@@ -9,6 +9,7 @@
 #include <vector>
 #include <mutex>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <functional>
 
@@ -88,8 +89,8 @@ public:
     ZENO_API void remove_attach_node_by_removing_objs();
 
     //viewport interactive obj
-    ZENO_API void markObjInteractive(std::set<std::string>& newobjKeys);
-    ZENO_API void unmarkObjInteractive(std::set<std::string>& removeobjKeys);
+    ZENO_API void collect_modify_objs(std::set<std::string>& newobjKeys);
+    ZENO_API void remove_modify_objs(std::set<std::string>& removeobjKeys);
     ZENO_API void getModifyObjsInfo(std::map<std::string, std::shared_ptr<zeno::IObject>>& modifyInteractiveObjs);  //interactive objs
 
 private:
@@ -103,13 +104,15 @@ private:
 
     std::set<std::string> m_viewObjs;
     std::set<std::string> m_lastViewObjs;
+
     std::set<std::string> m_removing_objs;  //这里是删除节点时记录的要删除的obj，要考虑rollback的情况
+    std::vector<std::string> m_lastUnregisterObjs;
 
     std::set<std::string> m_newAdded;       //渲染端需要新增的obj
     std::set<std::string> m_remove;         //渲染端需要移除的obj
     std::set<std::string> m_modify;         //渲染端(viewport)的 interactive obj
 
-    std::vector<std::string> m_lastUnregisterObjs;
+    std::unordered_map<std::string, std::string> m_listItem2ListNameMap;   //list元素-list名映射
 
     mutable std::mutex m_mtx;
 };

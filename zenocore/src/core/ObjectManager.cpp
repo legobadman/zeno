@@ -115,12 +115,8 @@ namespace zeno {
     ZENO_API void ObjectManager::clearLastUnregisterObjs()
     {
         for (auto& key : m_lastUnregisterObjs)
-        {
-            if (m_objects.find(key) != m_objects.end()) {
+            if (m_objects.find(key) != m_objects.end())
                 m_objects.erase(key);
-            }
-            m_remove.insert(key);
-        }
         m_lastUnregisterObjs.clear();
     }
 
@@ -175,8 +171,16 @@ namespace zeno {
         std::lock_guard lck(m_mtx);
         for (auto objkey : m_newAdded) {
             auto it = m_objects.find(objkey);
-            if (it != m_objects.end())
-                convertToView(it->second.obj, info.newObjs, std::set<std::string>());
+            if (it != m_objects.end()) {
+                SharedObjects tmp;
+                convertToView(it->second.obj, tmp, std::set<std::string>());
+
+                if (auto& list = std::dynamic_pointer_cast<ListObject>(it->second.obj))     //构造list元素和对应list名的映射
+                    for (auto& [key, value] : tmp)
+                        m_listItem2ListNameMap.insert(std::make_pair(key, objkey));
+
+                info.newObjs.insert(tmp.begin(), tmp.end());
+            }
         }
         for (auto objkey : m_modify) {
             auto it = m_objects.find(objkey);
@@ -185,8 +189,12 @@ namespace zeno {
         }
         for (auto objkey : m_remove) {
             auto it = m_objects.find(objkey);
-            if (it != m_objects.end())
+            if (it != m_objects.end()) {
                 convertToView(it->second.obj, SharedObjects(), info.remObjs, true);
+
+                for (auto& key : info.remObjs)                                              //移除历史元素
+                    m_listItem2ListNameMap.erase(key);
+            }
         }
     }
 
@@ -196,18 +204,21 @@ namespace zeno {
         for (auto& key : m_viewObjs) {
             auto& it = m_objects.find(key);
             if (it != m_objects.end())
-                info.allObjects.emplace(std::move(std::pair(key, it->second.obj)));
+                convertToView(it->second.obj, info.allObjects, std::set<std::string>());
         }
     }
 
     ZENO_API void ObjectManager::export_all_view_objs(std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>>& info)
     {
         std::lock_guard lck(m_mtx);
+        RenderObjsInfo tmp;
         for (auto& key : m_viewObjs) {
             auto& it = m_objects.find(key);
             if (it != m_objects.end())
-                info.emplace_back(key, it->second.obj);
+                convertToView(it->second.obj, tmp.allObjects, std::set<std::string>());
         }
+        for (auto& pair : tmp.allObjects)
+            info.emplace_back(std::move(pair));
     }
 
     ZENO_API std::shared_ptr<zeno::IObject> ObjectManager::getObj(std::string name)
@@ -215,6 +226,30 @@ namespace zeno {
         std::lock_guard lck(m_mtx);
         if (m_objects.find(name) != m_objects.end())
             return m_objects[name].obj;
+        else {
+            auto& it = m_listItem2ListNameMap.find(name);
+            if (it != m_listItem2ListNameMap.end())
+            {
+                std::function<zany(zany const&, std::string&)> searchObj = [&](zany const& obj, std::string& name) -> zany {
+                    if (std::shared_ptr<ListObject> lst = std::dynamic_pointer_cast<ListObject>(obj)) {
+                        for (size_t i = 0; i < lst->arr.size(); i++) {
+                            if (lst->arr[i]->key == name)
+                                return lst->arr[i];
+                            if (auto& res = searchObj(lst->arr[i], name))
+                                return res;
+                        }
+                        return nullptr;
+                    }
+                    else {
+                        if (obj && obj->key == name)
+                            return obj;
+                        else
+                            return nullptr;
+                    }
+                };
+                return searchObj(m_objects[it->second].obj, name);
+            }
+        }
         return nullptr;
     }
 
