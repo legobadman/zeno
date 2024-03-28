@@ -146,13 +146,13 @@ namespace zeno {
         }
     }
 
-    ZENO_API void ObjectManager::markObjInteractive(std::set<std::string>& newobjKeys)
+    ZENO_API void ObjectManager::collect_modify_objs(std::set<std::string>& newobjKeys)
     {
         std::lock_guard lck(m_mtx);
-        m_modify = newobjKeys;
+        m_modify.insert(newobjKeys.begin(), newobjKeys.end());
     }
 
-    ZENO_API void ObjectManager::unmarkObjInteractive(std::set<std::string>& removeobjKeys)
+    ZENO_API void ObjectManager::remove_modify_objs(std::set<std::string>& removeobjKeys)
     {
         std::lock_guard lck(m_mtx);
         m_modify.clear();

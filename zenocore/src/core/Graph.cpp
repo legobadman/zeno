@@ -78,7 +78,10 @@ ZENO_API bool Graph::applyNode(std::string const &node_name) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
     GraphException::translated([&] {
-        node->doApply();
+        if (getSession().is_auto_run())
+            node->doOnlyApply();
+        else
+            node->doApply();
     }, node);
     return true;
 }

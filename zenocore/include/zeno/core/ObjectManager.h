@@ -88,7 +88,8 @@ public:
     ZENO_API void collect_removing_objs(const std::string& objkey);
     ZENO_API void remove_attach_node_by_removing_objs();
 
-    //viewport interactive obj
+
+    //interactive obj
     ZENO_API void collect_modify_objs(std::set<std::string>& newobjKeys);
     ZENO_API void remove_modify_objs(std::set<std::string>& removeobjKeys);
     ZENO_API void getModifyObjsInfo(std::map<std::string, std::shared_ptr<zeno::IObject>>& modifyInteractiveObjs);  //interactive objs

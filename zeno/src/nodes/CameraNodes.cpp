@@ -193,20 +193,10 @@ struct LightNode : INode {
         auto shapeEnum = magic_enum::enum_cast<LightShape>(shapeString).value_or(LightShape::Plane);
         auto shapeOrder = magic_enum::enum_integer(shapeEnum);
 
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
-
-        if (has_input("prim")) {
-            auto mesh = get_input<PrimitiveObject>("prim");
-
-            if (mesh->size() > 0) {
-                prim = mesh;
-                shapeEnum = LightShape::TriangleMesh;
-                shapeOrder = magic_enum::enum_integer(shapeEnum);
-            }
-        } else {
-
-        auto &verts = prim->verts;
-        auto &tris = prim->tris;
+        std::shared_ptr<PrimitiveObject> prim = std::dynamic_pointer_cast<PrimitiveObject>(get_output("prim"));
+        auto initParam = [&]() {
+            auto& verts = prim->verts;
+            auto& tris = prim->tris;
 
             auto start_point = zeno::vec3f(0.5, 0, 0.5);
             float rm = 1.0f;
@@ -245,6 +235,35 @@ struct LightNode : INode {
             // Plane Indices
             tris.emplace_back(zeno::vec3i(0, 3, 1));
             tris.emplace_back(zeno::vec3i(3, 0, 2));
+        };
+
+        if (prim)
+        {
+            if (has_input("prim"))
+            {
+                if (prim->size() > 0) {
+                    shapeEnum = LightShape::TriangleMesh;
+                    shapeOrder = magic_enum::enum_integer(shapeEnum);
+                }
+            }
+            else {
+                prim->verts.clear();
+                prim->verts.clear_attrs();
+                prim->tris.clear();
+                initParam();
+            }
+        } else if (has_input("prim"))
+        {
+            auto mesh = get_input<PrimitiveObject>("prim");
+
+            if (mesh->size() > 0) {
+                prim = mesh;
+                shapeEnum = LightShape::TriangleMesh;
+                shapeOrder = magic_enum::enum_integer(shapeEnum);
+            }
+        } else {
+            prim = std::make_shared<zeno::PrimitiveObject>();
+            initParam();
         }
 
         auto &verts = prim->verts;

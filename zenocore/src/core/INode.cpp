@@ -360,7 +360,39 @@ ZENO_API bool INode::requireInput(std::shared_ptr<IParam> in_param) {
 }
 
 ZENO_API void INode::doOnlyApply() {
+    //unregisterObjs();
+    if (!m_dirty) {
+        registerObjToManager();
+        return;
+    }
+    for (const auto& [name, param] : inputs_) {
+        if (!param)
+            continue;
+        if (param->links.empty()) {
+            param->result = process(param);
+            continue;
+        }
+        const auto& inLinks = param->links;
+        std::shared_ptr<ILink> spLink = inLinks.front();
+        std::shared_ptr<IParam> out_param = spLink->fromparam.lock();
+        param->result = out_param->result;
+    }
     apply();
+
+    for (auto const& [name, param] : outputs_)
+    {
+        if (auto spObj = std::dynamic_pointer_cast<IObject>(param->result)) {
+            if (std::dynamic_pointer_cast<NumericObject>(spObj)) {
+                return;
+            }
+            assert(!spObj->key.empty());    //if view?
+            getSession().objsMan->collect_modify_objs(std::set<std::string>({ spObj->key }));
+        }
+    }
+
+    mark_dirty(false);
+    m_status = Node_RunSucceed;
+    zeno::getSession().reportNodeStatus(shared_from_this());
 }
 
 ZENO_API void INode::doApply() {
