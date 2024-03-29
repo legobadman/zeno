@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <set>
 #include <functional>
+#include <zeno/utils/string.h>
 
 
 namespace zeno {
@@ -95,7 +96,7 @@ public:
     ZENO_API void getModifyObjsInfo(std::map<std::string, std::shared_ptr<zeno::IObject>>& modifyInteractiveObjs);  //interactive objs
 
 private:
-    void convertToView(zany const& objToBeConvert, SharedObjects& objConvertResult, std::set<std::string>& keyConvertResult, bool convertKeyOnly = false);
+    void convertToView(zany const& objToBeConvert, SharedObjects& objConvertResult, std::set<std::string>& keyConvertResult, bool convertKeyOnly = false, std::string listitemidx = "");
     void clear();
 
     std::map<std::string, int> m_objRegister;
@@ -112,8 +113,6 @@ private:
     std::set<std::string> m_newAdded;       //渲染端需要新增的obj
     std::set<std::string> m_remove;         //渲染端需要移除的obj
     std::set<std::string> m_modify;         //渲染端(viewport)的 interactive obj
-
-    std::unordered_map<std::string, std::string> m_listItem2ListNameMap;   //list元素-list名映射
 
     mutable std::mutex m_mtx;
 };

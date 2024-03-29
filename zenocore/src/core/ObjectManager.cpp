@@ -172,28 +172,18 @@ namespace zeno {
         for (auto objkey : m_newAdded) {
             auto it = m_objects.find(objkey);
             if (it != m_objects.end()) {
-                SharedObjects tmp;
-                convertToView(it->second.obj, tmp, std::set<std::string>());
-
-                if (auto& list = std::dynamic_pointer_cast<ListObject>(it->second.obj))     //构造list元素和对应list名的映射
-                    for (auto& [key, value] : tmp)
-                        m_listItem2ListNameMap.insert(std::make_pair(key, objkey));
-
-                info.newObjs.insert(tmp.begin(), tmp.end());
+                convertToView(it->second.obj, info.newObjs, std::set<std::string>(), false, it->second.obj->key);
             }
         }
         for (auto objkey : m_modify) {
             auto it = m_objects.find(objkey);
             if (it != m_objects.end())
-                convertToView(it->second.obj, info.modifyObjs, std::set<std::string>());
+                convertToView(it->second.obj, info.modifyObjs, std::set<std::string>(), false, it->second.obj->key);
         }
         for (auto objkey : m_remove) {
             auto it = m_objects.find(objkey);
             if (it != m_objects.end()) {
-                convertToView(it->second.obj, SharedObjects(), info.remObjs, true);
-
-                for (auto& key : info.remObjs)                                              //移除历史元素
-                    m_listItem2ListNameMap.erase(key);
+                convertToView(it->second.obj, SharedObjects(), info.remObjs, true, it->second.obj->key);
             }
         }
     }
@@ -204,7 +194,7 @@ namespace zeno {
         for (auto& key : m_viewObjs) {
             auto& it = m_objects.find(key);
             if (it != m_objects.end())
-                convertToView(it->second.obj, info.allObjects, std::set<std::string>());
+                convertToView(it->second.obj, info.allObjects, std::set<std::string>(), false, it->second.obj->key);
         }
     }
 
@@ -215,7 +205,7 @@ namespace zeno {
         for (auto& key : m_viewObjs) {
             auto& it = m_objects.find(key);
             if (it != m_objects.end())
-                convertToView(it->second.obj, tmp.allObjects, std::set<std::string>());
+                convertToView(it->second.obj, tmp.allObjects, std::set<std::string>(), false, it->second.obj->key);
         }
         for (auto& pair : tmp.allObjects)
             info.emplace_back(std::move(pair));
@@ -227,42 +217,47 @@ namespace zeno {
         if (m_objects.find(name) != m_objects.end())
             return m_objects[name].obj;
         else {
-            auto& it = m_listItem2ListNameMap.find(name);
-            if (it != m_listItem2ListNameMap.end())
+            if (name.find("/") != std::string::npos)    //this item come from a listObj
             {
-                std::function<zany(zany const&, std::string&)> searchObj = [&](zany const& obj, std::string& name) -> zany {
-                    if (std::shared_ptr<ListObject> lst = std::dynamic_pointer_cast<ListObject>(obj)) {
-                        for (size_t i = 0; i < lst->arr.size(); i++) {
-                            if (lst->arr[i]->key == name)
-                                return lst->arr[i];
-                            if (auto& res = searchObj(lst->arr[i], name))
-                                return res;
+                auto viewnodeid = name.substr(0, name.find_first_of("/"));
+                if (m_objects.find(viewnodeid) != m_objects.end()) {
+                    auto idxlist = name.substr(name.find_first_of("/") + 1);
+                    auto reslist = split_str(idxlist, '/');
+                    auto root = m_objects[viewnodeid].obj;
+                    for (auto& idx : reslist)
+                    {
+                        if (idx.empty())
+                            continue;
+                        int i = std::stoi(idx);
+                        if (auto list = std::dynamic_pointer_cast<ListObject>(root)) {
+                            if (i >= list->arr.size())
+                                return nullptr;
+                            root = list->arr[i];
                         }
-                        return nullptr;
-                    }
-                    else {
-                        if (obj && obj->key == name)
-                            return obj;
                         else
-                            return nullptr;
+                            return root;
                     }
-                };
-                return searchObj(m_objects[it->second].obj, name);
+                    return root;
+                }
             }
         }
         return nullptr;
     }
 
-    void ObjectManager::convertToView(zany const& objToBeConvert, SharedObjects& objConvertResult, std::set<std::string>& keyConvertResult, bool convertKeyOnly)
+    void ObjectManager::convertToView(zany const& objToBeConvert, SharedObjects& objConvertResult, std::set<std::string>& keyConvertResult, bool convertKeyOnly, std::string listitemidx)
     {
         if (std::shared_ptr<ListObject> lst = std::dynamic_pointer_cast<ListObject>(objToBeConvert)) {
-            for (size_t i = 0; i < lst->arr.size(); i++)
-                convertToView(lst->arr[i], objConvertResult, keyConvertResult, convertKeyOnly);
+            for (size_t i = 0; i < lst->arr.size(); i++) {
+                std::string idx = "";
+                idx = listitemidx + '/' + std::to_string(i);
+                convertToView(lst->arr[i], objConvertResult, keyConvertResult, convertKeyOnly, idx);
+            }
             return;
         }
         if (!objToBeConvert)
             return;
         else {
+            objToBeConvert->key = listitemidx;
             if (convertKeyOnly)
                 keyConvertResult.insert(objToBeConvert->key);
             else
