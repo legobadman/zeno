@@ -358,7 +358,7 @@ namespace zeno
                         if (h->pair)
                             h->pair->pair = nullptr;
                         if (prev) {
-                            //当前边的起点的edges也需要清除自己
+                        //当前边的起点的edges也需要清除自己，第一条边的顶点除外（本身就是要被删除的点）
                             m_points[prev->point]->edges.erase(h);
                         }
                         prev = h;
@@ -413,26 +413,38 @@ namespace zeno
             if ("6484->6483" == hedge->id) {
                 int j;
             }
+
+            int nStep = 0;
             for (auto remPointId : _remPoints) {
                 if (hedge->point >= remPointId) {
+                    nStep++;
                     hedge->point--;
                 }
                 else {
                     break;
                 }
             }
-            assert(hedge->point >= 0 && hedge->point < m_points.size());
+            hedge->point -= nStep;
+            //assert(hedge->point >= 0 && hedge->point < m_points.size());
             //if (hedge->point >= ptnum) {
             //    hedge->point--;
             //}
+            nStep = 0;
             for (auto remFaceId : _remFaces) {
                 if (hedge->face >= remFaceId)
-                    hedge->face--;
+                    nStep++;
                 else
                     break;
             }
+            hedge->face -= nStep;
 
-            assert(hedge->face >= 0 && hedge->face < m_faces.size());
+            /*
+            auto ph = hedge.get();
+            auto fh = m_faces[hedge->face]->h;
+            if (m_bTriangle) {
+                assert(fh == ph || fh == ph->next || fh == ph->next->next);
         }
+            */
+    }
     }
 }
