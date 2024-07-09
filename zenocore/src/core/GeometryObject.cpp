@@ -318,94 +318,121 @@ namespace zeno
         return { point, h, prev };
     }
 
-    bool GeometryObject::remove_point(int ptnum) {
-        if (ptnum < 0 || ptnum >= m_points.size())
-            return false;
+    bool GeometryObject::remove_points(const std::set<int>& remPoints) {
+
+        auto setToOrderedVec = [](const std::set<int>& s)->std::vector<int> {
+            std::vector<int> v;
+            for (int idx : s)
+                v.push_back(idx);
+            std::sort(v.begin(), v.end());
+            return v;
+        };
 
         std::set<int> remFaces;
         std::set<std::string> remHEdges;
 
-        for (auto outEdge : m_points[ptnum]->edges) {
-            assert(outEdge);
+        for (int ptnum : remPoints) {
+            if (ptnum < 0 || ptnum >= m_points.size())
+                return false;
 
-            HEdge* firstEdge = outEdge;
-            HEdge* nextEdge = firstEdge->next;
-            assert(nextEdge);
-            HEdge* nnextEdge = nextEdge->next;
-            assert(nnextEdge);
+            for (auto outEdge : m_points[ptnum]->edges) {
+                assert(outEdge);
 
-            auto& [prevPoint, prevEdge, pprevEdge]= getPrev(outEdge);
-            assert(prevEdge && pprevEdge);
-            if (nextEdge && nnextEdge == prevEdge) {
-                //triangle，整个面和所有隶属这个面的半边都要移除
-                remFaces.insert(outEdge->face);
+                HEdge* firstEdge = outEdge;
+                HEdge* nextEdge = firstEdge->next;
+                assert(nextEdge);
+                HEdge* nnextEdge = nextEdge->next;
+                assert(nnextEdge);
 
-                HEdge* h = outEdge;
-                HEdge* prev = nullptr;
-                do {
-                    remHEdges.insert(h->id);
-                    //对面先置空自己
-                    if (h->pair)
-                        h->pair->pair = nullptr;
-                    if (prev) {
-                        //当前边的起点的edges也需要清除自己
-                        m_points[prev->point]->edges.erase(h);
-                    }
-                    prev = h;
-                    h = h->next;
-                } while (h != outEdge);
-            }
-            else {
-                remHEdges.insert(outEdge->id);
-                remHEdges.insert(prevEdge->id);
+                auto& [prevPoint, prevEdge, pprevEdge] = getPrev(outEdge);
+                assert(prevEdge && pprevEdge);
+                if (nextEdge && nnextEdge == prevEdge) {
+                    //triangle，整个面和所有隶属这个面的半边都要移除
+                    remFaces.insert(outEdge->face);
 
-                auto newEdge = std::make_shared<HEdge>();
+                    HEdge* h = outEdge;
+                    HEdge* prev = nullptr;
+                    do {
+                        remHEdges.insert(h->id);
+                        //对面先置空自己
+                        if (h->pair)
+                            h->pair->pair = nullptr;
+                        if (prev) {
+                            //当前边的起点的edges也需要清除自己
+                            m_points[prev->point]->edges.erase(h);
+                        }
+                        prev = h;
+                        h = h->next;
+                    } while (h != outEdge);
+                }
+                else {
+                    remHEdges.insert(outEdge->id);
+                    remHEdges.insert(prevEdge->id);
 
-                std::string id = generateUUID();
-                newEdge->id = id;
-                m_hEdges.insert(std::make_pair(id, newEdge));
+                    auto newEdge = std::make_shared<HEdge>();
 
-                //connect between outEdge->point and prevPoint.
-                newEdge->point = outEdge->point;
-                newEdge->pair = nullptr;
-                newEdge->next = nextEdge;
-                newEdge->face = outEdge->face;
+                    std::string id = generateUUID();
+                    newEdge->id = id;
+                    m_hEdges.insert(std::make_pair(id, newEdge));
 
-                m_faces[newEdge->face]->h = newEdge.get();
+                    //connect between outEdge->point and prevPoint.
+                    newEdge->point = outEdge->point;
+                    newEdge->pair = nullptr;
+                    newEdge->next = nextEdge;
+                    newEdge->face = outEdge->face;
 
-                pprevEdge->next = newEdge.get();
-                prevPoint->edges.erase(prevEdge);
-                prevPoint->edges.insert(newEdge.get());
+                    m_faces[newEdge->face]->h = newEdge.get();
+
+                    pprevEdge->next = newEdge.get();
+                    prevPoint->edges.erase(prevEdge);
+                    prevPoint->edges.insert(newEdge.get());
+                }
             }
         }
 
-        m_points.erase(m_points.begin() + ptnum);
+        const std::vector<int>& _remPoints = setToOrderedVec(remPoints);
+        const std::vector<int>& _remFaces = setToOrderedVec(remFaces);
+
+        //m_points.erase(m_points.begin() + ptnum);
+        for (int i = _remPoints.size() - 1; i >= 0; i--) {
+            int rmIdx = _remPoints[i];
+            m_points.erase(m_points.begin() + rmIdx);
+        }
 
         for (auto keyname : remHEdges) {
             m_hEdges.erase(keyname);
         }
 
         //adjust face
-        std::vector<int> _remFaces;
-        for (int idx : remFaces)
-            _remFaces.push_back(idx);
-        std::sort(_remFaces.begin(), _remFaces.end());
-
         for (auto iter = _remFaces.rbegin(); iter != _remFaces.rend(); iter++) {
             int rmIdx = *iter;
             m_faces.erase(m_faces.begin() + rmIdx);
         }
 
         for (auto& [_, hedge] : m_hEdges) {
-            if (hedge->point >= ptnum) {
-                hedge->point--;
+            if ("6484->6483" == hedge->id) {
+                int j;
             }
+            for (auto remPointId : _remPoints) {
+                if (hedge->point >= remPointId) {
+                    hedge->point--;
+                }
+                else {
+                    break;
+                }
+            }
+            assert(hedge->point >= 0 && hedge->point < m_points.size());
+            //if (hedge->point >= ptnum) {
+            //    hedge->point--;
+            //}
             for (auto remFaceId : _remFaces) {
                 if (hedge->face >= remFaceId)
                     hedge->face--;
                 else
                     break;
             }
+
+            assert(hedge->face >= 0 && hedge->face < m_faces.size());
         }
     }
 }

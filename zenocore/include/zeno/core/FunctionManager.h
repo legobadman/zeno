@@ -57,7 +57,8 @@ namespace zeno {
 
         ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext);
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
-        bool removePoint(int pointnum, ZfxContext* pContext);
+        //bool removePoint(int pointnum, ZfxContext* pContext);
+        bool removePoints(const std::set<int>& pointnums, ZfxContext* pContext);
         void afterRemovePoint(int rempoint);
 
         VariableTable m_globalAttrCached;

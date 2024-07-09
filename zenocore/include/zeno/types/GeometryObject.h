@@ -67,7 +67,8 @@ public:
 
     void set_points_pos(const ZfxVariable& val, ZfxElemFilter& filter);
     void set_points_normal(const ZfxVariable& val, ZfxElemFilter& filter);
-    bool remove_point(int ptnum);
+    //bool remove_point(int ptnum);
+    bool remove_points(const std::set<int>& remPoints);
 
 private:
     void initFromPrim(PrimitiveObject* prim);

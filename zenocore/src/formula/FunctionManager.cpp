@@ -1797,7 +1797,7 @@ namespace zeno {
                 if (N < filter.size()) {
                     assert(N == 1);
                     int currrem = get_zfxvar<int>(arg.value[0]);
-                    bSucceed = removePoint(currrem, pContext);
+                    bSucceed = removePoints({ currrem }, pContext);
                     if (bSucceed) {
                         //要调整filter，移除掉第currrem位置的元素
                         filter.erase(filter.begin() + currrem);
@@ -1809,34 +1809,36 @@ namespace zeno {
                     }
                 }
                 else {
-                    std::deque<int> remPoints;
+                    std::set<int> remPoints;
 
                     assert(N == filter.size());
                     for (int i = 0; i < N; i++) {
                         if (!filter[i]) continue;
                         int pointnum = get_zfxvar<int>(arg.value[i]);
-                        remPoints.push_back(pointnum);
+                        remPoints.insert(pointnum);
                     }
 
-                    while (!remPoints.empty())
-                    {
-                        int currrem = remPoints.front();
-                        remPoints.pop_front();
-                        bSucceed = removePoint(currrem, pContext);
-                        if (bSucceed) {
-                            //要调整filter，移除掉第currrem位置的元素
-                            filter.erase(filter.begin() + currrem);
-                            //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
-                            afterRemovePoint(currrem);
-                            //最后将当前所有剩下的删除点的序号再自减
-                            for (auto iter = remPoints.begin(); iter != remPoints.end(); iter++) {
-                                *iter -= 1;
-                            }
-                        }
-                        else {
-                            throw makeError<UnimplError>("error on removePoint");
-                        }
-                    }
+                    bSucceed = removePoints(remPoints, pContext);
+
+                    //while (!remPoints.empty())
+                    //{
+                    //    int currrem = remPoints.front();
+                    //    remPoints.pop_front();
+                    //    bSucceed = removePoint(currrem, pContext);
+                    //    if (bSucceed) {
+                    //        //要调整filter，移除掉第currrem位置的元素
+                    //        filter.erase(filter.begin() + currrem);
+                    //        //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
+                    //        afterRemovePoint(currrem);
+                    //        //最后将当前所有剩下的删除点的序号再自减
+                    //        for (auto iter = remPoints.begin(); iter != remPoints.end(); iter++) {
+                    //            *iter -= 1;
+                    //        }
+                    //    }
+                    //    else {
+                    //        throw makeError<UnimplError>("error on removePoint");
+                    //    }
+                    //}
                 }
                 return ZfxVariable();
             }
@@ -1846,10 +1848,9 @@ namespace zeno {
         }
     }
 
-    bool FunctionManager::removePoint(int pointnum, ZfxContext* pContext) {
-        /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
+    bool FunctionManager::removePoints(const std::set<int>& pointnums, ZfxContext* pContext) {
         if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-            return spGeo->remove_point(pointnum);
+            return spGeo->remove_points(pointnums);
         }
         return false;
     }
