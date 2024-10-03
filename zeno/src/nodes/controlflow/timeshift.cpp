@@ -21,7 +21,6 @@ namespace zeno {
                 {"prim", ParamObject("prim", Socket_Clone)},
                 {"offset", ParamPrimitive("offset")},
             },
-            //Êä³ö
             _Group {
                 {"", ParamObject("Output Object")},
             }

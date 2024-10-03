@@ -930,12 +930,7 @@ namespace zeno {
             }
         }
         else if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
-            if (attr_name == "pos") {
-                spGeo->set_points_pos(val, filter);
-            }
-            else if (attr_name == "nrm") {
-                spGeo->set_points_normal(val, filter);
-            }
+            spGeo->set_attr_byzfx(ATTR_POINT, attr_name, val, filter);
         }
     }
 
@@ -1007,7 +1002,7 @@ namespace zeno {
         else if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
             if (attr_name == "pos")
             {
-                const auto& P = spGeo->get_points();
+                const auto& P = spGeo->points_pos();
                 ZfxVariable res;
                 res.bAttr = true;
                 for (auto pos : P) {
@@ -1027,10 +1022,10 @@ namespace zeno {
             }
             if (attr_name == "nrm")
             {
-                if (spGeo->has_point_attr("nrm")) {
+                if (spGeo->has_attr(ATTR_POINT, "nrm")) {
                     ZfxVariable res;
                     res.bAttr = true;
-                    res.value = spGeo->get_point_attr("nrm");
+                    res.value = spGeo->get_attr_byzfx(ATTR_POINT, "nrm");
                     return res;
                 }
                 else {

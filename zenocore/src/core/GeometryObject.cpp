@@ -4,6 +4,9 @@
 #include <zeno/formula/syntax_tree.h>
 #include <zeno/utils/vectorutil.h>
 #include <zeno/utils/format.h>
+#include "geotopology.h"
+#include "../utils/zfxutil.h"
+#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno
@@ -18,67 +21,16 @@ namespace zeno
             else {
                 return T(val);
             }
-        }, value);
+            }, value);
     }
 
     ZENO_API GeometryObject::GeometryObject() {
 
     }
 
-    ZENO_API GeometryObject::GeometryObject(const GeometryObject& rhs) {
-        m_bTriangle = rhs.m_bTriangle;
-#if 0
-        auto spPrim = rhs.toPrimitive();
-        initFromPrim(spPrim.get());
-#else
-        m_points.resize(rhs.m_points.size());
-        m_faces.resize(rhs.m_faces.size());
-
-        for (int i = 0; i < m_points.size(); i++) {
-            auto p = std::make_shared<Point>();
-            auto& rp = rhs.m_points[i];
-            p->pos = rp->pos;
-            p->attr = rp->attr;
-            p->normal = rp->normal;
-            m_points[i] = std::move(p);
-        }
-
-        for (auto&[keyName, rEdge] : rhs.m_hEdges) {
-            auto spEdge = std::make_shared<HEdge>();
-            spEdge->id = rEdge->id;
-            spEdge->point = rEdge->point;
-            spEdge->face = rEdge->face;
-            m_hEdges.insert(std::make_pair(spEdge->id, spEdge));
-        }
-
-        for (int i = 0; i < m_faces.size(); i++) {
-            m_faces[i] = std::make_shared<Face>();
-        }
-
-        //adjust all pointers
-        for (int i = 0; i < m_points.size(); i++) {
-            for (auto rEdge : rhs.m_points[i]->edges) {
-                auto& spEdge = m_hEdges[rEdge->id];
-                m_points[i]->edges.insert(spEdge.get());
-            }
-        }
-
-        for (auto& [keyName, rhsptr] : rhs.m_hEdges)
-        {
-            auto p = m_hEdges[keyName];
-            p->face = rhsptr->face;
-            p->point = rhsptr->point;
-            if (rhsptr->pair)
-                p->pair = m_hEdges[rhsptr->pair->id].get();
-            p->next = m_hEdges[rhsptr->next->id].get();
-        }
-
-        for (int i = 0; i < m_faces.size(); i++) {
-            auto p = m_faces[i].get();
-            auto spEdge = m_hEdges[rhs.m_faces[i]->h->id];
-            m_faces[i]->h = spEdge.get();
-        }
-#endif
+    ZENO_API GeometryObject::GeometryObject(const GeometryObject& rhs)
+        : m_spTopology(rhs.m_spTopology)
+    {
     }
 
     ZENO_API GeometryObject::~GeometryObject() {
@@ -90,31 +42,34 @@ namespace zeno
 
     ZENO_API std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() const {
         std::shared_ptr<PrimitiveObject> spPrim = std::make_shared<PrimitiveObject>();
-        spPrim->resize(m_points.size());
-        for (int i = 0; i < m_points.size(); i++) {
-            spPrim->verts[i] = m_points[i]->pos;
+        std::vector<vec3f>& vec_pos = points_pos();
+        int nPoints = m_spTopology->m_points.size();
+        assert(nPoints == vec_pos.size());
+        spPrim->resize(nPoints);
+        for (int i = 0; i < nPoints; i++) {
+            spPrim->verts[i] = vec_pos[i];
         }
 
         int startIdx = 0;
-        if (m_bTriangle) {
-            spPrim->tris->resize(m_faces.size());
+        if (m_spTopology->m_bTriangle) {
+            spPrim->tris->resize(m_spTopology->m_faces.size());
         }
         else {
-            spPrim->polys->resize(m_faces.size());
+            spPrim->polys->resize(m_spTopology->m_faces.size());
         }
 
-        for (int i = 0; i < m_faces.size(); i++) {
-            auto face = m_faces[i].get();
+        for (int i = 0; i < m_spTopology->m_faces.size(); i++) {
+            auto face = m_spTopology->m_faces[i].get();
             HEdge* firsth = face->h;
             HEdge* h = firsth;
             std::vector<int> points;
             do {
-                int index = getPointTo(h);
+                int index = m_spTopology->getPointTo(h);
                 points.push_back(index);
                 h = h->next;
             } while (firsth != h);
 
-            if (m_bTriangle) {
+            if (m_spTopology->m_bTriangle) {
                 vec3i tri = { points[0],points[1], points[2] };
                 spPrim->tris[i] = std::move(tri);
             }
@@ -123,68 +78,40 @@ namespace zeno
                 for (auto pt : points) {
                     spPrim->loops.push_back(pt);
                 }
-                spPrim->polys.push_back({startIdx, sz});
+                spPrim->polys.push_back({ startIdx, sz });
                 startIdx += sz;
             }
         }
         return spPrim;
     }
 
-    HEdge* GeometryObject::checkHEdge(int fromPoint, int toPoint) {
-        assert(fromPoint < m_points.size() && toPoint < m_points.size() &&
-               fromPoint >= 0 && toPoint >= 0);
-        for (auto hedge : m_points[fromPoint]->edges) {
-            if (hedge->point == toPoint) {
-                return hedge;
-            }
-        }
-        return nullptr;
-    }
-
-    int GeometryObject::getNextOutEdge(int fromPoint, int currentOutEdge) {
-        return -1;
-    }
-
-    int GeometryObject::getPointTo(HEdge* hedge) const {
-        return hedge->point;
-    }
-
-    bool GeometryObject::has_point_attr(std::string const& name) const {
-        if (m_points.empty())
-            return false;
-
-        if (name == "pos" || name == "nrm")
-            return true;
-
-        auto attr = m_points[0]->attr;
-        return attr.find(name) != attr.end();
-    }
-
     void GeometryObject::initFromPrim(PrimitiveObject* prim) {
-
-        m_points.resize(prim->verts->size());
-        for (int i = 0; i < m_points.size(); i++) {
-            m_points[i] = std::make_shared<Point>();
-            m_points[i]->pos = prim->verts[i];
+        int n = prim->verts->size();
+        m_spTopology->m_points.resize(n);
+        std::vector<vec3f> pos;
+        pos.resize(n);
+        for (int i = 0; i < m_spTopology->m_points.size(); i++) {
+            m_spTopology->m_points[i] = std::make_shared<Point>();
+            pos[i] = prim->verts[i];
         }
 
         int nFace = -1;
-        m_bTriangle = prim->loops->empty() && !prim->tris->empty();
-        if (m_bTriangle) {
+        m_spTopology->m_bTriangle = prim->loops->empty() && !prim->tris->empty();
+        if (m_spTopology->m_bTriangle) {
             nFace = prim->tris->size();
-            m_hEdges.reserve(nFace * 3);
+            m_spTopology->m_hEdges.reserve(nFace * 3);
         }
         else {
             assert(!prim->loops->empty() && !prim->polys->empty());
             nFace = prim->polys->size();
-            //“ª∞„ «Àƒ±ﬂ–Œ
-            m_hEdges.reserve(nFace * 4);
+            //‰∏ÄËà¨ÊòØÂõõËæπÂΩ¢
+            m_spTopology->m_hEdges.reserve(nFace * 4);
         }
-        m_faces.resize(nFace);
+        m_spTopology->m_faces.resize(nFace);
 
         for (int face = 0; face < nFace; face++) {
             std::vector<int> points;
-            if (m_bTriangle) {
+            if (m_spTopology->m_bTriangle) {
                 auto const& ind = prim->tris[face];
                 points = { ind[0], ind[1], ind[2] };
             }
@@ -200,7 +127,7 @@ namespace zeno
             //TODO: init data for Face
             auto pFace = std::make_shared<Face>();
 
-            HEdge* lastHedge = 0, *firstHedge = 0;
+            HEdge* lastHedge = 0, * firstHedge = 0;
             for (int i = 0; i < points.size(); i++) {
                 int vp = -1, vq = -1;
                 if (i < points.size() - 1) {
@@ -216,7 +143,7 @@ namespace zeno
                 auto hedge = std::make_shared<HEdge>();
                 std::string id = zeno::format("{}->{}", vp, vq);
                 hedge->id = id;
-                m_hEdges.insert(std::make_pair(id, hedge));
+                m_spTopology->m_hEdges.insert(std::make_pair(id, hedge));
 
                 hedge->face = face;
                 hedge->point = vq;
@@ -224,7 +151,7 @@ namespace zeno
                 if (lastHedge) {
                     lastHedge->next = hedge.get();
                 }
-                //TODO: »Áπ˚÷ª”–“ªÃı±ﬂª·‘ı√¥—˘£ø
+                //TODO: Â¶ÇÊûúÂè™Êúâ‰∏ÄÊù°Ëæπ‰ºöÊÄé‰πàÊ†∑Ôºü
                 if (i == points.size() - 1) {
                     hedge->next = firstHedge;
                 }
@@ -233,103 +160,50 @@ namespace zeno
                 }
 
                 //check whether the pair edge exist
-                auto pairedge = checkHEdge(vq, vp);
+                auto pairedge = m_spTopology->checkHEdge(vq, vp);
                 if (pairedge) {
                     hedge->pair = pairedge;
                     pairedge->pair = hedge.get();
                 }
 
-                m_points[vp]->edges.insert(hedge.get());
+                m_spTopology->m_points[vp]->edges.insert(hedge.get());
 
                 //pFace->h = hedge.get();
                 lastHedge = hedge.get();
             }
-            //Õ≥“ª»°µ⁄“ªÃı∞Î±ﬂ◊˜Œ™faceµƒ°∞∆µ„±ﬂ°±
+            //Áªü‰∏ÄÂèñÁ¨¨‰∏ÄÊù°ÂçäËæπ‰Ωú‰∏∫faceÁöÑ‚ÄúËµ∑ÁÇπËæπ‚Äù
             pFace->h = firstHedge;
 
-            m_faces[face] = std::move(pFace);
+            m_spTopology->m_faces[face] = std::move(pFace);
         }
     }
 
     int GeometryObject::get_point_count() const {
-        return m_points.size();
+        return m_spTopology->m_points.size();
     }
 
     int GeometryObject::get_face_count() const {
-        return m_faces.size();
+        return m_spTopology->m_faces.size();
     }
 
-    std::vector<vec3f> GeometryObject::get_points() const {
-        std::vector<vec3f> pos;
-        pos.resize(m_points.size());
-        for (int i = 0; i < m_points.size(); i++) {
-            pos[i] = m_points[i]->pos;
+    std::vector<vec3f>& GeometryObject::points_pos() const {
+        auto iter = m_point_attrs.find("pos");
+        if (iter == m_point_attrs.end()) {
+            throw makeError<UnimplError>("no pos on geo");
         }
-        return pos;
-    }
-
-    std::vector<zfxvariant> GeometryObject::get_point_attr(std::string const& name) const {
-        std::vector<zfxvariant> res;
-        if (!has_point_attr(name))
-            return res;
-        res.resize(m_points.size());
-        bool bPos = name == "pos";
-        bool bNrm = name == "nrm";
-        for (int i = 0; i < m_points.size(); i++) {
-            auto pt = m_points[i].get();
-            if (bPos) {
-                res.push_back(glm::vec3(pt->pos[0], pt->pos[1], pt->pos[2]));
-            }
-            else if (bNrm) {
-                res.push_back(glm::vec3(pt->normal[0], pt->normal[1], pt->normal[2]));
-            }
-            else {
-                auto iter = pt->attr.find(name);
-                assert(iter != pt->attr.end());
-                res[i] = iter->second;
-            }
-        }
-        return res;
-    }
-
-    void GeometryObject::set_points_pos(const ZfxVariable& val, ZfxElemFilter& filter) {
-        for (int i = 0; i < m_points.size(); i++) {
-            if (filter[i]) {
-                const glm::vec3& vec = get_zfxvar<glm::vec3>(val.value[i]);
-                m_points[i]->pos = { vec.x, vec.y, vec.z };
-            }
-        }
-    }
-
-    void GeometryObject::set_points_normal(const ZfxVariable& val, ZfxElemFilter& filter)
-    {
-        for (int i = 0; i < m_points.size(); i++) {
-            if (filter[i]) {
-                const glm::vec3& vec = get_zfxvar<glm::vec3>(val.value[i]);
-                m_points[i]->normal = { vec.x, vec.y, vec.z };
-            }
-        }
-    }
-
-    std::tuple<Point*, HEdge*, HEdge*> GeometryObject::getPrev(HEdge* outEdge) {
-        HEdge* h = outEdge, *prev = nullptr;
-        Point* point = nullptr;
-        do {
-            prev = h;
-            point = m_points[h->point].get();
-            h = h->next;
-        } while (h && h->next != outEdge);
-        return { point, h, prev };
+        ATTR_DATA_PTR spPointAttrs = iter->second;
+        auto& val = spPointAttrs->value();
+        return any_cast<std::vector<vec3f>&>(val);
     }
 
     bool GeometryObject::remove_point(int ptnum) {
-        if (ptnum < 0 || ptnum >= m_points.size())
+        if (ptnum < 0 || ptnum >= m_spTopology->m_points.size())
             return false;
 
         std::set<int> remFaces;
         std::set<std::string> remHEdges;
 
-        for (auto outEdge : m_points[ptnum]->edges) {
+        for (auto outEdge : m_spTopology->m_points[ptnum]->edges) {
             assert(outEdge);
 
             HEdge* firstEdge = outEdge;
@@ -338,22 +212,22 @@ namespace zeno
             HEdge* nnextEdge = nextEdge->next;
             assert(nnextEdge);
 
-            auto& [prevPoint, prevEdge, pprevEdge]= getPrev(outEdge);
+            auto& [prevPoint, prevEdge, pprevEdge] = m_spTopology->getPrev(outEdge);
             assert(prevEdge && pprevEdge);
             if (nextEdge && nnextEdge == prevEdge) {
-                //triangle£¨’˚∏ˆ√Ê∫ÕÀ˘”–¡• Ù’‚∏ˆ√Êµƒ∞Î±ﬂ∂º“™“∆≥˝
+                //triangleÔºåÊï¥‰∏™Èù¢ÂíåÊâÄÊúâÈö∂Â±ûËøô‰∏™Èù¢ÁöÑÂçäËæπÈÉΩË¶ÅÁßªÈô§
                 remFaces.insert(outEdge->face);
 
                 HEdge* h = outEdge;
                 HEdge* prev = nullptr;
                 do {
                     remHEdges.insert(h->id);
-                    //∂‘√Êœ»÷√ø’◊‘º∫
+                    //ÂØπÈù¢ÂÖàÁΩÆÁ©∫Ëá™Â∑±
                     if (h->pair)
                         h->pair->pair = nullptr;
                     if (prev) {
-                        //µ±«∞±ﬂµƒ∆µ„µƒedges“≤–Ë“™«Â≥˝◊‘º∫£¨µ⁄“ªÃı±ﬂµƒ∂•µ„≥˝Õ‚£®±æ…ÌæÕ «“™±ª…æ≥˝µƒµ„£©
-                        m_points[prev->point]->edges.erase(h);
+                        //ÂΩìÂâçËæπÁöÑËµ∑ÁÇπÁöÑedges‰πüÈúÄË¶ÅÊ∏ÖÈô§Ëá™Â∑±ÔºåÁ¨¨‰∏ÄÊù°ËæπÁöÑÈ°∂ÁÇπÈô§Â§ñÔºàÊú¨Ë∫´Â∞±ÊòØË¶ÅË¢´Âà†Èô§ÁöÑÁÇπÔºâ
+                        m_spTopology->m_points[prev->point]->edges.erase(h);
                     }
                     prev = h;
                     h = h->next;
@@ -367,7 +241,7 @@ namespace zeno
 
                 std::string id = generateUUID();
                 newEdge->id = id;
-                m_hEdges.insert(std::make_pair(id, newEdge));
+                m_spTopology->m_hEdges.insert(std::make_pair(id, newEdge));
 
                 //connect between outEdge->point and prevPoint.
                 newEdge->point = outEdge->point;
@@ -375,7 +249,7 @@ namespace zeno
                 newEdge->next = nextEdge;
                 newEdge->face = outEdge->face;
 
-                m_faces[newEdge->face]->h = newEdge.get();
+                m_spTopology->m_faces[newEdge->face]->h = newEdge.get();
 
                 pprevEdge->next = newEdge.get();
                 prevPoint->edges.erase(prevEdge);
@@ -383,10 +257,10 @@ namespace zeno
             }
         }
 
-        m_points.erase(m_points.begin() + ptnum);
+        m_spTopology->m_points.erase(m_spTopology->m_points.begin() + ptnum);
 
         for (auto keyname : remHEdges) {
-            m_hEdges.erase(keyname);
+            m_spTopology->m_hEdges.erase(keyname);
         }
 
         //adjust face
@@ -397,10 +271,10 @@ namespace zeno
 
         for (auto iter = _remFaces.rbegin(); iter != _remFaces.rend(); iter++) {
             int rmIdx = *iter;
-            m_faces.erase(m_faces.begin() + rmIdx);
+            m_spTopology->m_faces.erase(m_spTopology->m_faces.begin() + rmIdx);
         }
 
-        for (auto& [_, hedge] : m_hEdges) {
+        for (auto& [_, hedge] : m_spTopology->m_hEdges) {
             if (hedge->point >= ptnum) {
                 hedge->point--;
             }
@@ -414,8 +288,8 @@ namespace zeno
             hedge->face -= nStep;
             /*
             auto ph = hedge.get();
-            auto fh = m_faces[hedge->face]->h;
-            if (m_bTriangle) {
+            auto fh = m_spTopology->m_faces[hedge->face]->h;
+            if (m_spTopology->m_bTriangle) {
                 assert(fh == ph || fh == ph->next || fh == ph->next->next);
             }
             */
@@ -424,10 +298,10 @@ namespace zeno
 
     int GeometryObject::facepoint(int face_id, int vert_id) const
     {
-        if (face_id < 0 || face_id >= m_faces.size())
+        if (face_id < 0 || face_id >= m_spTopology->m_faces.size())
             return -1;
 
-        auto h = m_faces[face_id]->h;
+        auto h = m_spTopology->m_faces[face_id]->h;
         auto firsth = h;
         do {
             if (vert_id-- == 0) {
@@ -441,10 +315,10 @@ namespace zeno
     zfxintarr GeometryObject::facepoints(int face_id)
     {
         zfxintarr pts;
-        if (face_id < 0 || face_id >= m_faces.size())
+        if (face_id < 0 || face_id >= m_spTopology->m_faces.size())
             return pts;
 
-        auto h = m_faces[face_id]->h;
+        auto h = m_spTopology->m_faces[face_id]->h;
         auto firsth = h;
         do {
             pts.push_back(h->point);
@@ -456,10 +330,10 @@ namespace zeno
     zfxintarr GeometryObject::pointfaces(int point_id)
     {
         zfxintarr faces;
-        if (point_id < 0 || point_id >= m_points.size())
+        if (point_id < 0 || point_id >= m_spTopology->m_points.size())
             return faces;
 
-        for (auto h : m_points[point_id]->edges) {
+        for (auto h : m_spTopology->m_points[point_id]->edges) {
             faces.push_back(h->face);
         }
         return faces;
@@ -470,98 +344,142 @@ namespace zeno
         throw makeError<UnimplError>();
     }
 
-    bool GeometryObject::createFaceAttr(const std::string& attr_name, const zfxvariant& defl)
-    {
-        if (m_faces.empty())
-            return false;
+    int GeometryObject::get_attr_size(GeoAttrGroup grp) {
+        if (grp == ATTR_GEO) {
+            return 1;
+        }
+        else if (grp == ATTR_POINT) {
+            return m_spTopology->m_points.size();
+        }
+        else if (grp == ATTR_FACE) {
+            return m_spTopology->m_faces.size();
+        }
+        else {
+            throw makeError<UnimplError>("Unknown group on attr");
+        }
+    }
 
-        if (m_faces[0]->attr.find(attr_name) != m_faces[0]->attr.end())
+    std::map<std::string, ATTR_DATA_PTR>& GeometryObject::get_container(GeoAttrGroup grp) {
+        if (grp == ATTR_GEO) {
+            return m_geo_attrs;
+        }
+        else if (grp == ATTR_POINT) {
+            return m_point_attrs;
+        }
+        else if (grp == ATTR_FACE) {
+            return m_face_attrs;
+        }
+        else {
+            throw makeError<UnimplError>("Unknown group on attr");
+        }
+    }
+
+    bool GeometryObject::create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(attr_name);
+        if (iter != container.end()) {
             return false;   //already exist
-
-        for (auto pFace : m_faces) {
-            pFace->attr.insert(std::make_pair(attr_name, defl));
         }
-        //–Ë“™Õ¨≤ΩµΩÕ‚≤‡µƒzfx manager
+
+        Any val = zeno::zfx::zfxvarToAny(defl);
+        int n = get_attr_size(grp);
+        ATTR_DATA_PTR spAttr = std::make_shared<AttributeData>(val, n);
+        spAttr->set(val);
+
+        container.insert(std::make_pair(attr_name, spAttr));
+        //ÈúÄË¶ÅÂêåÊ≠•Âà∞Â§ñ‰æßÁöÑzfx manager
         return true;
     }
 
-    bool GeometryObject::setFaceAttr(const std::string& attr_name, const zfxvariant& val)
+    bool GeometryObject::create_attr(GeoAttrGroup grp, const std::string& attr_name, const Any& defl)
     {
-        if (m_faces.empty())
-            return false;
-        if (m_faces[0]->attr.find(attr_name) == m_faces[0]->attr.end())
-            return false;   //not exist
-        for (auto pFace : m_faces) {
-            pFace->attr[attr_name] = val;
-        }
-        return true;
-    }
-
-    std::vector<zfxvariant> GeometryObject::getFaceAttr(const std::string& attr_name) const
-    {
-        std::vector<zfxvariant> res;
-        res.resize(m_faces.size());
-        for (int i = 0; i < m_faces.size(); i++)
-        {
-            assert(m_faces[i] && m_faces[i]->attr.find(attr_name) != m_faces[i]->attr.end());
-            res[i] = m_faces[i]->attr[attr_name];
-        }
-        return res;
-    }
-
-    bool GeometryObject::deleteFaceAttr(const std::string& attr_name)
-    {
-        for (int i = 0; i < m_faces.size(); i++)
-        {
-            assert(m_faces[i] && m_faces[i]->attr.find(attr_name) != m_faces[i]->attr.end());
-            m_faces[i]->attr.erase(attr_name);
-        }
-        return false;
-    }
-
-    bool GeometryObject::createPointAttr(const std::string& attr_name, const zfxvariant& defl) {
-        if (m_points.empty())
-            return false;
-
-        if (m_points[0]->attr.find(attr_name) != m_points[0]->attr.end())
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(attr_name);
+        if (iter != container.end()) {
             return false;   //already exist
-
-        for (auto pFace : m_points) {
-            pFace->attr.insert(std::make_pair(attr_name, defl));
         }
-        //–Ë“™Õ¨≤ΩµΩÕ‚≤‡µƒzfx manager
+
+        int n = get_attr_size(grp);
+        ATTR_DATA_PTR spAttr = std::make_shared<AttributeData>(defl, n);
+        spAttr->set(defl);
+
+        container.insert(std::make_pair(attr_name, spAttr));
+        //ÈúÄË¶ÅÂêåÊ≠•Âà∞Â§ñ‰æßÁöÑzfx manager
         return true;
     }
 
-    bool GeometryObject::setPointAttr(const std::string& attr_name, const zfxvariant& val) {
-        if (m_points.empty())
-            return false;
-        if (m_points[0]->attr.find(attr_name) == m_points[0]->attr.end())
-            return false;   //not exist
-        for (auto pFace : m_points) {
-            pFace->attr[attr_name] = val;
-        }
-        return true;
+    bool GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        return container.find(attr_name) != container.end();
     }
 
-    std::vector<zfxvariant> GeometryObject::getPointAttr(const std::string& attr_name) const {
-        std::vector<zfxvariant> res;
-        res.resize(m_points.size());
-        for (int i = 0; i < m_points.size(); i++)
-        {
-            assert(m_points[i] && m_points[i]->attr.find(attr_name) != m_points[i]->attr.end());
-            res[i] = m_points[i]->attr[attr_name];
-        }
-        return res;
+    bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        return container.find(name) != container.end();
     }
 
-    bool GeometryObject::deletePointAttr(const std::string& attr_name) {
-        for (int i = 0; i < m_points.size(); i++)
-        {
-            assert(m_points[i] && m_points[i]->attr.find(attr_name) != m_points[i]->attr.end());
-            m_points[i]->attr.erase(attr_name);
+    std::vector<zfxvariant> GeometryObject::get_attr_byzfx(GeoAttrGroup grp, std::string const& name)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(name);
+        if (iter == container.end()) {
+            throw makeError<KeyError>(name, "not exist on point attr");
         }
-        return false;
+
+        int n = iter->second->size();
+        Any& val = iter->second->value();
+        if (!val.has_value()) {
+            throw makeError<UnimplError>("empty value on attr `" + name + "`");
+        }
+        return zeno::zfx::extractAttrValue(val, n);
+    }
+
+    Any& GeometryObject::get_attr(GeoAttrGroup grp, std::string const& name)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(name);
+        if (iter == container.end()) {
+            throw makeError<KeyError>(name, "not exist on point attr");
+        }
+
+        int n = iter->second->size();
+        Any& val = iter->second->value();
+        if (!val.has_value()) {
+            throw makeError<UnimplError>("empty value on attr `" + name + "`");
+        }
+        return val;
+    }
+
+    void GeometryObject::set_attr_byzfx(GeoAttrGroup grp, std::string const& name, const ZfxVariable& val, ZfxElemFilter& filter)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(name);
+        if (iter == container.end()) {
+            throw makeError<KeyError>(name, "not exist on point attr");
+        }
+        ATTR_DATA_PTR spAttr = iter->second;
+        int n = spAttr->size();
+        for (int i = 0; i < n; i++) {
+            if (filter[i]) {
+                const glm::vec3& vec = get_zfxvar<glm::vec3>(val.value[i]);
+                spAttr->set(i, zeno::vec3f(vec.x, vec.y, vec.z));
+            }
+        }
+    }
+
+    void GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const Any& val)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(name);
+        if (iter == container.end()) {
+            throw makeError<KeyError>(name, "not exist on point attr");
+        }
+        ATTR_DATA_PTR spAttr = iter->second;
+        int n = spAttr->size();
+        spAttr->set(val);
     }
 
     int GeometryObject::addpoint(zfxvariant var) {
@@ -579,22 +497,22 @@ namespace zeno
         }, var);
 
         auto spPoint = std::make_shared<Point>();
-        spPoint->pos = pos;
-        m_points.emplace_back(spPoint);
-        return m_points.size() - 1;
+        m_spTopology->m_points.emplace_back(spPoint);
+        create_attr(ATTR_POINT, "pos", pos);
+        return m_spTopology->m_points.size() - 1;
     }
 
     int GeometryObject::addvertex(int face_id, int point_id) {
-        if (face_id < 0 || face_id >= m_faces.size() ||
-            point_id < 0 || point_id >= m_points.size()) {
+        if (face_id < 0 || face_id >= m_spTopology->m_faces.size() ||
+            point_id < 0 || point_id >= m_spTopology->m_points.size()) {
             return -1;
         }
-        auto& spPoint = m_points[point_id];
+        auto& spPoint = m_spTopology->m_points[point_id];
         if (spPoint->edges.empty()) {
-            auto pFace = m_faces[face_id];
+            auto pFace = m_spTopology->m_faces[face_id];
             assert(pFace);
             auto firstH = pFace->h;
-            auto& [prevPoint, prevEdge, pprevEdge] = getPrev(firstH);
+            auto& [prevPoint, prevEdge, pprevEdge] = m_spTopology->getPrev(firstH);
             auto newedge = std::make_shared<HEdge>();
             newedge->point = prevEdge->point;
             newedge->next = firstH;
@@ -602,8 +520,8 @@ namespace zeno
             newedge->id = generateUUID();
             prevEdge->next = newedge.get();
             prevEdge->point = point_id;
-            m_hEdges.insert(std::make_pair(newedge->id, newedge));
-            m_bTriangle = false;    //”–‘ˆº”“‚Œ∂◊≈≤ªƒ‹µ±◊˜»˝Ω«–Œ¥¶¿Ì¡À
+            m_spTopology->m_hEdges.insert(std::make_pair(newedge->id, newedge));
+            m_spTopology->m_bTriangle = false;    //ÊúâÂ¢ûÂä†ÊÑèÂë≥ÁùÄ‰∏çËÉΩÂΩì‰Ωú‰∏âËßíÂΩ¢Â§ÑÁêÜ‰∫Ü
             return nvertices(face_id);
         }
         else {
@@ -612,10 +530,10 @@ namespace zeno
     }
 
     int GeometryObject::nvertices(int face_id) const {
-        if (face_id < 0 || face_id >= m_faces.size()) {
+        if (face_id < 0 || face_id >= m_spTopology->m_faces.size()) {
             return 0;
         }
-        auto firstedge = m_faces[face_id]->h;
+        auto firstedge = m_spTopology->m_faces[face_id]->h;
         auto h = firstedge;
         int ncount = 0;
         do {
@@ -637,39 +555,38 @@ namespace zeno
         std::set<int> remPoints;
         std::set<Point*> remPtrPoints;
         for (auto face_id : faces) {
-            auto pFace = m_faces[face_id];
+            auto pFace = m_spTopology->m_faces[face_id];
             if (includePoints) {
-                //øº≤Ïface…œÀ˘”–µƒµ„£¨ «∑Ò”–µ„–Ë“™±ª…æ≥˝
+                //ËÄÉÂØüface‰∏äÊâÄÊúâÁöÑÁÇπÔºåÊòØÂê¶ÊúâÁÇπÈúÄË¶ÅË¢´Âà†Èô§
                 auto firsth = pFace->h;
                 auto h = firsth;
-                do 
+                do
                 {
-                    auto& spPoint = m_points[h->point];
+                    auto& spPoint = m_spTopology->m_points[h->point];
                     spPoint->edges.erase(h);
                     if (spPoint->edges.empty()) {
                         remPoints.insert(h->point);
                         remPtrPoints.insert(spPoint.get());
                     }
                     if (h->pair) {
-                        //∂‘√Ê÷√ø’◊‘º∫
+                        //ÂØπÈù¢ÁΩÆÁ©∫Ëá™Â∑±
                         h->pair->pair = nullptr;
                     }
                     h->pair = nullptr;
                     auto nexth = h->next;
-                    //hµƒ“¿¿µ∂ºΩ‚≥˝¡À£¨œ÷‘⁄æÕø…“‘…æ≥˝¡À°£
-                    m_hEdges.erase(h->id);
+                    //hÁöÑ‰æùËµñÈÉΩËß£Èô§‰∫ÜÔºåÁé∞Âú®Â∞±ÂèØ‰ª•Âà†Èô§‰∫Ü„ÄÇ
+                    m_spTopology->m_hEdges.erase(h->id);
                     h = nexth;
                 } while (firsth != h);
             }
         }
 
-        //±ﬂ∂º“—æ≠…æ≥˝¡À£¨œ÷‘⁄÷ª“™…æ≥˝µ„∫Õ√Êº¥ø…°£
-        removeElements(m_points, remPoints);
-        removeElements(m_faces, faces);
+        //ËæπÈÉΩÂ∑≤ÁªèÂà†Èô§‰∫ÜÔºåÁé∞Âú®Âè™Ë¶ÅÂà†Èô§ÁÇπÂíåÈù¢Âç≥ÂèØ„ÄÇ
+        removeElements(m_spTopology->m_points, remPoints);
+        removeElements(m_spTopology->m_faces, faces);
 
-
-        //“ÚŒ™µ„±ª…æ≥˝¡À£¨π –Ë“™µ˜’˚À˘”–Œ¥±ª…æ≥˝µƒ±ﬂ£®÷ª“™µ˜’˚point∫ÕfaceµƒÀ˜“˝£©£¨÷¡”⁄face‘Ú≤ª–Ë“™µ˜’˚£¨“ÚŒ™…æ≥˝µƒæÕ «face£¨÷±Ω”…æ¡ÀÕÍ ¬
-        for (auto& [_, hedge] : m_hEdges) {
+        //Âõ†‰∏∫ÁÇπË¢´Âà†Èô§‰∫ÜÔºåÊïÖÈúÄË¶ÅË∞ÉÊï¥ÊâÄÊúâÊú™Ë¢´Âà†Èô§ÁöÑËæπÔºàÂè™Ë¶ÅË∞ÉÊï¥pointÂíåfaceÁöÑÁ¥¢ÂºïÔºâÔºåËá≥‰∫éfaceÂàô‰∏çÈúÄË¶ÅË∞ÉÊï¥ÔºåÂõ†‰∏∫Âà†Èô§ÁöÑÂ∞±ÊòØfaceÔºåÁõ¥Êé•Âà†‰∫ÜÂÆå‰∫ã
+        for (auto& [_, hedge] : m_spTopology->m_hEdges) {
             int nStep = 0;
             for (auto remPointId : remPoints) {
                 if (hedge->point >= remPointId)
@@ -689,8 +606,8 @@ namespace zeno
             hedge->face -= nStep;
 
             auto ph = hedge.get();
-            auto fh = m_faces[hedge->face]->h;
-            if (m_bTriangle) {
+            auto fh = m_spTopology->m_faces[hedge->face]->h;
+            if (m_spTopology->m_bTriangle) {
                 assert(fh == ph || fh == ph->next || fh == ph->next->next);
             }
         }
@@ -698,11 +615,11 @@ namespace zeno
     }
 
     int GeometryObject::npoints() const {
-        return m_points.size();
+        return m_spTopology->m_points.size();
     }
 
     int GeometryObject::nfaces() const {
-        return m_faces.size();
+        return m_spTopology->m_faces.size();
     }
 
     int GeometryObject::nvertices() const {

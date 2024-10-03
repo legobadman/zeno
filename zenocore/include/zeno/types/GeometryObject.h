@@ -7,117 +7,79 @@
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/FunctionManager.h>
+#include <zeno/types/AttributeData.h>
+
 
 namespace zeno
 {
+    struct PrimitiveObject;
 
-using Geo_Attribute = std::pair<std::string, AttrValue>;
+    class GeometryTopology;
 
-struct PrimitiveObject;
+    using ATTR_DATA_PTR = std::shared_ptr<AttributeData>;
 
-struct Geo_Attributes : std::vector<Geo_Attribute>
-{
-    template <class T>
-    T get_attr(const std::string& name) const {
-        for (auto iter = this->begin(); iter != this->end(); iter++) {
-            if (iter->first == name) {
-                return iter->second;
-            }
-        }
-        throw makeError<zeno::KeyError>("");
-    }
-};
+    enum GeoAttrGroup {
+        ATTR_GEO,
+        ATTR_FACE,
+        ATTR_POINT,
+    };
 
-struct HEdge;
-struct Face;
-struct Point;
+    class GeometryObject : public IObjectClone<GeometryObject> {
+    public:
+        ZENO_API GeometryObject();
+        ZENO_API GeometryObject(const GeometryObject& rhs);
+        ZENO_API GeometryObject(PrimitiveObject* prim);
+        ZENO_API std::shared_ptr<PrimitiveObject> toPrimitive() const;
+        ZENO_API ~GeometryObject();
 
-struct HEdge {
-    std::string id;
-    HEdge* pair = 0, *next = 0;
-    int point = -1;
-    int face = -1;
-};
+        int get_point_count() const;
+        int get_face_count() const;
+        std::vector<vec3f>& points_pos() const;
 
-struct Face {
-    HEdge* h = 0;      //any h-edge of this face.
-    std::map<std::string, zfxvariant> attr;
-};
+        //attr:
+        bool create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl);
+        bool create_attr(GeoAttrGroup grp, const std::string& attr_name, const Any& defl);
+        bool delete_attr(GeoAttrGroup grp, const std::string& attr_name);
+        bool has_attr(GeoAttrGroup grp, std::string const& name);
+        std::vector<zfxvariant> get_attr_byzfx(GeoAttrGroup grp, std::string const& name);
+        Any& get_attr(GeoAttrGroup grp, std::string const& name);
+        void set_attr_byzfx(GeoAttrGroup grp, std::string const& name, const ZfxVariable& val, ZfxElemFilter& filter);
+        void set_attr(GeoAttrGroup grp, std::string const& name, const Any& val);
 
-struct Point {
-    vec3f pos = { 0, 0, 0 };
-    vec3f normal = { 0, 0, 0 };
-    std::map<std::string, zfxvariant> attr;
-    std::set<HEdge*> edges;    //all h-edge starting from this point.
-};
+        //API:
+        //ç»™å®š face_id å’Œ vert_idï¼Œè¿”å›é¡¶ç‚¹ç´¢å¼•ç¼–å· point_idxã€‚
+        int facepoint(int face_id, int vert_id) const;
 
-class GeometryObject : public IObjectClone<GeometryObject> {
-public:
-    ZENO_API GeometryObject();
-    ZENO_API GeometryObject(const GeometryObject& rhs);
-    ZENO_API GeometryObject(PrimitiveObject* prim);
-    ZENO_API std::shared_ptr<PrimitiveObject> toPrimitive() const;
-    ZENO_API ~GeometryObject();
+        //é€šè¿‡ face_idï¼Œè·å–æ­¤ face æ‰€æœ‰ points ç´¢å¼•ç¼–å·ã€‚
+        zfxintarr facepoints(int face_id);
 
-    int get_point_count() const;
-    int get_face_count() const;
-    std::vector<vec3f> get_points() const;
+        //è¿”å›åŒ…å«æŒ‡å®š point çš„ prim åˆ—è¡¨ã€‚
+        zfxintarr pointfaces(int point_id);
+        zfxintarr pointvertex(int point_id);
 
-    bool has_point_attr(std::string const& name) const;
-    std::vector<zfxvariant> get_point_attr(std::string const& name) const;
+        int addpoint(zfxvariant pos = zfxfloatarr({ 0,0,0 }));
+        void addprim();
+        int addvertex(int face_id, int point_id);
 
-    void set_points_pos(const ZfxVariable& val, ZfxElemFilter& filter);
-    void set_points_normal(const ZfxVariable& val, ZfxElemFilter& filter);
+        bool remove_point(int ptnum);
+        bool remove_faces(const std::set<int>& faces, bool includePoints);
 
-    //API:
-    //¸ø¶¨ face_id ºÍ vert_id£¬·µ»Ø¶¥µãË÷Òı±àºÅ point_idx¡£
-    int facepoint(int face_id, int vert_id) const;
+        int npoints() const;
+        int nfaces() const;
+        int nvertices() const;
+        int nvertices(int face_id) const;
 
-    //Í¨¹ı face_id£¬»ñÈ¡´Ë face ËùÓĞ points Ë÷Òı±àºÅ¡£
-    zfxintarr facepoints(int face_id);
+        //vertexå…ˆä¸è€ƒè™‘
+    private:
+        void initFromPrim(PrimitiveObject* prim);
+        std::map<std::string, ATTR_DATA_PTR>& get_container(GeoAttrGroup grp);
+        int get_attr_size(GeoAttrGroup grp);
 
-    //·µ»Ø°üº¬Ö¸¶¨ point µÄ prim ÁĞ±í¡£
-    zfxintarr pointfaces(int point_id);
-    zfxintarr pointvertex(int point_id);
-
-    bool createFaceAttr(const std::string& attr_name, const zfxvariant& defl);
-    bool setFaceAttr(const std::string& attr_name, const zfxvariant& val);
-    std::vector<zfxvariant> getFaceAttr(const std::string& attr_name) const;
-    bool deleteFaceAttr(const std::string& attr_name);
-
-    bool createPointAttr(const std::string& attr_name, const zfxvariant& defl);
-    bool setPointAttr(const std::string& attr_name, const zfxvariant& val);
-    std::vector<zfxvariant> getPointAttr(const std::string& attr_name) const;
-    bool deletePointAttr(const std::string& attr_name);
-
-    int addpoint(zfxvariant pos = zfxfloatarr({0,0,0}));
-    void addprim();
-    int addvertex(int face_id, int point_id);
-
-    bool remove_point(int ptnum);
-    bool remove_faces(const std::set<int>& faces, bool includePoints);
-
-    int npoints() const;
-    int nfaces() const;
-    int nvertices() const;
-    int nvertices(int face_id) const;
-
-    //vertexÏÈ²»¿¼ÂÇ
-
-private:
-    void initFromPrim(PrimitiveObject* prim);
-    HEdge* checkHEdge(int fromPoint, int toPoint);
-    std::tuple<Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
-    int getNextOutEdge(int fromPoint, int currentOutEdge);
-    int getPointTo(HEdge* hedge) const;
-
-    std::vector<std::shared_ptr<Face>> m_faces;
-
-    std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;
-
-    std::vector<std::shared_ptr<Point>> m_points;
-    bool m_bTriangle = true;
-};
+        std::shared_ptr<GeometryTopology> m_spTopology;
+        std::map<std::string, ATTR_DATA_PTR> m_point_attrs;
+        std::map<std::string, ATTR_DATA_PTR> m_face_attrs;
+        std::map<std::string, ATTR_DATA_PTR> m_geo_attrs;
+    };
 
 }
 
