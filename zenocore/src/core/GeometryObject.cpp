@@ -24,8 +24,9 @@ namespace zeno
             }, value);
     }
 
-    ZENO_API GeometryObject::GeometryObject() {
-
+    ZENO_API GeometryObject::GeometryObject()
+        : m_spTopology(std::make_shared<GeometryTopology>())
+    {
     }
 
     ZENO_API GeometryObject::GeometryObject(const GeometryObject& rhs)
@@ -36,7 +37,9 @@ namespace zeno
     ZENO_API GeometryObject::~GeometryObject() {
     }
 
-    ZENO_API GeometryObject::GeometryObject(PrimitiveObject* prim) {
+    ZENO_API GeometryObject::GeometryObject(PrimitiveObject* prim)
+        : m_spTopology(std::make_shared<GeometryTopology>())
+    {
         initFromPrim(prim);
     }
 
@@ -176,6 +179,8 @@ namespace zeno
 
             m_spTopology->m_faces[face] = std::move(pFace);
         }
+
+        create_attr(ATTR_POINT, "pos", pos);
     }
 
     int GeometryObject::get_point_count() const {
@@ -402,7 +407,6 @@ namespace zeno
 
         int n = get_attr_size(grp);
         ATTR_DATA_PTR spAttr = std::make_shared<AttributeData>(defl, n);
-        spAttr->set(defl);
 
         container.insert(std::make_pair(attr_name, spAttr));
         //需要同步到外侧的zfx manager

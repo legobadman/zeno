@@ -15,7 +15,7 @@ namespace zeno {
     class AttributeData {
     public:
         AttributeData() = delete;
-        AttributeData(const AttributeData& rhs) = delete;
+        AttributeData(const AttributeData& rhs);
         AttributeData(Any value, int size);
         ~AttributeData();
         Any& value() const;

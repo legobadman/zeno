@@ -30,6 +30,7 @@ namespace zeno
 
     struct GeometryTopology
     {
+        GeometryTopology() = default;
         GeometryTopology(const GeometryTopology& rhs);
 
         HEdge* checkHEdge(int fromPoint, int toPoint);

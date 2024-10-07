@@ -96,7 +96,7 @@ static PyModuleDef zenomodule = {
     -1,
     ZenoMethods
 };
-#endif
+
 
 PyMODINIT_FUNC
 PyInit_zeno(void)
@@ -128,3 +128,5 @@ PyInit_zeno(void)
 }
 
 }
+
+#endif

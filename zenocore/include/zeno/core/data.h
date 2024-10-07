@@ -110,8 +110,8 @@ namespace zeno {
         zeno::reflect::Any ctrlProps;
 
         ParamPrimitive() {}
-        ParamPrimitive(std::string name, zeno::reflect::Any defl = zeno::reflect::Any(), ParamControl control = NullControl, zeno::reflect::Any ctrlProps = zeno::reflect::Any())
-            : CommonParam(name)
+        ParamPrimitive(std::string name, zeno::reflect::Any defl = zeno::reflect::Any(), ParamControl control = NullControl, zeno::reflect::Any ctrlProps = zeno::reflect::Any(), std::string wildcardGrp = "", std::string constrain = "")
+            : CommonParam(name, Socket_Primitve, wildcardGrp, constrain)
             , defl(defl)
             , control(control)
             , ctrlProps(ctrlProps)
