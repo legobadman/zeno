@@ -30,8 +30,11 @@
 #include "zeno/utils/string.h"
 #include <filesystem>
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+
+#ifdef CRYPTOPP_LINK
 #include <cryptopp/md5.h>
 #include <cryptopp/hex.h>
+#endif
 
 //#include <GLFW/glfw3.h>
 
@@ -764,6 +767,7 @@ inline void calc_sky_cdf_map(cuTexture* tex, int nx, int ny, int nc, std::functi
 }
 
 static std::string calculateMD5(const std::vector<char>& input) {
+#ifdef CRYPTOPP_LINK
     CryptoPP::byte digest[CryptoPP::Weak::MD5::DIGESTSIZE];
     CryptoPP::Weak::MD5().CalculateDigest(digest, (const CryptoPP::byte*)input.data(), input.size());
     CryptoPP::HexEncoder encoder;
@@ -772,6 +776,9 @@ static std::string calculateMD5(const std::vector<char>& input) {
     encoder.Put(digest, sizeof(digest));
     encoder.MessageEnd();
     return output;
+#else
+    return "";
+#endif
 }
 
 namespace detail {

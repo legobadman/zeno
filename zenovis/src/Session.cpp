@@ -175,6 +175,7 @@ void Session::do_screenshot(std::string path, std::string type, bool bOptix) {
 #ifdef ZENO_ENABLE_OPTIX
         using namespace zeno::ChiefDesignerEXR;
 #endif
+        /*
         int ret = SaveEXR((float *)pixels.data(), nx, ny, 3, 1, path.c_str(), &err);
         if (ret != 0) {
             if (err) {
@@ -182,6 +183,7 @@ void Session::do_screenshot(std::string path, std::string type, bool bOptix) {
                 FreeEXRErrorMessage(err);
             }
         }
+        */
     }},
     {"hdr", [&] {
         stbi_flip_vertically_on_write(true);
