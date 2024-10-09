@@ -19,8 +19,11 @@ public:
     PrimAttrTableModel *dataModel = nullptr;
     void clear();
     void setPrim(std::string primid);
+    void onNodeSelected(const QModelIndex& idx);
+
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
+
 private:
     QTableView* prim_attr_view;
     QCheckBox* m_checkSortingEnabled;

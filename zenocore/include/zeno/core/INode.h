@@ -212,8 +212,8 @@ public:
 
     ZENO_API bool has_input(std::string const &id) const;
     ZENO_API zany get_input(std::string const &id) const;
-
     ZENO_API zany get_output_obj(std::string const& sock_name);
+    ZENO_API std::vector<zany> get_output_objs();
 
     template <class T>
     std::shared_ptr<T> get_input(std::string const &id) const {

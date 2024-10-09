@@ -462,11 +462,11 @@ void CameraControl::fakeWheelEvent(QWheelEvent *event) {
         }
     }
     updatePerspective();
-
-    if (zenoApp->getMainWindow()->lightPanel != nullptr) {
-        zenoApp->getMainWindow()->lightPanel->camApertureEdit->setText(QString::number(getAperture()));
-        zenoApp->getMainWindow()->lightPanel->camDisPlaneEdit->setText(QString::number(getDisPlane()));
-    }
+    //TODO: need update light?
+    //if (zenoApp->getMainWindow()->lightPanel != nullptr) {
+    //    zenoApp->getMainWindow()->lightPanel->camApertureEdit->setText(QString::number(getAperture()));
+    //    zenoApp->getMainWindow()->lightPanel->camDisPlaneEdit->setText(QString::number(getDisPlane()));
+    //}
 }
 
 void CameraControl::fakeMouseDoubleClickEvent(QMouseEvent *event)

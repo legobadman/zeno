@@ -5,6 +5,8 @@
 #ifndef ZENO_ZENOIMAGEPANEL_H
 #define ZENO_ZENOIMAGEPANEL_H
 
+//TODO: image can show on the property panel, no need to show it on a panel.
+#if 0
 #include <QtWidgets>
 #include "widgets/zcombobox.h"
 
@@ -102,6 +104,7 @@ public:
     void clear();
     void setPrim(std::string primid);
 };
+#endif
 
 
 #endif //ZENO_ZENOIMAGEPANEL_H

@@ -31,7 +31,6 @@
 #include "nodeeditor/gv/callbackdef.h"
 #include "zassert.h"
 #include "viewport/zenovis.h"
-#include "layout/zdockwidget.h"
 #include "calculation/calculationmgr.h"
 #include "model/GraphModel.h"
 #include "dialog/ZOptixCameraSetting.h"
@@ -1257,20 +1256,4 @@ void DockContent_Log::onLogLevelChanged(int idx)
     zeno::log_level_t level = static_cast<zeno::log_level_t>(idx);
     zeno::set_log_level(level);
     //TODO: update env var.
-}
-
-
-DockContent_Image::DockContent_Image(QWidget *parent)
-    : DockToolbarWidget(parent)
-    , m_ImagePanel(nullptr)
-{
-}
-
-QWidget *DockContent_Image::initWidget() {
-    m_ImagePanel = new ZenoImagePanel(this);
-    return m_ImagePanel;
-}
-
-ZenoImagePanel *DockContent_Image::getImagePanel() {
-    return m_ImagePanel;
 }

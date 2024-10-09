@@ -228,10 +228,6 @@ int Session::get_curr_frameid() {
     return impl->curr_frameid;
 }
 
-bool Session::load_objects() {
-    return impl->scene->loadFrameObjects(impl->curr_frameid);
-}
-
 void Session::set_render_engine(std::string const &name) {
     impl->scene->switchRenderEngine(name);
 }

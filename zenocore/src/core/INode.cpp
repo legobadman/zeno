@@ -2721,6 +2721,14 @@ ZENO_API zany INode::get_output_obj(std::string const& param) {
     return spParam.spObject;
 }
 
+ZENO_API std::vector<zany> INode::get_output_objs() {
+    std::vector<zany> objs;
+    for (const auto& [name, objparam] : m_outputObjs) {
+        objs.push_back(objparam.spObject);
+    }
+    return objs;
+}
+
 ZENO_API TempNodeCaller INode::temp_node(std::string const &id) {
     //TODO: deprecated
     std::shared_ptr<Graph> spGraph = graph.lock();

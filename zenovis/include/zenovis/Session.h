@@ -24,7 +24,6 @@ struct Session : zeno::disable_copy {
     ~Session();
 
     void new_frame();
-    bool load_objects();
     void set_safe_frames(bool bLock, int nx, int ny);
     float get_safe_frames() const;
     bool is_lock_window() const;

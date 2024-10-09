@@ -46,7 +46,6 @@ void Zenovis::paintGL()
         session->set_viewport_point_size_scale(viewportPointSizeScale);
     }
     int frameid = session->get_curr_frameid();
-    //doFrameUpdate();
     session->new_frame();
     emit frameDrawn(frameid);
 }
@@ -181,42 +180,6 @@ int Zenovis::setCurrentFrameId(int frameid)
             emit frameUpdated(frameid);
     }
     return frameid;
-}
-
-void Zenovis::doFrameUpdate()
-{
-    int frameid = getCurrentFrameId();
-
-    //todo: move out of the optix working thread.
-#if 0
-    ZenoMainWindow* pMainWin = zenoApp->getMainWindow();
-    if (!pMainWin)
-        return;
-
-    ZTimeline* timeline = pMainWin->timeline();
-    if (!timeline)
-        return;
-
-    int ui_frameid = timeline->value();
-    zenoApp->getMainWindow()->doFrameUpdate(ui_frameid);
-#endif
-
-    if (m_playing) {
-        zeno::log_trace("playing at frame {}", frameid);
-    }
-    //zenvis::auto_gc_frame_data(m_cache_frames);
-
-    bool inserted = session->load_objects();
-    if (inserted) {
-        emit objectsUpdated(frameid);
-    }
-    if (m_playing) {
-        if (m_loopPlaying && frameid == zeno::getSession().globalComm->frameRange().second)
-        {
-            frameid = zeno::getSession().globalComm->frameRange().first - 1;
-        }
-        setCurrentFrameId(frameid + 1);
-    }
 }
 
 void Zenovis::load_objects(const zeno::RenderObjsInfo& objs)

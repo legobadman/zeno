@@ -1,5 +1,4 @@
 #include "zenomainwindow.h"
-#include "layout/zdockwidget.h"
 #include "model/graphsmanager.h"
 #include <zeno/extra/EventCallbacks.h>
 #include <zeno/types/GenericObject.h>
@@ -31,7 +30,6 @@
 #include "dialog/zfeedbackdlg.h"
 #include "startup/zstartup.h"
 #include "settings/zsettings.h"
-#include "panel/zenolights.h"
 #include "nodeeditor/gv/zenosubgraphscene.h"
 #include "viewport/recordvideomgr.h"
 #include "viewport/displaywidget.h"
@@ -500,13 +498,6 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
         pDockElem->setWidget(pLog, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
-    case PANEL_IMAGE:
-    {
-        auto pImage = new DockContent_Image;
-        pImage->initUI();
-        pDockElem->setWidget(pImage, ads::CDockWidget::ForceNoScrollArea);
-        break;
-    }
     case PANEL_OPTIX_VIEW:
     {
         break;
@@ -615,13 +606,6 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
                 auto pLog = new DockContent_Log;
                 pLog->initUI();
                 pDockElem->setWidget(pLog, ads::CDockWidget::ForceNoScrollArea);
-                break;
-            }
-            case PANEL_IMAGE:
-            {
-                auto pImage = new DockContent_Image;
-                pImage->initUI();
-                pDockElem->setWidget(pImage, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
             case PANEL_OPTIX_VIEW:
@@ -791,11 +775,6 @@ void ZenoMainWindow::initAllDockWidgets()
     ZenoSpreadsheet* pObjectData = new ZenoSpreadsheet;
     pDock5->setWidget(pObjectData);
     m_pDockManager->addDockWidget(ads::TopDockWidgetArea, pDock5);
-
-    ads::CDockWidget* pDock6 = new ads::CDockWidget(tr("Image"));
-    DockContent_Image* pImage = new DockContent_Image;
-    pImage->initUI();
-    m_pDockManager->addDockWidget(ads::TopDockWidgetArea, pDock6);
 }
 
 void ZenoMainWindow::initDocks(PANEL_TYPE onlyView)
@@ -916,13 +895,6 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         pLog->initUI();
         pWid = pLog;
         title = tr("Log");
-        break;
-    }
-    case ACTION_IMAGE: {
-        auto pImage = new DockContent_Image;
-        pImage->initUI();
-        pWid = pImage;
-        title = tr("Image");
         break;
     }
     case ACTION_COMMAND_ARGS: {
@@ -1164,7 +1136,6 @@ void ZenoMainWindow::updateViewport(const QString& action)
     {
         if (action == "finishFrame")
         {
-            updateLightList();
             bool bPlayed = m_pTimeline->isPlayToggled();
             int endFrame = zeno::getSession().globalComm->maxPlayFrames() - 1;
             m_pTimeline->updateCachedFrame();
@@ -2167,13 +2138,13 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
     //dispatch to all property panel.
     for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
     {
-        if (dock->isVisible())
+        if (true || dock->isVisible())
         {
             QWidget* wid = dock->widget();
             if (DockContent_Parameter* prop = qobject_cast<DockContent_Parameter*>(wid))
             {
                 if (select && nodes.size() <= 1) {
-                        prop->onNodesSelected(subgraph, nodes, select);
+                    prop->onNodesSelected(subgraph, nodes, select);
                 }
             }
             else if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(wid))
@@ -2181,6 +2152,8 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                 if (select && nodes.size() == 1)
                 {
                     const QModelIndex& idx = nodes[0];
+                    panel->onNodeSelected(idx);
+
                     QString nodeId = idx.data(ROLE_NODE_NAME).toString();
 
                     ZenoMainWindow* pWin = zenoApp->getMainWindow();
@@ -2212,6 +2185,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
             else if (DockContent_View* view = qobject_cast<DockContent_View*>(wid)) {
                 view->getDisplayWid()->onNodeSelected(subgraph, nodes, select);
             }
+#if 0
             else if (ZenoImagePanel* image = qobject_cast<ZenoImagePanel*>(wid))
             {
                 if (select && nodes.size() == 1)
@@ -2224,6 +2198,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     image->clear();
                 }
             }
+#endif
         }
     }
 }
@@ -2231,6 +2206,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
 void ZenoMainWindow::onPrimitiveSelected(const std::unordered_set<std::string>& primids) {
     for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
     {
+#if 0
         if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(dock->widget()))
         {
             if (primids.size() == 1) {
@@ -2240,38 +2216,7 @@ void ZenoMainWindow::onPrimitiveSelected(const std::unordered_set<std::string>& 
                 panel->clear();
             }
         }
-    }
-}
-
-void ZenoMainWindow::updateLightList() {
-
-    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
-    {
-        if (ZenoLights* panel = qobject_cast<ZenoLights*>(dock->widget()))
-        {
-            panel->updateLights();
-        }
-    }
-}
-
-void ZenoMainWindow::doFrameUpdate(int frame) {
-    //TODO: deprecated.
-    std::cout << "====== Frame " << frame << "\n";
-
-    QVector<DisplayWidget*> views = zenoApp->getMainWindow()->viewports();
-    for (auto displayWid : views)
-    {
-        ZASSERT_EXIT(displayWid);
-        bool bMovingCamera = displayWid->isCameraMoving();
-        std::cout << "====== CameraMoving " << bMovingCamera << "\n";
-
-        // Sync Camera
-        if (bMovingCamera) {
-
-        }
-        // Sync Frame
-        else {
-        }
+#endif
     }
 }
 

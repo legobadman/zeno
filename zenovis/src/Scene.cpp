@@ -145,12 +145,14 @@ void zenovis::Scene::convertListObjs(std::shared_ptr<zeno::IObject>const& objToB
 }
 
 bool Scene::cameraFocusOnNode(std::string const &nodeid, zeno::vec3f &center, float &radius) {
+#if 0
     for (auto const &[key, ptr]: this->objectsMan->pairs()) {
         if (nodeid == key.substr(0, key.find_first_of(':'))) {
             return zeno::objectGetFocusCenterRadius(ptr, center, radius);
         }
     }
     zeno::log_warn("cannot focus: node with id {} not found, did you tagged VIEW on it?", nodeid);
+#endif
     return false;
 }
 
@@ -162,29 +164,15 @@ void Scene::load_objects(const zeno::RenderObjsInfo& objs) {
     }
 }
 
-bool Scene::loadFrameObjects(int frameid) {
-    auto &ud = zeno::getSession().userData();
-    ud.set2<int>("frameid", std::move(frameid));
-
-    const auto& cbLoadObjs = [this](std::map<std::string, std::shared_ptr<zeno::IObject>> const& objs) -> bool {
-        return this->objectsMan->load_objects(objs);
-    };
-    bool isFrameValid = false;
-    bool inserted = zeno::getSession().globalComm->load_objects(frameid, cbLoadObjs, isFrameValid);
-    if (!isFrameValid)
-        return false;
-
-    renderMan->getEngine()->update();
-    return inserted;
-}
-
 void Scene::set_select_mode(PICK_MODE _select_mode) {
 //    zeno::log_info("{} -> {}", magic_enum::enum_name(select_mode), magic_enum::enum_name(_select_mode));
     select_mode = _select_mode;
 }
+
 PICK_MODE Scene::get_select_mode() {
     return select_mode;
 }
+
 void Scene::draw(bool record) {
     if (renderMan->getDefaultEngineName() != "optx")
     {

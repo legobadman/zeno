@@ -336,6 +336,19 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             //if (item->bMute)
             return QVariant(options);
         }
+        case ROLE_OUTPUT_OBJS:
+        {
+            auto spNode = item->m_wpNode.lock();
+            ZASSERT_EXIT(spNode, QVariant());
+            std::vector<zeno::zany> objs(spNode->get_output_objs());
+            //如果有多个，只取第一个。
+            if (!objs.empty()) {
+                return QVariant::fromValue(objs[0]);
+            }
+            else {
+                return QVariant();
+            }
+        }
         case ROLE_NODE_ISVIEW:
         {
             return item->bView;
@@ -394,7 +407,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         }
         case ROLE_KEYFRAMES: 
         {
-           QVector<int> keys;
+            QVector<int> keys;
             for (const zeno::ParamPrimitive& info : item->params->getInputs()) {
                 if (!info.defl.has_value()) {
                     continue;

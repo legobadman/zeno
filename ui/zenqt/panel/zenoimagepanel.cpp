@@ -1,6 +1,7 @@
 //
 // Created by zh on 2023/3/23.
 //
+#if 0
 
 #include "zenoimagepanel.h"
 #include "PrimAttrTableModel.h"
@@ -277,3 +278,4 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
     });
 }
 
+#endif

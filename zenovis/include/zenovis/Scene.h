@@ -43,7 +43,6 @@ struct Scene : zeno::disable_copy {
     ~Scene();
 
     void draw(bool record);
-    bool loadFrameObjects(int frameid);
     void load_objects(const zeno::RenderObjsInfo& objs);
     void cleanUpScene();
     void cleanupView();

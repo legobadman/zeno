@@ -15,12 +15,12 @@ namespace zeno
         ReflectCustomUI m_uilayout = {
             //输入：
             _Group {
-                {"spGeo", ParamObject("Input Geometry", Socket_Clone)},
+                {"spGeo", ParamObject("Input", Socket_Clone)},
                 {"zfxCode", ParamPrimitive("Zfx Code", "", CodeEditor)},
             },
             //输出：
             _Group {
-                {"", ParamObject("Output Geometry")},
+                {"", ParamObject("Output")},
             }
         };
 

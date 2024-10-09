@@ -14,6 +14,38 @@
 #include "zassert.h"
 
 
+
+std::vector<zeno::vec3f> computeLightPrim(zeno::vec3f position, zeno::vec3f rotate, zeno::vec3f scale) {
+    auto start_point = zeno::vec3f(0.5, 0, 0.5);
+    float rm = 1.0f;
+    float cm = 1.0f;
+    std::vector<zeno::vec3f> verts;
+    float ax = rotate[0] * (3.14159265358979323846 / 180.0);
+    float ay = rotate[1] * (3.14159265358979323846 / 180.0);
+    float az = rotate[2] * (3.14159265358979323846 / 180.0);
+    glm::mat3 mx = glm::mat3(1, 0, 0, 0, cos(ax), -sin(ax), 0, sin(ax), cos(ax));
+    glm::mat3 my = glm::mat3(cos(ay), 0, sin(ay), 0, 1, 0, -sin(ay), 0, cos(ay));
+    glm::mat3 mz = glm::mat3(cos(az), -sin(az), 0, sin(az), cos(az), 0, 0, 0, 1);
+
+    for (int i = 0; i <= 1; i++) {
+        auto rp = start_point - zeno::vec3f(i * rm, 0, 0);
+        for (int j = 0; j <= 1; j++) {
+            auto p = rp - zeno::vec3f(0, 0, j * cm);
+            // S R T
+            p = p * scale;
+            auto gp = glm::vec3(p[0], p[1], p[2]);
+            gp = mz * my * mx * gp;
+            p = zeno::vec3f(gp.x, gp.y, gp.z);
+            auto zcp = zeno::vec3f(p[0], p[1], p[2]);
+            zcp = zcp + position;
+
+            verts.push_back(zcp);
+        }
+    }
+    return verts;
+}
+
+
 OptixWorker::OptixWorker(Zenovis *pzenoVis)
     : QObject(nullptr)
     , m_zenoVis(pzenoVis)
@@ -92,7 +124,7 @@ void OptixWorker::onModifyLightData(UI_VECTYPE posvec, UI_VECTYPE scalevec, UI_V
     zeno::vec3f scale = zeno::vec3f(scalevec[0], scalevec[1], scalevec[2]);
     zeno::vec3f rotate = zeno::vec3f(rotatevec[0], rotatevec[1], rotatevec[2]);
     zeno::vec3f color = zeno::vec3f(colorvec[0], colorvec[1], colorvec[2]);
-    auto verts = ZenoLights::computeLightPrim(pos, rotate, scale);
+    auto verts = computeLightPrim(pos, rotate, scale);
 
     auto scene = m_zenoVis->getSession()->get_scene();
     ZASSERT_EXIT(scene);
@@ -284,7 +316,7 @@ bool OptixWorker::recordFrame_impl(VideoRecInfo recInfo, int frame)
     }
 
     int actualFrame = m_zenoVis->setCurrentFrameId(frame);
-    m_zenoVis->doFrameUpdate();
+    //m_zenoVis->doFrameUpdate();
     if (recInfo.bAutoRemoveCache)
         zeno::getSession().globalComm->removeCache(frame);
 

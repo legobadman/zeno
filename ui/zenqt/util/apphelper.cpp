@@ -11,7 +11,6 @@
 #include "widgets/ztimeline.h"
 #include "util/curveutil.h"
 #include "layout/docktabcontent.h"
-#include "layout/zdockwidget.h"
 #include "util/uihelper.h"
 
 
@@ -120,9 +119,6 @@ void AppHelper::dumpTabsToZsg(QDockWidget* dockWidget, RAPIDJSON_WRITER& writer)
             }
             else if (qobject_cast<DockContent_Log*>(wid)) {
                 writer.String("Logger");
-            }
-            else if (qobject_cast<ZenoLights*>(wid)) {
-                writer.String("Light");
             }
         }
     }

@@ -33,6 +33,7 @@ registerObjectTypeHash(LightObject, Light)
 registerObjectTypeHash(MeshObject, Mesh)
 registerObjectTypeHash(ParticlesObject, Particles)
 registerObjectTypeHash(MaterialObject, Material)
+registerObjectTypeHash(GeometryObject, Geometry)
 
 #define gParamType_VDBGrid          234
 #define gParamType_FOR              235

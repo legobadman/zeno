@@ -3,8 +3,6 @@
 
 #include <unordered_set>
 #include <QtWidgets>
-#include "layout/zdockwidget.h"
-#include "panel/zenolights.h"
 #include "layout/winlayoutrw.h"
 #include <QTcpSocket>
 #include <QLocalSocket>
@@ -54,14 +52,12 @@ public:
     ZenoGraphsEditor* getAnyEditor() const;
     void dispatchCommand(QAction* pAction, bool bTriggered);
 
-    void doFrameUpdate(int frame);
     void sortRecentFile(QStringList &lst);
     bool isOnlyOptixWindow() const;
     bool isRecordByCommandLine() const;
     void statusbarShowMessage(const std::string& text, int timeout = 0) const;
 
     QLineEdit* selected = nullptr;
-    ZenoLights* lightPanel = nullptr;
 
     enum ActionType {
         //File
@@ -171,7 +167,6 @@ public slots:
     void onRunFinished();
     void onFeedBack();
     void clearErrorMark();
-    void updateLightList();
     void saveDockLayout();
     void loadSavedLayout();
     void onLangChanged(bool bChecked);
