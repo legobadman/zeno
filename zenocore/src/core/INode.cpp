@@ -654,7 +654,7 @@ void INode::registerObjToManager()
 
             const std::string& key = param.spObject->key();
             assert(!key.empty());
-            param.spObject->nodeId = m_name;
+            param.spObject->nodeId = m_uuidPath;
 
             auto& objsMan = getSession().objsMan;
             std::shared_ptr<INode> spNode = shared_from_this();
@@ -971,13 +971,17 @@ std::shared_ptr<DictObject> INode::processDict(ObjectParam* in_param, CalcContex
                 assert(outResult);
                 assert(out_param->type == gParamType_Dict);
 
+                //规则如普通节点，都是直接拷贝
+#if 0
                 if (in_param->socketType == Socket_Owning) {
                     spDict = std::dynamic_pointer_cast<DictObject>(outResult->move_clone());
                 }
                 else if (in_param->socketType == Socket_ReadOnly) {
                     spDict = std::dynamic_pointer_cast<DictObject>(outResult);
                 }
-                else if (in_param->socketType == Socket_Clone) {
+                else if (in_param->socketType == Socket_Clone)
+#endif
+                {
                     //里面的元素也要clone
                     spDict = std::make_shared<DictObject>();
                     std::shared_ptr<DictObject> outDict = std::dynamic_pointer_cast<DictObject>(outResult);
@@ -1008,13 +1012,16 @@ std::shared_ptr<DictObject> INode::processDict(ObjectParam* in_param, CalcContex
 
             auto outResult = outNode->get_output_obj(out_param->name);
             assert(outResult);
+#if 0
             if (in_param->socketType == Socket_Owning) {
                 spDict->lut[keyName] = outResult->move_clone();
             }
             else if (in_param->socketType == Socket_ReadOnly) {
                 spDict->lut[keyName] = outResult;
             }
-            else if (in_param->socketType == Socket_Clone) {
+            else if (in_param->socketType == Socket_Clone)
+#endif
+            {
                 //后续要考虑key的问题
                 spDict->lut[keyName] = outResult->clone();
             }
@@ -1046,13 +1053,16 @@ std::shared_ptr<ListObject> INode::processList(ObjectParam* in_param, CalcContex
                 assert(outResult);
                 assert(out_param->type == gParamType_List);
 
+#if 0
                 if (in_param->socketType == Socket_Owning) {
                     spList = std::dynamic_pointer_cast<ListObject>(outResult->move_clone());
                 }
                 else if (in_param->socketType == Socket_ReadOnly) {
                     spList = std::dynamic_pointer_cast<ListObject>(outResult);
                 }
-                else if (in_param->socketType == Socket_Clone) {
+                else if (in_param->socketType == Socket_Clone)
+#endif
+                {
                     //里面的元素也要clone
                     spList = std::make_shared<ListObject>();
                     std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
@@ -1082,13 +1092,16 @@ std::shared_ptr<ListObject> INode::processList(ObjectParam* in_param, CalcContex
             auto outResult = outNode->get_output_obj(out_param->name);
             assert(outResult);
 
+#if 0
             if (in_param->socketType == Socket_Owning) {
                 spList->push_back(outResult->move_clone());
             }
             else if (in_param->socketType == Socket_ReadOnly) {
                 spList->push_back(outResult);
             }
-            else if (in_param->socketType == Socket_Clone) {
+            else if (in_param->socketType == Socket_Clone)
+#endif
+            {
                 spList->push_back(outResult->clone());
             }
             //spList->dirtyIndice.insert(indx);
@@ -1221,6 +1234,10 @@ zeno::reflect::Any INode::processPrimitive(PrimitiveParam* in_param)
 
 bool INode::receiveOutputObj(ObjectParam* in_param, std::shared_ptr<INode> outNode, zany outputObj, ParamType outobj_type) {
 
+    //在此版本里，只有克隆，每个对象只有一个节点关联，虽然激进，但可以充分测试属性数据共享在面对
+    //内存暴涨时的冲击，能优化到什么程度
+    in_param->spObject = outputObj->clone();
+#if 0
     if (in_param->socketType == Socket_Clone) {
         in_param->spObject = outputObj->clone();
     }
@@ -1240,6 +1257,7 @@ bool INode::receiveOutputObj(ObjectParam* in_param, std::shared_ptr<INode> outNo
             }
         }
     }
+#endif
     return true;
 }
 
@@ -1970,11 +1988,13 @@ ZENO_API bool zeno::INode::update_param_socket_type(const std::string& param, So
     if (type != spParam.socketType)
     {
         spParam.socketType = type;
+#if 0
         if (type == Socket_Owning)
         {
             auto spGraph = graph.lock();
             spGraph->removeLinks(m_name, true, param);
         }
+#endif
         mark_dirty(true);
         CALLBACK_NOTIFY(update_param_socket_type, param, type)
         return true;
