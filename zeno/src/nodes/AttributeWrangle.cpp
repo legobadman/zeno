@@ -15,31 +15,23 @@ namespace zeno
         ReflectCustomUI m_uilayout = {
             //输入：
             _Group {
-                {"prim", ParamObject("Input Object", Socket_Clone)},
+                {"spGeo", ParamObject("Input Geometry", Socket_Clone)},
                 {"zfxCode", ParamPrimitive("Zfx Code", "", CodeEditor)},
             },
             //输出：
             _Group {
-                {"", ParamObject("Output Object")},
+                {"", ParamObject("Output Geometry")},
             }
         };
 
-        std::shared_ptr<PrimitiveObject> apply(std::shared_ptr<PrimitiveObject> prim, std::string zfxCode) {
-            std::shared_ptr<GeometryObject> out_prim = std::make_shared<GeometryObject>(prim.get());
-
+        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> spGeo, std::string zfxCode) {
             ZfxContext ctx;
             ctx.spNode = shared_from_this();
-            ctx.spObject = out_prim;
+            ctx.spObject = spGeo;
             ctx.code = zfxCode;
             ZfxExecute zfx(zfxCode, &ctx);
             zfx.execute();
-
-            if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(ctx.spObject)) {
-                return spGeo->toPrimitive();
-            }
-            else {
-                return prim;
-            }
+            return spGeo;
         }
     };
 }

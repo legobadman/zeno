@@ -521,7 +521,8 @@ namespace zeno {
                     ParamObject inputObj;
                     inputObj.name = param_name;
                     inputObj.type = type;
-                    inputObj.socketType = socketProp;
+                    //此版本的对象socket全是clone，不再区分owing,readonly和clone
+                    inputObj.socketType = Socket_Clone;
                     inputObj.constrain = constrain;
                     paramsMapping.inputObjs.insert({ field_name,inputObj });
                     paramsMapping.reg_inputobjs.insert(param_name);
@@ -703,10 +704,12 @@ namespace zeno {
                             ParamObject inObj;
                             inObj.name = param_name;
                             inObj.bInput = true;
-                            if (isConstPtr)
-                                inObj.socketType = Socket_ReadOnly;
-                            else
-                                inObj.socketType = Socket_Owning;   //默认还是owning
+                            //if (isConstPtr)
+                            //    inObj.socketType = Socket_ReadOnly;
+                            //else
+                            //    inObj.socketType = Socket_Owning;   //默认还是owning
+                            //在此版本里，无论是const还是非const，对象在节点传递都要clone，至于修改数据的权限和拷贝的时机，由节点算法决定
+                            inObj.socketType = Socket_Clone;
                             inObj.type = type;
 
                             paramsMapping.inputObjs.insert({ param_name, inObj });
@@ -755,7 +758,7 @@ namespace zeno {
 
     void ReflectNodeClass::initCustomUI() {
         //DEBUG:
-        if (this->classname == "Duplicate2") {
+        if (this->classname == "CreateAttribute") {
             int j;
             j = 0;
         }

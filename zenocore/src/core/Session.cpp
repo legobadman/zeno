@@ -128,8 +128,9 @@ static CustomUI descToCustomui(const Descriptor& desc) {
             ParamObject param;
             param.name = param_desc.name;
             param.type = type;
-            if (param_desc.socketType != zeno::NoSocket)
-                param.socketType = param_desc.socketType;
+            param.socketType = Socket_Clone;        //在此版本里，不再区分owing, readonly clone，全都是clone.
+            //if (param_desc.socketType != zeno::NoSocket)
+            //    param.socketType = param_desc.socketType;
             param.bInput = true;
             param.wildCardGroup = param_desc.wildCard;
 
@@ -409,21 +410,6 @@ ZENO_API void Session::set_Rerun()
 {
     mainGraph->markDirtyAll();
     objsMan->clear();
-}
-
-static bool isBasedINode(const size_t hash) {
-    static size_t inodecode = zeno::reflect::type_info<class zeno::INode>().hash_code();
-    if (hash == inodecode)
-        return true;
-
-    auto& registry = zeno::reflect::ReflectionRegistry::get();
-    auto typeHdl = registry->get(hash);
-    const ArrayList<TypeHandle>& baseclasses = typeHdl->get_base_classes();
-    for (auto& _typeHdl : baseclasses) {
-        if (isBasedINode(_typeHdl.type_hash()))
-            return true;
-    }
-    return false;
 }
 
 ZENO_API void Session::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {
