@@ -17,6 +17,8 @@ namespace zeno {
         std::map<std::string, ParamPrimitive> outputPrims;
         std::map<std::string, ParamObject> outputObjs;
 
+        std::vector<std::string> inPrimNames, inObjNames, outPrimNames, outObjNames;
+
         //函数返回值专门存放的地方，由于当时没有名字，所以上述其他结构不能保存返回值
         std::vector<std::variant<ParamObject, ParamPrimitive>> retInfo;
 
@@ -121,16 +123,18 @@ namespace zeno {
                 std::visit([&](auto& val) {
                     using T = std::decay_t<decltype(val)>;
                     if constexpr (std::is_same_v<T, ParamObject>) {
-                        std::string dispName = uniqueName("Output Object", paramsMapping.reg_outputobjs);
+                        std::string dispName = uniqueName("Output", paramsMapping.reg_outputobjs);
                         val.name = dispName;
                         paramsMapping.outputObjs.insert({ dispName, val });
                         paramsMapping.reg_outputobjs.insert(dispName);
+                        paramsMapping.outObjNames.push_back(dispName);
                     }
                     else if constexpr (std::is_same_v<T, ParamPrimitive>) {
                         std::string dispName = uniqueName("Output Data", paramsMapping.reg_outputprims);
                         val.name = dispName;
                         paramsMapping.outputPrims.insert({ dispName, val });
                         paramsMapping.reg_outputprims.insert(dispName);
+                        paramsMapping.outPrimNames.push_back(dispName);
                     }
                 }, arg);
             }
@@ -204,6 +208,7 @@ namespace zeno {
                                 auto handler = paramsMapping.inputPrims.extract(input_param.mapTo);
                                 if (std::holds_alternative<ParamPrimitive>(input_param.param)) {
                                     auto in_param = std::get<ParamPrimitive>(input_param.param);
+                                    std::string old_name = handler.key();
                                     handler.key() = in_param.name;
                                     handler.mapped().bInput = true;
                                     handler.mapped().name = in_param.name;
@@ -214,6 +219,10 @@ namespace zeno {
                                     //handler.defl = param.defl;
                                     handler.mapped().wildCardGroup = in_param.wildCardGroup;
                                     paramsMapping.inputPrims.insert(std::move(handler));
+
+                                    auto& inPrimNames = paramsMapping.inPrimNames;
+                                    //替换掉原来的名字
+                                    std::replace(inPrimNames.begin(), inPrimNames.end(), old_name, in_param.name);
                                 }
                             }
                             else{
@@ -228,6 +237,9 @@ namespace zeno {
                                         handler.mapped().constrain = in_param.constrain;
                                         handler.mapped().wildCardGroup = in_param.wildCardGroup;
                                         paramsMapping.inputObjs.insert(std::move(handler));
+
+                                        //对象个数不多，就不处理了
+                                        //paramsMapping.inObjNames;
                                     }
                                 }
                             }
@@ -393,8 +405,11 @@ namespace zeno {
         }
 
         if (!bReflectCustomUI) {
-            for (auto& [name, primParam] : paramsMapping.inputPrims) {
-                customui.inputPrims[0].groups[0].params.push_back(primParam);
+            for (auto& param_name : paramsMapping.inPrimNames)
+            {
+                auto iterPrim = paramsMapping.inputPrims.find(param_name);
+                assert(iterPrim != paramsMapping.inputPrims.end());
+                customui.inputPrims[0].groups[0].params.push_back(iterPrim->second);
             }
         }
 
@@ -524,7 +539,8 @@ namespace zeno {
                     //此版本的对象socket全是clone，不再区分owing,readonly和clone
                     inputObj.socketType = Socket_Clone;
                     inputObj.constrain = constrain;
-                    paramsMapping.inputObjs.insert({ field_name,inputObj });
+                    paramsMapping.inputObjs.insert({ param_name, inputObj });
+                    paramsMapping.inObjNames.push_back(param_name);
                     paramsMapping.reg_inputobjs.insert(param_name);
                 }
                 else if (role == Role_OutputObject)
@@ -539,7 +555,8 @@ namespace zeno {
                     outputObj.type = type;
                     outputObj.socketType = Socket_Output;
 
-                    paramsMapping.outputObjs.insert({ field_name,outputObj });
+                    paramsMapping.outputObjs.insert({ param_name, outputObj });
+                    paramsMapping.outObjNames.push_back(param_name);
                     paramsMapping.reg_outputobjs.insert(param_name);
                 }
                 else if (role == Role_InputPrimitive)
@@ -570,7 +587,8 @@ namespace zeno {
                     prim.wildCardGroup;
 
                     //缓存在inputrims，后面再移动到正确层级
-                    paramsMapping.inputPrims.insert({ field_name, prim });
+                    paramsMapping.inputPrims.insert({ param_name, prim });
+                    paramsMapping.inPrimNames.push_back(param_name);
                 }
                 else if (role == Role_OutputPrimitive)
                 {
@@ -589,7 +607,8 @@ namespace zeno {
                     prim.tooltip;
                     prim.wildCardGroup;
 
-                    paramsMapping.outputPrims.insert({ field_name, prim });
+                    paramsMapping.outputPrims.insert({ param_name, prim });
+                    paramsMapping.outPrimNames.push_back(param_name);
                     paramsMapping.reg_outputprims.insert(param_name);
                 }
             }
@@ -713,6 +732,7 @@ namespace zeno {
                             inObj.type = type;
 
                             paramsMapping.inputObjs.insert({ param_name, inObj });
+                            paramsMapping.inObjNames.push_back(param_name);
                             paramsMapping.reg_inputobjs.insert(param_name);
                         }
                     }
@@ -740,6 +760,7 @@ namespace zeno {
 
                             //缓存在inputrims，后面再移动到正确层级
                             paramsMapping.inputPrims.insert({ param_name, inPrim });
+                            paramsMapping.inPrimNames.push_back(param_name);
                             paramsMapping.reg_inputprims.insert(param_name);
                         }
                     }
@@ -758,7 +779,7 @@ namespace zeno {
 
     void ReflectNodeClass::initCustomUI() {
         //DEBUG:
-        if (this->classname == "CreateAttribute") {
+        if (this->classname == "Cube") {
             int j;
             j = 0;
         }
