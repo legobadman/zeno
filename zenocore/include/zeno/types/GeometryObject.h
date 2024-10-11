@@ -27,6 +27,7 @@ namespace zeno
     class GeometryObject : public IObjectClone<GeometryObject> {
     public:
         ZENO_API GeometryObject();
+        ZENO_API GeometryObject(bool bTriangle, int nPoints, int nFaces);
         ZENO_API GeometryObject(const GeometryObject& rhs);
         ZENO_API GeometryObject(PrimitiveObject* prim);
         ZENO_API std::shared_ptr<PrimitiveObject> toPrimitive() const;
@@ -57,9 +58,10 @@ namespace zeno
         zfxintarr pointfaces(int point_id);
         zfxintarr pointvertex(int point_id);
 
+        void initpoint(size_t point_id);
         int addpoint(zfxvariant pos = zfxfloatarr({ 0,0,0 }));
-        void addprim();
-        int addvertex(int face_id, int point_id);
+        void addface(const std::vector<size_t>& points);
+        int addvertex(size_t face_id, size_t point_id);
 
         bool remove_point(int ptnum);
         bool remove_faces(const std::set<int>& faces, bool includePoints);

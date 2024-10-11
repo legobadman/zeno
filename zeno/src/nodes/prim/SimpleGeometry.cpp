@@ -479,7 +479,7 @@ ZENDEFNODE(CreateCube, {
     {{gParamType_Primitive, "prim"}},
     {},
     {"create"},
-    {"Cube"},
+    {""},
     {":/icons/node/box.svg"},
     {"创建一个立方体"}
 });

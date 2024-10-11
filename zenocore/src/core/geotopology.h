@@ -16,8 +16,8 @@ namespace zeno
     struct HEdge {
         std::string id;
         HEdge* pair = 0, * next = 0;
-        int point = -1;
-        int face = -1;
+        size_t point = -1;
+        size_t face = -1;
     };
 
     struct Face {
@@ -32,11 +32,14 @@ namespace zeno
     {
         GeometryTopology() = default;
         GeometryTopology(const GeometryTopology& rhs);
+        GeometryTopology(bool bTriangle, int nPoints, int nFaces);
 
-        HEdge* checkHEdge(int fromPoint, int toPoint);
+        HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
         std::tuple<Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
-        int getNextOutEdge(int fromPoint, int currentOutEdge);
-        int getPointTo(HEdge* hedge) const;
+        size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
+        size_t getPointTo(HEdge* hedge) const;
+        void addface(const std::vector<size_t>& points);
+        void initpoint(size_t idxPoint);
 
         std::vector<std::shared_ptr<Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;

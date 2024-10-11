@@ -29,9 +29,17 @@ namespace zeno
     {
     }
 
+    ZENO_API GeometryObject::GeometryObject(bool bTriangle, int nPoints, int nFaces)
+        : m_spTopology(std::make_shared<GeometryTopology>(bTriangle, nPoints, nFaces))
+    {
+    }
+
     ZENO_API GeometryObject::GeometryObject(const GeometryObject& rhs)
         : m_spTopology(rhs.m_spTopology)
     {
+        m_point_attrs = rhs.m_point_attrs;
+        m_face_attrs = rhs.m_face_attrs;
+        m_geo_attrs = rhs.m_geo_attrs;
     }
 
     ZENO_API GeometryObject::~GeometryObject() {
@@ -486,6 +494,10 @@ namespace zeno
         spAttr->set(val);
     }
 
+    void GeometryObject::initpoint(size_t point_id) {
+        m_spTopology->initpoint(point_id);
+    }
+
     int GeometryObject::addpoint(zfxvariant var) {
         vec3f pos = std::visit([](auto&& val)->vec3f {
             using T = std::decay_t<decltype(val)>;
@@ -506,7 +518,7 @@ namespace zeno
         return m_spTopology->m_points.size() - 1;
     }
 
-    int GeometryObject::addvertex(int face_id, int point_id) {
+    int GeometryObject::addvertex(size_t face_id, size_t point_id) {
         if (face_id < 0 || face_id >= m_spTopology->m_faces.size() ||
             point_id < 0 || point_id >= m_spTopology->m_points.size()) {
             return -1;
@@ -547,8 +559,8 @@ namespace zeno
         return ncount;
     }
 
-    void GeometryObject::addprim() {
-
+    void GeometryObject::addface(const std::vector<size_t>& points) {
+        m_spTopology->addface(points);
     }
 
     bool GeometryObject::remove_faces(const std::set<int>& faces, bool includePoints) {
