@@ -617,6 +617,11 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
     }
 
+    explicit ZhxxGraphicPrimitive(Scene* scene_, zeno::GeometryObject* prim)
+        : scene(scene_) {
+        //TODO: 先让PrimitiveObject中转一下。
+    }
+
     virtual void draw() override {
         bool selected = scene->selected.count(nameid) > 0;
         if (scene->drawOptions->uv_mode && !selected) {
@@ -827,6 +832,11 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
 
 void MakeGraphicVisitor::visit(zeno::PrimitiveObject *obj) {
      this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj);
+}
+
+void MakeGraphicVisitor::visit(zeno::GeometryObject *obj) {
+    //考虑到primitive又要创建各种nrm uv，可以在这里让PrimitiveObject中转一下
+    this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj->toPrimitive().get());
 }
 
 } // namespace zenovis
