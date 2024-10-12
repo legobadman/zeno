@@ -75,14 +75,11 @@ private:
     QSet<int> m_pressedKeys;
     std::optional<glm::vec3> m_hit_posWS;
 
-    std::shared_ptr<zeno::Picker> m_picker;
-    std::shared_ptr<zeno::FakeTransformer> m_transformer;
+    std::weak_ptr<zeno::Picker> m_picker;
+    std::weak_ptr<zeno::FakeTransformer> m_transformer;
     Zenovis* m_zenovis;
 
     bool middle_button_pressed = false;
-    bool shift_pressed = false;
-    bool ctrl_pressed = false;
-    bool alt_pressed = false;
 };
 
 

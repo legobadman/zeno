@@ -3,7 +3,6 @@
 #include "zenovis.h"
 //#include <zenovis/Camera.h>
 #include <zenovis/ObjectsManager.h>
-#include "widgets/zlineedit.h"
 #include "zenomainwindow.h"
 #include "nodeeditor/gv/zenographseditor.h"
 #include <zeno/types/UserData.h>
@@ -11,10 +10,6 @@
 #include "glm/gtx/quaternion.hpp"
 #include "zeno/core/Session.h"
 #include <cmath>
-#include "viewport/transform.h"
-#include "viewport/picker.h"
-#include "util/log.h"
-#include "model/GraphModel.h"
 
 
 using std::string;
@@ -113,10 +108,11 @@ void CameraControl::fakeMousePressEvent(QMouseEvent *event)
             m_hit_posWS = scene->renderMan->getEngine()->getClickedPos(event->x(), event->y());
             if (m_hit_posWS.has_value()) {
                 scene->camera->setPivot(m_hit_posWS.value());
-    }
+            }
         }
     }
-
+    auto m_picker = this->m_picker.lock();
+    auto m_transformer = this->m_transformer.lock();
     int button = Qt::NoButton;
     ZenoSettingsManager& settings = ZenoSettingsManager::GetInstance();
     settings.getViewShortCut(ShortCut_MovingView, button);
@@ -170,6 +166,7 @@ void CameraControl::lookTo(zenovis::CameraLookToDir dir) {
 }
 
 void CameraControl::clearTransformer() {
+    auto m_transformer = this->m_transformer.lock();
     if (!m_transformer)
         return;
     m_transformer->clear();
@@ -177,6 +174,7 @@ void CameraControl::clearTransformer() {
 
 void CameraControl::changeTransformOperation(const QString &node)
 {
+    auto m_transformer = this->m_transformer.lock();
     if (!m_transformer)
         return;
 
@@ -199,6 +197,7 @@ void CameraControl::changeTransformOperation(const QString &node)
 
 void CameraControl::changeTransformOperation(int mode)
 {
+    auto m_transformer = this->m_transformer.lock();
     if (!m_transformer)
         return;
 
@@ -213,6 +212,7 @@ void CameraControl::changeTransformOperation(int mode)
 
 void CameraControl::changeTransformCoordSys()
 {
+    auto m_transformer = this->m_transformer.lock();
     if (!m_transformer)
         return;
     m_transformer->changeCoordSys();
@@ -221,6 +221,7 @@ void CameraControl::changeTransformCoordSys()
 
 void CameraControl::resizeTransformHandler(int dir)
 {
+    auto m_transformer = this->m_transformer.lock();
     if (!m_transformer)
         return;
     m_transformer->resizeHandler(dir);
@@ -229,6 +230,10 @@ void CameraControl::resizeTransformHandler(int dir)
 
 void CameraControl::fakeMouseMoveEvent(QMouseEvent *event)
 {
+    auto m_transformer = this->m_transformer.lock();
+    bool ctrl_pressed = event->modifiers() & Qt::ControlModifier;
+    bool alt_pressed = event->modifiers() & Qt::AltModifier;
+
     auto session = m_zenovis->getSession();
     auto scene = session->get_scene();
     float xpos = event->x(), ypos = event->y();
@@ -292,7 +297,7 @@ void CameraControl::fakeMouseMoveEvent(QMouseEvent *event)
                     auto diff = new_pos.value() - getPos();
                     setPivot(getPivot() + diff);
                     setPos(new_pos.value());
-            }
+                }
             }
             else {
                 auto left = getRightDir() * -1.0f;
@@ -420,7 +425,7 @@ void CameraControl::fakeWheelEvent(QWheelEvent *event) {
             auto pMainWindow = zenoApp->getMainWindow();
             if (pMainWindow) {
                 pMainWindow->statusbarShowMessage(zeno::format("First Person Navigation: movement speed level: {}", FPN_move_speed), 10000);
-    }
+            }
         }
         else {
             auto pos = getPos();
@@ -472,6 +477,7 @@ void CameraControl::fakeWheelEvent(QWheelEvent *event) {
 void CameraControl::fakeMouseDoubleClickEvent(QMouseEvent *event)
 {
     auto pos = event->pos();
+    auto m_picker = this->m_picker.lock();
     if (!m_picker)
         return;
     auto scene = m_zenovis->getSession()->get_scene();
@@ -592,7 +598,8 @@ void CameraControl::fakeMouseReleaseEvent(QMouseEvent *event) {
         middle_button_pressed = false;
     }
     if (event->button() == Qt::LeftButton) {
-
+        auto m_transformer = this->m_transformer.lock();
+        auto m_picker = this->m_picker.lock();
         //if (Zenovis::GetInstance().m_bAddPoint == true) {
         //float x = (float)event->x() / m_res.x();
         //float y = (float)event->y() / m_res.y();
@@ -633,6 +640,7 @@ void CameraControl::fakeMouseReleaseEvent(QMouseEvent *event) {
             auto cam_pos = realPos();
 
             scene->select_box = std::nullopt;
+            bool ctrl_pressed = event->modifiers() & Qt::ControlModifier;
             bool shift_pressed = event->modifiers() & Qt::ShiftModifier;
             if (!shift_pressed) {
                 scene->selected.clear();
@@ -753,17 +761,8 @@ void CameraControl::fakeMouseReleaseEvent(QMouseEvent *event) {
 }
 
 bool CameraControl::fakeKeyPressEvent(int uKey) {
-    if (uKey & Qt::SHIFT) {
-        shift_pressed = true;
-    }
-    if (uKey & Qt::CTRL) {
-        ctrl_pressed = true;
-    }
-    if (uKey & Qt::ALT) {
-        alt_pressed = true;
-    }
     // viewport focus prim
-    if ((uKey & 0xff) == Qt::Key_F && alt_pressed) {
+    if ((uKey & 0xff) == Qt::Key_F && uKey & Qt::AltModifier) {
         auto *scene = m_zenovis->getSession()->get_scene();
         if (scene->selected.size() == 1) {
             std::string nodeId = *scene->selected.begin();
@@ -820,15 +819,6 @@ bool CameraControl::fakeKeyPressEvent(int uKey) {
 }
 
 bool CameraControl::fakeKeyReleaseEvent(int uKey) {
-    if (uKey == Qt::Key_Shift) {
-        shift_pressed = false;
-    }
-    if (uKey == Qt::Key_Control) {
-        ctrl_pressed = false;
-    }
-    if (uKey == Qt::Key_Alt) {
-        alt_pressed = false;
-    }
     return false;
 }
 //void CameraControl::createPointNode(QPointF pnt) {
