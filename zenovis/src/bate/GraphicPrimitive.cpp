@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/InstancingObject.h>
 #include <zeno/types/PrimitiveTools.h>
 #include <zeno/types/UserData.h>
@@ -351,15 +352,13 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
     ZhxxDrawObject lineObj;
     ZhxxDrawObject triObj;
     std::vector<std::unique_ptr<Texture>> textures;
-    std::shared_ptr<zeno::PrimitiveObject> primUnique;
-    zeno::PrimitiveObject *prim;
 
     ZhxxDrawObject polyEdgeObj = {};
     ZhxxDrawObject polyUvObj = {};
 
-    explicit ZhxxGraphicPrimitive(Scene *scene_, zeno::PrimitiveObject *primArg)
-        : scene(scene_), primUnique(std::make_shared<zeno::PrimitiveObject>(*primArg)) {
-        prim = primUnique.get();
+    explicit ZhxxGraphicPrimitive(Scene *scene_, zeno::PrimitiveObject *prim)
+        : scene(scene_)
+    {
         invisible = prim->userData().get2<bool>("invisible", 0);
         zeno::log_trace("rendering primitive size {}", prim->size());
 
@@ -466,7 +465,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
             // todo: zhxx, should comp normal after subd or before?
             zeno::log_trace("computing subdiv {}", subdlevs);
             (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
-                .set("prim", primUnique)
+                .set("prim", std::make_shared<zeno::PrimitiveObject>(*prim))
                 .set2<int>("levels", subdlevs)
                 .set2<std::string>("edgeCreaseAttr", "")
                 .set2<bool>("triangulate", false)
