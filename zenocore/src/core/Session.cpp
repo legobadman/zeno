@@ -429,13 +429,15 @@ ZENO_API bool Session::getObjUIInfo(size_t hashcode, std::string_view& color, st
 }
 
 ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
-    resetMainGraph();
-    mainGraph->init(ioresult.mainGraph);
-    //referManager->init(mainGraph);
 
     bool bDisableRun = m_bDisableRunning;
     m_bDisableRunning = true;
     scope_exit sp([&]() {m_bDisableRunning = bDisableRun; });
+
+    resetMainGraph();
+    mainGraph->init(ioresult.mainGraph);
+    //referManager->init(mainGraph);
+
     switchToFrame(ioresult.timeline.currFrame);
     //init $F globalVariable
     //zeno::getSession().globalVariableManager->overrideVariable(zeno::GVariable("$F", zeno::reflect::make_any<float>(ioresult.timeline.currFrame)));
