@@ -4,6 +4,11 @@
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+
 namespace zeno {
 
     using namespace zeno::reflect;
@@ -48,6 +53,7 @@ namespace zeno {
             float x, y, z = 0;
             float z_prev = zback;
 
+            //TODO: nFaces需要考虑三角面的情况
             int nPoints = 2 * (x_division * y_division) + (z_division - 2) * (2 * y_division + 2 * x_division - 4);
             int nFaces = 2 * (x_division - 1) * (y_division - 1) + 2 * (x_division - 1) * (z_division - 1) + 2 * (y_division - 1) * (z_division - 1);
 
@@ -57,39 +63,19 @@ namespace zeno {
 
             for (int z_div = 0; z_div < z_division; z_div++)
             {
-                if (z_div == 0) {
+                if (z_div == 0 || z_div == z_division - 1) {
                     for (int y_div = 0; y_div < y_division; y_div++) {
                         for (int x_div = 0; x_div < x_division; x_div++) {
 
+                            bool bFirstFace = z_div == 0;
                             zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
 
-                            size_t idx = x_div % x_division + y_div * x_division;
-                            points[idx] = pt;
-                            geo->initpoint(idx);
-
-                            if (x_div > 0 && y_div > 0) {
-                                //current traversal point is rightup.
-                                size_t leftdown = (x_div - 1) % x_division + (y_div - 1) * x_division;
-                                size_t rightdown = leftdown + 1;
-                                size_t leftup = (x_div - 1) % x_division + y_div * x_division;
-                                size_t rightup = idx;
-
-                                if (bQuad) {
-                                    geo->addface({leftdown, rightdown, rightup, leftup});
-                                }
-                                else {
-                                    geo->addface({ leftdown, rightdown, leftup });
-                                    geo->addface({ rightdown, rightup, leftup});
-                                }
+                            int nPrevPoints = 0;
+                            if (!bFirstFace) {
+                                //枚举以前所有z_div平面时已处理的顶点数，下同
+                                nPrevPoints = x_division * y_division + (z_div - 1) * (2 * y_division + 2 * x_division - 4);
                             }
-                        }
-                    }
-                }
-                else if (z_div == z_division - 1) {
-                    for (int y_div = 0; y_div < y_division; y_div++) {
-                        for (int x_div = 0; x_div < x_division; x_div++) {
-                            zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
-                            int nPrevPoints = x_division * y_division + (z_div - 1) * (2 * y_division + 2 * x_division - 4);
+
                             size_t idx = nPrevPoints + x_div % x_division + y_div * x_division;
                             points[idx] = pt;
                             geo->initpoint(idx);
@@ -101,12 +87,23 @@ namespace zeno {
                                 size_t leftup = nPrevPoints + (x_div - 1) % x_division + y_div * x_division;
                                 size_t rightup = idx;
 
-                                if (bQuad) {
-                                    geo->addface({ leftdown, leftup, rightup, rightdown });
+                                if (bFirstFace) {
+                                    if (bQuad) {
+                                        geo->addface({ leftdown, rightdown, rightup, leftup });
+                                    }
+                                    else {
+                                        geo->addface({ leftdown, rightdown, leftup });
+                                        geo->addface({ rightdown, rightup, leftup });
+                                    }
                                 }
                                 else {
-                                    geo->addface({ leftdown, leftup, rightup });
-                                    geo->addface({ rightup, rightdown, leftdown });
+                                    if (bQuad) {
+                                        geo->addface({ leftdown, leftup, rightup, rightdown });
+                                    }
+                                    else {
+                                        geo->addface({ leftdown, leftup, rightup });
+                                        geo->addface({ rightup, rightdown, leftdown });
+                                    }
                                 }
                             }
                         }
@@ -319,6 +316,12 @@ namespace zeno {
     };
 
     struct ZDEFNODE() Grid : INode {
+        
+        enum PlaneDirection {
+            Dir_XY,
+            Dir_YZ,
+            Dir_ZX
+        };
 
         ReflectCustomUI m_uilayout = {
             _Group {
@@ -334,12 +337,80 @@ namespace zeno {
             zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
             zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
             zeno::vec2f Size = zeno::vec2f({1,1}),
-            int Rows = 1,
-            int Columns = 1,
+            int Rows = 2,
+            int Columns = 2,
             std::string face_type = "Quadrilaterals",
             std::string Direction = "ZX"
         ) {
-            auto geo = std::make_shared<zeno::GeometryObject>();
+            if (Rows < 2 || Columns < 2) {
+                throw makeError<UnimplError>("the division should be greater than 2");
+            }
+
+            float size1 = Size[0], size2 = Size[1];
+            float step1 = size1 / (Rows - 1), step2 = size2 / (Columns - 1);
+            float bottom1 = Center[0] - size1 / 2, up1 = bottom1 + size1;
+            float bottom2 = Center[1] - size2 / 2, up2 = bottom2 + size2;
+            bool bQuad = face_type == "Quadrilaterals";
+
+            int nPoints = Rows * Columns;
+            int nFaces = (Rows - 1) * (Columns - 1);
+            if (!bQuad) {
+                nFaces *= 2;
+            }
+
+            PlaneDirection dir;
+            if (Direction == "ZX") {
+                dir = Dir_ZX;
+            }
+            else if (Direction == "YZ") {
+                dir = Dir_YZ;
+            }
+            else if (Direction == "XY") {
+                dir = Dir_XY;
+            }
+            else {
+                throw makeError<UnimplError>("Unknown Direction");
+            }
+
+            auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
+            std::vector<vec3f> points;
+            points.resize(nPoints);
+
+            for (size_t i = 0; i < Rows; i++) {
+                for (size_t j = 0; j < Columns; j++) {
+                    //zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
+                    vec3f pt;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(bottom2 + step2 * j, 0, bottom1 + step1 * i);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, bottom1 + step1 * i, bottom2 + step2 * j);
+                    }
+                    else {
+                        pt = vec3f(bottom1 + step1 * i, bottom2 + step2 * j, 0);
+                    }
+
+                    size_t idx = i * Columns + j;
+                    points[idx] = pt;
+                    geo->initpoint(idx);
+
+                    if (j > 0 && i > 0) {
+                        size_t ij = idx;
+                        size_t ij_1 = idx - 1;
+                        size_t i_1j = (i - 1) * Columns + j;
+                        size_t i_1j_1 = i_1j - 1;
+
+                        if (bQuad) {
+                            geo->addface({ ij, i_1j, i_1j_1, ij_1 });
+                        }
+                        else {
+                            geo->addface({ ij, i_1j, i_1j_1 });
+                            geo->addface({ ij, i_1j_1, ij_1 });
+                        }
+                    }
+                }
+            }
+            geo->create_attr(ATTR_POINT, "pos", points);
             return geo;
         }
     };
@@ -369,30 +440,233 @@ namespace zeno {
             float Height = 1.0f,
             int Rows = 2,
             int Columns = 12,
-            std::string Direction = "X Axis",
+            std::string Direction = "Y Axis",
             std::string face_type = "Quadrilaterals",
-            bool end_caps = true
+            bool end_caps = false
             )
         {
-            auto geo = std::make_shared<zeno::GeometryObject>();
+            bool bQuad = face_type == "Quadrilaterals";
+            int nPoints = Rows * Columns;
+            int nFaces = (Rows - 1) * (Columns - 1);    //暂不考虑end_caps
+            if (!bQuad) {
+                nFaces *= 2;
+            }
+
+            auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
+            std::vector<vec3f> points;
+            points.resize(nPoints);
+
+            for (int row = 0; row < Rows; row++)
+            {
+                float up_y = Height / 2.0f, down_y = -Height / 2.0f;
+                for (int col = 0; col < Columns; col++)
+                {
+                    float rad = 2.0f * M_PI * col / Columns;
+                    float up_x = up_radius * cos(rad), up_z = up_radius * sin(rad);
+                    float down_x = down_radius * cos(rad), down_z = down_radius * sin(rad);
+                    vec3f up_pos(up_x, up_y, up_z);
+                    vec3f down_pos(down_x, down_y, down_z);
+
+                    size_t idx = row * Columns + col;
+                    vec3f pt;
+                    if (Direction == "Y Axis") {
+                        pt = (float)row / (Rows - 1) * (down_pos - up_pos) + up_pos;
+                    }
+                    else {
+                        throw;
+                    }
+
+                    points[idx] = pt;
+                    geo->initpoint(idx);
+                    if (row > 0 && col > 0) {
+                        size_t right_bottom = idx;
+                        size_t left_bottom = right_bottom - 1;
+                        size_t right_top = right_bottom - Columns;
+                        size_t left_top = right_top - 1;
+
+                        if (bQuad) {
+                            geo->addface({ left_top, left_bottom, right_bottom, right_top });
+                        }
+                        else {
+                            geo->addface({ left_top, left_bottom, right_bottom });
+                            geo->addface({ left_top, right_bottom, right_top });
+                        }
+
+                        if (col == Columns - 1) {
+                            //连接这一圈最后一个点和起始点
+                            right_bottom = idx - Columns + 1;
+                            left_bottom = idx;
+                            left_top = left_bottom - Columns;
+                            right_top = right_bottom - Columns;
+
+                            if (bQuad) {
+                                geo->addface({ left_top, left_bottom, right_bottom, right_top });
+                            }
+                            else {
+                                geo->addface({ left_top, left_bottom, right_bottom });
+                                geo->addface({ left_top, right_bottom, right_top });
+                            }
+                        }
+                    }
+                }
+            }
+            geo->create_attr(ATTR_POINT, "pos", points);
             return geo;
         }
     };
 
     struct ZDEFNODE() Sphere : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"uniform_scale", ParamPrimitive("Uniform Scale")},
+                {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
+                {"Direction", ParamPrimitive("Direction", "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"})},
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
         std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Position,
-            zeno::vec3f Scale,
+            zeno::vec3f Center,
             zeno::vec3f Rotate,
-            bool HasNormal = false,
-            bool HasVertUV = false,
-            bool IsFlipFace = false,
-            int rows = 1,
-            int columns = 1,
-            bool quads = true,
-            bool SphereRT = false)
+            zeno::vec3f Radius = zeno::vec3f(1.f,1.f,1.f),
+            float uniform_scale = 1.f,
+            std::string Direction = "Y Axis",
+            int Rows = 13,
+            int Columns = 24,
+            std::string face_type = "Quadrilaterals")
         {
-            auto geo = std::make_shared<zeno::GeometryObject>();
+            bool bQuad = face_type == "Quadrilaterals";
+
+            if (Rows < 3) {
+                throw;
+            }
+
+            int nPoints = 2 + (Rows - 2) * Columns;
+            int nFaces = 0;
+            if (bQuad) {
+                nFaces = (Rows - 1) * Columns;
+            }
+            else {
+                nFaces = Columns * 2 + (Rows - 3) * Columns * 2;
+            }
+
+            float Rx = Radius[0], Ry = Radius[1], Rz = Radius[2];
+            if (Rx <= 0 || Ry <= 0 || Rz <= 0) {
+                throw;
+            }
+
+            std::vector<vec3f> points;
+            points.resize(nPoints);
+
+            auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
+
+            //先加顶部和底部两个顶点
+            vec3f topPos(0, Ry, 0);
+            int idx = 0;
+            points[idx] = topPos;
+            geo->initpoint(idx);
+
+            vec3f bottomPos(0, -Ry, 0);
+            idx = 1;    //兼容houdini
+            points[idx] = bottomPos;
+            geo->initpoint(idx);
+
+            float Rxsqr = Rx * Rx;
+            float Rysqr = Ry * Ry;
+            float Rzsqr = Rz * Rz;
+
+            auto find_x = [=](float y) {
+                return sqrt(Rxsqr - Rxsqr * y * y / Rysqr);
+            };
+            auto find_z = [=](float y) {
+                return sqrt(Rzsqr - Rzsqr * y * y / Rysqr);
+            };
+
+            float y_piece = 2 * Ry / Rows;
+
+            for (int row = 1; row < Rows - 1; row++)
+            {
+                float v = (float)row / (float)Rows;
+                float theta = M_PI * v;
+
+                float y_pos = topPos[1] - row * y_piece;
+                float Rx_level = find_x(y_pos);
+                float Rz_level = find_z(y_pos);
+                //col = 0, 从x轴正方向开始转圈圈
+                size_t startIdx = 2 + (row - 1) * Columns;
+                for (int col = 0; col < Columns; col++)
+                {
+                    //R_level只是定义了y方向界面在x轴的短轴，长轴仍需z方向的R来决定
+                    float rad = 2.0f * M_PI * col / Columns;
+                    float x_pos = sqrt((Rx_level * Rx_level) / (1.f + pow(tan(rad) * Rx_level / Rz_level, 2)));
+                    if (cos(rad) < 0) {
+                        x_pos *= -1;
+                    }
+                    float z_pos = tan(rad) * x_pos;
+                    z_pos *= -1;
+                    vec3f pt(x_pos, y_pos, z_pos);
+
+                    float u = (float)col / (float)Columns;
+                    float phi = M_PI * 2 * u;
+                    float x = sin(theta) * cos(phi);
+                    float y = cos(theta);
+                    float z = -sin(theta) * sin(phi);
+                    //pt = vec3f(x, y, z);
+
+                    size_t idx = 2/*顶部底部两个点*/ + (row - 1) * Columns + col;
+                    geo->initpoint(idx);
+                    points[idx] = pt;
+                    if (col > 0) {
+                        if (row == 1) {
+                            //与顶部顶点构成三角面
+                            geo->addface({ 0, idx - 1, idx });
+                            if (col == Columns - 1) {
+                                geo->addface({ 0, idx, startIdx });
+                            }
+                        }
+                        else {
+                            size_t rightdown = idx;
+                            size_t leftdown = rightdown - 1;
+                            size_t rightup = 2/*顶部底部两个点*/ + (row - 2) * Columns + col;
+                            size_t leftup = rightup - 1;
+                            if (bQuad) {
+                                geo->addface({ rightdown, rightup, leftup, leftdown });
+                            }
+                            else {
+                                geo->addface({ rightdown, rightup, leftup });
+                                geo->addface({ rightdown, leftup, leftdown });
+                            }
+
+                            if (col == Columns - 1) {
+                                leftup = rightup;
+                                leftdown = rightdown;
+                                rightdown = startIdx;
+                                rightup = 2 + (row - 2) * Columns;
+
+                                if (bQuad) {
+                                    geo->addface({ rightdown, rightup, leftup, leftdown });
+                                }
+                                else {
+                                    geo->addface({ rightdown, rightup, leftup });
+                                    geo->addface({ rightdown, leftup, leftdown });
+                                }
+                            }
+
+                            if (row == Rows - 2) {
+                                //与底部顶点构成三角面
+                                geo->addface({ idx, idx - 1, 1 });
+                                if (col == Columns - 1) {
+                                    geo->addface({ 1, startIdx, idx });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            geo->create_attr(ATTR_POINT, "pos", points);
             return geo;
         }
     };
