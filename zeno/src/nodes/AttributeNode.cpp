@@ -12,10 +12,10 @@ namespace zeno {
 
         ReflectCustomUI m_uilayout = {
             _Group {
-                {"input_object", ParamObject("Input Object", Socket_Clone)},
+                {"input_object", ParamObject("Input", Socket_Clone)},
             },
             _Group {
-                {"", ParamObject("Output Object")},
+                {"", ParamObject("Output")},
             }
         };
 
@@ -95,6 +95,47 @@ namespace zeno {
 
         ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Vector4 Value", Control = zeno::Vec4edit, Constrain = "visible = parameter('Attribute Type').value == 'Vector4';")
         zeno::vec4f m_vec4Value;
+    };
+
+    struct ZDEFNODE() DeleteAttribute : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"input_object", ParamObject("Input", Socket_Clone)},
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        zany apply(zany input_object, std::string attr_name = "attribute1") {
+            if (attr_name == "") {
+                throw makeError<UnimplError>("the attribute name cannot be empty.");
+            }
+
+            if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
+                throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
+            }
+            else if (std::shared_ptr<GeometryObject> spGeo = std::dynamic_pointer_cast<GeometryObject>(input_object)) {
+                if (m_attrgroup == "Point") {
+                    spGeo->delete_attr(ATTR_POINT, attr_name);
+                }
+                else if (m_attrgroup == "Face") {
+                    spGeo->delete_attr(ATTR_FACE, attr_name);
+                }
+                else if (m_attrgroup == "Geometry") {
+                    spGeo->delete_attr(ATTR_GEO, attr_name);
+                }
+            }
+            else {
+                throw makeError<UnimplError>("Unsupport Object for creating attribute");
+            }
+            return input_object;
+        }
+
+
+        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Attribute Group", Control = zeno::Combobox, ComboBoxItems = ("Point", "Face", "Geometry"))
+        std::string m_attrgroup = "Point";
     };
 }
 

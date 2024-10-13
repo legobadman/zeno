@@ -7,7 +7,7 @@ namespace zeno
     GeometryTopology::GeometryTopology(bool bTriangle, int nPoints, int nFaces) {
         m_bTriangle = bTriangle;
         m_points.resize(nPoints);
-        m_faces.reserve(nFaces);        //Ãæ²»ºÃË÷Òı£¬Ö»ÄÜÖğ¸ö¼Ó
+        m_faces.reserve(nFaces);    //é¢ä¸å¥½ç´¢å¼•ï¼Œåªèƒ½é€ä¸ªåŠ 
     }
 
     GeometryTopology::GeometryTopology(const GeometryTopology& rhs) {
@@ -98,8 +98,19 @@ namespace zeno
             m_points[idxPoint] = std::make_shared<Point>();
     }
 
+    std::vector<vec3i> GeometryTopology::tri_indice() const {
+        std::vector<vec3i> indice;
+        for (auto spFace : m_faces) {
+            HEdge* h = spFace->h;
+            vec3i tri(h->point, h->next->point, h->next->next->point);
+            indice.push_back(tri);
+            indice.push_back(vec3i(h->next->next->next->point, h->point, h->next->next->point));
+        }
+        return indice;
+    }
+
     void GeometryTopology::addface(const std::vector<size_t>& points) {
-        //pointsÒª°´ÕÕÄæÊ±Õë·½Ïò
+        //pointsè¦æŒ‰ç…§é€†æ—¶é’ˆæ–¹å‘
         std::shared_ptr<Face> spFace = std::make_shared<Face>();
         size_t face_id = m_faces.size();
 

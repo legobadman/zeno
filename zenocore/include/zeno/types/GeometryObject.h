@@ -33,19 +33,20 @@ namespace zeno
         ZENO_API std::shared_ptr<PrimitiveObject> toPrimitive() const;
         ZENO_API ~GeometryObject();
 
-        int get_point_count() const;
-        int get_face_count() const;
-        std::vector<vec3f>& points_pos() const;
+        ZENO_API int get_point_count() const;
+        ZENO_API int get_face_count() const;
+        ZENO_API std::vector<vec3f>& points_pos() const;
+        ZENO_API std::vector<vec3i> tri_indice() const;
 
         //attr:
         bool create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl);
-        bool create_attr(GeoAttrGroup grp, const std::string& attr_name, const Any& defl);
-        bool delete_attr(GeoAttrGroup grp, const std::string& attr_name);
-        bool has_attr(GeoAttrGroup grp, std::string const& name);
+        ZENO_API bool create_attr(GeoAttrGroup grp, const std::string& attr_name, const Any& defl);
+        ZENO_API bool delete_attr(GeoAttrGroup grp, const std::string& attr_name);
+        ZENO_API bool has_attr(GeoAttrGroup grp, std::string const& name);
         std::vector<zfxvariant> get_attr_byzfx(GeoAttrGroup grp, std::string const& name);
-        Any& get_attr(GeoAttrGroup grp, std::string const& name);
+        ZENO_API Any& get_attr(GeoAttrGroup grp, std::string const& name);
         void set_attr_byzfx(GeoAttrGroup grp, std::string const& name, const ZfxVariable& val, ZfxElemFilter& filter);
-        void set_attr(GeoAttrGroup grp, std::string const& name, const Any& val);
+        ZENO_API void set_attr(GeoAttrGroup grp, std::string const& name, const Any& val);
 
         //API:
         //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。

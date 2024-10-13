@@ -501,6 +501,43 @@ struct FrameBufferPicker : IPicker {
                 // store object's name
                 id_table[id + 1] = it->first;
             }
+
+            auto geo = dynamic_cast<zeno::GeometryObject*>(it->second.get());
+            if (geo) {
+                std::vector<vec3f>& pos = geo->points_pos();
+                vao->bind();
+                vbo->bind_data(pos.data(), pos.size() * sizeof(pos[0]));
+                vbo->attribute(0, sizeof(float) * 0, sizeof(float) * 3, GL_FLOAT, 3);
+
+                bool pick_particle = false;
+                PICK_MODE mode = scene->get_select_mode();
+                if (PICK_MODE::PICK_OBJECT == mode) {
+                    pick_particle = geo->get_face_count() == 0;
+                    CHECK_GL(glEnable(GL_DEPTH_TEST));
+                    CHECK_GL(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE));
+                    glDepthFunc(GL_GREATER);
+                    CHECK_GL(glClearDepth(0.0));
+
+                    // shader uniform
+                    obj_shader->use();
+                    scene->camera->set_program_uniforms(obj_shader);
+                    CHECK_GL(glUniform1ui(glGetUniformLocation(obj_shader->pro, "gObjectIndex"), id + 1));
+                    // draw prim
+                    std::vector<vec3i> tris = geo->tri_indice();
+                    ebo->bind_data(tris.data(), tris.size() * sizeof(tris[0]));
+                    CHECK_GL(glDrawElements(GL_TRIANGLES, tris.size() * 3, GL_UNSIGNED_INT, 0));
+                    ebo->unbind();
+                    CHECK_GL(glDisable(GL_DEPTH_TEST));
+                }
+
+                // unbind vbo
+                vbo->disable_attribute(0);
+                vbo->unbind();
+                vao->unbind();
+
+                // store object's name
+                id_table[id + 1] = it->first;
+            }
         }
         fbo->unbind();
     }

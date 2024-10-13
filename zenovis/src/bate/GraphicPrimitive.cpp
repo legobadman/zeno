@@ -619,7 +619,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
 
     explicit ZhxxGraphicPrimitive(Scene* scene_, zeno::GeometryObject* prim)
         : scene(scene_) {
-        //TODO: ÏÈÈÃPrimitiveObjectÖÐ×ªÒ»ÏÂ¡£
+        //TODO: ï¿½ï¿½ï¿½ï¿½PrimitiveObjectï¿½ï¿½×ªÒ»ï¿½Â¡ï¿½
     }
 
     virtual void draw() override {
@@ -835,7 +835,7 @@ void MakeGraphicVisitor::visit(zeno::PrimitiveObject *obj) {
 }
 
 void MakeGraphicVisitor::visit(zeno::GeometryObject *obj) {
-    //¿¼ÂÇµ½primitiveÓÖÒª´´½¨¸÷ÖÖnrm uv£¬¿ÉÒÔÔÚÕâÀïÈÃPrimitiveObjectÖÐ×ªÒ»ÏÂ
+    //è€ƒè™‘åˆ°primitiveåˆè¦åˆ›å»ºå„ç§nrm uvï¼Œå¯ä»¥åœ¨è¿™é‡Œè®©PrimitiveObjectä¸­è½¬ä¸€ä¸‹
     this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj->toPrimitive().get());
 }
 

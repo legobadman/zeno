@@ -40,6 +40,7 @@ namespace zeno
         size_t getPointTo(HEdge* hedge) const;
         void addface(const std::vector<size_t>& points);
         void initpoint(size_t idxPoint);
+        std::vector<vec3i> tri_indice() const;
 
         std::vector<std::shared_ptr<Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;

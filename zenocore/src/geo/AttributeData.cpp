@@ -277,7 +277,7 @@ namespace zeno {
                     elemType == gParamType_Bool) {
                     int newVal = any_cast<int>(elemVal);
                     if (newVal != val) {
-                        //Öµ²»Ò»ÖÂ£¬ĞèÒª¸ÄÓÃvector´¢´æÁË
+                        //å€¼ä¸ä¸€è‡´ï¼Œéœ€è¦æ”¹ç”¨vectorå‚¨å­˜äº†
                         m_data = std::vector<int>(m_size, newVal);
                     }
                 }
@@ -499,7 +499,7 @@ namespace zeno {
         }
 
         int m_size;
-        //ÔİÊ±²»´¢´æºËĞÄÀàĞÍ£¬²»¹ıÓĞ¿ÉÄÜ³öÏÖÀàĞÍ´íÎó¸³ÖµµÄÇé¿ö
+        //æš‚æ—¶ä¸å‚¨å­˜æ ¸å¿ƒç±»å‹ï¼Œä¸è¿‡æœ‰å¯èƒ½å‡ºç°ç±»å‹é”™è¯¯èµ‹å€¼çš„æƒ…å†µ
         Any m_data;
     };
 

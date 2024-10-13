@@ -209,6 +209,10 @@ namespace zeno
         return any_cast<std::vector<vec3f>&>(val);
     }
 
+    ZENO_API std::vector<vec3i> GeometryObject::tri_indice() const {
+        return m_spTopology->tri_indice();
+    }
+
     bool GeometryObject::remove_point(int ptnum) {
         if (ptnum < 0 || ptnum >= m_spTopology->m_points.size())
             return false;
@@ -424,7 +428,11 @@ namespace zeno
     bool GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
     {
         std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
-        return container.find(attr_name) != container.end();
+        auto iter = container.find(attr_name);
+        if (iter == container.end())
+            return false;
+        container.erase(iter);
+        return true;
     }
 
     bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name)
