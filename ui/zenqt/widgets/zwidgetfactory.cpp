@@ -31,9 +31,9 @@ namespace zenoui
 {
     QWidget* createWidget(
         const QModelIndex& nodeIdx,
-        const Any& value,                   //±à¼­Öµ£¬ÀïÃæµÄÀàÐÍÎ´±ØÊÇ²ÎÊýÕæÕýµÄÀàÐÍ£¬±ÈÈç¹«Ê½µÄ±à¼­Öµ
+        const Any& value,                   //ç¼–è¾‘å€¼ï¼Œé‡Œé¢çš„ç±»åž‹æœªå¿…æ˜¯å‚æ•°çœŸæ­£çš„ç±»åž‹ï¼Œæ¯”å¦‚å…¬å¼çš„ç¼–è¾‘å€¼
         zeno::ParamControl ctrl,
-        const zeno::ParamType paramType,    //²ÎÊýÕæÕýµÄÀàÐÍ
+        const zeno::ParamType paramType,    //å‚æ•°çœŸæ­£çš„ç±»åž‹
         CallbackCollection cbSet,
         const Any& controlProps
     )
@@ -78,7 +78,7 @@ namespace zenoui
                     pCheckbox->setCheckState(any_cast<bool>(value) ? Qt::Checked : Qt::Unchecked);
                 }
                 else if (typecode == gParamType_Int) {
-                    //ÒÔºó·´Éä¶¨ÒåÀï²»ÅÅ³ýÓÃ»§»áÐ´intÀàÐÍÈ´ÓÃcheckbox
+                    //ä»¥åŽåå°„å®šä¹‰é‡Œä¸æŽ’é™¤ç”¨æˆ·ä¼šå†™intç±»åž‹å´ç”¨checkbox
                     pCheckbox->setCheckState(any_cast<int>(value) ? Qt::Checked : Qt::Unchecked);
                 }
                 else {
@@ -243,7 +243,7 @@ namespace zenoui
                 pComboBox->setFixedHeight(ZenoStyle::dpiScaled(zenoui::g_ctrlHeight));
                 pComboBox->addItems(items);
                 pComboBox->setCurrentText(text);
-                pComboBox->setEditable(false);
+                pComboBox->setEditable(true);
                 pComboBox->setItemDelegate(new ZComboBoxItemDelegate2(pComboBox));
 
                 QObject::connect(pComboBox, &ZComboBox::_textActivated, [=](const QString& newText) {

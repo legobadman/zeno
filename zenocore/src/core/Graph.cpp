@@ -106,7 +106,7 @@ ZENO_API void Graph::runGraph() {
 void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
     auto spNode = spParam->m_wpNode.lock();
     assert(spNode);
-    {   //¼ì²âparamÒÀÀµÈ«¾Ö±äÁ¿,ÏÈremoveÔÙparse
+    {   //ï¿½ï¿½ï¿½paramï¿½ï¿½ï¿½ï¿½È«ï¿½Ö±ï¿½ï¿½ï¿½,ï¿½ï¿½removeï¿½ï¿½parse
         const std::string& uuid = spNode->get_uuid();
         frame_nodes.erase(uuid);
         assert(spParam);
@@ -353,7 +353,7 @@ ZENO_API void Graph::init(const GraphData& graph) {
 void Graph::markDirtyWhenFrameChanged()
 {
     for (const std::string& uuid : frame_nodes) {
-        if (!m_nodes[uuid]->isInDopnetwork()) {//²»ÔÚdop½ÚµãÖÐ²ÅmarkDirty
+        if (!m_nodes[uuid]->isInDopnetwork()) {//ï¿½ï¿½ï¿½ï¿½dopï¿½Úµï¿½ï¿½Ð²ï¿½markDirty
         m_nodes[uuid]->mark_dirty(true);
     }
     }
@@ -411,7 +411,7 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
 {
     if (!spCurrGarph || !spNode)
         return;
-    if (spNode->get_nodecls() == "SubOutput" || spNode->get_nodecls() == "SubInput") { //ÓÉ×ÓÍ¼ÄÚ²¿´«µ¼³öÀ´
+    if (spNode->get_nodecls() == "SubOutput" || spNode->get_nodecls() == "SubInput") { //ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         spNode->update_param_type(paramName, bPrim, bInput, newtype);
         auto links = spNode->getLinksByParam(bInput, paramName);
         for (auto& link : links) {
@@ -463,7 +463,7 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
             }
         }
     } 
-    else if (zeno::isDerivedFromSubnetNodeName(spNode->get_nodecls())) {  //Í¨¹ýinputObj´«Èë×ÓÍ¼
+    else if (zeno::isDerivedFromSubnetNodeName(spNode->get_nodecls())) {  //Í¨ï¿½ï¿½inputObjï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
         spNode->update_param_type(paramName, bPrim, bInput, newtype);
         if (std::shared_ptr<SubnetNode> subnet = std::dynamic_pointer_cast<SubnetNode>(spNode)) {
             for (auto& link : subnet->getLinksByParam(bInput, paramName)) {
@@ -529,10 +529,10 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
         const auto& params = spNode->getWildCardParams(paramName, bPrim);
         for (const auto& param : params) {
             spNode->update_param_type(param.first, bPrim, param.second, newtype);
-            for (auto& link : spNode->getLinksByParam(param.second, param.first)) {      //ÓÐÆäËû±ßÁ¬½ÓÕâ¸ö²ÎÊý£¬ÀàÐÍ²»Í¬ÔòÉ¾³ý
+            for (auto& link : spNode->getLinksByParam(param.second, param.first)) {      //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í²ï¿½Í¬ï¿½ï¿½É¾ï¿½ï¿½
                 std::shared_ptr<INode> otherNodeLinkToThis = param.second ? spCurrGarph->getNode(link.outNode) : spCurrGarph->getNode(link.inNode);
                 if (otherNodeLinkToThis) {
-                    if (param.second) { //ÊÇÊäÈë
+                    if (param.second) { //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                         ParamType paramType;
                         SocketType socketType;
                         otherNodeLinkToThis->getParamTypeAndSocketType(link.outParam, bPrim, false, paramType, socketType);
@@ -791,7 +791,7 @@ ZENO_API std::shared_ptr<INode> Graph::createNode(std::string const& cls, const 
     if (cls == "GetFrameNum") {
         frame_nodes.insert(uuid);
     }
-    if (cls == "CameraNode") {   //Ïà»úÏà¹Ø½ÚµãºÍÖ¡Ïà¹Ø
+    if (cls == "CameraNode") {   //ï¿½ï¿½ï¿½ï¿½ï¿½Ø½Úµï¿½ï¿½Ö¡ï¿½ï¿½ï¿½
         frame_nodes.insert(uuid);
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {
@@ -1078,11 +1078,11 @@ bool zeno::Graph::isLinkValid(const EdgeInfo& edge)
 }
 
 ZENO_API bool Graph::addLink(const EdgeInfo& edge) {
-    //Èç¹ûÊäÈë¶ËÊÇdict/list£¬
-    //Íâ²¿µ÷ÓÃÕßÔÚµ÷ÓÃ´ËapiÊ±£¬ÓÐÈçÏÂ¹æÔò£º
-    //1.Èç¹ûÁ¬½øÀ´µÄÊÇdictlist£¬²¢ÇÒÃ»ÓÐÖ¸¶¨key£¬ÔòÈÏÎªÊÇÖ±½ÓÁ¬´ËÊäÈë²ÎÊý(ÀàÐÍÎªdictlist)
-    //2.Èç¹ûÁ¬½øÀ´µÄÊÇdictlist£¬²¢ÇÒÖ¸¶¨ÁËkey£¬ÔòÈÏÎªÊÇÁ¬ÈëdictlistÄÚ²¿²¢×÷ÎªÊäÈë¶ËµÄ×Ó³ÉÔ±¡£
-    //3.Èç¹ûÁ¬½øÀ´µÄÊÇ·Çdictlist£¬²¢ÇÒÃ»ÓÐÖ¸¶¨key£¬ÔòÈÏÎªÊÇÁ¬ÈëÊäÈë¶Ëdictlist²¢×÷ÎªÊäÈë¶ËµÄÄÚ²¿×Ó³ÉÔ±¡£
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dict/listï¿½ï¿½
+    //ï¿½â²¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Ã´ï¿½apiÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¹ï¿½ï¿½ï¿½
+    //1.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dictlistï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Ö¸ï¿½ï¿½keyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½Îªdictlist)
+    //2.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dictlistï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½keyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dictlistï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½Ó³ï¿½Ô±ï¿½ï¿½
+    //3.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½dictlistï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Ö¸ï¿½ï¿½keyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½dictlistï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½Ëµï¿½ï¿½Ú²ï¿½ï¿½Ó³ï¿½Ô±ï¿½ï¿½
     CORE_API_BATCH
 
     if (!isLinkValid(edge))
@@ -1176,7 +1176,7 @@ ZENO_API bool Graph::addLink(const EdgeInfo& edge) {
     inNode->mark_dirty(true);
 
 
-    //¼Ó±ßÖ®ºó£¬Èç¹ûÉæ¼°wildCardµÄsocket£¬´«²¥wildcardÀàÐÍ
+    //ï¿½Ó±ï¿½Ö®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ¼°wildCardï¿½ï¿½socketï¿½ï¿½ï¿½ï¿½ï¿½ï¿½wildcardï¿½ï¿½ï¿½ï¿½
     SocketType outSocketType;
     ParamType outParamType;
     outNode->getParamTypeAndSocketType(edge.outParam, bOutputPrim, false, outParamType, outSocketType);
@@ -1239,7 +1239,7 @@ ZENO_API bool Graph::removeLink(const EdgeInfo& edge) {
     inNode->removeLink(true, edge);
     inNode->mark_dirty(true);
 
-    //É¾³ý±ßºó£¬Èç¹ûÓÐÉæ¼°wildCardÀàÐÍµÄparam£¬ÅÐ¶ÏÊÇ·ñÐèÒª½«ËùÊôwildCard×éreset
+    //É¾ï¿½ï¿½ï¿½ßºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ¼°wildCardï¿½ï¿½ï¿½Íµï¿½paramï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½wildCardï¿½ï¿½reset
     SocketType inSocketType;
     ParamType inParamType;
     inNode->getParamTypeAndSocketType(edge.inParam, bPrimType, true, inParamType, inSocketType);
@@ -1256,7 +1256,7 @@ ZENO_API bool Graph::removeLink(const EdgeInfo& edge) {
             if (inParamLinks.size() == 1) {
                 if (auto node = getNode(inParamLinks[0].outNode)) {
                     ParamObject existOneParam = node->get_output_obj_param(inParamLinks[0].outParam);
-                    if (existOneParam.type == inParam.type) {   //Ö»Á¬Ò»Ìõdict/list,ÖØÖÃtokey±íÊ¾Ö±Á¬
+                    if (existOneParam.type == inParam.type) {   //Ö»ï¿½ï¿½Ò»ï¿½ï¿½dict/list,ï¿½ï¿½ï¿½ï¿½tokeyï¿½ï¿½Ê¾Ö±ï¿½ï¿½
                         updateLink(inParamLinks[0], false, inParamLinks[0].inKey, "");
                     }
                 }
