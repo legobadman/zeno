@@ -213,6 +213,14 @@ namespace zeno
         return m_spTopology->tri_indice();
     }
 
+    ZENO_API std::vector<int> GeometryObject::edge_list() const {
+        return m_spTopology->edge_list();
+    }
+
+    ZENO_API bool GeometryObject::is_base_triangle() const {
+        return m_spTopology->is_base_triangle();
+    }
+
     bool GeometryObject::remove_point(int ptnum) {
         if (ptnum < 0 || ptnum >= m_spTopology->m_points.size())
             return false;

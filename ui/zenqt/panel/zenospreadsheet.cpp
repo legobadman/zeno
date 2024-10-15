@@ -82,7 +82,7 @@ ZenoSpreadsheet::ZenoSpreadsheet(QWidget *parent) : QWidget(parent) {
     ZERROR_EXIT(pWin);
 
     connect(pWin, &ZenoMainWindow::visObjectsUpdated, this, [=](ViewportWidget* pViewport, int frame) {
-        return;//TODO: 计算绘制触发的情况晚点再整合
+        return;
     });
 
     connect(pMode, &ZComboBox::_textActivated, [=](const QString& text) {
@@ -153,8 +153,7 @@ void ZenoSpreadsheet::onNodeSelected(const QModelIndex& idx) {
 }
 
 void ZenoSpreadsheet::setPrim(std::string primid) {
-    //TODO: 目前只有计算和选择点才能触发，计算触发的情况比较复杂，晚点再补上。
-    //思路可以是：通过Obj自身储存的节点uuid，找到节点，再找到obj，也可以尝试通过信号槽直传
+    //TODO: 
     return;
 }
 

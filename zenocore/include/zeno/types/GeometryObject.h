@@ -37,6 +37,8 @@ namespace zeno
         ZENO_API int get_face_count() const;
         ZENO_API std::vector<vec3f>& points_pos() const;
         ZENO_API std::vector<vec3i> tri_indice() const;
+        ZENO_API std::vector<int> edge_list() const;
+        ZENO_API bool is_base_triangle() const;
 
         //attr:
         bool create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl);
@@ -50,7 +52,7 @@ namespace zeno
 
         //API:
         //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。
-        int facepoint(int face_id, int vert_id) const;
+        ZENO_API int facepoint(int face_id, int vert_id) const;
 
         //通过 face_id，获取此 face 所有 points 索引编号。
         zfxintarr facepoints(int face_id);
@@ -59,18 +61,18 @@ namespace zeno
         zfxintarr pointfaces(int point_id);
         zfxintarr pointvertex(int point_id);
 
-        void initpoint(size_t point_id);
-        int addpoint(zfxvariant pos = zfxfloatarr({ 0,0,0 }));
-        void addface(const std::vector<size_t>& points);
-        int addvertex(size_t face_id, size_t point_id);
+        ZENO_API void initpoint(size_t point_id);
+        ZENO_API int addpoint(zfxvariant pos = zfxfloatarr({ 0,0,0 }));
+        ZENO_API void addface(const std::vector<size_t>& points);
+        ZENO_API int addvertex(size_t face_id, size_t point_id);
 
-        bool remove_point(int ptnum);
-        bool remove_faces(const std::set<int>& faces, bool includePoints);
+        ZENO_API bool remove_point(int ptnum);
+        ZENO_API bool remove_faces(const std::set<int>& faces, bool includePoints);
 
-        int npoints() const;
-        int nfaces() const;
-        int nvertices() const;
-        int nvertices(int face_id) const;
+        ZENO_API int npoints() const;
+        ZENO_API int nfaces() const;
+        ZENO_API int nvertices() const;
+        ZENO_API int nvertices(int face_id) const;
 
         //vertex先不考虑
     private:

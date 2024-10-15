@@ -10,6 +10,7 @@
 #include <zeno/utils/orthonormal.h>
 #include <zeno/utils/ticktock.h>
 #include <zeno/utils/vec.h>
+#include <zeno/utils/helper.h>
 #include <zeno/extra/TempNode.h>
 #include <zenovis/Camera.h>
 #include <zenovis/DrawOptions.h>
@@ -328,25 +329,25 @@ static void parseTrianglesDrawBuffer(zeno::PrimitiveObject *prim, ZhxxDrawObject
 }
 
 struct ZhxxGraphicPrimitive final : IGraphicDraw {
-    Scene *scene;
+    Scene *scene = nullptr;
     std::vector<std::unique_ptr<Buffer>> vbos = std::vector<std::unique_ptr<Buffer>>(5);
-    size_t vertex_count;
-    bool draw_all_points;
+    size_t vertex_count = 0;
+    bool draw_all_points = false;
 
     //Program *points_prog;
     //std::unique_ptr<Buffer> points_ebo;
-    size_t points_count;
+    size_t points_count = 0;
 
     //Program *lines_prog;
     //std::unique_ptr<Buffer> lines_ebo;
-    size_t lines_count;
+    size_t lines_count = 0;
 
     //Program *tris_prog;
     //std::unique_ptr<Buffer> tris_ebo;
-    size_t tris_count;
+    size_t tris_count = 0;
 
-    bool invisible;
-    bool custom_color;
+    bool invisible = false;
+    bool custom_color = false;
 
     ZhxxDrawObject pointObj;
     ZhxxDrawObject lineObj;
@@ -617,9 +618,86 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
     }
 
-    explicit ZhxxGraphicPrimitive(Scene* scene_, zeno::GeometryObject* prim)
+    explicit ZhxxGraphicPrimitive(Scene* scene_, zeno::GeometryObject* geo)
         : scene(scene_) {
-        //TODO: ����PrimitiveObject��תһ�¡�
+        zeno::log_trace("rendering primitive size {}", geo->npoints());
+
+        const std::vector<zeno::vec3f>& points = geo->points_pos();
+        std::vector<zeno::vec3f> clr, nrms, uv, tang;
+        std::vector<zeno::vec3i> tris;
+
+        bool any_not_triangle = !geo->is_base_triangle();
+        if (any_not_triangle) {
+            std::vector<int> edges = geo->edge_list();
+
+            polyEdgeObj.count = edges.size();
+            polyEdgeObj.ebo = std::make_unique<Buffer>(GL_ELEMENT_ARRAY_BUFFER);
+            polyEdgeObj.ebo->bind_data(edges.data(), edges.size() * sizeof(edges[0]));
+            auto vbo = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+
+            vbo->bind_data(points.data(), points.size() * sizeof(points[0]));
+            polyEdgeObj.vbos.push_back(std::move(vbo));
+            polyEdgeObj.prog = get_edge_program();
+        }
+        if (geo->get_face_count() > 0) {
+            //还是需要展开成三角形
+            tris = geo->tri_indice();
+        }
+
+        if (any_not_triangle && geo->has_attr(zeno::ATTR_POINT, "uvs")) {
+            //TODO: uvs
+        }
+        else {
+            std::fill(uv.begin(), uv.end(), zeno::vec3f(0.0f));
+        }
+
+        if (geo->has_attr(zeno::ATTR_POINT, "clr")) {
+            clr = zeno::get_attr_vector(geo, zeno::ATTR_POINT, "clr");
+        }
+        else {
+            zeno::vec3f clr0(1.0f);
+            std::fill(clr.begin(), clr.end(), clr0);
+        }
+
+        if (geo->has_attr(zeno::ATTR_POINT, "nrm")) {
+            nrms = zeno::get_attr_vector(geo, zeno::ATTR_POINT, "nrm");
+        }
+        else {
+            //TODO: calculate normals by util function.
+            std::fill(nrms.begin(), nrms.end(), zeno::vec3f(1.0f, 0.0f, 0.0f));
+        }
+
+        if (geo->has_attr(zeno::ATTR_POINT, "tang")) {
+            tang = zeno::get_attr_vector(geo, zeno::ATTR_POINT, "tang");
+        }
+        else {
+            std::fill(tang.begin(), tang.end(), zeno::vec3f(0.0f));
+        }
+
+        vbos[0] = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+        vbos[0]->bind_data(points.data(), points.size() * sizeof(points[0]));
+        vbos[1] = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+        vbos[1]->bind_data(clr.data(), clr.size() * sizeof(clr[0]));
+        vbos[2] = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+        vbos[2]->bind_data(nrms.data(), nrms.size() * sizeof(nrms[0]));
+        vbos[3] = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+        vbos[3]->bind_data(uv.data(), uv.size() * sizeof(uv[0]));
+        vbos[4] = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+        vbos[4]->bind_data(tang.data(), tang.size() * sizeof(tang[0]));
+
+        //TODO: case of points.
+
+        //TODO: case of lines.
+
+        tris_count = tris.size();
+        if (tris_count > 0) {
+            triObj.count = tris_count;
+            triObj.ebo = std::make_unique<Buffer>(GL_ELEMENT_ARRAY_BUFFER);
+            triObj.ebo->bind_data(tris.data(), tris_count * sizeof(tris[0]));
+            triObj.prog = get_tris_program();
+        }
+
+        draw_all_points = false;
     }
 
     virtual void draw() override {

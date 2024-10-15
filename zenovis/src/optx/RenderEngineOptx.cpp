@@ -888,7 +888,7 @@ struct GraphicsManager {
         else {
             wtf.erase(obj->key());
             auto ig = std::make_unique<ZxxGraphic>(obj->key(), obj.get());
-            graphics.m_curr.insert(std::make_pair(obj->key(), std::move(ig)));  //ÏÈeraseÔÙÌí¼Ó£¬Í¨¹ıit->second = std::move(ig)·½Ê½Ìí¼Ó»áÊ§Ğ§
+            graphics.m_curr.insert(std::make_pair(obj->key(), std::move(ig)));  //å…ˆeraseå†æ·»åŠ ï¼Œé€šè¿‡it->second = std::move(ig)æ–¹å¼æ·»åŠ ä¼šå¤±æ•ˆ
             //if (!ig)
             //    return;
             //ig->key = obj->key();
@@ -1036,32 +1036,32 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         //light update condition
         graphicsMan->load_light_objects(objs.lightObjs);
 
-        //ÔöÉ¾¶ÔÏóÎŞ·¨ÑØÓÃviewportÂß¼­£¬·ñÔòalwaysÄ£Ê½ÒÆ¶¯ÊıÖµ»¬¿é»áÓĞÍÏÓ°
+        //å¢åˆ å¯¹è±¡æ— æ³•æ²¿ç”¨viewporté€»è¾‘ï¼Œå¦åˆ™alwaysæ¨¡å¼ç§»åŠ¨æ•°å€¼æ»‘å—ä¼šæœ‰æ‹–å½±
         graphicsMan->objOrder.clear();
         size_t idx = 0;
         std::map<std::string, std::shared_ptr<zeno::IObject>> allViewObjs, allConvertedViewObjs, addObjs;
         zeno::getSession().objsMan->export_all_view_objs(allViewObjs);
         for (auto& [key, obj] : allViewObjs) {
-            scene->convertListObjs(obj, allConvertedViewObjs);              //Õ¹Æ½ËùÓĞview¶ÔÏó
+            scene->convertListObjs(obj, allConvertedViewObjs);              //å±•å¹³æ‰€æœ‰viewå¯¹è±¡
         }
         for (auto& [key, obj] : objs.newObjs) {
-            scene->convertListObjs(obj, addObjs);                           //Õ¹Æ½ËùÓĞĞÂÔö¶ÔÏó
+            scene->convertListObjs(obj, addObjs);                           //å±•å¹³æ‰€æœ‰æ–°å¢å¯¹è±¡
         }
         for (auto& [key, obj] : objs.modifyObjs) {
-            scene->convertListObjs(obj, addObjs);                           //Õ¹Æ½ËùÓĞĞŞ¸Ä¶ÔÏó
+            scene->convertListObjs(obj, addObjs);                           //å±•å¹³æ‰€æœ‰ä¿®æ”¹å¯¹è±¡
         }
         for (auto [key, spObj] : addObjs) {
-            graphicsMan->add_object(spObj);                                 //¼ÓÈëgraphics
+            graphicsMan->add_object(spObj);                                 //åŠ å…¥graphics
             graphicsMan->objOrder[key] = idx++;
         }
-        std::vector<std::string> removeList;                                //¸ù¾İÊµ¼Ê²»Ê¹ÓÃµÄ¶ÔÏóÉ¾³ı
+        std::vector<std::string> removeList;                                //æ ¹æ®å®é™…ä¸ä½¿ç”¨çš„å¯¹è±¡åˆ é™¤
         for (auto& [key, spObj] : graphicsMan->graphics.m_curr)
             if (allConvertedViewObjs.find(key) == allConvertedViewObjs.end())
                 removeList.push_back(key);
         for (auto& key : removeList)
             graphicsMan->remove_object(key);
 
-        //ÉèÖÃ½ö¸üĞÂµÆ¹âÏà»ú²ÄÖÊ
+        //è®¾ç½®ä»…æ›´æ–°ç¯å…‰ç›¸æœºæè´¨
         setUpdateLightCameraMaterialOnly(addObjs, removeList);
 
         if (!objs.allObjects.empty()) {

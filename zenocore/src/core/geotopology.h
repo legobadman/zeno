@@ -18,6 +18,15 @@ namespace zeno
         HEdge* pair = 0, * next = 0;
         size_t point = -1;
         size_t face = -1;
+
+        size_t find_from() {
+            if (pair) return pair->point;
+            HEdge* h = this;
+            while (h->next != this) {
+                h = h->next;
+            }
+            return h->point;
+        }
     };
 
     struct Face {
@@ -41,6 +50,8 @@ namespace zeno
         void addface(const std::vector<size_t>& points);
         void initpoint(size_t idxPoint);
         std::vector<vec3i> tri_indice() const;
+        std::vector<int> edge_list() const;
+        bool is_base_triangle() const;
 
         std::vector<std::shared_ptr<Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;

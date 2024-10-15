@@ -1061,6 +1061,25 @@ namespace zeno {
         }
     }
 
+    ZENO_API std::vector<zeno::vec3f> get_attr_vector(GeometryObject* spGeo, zeno::GeoAttrGroup grp, std::string attr_name)
+    {
+        if (!spGeo)
+            throw;
+        std::vector<zeno::vec3f> vec;
+        zeno::reflect::Any attrVal = spGeo->get_attr(grp, attr_name);
+        if (attrVal.type() == zeno::reflect::type_info<std::vector<zeno::vec3f>>()) {
+            vec = zeno::reflect::any_cast<std::vector<zeno::vec3f>>(attrVal);
+        }
+        else if (attrVal.type() == zeno::reflect::type_info<zeno::vec3f>()) {
+            zeno::vec3f clrval = zeno::reflect::any_cast<zeno::vec3f>(attrVal);
+            vec = std::vector<zeno::vec3f>(spGeo->get_point_count(), clrval);
+        }
+        else {
+            throw;
+        }
+        return vec;
+    }
+
     ZENO_API bool isPrimVarType(ParamType type)
     {
         return type == gParamType_Int || type == gParamType_Float || type == gParamType_String || type == gParamType_Curve;

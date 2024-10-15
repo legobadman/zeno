@@ -22,6 +22,7 @@ namespace zeno {
                 {"z_division", ParamPrimitive("Z Division")},
                 {"uniform_scale", ParamPrimitive("Uniform Scale")},
                 {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
+                {"bCalcPointNormals", ParamPrimitive("Point Normals")},
             },
             _Group {
                 {"", ParamObject("Output")},
@@ -29,15 +30,16 @@ namespace zeno {
         };
 
         std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Center = zeno::vec3f({0,0,0}),
-            zeno::vec3f Size = zeno::vec3f({1,1,1}),
-            zeno::vec3f Rotate = zeno::vec3f({0,0,0}),
+            zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
+            zeno::vec3f Size = zeno::vec3f({ 1,1,1 }),
+            zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
             int x_division = 2,
             int y_division = 2,
             int z_division = 2,
             float uniform_scale = 1.f,
-            std::string face_type = "Quadrilaterals"
-            )
+            std::string face_type = "Quadrilaterals",
+            bool bCalcPointNormals = false
+        )
         {
             if (x_division < 2 || y_division < 2 || z_division < 2) {
                 throw makeError<UnimplError>("the division should be greater than 2");
@@ -53,13 +55,15 @@ namespace zeno {
             float x, y, z = 0;
             float z_prev = zback;
 
-            //TODO: nFaces–Ë“™øº¬«»˝Ω«√Êµƒ«Èøˆ
+            //TODO: nFacesÈúÄË¶ÅËÄÉËôë‰∏âËßíÈù¢ÁöÑÊÉÖÂÜµ
             int nPoints = 2 * (x_division * y_division) + (z_division - 2) * (2 * y_division + 2 * x_division - 4);
             int nFaces = 2 * (x_division - 1) * (y_division - 1) + 2 * (x_division - 1) * (z_division - 1) + 2 * (y_division - 1) * (z_division - 1);
 
             auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
-            std::vector<vec3f> points;
+            std::vector<vec3f> points, normals;
             points.resize(nPoints);
+            if (bCalcPointNormals)
+                normals.resize(nPoints);
 
             for (int z_div = 0; z_div < z_division; z_div++)
             {
@@ -72,13 +76,20 @@ namespace zeno {
 
                             int nPrevPoints = 0;
                             if (!bFirstFace) {
-                                //√∂æŸ“‘«∞À˘”–z_div∆Ω√Ê ±“—¥¶¿Ìµƒ∂•µ„ ˝£¨œ¬Õ¨
+                                //Êûö‰∏æ‰ª•ÂâçÊâÄÊúâz_divÂπ≥Èù¢Êó∂Â∑≤Â§ÑÁêÜÁöÑÈ°∂ÁÇπÊï∞Ôºå‰∏ãÂêå
                                 nPrevPoints = x_division * y_division + (z_div - 1) * (2 * y_division + 2 * x_division - 4);
                             }
 
                             size_t idx = nPrevPoints + x_div % x_division + y_div * x_division;
                             points[idx] = pt;
                             geo->initpoint(idx);
+                            //init normals
+                            if (bCalcPointNormals) {
+                                float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
+                                float ycomp = (y_div == 0) ? -1 : ((y_div == y_division - 1) ? 1 : 0);
+                                float zcomp = (z_div == 0) ? -1 : ((z_div == z_division - 1) ? 1 : 0);
+                                normals[idx] = normalize(zeno::vec3f(xcomp, ycomp, zcomp));
+                            }
 
                             if (x_div > 0 && y_div > 0) {
                                 //current traversal point is rightup.
@@ -112,7 +123,7 @@ namespace zeno {
 
                 if (z_div > 0)
                 {
-                    //x∑ΩœÚ£¨¥¶¿Ìx-z÷·µƒ∂•√Ê∫Õµ◊√Ê°£
+                    //xÊñπÂêëÔºåÂ§ÑÁêÜx-zËΩ¥ÁöÑÈ°∂Èù¢ÂíåÂ∫ïÈù¢„ÄÇ
                     for (int y_div = 0; y_div < y_division; y_div += (y_division - 1)) {
                         for (int x_div = 0; x_div < x_division; x_div++) {
                             zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
@@ -121,7 +132,7 @@ namespace zeno {
                             bool bTop = y_div == y_division - 1;
                             bool bLastFace = z_div == z_division - 1;
 
-                            //º∆À„µ±«∞Ω⁄µ„µƒÀ˜“˝Œª÷√£∫
+                            //ËÆ°ÁÆóÂΩìÂâçËäÇÁÇπÁöÑÁ¥¢Âºï‰ΩçÁΩÆÔºö
                             int idx = 0;
                             if (bLastFace) {
                                 idx = nPrevPoints + x_div % x_division + y_div * x_division;
@@ -132,18 +143,25 @@ namespace zeno {
 
                             points[idx] = pt;
                             geo->initpoint(idx);
+                            //init normals
+                            if (bCalcPointNormals) {
+                                float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
+                                float ycomp = (y_div == 0) ? -1 : ((y_div == y_division - 1) ? 1 : 0);
+                                float zcomp = (z_div == 0) ? -1 : ((z_div == z_division - 1) ? 1 : 0);
+                                normals[idx] = normalize(zeno::vec3f(xcomp, ycomp, zcomp));
+                            }
 
-                            //ÃÌº”µ◊≤ø£®Õ˘z’˝∑ΩœÚ£©µƒ√Ê
+                            //Ê∑ªÂä†Â∫ïÈÉ®ÔºàÂæÄzÊ≠£ÊñπÂêëÔºâÁöÑÈù¢
                             if (x_div > 0) {
                                 size_t leftdown = 0;
                                 size_t rightup = idx;
                                 if (z_div > 1) {
                                     int nPrevPrevPoints = x_division * y_division + (z_div - 2) * (2 * y_division + 2 * x_division - 4);
                                     if (bTop) {
-                                        leftdown = nPrevPrevPoints + x_division + y_division * 2 - 4/*¡Ω∏ˆ÷ÿ∫œµ„£¨“‘º∞◊Û”“…œΩ«*/ + x_div - 1;
+                                        leftdown = nPrevPrevPoints + x_division + y_division * 2 - 4/*‰∏§‰∏™ÈáçÂêàÁÇπÔºå‰ª•ÂèäÂ∑¶Âè≥‰∏äËßí*/ + x_div - 1;
                                     }
                                     else {
-                                        leftdown = nPrevPrevPoints + x_div - 1/*“ÚŒ™ «Leftdown£¨ªπ–Ë“™Õ˘◊Û∆´“∆“ª∏ˆµ•Œª*/;
+                                        leftdown = nPrevPrevPoints + x_div - 1/*Âõ†‰∏∫ÊòØLeftdownÔºåËøòÈúÄË¶ÅÂæÄÂ∑¶ÂÅèÁßª‰∏Ä‰∏™Âçï‰Ωç*/;
                                     }
                                 }
                                 else {
@@ -157,7 +175,7 @@ namespace zeno {
 
                                 size_t rightdown = leftdown + 1;
                                 size_t leftup = idx - 1;
-                                
+
                                 if (bTop) {
                                     if (bQuad) {
                                         geo->addface({ leftdown, rightdown, rightup, leftup });
@@ -172,25 +190,25 @@ namespace zeno {
                                         geo->addface({ leftdown, leftup, rightup, rightdown });
                                     }
                                     else {
-                                        geo->addface({ leftdown, leftup, rightup});
-                                        geo->addface({ rightdown, leftdown, rightup});
+                                        geo->addface({ leftdown, leftup, rightup });
+                                        geo->addface({ rightdown, leftdown, rightup });
                                     }
                                 }
                             }
                         }
                     }
-                    //y∑ΩœÚ£¨¥¶¿Ìy-z÷·µƒ≤‡√Ê°£
+                    //yÊñπÂêëÔºåÂ§ÑÁêÜy-zËΩ¥ÁöÑ‰æßÈù¢„ÄÇ
                     for (int x_div = 0; x_div < x_division; x_div += (x_division - 1))
                     {
                         for (int y_div = 0; y_div < y_division; y_div++) {
                             zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
 
-                            //x’˝∑ΩœÚµƒƒ«∏ˆ≤‡√Ê
+                            //xÊ≠£ÊñπÂêëÁöÑÈÇ£‰∏™‰æßÈù¢
                             bool bTop = y_div == y_division - 1;
                             bool bRight = x_div == x_division - 1;
                             bool bLastFace = z_div == z_division - 1;
                             int nPrevPoints = x_division * y_division + (z_div - 1) * (2 * y_division + 2 * x_division - 4);
-                            //º∆À„µ±«∞Ω⁄µ„µƒÀ˜“˝Œª÷√£∫
+                            //ËÆ°ÁÆóÂΩìÂâçËäÇÁÇπÁöÑÁ¥¢Âºï‰ΩçÁΩÆÔºö
                             int idx = 0;
                             if (bLastFace) {
                                 idx = nPrevPoints + x_div % x_division + y_div * x_division;
@@ -209,6 +227,13 @@ namespace zeno {
 
                             points[idx] = pt;
                             geo->initpoint(idx);
+                            //init normals
+                            if (bCalcPointNormals) {
+                                float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
+                                float ycomp = (y_div == 0) ? -1 : ((y_div == y_division - 1) ? 1 : 0);
+                                float zcomp = (z_div == 0) ? -1 : ((z_div == z_division - 1) ? 1 : 0);
+                                normals[idx] = normalize(zeno::vec3f(xcomp, ycomp, zcomp));
+                            }
 
                             if (y_div > 0) {
                                 size_t leftdown = 0;
@@ -227,7 +252,7 @@ namespace zeno {
                                         rightdown = rightup - x_division;
                                     }
                                     else {
-                                        rightdown = rightup - 2;    //æÕ‘⁄’˝œ¬∑Ω
+                                        rightdown = rightup - 2;    //Â∞±Âú®Ê≠£‰∏ãÊñπ
                                     }
                                 }
 
@@ -235,7 +260,7 @@ namespace zeno {
                                 if (z_div > 1) {
                                     if (bRight) {
                                         if (bTop) {
-                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*œ¬∑Ωxy¡Ω∏ˆ÷ÿ∫œµ„*/ - 2/*◊Ó…œ√Ê¡Ω∏ˆµ„*/ + x_div;
+                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*‰∏ãÊñπxy‰∏§‰∏™ÈáçÂêàÁÇπ*/ - 2/*ÊúÄ‰∏äÈù¢‰∏§‰∏™ÁÇπ*/ + x_div;
                                         }
                                         else {
                                             leftup = nPrevPrevPoints + y_div * 2 + x_division - 2 + 1;
@@ -243,7 +268,7 @@ namespace zeno {
                                     }
                                     else {
                                         if (bTop) {
-                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*œ¬∑Ωxy¡Ω∏ˆ÷ÿ∫œµ„*/ - 2/*◊Ó…œ√Ê¡Ω∏ˆµ„*/ + x_div;
+                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*‰∏ãÊñπxy‰∏§‰∏™ÈáçÂêàÁÇπ*/ - 2/*ÊúÄ‰∏äÈù¢‰∏§‰∏™ÁÇπ*/ + x_div;
                                         }
                                         else {
                                             leftup = nPrevPrevPoints + y_div * 2 + x_division - 2;
@@ -254,9 +279,9 @@ namespace zeno {
                                     leftup = x_div % x_division + y_div * x_division;
                                 }
 
-                                //x∏∫∑ΩœÚµƒƒ«∏ˆ≤‡√Ê
+                                //xË¥üÊñπÂêëÁöÑÈÇ£‰∏™‰æßÈù¢
                                 if (z_div > 1) {
-                                    //∏˘æ›leftupÀ„leftdown
+                                    //Ê†πÊçÆleftupÁÆóleftdown
                                     if (y_div == 1) {
                                         leftdown = bRight ? leftup - 2 : leftup - x_division;
                                     }
@@ -264,7 +289,7 @@ namespace zeno {
                                         leftdown = leftup - x_division;
                                     }
                                     else {
-                                        leftdown = leftup - 2;    //æÕ‘⁄’˝œ¬∑Ω
+                                        leftdown = leftup - 2;    //Â∞±Âú®Ê≠£‰∏ãÊñπ
                                     }
                                 }
                                 else {
@@ -295,6 +320,8 @@ namespace zeno {
                 }
             }
             geo->create_attr(ATTR_POINT, "pos", points);
+            if (bCalcPointNormals)
+                geo->create_attr(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -316,7 +343,7 @@ namespace zeno {
     };
 
     struct ZDEFNODE() Grid : INode {
-        
+
         enum PlaneDirection {
             Dir_XY,
             Dir_YZ,
@@ -327,6 +354,7 @@ namespace zeno {
             _Group {
                 {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
                 {"Direction", ParamPrimitive("Direction", "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"})},
+                {"bCalcPointNormals", ParamPrimitive("Point Normals")},
             },
             _Group {
                 {"", ParamObject("Output")},
@@ -336,11 +364,12 @@ namespace zeno {
         std::shared_ptr<GeometryObject> apply(
             zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
             zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
-            zeno::vec2f Size = zeno::vec2f({1,1}),
+            zeno::vec2f Size = zeno::vec2f({ 1,1 }),
             int Rows = 2,
             int Columns = 2,
             std::string face_type = "Quadrilaterals",
-            std::string Direction = "ZX"
+            std::string Direction = "ZX",
+            bool bCalcPointNormals = false
         ) {
             if (Rows < 2 || Columns < 2) {
                 throw makeError<UnimplError>("the division should be greater than 2");
@@ -373,26 +402,33 @@ namespace zeno {
             }
 
             auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
-            std::vector<vec3f> points;
+            std::vector<vec3f> points, normals;
             points.resize(nPoints);
+            if (bCalcPointNormals)
+                normals.resize(nPoints);
 
             for (size_t i = 0; i < Rows; i++) {
                 for (size_t j = 0; j < Columns; j++) {
                     //zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
-                    vec3f pt;
+                    vec3f pt, nrm;
                     if (dir == Dir_ZX) {
                         pt = vec3f(bottom2 + step2 * j, 0, bottom1 + step1 * i);
+                        nrm = vec3f(0, 1, 0);
                     }
                     else if (dir == Dir_YZ) {
                         pt = vec3f(0, bottom1 + step1 * i, bottom2 + step2 * j);
+                        nrm = vec3f(1, 0, 0);
                     }
                     else {
                         pt = vec3f(bottom1 + step1 * i, bottom2 + step2 * j, 0);
+                        nrm = vec3f(0, 0, -1);
                     }
 
                     size_t idx = i * Columns + j;
                     points[idx] = pt;
                     geo->initpoint(idx);
+                    if (bCalcPointNormals)
+                        normals[idx] = nrm;
 
                     if (j > 0 && i > 0) {
                         size_t ij = idx;
@@ -411,6 +447,8 @@ namespace zeno {
                 }
             }
             geo->create_attr(ATTR_POINT, "pos", points);
+            if (bCalcPointNormals)
+                geo->create_attr(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -424,6 +462,7 @@ namespace zeno {
                 {"uniform_scale", ParamPrimitive("Uniform Scale")},
                 {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
                 {"Direction", ParamPrimitive("Direction", "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"})},
+                {"bCalcPointNormals", ParamPrimitive("Point Normals")},
                 {"end_caps", ParamPrimitive("End Caps")},
             },
             _Group {
@@ -442,28 +481,36 @@ namespace zeno {
             int Columns = 12,
             std::string Direction = "Y Axis",
             std::string face_type = "Quadrilaterals",
+            bool bCalcPointNormals = false,
             bool end_caps = false
-            )
+        )
         {
             bool bQuad = face_type == "Quadrilaterals";
             int nPoints = Rows * Columns;
-            int nFaces = (Rows - 1) * (Columns - 1);    //‘›≤ªøº¬«end_caps
+            int nFaces = (Rows - 1) * (Columns - 1);    //ÊöÇ‰∏çËÄÉËôëend_caps
             if (!bQuad) {
                 nFaces *= 2;
             }
 
             auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
-            std::vector<vec3f> points;
+            std::vector<vec3f> points, normals;
             points.resize(nPoints);
+            if (bCalcPointNormals)
+                normals.resize(nPoints);
 
             for (int row = 0; row < Rows; row++)
             {
                 float up_y = Height / 2.0f, down_y = -Height / 2.0f;
+
+                //ÊåáÂêë‰æßÔºàÊñúÔºâÈù¢Â§ñÈÉ®
+                float tan_belta = (down_radius - up_radius) / Height;
+
                 for (int col = 0; col < Columns; col++)
                 {
                     float rad = 2.0f * M_PI * col / Columns;
-                    float up_x = up_radius * cos(rad), up_z = up_radius * sin(rad);
-                    float down_x = down_radius * cos(rad), down_z = down_radius * sin(rad);
+                    float sin_a = sin(rad), cos_a = cos(rad);
+                    const float up_x = up_radius * cos_a, up_z = -1 * up_radius * sin_a;
+                    const float down_x = down_radius * cos_a, down_z = -1 * down_radius * sin_a;
                     vec3f up_pos(up_x, up_y, up_z);
                     vec3f down_pos(down_x, down_y, down_z);
 
@@ -478,6 +525,10 @@ namespace zeno {
 
                     points[idx] = pt;
                     geo->initpoint(idx);
+                    if (bCalcPointNormals) {
+                        normals[idx] = normalize(vec3f(cos_a, tan_belta * (sin_a * sin_a + cos_a * cos_a), -1 * sin_a));
+                    }
+
                     if (row > 0 && col > 0) {
                         size_t right_bottom = idx;
                         size_t left_bottom = right_bottom - 1;
@@ -493,7 +544,7 @@ namespace zeno {
                         }
 
                         if (col == Columns - 1) {
-                            //¡¨Ω”’‚“ª»¶◊Ó∫Û“ª∏ˆµ„∫Õ∆ ºµ„
+                            //ËøûÊé•Ëøô‰∏ÄÂúàÊúÄÂêé‰∏Ä‰∏™ÁÇπÂíåËµ∑ÂßãÁÇπ
                             right_bottom = idx - Columns + 1;
                             left_bottom = idx;
                             left_top = left_bottom - Columns;
@@ -511,6 +562,8 @@ namespace zeno {
                 }
             }
             geo->create_attr(ATTR_POINT, "pos", points);
+            if (bCalcPointNormals)
+                geo->create_attr(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -531,7 +584,7 @@ namespace zeno {
         std::shared_ptr<GeometryObject> apply(
             zeno::vec3f Center,
             zeno::vec3f Rotate,
-            zeno::vec3f Radius = zeno::vec3f(1.f,1.f,1.f),
+            zeno::vec3f Radius = zeno::vec3f(1.f, 1.f, 1.f),
             float uniform_scale = 1.f,
             std::string Direction = "Y Axis",
             int Rows = 13,
@@ -563,14 +616,14 @@ namespace zeno {
 
             auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
 
-            //œ»º”∂•≤ø∫Õµ◊≤ø¡Ω∏ˆ∂•µ„
+            //ÂÖàÂä†È°∂ÈÉ®ÂíåÂ∫ïÈÉ®‰∏§‰∏™È°∂ÁÇπ
             vec3f topPos(0, Ry, 0);
             int idx = 0;
             points[idx] = topPos;
             geo->initpoint(idx);
 
             vec3f bottomPos(0, -Ry, 0);
-            idx = 1;    //ºÊ»›houdini
+            idx = 1;    //ÂÖºÂÆπhoudini
             points[idx] = bottomPos;
             geo->initpoint(idx);
 
@@ -595,11 +648,11 @@ namespace zeno {
                 float y_pos = topPos[1] - row * y_piece;
                 float Rx_level = find_x(y_pos);
                 float Rz_level = find_z(y_pos);
-                //col = 0, ¥”x÷·’˝∑ΩœÚø™ º◊™»¶»¶
+                //col = 0, ‰ªéxËΩ¥Ê≠£ÊñπÂêëÂºÄÂßãËΩ¨ÂúàÂúà
                 size_t startIdx = 2 + (row - 1) * Columns;
                 for (int col = 0; col < Columns; col++)
                 {
-                    //R_level÷ª «∂®“Â¡Ày∑ΩœÚΩÁ√Ê‘⁄x÷·µƒ∂Ã÷·£¨≥§÷·»‘–Ëz∑ΩœÚµƒR¿¥æˆ∂®
+                    //R_levelÂè™ÊòØÂÆö‰πâ‰∫ÜyÊñπÂêëÁïåÈù¢Âú®xËΩ¥ÁöÑÁü≠ËΩ¥ÔºåÈïøËΩ¥‰ªçÈúÄzÊñπÂêëÁöÑRÊù•ÂÜ≥ÂÆö
                     float rad = 2.0f * M_PI * col / Columns;
                     float x_pos = sqrt((Rx_level * Rx_level) / (1.f + pow(tan(rad) * Rx_level / Rz_level, 2)));
                     if (cos(rad) < 0) {
@@ -616,12 +669,12 @@ namespace zeno {
                     float z = -sin(theta) * sin(phi);
                     //pt = vec3f(x, y, z);
 
-                    size_t idx = 2/*∂•≤øµ◊≤ø¡Ω∏ˆµ„*/ + (row - 1) * Columns + col;
+                    size_t idx = 2/*È°∂ÈÉ®Â∫ïÈÉ®‰∏§‰∏™ÁÇπ*/ + (row - 1) * Columns + col;
                     geo->initpoint(idx);
                     points[idx] = pt;
                     if (col > 0) {
                         if (row == 1) {
-                            //”Î∂•≤ø∂•µ„ππ≥…»˝Ω«√Ê
+                            //‰∏éÈ°∂ÈÉ®È°∂ÁÇπÊûÑÊàê‰∏âËßíÈù¢
                             geo->addface({ 0, idx - 1, idx });
                             if (col == Columns - 1) {
                                 geo->addface({ 0, idx, startIdx });
@@ -630,7 +683,7 @@ namespace zeno {
                         else {
                             size_t rightdown = idx;
                             size_t leftdown = rightdown - 1;
-                            size_t rightup = 2/*∂•≤øµ◊≤ø¡Ω∏ˆµ„*/ + (row - 2) * Columns + col;
+                            size_t rightup = 2/*È°∂ÈÉ®Â∫ïÈÉ®‰∏§‰∏™ÁÇπ*/ + (row - 2) * Columns + col;
                             size_t leftup = rightup - 1;
                             if (bQuad) {
                                 geo->addface({ rightdown, rightup, leftup, leftdown });
@@ -656,7 +709,7 @@ namespace zeno {
                             }
 
                             if (row == Rows - 2) {
-                                //”Îµ◊≤ø∂•µ„ππ≥…»˝Ω«√Ê
+                                //‰∏éÂ∫ïÈÉ®È°∂ÁÇπÊûÑÊàê‰∏âËßíÈù¢
                                 geo->addface({ idx, idx - 1, 1 });
                                 if (col == Columns - 1) {
                                     geo->addface({ 1, startIdx, idx });

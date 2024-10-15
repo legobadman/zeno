@@ -4,6 +4,7 @@
 
 namespace zeno
 {
+
     GeometryTopology::GeometryTopology(bool bTriangle, int nPoints, int nFaces) {
         m_bTriangle = bTriangle;
         m_points.resize(nPoints);
@@ -107,6 +108,25 @@ namespace zeno
             indice.push_back(vec3i(h->next->next->next->point, h->point, h->next->next->point));
         }
         return indice;
+    }
+
+    std::vector<int> GeometryTopology::edge_list() const {
+        std::vector<int> edges;
+        for (auto spFace : m_faces) {
+            HEdge* h = spFace->h;
+            while (h->next != spFace->h) {
+                edges.push_back(h->find_from());
+                edges.push_back(h->point);
+                h = h->next;
+            }
+            edges.push_back(h->find_from());
+            edges.push_back(h->point);
+        }
+        return edges;
+    }
+
+    bool GeometryTopology::is_base_triangle() const {
+        return m_bTriangle;
     }
 
     void GeometryTopology::addface(const std::vector<size_t>& points) {
