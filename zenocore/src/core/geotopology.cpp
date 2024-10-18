@@ -1,5 +1,8 @@
 #include "geotopology.h"
 #include <zeno/utils/format.h>
+#include <zeno/para/parallel_for.h>
+#include <zeno/para/parallel_scan.h>
+#include <zeno/utils/variantswitch.h>
 
 
 namespace zeno
@@ -127,6 +130,76 @@ namespace zeno
 
     bool GeometryTopology::is_base_triangle() const {
         return m_bTriangle;
+    }
+
+    int GeometryTopology::npoints_in_face(Face* face) const {
+        auto h = face->h;
+        int ncount = 0;
+        do {
+            ncount++;
+            h = h->next;
+        } while (face->h != h);
+        return ncount;
+    }
+
+    void GeometryTopology::geomTriangulate(zeno::TriangulateInfo& info) {
+        boolean_switch(info.has_lines, [&](auto has_lines) {
+            std::vector<std::conditional_t<has_lines.value, vec2i, int>> scansum(m_faces.size());
+            auto redsum = parallel_exclusive_scan_sum(m_faces.begin(), m_faces.end(),
+                scansum.begin(), [&](auto& face) {
+                    int npts = npoints_in_face(face.get());
+                    if constexpr (has_lines.value) {
+                        return vec2i(npts >= 3 ? npts - 2 : 0, npts == 2 ? 1 : 0);
+                    }
+                    else {
+                        return npts >= 3 ? npts - 2 : 0;
+                    }
+                });
+            std::vector<int> mapping;
+            int tribase = 0;        //TODO: 即使是四边形构成的结合体，也有可能有一些三角形的面存在，这些三角形需要缓存起来
+            int linebase = 0;
+            if constexpr (has_lines.value) {
+                info.tris.resize(tribase + redsum[0]);
+                mapping.resize(tribase + redsum[0]);
+                info.lines.resize(linebase + redsum[1]);
+            }
+            else {
+                info.tris.resize(tribase + redsum);
+                mapping.resize(tribase + redsum);
+            }
+
+            {
+                parallel_for(m_faces.size(), [&](size_t i) {
+                    Face* f = m_faces[i].get();
+                    HEdge* hstart = f->h;
+                    int start = hstart->find_from();
+                    int len =  npoints_in_face(f);
+                    if (len >= 3) {
+                        int scanbase = 0;
+                        if constexpr (has_lines.value) {
+                            scanbase = scansum[i][0] + tribase;
+                        }
+                        else {
+                            scanbase = scansum[i] + tribase;
+                        }
+
+                        HEdge* h = hstart;
+                        while (h->next->point != start) {
+                            info.tris[scanbase] = vec3i(start, h->point, h->next->point);
+                            mapping[scanbase] = i;
+                            h = h->next;
+                            scanbase++;
+                        }
+                    }
+                    if constexpr (has_lines.value) {
+                        if (len == 2) {
+                            int scanbase = scansum[i][1] + linebase;
+                            info.lines[scanbase] = vec2i(start, f->h->point);
+                        }
+                    }
+                });
+            }
+        });
     }
 
     void GeometryTopology::addface(const std::vector<size_t>& points) {

@@ -338,6 +338,19 @@ namespace zeno {
         std::vector<ref_tip_info> ref_candidates;
     };
 
+    struct TriangulateInfo
+    {
+        /*in*/ bool with_uv = true;
+        /*in*/ bool has_lines = true;
+        /*in*/ bool with_attr = true;
+        /*out*/std::vector<vec3i> tris;
+        /*out*/std::vector<vec2i> lines;
+        /*out*/std::vector<vec3f> uv;
+        /*out*/std::vector<vec3f> uv0;
+        /*out*/std::vector<vec3f> uv1;
+        /*out*/std::vector<vec3f> uv2;
+    };
+
     //可以是公式，曲线，数值，字符串中的一种，适用于所有数值类型和向量类型
     using PrimVar = std::variant<int, float, std::string, CurveData>;
     using vecvar = std::vector<zeno::PrimVar>;

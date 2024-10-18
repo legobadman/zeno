@@ -52,6 +52,8 @@ namespace zeno
         std::vector<vec3i> tri_indice() const;
         std::vector<int> edge_list() const;
         bool is_base_triangle() const;
+        int npoints_in_face(Face* face) const;
+        void geomTriangulate(zeno::TriangulateInfo& info);
 
         std::vector<std::shared_ptr<Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;

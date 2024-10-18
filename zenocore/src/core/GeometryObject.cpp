@@ -7,6 +7,9 @@
 #include "geotopology.h"
 #include "../utils/zfxutil.h"
 #include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/para/parallel_for.h>
+#include <zeno/para/parallel_scan.h>
+#include <zeno/utils/variantswitch.h>
 
 
 namespace zeno
@@ -51,7 +54,7 @@ namespace zeno
         initFromPrim(prim);
     }
 
-    ZENO_API std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() const {
+    ZENO_API std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
         std::shared_ptr<PrimitiveObject> spPrim = std::make_shared<PrimitiveObject>();
         std::vector<vec3f>& vec_pos = points_pos();
         int nPoints = m_spTopology->m_points.size();
@@ -124,7 +127,7 @@ namespace zeno
             std::vector<int> points;
             if (m_spTopology->m_bTriangle) {
                 auto const& ind = prim->tris[face];
-                points = { ind[0], ind[1], ind[2] };
+                points = { ind[0], ind[1], ind[2]};
             }
             else {
                 auto const& poly = prim->polys[face];
@@ -199,14 +202,8 @@ namespace zeno
         return m_spTopology->m_faces.size();
     }
 
-    std::vector<vec3f>& GeometryObject::points_pos() const {
-        auto iter = m_point_attrs.find("pos");
-        if (iter == m_point_attrs.end()) {
-            throw makeError<UnimplError>("no pos on geo");
-        }
-        ATTR_DATA_PTR spPointAttrs = iter->second;
-        auto& val = spPointAttrs->value();
-        return any_cast<std::vector<vec3f>&>(val);
+    std::vector<vec3f> GeometryObject::points_pos() {
+        return get_attr<vec3f>(ATTR_POINT, "pos");
     }
 
     ZENO_API std::vector<vec3i> GeometryObject::tri_indice() const {
@@ -219,6 +216,25 @@ namespace zeno
 
     ZENO_API bool GeometryObject::is_base_triangle() const {
         return m_spTopology->is_base_triangle();
+    }
+
+    ZENO_API int GeometryObject::get_group_count(GeoAttrGroup grp) const {
+        switch (grp) {
+        case ATTR_POINT: return m_point_attrs.size();
+        case ATTR_FACE: return m_face_attrs.size();
+        case ATTR_GEO: return 1;
+        default:
+            return 0;
+        }
+    }
+
+    ZENO_API void GeometryObject::geomTriangulate(zeno::TriangulateInfo& info) {
+        if (is_base_triangle()) {
+            //TODO
+            return;
+        }
+        m_spTopology->geomTriangulate(info);
+        //TODO: uv
     }
 
     bool GeometryObject::remove_point(int ptnum) {
@@ -369,7 +385,7 @@ namespace zeno
         throw makeError<UnimplError>();
     }
 
-    int GeometryObject::get_attr_size(GeoAttrGroup grp) {
+    ZENO_API size_t GeometryObject::get_attr_size(GeoAttrGroup grp) const {
         if (grp == ATTR_GEO) {
             return 1;
         }
@@ -384,7 +400,7 @@ namespace zeno
         }
     }
 
-    std::map<std::string, ATTR_DATA_PTR>& GeometryObject::get_container(GeoAttrGroup grp) {
+    ZENO_API std::map<std::string, ATTR_DATA_PTR>& GeometryObject::get_container(GeoAttrGroup grp) {
         if (grp == ATTR_GEO) {
             return m_geo_attrs;
         }
@@ -465,7 +481,7 @@ namespace zeno
         return zeno::zfx::extractAttrValue(val, n);
     }
 
-    Any& GeometryObject::get_attr(GeoAttrGroup grp, std::string const& name)
+    Any& GeometryObject::get_attr_impl(GeoAttrGroup grp, std::string const& name)
     {
         std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
         auto iter = container.find(name);
@@ -479,6 +495,17 @@ namespace zeno
             throw makeError<UnimplError>("empty value on attr `" + name + "`");
         }
         return val;
+    }
+
+    ZENO_API void GeometryObject::create_attr_impl(GeoAttrGroup grp, const std::string& attr_name, const Any& vecAny) {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(attr_name);
+        if (iter != container.end()) {
+            throw;   //already exist
+        }
+        size_t n = get_attr_size(grp);
+        ATTR_DATA_PTR spAttr = std::make_shared<AttributeData>(vecAny, n);
+        container.insert(std::make_pair(attr_name, spAttr));
     }
 
     void GeometryObject::set_attr_byzfx(GeoAttrGroup grp, std::string const& name, const ZfxVariable& val, ZfxElemFilter& filter)
@@ -565,14 +592,7 @@ namespace zeno
         if (face_id < 0 || face_id >= m_spTopology->m_faces.size()) {
             return 0;
         }
-        auto firstedge = m_spTopology->m_faces[face_id]->h;
-        auto h = firstedge;
-        int ncount = 0;
-        do {
-            ncount++;
-            h = h->next;
-        } while (firstedge != h);
-        return ncount;
+        return m_spTopology->npoints_in_face(m_spTopology->m_faces[face_id].get());
     }
 
     void GeometryObject::addface(const std::vector<size_t>& points) {

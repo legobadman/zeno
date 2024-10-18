@@ -652,7 +652,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
 
         if (geo->has_attr(zeno::ATTR_POINT, "clr")) {
-            clr = zeno::get_attr_vector(geo, zeno::ATTR_POINT, "clr");
+            clr = geo->get_attr<zeno::vec3f>(zeno::ATTR_POINT, "clr");
         }
         else {
             zeno::vec3f clr0(1.0f);
@@ -660,7 +660,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
 
         if (geo->has_attr(zeno::ATTR_POINT, "nrm")) {
-            nrms = zeno::get_attr_vector(geo, zeno::ATTR_POINT, "nrm");
+            nrms = geo->get_attr<zeno::vec3f>(zeno::ATTR_POINT, "nrm");
         }
         else {
             //TODO: calculate normals by util function.
@@ -668,7 +668,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
 
         if (geo->has_attr(zeno::ATTR_POINT, "tang")) {
-            tang = zeno::get_attr_vector(geo, zeno::ATTR_POINT, "tang");
+            tang = geo->get_attr<zeno::vec3f>(zeno::ATTR_POINT, "tang");
         }
         else {
             std::fill(tang.begin(), tang.end(), zeno::vec3f(0.0f));

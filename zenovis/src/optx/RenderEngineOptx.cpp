@@ -19,6 +19,8 @@
 #include <zeno/utils/UserData.h>
 #include <zeno/extra/TempNode.h>
 #include <zeno/utils/fileio.h>
+#include <zeno/utils/helper.h>
+#include <zeno/geo/geometryutil.h>
 #include <zenovis/Scene.h>
 #include <zenovis/Camera.h>
 #include <zenovis/RenderEngine.h>
@@ -203,7 +205,6 @@ struct GraphicsManager {
         };
 
         struct DetPrimitive {
-            std::shared_ptr<zeno::PrimitiveObject> primSp;
         };
 
     struct ZxxGraphic : zeno::disable_copy {
@@ -328,10 +329,17 @@ struct GraphicsManager {
         explicit ZxxGraphic(std::string key_, zeno::IObject *obj)
         : key(std::move(key_))
         {
-            if (auto const *prim_in0 = dynamic_cast<zeno::PrimitiveObject *>(obj))
-            {
+            std::shared_ptr<zeno::PrimitiveObject> prim_in_lslislSp;
+            if (auto geo = dynamic_cast<zeno::GeometryObject*>(obj)) {
+                prim_in_lslislSp = geo->toPrimitive();
+            }
+            else if (auto const* prim_in0 = dynamic_cast<zeno::PrimitiveObject*>(obj)){
                 // vvv deepcopy to cihou following inplace ops vvv
-                auto prim_in_lslislSp = std::make_shared<zeno::PrimitiveObject>(*prim_in0);
+                prim_in_lslislSp = std::make_shared<zeno::PrimitiveObject>(*prim_in0);
+            }
+
+            if (prim_in_lslislSp)
+            {
                 // ^^^ Don't wuhui, I mean: Literial Synthetic Lazy internal static Local Shared Pointer
                 auto prim_in = prim_in_lslislSp.get();
 
@@ -544,7 +552,7 @@ struct GraphicsManager {
 
 
 
-        det = DetPrimitive{prim_in_lslislSp};
+        det = DetPrimitive{};
         if (int subdlevs = prim_in->userData().get2<int>("delayedSubdivLevels", 0)) {
             // todo: zhxx, should comp normal after subd or before????
             zeno::log_trace("computing subdiv {}", subdlevs);
@@ -653,6 +661,140 @@ struct GraphicsManager {
                     xinxinoptix::load_object(key, mtlid, instID, vs, nvs, ts, nts, vtab, matids.data(), matNameList);
                 }
             }
+#if 0
+            else if (auto geo = dynamic_cast<zeno::GeometryObject*>(obj)){
+                //TODO
+                size_t nPoints = geo->npoints();
+                zeno::UserData& ud = geo->userData();
+                if (ud.has("curve") && geo->npoints() > 0 && geo->has_attr(zeno::ATTR_POINT, "width")) {
+
+                }
+                if (ud.has("cyhair")) {
+
+                }
+                if (ud.has("sphere_center")) {
+
+                }
+                if (ud.has("vbox")) {
+
+                }
+
+                auto isRealTimeObject = ud.get2<int>("isRealTimeObject", 0);
+                auto isUniformCarrier = ud.has("ShaderUniforms");
+                auto isInst = ud.get2<int>("isInst", 0);
+
+                if (isInst == 1)
+                {
+                    if (!geo->has_attr(zeno::ATTR_POINT, "pos")) {
+
+                    }
+                    if (!geo->has_attr(zeno::ATTR_POINT, "nrm")) {
+
+                    }
+                    if (!geo->has_attr(zeno::ATTR_POINT, "uv")) {
+
+                    }
+                    if (!geo->has_attr(zeno::ATTR_POINT, "clr")) {
+
+                    }
+                    if (!geo->has_attr(zeno::ATTR_POINT, "tang")) {
+
+                    }
+
+                    auto instID = ud.get2<std::string>("instID", "Default");
+                    auto onbType = ud.get2<std::string>("onbType", "XYZ");
+
+                    std::size_t numInsts = geo->npoints();
+                    //if not exist?
+                    //const float* pos = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "pos").data();
+                    //const float* nrm = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "nrm").data();
+                    //const float* uv = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "uv").data();
+                    //const float* clr = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "clr").data();
+                    //const float* tang = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "tang").data();
+                    //xinxinoptix::load_inst(key, instID, onbType, numInsts, pos, nrm, uv, clr, tang);
+                }
+                else if (isRealTimeObject == 0 && isUniformCarrier == 0)
+                {
+                    int matNum = ud.get2<int>("matNum", 0);
+                    if (matNum == 0)
+                    {
+                        //assign -1 to "matid" attr
+                        if (geo->nfaces() > 0) {
+                            geo->create_attr(zeno::ATTR_FACE, "matid", -1);
+                        }
+                    }
+                    det = DetPrimitive{};
+                    if (int subdlevs = ud.get2<int>("delayedSubdivLevels", 0)) {
+                        //TODO? compute subdiv?
+                        /*
+                                    (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
+                            .set("prim", prim_in_lslislSp)
+                            .set2<int>("levels", subdlevs)
+                            .set2<std::string>("edgeCreaseAttr", "")
+                            .set2<bool>("triangulate", true)
+                            .set2<bool>("asQuadFaces", true)
+                            .set2<bool>("hasLoopUVs", true)
+                            .set2<bool>("delayTillIpc", false)
+                            .call();  // will inplace subdiv prim
+                        prim_in->userData().del("delayedSubdivLevels");
+                        */
+                    }
+
+                    if (geo->is_base_triangle()) {
+                        //TODO:
+                        return;
+                    }
+
+                    zeno::TriangulateInfo tri_info;
+                    zeno::log_trace("demoting faces");
+                    geo->geomTriangulate(tri_info);
+
+                    size_t nTriangles = tri_info.tris.size();
+                    if (nTriangles == 0) {
+                        return;
+                    }
+
+                    auto mtlid = ud.get2<std::string>("mtlid", "Default");
+                    auto instID = ud.get2<std::string>("instID", "Default");
+
+                    bool has_uv = !tri_info.uv0.empty() && !tri_info.uv1.empty() && !tri_info.uv2.empty() && !tri_info.uv.empty();
+                    if (has_uv == false)
+                    {
+                        tri_info.uv0.resize(nTriangles);
+                        tri_info.uv1.resize(nTriangles);
+                        tri_info.uv2.resize(nTriangles);
+                        tri_info.uv.resize(nTriangles);
+                    }
+                    std::vector<zeno::vec3f> uv(nPoints);
+
+#ifdef ATTR_VEC_STORE_ISOLATE
+                    std::vector<zeno::vec3f> pos(geo->points_pos());
+#else
+                    std::vector<zeno::vec3f>& pos = geo->get_attr_value(ATTR_POINT, "pos");
+#endif
+
+                    std::vector<zeno::vec3f> normals;
+                    if (!geo->has_attr(zeno::ATTR_POINT, "nrm")) {
+                        normals = calc_point_normals(geo, tri_info.tris);
+                    }
+                    else {
+                        normals = geo->get_attr<zeno::vec3f>(zeno::ATTR_POINT, "nrm");
+                    }
+
+                    //TODO
+                    std::vector<zeno::vec3f> tang = calc_triangles_tangent(geo, has_uv, tri_info.tris, pos, tri_info.uv, tri_info.uv0, tri_info.uv1, tri_info.uv2);
+                    std::vector<zeno::vec3f> atang = compute_vertex_tangent(tri_info.tris, tang, pos);
+
+                    std::vector<zeno::vec3i> idxBuffer;
+
+                    //geo->create_attr_value(zeno::ATTR_POINT, "pos2", zeno::vec2f(0, 4.5));
+                    //geo->set_attr_value(zeno::ATTR_POINT, "pos2", zeno::vec2f(1.f, 5.f));
+                    //std::vector<std::vector<float>*> arr = geo->get_vec_attr_value<float>(zeno::ATTR_POINT, "pos2");
+
+                    //xinxinoptix::load_object(key, mtlid, instID, vs, nvs, ts, nts, vtab, matids.data(), matNameList);
+                }
+            }
+#endif
             else if (auto mtl = dynamic_cast<zeno::MaterialObject *>(obj))
             {
                 det = DetMaterial{mtl->tex2Ds, mtl->tex3Ds, mtl->common, mtl->frag, mtl->extensions, mtl->mtlidkey, mtl->parameters};
@@ -1032,7 +1174,8 @@ struct GraphicsManager {
     }
 
     void add_object(std::shared_ptr<zeno::IObject> obj) {
-        if (obj->key().empty())
+        std::string objKey = obj->key();
+        if (objKey.empty())
             return;
         if (!scene->drawOptions->updateMatlOnly) {
             if (auto cam = std::dynamic_pointer_cast<zeno::CameraObject>(obj)) {
@@ -1040,19 +1183,19 @@ struct GraphicsManager {
             }
         }
 
-        auto& wtf = graphics.m_curr;
-        auto it = wtf.find(obj->key());
-        if (it == wtf.end()) {
-            auto ig = std::make_unique<ZxxGraphic>(obj->key(), obj.get());
-            graphics.m_curr.insert(std::make_pair(obj->key(), std::move(ig)));
+        auto& objs = graphics.m_curr;
+        auto it = objs.find(objKey);
+        if (it == objs.end()) {
+            auto ig = std::make_unique<ZxxGraphic>(objKey, obj.get());
+            graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));
         }
         else {
-            wtf.erase(obj->key());
-            auto ig = std::make_unique<ZxxGraphic>(obj->key(), obj.get());
-            graphics.m_curr.insert(std::make_pair(obj->key(), std::move(ig)));  //先erase再添加，通过it->second = std::move(ig)方式添加会失效
+            objs.erase(objKey);
+            auto ig = std::make_unique<ZxxGraphic>(objKey, obj.get());
+            graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));  //先erase再添加，通过it->second = std::move(ig)方式添加会失效
             //if (!ig)
             //    return;
-            //ig->key = obj->key();
+            //ig->key = objKey;
             //it->second = std::move(ig);
         }
     }

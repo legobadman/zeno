@@ -11,12 +11,12 @@ namespace zeno
     struct ZDEFNODE() Duplicate : INode
     {
         ReflectCustomUI m_uilayout = {
-            //ÊäÈë£º
+            //ï¿½ï¿½ï¿½ë£º
             _Group {
                 {"input_object", ParamObject("Original Object", Socket_Clone)},
                 {"keepModifyOriginal", ParamPrimitive("Keep Modify Original")},
             },
-            //Êä³ö£º
+            //ï¿½ï¿½ï¿½ï¿½ï¿½
             _Group {
                 {"", ParamObject("Duplicated Object", Socket_Output)},
                 {"", ParamObject("Original Object", Socket_Output, "", "visible = param('Keep Modify Original').value == 1;")},

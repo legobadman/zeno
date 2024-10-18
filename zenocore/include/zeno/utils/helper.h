@@ -54,7 +54,6 @@ namespace zeno {
     bool isSameDimensionNumericVecType(zeno::ParamType left, zeno::ParamType right);
     ZENO_API bool outParamTypeCanConvertInParamType(zeno::ParamType outType, zeno::ParamType inType, NodeDataGroup outGroup, NodeDataGroup inGroup);
     ZENO_API bool isPrimVarType(zeno::ParamType type);
-    ZENO_API std::vector<zeno::vec3f> get_attr_vector(GeometryObject* spGeo, zeno::GeoAttrGroup grp, std::string attr_name);
 
     void getNameMappingFromReflectUI(
         zeno::reflect::TypeBase* typeBase,

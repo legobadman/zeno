@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/core/reflectdef.h>
 #include <zeno/types/GeometryObject.h>
+#include "glm/gtc/matrix_transform.hpp"
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -319,7 +320,7 @@ namespace zeno {
                     }
                 }
             }
-            geo->create_attr(ATTR_POINT, "pos", points);
+            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
             return geo;
@@ -642,12 +643,12 @@ namespace zeno {
 
             for (int row = 1; row < Rows - 1; row++)
             {
-                float v = (float)row / (float)Rows;
+                float v = (float)row / (float)(Rows - 1);
                 float theta = M_PI * v;
+                float y = cos(theta);
 
-                float y_pos = topPos[1] - row * y_piece;
-                float Rx_level = find_x(y_pos);
-                float Rz_level = find_z(y_pos);
+                float Rx_level = find_x(y);
+                float Rz_level = find_z(y);
                 //col = 0, 从x轴正方向开始转圈圈
                 size_t startIdx = 2 + (row - 1) * Columns;
                 for (int col = 0; col < Columns; col++)
@@ -660,14 +661,12 @@ namespace zeno {
                     }
                     float z_pos = tan(rad) * x_pos;
                     z_pos *= -1;
-                    vec3f pt(x_pos, y_pos, z_pos);
 
                     float u = (float)col / (float)Columns;
                     float phi = M_PI * 2 * u;
                     float x = sin(theta) * cos(phi);
-                    float y = cos(theta);
                     float z = -sin(theta) * sin(phi);
-                    //pt = vec3f(x, y, z);
+                    vec3f pt = vec3f(x, y, z);
 
                     size_t idx = 2/*顶部底部两个点*/ + (row - 1) * Columns + col;
                     geo->initpoint(idx);
@@ -719,7 +718,25 @@ namespace zeno {
                     }
                 }
             }
-            geo->create_attr(ATTR_POINT, "pos", points);
+
+            glm::mat4 transform = glm::mat4(1.0), translate = glm::mat4(1.0), rotation = glm::mat4(1.0), scale_matrix = glm::mat4(uniform_scale);
+            auto angle = 0.f;
+            auto axis = glm::vec3(0, 1, 0);
+            rotation = glm::rotate(rotation, angle, axis);
+            scale_matrix = glm::scale(scale_matrix, glm::vec3(Radius[0], Radius[1], Radius[2]));
+            translate = glm::translate(translate, glm::vec3(Center[0], Center[1], Center[1]));
+
+            transform = translate * scale_matrix * rotation;
+
+            for (size_t i = 0; i < points.size(); i++)
+            {
+                auto pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                //todo: normal.
+            }
+
+            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
             return geo;
         }
     };
