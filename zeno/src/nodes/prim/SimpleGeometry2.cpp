@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/core/reflectdef.h>
 #include <zeno/types/GeometryObject.h>
+#include <zeno/geo/geometryutil.h>
 #include "glm/gtc/matrix_transform.hpp"
 #include "zeno_types/reflect/reflection.generated.hpp"
 
@@ -618,12 +619,12 @@ namespace zeno {
             auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
 
             //先加顶部和底部两个顶点
-            vec3f topPos(0, Ry, 0);
+            vec3f topPos(0, 1, 0);
             int idx = 0;
             points[idx] = topPos;
             geo->initpoint(idx);
 
-            vec3f bottomPos(0, -Ry, 0);
+            vec3f bottomPos(0, -1, 0);
             idx = 1;    //兼容houdini
             points[idx] = bottomPos;
             geo->initpoint(idx);
@@ -719,12 +720,26 @@ namespace zeno {
                 }
             }
 
-            glm::mat4 transform = glm::mat4(1.0), translate = glm::mat4(1.0), rotation = glm::mat4(1.0), scale_matrix = glm::mat4(uniform_scale);
+            glm::mat4 transform = glm::mat4(1.0), translate = glm::mat4(1.0), rotation = glm::mat4(1.0), scale_matrix = glm::mat4(1.0);
+
             auto angle = 0.f;
-            auto axis = glm::vec3(0, 1, 0);
-            rotation = glm::rotate(rotation, angle, axis);
-            scale_matrix = glm::scale(scale_matrix, glm::vec3(Radius[0], Radius[1], Radius[2]));
-            translate = glm::translate(translate, glm::vec3(Center[0], Center[1], Center[1]));
+            if (Direction == "X Axis") {
+                glm::vec3 axis = glm::vec3(0, 0, 1);
+                rotation = glm::rotate(rotation, glm::radians(-90.f), axis);
+            }
+            else if (Direction == "Z Axis") {
+                glm::vec3 axis = glm::vec3(1, 0, 0);
+                rotation = glm::rotate(rotation, glm::radians(90.f), axis);
+            }
+            else {
+                //default as "Y Axis"
+            }
+
+            scale_matrix = glm::scale(scale_matrix, glm::vec3(uniform_scale * Radius[0], uniform_scale * Radius[1], uniform_scale * Radius[2]));
+            translate = glm::translate(translate, glm::vec3(Center[0], Center[1], Center[2]));
+
+            glm::mat4 rotation_ = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Direction);
+            rotation = rotation_ * rotation;
 
             transform = translate * scale_matrix * rotation;
 

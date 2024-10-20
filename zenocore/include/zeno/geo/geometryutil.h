@@ -5,6 +5,10 @@
 #include <tuple>
 #include <array>
 #include <zeno/types/GeometryObject.h>
+#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace zeno
 {
@@ -28,6 +32,12 @@ namespace zeno
         const std::vector<vec3i>& tris,
         const std::vector<vec3f>& tang,
         const std::vector<vec3f>& pos
+        );
+    ZENO_API glm::mat4 calc_rotate_matrix(
+        float xangle,
+        float yangle,
+        float zangle,
+        std::string orientaion
         );
 }
 

@@ -158,4 +158,31 @@ namespace zeno
         return atang;
     }
 
+    ZENO_API glm::mat4 calc_rotate_matrix(
+        float xangle,
+        float yangle,
+        float zangle,
+        std::string orientaion
+    ) {
+        float rad_x = xangle * (M_PI / 180.0);
+        float rad_y = yangle * (M_PI / 180.0);
+        float rad_z = zangle * (M_PI / 180.0);
+        //这里构造的方式是基于列，和公式上的一样，所以看起来反过来了
+        glm::mat4 mx = glm::mat4(
+            1, 0, 0, 0,
+            0, cos(rad_x), sin(rad_x), 0,
+            0, -sin(rad_x), cos(rad_x), 0,
+            0, 0, 0, 1);
+        glm::mat4 my = glm::mat4(
+            cos(rad_y), 0, -sin(rad_y), 0,
+            0, 1, 0, 0,
+            sin(rad_y), 0, cos(rad_y), 0,
+            0, 0, 0, 1);
+        glm::mat4 mz = glm::mat4(
+            cos(rad_z), sin(rad_z), 0, 0,
+            -sin(rad_z), cos(rad_z), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1);
+        return mz * my * mx;
+    }
 }
