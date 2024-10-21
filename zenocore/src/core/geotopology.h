@@ -48,6 +48,7 @@ namespace zeno
         size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
         size_t getPointTo(HEdge* hedge) const;
         void addface(const std::vector<size_t>& points);
+        void setface(size_t idx, const std::vector<size_t>& points);
         void initpoint(size_t idxPoint);
         std::vector<vec3i> tri_indice() const;
         std::vector<int> edge_list() const;

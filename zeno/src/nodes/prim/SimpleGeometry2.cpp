@@ -48,11 +48,10 @@ namespace zeno {
             }
 
             bool bQuad = face_type == "Quadrilaterals";
-            float sizeX = Size[0] * uniform_scale, sizeY = Size[1] * uniform_scale, sizeZ = Size[2] * uniform_scale;
-            float xstep = sizeX / (x_division - 1), ystep = sizeY / (y_division - 1), zstep = sizeZ / (z_division - 1);
-            float xleft = Center[0] - sizeX / 2, xright = xleft + sizeX;
-            float ybottom = Center[1] - sizeY / 2, ytop = ybottom + sizeY;
-            float zback = Center[2] - sizeZ / 2, zfront = zback + sizeZ;
+            float xstep = 1.f / (x_division - 1), ystep = 1.f / (y_division - 1), zstep = 1.f / (z_division - 1);
+            float xleft = -0.5f, xright = 0.5;
+            float ybottom = -0.5f, ytop = 0.5;
+            float zback = -0.5f, zfront = 0.5;
 
             float x, y, z = 0;
             float z_prev = zback;
@@ -321,9 +320,22 @@ namespace zeno {
                     }
                 }
             }
+
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0), glm::vec3(uniform_scale * Size[0], uniform_scale * Size[1], uniform_scale * Size[2]));
+            glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], "");
+            glm::mat4 transform = translate * rotation * scale_matrix;
+            for (size_t i = 0; i < points.size(); i++)
+            {
+                auto pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                //todo: normal.
+            }
+
             geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
-                geo->create_attr(ATTR_POINT, "nrm", normals);
+                geo->create_attr_value_by_vec(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -379,8 +391,8 @@ namespace zeno {
 
             float size1 = Size[0], size2 = Size[1];
             float step1 = size1 / (Rows - 1), step2 = size2 / (Columns - 1);
-            float bottom1 = Center[0] - size1 / 2, up1 = bottom1 + size1;
-            float bottom2 = Center[1] - size2 / 2, up2 = bottom2 + size2;
+            float bottom1 = - size1 / 2, up1 = bottom1 + size1;
+            float bottom2 = - size2 / 2, up2 = bottom2 + size2;
             bool bQuad = face_type == "Quadrilaterals";
 
             int nPoints = Rows * Columns;
@@ -448,9 +460,21 @@ namespace zeno {
                     }
                 }
             }
-            geo->create_attr(ATTR_POINT, "pos", points);
+
+            glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Direction);
+            glm::mat4 transform = translate * rotation;
+            for (size_t i = 0; i < points.size(); i++)
+            {
+                auto pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                //todo: normal.
+            }
+
+            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
-                geo->create_attr(ATTR_POINT, "nrm", normals);
+                geo->create_attr_value_by_vec(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -489,9 +513,17 @@ namespace zeno {
         {
             bool bQuad = face_type == "Quadrilaterals";
             int nPoints = Rows * Columns;
-            int nFaces = (Rows - 1) * (Columns - 1);    //暂不考虑end_caps
+            int nFaces = (Rows - 1) * Columns;    //暂不考虑end_caps
             if (!bQuad) {
                 nFaces *= 2;
+            }
+
+            if (end_caps) {
+                nFaces += 2;
+            }
+            if (!bQuad && end_caps) {
+                //如果是三角形，就让中轴线顶部和底部多两个顶点，然后和顶部（底部）各个点形成三角形
+                nPoints += 2;
             }
 
             auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
@@ -500,10 +532,59 @@ namespace zeno {
             if (bCalcPointNormals)
                 normals.resize(nPoints);
 
+            float up_y = Height / 2.0f, down_y = -Height / 2.0f;
+
+            if (end_caps) {
+                //先把顶部和底部两个面加上
+                if (bQuad) {
+                    std::vector<size_t> up_pts, down_pts;
+                    for (int col = 0; col < Columns; col++)
+                    {
+                        size_t up_idx = col;
+                        geo->initpoint(up_idx);
+                        up_pts.push_back(up_idx);
+                    }
+                    for (int col = Columns - 1; col >= 0; col--) {
+                        size_t down_idx = (Rows - 1) * Columns + col;
+                        geo->initpoint(down_idx);
+                        down_pts.push_back(down_idx);
+                    }
+                    geo->addface(up_pts);
+                    geo->addface(down_pts);
+                }
+                else {
+                    points[0] = vec3f(0, up_y, 0);
+                    geo->initpoint(0);
+                    points[1] = vec3f(0, down_y, 0);
+                    geo->initpoint(1);
+                    for (int col = 0; col < Columns; col++)
+                    {
+                        size_t idx = col + 2;
+                        geo->initpoint(idx);
+                        if (col > 0) {
+                            geo->addface({ 0, idx - 1, idx });
+                        }
+                        if (col == Columns - 1) {
+                            geo->addface({ 0, idx, 2 });
+                        }
+                    }
+                    for (int col = 0; col < Columns; col++)
+                    {
+                        size_t idx = (Rows - 1) * Columns + col + 2;
+                        geo->initpoint(idx);
+                        if (col > 0) {
+                            geo->addface({ 1, idx, idx - 1 });
+                        }
+                        if (col == Columns - 1) {
+                            size_t last_start = (Rows - 1) * Columns + 2;
+                            geo->addface({ 1, last_start, idx});
+                        }
+                    }
+                }
+            }
+
             for (int row = 0; row < Rows; row++)
             {
-                float up_y = Height / 2.0f, down_y = -Height / 2.0f;
-
                 //指向侧（斜）面外部
                 float tan_belta = (down_radius - up_radius) / Height;
 
@@ -517,6 +598,10 @@ namespace zeno {
                     vec3f down_pos(down_x, down_y, down_z);
 
                     size_t idx = row * Columns + col;
+                    if (!bQuad && end_caps) {
+                        idx += 2;       //三角面另外加上中轴线顶部和底部两个点
+                    }
+
                     vec3f pt;
                     if (Direction == "Y Axis") {
                         pt = (float)row / (Rows - 1) * (down_pos - up_pos) + up_pos;
@@ -563,14 +648,20 @@ namespace zeno {
                     }
                 }
             }
-            geo->create_attr(ATTR_POINT, "pos", points);
+            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
-                geo->create_attr(ATTR_POINT, "nrm", normals);
+                geo->create_attr_value_by_vec(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
 
     struct ZDEFNODE() Sphere : INode {
+
+        enum AxisDirection {
+            Y_Axis,
+            X_Axis,
+            Z_Axis
+        };
 
         ReflectCustomUI m_uilayout = {
             _Group {
@@ -613,60 +704,85 @@ namespace zeno {
                 throw;
             }
 
+            AxisDirection dir;
+            if (Direction == "Y Axis") {
+                dir = Y_Axis;
+            }
+            else if (Direction == "X Axis") {
+                dir = X_Axis;
+            }
+            else if (Direction == "Z Axis") {
+                dir = Z_Axis;
+            }
+            else {
+                throw;
+            }
+
             std::vector<vec3f> points;
             points.resize(nPoints);
 
             auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
 
             //先加顶部和底部两个顶点
-            vec3f topPos(0, 1, 0);
+            vec3f topPos;
+            if (dir == Y_Axis) {
+                topPos = vec3f(0, 1, 0);
+            }
+            else if (dir == X_Axis) {
+                topPos = vec3f(1, 0, 0);
+            }
+            else if (dir == Z_Axis) {
+                topPos = vec3f(0, 0, 1);
+            }
+
             int idx = 0;
             points[idx] = topPos;
             geo->initpoint(idx);
 
-            vec3f bottomPos(0, -1, 0);
+            vec3f bottomPos;
+            if (dir == Y_Axis) {
+                bottomPos = vec3f(0, -1, 0);
+            }
+            else if (dir == X_Axis) {
+                bottomPos = vec3f(-1, 0, 0);
+            }
+            else if (dir == Z_Axis) {
+                bottomPos = vec3f(0, 0, -1);
+            }
             idx = 1;    //兼容houdini
             points[idx] = bottomPos;
             geo->initpoint(idx);
 
-            float Rxsqr = Rx * Rx;
-            float Rysqr = Ry * Ry;
-            float Rzsqr = Rz * Rz;
-
-            auto find_x = [=](float y) {
-                return sqrt(Rxsqr - Rxsqr * y * y / Rysqr);
-            };
-            auto find_z = [=](float y) {
-                return sqrt(Rzsqr - Rzsqr * y * y / Rysqr);
-            };
-
-            float y_piece = 2 * Ry / Rows;
+            float x, y, z;
 
             for (int row = 1; row < Rows - 1; row++)
             {
                 float v = (float)row / (float)(Rows - 1);
                 float theta = M_PI * v;
-                float y = cos(theta);
+                if (dir == Y_Axis) y = cos(theta);
+                else if (dir == X_Axis) x = cos(theta);
+                else if (dir == Z_Axis) z = cos(theta);
 
-                float Rx_level = find_x(y);
-                float Rz_level = find_z(y);
                 //col = 0, 从x轴正方向开始转圈圈
                 size_t startIdx = 2 + (row - 1) * Columns;
                 for (int col = 0; col < Columns; col++)
                 {
-                    //R_level只是定义了y方向界面在x轴的短轴，长轴仍需z方向的R来决定
-                    float rad = 2.0f * M_PI * col / Columns;
-                    float x_pos = sqrt((Rx_level * Rx_level) / (1.f + pow(tan(rad) * Rx_level / Rz_level, 2)));
-                    if (cos(rad) < 0) {
-                        x_pos *= -1;
-                    }
-                    float z_pos = tan(rad) * x_pos;
-                    z_pos *= -1;
-
                     float u = (float)col / (float)Columns;
                     float phi = M_PI * 2 * u;
-                    float x = sin(theta) * cos(phi);
-                    float z = -sin(theta) * sin(phi);
+
+                    if (dir == Y_Axis) {
+                        x = sin(theta) * cos(phi);
+                        z = -sin(theta) * sin(phi);
+                    }
+                    else if (dir == Z_Axis) {
+                        x = sin(theta) * cos(phi);
+                        y = sin(theta) * sin(phi);
+                    }
+                    else if (dir == X_Axis) {
+                        y = sin(theta) * cos(phi);
+                        z = -sin(theta) * sin(phi);
+                    }
+
                     vec3f pt = vec3f(x, y, z);
 
                     size_t idx = 2/*顶部底部两个点*/ + (row - 1) * Columns + col;
@@ -720,29 +836,10 @@ namespace zeno {
                 }
             }
 
-            glm::mat4 transform = glm::mat4(1.0), translate = glm::mat4(1.0), rotation = glm::mat4(1.0), scale_matrix = glm::mat4(1.0);
-
-            auto angle = 0.f;
-            if (Direction == "X Axis") {
-                glm::vec3 axis = glm::vec3(0, 0, 1);
-                rotation = glm::rotate(rotation, glm::radians(-90.f), axis);
-            }
-            else if (Direction == "Z Axis") {
-                glm::vec3 axis = glm::vec3(1, 0, 0);
-                rotation = glm::rotate(rotation, glm::radians(90.f), axis);
-            }
-            else {
-                //default as "Y Axis"
-            }
-
-            scale_matrix = glm::scale(scale_matrix, glm::vec3(uniform_scale * Radius[0], uniform_scale * Radius[1], uniform_scale * Radius[2]));
-            translate = glm::translate(translate, glm::vec3(Center[0], Center[1], Center[2]));
-
-            glm::mat4 rotation_ = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Direction);
-            rotation = rotation_ * rotation;
-
-            transform = translate * scale_matrix * rotation;
-
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0), glm::vec3(uniform_scale * Radius[0], uniform_scale * Radius[1], uniform_scale * Radius[2]));
+            glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Direction);
+            glm::mat4 transform = translate * rotation * scale_matrix;
             for (size_t i = 0; i < points.size(); i++)
             {
                 auto pt = points[i];

@@ -301,6 +301,7 @@ namespace zeno
         ZENO_API void initpoint(size_t point_id);
         ZENO_API int addpoint(zfxvariant pos = zfxfloatarr({ 0,0,0 }));
         ZENO_API void addface(const std::vector<size_t>& points);
+        ZENO_API void setface(size_t face_id, const std::vector<size_t>& points);
         ZENO_API int addvertex(size_t face_id, size_t point_id);
 
         ZENO_API bool remove_point(int ptnum);

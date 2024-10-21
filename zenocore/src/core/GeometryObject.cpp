@@ -599,6 +599,10 @@ namespace zeno
         m_spTopology->addface(points);
     }
 
+    void GeometryObject::setface(size_t face_id, const std::vector<size_t>& points) {
+        m_spTopology->setface(face_id, points);
+    }
+
     bool GeometryObject::remove_faces(const std::set<int>& faces, bool includePoints) {
         if (faces.empty()) {
             return false;
