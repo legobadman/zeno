@@ -1,5 +1,6 @@
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
+#include <zeno/para/parallel_reduce.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -158,15 +159,35 @@ namespace zeno
         return atang;
     }
 
+    ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo) {
+        const std::vector<vec3f>& verts = geo->points_pos();
+        if (!verts.size())
+            return { {0, 0, 0}, {0, 0, 0} };
+        return parallel_reduce_minmax(verts.begin(), verts.end());
+    }
+
     ZENO_API glm::mat4 calc_rotate_matrix(
         float xangle,
         float yangle,
         float zangle,
-        std::string orientaion
+        Rotate_Orientaion orientaion
     ) {
         float rad_x = xangle * (M_PI / 180.0);
         float rad_y = yangle * (M_PI / 180.0);
         float rad_z = zangle * (M_PI / 180.0);
+#if 0
+        switch (orientaion)
+        {
+        case Orientaion_XY: //绕x轴旋转90
+            rad_x = (xangle + 90) * (M_PI / 180.0);
+            break;
+        case Orientaion_YZ: //绕z轴旋转-90
+            rad_z = (zangle - 90) * (M_PI / 180.0);
+            break;
+        case Orientaion_ZX:
+            break;//默认都是基于ZX平面
+        }
+#endif
         //这里构造的方式是基于列，和公式上的一样，所以看起来反过来了
         glm::mat4 mx = glm::mat4(
             1, 0, 0, 0,

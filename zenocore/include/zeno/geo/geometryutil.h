@@ -14,6 +14,13 @@ namespace zeno
 {
     using namespace zeno::reflect;
 
+    enum Rotate_Orientaion
+    {
+        Orientaion_YZ,
+        Orientaion_XY,
+        Orientaion_ZX
+    };
+
     struct GeometryObject;
 
     bool prim_remove_point(GeometryObject* prim, int ptnum);
@@ -37,8 +44,9 @@ namespace zeno
         float xangle,
         float yangle,
         float zangle,
-        std::string orientaion
+        Rotate_Orientaion orientaion
         );
+    ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo);
 }
 
 

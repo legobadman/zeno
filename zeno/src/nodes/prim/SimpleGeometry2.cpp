@@ -323,14 +323,18 @@ namespace zeno {
 
             glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0), glm::vec3(uniform_scale * Size[0], uniform_scale * Size[1], uniform_scale * Size[2]));
             glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
-            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], "");
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Orientaion_ZX);
             glm::mat4 transform = translate * rotation * scale_matrix;
             for (size_t i = 0; i < points.size(); i++)
             {
                 auto pt = points[i];
                 glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
                 points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
-                //todo: normal.
+                if (bCalcPointNormals) {
+                    auto nrm = normals[i];
+                    glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                    normals[i] = zeno::vec3f(gnrm.x, gnrm.y, gnrm.z);
+                }
             }
 
             geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
@@ -402,14 +406,18 @@ namespace zeno {
             }
 
             PlaneDirection dir;
+            Rotate_Orientaion ori;
             if (Direction == "ZX") {
                 dir = Dir_ZX;
+                ori = Orientaion_ZX;
             }
             else if (Direction == "YZ") {
                 dir = Dir_YZ;
+                ori = Orientaion_YZ;
             }
             else if (Direction == "XY") {
                 dir = Dir_XY;
+                ori = Orientaion_XY;
             }
             else {
                 throw makeError<UnimplError>("Unknown Direction");
@@ -462,14 +470,18 @@ namespace zeno {
             }
 
             glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
-            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Direction);
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], ori);
             glm::mat4 transform = translate * rotation;
             for (size_t i = 0; i < points.size(); i++)
             {
                 auto pt = points[i];
                 glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
                 points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
-                //todo: normal.
+                if (bCalcPointNormals) {
+                    auto nrm = normals[i];
+                    glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                    normals[i] = zeno::vec3f(gnrm.x, gnrm.y, gnrm.z);
+                }
             }
 
             geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
@@ -705,18 +717,23 @@ namespace zeno {
             }
 
             AxisDirection dir;
+            Rotate_Orientaion ori;
             if (Direction == "Y Axis") {
                 dir = Y_Axis;
+                ori = Orientaion_ZX;
             }
             else if (Direction == "X Axis") {
                 dir = X_Axis;
+                ori = Orientaion_YZ;
             }
             else if (Direction == "Z Axis") {
                 dir = Z_Axis;
+                ori = Orientaion_XY;
             }
             else {
                 throw;
             }
+            //dir = Y_Axis;
 
             std::vector<vec3f> points;
             points.resize(nPoints);
@@ -838,13 +855,15 @@ namespace zeno {
 
             glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0), glm::vec3(uniform_scale * Radius[0], uniform_scale * Radius[1], uniform_scale * Radius[2]));
             glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
-            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Direction);
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], ori);
             glm::mat4 transform = translate * rotation * scale_matrix;
             for (size_t i = 0; i < points.size(); i++)
             {
-                auto pt = points[i];
+                auto pt = points[i]/*, nrm = normals[i]*/;
                 glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
                 points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                //glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                //normals[i] = zeno::vec3f(gnrm.x, gnrm.y, gnrm.z);
                 //todo: normal.
             }
 
