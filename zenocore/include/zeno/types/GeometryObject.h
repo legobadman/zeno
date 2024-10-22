@@ -175,8 +175,8 @@ namespace zeno
         }
 
         template <class T>
-        std::vector<T>& get_attr_value(GeoAttrGroup grp, const std::string& attr_name) {
-            Any& vals = get_attr_impl(grp, attr_name);
+        std::vector<T>& modify_get_attr(GeoAttrGroup grp, const std::string& attr_name) {
+            Any& vals = modify_copy_attr_impl(grp, attr_name);
             return any_cast<std::vector<T>&>(vals);
         }
 
@@ -321,6 +321,7 @@ namespace zeno
         ZENO_API size_t get_attr_size(GeoAttrGroup grp) const;
         ZENO_API void create_attr_impl(GeoAttrGroup grp, const std::string& attr_name, const Any& vecAny);
         ZENO_API Any& get_attr_impl(GeoAttrGroup grp, std::string const& name);
+        ZENO_API Any& modify_copy_attr_impl(GeoAttrGroup grp, std::string const& name);
 
         std::shared_ptr<GeometryTopology> m_spTopology;
         std::map<std::string, ATTR_DATA_PTR> m_point_attrs;

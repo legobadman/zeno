@@ -10,6 +10,7 @@
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>
 #include <zeno/utils/variantswitch.h>
+#include <regex>
 
 
 namespace zeno
@@ -63,6 +64,81 @@ namespace zeno
         for (int i = 0; i < nPoints; i++) {
             spPrim->verts[i] = vec_pos[i];
         }
+
+        //TODO: 导出属性
+#ifdef ATTR_VEC_STORE_ISOLATE
+        std::set<std::string> export_attrs;
+        for (auto& [name, sp_attr_data] : m_point_attrs) {
+            std::regex rgx(R"(([A-Za-z0-9_]+)\[(x|y|z|w)\])");
+            std::smatch match;
+            if (std::regex_search(name, match, rgx)) {
+                std::string attr_name = match[1];
+                if (attr_name == "pos" || export_attrs.find(attr_name) != export_attrs.end())
+                    continue;
+
+                Any& xvals = get_attr_impl(ATTR_POINT, attr_name + "[x]");
+                std::vector<float>& xvec = any_cast<std::vector<float>&>(xvals);
+
+                Any& yvals = get_attr_impl(ATTR_POINT, attr_name + "[y]");
+                std::vector<float>& yvec = any_cast<std::vector<float>&>(yvals);
+
+                if (m_point_attrs.find(attr_name + "[z]") != m_point_attrs.end()) {
+                    Any& zvals = get_attr_impl(ATTR_POINT, attr_name + "[z]");
+                    std::vector<float>& zvec = any_cast<std::vector<float>&>(zvals);
+
+                    if (m_point_attrs.find("w") != m_point_attrs.end()) {
+                        Any& wvals = get_attr_impl(ATTR_POINT, attr_name + "[w]");
+                        std::vector<float>& wvec = any_cast<std::vector<float>&>(wvals);
+                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
+                        assert(vec_attr.size() == nPoints);
+                        for (size_t idx = 0; idx < nPoints; idx++) {
+                            vec_attr[idx] = zeno::vec4f(xvec[idx], yvec[idx], zvec[idx], wvec[idx]);
+                        }
+                    }
+                    else {
+                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
+                        assert(vec_attr.size() == nPoints);
+                        for (size_t idx = 0; idx < nPoints; idx++) {
+                            vec_attr[idx] = zeno::vec3f(xvec[idx], yvec[idx], zvec[idx]);
+                        }
+                    }
+                }
+                else {
+                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec2f>(attr_name);
+                    assert(vec_attr.size() == nPoints);
+                    for (size_t idx = 0; idx < nPoints; idx++) {
+                        vec_attr[idx] = zeno::vec2f(xvec[idx], yvec[idx]);
+                    }
+                }
+                export_attrs.insert(attr_name);
+            }
+            else {
+                auto attr_name = name;
+                Any& val = sp_attr_data->value();
+                if (val.type() == type_info<int>()) {
+                    std::vector<int>& avec = any_cast<std::vector<int>&>(val);
+                    auto& vec_attr = spPrim->verts.add_attr<int>(attr_name);
+                    //vec_attr = avec;
+                }
+                else if (val.type() == type_info<float>()) {
+                    std::vector<float>& avec = any_cast<std::vector<float>&>(val);
+                    auto& vec_attr = spPrim->verts.add_attr<float>(attr_name);
+                    //vec_attr = avec;
+                }
+                else if (val.type() == type_info<std::string>()) {
+                    //PrimitiveObject不支持字符串属性
+                }
+                else if (val.type() == type_info<bool>()) {
+                    //PrimitiveObject不支持布尔属性
+                }
+                else {
+                    throw;
+                }
+            }
+        }
+#else
+        //TODO
+#endif
 
         int startIdx = 0;
         if (m_spTopology->m_bTriangle) {
@@ -127,7 +203,7 @@ namespace zeno
             std::vector<int> points;
             if (m_spTopology->m_bTriangle) {
                 auto const& ind = prim->tris[face];
-                points = { ind[0], ind[1], ind[2]};
+                points = { ind[0], ind[1], ind[2] };
             }
             else {
                 auto const& poly = prim->polys[face];
@@ -495,6 +571,27 @@ namespace zeno
             throw makeError<UnimplError>("empty value on attr `" + name + "`");
         }
         return val;
+    }
+
+    ZENO_API Any& GeometryObject::modify_copy_attr_impl(GeoAttrGroup grp, std::string const& name)
+    {
+        std::map<std::string, ATTR_DATA_PTR>& container = get_container(grp);
+        auto iter = container.find(name);
+        if (iter == container.end()) {
+            throw makeError<KeyError>(name, "not exist on point attr");
+        }
+        ATTR_DATA_PTR spAttr = iter->second;
+        if (!spAttr)
+            throw;
+        if (spAttr.use_count() == 1) {
+            Any& val = spAttr->value();
+            return val;
+        }
+        else {
+            ATTR_DATA_PTR newAttr = std::make_shared<AttributeData>(*spAttr);
+            iter->second = newAttr;
+            return newAttr->value();
+        }
     }
 
     ZENO_API void GeometryObject::create_attr_impl(GeoAttrGroup grp, const std::string& attr_name, const Any& vecAny) {

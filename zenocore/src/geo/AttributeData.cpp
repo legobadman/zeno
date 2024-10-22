@@ -498,18 +498,18 @@ namespace zeno {
             }
         }
 
-        int m_size;
+        size_t m_size;
         //暂时不储存核心类型，不过有可能出现类型错误赋值的情况
         Any m_data;
     };
 
-    AttributeData::AttributeData(Any value, int size) {
+    AttributeData::AttributeData(Any value, size_t size) : m_pImpl(nullptr) {
         m_pImpl = new AttributeImpl;
         m_pImpl->m_data = value;
         m_pImpl->m_size = size;
     }
 
-    AttributeData::AttributeData(const AttributeData& rhs) {
+    AttributeData::AttributeData(const AttributeData& rhs) : m_pImpl(nullptr) {
         if (!m_pImpl)
             m_pImpl = new AttributeImpl;
         m_pImpl->m_data = rhs.m_pImpl->m_data;

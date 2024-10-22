@@ -16,7 +16,7 @@ namespace zeno {
     public:
         ZENO_API AttributeData() = delete;
         ZENO_API AttributeData(const AttributeData& rhs);
-        ZENO_API AttributeData(Any value, int size);
+        ZENO_API AttributeData(Any value, size_t size);
         ZENO_API ~AttributeData();
         Any& value() const;
         Any get(size_t index) const;

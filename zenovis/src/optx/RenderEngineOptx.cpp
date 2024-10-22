@@ -770,7 +770,7 @@ struct GraphicsManager {
 #ifdef ATTR_VEC_STORE_ISOLATE
                     std::vector<zeno::vec3f> pos(geo->points_pos());
 #else
-                    std::vector<zeno::vec3f>& pos = geo->get_attr_value(ATTR_POINT, "pos");
+                    std::vector<zeno::vec3f>& pos = geo->modify_get_attr(ATTR_POINT, "pos");
 #endif
 
                     std::vector<zeno::vec3f> normals;
