@@ -21,7 +21,7 @@ CalcWorker::CalcWorker(QObject* parent) {
             state.bDirty = bDirty;
             state.runstatus = status;
             emit nodeStatusChanged(nodePath, state);
-        });
+            });
     }
 }
 
@@ -30,7 +30,7 @@ void CalcWorker::run() {
 
     zeno::GraphException::catched([&] {
         sess.run();
-    }, *sess.globalError);
+        }, *sess.globalError);
     sess.globalState->set_working(false);
 
     if (sess.globalError->failed()) {
@@ -64,7 +64,7 @@ CalculationMgr::CalculationMgr(QObject* parent)
     auto& sess = zeno::getSession();
     sess.registerRunTrigger([=]() {
         run();
-    });
+        });
 }
 
 void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState state)
@@ -75,7 +75,7 @@ void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState stat
         if (targetNode.isValid()) {
             UiHelper::qIndexSetData(targetNode, QVariant::fromValue(state), ROLE_NODE_RUN_STATE);
             if (!m_bMultiThread) {
-                //TODO: ´¦ÀíµÄÊ±¼äÀï¿ÉÄÜ»á°üÀ¨¸Ä±ä½Úµã×´Ì¬ºÍÊý¾ÝµÄ²Ù×÷£¬±ÈÈç»¬¶¯Ê±¼äÖá£¬ËùÒÔ±ØÐëÒª¿ØÖÆÊÂ¼þµÄ·¶Î§
+                //TODO: å¤„ç†çš„æ—¶é—´é‡Œå¯èƒ½ä¼šåŒ…æ‹¬æ”¹å˜èŠ‚ç‚¹çŠ¶æ€å’Œæ•°æ®çš„æ“ä½œï¼Œæ¯”å¦‚æ»‘åŠ¨æ—¶é—´è½´ï¼Œæ‰€ä»¥å¿…é¡»è¦æŽ§åˆ¶äº‹ä»¶çš„èŒƒå›´
                 //zenoApp->processEvents();
             }
         }
@@ -84,7 +84,7 @@ void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState stat
 
 void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg)
 {
-    //È·±£´ËÊ±¼ÆËãÏß³Ì²»ÔÙÅÜÂß¼­£¬ÕâÀïÔÝÊ±ÊÇ´úÂëÉÏÔ¼Êø£¬Ò²¾ÍÊÇCalcWorker::run()×ßÍê¾Í·¢ÐÅºÅ¡£
+    //ç¡®ä¿æ­¤æ—¶è®¡ç®—çº¿ç¨‹ä¸å†è·‘é€»è¾‘ï¼Œè¿™é‡Œæš‚æ—¶æ˜¯ä»£ç ä¸Šçº¦æŸï¼Œä¹Ÿå°±æ˜¯CalcWorker::run()èµ°å®Œå°±å‘ä¿¡å·ã€‚
     if (m_bMultiThread)
     {
         m_thread.quit();
@@ -108,11 +108,11 @@ void CalculationMgr::onPlayReady() {
     if (!sess.is_auto_run()) {
         run();
     }
-    //ÇÐµ½ÏÂÒ»Ö¡
+    //åˆ‡åˆ°ä¸‹ä¸€å¸§
     int frame = sess.globalState->getFrameId();
     sess.switchToFrame(frame + 1);
 
-    //uiÉÏÒ²Í¬²½ÕâÒ»Ö¡
+    //uiä¸Šä¹ŸåŒæ­¥è¿™ä¸€å¸§
     if (auto mainWin = zenoApp->getMainWindow()) {
         if (auto timeline = mainWin->timeline()) {
             timeline->blockSignals(true);
@@ -145,9 +145,9 @@ void CalculationMgr::onPlayTriggered(bool bToggled) {
 }
 
 void CalculationMgr::onFrameSwitched(int frame) {
-    //ÊÖ¶¯ÒÆ¶¯Ê±¼äÖá
+    //æ‰‹åŠ¨ç§»åŠ¨æ—¶é—´è½´
 
-    //Í£Ö¹²¥·Å
+    //åœæ­¢æ’­æ”¾
     m_playTimer->stop();
     if (auto mainWin = zenoApp->getMainWindow()) {
         if (auto timeline = mainWin->timeline()) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zeno/core/Session.h>  //ÆÁ±ÎÕâ¾ä¾¹È»»áµ¼ÖÂ GlobalVarible.objÃ»·¨link INode Graph£¬ÕæÊÇÉñÆæ
+#include <zeno/core/Session.h>  //å±è”½è¿™å¥ç«Ÿç„¶ä¼šå¯¼è‡´ GlobalVarible.objæ²¡æ³•link INode Graphï¼ŒçœŸæ˜¯ç¥å¥‡
 #include <zeno/utils/api.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/utils/uuid.h>
@@ -15,9 +15,9 @@ struct UserData;
 struct IObject {
     using polymorphic_base_type = IObject;
 
-    std::string listitemNameIndex;      //¼ÇÂ¼ÔÚlistÖĞµÄnodeid¹¹³ÉµÄ²ã¼¶Ë÷Òı£¬Èç¹û²»ÊÇÄ³¸ölistÏÂÔªËØÔòÎª×ÔÉínodeid
-    std::string listitemNumberIndex;    //¼ÇÂ¼ÔÚlistÖĞµÄĞòºÅ¹¹³ÉµÄ²ã¼¶Ë÷Òı£¬Èç¹û²»ÊÇÄ³¸ölistÏÂÔªËØÔòÎª¿Õ
-    std::string nodeId;     //¸Ã¶ÔÏóÀ´×ÔÄÄ¸önode
+    std::string listitemNameIndex;      //è®°å½•åœ¨listä¸­çš„nodeidæ„æˆçš„å±‚çº§ç´¢å¼•ï¼Œå¦‚æœä¸æ˜¯æŸä¸ªlistä¸‹å…ƒç´ åˆ™ä¸ºè‡ªèº«nodeid
+    std::string listitemNumberIndex;    //è®°å½•åœ¨listä¸­çš„åºå·æ„æˆçš„å±‚çº§ç´¢å¼•ï¼Œå¦‚æœä¸æ˜¯æŸä¸ªlistä¸‹å…ƒç´ åˆ™ä¸ºç©º
+    std::string nodeId;     //è¯¥å¯¹è±¡æ¥è‡ªå“ªä¸ªnode
 
     IObject* m_parent = nullptr;
 
