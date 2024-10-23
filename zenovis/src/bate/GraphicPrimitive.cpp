@@ -620,6 +620,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
 
     explicit ZhxxGraphicPrimitive(Scene* scene_, zeno::GeometryObject* geo)
         : scene(scene_) {
+#if 0
         zeno::log_trace("rendering primitive size {}", geo->npoints());
 
         const std::vector<zeno::vec3f>& points = geo->points_pos();
@@ -698,6 +699,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
 
         draw_all_points = false;
+#endif
     }
 
     virtual void draw() override {

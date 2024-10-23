@@ -3,23 +3,22 @@
 
 #include <vector>
 #include <string>
-#include <zeno/types/AttrVector.h>
+#include <zeno/types/AttributeVector.h>
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/FunctionManager.h>
-#include <zeno/types/AttributeData.h>
 
-
-//属性向量的每一个维度的分量是否单独储存。
-#define ATTR_VEC_STORE_ISOLATE
 
 namespace zeno
 {
+    using namespace zeno::reflect;
+
     struct PrimitiveObject;
 
     class GeometryTopology;
+    class AttributeVector;
 
-    using ATTR_DATA_PTR = std::shared_ptr<AttributeData>;
+    using ATTR_VEC_PTR = std::shared_ptr<AttributeVector>;
 
     enum GeoAttrGroup {
         ATTR_GEO,
@@ -43,6 +42,7 @@ namespace zeno
         ZENO_API std::vector<int> edge_list() const;
         ZENO_API bool is_base_triangle() const;
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
+        ZENO_API ATTR_VEC_PTR get_attr(GeoAttrGroup grp, const std::string& attr_name);
 
         //attr:
         bool create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl);
@@ -127,6 +127,7 @@ namespace zeno
             }
         }
 
+        /*
         template <class T>
         std::vector<T> get_attr(GeoAttrGroup grp, const std::string& attr_name) {
             size_t n = get_attr_size(grp);
@@ -173,6 +174,9 @@ namespace zeno
                 return any_cast<std::vector<T>>(get_attr_impl(grp, attr_name));
             }
         }
+
+        ATTR_VEC_PTR get_attr(GeoAttrGroup grp, const std::string& attr_name);
+
 
         template <class T>
         std::vector<T>& modify_get_attr(GeoAttrGroup grp, const std::string& attr_name) {
@@ -286,6 +290,7 @@ namespace zeno
                 set_attr(grp, attr_name, vec);
             }
         }
+*/
 
         //API:
         //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。
@@ -317,16 +322,16 @@ namespace zeno
         //vertex先不考虑
     private:
         void initFromPrim(PrimitiveObject* prim);
-        ZENO_API std::map<std::string, ATTR_DATA_PTR>& get_container(GeoAttrGroup grp);
+        ZENO_API std::map<std::string, ATTR_VEC_PTR>& get_container(GeoAttrGroup grp);
         ZENO_API size_t get_attr_size(GeoAttrGroup grp) const;
         ZENO_API void create_attr_impl(GeoAttrGroup grp, const std::string& attr_name, const Any& vecAny);
         ZENO_API Any& get_attr_impl(GeoAttrGroup grp, std::string const& name);
-        ZENO_API Any& modify_copy_attr_impl(GeoAttrGroup grp, std::string const& name);
+        //ZENO_API Any& modify_copy_attr_impl(GeoAttrGroup grp, std::string const& name);
 
         std::shared_ptr<GeometryTopology> m_spTopology;
-        std::map<std::string, ATTR_DATA_PTR> m_point_attrs;
-        std::map<std::string, ATTR_DATA_PTR> m_face_attrs;
-        std::map<std::string, ATTR_DATA_PTR> m_geo_attrs;
+        std::map<std::string, ATTR_VEC_PTR> m_point_attrs;
+        std::map<std::string, ATTR_VEC_PTR> m_face_attrs;
+        std::map<std::string, ATTR_VEC_PTR> m_geo_attrs;
     };
 
 }

@@ -1,4 +1,4 @@
-#include <zeno/types/AttributeData.h>
+#include <zeno/types/AttrColumn.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -14,6 +14,7 @@ namespace zeno {
         }
 
         void set(size_t index, Any elemVal) {
+            //TODO: 类型冲突时的处理
             if (!m_data.has_value() || !elemVal.has_value()) {
                 throw makeError<UnimplError>("empty value when set attribute data");
             }
@@ -25,6 +26,7 @@ namespace zeno {
             const auto& elemType = elemVal.type().get_decayed_hash();
             if (valType == type_info<int>()) {
                 int val = any_cast<int>(m_data);
+                std::vector<int> vec(m_size, val);
                 if (elemType == gParamType_Int ||
                     elemType == gParamType_Float ||
                     elemType == gParamType_Bool) {
@@ -33,37 +35,32 @@ namespace zeno {
                 else {
                     throw makeError<UnimplError>("error type when set attribute value");
                 }
-                m_data = val;
+                vec[index] = val;
+                m_data = zeno::reflect::move(std::vector<int>(m_size, val));
             }
             else if (valType == type_info<std::string>()) {
                 std::string val = any_cast<std::string>(m_data);
+                std::vector<std::string> vec(m_size, val);
                 if (elemType == gParamType_String) {
                     val = any_cast<std::string>(elemVal);
                 }
                 else {
                     throw makeError<UnimplError>("error type when set attribute value");
                 }
-                m_data = val;
+                vec[index] = val;
+                m_data = zeno::reflect::move(std::vector<std::string>(m_size, val));
             }
             else if (valType == type_info<float>()) {
                 float val = any_cast<float>(m_data);
+                std::vector<float> vec(m_size, val);
                 if (elemType == gParamType_Float || elemType == gParamType_Int) {
                     val = any_cast<float>(elemVal);
                 }
                 else {
                     throw makeError<UnimplError>("error type when set attribute value");
                 }
-                m_data = val;
-            }
-            else if (valType == type_info<bool>()) {
-                bool val = any_cast<bool>(m_data);
-                if (elemType == gParamType_Float || elemType == gParamType_Int) {
-                    val = any_cast<float>(elemVal);
-                }
-                else {
-                    throw makeError<UnimplError>("error type when set attribute value");
-                }
-                m_data = val;
+                vec[index] = val;
+                m_data = zeno::reflect::move(std::vector<float>(m_size, val));
             }
             else if (valType == type_info<std::vector<vec3f>>()) {
                 std::vector<vec3f>& val = any_cast<std::vector<vec3f>&>(m_data);
@@ -284,7 +281,6 @@ namespace zeno {
                 else {
                     throw makeError<UnimplError>("error type when set attribute value");
                 }
-                m_data = val;
             }
             else if (valType == type_info<std::string>()) {
                 std::string val = any_cast<std::string>(m_data);
@@ -297,7 +293,6 @@ namespace zeno {
                 else {
                     throw makeError<UnimplError>("error type when set attribute value");
                 }
-                m_data = val;
             }
             else if (valType == type_info<float>()) {
                 float val = any_cast<float>(m_data);
@@ -310,7 +305,6 @@ namespace zeno {
                 else {
                     throw makeError<UnimplError>("error type when set attribute value");
                 }
-                m_data = val;
             }
             else if (valType == type_info<bool>()) {
                 bool val = any_cast<bool>(m_data);
@@ -323,7 +317,6 @@ namespace zeno {
                 else {
                     throw makeError<UnimplError>("error type when set attribute value");
                 }
-                m_data = val;
             }
             else if (valType == type_info<std::vector<vec3f>>()) {
                 std::vector<vec3f>& val = any_cast<std::vector<vec3f>&>(m_data);
@@ -503,52 +496,52 @@ namespace zeno {
         Any m_data;
     };
 
-    AttributeData::AttributeData(Any value, size_t size) : m_pImpl(nullptr) {
+    AttrColumn::AttrColumn(Any value, size_t size) : m_pImpl(nullptr) {
         m_pImpl = new AttributeImpl;
         m_pImpl->m_data = value;
         m_pImpl->m_size = size;
     }
 
-    AttributeData::AttributeData(const AttributeData& rhs) : m_pImpl(nullptr) {
+    AttrColumn::AttrColumn(const AttrColumn& rhs) : m_pImpl(nullptr) {
         if (!m_pImpl)
             m_pImpl = new AttributeImpl;
         m_pImpl->m_data = rhs.m_pImpl->m_data;
         m_pImpl->m_size = rhs.m_pImpl->m_size;
     }
 
-    AttributeData::~AttributeData() {
+    AttrColumn::~AttrColumn() {
         delete m_pImpl;
     }
 
-    Any& AttributeData::value() const {
+    Any& AttrColumn::value() const {
         return m_pImpl->m_data;
     }
 
-    Any AttributeData::get(size_t index) const {
+    Any AttrColumn::get(size_t index) const {
         return m_pImpl->get(index);
     }
 
-    Any AttributeData::get() const {
+    Any AttrColumn::get() const {
         return m_pImpl->m_data;
     }
 
-    void AttributeData::set(size_t index, Any val) {
+    void AttrColumn::set(size_t index, Any val) {
         return m_pImpl->set(index, val);
     }
 
-    void AttributeData::set(const Any& val) {
+    void AttrColumn::set(const Any& val) {
         return m_pImpl->set(val);
     }
 
-    void AttributeData::insert(size_t index, Any val) {
+    void AttrColumn::insert(size_t index, Any val) {
         return m_pImpl->insert(index, val);
     }
 
-    void AttributeData::remove(size_t index) {
+    void AttrColumn::remove(size_t index) {
         return m_pImpl->remove(index);
     }
 
-    size_t AttributeData::size() const {
+    size_t AttrColumn::size() const {
         return m_pImpl->m_size;
     }
 }

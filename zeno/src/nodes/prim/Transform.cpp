@@ -90,37 +90,29 @@ namespace zeno {
             //if (geom->has_attr(ATTR_POINT, "pos"))
             {
                 //TODO: 前面可以判断是否符合写时复制，比如transform的tsr是否发生改变
-                std::vector<float>& xvec = geom->modify_get_attr<float>(ATTR_POINT, "pos[x]");
-                std::vector<float>& yvec = geom->modify_get_attr<float>(ATTR_POINT, "pos[y]");
-                std::vector<float>& zvec = geom->modify_get_attr<float>(ATTR_POINT, "pos[z]");
+                auto spAttrVec = geom->get_attr(ATTR_POINT, "pos");
                 //prim->verts.add_attr<zeno::vec3f>("_origin_pos") = pos; //视图端transform会用到，这里先不加
 #pragma omp parallel for
                 for (int i = 0; i < geom->npoints(); i++) {
-                    auto p = zeno::vec_to_other<glm::vec3>(zeno::vec3f(xvec[i], yvec[i], zvec[i]));
+                    zeno::vec3f old_pos = spAttrVec->get_elem<zeno::vec3f>(i);
+                    auto p = zeno::vec_to_other<glm::vec3>(old_pos);
                     p = mapplypos(matrix, p);
                     auto newpos = zeno::other_to_vec<3>(p);
-                    xvec[i] = newpos[0];
-                    yvec[i] = newpos[1];
-                    zvec[i] = newpos[2];
+                    spAttrVec->set_elem(i, newpos);
                 }
             }
 
-            if (geom->has_attr(ATTR_POINT, "nrm[x]") &&
-                geom->has_attr(ATTR_POINT, "nrm[y]") &&
-                geom->has_attr(ATTR_POINT, "nrm[z]"))
+            if (geom->has_attr(ATTR_POINT, "nrm"))
             {
-                std::vector<float>& xvec = geom->modify_get_attr<float>(ATTR_POINT, "nrm[x]");
-                std::vector<float>& yvec = geom->modify_get_attr<float>(ATTR_POINT, "nrm[y]");
-                std::vector<float>& zvec = geom->modify_get_attr<float>(ATTR_POINT, "nrm[z]");
+                auto spAttrVec = geom->get_attr(ATTR_POINT, "nrm");
                 //prim->verts.add_attr<zeno::vec3f>("_origin_nrm") = nrm;
 #pragma omp parallel for
                 for (int i = 0; i < geom->npoints(); i++) {
-                    auto n = zeno::vec_to_other<glm::vec3>(zeno::vec3f(xvec[i], yvec[i], zvec[i]));
+                    zeno::vec3f old_nrm = spAttrVec->get_elem<zeno::vec3f>(i);
+                    auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
                     n = mapplynrm(matrix, n);
                     auto newnrm = zeno::other_to_vec<3>(n);
-                    xvec[i] = newnrm[0];
-                    yvec[i] = newnrm[1];
-                    zvec[i] = newnrm[2];
+                    spAttrVec->set_elem(i, newnrm);
                 }
             }
 

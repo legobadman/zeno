@@ -12,12 +12,12 @@ namespace zeno {
 
     class AttributeImpl;
 
-    class AttributeData {
+    class AttrColumn {
     public:
-        ZENO_API AttributeData() = delete;
-        ZENO_API AttributeData(const AttributeData& rhs);
-        ZENO_API AttributeData(Any value, size_t size);
-        ZENO_API ~AttributeData();
+        ZENO_API AttrColumn() = delete;
+        ZENO_API AttrColumn(const AttrColumn& rhs);
+        ZENO_API AttrColumn(Any value, size_t size);
+        ZENO_API ~AttrColumn();
         Any& value() const;
         Any get(size_t index) const;
         Any get() const;

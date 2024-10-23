@@ -16,18 +16,14 @@ namespace zeno
         size_t n = geo->npoints();
         std::vector<vec3f> normals(n);
 
-        std::vector<std::vector<float>*> vec_pos = geo->get_vec_attr_value<float>(ATTR_POINT, "pos");
-        assert(vec_pos.size() == 3);
-        auto& xvec = *vec_pos[0];
-        auto& yvec = *vec_pos[1];
-        auto& zvec = *vec_pos[2];
+        std::vector<vec3f> pos(geo->points_pos());
 
         for (size_t i = 0; i < tris.size(); i++) {
             auto ind = tris[i];
             size_t i1 = ind[0], i2 = ind[1], i3 = ind[2];
-            vec3f pos1(xvec[i1], yvec[i1], zvec[i1]);
-            vec3f pos2(xvec[i2], yvec[i2], zvec[i2]);
-            vec3f pos3(xvec[i3], yvec[i3], zvec[i3]);
+            vec3f pos1(pos[i1]);
+            vec3f pos2(pos[i2]);
+            vec3f pos3(pos[i3]);
             auto n = cross(pos2 - pos1, pos3 - pos1);
             normals[i1] += n;
             normals[i2] += n;
