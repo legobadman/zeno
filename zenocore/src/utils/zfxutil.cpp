@@ -8,6 +8,42 @@ namespace zeno
 
     namespace zfx
     {
+        AttrVar zfxvarToAttrvar(const zfxvariant& var) {
+            return std::visit([&](auto&& arg)->AttrVar {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, int>) {
+                    return arg;
+                }
+                else if constexpr (std::is_same_v<T, float>) {
+                    return arg;
+                }
+                else if constexpr (std::is_same_v<T, std::string>) {
+                    return arg;
+                }
+                else if constexpr (std::is_same_v<T, glm::vec2>) {
+                    return zeno::vec2f(arg[0], arg[1]);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec3>) {
+                    return zeno::vec3f(arg[0], arg[1], arg[2]);
+                }
+                else if constexpr (std::is_same_v<T, glm::vec4>) {
+                    return zeno::vec3f(arg[0], arg[1], arg[2], arg[3]);
+                }
+                else if constexpr (std::is_same_v<T, zfxintarr>) {
+                    return arg;
+                }
+                else if constexpr (std::is_same_v<T, zfxfloatarr>) {
+                    return arg;
+                }
+                else if constexpr (std::is_same_v<T, zfxstringarr>) {
+                    return arg;
+                }
+                else {
+                    throw makeError<UnimplError>("unsupport type to arg value");
+                }
+            }, var);
+        }
+
         zeno::reflect::Any zfxvarToAny(const zfxvariant& var)
         {
             return std::visit([&](auto&& arg)->zeno::reflect::Any {
@@ -43,6 +79,11 @@ namespace zeno
                     throw makeError<UnimplError>("unsupport type to arg value");
                 }
             }, var);
+        }
+
+        std::vector<zfxvariant> attrvarVecToZfxVec(AttrVarVec anyval, int size) {
+            std::vector<zfxvariant> ret;
+            return ret;
         }
 
         std::vector<zfxvariant> extractAttrValue(Any anyval, int size)

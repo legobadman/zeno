@@ -337,9 +337,9 @@ namespace zeno {
                 }
             }
 
-            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
+            geo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
-                geo->create_attr_value_by_vec(ATTR_POINT, "nrm", normals);
+                geo->create_attr(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -484,9 +484,9 @@ namespace zeno {
                 }
             }
 
-            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
+            geo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
-                geo->create_attr_value_by_vec(ATTR_POINT, "nrm", normals);
+                geo->create_attr(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -660,9 +660,9 @@ namespace zeno {
                     }
                 }
             }
-            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
+            geo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
-                geo->create_attr_value_by_vec(ATTR_POINT, "nrm", normals);
+                geo->create_attr(ATTR_POINT, "nrm", normals);
             return geo;
         }
     };
@@ -867,7 +867,7 @@ namespace zeno {
                 //todo: normal.
             }
 
-            geo->create_attr_value_by_vec(ATTR_POINT, "pos", points);
+            geo->create_attr(ATTR_POINT, "pos", points);
             return geo;
         }
     };

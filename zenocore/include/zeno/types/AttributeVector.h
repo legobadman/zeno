@@ -4,131 +4,100 @@
 #include <zeno/core/IObject.h>
 #include <zeno/core/data.h>
 #include <zeno/types/AttrColumn.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno {
 
     using namespace zeno::reflect;
 
-    template<class ElemType>
-    std::vector<ElemType> getElemVec(const Any& anyv, int n)
-    {
-        if (anyv.type() == type_info<ElemType>()) {
-            ElemType elemVal = any_cast<ElemType>(anyv);
-            return std::vector<ElemType>(n, elemVal);
-        }
-        else if (anyv.type() == type_info<std::vector<ElemType>>()) {
-            std::vector<ElemType> vec = any_cast<std::vector<ElemType>>(anyv);
-            return vec;
-        }
-        else {
-            throw;
-        }
-    }
-
     class AttributeVector
     {
-        //以后可能会改用variant
-        using AttrVectorVariant = std::variant
-            < std::vector<vec3f>
-            , std::vector<float>
-            , std::vector<vec3i>
-            , std::vector<int>
-            , std::vector<vec2f>
-            , std::vector<vec2i>
-            , std::vector<vec4f>
-            , std::vector<vec4i>
-            >;
-
     public:
         AttributeVector() = delete;
-        ZENO_API AttributeVector(const Any& val_or_vec, size_t size);
+        ZENO_API AttributeVector(const AttrVar& val_or_vec, size_t size);
         ZENO_API AttributeVector(const AttributeVector& rhs);
         ZENO_API size_t size() const;
-        ZENO_API void set(const Any& val_or_vec);
-        ZENO_API Any get();
+        ZENO_API void set(const AttrVar& val_or_vec);
+        ZENO_API AttrVarVec get();
+        ZENO_API void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, std::string const& name);
 
         template<class T>
         std::vector<T> get_attrs() const {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
-                std::vector<ElemType> xvals = getElemVec<ElemType>(x_comp->value(), m_size);
-                std::vector<ElemType> yvals = getElemVec<ElemType>(y_comp->value(), m_size);
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
-                    vec[i] = T(xvals[i], yvals[i]);
+                    ElemType xval = x_comp->get<ElemType>(i);
+                    ElemType yval = y_comp->get<ElemType>(i);
+                    vec[i] = T(xval, yval);
                 }
                 return vec;
             }
             else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, vec3i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec3f>, float, int>::type;
-                std::vector<ElemType> xvals = getElemVec<ElemType>(x_comp->value(), m_size);
-                std::vector<ElemType> yvals = getElemVec<ElemType>(y_comp->value(), m_size);
-                std::vector<ElemType> zvals = getElemVec<ElemType>(z_comp->value(), m_size);
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
-                    vec[i] = T(xvals[i], yvals[i], zvals[i]);
+                    ElemType xval = x_comp->get<ElemType>(i);
+                    ElemType yval = y_comp->get<ElemType>(i);
+                    ElemType zval = z_comp->get<ElemType>(i);
+                    vec[i] = T(xval, yval, zval);
                 }
                 return vec;
             }
             else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, vec4i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec4f>, float, int>::type;
-                std::vector<ElemType> xvals = getElemVec<ElemType>(x_comp->value(), m_size);
-                std::vector<ElemType> yvals = getElemVec<ElemType>(y_comp->value(), m_size);
-                std::vector<ElemType> zvals = getElemVec<ElemType>(z_comp->value(), m_size);
-                std::vector<ElemType> wvals = getElemVec<ElemType>(w_comp->value(), m_size);
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
-                    vec[i] = T(xvals[i], yvals[i], zvals[i], wvals[i]);
+                    ElemType xval = x_comp->get<ElemType>(i);
+                    ElemType yval = y_comp->get<ElemType>(i);
+                    ElemType zval = z_comp->get<ElemType>(i);
+                    ElemType wval = w_comp->get<ElemType>(i);
+                    vec[i] = T(xval, yval, zval, wval);
                 }
                 return vec;
             }
             else {
-                return any_cast<std::vector<T>>(self->value());
+                auto& varvec = self->value();
+                return std::visit([&](auto&& vec)->std::vector<T> {
+                    using E = std::decay_t<decltype(vec)>;
+                    if constexpr (std::is_same_v<E, std::vector<int>> ||
+                        std::is_same_v < E, std::vector<float>> ||
+                        std::is_same_v < E, std::vector<std::string>> ||
+                        std::is_same_v < E, std::vector<vec2i>> ||
+                        std::is_same_v < E, std::vector<vec2f>> ||
+                        std::is_same_v < E, std::vector<vec3i>> ||
+                        std::is_same_v < E, std::vector<vec3f>> ||
+                        std::is_same_v < E, std::vector<vec4i>> ||
+                        std::is_same_v < E, std::vector<vec4f>>) {
+                        if (vec.size() == 1) {
+                            return vector<T>(m_size, vec[0]);
+                        }
+                        return vec;
+                    }
+                    else {
+                        throw;
+                    }
+                }, varvec);
             }
-        }
-
-        std::vector<float> get_attr_value_float() const {
-            return any_cast<std::vector<float>>(self->value());
-        }
-
-        std::vector<int> get_attr_value_int() const {
-            return any_cast<std::vector<int>>(self->value());
-        }
-
-        std::vector<zeno::vec3f> get_attr_value_vec3f() const {
-            return any_cast<std::vector<zeno::vec3f>>(self->value());
         }
 
         template<class T>
         T get_elem(size_t idx) const {
-            auto& attrval = self->value();
-            const auto& valType = attrval.type();
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
-                return T(any_cast<ElemType>(x_comp->get(idx)), any_cast<ElemType>(y_comp->get(idx)));
+                return T(x_comp->get<ElemType>(idx), y_comp->get<ElemType>(idx));
             }
             else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, vec3i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec3f>, float, int>::type;
-                return T(any_cast<ElemType>(x_comp->get(idx)), any_cast<ElemType>(y_comp->get(idx)), any_cast<ElemType>(z_comp->get(idx)));
+                return T(x_comp->get<ElemType>(idx), y_comp->get<ElemType>(idx), z_comp->get<ElemType>(idx));
             }
             else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, vec4i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec4f>, float, int>::type;
-                return T(any_cast<ElemType>(x_comp->get(idx)), any_cast<ElemType>(y_comp->get(idx)),
-                        any_cast<ElemType>(z_comp->get(idx)), any_cast<ElemType>(w_comp->get(idx)));
+                return T(x_comp->get<ElemType>(idx), y_comp->get<ElemType>(idx), z_comp->get<ElemType>(idx), w_comp->get<ElemType>(idx));
             }
             else {
-                if (valType == type_info<T>()) {
-                    return any_cast<T>(attrval);
-                }
-                else if (valType == type_info<std::vector<T>>()) {
-                    auto& xvec = any_cast<std::vector<T>&>(attrval);
-                    return xvec[idx];
-                }
-                else {
-                    throw;
-                }
+                AttrVarVec& attrval = self->value();
+                return self->get<T>(idx);
             }
         }
 
@@ -175,7 +144,8 @@ namespace zeno {
             }
         }
 
-        void set_comp(size_t idx, char channel, Any val) {
+        template<typename T>
+        void set_comp(size_t idx, char channel, T val) {
             if (channel == 'x') {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
@@ -204,16 +174,16 @@ namespace zeno {
         template<class T>
         T get_comp(size_t idx, char channel) {
             if (channel == 'x') {
-                return x_comp->get(idx);
+                return x_comp->get<T>(idx);
             }
             else if (channel == 'y') {
-                return y_comp->get(idx);
+                return y_comp->get<T>(idx);
             }
             else if (channel == 'z') {
-                return z_comp->get(idx);
+                return z_comp->get<T>(idx);
             }
             else if (channel == 'w') {
-                return w_comp->get(idx);
+                return w_comp->get<T>(idx);
             }
             else {
                 throw;
