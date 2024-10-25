@@ -42,7 +42,6 @@ namespace zeno
         ZENO_API std::vector<int> edge_list() const;
         ZENO_API bool is_base_triangle() const;
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
-        ZENO_API ATTR_VEC_PTR get_attr(GeoAttrGroup grp, const std::string& attr_name);
 
         //attr:
         bool create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl);
@@ -52,6 +51,46 @@ namespace zeno
         std::vector<zfxvariant> get_attr_byzfx(GeoAttrGroup grp, std::string const& name);
         void set_attr_byzfx(GeoAttrGroup grp, std::string const& name, const ZfxVariable& val, ZfxElemFilter& filter);
         ZENO_API void set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
+
+        template<class T, char CHANNEL = 0>
+        std::vector<T> get_attrs(GeoAttrGroup grp, const std::string& attr_name) const {
+            const std::map<std::string, AttributeVector>& container = get_const_container(grp);
+            auto iter = container.find(attr_name);
+            if (iter == container.end()) {
+                throw makeError<KeyError>(attr_name, "not exist on point attr");
+            }
+            return iter->second.get_attrs<T, CHANNEL>();
+        }
+
+        template<class T>
+        void foreach_attr_update(GeoAttrGroup grp, const std::string& attr_name, std::function<T(T old_elem_value)>&& evalf) {
+            std::map<std::string, AttributeVector>& container = get_container(grp);
+            auto iter = container.find(attr_name);
+            if (iter == container.end()) {
+                throw makeError<KeyError>(attr_name, "not exist on point attr");
+            }
+            iter->second.foreach_attr_update<T>(std::move(evalf));
+        }
+
+        template<class T, char CHANNEL = 0>
+        T get_elem(GeoAttrGroup grp, std::string const& attr_name, size_t idx) const {
+            const std::map<std::string, AttributeVector>& container = get_const_container(grp);
+            auto iter = container.find(attr_name);
+            if (iter == container.end()) {
+                throw makeError<KeyError>(attr_name, "not exist on point attr");
+            }
+            return iter->second.get_elem<T, CHANNEL>(idx);
+        }
+
+        template<class T, char CHANNEL = 0>
+        void set_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx, T val) {
+            std::map<std::string, AttributeVector>& container = get_container(grp);
+            auto iter = container.find(attr_name);
+            if (iter == container.end()) {
+                throw makeError<KeyError>(attr_name, "not exist on point attr");
+            }
+            iter->second.set_elem<T, CHANNEL>(idx, val);
+        }
 
         //API:
         //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。
@@ -83,13 +122,14 @@ namespace zeno
         //vertex先不考虑
     private:
         void initFromPrim(PrimitiveObject* prim);
-        ZENO_API std::map<std::string, ATTR_VEC_PTR>& get_container(GeoAttrGroup grp);
+        ZENO_API std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
+        ZENO_API const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         ZENO_API size_t get_attr_size(GeoAttrGroup grp) const;
 
         std::shared_ptr<GeometryTopology> m_spTopology;
-        std::map<std::string, ATTR_VEC_PTR> m_point_attrs;
-        std::map<std::string, ATTR_VEC_PTR> m_face_attrs;
-        std::map<std::string, ATTR_VEC_PTR> m_geo_attrs;
+        std::map<std::string, AttributeVector> m_point_attrs;
+        std::map<std::string, AttributeVector> m_face_attrs;
+        std::map<std::string, AttributeVector> m_geo_attrs;
     };
 
 }

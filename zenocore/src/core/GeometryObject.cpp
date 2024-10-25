@@ -71,7 +71,7 @@ namespace zeno
             if (name == "pos") {
                 continue;
             }
-            sp_attr_data->to_prim_attr(spPrim, name);
+            sp_attr_data.to_prim_attr(spPrim, name);
         }
 
         int startIdx = 0;
@@ -213,13 +213,12 @@ namespace zeno
     }
 
     std::vector<vec3f> GeometryObject::points_pos() {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(ATTR_POINT);
+        std::map<std::string, AttributeVector>& container = get_container(ATTR_POINT);
         auto iter = container.find("pos");
         if (iter == container.end()) {
             throw makeError<KeyError>("pos", "not exist on point attr");
         }
-        auto spAttrVec = iter->second;
-        return spAttrVec->get_attrs<vec3f>();
+        return iter->second.get_attrs<vec3f>();
     }
 
     ZENO_API std::vector<vec3i> GeometryObject::tri_indice() const {
@@ -242,16 +241,6 @@ namespace zeno
         default:
             return 0;
         }
-    }
-
-    ZENO_API ATTR_VEC_PTR GeometryObject::get_attr(GeoAttrGroup grp, const std::string& attr_name) {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(ATTR_POINT);
-        auto iter = container.find(attr_name);
-        if (iter == container.end()) {
-            throw makeError<KeyError>(attr_name, "not exist on point attr");
-        }
-        auto spAttrVec = iter->second;
-        return spAttrVec;
     }
 
     ZENO_API void GeometryObject::geomTriangulate(zeno::TriangulateInfo& info) {
@@ -426,7 +415,22 @@ namespace zeno
         }
     }
 
-    ZENO_API std::map<std::string, ATTR_VEC_PTR>& GeometryObject::get_container(GeoAttrGroup grp) {
+    ZENO_API std::map<std::string, AttributeVector>& GeometryObject::get_container(GeoAttrGroup grp) {
+        if (grp == ATTR_GEO) {
+            return m_geo_attrs;
+        }
+        else if (grp == ATTR_POINT) {
+            return m_point_attrs;
+        }
+        else if (grp == ATTR_FACE) {
+            return m_face_attrs;
+        }
+        else {
+            throw makeError<UnimplError>("Unknown group on attr");
+        }
+    }
+
+    ZENO_API const std::map<std::string, AttributeVector>& GeometryObject::get_const_container(GeoAttrGroup grp) const {
         if (grp == ATTR_GEO) {
             return m_geo_attrs;
         }
@@ -443,7 +447,7 @@ namespace zeno
 
     bool GeometryObject::create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl)
     {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(grp);
+        std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(attr_name);
         if (iter != container.end()) {
             return false;   //already exist
@@ -451,32 +455,30 @@ namespace zeno
 
         AttrVar val = zeno::zfx::zfxvarToAttrvar(defl);
         int n = get_attr_size(grp);
-        ATTR_VEC_PTR spAttr = std::make_shared<AttributeVector>(val, n);
+        AttributeVector spAttr(val, n);
 
-        container.insert(std::make_pair(attr_name, spAttr));
+        container.insert(std::make_pair(attr_name, std::move(spAttr)));
         //需要同步到外侧的zfx manager
         return true;
     }
 
     bool GeometryObject::create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& val_or_vec)
     {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(grp);
+        std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(attr_name);
         if (iter != container.end()) {
             return false;   //already exist
         }
 
         int n = get_attr_size(grp);
-        ATTR_VEC_PTR spAttr = std::make_shared<AttributeVector>(val_or_vec, n);
-
-        container.insert(std::make_pair(attr_name, spAttr));
+        container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n)));
         //需要同步到外侧的zfx manager
         return true;
     }
 
     bool GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
     {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(grp);
+        std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(attr_name);
         if (iter == container.end())
             return false;
@@ -486,51 +488,51 @@ namespace zeno
 
     bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name)
     {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(grp);
+        std::map<std::string, AttributeVector>& container = get_container(grp);
         return container.find(name) != container.end();
     }
 
     std::vector<zfxvariant> GeometryObject::get_attr_byzfx(GeoAttrGroup grp, std::string const& name)
     {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(grp);
+        std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
             throw makeError<KeyError>(name, "not exist on point attr");
         }
 
-        auto spAttrVec = iter->second;
-        int n = spAttrVec->size();
-        AttrVarVec& val = spAttrVec->get();
+        auto& spAttrVec = iter->second;
+        int n = spAttrVec.size();
+        AttrVarVec& val = spAttrVec.get();
         return zeno::zfx::attrvarVecToZfxVec(val, n);
     }
 
     void GeometryObject::set_attr_byzfx(GeoAttrGroup grp, std::string const& name, const ZfxVariable& val, ZfxElemFilter& filter)
     {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(grp);
+        std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
             throw makeError<KeyError>(name, "not exist on point attr");
         }
-        ATTR_VEC_PTR spAttr = iter->second;
-        int n = spAttr->size();
+        AttributeVector& spAttr = iter->second;
+        int n = spAttr.size();
         for (int i = 0; i < n; i++) {
             if (filter[i]) {
                 const glm::vec3& vec = get_zfxvar<glm::vec3>(val.value[i]);
-                spAttr->set_elem(i, zeno::vec3f(vec.x, vec.y, vec.z));
+                spAttr.set_elem(i, zeno::vec3f(vec.x, vec.y, vec.z));
             }
         }
     }
 
     void GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val)
     {
-        std::map<std::string, ATTR_VEC_PTR>& container = get_container(grp);
+        std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
             throw makeError<KeyError>(name, "not exist on point attr");
         }
-        ATTR_VEC_PTR spAttr = iter->second;
-        int n = spAttr->size();
-        spAttr->set(val);
+        AttributeVector& spAttr = iter->second;
+        int n = spAttr.size();
+        spAttr.set(val);
     }
 
     void GeometryObject::initpoint(size_t point_id) {

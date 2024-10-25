@@ -87,33 +87,31 @@ namespace zeno {
             auto pivot_to_local = glm::inverse(pivot_to_world);
             matrix = pivot_to_world * matrix * pivot_to_local;
 
-            //if (geom->has_attr(ATTR_POINT, "pos"))
+            //std::vector<zeno::vec3f> pos = geom->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+            if (geom->has_attr(ATTR_POINT, "pos"))
             {
                 //TODO: 前面可以判断是否符合写时复制，比如transform的tsr是否发生改变
-                auto spAttrVec = geom->get_attr(ATTR_POINT, "pos");
-                //prim->verts.add_attr<zeno::vec3f>("_origin_pos") = pos; //视图端transform会用到，这里先不加
-#pragma omp parallel for
-                for (int i = 0; i < geom->npoints(); i++) {
-                    zeno::vec3f old_pos = spAttrVec->get_elem<zeno::vec3f>(i);
+                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", [&](zeno::vec3f old_pos)->zeno::vec3f {
                     auto p = zeno::vec_to_other<glm::vec3>(old_pos);
                     p = mapplypos(matrix, p);
                     auto newpos = zeno::other_to_vec<3>(p);
-                    spAttrVec->set_elem(i, newpos);
-                }
+                    return newpos;
+                });
+                //prim->verts.add_attr<zeno::vec3f>("_origin_pos") = pos; //视图端transform会用到，这里先不加
             }
+
+            //std::vector<float> xvec = geom->get_attrs<float, 'x'>(ATTR_POINT, "pos");
+            //float xpos = geom->get_elem<float, 'x'>(ATTR_POINT, "pos", 0);
 
             if (geom->has_attr(ATTR_POINT, "nrm"))
             {
-                auto spAttrVec = geom->get_attr(ATTR_POINT, "nrm");
-                //prim->verts.add_attr<zeno::vec3f>("_origin_nrm") = nrm;
-#pragma omp parallel for
-                for (int i = 0; i < geom->npoints(); i++) {
-                    zeno::vec3f old_nrm = spAttrVec->get_elem<zeno::vec3f>(i);
+                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", [&](zeno::vec3f old_nrm)->zeno::vec3f {
                     auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
                     n = mapplynrm(matrix, n);
                     auto newnrm = zeno::other_to_vec<3>(n);
-                    spAttrVec->set_elem(i, newnrm);
-                }
+                    return newnrm;
+                });
+                //prim->verts.add_attr<zeno::vec3f>("_origin_nrm") = nrm;
             }
 
             auto& user_data = geom->userData();

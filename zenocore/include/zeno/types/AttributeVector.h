@@ -21,7 +21,7 @@ namespace zeno {
         ZENO_API AttrVarVec get();
         ZENO_API void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, std::string const& name);
 
-        template<class T>
+        template<class T, char CHANNEL = 0>
         std::vector<T> get_attrs() const {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
@@ -57,31 +57,57 @@ namespace zeno {
                 return vec;
             }
             else {
-                auto& varvec = self->value();
-                return std::visit([&](auto&& vec)->std::vector<T> {
-                    using E = std::decay_t<decltype(vec)>;
-                    if constexpr (std::is_same_v<E, std::vector<int>> ||
-                        std::is_same_v < E, std::vector<float>> ||
-                        std::is_same_v < E, std::vector<std::string>> ||
-                        std::is_same_v < E, std::vector<vec2i>> ||
-                        std::is_same_v < E, std::vector<vec2f>> ||
-                        std::is_same_v < E, std::vector<vec3i>> ||
-                        std::is_same_v < E, std::vector<vec3f>> ||
-                        std::is_same_v < E, std::vector<vec4i>> ||
-                        std::is_same_v < E, std::vector<vec4f>>) {
-                        if (vec.size() == 1) {
-                            return vector<T>(m_size, vec[0]);
+                if constexpr (CHANNEL > 0) {
+                    std::shared_ptr<AttrColumn> spComp;
+                    if constexpr (CHANNEL == 'x') { spComp = x_comp; }
+                    else if constexpr (CHANNEL == 'y') { spComp = y_comp; }
+                    else if constexpr (CHANNEL == 'z') { spComp = z_comp; }
+                    else if constexpr (CHANNEL == 'w') { spComp = w_comp; }
+                    if (!spComp)
+                        throw UnimplError("the variant doesn't contain component vector");
+
+                    return std::visit([&](auto&& vec)->std::vector<T> {
+                        using E = std::decay_t<decltype(vec)>;
+                        if constexpr (std::is_same_v<E, std::vector<T>>) {
+                            if (vec.size() == 1) {
+                                return std::vector<T>(m_size, vec[0]);
+                            }
+                            else {
+                                return vec;
+                            }
                         }
-                        return vec;
-                    }
-                    else {
-                        throw;
-                    }
-                }, varvec);
+                        else {
+                            throw UnimplError("type dismatch");
+                        }
+                    }, spComp->value());
+                }
+                else {
+                    auto& varvec = self->value();
+                    return std::visit([&](auto&& vec)->std::vector<T> {
+                        using E = std::decay_t<decltype(vec)>;
+                        if constexpr (std::is_same_v<E, std::vector<int>> ||
+                            std::is_same_v < E, std::vector<float>> ||
+                            std::is_same_v < E, std::vector<std::string>> ||
+                            std::is_same_v < E, std::vector<vec2i>> ||
+                            std::is_same_v < E, std::vector<vec2f>> ||
+                            std::is_same_v < E, std::vector<vec3i>> ||
+                            std::is_same_v < E, std::vector<vec3f>> ||
+                            std::is_same_v < E, std::vector<vec4i>> ||
+                            std::is_same_v < E, std::vector<vec4f>>) {
+                            if (vec.size() == 1) {
+                                return vector<T>(m_size, vec[0]);
+                            }
+                            return vec;
+                        }
+                        else {
+                            throw;
+                        }
+                    }, varvec);
+                }
             }
         }
 
-        template<class T>
+        template<typename T, char CHANNEL = 0>
         T get_elem(size_t idx) const {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
                 using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
@@ -96,12 +122,37 @@ namespace zeno {
                 return T(x_comp->get<ElemType>(idx), y_comp->get<ElemType>(idx), z_comp->get<ElemType>(idx), w_comp->get<ElemType>(idx));
             }
             else {
-                AttrVarVec& attrval = self->value();
-                return self->get<T>(idx);
+                if constexpr (CHANNEL > 0) {
+                    std::shared_ptr<AttrColumn> spComp;
+                    if constexpr (CHANNEL == 'x') { spComp = x_comp; }
+                    else if constexpr (CHANNEL == 'y') { spComp = y_comp; }
+                    else if constexpr (CHANNEL == 'z') { spComp = z_comp; }
+                    else if constexpr (CHANNEL == 'w') { spComp = w_comp; }
+                    if (!spComp)
+                        throw UnimplError("the variant doesn't contain component vector");
+                    return std::visit([&](auto&& vec)->T {
+                        using E = std::decay_t<decltype(vec)>;
+                        if constexpr (std::is_same_v<E, std::vector<T>>) {
+                            if (vec.size() == 1) {
+                                return vec[0];
+                            }
+                            else {
+                                return vec[idx];
+                            }
+                        }
+                        else {
+                            throw;
+                        }
+                    }, spComp->value());
+                }
+                else {
+                    AttrVarVec& attrval = self->value();
+                    return self->get<T>(idx);
+                }
             }
         }
 
-        template<class T>
+        template<class T, char CHANNEL = 0>
         void set_elem(size_t idx, T val) {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
                 if (x_comp.use_count() > 1)
@@ -137,56 +188,104 @@ namespace zeno {
                 w_comp->set(idx, val[3]);
             }
             else {
-                if (self.use_count() > 1) {
-                    self = std::make_shared<AttrColumn>(*self);
+                if constexpr (CHANNEL > 0) {
+                    std::shared_ptr<AttrColumn> spComp;
+                    if constexpr (CHANNEL == 'x') {
+                        if (x_comp.use_count() > 1) {
+                            x_comp = std::make_shared<AttrColumn>(*x_comp);
+                        }
+                        x_comp->set(idx, val);
+                    }
+                    else if constexpr (CHANNEL == 'y') {
+                        if (y_comp.use_count() > 1) {
+                            y_comp = std::make_shared<AttrColumn>(*y_comp);
+                        }
+                        y_comp->set(idx, val);
+                    }
+                    else if constexpr (CHANNEL == 'z') {
+                        if (z_comp.use_count() > 1) {
+                            z_comp = std::make_shared<AttrColumn>(*z_comp);
+                        }
+                        z_comp->set(idx, val);
+                    }
+                    else if constexpr (CHANNEL == 'w') {
+                        if (w_comp.use_count() > 1) {
+                            w_comp = std::make_shared<AttrColumn>(*w_comp);
+                        }
+                        w_comp->set(idx, val);
+                    }
+                    else {
+                        throw;
+                    }
                 }
-                self->set(idx, val);
-            }
-        }
-
-        template<typename T>
-        void set_comp(size_t idx, char channel, T val) {
-            if (channel == 'x') {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                x_comp->set(idx, val);
-            }
-            else if (channel == 'y') {
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                y_comp->set(idx, val);
-            }
-            else if (channel == 'z') {
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
-                z_comp->set(idx, val);
-            }
-            else if (channel == 'w') {
-                if (w_comp.use_count() > 1)
-                    w_comp = std::make_shared<AttrColumn>(*w_comp);
-                w_comp->set(idx, val);
-            }
-            else {
-                throw;
+                else {
+                    if (self.use_count() > 1) {
+                        self = std::make_shared<AttrColumn>(*self);
+                    }
+                    self->set(idx, val);
+                }
             }
         }
 
         template<class T>
-        T get_comp(size_t idx, char channel) {
-            if (channel == 'x') {
-                return x_comp->get<T>(idx);
+        void foreach_attr_update(std::function<T(T old_elem_value)>&& evalf) {
+            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
+                using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                AttrVarVec& xvar = x_comp->value();
+                AttrVarVec& yvar = y_comp->value();
+                auto pXVec = std::get_if<std::vector<ElemType>>(&xvar);
+                auto pYVec = std::get_if<std::vector<ElemType>>(&yvar);
+                if (!pXVec || !pYVec)
+                    throw UnimplError("type dismatch");
+                int nx = pXVec->size(), ny = pYVec->size();
+#pragma omp parallel for
+                for (int i = 0; i < m_size; i++) {
+                    int ix = std::min(i, nx-1), iy = std::min(i, ny-1);
+                    T old_val(*pXVec[ix], (*pYVec)[iy]);
+                    T new_val = evalf(old_val);
+                    (*pXVec)[ix] = new_val[0];
+                    (*pYVec)[iy] = new_val[1];
+                }
             }
-            else if (channel == 'y') {
-                return y_comp->get<T>(idx);
+            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, vec3i>) {
+                using ElemType = std::conditional<std::is_same_v<T, vec3f>, float, int>::type;
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                if (z_comp.use_count() > 1)
+                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+
+                AttrVarVec& xvar = x_comp->value();
+                AttrVarVec& yvar = y_comp->value();
+                AttrVarVec& zvar = z_comp->value();
+                auto pXVec = std::get_if<std::vector<ElemType>>(&xvar);
+                auto pYVec = std::get_if<std::vector<ElemType>>(&yvar);
+                auto pZVec = std::get_if<std::vector<ElemType>>(&zvar);
+                if (!pXVec || !pYVec || !pZVec)
+                    throw UnimplError("type dismatch");
+                int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
+#pragma omp parallel for
+                for (int i = 0; i < m_size; i++) {
+                    int ix = std::min(i, nx-1), iy = std::min(i, ny-1), iz = std::min(i, nz-1);
+                    T old_val((*pXVec)[ix], (*pYVec)[iy], (*pZVec)[iz]);
+                    T new_val = evalf(old_val);
+                    (*pXVec)[ix] = new_val[0];
+                    (*pYVec)[iy] = new_val[1];
+                    (*pZVec)[iz] = new_val[2];
+                }
             }
-            else if (channel == 'z') {
-                return z_comp->get<T>(idx);
-            }
-            else if (channel == 'w') {
-                return w_comp->get<T>(idx);
+            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, vec4i>) {
+                using ElemType = std::conditional<std::is_same_v<T, vec4f>, float, int>::type;
+                
             }
             else {
-                throw;
+                AttrVarVec& attrval = self->value();
+                
             }
         }
 
