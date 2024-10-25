@@ -71,53 +71,56 @@ namespace zeno {
             auto& xvar = x_comp->value();
             auto& yvar = y_comp->value();
             assert(xvar.index() == yvar.index());
+            bool bFloat = std::holds_alternative<std::vector<float>>(xvar);
 
-            std::visit([&](auto&& vec) {
-                using E = std::decay_t<decltype(vec)>;
-                if constexpr (std::is_same_v < E, std::vector<vec2i>>) {
-                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec2i>(attr_name);
-                    for (int i = 0; i < m_size; i++) {
-                        vec_attr[i] = zeno::vec2i(x_comp->get<int>(i), y_comp->get<int>(i));
+            if (z_comp) {
+                auto& zvar = z_comp->value();
+                assert(zvar.index() == xvar.index());
+                if (w_comp) {
+                    auto& wvar = w_comp->value();
+                    assert(wvar.index() == xvar.index());
+                    if (bFloat) {
+                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
+                        for (int i = 0; i < m_size; i++) {
+                            vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
+                        }
+                    }
+                    else {
+                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec4i>(attr_name);
+                        for (int i = 0; i < m_size; i++) {
+                            vec_attr[i] = zeno::vec4i(x_comp->get<int>(i), y_comp->get<int>(i), z_comp->get<int>(i), w_comp->get<int>(i));
+                        }
                     }
                 }
-                else if constexpr (std::is_same_v < E, std::vector<vec2f>>) {
+                else {
+                    if (bFloat) {
+                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
+                        for (int i = 0; i < m_size; i++) {
+                            vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
+                        }
+                    }
+                    else {
+                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec3i>(attr_name);
+                        for (int i = 0; i < m_size; i++) {
+                            vec_attr[i] = zeno::vec3f(x_comp->get<int>(i), y_comp->get<int>(i), z_comp->get<int>(i));
+                        }
+                    }
+                }
+            }
+            else {
+                if (bFloat) {
                     auto& vec_attr = spPrim->verts.add_attr<zeno::vec2f>(attr_name);
                     for (int i = 0; i < m_size; i++) {
                         vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                     }
                 }
-                else if constexpr (std::is_same_v < E, std::vector<vec3i>>) {
-                    assert(z_comp);
-                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec3i>(attr_name);
-                    for (int i = 0; i < m_size; i++) {
-                        vec_attr[i] = zeno::vec3i(x_comp->get<int>(i), y_comp->get<int>(i), z_comp->get<int>(i));
-                    }
-                }
-                else if constexpr (std::is_same_v < E, std::vector<vec3f>>) {
-                    assert(z_comp);
-                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
-                    for (int i = 0; i < m_size; i++) {
-                        vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
-                    }
-                }
-                else if constexpr (std::is_same_v < E, std::vector<vec4i>>) {
-                    assert(z_comp && w_comp);
-                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec4i>(attr_name);
-                    for (int i = 0; i < m_size; i++) {
-                        vec_attr[i] = zeno::vec4i(x_comp->get<int>(i), y_comp->get<int>(i), z_comp->get<int>(i), w_comp->get<int>(i));
-                    }
-                }
-                else if constexpr (std::is_same_v < E, std::vector<vec4f>>) {
-                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
-                    assert(z_comp && w_comp);
-                    for (int i = 0; i < m_size; i++) {
-                        vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
-                    }
-                }
                 else {
-                    throw;
+                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec2i>(attr_name);
+                    for (int i = 0; i < m_size; i++) {
+                        vec_attr[i] = zeno::vec2i(x_comp->get<int>(i), y_comp->get<int>(i));
+                    }
                 }
-            }, x_comp->value());
+            }
         }
         else {
             throw;
