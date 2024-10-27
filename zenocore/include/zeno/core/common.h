@@ -155,6 +155,13 @@ namespace zeno {
         Node_RunSucceed             //计算成功并完成   (no dirty)
     };
 
+    //几何属性对应的分组
+    enum GeoAttrGroup {
+        ATTR_GEO,
+        ATTR_FACE,
+        ATTR_POINT,
+    };
+
     enum ZSG_VERSION
     {
         VER_2,          //old version io

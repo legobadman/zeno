@@ -1,4 +1,5 @@
 #include <zeno/types/AttributeVector.h>
+#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno {
@@ -9,15 +10,20 @@ namespace zeno {
         z_comp = rhs.z_comp;
         w_comp = rhs.w_comp;
         m_size = rhs.m_size;
+        m_type = rhs.m_type;
         self = rhs.self;
     }
 
-    ZENO_API AttributeVector::AttributeVector(const AttrVar& val_or_vec, size_t size) : m_size(size){
+    ZENO_API AttributeVector::AttributeVector(const AttrVar& val_or_vec, size_t size) : m_size(size), m_type(0){
         set(val_or_vec);
     }
 
     ZENO_API size_t AttributeVector::size() const {
         return m_size;
+    }
+
+    ZENO_API size_t AttributeVector::type() const {
+        return m_type;
     }
 
     ZENO_API AttrVarVec AttributeVector::get() {
@@ -128,34 +134,50 @@ namespace zeno {
     }
 
     ZENO_API void AttributeVector::set(const AttrVar& val_or_vec) {
-
         std::visit([&](auto&& val) {
             using E = std::decay_t<decltype(val)>;
+
+            size_t invar_type = type_info<E>().hash_code();
+            //TODO: 如果是int转float这种呢？
+            if (m_type != 0 && invar_type != m_type) {
+                throw UnimplError("type dismatch, cannot change type of attrvector");
+            }
+
             if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float> || std::is_same_v<E, std::string>) {
                 self = std::make_shared<AttrColumn>(std::vector<E>(1, val), m_size);
+                m_type = invar_type;
             }
             else if constexpr (std::is_same_v<E, vec2i> || std::is_same_v<E, vec2f>) {
                 using ElemType = std::conditional<std::is_same_v<E, vec2f>, float, int>::type;
                 x_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
                 y_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
+                m_type = invar_type;
             }
             else if constexpr (std::is_same_v<E, vec3i> || std::is_same_v<E, vec3f>) {
                 using ElemType = std::conditional<std::is_same_v<E, vec3f>, float, int>::type;
                 x_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
                 y_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[1]), m_size);
                 z_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[2]), m_size);
+                m_type = invar_type;
             }
             else if constexpr (std::is_same_v<E, vec4i> || std::is_same_v<E, vec4f>) {
                 using ElemType = std::conditional<std::is_same_v<E, vec4f>, float, int>::type;
                 x_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
                 y_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[1]), m_size);
                 z_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[2]), m_size);
+                m_type = invar_type;
             }
-            else if constexpr (std::is_same_v<E, std::vector<int>> ||
-                std::is_same_v<E, std::vector<float>> ||
-                std::is_same_v<E, std::vector<std::string>>)
-            {
+            else if constexpr (std::is_same_v<E, std::vector<int>>) {
                 self = std::make_shared<AttrColumn>(val, m_size);
+                m_type = type_info<int>().hash_code();
+            }
+            else if constexpr (std::is_same_v<E, std::vector<float>>) {
+                self = std::make_shared<AttrColumn>(val, m_size);
+                m_type = type_info<float>().hash_code();
+            }
+            else if constexpr (std::is_same_v<E, std::vector<std::string>>) {
+                self = std::make_shared<AttrColumn>(val, m_size);
+                m_type = type_info<std::string>().hash_code();
             }
             else if constexpr (std::is_same_v<E, std::vector<vec2i>> || std::is_same_v<E, std::vector<vec2f>>) {
                 using ElemType = std::conditional<std::is_same_v<E, std::vector<vec2f>>, float, int>::type;
@@ -167,6 +189,12 @@ namespace zeno {
                 }
                 x_comp = std::make_shared<AttrColumn>(xvec, m_size);
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
+                if constexpr (std::is_same_v<ElemType, float>) {
+                    m_type = type_info<vec2f>().hash_code();
+                }
+                else {
+                    m_type = type_info<vec2i>().hash_code();
+                }
             }
             else if constexpr (std::is_same_v<E, std::vector<vec3i>> || std::is_same_v<E, std::vector<vec3f>>) {
                 using ElemType = std::conditional<std::is_same_v<E, std::vector<vec3f>>, float, int>::type;
@@ -181,6 +209,12 @@ namespace zeno {
                 x_comp = std::make_shared<AttrColumn>(xvec, m_size);
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
                 z_comp = std::make_shared<AttrColumn>(zvec, m_size);
+                if constexpr (std::is_same_v<ElemType, float>) {
+                    m_type = type_info<vec3f>().hash_code();
+                }
+                else {
+                    m_type = type_info<vec3i>().hash_code();
+                }
             }
             else if constexpr (std::is_same_v<E, std::vector<vec4i>> || std::is_same_v<E, std::vector<vec4f>>) {
                 using ElemType = std::conditional<std::is_same_v<E, std::vector<vec4f>>, float, int>::type;
@@ -198,6 +232,12 @@ namespace zeno {
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
                 z_comp = std::make_shared<AttrColumn>(zvec, m_size);
                 w_comp = std::make_shared<AttrColumn>(wvec, m_size);
+                if constexpr (std::is_same_v<ElemType, float>) {
+                    m_type = type_info<vec3f>().hash_code();
+                }
+                else {
+                    m_type = type_info<vec3i>().hash_code();
+                }
             }
         }, val_or_vec);
     }

@@ -13,6 +13,8 @@
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/utils/vectorutil.h>
+#include "../utils/zfxutil.h"
+
 
 using namespace zeno::types;
 using namespace zeno::reflect;
@@ -188,10 +190,10 @@ namespace zeno {
 #endif
     }
 
-    static int getElementCount(std::shared_ptr<IObject> spObject, ZfxRunOver runover) {
+    static int getElementCount(std::shared_ptr<IObject> spObject, GeoAttrGroup runover) {
         switch (runover)
         {
-        case RunOver_Points: {
+        case ATTR_POINT: {
             if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
                 return spGeo->get_point_count();
             }
@@ -202,7 +204,7 @@ namespace zeno {
                 return 0;
             }
         }
-        case RunOver_Face:
+        case ATTR_FACE:
             if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
                 return spGeo->get_face_count();
             }
@@ -215,7 +217,7 @@ namespace zeno {
             else {
                 return 0;
             }
-        case RunOver_Geom: {
+        case ATTR_GEO: {
             //only one element
             return 1;
         }
@@ -908,52 +910,48 @@ namespace zeno {
         return bret;
     }
 
-    static void commitToObject(std::shared_ptr<IObject> spObject, const ZfxVariable& val, const std::string& attr_name, ZfxElemFilter& filter) {
-        if (attr_name != "nrm" && attr_name != "pos") {
-            //supporting only @N and @P
-            return;
-        }
-
-        if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
-            if (spPrim->has_attr(attr_name)) {
-                auto/*std::vector<vec3f>*/& attrvecs = spPrim->attr<vec3f>(attr_name);
-                assert(filter.size() == attrvecs.size());
-                for (int i = 0; i < attrvecs.size(); i++) {
-                    if (filter[i]) {
-                        const glm::vec3& vec = get_zfxvar<glm::vec3>(val.value[i]);
-                        attrvecs[i] = { vec.x, vec.y, vec.z };
-                    }
-                }
+    static void commitToObject(ZfxContext* pContext, const ZfxVariable& zfxvar, const std::string& attr_name, ZfxElemFilter& filter) {
+        assert(!attr_name.empty());
+        GeoAttrGroup grp = pContext->runover;
+        auto& zfxvec = zfxvar.value;
+        if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
+            AttrVar wtf = zeno::zfx::convertToAttrVar(zfxvec);
+            std::string attrname;
+            if (attr_name[0] == '@')
+                attrname = attr_name.substr(1);
+            if (!spGeo->has_attr(grp, attrname)) {
+                spGeo->create_attr(grp, attrname, wtf);
             }
             else {
-                throw makeError<UnimplError>("the prim has no attr about normal, you can check whether the option `hasNormal` is on");
+                spGeo->set_attr(grp, attrname, wtf);
             }
         }
-        else if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
-            spGeo->set_attr_byzfx(ATTR_POINT, attr_name, val, filter);
+        else {
+            throw UnimplError("only support Geometry when setting attributes");
         }
     }
 
     void FunctionManager::commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext) {
-        if (pContext->runover == RunOver_Points) {
+        if (pContext->runover == ATTR_POINT) {
             if (attrname == "@P") {
-                commitToObject(pContext->spObject, val, "pos", filter);
+                commitToObject(pContext, val, "pos", filter);
             }
             else if (attrname == "@ptnum") {
                 throw makeError<UnimplError>("");
             }
             else if (attrname == "@N") {
-                commitToObject(pContext->spObject, val, "nrm", filter);
+                commitToObject(pContext, val, "nrm", filter);
             }
             else if (attrname == "@Cd") {
             }
             else {
+                commitToObject(pContext, val, attrname, filter);
             }
         }
-        else if (pContext->runover == RunOver_Face) {
+        else if (pContext->runover == ATTR_FACE) {
             
         }
-        else if (pContext->runover == RunOver_Geom) {
+        else if (pContext->runover == ATTR_GEO) {
             
         }
         else {
@@ -1039,8 +1037,8 @@ namespace zeno {
     }
 
     ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext) {
-        if (pContext->runover == RunOver_Points) {
-            if (attrname == "@P") {
+        if (pContext->runover == ATTR_POINT) {
+            if (attrname == "@pos") {
                 return getAttrValue_impl(pContext->spObject, "pos");
             }
             else if (attrname == "@ptnum") {
@@ -1056,10 +1054,10 @@ namespace zeno {
                 return ZfxVariable();
             }
         }
-        else if (pContext->runover == RunOver_Face) {
+        else if (pContext->runover == ATTR_FACE) {
             return ZfxVariable();
         }
-        else if (pContext->runover == RunOver_Geom) {
+        else if (pContext->runover == ATTR_GEO) {
             return ZfxVariable();
         }
         else {
@@ -1084,6 +1082,18 @@ namespace zeno {
             case ZENVAR: {
                 //这里指的是取zenvar的值用于上层的计算或者输出，赋值并不会走到这里
                 const std::string& varname = get_zfxvar<std::string>(root->value);
+                if (root->opVal == COMPVISIT) {
+                    if (root->children.size() != 1) {
+                        throw makeError<UnimplError>("Indexing Error on NameVisit");
+                    }
+                    std::string component = get_zfxvar<std::string>(root->children[0]->value);
+                    //pContext->spObject->get_attrs();
+                    //return get_element_by_name(var, component);
+                }
+                else if (root->opVal == Indexing) {
+
+                }
+
                 ZfxVariable& var = getVariableRef(varname, pContext);
 
                 switch (root->opVal) {
@@ -1095,13 +1105,6 @@ namespace zeno {
                     ZfxVariable elemvar = get_array_element(var, idx);
                     return elemvar;
                 }
-                //case COMPVISIT: {
-                //    if (root->children.size() != 1) {
-                //        throw makeError<UnimplError>("Indexing Error on NameVisit");
-                //    }
-                //    std::string component = get_zfxvar<std::string>(root->children[0]->value);
-                //    return get_element_by_name(var, component);
-                //}
                 case BulitInVar: {
                     std::string attrname = get_zfxvar<std::string>(root->value);
                     if (attrname.size() < 2 || attrname[0] != '$') {
@@ -1231,7 +1234,7 @@ namespace zeno {
                         //先自增/减,再赋值，似乎没有意义，所以忽略
                         if (zenvarNode->bAttr) {
                             //属性的赋值不能修改其原来的维度。
-                            assert(res.value.size() <= var.value.size());
+                            //assert(res.value.size() <= var.value.size());
                             if (res.value.size() < var.value.size()) {
                                 //如果右边的值的容器大小比当前赋值属性要小，很可能是单值，先只考虑这种情况。
                                 assert(res.value.size() == 1);
@@ -1379,8 +1382,10 @@ namespace zeno {
                                 else if (visit_attr == "w") {
 
                                 }
-                                //unknown attr
-                                throw makeError<UnimplError>("unknown attr when visit nodeparam");
+                                else {
+                                    //unknown attr
+                                    throw makeError<UnimplError>("unknown attr when visit nodeparam");
+                                }
                             }
                             else if constexpr (std::is_same_v<E, ParamObject>) {
                                 if (visit_attr == "connected") {
@@ -2041,7 +2046,33 @@ namespace zeno {
         }
         else {
             //先简单匹配调用
-            if (funcname == "sin") {
+            if (funcname == "vec3") {
+                if (args.size() != 3)
+                    throw makeError<UnimplError>("the number of elements isn't 3");
+                const ZfxVariable& xvar = args[0], &yvar = args[1], &zvar = args[2];
+                int nx = xvar.value.size(), ny = yvar.value.size(), nz = zvar.value.size();
+                int N = std::max(nx, std::max(ny, nz));
+                ZfxVariable res;
+                if (N == 1) {
+                    float x = get_zfxvar<float>(xvar.value[0]);
+                    float y = get_zfxvar<float>(yvar.value[0]);
+                    float z = get_zfxvar<float>(zvar.value[0]);
+                    res.value.push_back(glm::vec3(x, y, z));
+                }
+                else {
+                    for (int i = 0; i < N; i++) {
+                        int ni = std::min(i, nx);
+                        int nj = std::min(i, ny);
+                        int nk = std::min(i, nz);
+                        float x = get_zfxvar<float>(xvar.value[ni]);
+                        float y = get_zfxvar<float>(yvar.value[nj]);
+                        float z = get_zfxvar<float>(zvar.value[nk]);
+                        res.value.push_back(glm::vec3(x, y, z));
+                    }
+                }
+                return res;
+            }
+            else if (funcname == "sin") {
                 if (args.size() != 1)
                     throw makeError<UnimplError>();
                 const auto& arg = args[0];

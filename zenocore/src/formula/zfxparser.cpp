@@ -1336,7 +1336,7 @@ namespace  zeno  {
   case 48: // foreach-step: TYPE VARNAME
 #line 266 "zfxparser.y"
                    {
-            /* 类型不是必要的，只是为了兼容一些编程习惯，比如foreach(int a : arr)*/
+            /* 绫诲瀷涓嶆槸蹇呰鐨勶紝鍙槸涓轰簡鍏煎涓�浜涚紪绋嬩範鎯紝姣斿foreach(int a : arr)*/
             auto varNode = driver.makeZfxVarNode(yystack_[0].value.as < string > ());
             yylhs.value.as < std::vector<std::shared_ptr<ZfxASTNode>> > () = std::vector<std::shared_ptr<ZfxASTNode>>({varNode});
         }

@@ -13,6 +13,7 @@ namespace zeno
         AttrVar zfxvarToAttrvar(const zfxvariant& var);
         std::vector<zfxvariant> extractAttrValue(zeno::reflect::Any anyval, int size);
         std::vector<zfxvariant> attrvarVecToZfxVec(AttrVarVec anyval, int size);
+        AttrVar convertToAttrVar(const std::vector<zfxvariant>& zfxvec);
     }
 }
 

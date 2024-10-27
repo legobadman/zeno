@@ -18,6 +18,7 @@ namespace zeno {
         ZENO_API AttributeVector(const AttributeVector& rhs);
         ZENO_API size_t size() const;
         ZENO_API void set(const AttrVar& val_or_vec);
+        ZENO_API size_t type() const;
         ZENO_API AttrVarVec get();
         ZENO_API void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, std::string const& name);
 
@@ -293,5 +294,6 @@ namespace zeno {
         //这里把vector的分量拆出来，仅仅考虑了内存储存优化的情况，如果后续基于共享内存，写法会改变。
         std::shared_ptr<AttrColumn> x_comp, y_comp, z_comp, w_comp, self;
         size_t m_size;
+        size_t m_type;  //from RTTITypeInfo.
     };
 }

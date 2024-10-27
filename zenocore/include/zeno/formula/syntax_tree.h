@@ -130,6 +130,22 @@ using zfxvariant = std::variant<int, float, std::string, ZfxLValue,
     glm::vec2, glm::vec3, glm::vec4, 
     glm::mat2, glm::mat3, glm::mat4>;
 
+using ZfxVecVar = std::variant<
+    std::vector<int>,
+    std::vector<float>,
+    std::vector<std::string>,
+    std::vector<ZfxLValue>,
+    std::vector<glm::vec2>,
+    std::vector<glm::vec3>,
+    std::vector<glm::vec4>,
+    std::vector<glm::mat2>,
+    std::vector<glm::mat3>,
+    std::vector<glm::mat4>,
+    std::vector<zfxintarr>,
+    std::vector<zfxfloatarr>,
+    std::vector<zfxstringarr>>;
+
+
 enum TokenMatchCase {
     Match_Nothing,
     Match_LeftPAREN,
@@ -175,10 +191,10 @@ struct ZfxParamConstrain
 
 struct ZfxContext
 {
-    /* in */ std::shared_ptr<IObject> spObject;
+    /* in */ std::shared_ptr<GeometryObject> spObject;
     /* in */ std::weak_ptr<INode> spNode;
     /* in */ std::string code;
-    /* in */ ZfxRunOver runover = RunOver_Points;
+    /* in */ GeoAttrGroup runover = ATTR_POINT;
     /* inout */ ZfxParamConstrain param_constrain;
     /* out */ std::string printContent;
     /* out */ operatorVals jumpFlag;

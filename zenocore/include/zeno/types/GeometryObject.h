@@ -20,12 +20,6 @@ namespace zeno
 
     using ATTR_VEC_PTR = std::shared_ptr<AttributeVector>;
 
-    enum GeoAttrGroup {
-        ATTR_GEO,
-        ATTR_FACE,
-        ATTR_POINT,
-    };
-
     class GeometryObject : public IObjectClone<GeometryObject> {
     public:
         ZENO_API GeometryObject();
@@ -44,12 +38,10 @@ namespace zeno
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
 
         //attr:
-        bool create_attr_by_zfx(GeoAttrGroup grp, const std::string& attr_name, const zfxvariant& defl);
         ZENO_API bool create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
         ZENO_API bool delete_attr(GeoAttrGroup grp, const std::string& attr_name);
         ZENO_API bool has_attr(GeoAttrGroup grp, std::string const& name);
         std::vector<zfxvariant> get_attr_byzfx(GeoAttrGroup grp, std::string const& name);
-        void set_attr_byzfx(GeoAttrGroup grp, std::string const& name, const ZfxVariable& val, ZfxElemFilter& filter);
         ZENO_API void set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
 
         template<class T, char CHANNEL = 0>

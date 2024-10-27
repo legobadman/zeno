@@ -144,6 +144,13 @@ std::shared_ptr<ZfxASTNode> ZfxExecute::makeTypeNode(std::string text, bool bArr
 }
 
 std::shared_ptr<ZfxASTNode> ZfxExecute::makeComponentVisit(std::shared_ptr<ZfxASTNode> pExpression, std::string component) {
+    if (pExpression->type == ZENVAR && pExpression->bAttr) {
+        std::shared_ptr<ZfxASTNode> childNode = std::make_shared<ZfxASTNode>();
+        childNode->value = component;
+        pExpression->opVal = COMPVISIT;
+        pExpression->children.push_back(childNode);
+        return pExpression;
+    }
 
     std::shared_ptr<ZfxASTNode> childNode = std::make_shared<ZfxASTNode>();
     childNode->type = ATTR_VAR;

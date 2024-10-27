@@ -13,7 +13,10 @@ namespace zeno {
 
     struct ZfxVariable
     {
-        std::vector<zfxvariant> value;  //如果是属性变量(bAttr=true)，那这个容器的大小就是runover（点线面）的元素个数，否则就是size=1
+        std::vector<zfxvariant> value;  //如果是属性变量(bAttr=true)，那这个容器的大小就是runover（点线面）的元素个数，否则就是size=1，也可以单值表示所有属性的等值。
+
+        //ZfxVecVar value2;
+
         bool bAttr = false;     //是否与属性关联（好像没什么用）
         bool bAttrUpdated = false;      //ZfxVariable也记录属性值（比如@P, @N @ptnum等），此标记记录在zfx执行中，属性值是否修改了
 

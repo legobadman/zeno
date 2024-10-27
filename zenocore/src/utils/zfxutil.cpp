@@ -197,5 +197,92 @@ namespace zeno
             }
             return res;
         }
+
+        AttrVar convertToAttrVar(const std::vector<zfxvariant>& zfxvec)
+        {
+            AttrVar wtf;
+            assert(!zfxvec.empty());
+            return std::visit([&](auto&& val)->AttrVar {
+                using E = std::decay_t<decltype(val)>;
+                if constexpr (std::is_same_v<E, int>) {
+                    if (zfxvec.size() == 1) {
+                        return val;
+                    }
+                    else {
+                        std::vector<int> vec(zfxvec.size());
+                        for (int i = 0; i < zfxvec.size(); i++) {
+                            vec[i] = std::get<int>(zfxvec[i]);
+                        }
+                        return vec;
+                    }
+                }
+                else if constexpr (std::is_same_v<E, float>) {
+                    if (zfxvec.size() == 1) {
+                        return val;
+                    }
+                    else {
+                        std::vector<float> vec(zfxvec.size());
+                        for (int i = 0; i < zfxvec.size(); i++) {
+                            vec[i] = std::get<float>(zfxvec[i]);
+                        }
+                        return vec;
+                    }
+                }
+                else if constexpr (std::is_same_v<E, std::string>) {
+                    if (zfxvec.size() == 1) {
+                        return val;
+                    }
+                    else {
+                        std::vector<std::string> vec(zfxvec.size());
+                        for (int i = 0; i < zfxvec.size(); i++) {
+                            vec[i] = std::get<std::string>(zfxvec[i]);
+                        }
+                        return vec;
+                    }
+                }
+                else if constexpr (std::is_same_v<E, glm::vec3>) {
+                    if (zfxvec.size() == 1) {
+                        return zeno::vec3f(val[0], val[1], val[2]);
+                    }
+                    else {
+                        std::vector<zeno::vec3f> vec(zfxvec.size());
+                        for (int i = 0; i < zfxvec.size(); i++) {
+                            glm::vec3 v = std::get<glm::vec3>(zfxvec[i]);
+                            vec[i] = zeno::vec3f(v[0], v[1], v[2]);
+                        }
+                        return vec;
+                    }
+                }
+                else if constexpr (std::is_same_v<E, glm::vec2>) {
+                    if (zfxvec.size() == 1) {
+                        return zeno::vec2f(val[0], val[1]);
+                    }
+                    else {
+                        std::vector<zeno::vec2f> vec(zfxvec.size());
+                        for (int i = 0; i < zfxvec.size(); i++) {
+                            glm::vec2 v = std::get<glm::vec2>(zfxvec[i]);
+                            vec[i] = zeno::vec2f(v[0], v[1]);
+                        }
+                        return vec;
+                    }
+                }
+                else if constexpr (std::is_same_v<E, glm::vec4>) {
+                    if (zfxvec.size() == 1) {
+                        return zeno::vec4f(val[0], val[1], val[2], val[3]);
+                    }
+                    else {
+                        std::vector<zeno::vec4f> vec(zfxvec.size());
+                        for (int i = 0; i < zfxvec.size(); i++) {
+                            glm::vec4 v = std::get<glm::vec4>(zfxvec[i]);
+                            vec[i] = zeno::vec4f(v[0], v[1], v[2]);
+                        }
+                        return vec;
+                    }
+                }
+                else {
+                    throw UnimplError("Unsupport type for converting to AttrVar");
+                }
+            }, zfxvec[0]);
+        }
     }
 }
