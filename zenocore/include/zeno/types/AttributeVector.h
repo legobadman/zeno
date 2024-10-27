@@ -24,35 +24,32 @@ namespace zeno {
 
         template<class T, char CHANNEL = 0>
         std::vector<T> get_attrs() const {
-            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
+            if constexpr (std::is_same_v<T, vec2f>) {
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
-                    ElemType xval = x_comp->get<ElemType>(i);
-                    ElemType yval = y_comp->get<ElemType>(i);
+                    float xval = x_comp->get<float>(i);
+                    float yval = y_comp->get<float>(i);
                     vec[i] = T(xval, yval);
                 }
                 return vec;
             }
-            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, vec3i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec3f>, float, int>::type;
+            else if constexpr (std::is_same_v<T, vec3f>) {
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
-                    ElemType xval = x_comp->get<ElemType>(i);
-                    ElemType yval = y_comp->get<ElemType>(i);
-                    ElemType zval = z_comp->get<ElemType>(i);
+                    float xval = x_comp->get<float>(i);
+                    float yval = y_comp->get<float>(i);
+                    float zval = z_comp->get<float>(i);
                     vec[i] = T(xval, yval, zval);
                 }
                 return vec;
             }
-            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, vec4i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec4f>, float, int>::type;
+            else if constexpr (std::is_same_v<T, vec4f>) {
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
-                    ElemType xval = x_comp->get<ElemType>(i);
-                    ElemType yval = y_comp->get<ElemType>(i);
-                    ElemType zval = z_comp->get<ElemType>(i);
-                    ElemType wval = w_comp->get<ElemType>(i);
+                    float xval = x_comp->get<float>(i);
+                    float yval = y_comp->get<float>(i);
+                    float zval = z_comp->get<float>(i);
+                    float wval = w_comp->get<float>(i);
                     vec[i] = T(xval, yval, zval, wval);
                 }
                 return vec;
@@ -89,11 +86,8 @@ namespace zeno {
                         if constexpr (std::is_same_v<E, std::vector<int>> ||
                             std::is_same_v < E, std::vector<float>> ||
                             std::is_same_v < E, std::vector<std::string>> ||
-                            std::is_same_v < E, std::vector<vec2i>> ||
                             std::is_same_v < E, std::vector<vec2f>> ||
-                            std::is_same_v < E, std::vector<vec3i>> ||
                             std::is_same_v < E, std::vector<vec3f>> ||
-                            std::is_same_v < E, std::vector<vec4i>> ||
                             std::is_same_v < E, std::vector<vec4f>>) {
                             if (vec.size() == 1) {
                                 return vector<T>(m_size, vec[0]);
@@ -110,17 +104,14 @@ namespace zeno {
 
         template<typename T, char CHANNEL = 0>
         T get_elem(size_t idx) const {
-            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
-                return T(x_comp->get<ElemType>(idx), y_comp->get<ElemType>(idx));
+            if constexpr (std::is_same_v<T, vec2f>) {
+                return T(x_comp->get<float>(idx), y_comp->get<float>(idx));
             }
-            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, vec3i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec3f>, float, int>::type;
-                return T(x_comp->get<ElemType>(idx), y_comp->get<ElemType>(idx), z_comp->get<ElemType>(idx));
+            else if constexpr (std::is_same_v<T, vec3f>) {
+                return T(x_comp->get<float>(idx), y_comp->get<float>(idx), z_comp->get<float>(idx));
             }
-            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, vec4i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec4f>, float, int>::type;
-                return T(x_comp->get<ElemType>(idx), y_comp->get<ElemType>(idx), z_comp->get<ElemType>(idx), w_comp->get<ElemType>(idx));
+            else if constexpr (std::is_same_v<T, vec4f>) {
+                return T(x_comp->get<float>(idx), y_comp->get<float>(idx), z_comp->get<float>(idx), w_comp->get<float>(idx));
             }
             else {
                 if constexpr (CHANNEL > 0) {
@@ -155,7 +146,7 @@ namespace zeno {
 
         template<class T, char CHANNEL = 0>
         void set_elem(size_t idx, T val) {
-            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
+            if constexpr (std::is_same_v<T, vec2f>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
@@ -163,7 +154,7 @@ namespace zeno {
                 x_comp->set(idx, val[0]);
                 y_comp->set(idx, val[1]);
             }
-            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, vec3i>) {
+            else if constexpr (std::is_same_v<T, vec3f>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
@@ -174,7 +165,7 @@ namespace zeno {
                 y_comp->set(idx, val[1]);
                 z_comp->set(idx, val[2]);
             }
-            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, vec4i>) {
+            else if constexpr (std::is_same_v<T, vec4f>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
@@ -230,16 +221,15 @@ namespace zeno {
 
         template<class T>
         void foreach_attr_update(std::function<T(T old_elem_value)>&& evalf) {
-            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, vec2i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec2f>, float, int>::type;
+            if constexpr (std::is_same_v<T, vec2f>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
                     y_comp = std::make_shared<AttrColumn>(*y_comp);
                 AttrVarVec& xvar = x_comp->value();
                 AttrVarVec& yvar = y_comp->value();
-                auto pXVec = std::get_if<std::vector<ElemType>>(&xvar);
-                auto pYVec = std::get_if<std::vector<ElemType>>(&yvar);
+                auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                auto pYVec = std::get_if<std::vector<float>>(&yvar);
                 if (!pXVec || !pYVec)
                     throw UnimplError("type dismatch");
                 int nx = pXVec->size(), ny = pYVec->size();
@@ -252,8 +242,7 @@ namespace zeno {
                     (*pYVec)[iy] = new_val[1];
                 }
             }
-            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, vec3i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec3f>, float, int>::type;
+            else if constexpr (std::is_same_v<T, vec3f>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
@@ -264,9 +253,9 @@ namespace zeno {
                 AttrVarVec& xvar = x_comp->value();
                 AttrVarVec& yvar = y_comp->value();
                 AttrVarVec& zvar = z_comp->value();
-                auto pXVec = std::get_if<std::vector<ElemType>>(&xvar);
-                auto pYVec = std::get_if<std::vector<ElemType>>(&yvar);
-                auto pZVec = std::get_if<std::vector<ElemType>>(&zvar);
+                auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                auto pYVec = std::get_if<std::vector<float>>(&yvar);
+                auto pZVec = std::get_if<std::vector<float>>(&zvar);
                 if (!pXVec || !pYVec || !pZVec)
                     throw UnimplError("type dismatch");
                 int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
@@ -280,8 +269,7 @@ namespace zeno {
                     (*pZVec)[iz] = new_val[2];
                 }
             }
-            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, vec4i>) {
-                using ElemType = std::conditional<std::is_same_v<T, vec4f>, float, int>::type;
+            else if constexpr (std::is_same_v<T, vec4f>) {
                 
             }
             else {

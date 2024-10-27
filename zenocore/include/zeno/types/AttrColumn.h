@@ -10,18 +10,6 @@ namespace zeno {
 
     using namespace zeno::reflect;
 
-    using AttrVarVec= std::variant
-        < std::vector<vec3f>
-        , std::vector<float>
-        , std::vector<std::string>
-        , std::vector<vec3i>
-        , std::vector<int>
-        , std::vector<vec2f>
-        , std::vector<vec2i>
-        , std::vector<vec4f>
-        , std::vector<vec4i>
-        >;
-
     class AttributeImpl {
     public:
         void set(AttrVarVec elemVal) {

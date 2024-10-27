@@ -14,7 +14,7 @@ namespace zeno {
         self = rhs.self;
     }
 
-    ZENO_API AttributeVector::AttributeVector(const AttrVar& val_or_vec, size_t size) : m_size(size), m_type(0){
+    ZENO_API AttributeVector::AttributeVector(const AttrVar& val_or_vec, size_t size) : m_size(size), m_type(0) {
         set(val_or_vec);
     }
 
@@ -57,15 +57,6 @@ namespace zeno {
                 }
                 else if constexpr (std::is_same_v < E, std::vector<std::string>>) {
                     // do not support string type on primitive object.
-                    /*
-                    auto& vec_attr = spPrim->verts.add_attr<std::string>(attr_name);
-                    if (vec.size() == 1) {
-                        vec_attr = std::vector<std::string>(m_size, vec[0]);
-                    }
-                    else {
-                        vec_attr = vec;
-                    }
-                    */
                 }
                 else {
                     throw;
@@ -73,58 +64,31 @@ namespace zeno {
             }, valvar);
         }
         else if (x_comp && y_comp) {
-
             auto& xvar = x_comp->value();
             auto& yvar = y_comp->value();
             assert(xvar.index() == yvar.index());
-            bool bFloat = std::holds_alternative<std::vector<float>>(xvar);
-
             if (z_comp) {
                 auto& zvar = z_comp->value();
                 assert(zvar.index() == xvar.index());
                 if (w_comp) {
                     auto& wvar = w_comp->value();
                     assert(wvar.index() == xvar.index());
-                    if (bFloat) {
-                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
-                        for (int i = 0; i < m_size; i++) {
-                            vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
-                        }
-                    }
-                    else {
-                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec4i>(attr_name);
-                        for (int i = 0; i < m_size; i++) {
-                            vec_attr[i] = zeno::vec4i(x_comp->get<int>(i), y_comp->get<int>(i), z_comp->get<int>(i), w_comp->get<int>(i));
-                        }
+                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
+                    for (int i = 0; i < m_size; i++) {
+                        vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
                     }
                 }
                 else {
-                    if (bFloat) {
-                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
-                        for (int i = 0; i < m_size; i++) {
-                            vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
-                        }
-                    }
-                    else {
-                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec3i>(attr_name);
-                        for (int i = 0; i < m_size; i++) {
-                            vec_attr[i] = zeno::vec3f(x_comp->get<int>(i), y_comp->get<int>(i), z_comp->get<int>(i));
-                        }
+                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
+                    for (int i = 0; i < m_size; i++) {
+                        vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
                     }
                 }
             }
             else {
-                if (bFloat) {
-                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec2f>(attr_name);
-                    for (int i = 0; i < m_size; i++) {
-                        vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
-                    }
-                }
-                else {
-                    auto& vec_attr = spPrim->verts.add_attr<zeno::vec2i>(attr_name);
-                    for (int i = 0; i < m_size; i++) {
-                        vec_attr[i] = zeno::vec2i(x_comp->get<int>(i), y_comp->get<int>(i));
-                    }
+                auto& vec_attr = spPrim->verts.add_attr<zeno::vec2f>(attr_name);
+                for (int i = 0; i < m_size; i++) {
+                    vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                 }
             }
         }
@@ -148,23 +112,21 @@ namespace zeno {
                 m_type = invar_type;
             }
             else if constexpr (std::is_same_v<E, vec2i> || std::is_same_v<E, vec2f>) {
-                using ElemType = std::conditional<std::is_same_v<E, vec2f>, float, int>::type;
-                x_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
-                y_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
+                //只能以float储存
+                x_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[0]), m_size);
+                y_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[0]), m_size);
                 m_type = invar_type;
             }
             else if constexpr (std::is_same_v<E, vec3i> || std::is_same_v<E, vec3f>) {
-                using ElemType = std::conditional<std::is_same_v<E, vec3f>, float, int>::type;
-                x_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
-                y_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[1]), m_size);
-                z_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[2]), m_size);
+                x_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[0]), m_size);
+                y_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[1]), m_size);
+                z_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[2]), m_size);
                 m_type = invar_type;
             }
             else if constexpr (std::is_same_v<E, vec4i> || std::is_same_v<E, vec4f>) {
-                using ElemType = std::conditional<std::is_same_v<E, vec4f>, float, int>::type;
-                x_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[0]), m_size);
-                y_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[1]), m_size);
-                z_comp = std::make_shared<AttrColumn>(std::vector<ElemType>(1, val[2]), m_size);
+                x_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[0]), m_size);
+                y_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[1]), m_size);
+                z_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[2]), m_size);
                 m_type = invar_type;
             }
             else if constexpr (std::is_same_v<E, std::vector<int>>) {
@@ -180,27 +142,20 @@ namespace zeno {
                 m_type = type_info<std::string>().hash_code();
             }
             else if constexpr (std::is_same_v<E, std::vector<vec2i>> || std::is_same_v<E, std::vector<vec2f>>) {
-                using ElemType = std::conditional<std::is_same_v<E, std::vector<vec2f>>, float, int>::type;
-                std::vector<ElemType> xvec(m_size);
-                std::vector<ElemType> yvec(m_size);
+                std::vector<float> xvec(m_size);
+                std::vector<float> yvec(m_size);
                 for (size_t i = 0; i < m_size; i++) {
                     xvec[i] = val[i][0];
                     yvec[i] = val[i][1];
                 }
                 x_comp = std::make_shared<AttrColumn>(xvec, m_size);
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
-                if constexpr (std::is_same_v<ElemType, float>) {
-                    m_type = type_info<vec2f>().hash_code();
-                }
-                else {
-                    m_type = type_info<vec2i>().hash_code();
-                }
+                m_type = type_info<vec2f>().hash_code();
             }
             else if constexpr (std::is_same_v<E, std::vector<vec3i>> || std::is_same_v<E, std::vector<vec3f>>) {
-                using ElemType = std::conditional<std::is_same_v<E, std::vector<vec3f>>, float, int>::type;
-                std::vector<ElemType> xvec(m_size);
-                std::vector<ElemType> yvec(m_size);
-                std::vector<ElemType> zvec(m_size);
+                std::vector<float> xvec(m_size);
+                std::vector<float> yvec(m_size);
+                std::vector<float> zvec(m_size);
                 for (size_t i = 0; i < m_size; i++) {
                     xvec[i] = val[i][0];
                     yvec[i] = val[i][1];
@@ -209,19 +164,13 @@ namespace zeno {
                 x_comp = std::make_shared<AttrColumn>(xvec, m_size);
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
                 z_comp = std::make_shared<AttrColumn>(zvec, m_size);
-                if constexpr (std::is_same_v<ElemType, float>) {
-                    m_type = type_info<vec3f>().hash_code();
-                }
-                else {
-                    m_type = type_info<vec3i>().hash_code();
-                }
+                m_type = type_info<vec3f>().hash_code();
             }
             else if constexpr (std::is_same_v<E, std::vector<vec4i>> || std::is_same_v<E, std::vector<vec4f>>) {
-                using ElemType = std::conditional<std::is_same_v<E, std::vector<vec4f>>, float, int>::type;
-                std::vector<ElemType> xvec(m_size);
-                std::vector<ElemType> yvec(m_size);
-                std::vector<ElemType> zvec(m_size);
-                std::vector<ElemType> wvec(m_size);
+                std::vector<float> xvec(m_size);
+                std::vector<float> yvec(m_size);
+                std::vector<float> zvec(m_size);
+                std::vector<float> wvec(m_size);
                 for (size_t i = 0; i < m_size; i++) {
                     xvec[i] = val[i][0];
                     yvec[i] = val[i][1];
@@ -232,14 +181,8 @@ namespace zeno {
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
                 z_comp = std::make_shared<AttrColumn>(zvec, m_size);
                 w_comp = std::make_shared<AttrColumn>(wvec, m_size);
-                if constexpr (std::is_same_v<ElemType, float>) {
-                    m_type = type_info<vec3f>().hash_code();
-                }
-                else {
-                    m_type = type_info<vec3i>().hash_code();
-                }
+                m_type = type_info<vec3f>().hash_code();
             }
         }, val_or_vec);
     }
-
 }

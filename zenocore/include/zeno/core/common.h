@@ -177,6 +177,15 @@ namespace zeno {
 
     using AttrValue = std::variant<float, int, vec3f, vec2f, vec4f, std::string>;
 
+    using AttrVarVec = std::variant
+        < std::vector<int>
+        , std::vector<float>
+        , std::vector<std::string>
+        , std::vector<vec3f>
+        , std::vector<vec2f>
+        , std::vector<vec4f>
+        >;
+
     using AttrVar = std::variant
         <float
         , int
