@@ -219,61 +219,110 @@ namespace zeno {
         }
 
         template<class T>
-        void foreach_attr_update(std::function<T(T old_elem_value)>&& evalf) {
-            if constexpr (std::is_same_v<T, vec2f>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                AttrVarVec& xvar = x_comp->value();
-                AttrVarVec& yvar = y_comp->value();
-                auto pXVec = std::get_if<std::vector<float>>(&xvar);
-                auto pYVec = std::get_if<std::vector<float>>(&yvar);
-                if (!pXVec || !pYVec)
-                    throw UnimplError("type dismatch");
-                int nx = pXVec->size(), ny = pYVec->size();
-#pragma omp parallel for
-                for (int i = 0; i < m_size; i++) {
-                    int ix = std::min(i, nx-1), iy = std::min(i, ny-1);
-                    T old_val(*pXVec[ix], (*pYVec)[iy]);
-                    T new_val = evalf(old_val);
-                    (*pXVec)[ix] = new_val[0];
-                    (*pYVec)[iy] = new_val[1];
+        void foreach_attr_update(char channel, std::function<T(int idx, T old_elem_value)>&& evalf) {
+            if (channel > 0) {
+                std::shared_ptr<AttrColumn> spComp;
+                if (channel == 'x') {
+                    if (x_comp.use_count() > 1) {
+                        x_comp = std::make_shared<AttrColumn>(*x_comp);
+                    }
+                    spComp = x_comp;
                 }
-            }
-            else if constexpr (std::is_same_v<T, vec3f>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                else if (channel == 'y') {
+                    if (y_comp.use_count() > 1) {
+                        y_comp = std::make_shared<AttrColumn>(*y_comp);
+                    }
+                    spComp = y_comp;
+                }
+                else if (channel == 'z') {
+                    if (z_comp.use_count() > 1) {
+                        z_comp = std::make_shared<AttrColumn>(*z_comp);
+                    }
+                    spComp = z_comp;
+                }
+                else if (channel == 'w') {
+                    if (w_comp.use_count() > 1) {
+                        w_comp = std::make_shared<AttrColumn>(*w_comp);
+                    }
+                    spComp = w_comp;
+                }
+                else {
+                    throw UnimplError("Unknown channel");
+                }
 
-                AttrVarVec& xvar = x_comp->value();
-                AttrVarVec& yvar = y_comp->value();
-                AttrVarVec& zvar = z_comp->value();
-                auto pXVec = std::get_if<std::vector<float>>(&xvar);
-                auto pYVec = std::get_if<std::vector<float>>(&yvar);
-                auto pZVec = std::get_if<std::vector<float>>(&zvar);
-                if (!pXVec || !pYVec || !pZVec)
-                    throw UnimplError("type dismatch");
-                int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
-#pragma omp parallel for
-                for (int i = 0; i < m_size; i++) {
-                    int ix = std::min(i, nx-1), iy = std::min(i, ny-1), iz = std::min(i, nz-1);
-                    T old_val((*pXVec)[ix], (*pYVec)[iy], (*pZVec)[iz]);
-                    T new_val = evalf(old_val);
-                    (*pXVec)[ix] = new_val[0];
-                    (*pYVec)[iy] = new_val[1];
-                    (*pZVec)[iz] = new_val[2];
-                }
-            }
-            else if constexpr (std::is_same_v<T, vec4f>) {
-                
+                AttrVarVec& var = spComp->value();
+                std::visit([&](auto& vec) {
+                    using E = std::decay_t<decltype(vec)>;
+                    if constexpr (std::is_same_v<std::vector<T>, E>) {
+                        int sz = vec.size();
+                        for (int i = 0; i < m_size; i++) {
+                            int idx = std::min(i, sz - 1);
+                            T old_val(vec[idx]);
+                            T new_val = evalf(i, old_val);
+                            vec[idx] = new_val;
+                        }
+                    }
+                    else {
+                        throw UnimplError("type dismatch when visit attribute value and modify them");
+                    }
+                }, var);
             }
             else {
-                AttrVarVec& attrval = self->value();
-                
+                if constexpr (std::is_same_v<T, vec2f>) {
+                    if (x_comp.use_count() > 1)
+                        x_comp = std::make_shared<AttrColumn>(*x_comp);
+                    if (y_comp.use_count() > 1)
+                        y_comp = std::make_shared<AttrColumn>(*y_comp);
+                    AttrVarVec& xvar = x_comp->value();
+                    AttrVarVec& yvar = y_comp->value();
+                    auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                    auto pYVec = std::get_if<std::vector<float>>(&yvar);
+                    if (!pXVec || !pYVec)
+                        throw UnimplError("type dismatch");
+                    int nx = pXVec->size(), ny = pYVec->size();
+#pragma omp parallel for
+                    for (int i = 0; i < m_size; i++) {
+                        int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1);
+                        T old_val(*pXVec[ix], (*pYVec)[iy]);
+                        T new_val = evalf(i, old_val);
+                        (*pXVec)[ix] = new_val[0];
+                        (*pYVec)[iy] = new_val[1];
+                    }
+                }
+                else if constexpr (std::is_same_v<T, vec3f>) {
+                    if (x_comp.use_count() > 1)
+                        x_comp = std::make_shared<AttrColumn>(*x_comp);
+                    if (y_comp.use_count() > 1)
+                        y_comp = std::make_shared<AttrColumn>(*y_comp);
+                    if (z_comp.use_count() > 1)
+                        z_comp = std::make_shared<AttrColumn>(*z_comp);
+
+                    AttrVarVec& xvar = x_comp->value();
+                    AttrVarVec& yvar = y_comp->value();
+                    AttrVarVec& zvar = z_comp->value();
+                    auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                    auto pYVec = std::get_if<std::vector<float>>(&yvar);
+                    auto pZVec = std::get_if<std::vector<float>>(&zvar);
+                    if (!pXVec || !pYVec || !pZVec)
+                        throw UnimplError("type dismatch");
+                    int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
+#pragma omp parallel for
+                    for (int i = 0; i < m_size; i++) {
+                        int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1), iz = std::min(i, nz - 1);
+                        T old_val((*pXVec)[ix], (*pYVec)[iy], (*pZVec)[iz]);
+                        T new_val = evalf(i, old_val);
+                        (*pXVec)[ix] = new_val[0];
+                        (*pYVec)[iy] = new_val[1];
+                        (*pZVec)[iz] = new_val[2];
+                    }
+                }
+                else if constexpr (std::is_same_v<T, vec4f>) {
+
+                }
+                else {
+                    AttrVarVec& attrval = self->value();
+
+                }
             }
         }
 

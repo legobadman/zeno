@@ -91,7 +91,7 @@ namespace zeno {
             if (geom->has_attr(ATTR_POINT, "pos"))
             {
                 //TODO: 前面可以判断是否符合写时复制，比如transform的tsr是否发生改变
-                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", [&](zeno::vec3f old_pos)->zeno::vec3f {
+                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
                     auto p = zeno::vec_to_other<glm::vec3>(old_pos);
                     p = mapplypos(matrix, p);
                     auto newpos = zeno::other_to_vec<3>(p);
@@ -105,7 +105,7 @@ namespace zeno {
 
             if (geom->has_attr(ATTR_POINT, "nrm"))
             {
-                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", [&](zeno::vec3f old_nrm)->zeno::vec3f {
+                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
                     auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
                     n = mapplynrm(matrix, n);
                     auto newnrm = zeno::other_to_vec<3>(n);

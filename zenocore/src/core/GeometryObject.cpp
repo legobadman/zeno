@@ -235,8 +235,8 @@ namespace zeno
 
     ZENO_API int GeometryObject::get_group_count(GeoAttrGroup grp) const {
         switch (grp) {
-        case ATTR_POINT: return m_point_attrs.size();
-        case ATTR_FACE: return m_face_attrs.size();
+        case ATTR_POINT: return m_spTopology->m_points.size();
+        case ATTR_FACE: return m_spTopology->m_faces.size();
         case ATTR_GEO: return 1;
         default:
             return 0;

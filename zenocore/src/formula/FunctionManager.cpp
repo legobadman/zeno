@@ -1036,6 +1036,10 @@ namespace zeno {
         }
     }
 
+    void FunctionManager::setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext) {
+        zeno::zfx::setAttrValue(attrname, channel, var, opVal, pContext);
+    }
+
     ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
         std::string attr_name = attrname;
         if (attrname[0] == '@')
@@ -1236,12 +1240,27 @@ namespace zeno {
                 if (root->children.size() != 2) {
                     throw makeError<UnimplError>("assign variable failed.");
                 }
-                std::shared_ptr<ZfxASTNode> zenvarNode = root->children[0];
+
                 std::shared_ptr<ZfxASTNode> valNode = root->children[1];
+                ZfxVariable res = execute(valNode, filter, pContext);
+
+                std::shared_ptr<ZfxASTNode> zenvarNode = root->children[0];
+                if (zenvarNode->bAttr) {
+                    //无须把值拎出来再计算，直接往属性数据内部设置
+                    const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value);
+                    std::string channel;
+                    if (zenvarNode->opVal == COMPVISIT) {
+                        assert(zenvarNode->children.size() == 1);
+                        channel = get_zfxvar<std::string>(zenvarNode->children[0]->value);
+                    }
+                    else if (zenvarNode->opVal == Indexing) {
+                        //todo
+                    }
+                    setAttrValue(attrname, channel, res, root->opVal, pContext);
+                    return ZfxVariable();
+                }
 
                 const std::string& targetvar = get_zfxvar<std::string>(zenvarNode->value);
-
-                ZfxVariable res = execute(valNode, filter, pContext);
 
                 if (root->opVal == AddAssign) {
                     ZfxVariable varres = execute(zenvarNode, filter, pContext);

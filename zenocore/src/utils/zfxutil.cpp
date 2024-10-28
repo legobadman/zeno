@@ -284,5 +284,162 @@ namespace zeno
                 }
             }, zfxvec[0]);
         }
-    }
+
+        template <class T>
+        static T get_zfxvar(zfxvariant value) {
+            return std::visit([](auto const& val) -> T {
+                using V = std::decay_t<decltype(val)>;
+                if constexpr (!std::is_constructible_v<T, V>) {
+                    throw makeError<TypeError>(typeid(T), typeid(V), "get<zfxvariant>");
+                }
+                else {
+                    return T(val);
+                }
+            }, value);
+        }
+
+        template<class ElemType>
+        static void set_attr_by_zfx(std::shared_ptr<GeometryObject> spGeom, std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext) {
+            GeoAttrGroup group = pContext->runover;
+            int N = spGeom->get_group_count(group);
+            int nVariable = var.value.size();
+            if (N != nVariable && nVariable != 1) {
+                throw UnimplError("size dismatch when assign value to attributes");
+            }
+
+            std::vector<ElemType> vec(N);
+            for (int i = 0; i < N; i++) {
+                vec[i] = get_zfxvar<ElemType>(var.value[std::min(i, nVariable - 1)]);
+            }
+
+            bool bAttrExist = spGeom->has_attr(group, attrname);
+            if (bAttrExist) {
+                char chn = 0;
+                if (!channel.empty()) {
+                    chn = channel[0];
+                }
+                int chnidx = chn - 'x';
+                if (opVal == AddAssign) {
+                    if (chn != 0) {
+                        if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                            spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                //单值？
+                                return old_val + vec[idx][chnidx];
+                                });
+                        }
+                    }
+                    else {
+                        spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            //单值？
+                            return old_val + vec[idx];
+                        });
+                    }
+
+                }
+                else if (opVal == SubAssign) {
+                    if (chn != 0) {
+                        if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                            spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                return old_val - vec[idx][chnidx];
+                                });
+                        }
+                    }
+                    else {
+                        spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            return old_val - vec[idx];
+                            });
+                    }
+                }
+                else if (opVal == MulAssign) {
+                    if (chn != 0) {
+                        if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                            spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                return old_val * vec[idx][chnidx];
+                                });
+                        }
+                    }
+                    else {
+                        spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            return old_val * vec[idx];
+                            });
+                    }
+                }
+                else if (opVal == DivAssign) {
+                    if (chn != 0) {
+                        if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                            spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                return old_val / vec[idx][chnidx];
+                                });
+                        }
+                    }
+                    else {
+                        spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            return old_val / vec[idx];
+                            });
+                    }
+                }
+                else {
+                    if (chn != 0) {
+                        if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                            spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                return vec[idx][chnidx];
+                                });
+                        }
+                    }else{
+                        spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            return vec[idx];
+                            });
+                    }
+                }
+            }
+            else {
+                spGeom->create_attr(group, attrname, vec);
+            }
+        }
+
+        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext) {
+            if (attrname[0] == '@')
+                attrname = attrname.substr(1);
+
+            std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+
+            GeoAttrGroup group = pContext->runover;
+
+
+            if (!channel.empty() && channel != "x" && channel != "y" && channel != "z" && channel != "w") {
+                throw UnimplError("Unknown channel name");
+            }
+
+            GeoAttrType type = spGeom->get_attr_type(group, attrname);
+            switch (type) {
+            case ATTR_INT: {
+                set_attr_by_zfx<int>(spGeom, attrname, channel, var, opVal, pContext);
+                break;
+            }
+            case ATTR_FLOAT: {
+                set_attr_by_zfx<float>(spGeom, attrname, channel, var, opVal, pContext);
+                break;
+            }
+            case ATTR_STRING: {
+                //set_attr_by_zfx<std::string>(spGeom, attrname, channel, var, pContext);
+                break;
+            }
+            case ATTR_VEC2: {
+                set_attr_by_zfx<glm::vec2>(spGeom, attrname, channel, var, opVal, pContext);
+                break;
+            }
+            case ATTR_VEC3: {
+                set_attr_by_zfx<glm::vec3>(spGeom, attrname, channel, var, opVal, pContext);
+                break;
+            }
+            case ATTR_VEC4: {
+                set_attr_by_zfx<glm::vec4>(spGeom, attrname, channel, var, opVal, pContext);
+                break;
+            }
+            default: {
+                throw UnimplError("Unknown type of attribute when set value");
+            }
+            }
+        }
+}
 }

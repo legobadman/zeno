@@ -55,13 +55,13 @@ namespace zeno
         }
 
         template<class T>
-        void foreach_attr_update(GeoAttrGroup grp, const std::string& attr_name, std::function<T(T old_elem_value)>&& evalf) {
+        void foreach_attr_update(GeoAttrGroup grp, const std::string& attr_name, char channel, std::function<T(int idx, T old_elem_value)>&& evalf) {
             std::map<std::string, AttributeVector>& container = get_container(grp);
             auto iter = container.find(attr_name);
             if (iter == container.end()) {
                 throw makeError<KeyError>(attr_name, "not exist on point attr");
             }
-            iter->second.foreach_attr_update<T>(std::move(evalf));
+            iter->second.foreach_attr_update<T>(channel, std::move(evalf));
         }
 
         template<class T, char CHANNEL = 0>

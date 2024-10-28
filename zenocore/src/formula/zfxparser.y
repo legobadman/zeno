@@ -184,7 +184,7 @@ bool-stmt: TRUE { $$ = true; }
     | FALSE { $$ = false; }
     ;
 
-assign-statement: zenvar assign-op array-or-exp {
+assign-statement: term assign-op array-or-exp {
             std::vector<std::shared_ptr<ZfxASTNode>> children({$1, $3});
             $$ = driver.makeNewNode(ASSIGNMENT, $2, children);
         }

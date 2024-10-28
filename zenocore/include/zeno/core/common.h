@@ -7,6 +7,9 @@
 #include <list>
 #include <functional>
 #include <zeno/utils/vec.h>
+#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 
 #define ENUM_FLAGS(enum_class) \
@@ -207,6 +210,9 @@ namespace zeno {
         , vec3i
         , vec4f
         , vec4i
+        , glm::vec2
+        , glm::vec3
+        , glm::vec4
         , std::vector<vec3f>
         , std::vector<float>
         , std::vector<std::string>
@@ -216,6 +222,9 @@ namespace zeno {
         , std::vector<vec2i>
         , std::vector<vec4f>
         , std::vector<vec4i>
+        , std::vector<glm::vec2>
+        , std::vector<glm::vec3>
+        , std::vector<glm::vec4>
         >;
 
     using ctrlpropvalue = std::variant<
