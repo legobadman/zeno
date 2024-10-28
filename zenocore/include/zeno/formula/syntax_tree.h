@@ -191,7 +191,7 @@ struct ZfxParamConstrain
 
 struct ZfxContext
 {
-    /* in */ std::shared_ptr<GeometryObject> spObject;
+    /* in */ std::shared_ptr<IObject> spObject;
     /* in */ std::weak_ptr<INode> spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;

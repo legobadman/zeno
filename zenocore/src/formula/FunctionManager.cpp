@@ -1020,15 +1020,15 @@ namespace zeno {
             }
             if (attr_name == "nrm")
             {
-                if (spGeo->has_attr(ATTR_POINT, "nrm")) {
-                    ZfxVariable res;
-                    res.bAttr = true;
-                    res.value = spGeo->get_attr_byzfx(ATTR_POINT, "nrm");
-                    return res;
-                }
-                else {
-                    throw makeError<UnimplError>("the prim has no attr about normal, you can check whether the option `hasNormal` is on");
-                }
+                //if (spGeo->has_attr(ATTR_POINT, "nrm")) {
+                //    ZfxVariable res;
+                //    res.bAttr = true;
+                //    res.value = spGeo->get_attr_byzfx(ATTR_POINT, "nrm");
+                //    return res;
+                //}
+                //else {
+                //    throw makeError<UnimplError>("the prim has no attr about normal, you can check whether the option `hasNormal` is on");
+                //}
             }
         }
         else {
@@ -1036,32 +1036,109 @@ namespace zeno {
         }
     }
 
-    ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext) {
-        if (pContext->runover == ATTR_POINT) {
-            if (attrname == "@pos") {
-                return getAttrValue_impl(pContext->spObject, "pos");
+    ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
+        std::string attr_name = attrname;
+        if (attrname[0] == '@')
+            attr_name = attrname.substr(1);
+
+        std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+        GeoAttrType type = spGeom->get_attr_type(pContext->runover, attr_name);
+        switch (type) {
+        case ATTR_INT: {
+            std::vector<int> vec(spGeom->get_attrs<int>(pContext->runover, attr_name));
+            ZfxVariable res;
+            res.value.resize(vec.size());
+            res.bAttr = true;
+            for (int i = 0; i < vec.size(); i++) {
+                res.value[i] = vec[i];
             }
-            else if (attrname == "@ptnum") {
-                return getAttrValue_impl(pContext->spObject, "ptnum");
+            return res;
+        }
+        case ATTR_FLOAT: {
+            std::vector<float> vec(spGeom->get_attrs<float>(pContext->runover, attr_name));
+            ZfxVariable res;
+            res.value.resize(vec.size());
+            res.bAttr = true;
+            for (int i = 0; i < vec.size(); i++) {
+                res.value[i] = vec[i];
             }
-            else if (attrname == "@N") {
-                return getAttrValue_impl(pContext->spObject, "nrm");
+            return res;
+        }
+        case ATTR_STRING: {
+            std::vector<std::string> vec(spGeom->get_attrs<std::string>(pContext->runover, attr_name));
+            ZfxVariable res;
+            res.value.resize(vec.size());
+            res.bAttr = true;
+            for (int i = 0; i < vec.size(); i++) {
+                res.value[i] = vec[i];
             }
-            else if (attrname == "@Cd") {
-                return ZfxVariable();
+            return res;
+        }
+        case ATTR_VEC2: {
+            std::vector<glm::vec2> vec(spGeom->get_attrs<glm::vec2>(pContext->runover, attr_name));
+            ZfxVariable res;
+            res.value.resize(vec.size());
+            res.bAttr = true;
+            for (int i = 0; i < vec.size(); i++) {
+                res.value[i] = vec[i];
+            }
+            return res;
+        }
+        case ATTR_VEC3: {
+            if (channel == 'x') {
+                std::vector<float> vec(spGeom->get_attrs<float, 'x'>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
+            }
+            else if (channel == 'y') {
+                std::vector<float> vec(spGeom->get_attrs<float, 'y'>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
+            }
+            else if (channel == 'z') {
+                std::vector<float> vec(spGeom->get_attrs<float, 'z'>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
             }
             else {
-                return ZfxVariable();
+                assert(channel == 0);
+                std::vector<glm::vec3> vec(spGeom->get_attrs<glm::vec3>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
             }
         }
-        else if (pContext->runover == ATTR_FACE) {
-            return ZfxVariable();
+        case ATTR_VEC4: {
+            std::vector<glm::vec4> vec(spGeom->get_attrs<glm::vec4>(pContext->runover, attr_name));
+            ZfxVariable res;
+            res.value.resize(vec.size());
+            res.bAttr = true;
+            for (int i = 0; i < vec.size(); i++) {
+                res.value[i] = vec[i];
+            }
+            return res;
         }
-        else if (pContext->runover == ATTR_GEO) {
-            return ZfxVariable();
-        }
-        else {
-            return ZfxVariable();
+        default:
+            throw UnimplError("unknown attr type");
         }
     }
 
@@ -1082,13 +1159,21 @@ namespace zeno {
             case ZENVAR: {
                 //这里指的是取zenvar的值用于上层的计算或者输出，赋值并不会走到这里
                 const std::string& varname = get_zfxvar<std::string>(root->value);
-                if (root->opVal == COMPVISIT) {
+                if (root->bAttr && root->opVal == COMPVISIT) {
                     if (root->children.size() != 1) {
                         throw makeError<UnimplError>("Indexing Error on NameVisit");
                     }
                     std::string component = get_zfxvar<std::string>(root->children[0]->value);
-                    //pContext->spObject->get_attrs();
-                    //return get_element_by_name(var, component);
+                    char channel = 0;
+                    if (component == "x")
+                        channel = 'x';
+                    else if (component == "y")
+                        channel = 'y';
+                    else if (component == "z")
+                        channel = 'z';
+                    else if (component == "w")
+                        channel = 'w';
+                    return getAttrValue(varname, pContext, channel);
                 }
                 else if (root->opVal == Indexing) {
 

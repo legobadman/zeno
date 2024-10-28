@@ -69,7 +69,7 @@ namespace zeno {
         ZfxVariable execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext);
         std::vector<ZfxVariable> process_args(std::shared_ptr<ZfxASTNode> parent, ZfxElemFilter& filter, ZfxContext* pContext);
 
-        ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext);
+        ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel = 0);
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
         bool removePoint(int pointnum, ZfxContext* pContext);
         void afterRemovePoint(int rempoint);

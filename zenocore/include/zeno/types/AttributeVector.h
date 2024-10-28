@@ -18,13 +18,13 @@ namespace zeno {
         ZENO_API AttributeVector(const AttributeVector& rhs);
         ZENO_API size_t size() const;
         ZENO_API void set(const AttrVar& val_or_vec);
-        ZENO_API size_t type() const;
+        ZENO_API GeoAttrType type() const;
         ZENO_API AttrVarVec get();
         ZENO_API void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, std::string const& name);
 
         template<class T, char CHANNEL = 0>
         std::vector<T> get_attrs() const {
-            if constexpr (std::is_same_v<T, vec2f>) {
+            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
                     float xval = x_comp->get<float>(i);
@@ -33,7 +33,7 @@ namespace zeno {
                 }
                 return vec;
             }
-            else if constexpr (std::is_same_v<T, vec3f>) {
+            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
                     float xval = x_comp->get<float>(i);
@@ -43,7 +43,7 @@ namespace zeno {
                 }
                 return vec;
             }
-            else if constexpr (std::is_same_v<T, vec4f>) {
+            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
                 std::vector<T> vec(m_size);
                 for (int i = 0; i < m_size; i++) {
                     float xval = x_comp->get<float>(i);
@@ -80,22 +80,21 @@ namespace zeno {
                     }, spComp->value());
                 }
                 else {
+                    //现在对于向量采用分列储存，因此实质上内部只有int float string三种类型
                     auto& varvec = self->value();
                     return std::visit([&](auto&& vec)->std::vector<T> {
                         using E = std::decay_t<decltype(vec)>;
-                        if constexpr (std::is_same_v<E, std::vector<int>> ||
-                            std::is_same_v < E, std::vector<float>> ||
-                            std::is_same_v < E, std::vector<std::string>> ||
-                            std::is_same_v < E, std::vector<vec2f>> ||
-                            std::is_same_v < E, std::vector<vec3f>> ||
-                            std::is_same_v < E, std::vector<vec4f>>) {
+                        if constexpr (
+                            (std::is_same_v<E, std::vector<int>> && std::is_same_v<T, int>) ||
+                            (std::is_same_v<E, std::vector<float>> && std::is_same_v<T, float>) ||
+                            (std::is_same_v<E, std::vector<std::string>> && std::is_same_v<T, std::string>)) {
                             if (vec.size() == 1) {
-                                return vector<T>(m_size, vec[0]);
+                                return std::vector<T>(m_size, vec[0]);
                             }
                             return vec;
                         }
                         else {
-                            throw;
+                            throw UnimplError("internal type error of primitive type of attribute data");
                         }
                     }, varvec);
                 }
@@ -104,13 +103,13 @@ namespace zeno {
 
         template<typename T, char CHANNEL = 0>
         T get_elem(size_t idx) const {
-            if constexpr (std::is_same_v<T, vec2f>) {
+            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
                 return T(x_comp->get<float>(idx), y_comp->get<float>(idx));
             }
-            else if constexpr (std::is_same_v<T, vec3f>) {
+            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
                 return T(x_comp->get<float>(idx), y_comp->get<float>(idx), z_comp->get<float>(idx));
             }
-            else if constexpr (std::is_same_v<T, vec4f>) {
+            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
                 return T(x_comp->get<float>(idx), y_comp->get<float>(idx), z_comp->get<float>(idx), w_comp->get<float>(idx));
             }
             else {
@@ -146,7 +145,7 @@ namespace zeno {
 
         template<class T, char CHANNEL = 0>
         void set_elem(size_t idx, T val) {
-            if constexpr (std::is_same_v<T, vec2f>) {
+            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
@@ -154,7 +153,7 @@ namespace zeno {
                 x_comp->set(idx, val[0]);
                 y_comp->set(idx, val[1]);
             }
-            else if constexpr (std::is_same_v<T, vec3f>) {
+            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
@@ -165,7 +164,7 @@ namespace zeno {
                 y_comp->set(idx, val[1]);
                 z_comp->set(idx, val[2]);
             }
-            else if constexpr (std::is_same_v<T, vec4f>) {
+            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
@@ -282,6 +281,6 @@ namespace zeno {
         //这里把vector的分量拆出来，仅仅考虑了内存储存优化的情况，如果后续基于共享内存，写法会改变。
         std::shared_ptr<AttrColumn> x_comp, y_comp, z_comp, w_comp, self;
         size_t m_size;
-        size_t m_type;  //from RTTITypeInfo.
+        GeoAttrType m_type;
     };
 }

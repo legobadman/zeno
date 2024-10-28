@@ -475,18 +475,14 @@ namespace zeno
         return container.find(name) != container.end();
     }
 
-    std::vector<zfxvariant> GeometryObject::get_attr_byzfx(GeoAttrGroup grp, std::string const& name)
-    {
+    ZENO_API GeoAttrType GeometryObject::get_attr_type(GeoAttrGroup grp, std::string const& name) {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
-            throw makeError<KeyError>(name, "not exist on point attr");
+            return ATTR_TYPE_UNKNOWN;
         }
-
-        auto& spAttrVec = iter->second;
-        int n = spAttrVec.size();
-        AttrVarVec& val = spAttrVec.get();
-        return zeno::zfx::attrvarVecToZfxVec(val, n);
+        auto& attrVec = iter->second;
+        return attrVec.type();
     }
 
     void GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val)

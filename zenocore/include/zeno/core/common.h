@@ -79,7 +79,7 @@ namespace zeno {
     };
     ENUM_FLAGS(SocketProperty)
 
-        enum SocketType
+    enum SocketType
     {
         NoSocket,
         //Socket_Primitve,
@@ -160,6 +160,17 @@ namespace zeno {
         ATTR_GEO,
         ATTR_FACE,
         ATTR_POINT,
+    };
+
+    //几何属性类型
+    enum GeoAttrType {
+        ATTR_TYPE_UNKNOWN,
+        ATTR_INT,
+        ATTR_FLOAT,
+        ATTR_STRING,
+        ATTR_VEC2,
+        ATTR_VEC3,
+        ATTR_VEC4
     };
 
     enum ZSG_VERSION

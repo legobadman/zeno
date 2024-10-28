@@ -41,7 +41,7 @@ namespace zeno
         ZENO_API bool create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
         ZENO_API bool delete_attr(GeoAttrGroup grp, const std::string& attr_name);
         ZENO_API bool has_attr(GeoAttrGroup grp, std::string const& name);
-        std::vector<zfxvariant> get_attr_byzfx(GeoAttrGroup grp, std::string const& name);
+        ZENO_API GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
         ZENO_API void set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
 
         template<class T, char CHANNEL = 0>
