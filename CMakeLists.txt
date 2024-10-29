@@ -44,6 +44,7 @@ option(ZENO_WIN32_RC "Build ZENO with win32 resource file" OFF)
 option(ZENO_NODESVIEW_OPTIM "Optimize Node Graphics View manually" ON)
 option(ZENO_WITH_PYTHON "Build ZENO with python" ON)
 option(ZENO_WITH_REFLECTOR "Support Reflector" ON)
+option(ZENO_WITH_QT3D "Support Qt 3D Scene" OFF)
 option(REFLECTION_USE_PREBUILT_BINARY "Use Prebuild RefactGenerator on Windows" ON)
 
 if (NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)

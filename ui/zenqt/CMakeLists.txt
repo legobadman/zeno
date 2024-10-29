@@ -1,4 +1,11 @@
-find_package(Qt5 COMPONENTS Widgets OpenGL Network Quick Svg REQUIRED)
+if (ZENO_WITH_QT3D)
+    find_package(Qt5 COMPONENTS 
+        Widgets OpenGL Network Qml Quick Svg 3DCore 3DRender 3DExtras 3DInput 3DLogic 3DQuick Concurrent
+        REQUIRED)
+else()
+    find_package(Qt5 COMPONENTS Widgets OpenGL Network Quick Svg REQUIRED)
+endif()
+
 find_package(Threads REQUIRED)
 
 message(STATUS "Found Qt5 version ${Qt5_VERSION}: ${Qt5_DIR}")
@@ -38,7 +45,28 @@ endif()
 
 
 target_link_libraries(zenqt PRIVATE Threads::Threads)
-target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick qt5advanceddocking QCodeEditor)
+if (ZENO_WITH_QT3D)
+    target_link_libraries(zenqt PUBLIC 
+        Qt5::Widgets
+        Qt5::OpenGL
+        Qt5::Svg
+        Qt5::Network
+        Qt5::Quick
+        qt5advanceddocking
+        QCodeEditor
+        Qt5::Qml 
+        Qt5::3DCore
+        Qt5::3DRender
+        Qt5::3DRenderPrivate
+        Qt5::3DExtras
+        Qt5::3DInput
+        Qt5::3DLogic
+        Qt5::3DQuick
+        Qt5::Concurrent
+    )
+else()
+    target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick qt5advanceddocking QCodeEditor)
+endif()
 
 if (WIN32)
     target_link_libraries(zenqt PRIVATE Dbghelp Version)
