@@ -8,6 +8,7 @@
 #include "zeno/utils/log.h"
 #include "zeno/zeno.h"
 #include "zeno/extra/EventCallbacks.h"
+#include <GL/glut.h>
 
 
 /* debug cutsom layout: ZGraphicsLayout */
@@ -29,6 +30,8 @@ PyMODINIT_FUNC PyInit_spam(void);
 
 int main(int argc, char *argv[]) 
 {
+    glutInit(&argc, argv);
+
     ZenoApplication a(argc, argv);
     a.setStyle(new ZenoStyle);
 

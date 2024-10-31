@@ -108,16 +108,16 @@ public:
 private:
     std::map<std::string, int> m_objRegister;
 
-    ViewObjects m_objects;  //¼ÇÂ¼ËùÓĞµ±Ç°¼ÆËãµÄ¶ÔÏó£¬µ±ÇĞ»»Ö¡µÄÊ±ºò£¬¿ÉÄÜÊ¹µÃ²¿·ÖÒÀÀµÖ¡µÄ¶ÔÏóÖØËã¡£
-    std::map<int, FrameData> m_frameData;   //¼ÇÂ¼Á÷ÌåÏà¹ØµÄÖ¡»º´æ
+    ViewObjects m_objects;  //è®°å½•æ‰€æœ‰å½“å‰è®¡ç®—çš„å¯¹è±¡ï¼Œå½“åˆ‡æ¢å¸§çš„æ—¶å€™ï¼Œå¯èƒ½ä½¿å¾—éƒ¨åˆ†ä¾èµ–å¸§çš„å¯¹è±¡é‡ç®—ã€‚
+    std::map<int, FrameData> m_frameData;   //è®°å½•æµä½“ç›¸å…³çš„å¸§ç¼“å­˜
 
     std::set<std::string> m_viewObjs;
     std::set<std::string> m_lastViewObjs;
-    std::set<std::string> m_removing_objs;  //ÕâÀïÊÇÉ¾³ı½ÚµãÊ±¼ÇÂ¼µÄÒªÉ¾³ıµÄobj£¬Òª¿¼ÂÇrollbackµÄÇé¿ö
+    std::set<std::string> m_removing_objs;  //è¿™é‡Œæ˜¯åˆ é™¤èŠ‚ç‚¹æ—¶è®°å½•çš„è¦åˆ é™¤çš„objï¼Œè¦è€ƒè™‘rollbackçš„æƒ…å†µ
 
-    std::set<std::string> m_newAdded;       //äÖÈ¾¶ËĞèÒªĞÂÔöµÄobj
-    std::set<std::string> m_remove;         //äÖÈ¾¶ËĞèÒªÒÆ³ıµÄobj
-    std::set<std::string> m_modify;         //äÖÈ¾¶Ë¸ü¸ÄµÄobj
+    std::set<std::string> m_newAdded;       //æ¸²æŸ“ç«¯éœ€è¦æ–°å¢çš„obj
+    std::set<std::string> m_remove;         //æ¸²æŸ“ç«¯éœ€è¦ç§»é™¤çš„obj
+    std::set<std::string> m_modify;         //æ¸²æŸ“ç«¯æ›´æ”¹çš„obj
 
     std::set<std::string> m_lastUnregisterObjs;
 

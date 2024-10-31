@@ -127,7 +127,7 @@ namespace zeno {
         ZENO_API AttrColumn(const AttrColumn& rhs);
         ZENO_API AttrColumn(AttrVarVec value, size_t size);
         ZENO_API ~AttrColumn();
-        AttrVarVec& value() const;
+        ZENO_API AttrVarVec& value() const;
 
         template<typename T>
         T get(size_t index) const {

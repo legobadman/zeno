@@ -379,7 +379,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pListView->setChecked(false);
     pShowGrid->setChecked(ZenoSettingsManager::GetInstance().getValue(zsShowGrid).toBool());
 
-    //±ØÐëÒªµÈ³õÊ¼»¯½çÃæºó²ÅÄÜÈÃÓÃ»§µã»÷ÏÔÊ¾
+    //å¿…é¡»è¦ç­‰åˆå§‹åŒ–ç•Œé¢åŽæ‰èƒ½è®©ç”¨æˆ·ç‚¹å‡»æ˜¾ç¤º
     pShowThumb->setChecked(false);
     ZenoSettingsManager::GetInstance().setValue(zsShowThumbnail, false);
 
@@ -434,7 +434,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pToolLayout->addWidget(pGroup);
     pToolLayout->addWidget(pShowThumb);
     pToolLayout->addWidget(pRearrangeGraph);
-    pToolLayout->addWidget(pTestApi);     //TOFIX: Ìí¼Ó´ËÏî¾¹È»µ¼ÖÂ×î´ó»¯´°¿ÚÎÞÐ§£¬ÒªÑÐ¾¿²¼¾ÖÏ¸½Ú¡£
+    pToolLayout->addWidget(pTestApi);     //TOFIX: æ·»åŠ æ­¤é¡¹ç«Ÿç„¶å¯¼è‡´æœ€å¤§åŒ–çª—å£æ— æ•ˆï¼Œè¦ç ”ç©¶å¸ƒå±€ç»†èŠ‚ã€‚
     pToolLayout->addWidget(pAlways);
 
     //pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
@@ -745,8 +745,10 @@ DockContent_View::DockContent_View(bool bGLView, QWidget* parent)
     , m_resizeViewport(nullptr)
     , m_bGLView(bGLView)
     , m_background(nullptr)
+    , m_pointIndicator(nullptr)
 {
 }
+
 void DockContent_View::keyPressEvent(QKeyEvent *event) {
     DockToolbarWidget::keyPressEvent(event);
     int uKey = event->key();
@@ -776,6 +778,9 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
 
     m_normal_check = new ZToolBarButton(true, ":/icons/viewToolbar_normalcheck_idle.svg", ":/icons/viewToolbar_normalcheck_light.svg");
     m_normal_check->setToolTip(tr("Normal Check"));
+
+    m_pointIndicator = new ZToolBarButton(true, ":/icons/viewToolbar_normalcheck_idle.svg", ":/icons/viewToolbar_normalcheck_light.svg");
+    m_pointIndicator->setToolTip(tr("Point Numbers"));
 
     m_wire_frame = new ZToolBarButton(true, ":/icons/viewToolbar_wireframe_idle.svg", ":/icons/viewToolbar_wireframe_light.svg");
     m_wire_frame->setToolTip(tr("Wireframe"));
@@ -951,6 +956,7 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
         pToolLayout->addWidget(m_wire_frame);
         pToolLayout->addWidget(m_smooth_shading);
         pToolLayout->addWidget(m_normal_check);
+        pToolLayout->addWidget(m_pointIndicator);
         m_uv_mode = new QCheckBox(tr("UV"));
         m_uv_mode->setStyleSheet("color: white;");
         pToolLayout->addWidget(m_uv_mode);
@@ -1050,6 +1056,19 @@ void DockContent_View::initConnections()
 
     connect(m_normal_check, &ZToolBarButton::toggled, this, [=](bool bToggled) {
         m_pDisplay->onCommandDispatched(ZenoMainWindow::ACTION_NORMAL_CHECK, bToggled);
+    });
+
+    connect(m_pointIndicator, &ZToolBarButton::toggled, this, [=](bool bToggled) {
+        auto pScene = m_pDisplay->getZenoVis()->getSession()->get_scene();
+        std::map<std::string, std::shared_ptr<zeno::IObject>> viewobjs;
+        auto& objectsMan = zeno::getSession().objsMan;
+        objectsMan->export_all_view_objs(viewobjs);
+        for (auto& [key, obj] : viewobjs) {
+            if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(obj)) {
+                auto indicator = zenovis::makePointIndicators(pScene, spGeom.get());
+                m_pDisplay->getZenoVis()->getSession()->set_point_indicator(indicator);
+            }
+        }
     });
 
     connect(m_wire_frame, &ZToolBarButton::toggled, this, [=](bool bToggled) {

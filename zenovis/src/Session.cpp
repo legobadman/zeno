@@ -234,6 +234,10 @@ void Session::set_handler(std::shared_ptr<IGraphicHandler> &handler) {
     impl->scene->drawOptions->handler = handler;
 }
 
+void Session::set_point_indicator(std::shared_ptr<IGraphicDraw> &indicator) {
+    impl->scene->drawOptions->indicators = indicator;
+}
+
 void Session::load_opengl_api(void *procaddr) {
     Scene::loadGLAPI(procaddr);
 }

@@ -99,6 +99,9 @@ struct RenderEngineBate : RenderEngine {
             CHECK_GL(glClear(GL_DEPTH_BUFFER_BIT));
             scene->drawOptions->handler->draw();
         }
+        if (scene->drawOptions->indicators) {
+            scene->drawOptions->indicators->draw();
+        }
         if (!record) {
             fbr->unbind();
             fbr->draw_to_screen();

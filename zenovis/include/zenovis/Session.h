@@ -52,6 +52,7 @@ struct Session : zeno::disable_copy {
     void set_render_wireframe(bool render_wireframe);
     void set_render_engine(std::string const &name);
     void set_handler(std::shared_ptr<IGraphicHandler> &handler);
+    void set_point_indicator(std::shared_ptr<IGraphicDraw> &indicator);
     bool focus_on_node(std::string const &nodeid, zeno::vec3f &center, float &radius);
     static void load_opengl_api(void *procaddr);
     Scene* get_scene() const;

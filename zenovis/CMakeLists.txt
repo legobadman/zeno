@@ -8,6 +8,7 @@ target_link_libraries(zenovis PUBLIC zeno)
 target_include_directories(zenovis PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/glad/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/freeglut/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/stbi/include>)
 
 option(ZENO_ENABLE_ZHXXVIS "Enable Zhxx Real-time Rendering Engine" ON)
@@ -15,6 +16,9 @@ if (ZENO_ENABLE_ZHXXVIS)
     add_subdirectory(zhxxvis)
     target_compile_definitions(zenovis PRIVATE -DZENO_ENABLE_ZHXXVIS)
 endif()
+
+add_subdirectory(freeglut)
+target_link_libraries(zenovis PRIVATE freeglut)
 
 if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zenovis)

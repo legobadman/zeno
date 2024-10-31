@@ -124,8 +124,8 @@ struct ListObject : IObjectClone<ListObject> {
 
 private:
     std::vector<zany> m_objects;
-    std::set<int> dirtyIndice;                        //该list下dirty的obj的index
-    //std::map<std::string, int> nodeNameArrItemMap;    //obj所在的节点名到obj在m_objects中索引的map
+    std::set<int> dirtyIndice;                        //璇ist涓媎irty鐨刼bj鐨刬ndex
+    //std::map<std::string, int> nodeNameArrItemMap;    //obj鎵�鍦ㄧ殑鑺傜偣鍚嶅埌obj鍦╩_objects涓储寮曠殑map
     //std::map<uint16_t, int> m_ptr2Index;
 };
 

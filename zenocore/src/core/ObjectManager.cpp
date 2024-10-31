@@ -45,18 +45,18 @@ namespace zeno {
             it->second.attach_nodes.insert(path);
         }
 
-        //½ö´¦ÀíviewµÄ¶ÔÏó£¬²»viewµÄ¿ÉÄÜÃ»±ØÒª¼Ó½øÀ´¡£
+        //ä»…å¤„ç†viewçš„å¯¹è±¡ï¼Œä¸viewçš„å¯èƒ½æ²¡å¿…è¦åŠ è¿›æ¥ã€‚
         if (bView) {
             m_viewObjs.insert(objId);
             if (m_lastViewObjs.find(objId) != m_lastViewObjs.end()) {
                 m_lastViewObjs.erase(objId);
-                //ÉÏÒ»´ÎÔËĞĞÓĞview£¬ÕâÒ»´ÎÒ²ÓĞview£¬Èç¹û½Úµã×´Ì¬ÊÇÔËĞĞÌ¬£¬ËµÃ÷ÊÇĞŞ¸Ä¶ÔÏó
+                //ä¸Šä¸€æ¬¡è¿è¡Œæœ‰viewï¼Œè¿™ä¸€æ¬¡ä¹Ÿæœ‰viewï¼Œå¦‚æœèŠ‚ç‚¹çŠ¶æ€æ˜¯è¿è¡Œæ€ï¼Œè¯´æ˜æ˜¯ä¿®æ”¹å¯¹è±¡
                 if (Node_Running == attachNode->get_run_status()) {
                     m_modify.insert(objId);
                 }
             }
             else {
-                //ÉÏÒ»´ÎÃ»ÓĞview£¬Õâ´ÎÓĞview£¬ÒªÃ´¾ÍÊÇĞÂÔö£¬ÒªÃ´¾ÍÊÇÖØĞÂ´òview
+                //ä¸Šä¸€æ¬¡æ²¡æœ‰viewï¼Œè¿™æ¬¡æœ‰viewï¼Œè¦ä¹ˆå°±æ˜¯æ–°å¢ï¼Œè¦ä¹ˆå°±æ˜¯é‡æ–°æ‰“view
                 m_newAdded.insert(objId);
             }
         }
@@ -65,13 +65,13 @@ namespace zeno {
     ZENO_API void ObjectManager::removeObject(const std::string& id)
     {
         std::lock_guard lck(m_mtx);
-        m_lastUnregisterObjs.insert(id); //ÏÈ±ê¼Ç£¬ÏÂÒ»´ÎrunµÄÊ±ºòÔÚÈ¥m_objectsÖĞÒÆ³ı
+        m_lastUnregisterObjs.insert(id); //å…ˆæ ‡è®°ï¼Œä¸‹ä¸€æ¬¡runçš„æ—¶å€™åœ¨å»m_objectsä¸­ç§»é™¤
     }
 
     ZENO_API void ObjectManager::revertRemoveObject(const std::string& id)
     {
         std::lock_guard lck(m_mtx);
-        m_lastUnregisterObjs.erase(id); //ÓĞÒ»ÖÖÇé¿öÊÇapplyÊ±½ö¶Ôobj½øĞĞmodify£¬´ËÊ±ĞèÒª½«applyÖ®Ç°¼ÓÈëµÄ´ıÉ¾³ıobjµÄidÒÆ³ı£¬ÎŞĞèÏÂ´ÎÔËĞĞÊ±Çå³ı¸Ãobj
+        m_lastUnregisterObjs.erase(id); //æœ‰ä¸€ç§æƒ…å†µæ˜¯applyæ—¶ä»…å¯¹objè¿›è¡Œmodifyï¼Œæ­¤æ—¶éœ€è¦å°†applyä¹‹å‰åŠ å…¥çš„å¾…åˆ é™¤objçš„idç§»é™¤ï¼Œæ— éœ€ä¸‹æ¬¡è¿è¡Œæ—¶æ¸…é™¤è¯¥obj
     }
 
     ZENO_API void ObjectManager::notifyTransfer(std::shared_ptr<IObject> obj)
@@ -111,7 +111,7 @@ namespace zeno {
 
     ZENO_API void ObjectManager::beforeRun()
     {
-        std::lock_guard lck(m_mtx);     //¿ÉÄÜ´ËÊ±äÖÈ¾¶ËÔÚload_objects
+        std::lock_guard lck(m_mtx);     //å¯èƒ½æ­¤æ—¶æ¸²æŸ“ç«¯åœ¨load_objects
         m_lastViewObjs = m_viewObjs;
         m_viewObjs.clear();
         m_newAdded.clear();
@@ -122,7 +122,7 @@ namespace zeno {
     ZENO_API void ObjectManager::afterRun()
     {
         std::lock_guard lck(m_mtx);
-        //m_lastViewObjsÊ£ÏÂÀ´µÄ¶¼ÊÇÉÏÒ»´Îview£¬¶øÕâÒ»´ÎÃ»ÓĞviewµÄ¡£
+        //m_lastViewObjså‰©ä¸‹æ¥çš„éƒ½æ˜¯ä¸Šä¸€æ¬¡viewï¼Œè€Œè¿™ä¸€æ¬¡æ²¡æœ‰viewçš„ã€‚
         m_remove = m_lastViewObjs;
         m_lastViewObjs.clear();
         m_removing_objs.clear();
@@ -232,7 +232,7 @@ namespace zeno {
                 info.remObjs.insert(std::make_pair(objkey, it->second.obj));
         }
 
-        //µ¼³ölightObjs
+        //å¯¼å‡ºlightObjs
         export_light_objs(info);
     }
 

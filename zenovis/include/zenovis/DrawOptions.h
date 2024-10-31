@@ -26,6 +26,7 @@ struct DrawOptions {
     float viewportPointSizeScale = 1;
 
     std::shared_ptr<IGraphicHandler> handler;
+    std::shared_ptr<IGraphicDraw> indicators;
 
     glm::vec3 bgcolor{0.23f, 0.23f, 0.23f};
 };

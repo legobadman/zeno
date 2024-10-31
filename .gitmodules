@@ -40,3 +40,6 @@
 [submodule "reflect"]
 	path = reflect
 	url = https://github.com/DarcJC/ZenoReflect.git
+[submodule "zenovis/freeglut"]
+	path = zenovis/freeglut
+	url = https://github.com/legobadman/freeglut.git

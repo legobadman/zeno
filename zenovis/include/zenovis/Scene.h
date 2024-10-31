@@ -52,13 +52,13 @@ struct Scene : zeno::disable_copy {
     static void loadGLAPI(void *procaddr);
     void* getOptixImg(int &w, int &h);
 
-    //äÖÈ¾Ç°Õ¹Æ½ËùÓĞ¶ÔÏó
-    void convertListObjsRender(std::shared_ptr<zeno::IObject>const& objToBeConvert,     //Õ¹Æ½¶ÔÏó²¢¹¹½¨Ë÷Òı(Èç¹ûÊÇlistÖĞµÄÔªËØ)
+    //æ¸²æŸ“å‰å±•å¹³æ‰€æœ‰å¯¹è±¡
+    void convertListObjsRender(std::shared_ptr<zeno::IObject>const& objToBeConvert,     //å±•å¹³å¯¹è±¡å¹¶æ„å»ºç´¢å¼•(å¦‚æœæ˜¯listä¸­çš„å…ƒç´ )
         std::map<std::string, std::shared_ptr<zeno::IObject>>& allListItems,
         std::set<std::string>& allListItemsKeys, bool convertKeyOnly = false, std::string listNamePath = "", std::string listIdxPath = "");
-    void convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert,           //½öÕ¹Æ½¶ÔÏó
+    void convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert,           //ä»…å±•å¹³å¯¹è±¡
         std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>>& allListItems);
-    void convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert,           //½öÕ¹Æ½¶ÔÏó
+    void convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert,           //ä»…å±•å¹³å¯¹è±¡
         std::map<std::string, std::shared_ptr<zeno::IObject>>& allListItems);
     void set_select_mode(PICK_MODE _select_mode);
     PICK_MODE get_select_mode();
