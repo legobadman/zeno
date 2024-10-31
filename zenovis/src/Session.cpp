@@ -238,6 +238,10 @@ void Session::set_point_indicator(std::shared_ptr<IGraphicDraw> &indicator) {
     impl->scene->drawOptions->indicators = indicator;
 }
 
+void Session::set_show_ptnum(bool bShow) {
+    impl->scene->set_show_ptnum(bShow);
+}
+
 void Session::load_opengl_api(void *procaddr) {
     Scene::loadGLAPI(procaddr);
 }

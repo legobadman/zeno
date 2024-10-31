@@ -60,6 +60,15 @@ void Scene::cleanupView()
     }
 }
 
+void Scene::set_show_ptnum(bool bShow)
+{
+    m_show_ptnum = bShow;
+}
+
+bool Scene::is_show_ptnum() const {
+    return m_show_ptnum;
+}
+
 void Scene::cleanUpScene()
 {
         zeno::getSession().globalComm->clear_objects([this](){

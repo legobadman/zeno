@@ -20,6 +20,7 @@
 #include <zenovis/opengl/buffer.h>
 #include <zenovis/opengl/shader.h>
 #include <zenovis/opengl/texture.h>
+#include <GL/freeglut.h>
 
 namespace zenovis {
 namespace {
@@ -32,6 +33,14 @@ struct ZhxxDrawObject {
     size_t count = 0;
     Program *prog{};
 };
+
+using CHAR_VBO_DATA = std::vector<glm::vec3>;
+
+struct CHAR_VBO_INFO {
+    glm::vec3 pos;
+    CHAR_VBO_DATA m_data;
+};
+
 #if 0
 static void parsePointsDrawBuffer(zeno::PrimitiveObject *prim, ZhxxDrawObject &obj) {
     auto const &pos = prim->attr<zeno::vec3f>("pos");
@@ -334,6 +343,10 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
     size_t vertex_count = 0;
     bool draw_all_points = false;
 
+    std::unique_ptr<Buffer> ptnum_vbo;
+    std::vector<CHAR_VBO_INFO> m_data;
+    Program* ptnums_prog;
+
     //Program *points_prog;
     //std::unique_ptr<Buffer> points_ebo;
     size_t points_count = 0;
@@ -616,6 +629,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         if (draw_all_points) {
             pointObj.prog = get_points_program();
         }
+        init_ptnum_data(pos);
     }
 
     explicit ZhxxGraphicPrimitive(Scene* scene_, zeno::GeometryObject* geo)
@@ -702,6 +716,71 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
 #endif
     }
 
+    void init_ptnum_data(const std::vector<zeno::vec3f>& pos) {
+        ptnum_vbo = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+        for (int idxPoint = 0; idxPoint < pos.size(); idxPoint++)
+        {
+            zeno::vec3f basepos = pos[idxPoint];
+            std::string drawNum = std::to_string(idxPoint);
+            GLfloat arr[1024];
+            int size = 0;
+            int arr_split[64];
+            int split_size = 0;
+            glutGetStrokeString(GLUT_STROKE_MONO_ROMAN, drawNum.c_str(), arr, &size, arr_split, &split_size);
+
+            //找出整个字符串数字顶点的包围盒
+            GLfloat xmin = 100000, ymin = 100000, xmax = -10000, ymax = -10000;
+            for (int i = 0; i < size; i++) {
+                if (i % 2 == 0) {
+                    xmin = std::min(arr[i], xmin);
+                    xmax = std::max(arr[i], xmax);
+                }
+                else {
+                    ymin = std::min(arr[i], ymin);
+                    ymax = std::max(arr[i], ymax);
+                }
+            }
+            GLfloat width = xmax - xmin, height = ymax - ymin;
+            for (int i = 0; i < size; i++) {
+                if (i % 2 == 0) {
+                    GLfloat xp = arr[i];
+                    xp -= xmin;
+                    xp /= (width / 2);
+                    xp *= 0.01;
+                    arr[i] = xp;
+                }
+                else {
+                    GLfloat yp = arr[i];
+                    yp -= ymin;
+                    yp /= (height * 1.5);
+                    yp *= 0.01;
+                    arr[i] = yp;
+                }
+            }
+
+            for (int j = 0; j < split_size; j++) {
+                int i_start = (j == 0) ? 0 : arr_split[j - 1];
+                int i_end = arr_split[j];
+                int mem_size = i_end - i_start;
+                assert(mem_size % 2 == 0);
+                int nVertexs = mem_size / 2;
+                CHAR_VBO_DATA mem(nVertexs);
+                for (int k = 0; k < nVertexs; k++) {
+                    GLfloat xp = arr[i_start + k * 2];
+                    GLfloat yp = arr[i_start + k * 2 + 1];
+                    GLfloat zp = 0;
+                    //先放置在原点，待会再实施旋转和平移
+                    mem[k] = glm::vec3(xp, yp, zp);
+                }
+                CHAR_VBO_INFO info;
+                info.m_data = mem;
+                info.pos = glm::vec3(basepos[0], basepos[1], basepos[2]);
+                m_data.emplace_back(info);
+            }
+        }
+        ptnums_prog = get_ptnum_program();
+    }
+
     virtual void draw() override {
         bool selected = scene->selected.count(nameid) > 0;
         if (scene->drawOptions->uv_mode && !selected) {
@@ -774,6 +853,38 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
                 vbounbind(lineObj.vbos);
             } else {
                 vbounbind(vbos);
+            }
+        }
+
+        if (scene->is_show_ptnum()) {
+            ptnums_prog->use();
+            scene->camera->set_program_uniforms(ptnums_prog);
+
+            glm::vec3 lodfront = scene->camera->get_lodfront();
+            glm::vec3 lodup = scene->camera->get_lodup();
+            glm::vec3 cam_pos = scene->camera->getPos();
+            glm::vec3 pivot = scene->camera->getPivot();
+
+            glm::vec3 uz = glm::normalize(cam_pos);
+            glm::vec3 uy = glm::normalize(lodup);
+            glm::vec3 ux = glm::normalize(glm::cross(uy, uz));
+            glm::mat3 rotateM(ux, uy, uz);
+
+            //TODO: 挪到shader
+            for (CHAR_VBO_INFO& vbo_data : m_data) {
+                int n = vbo_data.m_data.size();
+                CHAR_VBO_DATA new_vbodata(n);
+                for (int i = 0; i < n; i++) {
+                    auto& pos = vbo_data.m_data[i];
+                    glm::vec3 newpos = rotateM * pos + vbo_data.pos;
+                    newpos += (cam_pos - newpos) * 0.01f;
+                    new_vbodata[i] = newpos;
+                }
+                ptnum_vbo->bind();
+                ptnum_vbo->bind_data(new_vbodata.data(), new_vbodata.size() * sizeof(new_vbodata[0]));
+                ptnum_vbo->attribute(0, 0, sizeof(GLfloat) * 3, GL_FLOAT, 3);
+                CHECK_GL(glDrawArrays(GL_LINE_STRIP, 0, new_vbodata.size()));
+                ptnum_vbo->unbind();
             }
         }
 
@@ -893,6 +1004,16 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
 #include "shader/tris.frag"
         ;
 
+        return scene->shaderMan->compile_program(vert, frag);
+    }
+
+    Program* get_ptnum_program() {
+        auto vert =
+#include "shader/ptnum.vert"
+            ;
+        auto frag =
+#include "shader/ptnum.frag"
+            ;
         return scene->shaderMan->compile_program(vert, frag);
     }
 

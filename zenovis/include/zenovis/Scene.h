@@ -46,6 +46,8 @@ struct Scene : zeno::disable_copy {
     void load_objects(const zeno::RenderObjsInfo& objs);
     void cleanUpScene();
     void cleanupView();
+    void set_show_ptnum(bool bShow);
+    bool is_show_ptnum() const;
     void switchRenderEngine(std::string const &name);
     std::vector<char> record_frame_offline(int hdrSize = 1, int rgbComps = 3);
     bool cameraFocusOnNode(std::string const &nodeid, zeno::vec3f &center, float &radius);
@@ -64,6 +66,7 @@ struct Scene : zeno::disable_copy {
     PICK_MODE get_select_mode();
 private:
     PICK_MODE select_mode = PICK_MODE::PICK_OBJECT;
+    bool m_show_ptnum = false;
 };
 
 } // namespace zenovis
