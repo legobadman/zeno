@@ -344,8 +344,12 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
     bool draw_all_points = false;
 
     std::unique_ptr<Buffer> ptnum_vbo;
-    std::vector<CHAR_VBO_INFO> m_data;
+    std::vector<CHAR_VBO_INFO> m_ptnum_data;
     Program* ptnums_prog;
+
+    std::unique_ptr<Buffer> facenum_vbo;
+    std::vector<CHAR_VBO_INFO> m_facenum_data;
+    Program* facenums_prog;
 
     //Program *points_prog;
     //std::unique_ptr<Buffer> points_ebo;
@@ -443,6 +447,8 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
                 polyUvObj.prog = get_edge_program();
             }
         }
+
+        init_facenum_data(prim);
 
         if (!prim->attr_is<zeno::vec3f>("pos")) {
             auto &pos = prim->add_attr<zeno::vec3f>("pos");
@@ -716,69 +722,110 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
 #endif
     }
 
+    std::vector<CHAR_VBO_INFO> gen_vbo_info(const std::string& drawNum, const zeno::vec3f& basepos) {
+        std::vector<CHAR_VBO_INFO> arrs;
+        GLfloat arr[1024];
+        int size = 0;
+        int arr_split[64];
+        int split_size = 0;
+        glutGetStrokeString(GLUT_STROKE_MONO_ROMAN, drawNum.c_str(), arr, &size, arr_split, &split_size);
+
+        //找出整个字符串数字顶点的包围盒
+        GLfloat xmin = 100000, ymin = 100000, xmax = -10000, ymax = -10000;
+        for (int i = 0; i < size; i++) {
+            if (i % 2 == 0) {
+                xmin = std::min(arr[i], xmin);
+                xmax = std::max(arr[i], xmax);
+            }
+            else {
+                ymin = std::min(arr[i], ymin);
+                ymax = std::max(arr[i], ymax);
+            }
+        }
+        GLfloat width = xmax - xmin, height = ymax - ymin;
+        for (int i = 0; i < size; i++) {
+            if (i % 2 == 0) {
+                GLfloat xp = arr[i];
+                xp -= xmin;
+                xp /= (width / 2);
+                xp *= 0.01;
+                arr[i] = xp;
+            }
+            else {
+                GLfloat yp = arr[i];
+                yp -= ymin;
+                yp /= (height * 1.5);
+                yp *= 0.01;
+                arr[i] = yp;
+            }
+        }
+
+        for (int j = 0; j < split_size; j++) {
+            int i_start = (j == 0) ? 0 : arr_split[j - 1];
+            int i_end = arr_split[j];
+            int mem_size = i_end - i_start;
+            assert(mem_size % 2 == 0);
+            int nVertexs = mem_size / 2;
+            CHAR_VBO_DATA mem(nVertexs);
+            for (int k = 0; k < nVertexs; k++) {
+                GLfloat xp = arr[i_start + k * 2];
+                GLfloat yp = arr[i_start + k * 2 + 1];
+                GLfloat zp = 0;
+                //先放置在原点，待会再实施旋转和平移
+                mem[k] = glm::vec3(xp, yp, zp);
+            }
+            CHAR_VBO_INFO info;
+            info.m_data = mem;
+            info.pos = glm::vec3(basepos[0], basepos[1], basepos[2]);
+            arrs.emplace_back(info);
+        }
+        return arrs;
+    }
+
     void init_ptnum_data(const std::vector<zeno::vec3f>& pos) {
         ptnum_vbo = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
         for (int idxPoint = 0; idxPoint < pos.size(); idxPoint++)
         {
             zeno::vec3f basepos = pos[idxPoint];
             std::string drawNum = std::to_string(idxPoint);
-            GLfloat arr[1024];
-            int size = 0;
-            int arr_split[64];
-            int split_size = 0;
-            glutGetStrokeString(GLUT_STROKE_MONO_ROMAN, drawNum.c_str(), arr, &size, arr_split, &split_size);
-
-            //找出整个字符串数字顶点的包围盒
-            GLfloat xmin = 100000, ymin = 100000, xmax = -10000, ymax = -10000;
-            for (int i = 0; i < size; i++) {
-                if (i % 2 == 0) {
-                    xmin = std::min(arr[i], xmin);
-                    xmax = std::max(arr[i], xmax);
-                }
-                else {
-                    ymin = std::min(arr[i], ymin);
-                    ymax = std::max(arr[i], ymax);
-                }
-            }
-            GLfloat width = xmax - xmin, height = ymax - ymin;
-            for (int i = 0; i < size; i++) {
-                if (i % 2 == 0) {
-                    GLfloat xp = arr[i];
-                    xp -= xmin;
-                    xp /= (width / 2);
-                    xp *= 0.01;
-                    arr[i] = xp;
-                }
-                else {
-                    GLfloat yp = arr[i];
-                    yp -= ymin;
-                    yp /= (height * 1.5);
-                    yp *= 0.01;
-                    arr[i] = yp;
-                }
-            }
-
-            for (int j = 0; j < split_size; j++) {
-                int i_start = (j == 0) ? 0 : arr_split[j - 1];
-                int i_end = arr_split[j];
-                int mem_size = i_end - i_start;
-                assert(mem_size % 2 == 0);
-                int nVertexs = mem_size / 2;
-                CHAR_VBO_DATA mem(nVertexs);
-                for (int k = 0; k < nVertexs; k++) {
-                    GLfloat xp = arr[i_start + k * 2];
-                    GLfloat yp = arr[i_start + k * 2 + 1];
-                    GLfloat zp = 0;
-                    //先放置在原点，待会再实施旋转和平移
-                    mem[k] = glm::vec3(xp, yp, zp);
-                }
-                CHAR_VBO_INFO info;
-                info.m_data = mem;
-                info.pos = glm::vec3(basepos[0], basepos[1], basepos[2]);
-                m_data.emplace_back(info);
-            }
+            auto vec = gen_vbo_info(drawNum, basepos);
+            m_ptnum_data.insert(m_ptnum_data.end(), vec.begin(), vec.end());
         }
         ptnums_prog = get_ptnum_program();
+    }
+
+    void init_facenum_data(zeno::PrimitiveObject* prim) {
+        facenum_vbo = std::make_unique<Buffer>(GL_ARRAY_BUFFER);
+        auto& pos = prim->verts;
+        if (prim->tris.size() > 0) {
+            for (int idxFace = 0; idxFace < prim->tris.size(); idxFace++) {
+                zeno::vec3i indice = prim->tris[idxFace];
+                zeno::vec3f p1(pos[indice[0]]), p2(pos[indice[1]]), p3(pos[indice[2]]);
+                zeno::vec3f basepos = (p1 + p2 + p3) / 3;
+
+                std::string drawNum = std::to_string(idxFace);
+                auto vec = gen_vbo_info(drawNum, basepos);
+                m_facenum_data.insert(m_facenum_data.end(), vec.begin(), vec.end());
+            }
+        }
+        else if (prim->loops.size() > 0) {
+            for (int idxFace = 0; idxFace < prim->polys.size(); idxFace++)
+            {
+                auto& [startIdx, sz] = prim->polys[idxFace];
+                zeno::vec3f total;
+                for (int i = 0; i < sz; i++) {
+                    int idxPt = prim->loops[startIdx + i];
+                    zeno::vec3f pt = pos[idxPt];
+                    total += pt;
+                }
+                zeno::vec3f basepos = total / sz;
+
+                std::string drawNum = std::to_string(idxFace);
+                auto vec = gen_vbo_info(drawNum, basepos);
+                m_facenum_data.insert(m_facenum_data.end(), vec.begin(), vec.end());
+            }
+        }
+        facenums_prog = get_facenum_program();
     }
 
     virtual void draw() override {
@@ -857,35 +904,8 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
 
         if (scene->is_show_ptnum()) {
-            ptnums_prog->use();
-            scene->camera->set_program_uniforms(ptnums_prog);
-
-            glm::vec3 lodfront = scene->camera->get_lodfront();
-            glm::vec3 lodup = scene->camera->get_lodup();
-            glm::vec3 cam_pos = scene->camera->getPos();
-            glm::vec3 pivot = scene->camera->getPivot();
-
-            glm::vec3 uz = glm::normalize(cam_pos);
-            glm::vec3 uy = glm::normalize(lodup);
-            glm::vec3 ux = glm::normalize(glm::cross(uy, uz));
-            glm::mat3 rotateM(ux, uy, uz);
-
-            //TODO: 挪到shader
-            for (CHAR_VBO_INFO& vbo_data : m_data) {
-                int n = vbo_data.m_data.size();
-                CHAR_VBO_DATA new_vbodata(n);
-                for (int i = 0; i < n; i++) {
-                    auto& pos = vbo_data.m_data[i];
-                    glm::vec3 newpos = rotateM * pos + vbo_data.pos;
-                    newpos += (cam_pos - newpos) * 0.01f;
-                    new_vbodata[i] = newpos;
-                }
-                ptnum_vbo->bind();
-                ptnum_vbo->bind_data(new_vbodata.data(), new_vbodata.size() * sizeof(new_vbodata[0]));
-                ptnum_vbo->attribute(0, 0, sizeof(GLfloat) * 3, GL_FLOAT, 3);
-                CHECK_GL(glDrawArrays(GL_LINE_STRIP, 0, new_vbodata.size()));
-                ptnum_vbo->unbind();
-            }
+            draw_ptnums();
+            draw_facenums();
         }
 
         if (tris_count) {
@@ -973,6 +993,70 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
     }
 
+    void draw_ptnums() {
+        ptnums_prog->use();
+        scene->camera->set_program_uniforms(ptnums_prog);
+
+        glm::vec3 lodfront = scene->camera->get_lodfront();
+        glm::vec3 lodup = scene->camera->get_lodup();
+        glm::vec3 cam_pos = scene->camera->getPos();
+        glm::vec3 pivot = scene->camera->getPivot();
+
+        glm::vec3 uz = glm::normalize(cam_pos);
+        glm::vec3 uy = glm::normalize(lodup);
+        glm::vec3 ux = glm::normalize(glm::cross(uy, uz));
+        glm::mat3 rotateM(ux, uy, uz);
+
+        //TODO: 挪到shader
+        for (CHAR_VBO_INFO& vbo_data : m_ptnum_data) {
+            int n = vbo_data.m_data.size();
+            CHAR_VBO_DATA new_vbodata(n);
+            for (int i = 0; i < n; i++) {
+                auto& pos = vbo_data.m_data[i];
+                glm::vec3 newpos = rotateM * pos + vbo_data.pos;
+                newpos += (cam_pos - newpos) * 0.01f;
+                new_vbodata[i] = newpos;
+            }
+            ptnum_vbo->bind();
+            ptnum_vbo->bind_data(new_vbodata.data(), new_vbodata.size() * sizeof(new_vbodata[0]));
+            ptnum_vbo->attribute(0, 0, sizeof(GLfloat) * 3, GL_FLOAT, 3);
+            CHECK_GL(glDrawArrays(GL_LINE_STRIP, 0, new_vbodata.size()));
+            ptnum_vbo->unbind();
+        }
+    }
+
+    void draw_facenums() {
+        facenums_prog->use();
+        scene->camera->set_program_uniforms(facenums_prog);
+
+        glm::vec3 lodfront = scene->camera->get_lodfront();
+        glm::vec3 lodup = scene->camera->get_lodup();
+        glm::vec3 cam_pos = scene->camera->getPos();
+        glm::vec3 pivot = scene->camera->getPivot();
+
+        glm::vec3 uz = glm::normalize(cam_pos);
+        glm::vec3 uy = glm::normalize(lodup);
+        glm::vec3 ux = glm::normalize(glm::cross(uy, uz));
+        glm::mat3 rotateM(ux, uy, uz);
+
+        //TODO: 挪到shader
+        for (CHAR_VBO_INFO& vbo_data : m_facenum_data) {
+            int n = vbo_data.m_data.size();
+            CHAR_VBO_DATA new_vbodata(n);
+            for (int i = 0; i < n; i++) {
+                auto& pos = vbo_data.m_data[i];
+                glm::vec3 newpos = rotateM * pos + vbo_data.pos;
+                newpos += (cam_pos - newpos) * 0.01f;
+                new_vbodata[i] = newpos;
+            }
+            facenum_vbo->bind();
+            facenum_vbo->bind_data(new_vbodata.data(), new_vbodata.size() * sizeof(new_vbodata[0]));
+            facenum_vbo->attribute(0, 0, sizeof(GLfloat) * 3, GL_FLOAT, 3);
+            CHECK_GL(glDrawArrays(GL_LINE_STRIP, 0, new_vbodata.size()));
+            facenum_vbo->unbind();
+        }
+    }
+
     Program *get_points_program() {
         auto vert = 
 #include "shader/points.vert"
@@ -1013,6 +1097,16 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
             ;
         auto frag =
 #include "shader/ptnum.frag"
+            ;
+        return scene->shaderMan->compile_program(vert, frag);
+    }
+
+    Program* get_facenum_program() {
+        auto vert =
+#include "shader/facenum.vert"
+            ;
+        auto frag =
+#include "shader/facenum.frag"
             ;
         return scene->shaderMan->compile_program(vert, frag);
     }
