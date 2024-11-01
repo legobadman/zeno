@@ -1064,11 +1064,8 @@ void DockContent_View::initConnections()
         auto& objectsMan = zeno::getSession().objsMan;
         objectsMan->export_all_view_objs(viewobjs);
         for (auto& [key, obj] : viewobjs) {
-            if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(obj)) {
-                //auto indicator = zenovis::makePointIndicators(pScene, spGeom.get());
-                m_pDisplay->getZenoVis()->getSession()->set_show_ptnum(bToggled);
-                m_pDisplay->updateFrame();
-            }
+            m_pDisplay->getZenoVis()->getSession()->set_show_ptnum(bToggled);
+            m_pDisplay->updateFrame();
         }
     });
 

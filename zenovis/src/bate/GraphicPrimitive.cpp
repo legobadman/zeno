@@ -742,20 +742,30 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
                 ymax = std::max(arr[i], ymax);
             }
         }
+        //TODO:用于缩放glut导出的字体大小，经验值设定。
+        float xscale, yscale;
+        if (drawNum.length() > 1) {
+            xscale = 0.01;
+            yscale = 0.02;
+        }
+        else {
+            xscale = 0.004;
+            yscale = 0.02;
+        }
         GLfloat width = xmax - xmin, height = ymax - ymin;
         for (int i = 0; i < size; i++) {
             if (i % 2 == 0) {
                 GLfloat xp = arr[i];
                 xp -= xmin;
                 xp /= (width / 2);
-                xp *= 0.01;
+                xp *= xscale;
                 arr[i] = xp;
             }
             else {
                 GLfloat yp = arr[i];
                 yp -= ymin;
                 yp /= (height * 1.5);
-                yp *= 0.01;
+                yp *= yscale;
                 arr[i] = yp;
             }
         }
@@ -812,7 +822,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
             for (int idxFace = 0; idxFace < prim->polys.size(); idxFace++)
             {
                 auto& [startIdx, sz] = prim->polys[idxFace];
-                zeno::vec3f total;
+                zeno::vec3f total(0, 0, 0);
                 for (int i = 0; i < sz; i++) {
                     int idxPt = prim->loops[startIdx + i];
                     zeno::vec3f pt = pos[idxPt];
@@ -993,68 +1003,112 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
     }
 
-    void draw_ptnums() {
-        ptnums_prog->use();
-        scene->camera->set_program_uniforms(ptnums_prog);
+    void print_help(void)
+    {
+        //TODO: 以贴图方式取代画点线
+        int i;
+        const char* s, ** text;
 
+        glPushAttrib(GL_ENABLE_BIT);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+
+        int win_width = scene->camera->m_nx;
+        int win_height = scene->camera->m_ny;
+        glOrtho(0, win_width, 0, win_height, -1, 1);
+
+        static const char* helpprompt[] = { "Press F1 for help", 0 };
+        text = helpprompt;
+
+        for (i = 0; text[i]; i++) {
+            glColor3f(0, 0.1, 0);
+            glRasterPos2f(7, win_height - (i + 1) * 20 - 2);
+            s = text[i];
+            while (*s) {
+                glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *s++);
+            }
+            glColor3f(0, 0.9, 0);
+            glRasterPos2f(5, win_height - (i + 1) * 20);
+            s = text[i];
+            while (*s) {
+                glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *s++);
+            }
+        }
+
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+
+        glPopAttrib();
+    }
+
+    glm::mat4 get_proper_view_matrix() {
         glm::vec3 lodfront = scene->camera->get_lodfront();
         glm::vec3 lodup = scene->camera->get_lodup();
         glm::vec3 cam_pos = scene->camera->getPos();
         glm::vec3 pivot = scene->camera->getPivot();
 
-        glm::vec3 uz = glm::normalize(cam_pos);
-        glm::vec3 uy = glm::normalize(lodup);
-        glm::vec3 ux = glm::normalize(glm::cross(uy, uz));
-        glm::mat3 rotateM(ux, uy, uz);
+        //zeno::log_info("camera pos: x={}, y={}, z={}", cam_pos[0], cam_pos[1], cam_pos[2]);
+
+        glm::vec3 _uz = glm::normalize(cam_pos);
+        glm::vec3 _uy = glm::normalize(lodup);
+        glm::vec3 _ux = glm::normalize(glm::cross(_uy, _uz));
+
+        glm::vec4 uz(_uz[0], _uz[1], _uz[2], 0);
+        glm::vec4 uy(_uy[0], _uy[1], _uy[2], 0);
+        glm::vec4 ux(_ux[0], _ux[1], _ux[2], 0);
+
+        float scale_factor = glm::length(cam_pos) * 1.0;
+        glm::vec3 scale_cam(scale_factor);
+
+        glm::mat4 scaleM(glm::vec4(scale_factor, 0, 0, 0), glm::vec4(0, scale_factor, 0, 0),
+            glm::vec4(0, 0, scale_factor, 0), glm::vec4(0, 0, 0, 1));
+        glm::mat4 rotateM(ux, uy, uz, glm::vec4(0, 0, 0, 1));
+        glm::mat4 rsM = rotateM * scaleM;
+        return rsM;
+    }
+
+    void draw_elemnums(Program* prog, std::vector<CHAR_VBO_INFO>& vbo_datas, Buffer* pVBO) {
+        prog->use();
+        scene->camera->set_program_uniforms(prog);
+        glm::vec3 cam_pos = scene->camera->getPos();
+        glm::mat4 rsM = get_proper_view_matrix();
+
+        //zeno::log_info("camera abs pos: x={}, y={}, z={}", scale_cam[0], scale_cam[1], scale_cam[2]);
 
         //TODO: 挪到shader
-        for (CHAR_VBO_INFO& vbo_data : m_ptnum_data) {
+        for (CHAR_VBO_INFO& vbo_data : vbo_datas) {
             int n = vbo_data.m_data.size();
+            glm::vec4 trans(vbo_data.pos[0], vbo_data.pos[1], vbo_data.pos[2], 1);
+            rsM[3] = trans;
+
             CHAR_VBO_DATA new_vbodata(n);
             for (int i = 0; i < n; i++) {
-                auto& pos = vbo_data.m_data[i];
-                glm::vec3 newpos = rotateM * pos + vbo_data.pos;
-                newpos += (cam_pos - newpos) * 0.01f;
-                new_vbodata[i] = newpos;
+                auto& _pos = vbo_data.m_data[i];
+                glm::vec4 pos(_pos[0], _pos[1], _pos[2], 1);
+                glm::vec4 newpos = rsM * pos;
+                newpos += (glm::vec4(cam_pos[0], cam_pos[1], cam_pos[2], 1) - newpos) * 0.01f;   //防止遮挡
+                new_vbodata[i] = glm::vec3(newpos[0], newpos[1], newpos[2]);
             }
-            ptnum_vbo->bind();
-            ptnum_vbo->bind_data(new_vbodata.data(), new_vbodata.size() * sizeof(new_vbodata[0]));
-            ptnum_vbo->attribute(0, 0, sizeof(GLfloat) * 3, GL_FLOAT, 3);
+            pVBO->bind();
+            pVBO->bind_data(new_vbodata.data(), new_vbodata.size() * sizeof(new_vbodata[0]));
+            pVBO->attribute(0, 0, sizeof(GLfloat) * 3, GL_FLOAT, 3);
             CHECK_GL(glDrawArrays(GL_LINE_STRIP, 0, new_vbodata.size()));
-            ptnum_vbo->unbind();
+            pVBO->unbind();
         }
     }
 
+    void draw_ptnums() {
+        draw_elemnums(ptnums_prog, m_ptnum_data, ptnum_vbo.get());
+    }
+
     void draw_facenums() {
-        facenums_prog->use();
-        scene->camera->set_program_uniforms(facenums_prog);
-
-        glm::vec3 lodfront = scene->camera->get_lodfront();
-        glm::vec3 lodup = scene->camera->get_lodup();
-        glm::vec3 cam_pos = scene->camera->getPos();
-        glm::vec3 pivot = scene->camera->getPivot();
-
-        glm::vec3 uz = glm::normalize(cam_pos);
-        glm::vec3 uy = glm::normalize(lodup);
-        glm::vec3 ux = glm::normalize(glm::cross(uy, uz));
-        glm::mat3 rotateM(ux, uy, uz);
-
-        //TODO: 挪到shader
-        for (CHAR_VBO_INFO& vbo_data : m_facenum_data) {
-            int n = vbo_data.m_data.size();
-            CHAR_VBO_DATA new_vbodata(n);
-            for (int i = 0; i < n; i++) {
-                auto& pos = vbo_data.m_data[i];
-                glm::vec3 newpos = rotateM * pos + vbo_data.pos;
-                newpos += (cam_pos - newpos) * 0.01f;
-                new_vbodata[i] = newpos;
-            }
-            facenum_vbo->bind();
-            facenum_vbo->bind_data(new_vbodata.data(), new_vbodata.size() * sizeof(new_vbodata[0]));
-            facenum_vbo->attribute(0, 0, sizeof(GLfloat) * 3, GL_FLOAT, 3);
-            CHECK_GL(glDrawArrays(GL_LINE_STRIP, 0, new_vbodata.size()));
-            facenum_vbo->unbind();
-        }
+        draw_elemnums(facenums_prog, m_facenum_data, facenum_vbo.get());
     }
 
     Program *get_points_program() {
