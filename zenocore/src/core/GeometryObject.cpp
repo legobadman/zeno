@@ -82,8 +82,8 @@ namespace zeno
             spPrim->polys->resize(m_spTopology->m_faces.size());
         }
 
-        for (int i = 0; i < m_spTopology->m_faces.size(); i++) {
-            auto face = m_spTopology->m_faces[i].get();
+        for (int iFace = 0; iFace < m_spTopology->m_faces.size(); iFace++) {
+            auto face = m_spTopology->m_faces[iFace].get();
             HEdge* firsth = face->h;
             HEdge* h = firsth;
             std::vector<int> points;
@@ -95,14 +95,14 @@ namespace zeno
 
             if (m_spTopology->m_bTriangle) {
                 vec3i tri = { points[0],points[1], points[2] };
-                spPrim->tris[i] = std::move(tri);
+                spPrim->tris[iFace] = std::move(tri);
             }
             else {
                 int sz = points.size();
                 for (auto pt : points) {
                     spPrim->loops.push_back(pt);
                 }
-                spPrim->polys.push_back({ startIdx, sz });
+                spPrim->polys[iFace] = { startIdx, sz };
                 startIdx += sz;
             }
         }
