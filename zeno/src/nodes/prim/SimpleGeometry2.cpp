@@ -94,27 +94,27 @@ namespace zeno {
 
                             if (x_div > 0 && y_div > 0) {
                                 //current traversal point is rightup.
-                                size_t leftdown = nPrevPoints + (x_div - 1) % x_division + (y_div - 1) * x_division;
-                                size_t rightdown = leftdown + 1;
-                                size_t leftup = nPrevPoints + (x_div - 1) % x_division + y_div * x_division;
-                                size_t rightup = idx;
+                                int leftdown = nPrevPoints + (x_div - 1) % x_division + (y_div - 1) * x_division;
+                                int rightdown = leftdown + 1;
+                                int leftup = nPrevPoints + (x_div - 1) % x_division + y_div * x_division;
+                                int rightup = idx;
 
                                 if (bFirstFace) {
                                     if (bQuad) {
-                                        geo->addface({ leftdown, rightdown, rightup, leftup });
+                                        geo->add_face({ leftdown, rightdown, rightup, leftup });
                                     }
                                     else {
-                                        geo->addface({ leftdown, rightdown, leftup });
-                                        geo->addface({ rightdown, rightup, leftup });
+                                        geo->add_face({ leftdown, rightdown, leftup });
+                                        geo->add_face({ rightdown, rightup, leftup });
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        geo->addface({ leftdown, leftup, rightup, rightdown });
+                                        geo->add_face({ leftdown, leftup, rightup, rightdown });
                                     }
                                     else {
-                                        geo->addface({ leftdown, leftup, rightup });
-                                        geo->addface({ rightup, rightdown, leftdown });
+                                        geo->add_face({ leftdown, leftup, rightup });
+                                        geo->add_face({ rightup, rightdown, leftdown });
                                     }
                                 }
                             }
@@ -154,8 +154,8 @@ namespace zeno {
 
                             //添加底部（往z正方向）的面
                             if (x_div > 0) {
-                                size_t leftdown = 0;
-                                size_t rightup = idx;
+                                int leftdown = 0;
+                                int rightup = idx;
                                 if (z_div > 1) {
                                     int nPrevPrevPoints = x_division * y_division + (z_div - 2) * (2 * y_division + 2 * x_division - 4);
                                     if (bTop) {
@@ -174,25 +174,25 @@ namespace zeno {
                                     }
                                 }
 
-                                size_t rightdown = leftdown + 1;
-                                size_t leftup = idx - 1;
+                                int rightdown = leftdown + 1;
+                                int leftup = idx - 1;
 
                                 if (bTop) {
                                     if (bQuad) {
-                                        geo->addface({ leftdown, rightdown, rightup, leftup });
+                                        geo->add_face({ leftdown, rightdown, rightup, leftup });
                                     }
                                     else {
-                                        geo->addface({ leftdown, rightdown, leftup });
-                                        geo->addface({ rightdown, rightup, leftup });
+                                        geo->add_face({ leftdown, rightdown, leftup });
+                                        geo->add_face({ rightdown, rightup, leftup });
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        geo->addface({ leftdown, leftup, rightup, rightdown });
+                                        geo->add_face({ leftdown, leftup, rightup, rightdown });
                                     }
                                     else {
-                                        geo->addface({ leftdown, leftup, rightup });
-                                        geo->addface({ rightdown, leftdown, rightup });
+                                        geo->add_face({ leftdown, leftup, rightup });
+                                        geo->add_face({ rightdown, leftdown, rightup });
                                     }
                                 }
                             }
@@ -237,11 +237,11 @@ namespace zeno {
                             }
 
                             if (y_div > 0) {
-                                size_t leftdown = 0;
-                                size_t nPrevPrevPoints = x_division * y_division + (z_div - 2) * (2 * y_division + 2 * x_division - 4);
+                                int leftdown = 0;
+                                int nPrevPrevPoints = x_division * y_division + (z_div - 2) * (2 * y_division + 2 * x_division - 4);
 
-                                size_t rightdown = 0;
-                                size_t rightup = idx;
+                                int rightdown = 0;
+                                int rightup = idx;
                                 if (bLastFace) {
                                     rightdown = nPrevPoints + x_div % x_division + (y_div - 1) * x_division;
                                 }
@@ -257,7 +257,7 @@ namespace zeno {
                                     }
                                 }
 
-                                size_t leftup = 0;
+                                int leftup = 0;
                                 if (z_div > 1) {
                                     if (bRight) {
                                         if (bTop) {
@@ -299,20 +299,20 @@ namespace zeno {
 
                                 if (bRight) {
                                     if (bQuad) {
-                                        geo->addface({ leftdown, rightdown, rightup, leftup });
+                                        geo->add_face({ leftdown, rightdown, rightup, leftup });
                                     }
                                     else {
-                                        geo->addface({ leftdown, rightdown, leftup });
-                                        geo->addface({ rightdown, rightup, leftup });
+                                        geo->add_face({ leftdown, rightdown, leftup });
+                                        geo->add_face({ rightdown, rightup, leftup });
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        geo->addface({ leftdown, leftup, rightup, rightdown });
+                                        geo->add_face({ leftdown, leftup, rightup, rightdown });
                                     }
                                     else {
-                                        geo->addface({ leftdown, leftup, rightup });
-                                        geo->addface({ rightdown, leftdown, rightup });
+                                        geo->add_face({ leftdown, leftup, rightup });
+                                        geo->add_face({ rightdown, leftdown, rightup });
                                     }
                                 }
                             }
@@ -446,24 +446,24 @@ namespace zeno {
                         nrm = vec3f(0, 0, -1);
                     }
 
-                    size_t idx = i * Columns + j;
+                    int idx = i * Columns + j;
                     points[idx] = pt;
                     geo->initpoint(idx);
                     if (bCalcPointNormals)
                         normals[idx] = nrm;
 
                     if (j > 0 && i > 0) {
-                        size_t ij = idx;
-                        size_t ij_1 = idx - 1;
-                        size_t i_1j = (i - 1) * Columns + j;
-                        size_t i_1j_1 = i_1j - 1;
+                        int ij = idx;
+                        int ij_1 = idx - 1;
+                        int i_1j = (i - 1) * Columns + j;
+                        int i_1j_1 = i_1j - 1;
 
                         if (bQuad) {
-                            geo->addface({ ij, i_1j, i_1j_1, ij_1 });
+                            geo->add_face({ ij, i_1j, i_1j_1, ij_1 });
                         }
                         else {
-                            geo->addface({ ij, i_1j, i_1j_1 });
-                            geo->addface({ ij, i_1j_1, ij_1 });
+                            geo->add_face({ ij, i_1j, i_1j_1 });
+                            geo->add_face({ ij, i_1j_1, ij_1 });
                         }
                     }
                 }
@@ -549,20 +549,20 @@ namespace zeno {
             if (end_caps) {
                 //先把顶部和底部两个面加上
                 if (bQuad) {
-                    std::vector<size_t> up_pts, down_pts;
+                    std::vector<int> up_pts, down_pts;
                     for (int col = 0; col < Columns; col++)
                     {
-                        size_t up_idx = col;
+                        int up_idx = col;
                         geo->initpoint(up_idx);
                         up_pts.push_back(up_idx);
                     }
                     for (int col = Columns - 1; col >= 0; col--) {
-                        size_t down_idx = (Rows - 1) * Columns + col;
+                        int down_idx = (Rows - 1) * Columns + col;
                         geo->initpoint(down_idx);
                         down_pts.push_back(down_idx);
                     }
-                    geo->addface(up_pts);
-                    geo->addface(down_pts);
+                    geo->add_face(up_pts);
+                    geo->add_face(down_pts);
                 }
                 else {
                     points[0] = vec3f(0, up_y, 0);
@@ -571,25 +571,25 @@ namespace zeno {
                     geo->initpoint(1);
                     for (int col = 0; col < Columns; col++)
                     {
-                        size_t idx = col + 2;
+                        int idx = col + 2;
                         geo->initpoint(idx);
                         if (col > 0) {
-                            geo->addface({ 0, idx - 1, idx });
+                            geo->add_face({ 0, idx - 1, idx });
                         }
                         if (col == Columns - 1) {
-                            geo->addface({ 0, idx, 2 });
+                            geo->add_face({ 0, idx, 2 });
                         }
                     }
                     for (int col = 0; col < Columns; col++)
                     {
-                        size_t idx = (Rows - 1) * Columns + col + 2;
+                        int idx = (Rows - 1) * Columns + col + 2;
                         geo->initpoint(idx);
                         if (col > 0) {
-                            geo->addface({ 1, idx, idx - 1 });
+                            geo->add_face({ 1, idx, idx - 1 });
                         }
                         if (col == Columns - 1) {
-                            size_t last_start = (Rows - 1) * Columns + 2;
-                            geo->addface({ 1, last_start, idx});
+                            int last_start = (Rows - 1) * Columns + 2;
+                            geo->add_face({ 1, last_start, idx});
                         }
                     }
                 }
@@ -629,17 +629,17 @@ namespace zeno {
                     }
 
                     if (row > 0 && col > 0) {
-                        size_t right_bottom = idx;
-                        size_t left_bottom = right_bottom - 1;
-                        size_t right_top = right_bottom - Columns;
-                        size_t left_top = right_top - 1;
+                        int right_bottom = idx;
+                        int left_bottom = right_bottom - 1;
+                        int right_top = right_bottom - Columns;
+                        int left_top = right_top - 1;
 
                         if (bQuad) {
-                            geo->addface({ left_top, left_bottom, right_bottom, right_top });
+                            geo->add_face({ left_top, left_bottom, right_bottom, right_top });
                         }
                         else {
-                            geo->addface({ left_top, left_bottom, right_bottom });
-                            geo->addface({ left_top, right_bottom, right_top });
+                            geo->add_face({ left_top, left_bottom, right_bottom });
+                            geo->add_face({ left_top, right_bottom, right_top });
                         }
 
                         if (col == Columns - 1) {
@@ -650,11 +650,11 @@ namespace zeno {
                             right_top = right_bottom - Columns;
 
                             if (bQuad) {
-                                geo->addface({ left_top, left_bottom, right_bottom, right_top });
+                                geo->add_face({ left_top, left_bottom, right_bottom, right_top });
                             }
                             else {
-                                geo->addface({ left_top, left_bottom, right_bottom });
-                                geo->addface({ left_top, right_bottom, right_top });
+                                geo->add_face({ left_top, left_bottom, right_bottom });
+                                geo->add_face({ left_top, right_bottom, right_top });
                             }
                         }
                     }
@@ -781,7 +781,7 @@ namespace zeno {
                 else if (dir == Z_Axis) z = cos(theta);
 
                 //col = 0, 从x轴正方向开始转圈圈
-                size_t startIdx = 2 + (row - 1) * Columns;
+                int startIdx = 2 + (row - 1) * Columns;
                 for (int col = 0; col < Columns; col++)
                 {
                     float u = (float)col / (float)Columns;
@@ -802,28 +802,28 @@ namespace zeno {
 
                     vec3f pt = vec3f(x, y, z);
 
-                    size_t idx = 2/*顶部底部两个点*/ + (row - 1) * Columns + col;
+                    int idx = 2/*顶部底部两个点*/ + (row - 1) * Columns + col;
                     geo->initpoint(idx);
                     points[idx] = pt;
                     if (col > 0) {
                         if (row == 1) {
                             //与顶部顶点构成三角面
-                            geo->addface({ 0, idx - 1, idx });
+                            geo->add_face({ 0, idx - 1, idx });
                             if (col == Columns - 1) {
-                                geo->addface({ 0, idx, startIdx });
+                                geo->add_face({ 0, idx, startIdx });
                             }
                         }
                         else {
-                            size_t rightdown = idx;
-                            size_t leftdown = rightdown - 1;
-                            size_t rightup = 2/*顶部底部两个点*/ + (row - 2) * Columns + col;
-                            size_t leftup = rightup - 1;
+                            int rightdown = idx;
+                            int leftdown = rightdown - 1;
+                            int rightup = 2/*顶部底部两个点*/ + (row - 2) * Columns + col;
+                            int leftup = rightup - 1;
                             if (bQuad) {
-                                geo->addface({ rightdown, rightup, leftup, leftdown });
+                                geo->add_face({ rightdown, rightup, leftup, leftdown });
                             }
                             else {
-                                geo->addface({ rightdown, rightup, leftup });
-                                geo->addface({ rightdown, leftup, leftdown });
+                                geo->add_face({ rightdown, rightup, leftup });
+                                geo->add_face({ rightdown, leftup, leftdown });
                             }
 
                             if (col == Columns - 1) {
@@ -833,19 +833,19 @@ namespace zeno {
                                 rightup = 2 + (row - 2) * Columns;
 
                                 if (bQuad) {
-                                    geo->addface({ rightdown, rightup, leftup, leftdown });
+                                    geo->add_face({ rightdown, rightup, leftup, leftdown });
                                 }
                                 else {
-                                    geo->addface({ rightdown, rightup, leftup });
-                                    geo->addface({ rightdown, leftup, leftdown });
+                                    geo->add_face({ rightdown, rightup, leftup });
+                                    geo->add_face({ rightdown, leftup, leftdown });
                                 }
                             }
 
                             if (row == Rows - 2) {
                                 //与底部顶点构成三角面
-                                geo->addface({ idx, idx - 1, 1 });
+                                geo->add_face({ idx, idx - 1, 1 });
                                 if (col == Columns - 1) {
-                                    geo->addface({ 1, startIdx, idx });
+                                    geo->add_face({ 1, startIdx, idx });
                                 }
                             }
                         }

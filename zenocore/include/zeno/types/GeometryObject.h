@@ -29,30 +29,31 @@ namespace zeno
         ZENO_API std::shared_ptr<PrimitiveObject> toPrimitive();
         ZENO_API ~GeometryObject();
 
-        ZENO_API int get_point_count() const;
-        ZENO_API int get_face_count() const;
         ZENO_API std::vector<vec3f> points_pos();
         ZENO_API std::vector<vec3i> tri_indice() const;
         ZENO_API std::vector<int> edge_list() const;
         ZENO_API bool is_base_triangle() const;
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
-
-        //attr:
-        ZENO_API bool create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
-        ZENO_API bool delete_attr(GeoAttrGroup grp, const std::string& attr_name);
-        ZENO_API bool has_attr(GeoAttrGroup grp, std::string const& name);
         ZENO_API GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
-        ZENO_API void set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
+        ZENO_API void initpoint(size_t point_id);
+        ZENO_API void setface(size_t face_id, const std::vector<size_t>& points);
+        ZENO_API void geomTriangulate(zeno::TriangulateInfo& info);
 
-        template<class T, char CHANNEL = 0>
-        std::vector<T> get_attrs(GeoAttrGroup grp, const std::string& attr_name) const {
-            const std::map<std::string, AttributeVector>& container = get_const_container(grp);
-            auto iter = container.find(attr_name);
-            if (iter == container.end()) {
-                throw makeError<KeyError>(attr_name, "not exist on point attr");
-            }
-            return iter->second.get_attrs<T, CHANNEL>();
-        }
+        //standard API
+
+        //创建属性
+        ZENO_API int create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
+        ZENO_API int create_face_attr(std::string const& attr_name, const AttrVar& defl);
+        ZENO_API int create_point_attr(std::string const& attr_name, const AttrVar& defl);
+        ZENO_API int create_vertex_attr(std::string const& attr_name, const AttrVar& defl);
+        ZENO_API int create_geometry_attr(std::string const& attr_name, const AttrVar& defl);
+
+        //设置属性
+        ZENO_API int set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
+        ZENO_API int set_vertex_attr(std::string const& attr_name, const AttrVar& defl);
+        ZENO_API int set_point_attr(std::string const& attr_name, const AttrVar& defl);
+        ZENO_API int set_face_attr(std::string const& attr_name, const AttrVar& defl);
+        ZENO_API int set_geometry_attr(std::string const& attr_name, const AttrVar& defl);
 
         template<class T>
         void foreach_attr_update(GeoAttrGroup grp, const std::string& attr_name, char channel, std::function<T(int idx, T old_elem_value)>&& evalf) {
@@ -65,16 +66,6 @@ namespace zeno
         }
 
         template<class T, char CHANNEL = 0>
-        T get_elem(GeoAttrGroup grp, std::string const& attr_name, size_t idx) const {
-            const std::map<std::string, AttributeVector>& container = get_const_container(grp);
-            auto iter = container.find(attr_name);
-            if (iter == container.end()) {
-                throw makeError<KeyError>(attr_name, "not exist on point attr");
-            }
-            return iter->second.get_elem<T, CHANNEL>(idx);
-        }
-
-        template<class T, char CHANNEL = 0>
         void set_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx, T val) {
             std::map<std::string, AttributeVector>& container = get_container(grp);
             auto iter = container.find(attr_name);
@@ -84,34 +75,85 @@ namespace zeno
             iter->second.set_elem<T, CHANNEL>(idx, val);
         }
 
-        //API:
-        //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。
-        ZENO_API int facepoint(int face_id, int vert_id) const;
+        /* 检查属性是否存在 */
+        ZENO_API bool has_attr(GeoAttrGroup grp, std::string const& name);
+        ZENO_API bool has_vertex_attr(std::string const& name) const;
+        ZENO_API bool has_point_attr(std::string const& name) const;
+        ZENO_API bool has_face_attr(std::string const& name) const;
+        ZENO_API bool has_geometry_attr(std::string const& name) const;
 
-        //通过 face_id，获取此 face 所有 points 索引编号。
-        zfxintarr facepoints(int face_id);
+        //删除属性
+        ZENO_API int delete_attr(GeoAttrGroup grp, const std::string& attr_name);
+        ZENO_API int delete_vertex_attr(std::string const& attr_name);
+        ZENO_API int delete_point_attr(std::string const& attr_name);
+        ZENO_API int delete_face_attr(std::string const& attr_name);
+        ZENO_API int delete_geometry_attr(std::string const& attr_name);
 
-        //返回包含指定 point 的 prim 列表。
-        zfxintarr pointfaces(int point_id);
-        zfxintarr pointvertex(int point_id);
+        //获取属性，CHANNEL如果为'x','y','z','w'中的一个，就是获取相应通道的值，此时T应为float
+        template<class T, char CHANNEL = 0>
+        std::vector<T> get_attrs(GeoAttrGroup grp, const std::string& attr_name) const {
+            const std::map<std::string, AttributeVector>& container = get_const_container(grp);
+            auto iter = container.find(attr_name);
+            if (iter == container.end()) {
+                throw makeError<KeyError>(attr_name, "not exist on point attr");
+            }
+            return iter->second.get_attrs<T, CHANNEL>();
+        }
 
-        ZENO_API void initpoint(size_t point_id);
-        ZENO_API int addpoint(zfxvariant pos = zfxfloatarr({ 0,0,0 }));
-        ZENO_API void addface(const std::vector<size_t>& points);
-        ZENO_API void setface(size_t face_id, const std::vector<size_t>& points);
-        ZENO_API int addvertex(size_t face_id, size_t point_id);
+        //获取属性对应某一个索引下的值
+        template<class T, char CHANNEL = 0>
+        T get_elem(GeoAttrGroup grp, std::string const& attr_name, size_t idx) const {
+            const std::map<std::string, AttributeVector>& container = get_const_container(grp);
+            auto iter = container.find(attr_name);
+            if (iter == container.end()) {
+                throw makeError<KeyError>(attr_name, "not exist on point attr");
+            }
+            return iter->second.get_elem<T, CHANNEL>(idx);
+        }
 
-        ZENO_API bool remove_point(int ptnum);
+        /*
+            用指定的 point 列表创建 prim。
+            type = poly 创建闭合多边形。
+            type = polyline 创建开放多边形，就是折线。
+         */
+        //TODO: createPrim(type, point[])
+
+        /* 添加元素 */
+        ZENO_API int add_vertex(int face_id, int point_id);
+        ZENO_API int add_point(zeno::vec3f pos);
+        ZENO_API int add_face(const std::vector<int>& points);
+
+        /* 移除元素相关 */
         ZENO_API bool remove_faces(const std::set<int>& faces, bool includePoints);
+        ZENO_API bool remove_point(int ptnum);
+        ZENO_API bool remove_vertex(int face_id, int vert_id);
 
+        /* 返回元素个数 */
         ZENO_API int npoints() const;
         ZENO_API int nfaces() const;
         ZENO_API int nvertices() const;
         ZENO_API int nvertices(int face_id) const;
 
-        ZENO_API void geomTriangulate(zeno::TriangulateInfo& info);
+        /* 点相关 */
+        ZENO_API std::vector<int> point_faces(int point_id);
+        ZENO_API int point_vertex(int point_id);
+        ZENO_API std::vector<int> point_vertices(int point_id);
 
-        //vertex先不考虑
+        /* 面相关 */
+        ZENO_API int face_point(int face_id, int vert_id) const;
+        ZENO_API std::vector<int> face_points(int face_id);
+        ZENO_API int face_vertex(int face_id, int vert_id);
+        ZENO_API int face_vertex_count(int face_id);
+        ZENO_API std::vector<int> face_vertices(int face_id);
+
+        /* Vertex相关 */
+        ZENO_API int vertex_index(int face_id, int vertex_id);
+        ZENO_API int vertex_next(int linear_vertex_id);
+        ZENO_API int vertex_prev(int linear_vertex_id);
+        ZENO_API int vertex_point(int linear_vertex_id);
+        ZENO_API int vertex_face(int linear_vertex_id);
+        ZENO_API int vertex_face_index(int linear_vertex_id);
+
     private:
         void initFromPrim(PrimitiveObject* prim);
         ZENO_API std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);

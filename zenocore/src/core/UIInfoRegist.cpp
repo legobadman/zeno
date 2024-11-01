@@ -1,7 +1,7 @@
 #include <zeno/zeno.h>
 
 
-//基础类型也要写在这里
+//鍩虹绫诲瀷涔熻鍐欏湪杩欓噷
 
 registerObjectTypeUIInfo(Bool, Bool, "#FFFF00")
 registerObjectTypeUIInfo(Int, Int, "#FF0000")

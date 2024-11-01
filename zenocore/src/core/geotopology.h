@@ -43,12 +43,19 @@ namespace zeno
         GeometryTopology(const GeometryTopology& rhs);
         GeometryTopology(bool bTriangle, int nPoints, int nFaces);
 
+        void initFromPrim(PrimitiveObject* prim);
+        void toPrimitive(std::shared_ptr<PrimitiveObject> spPrim);
+
         HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
         std::tuple<Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
         size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
         size_t getPointTo(HEdge* hedge) const;
-        void addface(const std::vector<size_t>& points);
+        int  addface(const std::vector<int>& points);
         void setface(size_t idx, const std::vector<size_t>& points);
+        int add_point();
+        int add_vertex(int face_id, int point_id);
+        bool remove_point(int ptnum);
+        bool remove_faces(const std::set<int>& faces, bool includePoints);
         void initpoint(size_t idxPoint);
         std::vector<vec3i> tri_indice() const;
         std::vector<int> edge_list() const;
@@ -56,10 +63,20 @@ namespace zeno
         int npoints_in_face(Face* face) const;
         void geomTriangulate(zeno::TriangulateInfo& info);
 
+        int face_point(int face_id, int vert_id) const;
+        std::vector<int> face_points(int face_id);
+        std::vector<int> point_faces(int point_id);
+
+        int npoints() const;
+        int nfaces() const;
+        int nvertices() const;
+        int nvertices(int face_id) const;
+
+    private:
+        std::vector<std::shared_ptr<Point>> m_points;
         std::vector<std::shared_ptr<Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;
-        std::vector<std::shared_ptr<Point>> m_points;
-        bool m_bTriangle = true;
+        bool m_bTriangle = true;    //所有面都是三角面
     };
 
 

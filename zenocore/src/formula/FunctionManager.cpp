@@ -195,7 +195,7 @@ namespace zeno {
         {
         case ATTR_POINT: {
             if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
-                return spGeo->get_point_count();
+                return spGeo->npoints();
             }
             else if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
                 return spPrim->verts->size();
@@ -206,7 +206,7 @@ namespace zeno {
         }
         case ATTR_FACE:
             if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
-                return spGeo->get_face_count();
+                return spGeo->nfaces();
             }
             else if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
                 if (spPrim->tris.size() > 0)
@@ -1010,7 +1010,7 @@ namespace zeno {
             }
             if (attr_name == "ptnum")
             {
-                int N = spGeo->get_point_count();
+                int N = spGeo->npoints();
                 ZfxVariable res;
                 res.value.resize(N);
                 res.bAttr = true;
@@ -2251,7 +2251,17 @@ namespace zeno {
                     const auto& arg = args[0];
                     if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
                         //暂时只考虑一个点
-                        int ptnum = spGeo->addpoint(arg.value[0]);
+                        const zfxvariant& varpos = arg.value[0];
+                        int ptnum = -1;
+                        std::visit([&](auto&& val) {
+                            using T = std::decay_t<decltype(val)>;
+                            if constexpr (std::is_same_v<T, glm::vec3>) {
+                                ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
+                            }
+                            else {
+                                //TODO: error
+                            }
+                        }, varpos);
                         ZfxVariable res;
                         res.value.push_back(ptnum);
                         return res;
@@ -2263,7 +2273,7 @@ namespace zeno {
                 else if (args.empty()) {
                     if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
                         //暂时只考虑一个点
-                        int ptnum = spGeo->addpoint();
+                        int ptnum = spGeo->add_point(zeno::vec3f(0,0,0));
                         ZfxVariable res;
                         res.value.push_back(ptnum);
                         return res;
@@ -2283,7 +2293,7 @@ namespace zeno {
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
                     int faceid = get_zfxvar<int>(args[0].value[0]);
                     int pointid = get_zfxvar<int>(args[1].value[0]);
-                    int vertid = spGeo->addvertex(faceid, pointid);
+                    int vertid = spGeo->add_vertex(faceid, pointid);
                     ZfxVariable res;
                     res.value.push_back(vertid);
                     return res;

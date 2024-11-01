@@ -512,7 +512,7 @@ struct FrameBufferPicker : IPicker {
                 bool pick_particle = false;
                 PICK_MODE mode = scene->get_select_mode();
                 if (PICK_MODE::PICK_OBJECT == mode) {
-                    pick_particle = geo->get_face_count() == 0;
+                    pick_particle = geo->nfaces() == 0;
                     CHECK_GL(glEnable(GL_DEPTH_TEST));
                     CHECK_GL(glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE));
                     glDepthFunc(GL_GREATER);

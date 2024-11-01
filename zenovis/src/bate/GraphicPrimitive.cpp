@@ -660,7 +660,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
             polyEdgeObj.vbos.push_back(std::move(vbo));
             polyEdgeObj.prog = get_edge_program();
         }
-        if (geo->get_face_count() > 0) {
+        if (geo->nfaces() > 0) {
             //还是需要展开成三角形
             tris = geo->tri_indice();
         }
