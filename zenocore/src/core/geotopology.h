@@ -30,6 +30,7 @@ namespace zeno
     };
 
     struct Face {
+        int start_linearIdx;  //the vertex index of start vertex.
         HEdge* h = 0;      //any h-edge of this face.
     };
 
@@ -50,12 +51,7 @@ namespace zeno
         std::tuple<Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
         size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
         size_t getPointTo(HEdge* hedge) const;
-        int  addface(const std::vector<int>& points);
-        void setface(size_t idx, const std::vector<size_t>& points);
-        int add_point();
-        int add_vertex(int face_id, int point_id);
-        bool remove_point(int ptnum);
-        bool remove_faces(const std::set<int>& faces, bool includePoints);
+
         void initpoint(size_t idxPoint);
         std::vector<vec3i> tri_indice() const;
         std::vector<int> edge_list() const;
@@ -63,14 +59,41 @@ namespace zeno
         int npoints_in_face(Face* face) const;
         void geomTriangulate(zeno::TriangulateInfo& info);
 
-        int face_point(int face_id, int vert_id) const;
-        std::vector<int> face_points(int face_id);
-        std::vector<int> point_faces(int point_id);
+        /* 添加元素 */
+        int addface(const std::vector<int>& points);
+        int add_point();
+        int add_vertex(int face_id, int point_id);
 
+        /* 移除元素相关 */
+        bool remove_faces(const std::set<int>& faces, bool includePoints);
+        bool remove_point(int ptnum);
+        bool remove_vertex(int face_id, int vert_id);
+
+        /* 返回元素个数 */
         int npoints() const;
         int nfaces() const;
         int nvertices() const;
         int nvertices(int face_id) const;
+
+        /* 点相关 */
+        std::vector<int> point_faces(int point_id);
+        int point_vertex(int point_id);
+        std::vector<int> point_vertices(int point_id);
+
+        /* 面相关 */
+        int face_point(int face_id, int vert_id) const;
+        std::vector<int> face_points(int face_id);
+        int face_vertex(int face_id, int vert_id);
+        int face_vertex_count(int face_id);
+        std::vector<int> face_vertices(int face_id);
+
+        /* Vertex相关 */
+        int vertex_index(int face_id, int vertex_id);
+        int vertex_next(int linear_vertex_id);
+        int vertex_prev(int linear_vertex_id);
+        int vertex_point(int linear_vertex_id);
+        int vertex_face(int linear_vertex_id);
+        int vertex_face_index(int linear_vertex_id);
 
     private:
         std::vector<std::shared_ptr<Point>> m_points;

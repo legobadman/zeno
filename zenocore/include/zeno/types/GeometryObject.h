@@ -36,7 +36,6 @@ namespace zeno
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
         ZENO_API GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
         ZENO_API void initpoint(size_t point_id);
-        ZENO_API void setface(size_t face_id, const std::vector<size_t>& points);
         ZENO_API void geomTriangulate(zeno::TriangulateInfo& info);
 
         //standard API
@@ -160,10 +159,11 @@ namespace zeno
         ZENO_API const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         ZENO_API size_t get_attr_size(GeoAttrGroup grp) const;
 
-        std::shared_ptr<GeometryTopology> m_spTopology;
+        std::shared_ptr<GeometryTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
         std::map<std::string, AttributeVector> m_point_attrs;
         std::map<std::string, AttributeVector> m_face_attrs;
         std::map<std::string, AttributeVector> m_geo_attrs;
+        std::map<std::string, AttributeVector> m_vert_attrs;
     };
 
 }

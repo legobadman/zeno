@@ -163,6 +163,7 @@ namespace zeno {
         ATTR_GEO,
         ATTR_FACE,
         ATTR_POINT,
+        ATTR_VERTEX,
     };
 
     //几何属性类型
