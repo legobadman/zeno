@@ -341,7 +341,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             auto spNode = item->m_wpNode.lock();
             ZASSERT_EXIT(spNode, QVariant());
             std::vector<zeno::zany> objs(spNode->get_output_objs());
-            //Èç¹ûÓÐ¶à¸ö£¬Ö»È¡µÚÒ»¸ö¡£
+            //å¦‚æžœæœ‰å¤šä¸ªï¼Œåªå–ç¬¬ä¸€ä¸ªã€‚
             if (!objs.empty()) {
                 return QVariant::fromValue(objs[0]);
             }
@@ -754,7 +754,7 @@ void GraphModel::pushToplevelStack(QUndoCommand* cmd)
 void GraphModel::beginMacro(const QString& name)
 {
     auto curpath = currentPath();
-    if (curpath.size() > 1)   //²»ÊÇ¶¥²ãgraph£¬Ôòµ÷ÓÃ¶¥²ãgraph
+    if (curpath.size() > 1)   //ä¸æ˜¯é¡¶å±‚graphï¼Œåˆ™è°ƒç”¨é¡¶å±‚graph
     {
         if (GraphModel* topLevelGraph = getTopLevelGraph(curpath))
             topLevelGraph->beginMacro(name);
@@ -769,7 +769,7 @@ void GraphModel::beginMacro(const QString& name)
 void GraphModel::endMacro()
 {
     auto curpath = currentPath();
-    if (curpath.size() > 1)   //²»ÊÇ¶¥²ãgraph£¬Ôòµ÷ÓÃ¶¥²ãgraph
+    if (curpath.size() > 1)   //ä¸æ˜¯é¡¶å±‚graphï¼Œåˆ™è°ƒç”¨é¡¶å±‚graph
     {
         if (GraphModel* topLevelGraph = getTopLevelGraph(curpath))
             topLevelGraph->endMacro();

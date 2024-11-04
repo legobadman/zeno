@@ -2336,6 +2336,9 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Data") || title == "Data" || title == QObject::tr("Spreadsheet") || title == "Spreadsheet") {
         type = PANEL_NODE_DATA;
     }
+    else if (title == QObject::tr("Geometry Data") || title == "Geometry Data") {
+        type = PANEL_GEOM_DATA;
+    }
     else if (title == QObject::tr("Logger") || title == "Logger" || title == QObject::tr("Log") || title == "Log") {
         type = PANEL_LOG;
     }

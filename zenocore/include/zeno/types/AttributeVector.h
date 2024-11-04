@@ -101,8 +101,8 @@ namespace zeno {
             }
         }
 
-        template<typename T, char CHANNEL = 0>
-        T get_elem(size_t idx) const {
+        template<typename T>
+        T get_elem(char channel, size_t idx) const {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
                 return T(x_comp->get<float>(idx), y_comp->get<float>(idx));
             }
@@ -113,12 +113,12 @@ namespace zeno {
                 return T(x_comp->get<float>(idx), y_comp->get<float>(idx), z_comp->get<float>(idx), w_comp->get<float>(idx));
             }
             else {
-                if constexpr (CHANNEL > 0) {
+                if (channel > 0) {
                     std::shared_ptr<AttrColumn> spComp;
-                    if constexpr (CHANNEL == 'x') { spComp = x_comp; }
-                    else if constexpr (CHANNEL == 'y') { spComp = y_comp; }
-                    else if constexpr (CHANNEL == 'z') { spComp = z_comp; }
-                    else if constexpr (CHANNEL == 'w') { spComp = w_comp; }
+                    if (channel == 'x') { spComp = x_comp; }
+                    else if (channel == 'y') { spComp = y_comp; }
+                    else if (channel == 'z') { spComp = z_comp; }
+                    else if (channel == 'w') { spComp = w_comp; }
                     if (!spComp)
                         throw UnimplError("the variant doesn't contain component vector");
                     return std::visit([&](auto&& vec)->T {

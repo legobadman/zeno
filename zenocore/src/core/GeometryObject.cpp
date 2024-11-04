@@ -275,7 +275,16 @@ namespace zeno
     }
 
     ZENO_API int GeometryObject::create_vertex_attr(std::string const& attr_name, const AttrVar& defl) {
-        return -1;
+        if (attr_name == "Point Number") {
+            throw UnimplError("Point Number is an internal attribute");
+        }
+        auto iter = m_vert_attrs.find(attr_name);
+        if (iter != m_vert_attrs.end()) {
+            return -1;
+        }
+        int n = m_spTopology->nvertices();
+        m_vert_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
+        return 0;
     }
 
     ZENO_API int GeometryObject::create_geometry_attr(std::string const& attr_name, const AttrVar& defl) {
@@ -367,6 +376,33 @@ namespace zeno
         }
         auto& attrVec = iter->second;
         return attrVec.type();
+    }
+
+    ZENO_API std::vector<std::string> GeometryObject::get_attr_names(GeoAttrGroup grp) {
+        std::vector<std::string> names;
+        switch (grp) {
+        case ATTR_GEO:
+            for (auto& [name, _] : m_geo_attrs) {
+                names.push_back(name);
+            }
+            break;
+        case ATTR_FACE:
+            for (auto& [name, _] : m_face_attrs) {
+                names.push_back(name);
+            }
+            break;
+        case ATTR_POINT:
+            for (auto& [name, _] : m_point_attrs) {
+                names.push_back(name);
+            }
+            break;
+        case ATTR_VERTEX:
+            for (auto& [name, _] : m_vert_attrs) {
+                names.push_back(name);
+            }
+            break;
+        }
+        return names;
     }
 
     ZENO_API int GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val)
@@ -500,6 +536,9 @@ namespace zeno
         return m_spTopology->vertex_face_index(linear_vertex_id);
     }
 
+    ZENO_API std::pair<int, int> GeometryObject::vertex_info(int linear_vertex_id) {
+        return m_spTopology->vertex_info(linear_vertex_id);
+    }
 
     ZENO_API int GeometryObject::add_face(const std::vector<int>& points) {
         return m_spTopology->addface(points);
@@ -529,5 +568,14 @@ namespace zeno
 
     ZENO_API int GeometryObject::nvertices(int face_id) const {
         return m_spTopology->nvertices(face_id);
+    }
+
+    ZENO_API int GeometryObject::nattributes(GeoAttrGroup grp) const {
+        switch (grp) {
+        case ATTR_GEO: return m_geo_attrs.size();
+        case ATTR_FACE: return m_face_attrs.size();
+        case ATTR_POINT: return m_point_attrs.size();
+        case ATTR_VERTEX: return m_vert_attrs.size();
+        }
     }
 }

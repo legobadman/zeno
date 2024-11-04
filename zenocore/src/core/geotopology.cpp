@@ -501,9 +501,13 @@ namespace zeno
     }
 
     int GeometryTopology::vertex_point(int linear_vertex_id) {
+        return vertex_info(linear_vertex_id).second;
+    }
+
+    std::pair<int, int> GeometryTopology::vertex_info(int linear_vertex_id) {
         int faceid = vertex_face(linear_vertex_id);
         if (faceid == -1)
-            return -1;
+            return {-1,-1};
 
         auto& spFace = m_faces[faceid];
         int offset = linear_vertex_id - spFace->start_linearIdx;
@@ -511,7 +515,7 @@ namespace zeno
         while (offset--) {
             h = h->next;
         }
-        return h->point;
+        return { faceid, h->point };
     }
 
     /*

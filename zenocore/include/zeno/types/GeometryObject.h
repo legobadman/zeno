@@ -35,6 +35,7 @@ namespace zeno
         ZENO_API bool is_base_triangle() const;
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
         ZENO_API GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
+        ZENO_API std::vector<std::string> get_attr_names(GeoAttrGroup grp);
         ZENO_API void initpoint(size_t point_id);
         ZENO_API void geomTriangulate(zeno::TriangulateInfo& info);
 
@@ -100,14 +101,14 @@ namespace zeno
         }
 
         //获取属性对应某一个索引下的值
-        template<class T, char CHANNEL = 0>
-        T get_elem(GeoAttrGroup grp, std::string const& attr_name, size_t idx) const {
+        template<class T>
+        T get_elem(GeoAttrGroup grp, std::string const& attr_name, char channel, size_t idx) const {
             const std::map<std::string, AttributeVector>& container = get_const_container(grp);
             auto iter = container.find(attr_name);
             if (iter == container.end()) {
                 throw makeError<KeyError>(attr_name, "not exist on point attr");
             }
-            return iter->second.get_elem<T, CHANNEL>(idx);
+            return iter->second.get_elem<T>(channel, idx);
         }
 
         /*
@@ -132,6 +133,7 @@ namespace zeno
         ZENO_API int nfaces() const;
         ZENO_API int nvertices() const;
         ZENO_API int nvertices(int face_id) const;
+        ZENO_API int nattributes(GeoAttrGroup grp) const;
 
         /* 点相关 */
         ZENO_API std::vector<int> point_faces(int point_id);
@@ -152,6 +154,7 @@ namespace zeno
         ZENO_API int vertex_point(int linear_vertex_id);
         ZENO_API int vertex_face(int linear_vertex_id);
         ZENO_API int vertex_face_index(int linear_vertex_id);
+        ZENO_API std::pair<int, int> vertex_info(int linear_vertex_id);
 
     private:
         void initFromPrim(PrimitiveObject* prim);

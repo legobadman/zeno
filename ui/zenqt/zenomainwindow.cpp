@@ -9,6 +9,7 @@
 #include "panel/zenoproppanel.h"
 #include "panel/zenospreadsheet.h"
 #include "panel/zlogpanel.h"
+#include "panel/zgeometryspreadsheet.h"
 #include "widgets/ztimeline.h"
 #include "widgets/ztoolbar.h"
 #include "viewport/viewportwidget.h"
@@ -491,6 +492,11 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
         pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
+    case PANEL_GEOM_DATA:
+    {
+        pDockElem->setWidget(new ZGeometrySpreadsheet, ads::CDockWidget::ForceNoScrollArea);
+        break;
+    }
     case PANEL_LOG:
     {
         auto pLog = new DockContent_Log;
@@ -599,6 +605,11 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
             {
                 auto pObjectData = new ZenoSpreadsheet;
                 pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
+                break;
+            }
+            case PANEL_GEOM_DATA:
+            {
+                pDockElem->setWidget(new ZGeometrySpreadsheet, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
             case PANEL_LOG:
@@ -772,7 +783,7 @@ void ZenoMainWindow::initAllDockWidgets()
     m_pDockManager->addDockWidget(ads::TopDockWidgetArea, pDock4);
 
     ads::CDockWidget* pDock5 = new ads::CDockWidget(tr("Object Data"));
-    ZenoSpreadsheet* pObjectData = new ZenoSpreadsheet;
+    ZGeometrySpreadsheet* pObjectData = new ZGeometrySpreadsheet;
     pDock5->setWidget(pObjectData);
     m_pDockManager->addDockWidget(ads::TopDockWidgetArea, pDock5);
 }
@@ -2145,6 +2156,18 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
             {
                 if (select && nodes.size() <= 1) {
                     prop->onNodesSelected(subgraph, nodes, select);
+                }
+            }
+            else if (ZGeometrySpreadsheet* panel = qobject_cast<ZGeometrySpreadsheet*>(wid))
+            {
+                if (select && nodes.size() == 1)
+                {
+                    const QModelIndex& idx = nodes[0];
+                    ZASSERT_EXIT(idx.isValid());
+                    zeno::zany pObject = idx.data(ROLE_OUTPUT_OBJS).value<zeno::zany>();
+                    if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
+                        panel->setGeometry(spGeom.get());
+                    }
                 }
             }
             else if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(wid))
