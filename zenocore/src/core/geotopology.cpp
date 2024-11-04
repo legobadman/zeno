@@ -363,8 +363,6 @@ namespace zeno
         return pts;
     }
 
-
-
     std::vector<int> GeometryTopology::face_vertices(int face_id) {
         if (face_id < 0 || face_id > m_faces.size())
             return std::vector<int>();
@@ -393,7 +391,6 @@ namespace zeno
         std::vector<int> vertices = point_vertices(point_id);
         if (vertices.empty())
             return -1;
-        std::sort(vertices.begin(), vertices.end());
         return vertices[0];
     }
 
@@ -420,6 +417,7 @@ namespace zeno
                 vertices.push_back(spFace->start_linearIdx + nCount);
             }
         }
+        std::sort(vertices.begin(), vertices.end());
         return vertices;
     }
 
@@ -467,19 +465,58 @@ namespace zeno
      * 与linear_vertex_id共享一个point的下一个vertex的linear_vertex_id;
      */
     int GeometryTopology::vertex_next(int linear_vertex_id) {
+        int pointid = vertex_point(linear_vertex_id);
+        if (pointid == -1) {
+            return -1;
+        }
 
-
-        return -1;
+        auto& vertices = point_vertices(pointid);
+        auto iter = std::find(vertices.cbegin(), vertices.cend(), linear_vertex_id);
+        assert(iter != vertices.end());
+        size_t idx = static_cast<size_t>(std::distance(vertices.cbegin(), iter));
+        if (idx == vertices.size() - 1) {
+            return vertices[0];
+        }
+        else {
+            return vertices[idx + 1];
+        }
     }
 
     int GeometryTopology::vertex_prev(int linear_vertex_id) {
-        return -1;
+        int pointid = vertex_point(linear_vertex_id);
+        if (pointid == -1) {
+            return -1;
+        }
+
+        auto& vertices = point_vertices(pointid);
+        auto iter = std::find(vertices.cbegin(), vertices.cend(), linear_vertex_id);
+        assert(iter != vertices.end());
+        size_t idx = static_cast<size_t>(std::distance(vertices.cbegin(), iter));
+        if (idx == 0) {
+            return vertices.back();
+        }
+        else {
+            return vertices[idx - 1];
+        }
     }
 
     int GeometryTopology::vertex_point(int linear_vertex_id) {
-        return -1;
+        int faceid = vertex_face(linear_vertex_id);
+        if (faceid == -1)
+            return -1;
+
+        auto& spFace = m_faces[faceid];
+        int offset = linear_vertex_id - spFace->start_linearIdx;
+        auto h = spFace->h;
+        while (offset--) {
+            h = h->next;
+        }
+        return h->point;
     }
 
+    /*
+     * 与linear_vertex_id关联的face的id;
+     */
     int GeometryTopology::vertex_face(int linear_vertex_id) {
         int n = m_faces.size();
         if (n == 0)
@@ -503,19 +540,19 @@ namespace zeno
         return -1;
     }
 
+    /*
+     * 将linear_vertex_id转为它所在的那个面上的idx（就是2:3里面的3);
+     */
     int GeometryTopology::vertex_face_index(int linear_vertex_id) {
         int idxFace = vertex_face(linear_vertex_id);
         if (idxFace == -1)
             return -1;
+
         auto spFace = m_faces[idxFace];
-        
         auto pFirstH = spFace->h;
         auto h = pFirstH;
-        int nCount = linear_vertex_id - spFace->start_linearIdx;
-
-        while (h->next != pFirstH) {
-        }
-        return -1;
+        int offset = linear_vertex_id - spFace->start_linearIdx;
+        return offset;
     }
 
     bool GeometryTopology::remove_point(int ptnum) {
@@ -620,6 +657,7 @@ namespace zeno
     }
 
     bool GeometryTopology::remove_vertex(int face_id, int vert_id) {
+        //TODO
         return false;
     }
 
