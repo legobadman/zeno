@@ -501,21 +501,27 @@ namespace zeno
     }
 
     int GeometryTopology::vertex_point(int linear_vertex_id) {
-        return vertex_info(linear_vertex_id).second;
+        return std::get<2>(vertex_info(linear_vertex_id));
     }
 
-    std::pair<int, int> GeometryTopology::vertex_info(int linear_vertex_id) {
+    std::tuple<int, int, int> GeometryTopology::vertex_info(int linear_vertex_id) {
         int faceid = vertex_face(linear_vertex_id);
         if (faceid == -1)
-            return {-1,-1};
+            return {-1,-1,-1};
 
         auto& spFace = m_faces[faceid];
         int offset = linear_vertex_id - spFace->start_linearIdx;
+        if (offset == 0) {
+            return { faceid, 0, spFace->h->find_from()};
+        }
+        if (offset >= nvertices(faceid))
+            return { -1,-1,-1 };
+
         auto h = spFace->h;
-        while (offset--) {
+        while (--offset) {
             h = h->next;
         }
-        return { faceid, h->point };
+        return { faceid, linear_vertex_id - spFace->start_linearIdx, h->point };
     }
 
     /*
@@ -527,21 +533,28 @@ namespace zeno
             return -1;
 
         int left = 0, right = n - 1;
-        while (right - left > 1) {
+        while (right - left > 0) {
             int mid = (left + right) / 2;
             auto spFace = m_faces[mid];
-            int nVertices = nvertices(mid);
+            
             if (linear_vertex_id < spFace->start_linearIdx) {
-                right = linear_vertex_id - 1;
-            }
-            else if (linear_vertex_id > spFace->start_linearIdx + nVertices) {
-                left = mid + 1;
+                right = mid - 1;
             }
             else {
-                return mid;
+                int nVertices = nvertices(mid);
+                if (linear_vertex_id >= spFace->start_linearIdx + nVertices) {
+                    left = mid + 1;
+                }
+                else {
+                    return mid;
+                }
             }
+
         }
-        return -1;
+        auto& spFace = m_faces[left];
+        if (linear_vertex_id >= spFace->start_linearIdx + nvertices(left))
+            return -1;
+        return left;
     }
 
     /*

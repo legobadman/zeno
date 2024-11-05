@@ -154,7 +154,7 @@ namespace zeno
         ZENO_API int vertex_point(int linear_vertex_id);
         ZENO_API int vertex_face(int linear_vertex_id);
         ZENO_API int vertex_face_index(int linear_vertex_id);
-        ZENO_API std::pair<int, int> vertex_info(int linear_vertex_id);
+        ZENO_API std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
     private:
         void initFromPrim(PrimitiveObject* prim);

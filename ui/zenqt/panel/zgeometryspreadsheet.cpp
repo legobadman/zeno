@@ -29,8 +29,8 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     pMainLayout->addLayout(pToolbarLayout);
     pMainLayout->addWidget(m_views);
 
-    m_point->setChecked(true);
-    m_vertex->setChecked(false);
+    m_vertex->setChecked(true);
+    m_point->setChecked(false);
     m_face->setChecked(false);
     m_geom->setChecked(false);
 

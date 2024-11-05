@@ -23,6 +23,7 @@ enum AttrColType {
 
 struct AttributeInfo {
     std::string name;
+    std::string showName;
     AttrColType type;
     char channel = 0;
 };
@@ -36,10 +37,10 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent) const override;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
 private:
-    //std::vector<VertexInfo> m_vertices;
-    std::map<int, AttributeInfo> m_colMap;
+    QMap<int, AttributeInfo> m_colMap;
     zeno::GeometryObject* m_object;
 };
 
@@ -53,9 +54,10 @@ public:
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent) const override;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
 private:
-    std::map<int, AttributeInfo> m_colMap;
+    QMap<int, AttributeInfo> m_colMap;
     zeno::GeometryObject* m_object;
 };
 
@@ -70,7 +72,7 @@ public:
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 
 private:
-    std::map<int, AttributeInfo> m_colMap;
+    QMap<int, AttributeInfo> m_colMap;
     zeno::GeometryObject* m_object;
 };
 

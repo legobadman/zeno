@@ -91,7 +91,7 @@ namespace zeno
         int vertex_index(int face_id, int vertex_id);
         int vertex_next(int linear_vertex_id);
         int vertex_prev(int linear_vertex_id);
-        std::pair<int, int> vertex_info(int linear_vertex_id);
+        std::tuple<int, int, int>  vertex_info(int linear_vertex_id);
         int vertex_point(int linear_vertex_id);
         int vertex_face(int linear_vertex_id);
         int vertex_face_index(int linear_vertex_id);

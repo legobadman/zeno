@@ -536,7 +536,7 @@ namespace zeno
         return m_spTopology->vertex_face_index(linear_vertex_id);
     }
 
-    ZENO_API std::pair<int, int> GeometryObject::vertex_info(int linear_vertex_id) {
+    ZENO_API std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) {
         return m_spTopology->vertex_info(linear_vertex_id);
     }
 
