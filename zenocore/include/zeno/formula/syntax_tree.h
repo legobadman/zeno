@@ -130,6 +130,23 @@ using zfxvariant = std::variant<int, float, std::string, ZfxLValue,
     glm::vec2, glm::vec3, glm::vec4, 
     glm::mat2, glm::mat3, glm::mat4>;
 
+struct ZfxVariable
+{
+    std::vector<zfxvariant> value;  //如果是属性变量(bAttr=true)，那这个容器的大小就是runover（点线面）的元素个数，否则就是size=1，也可以单值表示所有属性的等值。
+
+    bool bAttr = false;     //是否与属性关联（好像没什么用）
+    bool bAttrUpdated = false;      //ZfxVariable也记录属性值（比如@P, @N @ptnum等），此标记记录在zfx执行中，属性值是否修改了
+
+    ZfxVariable() {}
+    ZfxVariable(zfxvariant&& var) {
+        value.emplace_back(var);
+    }
+};
+
+using VariableTable = std::map<std::string, ZfxVariable>;
+using ZfxVarRef = VariableTable::const_iterator;
+using ZfxElemFilter = std::vector<char>;
+
 using ZfxVecVar = std::variant<
     std::vector<int>,
     std::vector<float>,
@@ -195,6 +212,7 @@ struct ZfxContext
     /* in */ std::weak_ptr<INode> spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;
+    /**/     VariableTable* zfxVariableTbl = nullptr;
     /* inout */ ZfxParamConstrain param_constrain;
     /* out */ std::string printContent;
     /* out */ operatorVals jumpFlag;

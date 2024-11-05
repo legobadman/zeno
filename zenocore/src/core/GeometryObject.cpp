@@ -276,7 +276,7 @@ namespace zeno
 
     ZENO_API int GeometryObject::create_vertex_attr(std::string const& attr_name, const AttrVar& defl) {
         if (attr_name == "Point Number") {
-            throw UnimplError("Point Number is an internal attribute");
+            throw makeError<UnimplError>("Point Number is an internal attribute");
         }
         auto iter = m_vert_attrs.find(attr_name);
         if (iter != m_vert_attrs.end()) {

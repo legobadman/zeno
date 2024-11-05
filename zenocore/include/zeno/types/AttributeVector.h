@@ -62,7 +62,7 @@ namespace zeno {
                     else if constexpr (CHANNEL == 'z') { spComp = z_comp; }
                     else if constexpr (CHANNEL == 'w') { spComp = w_comp; }
                     if (!spComp)
-                        throw UnimplError("the variant doesn't contain component vector");
+                        throw makeError<UnimplError>("the variant doesn't contain component vector");
 
                     return std::visit([&](auto&& vec)->std::vector<T> {
                         using E = std::decay_t<decltype(vec)>;
@@ -75,7 +75,7 @@ namespace zeno {
                             }
                         }
                         else {
-                            throw UnimplError("type dismatch");
+                            throw makeError<UnimplError>("type dismatch");
                         }
                     }, spComp->value());
                 }
@@ -94,7 +94,7 @@ namespace zeno {
                             return vec;
                         }
                         else {
-                            throw UnimplError("internal type error of primitive type of attribute data");
+                            throw makeError<UnimplError>("internal type error of primitive type of attribute data");
                         }
                     }, varvec);
                 }
@@ -120,7 +120,7 @@ namespace zeno {
                     else if (channel == 'z') { spComp = z_comp; }
                     else if (channel == 'w') { spComp = w_comp; }
                     if (!spComp)
-                        throw UnimplError("the variant doesn't contain component vector");
+                        throw makeError<UnimplError>("the variant doesn't contain component vector");
                     return std::visit([&](auto&& vec)->T {
                         using E = std::decay_t<decltype(vec)>;
                         if constexpr (std::is_same_v<E, std::vector<T>>) {
@@ -247,7 +247,7 @@ namespace zeno {
                     spComp = w_comp;
                 }
                 else {
-                    throw UnimplError("Unknown channel");
+                    throw makeError<UnimplError>("Unknown channel");
                 }
 
                 AttrVarVec& var = spComp->value();
@@ -263,7 +263,7 @@ namespace zeno {
                         }
                     }
                     else {
-                        throw UnimplError("type dismatch when visit attribute value and modify them");
+                        throw makeError<UnimplError>("type dismatch when visit attribute value and modify them");
                     }
                 }, var);
             }
@@ -278,7 +278,7 @@ namespace zeno {
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     if (!pXVec || !pYVec)
-                        throw UnimplError("type dismatch");
+                        throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size();
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
@@ -304,7 +304,7 @@ namespace zeno {
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     auto pZVec = std::get_if<std::vector<float>>(&zvar);
                     if (!pXVec || !pYVec || !pZVec)
-                        throw UnimplError("type dismatch");
+                        throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {

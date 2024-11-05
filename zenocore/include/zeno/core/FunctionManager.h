@@ -11,25 +11,6 @@
 
 namespace zeno {
 
-    struct ZfxVariable
-    {
-        std::vector<zfxvariant> value;  //如果是属性变量(bAttr=true)，那这个容器的大小就是runover（点线面）的元素个数，否则就是size=1，也可以单值表示所有属性的等值。
-
-        //ZfxVecVar value2;
-
-        bool bAttr = false;     //是否与属性关联（好像没什么用）
-        bool bAttrUpdated = false;      //ZfxVariable也记录属性值（比如@P, @N @ptnum等），此标记记录在zfx执行中，属性值是否修改了
-
-        ZfxVariable() {}
-        ZfxVariable(zfxvariant&& var) {
-            value.emplace_back(var);
-        }
-    };
-
-    using VariableTable = std::map<std::string, ZfxVariable>;
-    using ZfxVarRef = VariableTable::const_iterator;
-    using ZfxElemFilter = std::vector<char>;
-
     struct ZfxStackEnv
     {
         VariableTable table;
@@ -55,7 +36,6 @@ namespace zeno {
 
     private:
         void init();
-        float callRef(const std::string& ref, ZfxContext* pContext);
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);
         void pushStack();
         void popStack();
@@ -73,9 +53,6 @@ namespace zeno {
         void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext);
 
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
-        bool removePoint(int pointnum, ZfxContext* pContext);
-        void afterRemovePoint(int rempoint);
-        void afterRemoveElements(std::set<int> rm_indice);
 
         VariableTable m_globalAttrCached;
         std::map<std::string, FUNC_INFO> m_funcs;

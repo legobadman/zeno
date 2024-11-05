@@ -44,7 +44,7 @@ namespace zeno {
             return std::visit([&](auto&& vec)->T {
                 using E = std::decay_t<decltype(vec)>;
                 if constexpr (!std::is_same_v<E, std::vector<T>>) {
-                    throw UnimplError("the type T you want to get doesn't match with the type of variant");
+                    throw makeError<UnimplError>("the type T you want to get doesn't match with the type of variant");
                 }
                 else if constexpr (std::is_same_v<E, std::vector<int>>) {
                     if (vec.size() == 1) {

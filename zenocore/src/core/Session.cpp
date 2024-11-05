@@ -387,14 +387,7 @@ ZENO_API bool Session::run() {
     objsMan->clearLastUnregisterObjs();
     //对之前删除节点时记录的obj，对应的所有其他关联节点，都标脏
     objsMan->remove_attach_node_by_removing_objs();
-
-    zeno::GraphException::catched([&] {
-        mainGraph->runGraph();
-        }, *globalError);
-    if (globalError->failed()) {
-        zeno::log_error("");
-    }
-
+    mainGraph->runGraph();
     return true;
 }
 

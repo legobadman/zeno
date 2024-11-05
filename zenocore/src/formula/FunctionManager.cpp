@@ -14,10 +14,12 @@
 #include <zeno/types/GeometryObject.h>
 #include <zeno/utils/vectorutil.h>
 #include "../utils/zfxutil.h"
+#include "functionimpl.h"
 
 
 using namespace zeno::types;
 using namespace zeno::reflect;
+using namespace zeno::zfx;
 
 namespace zeno {
 
@@ -65,129 +67,6 @@ namespace zeno {
             return FUNC_INFO();
         }
         return iter->second;
-    }
-
-    float FunctionManager::callRef(const std::string& ref, ZfxContext* pContext) {
-        //TODO: vec type.
-        //TODO: resolve with zeno::reflect::any
-#if 1
-        std::string fullPath, graphAbsPath;
-
-        if (ref.empty()) {
-            throw makeError<UnimplError>();
-        }
-
-        auto thisNode = pContext->spNode.lock();
-        const std::string& thisnodePath = thisNode->get_path();
-        graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
-
-        if (ref.front() == '/') {
-            fullPath = ref;
-        } else {
-            fullPath = graphAbsPath + "/" + ref;
-        }
-
-        int idx = fullPath.find_last_of('/');
-        if (idx == std::string::npos) {
-            throw makeError<UnimplError>();
-        }
-
-        const std::string& nodePath = fullPath.substr(idx + 1);
-
-        idx = nodePath.find('.');
-        if (idx == std::string::npos) {
-            throw makeError<UnimplError>();
-        }
-        std::string nodename = nodePath.substr(0, idx);
-        std::string parampath = nodePath.substr(idx + 1);
-
-        std::string nodeAbsPath = graphAbsPath + '/' + nodename;
-        std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
-
-        if (!spNode) {
-            throw makeError<UnimplError>("the refer node doesn't exist, may be deleted before");
-        }
-
-        auto items = split_str(parampath, '.');
-        std::string paramname = items[0];
-
-        bool bExist = false;
-        ParamPrimitive paramData = spNode->get_input_prim_param(paramname, &bExist);
-        if (!bExist)
-            throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
-
-        //直接拿引用源的计算结果，所以本节点在执行前，引用源必须先执行（比如引用源的数值也是依赖另一个节点），参考代码INode::requireInput
-        //，所以要在preApply的基础上作提前依赖计算
-
-        //如果取的是“静态值”，则不要求引用源必须执行，此时要拿的数据应该是defl.
-
-        //以上方案取决于产品设计。
-
-        if (items.size() == 1) {
-            if (!paramData.result.has_value()) {
-                throw makeError<UnimplError>("there is no result on refer source, should calc the source first.");
-            }
-
-            size_t primtype = paramData.result.type().hash_code();
-            if (primtype == zeno::types::gParamType_Int) {
-                return zeno::reflect::any_cast<int>(paramData.result);
-            }
-            else if (primtype == zeno::types::gParamType_Float) {
-                return zeno::reflect::any_cast<float>(paramData.result);
-            }
-            else {
-                throw makeError<UnimplError>();
-            }
-        }
-
-        if (items.size() == 2 &&
-            (paramData.type == gParamType_Vec2f || paramData.type == gParamType_Vec2i ||
-                paramData.type == gParamType_Vec3f || paramData.type == gParamType_Vec3i ||
-                paramData.type == gParamType_Vec4f || paramData.type == gParamType_Vec4i))
-        {
-            if (items[1].size() != 1)
-                throw makeError<UnimplError>();
-
-            int idx = -1;
-            switch (items[1][0])
-            {
-            case 'x': idx = 0; break;
-            case 'y': idx = 1; break;
-            case 'z': idx = 2; break;
-            case 'w': idx = 3; break;
-            default:
-                throw makeError<UnimplError>();
-            }
-            if (paramData.type == gParamType_Vec2f || paramData.type == gParamType_Vec2i) {
-                if (idx < 2) {
-                    return paramData.type == gParamType_Vec2f ? any_cast<vec2f>(paramData.result)[idx] :
-                        any_cast<vec2i>(paramData.result)[idx];
-                }
-                else {
-                    throw makeError<UnimplError>();
-                }
-            }
-            if (paramData.type == gParamType_Vec3f || paramData.type == gParamType_Vec3i) {
-                if (idx < 3) {
-                    return paramData.type == gParamType_Vec3f ? any_cast<vec3f>(paramData.result)[idx] :
-                        any_cast<vec3i>(paramData.result)[idx];
-                }
-                else {
-                    throw makeError<UnimplError>();
-                }
-            }
-            if (paramData.type == gParamType_Vec4f || paramData.type == gParamType_Vec4i) {
-                if (idx < 4) {
-                    return paramData.type == gParamType_Vec4f ? any_cast<vec4f>(paramData.result)[idx] :
-                        any_cast<vec4i>(paramData.result)[idx];
-                }
-                else {
-                    throw makeError<UnimplError>();
-                }
-            }
-        }
-        throw makeError<UnimplError>();
-#endif
     }
 
     static int getElementCount(std::shared_ptr<IObject> spObject, GeoAttrGroup runover) {
@@ -361,7 +240,7 @@ namespace zeno {
                     else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, float>) {
                         return method((int)lval, (int)rval);
                     }
-                    throw UnimplError("");
+                    throw makeError<UnimplError>("");
                 }
                 else if constexpr (std::is_same_v<T, int>) {
                     if constexpr (std::is_same_v<E, int>) {
@@ -372,7 +251,7 @@ namespace zeno {
                     }
                     else {
                         //暂不考虑一个元素和一个矩阵相加的情况。
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                 }
                 else if constexpr (std::is_same_v<T, float>) {
@@ -382,29 +261,29 @@ namespace zeno {
                     else if constexpr (std::is_same_v<E, float>) {
                         return method(lval, rval);
                     }
-                    throw UnimplError("");
+                    throw makeError<UnimplError>("");
                 }
                 else if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::vec3> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::vec4> && std::is_same_v<T, E>)
                 {
                     if constexpr (std::is_same_v<Op, std::less_equal<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::less<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::greater<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else
                     {
@@ -416,16 +295,16 @@ namespace zeno {
                     std::is_same_v<T, glm::mat2> && std::is_same_v<T, E>) {
 
                     if constexpr (std::is_same_v<Op, std::less_equal<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::less<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::greater<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::multiplies<>>)
                     {
@@ -433,10 +312,10 @@ namespace zeno {
                         return method(rval, lval);
                     }
                     else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
-                        throw UnimplError("");
+                        throw makeError<UnimplError>("");
                     }
                     else {
                         return method(lval, rval);
@@ -447,7 +326,7 @@ namespace zeno {
                     return method(lval, rval);
                 }
                 else{
-                    throw UnimplError("");
+                    throw makeError<UnimplError>("");
                 }
             }, _lhs, _rhs);
         }
@@ -597,16 +476,7 @@ namespace zeno {
 
     ZfxVariable& FunctionManager::getVariableRef(const std::string& name, ZfxContext* pContext) {
         assert(!name.empty());
-        if (name.at(0) == '@') {
-            auto iter = m_globalAttrCached.find(name);
-            if (iter == m_globalAttrCached.end()) {
-                const auto& res = m_globalAttrCached.insert(std::make_pair(name, ZfxVariable()));
-                iter = res.first;
-                iter->second = getAttrValue(name, pContext);
-            }
-            return iter->second;
-        }
-        else {
+        if (name.at(0) != '@'){
             for (auto iter = m_stacks.rbegin(); iter != m_stacks.rend(); iter++) {
                 auto& stackvars = iter->table;
                 auto iter_ = stackvars.find(name);
@@ -927,7 +797,7 @@ namespace zeno {
             }
         }
         else {
-            throw UnimplError("only support Geometry when setting attributes");
+            throw makeError<UnimplError>("only support Geometry when setting attributes");
         }
     }
 
@@ -1046,6 +916,48 @@ namespace zeno {
             attr_name = attrname.substr(1);
 
         std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+
+        //观察是否内置属性，目前内置属性统统在外部处理，不耦合到GeometryObject的api上
+        if (attr_name == "ptnum") {
+            int N = spGeom->npoints();
+            ZfxVariable res;
+            res.value.resize(N);
+            for (int i = 0; i < N; i++) {
+                res.value[i] = i;
+            }
+            res.bAttr = true;
+            return res;
+        }
+        else if (attr_name == "primnum") {
+            int N = spGeom->nfaces();
+            ZfxVariable res;
+            res.value.resize(N);
+            for (int i = 0; i < N; i++) {
+                res.value[i] = i;
+            }
+            res.bAttr = true;
+            return res;
+        }
+        else if (attr_name == "vtxnum") {
+            int N = spGeom->nvertices();
+            ZfxVariable res;
+            res.value.resize(N);
+            for (int i = 0; i < N; i++) {
+                res.value[i] = i;
+            }
+            res.bAttr = true;
+            return res;
+        }
+        else if (attr_name == "pscale") {
+            
+        }
+        else if (attr_name == "Frame") {
+
+        }
+        else if (attr_name == "P") {
+            attr_name = "pos";
+        }
+
         GeoAttrType type = spGeom->get_attr_type(pContext->runover, attr_name);
         switch (type) {
         case ATTR_INT: {
@@ -1142,7 +1054,7 @@ namespace zeno {
             return res;
         }
         default:
-            throw UnimplError("unknown attr type");
+            throw makeError<UnimplError>("unknown attr type");
         }
     }
 
@@ -1181,6 +1093,10 @@ namespace zeno {
                 }
                 else if (root->opVal == Indexing) {
 
+                }
+
+                if (root->bAttr && root->opVal == UNDEFINE_OP) {
+                    return getAttrValue(varname, pContext);
                 }
 
                 ZfxVariable& var = getVariableRef(varname, pContext);
@@ -2004,8 +1920,11 @@ namespace zeno {
                 if (funcname == "ref") {
                     if (root->children.size() != 1) throw makeError<UnimplError>();
                     const std::string ref = std::get<std::string>(calc(root->children[0], pContext));
-                    float res = callRef(ref, pContext);
-                    return res;
+                    ZfxElemFilter filter;
+                    std::vector<ZfxVariable> args;
+                    args.push_back(ZfxVariable(ref));
+                    ZfxVariable res = callFunction("ref", args, filter, pContext);
+                    return res.value[0];
                 }
                 else {
                     //先简单匹配调用
@@ -2043,394 +1962,10 @@ namespace zeno {
         return zfxvariant();
     }
 
-    std::string format_variable_size(const char* fmt, std::vector<zfxvariant> args) {
-        return std::accumulate(
-            std::begin(args),
-            std::end(args),
-            std::string{ fmt },
-            [](std::string toFmt, zfxvariant arg) {
-                return std::visit([toFmt](auto&& val)->std::string {
-                    using T = std::decay_t<decltype(val)>;
-                    if constexpr (std::is_same_v<T, int>) {
-                        return format(toFmt, val);
-                    }
-                    else if constexpr (std::is_same_v<T, float>) {
-                        return format(toFmt, val);
-                    }
-                    else if constexpr (std::is_same_v<T, std::string>) {
-                        return format(toFmt, val);
-                    }
-                    else {
-                        throw makeError<UnimplError>("error type on format string");
-                    }
-                    }, arg);
-            }
-        );
-    }
+
 
     ZfxVariable FunctionManager::eval(const std::string& funcname, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-        if (funcname == "ref") {
-            if (args.size() != 1)
-                throw makeError<UnimplError>("only support non-attr value when using ref");
-            const std::string ref = get_zfxvar<std::string>(args[0].value[0]);
-            float res = callRef(ref, pContext);
-            ZfxVariable varres;
-            varres.value.push_back(res);
-            return varres;
-        }
-        else if (funcname == "param" || funcname == "parameter") {
-            if (args.size() != 1) {
-                throw makeError<UnimplError>("error number of args on param(...)");
-            }
-            if (pContext->param_constrain.constrain_param.empty()) {
-                throw makeError<UnimplError>("only support indexing param for param constrain");
-            }
-            const std::string& param = get_zfxvar<std::string>(args[0].value[0]);
-            auto pnode = pContext->spNode.lock();
-            ZfxLValue lval;
-            bool bExist = false;
-            lval.var = pnode->get_input_obj_param(param, &bExist);
-            if (bExist) {
-                return lval;
-            }
-            else {
-                lval.var = pnode->get_input_prim_param(param, &bExist);
-                if (bExist)
-                    return lval;
-            }
-            throw makeError<UnimplError>("the param does not exist when calling param(...)");
-        }
-        else if (funcname == "log") {
-            if (args.empty()) {
-                throw makeError<UnimplError>("empty args on log");
-            }
-            const auto& formatStr = args[0];
-            assert(formatStr.value.size() == 1);
-            std::string formatString = get_zfxvar<std::string>(formatStr.value[0]);
-
-            std::vector<ZfxVariable> _args = args;
-            _args.erase(_args.begin());
-
-            //有可能是： log("format", 2, @P.x, b);  //这里的_args的元素，可能是一个或多个。
-            int maxSize = 1;
-            for (auto& arg : _args) {
-                maxSize = max(maxSize, arg.value.size());
-            }
-
-            //逐个调用输出
-            if (maxSize > 1) {
-                //属性或相关变量的调用
-                for (int i = 0; i < maxSize; i++) {
-                    if (!filter[i]) continue;
-                    std::vector<zfxvariant> formatargs;
-                    for (int j = 0; j < _args.size(); j++) {
-                        auto& arg = _args[j];
-                        assert(!arg.value.empty());
-                        if (arg.value.size() < i) {
-                            formatargs.push_back(arg.value[0]);
-                        }
-                        else {
-                            formatargs.push_back(arg.value[i]);
-                        }
-                    }
-                    std::string ret = format_variable_size(formatString.c_str(), formatargs);
-                    zeno::log_only_print(ret);
-                }
-            }
-            else {
-                std::vector<zfxvariant> __args;
-                for (auto __arg : _args) {
-                    __args.push_back(__arg.value[0]);
-                }
-                std::string ret = format_variable_size(formatString.c_str(), __args);
-                zeno::log_only_print(ret);
-            }
-
-            return ZfxVariable();
-        }
-        else {
-            //先简单匹配调用
-            if (funcname == "vec3") {
-                if (args.size() != 3)
-                    throw makeError<UnimplError>("the number of elements isn't 3");
-                const ZfxVariable& xvar = args[0], &yvar = args[1], &zvar = args[2];
-                int nx = xvar.value.size(), ny = yvar.value.size(), nz = zvar.value.size();
-                int N = std::max(nx, std::max(ny, nz));
-                ZfxVariable res;
-                if (N == 1) {
-                    float x = get_zfxvar<float>(xvar.value[0]);
-                    float y = get_zfxvar<float>(yvar.value[0]);
-                    float z = get_zfxvar<float>(zvar.value[0]);
-                    res.value.push_back(glm::vec3(x, y, z));
-                }
-                else {
-                    for (int i = 0; i < N; i++) {
-                        int ni = std::min(i, nx);
-                        int nj = std::min(i, ny);
-                        int nk = std::min(i, nz);
-                        float x = get_zfxvar<float>(xvar.value[ni]);
-                        float y = get_zfxvar<float>(yvar.value[nj]);
-                        float z = get_zfxvar<float>(zvar.value[nk]);
-                        res.value.push_back(glm::vec3(x, y, z));
-                    }
-                }
-                return res;
-            }
-            else if (funcname == "sin") {
-                if (args.size() != 1)
-                    throw makeError<UnimplError>();
-                const auto& arg = args[0];
-                int N = arg.value.size();
-                ZfxVariable res;
-                res.value.resize(N);
-                assert(N >= 1);
-                if (N > 1) {
-                    for (int i = 0; i < arg.value.size(); i++)
-                    {
-                        if (!filter[i]) continue;
-                        float val = get_zfxvar<float>(arg.value[i]);
-                        res.value[i] = sin(val);
-                    }
-                }
-                else {
-                    float val = get_zfxvar<float>(arg.value[0]);
-                    res.value[0] = sin(val);
-                }
-                return res;
-            }
-            else if (funcname == "cos") {
-                if (args.size() != 1)
-                    throw makeError<UnimplError>();
-                const auto& arg = args[0];
-                ZfxVariable res;
-                res.value.resize(arg.value.size());
-                for (int i = 0; i < arg.value.size(); i++)
-                {
-                    if (!filter[i]) continue;
-                    float val = get_zfxvar<float>(arg.value[i]);
-                    res.value[i] = cos(val);
-                }
-                return res;
-            }
-            else if (funcname == "sinh") {
-                if (args.size() != 1)
-                    throw makeError<UnimplError>();
-                const auto& arg = args[0];
-                ZfxVariable res;
-                res.value.resize(arg.value.size());
-                for (int i = 0; i < arg.value.size(); i++)
-                {
-                    if (!filter[i]) continue;
-                    float val = get_zfxvar<float>(arg.value[i]);
-                    res.value[i] = sinh(val);
-                }
-                return res;
-            }
-            else if (funcname == "cosh") {
-                if (args.size() != 1)
-                    throw makeError<UnimplError>();
-                const auto& arg = args[0];
-                ZfxVariable res;
-                res.value.resize(arg.value.size());
-                for (int i = 0; i < arg.value.size(); i++)
-                {
-                    if (!filter[i]) continue;
-                    float val = get_zfxvar<float>(arg.value[i]);
-                    res.value[i] = cosh(val);
-                }
-                return res;
-            }
-            else if (funcname == "rand") {
-                if (!args.empty()) throw makeError<UnimplError>();
-                ZfxVariable res;
-                res.value.push_back(rand());
-                return res;
-            }
-            else if (funcname == "addpoint") {
-                if (args.size() == 1) {
-                    const auto& arg = args[0];
-                    if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                        //暂时只考虑一个点
-                        const zfxvariant& varpos = arg.value[0];
-                        int ptnum = -1;
-                        std::visit([&](auto&& val) {
-                            using T = std::decay_t<decltype(val)>;
-                            if constexpr (std::is_same_v<T, glm::vec3>) {
-                                ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
-                            }
-                            else {
-                                //TODO: error
-                            }
-                        }, varpos);
-                        ZfxVariable res;
-                        res.value.push_back(ptnum);
-                        return res;
-                    }
-                    else {
-                        throw makeError<UnimplError>();
-                    }
-                }
-                else if (args.empty()) {
-                    if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                        //暂时只考虑一个点
-                        int ptnum = spGeo->add_point(zeno::vec3f(0,0,0));
-                        ZfxVariable res;
-                        res.value.push_back(ptnum);
-                        return res;
-                    }
-                    else {
-                        throw makeError<UnimplError>();
-                    }
-                }
-                else {
-                    throw makeError<UnimplError>();
-                }
-            }
-            else if (funcname == "addvertex") {
-                if (args.size() != 2) {
-                    throw makeError<UnimplError>();
-                }
-                if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                    int faceid = get_zfxvar<int>(args[0].value[0]);
-                    int pointid = get_zfxvar<int>(args[1].value[0]);
-                    int vertid = spGeo->add_vertex(faceid, pointid);
-                    ZfxVariable res;
-                    res.value.push_back(vertid);
-                    return res;
-                }
-                else {
-                    throw makeError<UnimplError>();
-                }
-            }
-            else if (funcname == "removepoint") {
-                if (args.size() != 1)
-                    throw makeError<UnimplError>();
-                const auto& arg = args[0];
-                int N = arg.value.size();
-                if (N == 0) return ZfxVariable();
-                bool bSucceed = false;
-
-                if (N < filter.size()) {
-                    assert(N == 1);
-                    int currrem = get_zfxvar<int>(arg.value[0]);
-                    bSucceed = removePoint(currrem, pContext);
-                    if (bSucceed) {
-                        //要调整filter，移除掉第currrem位置的元素
-                        filter.erase(filter.begin() + currrem);
-                        //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
-                        afterRemovePoint(currrem);
-                    }
-                    else {
-                        throw makeError<UnimplError>("error on removePoint");
-                    }
-                }
-                else {
-                    std::deque<int> remPoints;
-
-                    assert(N == filter.size());
-                    for (int i = 0; i < N; i++) {
-                        if (!filter[i]) continue;
-                        int pointnum = get_zfxvar<int>(arg.value[i]);
-                        remPoints.push_back(pointnum);
-                    }
-
-                    while (!remPoints.empty())
-                    {
-                        int currrem = remPoints.front();
-                        remPoints.pop_front();
-                        bSucceed = removePoint(currrem, pContext);
-                        if (bSucceed) {
-                            //要调整filter，移除掉第currrem位置的元素
-                            filter.erase(filter.begin() + currrem);
-                            //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
-                            afterRemovePoint(currrem);
-                            //最后将当前所有剩下的删除点的序号再自减
-                            for (auto iter = remPoints.begin(); iter != remPoints.end(); iter++) {
-                                *iter -= 1;
-                            }
-                        }
-                        else {
-                            throw makeError<UnimplError>("error on removePoint");
-                        }
-                    }
-                }
-                return ZfxVariable();
-            }
-            else if (funcname == "removeface") {
-                if (args.size() > 2 || args.empty())
-                    throw makeError<UnimplError>();
-
-                auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
-                const auto& arg = args[0];
-                bool bIncludePoints = true;
-                if (args.size() == 2) {
-                    bIncludePoints = get_zfxvar<bool>(args[1].value[0]);
-                }
-
-                int N = arg.value.size();
-                if (N == 0) return ZfxVariable();
-                bool bSucceed = false;
-
-                std::set<int> remfaces;
-                if (N < filter.size()) {
-                    assert(N == 1);
-                    int currrem = get_zfxvar<int>(arg.value[0]);
-                    remfaces.insert(currrem);
-                }
-                else {
-                    assert(N == filter.size());
-                    for (int i = 0; i < N; i++) {
-                        if (!filter[i]) continue;
-                        int pointnum = get_zfxvar<int>(arg.value[i]);
-                        remfaces.insert(pointnum);
-                    }
-                }
-
-                bSucceed = spGeo->remove_faces(remfaces, bIncludePoints);
-                if (bSucceed) {
-                    //要调整filter，移除掉第currrem位置的元素
-                    removeElemsByIndice(filter, remfaces);
-                    afterRemoveElements(remfaces);
-                }
-                else {
-                    throw makeError<UnimplError>("error on removeface");
-                }
-                return ZfxVariable();
-            }
-            else {
-                throw makeError<UnimplError>();
-            }
-        }
-    }
-
-    bool FunctionManager::removePoint(int pointnum, ZfxContext* pContext) {
-        /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
-        if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-            return spGeo->remove_point(pointnum);
-        }
-        return false;
-    }
-
-    void FunctionManager::afterRemoveElements(std::set<int> rm_indice) {
-        for (auto& [name, attrVar] : m_globalAttrCached) {
-            auto& attrvalues = attrVar.value;
-            removeElemsByIndice(attrvalues, rm_indice);
-        }
-    }
-
-    void FunctionManager::afterRemovePoint(int rempoint) {
-        for (auto& [name, attrVar] : m_globalAttrCached) {
-            auto& attrvalues = attrVar.value;
-            if (name == "@ptnum") {
-                assert(rempoint < attrvalues.size());
-                for (int i = rempoint+1; i < attrvalues.size(); i++)
-                    attrvalues[i] = i - 1;
-                attrvalues.erase(attrvalues.begin() + rempoint);
-            }
-            else {
-                attrvalues.erase(attrvalues.begin() + rempoint);
-            }
-        }
+        return callFunction(funcname, args, filter, pContext);
     }
 
     void FunctionManager::init() {

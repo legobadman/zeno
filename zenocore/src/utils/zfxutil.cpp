@@ -280,7 +280,7 @@ namespace zeno
                     }
                 }
                 else {
-                    throw UnimplError("Unsupport type for converting to AttrVar");
+                    throw makeError<UnimplError>("Unsupport type for converting to AttrVar");
                 }
             }, zfxvec[0]);
         }
@@ -304,7 +304,7 @@ namespace zeno
             int N = spGeom->get_group_count(group);
             int nVariable = var.value.size();
             if (N != nVariable && nVariable != 1) {
-                throw UnimplError("size dismatch when assign value to attributes");
+                throw makeError<UnimplError>("size dismatch when assign value to attributes");
             }
 
             std::vector<ElemType> vec(N);
@@ -407,7 +407,7 @@ namespace zeno
 
 
             if (!channel.empty() && channel != "x" && channel != "y" && channel != "z" && channel != "w") {
-                throw UnimplError("Unknown channel name");
+                throw makeError<UnimplError>("Unknown channel name");
             }
 
             GeoAttrType type = spGeom->get_attr_type(group, attrname);
@@ -437,7 +437,7 @@ namespace zeno
                 break;
             }
             default: {
-                throw UnimplError("Unknown type of attribute when set value");
+                throw makeError<UnimplError>("Unknown type of attribute when set value");
             }
             }
         }

@@ -1205,7 +1205,7 @@ zeno::reflect::Any INode::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw UnimplError();
+                    throw makeError<UnimplError>();
                 }
             }, var);
         }
@@ -1258,7 +1258,7 @@ zeno::reflect::Any INode::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw UnimplError();
+                    throw makeError<UnimplError>();
                 }
             }, editvec[i]);
             vec.push_back(res);
@@ -2842,6 +2842,9 @@ float INode::resolve(const std::string& expression, const ParamType type)
         ctx.code = code;
         ctx.spNode = shared_from_this();
         zfxvariant res = funcMgr->calc(astRoot, &ctx);
+        funcMgr->executeZfx(astRoot, &ctx);
+
+
         if (std::holds_alternative<int>(res)) {
             return std::get<int>(res);
         }
