@@ -66,7 +66,7 @@ void ZLineEdit::init()
             QString nodePath = m_nodeIdx.data(ROLE_OBJPATH).toString();
             zeno::Formula fmla(txt.toStdString(), nodePath.toStdString());
 
-            //º¯ÊıËµÃ÷
+            //å‡½æ•°è¯´æ˜
             int ret = fmla.parse();
             //fmla.printSyntaxTree();
             if (ret == 0 || fmla.getASTResult())
@@ -394,13 +394,13 @@ void ZLineEdit::focusOutEvent(QFocusEvent* event)
     }
 
     Qt::FocusReason reason = event->reason();
-    //ÓÒ¼üÏÔÊ¾keyframemenuµ¼ÖÂµÄfocusout²»·¢³öeditfinishĞÅºÅ
+    //å³é”®æ˜¾ç¤ºkeyframemenuå¯¼è‡´çš„focusoutä¸å‘å‡ºeditfinishä¿¡å·
     if (reason == Qt::PopupFocusReason) {
         BlockSignalScope scp(this);
         QLineEdit::focusOutEvent(event);
     }
     else if (reason != Qt::ActiveWindowFocusReason) {
-        //ÇĞ»»windowsÈÃwidget²»Òª·¢editFinishedĞÅºÅ¡£
+        //åˆ‡æ¢windowsè®©widgetä¸è¦å‘editFinishedä¿¡å·ã€‚
         QLineEdit::focusOutEvent(event);
     }
 }
@@ -422,14 +422,14 @@ ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType target
                 m_var = ival;
             }
             else {
-                //¿ÉÒÔ³¢ÊÔÒ»ÏÂ×ªfloat
+                //å¯ä»¥å°è¯•ä¸€ä¸‹è½¬float
                 float fval = newText.toFloat(&bConvert);
                 if (bConvert) {
                     ival = static_cast<int>(fval);
                     m_var = ival;
                 }
                 else {
-                    //¿ÉÄÜÊÇ±ğµÄ±í´ïÊ½ÁË£¬ÕâÊ±ºòÖ±½ÓÌ××Ö·û´®½øÈ¥¾ÍĞĞ
+                    //å¯èƒ½æ˜¯åˆ«çš„è¡¨è¾¾å¼äº†ï¼Œè¿™æ—¶å€™ç›´æ¥å¥—å­—ç¬¦ä¸²è¿›å»å°±è¡Œ
                     m_var = newText.toStdString();
                 }
             }
@@ -441,7 +441,7 @@ ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType target
                 m_var = fval;
             }
             else {
-                //¿ÉÒÔ³¢ÊÔÒ»ÏÂ×ªint
+                //å¯ä»¥å°è¯•ä¸€ä¸‹è½¬int
                 int ival = newText.toInt(&bConvert);
                 if (bConvert) {
                     fval = ival;
@@ -455,7 +455,7 @@ ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType target
         else if (m_targetType == gParamType_String) {
             m_var = newText.toStdString();
         }
-        else if (m_targetType == gParamType_Curve) {    //kÖ¡Ïà¹Ø
+        else if (m_targetType == gParamType_Curve) {    //kå¸§ç›¸å…³
             std::string xKey = "x";
             zeno::CurveData curvedata = std::get<zeno::CurveData>(m_var);
 
@@ -503,7 +503,7 @@ void ZCoreParamLineEdit::setKeyFrame(const QStringList& keys)
                 var = this->text().toFloat();
                 break;
             case gParamType_String:
-                //»ñÈ¡formula½á¹û
+                //è·å–formulaç»“æœ
                 break;
             default:
                 break;

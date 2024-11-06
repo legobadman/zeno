@@ -283,7 +283,7 @@ namespace zeno {
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
                         int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1);
-                        T old_val(*pXVec[ix], (*pYVec)[iy]);
+                        T old_val((*pXVec)[ix], (*pYVec)[iy]);
                         T new_val = evalf(i, old_val);
                         (*pXVec)[ix] = new_val[0];
                         (*pYVec)[iy] = new_val[1];

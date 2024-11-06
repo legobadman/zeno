@@ -131,6 +131,7 @@ namespace zeno
             for (auto& [name, attrib_vec] : m_point_attrs) {
             }
         }
+        return ret;
     }
 
     ZENO_API bool GeometryObject::remove_vertex(int face_id, int vert_id) {
