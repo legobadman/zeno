@@ -406,16 +406,50 @@ void ZLineEdit::focusOutEvent(QFocusEvent* event)
 }
 
 
+NotEmptyValidator::NotEmptyValidator(ZCoreParamLineEdit* parent)
+    : QValidator(parent)
+    , m_lineedit(parent)
+{
+}
+
+QValidator::State NotEmptyValidator::validate(QString& input, int& pos) const {
+    if (input.isEmpty())
+        return Intermediate;
+    return Acceptable;
+}
+
+void NotEmptyValidator::fixup(QString& input) const {
+    const zeno::PrimVar& var = m_lineedit->getPrimVariant();
+    std::visit([&](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+            input = QString::fromStdString(std::to_string(arg));
+        }
+        else if constexpr (std::is_same_v<T, std::string>) {
+            input = QString::fromStdString(arg);
+        }
+        else if constexpr (std::is_same_v<T, zeno::CurveData>) {
+            //TODO:怎么还原？
+        }
+    }, var);
+}
+
+
 
 ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType targetType, QWidget* parent)
     : ZLineEdit(QString::fromStdString(zeno::editVariantToStr(var)), parent)
     , m_var(var)
     , m_targetType(targetType)
 {
+    setValidator(new NotEmptyValidator(this));
     connect(this, &ZLineEdit::editingFinished, this, [=]() {
         QString newText = this->text();
         zeno::PrimVar old_var = m_var;
         if (m_targetType == gParamType_Int) {
+            if (newText.isEmpty()) {
+                return;
+            }
+
             bool bConvert = false;
             int ival = newText.toInt(&bConvert);
             if (bConvert) {

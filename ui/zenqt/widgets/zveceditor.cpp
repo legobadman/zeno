@@ -123,10 +123,12 @@ void ZVecEditor::initUI(const zeno::vecvar& vecedit) {
     m_editors.resize(n);
     for (int i = 0; i < n; i++)
     {
-        m_editors[i] = new ZLineEdit;
+        zeno::ParamType compType = m_bFloat ? zeno::types::gParamType_Float : zeno::types::gParamType_Int;
+
+        m_editors[i] = new ZCoreParamLineEdit(vecedit[i], compType, this);
         m_editors[i]->installEventFilter(this);
 
-        m_editors[i]->setNumSlider(UiHelper::getSlideStep("", m_bFloat ? zeno::types::gParamType_Float : zeno::types::gParamType_Int));
+        m_editors[i]->setNumSlider(UiHelper::getSlideStep("", compType));
         //m_editors[i]->setFixedWidth(ZenoStyle::dpiScaled(64));
         m_editors[i]->setProperty("cssClass", m_styleCls);
 
