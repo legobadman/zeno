@@ -15,6 +15,7 @@ class LiveTcpServer;
 class LiveHttpServer;
 class LiveSignalsBridge;
 class ViewportWidget;
+class ZenoPropPanel;
 
 namespace ads
 {
@@ -56,6 +57,8 @@ public:
     bool isOnlyOptixWindow() const;
     bool isRecordByCommandLine() const;
     void statusbarShowMessage(const std::string& text, int timeout = 0) const;
+
+    bool propPanelIsFloating(ZenoPropPanel* panel);
 
     QLineEdit* selected = nullptr;
 

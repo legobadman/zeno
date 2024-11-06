@@ -30,6 +30,7 @@
 #include "widgets/zcheckbox.h"
 #include "ZenoDictListLinksPanel.h"
 #include "zenoDopNetworkPanel.h"
+#include <zeno/utils/helper.h>
 
 
 using namespace zeno::reflect;
@@ -59,8 +60,8 @@ ZenoPropPanel::ZenoPropPanel(QWidget* parent)
     , m_outputWidget(nullptr)
     , m_dictListLinksTable(nullptr)
     , m_dopNetworkPanel(nullptr)
-    , m_hintlist(new ZenoHintListWidget)
-    , m_descLabel(new ZenoFuncDescriptionLabel)
+    , m_hintlist(new ZenoHintListWidget(this))
+    , m_descLabel(new ZenoFuncDescriptionLabel(this))
 {
     QVBoxLayout* pVLayout = new QVBoxLayout;
     pVLayout->setContentsMargins(QMargins(0, 0, 0, 0));
@@ -478,10 +479,10 @@ QWidget* ZenoPropPanel::resetSubnetLayout()
         QStandardItem* pTabItem = pInputs->child(i);
         syncAddTab(m_tabWidget, pTabItem, i);
     }
-    m_hintlist->setParent(m_tabWidget);
+
+    m_descLabel->updateParent();
+    m_hintlist->updateParent();
     m_hintlist->resetSize();
-    m_hintlist->setCalcPropPanelPosFunc([this]() -> QPoint {return m_tabWidget->mapToGlobal(QPoint(0, 0)); });
-    m_descLabel->setParent(m_tabWidget);
 
     splitter->addWidget(m_tabWidget);
     update();
@@ -574,11 +575,31 @@ bool ZenoPropPanel::syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout
         const QModelIndex& idx = paramsModel->paramIdx(perIdx.data(ROLE_PARAM_NAME).toString(), true);
         UiHelper::qIndexSetData(idx, toggled, ROLE_PARAM_SOCKET_VISIBLE);
     });
-    pGroupLayout->addWidget(pIcon, row, 0, Qt::AlignCenter);
 
-    pGroupLayout->addWidget(pLabel, row, 1, Qt::AlignLeft | Qt::AlignVCenter);
+    ZIconLabel* poriginIcon = nullptr, *pnewIcon = pIcon;
+    ZTextLabel* poriginLabel = nullptr, *pnewLabel = pLabel;
+    QWidget* poriginControl = nullptr, *pnewControl = pControl;
+    if (row < pGroupLayout->rowCount()) {//考虑pGroupLayout中插入行的情况
+        while (pGroupLayout->itemAtPosition(row, 0) && pGroupLayout->itemAtPosition(row, 1) && pControl && pGroupLayout->itemAtPosition(row, 2)) {
+            poriginIcon = qobject_cast<ZIconLabel*>(pGroupLayout->itemAtPosition(row, 0)->widget());
+            pGroupLayout->replaceWidget(poriginIcon, pnewIcon);
+            pnewIcon = poriginIcon;
+
+            poriginLabel = qobject_cast<ZTextLabel*>(pGroupLayout->itemAtPosition(row, 1)->widget());
+            pGroupLayout->replaceWidget(poriginLabel, pnewLabel);
+            pnewLabel = poriginLabel;
+
+            poriginControl = pGroupLayout->itemAtPosition(row, 2)->widget();
+            pGroupLayout->replaceWidget(poriginControl, pnewControl);
+            pnewControl = poriginControl;
+            row++;
+        }
+    }
+    pGroupLayout->addWidget(pnewIcon, row, 0, Qt::AlignCenter);
+
+    pGroupLayout->addWidget(pnewLabel, row, 1, Qt::AlignLeft | Qt::AlignVCenter);
     if (pControl)
-        pGroupLayout->addWidget(pControl, row, 2, Qt::AlignVCenter);
+        pGroupLayout->addWidget(pnewControl, row, 2, Qt::AlignVCenter);
 
     if (ZTextEdit* pMultilineStr = qobject_cast<ZTextEdit*>(pControl))
     {
@@ -728,10 +749,9 @@ QWidget* ZenoPropPanel::resetNormalNodeLayout()
         normalNodeAddInputWidget(scrollArea, pLayout, pGroupItem, row);
     }
 
-    m_hintlist->setParent(m_normalNodeInputWidget);
+    m_descLabel->updateParent();
+    m_hintlist->updateParent();
     m_hintlist->resetSize();
-    m_hintlist->setCalcPropPanelPosFunc([this]() -> QPoint {return m_normalNodeInputWidget->mapToGlobal(QPoint(0, 0)); });
-    m_descLabel->setParent(m_normalNodeInputWidget);
 
     splitter->addWidget(m_normalNodeInputWidget);
     if (QWidget* outputsWidget = resetOutputs()) {
@@ -1140,6 +1160,13 @@ void ZenoPropPanel::onCustomParamDataChanged(const QModelIndex& topLeft, const Q
             else if (role == ROLE_PARAM_CONTROL)
             {
                 const QString& paramName = param->data(ROLE_PARAM_NAME).toString();
+                const zeno::ParamType type = (zeno::ParamType)param->data(ROLE_PARAM_TYPE).toLongLong();
+                zeno::reflect::Any defAnyval = zeno::initAnyDeflValue(type);
+                zeno::convertToEditVar(defAnyval, type);
+                zeno::scope_exit sp([&paramsModel] {paramsModel->blockSignals(false); });
+                paramsModel->blockSignals(true);
+                param->setData(QVariant::fromValue(defAnyval), ROLE_PARAM_VALUE);
+
                 _PANEL_CONTROL& ctrl = group[paramName];
                 QGridLayout* pGridLayout = qobject_cast<QGridLayout*>(ctrl.controlLayout);
                 ZASSERT_EXIT(pGridLayout);
