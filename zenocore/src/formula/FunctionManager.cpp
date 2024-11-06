@@ -105,6 +105,7 @@ namespace zeno {
 
     void FunctionManager::executeZfx(std::shared_ptr<ZfxASTNode> root, ZfxContext* pCtx) {
         //printSyntaxTree(root, pCtx->code);
+        pCtx->zfxVariableTbl = &m_globalAttrCached;
         if (pCtx->spObject) {
             int nFilterSize = getElementCount(pCtx->spObject, pCtx->runover);
             ZfxElemFilter filter(nFilterSize, 1);

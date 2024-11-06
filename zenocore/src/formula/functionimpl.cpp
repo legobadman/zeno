@@ -71,6 +71,60 @@ namespace zeno
             );
         }
 
+        AttrVar zfxVarToAttrVar(const ZfxVariable& var) {
+            int N = var.value.size();
+            if (N == 1) {
+                return std::visit([&](auto&& arg)->AttrVar {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (
+                        std::is_same_v<T, int> ||
+                        std::is_same_v<T, float> ||
+                        std::is_same_v<T, std::string> ||
+                        std::is_same_v<T, glm::vec2> ||
+                        std::is_same_v<T, glm::vec3> ||
+                        std::is_same_v<T, glm::vec4>) {
+                        return arg;
+                    }
+                    else if constexpr (
+                        std::is_same_v<T, zfxintarr> ||
+                        std::is_same_v<T, zfxfloatarr> ||
+                        std::is_same_v<T, zfxstringarr>) {
+                        throw makeError<UnimplError>("no support array as the attribute type.");
+                    }
+                    else {
+                        throw makeError<UnimplError>("no supported attribute type.");
+                    }
+                }, var.value[0]);
+            }
+            else {
+                return std::visit([&](auto&& arg)->AttrVar {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (
+                        std::is_same_v<T, int> ||
+                        std::is_same_v<T, float> ||
+                        std::is_same_v<T, std::string> ||
+                        std::is_same_v<T, glm::vec2> ||
+                        std::is_same_v<T, glm::vec3> ||
+                        std::is_same_v<T, glm::vec4>) {
+                        std::vector<T> vec(N);
+                        for (int i = 0; i < N; i++) {
+                            vec[i] = std::get<T>(var.value[i]);
+                        }
+                        return vec;
+                    }
+                    else if constexpr (
+                        std::is_same_v<T, zfxintarr> ||
+                        std::is_same_v<T, zfxfloatarr> ||
+                        std::is_same_v<T, zfxstringarr>) {
+                        throw makeError<UnimplError>("no support array as the attribute type.");
+                    }
+                    else {
+                        throw makeError<UnimplError>("no supported attribute type.");
+                    }
+                }, var.value[0]);
+            }
+        }
+
 
         ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
@@ -379,7 +433,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable addpoint(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        ZfxVariable add_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() == 1) {
                 const auto& arg = args[0];
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
@@ -420,7 +474,7 @@ namespace zeno
             }
         }
 
-        ZfxVariable addvertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        ZfxVariable add_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2) {
                 throw makeError<UnimplError>();
             }
@@ -437,9 +491,18 @@ namespace zeno
             }
         }
 
-        ZfxVariable removepoint(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        ZfxVariable remove_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of remove_vertex is not matched.");
+
+            //TODO
+            return ZfxVariable();
+        }
+
+        ZfxVariable remove_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>();
+                throw makeError<UnimplError>("the number of arguments of remove_point is not matched.");
+
             const auto& arg = args[0];
             int N = arg.value.size();
             if (N == 0) return ZfxVariable();
@@ -527,9 +590,19 @@ namespace zeno
             return ZfxVariable();
         }
 
-        ZfxVariable removeface(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        ZfxVariable add_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of add_face is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::vector<int> points = get_zfxvar<std::vector<int>>(args[0].value[0]);
+            int ret = spGeo->add_face(points);
+            return ret;
+        }
+
+        ZfxVariable remove_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 2 || args.empty())
-                throw makeError<UnimplError>();
+                throw makeError<UnimplError>("the number of arguments of remove_face is not matched.");
 
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             const auto& arg = args[0];
@@ -575,8 +648,8 @@ namespace zeno
 
         ZfxVariable create_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3)
-                throw makeError<UnimplError>("the number of arguments of create_attr is not 3.");
-            
+                throw makeError<UnimplError>("the number of arguments of create_attr is not matched.");
+
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
 
             std::string group = get_zfxvar<std::string>(args[0].value[0]);
@@ -588,13 +661,412 @@ namespace zeno
             else if (group == "face") grp = ATTR_FACE;
             else if (group == "geometry") grp = ATTR_GEO;
 
-            AttrVar defl;
-
+            AttrVar defl = zfxVarToAttrVar(args[2]);
             spGeo->create_attr(grp, name, defl);
-
             return ZfxVariable();
         }
 
+        ZfxVariable create_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of create_face_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->create_face_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable create_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of create_point_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->create_point_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable create_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of create_vertex_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->create_vertex_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable create_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of create_geometry_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->create_geometry_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable set_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 3)
+                throw makeError<UnimplError>("the number of arguments of set_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+
+            std::string group = get_zfxvar<std::string>(args[0].value[0]);
+            std::string name = get_zfxvar<std::string>(args[1].value[0]);
+
+            GeoAttrGroup grp = ATTR_POINT;
+            if (group == "vertex") grp = ATTR_VERTEX;
+            else if (group == "point") grp = ATTR_POINT;
+            else if (group == "face") grp = ATTR_FACE;
+            else if (group == "geometry") grp = ATTR_GEO;
+
+            AttrVar defl = zfxVarToAttrVar(args[2]);
+            spGeo->set_attr(grp, name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable set_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of set_vertex_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->set_vertex_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable set_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of set_point_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->set_point_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable set_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of set_face_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->set_face_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable set_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of set_geometry_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            AttrVar defl = zfxVarToAttrVar(args[1]);
+            spGeo->set_geometry_attr(name, defl);
+            return ZfxVariable();
+        }
+
+        ZfxVariable has_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of has_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string group = get_zfxvar<std::string>(args[0].value[0]);
+            std::string name = get_zfxvar<std::string>(args[1].value[0]);
+
+            GeoAttrGroup grp = ATTR_POINT;
+            if (group == "vertex") grp = ATTR_VERTEX;
+            else if (group == "point") grp = ATTR_POINT;
+            else if (group == "face") grp = ATTR_FACE;
+            else if (group == "geometry") grp = ATTR_GEO;
+
+            bool hasattr = spGeo->has_attr(grp, name);
+            ZfxVariable ret(hasattr);
+            return ret;
+        }
+
+        ZfxVariable has_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of has_vertex_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            bool hasattr = spGeo->has_vertex_attr(name);
+            ZfxVariable ret(hasattr);
+            return ret;
+        }
+
+        ZfxVariable has_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of has_point_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            bool hasattr = spGeo->has_point_attr(name);
+            ZfxVariable ret(hasattr);
+            return ret;
+        }
+
+        ZfxVariable has_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of has_vertex_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            bool hasattr = spGeo->has_face_attr(name);
+            ZfxVariable ret(hasattr);
+            return ret;
+        }
+
+        ZfxVariable has_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of has_geometry_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            bool hasattr = spGeo->has_geometry_attr(name);
+            ZfxVariable ret(hasattr);
+            return ret;
+        }
+
+        ZfxVariable delete_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of delete_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string group = get_zfxvar<std::string>(args[0].value[0]);
+            std::string name = get_zfxvar<std::string>(args[1].value[0]);
+
+            GeoAttrGroup grp = ATTR_POINT;
+            if (group == "vertex") grp = ATTR_VERTEX;
+            else if (group == "point") grp = ATTR_POINT;
+            else if (group == "face") grp = ATTR_FACE;
+            else if (group == "geometry") grp = ATTR_GEO;
+
+            int ret = spGeo->delete_attr(grp, name);
+            return ret;
+        }
+
+        ZfxVariable delete_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of delete_vertex_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            int ret = spGeo->delete_vertex_attr(name);
+            return ret;
+        }
+
+        ZfxVariable delete_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of delete_point_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            int ret = spGeo->delete_point_attr(name);
+            return ret;
+        }
+
+        ZfxVariable delete_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of delete_face_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            int ret = spGeo->delete_face_attr(name);
+            return ret;
+        }
+
+        ZfxVariable delete_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of delete_geometry_attr is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            int ret = spGeo->delete_geometry_attr(name);
+            return ret;
+        }
+
+        ZfxVariable npoints(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 0)
+                throw makeError<UnimplError>("the number of arguments of npoints is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int ret = spGeo->npoints();
+            return ret;
+        }
+
+        ZfxVariable nfaces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 0)
+                throw makeError<UnimplError>("the number of arguments of nfaces is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int ret = spGeo->nfaces();
+            return ret;
+        }
+
+        ZfxVariable nvertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 0)
+                throw makeError<UnimplError>("the number of arguments of nvertices is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int ret = spGeo->nvertices();
+            return ret;
+        }
+
+        /* 点相关 */
+        ZfxVariable point_faces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of point_faces is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int pointid = get_zfxvar<int>(args[0].value[0]);
+            std::vector<int> ret = spGeo->point_faces(pointid);
+            return ret;
+        }
+
+        ZfxVariable point_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of point_vertex is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int pointid = get_zfxvar<int>(args[0].value[0]);
+            int ret = spGeo->point_vertex(pointid);
+            return ret;
+        }
+
+        ZfxVariable point_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of point_vertices is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int pointid = get_zfxvar<int>(args[0].value[0]);
+            std::vector<int> ret = spGeo->point_vertices(pointid);
+            return ret;
+        }
+
+        /* 面相关 */
+        ZfxVariable face_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of face_point is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int faceid = get_zfxvar<int>(args[0].value[0]);
+            int vertid = get_zfxvar<int>(args[1].value[0]);
+            int ret = spGeo->face_point(faceid, vertid);
+            return ret;
+        }
+
+        ZfxVariable face_points(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of face_points is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int faceid = get_zfxvar<int>(args[0].value[0]);
+            std::vector<int> ret = spGeo->face_points(faceid);
+            return ret;
+        }
+
+        ZfxVariable face_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of face_vertex is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int faceid = get_zfxvar<int>(args[0].value[0]);
+            int vertid = get_zfxvar<int>(args[1].value[0]);
+            int ret = spGeo->face_vertex(faceid, vertid);
+            return ret;
+        }
+
+        ZfxVariable face_vertex_count(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of face_vertex_count is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int faceid = get_zfxvar<int>(args[0].value[0]);
+            int ret = spGeo->face_vertex_count(faceid);
+            return ret;
+        }
+
+        ZfxVariable face_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of face_vertices is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int face_id = get_zfxvar<int>(args[0].value[0]);
+            std::vector<int> ret = spGeo->face_vertices(face_id);
+            return ret;
+        }
+
+        /* Vertex相关 */
+        ZfxVariable vertex_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of vertex_index is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int faceid = get_zfxvar<int>(args[0].value[0]);
+            int vertid = get_zfxvar<int>(args[1].value[0]);
+            int ret = spGeo->vertex_index(faceid, vertid);
+            return ret;
+        }
+
+        ZfxVariable vertex_next(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of vertex_next is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int linear_vertex_id = get_zfxvar<int>(args[0].value[0]);
+            int ret = spGeo->vertex_next(linear_vertex_id);
+            return ret;
+        }
+
+        ZfxVariable vertex_prev(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of vertex_prev is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int linear_vertex_id = get_zfxvar<int>(args[0].value[0]);
+            int ret = spGeo->vertex_prev(linear_vertex_id);
+            return ret;
+        }
+
+        ZfxVariable vertex_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of vertex_point is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int linear_vertex_id = get_zfxvar<int>(args[0].value[0]);
+            int ret = spGeo->vertex_point(linear_vertex_id);
+            return ret;
+        }
+
+        ZfxVariable vertex_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of vertex_face is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int linear_vertex_id = get_zfxvar<int>(args[0].value[0]);
+            int ret = spGeo->vertex_face(linear_vertex_id);
+            return ret;
+        }
+
+        ZfxVariable vertex_face_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of vertex_face_index is not matched.");
+
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            int linear_vertex_id = get_zfxvar<int>(args[0].value[0]);
+            int ret = spGeo->vertex_face_index(linear_vertex_id);
+            return ret;
+        }
 
 
         ZfxVariable callFunction(const std::string& funcname, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext)
@@ -626,149 +1098,134 @@ namespace zeno
             if (funcname == "rand") {
                 return rand(args, filter, pContext);
             }
-            if (funcname == "addpoint") {
-                return addpoint(args, filter, pContext);
-            }
-            if (funcname == "addvertex") {
-                return addvertex(args, filter, pContext);
-            }
-            if (funcname == "removepoint") {
-                return removepoint(args, filter, pContext);
-            }
-            if (funcname == "removeface") {
-                return removeface(args, filter, pContext);
-            }
             if (funcname == "create_attr") {
                 return create_attr(args, filter, pContext);
             }
             if (funcname == "create_face_attr") {
-
+                return create_face_attr(args, filter, pContext);
             }
             if (funcname == "create_point_attr") {
-
+                return create_point_attr(args, filter, pContext);
             }
             if (funcname == "create_vertex_attr") {
-
+                return create_vertex_attr(args, filter, pContext);
             }
             if (funcname == "create_geometry_attr") {
-
+                return create_geometry_attr(args, filter, pContext);
             }
             if (funcname == "set_attr") {
-
+                return set_attr(args, filter, pContext);
             }
             if (funcname == "set_vertex_attr") {
-
+                return set_vertex_attr(args, filter, pContext);
             }
             if (funcname == "set_point_attr") {
-
+                return set_point_attr(args, filter, pContext);
             }
             if (funcname == "set_face_attr") {
-
+                return set_face_attr(args, filter, pContext);
             }
             if (funcname == "set_geometry_attr") {
-
+                return set_geometry_attr(args, filter, pContext);
             }
             if (funcname == "has_attr") {
-
+                return has_attr(args, filter, pContext);
             }
             if (funcname == "has_vertex_attr") {
-
+                return has_vertex_attr(args, filter, pContext);
             }
             if (funcname == "has_point_attr") {
-
+                return has_point_attr(args, filter, pContext);
             }
             if (funcname == "has_face_attr") {
-
+                return create_attr(args, filter, pContext);
             }
             if (funcname == "has_geometry_attr") {
-
+                return has_geometry_attr(args, filter, pContext);
             }
             if (funcname == "delete_attr") {
-
+                return delete_attr(args, filter, pContext);
             }
             if (funcname == "delete_vertex_attr") {
-
+                return delete_vertex_attr(args, filter, pContext);
             }
             if (funcname == "delete_point_attr") {
-
+                return delete_point_attr(args, filter, pContext);
             }
             if (funcname == "delete_face_attr") {
-
+                return delete_face_attr(args, filter, pContext);
             }
             if (funcname == "delete_geometry_attr") {
-
+                return delete_geometry_attr(args, filter, pContext);
             }
             if (funcname == "add_vertex") {
-
+                return add_vertex(args, filter, pContext);
             }
             if (funcname == "add_point") {
-
+                return add_point(args, filter, pContext);
             }
             if (funcname == "add_face") {
-
+                return add_face(args, filter, pContext);
             }
             if (funcname == "remove_face") {
-
+                return remove_face(args, filter, pContext);
             }
             if (funcname == "remove_point") {
-
+                return remove_point(args, filter, pContext);
             }
             if (funcname == "remove_vertex") {
-
+                return remove_vertex(args, filter, pContext);
             }
             if (funcname == "npoints") {
-
+                return npoints(args, filter, pContext);
             }
             if (funcname == "nfaces") {
-
+                return nfaces(args, filter, pContext);
             }
             if (funcname == "nvertices") {
-
+                return nvertices(args, filter, pContext);
             }
             if (funcname == "point_faces") {
-
+                return point_faces(args, filter, pContext);
             }
             if (funcname == "point_vertex") {
-
+                return point_vertex(args, filter, pContext);
             }
             if (funcname == "point_vertices") {
-
+                return point_vertices(args, filter, pContext);
             }
             if (funcname == "face_point") {
-
+                return face_point(args, filter, pContext);
             }
             if (funcname == "face_points") {
-
+                return face_points(args, filter, pContext);
             }
             if (funcname == "face_vertex") {
-
+                return face_vertex(args, filter, pContext);
             }
             if (funcname == "face_vertex_count") {
-
+                return face_vertex_count(args, filter, pContext);
             }
             if (funcname == "face_vertices") {
-
-            }
-            if (funcname == "point_vertices") {
-
+                return face_vertices(args, filter, pContext);
             }
             if (funcname == "vertex_index") {
-
+                return vertex_index(args, filter, pContext);
             }
             if (funcname == "vertex_next") {
-
+                return vertex_next(args, filter, pContext);
             }
             if (funcname == "vertex_prev") {
-
+                return vertex_prev(args, filter, pContext);
             }
             if (funcname == "vertex_point") {
-
+                return vertex_point(args, filter, pContext);
             }
             if (funcname == "vertex_face") {
-
+                return vertex_face(args, filter, pContext);
             }
             if (funcname == "vertex_face_index") {
-
+                return vertex_face_index(args, filter, pContext);
             }
 
             throw makeError<UnimplError>("unknown function call");

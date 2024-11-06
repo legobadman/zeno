@@ -125,7 +125,12 @@ namespace zeno
     }
 
     ZENO_API bool GeometryObject::remove_point(int ptnum) {
-        return m_spTopology->remove_point(ptnum);
+        bool ret = m_spTopology->remove_point(ptnum);
+        if (ret) {
+            //TODO: 属性也要同步删除,包括point和vertices
+            for (auto& [name, attrib_vec] : m_point_attrs) {
+            }
+        }
     }
 
     ZENO_API bool GeometryObject::remove_vertex(int face_id, int vert_id) {
