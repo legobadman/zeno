@@ -1,6 +1,5 @@
 import QtQuick 2.12
 import QtQuick.Layouts 1.3
-import ZQuickParam 1.0
 import QtQuick.Controls.Styles 1.4
 import zeno.enum 1.0
 
@@ -76,55 +75,11 @@ RowLayout {
         var item = Qt.createQmlObject('import QtQuick 2.12; Rectangle {color: "transparent"; width: 6; height: 1}',qmlparam);
     }
 
-    function createControl() {
-        var component = null;
-        var controlObj = null;
-
-        //console.log(qmlparam.arg_control)
-
-        if (qmlparam.arg_control == ParamControl.Lineddit)
-        {
-            component = Qt.createComponent("qrc:/qml/controls/ZLineEditor.qml");
-        }
-        else if (qmlparam.arg_control == ParamControl.Combobox)
-        {
-            component = Qt.createComponent("qrc:/qml/controls/ZCombobox.qml");
-        }
-        else if (qmlparam.arg_control == ParamControl.Multiline)
-        {
-            component = Qt.createComponent("qrc:/qml/controls/ZTextEditor.qml");
-        }
-        else if (qmlparam.arg_control == ParamControl.Checkbox)
-        {
-            component = Qt.createComponent("qrc:/qml/controls/ZCheckBox.qml");
-        }
-        else if (qmlparam.arg_control == ParamControl.Vec2edit)
-        {
-            component = Qt.createComponent("qrc:/qml/controls/ZVec2Editor.qml");
-        }
-        else if (qmlparam.arg_control == ParamControl.Vec3edit)
-        {
-            component = Qt.createComponent("qrc:/qml/controls/ZVec3Editor.qml");
-        }
-        else if (qmlparam.arg_control == ParamControl.Vec4edit)
-        {
-            component = Qt.createComponent("qrc:/qml/controls/ZVec4Editor.qml");
-        }
-        if (component) {
-            if (component.status == Component.Ready) {
-                _controlObj = component.createObject(qmlparam)
-                if (qmlparam.arg_control == ParamControl.Lineddit || qmlparam.arg_control == ParamControl.Multiline)
-                    _controlObj.Layout.fillWidth = true
-            }
-        }
-    }
-
     Component.onCompleted: {
         if (qmlparam.arg_isinput) {
             createSocket(true)
             createName()
             createFillSpacer()
-            createControl()
             createFixSpacer()
         }
         else {
@@ -138,7 +93,6 @@ RowLayout {
         if (_controlObj) {
             console.log("onArg_controlChanged")
             _controlObj.destroy();
-            createControl()
         }
     }
 }

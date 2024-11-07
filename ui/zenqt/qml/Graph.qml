@@ -66,8 +66,8 @@ Item {
                 }
 
                 delegate: ZNode {
+                    required property string classname
                     required property string name
-                    required property string ident
                     required property variant params
                     required property var pos
                     required property variant subgraph
@@ -75,8 +75,8 @@ Item {
                     //id: ident     //warning: Unable to assign ZNode_QMLTYPE_31_QML_35 to QString
                     id: qmlnode
 
-                    arg_name: name
-                    arg_ident: ident
+                    arg_name: classname
+                    arg_ident: name
                     paramModel: params
                     subgModel: subgraph
                     x: pos[0]
@@ -296,8 +296,8 @@ Item {
                                         var pt = inNode.mapFromItem(socketObj, 0, 0)
                                         return inNode.y + pt.y +  socketObj.height/2
                                     })
-                                }
-                            }
+                }
+            }
                         }', draggable)
                 }
             }

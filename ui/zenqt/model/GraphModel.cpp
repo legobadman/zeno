@@ -291,8 +291,8 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             return item->cls;
         }
         case ROLE_OBJPOS: {
-            return item->pos;   //qpoint supported by qml?
-            //return QVariantList({ item->pos.x(), item->pos.y() });
+            //return item->pos;   //qpoint supported by qml?
+            return QVariantList({ item->pos.x(), item->pos.y() });
         }
         case ROLE_PARAMS:
         {

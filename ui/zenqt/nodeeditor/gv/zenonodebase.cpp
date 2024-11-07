@@ -232,7 +232,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 
             ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(scene());
             ZASSERT_EXIT(pScene && !pScene->views().isEmpty());
-            if (_ZenoSubGraphView* pView = qobject_cast<_ZenoSubGraphView*>(pScene->views().first()))
+            if (ZenoSubGraphView* pView = pScene->getView())
             {
                 ZEditParamLayoutDlg dlg(paramsM->customParamModel(), pView);
                 if (QDialog::Accepted == dlg.exec())

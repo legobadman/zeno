@@ -504,6 +504,13 @@ void ZenoSubGraphScene::select(const QModelIndexList &indexs)
     afterSelectionChanged();
 }
 
+ZenoSubGraphView* ZenoSubGraphScene::getView() {
+    QList <QGraphicsView*> vs = this->views();
+    if (vs.empty() && vs.first())
+        return nullptr;
+
+    return qobject_cast<ZenoSubGraphView*>(vs.first()->parentWidget());
+}
 
 QList<ZenoNodeBase*> ZenoSubGraphScene::getNodesItem() const
 {

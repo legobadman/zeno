@@ -27,6 +27,9 @@
 #include "widgets/zlabel.h"
 #include "nodeeditor/gv/callbackdef.h"
 #include <zeno/core/Session.h>
+#include <QtQuickWidgets/QQuickWidget>
+#include <QQmlContext>
+#include "variantptr.h"
 
 
 ZenoGraphsEditor::ZenoGraphsEditor(ZenoMainWindow* pMainWin)

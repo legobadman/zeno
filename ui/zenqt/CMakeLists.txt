@@ -3,7 +3,7 @@ if (ZENO_WITH_QT3D)
         Widgets OpenGL Network Qml Quick Svg 3DCore 3DRender 3DExtras 3DInput 3DLogic 3DQuick Concurrent
         REQUIRED)
 else()
-    find_package(Qt5 COMPONENTS Widgets OpenGL Network Quick Svg REQUIRED)
+    find_package(Qt5 COMPONENTS Widgets OpenGL Network Quick QuickWidgets Svg REQUIRED)
 endif()
 
 find_package(Threads REQUIRED)
@@ -74,7 +74,7 @@ if (ZENO_WITH_QT3D)
         Qt5::Concurrent
     )
 else()
-    target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick qt5advanceddocking QCodeEditor)
+    target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor)
 endif()
 
 if (WIN32)

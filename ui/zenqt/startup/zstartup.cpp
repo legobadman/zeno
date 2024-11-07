@@ -10,7 +10,17 @@
 #include <algorithm>
 #include "settings/zsettings.h"
 #include "exceptionhandle.h"
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include "uicommon.h"
+#include "model/LinkModel.h"
 
+
+void initQml()
+{
+    qRegisterMetaType<LinkModel*>("LinkModel*");
+    qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
+}
 
 void startUp(bool bEnableCrashReport)
 {
@@ -22,6 +32,8 @@ void startUp(bool bEnableCrashReport)
 
     zeno::setExecutableDir(QCoreApplication::applicationDirPath().toStdString());
     zeno::setConfigVariable("EXECFILE", QCoreApplication::applicationFilePath().toStdString());
+
+    initQml();
 
     QSettings settings(zsCompanyName, zsEditor);
 

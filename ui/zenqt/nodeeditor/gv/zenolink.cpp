@@ -338,7 +338,7 @@ void ZenoFullLink::focusOnNode(const QModelIndex& nodeIdx)
 {
     ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(scene());
     ZASSERT_EXIT(pScene && !pScene->views().isEmpty());
-    if (_ZenoSubGraphView* pView = qobject_cast<_ZenoSubGraphView*>(pScene->views().first()))
+    if (ZenoSubGraphView* pView = pScene->getView())
     {
         ZASSERT_EXIT(nodeIdx.isValid());
         pView->focusOn(nodeIdx.data(ROLE_NODE_NAME).toString(), QPointF(), false);

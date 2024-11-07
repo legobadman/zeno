@@ -212,6 +212,40 @@ enum MODEL_ROLE {
     ROLE_DOPNETWORK_MEM
 };
 
+class QmlParamControl
+{
+    Q_GADGET
+public:
+    explicit QmlParamControl() {}
+
+    enum Value {
+        NullControl,
+        Lineedit,
+        Multiline,
+        ReadPathEdit,
+        WritePathEdit,
+        DirectoryPathEdit,
+        Combobox,
+        Checkbox,
+        Vec2edit,
+        Vec3edit,
+        Vec4edit,
+        ColorVec,
+        Heatmap,
+        CurveEditor,
+        SpinBox,
+        Slider,
+        DoubleSpinBox,
+        SpinBoxSlider,
+        PythonEditor,
+        PushButton,
+        Seperator,
+        CodeEditor,
+        NoMultiSockPanel,   //disable dist/list panel
+    };
+    Q_ENUM(Value)
+};
+
 enum LOG_ROLE
 {
     ROLE_LOGTYPE = Qt::UserRole + 1,
