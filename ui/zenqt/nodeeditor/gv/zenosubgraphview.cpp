@@ -771,12 +771,12 @@ void ZenoSubGraphView::onRowsAboutToBeRemoved(const QModelIndex& parent, int fir
         int nodeType = idx.data(ROLE_NODETYPE).toInt();
         if (nodeType == zeno::Node_SubgraphNode || nodeType == zeno::Node_AssetInstance)
         {
-            //ÒÆ³ıview scene
+            //ç§»é™¤view scene
             GraphModel* pSubnetModel = idx.data(ROLE_SUBGRAPH).value<GraphModel*>();;
             auto graphsMgr = zenoApp->graphsManager();
             auto path = pSubnetModel->currentPath();
             auto subScenes = graphsMgr->gvSubScenes(path);
-            for (auto& it = subScenes.begin(); it != subScenes.end(); it++) //É¾³ı /path µÄsceneÊ±,ÒÆ³ı×Óscene, /path/xxx/...
+            for (auto& it = subScenes.begin(); it != subScenes.end(); it++) //åˆ é™¤ /path çš„sceneæ—¶,ç§»é™¤å­scene, /path/xxx/...
             {
                 if (ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(it.value()))
                 {

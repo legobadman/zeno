@@ -20,6 +20,15 @@ file(GLOB_RECURSE source CONFIGURE_DEPENDS *.h *.cpp *.ui)
 file(GLOB_RECURSE resource CONFIGURE_DEPENDS *.qrc)
 file(GLOB_RECURSE bigresource CONFIGURE_DEPENDS *font.qrc)
 
+set(qmlsource
+    qml/testGraphEditor.qml
+    qml/Graph.qml
+    qml/ZNode.qml
+    qml/ZParam.qml
+    qml/container/TabView/TabViewController.qml
+    qml/container/TabView/TabPages/PagesController.qml
+)
+
 FOREACH(item ${resource})
     IF(item IN_LIST bigresource)
         LIST(REMOVE_ITEM resource ${item})
@@ -29,7 +38,7 @@ ENDFOREACH(item)
 qt5_add_big_resources(source ${bigresource})  # cihou msvc: fatal error C1060: compiler is out of heap space
 qt5_add_resources(source ${resource})
 
-add_executable(zenqt ${source})
+add_executable(zenqt ${source} ${qmlsource})
 # Add a dependency to ensure that the resource file is deleted before being regenerated
 
 # add_dependencies(zenqt clean_resource_file)
