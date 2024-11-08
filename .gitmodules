@@ -43,3 +43,6 @@
 [submodule "zenovis/freeglut"]
 	path = zenovis/freeglut
 	url = https://github.com/legobadman/freeglut.git
+[submodule "ui/3rdparty/QuickQanava-2.4"]
+	path = ui/3rdparty/QuickQanava-2.4
+	url = https://github.com/legobadman/QuickQanava-2.4.git
