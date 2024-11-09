@@ -1,11 +1,4 @@
-if (ZENO_WITH_QT3D)
-    find_package(Qt5 COMPONENTS 
-        Widgets OpenGL Network Qml Quick Svg 3DCore 3DRender 3DExtras 3DInput 3DLogic 3DQuick Concurrent
-        REQUIRED)
-else()
-    find_package(Qt5 COMPONENTS Widgets OpenGL Network Quick QuickWidgets Svg REQUIRED)
-endif()
-
+find_package(Qt5 COMPONENTS Widgets OpenGL Network Quick QuickWidgets QuickControls2 Svg REQUIRED)
 find_package(Threads REQUIRED)
 
 message(STATUS "Found Qt5 version ${Qt5_VERSION}: ${Qt5_DIR}")
@@ -74,7 +67,7 @@ if (ZENO_WITH_QT3D)
         Qt5::Concurrent
     )
 else()
-    target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor)
+    target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor QuickQanava Qt${QT_VERSION_MAJOR}::QuickControls2)
 endif()
 
 if (WIN32)
@@ -83,6 +76,7 @@ if (WIN32)
 endif()
 
 target_link_libraries(zenqt PRIVATE zenocore zenovis)
+target_include_directories(zenqt PUBLIC QuickQanava Qt${QT_VERSION_MAJOR}::QuickControls2)
 target_include_directories(zenqt PRIVATE . ./include ../3rdparty/include ../3rdparty/Qt-Advanced-Docking-System/src)
 
 add_custom_command(TARGET zenqt PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/hdr ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/hdr)

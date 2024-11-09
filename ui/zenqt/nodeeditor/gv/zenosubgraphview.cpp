@@ -923,7 +923,7 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
     if (!bFound) {
         QQuickWidget* pView = new QQuickWidget;
         pView->rootContext()->setContextProperty("nodesModel", pGraphM);
-        pView->setSource(QUrl(QStringLiteral("qrc:/testGraph.qml")));
+        pView->setSource(QUrl(QStringLiteral("qrc:/testQan.qml")));
         m_stackedView->addWidget(pView);
         m_stackedView->setCurrentWidget(pView);
         pCurrentView = pView;
