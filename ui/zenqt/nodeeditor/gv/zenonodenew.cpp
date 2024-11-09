@@ -373,7 +373,12 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     //根据是否有visible的socket显示来决定
     buttonShapeInfo.rbradius = bBodyVisible ? 0 : ZenoStyle::dpiScaled(9.);
 
-    m_pStatusWidgets = new StatusGroup(buttonShapeInfo);
+    bool bHasOptimStatus = false;
+    if (type == zeno::Node_SubgraphNode || type == zeno::Node_AssetInstance) {
+        bHasOptimStatus = true;
+    }
+
+    m_pStatusWidgets = new StatusGroup(bHasOptimStatus, buttonShapeInfo);
     bool bView = m_index.data(ROLE_NODE_ISVIEW).toBool();
     m_pStatusWidgets->setView(bView);
     connect(m_pStatusWidgets, SIGNAL(toggleChanged(STATUS_BTN, bool)), this, SLOT(onOptionsBtnToggled(STATUS_BTN, bool)));

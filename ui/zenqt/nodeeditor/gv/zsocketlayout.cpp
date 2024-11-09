@@ -80,7 +80,7 @@ void ZSocketLayout::initUI(const CallbackForSocket& cbSock)
             cbSock.cbOnSockClicked(m_socket);
         });
         if (ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_paramIdx.data(ROLE_NODE_IDX).value<QModelIndex>().data(ROLE_PARAMS))) {
-            //TODO: 范围大，可以考虑根据是否显示决定优化
+            //TODO: 鑼冨洿澶э紝鍙互鑰冭檻鏍规嵁鏄惁鏄剧ず鍐冲畾浼樺寲
             QObject::connect(paramsM, &QStandardItemModel::dataChanged, m_socket, &ZenoSocketItem::onCustomParamDataChanged);
         }
     }
