@@ -339,7 +339,7 @@ void ZenoObjSocketItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*
     QRectF rc = boundingRect();
     auto status = sockStatus();
     bool bOn = status == STATUS_TRY_CONN || status == STATUS_CONNECTED || m_bHovered;
-    //TODO: ÕâĞ©ÆäÊµ¿ÉÒÔ»º´æ£¬Ö»ÓĞ×ÓÍ¼²Å»áĞŞ¸Ä
+    //TODO: è¿™äº›å…¶å®å¯ä»¥ç¼“å­˜ï¼Œåªæœ‰å­å›¾æ‰ä¼šä¿®æ”¹
     PARAM_LINKS links = paramIdx.data(ROLE_LINKS).value<PARAM_LINKS>();
     zeno::SocketType type = static_cast<zeno::SocketType>(paramIdx.data(ROLE_SOCKET_TYPE).toInt());
     const QString& name = paramIdx.data(ROLE_PARAM_NAME).toString();
@@ -419,11 +419,11 @@ void ZenoObjSocketItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*
         painter->drawText(rc, Qt::AlignCenter, name);
     }
     else {
-        //ZASSERT_EXIT(!m_bInput && type == zeno::Socket_Output);   //¿ÉÄÜÊÇwildcardµÄInput/Output
+        //ZASSERT_EXIT(!m_bInput && type == zeno::Socket_Output);   //å¯èƒ½æ˜¯wildcardçš„Input/Output
         qreal radius = rc.height() * 0.2;
         QPen pen = QPen(paramIdx.data(ROLE_PARAM_TYPE).value<zeno::ParamType>() == Obj_Wildcard ? Qt::black : Qt::white, 2);
 
-        //¹Û²ìÊÇ·ñ±»ownÁË
+        //è§‚å¯Ÿæ˜¯å¦è¢«ownäº†
         if (!links.empty()) {
             QModelIndex targetSocket = links[0].data(ROLE_INSOCK_IDX).toModelIndex();
             ZASSERT_EXIT(targetSocket.isValid());

@@ -432,7 +432,7 @@ void ZEditParamLayoutDlg::onParamTreeDeleted()
     if (!idx.isValid() || !idx.parent().isValid() || !bEditable)
         return;
 
-    //TODO: Ã»ÓĞ²»ÔÊĞíÉ¾³ıµÄ×é£¬Ö»ÊÇÊ£ÏÂ×îºóÒ»¸öµÄÊ±ºò²»ÄÜÉ¾¡£
+    //TODO: æ²¡æœ‰ä¸å…è®¸åˆ é™¤çš„ç»„ï¼Œåªæ˜¯å‰©ä¸‹æœ€åä¸€ä¸ªçš„æ—¶å€™ä¸èƒ½åˆ ã€‚
     VPARAM_TYPE type = (VPARAM_TYPE)idx.data(ROLE_ELEMENT_TYPE).toInt();
     if (type == VPARAM_ROOT ||
         type == VPARAM_TAB && idx.data(Qt::DisplayRole).toString() == "Default" ||
@@ -693,7 +693,7 @@ void ZEditParamLayoutDlg::onBtnAddInputs()
         CONTROL_ITEM_INFO ctrl = getControlByName(ctrlName);
         QStringList existNames = getExistingNames(true, VPARAM_PARAM);
         QString newParamName = UiHelper::getUniqueName(existNames, ctrl.name);
-        if (layerIdx.data(Qt::DisplayRole).toString() == "inputs")  //Èç¹ûÊÇÔö¼ÓÊäÈë²ÎÊı£¬ÅĞ¶ÏÊÇ·ñºÍÒÑÓĞÊä³öÖØÃû
+        if (layerIdx.data(Qt::DisplayRole).toString() == "inputs")  //å¦‚æœæ˜¯å¢åŠ è¾“å…¥å‚æ•°ï¼Œåˆ¤æ–­æ˜¯å¦å’Œå·²æœ‰è¾“å‡ºé‡å
         {
             for (int r = 0; r < m_paramsLayoutM_outputs->rowCount(); r++) {
                 if (QStandardItem* pChildItem = m_paramsLayoutM_outputs->invisibleRootItem()->child(r)) {
@@ -898,13 +898,13 @@ void ZEditParamLayoutDlg::onNameEditFinished()
 
     QStandardItem* currentItem = nullptr;
     QString oldName;
-    if (paramsViewCurrIdx.isValid()) {          //ĞŞ¸ÄµÄ²ÎÊıÀ´×ÔparamsView
+    if (paramsViewCurrIdx.isValid()) {          //ä¿®æ”¹çš„å‚æ•°æ¥è‡ªparamsView
         currentItem = m_paramsLayoutM_inputs->itemFromIndex(paramsViewCurrIdx);
-    }else if (outputsViewCurrIdx.isValid()) {   //ĞŞ¸ÄµÄ²ÎÊıÀ´×ÔoutputView
+    }else if (outputsViewCurrIdx.isValid()) {   //ä¿®æ”¹çš„å‚æ•°æ¥è‡ªoutputView
         currentItem = m_paramsLayoutM_outputs->itemFromIndex(outputsViewCurrIdx);
-    } else if (objInputsViewCurrIdx.isValid()) {   //ĞŞ¸ÄµÄ²ÎÊıÀ´×ÔobjInputsView
+    } else if (objInputsViewCurrIdx.isValid()) {   //ä¿®æ”¹çš„å‚æ•°æ¥è‡ªobjInputsView
         currentItem = m_paramsLayoutM_objInputs->itemFromIndex(objInputsViewCurrIdx);
-    } else if (objOutputsViewCurrIdx.isValid()) {   //ĞŞ¸ÄµÄ²ÎÊıÀ´×ÔobjOutputsView
+    } else if (objOutputsViewCurrIdx.isValid()) {   //ä¿®æ”¹çš„å‚æ•°æ¥è‡ªobjOutputsView
         currentItem = m_paramsLayoutM_objOutputs->itemFromIndex(objOutputsViewCurrIdx);
     }
     if (!currentItem)

@@ -24,7 +24,7 @@ namespace zeno {
         {
             spNode->add_output_obj_param(param);
         }
-        //根据customui上的约束信息调整所有控件的可见可用情况
+        //鏍规嵁customui涓婄殑绾︽潫淇℃伅璋冩暣鎵�鏈夋帶浠剁殑鍙鍙敤鎯呭喌
         spNode->checkParamsConstrain();
     }
 

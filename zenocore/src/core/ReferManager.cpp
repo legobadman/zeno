@@ -23,7 +23,7 @@ namespace zeno {
 
     void ReferManager::removeReference(const std::string& uuid_path, const std::string& param)
     {
-        //ÈôÉ¾³ıµÄ½Úµã/²ÎÊı±»ÒıÓÃÁË
+        //è‹¥åˆ é™¤çš„èŠ‚ç‚¹/å‚æ•°è¢«å¼•ç”¨äº†
         std::set<std::string> updateParams;
         bool bRemoveNode = param.empty();
 
@@ -46,7 +46,7 @@ namespace zeno {
 
     void ReferManager::addReferInfo(const std::set<std::pair<std::string, std::string>>& referSources, const std::string& referPath)
     {
-        //referPathµÄ¸ñÊ½ÊÇ£º uuid-path-of-node/param.
+        //referPathçš„æ ¼å¼æ˜¯ï¼š uuid-path-of-node/param.
         for (const auto& param : referSources)
         {
             const std::string& source_node_uuid = param.first;
@@ -208,7 +208,7 @@ namespace zeno {
                     if (!spNode->is_dirty())
                     {
                         spNode->mark_dirty(true);
-                        //¸Ã½Úµã±»ÆäËû²ÎÊıÒıÓÃµÄÇé¿öÏÂ£¬Ò²Òª±êÔà
+                        //è¯¥èŠ‚ç‚¹è¢«å…¶ä»–å‚æ•°å¼•ç”¨çš„æƒ…å†µä¸‹ï¼Œä¹Ÿè¦æ ‡è„
                         updateDirty(nodePath, param);
                     }
                 }
@@ -232,7 +232,7 @@ namespace zeno {
                 if (absolutePath.find(oldVal) != std::string::npos)
                 {
                     std::regex num_rgx("[0-9]+");
-                    //Èç¹ûÊÇÊı×Ö£¬ĞèÒª½«Õû¸öreferÌæ»»
+                    //å¦‚æœæ˜¯æ•°å­—ï¼Œéœ€è¦å°†æ•´ä¸ªreferæ›¿æ¢
                     if (std::regex_match(newVal, num_rgx))
                     {
                         arg = newVal;

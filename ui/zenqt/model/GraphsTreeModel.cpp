@@ -94,7 +94,7 @@ QModelIndex GraphsTreeModel::innerIndex(const QModelIndex& treeIdx) const
     if (!treeIdx.isValid())
         return QModelIndex();
 
-    //treeÏîµÄĞĞºÅºÍÍ¼Ä£ĞÍµÄĞĞºÅÊÇÒ»ÖÂµÄ¡£
+    //treeé¡¹çš„è¡Œå·å’Œå›¾æ¨¡å‹çš„è¡Œå·æ˜¯ä¸€è‡´çš„ã€‚
     GraphModel* ownerModel = static_cast<GraphModel*>(treeIdx.internalPointer());
     Q_ASSERT(ownerModel);
     return ownerModel->index(treeIdx.row(), 0);
@@ -110,7 +110,7 @@ QVariant GraphsTreeModel::data(const QModelIndex& index, int role) const
         if (Qt::DisplayRole == role || ROLE_NODE_NAME == role || ROLE_CLASS_NAME == role) {
             return "main";
         }
-        else if (ROLE_SUBGRAPH == role) {   //Ïàµ±ÓÚ×ÓÍ¼½ÚµãÄÇÑù£¬main¿ÉÒÔ¿´×÷×î¸ù²¿µÄ×ÓÍ¼½Úµã
+        else if (ROLE_SUBGRAPH == role) {   //ç›¸å½“äºå­å›¾èŠ‚ç‚¹é‚£æ ·ï¼Œmainå¯ä»¥çœ‹ä½œæœ€æ ¹éƒ¨çš„å­å›¾èŠ‚ç‚¹
             return QVariant::fromValue(m_main);
         }
         else if (ROLE_OBJPATH == role) {

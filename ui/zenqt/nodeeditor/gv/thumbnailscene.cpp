@@ -102,9 +102,9 @@ void ThumbnailScene::initScene(ZenoSubGraphScene* pScene)
 
     m_navigator = nullptr;
     m_nodes.clear();
-    //case1: Ô´sceneÀïÃæÓĞÔöÉ¾²é¸Ä£¬Èç¹ûÕûÌåboudingrectÃ»±ä»¯£¬ÔòÖ»Ğè¸üĞÂ¸ö±ğ½ÚµãËõÂÔÍ¼µÄÎ»ÖÃ¡£
+    //case1: æºsceneé‡Œé¢æœ‰å¢åˆ æŸ¥æ”¹ï¼Œå¦‚æœæ•´ä½“boudingrectæ²¡å˜åŒ–ï¼Œåˆ™åªéœ€æ›´æ–°ä¸ªåˆ«èŠ‚ç‚¹ç¼©ç•¥å›¾çš„ä½ç½®ã€‚
     connect(pScene, &ZenoSubGraphScene::nodePosChanged, this, &ThumbnailScene::onNodePosChanged);
-    //case2: Èç¹ûÕû¸ösceneRectÓĞ±ä»¯£¨±ÈÈçÍùÍâÍÏ¶¯µ¼ÖÂsceneRectÀ©´ó£©£¬ĞèÒª¸üĞÂËùÓĞ½Úµã
+    //case2: å¦‚æœæ•´ä¸ªsceneRectæœ‰å˜åŒ–ï¼ˆæ¯”å¦‚å¾€å¤–æ‹–åŠ¨å¯¼è‡´sceneRectæ‰©å¤§ï¼‰ï¼Œéœ€è¦æ›´æ–°æ‰€æœ‰èŠ‚ç‚¹
     connect(pScene, &ZenoSubGraphScene::sceneRectChanged, this, &ThumbnailScene::onSceneRectChanged);
 
     connect(pScene, &ZenoSubGraphScene::nodeInserted, this, &ThumbnailScene::onNodeInserted);

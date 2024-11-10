@@ -1050,7 +1050,7 @@ namespace zenoio
             case gParamType_Curve:
             {
                 if (auto pCurves = zeno::reflect::any_cast<zeno::CurvesData>(&any)) {
-                    //ºóĞø»á²ÉÓÃĞòÁĞ»¯½øĞĞ¶ÁĞ´£¬ÏÖÔÚÏÈ×ªÎªjson×Ö·û´®´¢´æ£¬ÒÔ±ã¸´ÓÃÒÔÇ°µÄ´úÂë
+                    //åç»­ä¼šé‡‡ç”¨åºåˆ—åŒ–è¿›è¡Œè¯»å†™ï¼Œç°åœ¨å…ˆè½¬ä¸ºjsonå­—ç¬¦ä¸²å‚¨å­˜ï¼Œä»¥ä¾¿å¤ç”¨ä»¥å‰çš„ä»£ç 
                     dumpCurves(pCurves, writer);
                 }
                 break;
@@ -1091,7 +1091,7 @@ namespace zenoio
                     writer.EndArray();
                 }
                 else {
-                    //ÆäÊµdefl¿Ï¶¨¶¼ÊÇeditÀàĞÍµÄ
+                    //å…¶å®deflè‚¯å®šéƒ½æ˜¯editç±»å‹çš„
                     assert(false);
                     writer.Null();
                 }

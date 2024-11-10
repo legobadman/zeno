@@ -450,7 +450,7 @@ static const flex_int16_t yy_chk[65] =
     #include "parser.hpp"
     #include "location.hh"
 
-    static zeno::location loc;    //ÉùÃ÷Î»ÖÃÊµÀı
+    static zeno::location loc;    //å£°æ˜ä½ç½®å®ä¾‹
 
     using namespace std;
 
@@ -472,7 +472,7 @@ static const flex_int16_t yy_chk[65] =
     // Location class can be found in location.hh and posistion.hh files. It's just a bit too much
     // boilerplate for this small example. Bummer.
 #line 474 "scanner.cpp"
-/*ÕıÔòÊ½µÄ¸÷ÖÖ¼òĞ´£¬Ê¹³ÌĞòÓĞ²ã´Î¸Ğ¶øÏÔµÃÃ÷Îú */
+/*æ­£åˆ™å¼çš„å„ç§ç®€å†™ï¼Œä½¿ç¨‹åºæœ‰å±‚æ¬¡æ„Ÿè€Œæ˜¾å¾—æ˜æ™° */
 /*name    (\$)({alpha}|{dig}|[_.\-/$])*/
 #line 477 "scanner.cpp"
 
@@ -610,7 +610,7 @@ YY_DECL
 
 
 #line 63 "scanner.l"
-  // C++ ¼æÈİµÄ´Ê·¨·ÖÎöÆ÷µÄ¹æÔò£¬stepº¯Êı°ÑÎ»ÖÃµÄÆğÊ¼ÖµÉèÖÃÎªÓë½áÊøÖµÏàµÈ£¬ÕâÑùÎ»ÖÃ¾ÍÖ¸ÏòÁËÉÏÒ»¸ö¼«ÉÙµÄ½áÊøÎ»ÖÃ¡£
+  // C++ å…¼å®¹çš„è¯æ³•åˆ†æå™¨çš„è§„åˆ™ï¼Œstepå‡½æ•°æŠŠä½ç½®çš„èµ·å§‹å€¼è®¾ç½®ä¸ºä¸ç»“æŸå€¼ç›¸ç­‰ï¼Œè¿™æ ·ä½ç½®å°±æŒ‡å‘äº†ä¸Šä¸€ä¸ªæå°‘çš„ç»“æŸä½ç½®ã€‚
   loc.step();
 
 
@@ -675,7 +675,7 @@ case 1:
 YY_RULE_SETUP
 #line 67 "scanner.l"
 {
-                return Parser::make_NUMBER(std::strtof(yytext,0),loc); // strtofº¯Êı½«×Ö·û´®×ª»»Îª¸¡µãÊı
+                return Parser::make_NUMBER(std::strtof(yytext,0),loc); // strtofå‡½æ•°å°†å­—ç¬¦ä¸²è½¬æ¢ä¸ºæµ®ç‚¹æ•°
             }
 	YY_BREAK
 case 2:
@@ -684,9 +684,9 @@ case 3:
 YY_RULE_SETUP
 #line 72 "scanner.l"
 {
-            /* Ìø¹ı×¢ÊÍºÍ¿Õ°×·ûºÅ */
-            // stepº¯Êı°ÑÎ»ÖÃµÄÆğÊ¼ÖµÉèÖÃÎªÓë½áÊøÖµÏàµÈ£¬ÕâÑùÎ»ÖÃ¾ÍÖ¸ÏòÁËÉÏÒ»¸ö¼«ÉÙµÄ½áÊøÎ»ÖÃ¡£
-            // ÓÉÓÚ×¢ÊÍºÍ¿Õ°×·ûºÅÊ¶±ğºó²¢²»»á·µ»Ø£¬¶øÇ°Ò»¸östepµÄµ÷ÓÃÊÇÔÚÉÏÒ»´Îyylex·µ»ØÊ±£¬ËùÒÔ´Ë´¦ĞèÒªÊÖ¶¯¸üĞÂ¼ÇºÅµÄÆğÊ¼Î»ÖÃ
+            /* è·³è¿‡æ³¨é‡Šå’Œç©ºç™½ç¬¦å· */
+            // stepå‡½æ•°æŠŠä½ç½®çš„èµ·å§‹å€¼è®¾ç½®ä¸ºä¸ç»“æŸå€¼ç›¸ç­‰ï¼Œè¿™æ ·ä½ç½®å°±æŒ‡å‘äº†ä¸Šä¸€ä¸ªæå°‘çš„ç»“æŸä½ç½®ã€‚
+            // ç”±äºæ³¨é‡Šå’Œç©ºç™½ç¬¦å·è¯†åˆ«åå¹¶ä¸ä¼šè¿”å›ï¼Œè€Œå‰ä¸€ä¸ªstepçš„è°ƒç”¨æ˜¯åœ¨ä¸Šä¸€æ¬¡yylexè¿”å›æ—¶ï¼Œæ‰€ä»¥æ­¤å¤„éœ€è¦æ‰‹åŠ¨æ›´æ–°è®°å·çš„èµ·å§‹ä½ç½®
             loc.step();
         }
 	YY_BREAK
@@ -695,7 +695,7 @@ case 4:
 YY_RULE_SETUP
 #line 79 "scanner.l"
 {
-            loc.lines(yyleng);  //Ê¹ÓÃlinesº¯ÊıÀ´¸üĞÂÎ»ÖÃĞÅÏ¢ÖĞµÄ·ûºÅ
+            loc.lines(yyleng);  //ä½¿ç”¨lineså‡½æ•°æ¥æ›´æ–°ä½ç½®ä¿¡æ¯ä¸­çš„ç¬¦å·
             loc.step();
             return zeno::Parser::make_EOL(zeno::location());
         }

@@ -19,7 +19,7 @@ namespace zeno {
 
         std::vector<std::string> inPrimNames, inObjNames, outPrimNames, outObjNames;
 
-        //º¯Êı·µ»ØÖµ×¨ÃÅ´æ·ÅµÄµØ·½£¬ÓÉÓÚµ±Ê±Ã»ÓĞÃû×Ö£¬ËùÒÔÉÏÊöÆäËû½á¹¹²»ÄÜ±£´æ·µ»ØÖµ
+        //å‡½æ•°è¿”å›å€¼ä¸“é—¨å­˜æ”¾çš„åœ°æ–¹ï¼Œç”±äºå½“æ—¶æ²¡æœ‰åå­—ï¼Œæ‰€ä»¥ä¸Šè¿°å…¶ä»–ç»“æ„ä¸èƒ½ä¿å­˜è¿”å›å€¼
         std::vector<std::variant<ParamObject, ParamPrimitive>> retInfo;
 
         std::set<std::string> anyInputs;
@@ -45,7 +45,7 @@ namespace zeno {
         {
             spNode->add_output_obj_param(param);
         }
-        //¸ù¾İcustomuiÉÏµÄÔ¼ÊøĞÅÏ¢µ÷ÕûËùÓĞ¿Ø¼şµÄ¿É¼û¿ÉÓÃÇé¿ö
+        //æ ¹æ®customuiä¸Šçš„çº¦æŸä¿¡æ¯è°ƒæ•´æ‰€æœ‰æ§ä»¶çš„å¯è§å¯ç”¨æƒ…å†µ
         spNode->checkParamsConstrain();
     }
 
@@ -101,7 +101,7 @@ namespace zeno {
         return ctrl;
     }
 
-    //ÕûÀícustomui²ã¼¶
+    //æ•´ç†customuiå±‚çº§
     static void adjustCustomUiStructure(
         std::shared_ptr<INode> spTempNode,
         zeno::reflect::TypeBase* typebase,
@@ -154,16 +154,16 @@ namespace zeno {
 
                     if (!reflectCustomUi.customUI.empty())
                     {
-                        //ÓÃ»§ÔÚÀà¶¨ÒåÀï¶¨ÒåÁËÒ»¸ö£¬Ö±½ÓÓÃ¶¨ÒåµÄ¸²¸ÇÔ­À´µÄ
+                        //ç”¨æˆ·åœ¨ç±»å®šä¹‰é‡Œå®šä¹‰äº†ä¸€ä¸ªï¼Œç›´æ¥ç”¨å®šä¹‰çš„è¦†ç›–åŸæ¥çš„
                         customui.inputPrims = reflectCustomUi.customUI;
                         bReflectCustomUI = true;
                     }
 
-                    //customuiÈç¹ûÖ¸¶¨ÁË·µ»ØÖµµÄÃû³ÆÓ³Éä£¬ÄÇÃ´´óĞ¡¾ÍÒªºÍ·µ»ØÖµ´óĞ¡Ò»ÖÂ£¬·ñÔò»áºÜ»ìÂÒ
+                    //customuiå¦‚æœæŒ‡å®šäº†è¿”å›å€¼çš„åç§°æ˜ å°„ï¼Œé‚£ä¹ˆå¤§å°å°±è¦å’Œè¿”å›å€¼å¤§å°ä¸€è‡´ï¼Œå¦åˆ™ä¼šå¾ˆæ··ä¹±
                     int nMappingOutput = reflectCustomUi.outputParams.size();
                     assert(nMappingOutput == 0 || nMappingOutput == paramsMapping.retInfo.size());
 
-                    //Ê×ÏÈÎª·µ»ØÖµÉèÖÃÃû×Ö£¨Èç¹ûÓĞÖ¸¶¨Ãû×ÖÓ³Éä£©
+                    //é¦–å…ˆä¸ºè¿”å›å€¼è®¾ç½®åå­—ï¼ˆå¦‚æœæœ‰æŒ‡å®šåå­—æ˜ å°„ï¼‰
                     if (nMappingOutput > 0) {
                         for (int i = 0; i < nMappingOutput; i++) {
                             _CommonParam& outputParam = reflectCustomUi.outputParams[i];
@@ -175,7 +175,7 @@ namespace zeno {
                                         std::string dispName = out_param.name;
                                         out_param.bInput = false;
                                         out_param.socketType = Socket_Output;
-                                        out_param.type = arg.type;  //·µ»ØÖµµÄÀàĞÍÊÇ×îÕıÈ·µÄ
+                                        out_param.type = arg.type;  //è¿”å›å€¼çš„ç±»å‹æ˜¯æœ€æ­£ç¡®çš„
                                         paramsMapping.outputObjs.insert({ dispName, out_param });
                                         paramsMapping.reg_outputobjs.insert(dispName);
                                     }
@@ -183,7 +183,7 @@ namespace zeno {
                                 else if constexpr (std::is_same_v<T, ParamPrimitive>) {
                                     if (std::holds_alternative<ParamPrimitive>(outputParam.param)) {
                                         auto out_param = std::get<ParamPrimitive>(outputParam.param);
-                                        out_param.type = arg.type;  //Ö»ÓĞÀàĞÍÊÇÔÚº¯Êı½âÎöÊ±È·¶¨ÏÂÀ´µÄ
+                                        out_param.type = arg.type;  //åªæœ‰ç±»å‹æ˜¯åœ¨å‡½æ•°è§£ææ—¶ç¡®å®šä¸‹æ¥çš„
                                         out_param.bInput = false;
                                         out_param.socketType = Socket_Primitve;
                                         std::string dispName = out_param.name;
@@ -195,11 +195,11 @@ namespace zeno {
                         }
                     }
                     else {
-                        //Ã»ÓĞÖ¸¶¨Ãû³Æ£¬Îª·µ»ØÖµ²ÎÊı¸øÒ»¸öÄ¬ÈÏÃû³Æ
+                        //æ²¡æœ‰æŒ‡å®šåç§°ï¼Œä¸ºè¿”å›å€¼å‚æ•°ç»™ä¸€ä¸ªé»˜è®¤åç§°
                         autofillDefaultOutputName();
                     }
 
-                    //´¦ÀíÊäÈëµÄÃû³ÆÓ³Éä
+                    //å¤„ç†è¾“å…¥çš„åç§°æ˜ å°„
                     if (reflectCustomUi.inputParams.size() > 0)
                     {
                         for (_CommonParam& input_param : reflectCustomUi.inputParams) {
@@ -215,13 +215,13 @@ namespace zeno {
                                     handler.mapped().control = in_param.control;
                                     handler.mapped().ctrlProps = in_param.ctrlProps;
                                     handler.mapped().constrain = in_param.constrain;
-                                    //ÀàĞÍºÍÄ¬ÈÏÖµ²»ÒªÔÚÕâÀï¸ø£¬applyº¯Êı½âÎöÊ±ÒÑ¾­½âÎö¹ıÁË£¬·ñÔò»áÓĞ³åÍ»²»ºÃ´¦Àí
+                                    //ç±»å‹å’Œé»˜è®¤å€¼ä¸è¦åœ¨è¿™é‡Œç»™ï¼Œapplyå‡½æ•°è§£ææ—¶å·²ç»è§£æè¿‡äº†ï¼Œå¦åˆ™ä¼šæœ‰å†²çªä¸å¥½å¤„ç†
                                     //handler.defl = param.defl;
                                     handler.mapped().wildCardGroup = in_param.wildCardGroup;
                                     paramsMapping.inputPrims.insert(std::move(handler));
 
                                     auto& inPrimNames = paramsMapping.inPrimNames;
-                                    //Ìæ»»µôÔ­À´µÄÃû×Ö
+                                    //æ›¿æ¢æ‰åŸæ¥çš„åå­—
                                     std::replace(inPrimNames.begin(), inPrimNames.end(), old_name, in_param.name);
                                 }
                             }
@@ -238,7 +238,7 @@ namespace zeno {
                                         handler.mapped().wildCardGroup = in_param.wildCardGroup;
                                         paramsMapping.inputObjs.insert(std::move(handler));
 
-                                        //¶ÔÏó¸öÊı²»¶à£¬¾Í²»´¦ÀíÁË
+                                        //å¯¹è±¡ä¸ªæ•°ä¸å¤šï¼Œå°±ä¸å¤„ç†äº†
                                         //paramsMapping.inObjNames;
                                     }
                                 }
@@ -252,11 +252,11 @@ namespace zeno {
                         ParamGroup group;
                         group.name = reflectgroup.name;
                         for (auto& param : reflectgroup.params) {
-                            if (paramsMapping.anyInputs.find(param.mapTo) != paramsMapping.anyInputs.end()) {   //Èç¹ûÊÇAnyÊÓÎªwildCard
+                            if (paramsMapping.anyInputs.find(param.mapTo) != paramsMapping.anyInputs.end()) {   //å¦‚æœæ˜¯Anyè§†ä¸ºwildCard
                                 group.params.push_back(std::move(makeWildCardPrimParam(param.dispName, true, param.wildCardGroup)));
                                 paramsMapping.anyInputs.erase(param.mapTo);
                             }
-                            else if (paramsMapping.inputPrims.find(param.mapTo) != paramsMapping.inputPrims.end()) { //°´ÕÕReflectCustomUIµÄĞÅÏ¢¸üĞÂParamPrimitive²¢·ÅÈë¶ÔÓ¦µÄgroup
+                            else if (paramsMapping.inputPrims.find(param.mapTo) != paramsMapping.inputPrims.end()) { //æŒ‰ç…§ReflectCustomUIçš„ä¿¡æ¯æ›´æ–°ParamPrimitiveå¹¶æ”¾å…¥å¯¹åº”çš„group
                                 auto& inprim = inputPrims[param.mapTo];
                                 inprim.name = param.dispName;
                                 inprim.defl = param.defl.type() == zeno::reflect::type_info<const char*>() ? (std::string)zeno::reflect::any_cast<const char*>(param.defl) : param.defl;
@@ -293,7 +293,7 @@ namespace zeno {
                             auto& ObjSetting = inputObjs[reflectInputObj.mapTo];
                             ObjSetting.name = reflectInputObj.dispName;
                             if (ObjSetting.socketType != Socket_ReadOnly) {
-                                //Èç¹û³öÏÖÁËÖ»¶Á£¬ËµÃ÷ÊÇº¯ÊıÇ©ÃûÊ©¼ÓµÄ£¬ÒòÒÔ´ËÎªÖ÷£¬·ñÔò¾ÍÓÉinfo¾ö¶¨
+                                //å¦‚æœå‡ºç°äº†åªè¯»ï¼Œè¯´æ˜æ˜¯å‡½æ•°ç­¾åæ–½åŠ çš„ï¼Œå› ä»¥æ­¤ä¸ºä¸»ï¼Œå¦åˆ™å°±ç”±infoå†³å®š
                                 ObjSetting.socketType = reflectInputObj.type;
                             }
                             customui.inputObjs.push_back(ObjSetting);
@@ -301,7 +301,7 @@ namespace zeno {
                         }
                     }
 
-                    //²é¿´·µ»ØÖµµÄÊä³öĞÅÏ¢£¬Èç¹ûÓĞÓ³Éä£¬¾ÍĞŞ¸Ä·µ»ØÖµµÄÃû³ÆĞÅÏ¢£º
+                    //æŸ¥çœ‹è¿”å›å€¼çš„è¾“å‡ºä¿¡æ¯ï¼Œå¦‚æœæœ‰æ˜ å°„ï¼Œå°±ä¿®æ”¹è¿”å›å€¼çš„åç§°ä¿¡æ¯ï¼š
                     if (!reflectCustomUi.retInfo.dispName.empty())
                     {
                         std::visit([&](auto& arg) {
@@ -337,13 +337,13 @@ namespace zeno {
                             paramsMapping.outputObjs.erase(reflectOutputObj.mapTo);
                         }
                         else if (reflectOutputObj.mapTo.empty()) {
-                            if (paramsMapping.outputObjs.find("result") != paramsMapping.outputObjs.end()) {    //¿Õ´®mappingµ½·µ»ØÖµ,·µ»ØÖµÃûÎª"result"
+                            if (paramsMapping.outputObjs.find("result") != paramsMapping.outputObjs.end()) {    //ç©ºä¸²mappingåˆ°è¿”å›å€¼,è¿”å›å€¼åä¸º"result"
                                 paramsMapping.outputObjs["result"].name = reflectOutputObj.dispName;
                                 paramsMapping.outputObjs["result"].socketType = reflectOutputObj.type;
                                 customui.outputObjs.push_back(std::move(paramsMapping.outputObjs["result"]));
                                 paramsMapping.outputObjs.erase("result");
                             }
-                            else {    //apply·µ»ØÖµÎªvoidµ«ReflectCustomUI¶¨ÒåÁË¿Õ´®£¬¼ÓÈëÒ»¸öÄ¬ÈÏIObjectÊä³ö
+                            else {    //applyè¿”å›å€¼ä¸ºvoidä½†ReflectCustomUIå®šä¹‰äº†ç©ºä¸²ï¼ŒåŠ å…¥ä¸€ä¸ªé»˜è®¤IObjectè¾“å‡º
                                 ParamObject outputObj;
                                 outputObj.name = "result";
                                 outputObj.bInput = false;
@@ -365,7 +365,7 @@ namespace zeno {
                         }
                     }
 
-                    //ÈôÓĞÊ£Óà(ÊÇ³ÉÔ±±äÁ¿»òapplyÖĞÓĞ,µ«ReflectCustomUIÃ»ÓĞµÄ²ÎÊı)£¬ÔÙ½«Ê£Óà¼ÓÈë
+                    //è‹¥æœ‰å‰©ä½™(æ˜¯æˆå‘˜å˜é‡æˆ–applyä¸­æœ‰,ä½†ReflectCustomUIæ²¡æœ‰çš„å‚æ•°)ï¼Œå†å°†å‰©ä½™åŠ å…¥
                     if (customui.inputPrims.empty()) {
                         zeno::ParamTab tab;
                         tab.name = "Tab1";
@@ -388,7 +388,7 @@ namespace zeno {
             autofillDefaultOutputName();
         }
 
-        //Èç¹ûÃ»ÓĞ¶¨ÒåReflectCustomUIÀàĞÍ³ÉÔ±±äÁ¿£¬Ê¹ÓÃÄ¬ÈÏ
+        //å¦‚æœæ²¡æœ‰å®šä¹‰ReflectCustomUIç±»å‹æˆå‘˜å˜é‡ï¼Œä½¿ç”¨é»˜è®¤
         if (customui.inputPrims.empty())
         {
             zeno::ParamTab tab;
@@ -432,18 +432,18 @@ namespace zeno {
                     auto iterPrim = paramsMapping.inputPrims.find(name);
                     if (iterPrim != paramsMapping.inputPrims.end()) {
                         ParamPrimitive mappingPrim = iterPrim->second;
-                        //Õâ¸öprimÒ»¶¨ÓĞÀàĞÍºÍÃû×ÖĞÅÏ¢
+                        //è¿™ä¸ªprimä¸€å®šæœ‰ç±»å‹å’Œåå­—ä¿¡æ¯
                         input_param.name = mappingPrim.name;
                         input_param.type = mappingPrim.type;
                         if (input_param.control == NullControl) {
-                            //Èç¹ûcustomuiÃ»ÓĞÖ¸¶¨¿Ø¼ş£¬¿´¿´mappingÄÇÀïÓĞÃ»ÓĞÖ¸¶¨
+                            //å¦‚æœcustomuiæ²¡æœ‰æŒ‡å®šæ§ä»¶ï¼Œçœ‹çœ‹mappingé‚£é‡Œæœ‰æ²¡æœ‰æŒ‡å®š
                             input_param.control = mappingPrim.control;
-                            //Èç¹û¶¼ÊÇ¿Õ£¬ÄÇ¾Í¸ø¸öÄ¬ÈÏ
+                            //å¦‚æœéƒ½æ˜¯ç©ºï¼Œé‚£å°±ç»™ä¸ªé»˜è®¤
                             input_param.control = getDefaultControl(input_param.type);
                         }
                     }
                     else {
-                        //Ó¦¸ÃÊÇ³ÉÔ±±äÁ¿¶¨ÒåµÄ²ÎÊı
+                        //åº”è¯¥æ˜¯æˆå‘˜å˜é‡å®šä¹‰çš„å‚æ•°
                         //assert(false);
                     }
                     if (!input_param.defl.has_value() && input_param.type != Param_Wildcard) {
@@ -474,20 +474,20 @@ namespace zeno {
                 else {
                     param_name = field_name;
                 }
-                //TODO: Ãû³ÆºÏ·¨ĞÔÅĞ¶Ï
+                //TODO: åç§°åˆæ³•æ€§åˆ¤æ–­
 
-                //²ÎÊıÔ¼Êø£º
+                //å‚æ•°çº¦æŸï¼š
                 if (const zeno::reflect::IMetadataValue* value = metadata->get_value("Constrain")) {
                     constrain = value->as_string();
                 }
 
-                //¸ù¾İÀàĞÍÅĞ¶ÏÒ»ÏÂÊÇobject»¹ÊÇprimitive
+                //æ ¹æ®ç±»å‹åˆ¤æ–­ä¸€ä¸‹æ˜¯objectè¿˜æ˜¯primitive
                 zeno::reflect::TypeHandle fieldType = field->get_field_type();
                 ParamType type = fieldType.type_hash();
                 const RTTITypeInfo& typeInfo = ReflectionRegistry::get().getRttiMap()->get(type);
                 assert(typeInfo.hash_code());
                 std::string rttiname(typeInfo.name());
-                //ºóĞø»áÓĞ¸üºÃµÄÅĞ¶Ï·½Ê½£¬Ô­Àí¶¼ÊÇÒ»Ñù£º°ÑrttiÄÃ³öÀ´
+                //åç»­ä¼šæœ‰æ›´å¥½çš„åˆ¤æ–­æ–¹å¼ï¼ŒåŸç†éƒ½æ˜¯ä¸€æ ·ï¼šæŠŠrttiæ‹¿å‡ºæ¥
                 bool bObject = rttiname.find("std::shared_ptr") != rttiname.npos;
 
                 //role:
@@ -500,12 +500,12 @@ namespace zeno {
                     role = static_cast<NodeDataGroup>(_role);
                 }
                 else {
-                    //Ã»ÓĞÖ¸¶¨role£¬Ò»ÂÉ¶¼ÊÇ°´input´¦Àí£¬ÊÇ·ñÎªobj¸ù¾İÀàĞÍ×öÅĞ¶Ï
+                    //æ²¡æœ‰æŒ‡å®šroleï¼Œä¸€å¾‹éƒ½æ˜¯æŒ‰inputå¤„ç†ï¼Œæ˜¯å¦ä¸ºobjæ ¹æ®ç±»å‹åšåˆ¤æ–­
                     role = bObject ? Role_InputObject : Role_InputPrimitive;
                 }
 
                 std::regex matchAny(R"(zeno::reflect::Any)");
-                if (std::regex_search(typeInfo.name(), matchAny)) {   //ÅĞ¶ÏAnyÀàĞÍ£¬ºóĞø´¦Àí
+                if (std::regex_search(typeInfo.name(), matchAny)) {   //åˆ¤æ–­Anyç±»å‹ï¼Œåç»­å¤„ç†
                     if (role == Role_InputObject || role == Role_InputPrimitive) {
                         paramsMapping.anyInputs.insert(field_name);
                     }
@@ -518,11 +518,11 @@ namespace zeno {
                 if (role == Role_InputObject)
                 {
                     if (paramsMapping.reg_inputobjs.find(param_name) != paramsMapping.reg_inputobjs.end()) {
-                        //ÒòÎªÊÇ¶¨ÒåÔÚPROPERTYÉÏ£¬ËùÒÔÀíÂÛÉÏ¿ÉÒÔÖØ¸´Ğ´
+                        //å› ä¸ºæ˜¯å®šä¹‰åœ¨PROPERTYä¸Šï¼Œæ‰€ä»¥ç†è®ºä¸Šå¯ä»¥é‡å¤å†™
                         throw makeError<UnimplError>("repeated name on input objs");
                     }
 
-                    //¹Û²ìÓĞÎŞ¶¨ÒåsocketÊôĞÔ
+                    //è§‚å¯Ÿæœ‰æ— å®šä¹‰socketå±æ€§
                     SocketType socketProp = Socket_Owning;
                     if (const zeno::reflect::IMetadataValue* value = metadata->get_value("Socket")) {
                         int _role = value->as_int();
@@ -536,7 +536,7 @@ namespace zeno {
                     ParamObject inputObj;
                     inputObj.name = param_name;
                     inputObj.type = type;
-                    //´Ë°æ±¾µÄ¶ÔÏósocketÈ«ÊÇclone£¬²»ÔÙÇø·Öowing,readonlyºÍclone
+                    //æ­¤ç‰ˆæœ¬çš„å¯¹è±¡socketå…¨æ˜¯cloneï¼Œä¸å†åŒºåˆ†owing,readonlyå’Œclone
                     inputObj.socketType = Socket_Clone;
                     inputObj.constrain = constrain;
                     paramsMapping.inputObjs.insert({ param_name, inputObj });
@@ -546,7 +546,7 @@ namespace zeno {
                 else if (role == Role_OutputObject)
                 {
                     if (paramsMapping.reg_outputobjs.find(param_name) != paramsMapping.reg_outputobjs.end()) {
-                        //ÒòÎªÊÇ¶¨ÒåÔÚPROPERTYÉÏ£¬ËùÒÔÀíÂÛÉÏ¿ÉÒÔÖØ¸´Ğ´
+                        //å› ä¸ºæ˜¯å®šä¹‰åœ¨PROPERTYä¸Šï¼Œæ‰€ä»¥ç†è®ºä¸Šå¯ä»¥é‡å¤å†™
                         throw makeError<UnimplError>("repeated name on input objs");
                     }
 
@@ -566,7 +566,7 @@ namespace zeno {
                     ParamPrimitive prim;
                     ParamControl ctrl = parseControlProps(metadata, type, controlProps);
 
-                    //¹Û²ìÊÇ·ñÄÚ²¿²ÎÊı£º
+                    //è§‚å¯Ÿæ˜¯å¦å†…éƒ¨å‚æ•°ï¼š
                     if (const zeno::reflect::IMetadataValue* value = metadata->get_value("InnerSocket")) {
                         prim.sockProp = Socket_Disable;
                         ctrl = NullControl;
@@ -586,14 +586,14 @@ namespace zeno {
                     prim.tooltip;
                     prim.wildCardGroup;
 
-                    //»º´æÔÚinputrims£¬ºóÃæÔÙÒÆ¶¯µ½ÕıÈ·²ã¼¶
+                    //ç¼“å­˜åœ¨inputrimsï¼Œåé¢å†ç§»åŠ¨åˆ°æ­£ç¡®å±‚çº§
                     paramsMapping.inputPrims.insert({ param_name, prim });
                     paramsMapping.inPrimNames.push_back(param_name);
                 }
                 else if (role == Role_OutputPrimitive)
                 {
                     if (paramsMapping.reg_outputprims.find(param_name) != paramsMapping.reg_outputprims.end()) {
-                        //ÒòÎªÊÇ¶¨ÒåÔÚPROPERTYÉÏ£¬ËùÒÔÀíÂÛÉÏ¿ÉÒÔÖØ¸´Ğ´
+                        //å› ä¸ºæ˜¯å®šä¹‰åœ¨PROPERTYä¸Šï¼Œæ‰€ä»¥ç†è®ºä¸Šå¯ä»¥é‡å¤å†™
                         throw makeError<UnimplError>("repeated name on output prims");
                     }
 
@@ -622,7 +622,7 @@ namespace zeno {
         ParamMappingInfo& paramsMapping
     )
     {
-        //Í¨¹ıÑ°ÕÒapplyº¯ÊıÉÏµÄ²ÎÊıºÍ·µ»ØÖµ£¬Îª½ÚµãÌí¼Ó²ÎÊı£¬²»¹ıZenoReflect»¹Ã»Ö§³Ö²ÎÊıÃû³ÆµÄ·´Éä£¬Ö»ÓĞÀàĞÍĞÅÏ¢
+        //é€šè¿‡å¯»æ‰¾applyå‡½æ•°ä¸Šçš„å‚æ•°å’Œè¿”å›å€¼ï¼Œä¸ºèŠ‚ç‚¹æ·»åŠ å‚æ•°ï¼Œä¸è¿‡ZenoReflectè¿˜æ²¡æ”¯æŒå‚æ•°åç§°çš„åå°„ï¼Œåªæœ‰ç±»å‹ä¿¡æ¯
         for (IMemberFunction* func : typebase->get_member_functions())
         {
             const auto& funcname = func->get_name();
@@ -642,7 +642,7 @@ namespace zeno {
                     ParamType rettype = ret_type_rtti.get_decayed_hash() == 0 ? ret_type_rtti.hash_code() : ret_type_rtti.get_decayed_hash();
                     if (ret_type_rtti.has_flags(TF_IsObject)) {
                         ParamObject outputObj;
-                        outputObj.name = "";        //·µ»ØÖµÔİÊ±Ã»ÓĞÃû×Ö¿ÉÒÔ±êÊ¶
+                        outputObj.name = "";        //è¿”å›å€¼æš‚æ—¶æ²¡æœ‰åå­—å¯ä»¥æ ‡è¯†
                         outputObj.bInput = false;
                         outputObj.socketType = Socket_Output;
                         outputObj.type = rettype;
@@ -661,13 +661,13 @@ namespace zeno {
             }
             else if (type != Param_Null)
             {
-                //´æÔÚ·µ»ØÀàĞÍ£¬ËµÃ÷ÓĞÊä³ö£¬ĞèÒª·ÖÅäÒ»¸öÊä³ö²ÎÊı
+                //å­˜åœ¨è¿”å›ç±»å‹ï¼Œè¯´æ˜æœ‰è¾“å‡ºï¼Œéœ€è¦åˆ†é…ä¸€ä¸ªè¾“å‡ºå‚æ•°
                 int idx = 1;
                 std::string param_name = "result";
 
-                //TODO: ·µ»ØÖµ²»¸ÃÖ§³ÖAnyÀàĞÍ£¬»áÊ¹µÃparse¸üÎª¸´ÔÓ
+                //TODO: è¿”å›å€¼ä¸è¯¥æ”¯æŒAnyç±»å‹ï¼Œä¼šä½¿å¾—parseæ›´ä¸ºå¤æ‚
                 std::regex matchAny(R"(zeno::reflect::Any)");
-                if (std::regex_search(ret_type.name(), matchAny)) {   //ÅĞ¶ÏAnyÀàĞÍ£¬ºóĞø´¦Àí
+                if (std::regex_search(ret_type.name(), matchAny)) {   //åˆ¤æ–­Anyç±»å‹ï¼Œåç»­å¤„ç†
                     paramsMapping.anyOutputs.insert(param_name);
                     continue;
                 }
@@ -702,23 +702,23 @@ namespace zeno {
                 std::string const& param_name(param_names[idxParam].c_str());
                 type = param_type.get_decayed_hash() == 0 ? param_type.hash_code() : param_type.get_decayed_hash();
                 if (param_name.empty()) {
-                    //¿Õ°×²ÎÊı²»¿¼ÂÇ
+                    //ç©ºç™½å‚æ•°ä¸è€ƒè™‘
                     continue;
                 }
                 if (!param_type.has_flags(TF_IsConst) && param_type.has_flags(TF_IsLValueRef)) {
-                    //ºöÂÔÒıÓÃ·µ»ØÕâÖÖÇé¿ö£¬Êä³ö²ÎÊı±ØĞëÒªÍ¨¹ı·µ»ØÖµ²ÅÄÜÌåÏÖ¡£
+                    //å¿½ç•¥å¼•ç”¨è¿”å›è¿™ç§æƒ…å†µï¼Œè¾“å‡ºå‚æ•°å¿…é¡»è¦é€šè¿‡è¿”å›å€¼æ‰èƒ½ä½“ç°ã€‚
                 }
                 else {
-                    //¹Û²ìÊÇ·ñÎªshared_ptr<IObject>
+                    //è§‚å¯Ÿæ˜¯å¦ä¸ºshared_ptr<IObject>
                     std::regex matchAny(R"(zeno::reflect::Any)");
-                    if (std::regex_search(param_type.name(), matchAny)) {   //ÅĞ¶ÏAnyÀàĞÍ£¬ºóĞø´¦Àí
+                    if (std::regex_search(param_type.name(), matchAny)) {   //åˆ¤æ–­Anyç±»å‹ï¼Œåç»­å¤„ç†
                         paramsMapping.anyInputs.insert(param_name);
                         continue;
                     }
                     if (isObject)
                     {
                         if (paramsMapping.reg_inputobjs.find(param_name) != paramsMapping.reg_inputobjs.end()) {
-                            //Í¬ÃûÇé¿ö£¬ËµÃ÷³ÉÔ±±äÁ¿¶¨ÒåÁËÒ»¸öÏàÍ¬Ãû×ÖµÄ²ÎÊı£¬ºÜº±¼û£¬µ«¿ÉÒÔÖ±½ÓÌø¹ı
+                            //åŒåæƒ…å†µï¼Œè¯´æ˜æˆå‘˜å˜é‡å®šä¹‰äº†ä¸€ä¸ªç›¸åŒåå­—çš„å‚æ•°ï¼Œå¾ˆç½•è§ï¼Œä½†å¯ä»¥ç›´æ¥è·³è¿‡
                         }
                         else {
                             ParamObject inObj;
@@ -727,8 +727,8 @@ namespace zeno {
                             //if (isConstPtr)
                             //    inObj.socketType = Socket_ReadOnly;
                             //else
-                            //    inObj.socketType = Socket_Owning;   //Ä¬ÈÏ»¹ÊÇowning
-                            //ÔÚ´Ë°æ±¾Àï£¬ÎŞÂÛÊÇconst»¹ÊÇ·Çconst£¬¶ÔÏóÔÚ½Úµã´«µİ¶¼Òªclone£¬ÖÁÓÚĞŞ¸ÄÊı¾İµÄÈ¨ÏŞºÍ¿½±´µÄÊ±»ú£¬ÓÉ½ÚµãËã·¨¾ö¶¨
+                            //    inObj.socketType = Socket_Owning;   //é»˜è®¤è¿˜æ˜¯owning
+                            //åœ¨æ­¤ç‰ˆæœ¬é‡Œï¼Œæ— è®ºæ˜¯constè¿˜æ˜¯éconstï¼Œå¯¹è±¡åœ¨èŠ‚ç‚¹ä¼ é€’éƒ½è¦cloneï¼Œè‡³äºä¿®æ”¹æ•°æ®çš„æƒé™å’Œæ‹·è´çš„æ—¶æœºï¼Œç”±èŠ‚ç‚¹ç®—æ³•å†³å®š
                             inObj.socketType = Socket_Clone;
                             inObj.type = type;
 
@@ -745,7 +745,7 @@ namespace zeno {
                             inPrim.socketType = Socket_Primitve;
                             inPrim.type = type;
 
-                            //¼ì²éº¯ÊıÊÇ·ñ´øÓĞÄ¬ÈÏ²ÎÊı
+                            //æ£€æŸ¥å‡½æ•°æ˜¯å¦å¸¦æœ‰é»˜è®¤å‚æ•°
                             const Any& deflVal = func->get_param_default_value(idxParam);
                             if (deflVal.has_value()) {
                                 inPrim.defl = deflVal;
@@ -759,7 +759,7 @@ namespace zeno {
                             inPrim.bSocketVisible = false;
                             inPrim.wildCardGroup;
 
-                            //»º´æÔÚinputrims£¬ºóÃæÔÙÒÆ¶¯µ½ÕıÈ·²ã¼¶
+                            //ç¼“å­˜åœ¨inputrimsï¼Œåé¢å†ç§»åŠ¨åˆ°æ­£ç¡®å±‚çº§
                             paramsMapping.inputPrims.insert({ param_name, inPrim });
                             paramsMapping.inPrimNames.push_back(param_name);
                             paramsMapping.reg_inputprims.insert(param_name);
@@ -794,9 +794,9 @@ namespace zeno {
 
         ParamMappingInfo paramsMapping;
 
-        std::shared_ptr<INode> spTempNode = ctor();     //ÁÙÊ±½ÚµãÓÃÓÚÈ¡³õÊ¼»¯ĞÅÏ¢£¬²»²ÎÓëºóĞø½Úµã¹ı³Ì
+        std::shared_ptr<INode> spTempNode = ctor();     //ä¸´æ—¶èŠ‚ç‚¹ç”¨äºå–åˆå§‹åŒ–ä¿¡æ¯ï¼Œä¸å‚ä¸åç»­èŠ‚ç‚¹è¿‡ç¨‹
 
-        //ÏÈ±éÀúËùÓĞ³ÉÔ±£¬²¢ÊÕ¼¯ÆäÖĞµÄ²ÎÊı£¬Ä¿Ç°¼Ù¶¨ËùÓĞ³ÉÔ±±äÁ¿¶¼×÷Îª½ÚµãµÄ²ÎÊı´æÔÚ£¬ºóĞø¿´Çé¿ö¿ÉÒÔÖ¸¶¨
+        //å…ˆéå†æ‰€æœ‰æˆå‘˜ï¼Œå¹¶æ”¶é›†å…¶ä¸­çš„å‚æ•°ï¼Œç›®å‰å‡å®šæ‰€æœ‰æˆå‘˜å˜é‡éƒ½ä½œä¸ºèŠ‚ç‚¹çš„å‚æ•°å­˜åœ¨ï¼Œåç»­çœ‹æƒ…å†µå¯ä»¥æŒ‡å®š
         collectParamsFromMember(spTempNode, typebase, paramsMapping);
 
         collectParamsFromApply(spTempNode, typebase, paramsMapping);

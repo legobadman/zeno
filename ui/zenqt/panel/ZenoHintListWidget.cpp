@@ -54,7 +54,7 @@ void ZenoHintListWidget::setData(QStringList items) {
 };
 
 void ZenoHintListWidget::onSwitchItemByKey(bool bDown) {
-    //m_listView->setFocus(); Ã»±ØÒª»ñµÃ½¹µã£¬ÈÃËüÁôÔÚ±à¼­Æ÷ÉÏ¡£
+    //m_listView->setFocus(); æ²¡å¿…è¦è·å¾—ç„¦ç‚¹ï¼Œè®©å®ƒç•™åœ¨ç¼–è¾‘å™¨ä¸Šã€‚
     QItemSelectionModel* selModel = m_listView->selectionModel();
     int r = selModel->currentIndex().row();
     if (bDown && r < m_model->rowCount() - 1) {
@@ -199,7 +199,7 @@ bool ZenoHintListWidget::eventFilter(QObject* watched, QEvent* event)
         {
             if (QMouseEvent* e = static_cast<QMouseEvent*>(event))
             {
-                if (QWidget* wid = qobject_cast<QWidget*>(watched)) //µã»÷ÇøÓò²»ÔÚÄÚ²¿Ôòhide
+                if (QWidget* wid = qobject_cast<QWidget*>(watched)) //ç‚¹å‡»åŒºåŸŸä¸åœ¨å†…éƒ¨åˆ™hide
                 {
                     const QPoint& globalPos = wid->mapToGlobal(e->pos());
                     const QPoint& lefttop = mapToGlobal(QPoint(0, 0));
@@ -338,7 +338,7 @@ bool ZenoFuncDescriptionLabel::eventFilter(QObject* watched, QEvent* event)
         {
             if (QMouseEvent* e = static_cast<QMouseEvent*>(event))
             {
-                if (QWidget* wid = qobject_cast<QWidget*>(watched)) //µã»÷ÇøÓò²»ÔÚÄÚ²¿Ôòhide
+                if (QWidget* wid = qobject_cast<QWidget*>(watched)) //ç‚¹å‡»åŒºåŸŸä¸åœ¨å†…éƒ¨åˆ™hide
                 {
                     const QPoint& globalPos = wid->mapToGlobal(e->pos());
                     const QPoint& lefttop = mapToGlobal(QPoint(0, 0));

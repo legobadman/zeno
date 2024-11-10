@@ -250,14 +250,14 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
     preOrderVec(m_rootNode, preorderVec);
     if (preorderVec.size() != 0)
     {
-        //°´ÕÕÏÈĞò±éÀú£¬µÃµ½×îºóµÄÒ¶½Úµã¾ÍÊÇµ±Ç°±à¼­¹â±ê¶ÔÓ¦µÄÓï·¨Ê÷Ïî¡£
+        //æŒ‰ç…§å…ˆåºéå†ï¼Œå¾—åˆ°æœ€åçš„å¶èŠ‚ç‚¹å°±æ˜¯å½“å‰ç¼–è¾‘å…‰æ ‡å¯¹åº”çš„è¯­æ³•æ ‘é¡¹ã€‚
         auto last = preorderVec.back();
         do {
-            //ÒòÎªÍÆ¼ö½öÕë¶Ôº¯Êı£¬ËùÒÔÖ»Ğè±éÀúµ±Ç°½Úµã¼°Æä¸¸½Úµã£¬ÕÒµ½º¯Êı½Úµã¼´¿É¡£
+            //å› ä¸ºæ¨èä»…é’ˆå¯¹å‡½æ•°ï¼Œæ‰€ä»¥åªéœ€éå†å½“å‰èŠ‚ç‚¹åŠå…¶çˆ¶èŠ‚ç‚¹ï¼Œæ‰¾åˆ°å‡½æ•°èŠ‚ç‚¹å³å¯ã€‚
             if (last->type == FUNC) {
                 std::string funcprefix = std::get<std::string>(last->value);
                 if (Match_Nothing == last->func_match) {
-                    //½ö½öÓĞ£¨Ç±ÔÚµÄ£©º¯ÊıÃû£¬»¹Ã»ÓĞÀ¨ºÅ¡£
+                    //ä»…ä»…æœ‰ï¼ˆæ½œåœ¨çš„ï¼‰å‡½æ•°åï¼Œè¿˜æ²¡æœ‰æ‹¬å·ã€‚
                     std::vector<std::string> candidates = zeno::getSession().funcManager->getCandidates(funcprefix, true);
                     if (!candidates.empty())
                     {
@@ -291,7 +291,7 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                                 auto nodepath = refcontent.substr(idx + 1);
 
                                 if (graphpath.empty()) {
-                                    // "/" "/m" ÕâÖÖ£¬Ö»ÓĞÍÆ¼ö´Ê /main £¨²»¿¼ÂÇÒıÓÃassetµÄÇé¿ö£©
+                                    // "/" "/m" è¿™ç§ï¼Œåªæœ‰æ¨èè¯ /main ï¼ˆä¸è€ƒè™‘å¼•ç”¨assetçš„æƒ…å†µï¼‰
                                     std::string mainstr = "main";
                                     if (mainstr.find(nodepath) != std::string::npos) {
                                         ret.ref_candidates.push_back({ "main", /*TODO: icon*/"" });
@@ -311,7 +311,7 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                         }
                         else {
                             ret.func_args.func = info;
-                            //TODO: ²ÎÊıÎ»ÖÃ¸ßÁÁ
+                            //TODO: å‚æ•°ä½ç½®é«˜äº®
                             ret.func_args.argidx = last->children.size();
                             ret.type = FMLA_TIP_FUNC_ARGS;
                         }
