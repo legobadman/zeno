@@ -1238,6 +1238,29 @@ void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransact
     }
 }
 
+void GraphModel::_setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransaction)
+{
+    bool bEnableIoProc = GraphsManager::instance().isInitializing() || GraphsManager::instance().isImporting();
+    if (bEnableIoProc)
+        endTransaction = false;
+
+    if (endTransaction)
+    {
+        auto currtPath = currentPath();
+        NodeStatusCommand* pCmd = new NodeStatusCommand(false, idx.data(ROLE_NODE_NAME).toString(), bOn, currtPath);
+        if (auto topLevelGraph = getTopLevelGraph(currtPath))
+            topLevelGraph->pushToplevelStack(pCmd);
+    }
+    else {
+        auto spCoreGraph = m_wpCoreGraph.lock();
+        ZASSERT_EXIT(spCoreGraph);
+        NodeItem* item = m_nodes[m_row2uuid[idx.row()]];
+        auto spCoreNode = item->m_wpNode.lock();
+        ZASSERT_EXIT(spCoreNode);
+        spCoreNode->set_mute(bOn);
+    }
+}
+
 std::weak_ptr<zeno::INode> GraphModel::getWpNode(QString& nodename)
 {
     auto it = m_name2uuid.find(nodename);
@@ -1290,7 +1313,7 @@ void GraphModel::setView(const QModelIndex& idx, bool bOn)
 
 void GraphModel::setMute(const QModelIndex& idx, bool bOn)
 {
-    //TODO
+    _setMuteImpl(idx, bOn, true);
 }
 
 QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)

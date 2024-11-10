@@ -70,6 +70,10 @@ public:
     CALLBACK_REGIST(set_view, void, bool)
     ZENO_API bool is_view() const;
 
+    ZENO_API void set_mute(bool bOn);
+    CALLBACK_REGIST(set_mute, void, bool)
+    ZENO_API bool is_mute() const;
+
     ZENO_API void mark_dirty(bool bOn, bool bWholeSubnet = true, bool bRecursively = true);
     ZENO_API bool is_dirty() const { return m_dirty; }
     ZENO_API NodeRunStatus get_run_status() const { return m_status; }
@@ -202,6 +206,8 @@ private:
     //preApply是先解决所有输入参数（上游）的求值问题
     void preApply(CalcContext* pContext);
 
+    void bypass();
+
     //for timeshift node
     void preApplyTimeshift(CalcContext* pContext);
     //foreach特供
@@ -285,6 +291,7 @@ private:
     NodeRunStatus m_status = Node_DirtyReadyToRun;
     std::weak_ptr<Graph> graph;
     bool m_bView = false;
+    bool m_mute = false;
     bool m_dirty = true;
 
     zeno::reflect::TypeBase* m_pTypebase = nullptr;

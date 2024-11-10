@@ -119,7 +119,7 @@ void RemoveNodeCommand::redo()
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
         auto spNode = m_model->getWpNode(nodename).lock();
-        if (std::shared_ptr<zeno::SubnetNode> subnetNode = std::dynamic_pointer_cast<zeno::SubnetNode>(spNode)) {   //if is subnet/assets£¬record cate
+        if (std::shared_ptr<zeno::SubnetNode> subnetNode = std::dynamic_pointer_cast<zeno::SubnetNode>(spNode)) {   //if is subnet/assetsï¼Œrecord cate
             m_cate = subnetNode->isAssetsNode() ? "assets" : "";
         }
         m_model->_removeNodeImpl(QString::fromStdString(m_nodeData.name));
@@ -254,7 +254,7 @@ void NodeStatusCommand::redo()
                 m_model->_setViewImpl(idx, m_On);
             }
             else {
-                //m_model->_setMuteImpl(idx, m_On);
+                m_model->_setMuteImpl(idx, m_On);
             }
         }
     }
@@ -272,7 +272,7 @@ void NodeStatusCommand::undo()
                 m_model->_setViewImpl(idx, !m_On);
             }
             else {
-                //m_model->_setMuteImpl(idx, !m_On);
+                m_model->_setMuteImpl(idx, !m_On);
             }
         }
     }

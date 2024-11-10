@@ -317,6 +317,24 @@ ZENO_API bool INode::is_view() const
     return m_bView;
 }
 
+ZENO_API void INode::set_mute(bool bOn)
+{
+    CORE_API_BATCH
+
+    m_mute = bOn;
+    CALLBACK_NOTIFY(set_mute, m_mute)
+    mark_dirty(true);
+
+    //std::shared_ptr<Graph> spGraph = graph.lock();
+    //assert(spGraph);
+    //spGraph->viewNodeUpdated(m_name, bOn);
+}
+
+ZENO_API bool INode::is_mute() const
+{
+    return m_mute;
+}
+
 void INode::reportStatus(bool bDirty, NodeRunStatus status) {
     m_status = status;
     m_dirty = bDirty;
@@ -1297,6 +1315,7 @@ bool INode::receiveOutputObj(ObjectParam* in_param, std::shared_ptr<INode> outNo
     //在此版本里，只有克隆，每个对象只有一个节点关联，虽然激进，但可以充分测试属性数据共享在面对
     //内存暴涨时的冲击，能优化到什么程度
     in_param->spObject = outputObj->clone();
+    in_param->spObject->update_key(m_uuidPath);
 #if 0
     if (in_param->socketType == Socket_Clone) {
         in_param->spObject = outputObj->clone();
@@ -1433,6 +1452,22 @@ void INode::doApply_Parameter(std::string const& name, CalcContext* pContext) {
     requireInput(name, pContext);
 }
 
+void INode::bypass() {
+    //在preAppy拷贝了对象以后再直接赋值给output，还有一种方法是不拷贝，直接把上一个节点的输出给到这里的输出。
+
+    //找到输入和输出的唯一object(如果输入有两个，并且有一个有连线，是否采纳连线这个？）
+    //不考虑数值类型的输出
+    if (m_outputObjs.empty() || m_inputObjs.empty()) {
+        throw makeError<UnimplError>("there is not matched input and output object when mute button is on");
+    }
+    ObjectParam& input_objparam = m_inputObjs.begin()->second;
+    ObjectParam& output_objparam = m_outputObjs.begin()->second;
+    if (input_objparam.type != output_objparam.type) {
+        throw makeError<UnimplError>("the input and output type is not matched, when the mute button is on");
+    }
+    output_objparam.spObject = input_objparam.spObject;
+}
+
 ZENO_API void INode::doApply(CalcContext* pContext) {
 
     if (!m_dirty) {
@@ -1464,15 +1499,21 @@ ZENO_API void INode::doApply(CalcContext* pContext) {
 #ifdef ZENO_BENCHMARKING
         Timer _(m_name);
 #endif
-        reportStatus(true, Node_Running);
-        if (!m_pTypebase) {
-            apply();
+        if (m_mute) {
+            bypass();
         }
         else {
-            if (m_nodecls == "ForEachEnd") {
-                reflectForeach_apply(pContext);
-            } else {
-                reflectNode_apply();
+            reportStatus(true, Node_Running);
+            if (!m_pTypebase) {
+                apply();
+            }
+            else {
+                if (m_nodecls == "ForEachEnd") {
+                    reflectForeach_apply(pContext);
+                }
+                else {
+                    reflectNode_apply();
+                }
             }
         }
     }
