@@ -288,6 +288,8 @@ Q_DECLARE_METATYPE(zeno::reflect::Any)
 
 Q_DECLARE_METATYPE(zeno::zany)
 
+Q_DECLARE_METATYPE(zeno::render_update_info);
+
 typedef QList<QPersistentModelIndex> PARAM_LINKS;
 Q_DECLARE_METATYPE(PARAM_LINKS)
 

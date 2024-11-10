@@ -47,6 +47,10 @@ struct RenderEngineBate : RenderEngine {
         graphicsMan->load_objects2(objs);
     }
 
+    void load_object(zeno::render_update_info info) override {
+        
+    }
+
     //deprecated
     void update() override {
         graphicsMan->load_objects(scene->objectsMan->pairsShared());

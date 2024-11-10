@@ -177,6 +177,11 @@ namespace zeno {
         ATTR_VEC4
     };
 
+    enum UpdateReason {
+        Update_View,            //只是view，计算已经完成了(dirty==false)
+        Update_Reconstruct,     //经过了重新计算需要更新
+    };
+
     enum ZSG_VERSION
     {
         VER_2,          //old version io
@@ -237,6 +242,14 @@ namespace zeno {
     using ObjPath = std::string;
 
     typedef std::function<void(ObjPath, bool, NodeRunStatus)> F_NodeStatus;
+
+    struct render_update_info {
+        UpdateReason reason;
+        std::string graph;          //临时使用，不需要uuid
+        std::string node;
+        std::string param_name;
+    };
+    typedef std::function<void(render_update_info)> F_CommitRender;
 }
 
 

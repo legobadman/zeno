@@ -388,6 +388,17 @@ void DisplayWidget::onPlayClicked(bool bChecked)
     }
 }
 
+void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
+    if (m_bGLView) {
+        m_glView->load_object(info);
+        //emit render_objects_loaded();
+    }
+    else {
+        m_optixView->load_object(info);
+    }
+    updateFrame();
+}
+
 void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
     if (bSucceed) {
         if (m_bGLView) {

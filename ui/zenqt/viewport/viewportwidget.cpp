@@ -235,6 +235,11 @@ void ViewportWidget::load_objects()
     m_zenovis->load_objects(objs);
 }
 
+void ViewportWidget::load_object(zeno::render_update_info info)
+{
+    m_zenovis->load_object(info);
+}
+
 void ViewportWidget::paintGL()
 {
     m_zenovis->paintGL();

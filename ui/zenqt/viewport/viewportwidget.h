@@ -57,6 +57,7 @@ public:
     void setViewWidgetInfo(DockContentWidgetInfo& info);
     void glDrawForCommandLine();
     void load_objects();
+    void load_object(zeno::render_update_info info);
 
 signals:
     void frameRecorded(int);

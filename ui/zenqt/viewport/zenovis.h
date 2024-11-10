@@ -59,6 +59,7 @@ public:
 
 //private:
     void load_objects(const zeno::RenderObjsInfo& objs);
+    void load_object(zeno::render_update_info info);
 
     int m_solver_frameid;
     int m_solver_interval;

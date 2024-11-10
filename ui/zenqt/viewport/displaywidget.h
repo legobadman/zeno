@@ -80,6 +80,7 @@ public slots:
     void onMouseHoverMoved();
     void onDockViewAction(bool triggered);
     void onCalcFinished(bool bSucceed, zeno::ObjPath, QString);
+    void onRenderInfoCommitted(zeno::render_update_info info);
     void onJustLoadObjects();
     void onSetCamera(zenovis::ZOptixCameraSettingInfo value);
     void onSetBackground(bool bShowBackground);

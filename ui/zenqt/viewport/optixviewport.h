@@ -46,7 +46,7 @@ public slots:
     void load_objects();
     void onCleanUpView();
     void onSetBackground(bool bShowBg);
-
+    void on_load_data(zeno::render_update_info info);
     void onSetData(float, float, float, bool, bool);
 
 private:
@@ -88,6 +88,7 @@ public:
     void modifyLightData(UI_VECTYPE pos, UI_VECTYPE scale, UI_VECTYPE rotate, UI_VECTYPE color, float intensity, QString name, UI_VECTYPE skipParam);
     void cleanUpScene();
     void load_objects();
+    void load_object(zeno::render_update_info info);
     void cleanupView();
 
     zenovis::ZOptixCameraSettingInfo getdata_from_optix_thread();
@@ -98,6 +99,7 @@ signals:
     void stopRenderOptix();
     void resumeWork();
     void sigRecordVideo(VideoRecInfo recInfo);
+    void sig_loadObject(zeno::render_update_info info);
     void sig_recordFinished();
     void sig_frameRecordFinished(int frame);
     void sig_frameRunFinished(int frame);

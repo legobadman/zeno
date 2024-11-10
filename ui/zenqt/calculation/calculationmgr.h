@@ -19,6 +19,7 @@ public:
 signals:
     void calcFinished(bool, zeno::ObjPath, QString);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
+    void commitRenderInfo(zeno::render_update_info);
 
 public slots:
     void run();
@@ -42,6 +43,7 @@ public:
 signals:
     void calcFinished(bool, zeno::ObjPath, QString);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
+    void commitRenderInfo(zeno::render_update_info);
 
 public slots:
     void onPlayTriggered(bool bToggled);

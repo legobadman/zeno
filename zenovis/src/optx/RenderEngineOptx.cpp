@@ -1344,6 +1344,10 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         xinxinoptix::optixinit(std::size(argv), argv);
     }
 
+    void load_object(zeno::render_update_info info) override {
+
+    }
+
     void load_objects(const zeno::RenderObjsInfo& objs) override {
 
         //light update condition

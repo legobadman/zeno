@@ -199,6 +199,10 @@ void Session::load_objects(const zeno::RenderObjsInfo& objs) {
     impl->scene->load_objects(objs);
 }
 
+void Session::load_object(zeno::render_update_info info) {
+    impl->scene->load_object(info);
+}
+
 void Session::look_to_dir(float cx, float cy, float cz,
                           float dx, float dy, float dz,
                           float ux, float uy, float uz) {

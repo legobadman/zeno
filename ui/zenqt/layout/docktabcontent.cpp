@@ -656,7 +656,8 @@ void DockContent_Editor::initConnections()
         m_btnRun->setBackgroundClr(clr, hoverClr, clr, clr);
     });
 
-    connect(zenoApp->calculationMgr(), &CalculationMgr::calcFinished, this, [=](bool bSucceed, zeno::ObjPath, QString) {
+    auto calcMgr = zenoApp->calculationMgr();
+    connect(calcMgr, &CalculationMgr::calcFinished, this, [=](bool bSucceed, zeno::ObjPath, QString) {
         m_btnRun->setVisible(true);
         m_btnKill->setVisible(false);
     });

@@ -44,6 +44,7 @@ struct Scene : zeno::disable_copy {
 
     void draw(bool record);
     void load_objects(const zeno::RenderObjsInfo& objs);
+    void load_object(zeno::render_update_info info);
     void cleanUpScene();
     void cleanupView();
     void set_show_ptnum(bool bShow);

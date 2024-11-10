@@ -165,6 +165,14 @@ bool Scene::cameraFocusOnNode(std::string const &nodeid, zeno::vec3f &center, fl
     return false;
 }
 
+void Scene::load_object(zeno::render_update_info info) {
+    if (renderMan) {
+        if (RenderEngine* pEngine = renderMan->getEngine()) {
+            pEngine->load_object(info);
+        }
+    }
+}
+
 void Scene::load_objects(const zeno::RenderObjsInfo& objs) {
     if (renderMan)
     {

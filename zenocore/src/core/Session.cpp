@@ -334,6 +334,16 @@ ZENO_API void Session::registerNodeCallback(F_NodeStatus func)
     m_funcNodeStatus = func;
 }
 
+ZENO_API void Session::registerCommitRender(F_CommitRender&& func) {
+    m_func_commitrender = func;
+}
+
+void Session::commit_to_render(render_update_info info) {
+    if (m_func_commitrender) {
+        m_func_commitrender(info);
+    }
+}
+
 void Session::reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status)
 {
     if (m_funcNodeStatus) {

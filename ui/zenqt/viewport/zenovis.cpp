@@ -187,6 +187,10 @@ void Zenovis::load_objects(const zeno::RenderObjsInfo& objs)
     session->load_objects(objs);
 }
 
+void Zenovis::load_object(zeno::render_update_info info) {
+    session->load_object(info);
+}
+
 /*
 QList<Zenovis::FRAME_FILE> Zenovis::getFrameFiles(int frameid)
 {

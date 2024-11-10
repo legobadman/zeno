@@ -205,7 +205,7 @@ private:
 
     //preApply是先解决所有输入参数（上游）的求值问题
     void preApply(CalcContext* pContext);
-
+    void commit_to_render(UpdateReason reason);
     void bypass();
 
     //for timeshift node

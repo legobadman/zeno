@@ -714,6 +714,7 @@ ZENO_API void INode::reflectNode_apply()
 
 void INode::registerObjToManager()
 {
+    return;
     for (auto const& [name, param] : m_outputObjs)
     {
         if (param.spObject)
@@ -1468,10 +1469,29 @@ void INode::bypass() {
     output_objparam.spObject = input_objparam.spObject;
 }
 
+void INode::commit_to_render(UpdateReason reason) {
+    render_update_info info;
+    info.reason = reason;
+    info.node = this->get_path();
+    info.graph = this->get_graph_path();
+
+    auto& sess = zeno::getSession();
+
+    for (auto const& [name, param] : m_outputObjs) {
+        if (param.spObject) {
+            info.param_name = name;
+            sess.commit_to_render(info);
+        }
+    }
+}
+
 ZENO_API void INode::doApply(CalcContext* pContext) {
 
     if (!m_dirty) {
-        registerObjToManager();//如果只是打view，也是需要加到manager的。
+        if (m_bView) {
+            commit_to_render(Update_View);
+        }
+        //registerObjToManager();//如果只是打view，也是需要加到manager的。
         return;
     }
 
@@ -1532,6 +1552,9 @@ ZENO_API void INode::doApply(CalcContext* pContext) {
             registerObjToManager();
             reportStatus(false, Node_RunSucceed);
         }
+    }
+    if (m_bView) {
+        commit_to_render(Update_Reconstruct);
     }
 }
 
