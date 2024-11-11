@@ -378,9 +378,14 @@ void OptixWorker::onCleanUpView()
 
 void OptixWorker::load_objects()
 {
+#if 0
     zeno::RenderObjsInfo objs;
     zeno::getSession().objsMan->export_loading_objs(objs);
     m_zenoVis->load_objects(objs);
+#endif
+    std::vector<zeno::render_update_info> infos;
+    zeno::getSession().objsMan->export_render_infos(infos);
+    m_zenoVis->load_objects(infos);
 }
 
 void OptixWorker::on_load_data(zeno::render_update_info info)

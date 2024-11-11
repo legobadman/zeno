@@ -173,6 +173,14 @@ void Scene::load_object(zeno::render_update_info info) {
     }
 }
 
+void Scene::load_objects(const std::vector<zeno::render_update_info>& infos) {
+    if (renderMan)
+    {
+        if (RenderEngine* pEngine = renderMan->getEngine())
+            pEngine->load_objects(infos);
+    }
+}
+
 void Scene::load_objects(const zeno::RenderObjsInfo& objs) {
     if (renderMan)
     {

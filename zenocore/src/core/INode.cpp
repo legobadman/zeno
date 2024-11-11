@@ -307,6 +307,18 @@ ZENO_API void INode::set_view(bool bOn)
     m_bView = bOn;
     CALLBACK_NOTIFY(set_view, m_bView)
 
+    if (!m_outputObjs.empty()) {
+        //无论什么样的运行状态，只要view按钮状态变化，都记录着，后续渲染端remove的时候自然可以排查
+        auto& session = getSession();
+        render_update_info info;
+        info.reason = bOn ? Update_View : Update_Remove;
+        info.graph = this->get_graph_path();
+        info.node = m_name;
+        //多输出的情况太麻烦了，而且不合理
+        info.param_name = m_outputObjs.begin()->second.name;
+        session.objsMan->collect_render_update(info);
+    }
+
     std::shared_ptr<Graph> spGraph = graph.lock();
     assert(spGraph);
     spGraph->viewNodeUpdated(m_name, bOn);
@@ -712,25 +724,41 @@ ZENO_API void INode::reflectNode_apply()
     }
 }
 
+void INode::commit_to_render(UpdateReason reason) {
+    render_update_info info;
+    info.reason = reason;
+    info.node = m_name;
+    info.graph = this->get_graph_path();
+
+    auto& sess = zeno::getSession();
+
+    for (auto const& [name, param] : m_outputObjs) {
+        if (param.spObject) {
+            info.param_name = name;
+            info.objkey = param.spObject->key();
+            sess.objsMan->collect_render_update(info);
+        }
+    }
+}
+
 void INode::registerObjToManager()
 {
-    return;
     for (auto const& [name, param] : m_outputObjs)
     {
         if (param.spObject)
         {
-            if (std::dynamic_pointer_cast<NumericObject>(param.spObject) ||
-                std::dynamic_pointer_cast<StringObject>(param.spObject)) {
-                return;
-            }
+            //if (std::dynamic_pointer_cast<NumericObject>(param.spObject) ||
+            //    std::dynamic_pointer_cast<StringObject>(param.spObject)) {
+            //    return;
+            //}
 
             if (param.spObject->key().empty())
             {
-                //如果当前节点是引用前继节点产生的obj，则obj.key不为空，此时就必须沿用之前的id，
-                //以表示“引用”，否则如果新建id，obj指针可能是同一个，会在manager引起混乱。
+                //目前节点处所看到的object，都隶属于此节点本身。
                 param.spObject->update_key(m_uuid);
             }
 
+#if 0
             const std::string& key = param.spObject->key();
             assert(!key.empty());
             param.spObject->nodeId = m_uuidPath;
@@ -738,6 +766,7 @@ void INode::registerObjToManager()
             auto& objsMan = getSession().objsMan;
             std::shared_ptr<INode> spNode = shared_from_this();
             objsMan->collectingObject(param.spObject, spNode, m_bView);
+#endif
         }
     }
 }
@@ -1469,21 +1498,7 @@ void INode::bypass() {
     output_objparam.spObject = input_objparam.spObject;
 }
 
-void INode::commit_to_render(UpdateReason reason) {
-    render_update_info info;
-    info.reason = reason;
-    info.node = this->get_path();
-    info.graph = this->get_graph_path();
 
-    auto& sess = zeno::getSession();
-
-    for (auto const& [name, param] : m_outputObjs) {
-        if (param.spObject) {
-            info.param_name = name;
-            sess.commit_to_render(info);
-        }
-    }
-}
 
 ZENO_API void INode::doApply(CalcContext* pContext) {
 

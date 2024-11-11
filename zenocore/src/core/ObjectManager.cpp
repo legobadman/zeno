@@ -112,6 +112,10 @@ namespace zeno {
     ZENO_API void ObjectManager::beforeRun()
     {
         std::lock_guard lck(m_mtx);     //可能此时渲染端在load_objects
+
+        //有可能编辑阶段设置view，因此不能清除这些设定。
+        //clear_batch_updates();
+
         m_lastViewObjs = m_viewObjs;
         m_viewObjs.clear();
         m_newAdded.clear();
@@ -146,6 +150,27 @@ namespace zeno {
         m_remove.clear();
         m_modify.clear();
         m_frameData.clear();
+    }
+
+    ZENO_API void ObjectManager::collect_render_update(zeno::render_update_info info)
+    {
+        //有两种情况会触发collect:
+        //1. 编辑阶段，手动打view/去view（无论重复多少次）.
+        //2. 运行阶段，运行到打view节点
+        for (int i = 0; i < m_render_updates.size(); i++) {
+            auto update = m_render_updates[i];
+            if (update.graph == info.graph && update.node == info.node) {
+                //先把原来的覆盖掉
+                m_render_updates[i] = info;
+                return;
+            }
+        }
+        m_render_updates.push_back(info);
+    }
+
+    ZENO_API void ObjectManager::clear_batch_updates()
+    {
+        m_render_updates.clear();
     }
 
     ZENO_API void ObjectManager::clear_last_run()
@@ -211,6 +236,12 @@ namespace zeno {
     ZENO_API void ObjectManager::syncObjNodeInfo(zany spObj, std::shared_ptr<INode> spNode)
     {
         std::lock_guard lck(m_mtx);
+    }
+
+    ZENO_API void ObjectManager::export_render_infos(std::vector<zeno::render_update_info>& infos)
+    {
+        std::lock_guard lck(m_mtx);
+        infos = m_render_updates;
     }
 
     ZENO_API void ObjectManager::export_loading_objs(RenderObjsInfo& info)

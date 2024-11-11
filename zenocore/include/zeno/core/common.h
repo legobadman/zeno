@@ -180,6 +180,7 @@ namespace zeno {
     enum UpdateReason {
         Update_View,            //只是view，计算已经完成了(dirty==false)
         Update_Reconstruct,     //经过了重新计算需要更新
+        Update_Remove,          //移除，可能是删除或者Unview
     };
 
     enum ZSG_VERSION
@@ -248,6 +249,7 @@ namespace zeno {
         std::string graph;          //临时使用，不需要uuid
         std::string node;
         std::string param_name;
+        std::string objkey;
     };
     typedef std::function<void(render_update_info)> F_CommitRender;
 }

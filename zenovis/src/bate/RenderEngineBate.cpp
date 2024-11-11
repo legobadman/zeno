@@ -47,6 +47,10 @@ struct RenderEngineBate : RenderEngine {
         graphicsMan->load_objects2(objs);
     }
 
+    void load_objects(const std::vector<zeno::render_update_info>& infos) {
+        graphicsMan->load_objects3(infos);
+    }
+
     void load_object(zeno::render_update_info info) override {
         
     }

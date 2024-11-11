@@ -8,6 +8,7 @@
 #include <zeno/utils/log.h>
 #include <zenovis/bate/IGraphic.h>
 #include <zenovis/Scene.h>
+#include <zeno/core/Graph.h>
 
 namespace zenovis {
 
@@ -154,6 +155,43 @@ struct GraphicsManager {
             }
         }
         return true;
+    }
+
+    void load_objects3(const std::vector<zeno::render_update_info>& infos) {
+        auto& sess = zeno::getSession();
+        for (const zeno::render_update_info& info : infos) {
+            std::shared_ptr<zeno::Graph> spGraph = sess.mainGraph->getGraphByPath(info.graph);
+            assert(spGraph);
+            std::shared_ptr<zeno::INode> spNode = spGraph->getNode(info.node);
+            assert(spNode);
+            zeno::zany spObject = spNode->get_output_obj(info.param_name);
+            assert(spObject);
+
+            spGraph.reset();
+            spNode.reset();
+
+            std::string const& objkey = spObject->key();
+            if (info.reason == zeno::Update_Reconstruct) {
+                add_object(spObject);
+            }
+            else if (info.reason == zeno::Update_View) {
+                //要观察当前绘制端是否已经缓存了objkey
+                auto& wtf = graphics.m_curr.m_curr;
+                auto it = wtf.find(objkey);
+                if (it == wtf.end()) {
+                    add_object(spObject);
+                }
+                else {
+                    //只是切换view而已，而这个要绘制的object已经在这里绘制端缓存了，不需要重新load
+                    int j;
+                    j = 0;
+                }
+            }
+            else if (info.reason == zeno::Update_Remove) {
+                //包括节点删除以及view移除的情况，在绘制端看来都是移除
+                remove_object(spObject);
+            }
+        }
     }
 
     void load_objects2(const zeno::RenderObjsInfo& objs) {

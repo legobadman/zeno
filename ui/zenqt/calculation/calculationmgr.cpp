@@ -28,9 +28,9 @@ CalcWorker::CalcWorker(QObject* parent) {
 void CalcWorker::run() {
     auto& sess = zeno::getSession();
 
-    sess.registerCommitRender([&](zeno::render_update_info info) {
-        emit commitRenderInfo(info);
-    });
+    //sess.registerCommitRender([&](zeno::render_update_info info) {
+    //    emit commitRenderInfo(info);
+    //});
 
     zeno::GraphException::catched([&] {
         sess.run();
@@ -198,5 +198,8 @@ void CalculationMgr::on_render_objects_loaded()
     if (m_loadedRender.size() == m_registerRenders.size())
     {
         //todo: notify calc to continue, if still have something to calculate.
+        //清理渲染端的缓存队列
+        auto& session = zeno::getSession();
+        session.objsMan->clear_batch_updates();
     }
 }

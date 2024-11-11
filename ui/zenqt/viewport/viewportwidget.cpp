@@ -230,9 +230,14 @@ void ViewportWidget::updatePerspective()
 
 void ViewportWidget::load_objects()
 {
+#if 0
     zeno::RenderObjsInfo objs;
     zeno::getSession().objsMan->export_loading_objs(objs);
     m_zenovis->load_objects(objs);
+#endif
+    std::vector<zeno::render_update_info> infos;
+    zeno::getSession().objsMan->export_render_infos(infos);
+    m_zenovis->load_objects(infos);
 }
 
 void ViewportWidget::load_object(zeno::render_update_info info)
