@@ -307,18 +307,6 @@ ZENO_API void INode::set_view(bool bOn)
     m_bView = bOn;
     CALLBACK_NOTIFY(set_view, m_bView)
 
-    if (!m_outputObjs.empty()) {
-        //无论什么样的运行状态，只要view按钮状态变化，都记录着，后续渲染端remove的时候自然可以排查
-        auto& session = getSession();
-        render_update_info info;
-        info.reason = bOn ? Update_View : Update_Remove;
-        info.graph = this->get_graph_path();
-        info.node = m_name;
-        //多输出的情况太麻烦了，而且不合理
-        info.param_name = m_outputObjs.begin()->second.name;
-        session.objsMan->collect_render_update(info);
-    }
-
     std::shared_ptr<Graph> spGraph = graph.lock();
     assert(spGraph);
     spGraph->viewNodeUpdated(m_name, bOn);
@@ -727,18 +715,10 @@ ZENO_API void INode::reflectNode_apply()
 void INode::commit_to_render(UpdateReason reason) {
     render_update_info info;
     info.reason = reason;
-    info.node = m_name;
-    info.graph = this->get_graph_path();
+    info.uuidpath_node_objkey = m_uuidPath;
 
     auto& sess = zeno::getSession();
-
-    for (auto const& [name, param] : m_outputObjs) {
-        if (param.spObject) {
-            info.param_name = name;
-            info.objkey = param.spObject->key();
-            sess.objsMan->collect_render_update(info);
-        }
-    }
+    sess.objsMan->collect_render_update(info);
 }
 
 void INode::registerObjToManager()
@@ -2884,6 +2864,12 @@ ZENO_API bool INode::set_output(std::string const& param, zany obj) {
         }
     }
     return false;
+}
+
+ZENO_API zany INode::get_default_output_object() {
+    if (m_outputObjs.empty())
+        return nullptr;
+    return m_outputObjs.begin()->second.spObject;
 }
 
 ZENO_API zany INode::get_output_obj(std::string const& param) {

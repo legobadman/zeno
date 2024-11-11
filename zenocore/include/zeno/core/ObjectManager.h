@@ -68,7 +68,6 @@ public:
     ZENO_API void clear();
 
     ZENO_API void collect_render_update(zeno::render_update_info info);
-    ZENO_API void clear_batch_updates();
 
     ZENO_API void collectingObject(std::shared_ptr<IObject> obj, std::shared_ptr<INode> view_node, bool bView);
     CALLBACK_REGIST(collectingObject, void, std::shared_ptr<IObject>, bool)
@@ -110,6 +109,8 @@ public:
     ZENO_API void syncObjNodeInfo(zany spObj, std::shared_ptr<INode> spNode);
 
 private:
+    void clear_batch_updates();
+
     /*DEPRECATED BEGIN*/
     std::map<std::string, int> m_objRegister;
 
@@ -117,7 +118,6 @@ private:
     std::map<int, FrameData> m_frameData;   //记录流体相关的帧缓存
 
     std::set<std::string> m_viewObjs;
-    std::set<std::string> m_lastViewObjs;
     std::set<std::string> m_removing_objs;  //这里是删除节点时记录的要删除的obj，要考虑rollback的情况
 
     std::set<std::string> m_newAdded;       //渲染端需要新增的obj
@@ -127,6 +127,7 @@ private:
     std::set<std::string> m_lastUnregisterObjs;
     /*DEPRECATED END*/
 
+    std::set<std::string> m_lastViewObjs;
     std::vector<zeno::render_update_info> m_render_updates;
 
     mutable std::mutex m_mtx;

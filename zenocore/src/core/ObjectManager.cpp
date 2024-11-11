@@ -113,10 +113,9 @@ namespace zeno {
     {
         std::lock_guard lck(m_mtx);     //可能此时渲染端在load_objects
 
-        //有可能编辑阶段设置view，因此不能清除这些设定。
-        //clear_batch_updates();
+        clear_batch_updates();
 
-        m_lastViewObjs = m_viewObjs;
+        //m_lastViewObjs = m_viewObjs;
         m_viewObjs.clear();
         m_newAdded.clear();
         m_modify.clear();
@@ -128,6 +127,9 @@ namespace zeno {
         std::lock_guard lck(m_mtx);
         //m_lastViewObjs剩下来的都是上一次view，而这一次没有view的。
         m_remove = m_lastViewObjs;
+        for (auto objkey : m_lastViewObjs) {
+            m_render_updates.push_back(zeno::render_update_info{ Update_Remove, objkey });
+        }
         m_lastViewObjs.clear();
         m_removing_objs.clear();
     }
@@ -154,12 +156,14 @@ namespace zeno {
 
     ZENO_API void ObjectManager::collect_render_update(zeno::render_update_info info)
     {
-        //有两种情况会触发collect:
-        //1. 编辑阶段，手动打view/去view（无论重复多少次）.
-        //2. 运行阶段，运行到打view节点
+        if (info.reason != Update_Remove &&
+            m_lastViewObjs.find(info.uuidpath_node_objkey) != m_lastViewObjs.end()) {
+            //上一次view的，这一次也有
+            m_lastViewObjs.erase(info.uuidpath_node_objkey);
+        }
         for (int i = 0; i < m_render_updates.size(); i++) {
             auto update = m_render_updates[i];
-            if (update.graph == info.graph && update.node == info.node) {
+            if (update.uuidpath_node_objkey == info.uuidpath_node_objkey) {
                 //先把原来的覆盖掉
                 m_render_updates[i] = info;
                 return;
@@ -170,6 +174,12 @@ namespace zeno {
 
     ZENO_API void ObjectManager::clear_batch_updates()
     {
+        //先缓存记录上一次view的对象
+        for (const auto& info : m_render_updates) {
+            if (info.reason != Update_Remove) {
+                m_lastViewObjs.insert(info.uuidpath_node_objkey);
+            }
+        }
         m_render_updates.clear();
     }
 

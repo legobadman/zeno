@@ -69,7 +69,7 @@ CalculationMgr::CalculationMgr(QObject* parent)
     auto& sess = zeno::getSession();
     sess.registerRunTrigger([=]() {
         run();
-        });
+    });
 }
 
 void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState state)
@@ -198,8 +198,5 @@ void CalculationMgr::on_render_objects_loaded()
     if (m_loadedRender.size() == m_registerRenders.size())
     {
         //todo: notify calc to continue, if still have something to calculate.
-        //清理渲染端的缓存队列
-        auto& session = zeno::getSession();
-        session.objsMan->clear_batch_updates();
     }
 }

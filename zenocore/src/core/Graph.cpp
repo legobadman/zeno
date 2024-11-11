@@ -175,11 +175,15 @@ void Graph::viewNodeUpdated(const std::string node, bool bView) {
         //TODO: only run calculation chain which associate with `node`.
         //getSession().run_main_graph();
         //disable the previous view.
+
+        //由于现在改为node-object一一对应，所以允许多个view
+#if 0
         auto viewnodes = m_viewnodes;
         for (auto nodename : viewnodes) {
             auto spNode = getNode(nodename);
             spNode->set_view(false);
         }
+#endif
         m_viewnodes.insert(node);
     }
     else {

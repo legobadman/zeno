@@ -1060,14 +1060,8 @@ void DockContent_View::initConnections()
     });
 
     connect(m_pointIndicator, &ZToolBarButton::toggled, this, [=](bool bToggled) {
-        auto pScene = m_pDisplay->getZenoVis()->getSession()->get_scene();
-        std::map<std::string, std::shared_ptr<zeno::IObject>> viewobjs;
-        auto& objectsMan = zeno::getSession().objsMan;
-        objectsMan->export_all_view_objs(viewobjs);
-        for (auto& [key, obj] : viewobjs) {
-            m_pDisplay->getZenoVis()->getSession()->set_show_ptnum(bToggled);
-            m_pDisplay->updateFrame();
-        }
+        m_pDisplay->getZenoVis()->getSession()->set_show_ptnum(bToggled);
+        m_pDisplay->updateFrame();
     });
 
     connect(m_wire_frame, &ZToolBarButton::toggled, this, [=](bool bToggled) {

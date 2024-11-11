@@ -160,15 +160,10 @@ struct GraphicsManager {
     void load_objects3(const std::vector<zeno::render_update_info>& infos) {
         auto& sess = zeno::getSession();
         for (const zeno::render_update_info& info : infos) {
-            std::shared_ptr<zeno::Graph> spGraph = sess.mainGraph->getGraphByPath(info.graph);
-            assert(spGraph);
-            std::shared_ptr<zeno::INode> spNode = spGraph->getNode(info.node);
+            auto spNode = sess.mainGraph->getNodeByUuidPath(info.uuidpath_node_objkey);
             assert(spNode);
-            zeno::zany spObject = spNode->get_output_obj(info.param_name);
+            zeno::zany spObject = spNode->get_default_output_object();
             assert(spObject);
-
-            spGraph.reset();
-            spNode.reset();
 
             std::string const& objkey = spObject->key();
             if (info.reason == zeno::Update_Reconstruct) {

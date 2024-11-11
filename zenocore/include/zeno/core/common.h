@@ -246,10 +246,7 @@ namespace zeno {
 
     struct render_update_info {
         UpdateReason reason;
-        std::string graph;          //临时使用，不需要uuid
-        std::string node;
-        std::string param_name;
-        std::string objkey;
+        std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
     };
     typedef std::function<void(render_update_info)> F_CommitRender;
 }
