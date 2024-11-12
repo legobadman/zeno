@@ -302,6 +302,7 @@ ZENO_API void INode::set_name(const std::string& customname)
 
 ZENO_API void INode::set_view(bool bOn)
 {
+    //这一类方法要和ui model端位于同一线程
     CORE_API_BATCH
 
     m_bView = bOn;
@@ -1478,15 +1479,13 @@ void INode::bypass() {
     output_objparam.spObject = input_objparam.spObject;
 }
 
-
-
 ZENO_API void INode::doApply(CalcContext* pContext) {
 
     if (!m_dirty) {
         if (m_bView) {
-            commit_to_render(Update_View);
+            //无须发送，已经存在于视图端了
+            //commit_to_render(Update_View);
         }
-        //registerObjToManager();//如果只是打view，也是需要加到manager的。
         return;
     }
 

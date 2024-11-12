@@ -15,6 +15,7 @@
 #include "util/jsonhelper.h"
 #include "widgets/ztimeline.h"
 #include "zenomainwindow.h"
+#include "viewport/displaywidget.h"
 
 
 NodeItem::NodeItem(QObject* parent) : QObject(parent)
@@ -61,6 +62,29 @@ void NodeItem::init(GraphModel* pGraphM, std::shared_ptr<zeno::INode> spNode)
         this->bView = bView;
         QModelIndex idx = pGraphM->indexFromName(this->name);
         emit pGraphM->dataChanged(idx, idx, QVector<int>{ ROLE_NODE_ISVIEW });
+
+        //直接就在这里触发绘制更新，不再往外传递了
+        //不过有一种例外，就是当前打view会触发计算的话，后续由计算触发绘制更新就可以了
+        auto& session = zeno::getSession();
+
+        if (bView && session.is_auto_run() && idx.data(ROLE_NODE_DIRTY).toBool()) {
+            return;
+        }
+
+        zeno::render_reload_info info;
+        info.policy = zeno::Reload_ToggleView;
+        info.current_ui_graph;  //由于这是在ui下直接点击view，因此一般都是当前图（api的情况暂不考虑）
+
+        const QString& nodepath = idx.data(ROLE_NODE_UUID_PATH).toString();
+        zeno::render_update_info update;
+        update.reason = bView ? zeno::Update_View : zeno::Update_Remove;
+        update.uuidpath_node_objkey = nodepath.toStdString();
+        info.objs.push_back(update);
+
+        const auto& views = zenoApp->getMainWindow()->viewports();
+        for (DisplayWidget* view : views) {
+            view->reload(info);
+        }
     });
 
     this->params = new ParamsModel(spNode, this);
@@ -285,7 +309,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             return item->dispIcon;
         }
         case ROLE_NODE_UUID_PATH: {
-            return QVariant::fromValue(item->uuidPath);
+            return QString::fromStdString(item->uuidPath);
         }
         case ROLE_CLASS_NAME: {
             return item->cls;

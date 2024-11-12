@@ -157,6 +157,58 @@ struct GraphicsManager {
         return true;
     }
 
+    void reload(const zeno::render_reload_info& info) {
+        auto& sess = zeno::getSession();
+        if (zeno::Reload_SwitchGraph == info.policy) {
+            //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
+            graphics.clear();
+            std::shared_ptr<zeno::Graph> spGraph = sess.mainGraph->getGraphByPath(info.current_ui_graph);
+            //TODO: 要考虑asset的情况
+            assert(spGraph);
+            const auto& viewnodes = spGraph->get_viewnodes();
+            //其实是否可以在外面提前准备好对象列表？
+            for (auto viewnode : viewnodes) {
+                std::shared_ptr<zeno::INode> spNode = spGraph->getNode(viewnode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                add_object(spObject);
+            }
+        }
+        else if (zeno::Reload_ToggleView == info.policy) {
+            assert(info.objs.size() == 1);
+            const auto& update = info.objs[0];
+            auto& wtf = graphics.m_curr.m_curr;
+            auto spNode = sess.mainGraph->getNodeByUuidPath(update.uuidpath_node_objkey);
+            assert(spNode);
+            zeno::zany spObject = spNode->get_default_output_object();
+            if (spObject) {
+                if (update.reason == zeno::Update_View) {
+                    auto it = wtf.find(update.uuidpath_node_objkey);
+                    if (it == wtf.end()) {
+                        add_object(spObject);
+                    }
+                }
+                else if (update.reason == zeno::Update_Remove) {
+                    auto it = wtf.find(update.uuidpath_node_objkey);
+                    if (it != wtf.end()) {
+                        remove_object(spObject);
+                    }
+                }
+            }
+            else {
+                //可能还没计算
+            }
+        }
+        else if (zeno::Reload_Calculation == info.policy) {
+            for (const zeno::render_update_info& info : info.objs) {
+                auto spNode = sess.mainGraph->getNodeByUuidPath(info.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                assert(spObject);
+                add_object(spObject);
+            }
+        }
+    }
+
     void load_objects3(const std::vector<zeno::render_update_info>& infos) {
         auto& sess = zeno::getSession();
         for (const zeno::render_update_info& info : infos) {

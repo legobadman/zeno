@@ -175,9 +175,7 @@ void Graph::viewNodeUpdated(const std::string node, bool bView) {
         //TODO: only run calculation chain which associate with `node`.
         //getSession().run_main_graph();
         //disable the previous view.
-
-        //由于现在改为node-object一一对应，所以允许多个view
-#if 0
+#if 1
         auto viewnodes = m_viewnodes;
         for (auto nodename : viewnodes) {
             auto spNode = getNode(nodename);
@@ -954,6 +952,10 @@ ZENO_API std::map<std::string, std::shared_ptr<INode>> Graph::getNodes() const {
         nodes.insert(std::make_pair(node->get_name(), node));
     }
     return nodes;
+}
+
+ZENO_API std::set<std::string> Graph::get_viewnodes() const {
+    return m_viewnodes;
 }
 
 ZENO_API GraphData Graph::exportGraph() const {

@@ -245,6 +245,11 @@ void ViewportWidget::load_object(zeno::render_update_info info)
     m_zenovis->load_object(info);
 }
 
+void ViewportWidget::reload_objects(const zeno::render_reload_info& info)
+{
+    m_zenovis->reload(info);
+}
+
 void ViewportWidget::paintGL()
 {
     m_zenovis->paintGL();

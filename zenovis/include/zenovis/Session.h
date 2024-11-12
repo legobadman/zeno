@@ -38,6 +38,7 @@ struct Session : zeno::disable_copy {
     void look_perspective();
     void load_objects(const zeno::RenderObjsInfo& objs);
     void load_objects(const std::vector<zeno::render_update_info>& infos);
+    void reload(const zeno::render_reload_info& info);
     void load_object(zeno::render_update_info info);
     void look_to_dir(float cx, float cy, float cz,
                      float dx, float dy, float dz,

@@ -180,6 +180,7 @@ namespace zeno {
     enum UpdateReason {
         Update_View,            //只是view，计算已经完成了(dirty==false)
         Update_Reconstruct,     //经过了重新计算需要更新
+        Update_OnlyUserData,    //只是更新了与拓扑无关的数据，无须在渲染端重新构造。
         Update_Remove,          //移除，可能是删除或者Unview
     };
 
@@ -244,11 +245,23 @@ namespace zeno {
 
     typedef std::function<void(ObjPath, bool, NodeRunStatus)> F_NodeStatus;
 
+    enum render_reload_policy {
+        Reload_SwitchGraph,     //用户在编辑器上切换当前节点图的层次触发的Load
+        Reload_ToggleView,      //用户在编辑器上当前节点图，切换节点间的view触发的load
+        Reload_Calculation,     //由于标脏计算引发的load
+    };
+
     struct render_update_info {
         UpdateReason reason;
         std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
     };
     typedef std::function<void(render_update_info)> F_CommitRender;
+
+    struct render_reload_info {
+        render_reload_policy policy;
+        std::string current_ui_graph;   //当前用户在编辑器端的ui图层，以普通路径表达
+        std::vector<render_update_info> objs;
+    };
 }
 
 

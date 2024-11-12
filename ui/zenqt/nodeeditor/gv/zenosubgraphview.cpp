@@ -884,6 +884,15 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
         }
     }
 
+    //触发绘制更新
+    for (DisplayWidget* pWid : zenoApp->getMainWindow()->viewports()) {
+        zeno::render_reload_info info;
+        info.policy = zeno::Reload_SwitchGraph;
+        QString _path = '/' + path.join('/');
+        info.current_ui_graph = _path.toStdString();
+        pWid->reload(info);
+    }
+
     bool bShowThumbnail = ZenoSettingsManager::GetInstance().getValue(zsShowThumbnail).toBool();
     showThumbnail(bShowThumbnail);
 }
@@ -1020,6 +1029,11 @@ void ZenoSubGraphView::cameraFocus()
 {
     auto pView = getCurrentView();
     pView->cameraFocus();
+}
+
+QStringList ZenoSubGraphView::path() const
+{
+    return m_pathWidget->path();
 }
 
 void ZenoSubGraphView::keyPressEvent(QKeyEvent *event) {

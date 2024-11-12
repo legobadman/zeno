@@ -58,6 +58,7 @@ public:
     void cleanupView();
 
 //private:
+    void reload(const zeno::render_reload_info& info);
     void load_objects(const zeno::RenderObjsInfo& objs);
     void load_objects(const std::vector<zeno::render_update_info>& infos);
     void load_object(zeno::render_update_info info);

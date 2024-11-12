@@ -182,6 +182,11 @@ int Zenovis::setCurrentFrameId(int frameid)
     return frameid;
 }
 
+void Zenovis::reload(const zeno::render_reload_info& info)
+{
+    session->reload(info);
+}
+
 void Zenovis::load_objects(const zeno::RenderObjsInfo& objs)
 {
     session->load_objects(objs);

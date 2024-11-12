@@ -531,6 +531,15 @@ ZenoSubGraphView* ZenoGraphsEditor::getCurrentSubGraphView()
     return nullptr;
 }
 
+QStringList ZenoGraphsEditor::getCurrentGraphPath() {
+    if (ZenoSubGraphView* pCurr = getCurrentSubGraphView()) {
+        return pCurr->path();
+    }
+    else {
+        return {};
+    }
+}
+
 void ZenoGraphsEditor::showWelcomPage()
 {
     m_ui->mainStacked->setCurrentIndex(0);

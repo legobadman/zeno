@@ -81,6 +81,7 @@ struct Graph : std::enable_shared_from_this<Graph> {
     ZENO_API std::shared_ptr<INode> getNodeByPath(const std::string& path);
     ZENO_API std::shared_ptr<Graph> getGraphByPath(const std::string& path);
     ZENO_API std::map<std::string, std::shared_ptr<INode>> getNodes() const;
+    ZENO_API std::set<std::string> get_viewnodes() const;
 
     ZENO_API GraphData exportGraph() const;
 

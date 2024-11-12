@@ -127,9 +127,9 @@ namespace zeno {
         std::lock_guard lck(m_mtx);
         //m_lastViewObjs剩下来的都是上一次view，而这一次没有view的。
         m_remove = m_lastViewObjs;
-        for (auto objkey : m_lastViewObjs) {
-            m_render_updates.push_back(zeno::render_update_info{ Update_Remove, objkey });
-        }
+        //for (auto objkey : m_lastViewObjs) {
+        //    m_render_updates.push_back(zeno::render_update_info{ Update_Remove, objkey });
+        //}
         m_lastViewObjs.clear();
         m_removing_objs.clear();
     }
@@ -156,30 +156,20 @@ namespace zeno {
 
     ZENO_API void ObjectManager::collect_render_update(zeno::render_update_info info)
     {
-        if (info.reason != Update_Remove &&
-            m_lastViewObjs.find(info.uuidpath_node_objkey) != m_lastViewObjs.end()) {
-            //上一次view的，这一次也有
-            m_lastViewObjs.erase(info.uuidpath_node_objkey);
-        }
         for (int i = 0; i < m_render_updates.size(); i++) {
             auto update = m_render_updates[i];
             if (update.uuidpath_node_objkey == info.uuidpath_node_objkey) {
                 //先把原来的覆盖掉
-                m_render_updates[i] = info;
+                assert(false);
+                //m_render_updates[i] = info;
                 return;
             }
         }
         m_render_updates.push_back(info);
     }
 
-    ZENO_API void ObjectManager::clear_batch_updates()
+    void ObjectManager::clear_batch_updates()
     {
-        //先缓存记录上一次view的对象
-        for (const auto& info : m_render_updates) {
-            if (info.reason != Update_Remove) {
-                m_lastViewObjs.insert(info.uuidpath_node_objkey);
-            }
-        }
         m_render_updates.clear();
     }
 

@@ -32,6 +32,7 @@ public:
     void cleanUpScene();
     void beforeRun();
     void afterRun();
+    void reload(const zeno::render_reload_info& info);
     void changeTransformOperation(const QString &node);
     void changeTransformOperation(int mode);
     QSize viewportSize() const;

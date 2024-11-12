@@ -393,6 +393,11 @@ void OptixWorker::on_load_data(zeno::render_update_info info)
     m_zenoVis->load_object(info);
 }
 
+void OptixWorker::on_reload_objects(const zeno::render_reload_info& info)
+{
+    m_zenoVis->reload(info);
+}
+
 void OptixWorker::onSetBackground(bool bShowBg)
 {
     auto& ud = zeno::getSession().userData();
@@ -494,6 +499,7 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
     connect(this, &ZOptixViewport::sig_setBackground, m_worker, &OptixWorker::onSetBackground);
     connect(this, &ZOptixViewport::sig_setdata_on_optix_thread, m_worker, &OptixWorker::onSetData);
     connect(this, &ZOptixViewport::sig_loadObject, m_worker, &OptixWorker::on_load_data);
+    connect(this, &ZOptixViewport::sig_reload_objects, m_worker, &OptixWorker::on_reload_objects);
 
     setRenderSeparately(false, false);
     m_thdOptix.start();
@@ -532,6 +538,11 @@ void ZOptixViewport::load_objects()
 void ZOptixViewport::load_object(zeno::render_update_info info)
 {
     emit sig_loadObject(info);
+}
+
+void ZOptixViewport::reload_objects(const zeno::render_reload_info& info)
+{
+    emit sig_reload_objects(info);
 }
 
 void ZOptixViewport::setSimpleRenderOption()

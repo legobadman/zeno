@@ -27,6 +27,7 @@
 #include "layout/winlayoutrw.h"
 #include "model/graphsmanager.h"
 #include "calculation/calculationmgr.h"
+#include "nodeeditor/gv/zenographseditor.h"
 
 
 using std::string;
@@ -401,15 +402,49 @@ void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
 
 void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
     if (bSucceed) {
-        if (m_bGLView) {
-            m_glView->load_objects();
-            emit render_objects_loaded();
+        //先从objManager拿出
+        auto& sess = zeno::getSession();
+        std::vector<zeno::render_update_info> infos;
+        sess.objsMan->export_render_infos(infos);
+
+        zeno::render_reload_info reload;
+        reload.current_ui_graph;
+        reload.policy = zeno::Reload_Calculation;
+        reload.objs = infos;
+
+        ZenoGraphsEditor* pGraphEditor = zenoApp->getMainWindow()->getAnyEditor();
+        if (pGraphEditor) {
+            QStringList paths = pGraphEditor->getCurrentGraphPath();
+            QString path = '/' + paths.join('/');
+            reload.current_ui_graph = path.toStdString();
         }
-        else {
-            m_optixView->load_objects();
+        if (reload.current_ui_graph.empty()) {
+            //默认主图
+            reload.current_ui_graph = "/main";
         }
-        updateFrame();
+
+        if (!infos.empty()) {
+            if (m_bGLView) {
+                m_glView->reload_objects(reload);
+                emit render_objects_loaded();
+            }
+            else {
+                m_optixView->reload_objects(reload);
+            }
+            updateFrame();
+        }
     }
+}
+
+void DisplayWidget::reload(const zeno::render_reload_info& info)
+{
+    if (m_bGLView) {
+        m_glView->reload_objects(info);
+    }
+    else {
+        m_optixView->reload_objects(info);
+    }
+    updateFrame();
 }
 
 void DisplayWidget::onJustLoadObjects() {

@@ -203,6 +203,10 @@ void Session::load_objects(const std::vector<zeno::render_update_info>& infos) {
     impl->scene->load_objects(infos);
 }
 
+void Session::reload(const zeno::render_reload_info& info) {
+    impl->scene->reload(info);
+}
+
 void Session::load_object(zeno::render_update_info info) {
     impl->scene->load_object(info);
 }

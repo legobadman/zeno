@@ -43,6 +43,10 @@ struct RenderEngineBate : RenderEngine {
     ~RenderEngineBate() {
     }
 
+    void reload(const zeno::render_reload_info& info) override {
+        graphicsMan->reload(info);
+    }
+
     void load_objects(const zeno::RenderObjsInfo& objs) override {
         graphicsMan->load_objects2(objs);
     }
