@@ -1384,6 +1384,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
                 }
             }
+            meshNeedUpdate = true;
         }
         else if (zeno::Reload_ToggleView == info.policy) {
             assert(info.objs.size() == 1);
@@ -1397,12 +1398,14 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                     auto it = wtf.find(update.uuidpath_node_objkey);
                     if (it == wtf.end()) {
                         graphicsMan->add_object(spObject);
+                        meshNeedUpdate = true;
                     }
                 }
                 else if (update.reason == zeno::Update_Remove) {
                     auto it = wtf.find(update.uuidpath_node_objkey);
                     if (it != wtf.end()) {
                         graphicsMan->remove_object(update.uuidpath_node_objkey);
+                        meshNeedUpdate = true;
                     }
                 }
             }
@@ -1418,6 +1421,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 if (spObject) {
                     //可能是对象没有通过子图的Suboutput连出来
                     graphicsMan->add_object(spObject);
+                    meshNeedUpdate = true;
                 }
             }
         }
