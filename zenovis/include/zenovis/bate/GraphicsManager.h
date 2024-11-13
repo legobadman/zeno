@@ -182,7 +182,7 @@ struct GraphicsManager {
             assert(info.objs.size() == 1);
             const auto& update = info.objs[0];
             auto& wtf = graphics.m_curr.m_curr;
-            auto spNode = sess.mainGraph->getNodeByUuidPath(update.uuidpath_node_objkey);
+            auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
             assert(spNode);
             zeno::zany spObject = spNode->get_default_output_object();
             if (spObject) {
@@ -204,12 +204,14 @@ struct GraphicsManager {
             }
         }
         else if (zeno::Reload_Calculation == info.policy) {
-            for (const zeno::render_update_info& info : info.objs) {
-                auto spNode = sess.mainGraph->getNodeByUuidPath(info.uuidpath_node_objkey);
+            for (const zeno::render_update_info& update : info.objs) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
                 assert(spNode);
                 zeno::zany spObject = spNode->get_default_output_object();
-                assert(spObject);
-                add_object(spObject);
+                if (spObject) {
+                    //可能是对象没有通过子图的Suboutput连出来
+                    add_object(spObject);
+                }
             }
         }
     }
@@ -217,7 +219,7 @@ struct GraphicsManager {
     void load_objects3(const std::vector<zeno::render_update_info>& infos) {
         auto& sess = zeno::getSession();
         for (const zeno::render_update_info& info : infos) {
-            auto spNode = sess.mainGraph->getNodeByUuidPath(info.uuidpath_node_objkey);
+            auto spNode = sess.getNodeByUuidPath(info.uuidpath_node_objkey);
             assert(spNode);
             zeno::zany spObject = spNode->get_default_output_object();
             assert(spObject);

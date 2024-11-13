@@ -65,6 +65,11 @@ struct SubOutput : zeno::INode {
     virtual void apply() override {
     }
 
+    ZENO_API virtual zany get_default_output_object() override {
+        zany obj = get_input("port");
+        return obj;
+    }
+
     CustomUI export_customui() const override {
         CustomUI ui;
         ParamGroup group;

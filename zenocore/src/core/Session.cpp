@@ -285,6 +285,10 @@ ZENO_API std::shared_ptr<Graph> Session::createGraph(const std::string& name) {
     return graph;
 }
 
+ZENO_API std::shared_ptr<INode> Session::getNodeByUuidPath(std::string const& uuid_path) {
+    return mainGraph->getNodeByUuidPath(uuid_path);
+}
+
 ZENO_API void Session::resetMainGraph() {
     mainGraph.reset();
     mainGraph = std::make_shared<Graph>("main");

@@ -125,7 +125,7 @@ public:
     ZENO_API void update_layout(params_change_info& changes);
     CALLBACK_REGIST(update_layout, void, params_change_info& changes)
 
-    ZENO_API virtual params_change_info update_editparams(const ParamsUpdateInfo& params);
+    ZENO_API virtual params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
 
     //由param这个参数值的变化触发节点params重置
     ZENO_API virtual void trigger_update_params(const std::string& param, bool changed, params_change_info changes);
@@ -228,7 +228,7 @@ public:
     ZENO_API zany get_input(std::string const &id) const;
     ZENO_API zany get_output_obj(std::string const& sock_name);
     ZENO_API std::vector<zany> get_output_objs();
-    ZENO_API zany get_default_output_object();
+    ZENO_API virtual zany get_default_output_object();
 
     template <class T>
     std::shared_ptr<T> get_input(std::string const &id) const {

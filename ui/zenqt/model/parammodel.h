@@ -66,7 +66,7 @@ public:
 
     //temp:
     QStandardItemModel* customParamModel();
-    void batchModifyParams(const zeno::ParamsUpdateInfo& params);
+    void batchModifyParams(const zeno::ParamsUpdateInfo& params, bool bSubnetInit = false);
     void updateUiLinksSockets(zeno::params_change_info& changes);
     void resetCustomUi(const zeno::CustomUI& customui);
 

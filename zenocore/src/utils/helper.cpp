@@ -1131,7 +1131,7 @@ namespace zeno {
         if (spCurrNode) {
             getUpstreamNodes(spCurrNode, upstreamDepNodes, upstreams);
             for (auto& objPath : upstreamDepNodes) {
-                if (auto node = zeno::getSession().mainGraph->getNodeByUuidPath(objPath)) {
+                if (auto node = zeno::getSession().getNodeByUuidPath(objPath)) {
                     mark_dirty_by_dependNodes(node, true, upstreams);
                 }
             }

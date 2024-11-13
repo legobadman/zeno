@@ -109,7 +109,7 @@ namespace zeno {
             auto uuid_path = uuid_param.substr(0, idx);
             auto param = uuid_param.substr(idx + 1, uuid_param.size() - idx);
             auto objPath = zeno::strToObjPath(uuid_path);
-            auto spNode = getSession().mainGraph->getNodeByUuidPath(objPath);
+            auto spNode = getSession().getNodeByUuidPath(objPath);
             assert(spNode);
             bool bExist = false;
             ParamPrimitive primparam = spNode->get_input_prim_param(param, &bExist);
@@ -203,7 +203,7 @@ namespace zeno {
                     auto nodePath = path.substr(0, idx);
                     auto param = path.substr(idx + 1, path.size() - idx);
                     auto objPath = zeno::strToObjPath(nodePath);
-                    auto spNode = getSession().mainGraph->getNodeByUuidPath(objPath);
+                    auto spNode = getSession().getNodeByUuidPath(objPath);
                     assert(spNode);
                     if (!spNode->is_dirty())
                     {

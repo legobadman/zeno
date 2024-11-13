@@ -850,6 +850,12 @@ std::set<std::string> Graph::getSubOutputs()
     return outputs;
 }
 
+ZENO_API bool Graph::hasNode(std::string const& uuid_node_path) {
+    auto spNode = zeno::getSession().getNodeByUuidPath(uuid_node_path);
+    if (!spNode) return false;
+    return spNode->getThisGraph().get() == this;
+}
+
 ZENO_API std::shared_ptr<INode> Graph::getNode(std::string const& name) {
     if (m_name2uuid.find(name) == m_name2uuid.end()) {
         return nullptr;

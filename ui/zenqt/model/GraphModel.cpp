@@ -1079,7 +1079,7 @@ zeno::NodeData GraphModel::_createNodeImpl(const QString& cate, zeno::NodeData& 
                 zeno::ParamsUpdateInfo updateInfo;
                 zeno::parseUpdateInfo(nodedata.customUi, updateInfo);
                 paramsM->resetCustomUi(nodedata.customUi);
-                paramsM->batchModifyParams(updateInfo);
+                paramsM->batchModifyParams(updateInfo, true);
 
                 if (nodedata.subgraph.has_value())
                 {

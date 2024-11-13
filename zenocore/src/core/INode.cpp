@@ -953,7 +953,7 @@ void INode::initReferLinks(PrimitiveParam* target_param) {
 
     for (const auto& [source_node_uuidpath, source_param] : newAdded)
     {
-        std::shared_ptr<INode> srcNode = getSession().mainGraph->getNodeByUuidPath(source_node_uuidpath);
+        std::shared_ptr<INode> srcNode = getSession().getNodeByUuidPath(source_node_uuidpath);
         auto iterSrcParam = srcNode->m_inputPrims.find(source_param);
         if (iterSrcParam != srcNode->m_inputPrims.end()) {
             PrimitiveParam& srcparam = iterSrcParam->second;
@@ -2387,7 +2387,7 @@ ZENO_API void INode::update_layout(params_change_info& changes)
     CALLBACK_NOTIFY(update_layout, changes);
 }
 
-ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& params)
+ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
 {
     //TODO: 这里只有primitive参数类型的情况，还需要整合obj参数的情况。
     std::set<std::string> inputs_old, outputs_old, obj_inputs_old, obj_outputs_old;

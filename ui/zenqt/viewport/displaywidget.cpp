@@ -410,7 +410,6 @@ void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
         zeno::render_reload_info reload;
         reload.current_ui_graph;
         reload.policy = zeno::Reload_Calculation;
-        reload.objs = infos;
 
         ZenoGraphsEditor* pGraphEditor = zenoApp->getMainWindow()->getAnyEditor();
         if (pGraphEditor) {
@@ -423,7 +422,18 @@ void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
             reload.current_ui_graph = "/main";
         }
 
-        if (!infos.empty()) {
+        //这里要对不在current_ui_graph的节点进行过滤
+        std::shared_ptr<zeno::Graph> curr_graph = sess.mainGraph->getGraphByPath(reload.current_ui_graph);
+        for (auto iter = infos.begin(); iter != infos.end(); ) {
+            if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
+                iter = infos.erase(iter);
+            }
+            else {
+                iter++;
+            }
+        }
+        reload.objs = infos;
+        if (!reload.objs.empty()) {
             if (m_bGLView) {
                 m_glView->reload_objects(reload);
                 emit render_objects_loaded();

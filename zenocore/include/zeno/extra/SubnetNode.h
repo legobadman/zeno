@@ -16,7 +16,7 @@ struct SubnetNode : INode {
     ZENO_API ~SubnetNode();
 
     ZENO_API void initParams(const NodeData& dat) override;
-    ZENO_API params_change_info update_editparams(const ParamsUpdateInfo& params) override;
+    ZENO_API params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false) override;
     ZENO_API std::shared_ptr<Graph> get_graph() const;
     ZENO_API bool isAssetsNode() const;
     ZENO_API void apply() override;

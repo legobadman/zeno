@@ -44,13 +44,22 @@ ZENO_API bool SubnetNode::isAssetsNode() const {
     return subgraph->isAssets();
 }
 
-ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params)
+ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
 {
     params_change_info changes = INode::update_editparams(params);
     //update subnetnode.
     if (!subgraph->isAssets()) {
         for (auto name : changes.new_inputs) {
             std::shared_ptr<INode> newNode = subgraph->createNode("SubInput", name);
+
+            if (bSubnetInit) {
+                if (name == "int1") {
+                    newNode->set_pos({700, 0});
+                }
+                else if (name == "objInput1") {
+                    newNode->set_pos({0, 0});
+                }
+            }
 
             //这里SubInput的类型其实是和Subnet节点创建预设的参数对应，参考AddNodeCommand
 
@@ -96,6 +105,16 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
 
         for (auto name : changes.new_outputs) {
             std::shared_ptr<INode> newNode = subgraph->createNode("SubOutput", name);
+
+            if (bSubnetInit) {
+                if (name == "output1") {
+                    newNode->set_pos({ 700, 500 });
+                }
+                else if (name == "objOutput1") {
+                    newNode->set_pos({ 0, 500 });
+                    newNode->set_view(true);
+                }
+            }
 
             bool exist;
             bool isprim = isPrimitiveType(false, name, exist);
@@ -193,11 +212,15 @@ ZENO_API void SubnetNode::apply() {
         auto iter = m_inputObjs.find(subinput_node);
         if (iter != m_inputObjs.end()) {
             //object type.
-            zany spObject = iter->second.spObject;
-            bool ret = subinput->set_output("port", spObject);
-            assert(ret);
-            ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
-            assert(ret);
+            if (iter->second.spObject) {
+                //要拷贝一下才能赋值到SubInput的port参数
+                zany spObject = iter->second.spObject->clone();
+                spObject->update_key(subinput->get_uuid_path());
+                bool ret = subinput->set_output("port", spObject);
+                assert(ret);
+                ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
+                assert(ret);
+            }
         }
         else {
             //primitive type
@@ -221,11 +244,20 @@ ZENO_API void SubnetNode::apply() {
     }
     subgraph->applyNodes(nodesToExec);
 
-    for (auto const &suboutput_node: subgraph->getSubOutputs()) {
+    //TODO: 多输出其实是一个问题，不知道view哪一个，所以目前先规定子图只能有一个输出
+    auto suboutputs = subgraph->getSubOutputs();
+    bool bSetOutput = false;
+    for (auto const &suboutput_node: suboutputs) {
         auto suboutput = subgraph->getNode(suboutput_node);
         zany result = suboutput->get_input("port");
         if (result) {
-            bool ret = set_output(suboutput_node, result);
+            if (bSetOutput) {
+                throw makeError<UnimplError>("only support at most one suboutput on subnet");
+            }
+            bSetOutput = true;
+            zany spObject = result->clone();
+            spObject->update_key(get_uuid_path());
+            bool ret = set_output(suboutput_node, spObject);
             assert(ret);
         }
     }

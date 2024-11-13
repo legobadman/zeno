@@ -191,7 +191,7 @@ namespace zeno {
         for (auto obj_key : m_removing_objs) {
             auto nodes = getAttachNodes(obj_key);
             for (auto node_path : nodes) {
-                auto spNode = zeno::getSession().mainGraph->getNodeByUuidPath(node_path);
+                auto spNode = zeno::getSession().getNodeByUuidPath(node_path);
                 if (spNode)
                     spNode->mark_dirty(true);
             }
@@ -327,9 +327,9 @@ namespace zeno {
             return info;
 
         info.transformingObj = iter->second.obj;
-        auto& mainG = getSession().mainGraph;
+        auto& sess = getSession();
         for (auto nodepath : iter->second.attach_nodes) {
-            auto spNode = mainG->getNodeByUuidPath(nodepath);
+            auto spNode = sess.getNodeByUuidPath(nodepath);
             if (spNode->is_view())
             {
                 info.spViewNode = spNode;

@@ -76,6 +76,7 @@ struct Graph : std::enable_shared_from_this<Graph> {
     ZENO_API bool updateLink(const EdgeInfo& edge, bool bInput, const std::string oldkey, const std::string newkey);
     ZENO_API bool moveUpLinkKey(const EdgeInfo& edge, bool bInput, const std::string keyName);
 
+    ZENO_API bool hasNode(std::string const& uuid_node_path);
     ZENO_API std::shared_ptr<INode> getNode(std::string const& name);
     ZENO_API std::shared_ptr<INode> getNodeByUuidPath(ObjPath path);
     ZENO_API std::shared_ptr<INode> getNodeByPath(const std::string& path);

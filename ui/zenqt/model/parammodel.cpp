@@ -682,7 +682,7 @@ QStandardItemModel* ParamsModel::customParamModel()
     return m_customParamsM;
 }
 
-void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params)
+void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params, bool bSubnetInit)
 {
     //if (params.empty())   //可能是删除到空的情况，无需return
     //    return;
@@ -690,7 +690,7 @@ void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params)
     auto spNode = m_wpNode.lock();
     ZASSERT_EXIT(spNode);
     this->blockSignals(this);   //updateParamData不发出的datachange信号否则触发m_customParamsM的datachange
-    zeno::params_change_info changes = spNode->update_editparams(params);
+    zeno::params_change_info changes = spNode->update_editparams(params, bSubnetInit);
     this->blockSignals(false);
     updateUiLinksSockets(changes);
 }
