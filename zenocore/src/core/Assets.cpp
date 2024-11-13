@@ -399,14 +399,14 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     paramOutput.bInput = true;
     paramOutput.name = "port";
     paramOutput.type = Param_Wildcard;
-    paramOutput.socketType = Socket_WildCard;
+    paramOutput.bWildcard = true;
     output1Node->add_input_prim_param(paramOutput);
     std::shared_ptr<zeno::INode> objInput1Node = newAsst.sharedGraph->getNode("objInput1");
     zeno::ParamObject paramObj;
     paramObj.bInput = false;
     paramObj.name = "port";
     paramObj.type = Obj_Wildcard;
-    paramObj.socketType = zeno::Socket_WildCard;
+    paramObj.bWildcard = true;
     objInput1Node->add_output_obj_param(paramObj);
     std::shared_ptr<zeno::INode> objOutput1Node = newAsst.sharedGraph->getNode("objOutput1");
     paramObj.bInput = true;

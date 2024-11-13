@@ -78,10 +78,10 @@ struct NumericInterpolation : zeno::INode {
 };
 
 ZENDEFNODE(NumericInterpolation, {
-    {{gParamType_Float, "src", "", zeno::Socket_WildCard}, {gParamType_Float, "srcMin", "0", zeno::Socket_WildCard},
-     {gParamType_Float, "srcMax", "1", zeno::Socket_WildCard}, {gParamType_Float, "dstMin", "0", zeno::Socket_WildCard},
-     {gParamType_Float, "dstMax", "1", zeno::Socket_WildCard}},
-    {{gParamType_Float, "dst", "", zeno::Socket_WildCard}},
+    {{gParamType_Float, "src", ""}, {gParamType_Float, "srcMin", "0"},
+     {gParamType_Float, "srcMax", "1"}, {gParamType_Float, "dstMin", "0"},
+     {gParamType_Float, "dstMax", "1"}},
+    {{gParamType_Float, "dst", ""}},
     {{gParamType_Bool, "isClamped", "0"}},
     {"numeric"},
 });

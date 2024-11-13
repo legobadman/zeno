@@ -1340,7 +1340,7 @@ bool INode::receiveOutputObj(ObjectParam* in_param, std::shared_ptr<INode> outNo
         in_param->spObject = outputObj;
         //TODO: readonly property on object.
     }
-    else if (in_param->socketType == Socket_WildCard) {
+    else if (in_param->bWildcard) {
         in_param->spObject = outputObj;
     }
 #endif
@@ -1764,7 +1764,7 @@ bool INode::add_input_obj_param(ParamObject param) {
     sparam.bInput = true;
     sparam.name = param.name;
     sparam.type = param.type;
-    sparam.socketType = param.socketType;
+    sparam.socketType = Socket_Clone;// param.socketType;
     sparam.m_wpNode = shared_from_this();
     sparam.wildCardGroup = param.wildCardGroup;
     sparam.constrain = param.constrain;
@@ -1782,7 +1782,7 @@ bool INode::add_output_prim_param(ParamPrimitive param) {
     sparam.defl = param.defl;
     sparam.m_wpNode = shared_from_this();
     sparam.name = param.name;
-    sparam.socketType = param.socketType;
+    sparam.socketType = Socket_Clone;// param.socketType;
     sparam.type = param.type;
     sparam.ctrlProps = param.ctrlProps;
     sparam.wildCardGroup = param.wildCardGroup;
@@ -2108,7 +2108,18 @@ ZENO_API bool INode::update_param_impl(const std::string& param, zeno::reflect::
     return false;
 }
 
-ZENO_API bool zeno::INode::update_param_socket_type(const std::string& param, SocketType type)
+ZENO_API bool INode::update_param_wildcard(const std::string& param, bool isWildcard)
+{
+    auto& spParam = safe_at(m_inputObjs, param, "miss input param `" + param + "` on node `" + m_name + "`");
+    if (isWildcard != spParam.bWildcard) {
+        spParam.bWildcard = isWildcard;
+        CALLBACK_NOTIFY(update_param_wildcard, param, isWildcard)
+        return true;
+    }
+    return false;
+}
+
+ZENO_API bool INode::update_param_socket_type(const std::string& param, SocketType type)
 {
     CORE_API_BATCH
     auto& spParam = safe_at(m_inputObjs, param, "miss input param `" + param + "` on node `" + m_name + "`");
@@ -2423,7 +2434,13 @@ ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& par
                 ObjectParam sparam;
                 sparam.name = newname;
                 sparam.type = param.type;
-                sparam.socketType = param.socketType;
+                sparam.bWildcard = param.bWildcard;
+                if (!param.bInput) {
+                    sparam.socketType = Socket_Output;
+                }
+                else {
+                    sparam.socketType = param.socketType;
+                }
                 sparam.m_wpNode = shared_from_this();
                 in_outputs[newname] = std::move(sparam);
 
@@ -2449,6 +2466,7 @@ ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& par
                 auto& spParam = in_outputs[newname];
                 spParam.type = param.type;
                 spParam.name = newname;
+                spParam.bWildcard = param.bWildcard;
                 if (param.bInput)
                 {
                     update_param_socket_type(spParam.name, param.socketType);
@@ -2492,7 +2510,8 @@ ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& par
                 sparam.type = param.type;
                 sparam.control = param.control;
                 sparam.ctrlProps = param.ctrlProps;
-                sparam.socketType = param.socketType;
+                sparam.socketType = Socket_Primitve;
+                sparam.bWildcard = param.bWildcard;
                 sparam.m_wpNode = shared_from_this();
                 sparam.bSocketVisible = param.bSocketVisible;
                 in_outputs[newname] = std::move(sparam);
@@ -2524,7 +2543,8 @@ ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& par
                 convertToEditVar(spParam.defl, spParam.type);
 
                 spParam.name = newname;
-                spParam.socketType = param.socketType;
+                spParam.socketType = Socket_Primitve;
+                spParam.bWildcard = param.bWildcard;
                 if (param.bInput)
                 {
                     if (param.type != spParam.type)
@@ -3009,13 +3029,14 @@ std::vector<std::pair<std::string, bool>> zeno::INode::getWildCardParams(const s
     return params;
 }
 
-void zeno::INode::getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType)
+void zeno::INode::getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType, bool& bWildcard)
 {
     if (bPrim) {
         auto iter = bInput ? m_inputPrims.find(param_name) : m_outputPrims.find(param_name);
         if (bInput ? (iter != m_inputPrims.end()) : (iter != m_outputPrims.end())) {
             paramType = iter->second.type;
             socketType = iter->second.socketType;
+            bWildcard = iter->second.bWildcard;
             return;
     }
     }
@@ -3024,6 +3045,7 @@ void zeno::INode::getParamTypeAndSocketType(const std::string& param_name, bool 
         if (bInput ? (iter != m_inputObjs.end()) : (iter != m_outputObjs.end())) {
             paramType = iter->second.type;
             socketType = iter->second.socketType;
+            bWildcard = iter->second.bWildcard;
             return;
         }
     }

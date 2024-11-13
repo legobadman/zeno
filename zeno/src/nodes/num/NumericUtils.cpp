@@ -68,7 +68,7 @@ struct NumericRandom : INode {
 
 ZENDEFNODE(NumericRandom, {
     {{gParamType_Float, "scale", "1"}},
-    {{gParamType_Float, "value", "1", Socket_WildCard}},
+    {{gParamType_Float, "value", "1"}},
     {{gParamType_Int, "dim", "1"}, {gParamType_Bool, "symmetric", "0"}},
     {"deprecated"},
 });

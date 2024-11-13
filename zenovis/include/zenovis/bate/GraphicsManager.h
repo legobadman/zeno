@@ -170,7 +170,12 @@ struct GraphicsManager {
             for (auto viewnode : viewnodes) {
                 std::shared_ptr<zeno::INode> spNode = spGraph->getNode(viewnode);
                 zeno::zany spObject = spNode->get_default_output_object();
-                add_object(spObject);
+                if (spObject) {
+                    add_object(spObject);
+                }
+                else {
+
+                }
             }
         }
         else if (zeno::Reload_ToggleView == info.policy) {

@@ -998,7 +998,7 @@ ZENDEFNODE(PrimGetAttr,
                    {"enum vert tri line loop poly", "method", "tri"},
                    {gParamType_Int, "index", "0"},
                }, /* outputs: */ {
-                   {gParamType_Float,"value","", Socket_WildCard},
+                   {gParamType_Float,"value",""},
                }, /* params: */ {
                }, /* category: */ {
                    "erode",

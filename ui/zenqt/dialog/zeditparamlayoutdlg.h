@@ -97,6 +97,7 @@ private slots:
     void onParamsViewParamDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     void onOutputsViewParamDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     void onSocketTypeChanged(int idx);
+    void onObjTypeChanged(int idx);
 
 private:
     void initUI();

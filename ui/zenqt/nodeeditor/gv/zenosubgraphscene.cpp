@@ -830,8 +830,8 @@ bool ZenoSubGraphScene::isLinkValid(const ZenoSocketItem* fixedSockItem, const Z
     if (inParamType != outParamType)
     {
         if (zeno::outParamTypeCanConvertInParamType(outParamType, inParamType, outGroup, inGroup) || 
-            (zeno::SocketType)inSockIdx.data(ROLE_SOCKET_TYPE).toInt() == zeno::Socket_WildCard ||
-            (zeno::SocketType)outSockIdx.data(ROLE_SOCKET_TYPE).toInt() == zeno::Socket_WildCard) {
+            inSockIdx.data(ROLE_PARAM_IS_WILDCARD).toBool() ||
+            outSockIdx.data(ROLE_PARAM_IS_WILDCARD).toBool()) {
         }
         else {
             //subnet输入对象可能是Socket_Owning之类的，socket属于子图且为obj类型视为可连接

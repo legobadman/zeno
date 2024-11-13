@@ -213,9 +213,12 @@ namespace zenoio
             case zeno::Socket_Owning:   writer.String(iotags::params::socket_owning); break;
             case zeno::Socket_ReadOnly: writer.String(iotags::params::socket_readonly); break;
             case zeno::Socket_Primitve: writer.String(iotags::params::socket_primitive); break;
-            case zeno::Socket_WildCard: writer.String(iotags::params::socket_wildcard); break;
             default:
                 writer.String(iotags::params::socket_none);
+            }
+            if (param.bWildcard) {
+                writer.Key("is-wildcard");
+                writer.Bool(true);
             }
         }
         if (!param.wildCardGroup.empty())
@@ -324,7 +327,7 @@ namespace zenoio
             }
 #endif
         }
-        //�������Ҳ������Socket_WildCard���ͣ����¼socket_type
+
         writer.Key("socket-type");
         switch (param.socketType)
         {
@@ -332,10 +335,15 @@ namespace zenoio
         case zeno::Socket_Owning:   writer.String(iotags::params::socket_owning); break;
         case zeno::Socket_ReadOnly: writer.String(iotags::params::socket_readonly); break;
         case zeno::Socket_Primitve: writer.String(iotags::params::socket_primitive); break;
-        case zeno::Socket_WildCard: writer.String(iotags::params::socket_wildcard); break;
         default:
             writer.String(iotags::params::socket_none);
         }
+
+        if (param.bWildcard) {
+            writer.Key("is-wildcard");
+            writer.Bool(true);
+        }
+
         writer.Key("visible");
         writer.Bool(param.bSocketVisible);
 

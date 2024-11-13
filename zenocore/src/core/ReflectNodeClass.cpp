@@ -113,7 +113,7 @@ namespace zeno {
             wildCardPrim.name = name;
             wildCardPrim.bInput = bInput;
             wildCardPrim.type = Param_Wildcard;
-            wildCardPrim.socketType = Socket_WildCard;
+            wildCardPrim.bWildcard = true;
             wildCardPrim.wildCardGroup = wildCardGroup;
             return wildCardPrim;
         };
@@ -284,7 +284,7 @@ namespace zeno {
                             wildCardObj.name = reflectInputObj.dispName;
                             wildCardObj.bInput = true;
                             wildCardObj.type = Obj_Wildcard;
-                            wildCardObj.socketType = Socket_WildCard;
+                            wildCardObj.bWildcard = true;
                             wildCardObj.wildCardGroup = reflectInputObj.wildCardGroup;
                             customui.inputObjs.push_back(std::move(wildCardObj));
                             anyInputs.erase(reflectInputObj.mapTo);
@@ -325,7 +325,7 @@ namespace zeno {
                             wildCardObj.name = reflectOutputObj.dispName;
                             wildCardObj.bInput = false;
                             wildCardObj.type = Obj_Wildcard;
-                            wildCardObj.socketType = Socket_WildCard;
+                            wildCardObj.bWildcard = true;
                             wildCardObj.wildCardGroup = reflectOutputObj.wildCardGroup;
                             customui.outputObjs.push_back(std::move(wildCardObj));
                             paramsMapping.anyOutputs.erase(reflectOutputObj.mapTo);
@@ -526,7 +526,7 @@ namespace zeno {
                     SocketType socketProp = Socket_Owning;
                     if (const zeno::reflect::IMetadataValue* value = metadata->get_value("Socket")) {
                         int _role = value->as_int();
-                        if (_role < NoSocket || _role > Socket_WildCard) {
+                        if (_role < NoSocket || _role > Socket_Primitve) {
                             throw makeError<UnimplError>("parsing error when parsing reflected node.");
                         }
                         socketProp = (SocketType)_role;

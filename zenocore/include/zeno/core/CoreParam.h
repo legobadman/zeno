@@ -51,6 +51,7 @@ namespace zeno {
         bool m_idModify = false;    //该output param输出的obj是新创建的(false)还是基于已有的修改(true)
         bool bEnable = true;        //参数是否可用
         bool bVisible = true;       //参数是否可见，并非只指Socket可见，不过对于对象参数来说也就是socket
+        bool bWildcard = false;     //是否为wildcard参数
     };
 
     struct ObjectParam : CoreParam {

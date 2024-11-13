@@ -501,7 +501,7 @@ ZENO_DEFNODE(LiveMeshNode)({
         {gParamType_Bool, "outDict", "false"}
     },
     {
-        {gParamType_List, "prims", "", Socket_WildCard}
+        {gParamType_List, "prims", ""}
     },
     {
     },

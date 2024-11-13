@@ -287,7 +287,7 @@ struct PrimitiveHalfBinaryOp : INode {
 
 ZENDEFNODE(PrimitiveHalfBinaryOp,
     { /* inputs: */ {
-        {gParamType_Float, "valueB", "", zeno::Socket_WildCard},
+        {gParamType_Float, "valueB", ""},
         {gParamType_Primitive, "primA", "", zeno::Socket_ReadOnly},
         {gParamType_Primitive, "primOut", "", zeno::Socket_ReadOnly},
     }, /* outputs: */ {

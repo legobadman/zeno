@@ -41,7 +41,7 @@ ZenoSocketItem::ZenoSocketItem(
     bool bVisible = m_paramIdx.data(ROLE_PARAM_VISIBLE).value<bool>();
     m_color = ZColorManager::getColorByType(type);
     setBrush(m_color, m_color);
-    //if (m_paramIdx.data(ROLE_SOCKET_TYPE).toInt() == zeno::Socket_WildCard)
+    //if (m_paramIdx.data(ROLE_PARAM_IS_WILDCARD).toBool())
     //    setBrush(QColor("#CC7C5A"), QColor("#5FD2FF"));
     //else
     //    setBrush(QColor("#CCA44E"), QColor("#FFF000"));

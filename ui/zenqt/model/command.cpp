@@ -17,6 +17,7 @@ AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QS
         zeno::ParamGroup default;
 
         zeno::ParamUpdateInfo info;
+
         zeno::ParamPrimitive param;
         param.bInput = true;
         param.name = "int1";
@@ -27,24 +28,26 @@ AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QS
         param.bSocketVisible = false;
         info.param = param;
         default.params.push_back(param);
+
         zeno::ParamPrimitive outputparam;
         outputparam.bInput = false;
         outputparam.name = "output1";
         outputparam.defl = zeno::reflect::Any();
         outputparam.type = Param_Wildcard;
-        outputparam.socketType = zeno::Socket_WildCard;
+        outputparam.socketType = zeno::Socket_Primitve;
         outputparam.bSocketVisible = false;
         info.param = outputparam;
+
         zeno::ParamObject objInput;
         objInput.bInput = true;
         objInput.name = "objInput1";
-        objInput.type = Obj_Wildcard;
-        objInput.socketType = zeno::Socket_WildCard;
+        objInput.type = gParamType_Geometry;
+
         zeno::ParamObject objOutput;
         objOutput.bInput = false;
         objOutput.name = "objOutput1";
-        objOutput.type = Obj_Wildcard;
-        objOutput.socketType = zeno::Socket_WildCard;
+        objOutput.type = gParamType_Geometry;
+        objOutput.socketType = zeno::Socket_Output;
 
         tab.groups.emplace_back(std::move(default));
         m_nodeData.customUi.inputPrims.emplace_back(std::move(tab));

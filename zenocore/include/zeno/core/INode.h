@@ -101,6 +101,9 @@ public:
     ZENO_API bool update_param_socket_type(const std::string& name, SocketType type);
     CALLBACK_REGIST(update_param_socket_type, void, const std::string&, SocketType)
 
+    ZENO_API bool update_param_wildcard(const std::string& name, bool isWildcard);
+    CALLBACK_REGIST(update_param_wildcard, void, const std::string&, bool)
+
     ZENO_API bool update_param_type(const std::string& name, bool bPrim, bool bInput, ParamType type);
     CALLBACK_REGIST(update_param_type, void, const std::string&, ParamType, bool)
 
@@ -163,7 +166,7 @@ public:
     bool removeLink(bool bInput, const EdgeInfo& edge);
     void mark_dirty_objs();
     std::vector<std::pair<std::string, bool>> getWildCardParams(const std::string& name, bool bPrim);
-    void getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType);
+    void getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType, bool& bWildcard);
     void constructReference(const std::string& param_name);
     void onNodeNameUpdated(const std::string& oldname, const std::string& newname);
     void on_node_about_to_remove();

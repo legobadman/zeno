@@ -24,7 +24,7 @@ struct VDBChangeBackground : INode{
 ZENO_DEFNODE(VDBChangeBackground)(
      { /* inputs: */ {
      {gParamType_VDBGrid, "grid", "", zeno::Socket_ReadOnly},
-     {gParamType_Float, "background", "", zeno::Socket_WildCard},
+     {gParamType_Float, "background", ""},
      }, /* outputs: */ {
          {gParamType_VDBGrid, "grid"},
      }, /* params: */ {

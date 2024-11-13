@@ -30,6 +30,7 @@ struct ParamItem
     bool bSocketVisible = true;
     bool bVisible = true;
     bool bEnable = true;
+    bool bWildcard = false;
 };
 
 class ParamsModel : public QAbstractListModel

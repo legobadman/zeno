@@ -30,7 +30,6 @@ struct SubInput : zeno::INode {
     }
 
     virtual void apply() override {
-        //直接由SubnetNode来设置output，这里其实不用再apply了。
         //printf("!!! %s\n", typeid(*get_input("_IN_port")).name());
         //set_output("port", get_input("_IN_port")); 
         //set_output("hasValue", get_input("_IN_hasValue"));

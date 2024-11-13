@@ -63,6 +63,11 @@ ParamsModel::ParamsModel(std::shared_ptr<zeno::INode> spNode, QObject* parent)
             updateParamData(QString::fromStdString(name), type, ROLE_SOCKET_TYPE);
         });
 
+    spNode->register_update_param_wildcard(
+        [this](const std::string& name, bool isWildcard) {
+            updateParamData(QString::fromStdString(name), isWildcard, ROLE_PARAM_IS_WILDCARD);
+        });
+
     spNode->register_update_param_type(
         [this](const std::string& name, zeno::ParamType type, bool bInput) {
         updateParamData(QString::fromStdString(name), type, ROLE_PARAM_TYPE, bInput);
@@ -142,7 +147,7 @@ void ParamsModel::initParamItems()
             item.name = QString::fromStdString(spParam.name);
             item.type = spParam.type;
             item.value = spParam.defl;
-            item.connectProp = spParam.socketType;
+            item.connectProp = zeno::Socket_Primitve;
             item.bSocketVisible = spParam.bSocketVisible;
             item.bVisible = spParam.bVisible;
             item.bEnable = spParam.bEnable;
@@ -171,7 +176,7 @@ void ParamsModel::initParamItems()
         item.control = zeno::NullControl;
         item.name = QString::fromStdString(param.name);
         item.type = param.type;
-        item.connectProp = param.socketType;
+        item.connectProp = zeno::Socket_Primitve;
         item.group = zeno::Role_OutputPrimitive;
         item.bSocketVisible = param.bSocketVisible;
         item.bVisible = param.bVisible;
@@ -185,7 +190,7 @@ void ParamsModel::initParamItems()
         item.bInput = false;
         item.name = QString::fromStdString(param.name);
         item.type = param.type;
-        item.connectProp = param.socketType;
+        item.connectProp = zeno::Socket_Output;
         item.group = zeno::Role_OutputObject;
         item.bVisible = param.bVisible;
         item.bEnable = param.bEnable;
@@ -343,6 +348,7 @@ void ParamsModel::updateCustomUiModelIncremental(const zeno::params_change_info&
         int row = indexFromName(paramItem->data(ROLE_PARAM_NAME).toString(), true);
         if (row != -1) {
             paramItem->setData(m_items[row].connectProp, ROLE_SOCKET_TYPE);
+            paramItem->setData(m_items[row].bWildcard, ROLE_PARAM_IS_WILDCARD);
         }
     }
 }
@@ -392,6 +398,15 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         }
         return false;
     }
+    case ROLE_PARAM_IS_WILDCARD:
+    {
+        auto spNode = m_wpNode.lock();
+        if (spNode) {
+            param.bWildcard = value.toBool();
+            return spNode->update_param_wildcard(param.name.toStdString(), param.bWildcard);
+        }
+        return false;
+    }
     case ROLE_PARAM_SOCKET_VISIBLE:
     {
         if (param.sockProp == zeno::Socket_Disable)
@@ -430,6 +445,7 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     case ROLE_PARAM_VALUE:      return QVariant::fromValue(param.value);
     case ROLE_PARAM_CONTROL:    return param.control;
     case ROLE_SOCKET_TYPE:      return param.connectProp;
+    case ROLE_PARAM_IS_WILDCARD:return param.bWildcard;
     case ROLE_ISINPUT:          return param.bInput;
     case ROLE_NODEIDX:          return m_nodeIdx;
     case ROLE_LINKS:            return QVariant::fromValue(param.links);
@@ -837,6 +853,8 @@ void ParamsModel::updateParamData(const QString& name, const QVariant& val, int 
                 m_items[i].connectProp = (zeno::SocketType)val.toInt();
             else if (role == ROLE_PARAM_CTRL_PROPERTIES)
                 m_items[i].optCtrlprops = val.value<zeno::reflect::Any>();
+            else if (role == ROLE_PARAM_IS_WILDCARD)
+                m_items[i].bWildcard = val.toBool();
             else if (role == ROLE_PARAM_SOCKET_VISIBLE) {
                 if (m_items[i].bInput == bInput)
                     m_items[i].bSocketVisible = val.toBool();

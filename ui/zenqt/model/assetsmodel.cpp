@@ -174,20 +174,19 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
     outputparam.name = "output1";
     outputparam.defl = zeno::reflect::Any();
     outputparam.type = Param_Wildcard;
-    outputparam.socketType = zeno::Socket_WildCard;
+    outputparam.socketType = zeno::Socket_Clone;
     outputparam.bSocketVisible = false;
     outputs.push_back(outputparam);
     zeno::ParamObject objInput;
     objInput.bInput = true;
     objInput.name = "objInput1";
     objInput.type = Obj_Wildcard;
-    objInput.socketType = zeno::Socket_WildCard;
+    objInput.socketType = zeno::Socket_Clone;
     objInputs.push_back(objInput);
     zeno::ParamObject objOutput;
     objOutput.bInput = false;
     objOutput.name = "objOutput1";
     objOutput.type = Obj_Wildcard;
-    objOutput.socketType = zeno::Socket_WildCard;
     objOutputs.push_back(objOutput);
 
     zeno::ParamTab tab;

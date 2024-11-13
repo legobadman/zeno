@@ -192,8 +192,8 @@ struct PrimitiveRandomAttr : INode {
 ZENDEFNODE(PrimitiveRandomAttr, {
     {
         {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
-        {gParamType_Float, "min", "-1", zeno::Socket_WildCard},
-        {gParamType_Float, "max", "1", zeno::Socket_WildCard},
+        {gParamType_Float, "min", "-1"},
+        {gParamType_Float, "max", "1"},
     },
     {
         {gParamType_Primitive, "prim"},

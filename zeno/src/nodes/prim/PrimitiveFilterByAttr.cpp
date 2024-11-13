@@ -243,7 +243,7 @@ struct PrimitiveFilterByAttr : INode {
 ZENDEFNODE(PrimitiveFilterByAttr,
     { /* inputs: */ {
     {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
-    {gParamType_Float, "value", "0", zeno::Socket_WildCard},
+    {gParamType_Float, "value", "0"},
     }, /* outputs: */ {
 {gParamType_Primitive, "prim"},
 }, /* params: */ {
@@ -300,7 +300,7 @@ struct SubLine : INode { // deprecated zhxx-happy-node, FilterByAttr already aut
 ZENDEFNODE(SubLine,
     { /* inputs: */ {
     {gParamType_Primitive, "line", "", zeno::Socket_ReadOnly},
-    {gParamType_Float, "value", "0", zeno::Socket_WildCard},
+    {gParamType_Float, "value", "0"},
     }, /* outputs: */ {
 {gParamType_Primitive, "prim"},
 }, /* params: */ {

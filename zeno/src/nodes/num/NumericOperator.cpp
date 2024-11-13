@@ -218,8 +218,8 @@ _PER_OP(distance)
 };
 
 ZENO_DEFNODE(NumericOperator)({
-    {{gParamType_Float, "lhs", "", zeno::Socket_WildCard}, {gParamType_Float, "rhs", "", zeno::Socket_WildCard}},
-    {{gParamType_Float, "ret", "", zeno::Socket_WildCard}},
+    {{gParamType_Float, "lhs", ""}, {gParamType_Float, "rhs", ""}},
+    {{gParamType_Float, "ret", ""}},
     {{"enum"
 #define _PER_FN(x) " " #x
     _PER_FN(add)
