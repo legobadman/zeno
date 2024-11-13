@@ -99,6 +99,7 @@ void ZenoApplication::initMetaTypes()
     qRegisterMetaType<zeno::ObjPath>();
     qRegisterMetaType<zeno::CustomUI>();
     qRegisterMetaType<zeno::reflect::Any>();
+    qRegisterMetaType<zeno::render_reload_info>();
 }
 
 void ZenoApplication::initStyleSheets()

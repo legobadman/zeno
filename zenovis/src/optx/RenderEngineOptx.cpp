@@ -1352,6 +1352,66 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         //TODO
     }
 
+    void reload(const zeno::render_reload_info& info) override {
+        auto& sess = zeno::getSession();
+        if (zeno::Reload_SwitchGraph == info.policy) {
+            //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
+            graphicsMan->graphics.clear();
+
+            std::shared_ptr<zeno::Graph> spGraph = sess.mainGraph->getGraphByPath(info.current_ui_graph);
+            //TODO: 要考虑asset的情况
+            assert(spGraph);
+            const auto& viewnodes = spGraph->get_viewnodes();
+            //其实是否可以在外面提前准备好对象列表？
+            for (auto viewnode : viewnodes) {
+                std::shared_ptr<zeno::INode> spNode = spGraph->getNode(viewnode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    graphicsMan->add_object(spObject);
+                }
+                else {
+
+                }
+            }
+        }
+        else if (zeno::Reload_ToggleView == info.policy) {
+            assert(info.objs.size() == 1);
+            const auto& update = info.objs[0];
+            auto& wtf = graphicsMan->graphics.m_curr;
+            auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+            assert(spNode);
+            zeno::zany spObject = spNode->get_default_output_object();
+            if (spObject) {
+                if (update.reason == zeno::Update_View) {
+                    auto it = wtf.find(update.uuidpath_node_objkey);
+                    if (it == wtf.end()) {
+                        graphicsMan->add_object(spObject);
+                    }
+                }
+                else if (update.reason == zeno::Update_Remove) {
+                    auto it = wtf.find(update.uuidpath_node_objkey);
+                    if (it != wtf.end()) {
+                        graphicsMan->remove_object(update.uuidpath_node_objkey);
+                    }
+                }
+            }
+            else {
+                //可能还没计算
+            }
+        }
+        else if (zeno::Reload_Calculation == info.policy) {
+            for (const zeno::render_update_info& update : info.objs) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    //可能是对象没有通过子图的Suboutput连出来
+                    graphicsMan->add_object(spObject);
+                }
+            }
+        }
+    }
+
     void load_objects(const zeno::RenderObjsInfo& objs) override {
 
         //light update condition
