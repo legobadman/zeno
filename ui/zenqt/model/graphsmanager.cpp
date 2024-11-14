@@ -5,13 +5,11 @@
 #include <zeno/io/zsg2reader.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/scope_exit.h>
-#include <zeno/core/Graph.h>
 #include <zeno/io/iohelper.h>
 #include "util/uihelper.h"
 #include <zeno/io/zenwriter.h>
 #include <zeno/io/zenreader.h>
 #include <zeno/core/Session.h>
-#include <zeno/types/UserData.h>
 #include "nodeeditor/gv/zenosubgraphscene.h"
 #include "zassert.h"
 #include "variantptr.h"
@@ -32,7 +30,7 @@ GraphsManager::GraphsManager(QObject* parent)
 {
     m_logModel = new QStandardItemModel(this);
     m_model = new GraphsTreeModel(this);
-    m_main = new GraphModel(zeno::getSession().mainGraph, m_model, this);
+    m_main = new GraphModel(zeno::getSession().mainGraph.get(), m_model, this);
     m_model->init(m_main);
     m_assets = new AssetsModel(this);
 }
@@ -180,7 +178,7 @@ GraphsTreeModel* GraphsManager::newFile()
     if (!m_model) {
         m_model = new GraphsTreeModel(this);
         auto& sess = zeno::getSession();
-        m_main = new GraphModel(sess.mainGraph, m_model, this);
+        m_main = new GraphModel(sess.mainGraph.get(), m_model, this);
         m_model->init(m_main);
     }
 

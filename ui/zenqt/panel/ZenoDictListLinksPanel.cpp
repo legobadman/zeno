@@ -1,6 +1,8 @@
 #include "ZenoDictListLInksPanel.h"
 #include <zeno/core/data.h>
 #include <set>
+#include "declmetatype.h"
+
 
 IconDelegate::IconDelegate(bool bfirst, QObject* parent) : m_bFirstColumn(bfirst), QStyledItemDelegate(parent)
 {

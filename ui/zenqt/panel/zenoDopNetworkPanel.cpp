@@ -4,8 +4,6 @@
 #include "widgets/zlineedit.h"
 #include "style/zenostyle.h"
 #include "nodeeditor/gv/zitemfactory.h"
-#include <zeno/core/INode.h>
-#include <zeno/extra/SubnetNode.h>
 #include "model/GraphModel.h"
 #include "variantptr.h"
 

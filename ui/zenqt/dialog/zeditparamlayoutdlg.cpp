@@ -14,6 +14,8 @@
 #include "style/zenostyle.h"
 #include "widgets/zspinboxslider.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 static CONTROL_ITEM_INFO controlList[] = {

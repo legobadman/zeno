@@ -4,7 +4,6 @@
 #include "zenoapplication.h"
 #include <viewport/zenovis.h>
 #include "model/graphsmanager.h"
-#include <zeno/types/PrimitiveObject.h>
 #include "nodesync.h"
 #include <QtWidgets>
 #include <glm/glm.hpp>

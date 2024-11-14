@@ -12,6 +12,7 @@
 #include "zitemfactory.h"
 #include "util/uihelper.h"
 #include "model/parammodel.h"
+#include "declmetatype.h"
 
 
 ZSocketLayout::ZSocketLayout(const QPersistentModelIndex& viewSockIdx, bool bInput, SocketBackgroud* parentItem)

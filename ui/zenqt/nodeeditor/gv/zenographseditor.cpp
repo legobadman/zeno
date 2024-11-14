@@ -27,6 +27,7 @@
 #include "widgets/zlabel.h"
 #include "nodeeditor/gv/callbackdef.h"
 #include <zeno/core/Session.h>
+#include <zeno/core/Assets.h>
 
 
 ZenoGraphsEditor::ZenoGraphsEditor(ZenoMainWindow* pMainWin)

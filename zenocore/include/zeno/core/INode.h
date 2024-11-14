@@ -36,116 +36,116 @@ struct SubnetNode;
 struct CalcContext;
 
 
-class INode : public std::enable_shared_from_this<INode>
+class ZENO_API INode : public std::enable_shared_from_this<INode>
 {
 public:
     INodeClass *nodeClass = nullptr;
 
     zany muted_output;
 
-    ZENO_API INode();
-    ZENO_API virtual ~INode();
+    INode();
+    virtual ~INode();
 
-    ZENO_API void doComplete();
-    ZENO_API void doApply(CalcContext* pContext);
+    void doComplete();
+    void doApply(CalcContext* pContext);
     void doApply_Parameter(std::string const &name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
-    ZENO_API void doOnlyApply();
+    void doOnlyApply();
 
     //BEGIN new api
-    ZENO_API void init(const NodeData& dat);
-    ZENO_API std::string get_nodecls() const;
-    ZENO_API std::string get_ident() const;
-    ZENO_API std::string get_show_name() const;
-    ZENO_API std::string get_show_icon() const;
-    ZENO_API virtual CustomUI get_customui() const;     //由节点默认定义导出的customUi
-    ZENO_API virtual CustomUI export_customui() const;          //由此刻实际存在的节点输入输出导出的customUi
-    ZENO_API ObjPath get_path() const;
-    ZENO_API ObjPath get_graph_path() const;
-    ZENO_API ObjPath get_uuid_path() const { return m_uuidPath; }
-    ZENO_API std::string get_uuid() const;
-    ZENO_API std::weak_ptr<Graph> getGraph() const { return graph; }
+    void init(const NodeData& dat);
+    std::string get_nodecls() const;
+    std::string get_ident() const;
+    std::string get_show_name() const;
+    std::string get_show_icon() const;
+    virtual CustomUI get_customui() const;     //由节点默认定义导出的customUi
+    virtual CustomUI export_customui() const;          //由此刻实际存在的节点输入输出导出的customUi
+    ObjPath get_path() const;
+    ObjPath get_graph_path() const;
+    ObjPath get_uuid_path() const { return m_uuidPath; }
+    std::string get_uuid() const;
+    std::weak_ptr<Graph> getGraph() const { return graph; }
     void initUuid(std::shared_ptr<Graph> pGraph, const std::string nodecls);
 
-    ZENO_API void set_view(bool bOn);
+    void set_view(bool bOn);
     CALLBACK_REGIST(set_view, void, bool)
-    ZENO_API bool is_view() const;
+    bool is_view() const;
 
-    ZENO_API void set_mute(bool bOn);
+    void set_mute(bool bOn);
     CALLBACK_REGIST(set_mute, void, bool)
-    ZENO_API bool is_mute() const;
+    bool is_mute() const;
 
-    ZENO_API void mark_dirty(bool bOn, bool bWholeSubnet = true, bool bRecursively = true);
-    ZENO_API bool is_dirty() const { return m_dirty; }
-    ZENO_API NodeRunStatus get_run_status() const { return m_status; }
+    void mark_dirty(bool bOn, bool bWholeSubnet = true, bool bRecursively = true);
+    bool is_dirty() const { return m_dirty; }
+    NodeRunStatus get_run_status() const { return m_status; }
 
-    ZENO_API CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
-    ZENO_API CommonParam get_output_param(std::string const& name, bool* bExist = nullptr);
+    CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
+    CommonParam get_output_param(std::string const& name, bool* bExist = nullptr);
 
-    ZENO_API ObjectParams get_input_object_params() const;
-    ZENO_API ObjectParams get_output_object_params() const;
-    ZENO_API PrimitiveParams get_input_primitive_params() const;
-    ZENO_API PrimitiveParams get_output_primitive_params() const;
-    ZENO_API ParamPrimitive get_input_prim_param(std::string const& name, bool* pExist = nullptr) const;
-    ZENO_API ParamObject get_input_obj_param(std::string const& name, bool* pExist = nullptr) const;
-    ZENO_API ParamPrimitive get_output_prim_param(std::string const& name, bool* pExist = nullptr) const;
-    ZENO_API ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
-    ZENO_API zeno::reflect::Any get_defl_value(std::string const& name);
+    ObjectParams get_input_object_params() const;
+    ObjectParams get_output_object_params() const;
+    PrimitiveParams get_input_primitive_params() const;
+    PrimitiveParams get_output_primitive_params() const;
+    ParamPrimitive get_input_prim_param(std::string const& name, bool* pExist = nullptr) const;
+    ParamObject get_input_obj_param(std::string const& name, bool* pExist = nullptr) const;
+    ParamPrimitive get_output_prim_param(std::string const& name, bool* pExist = nullptr) const;
+    ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
+    zeno::reflect::Any get_defl_value(std::string const& name);
 
-    ZENO_API std::string get_viewobject_output_param() const;
-    ZENO_API virtual NodeData exportInfo() const;
-    ZENO_API void set_result(bool bInput, const std::string& name, zany spObj);
+    std::string get_viewobject_output_param() const;
+    virtual NodeData exportInfo() const;
+    void set_result(bool bInput, const std::string& name, zany spObj);
 
-    ZENO_API bool update_param(const std::string& name, zeno::reflect::Any new_value);
+    bool update_param(const std::string& name, zeno::reflect::Any new_value);
     CALLBACK_REGIST(update_param, void, const std::string&, zeno::reflect::Any, zeno::reflect::Any)
 
-    ZENO_API bool update_param_socket_type(const std::string& name, SocketType type);
+    bool update_param_socket_type(const std::string& name, SocketType type);
     CALLBACK_REGIST(update_param_socket_type, void, const std::string&, SocketType)
 
-    ZENO_API bool update_param_wildcard(const std::string& name, bool isWildcard);
+    bool update_param_wildcard(const std::string& name, bool isWildcard);
     CALLBACK_REGIST(update_param_wildcard, void, const std::string&, bool)
 
-    ZENO_API bool update_param_type(const std::string& name, bool bPrim, bool bInput, ParamType type);
+    bool update_param_type(const std::string& name, bool bPrim, bool bInput, ParamType type);
     CALLBACK_REGIST(update_param_type, void, const std::string&, ParamType, bool)
 
-    ZENO_API bool update_param_control(const std::string& name, ParamControl control);
+    bool update_param_control(const std::string& name, ParamControl control);
     CALLBACK_REGIST(update_param_control, void, const std::string&, ParamControl)
 
-    ZENO_API bool update_param_control_prop(const std::string& name, zeno::reflect::Any props);
+    bool update_param_control_prop(const std::string& name, zeno::reflect::Any props);
     CALLBACK_REGIST(update_param_control_prop, void, const std::string&, zeno::reflect::Any)
 
-    ZENO_API bool update_param_socket_visible(const std::string& name, bool bVisible, bool bInput = true);
+    bool update_param_socket_visible(const std::string& name, bool bVisible, bool bInput = true);
     CALLBACK_REGIST(update_param_socket_visible, void, const std::string&, bool, bool)
 
-    ZENO_API bool update_param_visible(const std::string& name, bool bOn, bool bInput = true);
-    ZENO_API bool update_param_enable(const std::string& name, bool bOn, bool bInput = true);
+    bool update_param_visible(const std::string& name, bool bOn, bool bInput = true);
+    bool update_param_enable(const std::string& name, bool bOn, bool bInput = true);
 
-    ZENO_API void update_param_color(const std::string& name, std::string& clr);
+    void update_param_color(const std::string& name, std::string& clr);
     CALLBACK_REGIST(update_param_color, void, const std::string&, std::string&)
 
-    ZENO_API void update_layout(params_change_info& changes);
+    void update_layout(params_change_info& changes);
     CALLBACK_REGIST(update_layout, void, params_change_info& changes)
 
-    ZENO_API virtual params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
+    virtual params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
 
     //由param这个参数值的变化触发节点params重置
-    ZENO_API virtual void trigger_update_params(const std::string& param, bool changed, params_change_info changes);
+    virtual void trigger_update_params(const std::string& param, bool changed, params_change_info changes);
 
-    ZENO_API void set_name(const std::string& name);
-    ZENO_API std::string get_name() const;
+    void set_name(const std::string& name);
+    std::string get_name() const;
 
-    ZENO_API void set_pos(std::pair<float, float> pos);
+    void set_pos(std::pair<float, float> pos);
     CALLBACK_REGIST(set_pos, void, std::pair<float, float>)
-    ZENO_API std::pair<float, float> get_pos() const;
+    std::pair<float, float> get_pos() const;
 
-    ZENO_API bool in_asset_file() const;
-    ZENO_API void initTypeBase(zeno::reflect::TypeBase* pTypeBase);
-    ZENO_API bool isInDopnetwork();
+    bool in_asset_file() const;
+    void initTypeBase(zeno::reflect::TypeBase* pTypeBase);
+    bool isInDopnetwork();
 
     //foreach特供
-    ZENO_API virtual bool is_continue_to_run();
-    ZENO_API virtual void increment();
-    ZENO_API virtual void reset_forloop_settings();
-    ZENO_API virtual std::shared_ptr<IObject> get_iterate_object();
+    virtual bool is_continue_to_run();
+    virtual void increment();
+    virtual void reset_forloop_settings();
+    virtual std::shared_ptr<IObject> get_iterate_object();
 
     void onInterrupted();
     void mark_previous_ref_dirty();
@@ -176,14 +176,14 @@ public:
     CALLBACK_REGIST(update_visable_enable, void, zeno::INode*, std::set<std::string>, std::set<std::string>)
 
 protected:
-    ZENO_API virtual void complete();
-    ZENO_API virtual void apply();
-    ZENO_API void reflectNode_apply();
+    virtual void complete();
+    virtual void apply();
+    void reflectNode_apply();
 
-    ZENO_API virtual void initParams(const NodeData& dat);
-    ZENO_API bool set_primitive_input(std::string const& id, const zeno::reflect::Any& val);
-    ZENO_API bool set_primitive_output(std::string const& id, const zeno::reflect::Any& val);
-    ZENO_API bool set_output(std::string const& param, zany obj);
+    virtual void initParams(const NodeData& dat);
+    bool set_primitive_input(std::string const& id, const zeno::reflect::Any& val);
+    bool set_primitive_output(std::string const& id, const zeno::reflect::Any& val);
+    bool set_output(std::string const& param, zany obj);
 
     template <class T>
     const T* get_input_prim(std::string const& name) const {
@@ -193,7 +193,7 @@ protected:
         return zeno::reflect::any_cast<T>(&iter->second.defl);
     }
 
-    ZENO_API bool update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& oldVal);
+    bool update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& oldVal);
 
 private:
     zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
@@ -218,17 +218,17 @@ private:
 
 public:
     //为名为ds的输入参数，求得这个参数在依赖边的求值下的值，或者没有依赖边下的默认值。
-    ZENO_API bool requireInput(std::string const &ds, CalcContext* pContext);
+    bool requireInput(std::string const &ds, CalcContext* pContext);
 
-    ZENO_API std::shared_ptr<Graph> getThisGraph() const;
-    ZENO_API Session *getThisSession() const;
-    ZENO_API GlobalState *getGlobalState() const;
+    std::shared_ptr<Graph> getThisGraph() const;
+    Session *getThisSession() const;
+    GlobalState *getGlobalState() const;
 
-    ZENO_API bool has_input(std::string const &id) const;
-    ZENO_API zany get_input(std::string const &id) const;
-    ZENO_API zany get_output_obj(std::string const& sock_name);
-    ZENO_API std::vector<zany> get_output_objs();
-    ZENO_API virtual zany get_default_output_object();
+    bool has_input(std::string const &id) const;
+    zany get_input(std::string const &id) const;
+    zany get_output_obj(std::string const& sock_name);
+    std::vector<zany> get_output_objs();
+    virtual zany get_default_output_object();
 
     template <class T>
     std::shared_ptr<T> get_input(std::string const &id) const {
@@ -265,9 +265,6 @@ public:
         return get_input2<T>(id);
     }
 
-    //[[deprecated("use get_param<T>")]]
-    //ZENO_API std::variant<int, float, std::string> get_param(std::string const &id) const;
-
     template <class T = IObject>
     std::shared_ptr<T> get_input(std::string const &id, std::shared_ptr<T> const &defl) const {
         return has_input(id) ? get_input<T>(id) : defl;
@@ -278,7 +275,7 @@ public:
         return has_input(id) ? get_input2<T>(id) : defl;
     }
 
-    ZENO_API TempNodeCaller temp_node(std::string const &id);
+    TempNodeCaller temp_node(std::string const &id);
 
 private:
     std::string m_name;

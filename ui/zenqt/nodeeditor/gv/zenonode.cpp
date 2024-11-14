@@ -41,6 +41,8 @@
 #include "statusbutton.h"
 #include "model/assetsmodel.h"
 #include <zeno/utils/helper.h>
+#include "declmetatype.h"
+#include <zeno/core/typeinfo.h>
 
 
 ZenoNode::ZenoNode(const NodeUtilParam &params, QGraphicsItem *parent)

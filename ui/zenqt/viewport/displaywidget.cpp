@@ -9,7 +9,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/utils/log.h>
 #include <zeno/types/CameraObject.h>
-#include <zeno/core/ObjectManager.h>
+#include <zeno/core/Graph.h>
 #include "util/uihelper.h"
 #include "zenomainwindow.h"
 #include "camerakeyframe.h"
@@ -28,6 +28,7 @@
 #include "model/graphsmanager.h"
 #include "calculation/calculationmgr.h"
 #include "nodeeditor/gv/zenographseditor.h"
+
 
 
 using std::string;
@@ -423,6 +424,7 @@ void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
         }
 
         //这里要对不在current_ui_graph的节点进行过滤
+        //TODO: 应该在graphmodel上做
         std::shared_ptr<zeno::Graph> curr_graph = sess.mainGraph->getGraphByPath(reload.current_ui_graph);
         for (auto iter = infos.begin(); iter != infos.end(); ) {
             if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {

@@ -23,6 +23,8 @@
 #include "util/jsonhelper.h"
 #include "widgets/zcodeeditor.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 using namespace zeno::reflect;

@@ -9,6 +9,7 @@
 #include "settings/zenosettingsmanager.h"
 #include "calculation/calculationmgr.h"
 #include "uicommon.h"
+#include "declmetatype.h"
 
 
 ZenoApplication::ZenoApplication(int &argc, char **argv)

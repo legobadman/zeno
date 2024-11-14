@@ -6,6 +6,7 @@
 #include <zeno/utils/log.h>
 #include <zeno/io/zdareader.h>
 #include "zassert.h"
+#include <zeno/core/typeinfo.h>
 
 
 AssetsModel::AssetsModel(QObject* parent)
@@ -61,7 +62,7 @@ GraphModel* AssetsModel::getAssetGraph(const QString& graphName)
                 std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
                 std::shared_ptr<zeno::Graph> spAsset = assets->getAssetGraph(assetName, true);
                 if (spAsset) {
-                    auto pNewAsstModel = new GraphModel(spAsset, nullptr, this);
+                    auto pNewAsstModel = new GraphModel(spAsset.get(), nullptr, this);
                     m_assets[i].pGraphM = pNewAsstModel;
                     return pNewAsstModel;
                 }
@@ -163,9 +164,9 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
     zeno::PrimVar def = int(0);
     param.defl = zeno::reflect::make_any<zeno::PrimVar>(def);
     size_t s = param.defl.type().hash_code();
-    size_t s1 = gParamType_Int;
-    size_t s2 = gParamType_PrimVariant;
-    param.type = zeno::types::gParamType_Int;
+    size_t s1 = ui_gParamType_Int;
+    size_t s2 = ui_gParamType_PrimVariant;
+    param.type = ui_gParamType_Int;
     param.bSocketVisible = false;
     inputs.push_back(param);
     defaultGroup.params.push_back(param);
@@ -251,7 +252,7 @@ void AssetsModel::_addAsset(zeno::AssetInfo info)
     std::shared_ptr<zeno::AssetsMgr> asts = zeno::getSession().assets;
     std::shared_ptr<zeno::Graph> spAsset = asts->getAsset(info.name).sharedGraph;
     if (spAsset) {
-        auto pNewAsstModel = new GraphModel(spAsset, nullptr, this);
+        auto pNewAsstModel = new GraphModel(spAsset.get(), nullptr, this);
         item.pGraphM = pNewAsstModel;
     }
 

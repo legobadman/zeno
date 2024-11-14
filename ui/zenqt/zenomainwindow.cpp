@@ -59,7 +59,6 @@
 #include "DockManager.h"
 #include <zeno/io/zdareader.h>
 #include <QFileSystemWatcher> 
-#include <zeno/core/GlobalVariable.h>
 
 
 const QString g_latest_layout = "LatestLayout";

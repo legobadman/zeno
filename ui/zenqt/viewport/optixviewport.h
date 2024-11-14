@@ -5,7 +5,7 @@
 #include "recordvideomgr.h"
 #include "uicommon.h"
 #include "zenovis/Camera.h"
-#include <zeno/core/ObjectManager.h>
+
 
 class Zenovis;
 class CameraControl;

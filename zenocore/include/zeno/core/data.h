@@ -178,6 +178,18 @@ namespace zeno {
         int minorVer;
     };
 
+    struct ZenoAsset {
+        ObjectParams object_inputs;
+        PrimitiveParams primitive_inputs;
+        PrimitiveParams primitive_outputs;
+        ObjectParams object_outputs;
+        AssetInfo info;
+        CustomUI m_customui;
+        std::optional<GraphData> optGraph;
+    };
+
+    using AssetsData = std::map<std::string, ZenoAsset>;
+
     struct GroupInfo
     {
         vec2f sz;

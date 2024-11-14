@@ -1,4 +1,6 @@
 #include "colormanager.h"
+#include <zeno/core/Session.h>
+
 
 ZColorManager::ZColorManager() {
     initColorsFromCustom();

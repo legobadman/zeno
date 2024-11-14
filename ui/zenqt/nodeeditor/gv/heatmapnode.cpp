@@ -5,6 +5,7 @@
 #include "util/log.h"
 #include "util/apphelper.h"
 #include "util/uihelper.h"
+#include "declmetatype.h"
 
 
 MakeHeatMapNode::MakeHeatMapNode(const NodeUtilParam& params, QGraphicsItem* parent)

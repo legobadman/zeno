@@ -1,6 +1,5 @@
 #include "calculationmgr.h"
 #include <zeno/core/Session.h>
-#include <zeno/core/Graph.h>
 #include <zeno/extra/GraphException.h>
 #include "viewport/displaywidget.h"
 #include "zassert.h"
@@ -11,6 +10,7 @@
 #include "model/graphsmanager.h"
 #include "model/GraphsTreeModel.h"
 #include "widgets/ztimeline.h"
+#include "declmetatype.h"
 
 
 CalcWorker::CalcWorker(QObject* parent) {

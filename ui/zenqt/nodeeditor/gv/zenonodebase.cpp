@@ -42,6 +42,8 @@
 #include "model/assetsmodel.h"
 #include <zeno/utils/helper.h>
 #include "dialog/zsocketsettingdlg.h"
+#include <zeno/core/Assets.h>
+#include "declmetatype.h"
 
 
 ZenoNodeBase::ZenoNodeBase(const NodeUtilParam &params, QGraphicsItem *parent)

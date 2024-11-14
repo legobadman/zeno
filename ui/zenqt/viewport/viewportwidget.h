@@ -7,8 +7,6 @@
 #include "recordvideomgr.h"
 #include "layout/docktabcontent.h"
 #include "layout/winlayoutrw.h"
-#include <zeno/core/ObjectManager.h>
-
 #include "transform.h"
 #include "picker.h"
 #include "zenovis/Camera.h"

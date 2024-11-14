@@ -9,6 +9,8 @@
 #include "zeno/zeno.h"
 #include "zeno/extra/EventCallbacks.h"
 #include <GL/glut.h>
+#include <zeno/core/INode.h>
+#include <zeno/core/Graph.h>
 
 
 /* debug cutsom layout: ZGraphicsLayout */
@@ -31,6 +33,10 @@ PyMODINIT_FUNC PyInit_spam(void);
 int main(int argc, char *argv[]) 
 {
     glutInit(&argc, argv);
+
+    std::shared_ptr<zeno::Graph> spGraph2;
+    //spGraph2->hasNode("");
+    spGraph2->getNodeByUuidPath("");
 
     ZenoApplication a(argc, argv);
     a.setStyle(new ZenoStyle);

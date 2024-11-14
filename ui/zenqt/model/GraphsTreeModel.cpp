@@ -225,7 +225,7 @@ void GraphsTreeModel::clear()
     emit layoutAboutToBeChanged();
     beginResetModel();
     //delete m_main;
-    //m_main = new GraphModel("main", this);
+    //m_main = new GraphModel("/main", false, this);
     endResetModel();
     emit layoutChanged();
     emit modelClear();

@@ -19,6 +19,7 @@
 #include <zeno/utils/helper.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 #include <regex>
+#include "declmetatype.h"
 
 
 const char* g_setKey = "setKey";

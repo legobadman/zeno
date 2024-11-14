@@ -1,5 +1,6 @@
 #include "linkmodel.h"
 #include "uicommon.h"
+#include "declmetatype.h"
 
 
 

@@ -7,12 +7,13 @@
 #include <zeno/utils/log.h>
 #include "panel/zenoproppanel.h"
 #include "zassert.h"
-#include <zeno/core/IObject.h>
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include "widgets/ztimeline.h"
 #include "curvemap/zcurvemapeditor.h"
 #include "nodeeditor/gv/zitemfactory.h"
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 ZVecEditor::ZVecEditor(const zeno::vecvar& vec, bool bFloat, QString styleCls, QWidget* parent)
@@ -123,7 +124,7 @@ void ZVecEditor::initUI(const zeno::vecvar& vecedit) {
     m_editors.resize(n);
     for (int i = 0; i < n; i++)
     {
-        zeno::ParamType compType = m_bFloat ? zeno::types::gParamType_Float : zeno::types::gParamType_Int;
+        zeno::ParamType compType = m_bFloat ? ui_gParamType_Float : ui_gParamType_Int;
 
         m_editors[i] = new ZCoreParamLineEdit(vecedit[i], compType, this);
         m_editors[i]->installEventFilter(this);

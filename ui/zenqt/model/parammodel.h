@@ -5,11 +5,14 @@
 #include <QStandardItemModel>
 #include <QQuickItem>
 #include "uicommon.h"
-#include <zeno/core/data.h>
-#include <zeno/core/INode.h>
-#include <zeno/extra/SubnetNode.h>
 
 class GraphModel;
+class ParamModelImpl;
+
+namespace zeno
+{
+    class INode;
+}
 
 struct ParamItem
 {
@@ -39,7 +42,7 @@ class ParamsModel : public QAbstractListModel
         QML_ELEMENT
 
 public:
-    ParamsModel(std::shared_ptr<zeno::INode> spNode, QObject* parent = nullptr);
+    ParamsModel(zeno::INode* spNode, QObject* parent = nullptr);
 
     Q_INVOKABLE int indexFromName(const QString& name, bool bInput) const;
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
@@ -93,7 +96,7 @@ private:
 
     QStandardItemModel* m_customParamsM;
 
-    std::weak_ptr<zeno::INode> m_wpNode;
+    zeno::INode* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了
     std::string cbUpdateParam;
     mutable bool m_bReentry = false;
 };

@@ -40,6 +40,7 @@
 #include "statusgroup.h"
 #include "statusbutton.h"
 #include "model/assetsmodel.h"
+#include <zeno/core/typeinfo.h>
 
 
 NodeNameItem::NodeNameItem(const QString& name, QGraphicsItem* parent)

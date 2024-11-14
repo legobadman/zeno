@@ -11,6 +11,9 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include "zassert.h"
+#include <zeno/core/typeinfo.h>
+#include <zeno/core/Graph.h>
+#include "declmetatype.h"
 
 
 namespace zeno {
@@ -820,6 +823,7 @@ namespace zeno {
             auto res_q = glm::toQuat(glm::toMat4(dif_q) * glm::toMat4(pre_q));
             rotate = vec4f(res_q.x, res_q.y, res_q.z, res_q.w);
 
+            //TODO: 通过model代理!!!
             transNode->update_param("translation", trans);
             transNode->update_param("scaling", scale);
             transNode->update_param("quatRotation", rotate);

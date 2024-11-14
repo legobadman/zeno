@@ -6,14 +6,22 @@
 #include <QAbstractListModel>
 #include <QString>
 #include <QQuickItem>
-#include "parammodel.h"
-#include "LinkModel.h"
-#include <zeno/core/Graph.h>
 #include <optional>
-#include "command.h"
+#include <QUndoCommand>
+#include "uicommon.h"
+//#include <zeno/core/Graph.h>
+
 
 class GraphModel;
 class GraphsTreeModel;
+class ParamsModel;
+class LinkModel;
+
+namespace zeno
+{
+    struct ZENO_API Graph;
+    class ZENO_API INode;
+}
 
 struct NodeItem : public QObject
 {
@@ -34,7 +42,7 @@ public:
     std::string m_cbFrameCached;
     std::string m_cbFrameRemoved;
 
-    std::weak_ptr<zeno::INode> m_wpNode;
+    zeno::INode* m_wpNode;
     ParamsModel* params = nullptr;
     bool bView = false;
     bool bCollasped = false;
@@ -45,7 +53,7 @@ public:
 
     NodeItem(QObject* parent);
     ~NodeItem();
-    void init(GraphModel* pGraphM, std::shared_ptr<zeno::INode> spNode);
+    void init(GraphModel* pGraphM, zeno::INode* spNode);
     QString getName() {
         return name;
     }
@@ -64,7 +72,7 @@ class GraphModel : public QAbstractListModel
     QML_ELEMENT
 
 public:
-    GraphModel(std::shared_ptr<zeno::Graph> spGraph, GraphsTreeModel* pTree, QObject* parent = nullptr);
+    GraphModel(zeno::Graph* spGraph, GraphsTreeModel* pTree, QObject* parent = nullptr);
     ~GraphModel();
     Q_INVOKABLE LinkModel* getLinkModel() const { return m_linkModel; }
     Q_INVOKABLE int indexFromId(const QString& name) const;
@@ -112,7 +120,7 @@ public:
     void updateParamName(QModelIndex nodeIdx, int row, QString newName);
     void syncToAssetsInstance(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui);
     void syncToAssetsInstance(const QString& assetsName);
-    void updateAssetInstance(const std::shared_ptr<zeno::Graph> spGraph);
+    void updateAssetInstance(zeno::Graph* spGraph);
     void removeParam(QModelIndex nodeIdx, int row);
     void removeLink(const QModelIndex& linkIdx);
     void removeLink(const zeno::EdgeInfo& link);
@@ -134,7 +142,9 @@ public:
     bool setModelData(const QModelIndex& index, const QVariant& newValue, int role);
     void _setViewImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
     void _setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
-    std::weak_ptr<zeno::INode> getWpNode(QString& nodename);
+
+    //TODO: 一定要尽快废弃这种节点!!!!!
+    zeno::INode* getWpNode(QString& nodename);
 
 signals:
     void reloaded();
@@ -148,7 +158,7 @@ private:
 
     void registerCoreNotify();
     void unRegisterCoreNotify();
-    void _appendNode(std::shared_ptr<zeno::INode> spNode);
+    void _appendNode(zeno::INode* spNode);
     void _initLink();
     void _addLink(const zeno::EdgeInfo link);
     bool _removeLink(const zeno::EdgeInfo& edge);
@@ -163,8 +173,6 @@ private:
     QHash<QString, QString> m_name2uuid;
     QSet<QString> m_subgNodes;
 
-    std::weak_ptr<zeno::Graph> m_wpCoreGraph;
-
     std::string m_cbCreateNode;
     std::string m_cbRemoveNode;
     std::string m_cbRenameNode;
@@ -174,6 +182,8 @@ private:
 
     GraphsTreeModel* m_pTree;
     LinkModel* m_linkModel;
+
+    zeno::Graph* m_wpCoreGraph;
 
     bool m_bLocked = false;
 

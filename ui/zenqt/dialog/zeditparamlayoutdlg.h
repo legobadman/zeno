@@ -7,7 +7,6 @@
 
 #include <QtWidgets>
 #include "model/parammodel.h"
-#include <zeno/core/data.h>
 
 
 namespace Ui

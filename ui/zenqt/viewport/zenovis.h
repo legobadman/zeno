@@ -3,7 +3,7 @@
 
 #include <QtWidgets>
 #include <zenovis/Session.h>
-#include <zeno/core/ObjectManager.h>
+
 
 class CameraControl;
 class CameraKeyframeWidget;

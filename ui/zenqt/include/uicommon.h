@@ -11,9 +11,8 @@
 #include <rapidjson/prettywriter.h>
 #include <memory>
 #include <zeno/core/data.h>
-#include <zeno/core/IObject.h>
 #include "qkeylist.h"
-#include <zeno/core/typeinfo.h>
+#include <reflect/registry.hpp>
 
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
@@ -24,6 +23,19 @@
 #define QtSkipEmptyParts QString::SkipEmptyParts
 #define qt_unordered_map std::map
 #endif
+
+constexpr size_t ui_gParamType_Bool = 15698046148323980066ULL;
+constexpr size_t ui_gParamType_String = 1350625706064273086ULL;
+constexpr size_t ui_gParamType_Int = 3143511548502526014ULL;
+constexpr size_t ui_gParamType_Float = 11532138274943533413ULL;
+constexpr size_t ui_gParamType_Vec2i = 16965886646643039397ULL;
+constexpr size_t ui_gParamType_Vec2f = 6471145251105555636ULL;
+constexpr size_t ui_gParamType_Vec3i = 8367839167412710198ULL;
+constexpr size_t ui_gParamType_Vec3f = 1291108797552895579ULL;
+constexpr size_t ui_gParamType_Vec4i = 724601356907542639ULL;
+constexpr size_t ui_gParamType_Vec4f = 5986645728587245802ULL;
+constexpr size_t ui_gParamType_PrimVariant = 9597672160759649577ULL;
+constexpr size_t ui_gParamType_Curve = 16327668114186180410ULL;
 
 typedef rapidjson::PrettyWriter<rapidjson::StringBuffer> RAPIDJSON_WRITER;
 
@@ -275,32 +287,9 @@ struct NODE_CATE {
 typedef QMap<QString, NODE_CATE> NODE_CATES;
 
 typedef QKeyList<QString, zeno::ParamPrimitive> PARAMS_INFO;
-Q_DECLARE_METATYPE(PARAMS_INFO)
-
-Q_DECLARE_METATYPE(zeno::NodeData)
-
-Q_DECLARE_METATYPE(zeno::ParamPrimitive)
-
-Q_DECLARE_METATYPE(zeno::EdgeInfo)
-
-Q_DECLARE_METATYPE(zeno::zvariant)
-
-Q_DECLARE_METATYPE(zeno::reflect::Any)
-
-Q_DECLARE_METATYPE(zeno::zany)
-
-Q_DECLARE_METATYPE(zeno::render_update_info);
-
-Q_DECLARE_METATYPE(zeno::render_reload_info)
 
 typedef QList<QPersistentModelIndex> PARAM_LINKS;
-Q_DECLARE_METATYPE(PARAM_LINKS)
 
-Q_DECLARE_METATYPE(QLinearGradient)
-
-Q_DECLARE_METATYPE(zeno::NodeDataGroup)
-
-Q_DECLARE_METATYPE(zeno::SocketProperty)
 
 class GraphModel;
 struct SEARCH_RESULT
@@ -490,8 +479,6 @@ struct CURVE_DATA {
 };
 
 typedef QMap<QString, CURVE_DATA> CURVES_DATA;
-Q_DECLARE_METATYPE(CURVES_DATA);
-Q_DECLARE_METATYPE(CURVE_DATA);
 
 struct SLIDER_INFO {
     qreal step;
@@ -499,7 +486,6 @@ struct SLIDER_INFO {
     qreal max;
     SLIDER_INFO() : step(1.), min(0.), max(100.) {}
 };
-Q_DECLARE_METATYPE(SLIDER_INFO)
 
 struct CommandParam
 {
@@ -511,7 +497,6 @@ struct CommandParam
         return name == rhs.name && description == rhs.description && value == rhs.value;
     }
 };
-Q_DECLARE_METATYPE(CommandParam)
 
 typedef QVariantMap CONTROL_PROPERTIES;
 
@@ -524,14 +509,10 @@ struct COLOR_RAMP
     COLOR_RAMP(const qreal& pos, const qreal& r, const qreal& g, const qreal& b)
         : pos(pos), r(r), g(g), b(b) {}
 };
+
 typedef QVector<COLOR_RAMP> COLOR_RAMPS;
-Q_DECLARE_METATYPE(COLOR_RAMPS)
-
 typedef QVector<qreal> UI_VECTYPE;
-Q_DECLARE_METATYPE(UI_VECTYPE);
-
 typedef QVector<QString> UI_VECSTRING;
-Q_DECLARE_METATYPE(UI_VECSTRING);
 
 struct BLACKBOARD_INFO
 {
@@ -544,20 +525,11 @@ struct BLACKBOARD_INFO
     QColor background;
     BLACKBOARD_INFO() : special(false) {}
 };
-Q_DECLARE_METATYPE(BLACKBOARD_INFO)
 
 struct NodeState
 {
     zeno::NodeRunStatus runstatus;
     bool bDirty;
 };
-Q_DECLARE_METATYPE(NodeState)
-
-Q_DECLARE_METATYPE(zeno::ObjPath)
-
-Q_DECLARE_METATYPE(zeno::CustomUI)
-
-Q_DECLARE_METATYPE(zeno::vecvar)
-Q_DECLARE_METATYPE(zeno::PrimVar)
 
 #endif

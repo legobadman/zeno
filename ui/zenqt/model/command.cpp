@@ -1,6 +1,9 @@
 #include "command.h"
 #include "variantptr.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
+#include <zeno/extra/SubnetNode.h>
+#include "model/parammodel.h"
 
 
 AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QStringList& graphPath)
@@ -74,7 +77,7 @@ void AddNodeCommand::undo()
 {
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
-        if (auto spnode = m_model->getWpNode(nodename).lock())
+        if (auto spnode = m_model->getWpNode(nodename))
         {
             m_pos = spnode->get_pos();
         }
@@ -121,8 +124,8 @@ void RemoveNodeCommand::redo()
 {
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
-        auto spNode = m_model->getWpNode(nodename).lock();
-        if (std::shared_ptr<zeno::SubnetNode> subnetNode = std::dynamic_pointer_cast<zeno::SubnetNode>(spNode)) {   //if is subnet/assets，record cate
+        auto spNode = m_model->getWpNode(nodename);
+        if (auto subnetNode = dynamic_cast<zeno::SubnetNode*>(spNode)) {   //if is subnet/assets，record cate
             m_cate = subnetNode->isAssetsNode() ? "assets" : "";
         }
         m_model->_removeNodeImpl(QString::fromStdString(m_nodeData.name));

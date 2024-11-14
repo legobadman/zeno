@@ -45,9 +45,10 @@ using namespace zeno::types;
 
 namespace zeno {
 
-ZENO_API INode::INode() {}
+INode::INode() {}
 
 void INode::initUuid(std::shared_ptr<Graph> pGraph, const std::string nodecls) {
+    //TODO: 考虑asset的情况
     m_nodecls = nodecls;
     this->graph = pGraph;
 
@@ -71,39 +72,39 @@ void INode::initUuid(std::shared_ptr<Graph> pGraph, const std::string nodecls) {
     m_uuidPath = path;
 }
 
-ZENO_API INode::~INode() {
+INode::~INode() {
     int j;
     j = 0;
 }
 
-ZENO_API std::shared_ptr<Graph> INode::getThisGraph() const {
+std::shared_ptr<Graph> INode::getThisGraph() const {
     return graph.lock();
 }
 
-ZENO_API Session *INode::getThisSession() const {
+Session *INode::getThisSession() const {
     return &getSession();
 }
 
-ZENO_API GlobalState *INode::getGlobalState() const {
+GlobalState *INode::getGlobalState() const {
     return getSession().globalState.get();
 }
 
-ZENO_API void INode::doComplete() {
+void INode::doComplete() {
     set_output("DST", std::make_shared<DummyObject>());
     complete();
 }
 
-ZENO_API std::string INode::get_nodecls() const
+std::string INode::get_nodecls() const
 {
     return m_nodecls;
 }
 
-ZENO_API std::string INode::get_ident() const
+std::string INode::get_ident() const
 {
     return m_name;
 }
 
-ZENO_API std::string INode::get_show_name() const {
+std::string INode::get_show_name() const {
     if (nodeClass) {
         std::string dispName = nodeClass->m_customui.nickname;
         if (!dispName.empty())
@@ -112,7 +113,7 @@ ZENO_API std::string INode::get_show_name() const {
     return m_nodecls;
 }
 
-ZENO_API std::string INode::get_show_icon() const {
+std::string INode::get_show_icon() const {
     if (nodeClass) {
         return nodeClass->m_customui.iconResPath;
     }
@@ -121,7 +122,7 @@ ZENO_API std::string INode::get_show_icon() const {
     }
 }
 
-ZENO_API CustomUI INode::get_customui() const {
+CustomUI INode::get_customui() const {
     if (nodeClass) {
         return nodeClass->m_customui;
     }
@@ -130,7 +131,7 @@ ZENO_API CustomUI INode::get_customui() const {
     }
 }
 
-ZENO_API ObjPath INode::get_graph_path() const {
+ObjPath INode::get_graph_path() const {
     ObjPath path;
     path = "";
 
@@ -154,7 +155,7 @@ ZENO_API ObjPath INode::get_graph_path() const {
     return path;
 }
 
-ZENO_API CustomUI INode::export_customui() const
+CustomUI INode::export_customui() const
 {
     std::set<std::string> intputPrims, outputPrims, inputObjs, outputObjs;
     zeno::CustomUI origin = nodeClass->m_customui;
@@ -261,7 +262,7 @@ ZENO_API CustomUI INode::export_customui() const
     return exportui;
 }
 
-ZENO_API ObjPath INode::get_path() const {
+ObjPath INode::get_path() const {
     ObjPath path;
     path = m_name;
 
@@ -290,17 +291,17 @@ std::string INode::get_uuid() const
     return m_uuid;
 }
 
-ZENO_API std::string INode::get_name() const
+std::string INode::get_name() const
 {
     return m_name;
 }
 
-ZENO_API void INode::set_name(const std::string& customname)
+void INode::set_name(const std::string& customname)
 {
     m_name = customname;
 }
 
-ZENO_API void INode::set_view(bool bOn)
+void INode::set_view(bool bOn)
 {
     //这一类方法要和ui model端位于同一线程
     CORE_API_BATCH
@@ -313,12 +314,12 @@ ZENO_API void INode::set_view(bool bOn)
     spGraph->viewNodeUpdated(m_name, bOn);
 }
 
-ZENO_API bool INode::is_view() const
+bool INode::is_view() const
 {
     return m_bView;
 }
 
-ZENO_API void INode::set_mute(bool bOn)
+void INode::set_mute(bool bOn)
 {
     CORE_API_BATCH
 
@@ -331,7 +332,7 @@ ZENO_API void INode::set_mute(bool bOn)
     //spGraph->viewNodeUpdated(m_name, bOn);
 }
 
-ZENO_API bool INode::is_mute() const
+bool INode::is_mute() const
 {
     return m_mute;
 }
@@ -359,7 +360,7 @@ void INode::mark_previous_ref_dirty() {
     */
 }
 
-ZENO_API bool INode::isInDopnetwork()
+bool INode::isInDopnetwork()
 {
     std::shared_ptr<Graph> parentGraph = graph.lock();
     while (parentGraph)
@@ -388,7 +389,7 @@ void INode::onInterrupted() {
     mark_previous_ref_dirty();
 }
 
-ZENO_API void INode::mark_dirty(bool bOn, bool bWholeSubnet, bool bRecursively)
+void INode::mark_dirty(bool bOn, bool bWholeSubnet, bool bRecursively)
 {
     scope_exit sp([&] {
         m_status = Node_DirtyReadyToRun;  //修改了数据，标脏，并置为此状态。（后续在计算过程中不允许修改数据，所以markDirty理论上是前端驱动）
@@ -468,7 +469,7 @@ void INode::mark_dirty_objs()
     }
 }
 
-ZENO_API void INode::complete() {}
+void INode::complete() {}
 
 void INode::preApply(CalcContext* pContext) {
     if (!m_dirty)
@@ -549,11 +550,11 @@ void INode::reflectForeach_apply(CalcContext* pContext)
 }
 
 
-ZENO_API void INode::apply() {
+void INode::apply() {
 
 }
 
-ZENO_API void INode::reflectNode_apply()
+void INode::reflectNode_apply()
 {
     if (m_pTypebase) {
         for (zeno::reflect::IMemberFunction* func : m_pTypebase->get_member_functions()) {
@@ -1347,7 +1348,7 @@ bool INode::receiveOutputObj(ObjectParam* in_param, std::shared_ptr<INode> outNo
     return true;
 }
 
-ZENO_API bool INode::requireInput(std::string const& ds, CalcContext* pContext) {
+bool INode::requireInput(std::string const& ds, CalcContext* pContext) {
     // 目前假设输入对象和输入数值，不能重名（不难实现，老节点直接改）。
     auto iter = m_inputObjs.find(ds);
     if (iter != m_inputObjs.end()) {
@@ -1443,7 +1444,7 @@ ZENO_API bool INode::requireInput(std::string const& ds, CalcContext* pContext) 
     return true;
 }
 
-ZENO_API void INode::doOnlyApply() {
+void INode::doOnlyApply() {
     apply();
 }
 
@@ -1479,7 +1480,7 @@ void INode::bypass() {
     output_objparam.spObject = input_objparam.spObject;
 }
 
-ZENO_API void INode::doApply(CalcContext* pContext) {
+void INode::doApply(CalcContext* pContext) {
 
     if (!m_dirty) {
         if (m_bView) {
@@ -1552,7 +1553,7 @@ ZENO_API void INode::doApply(CalcContext* pContext) {
     }
 }
 
-ZENO_API CommonParam INode::get_input_param(std::string const& name, bool* bExist) {
+CommonParam INode::get_input_param(std::string const& name, bool* bExist) {
     auto primparam = get_input_prim_param(name, bExist);
     if (bExist && *bExist)
         return primparam;
@@ -1563,7 +1564,7 @@ ZENO_API CommonParam INode::get_input_param(std::string const& name, bool* bExis
         *bExist = false;
 }
 
-ZENO_API CommonParam INode::get_output_param(std::string const& name, bool* bExist) {
+CommonParam INode::get_output_param(std::string const& name, bool* bExist) {
     auto primparam = get_output_prim_param(name, bExist);
     if (bExist && *bExist)
         return primparam;
@@ -1574,7 +1575,7 @@ ZENO_API CommonParam INode::get_output_param(std::string const& name, bool* bExi
         *bExist = false;
 }
 
-ZENO_API ObjectParams INode::get_input_object_params() const
+ObjectParams INode::get_input_object_params() const
 {
     ObjectParams params;
     for (auto& [name, spObjParam] : m_inputObjs)
@@ -1594,7 +1595,7 @@ ZENO_API ObjectParams INode::get_input_object_params() const
     return params;
 }
 
-ZENO_API ObjectParams INode::get_output_object_params() const
+ObjectParams INode::get_output_object_params() const
 {
     ObjectParams params;
     for (auto& [name, spObjParam] : m_outputObjs)
@@ -1614,7 +1615,7 @@ ZENO_API ObjectParams INode::get_output_object_params() const
     return params;
 }
 
-ZENO_API PrimitiveParams INode::get_input_primitive_params() const {
+PrimitiveParams INode::get_input_primitive_params() const {
     //TODO: deprecated node.
     PrimitiveParams params;
     for (auto& [name, spParamObj] : m_inputPrims) {
@@ -1636,7 +1637,7 @@ ZENO_API PrimitiveParams INode::get_input_primitive_params() const {
     return params;
 }
 
-ZENO_API PrimitiveParams INode::get_output_primitive_params() const {
+PrimitiveParams INode::get_output_primitive_params() const {
     PrimitiveParams params;
     for (auto& [name, spParamObj] : m_outputPrims) {
         ParamPrimitive param;
@@ -1655,7 +1656,7 @@ ZENO_API PrimitiveParams INode::get_output_primitive_params() const {
     return params;
 }
 
-ZENO_API ParamPrimitive INode::get_input_prim_param(std::string const& name, bool* pExist) const {
+ParamPrimitive INode::get_input_prim_param(std::string const& name, bool* pExist) const {
     ParamPrimitive param;
     auto iter = m_inputPrims.find(name);
     if (iter != m_inputPrims.end()) {
@@ -1671,7 +1672,7 @@ ZENO_API ParamPrimitive INode::get_input_prim_param(std::string const& name, boo
     return param;
 }
 
-ZENO_API ParamObject INode::get_input_obj_param(std::string const& name, bool* pExist) const {
+ParamObject INode::get_input_obj_param(std::string const& name, bool* pExist) const {
     ParamObject param;
     auto iter = m_inputObjs.find(name);
     if (iter != m_inputObjs.end()) {
@@ -1687,7 +1688,7 @@ ZENO_API ParamObject INode::get_input_obj_param(std::string const& name, bool* p
     return param;
 }
 
-ZENO_API ParamPrimitive INode::get_output_prim_param(std::string const& name, bool* pExist) const {
+ParamPrimitive INode::get_output_prim_param(std::string const& name, bool* pExist) const {
     ParamPrimitive param;
     auto iter = m_outputPrims.find(name);
     if (iter != m_outputPrims.end()) {
@@ -1703,7 +1704,7 @@ ZENO_API ParamPrimitive INode::get_output_prim_param(std::string const& name, bo
     return param;
 }
 
-ZENO_API ParamObject INode::get_output_obj_param(std::string const& name, bool* pExist) const {
+ParamObject INode::get_output_obj_param(std::string const& name, bool* pExist) const {
     ParamObject param;
     auto iter = m_outputObjs.find(name);
     if (iter != m_outputObjs.end()) {
@@ -1719,7 +1720,7 @@ ZENO_API ParamObject INode::get_output_obj_param(std::string const& name, bool* 
     return param;
 }
 
-ZENO_API zeno::reflect::Any INode::get_defl_value(std::string const& name) {
+zeno::reflect::Any INode::get_defl_value(std::string const& name) {
     //向量情况也挺麻烦的，因为可能存在公式
     ParamPrimitive param;
     auto iter = m_inputPrims.find(name);
@@ -1808,7 +1809,7 @@ bool INode::add_output_obj_param(ParamObject param) {
     return true;
 }
 
-ZENO_API void INode::set_result(bool bInput, const std::string& name, zany spObj) {
+void INode::set_result(bool bInput, const std::string& name, zany spObj) {
     if (bInput) {
         auto& param = safe_at(m_inputObjs, name, "");
         param.spObject = spObj;
@@ -2009,7 +2010,7 @@ bool INode::removeLink(bool bInput, const EdgeInfo& edge) {
     return false;
 }
 
-ZENO_API std::string INode::get_viewobject_output_param() const {
+std::string INode::get_viewobject_output_param() const {
     //现在暂时还没有什么标识符用于指定哪个输出口是对应输出view obj的
     //一般都是默认第一个输出obj，暂时这么规定，后续可能用标识符。
     if (m_outputObjs.empty())
@@ -2017,7 +2018,7 @@ ZENO_API std::string INode::get_viewobject_output_param() const {
     return m_outputObjs.begin()->second.name;
 }
 
-ZENO_API NodeData INode::exportInfo() const
+NodeData INode::exportInfo() const
 {
     NodeData node;
     node.cls = m_nodecls;
@@ -2073,7 +2074,7 @@ ZENO_API NodeData INode::exportInfo() const
     return node;
 }
 
-ZENO_API bool INode::update_param(const std::string& param, zeno::reflect::Any new_value) {
+bool INode::update_param(const std::string& param, zeno::reflect::Any new_value) {
     CORE_API_BATCH
     zeno::reflect::Any old_value;
     bool ret = update_param_impl(param, new_value, old_value);
@@ -2084,7 +2085,7 @@ ZENO_API bool INode::update_param(const std::string& param, zeno::reflect::Any n
     return ret;
 }
 
-ZENO_API bool INode::update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& old_value)
+bool INode::update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& old_value)
 {
     auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
     bool isvalid = convertToEditVar(new_value, spParam.type);
@@ -2108,7 +2109,7 @@ ZENO_API bool INode::update_param_impl(const std::string& param, zeno::reflect::
     return false;
 }
 
-ZENO_API bool INode::update_param_wildcard(const std::string& param, bool isWildcard)
+bool INode::update_param_wildcard(const std::string& param, bool isWildcard)
 {
     auto& spParam = safe_at(m_inputObjs, param, "miss input param `" + param + "` on node `" + m_name + "`");
     if (isWildcard != spParam.bWildcard) {
@@ -2119,7 +2120,7 @@ ZENO_API bool INode::update_param_wildcard(const std::string& param, bool isWild
     return false;
 }
 
-ZENO_API bool INode::update_param_socket_type(const std::string& param, SocketType type)
+bool INode::update_param_socket_type(const std::string& param, SocketType type)
 {
     CORE_API_BATCH
     auto& spParam = safe_at(m_inputObjs, param, "miss input param `" + param + "` on node `" + m_name + "`");
@@ -2140,7 +2141,7 @@ ZENO_API bool INode::update_param_socket_type(const std::string& param, SocketTy
     return false;
 }
 
-ZENO_API bool zeno::INode::update_param_type(const std::string& param, bool bPrim, bool bInput, ParamType type)
+bool zeno::INode::update_param_type(const std::string& param, bool bPrim, bool bInput, ParamType type)
 {
     CORE_API_BATCH
         if (bPrim)
@@ -2183,7 +2184,7 @@ ZENO_API bool zeno::INode::update_param_type(const std::string& param, bool bPri
     return false;
 }
 
-ZENO_API bool zeno::INode::update_param_control(const std::string& param, ParamControl control)
+bool zeno::INode::update_param_control(const std::string& param, ParamControl control)
 {
     CORE_API_BATCH
     auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
@@ -2196,7 +2197,7 @@ ZENO_API bool zeno::INode::update_param_control(const std::string& param, ParamC
     return false;
 }
 
-ZENO_API bool zeno::INode::update_param_control_prop(const std::string& param, zeno::reflect::Any props)
+bool zeno::INode::update_param_control_prop(const std::string& param, zeno::reflect::Any props)
 {
     CORE_API_BATCH
     auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
@@ -2205,7 +2206,7 @@ ZENO_API bool zeno::INode::update_param_control_prop(const std::string& param, z
         return true;
 }
 
-ZENO_API bool INode::update_param_visible(const std::string& name, bool bOn, bool bInput) {
+bool INode::update_param_visible(const std::string& name, bool bOn, bool bInput) {
     if (bInput) {
         if (auto iter = m_inputObjs.find(name); iter != m_inputObjs.end()) {
             auto& paramObj = iter->second;
@@ -2310,7 +2311,7 @@ void INode::checkParamsConstrain() {
     }
 }
 
-ZENO_API bool INode::update_param_enable(const std::string& name, bool bOn, bool bInput) {
+bool INode::update_param_enable(const std::string& name, bool bOn, bool bInput) {
     if (bInput) {
         if (auto iter = m_inputObjs.find(name); iter != m_inputObjs.end()) {
             auto& paramObj = iter->second;
@@ -2352,7 +2353,7 @@ ZENO_API bool INode::update_param_enable(const std::string& name, bool bOn, bool
     return false;
 }
 
-ZENO_API bool zeno::INode::update_param_socket_visible(const std::string& param, bool bVisible, bool bInput)
+bool zeno::INode::update_param_socket_visible(const std::string& param, bool bVisible, bool bInput)
 {
     CORE_API_BATCH
     if (bInput) {
@@ -2376,18 +2377,18 @@ ZENO_API bool zeno::INode::update_param_socket_visible(const std::string& param,
     return false;
 }
 
-ZENO_API void INode::update_param_color(const std::string& name, std::string& clr)
+void INode::update_param_color(const std::string& name, std::string& clr)
 {
     CORE_API_BATCH
     CALLBACK_NOTIFY(update_param_color, name, clr)
 }
 
-ZENO_API void INode::update_layout(params_change_info& changes)
+void INode::update_layout(params_change_info& changes)
 {
     CALLBACK_NOTIFY(update_layout, changes);
 }
 
-ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
+params_change_info INode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
 {
     //TODO: 这里只有primitive参数类型的情况，还需要整合obj参数的情况。
     std::set<std::string> inputs_old, outputs_old, obj_inputs_old, obj_outputs_old;
@@ -2615,13 +2616,13 @@ ZENO_API params_change_info INode::update_editparams(const ParamsUpdateInfo& par
     return changes;
 }
 
-ZENO_API void INode::trigger_update_params(const std::string& param, bool changed, params_change_info changes)
+void INode::trigger_update_params(const std::string& param, bool changed, params_change_info changes)
 {
     if (changed)
         update_layout(changes);
 }
 
-ZENO_API void INode::init(const NodeData& dat)
+void INode::init(const NodeData& dat)
 {
     //IO init
     if (!dat.name.empty())
@@ -2647,7 +2648,7 @@ ZENO_API void INode::init(const NodeData& dat)
     m_dirty = true;
 }
 
-ZENO_API void INode::initParams(const NodeData& dat)
+void INode::initParams(const NodeData& dat)
 {
     for (const ParamObject& paramObj : dat.customUi.inputObjs)
     {
@@ -2708,7 +2709,7 @@ ZENO_API void INode::initParams(const NodeData& dat)
     }
 }
 
-ZENO_API bool INode::has_input(std::string const &id) const {
+bool INode::has_input(std::string const &id) const {
     //这个has_input在旧的语义里，代表的是input obj，如果有一些边没有连上，那么有一些参数值仅有默认值，未必会设这个input的，
     //还有一种情况，就是对象值是否有输入引入
     //这种情况要看旧版本怎么处理。
@@ -2722,7 +2723,7 @@ ZENO_API bool INode::has_input(std::string const &id) const {
     }
 }
 
-ZENO_API zany INode::get_input(std::string const &id) const {
+zany INode::get_input(std::string const &id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {
         auto& val = iter->second.result;
@@ -2793,19 +2794,19 @@ ZENO_API zany INode::get_input(std::string const &id) const {
         }
 }
 
-ZENO_API void INode::set_pos(std::pair<float, float> pos) {
+void INode::set_pos(std::pair<float, float> pos) {
     m_pos = pos;
     CALLBACK_NOTIFY(set_pos, m_pos)
 }
 
-ZENO_API std::pair<float, float> INode::get_pos() const {
+std::pair<float, float> INode::get_pos() const {
     return m_pos;
 }
 
-ZENO_API bool INode::in_asset_file() const {
+bool INode::in_asset_file() const {
     std::shared_ptr<Graph> spGraph = graph.lock();
     assert(spGraph);
-    return getSession().assets->isAssetGraph(spGraph);
+    return getSession().assets->isAssetGraph(spGraph.get());
 }
 
 bool INode::set_primitive_input(std::string const& id, const zeno::reflect::Any& val) {
@@ -2823,7 +2824,7 @@ bool INode::set_primitive_output(std::string const& id, const zeno::reflect::Any
     iter->second.result = val;
 }
 
-ZENO_API bool INode::set_output(std::string const& param, zany obj) {
+bool INode::set_output(std::string const& param, zany obj) {
     //只给旧节点模块使用，如果函数暴露reflect::Any，就会迫使所有使用这个函数的cpp文件include headers
     //会增加程序体积以及编译时间，待后续生成文件优化后再考虑处理。
     auto iter = m_outputObjs.find(param);
@@ -2885,18 +2886,18 @@ ZENO_API bool INode::set_output(std::string const& param, zany obj) {
     return false;
 }
 
-ZENO_API zany INode::get_default_output_object() {
+zany INode::get_default_output_object() {
     if (m_outputObjs.empty())
         return nullptr;
     return m_outputObjs.begin()->second.spObject;
 }
 
-ZENO_API zany INode::get_output_obj(std::string const& param) {
+zany INode::get_output_obj(std::string const& param) {
     auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + m_name + "`");
     return spParam.spObject;
 }
 
-ZENO_API std::vector<zany> INode::get_output_objs() {
+std::vector<zany> INode::get_output_objs() {
     std::vector<zany> objs;
     for (const auto& [name, objparam] : m_outputObjs) {
         objs.push_back(objparam.spObject);
@@ -2904,7 +2905,7 @@ ZENO_API std::vector<zany> INode::get_output_objs() {
     return objs;
 }
 
-ZENO_API TempNodeCaller INode::temp_node(std::string const &id) {
+TempNodeCaller INode::temp_node(std::string const &id) {
     //TODO: deprecated
     std::shared_ptr<Graph> spGraph = graph.lock();
     assert(spGraph);
@@ -2947,19 +2948,19 @@ void INode::initTypeBase(zeno::reflect::TypeBase* pTypeBase)
     m_pTypebase = pTypeBase;
 }
 
-ZENO_API bool INode::is_continue_to_run() {
+bool INode::is_continue_to_run() {
     return false;
 }
 
-ZENO_API void INode::increment() {
+void INode::increment() {
 
 }
 
-ZENO_API void INode::reset_forloop_settings() {
+void INode::reset_forloop_settings() {
 
 }
 
-ZENO_API std::shared_ptr<IObject> INode::get_iterate_object() {
+std::shared_ptr<IObject> INode::get_iterate_object() {
     return nullptr;
 }
 
