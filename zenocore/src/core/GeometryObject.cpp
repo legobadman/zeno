@@ -128,10 +128,26 @@ namespace zeno
     }
 
     ZENO_API bool GeometryObject::remove_point(int ptnum) {
+        std::vector<vec3f>& vec_pos = points_pos();
+        assert(m_spTopology->npoints() == vec_pos.size(), false);
+
+        if (m_vert_attrs.size() > 0) {
+            auto firstIter = m_vert_attrs.begin();
+            assert(firstIter->second.size() == m_spTopology->nvertices(), false);
+        }
+
         bool ret = m_spTopology->remove_point(ptnum);
         if (ret) {
-            //TODO: 属性也要同步删除,包括point和vertices
+            //属性也要同步删除,包括point和vertices
             for (auto& [name, attrib_vec] : m_point_attrs) {
+                attrib_vec.remove_elem<zeno::vec3f> (ptnum);
+            }
+
+            for (auto& [name, attrib_vec] : m_vert_attrs) {
+                std::vector<int>& linearVertexIdx = m_spTopology->point_vertices(ptnum);
+                for (int i = linearVertexIdx.size() - 1; i >= 0; i--) {
+                    attrib_vec.remove_elem<zeno::vec3f>(linearVertexIdx[i]);
+                }
             }
         }
         return ret;
@@ -481,10 +497,15 @@ namespace zeno
     }
 
     ZENO_API int GeometryObject::add_point(zeno::vec3f pos) {
-        create_attr(ATTR_POINT, "pos", pos);
+        auto pointAttrIter = m_point_attrs.find("pos");
+        if (pointAttrIter == m_point_attrs.end()) {
+            create_attr(ATTR_POINT, "pos", pos);
+        } else {
+            pointAttrIter->second.append(pos);
+        }
         return m_spTopology->add_point();
     }
-
+        
     ZENO_API int GeometryObject::add_vertex(int face_id, int point_id) {
         return m_spTopology->add_vertex(face_id, point_id);
     }

@@ -81,6 +81,7 @@ namespace zeno {
                 x_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[0]), m_size);
                 y_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[1]), m_size);
                 z_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[2]), m_size);
+                w_comp = std::make_shared<AttrColumn>(std::vector<float>(1, val[3]), m_size);
                 m_type = ATTR_VEC4;
             }
             else if constexpr (std::is_same_v<E, std::vector<int>>) {

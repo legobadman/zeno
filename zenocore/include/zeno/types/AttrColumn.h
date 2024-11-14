@@ -76,9 +76,6 @@ namespace zeno {
 
         template<typename T>
         void insert(size_t index, T elemVal) {
-            if (!m_data.has_value() || !elemVal.has_value()) {
-                throw makeError<UnimplError>("empty value when set attribute data");
-            }
             if (index < 0 || index >= m_size) {
                 throw makeError<UnimplError>("index exceed the range of array");
             }
@@ -97,6 +94,25 @@ namespace zeno {
                     vec.insert(vec.begin() + index, elemVal);
                 }
             }, m_data);
+            m_size++;
+        }
+
+        template<typename T>
+        void append(T elementVal) {
+            std::visit([&](auto&& vec) {
+                using E = std::decay_t<decltype(vec)>;
+                if constexpr (!std::is_same_v<E, std::vector<T>>) {
+                    throw;
+                } else if constexpr (std::is_same_v<E, std::vector<int>> ||
+                    std::is_same_v<E, std::vector<float>> ||
+                    std::is_same_v<E, std::vector<std::string>>) {
+                    if (vec.size() == 1) {
+                        vec.resize(m_size, vec[0]);
+                    }
+                    vec.push_back(elementVal);
+                }
+            }, m_data);
+            m_size++;
         }
 
         void remove(size_t index) {
@@ -114,6 +130,7 @@ namespace zeno {
                     vec.erase(vec.begin() + index);
                 }
             }, m_data);
+            m_size--;
         }
 
         size_t m_size;
@@ -146,6 +163,11 @@ namespace zeno {
         template<typename T>
         void insert(size_t index, T val) {
             m_pImpl->insert(index, val);
+        }
+
+        template<typename T>
+        void append(T val) {
+            m_pImpl->append(val);
         }
 
         void remove(size_t index);

@@ -770,6 +770,7 @@ namespace zeno
             prevEdge->next = newedge.get();
             prevEdge->point = point_id;
             m_hEdges.insert(std::make_pair(newedge->id, newedge));
+            spPoint->edges.insert(newedge.get());   //需要将newedge加入newedge的edges中？
             m_bTriangle = false;    //有增加意味着不能当作三角形处理了
             return npoints_in_face(m_faces[face_id].get());
         }
