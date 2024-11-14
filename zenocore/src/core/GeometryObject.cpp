@@ -136,6 +136,8 @@ namespace zeno
             assert(firstIter->second.size() == m_spTopology->nvertices(), false);
         }
 
+        copyTopologyAccordtoUseCount();
+
         bool ret = m_spTopology->remove_point(ptnum);
         if (ret) {
             //属性也要同步删除,包括point和vertices
@@ -154,6 +156,7 @@ namespace zeno
     }
 
     ZENO_API bool GeometryObject::remove_vertex(int face_id, int vert_id) {
+        copyTopologyAccordtoUseCount();
         return m_spTopology->remove_vertex(face_id, vert_id);
     }
 
@@ -225,6 +228,12 @@ namespace zeno
         }
         else {
             throw makeError<UnimplError>("Unknown group on attr");
+        }
+    }
+
+    void GeometryObject::copyTopologyAccordtoUseCount() {
+        if (m_spTopology.use_count() > 1) {
+            m_spTopology = std::make_shared<GeometryTopology>(*m_spTopology.get());
         }
     }
 
@@ -497,6 +506,8 @@ namespace zeno
     }
 
     ZENO_API int GeometryObject::add_point(zeno::vec3f pos) {
+        copyTopologyAccordtoUseCount();
+
         auto pointAttrIter = m_point_attrs.find("pos");
         if (pointAttrIter == m_point_attrs.end()) {
             create_attr(ATTR_POINT, "pos", pos);
@@ -507,6 +518,7 @@ namespace zeno
     }
         
     ZENO_API int GeometryObject::add_vertex(int face_id, int point_id) {
+        copyTopologyAccordtoUseCount();
         return m_spTopology->add_vertex(face_id, point_id);
     }
 
@@ -571,6 +583,7 @@ namespace zeno
     }
 
     ZENO_API int GeometryObject::add_face(const std::vector<int>& points) {
+        copyTopologyAccordtoUseCount();
         return m_spTopology->addface(points);
     }
 

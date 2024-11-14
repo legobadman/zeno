@@ -161,6 +161,7 @@ namespace zeno
         ZENO_API std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
         ZENO_API const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         ZENO_API size_t get_attr_size(GeoAttrGroup grp) const;
+        void copyTopologyAccordtoUseCount();
 
         std::shared_ptr<GeometryTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
         std::map<std::string, AttributeVector> m_point_attrs;
