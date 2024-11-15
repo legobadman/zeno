@@ -77,10 +77,9 @@ void AddNodeCommand::undo()
 {
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
-        if (auto spnode = m_model->getWpNode(nodename))
-        {
-            m_pos = spnode->get_pos();
-        }
+        QModelIndex idx = m_model->indexFromName(nodename);
+        QPointF pos = idx.data(ROLE_OBJPOS).toPointF();
+        m_pos = { pos.x(), pos.y() };
         m_model->_removeNodeImpl(nodename);
     }
 }
@@ -124,10 +123,17 @@ void RemoveNodeCommand::redo()
 {
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
-        auto spNode = m_model->getWpNode(nodename);
-        if (auto subnetNode = dynamic_cast<zeno::SubnetNode*>(spNode)) {   //if is subnet/assets，record cate
-            m_cate = subnetNode->isAssetsNode() ? "assets" : "";
+        QModelIndex idx = m_model->indexFromName(nodename);
+        zeno::NodeType type = (zeno::NodeType)idx.data(ROLE_NODETYPE).toInt();
+        if (type == zeno::Node_AssetInstance) {
+            m_cate = "assets";
         }
+        else {
+            m_cate = "";
+        }
+        //if (auto subnetNode = dynamic_cast<zeno::SubnetNode*>(spNode)) {   //if is subnet/assets，record cate
+        //    m_cate = subnetNode->isAssetsNode() ? "assets" : "";
+        //}
         m_model->_removeNodeImpl(QString::fromStdString(m_nodeData.name));
     }
 }

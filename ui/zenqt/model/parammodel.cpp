@@ -533,8 +533,9 @@ QVariant ParamsModel::getIndexList(bool bInput) const
 
 GraphModel* ParamsModel::getGraph() const
 {
-    if (NodeItem* pItem = qobject_cast<NodeItem*>(parent())) {
-        if (GraphModel* pModel = qobject_cast<GraphModel*>(pItem->parent())) {
+    QObject* nodeitem = parent();
+    if (nodeitem) {
+        if (GraphModel* pModel = qobject_cast<GraphModel*>(nodeitem->parent())) {
             return pModel;
         }
     }
@@ -684,8 +685,11 @@ void ParamsModel::addParam(const ParamItem& param)
 
 GraphModel* ParamsModel::parentGraph() const
 {
-    if (auto pNode = qobject_cast<NodeItem*>(parent())) {
-        return qobject_cast<GraphModel*>(pNode->parent());
+    QObject* nodeitem = parent();
+    if (nodeitem) {
+        if (GraphModel* pModel = qobject_cast<GraphModel*>(nodeitem->parent())) {
+            return pModel;
+        }
     }
     return nullptr;
 }

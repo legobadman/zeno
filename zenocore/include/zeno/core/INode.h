@@ -171,8 +171,8 @@ public:
     void onNodeNameUpdated(const std::string& oldname, const std::string& newname);
     void on_node_about_to_remove();
     void on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded); //参数名包括对象输入和数值输入，不可重名
-
     void checkParamsConstrain();
+
     CALLBACK_REGIST(update_visable_enable, void, zeno::INode*, std::set<std::string>, std::set<std::string>)
 
 protected:

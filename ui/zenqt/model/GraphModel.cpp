@@ -24,6 +24,45 @@
 #include <zeno/core/INodeClass.h>
 
 
+struct NodeItem : public QObject
+{
+    Q_OBJECT
+
+public:
+    //temp cached data for spNode->...
+    QString name;
+    QString dispName;
+    QString dispIcon;
+    zeno::ObjPath uuidPath;
+    QString cls;
+    QPointF pos;
+
+    std::string m_cbSetPos;
+    std::string m_cbSetView;
+    //for DopnetWork
+    std::string m_cbFrameCached;
+    std::string m_cbFrameRemoved;
+
+    zeno::INode* m_wpNode;
+    ParamsModel* params = nullptr;
+    bool bView = false;
+    bool bCollasped = false;
+    NodeState runState;
+
+    //for subgraph, but not include assets:
+    std::optional<GraphModel*> optSubgraph;
+
+    NodeItem(QObject* parent);
+    ~NodeItem();
+    void init(GraphModel* pGraphM, zeno::INode* spNode);
+    QString getName() {
+        return name;
+    }
+
+private:
+    void unregister();
+};
+
 NodeItem::NodeItem(QObject* parent) : QObject(parent)
 {
 }
@@ -107,7 +146,8 @@ void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
     if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode))
     {
         GraphModel* parentM = qobject_cast<GraphModel*>(this->parent());
-        auto pModel = new GraphModel(subnetnode->subgraph.get(), parentM->treeModel(), this);
+        std::string const& subnetpath = spNode->get_path();
+        auto pModel = new GraphModel(subnetpath, false, parentM->treeModel(), this);
         bool bAssets = subnetnode->subgraph->isAssets();
         if (bAssets) {
             if (!subnetnode->in_asset_file())
@@ -135,14 +175,38 @@ void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
     }
 }
 
+#include "GraphModel.moc"
 
-GraphModel::GraphModel(zeno::Graph* spGraph, GraphsTreeModel* pTree, QObject* parent)
+struct GraphMImpl : QObject
+{
+    GraphMImpl(zeno::Graph* spGraph, GraphModel* parent)
+        : QObject(parent)
+        , m_wpCoreGraph(spGraph)
+        , m_parentM(parent)
+    {
+    }
+
+    zeno::Graph* m_wpCoreGraph;
+    GraphModel* m_parentM;
+};
+
+GraphModel::GraphModel(std::string const& asset_or_graphpath, bool bAsset, GraphsTreeModel* pTree, QObject* parent)
     : QAbstractListModel(parent)
-    , m_wpCoreGraph(spGraph)
     , m_pTree(pTree)
 {
+    std::shared_ptr<zeno::Graph> spGraph;
+    if (bAsset) {
+        std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
+        spGraph = assets->getAssetGraph(asset_or_graphpath, true);
+    }
+    else {
+        spGraph = zeno::getSession().mainGraph->getGraphByPath(asset_or_graphpath);
+    }
+
+    m_impl = new GraphMImpl(spGraph.get(), this);
+
     m_graphName = QString::fromStdString(spGraph->getName());
-    m_undoRedoStack = m_graphName == "main" || zeno::getSession().assets->isAssetGraph(spGraph) ? new QUndoStack(this) : nullptr;
+    m_undoRedoStack = m_graphName == "main" || zeno::getSession().assets->isAssetGraph(spGraph.get()) ? new QUndoStack(this) : nullptr;
     m_linkModel = new LinkModel(this);
     registerCoreNotify();
 
@@ -169,7 +233,7 @@ GraphModel::GraphModel(zeno::Graph* spGraph, GraphsTreeModel* pTree, QObject* pa
 
 void GraphModel::registerCoreNotify()
 {
-    auto coreGraph = m_wpCoreGraph;
+    auto coreGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(coreGraph);
 
     m_cbCreateNode = coreGraph->register_createNode([&](const std::string& name, std::weak_ptr<zeno::INode> spNode) {
@@ -209,7 +273,7 @@ void GraphModel::registerCoreNotify()
 
 void GraphModel::unRegisterCoreNotify()
 {
-    if (auto coreGraph = m_wpCoreGraph)
+    if (auto coreGraph = m_impl->m_wpCoreGraph)
     {
         bool ret = coreGraph->unregister_createNode(m_cbCreateNode);
         ZASSERT_EXIT(ret);
@@ -239,7 +303,7 @@ GraphModel::~GraphModel()
 
 void GraphModel::clear()
 {
-    auto spGraph = m_wpCoreGraph;
+    auto spGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(spGraph);
     spGraph->clear();
 }
@@ -594,7 +658,7 @@ QModelIndexList GraphModel::match(const QModelIndex& start, int role,
 {
     QModelIndexList result;
     if (role == ROLE_CLASS_NAME) {
-        auto spGraph = m_wpCoreGraph;
+        auto spGraph = m_impl->m_wpCoreGraph;
         ZASSERT_EXIT(spGraph, result);
         std::string content = value.toString().toStdString();
         auto results = spGraph->searchByClass(content);
@@ -923,7 +987,7 @@ void GraphModel::removeLink(const zeno::EdgeInfo& link)
 
 bool GraphModel::updateLink(const QModelIndex& linkIdx, bool bInput, const QString& oldkey, const QString& newkey)
 {
-    auto spGraph = m_wpCoreGraph;
+    auto spGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(spGraph, false);
     zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
     bool ret = spGraph->updateLink(edge, bInput, oldkey.toStdString(), newkey.toStdString());
@@ -937,7 +1001,7 @@ bool GraphModel::updateLink(const QModelIndex& linkIdx, bool bInput, const QStri
 
 void GraphModel::moveUpLinkKey(const QModelIndex& linkIdx, bool bInput, const std::string& keyName)
 {
-    auto spGraph = m_wpCoreGraph;
+    auto spGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(spGraph);
     zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
     spGraph->moveUpLinkKey(edge, bInput, keyName);
@@ -1003,8 +1067,9 @@ zeno::NodeData GraphModel::createNode(const QString& nodeCls, const QString& cat
     return _createNodeImpl(cate, nodedata, true);
 }
 
-void GraphModel::_appendNode(zeno::INode* spNode)
+void GraphModel::_appendNode(void* _spNode)
 {
+    zeno::INode* spNode = static_cast<zeno::INode*>(_spNode);
     ZASSERT_EXIT(spNode);
 
     int nRows = m_nodes.size();
@@ -1062,12 +1127,11 @@ zeno::NodeData GraphModel::_createNodeImpl(const QString& cate, zeno::NodeData& 
             }
         };
 
-        auto spGraph = m_wpCoreGraph;
+        auto spGraph = m_impl->m_wpCoreGraph;
         if (!spGraph)
             return zeno::NodeData();
 
-        std::shared_ptr<zeno::INode> spNode;
-        //spNode = spGraph->createNode(nodedata.cls, nodedata.name, cate == "assets", nodedata.uipos);
+        auto spNode = spGraph->createNode(nodedata.cls, nodedata.name, cate == "assets", nodedata.uipos);
         if (!spNode)
             return zeno::NodeData();
 
@@ -1180,7 +1244,7 @@ bool GraphModel::_removeNodeImpl(const QString& name, bool endTransaction)
             }
         }
 
-        auto spCoreGraph = m_wpCoreGraph;
+        auto spCoreGraph = m_impl->m_wpCoreGraph;
         ZASSERT_EXIT(spCoreGraph, false);
         if (spCoreGraph)
             return spCoreGraph->removeNode(name.toStdString());
@@ -1204,7 +1268,7 @@ void GraphModel::_addLinkImpl(const zeno::EdgeInfo& link, bool endTransaction)
         }
     }
     else {
-        m_wpCoreGraph->addLink(link);
+        m_impl->m_wpCoreGraph->addLink(link);
     }
 }
 
@@ -1225,7 +1289,7 @@ void GraphModel::_removeLinkImpl(const zeno::EdgeInfo& link, bool endTransaction
     }
     else {
         //emit to core data.
-        m_wpCoreGraph->removeLink(link);
+        m_impl->m_wpCoreGraph->removeLink(link);
     }
 }
 
@@ -1257,7 +1321,7 @@ void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransact
             topLevelGraph->pushToplevelStack(pCmd);
     }
     else {
-        auto spCoreGraph = m_wpCoreGraph;
+        auto spCoreGraph = m_impl->m_wpCoreGraph;
         ZASSERT_EXIT(spCoreGraph);
         NodeItem* item = m_nodes[m_row2uuid[idx.row()]];
         auto spCoreNode = item->m_wpNode;
@@ -1280,24 +1344,12 @@ void GraphModel::_setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransact
             topLevelGraph->pushToplevelStack(pCmd);
     }
     else {
-        auto spCoreGraph = m_wpCoreGraph;
+        auto spCoreGraph = m_impl->m_wpCoreGraph;
         ZASSERT_EXIT(spCoreGraph);
         NodeItem* item = m_nodes[m_row2uuid[idx.row()]];
         auto spCoreNode = item->m_wpNode;
         ZASSERT_EXIT(spCoreNode);
         spCoreNode->set_mute(bOn);
-    }
-}
-
-zeno::INode* GraphModel::getWpNode(QString& nodename)
-{
-    auto it = m_name2uuid.find(nodename);
-    if (it != m_name2uuid.end() && m_nodes.find(it.value()) != m_nodes.end())
-    {
-        if (NodeItem* item = m_nodes[it.value()])
-        {
-            return item->m_wpNode;
-        }
     }
 }
 
@@ -1346,7 +1398,7 @@ void GraphModel::setMute(const QModelIndex& idx, bool bOn)
 
 QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)
 {
-    auto spCoreGraph = m_wpCoreGraph;
+    auto spCoreGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(spCoreGraph, false);
 
     std::string oldName = idx.data(ROLE_NODE_NAME).toString().toStdString();
@@ -1356,7 +1408,7 @@ QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)
 
 void GraphModel::updateSocketValue(const QModelIndex& nodeidx, const QString socketName, const QVariant newValue)
 {
-    m_wpCoreGraph->hasNode("");
+    m_impl->m_wpCoreGraph->hasNode("");
     if (ParamsModel* paramModel = params(nodeidx))
     {
         QModelIndex& socketIdx = paramModel->paramIdx(socketName, true);
@@ -1470,7 +1522,16 @@ void GraphModel::syncToAssetsInstance(const QString& assetsName)
             if (spSubnetNode) {
                 auto& assetsMgr = zeno::getSession().assets;
                 assetsMgr->updateAssetInstance(assetsName.toStdString(), spSubnetNode);
-                pSubgM->updateAssetInstance(spSubnetNode->subgraph.get());
+                //pSubgM->updateAssetInstance(spSubnetNode->subgraph.get());
+                {
+                    auto spGraph = spSubnetNode->subgraph.get();
+                    pSubgM->m_impl->m_wpCoreGraph = spGraph;
+                    registerCoreNotify();
+                    for (auto& [name, node] : spGraph->getNodes()) {
+                        _appendNode(node.get());
+                    }
+                    _initLink();
+                }
                 spNode->mark_dirty(true);
             }
         }
@@ -1479,18 +1540,6 @@ void GraphModel::syncToAssetsInstance(const QString& assetsName)
             pSubgM->syncToAssetsInstance(assetsName);
         }
     }
-}
-
-void GraphModel::updateAssetInstance(zeno::Graph* spGraph)
-{
-    m_wpCoreGraph->get_viewnodes();
-
-    m_wpCoreGraph = spGraph;
-    registerCoreNotify();
-    for (auto& [name, node] : spGraph->getNodes()) {
-        _appendNode(node.get());
-    }
-    _initLink();
 }
 
 void GraphModel::updateParamName(QModelIndex nodeIdx, int row, QString newName)
@@ -1537,7 +1586,6 @@ bool GraphModel::isLocked() const
 
 void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData& links, const QPointF& pos)
 {
-#if 0
     if (nodes.empty())
         return;
 
@@ -1546,7 +1594,7 @@ void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData
     unRegisterCoreNotify();
     for (auto [name, node] : nodes) {
         bool bAsset = node.asset.has_value();
-        std::shared_ptr<zeno::INode> spNode = m_wpCoreGraph->createNode(node.cls, "", bAsset, { offset.x(), offset.y() });
+        std::shared_ptr<zeno::INode> spNode = m_impl->m_wpCoreGraph->createNode(node.cls, "", bAsset, { offset.x(), offset.y() });
         node.name = spNode->get_name();
         spNode->init(node);
         auto pos = spNode->get_pos();
@@ -1563,7 +1611,6 @@ void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData
         link.outNode = old2new[link.outNode];
         addLink(link);
     }
-#endif
 }
 
 GraphModel* GraphModel::getTopLevelGraph(const QStringList& currentPath)

@@ -30,7 +30,7 @@ GraphsManager::GraphsManager(QObject* parent)
 {
     m_logModel = new QStandardItemModel(this);
     m_model = new GraphsTreeModel(this);
-    m_main = new GraphModel(zeno::getSession().mainGraph.get(), m_model, this);
+    m_main = new GraphModel("/main", false, m_model, this);
     m_model->init(m_main);
     m_assets = new AssetsModel(this);
 }
@@ -178,7 +178,7 @@ GraphsTreeModel* GraphsManager::newFile()
     if (!m_model) {
         m_model = new GraphsTreeModel(this);
         auto& sess = zeno::getSession();
-        m_main = new GraphModel(sess.mainGraph.get(), m_model, this);
+        m_main = new GraphModel("/main", false, m_model, this);
         m_model->init(m_main);
     }
 

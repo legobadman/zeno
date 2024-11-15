@@ -1,6 +1,5 @@
 #include "zenosubgraphscene.h"
 #include "zenonodebase.h"
-#include "heatmapnode.h"
 #include "zenolink.h"
 #include <zeno/io/zsg2reader.h>
 #include <zeno/io/zenwriter.h>
