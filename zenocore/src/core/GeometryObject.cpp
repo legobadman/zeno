@@ -77,6 +77,7 @@ namespace zeno
         }
 
         m_spTopology->toPrimitive(spPrim);
+        spPrim->m_userData = m_userData;
         return spPrim;
     }
 
