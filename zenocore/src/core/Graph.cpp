@@ -748,6 +748,8 @@ std::string Graph::updateNodeName(const std::string oldName, const std::string n
 
 void Graph::clear()
 {
+    CALLBACK_NOTIFY(clear)
+
     m_nodes.clear();
     nodesToExec.clear();
     portalIns.clear();
@@ -766,8 +768,6 @@ void Graph::clear()
 
     optParentSubgNode = std::nullopt;
     ctx.reset();
-
-    CALLBACK_NOTIFY(clear)
 }
 
 std::shared_ptr<INode> Graph::createNode(std::string const& cls, const std::string& orgin_name, bool bAssets, std::pair<float, float> pos)

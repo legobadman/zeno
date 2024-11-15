@@ -43,7 +43,7 @@ public:
     std::string m_cbFrameCached;
     std::string m_cbFrameRemoved;
 
-    zeno::INode* m_wpNode;
+    zeno::INode* m_wpNode = nullptr;
     ParamsModel* params = nullptr;
     bool bView = false;
     bool bCollasped = false;
@@ -267,6 +267,7 @@ void GraphModel::registerCoreNotify()
     });
 
     m_cbClearGraph = coreGraph->register_clear([&]() {
+        //begin clear.
         _clear();
     });
 }
