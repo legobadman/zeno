@@ -20,7 +20,125 @@ namespace zeno {
         ZENO_API void set(const AttrVar& val_or_vec);
         ZENO_API GeoAttrType type() const;
         ZENO_API AttrVarVec get();
-        ZENO_API void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, std::string const& name);
+
+        void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {
+            if (self) {
+                auto& valvar = self->value();
+
+                std::visit([&](auto&& vec) {
+                    using E = std::decay_t<decltype(vec)>;
+                    if constexpr (std::is_same_v<E, std::vector<int>>) {
+                        if (is_point_attr) {
+                            auto& vec_attr = spPrim->verts.add_attr<int>(attr_name);
+                            vec_attr = (vec.size() == 1) ? std::vector<int>(m_size, vec[0]) : vec;
+                        }
+                        else if (is_triangle){
+                            auto& vec_attr = spPrim->tris.add_attr<int>(attr_name);
+                            vec_attr = (vec.size() == 1) ? std::vector<int>(m_size, vec[0]) : vec;
+                        }
+                        else {
+                            auto& vec_attr = spPrim->polys.add_attr<int>(attr_name);
+                            vec_attr = (vec.size() == 1) ? std::vector<int>(m_size, vec[0]) : vec;
+                        }
+                    }
+                    else if constexpr (std::is_same_v<E, std::vector<float>>) {
+                        if (is_point_attr) {
+                            auto& vec_attr = spPrim->verts.add_attr<float>(attr_name);
+                            vec_attr = (vec.size() == 1) ? std::vector<float>(m_size, vec[0]) : vec;
+                        }
+                        else if (is_triangle) {
+                            auto& vec_attr = spPrim->tris.add_attr<float>(attr_name);
+                            vec_attr = (vec.size() == 1) ? std::vector<float>(m_size, vec[0]) : vec;
+                        }
+                        else {
+                            auto& vec_attr = spPrim->polys.add_attr<float>(attr_name);
+                            vec_attr = (vec.size() == 1) ? std::vector<float>(m_size, vec[0]) : vec;
+                        }
+                    }
+                    else if constexpr (std::is_same_v < E, std::vector<std::string>>) {
+                        // do not support string type on primitive object.
+                    }
+                    else {
+                        throw;
+                    }
+                    }, valvar);
+            }
+            else if (x_comp && y_comp) {
+                auto& xvar = x_comp->value();
+                auto& yvar = y_comp->value();
+                assert(xvar.index() == yvar.index());
+                if (z_comp) {
+                    auto& zvar = z_comp->value();
+                    assert(zvar.index() == xvar.index());
+                    if (w_comp) {
+                        auto& wvar = w_comp->value();
+                        assert(wvar.index() == xvar.index());
+
+                        if (is_point_attr) {
+                            auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
+                            for (int i = 0; i < m_size; i++) {
+                                vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
+                            }
+                        }
+                        else if (is_triangle) {
+                            auto& vec_attr = spPrim->tris.add_attr<zeno::vec4f>(attr_name);
+                            for (int i = 0; i < m_size; i++) {
+                                vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
+                            }
+                        }
+                        else {
+                            auto& vec_attr = spPrim->polys.add_attr<zeno::vec4f>(attr_name);
+                            for (int i = 0; i < m_size; i++) {
+                                vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
+                            }
+                        }
+                    }
+                    else {
+                        if (is_point_attr) {
+                            auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
+                            for (int i = 0; i < m_size; i++) {
+                                vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
+                            }
+                        }
+                        else if (is_triangle) {
+                            auto& vec_attr = spPrim->tris.add_attr<zeno::vec3f>(attr_name);
+                            for (int i = 0; i < m_size; i++) {
+                                vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
+                            }
+                        }
+                        else {
+                            auto& vec_attr = spPrim->polys.add_attr<zeno::vec3f>(attr_name);
+                            for (int i = 0; i < m_size; i++) {
+                                vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
+                            }
+                        }
+                    }
+                }
+                else {
+                    if (is_point_attr) {
+                        auto& vec_attr = spPrim->verts.add_attr<zeno::vec2f>(attr_name);
+                        for (int i = 0; i < m_size; i++) {
+                            vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
+                        }
+                    }
+                    else if (is_triangle) {
+                        auto& vec_attr = spPrim->tris.add_attr<zeno::vec2f>(attr_name);
+                        for (int i = 0; i < m_size; i++) {
+                            vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
+                        }
+                    }
+                    else {
+                        auto& vec_attr = spPrim->polys.add_attr<zeno::vec2f>(attr_name);
+                        for (int i = 0; i < m_size; i++) {
+                            vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
+                        }
+                    }
+                }
+            }
+            else {
+                throw makeError<UnimplError>("internal data error on attribute vector");
+            }
+        }
 
         template<class T, char CHANNEL = 0>
         std::vector<T> get_attrs() const {
