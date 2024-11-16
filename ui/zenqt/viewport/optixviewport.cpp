@@ -12,7 +12,7 @@
 #include <zeno/funcs/ParseObjectFromUi.h>
 #include <zenovis/ObjectsManager.h>
 #include "zassert.h"
-
+#include "nodeeditor/gv/zenographseditor.h"
 
 
 std::vector<zeno::vec3f> computeLightPrim(zeno::vec3f position, zeno::vec3f rotate, zeno::vec3f scale) {
@@ -46,7 +46,7 @@ std::vector<zeno::vec3f> computeLightPrim(zeno::vec3f position, zeno::vec3f rota
 }
 
 
-OptixWorker::OptixWorker(Zenovis *pzenoVis)
+OptixWorker::OptixWorker(const QString& graph_path, Zenovis *pzenoVis)
     : QObject(nullptr)
     , m_zenoVis(pzenoVis)
     , m_bRecording(false)
@@ -56,10 +56,11 @@ OptixWorker::OptixWorker(Zenovis *pzenoVis)
     connect(m_pTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
 
     //启动光追时加载obj
-    zeno::RenderObjsInfo objs;
-    zeno::getSession().objsMan->export_all_view_objs(objs.newObjs);
-    zeno::getSession().objsMan->export_light_objs(objs);
-    m_zenoVis->load_objects(objs);
+    //TODO: 是否需要在worker线程load?
+    zeno::render_reload_info info;
+    info.policy = zeno::Reload_SwitchGraph;
+    info.current_ui_graph = graph_path.toStdString();
+    m_zenoVis->reload(info);
 }
 
 OptixWorker::~OptixWorker()
@@ -468,7 +469,15 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
 
     auto scene = m_zenovis->getSession()->get_scene();
 
-    m_worker = new OptixWorker(m_zenovis);
+    auto mainWin = zenoApp->getMainWindow();
+    ZenoGraphsEditor* editor = mainWin->getAnyEditor();
+    QString graphpath;
+    if (editor) {
+        QStringList paths = editor->getCurrentGraphPath();
+        graphpath = '/' + paths.join('/');
+    }
+
+    m_worker = new OptixWorker(graphpath, m_zenovis);
     m_worker->moveToThread(&m_thdOptix);
     connect(&m_thdOptix, &QThread::finished, m_worker, &QObject::deleteLater);
     connect(&m_thdOptix, &QThread::started, m_worker, &OptixWorker::work);

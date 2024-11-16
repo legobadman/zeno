@@ -15,7 +15,7 @@ class OptixWorker : public QObject
     Q_OBJECT
 public:
     OptixWorker(QObject* parent = nullptr);
-    OptixWorker(Zenovis *pzenoVis);
+    OptixWorker(const QString& graph_path, Zenovis *pzenoVis);
     ~OptixWorker();
     QImage renderImage() const;
 
