@@ -24,6 +24,24 @@
 #include <zeno/core/INodeClass.h>
 
 
+static void triggerView(const QString& nodepath, bool bView) {
+
+    zeno::render_reload_info info;
+    info.policy = zeno::Reload_ToggleView;
+    info.current_ui_graph;  //由于这是在ui下直接点击view，因此一般都是当前图（api的情况暂不考虑）
+
+    zeno::render_update_info update;
+    update.reason = bView ? zeno::Update_View : zeno::Update_Remove;
+    update.uuidpath_node_objkey = nodepath.toStdString();
+    info.objs.push_back(update);
+
+    const auto& views = zenoApp->getMainWindow()->viewports();
+    for (DisplayWidget* view : views) {
+        view->reload(info);
+    }
+}
+
+
 struct NodeItem : public QObject
 {
     Q_OBJECT
@@ -111,25 +129,11 @@ void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
         //直接就在这里触发绘制更新，不再往外传递了
         //不过有一种例外，就是当前打view会触发计算的话，后续由计算触发绘制更新就可以了
         auto& session = zeno::getSession();
-
         if (bView && session.is_auto_run() && idx.data(ROLE_NODE_DIRTY).toBool()) {
             return;
         }
-
-        zeno::render_reload_info info;
-        info.policy = zeno::Reload_ToggleView;
-        info.current_ui_graph;  //由于这是在ui下直接点击view，因此一般都是当前图（api的情况暂不考虑）
-
         const QString& nodepath = idx.data(ROLE_NODE_UUID_PATH).toString();
-        zeno::render_update_info update;
-        update.reason = bView ? zeno::Update_View : zeno::Update_Remove;
-        update.uuidpath_node_objkey = nodepath.toStdString();
-        info.objs.push_back(update);
-
-        const auto& views = zenoApp->getMainWindow()->viewports();
-        for (DisplayWidget* view : views) {
-            view->reload(info);
-        }
+        triggerView(nodepath, bView);
     });
 
     this->params = new ParamsModel(spNode, this);
@@ -242,11 +246,14 @@ void GraphModel::registerCoreNotify()
     });
 
     m_cbRemoveNode = coreGraph->register_removeNode([&](const std::string& name) {
+        //before core remove
         QString qName = QString::fromStdString(name);
         ZASSERT_EXIT(m_name2uuid.find(qName) != m_name2uuid.end(), false);
         QString uuid = m_name2uuid[qName];
         ZASSERT_EXIT(m_uuid2Row.find(uuid) != m_uuid2Row.end(), false);
         int row = m_uuid2Row[uuid];
+        const QString& nodepath = QString::fromStdString(m_nodes[uuid]->uuidPath);
+        triggerView(nodepath, false);
         removeRow(row);
         GraphsManager::instance().currentModel()->markDirty(true);
     });

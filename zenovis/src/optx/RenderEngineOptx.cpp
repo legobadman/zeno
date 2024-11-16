@@ -1390,27 +1390,25 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             assert(info.objs.size() == 1);
             const auto& update = info.objs[0];
             auto& wtf = graphicsMan->graphics.m_curr;
-            auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
-            assert(spNode);
-            zeno::zany spObject = spNode->get_default_output_object();
-            if (spObject) {
-                if (update.reason == zeno::Update_View) {
+            if (update.reason == zeno::Update_View) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
                     auto it = wtf.find(update.uuidpath_node_objkey);
                     if (it == wtf.end()) {
                         graphicsMan->add_object(spObject);
                         matNeedUpdate = meshNeedUpdate = true;
                     }
                 }
-                else if (update.reason == zeno::Update_Remove) {
-                    auto it = wtf.find(update.uuidpath_node_objkey);
-                    if (it != wtf.end()) {
-                        graphicsMan->remove_object(update.uuidpath_node_objkey);
-                        matNeedUpdate = meshNeedUpdate = true;
-                    }
-                }
             }
-            else {
-                //可能还没计算
+            else if (update.reason == zeno::Update_Remove) {
+                //节点被移除后，对象已经不存在了，这里拿key直接删就行
+                auto it = wtf.find(update.uuidpath_node_objkey);
+                if (it != wtf.end()) {
+                    graphicsMan->remove_object(update.uuidpath_node_objkey);
+                    matNeedUpdate = meshNeedUpdate = true;
+                }
             }
         }
         else if (zeno::Reload_Calculation == info.policy) {
