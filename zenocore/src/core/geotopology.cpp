@@ -670,6 +670,14 @@ namespace zeno
             }
             */
         }
+
+        if (!m_faces.empty()) {
+            m_faces[0]->start_linearIdx = 0;
+            for (int i = 1; i < m_faces.size(); ++i) {
+                m_faces[i]->start_linearIdx = m_faces[i - 1]->start_linearIdx + nvertices(i - 1);
+            }
+        }
+
         return true;
     }
 

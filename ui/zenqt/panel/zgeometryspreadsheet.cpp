@@ -2,6 +2,8 @@
 #include "../layout/docktabcontent.h"
 #include <zeno/types/GeometryObject.h>
 #include "model/geometrymodel.h"
+#include "zenoapplication.h"
+#include "model/graphsmanager.h"
 
 
 ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
@@ -61,6 +63,16 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         m_point->setChecked(!bChecked);
         m_views->setCurrentIndex(3);
         });
+
+    connect(zenoApp->graphsManager(), &GraphsManager::fileClosed, this, [this]() {
+        for (int i = 0; i < m_views->count(); ++i) {
+            QTableView* view = qobject_cast<QTableView*>(m_views->widget(i));
+            if (QAbstractItemModel* model = view->model()) {
+                view->setModel(nullptr);
+                delete model;
+            }
+        }
+    });
 
     setLayout(pMainLayout);
 }
