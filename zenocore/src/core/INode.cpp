@@ -360,6 +360,58 @@ void INode::mark_previous_ref_dirty() {
     */
 }
 
+bool INode::has_frame_relative_params() const {
+    for (auto& [name, param] : m_inputPrims) {
+        assert(param.type == Param_Wildcard || param.defl.has_value());
+        const std::string& uuid = get_uuid();
+        if (gParamType_String == param.type) {
+            std::string defl = zeno::reflect::any_cast<std::string>(param.defl);
+            if (defl.find("$F") != std::string::npos) {
+                return true;
+            }
+        }
+        else if (gParamType_Int == param.type || gParamType_Float == param.type) {
+            assert(gParamType_PrimVariant == param.defl.type().hash_code());
+            const zeno::PrimVar& editVar = zeno::reflect::any_cast<zeno::PrimVar>(param.defl);
+            bool bFind = std::visit([=](auto&& arg)->bool {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, std::string>) {
+                    if (arg.find("$F") != std::string::npos) {
+                        return true;
+                    }
+                }
+                return false;
+            }, editVar);
+            if (bFind)
+                return true;
+        }
+        else if (gParamType_Vec2f == param.type ||
+            gParamType_Vec2i == param.type ||
+            gParamType_Vec3f == param.type ||
+            gParamType_Vec3i == param.type ||
+            gParamType_Vec4f == param.type ||
+            gParamType_Vec4i == param.type)
+        {
+            assert(gParamType_VecEdit == param.defl.type().hash_code());
+            const zeno::vecvar& editVar = zeno::reflect::any_cast<zeno::vecvar>(param.defl);
+            for (auto primvar : editVar) {
+                bool bFind = std::visit([=](auto&& arg)->bool {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, std::string>) {
+                        if (arg.find("$F") != std::string::npos) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }, primvar);
+                if (bFind)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool INode::isInDopnetwork()
 {
     std::shared_ptr<Graph> parentGraph = graph.lock();

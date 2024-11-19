@@ -106,11 +106,13 @@ void Graph::runGraph() {
 void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
     auto spNode = spParam->m_wpNode.lock();
     assert(spNode);
-    {
-        const std::string& uuid = spNode->get_uuid();
+    const std::string& uuid = spNode->get_uuid();
+    bool bHasFrameRel = spNode->has_frame_relative_params();
+    if (bHasFrameRel) {
+        frame_nodes.insert(uuid);
+    }
+    else {
         frame_nodes.erase(uuid);
-        assert(spParam);
-        parseNodeParamDependency(spParam, new_value);
     }
 }
 

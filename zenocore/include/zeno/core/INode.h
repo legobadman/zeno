@@ -140,6 +140,7 @@ public:
     bool in_asset_file() const;
     void initTypeBase(zeno::reflect::TypeBase* pTypeBase);
     bool isInDopnetwork();
+    bool has_frame_relative_params() const;
 
     //foreach特供
     virtual bool is_continue_to_run();
