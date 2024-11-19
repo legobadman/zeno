@@ -42,10 +42,18 @@ struct GraphicsManager {
 
     bool add_object(zeno::zany obj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-            return add_listobj(spList);
+            for (auto obj : spList->get()) {
+                bool ret = add_object(obj);
+                assert(ret);
+            }
+            return true;
         }
         if (auto spDict = std::dynamic_pointer_cast<zeno::DictObject>(obj)) {
-            return add_dictobj(spDict);
+            for (auto& [key, spObject] : spDict->get()) {
+                bool ret = add_object(spObject);
+                assert(ret);
+            }
+            return true;
         }
 
         const std::string& key = obj->key();
@@ -77,12 +85,19 @@ struct GraphicsManager {
 
     bool remove_object(zeno::zany spObj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(spObj)) {
-            return remove_listobj(spList);
+            for (auto obj : spList->get()) {
+                bool ret = remove_object(obj);
+                assert(ret);
+            }
+            return true;
         }
         if (auto spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObj)) {
-            return remove_dictobj(spDict);
+            for (auto& [key, spObject] : spDict->get()) {
+                bool ret = remove_object(spObject);
+                assert(ret);
+            }
+            return true;
         }
-
         const std::string& key = spObj->key();
         auto& graphics_ = graphics.m_curr.m_curr;
         auto iter = graphics_.find(key);
@@ -93,65 +108,71 @@ struct GraphicsManager {
         return true;
     }
 
-    bool add_listobj(std::shared_ptr<zeno::ListObject> spList) {
-        for (auto obj : spList->get()) {
-            if (auto listobj = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-                bool ret = add_listobj(listobj);
-                if (!ret)
-                    return ret;
+    bool process_listobj(std::shared_ptr<zeno::ListObject> spList) {
+        for (auto spObject : spList->get()) {
+            assert(spObject);
+            std::string const& key = spObject->key();
+            if (spList->m_new_added.find(key) != spList->m_new_added.end() ||
+                spList->m_modify.find(key) != spList->m_modify.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = add_object(spObject);
+                }
+                assert(ret);
             }
-            else {
-                bool ret = add_object(obj);
-                if (!ret)
-                    return ret;
+            else if (spList->m_new_removed.find(key) != spList->m_new_removed.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = remove_object(spObject);
+                }
+                assert(ret);
             }
         }
         return true;
     }
 
-    bool add_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
+    bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
         for (auto& [key, spObject] : spDict->get()) {
-            if (auto dictobj = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                bool ret = add_dictobj(dictobj);
-                if (!ret)
-                    return ret;
+            assert(spObject);
+            std::string const& key = spObject->key();
+            if (spDict->m_new_added.find(key) != spDict->m_new_added.end() ||
+                spDict->m_modify.find(key) != spDict->m_modify.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = add_object(spObject);
+                }
+                assert(ret);
             }
-            else {
-                bool ret = add_object(spObject);
-                if (!ret)
-                    return ret;
-            }
-        }
-        return true;
-    }
-
-    bool remove_listobj(std::shared_ptr<zeno::ListObject> spList) {
-        for (auto obj : spList->get()) {
-            if (auto listobj = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-                bool ret = remove_listobj(listobj);
-                if (!ret)
-                    return ret;
-            }
-            else {
-                bool ret = remove_object(obj);
-                if (!ret)
-                    return ret;
-            }
-        }
-        return true;
-    }
-
-    bool remove_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
-        for (auto& [key, spObject] : spDict->get()) {
-            if (auto dictobj = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                bool ret = remove_dictobj(dictobj);
-                if (!ret)
-                    return ret;
-            }
-            else {
-                bool ret = remove_object(spObject);
-                if (!ret)
-                    return ret;
+            else if (spDict->m_new_removed.find(key) != spDict->m_new_removed.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = remove_object(spObject);
+                }
+                assert(ret);
             }
         }
         return true;
@@ -187,16 +208,10 @@ struct GraphicsManager {
             zeno::zany spObject = spNode->get_default_output_object();
             if (spObject) {
                 if (update.reason == zeno::Update_View) {
-                    auto it = wtf.find(update.uuidpath_node_objkey);
-                    if (it == wtf.end()) {
-                        add_object(spObject);
-                    }
+                    add_object(spObject);
                 }
                 else if (update.reason == zeno::Update_Remove) {
-                    auto it = wtf.find(update.uuidpath_node_objkey);
-                    if (it != wtf.end()) {
-                        remove_object(spObject);
-                    }
+                    remove_object(spObject);
                 }
             }
             else {
@@ -210,7 +225,15 @@ struct GraphicsManager {
                 zeno::zany spObject = spNode->get_default_output_object();
                 if (spObject) {
                     //可能是对象没有通过子图的Suboutput连出来
-                    add_object(spObject);
+                    if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                        process_listobj(_spList);
+                    }
+                    if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                        process_dictobj(_spDict);
+                    }
+                    else {
+                        add_object(spObject);
+                    }
                 }
             }
         }

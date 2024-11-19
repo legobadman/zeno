@@ -701,12 +701,12 @@ void INode::reflectNode_apply()
                                         {
                                             //TODO: need to parse on the param, not only return value.
                                             //iter2->second.spObject = zeno::reflect::any_cast<std::shared_ptr<IObject>>(outputAny);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
                 }
                 break;
             }
@@ -1048,6 +1048,7 @@ std::shared_ptr<DictObject> INode::processDict(ObjectParam* in_param, CalcContex
         std::shared_ptr<ObjectLink> spLink = inLinks.front();
         auto out_param = spLink->fromparam;
         std::shared_ptr<INode> outNode = out_param->m_wpNode.lock();
+        assert(outNode);
 
         if (out_param->type == in_param->type && spLink->tokey.empty()) //根据Graph::addLink规则，类型相同且无key视为直连
         {
@@ -1073,12 +1074,8 @@ std::shared_ptr<DictObject> INode::processDict(ObjectParam* in_param, CalcContex
 #endif
                 {
                     //里面的元素也要clone
-                    spDict = std::make_shared<DictObject>();
                     std::shared_ptr<DictObject> outDict = std::dynamic_pointer_cast<DictObject>(outResult);
-                    for (auto& [key, spObject] : outDict->get()) {
-                        //后续要考虑key的问题
-                        spDict->lut.insert(std::make_pair(key, spObject->clone()));
-                    }
+                    spDict = std::dynamic_pointer_cast<DictObject>(outDict->clone_by_key(m_uuid));
                 }
                 spDict->update_key(m_uuid);
                 return spDict;
@@ -1087,14 +1084,25 @@ std::shared_ptr<DictObject> INode::processDict(ObjectParam* in_param, CalcContex
     }
     if (!bDirecyLink)
     {
+        std::set<std::string> existObjs;
+        if (in_param->spObject) {
+            auto spOldDict = std::dynamic_pointer_cast<DictObject>(in_param->spObject);
+            for (auto& [key, spobj] : spOldDict->lut) {
+                existObjs.insert(spobj->key());
+            }
+        }
+
         spDict = std::make_shared<DictObject>();
         for (const auto& spLink : in_param->links)
         {
             const std::string& keyName = spLink->tokey;
             auto out_param = spLink->fromparam;
             std::shared_ptr<INode> outNode = out_param->m_wpNode.lock();
+            outNode->m_name;
 
-            if (outNode->is_dirty()) {  //list中的元素是dirty的，重新计算并加入list
+            bool is_this_item_dirty = outNode->is_dirty();
+
+            if (is_this_item_dirty) {  //list中的元素是dirty的，重新计算并加入list
                 GraphException::translated([&] {
                     outNode->doApply(pContext);
                     }, outNode.get());
@@ -1112,12 +1120,38 @@ std::shared_ptr<DictObject> INode::processDict(ObjectParam* in_param, CalcContex
             else if (in_param->socketType == Socket_Clone)
 #endif
             {
-                //后续要考虑key的问题
-                spDict->lut[keyName] = outResult->clone();
+                zany newObj;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(outResult)) {
+                    newObj = _spList->clone_by_key(m_uuid);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(outResult)) {
+                    newObj = _spDict->clone_by_key(m_uuid);
+                }
+                else {
+                    std::string newkey = m_uuid + '\\' + outResult->key();
+                    newObj = outResult->clone();
+                    newObj->update_key(newkey);
+                }
+                spDict->lut[keyName] = newObj;
+                std::string const& new_key = newObj->key();
+
+                if (is_this_item_dirty) {
+                    //需要区分是新的还是旧的，这里先粗暴认为全是新的
+                    if (existObjs.find(new_key) != existObjs.end()) {
+                        spDict->m_modify.insert(new_key);
+                        existObjs.erase(new_key);
+                    }
+                    else {
+                        spDict->m_new_added.insert(new_key);
+                    }
+                }
+                existObjs.erase(new_key);
             }
         }
+        //剩下没出现的都认为是移除掉了
+        spDict->m_new_removed = existObjs;
+
         spDict->update_key(m_uuid);
-        //已经是新构造的Dict了，不用复制了
     }
     return spDict;
 }
@@ -1154,12 +1188,16 @@ std::shared_ptr<ListObject> INode::processList(ObjectParam* in_param, CalcContex
 #endif
                 {
                     //里面的元素也要clone
+                    std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
+                    spList = std::dynamic_pointer_cast<ListObject>(outList->clone_by_key(m_uuid));
+#if 0
                     spList = std::make_shared<ListObject>();
                     std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
                     for (int i = 0; i < outList->size(); i++) {
                         //后续要考虑key的问题
                         spList->push_back(outList->get(i)->clone());
                     }
+#endif
                 }
                 spList->update_key(m_uuid);
             }
@@ -1168,20 +1206,30 @@ std::shared_ptr<ListObject> INode::processList(ObjectParam* in_param, CalcContex
     if (!bDirectLink)
     {
         spList = std::make_shared<ListObject>();
+
+        std::set<std::string> existObjs;
+        if (in_param->spObject) {
+            auto spOldDict = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
+            for (auto spobj : spOldDict->getRaw()) {
+                existObjs.insert(spobj->key());
+            }
+        }
+
         int indx = 0;
         for (const auto& spLink : in_param->links)
         {
             //list的情况下，keyName是不是没意义，顺序怎么维持？
             auto out_param = spLink->fromparam;
             std::shared_ptr<INode> outNode = out_param->m_wpNode.lock();
-            if (outNode->is_dirty()) {  //list中的元素是dirty的，重新计算并加入list
+            outNode->m_name;
+            bool is_this_item_dirty = outNode->is_dirty();
+            if (is_this_item_dirty) {  //list中的元素是dirty的，重新计算并加入list
                 GraphException::translated([&] {
                     outNode->doApply(pContext);
                 }, outNode.get());
             }
             auto outResult = outNode->get_output_obj(out_param->name);
             assert(outResult);
-
 #if 0
             if (in_param->socketType == Socket_Owning) {
                 spList->push_back(outResult->move_clone());
@@ -1192,10 +1240,37 @@ std::shared_ptr<ListObject> INode::processList(ObjectParam* in_param, CalcContex
             else if (in_param->socketType == Socket_Clone)
 #endif
             {
-                spList->push_back(outResult->clone());
+                zany newObj;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(outResult)) {
+                    newObj = _spList->clone_by_key(m_uuid);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(outResult)) {
+                    newObj = _spDict->clone_by_key(m_uuid);
+                }
+                else {
+                    std::string newkey = m_uuid + '\\' + outResult->key();
+                    newObj = outResult->clone();
+                    newObj->update_key(newkey);
+                }
+                spList->push_back(newObj);
+                //需要区分是新的还是旧的，这里先粗暴认为全是新的
+                std::string const& new_key = newObj->key();
+                if (is_this_item_dirty) {
+                    //需要区分是新的还是旧的，这里先粗暴认为全是新的
+                    if (existObjs.find(new_key) != existObjs.end()) {
+                        spList->m_modify.insert(new_key);
+                        existObjs.erase(new_key);
+                    }
+                    else {
+                        spList->m_new_added.insert(new_key);
+                    }
+                }
+                existObjs.erase(new_key);
+
             }
-            //spList->dirtyIndice.insert(indx);
         }
+        //剩下没出现的都认为是移除掉了
+        spList->m_new_removed = existObjs;
         spList->update_key(m_uuid);
     }
     return spList;
@@ -1327,7 +1402,12 @@ bool INode::receiveOutputObj(ObjectParam* in_param, std::shared_ptr<INode> outNo
     //在此版本里，只有克隆，每个对象只有一个节点关联，虽然激进，但可以充分测试属性数据共享在面对
     //内存暴涨时的冲击，能优化到什么程度
     in_param->spObject = outputObj->clone();
-    in_param->spObject->update_key(m_uuidPath);
+    if (std::dynamic_pointer_cast<DictObject>(in_param->spObject) || std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
+        //dict和List的key在预处理阶段已经把整个层次所有元素的key搞定了，这里不要再更新
+    }
+    else {
+        in_param->spObject->update_key(m_uuidPath);
+    }
 #if 0
     if (in_param->socketType == Socket_Clone) {
         in_param->spObject = outputObj->clone();
@@ -1364,13 +1444,15 @@ bool INode::requireInput(std::string const& ds, CalcContext* pContext) {
                 case gParamType_Dict:
                 {
                     std::shared_ptr<DictObject> outDict = processDict(in_param, pContext);
-                    receiveOutputObj(in_param, nullptr, outDict, gParamType_Dict);
+                    in_param->spObject = outDict;
+                    //receiveOutputObj(in_param, nullptr, outDict, gParamType_Dict);
                     break;
                 }
                 case gParamType_List:
                 {
                     std::shared_ptr<ListObject> outList = processList(in_param, pContext);
-                    receiveOutputObj(in_param, nullptr, outList, gParamType_List);
+                    in_param->spObject = outList;
+                    //receiveOutputObj(in_param, nullptr, outList, gParamType_List);
                     break;
                 }
                 case gParamType_Curve:

@@ -16,6 +16,26 @@ struct ListObject : IObjectClone<ListObject> {
   explicit ListObject(std::vector<zany> arrin) : m_objects(std::move(arrin)) {
   }
 
+  std::shared_ptr<IObject> clone_by_key(std::string const& prefix) override {
+      std::shared_ptr<ListObject> spList = std::make_shared<ListObject>();
+      spList->update_key(prefix + '\\' + m_key);
+      for (const auto& uuid : m_modify) {
+          spList->m_modify.insert(prefix + '\\' + uuid);
+      }
+      for (const auto& uuid : m_new_added) {
+          spList->m_new_added.insert(prefix + '\\' + uuid);
+      }
+      for (const auto& uuid : m_new_removed) {
+          spList->m_new_removed.insert(prefix + '\\' + uuid);
+      }
+
+      for (auto& spObject : m_objects) {
+          auto newObj = spObject->clone_by_key(prefix);
+          spList->m_objects.push_back(newObj);
+      }
+      return spList;
+  }
+
   template <class T = IObject>
   std::vector<std::shared_ptr<T>> get() const {
       std::vector<std::shared_ptr<T>> res;
@@ -94,15 +114,6 @@ struct ListObject : IObjectClone<ListObject> {
       append(obj);
   }
 
-  bool update_key(const std::string& key) override {
-      m_key = key;
-      for (int i = 0; i < m_objects.size(); i++) {
-          std::string itemKey = m_key + "/" + std::to_string(i);
-          m_objects[i]->update_key(itemKey);
-      }
-      return true;
-  }
-
   void clear() {
       m_objects.clear();
   }
@@ -121,6 +132,7 @@ struct ListObject : IObjectClone<ListObject> {
   std::vector<T> getLiterial() const {
       return get2<T>();
   }
+    std::set<std::string> m_modify, m_new_added, m_new_removed; //一次计算中发生变化的元素记录。
 
 private:
     std::vector<zany> m_objects;
