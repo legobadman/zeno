@@ -356,8 +356,8 @@ void Graph::markDirtyWhenFrameChanged()
 {
     for (const std::string& uuid : frame_nodes) {
         if (!m_nodes[uuid]->isInDopnetwork()) {
-        m_nodes[uuid]->mark_dirty(true);
-    }
+            m_nodes[uuid]->mark_dirty(true);
+        }
     }
     std::set<std::string> nodes = subnet_nodes;
     nodes.insert(asset_nodes.begin(), asset_nodes.end());

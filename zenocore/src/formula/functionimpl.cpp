@@ -202,8 +202,7 @@ namespace zeno
                     throw makeError<UnimplError>();
                 }
             }
-
-            if (items.size() == 2 &&
+            else if (items.size() == 2 &&
                 (paramData.type == zeno::types::gParamType_Vec2f || paramData.type == zeno::types::gParamType_Vec2i ||
                     paramData.type == zeno::types::gParamType_Vec3f || paramData.type == zeno::types::gParamType_Vec3i ||
                     paramData.type == zeno::types::gParamType_Vec4f || paramData.type == zeno::types::gParamType_Vec4i))

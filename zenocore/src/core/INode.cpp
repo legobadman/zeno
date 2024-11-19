@@ -1500,7 +1500,9 @@ bool INode::requireInput(std::string const& ds, CalcContext* pContext) {
                         assert(spSrcNode);
                         std::shared_ptr<Graph> spSrcGraph = spSrcNode->graph.lock();
                         assert(spSrcGraph);
-                        spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
+                        //干脆整个apply，这样可以统一管理脏位，避免引用源一直处于脏状态无法传播
+                        spSrcNode->doApply(pContext);
+                        //spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
                     }
                 }
 
@@ -3007,8 +3009,8 @@ float INode::resolve(const std::string& expression, const ParamType type)
         ctx.code = code;
         ctx.spNode = shared_from_this();
         zfxvariant res = funcMgr->calc(astRoot, &ctx);
-        funcMgr->executeZfx(astRoot, &ctx);
-
+        //是否需要整合calc和executezfx?
+        //funcMgr->executeZfx(astRoot, &ctx);
 
         if (std::holds_alternative<int>(res)) {
             return std::get<int>(res);
