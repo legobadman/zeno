@@ -147,6 +147,7 @@ void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
     auto pair = spNode->get_pos();
     this->pos = QPointF(pair.first, pair.second);
     this->uuidPath = spNode->get_uuid_path();
+    setProperty("uuid-path", QString::fromStdString(uuidPath));
     if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode))
     {
         GraphModel* parentM = qobject_cast<GraphModel*>(this->parent());
@@ -204,7 +205,7 @@ GraphModel::GraphModel(std::string const& asset_or_graphpath, bool bAsset, Graph
         spGraph = assets->getAssetGraph(asset_or_graphpath, true);
     }
     else {
-        spGraph = zeno::getSession().mainGraph->getGraphByPath(asset_or_graphpath);
+        spGraph = zeno::getSession().getGraphByPath(asset_or_graphpath);
     }
 
     m_impl = new GraphMImpl(spGraph.get(), this);

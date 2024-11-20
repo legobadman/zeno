@@ -80,6 +80,7 @@ struct Session {
     ZENO_API void registerRunTrigger(std::function<void()> func);
     ZENO_API void registerNodeCallback(F_NodeStatus func);
     ZENO_API void registerCommitRender(F_CommitRender&& func);
+    ZENO_API std::shared_ptr<Graph> getGraphByPath(const std::string& path);
 
     void commit_to_render(render_update_info info);
 

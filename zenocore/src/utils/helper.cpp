@@ -796,7 +796,7 @@ namespace zeno {
             return ret;
         }
 
-        auto spGraph = zeno::getSession().mainGraph->getGraphByPath(fullabspath);
+        auto spGraph = zeno::getSession().getGraphByPath(fullabspath);
         if (!spGraph)
             return ret;
 

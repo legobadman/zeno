@@ -899,10 +899,8 @@ std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
 
     std::string currname = items[0];
     items.erase(items.begin());
-    if (m_name == "main") {
-        if (currname == "main") {
-            return _getGraphByPath(items);
-        }
+    if (m_name == currname) {
+        return _getGraphByPath(items);
     }
 
     if (m_name2uuid.find(currname) == m_name2uuid.end())

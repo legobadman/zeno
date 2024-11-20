@@ -342,6 +342,24 @@ ZENO_API void Session::registerCommitRender(F_CommitRender&& func) {
     m_func_commitrender = func;
 }
 
+ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path) {
+    //对于assets
+    //可能的形式包括： /ABC/subnet1/subnet2   ABC   /ABC
+    std::vector<std::string> items = split_str(path, '/', false);
+    if (items.empty()) {
+        return nullptr;
+    }
+
+    std::string graph_name = items[0];
+    if (graph_name == "main") {
+        return mainGraph->getGraphByPath(path);
+    }
+    else {
+        auto spGraph = assets->getAssetGraph(graph_name, true);
+        return spGraph->getGraphByPath(path);
+    }
+}
+
 void Session::commit_to_render(render_update_info info) {
     if (m_func_commitrender) {
         m_func_commitrender(info);

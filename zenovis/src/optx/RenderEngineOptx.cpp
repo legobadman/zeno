@@ -1369,7 +1369,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
             graphicsMan->graphics.clear();
 
-            std::shared_ptr<zeno::Graph> spGraph = sess.mainGraph->getGraphByPath(info.current_ui_graph);
+            std::shared_ptr<zeno::Graph> spGraph = sess.getGraphByPath(info.current_ui_graph);
             //TODO: 要考虑asset的情况
             assert(spGraph);
             const auto& viewnodes = spGraph->get_viewnodes();

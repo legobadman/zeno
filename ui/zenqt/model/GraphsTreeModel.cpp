@@ -55,19 +55,9 @@ QModelIndex GraphsTreeModel::parent(const QModelIndex& child) const
         if (GraphModel* parentModel = qobject_cast<GraphModel*>(nodeitem->parent())) {
             QString uuidpath = nodeitem->property("uuid-path").toString();
             QModelIndex idx = parentModel->indexFromUuidPath(uuidpath.toStdString());
-            return idx;
+            return createIndex(idx.row(), 0, parentModel);
         }
     }
-#if 0
-    if (auto pItem = qobject_cast<NodeItem*>(pModel->parent()))
-    {
-        if (auto parentModel = qobject_cast<GraphModel*>(pItem->parent()))
-        {
-            int row = parentModel->indexFromId(pItem->getName());
-            return createIndex(row, 0, parentModel);
-        }
-    }
-#endif
     return createIndex(0, 0);   //main item
 }
 
