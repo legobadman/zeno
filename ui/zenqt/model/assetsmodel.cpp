@@ -163,31 +163,31 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
     param.name = "input1";
     zeno::PrimVar def = int(0);
     param.defl = zeno::reflect::make_any<zeno::PrimVar>(def);
-    size_t s = param.defl.type().hash_code();
-    size_t s1 = ui_gParamType_Int;
-    size_t s2 = ui_gParamType_PrimVariant;
-    param.type = ui_gParamType_Int;
+    param.type = gParamType_Int;
     param.bSocketVisible = false;
     inputs.push_back(param);
     defaultGroup.params.push_back(param);
+
     zeno::ParamPrimitive outputparam;
     outputparam.bInput = false;
     outputparam.name = "output1";
-    outputparam.defl = zeno::reflect::Any();
-    outputparam.type = Param_Wildcard;
+    outputparam.defl = 3;
+    outputparam.type = gParamType_Int;
     outputparam.socketType = zeno::Socket_Clone;
     outputparam.bSocketVisible = false;
     outputs.push_back(outputparam);
+
     zeno::ParamObject objInput;
     objInput.bInput = true;
     objInput.name = "objInput1";
-    objInput.type = Obj_Wildcard;
+    objInput.type = gParamType_Geometry;
     objInput.socketType = zeno::Socket_Clone;
     objInputs.push_back(objInput);
+
     zeno::ParamObject objOutput;
     objOutput.bInput = false;
     objOutput.name = "objOutput1";
-    objOutput.type = Obj_Wildcard;
+    objOutput.type = gParamType_Geometry;
     objOutputs.push_back(objOutput);
 
     zeno::ParamTab tab;

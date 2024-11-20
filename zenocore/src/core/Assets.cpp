@@ -386,28 +386,32 @@ std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGra
 void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
 {
     std::shared_ptr<zeno::INode> input1Node = newAsst.sharedGraph->getNode("input1");
+
     zeno::ParamPrimitive paramInput;
     paramInput.bInput = false;
     paramInput.name = "port";
     zeno::PrimVar def = int(0);
     paramInput.defl = zeno::reflect::make_any<zeno::PrimVar>(def);
-    paramInput.type = zeno::types::gParamType_Int;
+    paramInput.type = newAsst.primitive_inputs[0].type;
     paramInput.bSocketVisible = false;
     input1Node->add_output_prim_param(paramInput);
+
     std::shared_ptr<zeno::INode> output1Node = newAsst.sharedGraph->getNode("output1");
     zeno::ParamPrimitive paramOutput;
     paramOutput.bInput = true;
     paramOutput.name = "port";
-    paramOutput.type = Param_Wildcard;
+    paramOutput.type = newAsst.primitive_outputs[0].type;
     paramOutput.bWildcard = true;
     output1Node->add_input_prim_param(paramOutput);
+
     std::shared_ptr<zeno::INode> objInput1Node = newAsst.sharedGraph->getNode("objInput1");
     zeno::ParamObject paramObj;
     paramObj.bInput = false;
     paramObj.name = "port";
-    paramObj.type = Obj_Wildcard;
-    paramObj.bWildcard = true;
+    paramObj.type = newAsst.object_inputs[0].type;
+    paramObj.bWildcard = newAsst.object_inputs[0].bWildcard;
     objInput1Node->add_output_obj_param(paramObj);
+
     std::shared_ptr<zeno::INode> objOutput1Node = newAsst.sharedGraph->getNode("objOutput1");
     paramObj.bInput = true;
     objOutput1Node->add_input_obj_param(paramObj);
