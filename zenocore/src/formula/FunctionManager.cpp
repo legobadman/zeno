@@ -1786,6 +1786,7 @@ namespace zeno {
                     return {};
                 }
 
+                const std::string& graph_correct_path = fullPath.substr(0, idx);
                 const std::string& nodePath = fullPath.substr(idx + 1);
 
                 idx = nodePath.find('.');
@@ -1796,12 +1797,12 @@ namespace zeno {
                 std::string nodename = nodePath.substr(0, idx);
                 std::string parampath = nodePath.substr(idx + 1);
 
-                std::string nodeAbsPath = graphAbsPath + '/' + nodename;
+                std::string nodeAbsPath = graph_correct_path + '/' + nodename;
                 std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
                 if (!spNode) {
                     //unresolve node. 也有一种可能，就是引用源调整名字，然后同步到各个引用节点，引用节点的参数还是
                     // 旧的，所以在这里resolve不到。
-                    //zeno::log_warn("unresolve node");
+                    zeno::log_warn("unresolve node");
                     return {};
                 }
 

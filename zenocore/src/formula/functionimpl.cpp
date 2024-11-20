@@ -155,6 +155,7 @@ namespace zeno
                 throw makeError<UnimplError>();
             }
 
+            const std::string& graph_correct_path = fullPath.substr(0, idx);
             const std::string& nodePath = fullPath.substr(idx + 1);
 
             idx = nodePath.find('.');
@@ -164,7 +165,7 @@ namespace zeno
             std::string nodename = nodePath.substr(0, idx);
             std::string parampath = nodePath.substr(idx + 1);
 
-            std::string nodeAbsPath = graphAbsPath + '/' + nodename;
+            std::string nodeAbsPath = graph_correct_path + '/' + nodename;
             std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
 
             if (!spNode) {
