@@ -738,13 +738,12 @@ void ZenoGraphsEditor::showFloatPanel(GraphModel* subgraph, const QModelIndexLis
 void ZenoGraphsEditor::onTreeItemActivated(const QModelIndex& index)
 {
     QModelIndex idx = index;
-
-    const QString& objId = idx.data(ROLE_NODE_NAME).toString();
-
+    QString treeItemName = idx.data(ROLE_NODE_NAME).toString();
     QStringList subgPath;
     if (!idx.parent().isValid())
     {
         subgPath.append("main");
+        treeItemName.clear();
     }
     else
     {
@@ -756,7 +755,7 @@ void ZenoGraphsEditor::onTreeItemActivated(const QModelIndex& index)
             idx = idx.parent();
         }
     }
-    activateTab(subgPath, objId);
+    activateTab(subgPath, treeItemName);
 }
 
 void ZenoGraphsEditor::onPageActivated(const QPersistentModelIndex& subgIdx, const QPersistentModelIndex& nodeIdx)
