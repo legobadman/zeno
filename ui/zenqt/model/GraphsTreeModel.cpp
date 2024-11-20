@@ -175,10 +175,13 @@ void GraphsTreeModel::onNameUpdated(const QModelIndex& nodeIdx, const QString& o
 
 void GraphsTreeModel::onGraphRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
-    //GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
-    //QString graphPath = pGraphM->currentPath();
-    //QModelIndex treeParentItem = getIndexByPath(graphPath);
-    //emit layoutAboutToBeChanged({ treeParentItem });
+    GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
+    if (pGraphM) {
+        QStringList graphPath = pGraphM->currentPath();
+        QModelIndex treeParentItem = getIndexByPath(graphPath);
+        beginRemoveRows(treeParentItem, first, last);
+        endRemoveRows();
+    }
 }
 
 void GraphsTreeModel::onGraphRowsRemoved(const QModelIndex& parent, int first, int last)
