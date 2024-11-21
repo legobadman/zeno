@@ -475,7 +475,9 @@ namespace zenoio
                     defl = 0;
             }
             else {
-                zeno::log_error("error type");
+                //可能有读盘错误，考虑到asset, subnet各种io的复杂情况，在这里直接容错算了
+                //zeno::log_error("error type");
+                defl = 0;
             }
             break;
         }
@@ -498,8 +500,10 @@ namespace zenoio
                 else
                     defl = (float)0.0;
             }
-            else
-                zeno::log_error("error type");
+            else {
+                defl = 0.f;
+                //zeno::log_error("error type");
+            }
             break;
         }
         case gParamType_Bool:
@@ -511,7 +515,7 @@ namespace zenoio
             else if (val.IsFloat())
                 defl = val.GetFloat() != 0;
             else
-                zeno::log_error("error type");
+                defl = false;
             break;
         }
         case gParamType_String:
@@ -522,6 +526,9 @@ namespace zenoio
                     *hasRef = true;
                 }
                 defl = sval;
+            }
+            else {
+                defl = "";
             }
             break;
         }
