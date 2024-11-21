@@ -40,35 +40,15 @@ set_property(TARGET zenqt PROPERTY AUTOUIC ON)
 set_property(TARGET zenqt PROPERTY AUTOMOC ON)
 set_property(TARGET zenqt PROPERTY AUTORCC ON)
 set_property(TARGET zenqt PROPERTY WIN32_EXECUTABLE OFF)
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:QT_QML_DEBUG>)
+
 
 if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zenqt)
 endif()
 
-
 target_link_libraries(zenqt PRIVATE Threads::Threads)
-if (ZENO_WITH_QT3D)
-    target_link_libraries(zenqt PUBLIC 
-        Qt5::Widgets
-        Qt5::OpenGL
-        Qt5::Svg
-        Qt5::Network
-        Qt5::Quick
-        qt5advanceddocking
-        QCodeEditor
-        Qt5::Qml 
-        Qt5::3DCore
-        Qt5::3DRender
-        Qt5::3DRenderPrivate
-        Qt5::3DExtras
-        Qt5::3DInput
-        Qt5::3DLogic
-        Qt5::3DQuick
-        Qt5::Concurrent
-    )
-else()
-    target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor QuickQanava Qt${QT_VERSION_MAJOR}::QuickControls2)
-endif()
+target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor Qt${QT_VERSION_MAJOR}::QuickControls2)
 
 if (WIN32)
     target_link_libraries(zenqt PRIVATE Dbghelp Version)
@@ -76,7 +56,13 @@ if (WIN32)
 endif()
 
 target_link_libraries(zenqt PRIVATE zenocore zenovis)
-target_include_directories(zenqt PUBLIC QuickQanava Qt${QT_VERSION_MAJOR}::QuickControls2)
-target_include_directories(zenqt PRIVATE . ./include ../3rdparty/include ../3rdparty/Qt-Advanced-Docking-System/src)
+target_include_directories(zenqt PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2)
+target_include_directories(zenqt PRIVATE 
+    .
+    ./include
+    ../3rdparty/include
+    ../3rdparty/Qt-Advanced-Docking-System/src
+    ./qml/QuickQanava-2.4/src
+)
 
 add_custom_command(TARGET zenqt PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/hdr ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/hdr)

@@ -9,6 +9,8 @@
 #include "zeno/zeno.h"
 #include "zeno/extra/EventCallbacks.h"
 #include <GL/glut.h>
+#include <QuickQanava>
+#include <QQuickStyle>
 
 
 /* debug cutsom layout: ZGraphicsLayout */
@@ -27,13 +29,28 @@ PyMODINIT_FUNC PyInit_spam(void);
 #include <zenoui/comctrl/testwidget.h>
 #endif
 
-
+#if 0
+int	main(int argc, char** argv)
+{
+    QGuiApplication app(argc, argv);
+    QQuickStyle::setStyle("Material");
+    QQmlApplicationEngine* engine = new QQmlApplicationEngine();
+    engine->addPluginPath(QStringLiteral("../QuickQanava-2.4/src")); // Necessary only for development when plugin is not installed to QTDIR/qml
+    QuickQanava::initialize(engine);
+    engine->load(QUrl("qrc:/nodes.qml"));
+    const auto status = app.exec();
+    delete engine;
+    return status;
+}
+#else
 int main(int argc, char *argv[]) 
 {
     glutInit(&argc, argv);
 
     ZenoApplication a(argc, argv);
     a.setStyle(new ZenoStyle);
+
+
 
 #ifdef DEBUG_NORMAL_WIDGET
     TestNormalWidget wid;
@@ -73,3 +90,4 @@ int main(int argc, char *argv[])
     mainWindow.showMaximized();
     return a.exec();
 }
+#endif

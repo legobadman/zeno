@@ -26,6 +26,8 @@
 #include <QtQuickWidgets/QQuickWidget>
 #include <QQmlContext>
 #include "variantptr.h"
+#include <QuickQanava>
+#include <QQuickStyle>
 
 
 #define ZENO_QML_TEST
@@ -921,7 +923,11 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
     }
 
     if (!bFound) {
-        QQuickWidget* pView = new QQuickWidget;
+        QQuickStyle::setStyle("Material");
+        QQmlApplicationEngine* engine = new QQmlApplicationEngine;
+        QuickQanava::initialize(engine);
+
+        QQuickWidget* pView = new QQuickWidget(engine, m_stackedView);
         pView->rootContext()->setContextProperty("nodesModel", pGraphM);
         pView->setSource(QUrl(QStringLiteral("qrc:/testQan.qml")));
         m_stackedView->addWidget(pView);
