@@ -391,7 +391,7 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     paramInput.bInput = false;
     paramInput.name = "port";
     zeno::PrimVar def = int(0);
-    paramInput.defl = zeno::reflect::make_any<zeno::PrimVar>(def);
+    paramInput.defl = newAsst.primitive_inputs[0].defl;
     paramInput.type = newAsst.primitive_inputs[0].type;
     paramInput.bSocketVisible = false;
     input1Node->add_output_prim_param(paramInput);
@@ -400,6 +400,7 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     zeno::ParamPrimitive paramOutput;
     paramOutput.bInput = true;
     paramOutput.name = "port";
+    paramOutput.defl = newAsst.primitive_outputs[0].defl;   //仅仅保证有个值，实质没什么意义
     paramOutput.type = newAsst.primitive_outputs[0].type;
     paramOutput.bWildcard = true;
     output1Node->add_input_prim_param(paramOutput);
