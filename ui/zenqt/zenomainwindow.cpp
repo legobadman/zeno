@@ -934,7 +934,9 @@ void ZenoMainWindow::assetsWatcher()
         fileWatcher->addPath(info.absoluteFilePath());
     }
     connect(fileWatcher, &QFileSystemWatcher::fileChanged, this, [=](const QString& path) {
-        if (QMessageBox::question(this, tr("File Changed"), tr("The File %1 has been changed, do you want to update now?").arg(path)) == QMessageBox::Yes)
+        QMessageBox::information(this, tr("Asset Synced"), tr("The File %1 has been synced to all instance on main graph").arg(path));
+#if 0
+        //为什么同步了以后还要重新打开和创建？而且这么做以后界面侧边栏出现了两个一模一样的asset项
         {
             zenoio::ZdaReader reader;
             reader.setDelayReadGraph(true);
@@ -947,6 +949,7 @@ void ZenoMainWindow::assetsWatcher()
                 zeno::getSession().assets->createAsset(zasset);
             }
         }
+#endif
     });
 }
 

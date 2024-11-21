@@ -2863,6 +2863,9 @@ zany INode::get_input(std::string const &id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {
         auto& val = iter->second.result;
+        if (!val.has_value()) {
+            return nullptr;
+        }
         switch (iter->second.type) {
             case zeno::types::gParamType_Int:
             case zeno::types::gParamType_Float:
@@ -2915,19 +2918,18 @@ zany INode::get_input(std::string const &id) const {
             {
                 const std::string& str = zeno::reflect::any_cast<std::string>(val);
                 return std::make_shared<StringObject>(str);
-                }
-            default: {
-            return nullptr;
-                }
             }
+            default:
+                return nullptr;
         }
+    }
     else {
         auto iter2 = m_inputObjs.find(id);
         if (iter2 != m_inputObjs.end()) {
             return iter2->second.spObject;
         }
-            return nullptr;
-        }
+        return nullptr;
+    }
 }
 
 void INode::set_pos(std::pair<float, float> pos) {

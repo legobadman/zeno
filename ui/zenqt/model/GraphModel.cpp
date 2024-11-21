@@ -253,8 +253,11 @@ void GraphModel::registerCoreNotify()
         QString uuid = m_name2uuid[qName];
         ZASSERT_EXIT(m_uuid2Row.find(uuid) != m_uuid2Row.end(), false);
         int row = m_uuid2Row[uuid];
-        const QString& nodepath = QString::fromStdString(m_nodes[uuid]->uuidPath);
-        triggerView(nodepath, false);
+        NodeItem* pItem = m_nodes[uuid];
+        if (pItem && pItem->bView) {
+            const QString& nodepath = QString::fromStdString(pItem->uuidPath);
+            triggerView(nodepath, false);
+        }
         removeRow(row);
         GraphsManager::instance().currentModel()->markDirty(true);
     });
@@ -1535,11 +1538,11 @@ void GraphModel::syncToAssetsInstance(const QString& assetsName)
                 {
                     auto spGraph = spSubnetNode->subgraph.get();
                     pSubgM->m_impl->m_wpCoreGraph = spGraph;
-                    registerCoreNotify();
+                    pSubgM->registerCoreNotify();
                     for (auto& [name, node] : spGraph->getNodes()) {
-                        _appendNode(node.get());
+                        pSubgM->_appendNode(node.get());
                     }
-                    _initLink();
+                    pSubgM->_initLink();
                 }
                 spNode->mark_dirty(true);
             }
