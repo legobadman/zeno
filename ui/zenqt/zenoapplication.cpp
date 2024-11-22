@@ -204,6 +204,7 @@ ZenoMainWindow* ZenoApplication::getMainWindow()
 void ZenoApplication::initQuickQanavas()
 {
     if (!m_engine) {
+        QQuickStyle::setStyle("Material");
         m_engine = new QQmlApplicationEngine(this);
         QuickQanava::initialize(m_engine);
     }

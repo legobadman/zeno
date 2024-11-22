@@ -10,6 +10,7 @@
 #include "panel/zenospreadsheet.h"
 #include "panel/zlogpanel.h"
 #include "panel/zgeometryspreadsheet.h"
+#include "panel/zqmlpanel.h"
 #include "widgets/ztimeline.h"
 #include "widgets/ztoolbar.h"
 #include "viewport/viewportwidget.h"
@@ -492,6 +493,12 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
         pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
+    case PANEL_QMLPANEL:
+    {
+        auto panel = new ZQmlPanel;
+        pDockElem->setWidget(panel, ads::CDockWidget::ForceNoScrollArea);
+        break;
+    }
     case PANEL_GEOM_DATA:
     {
         pDockElem->setWidget(new ZGeometrySpreadsheet, ads::CDockWidget::ForceNoScrollArea);
@@ -592,6 +599,12 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
                 auto pEditor = new DockContent_Editor;
                 pEditor->initUI();
                 pDockElem->setWidget(pEditor, ads::CDockWidget::ForceNoScrollArea);
+                break;
+            }
+            case PANEL_QMLPANEL:
+            {
+                auto panel = new ZQmlPanel;
+                pDockElem->setWidget(panel, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
             case PANEL_NODE_PARAMS:

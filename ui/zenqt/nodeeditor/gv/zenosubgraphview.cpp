@@ -17,6 +17,7 @@
 #include "util/log.h"
 #include "util/uihelper.h"
 #include "settings/zenosettingsmanager.h"
+#include "panel/zqmlpanel.h"
 #include "groupnode.h"
 #include "viewport/cameracontrol.h"
 #include "model/GraphModel.h"
@@ -923,12 +924,7 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
     }
 
     if (!bFound) {
-        QQuickStyle::setStyle("Material");
-        QQmlApplicationEngine* engine = zenoApp->getQmlEngine();
-        QQuickWidget* pView = new QQuickWidget(engine, m_stackedView);
-        pView->setResizeMode(QQuickWidget::SizeRootObjectToView);
-        pView->rootContext()->setContextProperty("nodesModel", pGraphM);
-        pView->setSource(QUrl(QStringLiteral("qrc:/testQan.qml")));
+        ZQmlGraphWidget* pView = new ZQmlGraphWidget(pGraphM);
         m_stackedView->addWidget(pView);
         m_stackedView->setCurrentWidget(pView);
         pCurrentView = pView;

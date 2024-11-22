@@ -77,7 +77,7 @@ DisplayWidget::DisplayWidget(bool bGLView, QWidget *parent)
 
     //it seems there is no need to use timer, because optix is seperated from GL and update by a thread.
     m_pTimer = new QTimer(this);
-    connect(m_pTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
+    //connect(m_pTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
 
     auto pCalcMgr = zenoApp->calculationMgr();
     pCalcMgr->registerRenderWid(this);

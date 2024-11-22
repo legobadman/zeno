@@ -2342,6 +2342,10 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Logger") || title == "Logger" || title == QObject::tr("Log") || title == "Log") {
         type = PANEL_LOG;
     }
+    else if (title == QObject::tr("QML Panel"))
+    {
+        type = PANEL_QMLPANEL;
+    }
     else if (title == QObject::tr("Light") || title == "Light") {
         type = PANEL_LIGHT;
     }
