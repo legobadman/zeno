@@ -64,6 +64,7 @@ namespace zeno
             auto p = m_faces[i].get();
             auto spEdge = m_hEdges[rhs.m_faces[i]->h->id];
             m_faces[i]->h = spEdge.get();
+            m_faces[i]->start_linearIdx = rhs.m_faces[i]->start_linearIdx;
         }
 #endif
     }
@@ -447,7 +448,7 @@ namespace zeno
     }
 
     int GeometryTopology::face_vertex(int face_id, int vert_id) {
-        if (face_id < 0 || face_id > m_faces.size() || vert_id >= nvertices(face_id)) {
+        if (face_id < 0 || face_id >= m_faces.size() || vert_id < 0 || vert_id >= nvertices(face_id)) {
             return -1;
         }
         return m_faces[face_id]->start_linearIdx + vert_id;
@@ -572,6 +573,17 @@ namespace zeno
         return offset;
     }
 
+    void GeometryTopology::update_linear_vertex()
+    {
+        //更新linearIdx
+        if (!m_faces.empty()) {
+            m_faces[0]->start_linearIdx = 0;
+            for (int i = 1; i < m_faces.size(); ++i) {
+                m_faces[i]->start_linearIdx = m_faces[i - 1]->start_linearIdx + nvertices(i - 1);
+            }
+        }
+    }
+
     bool GeometryTopology::remove_point(int ptnum) {
         if (ptnum < 0 || ptnum >= m_points.size())
             return false;
@@ -671,19 +683,69 @@ namespace zeno
             */
         }
 
-        if (!m_faces.empty()) {
-            m_faces[0]->start_linearIdx = 0;
-            for (int i = 1; i < m_faces.size(); ++i) {
-                m_faces[i]->start_linearIdx = m_faces[i - 1]->start_linearIdx + nvertices(i - 1);
-            }
-        }
+        update_linear_vertex();
 
         return true;
     }
 
     bool GeometryTopology::remove_vertex(int face_id, int vert_id) {
-        //TODO
-        return false;
+        if (face_id < 0 || face_id >= m_faces.size() || vert_id < 0 || vert_id >= nvertices(face_id)) {
+            return true;
+        }
+
+        HEdge* first = m_faces[face_id]->h;
+        HEdge* vertEdge = first;
+        do 
+        {
+            if (vert_id-- == 0) {
+                break;
+            }
+            vertEdge = vertEdge->next;
+        } while (vertEdge != first);
+        auto& [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
+
+        if (vertEdge->next == pprevedge) {
+            size_t removeFaceid = vertEdge->face;
+            HEdge* startRemove = prevedge;
+            do 
+            {
+                if (startRemove->pair) {
+                    startRemove->pair->pair = nullptr;
+                }
+                m_points[startRemove->point]->edges.erase(startRemove->next);
+                std::string removeEdgeId = startRemove->id;
+                startRemove = startRemove->next;
+                m_hEdges.erase(removeEdgeId);
+            } while (startRemove != prevedge);
+
+            for (auto& [_, hedge] : m_hEdges) {
+                if (hedge->face >= removeFaceid) {
+                    hedge->face--;
+                }
+            }
+            m_faces.erase(m_faces.begin() + removeFaceid);
+        } else {
+            std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
+            newedge->id = generateUUID();
+            newedge->pair = nullptr;
+            newedge->next = vertEdge->next;
+            newedge->point = vertEdge->point;
+            newedge->face = vertEdge->face;
+
+            m_points[prevedge->point]->edges.erase(vertEdge);
+            m_points[pprevedge->point]->edges.erase(prevedge);
+            m_points[pprevedge->point]->edges.insert(newedge.get());
+            pprevedge->next = newedge.get();
+
+            m_faces[newedge->face]->h = newedge.get();
+
+            m_hEdges.erase(vertEdge->id);
+            m_hEdges.erase(prevedge->id);
+            m_hEdges.insert({newedge->id, newedge});
+        }
+        update_linear_vertex();
+
+        return true;
     }
 
     bool GeometryTopology::remove_faces(const std::set<int>& faces, bool includePoints) {
@@ -750,6 +812,9 @@ namespace zeno
                 assert(fh == ph || fh == ph->next || fh == ph->next->next);
             }
         }
+
+        update_linear_vertex();
+
         return true;
     }
 
@@ -780,6 +845,9 @@ namespace zeno
             m_hEdges.insert(std::make_pair(newedge->id, newedge));
             spPoint->edges.insert(newedge.get());   //需要将newedge加入newedge的edges中？
             m_bTriangle = false;    //有增加意味着不能当作三角形处理了
+
+            update_linear_vertex();
+
             return npoints_in_face(m_faces[face_id].get());
         }
         else {

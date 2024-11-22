@@ -151,13 +151,31 @@ namespace zeno
                     attrib_vec.remove_elem<zeno::vec3f>(linearVertexIdx[i]);
                 }
             }
+
+            CALLBACK_NOTIFY(remove_point, ptnum)
+            CALLBACK_NOTIFY(reset_faces)
+            CALLBACK_NOTIFY(reset_vertices)
         }
         return ret;
     }
 
     ZENO_API bool GeometryObject::remove_vertex(int face_id, int vert_id) {
         copyTopologyAccordtoUseCount();
-        return m_spTopology->remove_vertex(face_id, vert_id);
+
+        size_t linear_vertex = m_spTopology->vertex_index(face_id, vert_id);
+        int vertexCount = m_spTopology->face_vertex_count(face_id);
+
+        bool ret = m_spTopology->remove_vertex(face_id, vert_id);
+        if (ret) {
+            if (m_spTopology->is_base_triangle() || vertexCount == 3) {//如果有3个顶点删除一个也要删除face
+                CALLBACK_NOTIFY(reset_vertices)
+                CALLBACK_NOTIFY(remove_face, face_id)
+            } else {
+                CALLBACK_NOTIFY(remove_vertex, linear_vertex)
+            }
+        } else {
+            return false;
+        }
     }
 
     //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。
@@ -284,6 +302,19 @@ namespace zeno
 
         int n = get_attr_size(grp);
         container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n)));
+
+        if (grp == ATTR_GEO) {
+        }
+        else if (grp == ATTR_POINT) {
+            CALLBACK_NOTIFY(create_point_attr, attr_name);
+        }
+        else if (grp == ATTR_FACE) {
+            CALLBACK_NOTIFY(create_face_attr, attr_name);
+        }
+        else if (grp == ATTR_VERTEX) {
+            CALLBACK_NOTIFY(create_vertex_attr, attr_name);
+        }
+
         //返回啥？
         return 0;
     }
@@ -295,6 +326,8 @@ namespace zeno
         }
         int n = m_spTopology->nfaces();
         m_face_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
+
+        CALLBACK_NOTIFY(create_face_attr, attr_name)
         return 0;
     }
 
@@ -305,6 +338,8 @@ namespace zeno
         }
         int n = m_spTopology->npoints();
         m_point_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
+
+        CALLBACK_NOTIFY(create_point_attr, attr_name)
         return 0;
     }
 
@@ -318,6 +353,8 @@ namespace zeno
         }
         int n = m_spTopology->nvertices();
         m_vert_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
+
+        CALLBACK_NOTIFY(create_vertex_attr, attr_name)
         return 0;
     }
 
@@ -514,12 +551,20 @@ namespace zeno
         } else {
             pointAttrIter->second.append(pos);
         }
-        return m_spTopology->add_point();
+        int ptnum = m_spTopology->add_point();
+        CALLBACK_NOTIFY(add_point, ptnum)
+        return ptnum;
     }
         
     ZENO_API int GeometryObject::add_vertex(int face_id, int point_id) {
         copyTopologyAccordtoUseCount();
-        return m_spTopology->add_vertex(face_id, point_id);
+        int ret = m_spTopology->add_vertex(face_id, point_id);
+        if (ret != -1) {
+            CALLBACK_NOTIFY(add_vertex, m_spTopology->vertex_index(face_id, ret))
+            return ret;
+        } else {
+            return -1;
+        }
     }
 
     /* Vertex相关 */
@@ -584,7 +629,10 @@ namespace zeno
 
     ZENO_API int GeometryObject::add_face(const std::vector<int>& points) {
         copyTopologyAccordtoUseCount();
-        return m_spTopology->addface(points);
+        int faceid = m_spTopology->addface(points);
+        CALLBACK_NOTIFY(add_face, faceid);
+        CALLBACK_NOTIFY(reset_vertices)
+        return faceid;
     }
 
     /*
@@ -594,7 +642,15 @@ namespace zeno
         的任何点。
     */
     ZENO_API bool GeometryObject::remove_faces(const std::set<int>& faces, bool includePoints) {
-        return remove_faces(faces, includePoints);
+        copyTopologyAccordtoUseCount();
+        bool ret = m_spTopology->remove_faces(faces, includePoints);
+        if (ret) {
+            CALLBACK_NOTIFY(reset_faces)
+            CALLBACK_NOTIFY(reset_vertices)
+            return true;
+        } else {
+            return false;
+        }
     }
 
     ZENO_API int GeometryObject::npoints() const {

@@ -342,8 +342,8 @@ namespace zeno {
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
                     y_comp = std::make_shared<AttrColumn>(*y_comp);
-                x_comp->insert(idx, val);
-                y_comp->insert(idx, val);
+                x_comp->insert(idx, val[0]);
+                y_comp->insert(idx, val[1]);
             } else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
@@ -351,9 +351,9 @@ namespace zeno {
                     y_comp = std::make_shared<AttrColumn>(*y_comp);
                 if (z_comp.use_count() > 1)
                     z_comp = std::make_shared<AttrColumn>(*z_comp);
-                x_comp->insert(idx, val);
-                y_comp->insert(idx, val);
-                z_comp->insert(idx, val);
+                x_comp->insert(idx, val[0]);
+                y_comp->insert(idx, val[1]);
+                z_comp->insert(idx, val[2]);
             } else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
                 if (x_comp.use_count() > 1)
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
@@ -363,10 +363,10 @@ namespace zeno {
                     z_comp = std::make_shared<AttrColumn>(*z_comp);
                 if (w_comp.use_count() > 1)
                     w_comp = std::make_shared<AttrColumn>(*w_comp);
-                x_comp->insert(idx, val);
-                y_comp->insert(idx, val);
-                z_comp->insert(idx, val);
-                w_comp->insert(idx, val);
+                x_comp->insert(idx, val[0]);
+                y_comp->insert(idx, val[1]);
+                z_comp->insert(idx, val[2]);
+                w_comp->insert(idx, val[3]);
             } else {
                 if constexpr (CHANNEL > 0) {
                     if constexpr (CHANNEL == 'x') {
@@ -409,8 +409,8 @@ namespace zeno {
                     x_comp = std::make_shared<AttrColumn>(*x_comp);
                 if (y_comp.use_count() > 1)
                     y_comp = std::make_shared<AttrColumn>(*y_comp);
-                x_comp->append(val);
-                y_comp->append(val);
+                x_comp->append(val[0]);
+                y_comp->append(val[1]);
             }
             else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
                 if (x_comp.use_count() > 1)
@@ -419,9 +419,9 @@ namespace zeno {
                     y_comp = std::make_shared<AttrColumn>(*y_comp);
                 if (z_comp.use_count() > 1)
                     z_comp = std::make_shared<AttrColumn>(*z_comp);
-                x_comp->append(val);
-                y_comp->append(val);
-                z_comp->append(val);
+                x_comp->append(val[0]);
+                y_comp->append(val[1]);
+                z_comp->append(val[2]);
             }
             else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
                 if (x_comp.use_count() > 1)
@@ -432,10 +432,10 @@ namespace zeno {
                     z_comp = std::make_shared<AttrColumn>(*z_comp);
                 if (w_comp.use_count() > 1)
                     w_comp = std::make_shared<AttrColumn>(*w_comp);
-                x_comp->append(val);
-                y_comp->append(val);
-                z_comp->append(val);
-                w_comp->append(val);
+                x_comp->append(val[0]);
+                y_comp->append(val[1]);
+                z_comp->append(val[2]);
+                w_comp->append(val[3]);
             }
             else {
                 if constexpr (CHANNEL > 0) {

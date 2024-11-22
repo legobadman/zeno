@@ -4,6 +4,7 @@
 #include "model/geometrymodel.h"
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
+#include "declmetatype.h"
 
 
 ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
@@ -14,6 +15,8 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     , m_point(new ZToolBarButton(true, ":/icons/wiki.svg", ":/icons/wiki-on.svg"))
     , m_face(new ZToolBarButton(true, ":/icons/settings.svg", ":/icons/settings-on.svg"))
     , m_geom(new ZToolBarButton(true, ":/icons/toolbar_search_idle.svg", ":/icons/toolbar_search_light.svg"))
+    , m_model(nullptr)
+    , m_nodeIdx(QModelIndex())
 {
     m_views->addWidget(new QTableView); //vertex
     m_views->addWidget(new QTableView); //point
@@ -65,27 +68,73 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         });
 
     connect(zenoApp->graphsManager(), &GraphsManager::fileClosed, this, [this]() {
-        for (int i = 0; i < m_views->count(); ++i) {
-            QTableView* view = qobject_cast<QTableView*>(m_views->widget(i));
-            if (QAbstractItemModel* model = view->model()) {
-                view->setModel(nullptr);
-                delete model;
-            }
-        }
+        clearModel();
     });
 
     setLayout(pMainLayout);
 }
 
-void ZGeometrySpreadsheet::setGeometry(zeno::GeometryObject* pObject) {
+void ZGeometrySpreadsheet::setGeometry(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject* pObject) {
+    if (subgraph) {
+        m_model = subgraph;
+        connect(m_model, &GraphModel::nodeRemoved, this, &ZGeometrySpreadsheet::onNodeRemoved, Qt::UniqueConnection);
+        connect(m_model, &GraphModel::dataChanged, this, &ZGeometrySpreadsheet::onNodeDataChanged, Qt::UniqueConnection);
+    }
+    if (nodeidx.isValid()) {
+        m_nodeIdx = nodeidx;
+    }
+
     QTableView* view = qobject_cast<QTableView*>(m_views->widget(0));
-    view->setModel(new VertexModel(pObject));
+    if (VertexModel* model = qobject_cast<VertexModel*>(view->model())) {
+        model->setGeoObject(pObject);
+    } else {
+        view->setModel(new VertexModel(pObject));
+    }
 
     view = qobject_cast<QTableView*>(m_views->widget(1));
-    view->setModel(new PointModel(pObject));
+    if (PointModel* model = qobject_cast<PointModel*>(view->model())) {
+        model->setGeoObject(pObject);
+    }
+    else {
+        view->setModel(new PointModel(pObject));
+    }
 
     view = qobject_cast<QTableView*>(m_views->widget(2));
-    view->setModel(new FaceModel(pObject));
+    if (FaceModel* model = qobject_cast<FaceModel*>(view->model())) {
+        model->setGeoObject(pObject);
+    }
+    else {
+        view->setModel(new FaceModel(pObject));
+    }
 
+    mmm = pObject;
     //TODO: geom model
+}
+
+void ZGeometrySpreadsheet::onNodeRemoved(QString nodename)
+{
+    if (!m_nodeIdx.isValid()) {
+        clearModel();
+    }
+}
+
+void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
+{
+    if (!roles.empty() && roles[0] == ROLE_NODE_RUN_STATE) {
+        zeno::NodeRunStatus currStatus = topLeft.data(ROLE_NODE_RUN_STATE).value<NodeState>().runstatus;
+        if (currStatus == zeno::Node_Running) {
+            clearModel();
+        }
+    }
+}
+
+void ZGeometrySpreadsheet::clearModel()
+{
+    for (int i = 0; i < m_views->count(); ++i) {
+        QTableView* view = qobject_cast<QTableView*>(m_views->widget(i));
+        if (QAbstractItemModel* model = view->model()) {
+            view->setModel(nullptr);
+            delete model;
+        }
+    }
 }
