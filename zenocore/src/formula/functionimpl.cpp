@@ -495,7 +495,57 @@ namespace zeno
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of remove_vertex is not matched.");
 
-            //TODO
+            const auto& arg = args[0];
+            int N = arg.value.size();
+            if (N == 0)
+                return ZfxVariable();
+
+            const auto& arg2 = args[1];
+            N = arg2.value.size();
+            if (N == 0)
+                return ZfxVariable();
+
+            bool bSucceed = false;
+
+            if (N < filter.size()) {
+                assert(N == 1);
+                int faceid = get_zfxvar<int>(arg.value[0]);
+                int vertid = get_zfxvar<int>(arg2.value[0]);
+
+                /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
+                if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
+                    bool ret = spGeo->remove_vertex(faceid, vertid);
+                    bSucceed = true;
+                }
+#if 0
+                if (bSucceed) {
+                    //要调整filter，移除掉第currrem位置的元素
+                    filter.erase(filter.begin() + currrem);
+                    //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
+
+                    //移除点以后要调整已有的属性值
+                    for (auto& [name, attrVar] : *pContext->zfxVariableTbl) {
+                        auto& attrvalues = attrVar.value;
+                        if (name == "@ptnum") {
+                            assert(currrem < attrvalues.size());
+                            for (int i = currrem + 1; i < attrvalues.size(); i++)
+                                attrvalues[i] = i - 1;
+                            attrvalues.erase(attrvalues.begin() + currrem);
+                        }
+                        else {
+                            attrvalues.erase(attrvalues.begin() + currrem);
+                        }
+                    }
+                }
+                else {
+                    throw makeError<UnimplError>("error on removePoint");
+                }
+#endif
+            }
+            else {
+                //移除多个的情况
+                //TODO:
+            }
             return ZfxVariable();
         }
 
