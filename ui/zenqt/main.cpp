@@ -50,8 +50,6 @@ int main(int argc, char *argv[])
     ZenoApplication a(argc, argv);
     a.setStyle(new ZenoStyle);
 
-
-
 #ifdef DEBUG_NORMAL_WIDGET
     TestNormalWidget wid;
     wid.show();

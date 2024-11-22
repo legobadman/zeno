@@ -15,6 +15,7 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
     , m_bUIApp(true)
     , m_calcMgr(new CalculationMgr(this))
+    , m_engine(nullptr)
 {
     initMetaTypes();
     initFonts();
@@ -194,10 +195,22 @@ QStandardItemModel* ZenoApplication::logModel() const
 
 ZenoMainWindow* ZenoApplication::getMainWindow()
 {
-	foreach(QWidget* widget, topLevelWidgets())
-		if (ZenoMainWindow* mainWindow = qobject_cast<ZenoMainWindow*>(widget))
-			return mainWindow;
+    foreach(QWidget * widget, topLevelWidgets())
+        if (ZenoMainWindow* mainWindow = qobject_cast<ZenoMainWindow*>(widget))
+            return mainWindow;
     return nullptr;
+}
+
+void ZenoApplication::initQuickQanavas()
+{
+    if (!m_engine) {
+        m_engine = new QQmlApplicationEngine(this);
+        QuickQanava::initialize(m_engine);
+    }
+}
+
+QQmlApplicationEngine* ZenoApplication::getQmlEngine() const {
+    return m_engine;
 }
 
 QWidget *ZenoApplication::getWindow(const QString &objName)

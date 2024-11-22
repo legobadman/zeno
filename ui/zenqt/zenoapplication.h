@@ -6,6 +6,8 @@
 #include "util/procclipboard.h"
 #include "uicommon.h"
 #include <zeno/utils/scope_exit.h>
+#include <QuickQanava>
+#include <QQuickStyle>
 
 class GraphsManager;
 class ZenoMainWindow;
@@ -21,7 +23,9 @@ public:
     CalculationMgr* calculationMgr() const;
     void initFonts();
     void initStyleSheets();
+    void initQuickQanavas();
     ZenoMainWindow* getMainWindow();
+    QQmlApplicationEngine* getQmlEngine() const;
 	QWidget* getWindow(const QString& objName);
     std::shared_ptr<ProcessClipboard> procClipboard() const;
     QStandardItemModel* logModel() const;
@@ -37,6 +41,7 @@ private:
     std::shared_ptr<ZWidgetErrStream> m_spUILogStream;
     std::shared_ptr<ProcessClipboard> m_spProcClipboard;
     CalculationMgr* m_calcMgr;
+    QQmlApplicationEngine* m_engine;
     QDir m_appDataPath;
     bool m_bUIApp;
 };

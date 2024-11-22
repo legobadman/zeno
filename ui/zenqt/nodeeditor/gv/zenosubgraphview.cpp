@@ -924,10 +924,9 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
 
     if (!bFound) {
         QQuickStyle::setStyle("Material");
-        QQmlApplicationEngine* engine = new QQmlApplicationEngine;
-        QuickQanava::initialize(engine);
-
+        QQmlApplicationEngine* engine = zenoApp->getQmlEngine();
         QQuickWidget* pView = new QQuickWidget(engine, m_stackedView);
+        pView->setResizeMode(QQuickWidget::SizeRootObjectToView);
         pView->rootContext()->setContextProperty("nodesModel", pGraphM);
         pView->setSource(QUrl(QStringLiteral("qrc:/testQan.qml")));
         m_stackedView->addWidget(pView);

@@ -14,12 +14,14 @@
 #include <QQmlContext>
 #include "uicommon.h"
 #include "model/LinkModel.h"
+#include "zenoapplication.h"
 
 
 void initQml()
 {
     qRegisterMetaType<LinkModel*>("LinkModel*");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
+    zenoApp->initQuickQanavas();
 }
 
 void startUp(bool bEnableCrashReport)
