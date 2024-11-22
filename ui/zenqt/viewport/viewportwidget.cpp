@@ -170,7 +170,7 @@ void ViewportWidget::initializeGL()
 
 void ViewportWidget::resizeGL(int nx, int ny)
 {
-    float ratio = devicePixelRatioF();
+    float ratio = 1.0f;// devicePixelRatioF();
     zeno::log_trace("nx={}, ny={}, dpr={}", nx, ny, ratio);
     m_camera->setRes(QVector2D(nx * ratio, ny * ratio));
     m_camera->updatePerspective();

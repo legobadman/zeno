@@ -189,7 +189,7 @@ void ZOptixProcViewport::resizeEvent(QResizeEvent* event)
     int nx = sz.width();
     int ny = sz.height();
 
-    float ratio = devicePixelRatioF();
+    float ratio = 1.0f;// devicePixelRatioF();
     zeno::log_trace("nx={}, ny={}, dpr={}", nx, ny, ratio);
     m_camera->setRes(QVector2D(nx * ratio, ny * ratio));
     m_camera->updatePerspective();

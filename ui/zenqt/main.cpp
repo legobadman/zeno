@@ -45,6 +45,7 @@ int	main(int argc, char** argv)
 #else
 int main(int argc, char *argv[]) 
 {
+    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     glutInit(&argc, argv);
 
     ZenoApplication a(argc, argv);

@@ -28,6 +28,7 @@ qreal ZenoStyle::dpiScaled(qreal value)
         qreal dpi = screen->logicalDotsPerInch();
         scale = dpi / 96.0;
     }
+    scale = 1.0;
     return value * scale;
 }
 
