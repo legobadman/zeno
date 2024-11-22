@@ -347,10 +347,10 @@ ZENO_API void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo i
     assets.m_customui = customui;
 }
 
-std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGraph, std::shared_ptr<SubnetNode> subNode)
+std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGraph, SubnetNode* subNode)
 {
     std::shared_ptr<Graph> newGraph = std::make_shared<Graph>(assetGraph->getName(), true);
-    newGraph->optParentSubgNode = subNode.get();
+    newGraph->optParentSubgNode = subNode;
     for (const auto& [uuid, spNode] : assetGraph->getNodes())
     {
         zeno::NodeData nodeDat;
@@ -386,37 +386,42 @@ std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGra
 void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
 {
     std::shared_ptr<zeno::INode> input1Node = newAsst.sharedGraph->getNode("input1");
+
     zeno::ParamPrimitive paramInput;
     paramInput.bInput = false;
     paramInput.name = "port";
     zeno::PrimVar def = int(0);
-    paramInput.defl = zeno::reflect::make_any<zeno::PrimVar>(def);
-    paramInput.type = zeno::types::gParamType_Int;
+    paramInput.defl = newAsst.primitive_inputs[0].defl;
+    paramInput.type = newAsst.primitive_inputs[0].type;
     paramInput.bSocketVisible = false;
     input1Node->add_output_prim_param(paramInput);
+
     std::shared_ptr<zeno::INode> output1Node = newAsst.sharedGraph->getNode("output1");
     zeno::ParamPrimitive paramOutput;
     paramOutput.bInput = true;
     paramOutput.name = "port";
-    paramOutput.type = Param_Wildcard;
-    paramOutput.socketType = Socket_WildCard;
+    paramOutput.defl = newAsst.primitive_outputs[0].defl;   //仅仅保证有个值，实质没什么意义
+    paramOutput.type = newAsst.primitive_outputs[0].type;
+    paramOutput.bWildcard = true;
     output1Node->add_input_prim_param(paramOutput);
+
     std::shared_ptr<zeno::INode> objInput1Node = newAsst.sharedGraph->getNode("objInput1");
     zeno::ParamObject paramObj;
     paramObj.bInput = false;
     paramObj.name = "port";
-    paramObj.type = Obj_Wildcard;
-    paramObj.socketType = zeno::Socket_WildCard;
+    paramObj.type = newAsst.object_inputs[0].type;
+    paramObj.bWildcard = newAsst.object_inputs[0].bWildcard;
     objInput1Node->add_output_obj_param(paramObj);
+
     std::shared_ptr<zeno::INode> objOutput1Node = newAsst.sharedGraph->getNode("objOutput1");
     paramObj.bInput = true;
     objOutput1Node->add_input_obj_param(paramObj);
 }
 
-ZENO_API bool AssetsMgr::isAssetGraph(std::shared_ptr<Graph> spGraph) const
+ZENO_API bool AssetsMgr::isAssetGraph(Graph* spGraph) const
 {
     for (auto& [name, asset] : m_assets) {
-        if (asset.sharedGraph == spGraph)
+        if (asset.sharedGraph.get() == spGraph)
             return true;
     }
     return false;
@@ -453,7 +458,7 @@ ZENO_API std::shared_ptr<INode> AssetsMgr::newInstance(std::shared_ptr<Graph> pG
     std::shared_ptr<Graph> assetGraph;
     if (!createInAsset) {
         //should expand the asset graph into a tree.
-        assetGraph = forkAssetGraph(assets.sharedGraph, spNode);
+        assetGraph = forkAssetGraph(assets.sharedGraph, spNode.get());
     }
     else {
         assetGraph = assets.sharedGraph;
@@ -486,7 +491,7 @@ ZENO_API std::shared_ptr<INode> AssetsMgr::newInstance(std::shared_ptr<Graph> pG
     return std::dynamic_pointer_cast<INode>(spNode);
 }
 
-ZENO_API void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, std::shared_ptr<SubnetNode>& spNode)
+ZENO_API void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, SubnetNode* spNode)
 {
     if(m_assets.find(assetName) == m_assets.end()) {
         return;

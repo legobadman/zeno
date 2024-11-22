@@ -8,7 +8,7 @@
 #include "graphmodel.h"
 
 
-//ÎªÊ²Ã´²»base StandardModel£¬ÊÇÒòÎªStandardItemÓĞµãÈßÓà£¬¸É´à×Ô¼ºÊµÏÖÒ»¸ö¼òÒ×µÄÍ¼treemodel.
+//ä¸ºä»€ä¹ˆä¸base StandardModelï¼Œæ˜¯å› ä¸ºStandardItemæœ‰ç‚¹å†—ä½™ï¼Œå¹²è„†è‡ªå·±å®ç°ä¸€ä¸ªç®€æ˜“çš„å›¾treemodel.
 class GraphsTreeModel : public QAbstractItemModel
 {
     Q_OBJECT
@@ -34,11 +34,11 @@ public:
         Qt::MatchFlags(Qt::MatchStartsWith | Qt::MatchWrap)) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    //ÊÊÅäTreeView.qml
+    //é€‚é…TreeView.qml
     //! Return the depth for the given index
     Q_INVOKABLE int depth(const QModelIndex& index) const;
 
-    // ·µ»Øµ±Ç°Ë÷Òı½ÚµãËùÔÚµÄÍ¼Ä£ĞÍ
+    // è¿”å›å½“å‰ç´¢å¼•èŠ‚ç‚¹æ‰€åœ¨çš„å›¾æ¨¡å‹
     Q_INVOKABLE GraphModel* graph(const QModelIndex& index) const;
 
     Q_INVOKABLE QString name(const QModelIndex& index) const;

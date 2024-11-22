@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include "widgets/ztimeline.h"
 #include "zassert.h"
+#include "declmetatype.h"
 
 
 namespace zeno {

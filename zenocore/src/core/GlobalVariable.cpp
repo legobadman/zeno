@@ -17,7 +17,7 @@ namespace zeno {
             return false;
         }
         GVariable oldvar;
-        cancelOverride(newvar.name, oldvar);    //记录oldvar覆盖失败时取消cancel
+        cancelOverride(newvar.name, oldvar);    //璁板綍oldvar瑕嗙洊澶辫触鏃跺彇娑坈ancel
         if (overrideVariable(newvar)) {
             return true;
         }
@@ -43,7 +43,7 @@ namespace zeno {
                 return true;
             }
             else {
-                //override时类型不一致；
+                //override鏃剁被鍨嬩笉涓�鑷达紱
             }
         }
         return false;

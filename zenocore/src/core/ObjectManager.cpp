@@ -112,7 +112,10 @@ namespace zeno {
     ZENO_API void ObjectManager::beforeRun()
     {
         std::lock_guard lck(m_mtx);     //可能此时渲染端在load_objects
-        m_lastViewObjs = m_viewObjs;
+
+        clear_batch_updates();
+
+        //m_lastViewObjs = m_viewObjs;
         m_viewObjs.clear();
         m_newAdded.clear();
         m_modify.clear();
@@ -124,6 +127,9 @@ namespace zeno {
         std::lock_guard lck(m_mtx);
         //m_lastViewObjs剩下来的都是上一次view，而这一次没有view的。
         m_remove = m_lastViewObjs;
+        //for (auto objkey : m_lastViewObjs) {
+        //    m_render_updates.push_back(zeno::render_update_info{ Update_Remove, objkey });
+        //}
         m_lastViewObjs.clear();
         m_removing_objs.clear();
     }
@@ -148,6 +154,25 @@ namespace zeno {
         m_frameData.clear();
     }
 
+    ZENO_API void ObjectManager::collect_render_update(zeno::render_update_info info)
+    {
+        for (int i = 0; i < m_render_updates.size(); i++) {
+            auto update = m_render_updates[i];
+            if (update.uuidpath_node_objkey == info.uuidpath_node_objkey) {
+                //先把原来的覆盖掉
+                assert(false);
+                //m_render_updates[i] = info;
+                return;
+            }
+        }
+        m_render_updates.push_back(info);
+    }
+
+    void ObjectManager::clear_batch_updates()
+    {
+        m_render_updates.clear();
+    }
+
     ZENO_API void ObjectManager::clear_last_run()
     {
         std::lock_guard lck(m_mtx);
@@ -166,7 +191,7 @@ namespace zeno {
         for (auto obj_key : m_removing_objs) {
             auto nodes = getAttachNodes(obj_key);
             for (auto node_path : nodes) {
-                auto spNode = zeno::getSession().mainGraph->getNodeByUuidPath(node_path);
+                auto spNode = zeno::getSession().getNodeByUuidPath(node_path);
                 if (spNode)
                     spNode->mark_dirty(true);
             }
@@ -211,6 +236,12 @@ namespace zeno {
     ZENO_API void ObjectManager::syncObjNodeInfo(zany spObj, std::shared_ptr<INode> spNode)
     {
         std::lock_guard lck(m_mtx);
+    }
+
+    ZENO_API void ObjectManager::export_render_infos(std::vector<zeno::render_update_info>& infos)
+    {
+        std::lock_guard lck(m_mtx);
+        infos = m_render_updates;
     }
 
     ZENO_API void ObjectManager::export_loading_objs(RenderObjsInfo& info)
@@ -296,9 +327,9 @@ namespace zeno {
             return info;
 
         info.transformingObj = iter->second.obj;
-        auto& mainG = getSession().mainGraph;
+        auto& sess = getSession();
         for (auto nodepath : iter->second.attach_nodes) {
-            auto spNode = mainG->getNodeByUuidPath(nodepath);
+            auto spNode = sess.getNodeByUuidPath(nodepath);
             if (spNode->is_view())
             {
                 info.spViewNode = spNode;

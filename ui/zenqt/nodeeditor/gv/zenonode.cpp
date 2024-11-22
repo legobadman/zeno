@@ -41,6 +41,8 @@
 #include "statusbutton.h"
 #include "model/assetsmodel.h"
 #include <zeno/utils/helper.h>
+#include "declmetatype.h"
+#include <zeno/core/typeinfo.h>
 
 
 ZenoNode::ZenoNode(const NodeUtilParam &params, QGraphicsItem *parent)
@@ -278,7 +280,7 @@ ZLayoutBackground* ZenoNode::initMainHeaderBg()
     buttonShapeInfo.ltradius = buttonShapeInfo.lbradius = 0.;
     buttonShapeInfo.rtradius = buttonShapeInfo.rbradius = ZenoStyle::dpiScaled(9.);
 
-    m_pMainStatusWidgets = new StatusGroup(buttonShapeInfo);
+    m_pMainStatusWidgets = new StatusGroup(false, buttonShapeInfo);
     bool bView = m_index.data(ROLE_NODE_ISVIEW).toBool();
     m_pMainStatusWidgets->setView(bView);
     connect(m_pMainStatusWidgets, &StatusGroup::toggleChanged, this, &ZenoNode::onOptionsBtnToggled);
@@ -385,7 +387,7 @@ ZLayoutBackground* ZenoNode::initHeaderWidget()
     buttonShapeInfo.H = ZenoStyle::dpiScaled(50.);
     buttonShapeInfo.rtradius = ZenoStyle::dpiScaled(9.);
 
-    m_pStatusWidgets = new StatusGroup(buttonShapeInfo);
+    m_pStatusWidgets = new StatusGroup(false, buttonShapeInfo);
     bool bView = m_index.data(ROLE_NODE_ISVIEW).toBool();
     m_pStatusWidgets->setView(bView);
     connect(m_pStatusWidgets, SIGNAL(toggleChanged(STATUS_BTN, bool)), this, SLOT(onOptionsBtnToggled(STATUS_BTN, bool)));

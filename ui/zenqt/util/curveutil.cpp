@@ -6,6 +6,8 @@
 #include "zassert.h"
 #include "widgets/zveceditor.h"
 #include "util/uihelper.h"
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 namespace curve_util

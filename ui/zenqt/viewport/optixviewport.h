@@ -5,7 +5,7 @@
 #include "recordvideomgr.h"
 #include "uicommon.h"
 #include "zenovis/Camera.h"
-#include <zeno/core/ObjectManager.h>
+
 
 class Zenovis;
 class CameraControl;
@@ -15,7 +15,7 @@ class OptixWorker : public QObject
     Q_OBJECT
 public:
     OptixWorker(QObject* parent = nullptr);
-    OptixWorker(Zenovis *pzenoVis);
+    OptixWorker(const QString& graph_path, Zenovis *pzenoVis);
     ~OptixWorker();
     QImage renderImage() const;
 
@@ -46,7 +46,8 @@ public slots:
     void load_objects();
     void onCleanUpView();
     void onSetBackground(bool bShowBg);
-
+    void on_load_data(zeno::render_update_info info);
+    void on_reload_objects(const zeno::render_reload_info& info);
     void onSetData(float, float, float, bool, bool);
 
 private:
@@ -88,6 +89,8 @@ public:
     void modifyLightData(UI_VECTYPE pos, UI_VECTYPE scale, UI_VECTYPE rotate, UI_VECTYPE color, float intensity, QString name, UI_VECTYPE skipParam);
     void cleanUpScene();
     void load_objects();
+    void load_object(zeno::render_update_info info);
+    void reload_objects(const zeno::render_reload_info& info);
     void cleanupView();
 
     zenovis::ZOptixCameraSettingInfo getdata_from_optix_thread();
@@ -98,6 +101,7 @@ signals:
     void stopRenderOptix();
     void resumeWork();
     void sigRecordVideo(VideoRecInfo recInfo);
+    void sig_loadObject(zeno::render_update_info info);
     void sig_recordFinished();
     void sig_frameRecordFinished(int frame);
     void sig_frameRunFinished(int frame);
@@ -116,6 +120,7 @@ signals:
     void sig_cleanUpView();
     void sig_setBackground(bool bShowBg);
     void sig_setdata_on_optix_thread(float, float, float, bool, bool);
+    void sig_reload_objects(const zeno::render_reload_info&);
 
 public slots:
     void onFrameRunFinished(int frame);

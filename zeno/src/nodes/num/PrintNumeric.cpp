@@ -43,7 +43,7 @@ struct PrintNumeric : zeno::INode {
 };
 
 ZENDEFNODE(PrintNumeric, {
-    {{gParamType_Unknown, "value", "0", zeno::Socket_WildCard}},
+    {{gParamType_Unknown, "value", "0"}},
     {{gParamType_Unknown, "value"}},
     {{gParamType_String, "hint", "PrintNumeric"}},
     {"numeric"},

@@ -93,7 +93,7 @@ private:
 
     NodeUtilParam m_nodeParams;
     QPersistentModelIndex m_subgIdx;      //index to the subgraphmodel or node in "graphsModel"
-    std::map<QString, ZenoNodeBase*> m_nodes;   //TODO: 是否可考虑用uuid?
+    std::map<QString, ZenoNodeBase*> m_nodes;
     QStringList m_errNodes;        //the nodes which have been marked "error" at run time.
     QHash<QUuid, ZenoFullLink*> m_links;
     //QMap<QString, ZenoFullLink*> m_links;

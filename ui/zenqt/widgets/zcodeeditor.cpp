@@ -13,6 +13,7 @@
 #include <zeno/core/Session.h>
 #include <zeno/core/FunctionManager.h>
 
+
 ZCodeEditor::ZCodeEditor(const QString& text, QWidget *parent)
     : QCodeEditor(parent), m_zfxHighLighter(new QZfxHighlighter), m_descLabel(nullptr)
 {

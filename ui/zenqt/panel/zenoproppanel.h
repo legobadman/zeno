@@ -42,7 +42,7 @@ public:
     ZenoFuncDescriptionLabel* getFuncDescriptionInstance();
 
 public slots:
-    //subnet/ÆÕÍ¨½Úµã
+    //subnet/æ™®é€šèŠ‚ç‚¹
     void onCustomParamDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     void onViewParamInserted(const QModelIndex& parent, int first, int last);
     void onViewParamAboutToBeRemoved(const QModelIndex& parent, int first, int last);
@@ -67,19 +67,19 @@ private:
     void clearLayout();
 
     QWidget* resetOutputs();
-    //MakeDict/MakeList½Úµã
+    //MakeDict/MakeListèŠ‚ç‚¹
     QWidget* resetMakeDictMakeListLayout();
     void clearMakeDictMakeListLayout();
-    //DopNetwork½Úµã
+    //DopNetworkèŠ‚ç‚¹
     QWidget* resetDopNetworkLayout();
     void clearDopNetworkLayout();
-    //subnet½Úµã
+    //subnetèŠ‚ç‚¹
     QWidget* resetSubnetLayout();
     bool syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout* pGroupLayout, QStandardItem* paramItem, int row);
     bool syncAddGroup(QVBoxLayout* pTabLayout, QStandardItem* pGroupItem, int row);
     bool syncAddTab(QTabWidget* pTabWidget, QStandardItem* pTabItem, int row);
     ZExpandableSection* findGroup(const QString& tabName, const QString& groupName);
-    //ÆÕÍ¨½Úµã
+    //æ™®é€šèŠ‚ç‚¹
     QWidget* resetNormalNodeLayout();
     void normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayout* pLayout, QStandardItem* pItem, int row);
     void addOutputWidget(ZScrollArea* scrollArea, QGridLayout* pLayout, QStandardItem* pOutputItem, int row);
@@ -95,14 +95,14 @@ private:
     QPersistentModelIndex m_idx;
 
     QWidget* m_outputWidget;                //output
-    //MakeDict/MakeList½Úµã
-    ZenoDictListLinksTable* m_dictListLinksTable;   //ÏÔÊ¾makeDict/makeListÊäÈë±ß
+    //MakeDict/MakeListèŠ‚ç‚¹
+    ZenoDictListLinksTable* m_dictListLinksTable;   //æ˜¾ç¤ºmakeDict/makeListè¾“å…¥è¾¹
     //DopNetwork
     zenoDopNetworkPanel* m_dopNetworkPanel;
-    //subnet½Úµã
-    QTabWidget* m_tabWidget;                //×ÓÍ¼½ÚµãinputÊ¹ÓÃ
-    //ÆÕÍ¨½Úµã
-    QWidget* m_normalNodeInputWidget;       //ÆÕÍ¨½ÚµãinputÊ¹ÓÃ
+    //subnetèŠ‚ç‚¹
+    QTabWidget* m_tabWidget;                //å­å›¾èŠ‚ç‚¹inputä½¿ç”¨
+    //æ™®é€šèŠ‚ç‚¹
+    QWidget* m_normalNodeInputWidget;       //æ™®é€šèŠ‚ç‚¹inputä½¿ç”¨
 
     bool m_bReentry;
 

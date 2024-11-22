@@ -2,7 +2,7 @@
 #include "variantptr.h"
 #include "model/curvemodel.h"
 #include "zeno/utils/logger.h"
-#include <zeno/funcs/ParseObjectFromUi.h>
+#include <rapidjson/document.h>
 #include "uihelper.h"
 #include "zassert.h"
 #include "util/curveutil.h"

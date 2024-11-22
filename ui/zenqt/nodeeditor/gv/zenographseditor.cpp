@@ -27,6 +27,7 @@
 #include "widgets/zlabel.h"
 #include "nodeeditor/gv/callbackdef.h"
 #include <zeno/core/Session.h>
+#include <zeno/core/Assets.h>
 #include <QtQuickWidgets/QQuickWidget>
 #include <QQmlContext>
 #include "variantptr.h"
@@ -534,6 +535,15 @@ ZenoSubGraphView* ZenoGraphsEditor::getCurrentSubGraphView()
     return nullptr;
 }
 
+QStringList ZenoGraphsEditor::getCurrentGraphPath() {
+    if (ZenoSubGraphView* pCurr = getCurrentSubGraphView()) {
+        return pCurr->path();
+    }
+    else {
+        return {};
+    }
+}
+
 void ZenoGraphsEditor::showWelcomPage()
 {
     m_ui->mainStacked->setCurrentIndex(0);
@@ -731,13 +741,12 @@ void ZenoGraphsEditor::showFloatPanel(GraphModel* subgraph, const QModelIndexLis
 void ZenoGraphsEditor::onTreeItemActivated(const QModelIndex& index)
 {
     QModelIndex idx = index;
-
-    const QString& objId = idx.data(ROLE_NODE_NAME).toString();
-
+    QString treeItemName = idx.data(ROLE_NODE_NAME).toString();
     QStringList subgPath;
     if (!idx.parent().isValid())
     {
         subgPath.append("main");
+        treeItemName.clear();
     }
     else
     {
@@ -749,7 +758,7 @@ void ZenoGraphsEditor::onTreeItemActivated(const QModelIndex& index)
             idx = idx.parent();
         }
     }
-    activateTab(subgPath, objId);
+    activateTab(subgPath, treeItemName);
 }
 
 void ZenoGraphsEditor::onPageActivated(const QPersistentModelIndex& subgIdx, const QPersistentModelIndex& nodeIdx)

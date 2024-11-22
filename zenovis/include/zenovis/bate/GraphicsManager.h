@@ -8,6 +8,7 @@
 #include <zeno/utils/log.h>
 #include <zenovis/bate/IGraphic.h>
 #include <zenovis/Scene.h>
+#include <zeno/core/Graph.h>
 
 namespace zenovis {
 
@@ -41,10 +42,18 @@ struct GraphicsManager {
 
     bool add_object(zeno::zany obj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-            return add_listobj(spList);
+            for (auto obj : spList->get()) {
+                bool ret = add_object(obj);
+                assert(ret);
+            }
+            return true;
         }
         if (auto spDict = std::dynamic_pointer_cast<zeno::DictObject>(obj)) {
-            return add_dictobj(spDict);
+            for (auto& [key, spObject] : spDict->get()) {
+                bool ret = add_object(spObject);
+                assert(ret);
+            }
+            return true;
         }
 
         const std::string& key = obj->key();
@@ -76,12 +85,19 @@ struct GraphicsManager {
 
     bool remove_object(zeno::zany spObj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(spObj)) {
-            return remove_listobj(spList);
+            for (auto obj : spList->get()) {
+                bool ret = remove_object(obj);
+                assert(ret);
+            }
+            return true;
         }
         if (auto spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObj)) {
-            return remove_dictobj(spDict);
+            for (auto& [key, spObject] : spDict->get()) {
+                bool ret = remove_object(spObject);
+                assert(ret);
+            }
+            return true;
         }
-
         const std::string& key = spObj->key();
         auto& graphics_ = graphics.m_curr.m_curr;
         auto iter = graphics_.find(key);
@@ -92,68 +108,170 @@ struct GraphicsManager {
         return true;
     }
 
-    bool add_listobj(std::shared_ptr<zeno::ListObject> spList) {
-        for (auto obj : spList->get()) {
-            if (auto listobj = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-                bool ret = add_listobj(listobj);
-                if (!ret)
-                    return ret;
+    bool process_listobj(std::shared_ptr<zeno::ListObject> spList) {
+        for (auto spObject : spList->get()) {
+            assert(spObject);
+            std::string const& key = spObject->key();
+            if (spList->m_new_added.find(key) != spList->m_new_added.end() ||
+                spList->m_modify.find(key) != spList->m_modify.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = add_object(spObject);
+                }
+                assert(ret);
             }
-            else {
-                bool ret = add_object(obj);
-                if (!ret)
-                    return ret;
+            else if (spList->m_new_removed.find(key) != spList->m_new_removed.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = remove_object(spObject);
+                }
+                assert(ret);
             }
         }
         return true;
     }
 
-    bool add_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
+    bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
         for (auto& [key, spObject] : spDict->get()) {
-            if (auto dictobj = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                bool ret = add_dictobj(dictobj);
-                if (!ret)
-                    return ret;
+            assert(spObject);
+            std::string const& key = spObject->key();
+            if (spDict->m_new_added.find(key) != spDict->m_new_added.end() ||
+                spDict->m_modify.find(key) != spDict->m_modify.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = add_object(spObject);
+                }
+                assert(ret);
             }
-            else {
-                bool ret = add_object(spObject);
-                if (!ret)
-                    return ret;
+            else if (spDict->m_new_removed.find(key) != spDict->m_new_removed.end()) {
+                bool ret = false;
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    ret = process_listobj(_spList);
+                }
+                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    ret = process_dictobj(_spDict);
+                }
+                else {
+                    ret = remove_object(spObject);
+                }
+                assert(ret);
             }
         }
         return true;
     }
 
-    bool remove_listobj(std::shared_ptr<zeno::ListObject> spList) {
-        for (auto obj : spList->get()) {
-            if (auto listobj = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-                bool ret = remove_listobj(listobj);
-                if (!ret)
-                    return ret;
+    void reload(const zeno::render_reload_info& info) {
+        auto& sess = zeno::getSession();
+        if (zeno::Reload_SwitchGraph == info.policy) {
+            //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
+            graphics.clear();
+            std::shared_ptr<zeno::Graph> spGraph = sess.getGraphByPath(info.current_ui_graph);
+            assert(spGraph);
+            if (spGraph->isAssets()) {
+                //资产图不能view，因为没有实例化，不属于运行图的范畴
+                return;
             }
-            else {
-                bool ret = remove_object(obj);
-                if (!ret)
-                    return ret;
+            const auto& viewnodes = spGraph->get_viewnodes();
+            //其实是否可以在外面提前准备好对象列表？
+            for (auto viewnode : viewnodes) {
+                std::shared_ptr<zeno::INode> spNode = spGraph->getNode(viewnode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    add_object(spObject);
+                }
+                else {
+
+                }
             }
         }
-        return true;
+        else if (zeno::Reload_ToggleView == info.policy) {
+            assert(info.objs.size() == 1);
+            const auto& update = info.objs[0];
+            auto& wtf = graphics.m_curr.m_curr;
+            auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+            assert(spNode);
+            zeno::zany spObject = spNode->get_default_output_object();
+            if (spObject) {
+                if (update.reason == zeno::Update_View) {
+                    add_object(spObject);
+                }
+                else if (update.reason == zeno::Update_Remove) {
+                    remove_object(spObject);
+                }
+            }
+            else {
+                //可能还没计算
+            }
+        }
+        else if (zeno::Reload_Calculation == info.policy) {
+            for (const zeno::render_update_info& update : info.objs) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    //可能是对象没有通过子图的Suboutput连出来
+                    if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                        process_listobj(_spList);
+                    }
+                    if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                        process_dictobj(_spDict);
+                    }
+                    else {
+                        add_object(spObject);
+                    }
+                }
+            }
+        }
     }
 
-    bool remove_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
-        for (auto& [key, spObject] : spDict->get()) {
-            if (auto dictobj = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                bool ret = remove_dictobj(dictobj);
-                if (!ret)
-                    return ret;
+    void load_objects3(const std::vector<zeno::render_update_info>& infos) {
+        auto& sess = zeno::getSession();
+        for (const zeno::render_update_info& info : infos) {
+            auto spNode = sess.getNodeByUuidPath(info.uuidpath_node_objkey);
+            assert(spNode);
+            zeno::zany spObject = spNode->get_default_output_object();
+            assert(spObject);
+
+            std::string const& objkey = spObject->key();
+            if (info.reason == zeno::Update_Reconstruct) {
+                add_object(spObject);
             }
-            else {
-                bool ret = remove_object(spObject);
-                if (!ret)
-                    return ret;
+            else if (info.reason == zeno::Update_View) {
+                //要观察当前绘制端是否已经缓存了objkey
+                auto& wtf = graphics.m_curr.m_curr;
+                auto it = wtf.find(objkey);
+                if (it == wtf.end()) {
+                    add_object(spObject);
+                }
+                else {
+                    //只是切换view而已，而这个要绘制的object已经在这里绘制端缓存了，不需要重新load
+                    int j;
+                    j = 0;
+                }
+            }
+            else if (info.reason == zeno::Update_Remove) {
+                //包括节点删除以及view移除的情况，在绘制端看来都是移除
+                remove_object(spObject);
             }
         }
-        return true;
     }
 
     void load_objects2(const zeno::RenderObjsInfo& objs) {

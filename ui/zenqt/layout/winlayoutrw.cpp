@@ -8,6 +8,7 @@
 #include "util/jsonhelper.h"
 #include "util/apphelper.h"
 #include <DockManager.h>
+#include <zeno/io/zsg2reader.h>
 
 
 PtrLayoutNode findNode(PtrLayoutNode root, ads::CDockWidget* pWidget)

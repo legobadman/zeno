@@ -30,12 +30,12 @@ struct Context {
         visited.insert(other.visited.begin(), other.visited.end());
     }
 
-    ZENO_API Context();
-    ZENO_API Context(Context const &other);
-    ZENO_API ~Context();
+    Context();
+    Context(Context const &other);
+    ~Context();
 };
 
-struct Graph : std::enable_shared_from_this<Graph> {
+struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     Session* session = nullptr;
 
     int beginFrameNumber = 0, endFrameNumber = 0;  // only use by runnermain.cpp
@@ -47,8 +47,8 @@ struct Graph : std::enable_shared_from_this<Graph> {
 
     std::optional<SubnetNode*> optParentSubgNode;
 
-    ZENO_API Graph(const std::string& name, bool bAssets = false);
-    ZENO_API ~Graph();
+    Graph(const std::string& name, bool bAssets = false);
+    ~Graph();
 
     Graph(Graph const &) = delete;
     Graph &operator=(Graph const &) = delete;
@@ -56,70 +56,72 @@ struct Graph : std::enable_shared_from_this<Graph> {
     Graph &operator=(Graph &&) = delete;
 
     //BEGIN NEW STANDARD API
-    ZENO_API void init(const GraphData& graph);
+    void init(const GraphData& graph);
 
-    ZENO_API std::shared_ptr<INode> createNode(std::string const& cls, const std::string& orgin_name = "", bool bAssets = false, std::pair<float, float> pos = {});
+    std::shared_ptr<INode> createNode(std::string const& cls, const std::string& orgin_name = "", bool bAssets = false, std::pair<float, float> pos = {});
     CALLBACK_REGIST(createNode, void, const std::string&, std::weak_ptr<zeno::INode>)
 
-    ZENO_API bool removeNode(std::string const& name);
+    bool removeNode(std::string const& name);
     CALLBACK_REGIST(removeNode, void, const std::string&)
 
-    ZENO_API bool addLink(const EdgeInfo& edge);
+    bool addLink(const EdgeInfo& edge);
     CALLBACK_REGIST(addLink, bool, EdgeInfo)
 
-    ZENO_API bool removeLink(const EdgeInfo& edge);
+    bool removeLink(const EdgeInfo& edge);
     CALLBACK_REGIST(removeLink, bool, EdgeInfo)
 
-    ZENO_API bool removeLinks(const std::string nodename, bool bInput, const std::string paramname);
+    bool removeLinks(const std::string nodename, bool bInput, const std::string paramname);
     CALLBACK_REGIST(removeLinks, bool, std::string, bool, std::string)
 
-    ZENO_API bool updateLink(const EdgeInfo& edge, bool bInput, const std::string oldkey, const std::string newkey);
-    ZENO_API bool moveUpLinkKey(const EdgeInfo& edge, bool bInput, const std::string keyName);
+    bool updateLink(const EdgeInfo& edge, bool bInput, const std::string oldkey, const std::string newkey);
+    bool moveUpLinkKey(const EdgeInfo& edge, bool bInput, const std::string keyName);
 
-    ZENO_API std::shared_ptr<INode> getNode(std::string const& name);
-    ZENO_API std::shared_ptr<INode> getNodeByUuidPath(ObjPath path);
-    ZENO_API std::shared_ptr<INode> getNodeByPath(const std::string& path);
-    ZENO_API std::shared_ptr<Graph> getGraphByPath(const std::string& path);
-    ZENO_API std::map<std::string, std::shared_ptr<INode>> getNodes() const;
+    bool hasNode(std::string const& uuid_node_path);
+    std::shared_ptr<INode> getNode(std::string const& name);
+    std::shared_ptr<INode> getNodeByUuidPath(ObjPath path);
+    std::shared_ptr<zeno::INode> getNodeByPath(const std::string& path);
+    std::shared_ptr<Graph> getGraphByPath(const std::string& path);
+    std::map<std::string, std::shared_ptr<INode>> getNodes() const;
+    std::set<std::string> get_viewnodes() const;
 
-    ZENO_API GraphData exportGraph() const;
+    GraphData exportGraph() const;
 
-    ZENO_API LinksData exportLinks() const;
+    LinksData exportLinks() const;
 
-    ZENO_API std::string getName() const;
-    ZENO_API void setName(const std::string& name);
+    std::string getName() const;
+    void setName(const std::string& name);
 
-    ZENO_API std::string updateNodeName(const std::string oldName, const std::string newName = "");
+    std::string updateNodeName(const std::string oldName, const std::string newName = "");
     CALLBACK_REGIST(updateNodeName, void, std::string, std::string)
 
-    ZENO_API void clear();
+    void clear();
     CALLBACK_REGIST(clear, void)
 
-    ZENO_API bool isAssets() const;
-    ZENO_API std::set<std::string> searchByClass(const std::string& name) const;
+    bool isAssets() const;
+    std::set<std::string> searchByClass(const std::string& name) const;
 
-    ZENO_API void clearNodes();
-    ZENO_API void runGraph();
-    ZENO_API void applyNodes(std::set<std::string> const &ids);
-    ZENO_API void addNode(std::string const &cls, std::string const &id);
-    ZENO_API Graph *addSubnetNode(std::string const &id);
-    ZENO_API Graph *getSubnetGraph(std::string const &id) const;
-    ZENO_API void completeNode(std::string const &id);
-    ZENO_API void bindNodeInput(std::string const &dn, std::string const &ds,
+    void clearNodes();
+    void runGraph();
+    void applyNodes(std::set<std::string> const &ids);
+    void addNode(std::string const &cls, std::string const &id);
+    Graph *addSubnetNode(std::string const &id);
+    Graph *getSubnetGraph(std::string const &id) const;
+    void completeNode(std::string const &id);
+    void bindNodeInput(std::string const &dn, std::string const &ds,
         std::string const &sn, std::string const &ss);
 
     //容易有歧义：这个input是defl value，还是实质的对象？按原来zeno的语义，是指defl value
-    ZENO_API void setNodeInput(std::string const &id, std::string const &par, zany const &val);
+    void setNodeInput(std::string const &id, std::string const &par, zany const &val);
 
-    ZENO_API void setKeyFrame(std::string const &id, std::string const &par, zany const &val);
-    ZENO_API void setFormula(std::string const &id, std::string const &par, zany const &val);
-    ZENO_API void addNodeOutput(std::string const &id, std::string const &par);
-    ZENO_API zany getNodeInput(std::string const &sn, std::string const &ss) const;
-    ZENO_API void setNodeParam(std::string const &id, std::string const &par,
+    void setKeyFrame(std::string const &id, std::string const &par, zany const &val);
+    void setFormula(std::string const &id, std::string const &par, zany const &val);
+    void addNodeOutput(std::string const &id, std::string const &par);
+    zany getNodeInput(std::string const &sn, std::string const &ss) const;
+    void setNodeParam(std::string const &id, std::string const &par,
         std::variant<int, float, std::string, zany> const &val);  /* to be deprecated */
-    ZENO_API std::map<std::string, zany> callSubnetNode(std::string const &id,
+    std::map<std::string, zany> callSubnetNode(std::string const &id,
             std::map<std::string, zany> inputs) const;
-    ZENO_API std::map<std::string, zany> callTempNode(std::string const &id,
+    std::map<std::string, zany> callTempNode(std::string const &id,
             std::map<std::string, zany> inputs);
 
     std::set<std::string> getSubInputs();
@@ -139,7 +141,7 @@ private:
     std::string generateNewName(const std::string& node_cls, const std::string& origin_name = "", bool bAssets = false);
     //增/删边之后更新wildCard端口的类型
     void removeLinkWhenUpdateWildCardParam(const std::string& outNode, const std::string& inNode, EdgeInfo& edge);
-    void resetWildCardParamsType(SocketType& socketType, std::shared_ptr<INode>& node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
+    void resetWildCardParamsType(bool bWildcard, std::shared_ptr<INode>& node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
     std::shared_ptr<Graph> _getGraphByPath(std::vector<std::string> items);
     bool isLinkValid(const EdgeInfo& edge);
     bool applyNode(std::string const& id);

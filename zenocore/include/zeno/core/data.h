@@ -63,7 +63,7 @@ namespace zeno {
     struct CommonParam {
         std::string name;
         ParamType type = Param_Null;
-        SocketType socketType = Socket_ReadOnly;    //为了兼容zeno老版本的使用习惯，clone可能有内存性能风险，owning可能概念不明
+        SocketType socketType = Socket_Clone;    //为了兼容zeno老版本的使用习惯，clone可能有内存性能风险，owning可能概念不明
         SocketProperty sockProp = Socket_Normal;
         std::string wildCardGroup;
         std::string constrain;
@@ -74,6 +74,7 @@ namespace zeno {
         bool bSocketVisible = false;
         bool bVisible = true;       //在参数面板是否可见
         bool bEnable = true;        //在参数面板是否可用
+        bool bWildcard = false;     //是否为wildcard参数
 
         CommonParam() {}
         CommonParam(std::string name) : name(name) {}
@@ -176,6 +177,18 @@ namespace zeno {
         int majorVer;
         int minorVer;
     };
+
+    struct ZenoAsset {
+        ObjectParams object_inputs;
+        PrimitiveParams primitive_inputs;
+        PrimitiveParams primitive_outputs;
+        ObjectParams object_outputs;
+        AssetInfo info;
+        CustomUI m_customui;
+        std::optional<GraphData> optGraph;
+    };
+
+    using AssetsData = std::map<std::string, ZenoAsset>;
 
     struct GroupInfo
     {

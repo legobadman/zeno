@@ -18,6 +18,10 @@ ZENO_API std::shared_ptr<IObject> IObject::move_clone() {
     return nullptr;
 }
 
+ZENO_API std::shared_ptr<IObject> IObject::clone_by_key(std::string const& prefix) {
+    return nullptr;
+}
+
 ZENO_API bool IObject::assign(IObject const *other) {
     return false;
 }

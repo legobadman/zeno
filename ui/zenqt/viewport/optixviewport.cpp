@@ -12,7 +12,7 @@
 #include <zeno/funcs/ParseObjectFromUi.h>
 #include <zenovis/ObjectsManager.h>
 #include "zassert.h"
-
+#include "nodeeditor/gv/zenographseditor.h"
 
 
 std::vector<zeno::vec3f> computeLightPrim(zeno::vec3f position, zeno::vec3f rotate, zeno::vec3f scale) {
@@ -46,7 +46,7 @@ std::vector<zeno::vec3f> computeLightPrim(zeno::vec3f position, zeno::vec3f rota
 }
 
 
-OptixWorker::OptixWorker(Zenovis *pzenoVis)
+OptixWorker::OptixWorker(const QString& graph_path, Zenovis *pzenoVis)
     : QObject(nullptr)
     , m_zenoVis(pzenoVis)
     , m_bRecording(false)
@@ -55,11 +55,12 @@ OptixWorker::OptixWorker(Zenovis *pzenoVis)
     m_pTimer = new QTimer(this);
     connect(m_pTimer, SIGNAL(timeout()), this, SLOT(updateFrame()));
 
-    //Æô¶¯¹â×·Ê±¼ÓÔØobj
-    zeno::RenderObjsInfo objs;
-    zeno::getSession().objsMan->export_all_view_objs(objs.newObjs);
-    zeno::getSession().objsMan->export_light_objs(objs);
-    m_zenoVis->load_objects(objs);
+    //å¯åŠ¨å…‰è¿½æ—¶åŠ è½½obj
+    //TODO: æ˜¯å¦éœ€è¦åœ¨workerçº¿ç¨‹load?
+    zeno::render_reload_info info;
+    info.policy = zeno::Reload_SwitchGraph;
+    info.current_ui_graph = graph_path.toStdString();
+    m_zenoVis->reload(info);
 }
 
 OptixWorker::~OptixWorker()
@@ -378,9 +379,24 @@ void OptixWorker::onCleanUpView()
 
 void OptixWorker::load_objects()
 {
+#if 0
     zeno::RenderObjsInfo objs;
     zeno::getSession().objsMan->export_loading_objs(objs);
     m_zenoVis->load_objects(objs);
+#endif
+    std::vector<zeno::render_update_info> infos;
+    zeno::getSession().objsMan->export_render_infos(infos);
+    m_zenoVis->load_objects(infos);
+}
+
+void OptixWorker::on_load_data(zeno::render_update_info info)
+{
+    m_zenoVis->load_object(info);
+}
+
+void OptixWorker::on_reload_objects(const zeno::render_reload_info& info)
+{
+    m_zenoVis->reload(info);
 }
 
 void OptixWorker::onSetBackground(bool bShowBg)
@@ -453,7 +469,15 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
 
     auto scene = m_zenovis->getSession()->get_scene();
 
-    m_worker = new OptixWorker(m_zenovis);
+    auto mainWin = zenoApp->getMainWindow();
+    ZenoGraphsEditor* editor = mainWin->getAnyEditor();
+    QString graphpath;
+    if (editor) {
+        QStringList paths = editor->getCurrentGraphPath();
+        graphpath = '/' + paths.join('/');
+    }
+
+    m_worker = new OptixWorker(graphpath, m_zenovis);
     m_worker->moveToThread(&m_thdOptix);
     connect(&m_thdOptix, &QThread::finished, m_worker, &QObject::deleteLater);
     connect(&m_thdOptix, &QThread::started, m_worker, &OptixWorker::work);
@@ -483,6 +507,8 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
     connect(this, &ZOptixViewport::sig_cleanUpView, m_worker, &OptixWorker::onCleanUpView);
     connect(this, &ZOptixViewport::sig_setBackground, m_worker, &OptixWorker::onSetBackground);
     connect(this, &ZOptixViewport::sig_setdata_on_optix_thread, m_worker, &OptixWorker::onSetData);
+    connect(this, &ZOptixViewport::sig_loadObject, m_worker, &OptixWorker::on_load_data);
+    connect(this, &ZOptixViewport::sig_reload_objects, m_worker, &OptixWorker::on_reload_objects);
 
     setRenderSeparately(false, false);
     m_thdOptix.start();
@@ -516,6 +542,16 @@ void ZOptixViewport::setdata_on_optix_thread(zenovis::ZOptixCameraSettingInfo va
 void ZOptixViewport::load_objects()
 {
     emit sig_loadObjects();
+}
+
+void ZOptixViewport::load_object(zeno::render_update_info info)
+{
+    emit sig_loadObject(info);
+}
+
+void ZOptixViewport::reload_objects(const zeno::render_reload_info& info)
+{
+    emit sig_reload_objects(info);
 }
 
 void ZOptixViewport::setSimpleRenderOption()

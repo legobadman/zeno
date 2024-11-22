@@ -2,20 +2,13 @@
 #include "zslider.h"
 #include "zenomainwindow.h"
 #include "zenoapplication.h"
-#include "viewport/viewportwidget.h"
-#include "widgets/zlabel.h"
 #include "style/zenostyle.h"
-#include "effect/innershadoweffect.h"
-#include <zeno/utils/envconfig.h>
-#include "util/uihelper.h"
-#include "widgets/zwidgetfactory.h"
-#include "../viewport/zenovis.h"
-#include "ui_ztimeline.h"
-#include "widgets/zcomboboxitemdelegate.h"
-#include "viewport/zenovis.h"
-#include <zenovis/DrawOptions.h>
-#include <iostream>
 #include "viewport/displaywidget.h"
+#include <zeno/utils/envconfig.h>
+#include "ui_ztimeline.h"
+#include "util/uihelper.h"
+#include "widgets/zcomboboxitemdelegate.h"
+#include <iostream>
 #include "zassert.h"
 
 

@@ -4,8 +4,9 @@
 #include "model/graphsmanager.h"
 #include "model/graphstreemodel.h"
 #include "zassert.h"
-#include <zeno/core/ObjectManager.h>
 #include <zeno/core/Session.h>
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 namespace zeno {
@@ -58,6 +59,7 @@ std::optional<NodeLocation> NodeSyncMgr::searchNodeOfPrim(const std::string& pri
         return {};
     }
 
+#if 0
     const auto& objsMan = zeno::getSession().objsMan;
     std::set<ObjPath> nodeNameSet = objsMan->getAttachNodes(prim_name);
     if (nodeNameSet.empty())
@@ -65,12 +67,13 @@ std::optional<NodeLocation> NodeSyncMgr::searchNodeOfPrim(const std::string& pri
 
     for (auto nodepath : nodeNameSet)
     {
-        auto spNode = zeno::getSession().mainGraph->getNodeByUuidPath(nodepath);
+        auto spNode = zeno::getSession().getNodeByUuidPath(nodepath);
         if (spNode && spNode->is_view()) {
             auto search_result = graph_model->searchByUuidPath(*nodeNameSet.begin());
             return NodeLocation(search_result[0].targetIdx, search_result[0].subGraph);
         }
     }
+#endif
     return {};
 }
 

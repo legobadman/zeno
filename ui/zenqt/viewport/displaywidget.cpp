@@ -9,7 +9,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/utils/log.h>
 #include <zeno/types/CameraObject.h>
-#include <zeno/core/ObjectManager.h>
+#include <zeno/core/Graph.h>
 #include "util/uihelper.h"
 #include "zenomainwindow.h"
 #include "camerakeyframe.h"
@@ -27,6 +27,8 @@
 #include "layout/winlayoutrw.h"
 #include "model/graphsmanager.h"
 #include "calculation/calculationmgr.h"
+#include "nodeeditor/gv/zenographseditor.h"
+
 
 
 using std::string;
@@ -388,17 +390,73 @@ void DisplayWidget::onPlayClicked(bool bChecked)
     }
 }
 
+void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
+    if (m_bGLView) {
+        m_glView->load_object(info);
+        //emit render_objects_loaded();
+    }
+    else {
+        m_optixView->load_object(info);
+    }
+    updateFrame();
+}
+
 void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
     if (bSucceed) {
-        if (m_bGLView) {
-            m_glView->load_objects();
-            emit render_objects_loaded();
+        //先从objManager拿出
+        auto& sess = zeno::getSession();
+        std::vector<zeno::render_update_info> infos;
+        sess.objsMan->export_render_infos(infos);
+
+        zeno::render_reload_info reload;
+        reload.current_ui_graph;
+        reload.policy = zeno::Reload_Calculation;
+
+        ZenoGraphsEditor* pGraphEditor = zenoApp->getMainWindow()->getAnyEditor();
+        if (pGraphEditor) {
+            QStringList paths = pGraphEditor->getCurrentGraphPath();
+            QString path = '/' + paths.join('/');
+            reload.current_ui_graph = path.toStdString();
         }
-        else {
-            m_optixView->load_objects();
+        if (reload.current_ui_graph.empty()) {
+            //默认主图
+            reload.current_ui_graph = "/main";
         }
-        updateFrame();
+
+        //这里要对不在current_ui_graph的节点进行过滤
+        //TODO: 应该在graphmodel上做
+        std::shared_ptr<zeno::Graph> curr_graph = sess.mainGraph->getGraphByPath(reload.current_ui_graph);
+        for (auto iter = infos.begin(); iter != infos.end(); ) {
+            if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
+                iter = infos.erase(iter);
+            }
+            else {
+                iter++;
+            }
+        }
+        reload.objs = infos;
+        if (!reload.objs.empty()) {
+            if (m_bGLView) {
+                m_glView->reload_objects(reload);
+                emit render_objects_loaded();
+            }
+            else {
+                m_optixView->reload_objects(reload);
+            }
+            updateFrame();
+        }
     }
+}
+
+void DisplayWidget::reload(const zeno::render_reload_info& info)
+{
+    if (m_bGLView) {
+        m_glView->reload_objects(info);
+    }
+    else {
+        m_optixView->reload_objects(info);
+    }
+    updateFrame();
 }
 
 void DisplayWidget::onJustLoadObjects() {

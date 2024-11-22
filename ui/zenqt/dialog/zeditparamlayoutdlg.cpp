@@ -14,6 +14,8 @@
 #include "style/zenostyle.h"
 #include "widgets/zspinboxslider.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 static CONTROL_ITEM_INFO controlList[] = {
@@ -266,6 +268,7 @@ ZEditParamLayoutDlg::ZEditParamLayoutDlg(QStandardItemModel* pModel, QWidget* pa
 
     connect(m_ui->cbControl, SIGNAL(currentIndexChanged(int)), this, SLOT(onControlItemChanged(int)));
     connect(m_ui->cbSocketType, SIGNAL(currentIndexChanged(int)), this, SLOT(onSocketTypeChanged(int)));
+    connect(m_ui->cbObjectType, SIGNAL(currentIndexChanged(int)), this, SLOT(onObjTypeChanged(int)));
 
     connect(m_paramsLayoutM_inputs, &QStandardItemModel::dataChanged, this, &ZEditParamLayoutDlg::onParamsViewParamDataChanged);
     connect(m_paramsLayoutM_outputs, &QStandardItemModel::dataChanged, this, &ZEditParamLayoutDlg::onOutputsViewParamDataChanged);
@@ -372,6 +375,12 @@ void ZEditParamLayoutDlg::initUI()
     m_ui->objInputsView->setAlternatingRowColors(true);
     m_ui->objOutputsView->setAlternatingRowColors(true);
     m_ui->listConctrl->setFocusPolicy(Qt::NoFocus);
+
+    m_ui->cbObjectType->addItem(tr("Geometry"), gParamType_Geometry);
+    m_ui->cbObjectType->addItem(tr("Object"), gParamType_IObject);
+    m_ui->cbObjectType->addItem(tr("Wildcard"), Obj_Wildcard);
+    m_ui->cbObjectType->hide();
+
     //m_ui->paramsView->setFocusPolicy(Qt::NoFocus);
     resize(ZenoStyle::dpiScaled(900), ZenoStyle::dpiScaled(620));
     setFocusPolicy(Qt::ClickFocus);
@@ -614,9 +623,12 @@ void ZEditParamLayoutDlg::onOutputsListCurrentChanged(const QModelIndex& current
     if (pModel != m_paramsLayoutM_objInputs) {
         m_ui->cbSocketType->clear();
         m_ui->cbSocketType->setEnabled(false);
+        m_ui->cbObjectType->hide();
     }
     else {
+        m_ui->cbObjectType->show();
         m_ui->cbSocketType->setEnabled(true);
+
         BlockSignalScope scope(m_ui->cbSocketType);
         m_ui->cbSocketType->clear();
         m_ui->cbSocketType->addItem("Socket_ReadOnly", zeno::Socket_ReadOnly);
@@ -628,6 +640,13 @@ void ZEditParamLayoutDlg::onOutputsListCurrentChanged(const QModelIndex& current
             m_ui->cbSocketType->setCurrentText("Socket_Clone");
         } else if (socketType == zeno::Socket_Owning) {
             m_ui->cbSocketType->setCurrentText("Socket_Owning");
+        }
+
+        for (int i = 0; i < m_ui->cbObjectType->count(); i++) {
+            if (m_ui->cbObjectType->itemData(i) == paramType) {
+                m_ui->cbObjectType->setCurrentIndex(i);
+                break;
+            }
         }
     }
     switchStackProperties(ctrl, pCurrentItem);
@@ -752,7 +771,7 @@ void ZEditParamLayoutDlg::onBtnAddObjInputs()
     pNewItem->setData(Obj_Wildcard, ROLE_PARAM_TYPE);
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), ROLE_PARAM_VALUE);
-    pNewItem->setData(zeno::Socket_WildCard, ROLE_SOCKET_TYPE);
+    pNewItem->setData(zeno::Socket_Clone, ROLE_SOCKET_TYPE);
 
     m_paramsLayoutM_objInputs->appendRow(pNewItem);
     pNewItem->setData(getIcon(pNewItem), Qt::DecorationRole);
@@ -770,7 +789,7 @@ void ZEditParamLayoutDlg::onBtnAddObjOutputs()
     pNewItem->setData(Obj_Wildcard, ROLE_PARAM_TYPE);
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), ROLE_PARAM_VALUE);
-    pNewItem->setData(zeno::Socket_WildCard, ROLE_SOCKET_TYPE);
+    pNewItem->setData(zeno::Socket_Clone, ROLE_SOCKET_TYPE);
 
     m_paramsLayoutM_objOutputs->appendRow(pNewItem);
     pNewItem->setData(getIcon(pNewItem), Qt::DecorationRole);
@@ -788,7 +807,7 @@ void ZEditParamLayoutDlg::onBtnAddOutputs()
     pNewItem->setData(Param_Wildcard, ROLE_PARAM_TYPE);
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), ROLE_PARAM_VALUE);
-    pNewItem->setData(zeno::Socket_WildCard, ROLE_SOCKET_TYPE);
+    pNewItem->setData(zeno::Socket_Clone, ROLE_SOCKET_TYPE);
 
     m_paramsLayoutM_outputs->appendRow(pNewItem);
     pNewItem->setData(getIcon(pNewItem), Qt::DecorationRole);
@@ -957,6 +976,17 @@ void ZEditParamLayoutDlg::onSocketTypeChanged(int idx)
     const QString& socketType = m_ui->cbSocketType->itemText(idx);
     auto type = m_ui->cbSocketType->itemData(idx);
     pItem->setData(type, ROLE_SOCKET_TYPE);
+}
+
+void ZEditParamLayoutDlg::onObjTypeChanged(int idx)
+{
+    const QModelIndex& currIdx = m_ui->objInputsView->currentIndex();
+    if (!currIdx.isValid())
+        return;
+
+    QStandardItem* pItem = m_paramsLayoutM_objInputs->itemFromIndex(currIdx);
+    auto objtype = m_ui->cbObjectType->itemData(idx);
+    pItem->setData(objtype, ROLE_PARAM_TYPE);
 }
 
 void ZEditParamLayoutDlg::onControlItemChanged(int idx)

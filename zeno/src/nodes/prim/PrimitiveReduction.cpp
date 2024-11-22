@@ -59,7 +59,7 @@ ZENDEFNODE(PrimitiveReduction,
     { /* inputs: */ {
         {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
     }, /* outputs: */ {
-        {gParamType_Vec3f, "result", "", zeno::Socket_WildCard},
+        {gParamType_Vec3f, "result", ""},
     }, /* params: */ {
     {gParamType_String, "attr", "pos"},
     {"enum avg max min absmax", "op", "avg"},

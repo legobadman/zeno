@@ -6,6 +6,7 @@
 #include <zeno/utils/log.h>
 #include <zeno/io/zdareader.h>
 #include "zassert.h"
+#include <zeno/core/typeinfo.h>
 
 
 AssetsModel::AssetsModel(QObject* parent)
@@ -61,7 +62,7 @@ GraphModel* AssetsModel::getAssetGraph(const QString& graphName)
                 std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
                 std::shared_ptr<zeno::Graph> spAsset = assets->getAssetGraph(assetName, true);
                 if (spAsset) {
-                    auto pNewAsstModel = new GraphModel(spAsset, nullptr, this);
+                    auto pNewAsstModel = new GraphModel(assetName, true, nullptr, this);
                     m_assets[i].pGraphM = pNewAsstModel;
                     return pNewAsstModel;
                 }
@@ -162,32 +163,31 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
     param.name = "input1";
     zeno::PrimVar def = int(0);
     param.defl = zeno::reflect::make_any<zeno::PrimVar>(def);
-    size_t s = param.defl.type().hash_code();
-    size_t s1 = gParamType_Int;
-    size_t s2 = gParamType_PrimVariant;
-    param.type = zeno::types::gParamType_Int;
+    param.type = gParamType_Int;
     param.bSocketVisible = false;
     inputs.push_back(param);
     defaultGroup.params.push_back(param);
+
     zeno::ParamPrimitive outputparam;
     outputparam.bInput = false;
     outputparam.name = "output1";
-    outputparam.defl = zeno::reflect::Any();
-    outputparam.type = Param_Wildcard;
-    outputparam.socketType = zeno::Socket_WildCard;
+    outputparam.defl = 3;
+    outputparam.type = gParamType_Int;
+    outputparam.socketType = zeno::Socket_Clone;
     outputparam.bSocketVisible = false;
     outputs.push_back(outputparam);
+
     zeno::ParamObject objInput;
     objInput.bInput = true;
     objInput.name = "objInput1";
-    objInput.type = Obj_Wildcard;
-    objInput.socketType = zeno::Socket_WildCard;
+    objInput.type = gParamType_Geometry;
+    objInput.socketType = zeno::Socket_Clone;
     objInputs.push_back(objInput);
+
     zeno::ParamObject objOutput;
     objOutput.bInput = false;
     objOutput.name = "objOutput1";
-    objOutput.type = Obj_Wildcard;
-    objOutput.socketType = zeno::Socket_WildCard;
+    objOutput.type = gParamType_Geometry;
     objOutputs.push_back(objOutput);
 
     zeno::ParamTab tab;
@@ -252,7 +252,7 @@ void AssetsModel::_addAsset(zeno::AssetInfo info)
     std::shared_ptr<zeno::AssetsMgr> asts = zeno::getSession().assets;
     std::shared_ptr<zeno::Graph> spAsset = asts->getAsset(info.name).sharedGraph;
     if (spAsset) {
-        auto pNewAsstModel = new GraphModel(spAsset, nullptr, this);
+        auto pNewAsstModel = new GraphModel(info.name, true, nullptr, this);
         item.pGraphM = pNewAsstModel;
     }
 

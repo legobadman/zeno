@@ -72,6 +72,7 @@ public:
     void rearrangeGraph();
     void selectNodes(const QModelIndexList &nodes);
     void cameraFocus();
+    QStringList path() const;
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

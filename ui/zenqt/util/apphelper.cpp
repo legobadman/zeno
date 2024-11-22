@@ -1,17 +1,6 @@
 #include "apphelper.h"
-#include "util/log.h"
 #include "uicommon.h"
 #include "../startup/zstartup.h"
-#include "variantptr.h"
-#include "viewport/displaywidget.h"
-#include <zeno/core/Session.h>
-#include <zeno/extra/GlobalComm.h>
-#include "viewport/zoptixviewport.h"
-#include "viewport/zenovis.h"
-#include "widgets/ztimeline.h"
-#include "util/curveutil.h"
-#include "layout/docktabcontent.h"
-#include "util/uihelper.h"
 
 
 QString AppHelper::nativeWindowTitle(const QString& currentFilePath)

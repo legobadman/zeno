@@ -34,6 +34,7 @@ public:
     void showFloatPanel(GraphModel* subgraph, const QModelIndexList &nodes);
     void selectTab(const QString& subGraphName, const QString& path, std::vector<QString>& objId);
     ZenoSubGraphView* getCurrentSubGraphView();
+    QStringList getCurrentGraphPath();
 
     void showWelcomPage();
     bool welComPageShowed();

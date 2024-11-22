@@ -10,7 +10,6 @@
 #include "zenomainwindow.h"
 #include "settings/zenosettingsmanager.h"
 #include "dialog/zeditparamlayoutdlg.h"
-#include <zeno/core/Session.h>
 #include "util/uihelper.h"
 #include "nodeeditor/gv/zenographseditor.h"
 

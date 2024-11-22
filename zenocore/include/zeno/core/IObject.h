@@ -33,6 +33,7 @@ struct IObject {
 
     ZENO_API virtual std::shared_ptr<IObject> clone() const;
     ZENO_API virtual std::shared_ptr<IObject> move_clone();
+    ZENO_API virtual std::shared_ptr<IObject> clone_by_key(std::string const& prefix);
     ZENO_API virtual bool assign(IObject const *other);
     ZENO_API virtual bool move_assign(IObject *other);
     ZENO_API virtual std::string method_node(std::string const &op);
@@ -83,6 +84,12 @@ struct IObjectClone : CustomBase {
 
     virtual std::shared_ptr<IObject> move_clone() override {
         return std::make_shared<Derived>(static_cast<Derived &&>(*this));
+    }
+
+    virtual std::shared_ptr<IObject> clone_by_key(std::string const& prefix) override {
+        auto spClonedObj = clone();
+        spClonedObj->update_key(prefix + '\\' + m_key);
+        return spClonedObj;
     }
 
     virtual std::string key() override {

@@ -15,7 +15,7 @@ class StatusGroup : public ZLayoutBackground
     typedef ZLayoutBackground _base;
 
 public:
-    StatusGroup(RoundRectInfo info, QGraphicsItem* parent = nullptr);
+    StatusGroup(bool bHasOptimStatus, RoundRectInfo info, QGraphicsItem* parent = nullptr);
     QRectF boundingRect() const override;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
     void setChecked(STATUS_BTN btn, bool bChecked);
@@ -35,8 +35,10 @@ signals:
 protected:
     ZenoImageItem* m_mute;
     ZenoImageItem* m_view;
+    ZenoImageItem* m_optim;
     StatusButton* m_minMute;
     StatusButton* m_minView;
+    StatusButton* m_minOptim;
 };
 
 #endif

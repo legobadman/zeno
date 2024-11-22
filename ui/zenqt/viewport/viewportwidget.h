@@ -7,8 +7,6 @@
 #include "recordvideomgr.h"
 #include "layout/docktabcontent.h"
 #include "layout/winlayoutrw.h"
-#include <zeno/core/ObjectManager.h>
-
 #include "transform.h"
 #include "picker.h"
 #include "zenovis/Camera.h"
@@ -57,6 +55,8 @@ public:
     void setViewWidgetInfo(DockContentWidgetInfo& info);
     void glDrawForCommandLine();
     void load_objects();
+    void load_object(zeno::render_update_info info);
+    void reload_objects(const zeno::render_reload_info& info);
 
 signals:
     void frameRecorded(int);

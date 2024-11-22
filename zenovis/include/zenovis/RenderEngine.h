@@ -19,7 +19,10 @@ struct RenderEngine {
     virtual void cleanupScene() = 0;
     virtual void cleanupAssets() = 0;
     virtual void cleanupWhenExit() = 0;
+    virtual void reload(const zeno::render_reload_info& info) {}
     virtual void load_objects(const zeno::RenderObjsInfo& objs) {}
+    virtual void load_object(zeno::render_update_info info) {}
+    virtual void load_objects(const std::vector<zeno::render_update_info>& infos) {}
     virtual ~RenderEngine() = default;
     virtual std::optional<glm::vec3> getClickedPos(int x, int y) { return {}; }
 };

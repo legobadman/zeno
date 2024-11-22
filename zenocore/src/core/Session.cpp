@@ -200,7 +200,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
             param.type = type;
             if (param_desc.socketType != zeno::NoSocket)
                 param.socketType = param_desc.socketType;
-            if (param.socketType != zeno::Socket_WildCard)  //输出可能是wildCard
+            if (!param.bWildcard)  //输出可能是wildCard
                 param.socketType = Socket_Output;
             param.bInput = false;
             param.sockProp = Socket_Normal;
@@ -285,6 +285,10 @@ ZENO_API std::shared_ptr<Graph> Session::createGraph(const std::string& name) {
     return graph;
 }
 
+ZENO_API std::shared_ptr<INode> Session::getNodeByUuidPath(std::string const& uuid_path) {
+    return mainGraph->getNodeByUuidPath(uuid_path);
+}
+
 ZENO_API void Session::resetMainGraph() {
     mainGraph.reset();
     mainGraph = std::make_shared<Graph>("main");
@@ -332,6 +336,34 @@ ZENO_API void Session::registerRunTrigger(std::function<void()> func)
 ZENO_API void Session::registerNodeCallback(F_NodeStatus func)
 {
     m_funcNodeStatus = func;
+}
+
+ZENO_API void Session::registerCommitRender(F_CommitRender&& func) {
+    m_func_commitrender = func;
+}
+
+ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path) {
+    //对于assets
+    //可能的形式包括： /ABC/subnet1/subnet2   ABC   /ABC
+    std::vector<std::string> items = split_str(path, '/', false);
+    if (items.empty()) {
+        return nullptr;
+    }
+
+    std::string graph_name = items[0];
+    if (graph_name == "main") {
+        return mainGraph->getGraphByPath(path);
+    }
+    else {
+        auto spGraph = assets->getAssetGraph(graph_name, true);
+        return spGraph->getGraphByPath(path);
+    }
+}
+
+void Session::commit_to_render(render_update_info info) {
+    if (m_func_commitrender) {
+        m_func_commitrender(info);
+    }
 }
 
 void Session::reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status)

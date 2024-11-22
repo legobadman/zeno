@@ -32,6 +32,7 @@ public:
     void cleanUpScene();
     void beforeRun();
     void afterRun();
+    void reload(const zeno::render_reload_info& info);
     void changeTransformOperation(const QString &node);
     void changeTransformOperation(int mode);
     QSize viewportSize() const;
@@ -80,6 +81,7 @@ public slots:
     void onMouseHoverMoved();
     void onDockViewAction(bool triggered);
     void onCalcFinished(bool bSucceed, zeno::ObjPath, QString);
+    void onRenderInfoCommitted(zeno::render_update_info info);
     void onJustLoadObjects();
     void onSetCamera(zenovis::ZOptixCameraSettingInfo value);
     void onSetBackground(bool bShowBackground);

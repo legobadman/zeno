@@ -23,6 +23,8 @@
 #include "util/jsonhelper.h"
 #include "widgets/zcodeeditor.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 using namespace zeno::reflect;
@@ -170,11 +172,14 @@ namespace zenoui
             }
             case zeno::ColorVec:
             {
-                if (value.type().hash_code() != gParamType_Vec3f) {
+                if (paramType != gParamType_Vec3f) {
                     ZASSERT_EXIT(false, nullptr);
                 }
+                ZASSERT_EXIT(value.type().hash_code() == gParamType_VecEdit, nullptr);
 
-                zeno::vec3f colorVec = any_cast<zeno::vec3f>(value);
+                const zeno::vecvar& vecvar = any_cast<zeno::vecvar&>(value);
+                zeno::vec3f colorVec(std::get<float>(vecvar[0]), std::get<float>(vecvar[1]), std::get<float>(vecvar[2]));
+
                 QColor currentColor = QColor::fromRgbF(colorVec[0], colorVec[1], colorVec[2]);
 
                 QPushButton *pBtn = new QPushButton;
@@ -187,9 +192,10 @@ namespace zenoui
                         pBtn->setStyleSheet(QString("background-color:%1; border:0;").arg(color.name()));
                         if (ctrl == zeno::ColorVec) {
                             UI_VECTYPE colorVec(3);
-                            color.getRgbF(&colorVec[0], &colorVec[1], &colorVec[2]);
-                            zeno::vec3f newVal(colorVec[0], colorVec[1], colorVec[2]);
-                            cbSet.cbEditFinished(newVal);
+                            qreal r, g, b;
+                            color.getRgbF(&r, &g, &b);
+                            zeno::vecvar newValue = { static_cast<float>(r), static_cast<float>(g), static_cast<float>(b) };
+                            cbSet.cbEditFinished(newValue);
                         }
                     }
                 });

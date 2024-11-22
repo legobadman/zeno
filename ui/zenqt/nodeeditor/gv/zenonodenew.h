@@ -114,7 +114,7 @@ private:
 
     ZLayoutBackground* m_dirtyMarker;
 
-    NodeNameItem* m_nameItem;       //ÒÔÕâ¸öÎªÖ÷
+    NodeNameItem* m_nameItem;       //ä»¥è¿™ä¸ªä¸ºä¸»
 
     ZGraphicsLayout* m_bodyLayout;
     ZGraphicsLayout* m_inputObjSockets;

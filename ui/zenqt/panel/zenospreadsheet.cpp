@@ -18,6 +18,7 @@
 #include "zenoapplication.h"
 #include "zassert.h"
 #include "model/graphsmanager.h"
+#include "declmetatype.h"
 
 
 ZenoSpreadsheet::ZenoSpreadsheet(QWidget *parent) : QWidget(parent) {

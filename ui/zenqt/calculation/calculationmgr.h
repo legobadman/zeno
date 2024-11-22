@@ -19,12 +19,13 @@ public:
 signals:
     void calcFinished(bool, zeno::ObjPath, QString);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
+    void commitRenderInfo(zeno::render_update_info);
 
 public slots:
     void run();
 
 private:
-    bool m_bReportNodeStatus = true;    //在正常运行模式下，是否发送每个节点的运行状态到前端
+    bool m_bReportNodeStatus = true;    //鍦ㄦ甯歌繍琛屾ā寮忎笅锛屾槸鍚﹀彂閫佹瘡涓妭鐐圭殑杩愯鐘舵�佸埌鍓嶇
 };
 
 
@@ -42,6 +43,7 @@ public:
 signals:
     void calcFinished(bool, zeno::ObjPath, QString);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
+    void commitRenderInfo(zeno::render_update_info);
 
 public slots:
     void onPlayTriggered(bool bToggled);

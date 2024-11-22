@@ -84,6 +84,14 @@ if (ZENO_ENABLE_MAGICENUM)
     target_compile_definitions(zenocore PUBLIC -DZENO_ENABLE_MAGICENUM)
 endif()
 
+if (MSVC)  # must use this to make msvc linker happy
+    # 节数超过对象文件格式限制: 请使用 /bigobj 进行编译 
+    target_compile_options(zenocore
+        PRIVATE
+        $<IF:$<COMPILE_LANGUAGE:CXX>, /bigobj, >
+    )
+endif()
+
 if (ZENO_WITH_REFLECTOR)
     #生成反射信息
     target_compile_definitions(zenocore PUBLIC -DZENO_WITH_REFLECTOR)

@@ -12,6 +12,7 @@
 #include "model/graphsmanager.h"
 #include "zenomainwindow.h"
 #include "util/uihelper.h"
+#include "declmetatype.h"
 
 
 ZenoLink::ZenoLink(QGraphicsItem *parent)

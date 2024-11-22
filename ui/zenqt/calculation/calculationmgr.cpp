@@ -1,6 +1,5 @@
 #include "calculationmgr.h"
 #include <zeno/core/Session.h>
-#include <zeno/core/Graph.h>
 #include <zeno/extra/GraphException.h>
 #include "viewport/displaywidget.h"
 #include "zassert.h"
@@ -11,6 +10,7 @@
 #include "model/graphsmanager.h"
 #include "model/GraphsTreeModel.h"
 #include "widgets/ztimeline.h"
+#include "declmetatype.h"
 
 
 CalcWorker::CalcWorker(QObject* parent) {
@@ -27,6 +27,10 @@ CalcWorker::CalcWorker(QObject* parent) {
 
 void CalcWorker::run() {
     auto& sess = zeno::getSession();
+
+    //sess.registerCommitRender([&](zeno::render_update_info info) {
+    //    emit commitRenderInfo(info);
+    //});
 
     zeno::GraphException::catched([&] {
         sess.run();
@@ -58,13 +62,14 @@ CalculationMgr::CalculationMgr(QObject* parent)
     m_worker->moveToThread(&m_thread);
     connect(&m_thread, &QThread::started, m_worker, &CalcWorker::run);
     connect(m_worker, &CalcWorker::calcFinished, this, &CalculationMgr::onCalcFinished);
+    connect(m_worker, &CalcWorker::commitRenderInfo, this, &CalculationMgr::commitRenderInfo) ;
     connect(m_worker, &CalcWorker::nodeStatusChanged, this, &CalculationMgr::onNodeStatusReported);
     connect(m_playTimer, SIGNAL(timeout()), this, SLOT(onPlayReady()));
 
     auto& sess = zeno::getSession();
     sess.registerRunTrigger([=]() {
         run();
-        });
+    });
 }
 
 void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState state)
@@ -172,6 +177,8 @@ void CalculationMgr::registerRenderWid(DisplayWidget* pDisp)
 {
     m_registerRenders.insert(pDisp);
     connect(this, &CalculationMgr::calcFinished, pDisp, &DisplayWidget::onCalcFinished);
+    connect(this, &CalculationMgr::commitRenderInfo, pDisp,
+        &DisplayWidget::onRenderInfoCommitted);
     connect(pDisp, &DisplayWidget::render_objects_loaded, this, &CalculationMgr::on_render_objects_loaded);
 }
 

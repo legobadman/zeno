@@ -1,6 +1,9 @@
 #include "command.h"
 #include "variantptr.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
+#include <zeno/extra/SubnetNode.h>
+#include "model/parammodel.h"
 
 
 AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QStringList& graphPath)
@@ -17,6 +20,7 @@ AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QS
         zeno::ParamGroup default;
 
         zeno::ParamUpdateInfo info;
+
         zeno::ParamPrimitive param;
         param.bInput = true;
         param.name = "int1";
@@ -27,24 +31,26 @@ AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QS
         param.bSocketVisible = false;
         info.param = param;
         default.params.push_back(param);
+
         zeno::ParamPrimitive outputparam;
         outputparam.bInput = false;
         outputparam.name = "output1";
         outputparam.defl = zeno::reflect::Any();
         outputparam.type = Param_Wildcard;
-        outputparam.socketType = zeno::Socket_WildCard;
+        outputparam.socketType = zeno::Socket_Primitve;
         outputparam.bSocketVisible = false;
         info.param = outputparam;
+
         zeno::ParamObject objInput;
         objInput.bInput = true;
         objInput.name = "objInput1";
-        objInput.type = Obj_Wildcard;
-        objInput.socketType = zeno::Socket_WildCard;
+        objInput.type = gParamType_Geometry;
+
         zeno::ParamObject objOutput;
         objOutput.bInput = false;
         objOutput.name = "objOutput1";
-        objOutput.type = Obj_Wildcard;
-        objOutput.socketType = zeno::Socket_WildCard;
+        objOutput.type = gParamType_Geometry;
+        objOutput.socketType = zeno::Socket_Output;
 
         tab.groups.emplace_back(std::move(default));
         m_nodeData.customUi.inputPrims.emplace_back(std::move(tab));
@@ -71,10 +77,9 @@ void AddNodeCommand::undo()
 {
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
-        if (auto spnode = m_model->getWpNode(nodename).lock())
-        {
-            m_pos = spnode->get_pos();
-        }
+        QModelIndex idx = m_model->indexFromName(nodename);
+        QPointF pos = idx.data(ROLE_OBJPOS).toPointF();
+        m_pos = { pos.x(), pos.y() };
         m_model->_removeNodeImpl(nodename);
     }
 }
@@ -118,10 +123,17 @@ void RemoveNodeCommand::redo()
 {
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
-        auto spNode = m_model->getWpNode(nodename).lock();
-        if (std::shared_ptr<zeno::SubnetNode> subnetNode = std::dynamic_pointer_cast<zeno::SubnetNode>(spNode)) {   //if is subnet/assets£¬record cate
-            m_cate = subnetNode->isAssetsNode() ? "assets" : "";
+        QModelIndex idx = m_model->indexFromName(nodename);
+        zeno::NodeType type = (zeno::NodeType)idx.data(ROLE_NODETYPE).toInt();
+        if (type == zeno::Node_AssetInstance) {
+            m_cate = "assets";
         }
+        else {
+            m_cate = "";
+        }
+        //if (auto subnetNode = dynamic_cast<zeno::SubnetNode*>(spNode)) {   //if is subnet/assetsï¼Œrecord cate
+        //    m_cate = subnetNode->isAssetsNode() ? "assets" : "";
+        //}
         m_model->_removeNodeImpl(QString::fromStdString(m_nodeData.name));
     }
 }
@@ -254,7 +266,7 @@ void NodeStatusCommand::redo()
                 m_model->_setViewImpl(idx, m_On);
             }
             else {
-                //m_model->_setMuteImpl(idx, m_On);
+                m_model->_setMuteImpl(idx, m_On);
             }
         }
     }
@@ -272,7 +284,7 @@ void NodeStatusCommand::undo()
                 m_model->_setViewImpl(idx, !m_On);
             }
             else {
-                //m_model->_setMuteImpl(idx, !m_On);
+                m_model->_setMuteImpl(idx, !m_On);
             }
         }
     }

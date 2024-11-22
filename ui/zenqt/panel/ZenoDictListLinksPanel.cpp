@@ -1,6 +1,8 @@
 #include "ZenoDictListLInksPanel.h"
 #include <zeno/core/data.h>
 #include <set>
+#include "declmetatype.h"
+
 
 IconDelegate::IconDelegate(bool bfirst, QObject* parent) : m_bFirstColumn(bfirst), QStyledItemDelegate(parent)
 {
@@ -285,12 +287,12 @@ void ZenoDictListLinksTable::removeLink(const zeno::EdgeInfo& edge)
 
 void ZenoDictListLinksTable::dragEnterEvent(QDragEnterEvent* event)
 {
-    if (event->source() != this) {  // 允许拖动进入视图
+    if (event->source() != this) {  // 鍏佽鎷栧姩杩涘叆瑙嗗浘
         event->ignore();
         return;
     }
     QModelIndex index = indexAt(event->pos());
-    if (index.isValid() && index.column() == m_allowDragColumn) {   // 允许拖放到allowDragColumn
+    if (index.isValid() && index.column() == m_allowDragColumn) {   // 鍏佽鎷栨斁鍒癮llowDragColumn
         event->acceptProposedAction();
     }
     else {
@@ -302,7 +304,7 @@ void ZenoDictListLinksTable::dragEnterEvent(QDragEnterEvent* event)
 void ZenoDictListLinksTable::dragMoveEvent(QDragMoveEvent* event)
 {
     QModelIndex index = indexAt(event->pos());
-    if (index.isValid() && index.column() == m_allowDragColumn) {   // 允许拖放到allowDragColumn
+    if (index.isValid() && index.column() == m_allowDragColumn) {   // 鍏佽鎷栨斁鍒癮llowDragColumn
         event->acceptProposedAction();
     }
     else {
@@ -314,7 +316,7 @@ void ZenoDictListLinksTable::dragMoveEvent(QDragMoveEvent* event)
 void ZenoDictListLinksTable::dropEvent(QDropEvent* event)
 {
     QModelIndex index = indexAt(event->pos());
-    if (index.isValid() && index.column() == m_allowDragColumn) {   // 允许拖放到allowDragColumn
+    if (index.isValid() && index.column() == m_allowDragColumn) {   // 鍏佽鎷栨斁鍒癮llowDragColumn
         QTableView::dropEvent(event);
 
         selectionModel()->clearSelection();

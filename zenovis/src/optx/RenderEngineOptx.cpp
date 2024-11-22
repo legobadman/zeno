@@ -481,7 +481,18 @@ struct GraphicsManager {
                     memcpy(transform_ptr+8, row2.data(), sizeof(float)*4);  
                     memcpy(transform_ptr+12, row3.data(), sizeof(float)*4);
 
-                    OptixUtil::preloadVolumeBox(key, mtlid, vbox_transform);
+                    auto bounds = ud.get2<std::string>("bounds");
+                    
+                    uint8_t boundsID = [&]() {
+                        if ("Box" == bounds)
+                            return 0;
+                        if ("Sphere" == bounds)
+                            return 1;
+                        if ("HemiSphere" == bounds)
+                            return 2;
+                    } ();
+
+                    OptixUtil::preloadVolumeBox(key, mtlid, boundsID, vbox_transform);
                     return;
                 }
 
@@ -1344,6 +1355,76 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         xinxinoptix::optixinit(std::size(argv), argv);
     }
 
+    void load_object(zeno::render_update_info info) override {
+
+    }
+
+    void load_objects(const std::vector<zeno::render_update_info>& infos) override {
+        //TODO
+    }
+
+    void reload(const zeno::render_reload_info& info) override {
+        auto& sess = zeno::getSession();
+        if (zeno::Reload_SwitchGraph == info.policy) {
+            //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
+            graphicsMan->graphics.clear();
+
+            std::shared_ptr<zeno::Graph> spGraph = sess.getGraphByPath(info.current_ui_graph);
+            //TODO: 要考虑asset的情况
+            assert(spGraph);
+            const auto& viewnodes = spGraph->get_viewnodes();
+            //其实是否可以在外面提前准备好对象列表？
+            for (auto viewnode : viewnodes) {
+                std::shared_ptr<zeno::INode> spNode = spGraph->getNode(viewnode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    graphicsMan->add_object(spObject);
+                }
+                else {
+
+                }
+            }
+            matNeedUpdate = meshNeedUpdate = true;
+        }
+        else if (zeno::Reload_ToggleView == info.policy) {
+            assert(info.objs.size() == 1);
+            const auto& update = info.objs[0];
+            auto& wtf = graphicsMan->graphics.m_curr;
+            if (update.reason == zeno::Update_View) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    auto it = wtf.find(update.uuidpath_node_objkey);
+                    if (it == wtf.end()) {
+                        graphicsMan->add_object(spObject);
+                        matNeedUpdate = meshNeedUpdate = true;
+                    }
+                }
+            }
+            else if (update.reason == zeno::Update_Remove) {
+                //节点被移除后，对象已经不存在了，这里拿key直接删就行
+                auto it = wtf.find(update.uuidpath_node_objkey);
+                if (it != wtf.end()) {
+                    graphicsMan->remove_object(update.uuidpath_node_objkey);
+                    matNeedUpdate = meshNeedUpdate = true;
+                }
+            }
+        }
+        else if (zeno::Reload_Calculation == info.policy) {
+            for (const zeno::render_update_info& update : info.objs) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    //可能是对象没有通过子图的Suboutput连出来
+                    graphicsMan->add_object(spObject);
+                    matNeedUpdate = meshNeedUpdate = true;
+                }
+            }
+        }
+    }
+
     void load_objects(const zeno::RenderObjsInfo& objs) override {
 
         //light update condition
@@ -1624,7 +1705,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             ensure_shadtmpl(_volume_shader_template);
             ensure_shadtmpl(_light_shader_template);
 
-            if (cachedMeshesMaterials.count("Default")) {
+            //if (cachedMeshesMaterials.count("Default")) 
+            {
                 auto tmp = std::make_shared<ShaderPrepared>();
 
                 tmp->mark = ShaderMark::Mesh;
@@ -1637,7 +1719,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 meshMatLUT.insert({"Default", 0});
             }
 
-            if (cachedSphereMaterials.count("Default")) {
+            //if (cachedSphereMaterials.count("Default")) 
+            {
                 auto tmp = std::make_shared<ShaderPrepared>();
 
                 tmp->mark = ShaderMark::Sphere;

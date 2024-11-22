@@ -9,6 +9,7 @@
 #include "settings/zenosettingsmanager.h"
 #include "calculation/calculationmgr.h"
 #include "uicommon.h"
+#include "declmetatype.h"
 
 
 ZenoApplication::ZenoApplication(int &argc, char **argv)
@@ -100,6 +101,7 @@ void ZenoApplication::initMetaTypes()
     qRegisterMetaType<zeno::ObjPath>();
     qRegisterMetaType<zeno::CustomUI>();
     qRegisterMetaType<zeno::reflect::Any>();
+    qRegisterMetaType<zeno::render_reload_info>();
 }
 
 void ZenoApplication::initStyleSheets()

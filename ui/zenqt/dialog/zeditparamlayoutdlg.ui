@@ -293,28 +293,8 @@
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="3" column="0">
-          <widget class="QLabel" name="hintLbl">
-           <property name="text">
-            <string>hint</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="editHint"/>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="socketpropertyLbl">
-           <property name="text">
-            <string>socket property</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="1">
           <widget class="QLineEdit" name="editLabel"/>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="editName"/>
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="nameLbl">
@@ -323,8 +303,26 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
-          <widget class="QComboBox" name="cbSocketType"/>
+         <item row="2" column="0">
+          <widget class="QLabel" name="controlLbl">
+           <property name="text">
+            <string>Control</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="hintLbl">
+           <property name="text">
+            <string>hint</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="socketpropertyLbl">
+           <property name="text">
+            <string>socket property</string>
+           </property>
+          </widget>
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="labelLbl">
@@ -336,12 +334,24 @@
          <item row="2" column="1">
           <widget class="ZComboBox" name="cbControl"/>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="controlLbl">
+         <item row="4" column="1">
+          <widget class="QComboBox" name="cbSocketType"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="editName"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="editHint"/>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="lblObjType">
            <property name="text">
-            <string>Control</string>
+            <string>object type</string>
            </property>
           </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QComboBox" name="cbObjectType"/>
          </item>
         </layout>
        </item>

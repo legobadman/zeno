@@ -514,13 +514,13 @@ namespace zeno {
             float up_radius = 1.f,
             float down_radius = 1.f,
             float uniform_scale = 1.f,
-            float Height = 1.0f,
+            float Height = 2.0f,
             int Rows = 2,
             int Columns = 12,
             std::string Direction = "Y Axis",
             std::string face_type = "Quadrilaterals",
             bool bCalcPointNormals = false,
-            bool end_caps = false
+            bool end_caps = true
         )
         {
             bool bQuad = face_type == "Quadrilaterals";
@@ -544,8 +544,6 @@ namespace zeno {
             if (bCalcPointNormals)
                 normals.resize(nPoints);
 
-            float up_y = Height / 2.0f, down_y = -Height / 2.0f;
-
             if (end_caps) {
                 //先把顶部和底部两个面加上
                 if (bQuad) {
@@ -565,10 +563,25 @@ namespace zeno {
                     geo->add_face(down_pts);
                 }
                 else {
-                    points[0] = vec3f(0, up_y, 0);
                     geo->initpoint(0);
-                    points[1] = vec3f(0, down_y, 0);
                     geo->initpoint(1);
+
+                    if (Direction == "Y Axis") {
+                        float up_y = Height / 2.0f, down_y = -Height / 2.0f;
+                        points[0] = vec3f(0, up_y, 0);
+                        points[1] = vec3f(0, down_y, 0);
+                    }
+                    else if (Direction == "X Axis") {
+                        float up_x = Height / 2.0f, down_x = -Height / 2.0f;
+                        points[0] = vec3f(up_x, 0, 0);
+                        points[1] = vec3f(down_x, 0, 0);
+                    }
+                    else if (Direction == "Z Axis") {
+                        float up_z = Height / 2.0f, down_z = -Height / 2.0f;
+                        points[0] = vec3f(0, 0, up_z);
+                        points[1] = vec3f(0, 0, down_z);
+                    }
+
                     for (int col = 0; col < Columns; col++)
                     {
                         int idx = col + 2;
@@ -604,24 +617,37 @@ namespace zeno {
                 {
                     float rad = 2.0f * M_PI * col / Columns;
                     float sin_a = sin(rad), cos_a = cos(rad);
-                    const float up_x = up_radius * cos_a, up_z = -1 * up_radius * sin_a;
-                    const float down_x = down_radius * cos_a, down_z = -1 * down_radius * sin_a;
-                    vec3f up_pos(up_x, up_y, up_z);
-                    vec3f down_pos(down_x, down_y, down_z);
+
+                    vec3f up_pos;
+                    vec3f down_pos;
+                    if (Direction == "Y Axis") {
+                        const float up_y = Height / 2.0f, down_y = -Height / 2.0f;
+                        const float up_x = up_radius * cos_a, up_z = -1 * up_radius * sin_a;
+                        const float down_x = down_radius * cos_a, down_z = -1 * down_radius * sin_a;
+                        up_pos = vec3f(up_x, up_y, up_z);
+                        down_pos = vec3f(down_x, down_y, down_z);
+                    }
+                    else if (Direction == "X Axis") {
+                        const float up_x = Height / 2.0f, down_x = -Height / 2.0f;
+                        const float up_y = up_radius * cos_a, up_z = -1 * up_radius * sin_a;
+                        const float down_y = down_radius * cos_a, down_z = -1 * down_radius * sin_a;
+                        up_pos = vec3f(up_x, up_y, up_z);
+                        down_pos = vec3f(down_x, down_y, down_z);
+                    }
+                    else if (Direction == "Z Axis") {
+                        const float up_z = Height / 2.0f, down_z = -Height / 2.0f;
+                        const float up_y = up_radius * cos_a, up_x = -1 * up_radius * sin_a;
+                        const float down_y = down_radius * cos_a, down_x = -1 * down_radius * sin_a;
+                        up_pos = vec3f(up_x, up_y, up_z);
+                        down_pos = vec3f(down_x, down_y, down_z);
+                    }
 
                     size_t idx = row * Columns + col;
                     if (!bQuad && end_caps) {
                         idx += 2;       //三角面另外加上中轴线顶部和底部两个点
                     }
 
-                    vec3f pt;
-                    if (Direction == "Y Axis") {
-                        pt = (float)row / (Rows - 1) * (down_pos - up_pos) + up_pos;
-                    }
-                    else {
-                        throw;
-                    }
-
+                    vec3f pt = (float)row / (Rows - 1) * (down_pos - up_pos) + up_pos;
                     points[idx] = pt;
                     geo->initpoint(idx);
                     if (bCalcPointNormals) {
@@ -660,6 +686,23 @@ namespace zeno {
                     }
                 }
             }
+
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0), glm::vec3(uniform_scale, uniform_scale, uniform_scale));
+            glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], Orientaion_ZX);
+            glm::mat4 transform = translate * rotation * scale_matrix;
+            for (size_t i = 0; i < points.size(); i++)
+            {
+                auto pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                if (bCalcPointNormals) {
+                    auto nrm = normals[i];
+                    glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                    normals[i] = zeno::vec3f(gnrm.x, gnrm.y, gnrm.z);
+                }
+            }
+
             geo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);

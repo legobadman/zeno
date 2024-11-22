@@ -186,6 +186,48 @@ struct ExtractMaterialShader : zeno::INode
           },
       });
 
+
+    struct Material : zeno::INode
+    {
+        virtual void apply() override
+        {
+            auto obj = get_input<zeno::GeometryObject>("object");
+            auto mtlid = get_input2<std::string>("mtlid");
+            auto mtlid2 = get_input2<std::string>("mtlid");
+            int matNum = obj->userData().get2<int>("matNum", 0);
+            for (int i = 0; i < matNum; i++)
+            {
+                auto key = "Material_" + to_string(i);
+                obj->userData().erase(key);
+            }
+            obj->userData().set2("matNum", 1);
+            obj->userData().setLiterial("Material_0", std::move(mtlid2));
+            obj->userData().setLiterial("mtlid", std::move(mtlid));
+
+            int nFace = obj->nfaces();
+            if (obj->nfaces() > 0) {
+                obj->create_face_attr("matid", 0);
+            }
+            set_output("object", std::move(obj));
+        }
+    };
+
+    ZENDEFNODE(
+        Material,
+        {
+            {
+                {gParamType_Geometry, "object", "", zeno::Socket_ReadOnly},
+                {gParamType_String, "mtlid", "Mat1"},
+            },
+            {
+                {gParamType_Geometry, "object"},
+            },
+            {},
+            {
+                "shader",
+            },
+        });
+
     struct BindLight
         : zeno::INode
     {

@@ -47,7 +47,7 @@ struct NODES_MIME_DATA : public QObjectUserData
 
 enum STATUS_BTN
 {
-	STATUS_ONCE,
+	STATUS_OWNING,  //no clone by each other.
     STATUS_MUTE,
     STATUS_VIEW,
     STATUS_CACHE,

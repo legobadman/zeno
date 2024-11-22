@@ -40,6 +40,7 @@
 #include "statusgroup.h"
 #include "statusbutton.h"
 #include "model/assetsmodel.h"
+#include <zeno/core/typeinfo.h>
 
 
 NodeNameItem::NodeNameItem(const QString& name, QGraphicsItem* parent)
@@ -373,7 +374,12 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     //根据是否有visible的socket显示来决定
     buttonShapeInfo.rbradius = bBodyVisible ? 0 : ZenoStyle::dpiScaled(9.);
 
-    m_pStatusWidgets = new StatusGroup(buttonShapeInfo);
+    bool bHasOptimStatus = false;
+    if (type == zeno::Node_SubgraphNode || type == zeno::Node_AssetInstance) {
+        bHasOptimStatus = true;
+    }
+
+    m_pStatusWidgets = new StatusGroup(bHasOptimStatus, buttonShapeInfo);
     bool bView = m_index.data(ROLE_NODE_ISVIEW).toBool();
     m_pStatusWidgets->setView(bView);
     connect(m_pStatusWidgets, SIGNAL(toggleChanged(STATUS_BTN, bool)), this, SLOT(onOptionsBtnToggled(STATUS_BTN, bool)));
@@ -1354,7 +1360,10 @@ void ZenoNodeNew::onOptionsBtnToggled(STATUS_BTN btn, bool toggled)
 
     if (btn == STATUS_MUTE)
     {
-        //TODO:
+        QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
+        GraphModel* pGraphM = qobject_cast<GraphModel*>(pModel);
+        ZASSERT_EXIT(pGraphM);
+        pGraphM->setMute(m_index, toggled);
     }
     else if (btn == STATUS_VIEW)
     {

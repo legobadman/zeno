@@ -2,13 +2,15 @@
 #include "zassert.h"
 #include "util/uihelper.h"
 #include <zeno/core/data.h>
-#include <zeno/core/CoreParam.h>
 #include "model/LinkModel.h"
 #include "model/GraphModel.h"
 #include "variantptr.h"
 #include "model/graphsmanager.h"
 #include "model/graphstreemodel.h"
+#include <zeno/core/INode.h>
 #include <zeno/utils/helper.h>
+#include "declmetatype.h"
+#include <zeno/extra/SubnetNode.h>
 
 
 class CustomUIProxyModel : public QStandardItemModel
@@ -31,8 +33,19 @@ private:
     ParamsModel* m_baseM;
 };
 
+class ParamModelImpl : public QObject
+{
+public:
+    ParamModelImpl(std::shared_ptr<zeno::INode> spNode, QObject* parent)
+        : QObject(parent)
+        , m_wpNode(spNode)
+    {}
+    std::weak_ptr<zeno::INode> m_wpNode;
+};
 
-ParamsModel::ParamsModel(std::shared_ptr<zeno::INode> spNode, QObject* parent)
+
+
+ParamsModel::ParamsModel(zeno::INode* spNode, QObject* parent)
     : QAbstractListModel(parent)
     , m_wpNode(spNode)
     , m_customParamsM(nullptr)
@@ -52,8 +65,8 @@ ParamsModel::ParamsModel(std::shared_ptr<zeno::INode> spNode, QObject* parent)
                     break;
                 }
             }
-            //∏˘æ›–Ë“™∏¸–¬Ω⁄µ„≤ºæ÷
-            auto spNode = m_wpNode.lock();
+            //Ê†πÊçÆÈúÄË¶ÅÊõ¥Êñ∞ËäÇÁÇπÂ∏ÉÂ±Ä
+            auto spNode = m_wpNode/*.lock()*/;
             ZASSERT_EXIT(spNode);
             spNode->trigger_update_params(name, false, zeno::params_change_info());
         });
@@ -61,6 +74,11 @@ ParamsModel::ParamsModel(std::shared_ptr<zeno::INode> spNode, QObject* parent)
     spNode->register_update_param_socket_type(
         [this](const std::string& name, zeno::SocketType type) {
             updateParamData(QString::fromStdString(name), type, ROLE_SOCKET_TYPE);
+        });
+
+    spNode->register_update_param_wildcard(
+        [this](const std::string& name, bool isWildcard) {
+            updateParamData(QString::fromStdString(name), isWildcard, ROLE_PARAM_IS_WILDCARD);
         });
 
     spNode->register_update_param_type(
@@ -84,7 +102,7 @@ ParamsModel::ParamsModel(std::shared_ptr<zeno::INode> spNode, QObject* parent)
         });
 
     spNode->register_update_visable_enable([this](zeno::INode* pNode, std::set<std::string> adjInputs, std::set<std::string> adjOutputs) {
-        //…®“ª±È£¨∏¸–¬“ªœ¬ª∫¥Ê÷µ
+        //Êâ´‰∏ÄÈÅçÔºåÊõ¥Êñ∞‰∏Ä‰∏ãÁºìÂ≠òÂÄº
         for (ParamItem& item : m_items) {
             std::string name = item.name.toStdString();
             if (adjInputs.find(name) != adjInputs.end() && item.bInput) {
@@ -126,7 +144,7 @@ ParamsModel::ParamsModel(std::shared_ptr<zeno::INode> spNode, QObject* parent)
 
 void ParamsModel::initParamItems()
 {
-    auto spNode = m_wpNode.lock();
+    auto spNode = m_wpNode/*.lock()*/;
     ZASSERT_EXIT(spNode);
     //primitive inputs
     const zeno::CustomUI& customui = spNode->export_customui();
@@ -142,7 +160,7 @@ void ParamsModel::initParamItems()
             item.name = QString::fromStdString(spParam.name);
             item.type = spParam.type;
             item.value = spParam.defl;
-            item.connectProp = spParam.socketType;
+            item.connectProp = zeno::Socket_Primitve;
             item.bSocketVisible = spParam.bSocketVisible;
             item.bVisible = spParam.bVisible;
             item.bEnable = spParam.bEnable;
@@ -171,7 +189,7 @@ void ParamsModel::initParamItems()
         item.control = zeno::NullControl;
         item.name = QString::fromStdString(param.name);
         item.type = param.type;
-        item.connectProp = param.socketType;
+        item.connectProp = zeno::Socket_Primitve;
         item.group = zeno::Role_OutputPrimitive;
         item.bSocketVisible = param.bSocketVisible;
         item.bVisible = param.bVisible;
@@ -185,7 +203,7 @@ void ParamsModel::initParamItems()
         item.bInput = false;
         item.name = QString::fromStdString(param.name);
         item.type = param.type;
-        item.connectProp = param.socketType;
+        item.connectProp = zeno::Socket_Output;
         item.group = zeno::Role_OutputObject;
         item.bVisible = param.bVisible;
         item.bEnable = param.bEnable;
@@ -206,7 +224,7 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
     }
     UiHelper::newCustomModel(m_customParamsM, customui);
 
-    //m_customParamsM¥¥Ω®∫Û–Ë∏¸–¬≥ı º÷µ
+    //m_customParamsMÂàõÂª∫ÂêéÈúÄÊõ¥Êñ∞ÂàùÂßãÂÄº
     m_customParamsM->blockSignals(true);
     zeno::scope_exit sp([=] {m_customParamsM->blockSignals(false); });
 
@@ -305,7 +323,7 @@ void ParamsModel::updateCustomUiModelIncremental(const zeno::params_change_info&
         m_customParamsM = constructProxyModel();
         UiHelper::newCustomModel(m_customParamsM, customui);
     }
-    //m_customParamsM¥¥Ω®∫Û–Ë∏¸–¬≥ı º÷µ
+    //m_customParamsMÂàõÂª∫ÂêéÈúÄÊõ¥Êñ∞ÂàùÂßãÂÄº
     QStandardItem* pInputsRoot = m_customParamsM->item(0);
     for (int i = 0; i < pInputsRoot->rowCount(); i++)
     {
@@ -343,6 +361,7 @@ void ParamsModel::updateCustomUiModelIncremental(const zeno::params_change_info&
         int row = indexFromName(paramItem->data(ROLE_PARAM_NAME).toString(), true);
         if (row != -1) {
             paramItem->setData(m_items[row].connectProp, ROLE_SOCKET_TYPE);
+            paramItem->setData(m_items[row].bWildcard, ROLE_PARAM_IS_WILDCARD);
         }
     }
 }
@@ -366,7 +385,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
             return false;
         }
         param.value = anyVal;
-        auto spNode = m_wpNode.lock();
+        auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             spNode->update_param(param.name.toStdString(), anyVal);
             break;
@@ -384,7 +403,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         break;
     case ROLE_SOCKET_TYPE:
     {
-        auto spNode = m_wpNode.lock();
+        auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             param.connectProp = (zeno::SocketType)value.toInt();
             spNode->update_param_socket_type(param.name.toStdString(), param.connectProp);
@@ -392,11 +411,20 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         }
         return false;
     }
+    case ROLE_PARAM_IS_WILDCARD:
+    {
+        auto spNode = m_wpNode/*.lock()*/;
+        if (spNode) {
+            param.bWildcard = value.toBool();
+            return spNode->update_param_wildcard(param.name.toStdString(), param.bWildcard);
+        }
+        return false;
+    }
     case ROLE_PARAM_SOCKET_VISIBLE:
     {
         if (param.sockProp == zeno::Socket_Disable)
             return false;
-        auto spNode = m_wpNode.lock();
+        auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             spNode->update_param_socket_visible(param.name.toStdString(), value.toBool(), param.bInput);
             return true;
@@ -405,7 +433,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
     }
     case ROLE_NODE_DIRTY:
     {
-        if (auto spNode = m_wpNode.lock()) {
+        if (auto spNode = m_wpNode/*.lock()*/) {
             spNode->mark_dirty(value.toBool());
             return true;
         }
@@ -430,6 +458,7 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     case ROLE_PARAM_VALUE:      return QVariant::fromValue(param.value);
     case ROLE_PARAM_CONTROL:    return param.control;
     case ROLE_SOCKET_TYPE:      return param.connectProp;
+    case ROLE_PARAM_IS_WILDCARD:return param.bWildcard;
     case ROLE_ISINPUT:          return param.bInput;
     case ROLE_NODEIDX:          return m_nodeIdx;
     case ROLE_LINKS:            return QVariant::fromValue(param.links);
@@ -504,8 +533,9 @@ QVariant ParamsModel::getIndexList(bool bInput) const
 
 GraphModel* ParamsModel::getGraph() const
 {
-    if (NodeItem* pItem = qobject_cast<NodeItem*>(parent())) {
-        if (GraphModel* pModel = qobject_cast<GraphModel*>(pItem->parent())) {
+    QObject* nodeitem = parent();
+    if (nodeitem) {
+        if (GraphModel* pModel = qobject_cast<GraphModel*>(nodeitem->parent())) {
             return pModel;
         }
     }
@@ -655,8 +685,11 @@ void ParamsModel::addParam(const ParamItem& param)
 
 GraphModel* ParamsModel::parentGraph() const
 {
-    if (auto pNode = qobject_cast<NodeItem*>(parent())) {
-        return qobject_cast<GraphModel*>(pNode->parent());
+    QObject* nodeitem = parent();
+    if (nodeitem) {
+        if (GraphModel* pModel = qobject_cast<GraphModel*>(nodeitem->parent())) {
+            return pModel;
+        }
     }
     return nullptr;
 }
@@ -666,22 +699,22 @@ QStandardItemModel* ParamsModel::customParamModel()
     return m_customParamsM;
 }
 
-void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params)
+void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params, bool bSubnetInit)
 {
-    //if (params.empty())   //ø…ƒ‹ «…æ≥˝µΩø’µƒ«Èøˆ£¨Œﬁ–Ëreturn
+    //if (params.empty())   //ÂèØËÉΩÊòØÂà†Èô§Âà∞Á©∫ÁöÑÊÉÖÂÜµÔºåÊó†ÈúÄreturn
     //    return;
 
-    auto spNode = m_wpNode.lock();
+    auto spNode = m_wpNode/*.lock()*/;
     ZASSERT_EXIT(spNode);
-    this->blockSignals(this);   //updateParamData≤ª∑¢≥ˆµƒdatachange–≈∫≈∑Ò‘Ú¥•∑¢m_customParamsMµƒdatachange
-    zeno::params_change_info changes = spNode->update_editparams(params);
+    this->blockSignals(this);   //updateParamData‰∏çÂèëÂá∫ÁöÑdatachange‰ø°Âè∑Âê¶ÂàôËß¶Âèëm_customParamsMÁöÑdatachange
+    zeno::params_change_info changes = spNode->update_editparams(params, bSubnetInit);
     this->blockSignals(false);
     updateUiLinksSockets(changes);
 }
 
 void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
 {
-    auto spNode = m_wpNode.lock();
+    auto spNode = m_wpNode/*.lock()*/;
     ZASSERT_EXIT(spNode);
 
     //assuming that the param layout has changed, and we muse reconstruct all params and index.
@@ -725,7 +758,8 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
     m_items.clear();
     //reconstruct params.
     initParamItems();
-    if (std::shared_ptr<zeno::SubnetNode> sbn = std::dynamic_pointer_cast<zeno::SubnetNode>(spNode)) {
+    //TODO: Â∞ΩÈáèÂ∫üÂºÉdynamic_castËøôÁßçÂÜôÊ≥ï
+    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode)) {
         updateCustomUiModelIncremental(changes, sbn->get_customui());
     }
     else {
@@ -837,6 +871,8 @@ void ParamsModel::updateParamData(const QString& name, const QVariant& val, int 
                 m_items[i].connectProp = (zeno::SocketType)val.toInt();
             else if (role == ROLE_PARAM_CTRL_PROPERTIES)
                 m_items[i].optCtrlprops = val.value<zeno::reflect::Any>();
+            else if (role == ROLE_PARAM_IS_WILDCARD)
+                m_items[i].bWildcard = val.toBool();
             else if (role == ROLE_PARAM_SOCKET_VISIBLE) {
                 if (m_items[i].bInput == bInput)
                     m_items[i].bSocketVisible = val.toBool();
@@ -862,8 +898,8 @@ void ParamsModel::updateParamData(const QString& name, const QVariant& val, int 
 
 void ParamsModel::resetCustomUi(const zeno::CustomUI& customui)
 {
-    auto spNode = m_wpNode.lock();
-    if (std::shared_ptr<zeno::SubnetNode> sbn = std::dynamic_pointer_cast<zeno::SubnetNode>(spNode))
+    auto spNode = m_wpNode/*.lock()*/;
+    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode))
         sbn->setCustomUi(customui);
 }
 

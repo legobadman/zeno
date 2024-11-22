@@ -445,7 +445,7 @@ ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType target
     connect(this, &ZLineEdit::editingFinished, this, [=]() {
         QString newText = this->text();
         zeno::PrimVar old_var = m_var;
-        if (m_targetType == gParamType_Int) {
+        if (m_targetType == ui_gParamType_Int) {
             if (newText.isEmpty()) {
                 return;
             }
@@ -468,7 +468,7 @@ ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType target
                 }
             }
         }
-        else if (m_targetType == gParamType_Float) {
+        else if (m_targetType == ui_gParamType_Float) {
             bool bConvert = false;
             float fval = newText.toFloat(&bConvert);
             if (bConvert) {
@@ -486,10 +486,10 @@ ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType target
                 }
             }
         }
-        else if (m_targetType == gParamType_String) {
+        else if (m_targetType == ui_gParamType_String) {
             m_var = newText.toStdString();
         }
-        else if (m_targetType == gParamType_Curve) {    //k帧相关
+        else if (m_targetType == ui_gParamType_Curve) {    //k帧相关
             std::string xKey = "x";
             zeno::CurveData curvedata = std::get<zeno::CurveData>(m_var);
 
@@ -529,20 +529,20 @@ void ZCoreParamLineEdit::setKeyFrame(const QStringList& keys)
     std::string xKey = "x";
     zeno::CurvesData curvesdata;
     float var = 0;
-    if (m_targetType != gParamType_Curve) {
+    if (m_targetType != ui_gParamType_Curve) {
         switch (m_targetType)
         {
-            case gParamType_Int:
-            case gParamType_Float:
+            case ui_gParamType_Int:
+            case ui_gParamType_Float:
                 var = this->text().toFloat();
                 break;
-            case gParamType_String:
+            case ui_gParamType_String:
                 //获取formula结果
                 break;
             default:
                 break;
         }
-        m_targetType = gParamType_Curve;
+        m_targetType = ui_gParamType_Curve;
         curvesdata.keys.insert({xKey, zeno::CurveData()});
     }
     else {
@@ -581,13 +581,13 @@ void ZCoreParamLineEdit::delKeyFrame(const QStringList& keys)
         float fval = text().toFloat(&bConvertFloat);
         if (bConvertInt) {
             m_var = ival;
-            m_targetType = gParamType_Int;
+            m_targetType = ui_gParamType_Int;
         } else if (bConvertFloat) {
             m_var = fval;
-            m_targetType = gParamType_Float;
+            m_targetType = ui_gParamType_Float;
         } else {
             m_var = text().toStdString();
-            m_targetType = gParamType_String;
+            m_targetType = ui_gParamType_String;
         }
         setProperty(g_setKey, "null");
         this->style()->unpolish(this);
@@ -635,15 +635,15 @@ void ZCoreParamLineEdit::clearKeyFrame(const QStringList& keys)
     float fval = text().toFloat(&bConvertFloat);
     if (bConvertInt) {
         m_var = ival;
-        m_targetType = gParamType_Int;
+        m_targetType = ui_gParamType_Int;
     }
     else if (bConvertFloat) {
         m_var = fval;
-        m_targetType = gParamType_Float;
+        m_targetType = ui_gParamType_Float;
     }
     else {
         m_var = text().toStdString();
-        m_targetType = gParamType_String;
+        m_targetType = ui_gParamType_String;
     }
     setProperty(g_setKey, "null");
     this->style()->unpolish(this);

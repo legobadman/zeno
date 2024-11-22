@@ -31,6 +31,8 @@
 #include "ZenoDictListLinksPanel.h"
 #include "zenoDopNetworkPanel.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
+#include "declmetatype.h"
 
 
 using namespace zeno::reflect;

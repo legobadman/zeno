@@ -65,16 +65,19 @@ namespace zeno
             spPrim->verts[i] = vec_pos[i];
         }
 
-        //TODO: 导出属性
-        std::set<std::string> export_attrs;
         for (auto& [name, sp_attr_data] : m_point_attrs) {
             if (name == "pos") {
                 continue;
             }
-            sp_attr_data.to_prim_attr(spPrim, name);
+            sp_attr_data.to_prim_attr(spPrim, true, false, name);
+        }
+
+        for (auto& [name, sp_attr_data] : m_face_attrs) {
+            sp_attr_data.to_prim_attr(spPrim, false, m_spTopology->is_base_triangle(), name);
         }
 
         m_spTopology->toPrimitive(spPrim);
+        spPrim->m_userData = m_userData;
         return spPrim;
     }
 

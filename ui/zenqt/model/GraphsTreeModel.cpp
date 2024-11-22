@@ -49,12 +49,13 @@ QModelIndex GraphsTreeModel::parent(const QModelIndex& child) const
     if (!pModel) {
         return QModelIndex();
     }
-    if (auto pItem = qobject_cast<NodeItem*>(pModel->parent()))
-    {
-        if (auto parentModel = qobject_cast<GraphModel*>(pItem->parent()))
-        {
-            int row = parentModel->indexFromId(pItem->getName());
-            return createIndex(row, 0, parentModel);
+
+    QObject* nodeitem = pModel->parent();
+    if (nodeitem) {
+        if (GraphModel* parentModel = qobject_cast<GraphModel*>(nodeitem->parent())) {
+            QString uuidpath = nodeitem->property("uuid-path").toString();
+            QModelIndex idx = parentModel->indexFromUuidPath(uuidpath.toStdString());
+            return createIndex(idx.row(), 0, parentModel);
         }
     }
     return createIndex(0, 0);   //main item
@@ -174,10 +175,13 @@ void GraphsTreeModel::onNameUpdated(const QModelIndex& nodeIdx, const QString& o
 
 void GraphsTreeModel::onGraphRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
-    //GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
-    //QString graphPath = pGraphM->currentPath();
-    //QModelIndex treeParentItem = getIndexByPath(graphPath);
-    //emit layoutAboutToBeChanged({ treeParentItem });
+    GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
+    if (pGraphM) {
+        QStringList graphPath = pGraphM->currentPath();
+        QModelIndex treeParentItem = getIndexByPath(graphPath);
+        beginRemoveRows(treeParentItem, first, last);
+        endRemoveRows();
+    }
 }
 
 void GraphsTreeModel::onGraphRowsRemoved(const QModelIndex& parent, int first, int last)
@@ -225,7 +229,7 @@ void GraphsTreeModel::clear()
     emit layoutAboutToBeChanged();
     beginResetModel();
     //delete m_main;
-    //m_main = new GraphModel("main", this);
+    //m_main = new GraphModel("/main", false, this);
     endResetModel();
     emit layoutChanged();
     emit modelClear();

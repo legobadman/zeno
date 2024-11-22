@@ -44,13 +44,24 @@ ZENO_API bool SubnetNode::isAssetsNode() const {
     return subgraph->isAssets();
 }
 
-ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params)
+ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
 {
     params_change_info changes = INode::update_editparams(params);
     //update subnetnode.
     if (!subgraph->isAssets()) {
         for (auto name : changes.new_inputs) {
             std::shared_ptr<INode> newNode = subgraph->createNode("SubInput", name);
+
+            if (bSubnetInit) {
+                if (name == "int1") {
+                    newNode->set_pos({700, 0});
+                }
+                else if (name == "objInput1") {
+                    newNode->set_pos({0, 0});
+                }
+            }
+
+            //这里SubInput的类型其实是和Subnet节点创建预设的参数对应，参考AddNodeCommand
 
             bool exist;     //subnet通过自定义参数面板创建SubInput节点时，根据实际情况添加primitive/obj类型的port端口
             bool isprim = isPrimitiveType(true, name, exist);
@@ -65,8 +76,9 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 zeno::ParamObject paramObj;
                 paramObj.bInput = false;
                 paramObj.name = "port";
-                paramObj.type = Obj_Wildcard;
-                paramObj.socketType = zeno::Socket_WildCard;
+                paramObj.type = gParamType_Geometry;
+                paramObj.bWildcard = true;
+                paramObj.socketType = Socket_Output;
                 newNode->add_output_obj_param(paramObj);
             }
 
@@ -94,6 +106,16 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
         for (auto name : changes.new_outputs) {
             std::shared_ptr<INode> newNode = subgraph->createNode("SubOutput", name);
 
+            if (bSubnetInit) {
+                if (name == "output1") {
+                    newNode->set_pos({ 700, 500 });
+                }
+                else if (name == "objOutput1") {
+                    newNode->set_pos({ 0, 500 });
+                    newNode->set_view(true);
+                }
+            }
+
             bool exist;
             bool isprim = isPrimitiveType(false, name, exist);
             if (isprim) {
@@ -101,15 +123,17 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 primitive.bInput = true;
                 primitive.name = "port";
                 primitive.type = Param_Wildcard;
-                primitive.socketType = Socket_WildCard;
+                primitive.bWildcard = true;
+                primitive.socketType = Socket_Primitve;
                 newNode->add_input_prim_param(primitive);
             }
             else if (!isprim && exist) {
                 zeno::ParamObject paramObj;
                 paramObj.bInput = true;
                 paramObj.name = "port";
-                paramObj.type = Obj_Wildcard;
-                paramObj.socketType = zeno::Socket_WildCard;
+                paramObj.type = gParamType_Geometry;
+                paramObj.bWildcard = true;
+                paramObj.socketType = Socket_Clone;
                 newNode->add_input_obj_param(paramObj);
             }
             params_change_info changes;
@@ -135,15 +159,17 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 if (inputnode) {
                     ParamType paramtype;
                     SocketType socketype;
-                    inputnode->getParamTypeAndSocketType("port", true, false, paramtype, socketype);
+                    bool _wildcard;
+                    inputnode->getParamTypeAndSocketType("port", true, false, paramtype, socketype, _wildcard);
                     if (paramtype != param.type) {
                         inputnode->update_param_type("port", true, false, param.type);
                         for (auto& link : inputnode->getLinksByParam(false, "port")) {
                             if (auto linktonode = subgraph->getNode(link.inNode)) {
                                 ParamType paramType;
                                 SocketType socketType;
-                                linktonode->getParamTypeAndSocketType(link.inParam, true, true, paramType, socketType);
-                                if (socketType == Socket_WildCard) {
+                                bool bWildcard = false;
+                                linktonode->getParamTypeAndSocketType(link.inParam, true, true, paramType, socketType, bWildcard);
+                                if (bWildcard) {
                                     subgraph->updateWildCardParamTypeRecursive(subgraph, linktonode, link.inParam, true, true, param.type);
                                 } else if (!outParamTypeCanConvertInParamType(param.type, paramType, Role_OutputPrimitive, Role_InputPrimitive)) {
                                     subgraph->removeLink(link);
@@ -155,8 +181,9 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                                 if (auto linktonode = spgraph->getNode(link.outNode)) {
                                     ParamType paramType;
                                     SocketType socketType;
-                                    linktonode->getParamTypeAndSocketType(link.outParam, true, false, paramType, socketType);
-                                    if (socketType == Socket_WildCard) {
+                                    bool bWildcard = false;
+                                    linktonode->getParamTypeAndSocketType(link.outParam, true, false, paramType, socketType, bWildcard);
+                                    if (bWildcard) {
                                         spgraph->updateWildCardParamTypeRecursive(spgraph, linktonode, link.outParam, true, false, param.type);
                                     } else if (!outParamTypeCanConvertInParamType(paramType, param.type, Role_OutputPrimitive, Role_InputPrimitive)) {
                                         spgraph->removeLink(link);
@@ -185,11 +212,15 @@ ZENO_API void SubnetNode::apply() {
         auto iter = m_inputObjs.find(subinput_node);
         if (iter != m_inputObjs.end()) {
             //object type.
-            zany spObject = iter->second.spObject;
-            bool ret = subinput->set_output("port", spObject);
-            assert(ret);
-            ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
-            assert(ret);
+            if (iter->second.spObject) {
+                //要拷贝一下才能赋值到SubInput的port参数
+                zany spObject = iter->second.spObject->clone();
+                spObject->update_key(subinput->get_uuid_path());
+                bool ret = subinput->set_output("port", spObject);
+                assert(ret);
+                ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
+                assert(ret);
+            }
         }
         else {
             //primitive type
@@ -213,11 +244,20 @@ ZENO_API void SubnetNode::apply() {
     }
     subgraph->applyNodes(nodesToExec);
 
-    for (auto const &suboutput_node: subgraph->getSubOutputs()) {
+    //TODO: 多输出其实是一个问题，不知道view哪一个，所以目前先规定子图只能有一个输出
+    auto suboutputs = subgraph->getSubOutputs();
+    bool bSetOutput = false;
+    for (auto const &suboutput_node: suboutputs) {
         auto suboutput = subgraph->getNode(suboutput_node);
         zany result = suboutput->get_input("port");
         if (result) {
-            bool ret = set_output(suboutput_node, result);
+            if (bSetOutput) {
+                throw makeError<UnimplError>("only support at most one suboutput on subnet");
+            }
+            bSetOutput = true;
+            zany spObject = result->clone();
+            spObject->update_key(get_uuid_path());
+            bool ret = set_output(suboutput_node, spObject);
             assert(ret);
         }
     }
@@ -252,7 +292,8 @@ ZENO_API CustomUI SubnetNode::export_customui() const {
                     if (auto node = subgraph->getNode(param.name)) {
                         ParamType type;
                         SocketType socketype;
-                        node->getParamTypeAndSocketType("port", true, false, type, socketype);
+                        bool _wildcard;
+                        node->getParamTypeAndSocketType("port", true, false, type, socketype, _wildcard);
                         param.type = type;
                     }
                 }
@@ -262,7 +303,8 @@ ZENO_API CustomUI SubnetNode::export_customui() const {
             if (auto node = subgraph->getNode(param.name)) {
                 ParamType type;
                 SocketType socketype;
-                node->getParamTypeAndSocketType("port", false, false, type, socketype);
+                bool _wildcard;
+                node->getParamTypeAndSocketType("port", false, false, type, socketype, _wildcard);
                 param.type = type;
             }
         }
@@ -270,7 +312,8 @@ ZENO_API CustomUI SubnetNode::export_customui() const {
             if (auto node = subgraph->getNode(param.name)) {
                 ParamType type;
                 SocketType socketype;
-                node->getParamTypeAndSocketType("port", true, true, type, socketype);
+                bool _wildcard;
+                node->getParamTypeAndSocketType("port", true, true, type, socketype, _wildcard);
                 param.type = type;
             }
         }
@@ -278,7 +321,8 @@ ZENO_API CustomUI SubnetNode::export_customui() const {
             if (auto node = subgraph->getNode(param.name)) {
                 ParamType type;
                 SocketType socketype;
-                node->getParamTypeAndSocketType("port", false, true, type, socketype);
+                bool _wildcard;
+                node->getParamTypeAndSocketType("port", false, true, type, socketype, _wildcard);
                 param.type = type;
             }
         }

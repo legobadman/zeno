@@ -365,9 +365,6 @@ namespace zenoio
         else if (sockType == iotags::params::socket_primitive) {
             return zeno::Socket_Primitve;
         }
-        else if (sockType == iotags::params::socket_wildcard) {
-            return zeno::Socket_WildCard;
-        }
     }
 
     zeno::GraphData fork(
@@ -478,7 +475,9 @@ namespace zenoio
                     defl = 0;
             }
             else {
-                zeno::log_error("error type");
+                //å¯èƒ½æœ‰è¯»ç›˜é”™è¯¯ï¼Œè€ƒè™‘åˆ°asset, subnetå„ç§ioçš„å¤æ‚æƒ…å†µï¼Œåœ¨è¿™é‡Œç›´æ¥å®¹é”™ç®—äº†
+                //zeno::log_error("error type");
+                defl = 0;
             }
             break;
         }
@@ -501,8 +500,10 @@ namespace zenoio
                 else
                     defl = (float)0.0;
             }
-            else
-                zeno::log_error("error type");
+            else {
+                defl = 0.f;
+                //zeno::log_error("error type");
+            }
             break;
         }
         case gParamType_Bool:
@@ -514,7 +515,7 @@ namespace zenoio
             else if (val.IsFloat())
                 defl = val.GetFloat() != 0;
             else
-                zeno::log_error("error type");
+                defl = false;
             break;
         }
         case gParamType_String:
@@ -525,6 +526,9 @@ namespace zenoio
                     *hasRef = true;
                 }
                 defl = sval;
+            }
+            else {
+                defl = "";
             }
             break;
         }
@@ -590,6 +594,21 @@ namespace zenoio
                 }
             }
             defl = editvec;
+            break;
+        }
+        case gParamType_Matrix4:
+        {
+            auto arr = val.GetArray();
+            assert(4 == arr.Size());
+            auto r1 = arr[0].GetArray(); assert(4 == r1.Size());
+            auto r2 = arr[1].GetArray(); assert(4 == r2.Size());
+            auto r3 = arr[2].GetArray(); assert(4 == r3.Size());
+            auto r4 = arr[3].GetArray(); assert(4 == r4.Size());
+            defl = glm::mat4(
+                r1[0].GetFloat(), r2[0].GetFloat(), r3[0].GetFloat(), r4[0].GetFloat(),
+                r1[1].GetFloat(), r2[1].GetFloat(), r3[1].GetFloat(), r4[1].GetFloat(),
+                r1[2].GetFloat(), r2[2].GetFloat(), r3[2].GetFloat(), r4[2].GetFloat(),
+                r1[3].GetFloat(), r2[3].GetFloat(), r3[3].GetFloat(), r4[3].GetFloat());
             break;
         }
         case gParamType_Curve:
@@ -1050,7 +1069,7 @@ namespace zenoio
             case gParamType_Curve:
             {
                 if (auto pCurves = zeno::reflect::any_cast<zeno::CurvesData>(&any)) {
-                    //ºóĞø»á²ÉÓÃĞòÁĞ»¯½øĞĞ¶ÁĞ´£¬ÏÖÔÚÏÈ×ªÎªjson×Ö·û´®´¢´æ£¬ÒÔ±ã¸´ÓÃÒÔÇ°µÄ´úÂë
+                    //åç»­ä¼šé‡‡ç”¨åºåˆ—åŒ–è¿›è¡Œè¯»å†™ï¼Œç°åœ¨å…ˆè½¬ä¸ºjsonå­—ç¬¦ä¸²å‚¨å­˜ï¼Œä»¥ä¾¿å¤ç”¨ä»¥å‰çš„ä»£ç 
                     dumpCurves(pCurves, writer);
                 }
                 break;
@@ -1091,10 +1110,49 @@ namespace zenoio
                     writer.EndArray();
                 }
                 else {
-                    //ÆäÊµdefl¿Ï¶¨¶¼ÊÇeditÀàĞÍµÄ
+                    //å…¶å®deflè‚¯å®šéƒ½æ˜¯editç±»å‹çš„
                     assert(false);
                     writer.Null();
                 }
+                break;
+            }
+            case gParamType_Matrix4:
+            {
+                const glm::mat4& mat = any_cast<glm::mat4&>(any);
+                writer.StartArray();
+                {
+                    writer.StartArray();
+                    writer.Double(mat[0][0]);
+                    writer.Double(mat[1][0]);
+                    writer.Double(mat[2][0]);
+                    writer.Double(mat[3][0]);
+                    writer.EndArray();
+                }
+                {
+                    writer.StartArray();
+                    writer.Double(mat[0][1]);
+                    writer.Double(mat[1][1]);
+                    writer.Double(mat[2][1]);
+                    writer.Double(mat[3][1]);
+                    writer.EndArray();
+                }
+                {
+                    writer.StartArray();
+                    writer.Double(mat[0][2]);
+                    writer.Double(mat[1][2]);
+                    writer.Double(mat[2][2]);
+                    writer.Double(mat[3][2]);
+                    writer.EndArray();
+                }
+                {
+                    writer.StartArray();
+                    writer.Double(mat[0][3]);
+                    writer.Double(mat[1][3]);
+                    writer.Double(mat[2][3]);
+                    writer.Double(mat[3][3]);
+                    writer.EndArray();
+                }
+                writer.EndArray();
                 break;
             }
             default:
