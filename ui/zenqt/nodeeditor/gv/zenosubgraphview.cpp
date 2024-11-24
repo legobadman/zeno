@@ -31,7 +31,7 @@
 #include <QQuickStyle>
 
 
-#define ZENO_QML_TEST
+//#define ZENO_QML_TEST
 
 
 bool sceneMenuEvent(

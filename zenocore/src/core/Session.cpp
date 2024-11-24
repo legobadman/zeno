@@ -62,19 +62,6 @@ ZENO_API Session::Session()
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
 {
-    std::vector<zeno::reflect::Any> wtf;
-    wtf.push_back(3);
-    wtf.push_back(std::make_shared<PrimitiveObject>());
-    wtf.push_back("abc");
-
-    Any anyList = wtf;
-    if (anyList.type().hash_code() == zeno::types::gParamType_AnyList) {
-        std::vector<zeno::reflect::Any> lst = any_cast<std::vector<zeno::reflect::Any>>(anyList);
-        for (auto& elem : lst) {
-            int j;
-            j = 0;
-        }
-    }
 }
 
 ZENO_API Session::~Session() = default;

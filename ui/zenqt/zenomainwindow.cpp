@@ -36,6 +36,7 @@
 #include "viewport/recordvideomgr.h"
 #include "viewport/displaywidget.h"
 #include "viewport/optixviewport.h"
+#include "viewport/qml/zopenglquickview.h"
 #include "ui_zenomainwindow.h"
 #include <QJsonDocument>
 #include "dialog/zdocklayoutmangedlg.h"
@@ -492,6 +493,13 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
         pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
+    case PANEL_QML_GLVIEW:
+    {
+        ZOpenGLQuickView* view = new ZOpenGLQuickView;
+        QWidget* wid = QWidget::createWindowContainer(view);
+        pDockElem->setWidget(wid, ads::CDockWidget::ForceNoScrollArea);
+        break;
+    }
     case PANEL_QMLPANEL:
     {
         auto panel = new ZQmlPanel;
@@ -591,6 +599,13 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
                 auto pView = new DockContent_View(true);
                 pView->initUI();
                 pDockElem->setWidget(pView, ads::CDockWidget::ForceNoScrollArea);
+                break;
+            }
+            case PANEL_QML_GLVIEW:
+            {
+                ZOpenGLQuickView* view = new ZOpenGLQuickView;
+                QWidget* wid = QWidget::createWindowContainer(view);
+                pDockElem->setWidget(wid, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
             case PANEL_EDITOR:

@@ -11,6 +11,7 @@
 #include <GL/glut.h>
 #include <QuickQanava>
 #include <QQuickStyle>
+#include "viewport/qml/zopenglquickview.h"
 
 
 /* debug cutsom layout: ZGraphicsLayout */
@@ -50,6 +51,15 @@ int main(int argc, char *argv[])
 
     ZenoApplication a(argc, argv);
     a.setStyle(new ZenoStyle);
+
+    //ZOpenGLQuickView view;
+    ////view.show();
+    ////view.resize(600, 600);
+
+    //QWidget* wid = QWidget::createWindowContainer(&view);
+    //wid->show();
+    //wid->resize(600, 600);
+    //return a.exec();
 
 #ifdef DEBUG_NORMAL_WIDGET
     TestNormalWidget wid;

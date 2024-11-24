@@ -16,6 +16,7 @@ ZQmlPanel::ZQmlPanel(QWidget* parent)
 void ZQmlPanel::focusInEvent(QFocusEvent* event)
 {
     this->repaint();
+    this->quickWindow();
     QQuickWidget::focusInEvent(event);
 }
 

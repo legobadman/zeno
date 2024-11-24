@@ -541,7 +541,13 @@ void DockContent_Editor::initConnections()
             zeno::EdgeInfo edge;
             std::shared_ptr<zeno::INode> spNode;
 
-            HMODULE hDll = LoadLibrary("C:\\zeno3\\Debug\\bin\\customPlugin1.dll");
+            QFileDialog dlg;
+
+            QString filePath = QFileDialog::getOpenFileName(this, "File to Open", "", "Zeno Module (*.dll)");
+
+            HMODULE hDll = LoadLibrary(filePath.toUtf8().data());
+
+
 #if 0
             if (0) {
                 spNode = sess.mainGraph->getNode("NumericInt1");
