@@ -7,6 +7,7 @@
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/FunctionManager.h>
+#include <zeno/utils/api.h>
 
 
 namespace zeno
@@ -44,8 +45,11 @@ namespace zeno
         //创建属性
         ZENO_API int create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
         ZENO_API int create_face_attr(std::string const& attr_name, const AttrVar& defl);
+        CALLBACK_REGIST(create_face_attr, void, std::string)
         ZENO_API int create_point_attr(std::string const& attr_name, const AttrVar& defl);
+        CALLBACK_REGIST(create_point_attr, void, std::string)
         ZENO_API int create_vertex_attr(std::string const& attr_name, const AttrVar& defl);
+        CALLBACK_REGIST(create_vertex_attr, void, std::string)
         ZENO_API int create_geometry_attr(std::string const& attr_name, const AttrVar& defl);
 
         //设置属性
@@ -54,6 +58,9 @@ namespace zeno
         ZENO_API int set_point_attr(std::string const& attr_name, const AttrVar& defl);
         ZENO_API int set_face_attr(std::string const& attr_name, const AttrVar& defl);
         ZENO_API int set_geometry_attr(std::string const& attr_name, const AttrVar& defl);
+        //CALLBACK_REGIST(set_vertex_attr, void, std::string&, const AttrVar&)
+        //CALLBACK_REGIST(set_point_attr, void, std::string&, const AttrVar&)
+        //CALLBACK_REGIST(set_face_attr, void, std::string&, const AttrVar&)
 
         template<class T>
         void foreach_attr_update(GeoAttrGroup grp, const std::string& attr_name, char channel, std::function<T(int idx, T old_elem_value)>&& evalf) {
@@ -88,6 +95,9 @@ namespace zeno
         ZENO_API int delete_point_attr(std::string const& attr_name);
         ZENO_API int delete_face_attr(std::string const& attr_name);
         ZENO_API int delete_geometry_attr(std::string const& attr_name);
+        //CALLBACK_REGIST(delete_vertex_attr, void, std::string)
+        //CALLBACK_REGIST(delete_point_attr, void, std::string)
+        //CALLBACK_REGIST(delete_face_attr, void, std::string)
 
         //获取属性，CHANNEL如果为'x','y','z','w'中的一个，就是获取相应通道的值，此时T应为float
         template<class T, char CHANNEL = 0>
@@ -120,13 +130,21 @@ namespace zeno
 
         /* 添加元素 */
         ZENO_API int add_vertex(int face_id, int point_id);
+        CALLBACK_REGIST(add_vertex, void, int)
         ZENO_API int add_point(zeno::vec3f pos);
+        CALLBACK_REGIST(add_point, void, int)
         ZENO_API int add_face(const std::vector<int>& points);
+        CALLBACK_REGIST(add_face, void, int)
 
         /* 移除元素相关 */
         ZENO_API bool remove_faces(const std::set<int>& faces, bool includePoints);
+        CALLBACK_REGIST(remove_face, void, int)
         ZENO_API bool remove_point(int ptnum);
+        CALLBACK_REGIST(remove_point, void, int)
         ZENO_API bool remove_vertex(int face_id, int vert_id);
+        CALLBACK_REGIST(remove_vertex, void, int)
+        CALLBACK_REGIST(reset_faces, void)
+        CALLBACK_REGIST(reset_vertices, void)
 
         /* 返回元素个数 */
         ZENO_API int npoints() const;
@@ -161,6 +179,7 @@ namespace zeno
         ZENO_API std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
         ZENO_API const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         ZENO_API size_t get_attr_size(GeoAttrGroup grp) const;
+        void copyTopologyAccordtoUseCount();
 
         std::shared_ptr<GeometryTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
         std::map<std::string, AttributeVector> m_point_attrs;

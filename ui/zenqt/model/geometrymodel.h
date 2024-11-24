@@ -39,9 +39,13 @@ public:
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
+    void setGeoObject(zeno::GeometryObject* pObject);
+
 private:
     QMap<int, AttributeInfo> m_colMap;
     zeno::GeometryObject* m_object;
+
+    int m_nvertices;
 };
 
 class PointModel : public QAbstractTableModel
@@ -56,9 +60,13 @@ public:
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
+    void setGeoObject(zeno::GeometryObject* pObject);
+
 private:
     QMap<int, AttributeInfo> m_colMap;
     zeno::GeometryObject* m_object;
+
+    int m_npoints;
 };
 
 class FaceModel : public QAbstractTableModel
@@ -71,9 +79,13 @@ public:
     int columnCount(const QModelIndex& parent) const override;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 
+    void setGeoObject(zeno::GeometryObject* pObject);
+
 private:
     QMap<int, AttributeInfo> m_colMap;
     zeno::GeometryObject* m_object;
+
+    int m_nfaces;
 };
 
 #endif

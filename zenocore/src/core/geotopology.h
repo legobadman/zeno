@@ -96,6 +96,8 @@ namespace zeno
         int vertex_face(int linear_vertex_id);
         int vertex_face_index(int linear_vertex_id);
 
+        void update_linear_vertex();
+
     private:
         std::vector<std::shared_ptr<Point>> m_points;
         std::vector<std::shared_ptr<Face>> m_faces;

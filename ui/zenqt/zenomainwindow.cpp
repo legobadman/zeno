@@ -2196,7 +2196,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     ZASSERT_EXIT(idx.isValid());
                     zeno::zany pObject = idx.data(ROLE_OUTPUT_OBJS).value<zeno::zany>();
                     if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
-                        panel->setGeometry(spGeom.get());
+                        panel->setGeometry(subgraph, idx, spGeom.get());
                     }
                 }
             }

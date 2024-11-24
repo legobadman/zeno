@@ -298,7 +298,6 @@ namespace zeno {
             }
             else {
                 if constexpr (CHANNEL > 0) {
-                    std::shared_ptr<AttrColumn> spComp;
                     if constexpr (CHANNEL == 'x') {
                         if (x_comp.use_count() > 1) {
                             x_comp = std::make_shared<AttrColumn>(*x_comp);
@@ -335,6 +334,214 @@ namespace zeno {
                 }
             }
         }
+
+        template<class T, char CHANNEL = 0>
+        void insert_elem(size_t idx, T val) {
+            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                x_comp->insert(idx, val[0]);
+                y_comp->insert(idx, val[1]);
+            } else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                if (z_comp.use_count() > 1)
+                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp->insert(idx, val[0]);
+                y_comp->insert(idx, val[1]);
+                z_comp->insert(idx, val[2]);
+            } else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                if (z_comp.use_count() > 1)
+                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                if (w_comp.use_count() > 1)
+                    w_comp = std::make_shared<AttrColumn>(*w_comp);
+                x_comp->insert(idx, val[0]);
+                y_comp->insert(idx, val[1]);
+                z_comp->insert(idx, val[2]);
+                w_comp->insert(idx, val[3]);
+            } else {
+                if constexpr (CHANNEL > 0) {
+                    if constexpr (CHANNEL == 'x') {
+                        if (x_comp.use_count() > 1) {
+                            x_comp = std::make_shared<AttrColumn>(*x_comp);
+                        }
+                        x_comp->insert(idx, val);
+                    } else if constexpr (CHANNEL == 'y') {
+                        if (y_comp.use_count() > 1) {
+                            y_comp = std::make_shared<AttrColumn>(*y_comp);
+                        }
+                        y_comp->insert(idx, val);
+                    } else if constexpr (CHANNEL == 'z') {
+                        if (z_comp.use_count() > 1) {
+                            z_comp = std::make_shared<AttrColumn>(*z_comp);
+                        }
+                        z_comp->insert(idx, val);
+                    } else if constexpr (CHANNEL == 'w') {
+                        if (w_comp.use_count() > 1) {
+                            w_comp = std::make_shared<AttrColumn>(*w_comp);
+                        }
+                        w_comp->insert(idx, val);
+                    } else {
+                        throw;
+                    }
+                } else {
+                    if (self.use_count() > 1) {
+                        self = std::make_shared<AttrColumn>(*self);
+                    }
+                    self->insert(idx, val);
+                }
+            }
+            m_size++;
+        };
+
+        template<class T, char CHANNEL = 0>
+        void append(T val) {
+            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2> ) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                x_comp->append(val[0]);
+                y_comp->append(val[1]);
+            }
+            else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                if (z_comp.use_count() > 1)
+                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp->append(val[0]);
+                y_comp->append(val[1]);
+                z_comp->append(val[2]);
+            }
+            else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                if (z_comp.use_count() > 1)
+                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                if (w_comp.use_count() > 1)
+                    w_comp = std::make_shared<AttrColumn>(*w_comp);
+                x_comp->append(val[0]);
+                y_comp->append(val[1]);
+                z_comp->append(val[2]);
+                w_comp->append(val[3]);
+            }
+            else {
+                if constexpr (CHANNEL > 0) {
+                    if constexpr (CHANNEL == 'x') {
+                        if (x_comp.use_count() > 1) {
+                            x_comp = std::make_shared<AttrColumn>(*x_comp);
+                        }
+                        x_comp->append(val);
+                    } else if constexpr (CHANNEL == 'y') {
+                        if (y_comp.use_count() > 1) {
+                            y_comp = std::make_shared<AttrColumn>(*y_comp);
+                        }
+                        y_comp->append(val);
+                    } else if constexpr (CHANNEL == 'z') {
+                        if (z_comp.use_count() > 1) {
+                            z_comp = std::make_shared<AttrColumn>(*z_comp);
+                        }
+                        z_comp->append(val);
+                    } else if constexpr (CHANNEL == 'w') {
+                        if (w_comp.use_count() > 1) {
+                            w_comp = std::make_shared<AttrColumn>(*w_comp);
+                        }
+                        w_comp->append(val);
+                    } else {
+                        throw;
+                    }
+                } else {
+                    if (self.use_count() > 1) {
+                        self = std::make_shared<AttrColumn>(*self);
+                    }
+                    self->append(val);
+                }
+            }
+            m_size++;
+        };
+
+        template<class T, char CHANNEL = 0>
+        void remove_elem(size_t idx) {
+            if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                x_comp->remove(idx);
+                y_comp->remove(idx);
+            } else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                if (z_comp.use_count() > 1)
+                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp->remove(idx);
+                y_comp->remove(idx);
+                z_comp->remove(idx);
+            } else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
+                if (x_comp.use_count() > 1)
+                    x_comp = std::make_shared<AttrColumn>(*x_comp);
+                if (y_comp.use_count() > 1)
+                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                if (z_comp.use_count() > 1)
+                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                if (w_comp.use_count() > 1)
+                    w_comp = std::make_shared<AttrColumn>(*w_comp);
+                x_comp->remove(idx);
+                y_comp->remove(idx);
+                z_comp->remove(idx);
+                w_comp->remove(idx);
+            } else {
+                if constexpr (CHANNEL > 0) {
+                    if constexpr (CHANNEL == 'x') {
+                        if (x_comp.use_count() > 1) {
+                            x_comp = std::make_shared<AttrColumn>(*x_comp); 
+                        }
+                        x_comp->remove(idx);
+                    }
+                    else if constexpr (CHANNEL == 'y') {
+                        if (y_comp.use_count() > 1) {
+                            y_comp = std::make_shared<AttrColumn>(*y_comp);
+                        }
+                        y_comp->remove(idx);
+                    }
+                    else if constexpr (CHANNEL == 'z') {
+                        if (z_comp.use_count() > 1) {
+                            z_comp = std::make_shared<AttrColumn>(*z_comp);
+                        }
+                        z_comp->remove(idx);
+                    }
+                    else if constexpr (CHANNEL == 'w') {
+                        if (w_comp.use_count() > 1) {
+                            w_comp = std::make_shared<AttrColumn>(*w_comp);
+                        }
+                        w_comp->remove(idx);
+                    }
+                    else {
+                        throw;
+                    }
+                } else {
+                    if (self.use_count() > 1) {
+                        self = std::make_shared<AttrColumn>(*self);
+                    }
+                    self->remove(idx);
+                }
+            }
+            m_size--;
+        };
 
         template<class T>
         void foreach_attr_update(char channel, std::function<T(int idx, T old_elem_value)>&& evalf) {
