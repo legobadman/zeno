@@ -20,18 +20,29 @@
 ****************************************************************************/
 
 #include "zqmlrender.h"
-
 #include "objloader.h"
-
 #include <QMatrix4x4>
-
 #include <QDebug>
-
 #include <cmath>
 #include <QtMath>
+#include "viewport/zenovis.h"
+#include "viewport/cameracontrol.h"
+
+
+namespace {
+    struct OpenGLProcAddressHelper {
+        inline static QOpenGLContext* ctx;
+
+        static void* getProcAddress(const char* name) {
+            return (void*)ctx->getProcAddress(name);
+        }
+    };
+}
+
 
 ZQmlRender::ZQmlRender(QObject* parent)
     : QObject(parent)
+#ifdef BASE_KDAB
     , m_positionsBuffer(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer))
     , m_normalsBuffer(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer))
     , m_indicesBuffer(new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer))
@@ -42,7 +53,11 @@ ZQmlRender::ZQmlRender(QObject* parent)
     , m_azimuth(0.0)
     , m_elevation(15.0)
     , m_distance(15.0)
+#endif
 {
+#ifndef BASE_KDAB
+    m_zenovis = new Zenovis(this);
+#endif
 }
 
 ZQmlRender::~ZQmlRender()
@@ -50,8 +65,16 @@ ZQmlRender::~ZQmlRender()
     invalidate();
 }
 
-void ZQmlRender::initialize(CoordinateMirroring cm)
+void ZQmlRender::reload_objects(const zeno::render_reload_info& info)
 {
+#ifndef BASE_KDAB
+    m_zenovis->reload(info);
+#endif
+}
+
+void ZQmlRender::initialize(QOpenGLContext* context, CoordinateMirroring cm)
+{
+#ifdef BASE_KDAB
     if (m_vao->isCreated())
         return; // already initialized
 
@@ -110,10 +133,16 @@ void ZQmlRender::initialize(CoordinateMirroring cm)
     m_shaderProgram->setAttributeBuffer("vertexNormal", GL_FLOAT, 0, 3);
 
     m_vao->release();
+#else
+    OpenGLProcAddressHelper::ctx = context;
+    m_zenovis->loadGLAPI((void*)OpenGLProcAddressHelper::getProcAddress);
+    m_zenovis->initializeGL();
+#endif
 }
 
 void ZQmlRender::render()
 {
+#ifdef BASE_KDAB
     QOpenGLFunctions* functions = QOpenGLContext::currentContext()->functions();
 
     QMatrix4x4 modelMatrix;
@@ -175,28 +204,47 @@ void ZQmlRender::render()
     m_vao->bind();
     functions->glDrawElements(GL_TRIANGLES, m_indicesCount, GL_UNSIGNED_INT, Q_NULLPTR);
     m_vao->release();
+#else
+    m_zenovis->paintGL();
+#endif
 }
 
 void ZQmlRender::invalidate()
 {
+#ifdef BASE_KDAB
     m_positionsBuffer->destroy();
     m_normalsBuffer->destroy();
     m_indicesBuffer->destroy();
     m_shaderProgram.reset();
     m_vao->destroy();
+#else
+
+#endif
 }
 
 void ZQmlRender::setAzimuth(float azimuth)
 {
+#ifdef BASE_KDAB
     m_azimuth = azimuth;
+#else
+
+#endif
 }
 
 void ZQmlRender::setElevation(float elevation)
 {
+#ifdef BASE_KDAB
     m_elevation = elevation;
+#else
+
+#endif
 }
 
 void ZQmlRender::setDistance(float distance)
 {
+#ifdef BASE_KDAB
     m_distance = distance;
+#else
+
+#endif
 }

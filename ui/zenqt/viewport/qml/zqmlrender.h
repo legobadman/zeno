@@ -7,11 +7,18 @@
 #include <QScopedPointer>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
-
+#include "../viewport/transform.h"
+#include "../viewport/picker.h"
 #include <QOpenGLBuffer>
 #include <QOpenGLTexture>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
+#include <zeno/core/common.h>
+
+//#define BASE_KDAB
+
+class Zenovis;
+class CameraControl;
 
 class ZQmlRender : public QObject
 {
@@ -26,7 +33,7 @@ public:
     };
 
     // All assume that the GL context is current.
-    void initialize(CoordinateMirroring cm = DoNotMirrorCoordinates);
+    void initialize(QOpenGLContext* context, CoordinateMirroring cm = DoNotMirrorCoordinates);
     void render();
     void invalidate();
 
@@ -34,7 +41,11 @@ public:
     void setElevation(float elevation);
     void setDistance(float distance);
 
+public slots:
+    void reload_objects(const zeno::render_reload_info& info);
+
 private:
+#ifdef BASE_KDAB
     QScopedPointer<QOpenGLBuffer> m_positionsBuffer;
     QScopedPointer<QOpenGLBuffer> m_normalsBuffer;
     QScopedPointer<QOpenGLBuffer> m_indicesBuffer;
@@ -42,12 +53,16 @@ private:
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
 
     int m_indicesCount;
-
     CoordinateMirroring m_coordinateMirroring;
-
     float m_azimuth;
     float m_elevation;
     float m_distance;
+#else
+    std::shared_ptr<zeno::Picker> m_picker;
+    std::shared_ptr<zeno::FakeTransformer> m_fakeTrans;
+    Zenovis* m_zenovis;
+    CameraControl* m_camera;
+#endif
 };
 
 

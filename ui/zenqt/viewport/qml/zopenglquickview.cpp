@@ -48,12 +48,16 @@ ZOpenGLQuickView::ZOpenGLQuickView(QWindow* parent)
     setPersistentOpenGLContext(true);
 
     setResizeMode(SizeRootObjectToView);
+
+#ifdef BASE_KDAB
     rootContext()->setContextProperty("_camera", m_camera);
     setSource(QUrl("qrc:///qml/mainview.qml"));
+#endif
 }
 
 void ZOpenGLQuickView::initializeUnderlay() {
-    m_renderer->initialize();
+    auto ctx = this->openglContext();
+    m_renderer->initialize(ctx);
     resetOpenGLState();
 }
 
