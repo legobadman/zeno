@@ -748,7 +748,7 @@ namespace zeno
         return true;
     }
 
-    bool GeometryTopology::remove_faces(const std::set<int>& faces, bool includePoints) {
+    bool GeometryTopology::remove_faces(const std::set<int>& faces, bool includePoints, std::vector<int>& removedPtnum) {
         if (faces.empty()) {
             return false;
         }
@@ -757,29 +757,31 @@ namespace zeno
         std::set<Point*> remPtrPoints;
         for (auto face_id : faces) {
             auto pFace = m_faces[face_id];
-            if (includePoints) {
-                //考察face上所有的点，是否有点需要被删除
-                auto firsth = pFace->h;
-                auto h = firsth;
-                do
-                {
-                    auto& spPoint = m_points[h->point];
-                    spPoint->edges.erase(h);
+
+            auto firsth = pFace->h;
+            auto h = firsth;
+            do
+            {
+                auto& spPoint = m_points[h->point];
+                spPoint->edges.erase(h->next);
+                if (includePoints) {
+                    //考察face上所有的点，是否有点需要被删除
                     if (spPoint->edges.empty()) {
                         remPoints.insert(h->point);
                         remPtrPoints.insert(spPoint.get());
+                        removedPtnum.push_back(h->point);
                     }
-                    if (h->pair) {
-                        //对面置空自己
-                        h->pair->pair = nullptr;
-                    }
-                    h->pair = nullptr;
-                    auto nexth = h->next;
-                    //h的依赖都解除了，现在就可以删除了。
-                    m_hEdges.erase(h->id);
-                    h = nexth;
-                } while (firsth != h);
-            }
+                }
+                if (h->pair) {
+                    //对面置空自己
+                    h->pair->pair = nullptr;
+                }
+                h->pair = nullptr;
+                auto nexth = h->next;
+                //h的依赖都解除了，现在就可以删除了。
+                m_hEdges.erase(h->id);
+                h = nexth;
+            } while (firsth != h);
         }
 
         //边都已经删除了，现在只要删除点和面即可。

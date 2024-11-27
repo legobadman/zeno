@@ -65,7 +65,7 @@ namespace zeno
         int add_vertex(int face_id, int point_id);
 
         /* 移除元素相关 */
-        bool remove_faces(const std::set<int>& faces, bool includePoints);
+        bool remove_faces(const std::set<int>& faces, bool includePoints, std::vector<int>& removedPtnum);
         bool remove_point(int ptnum);
         bool remove_vertex(int face_id, int vert_id);
 
