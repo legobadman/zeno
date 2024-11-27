@@ -33,7 +33,6 @@ using std::unordered_map;
 ViewportWidget::ViewportWidget(QWidget* parent)
     : QGLWidget(parent)
     , m_camera(nullptr)
-    , updateLightOnce(true)
     , m_pauseRenderDally(new QTimer)
     , m_wheelEventDally(new QTimer)
     , simpleRenderTime(0)
@@ -206,6 +205,10 @@ bool ViewportWidget::isPlaying() const
     return m_zenovis->isPlaying();
 }
 
+bool ViewportWidget::isCameraMoving() const {
+    return m_bMovingCamera;
+}
+
 void ViewportWidget::startPlay(bool bPlaying)
 {
     m_zenovis->startPlay(bPlaying);
@@ -253,12 +256,6 @@ void ViewportWidget::reload_objects(const zeno::render_reload_info& info)
 void ViewportWidget::paintGL()
 {
     m_zenovis->paintGL();
-    if(updateLightOnce){
-        auto scene = m_zenovis->getSession()->get_scene();
-        if(scene->objectsMan->lightObjects.size() > 0){
-            updateLightOnce = false;
-        }
-    }
 }
 
 void ViewportWidget::mousePressEvent(QMouseEvent* event)

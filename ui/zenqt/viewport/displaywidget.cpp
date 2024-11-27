@@ -28,7 +28,7 @@
 #include "model/graphsmanager.h"
 #include "calculation/calculationmgr.h"
 #include "nodeeditor/gv/zenographseditor.h"
-
+#include "viewport/qml/zopenglquickview.h"
 
 
 using std::string;
@@ -54,8 +54,14 @@ DisplayWidget::DisplayWidget(bool bGLView, QWidget *parent)
 
     if (m_bGLView)
     {
+#ifndef BASE_QML_VIEWPORT
         m_glView = new ViewportWidget;
         pLayout->addWidget(m_glView);
+#else
+        m_glView = new ZOpenGLQuickView;
+        QWidget* wid = QWidget::createWindowContainer(m_glView);
+        pLayout->addWidget(wid);
+#endif
     }
     else
     {
@@ -241,7 +247,7 @@ void DisplayWidget::setRenderSeparately(bool updateLightCameraOnly, bool updateM
 bool DisplayWidget::isCameraMoving() const
 {
     if (m_glView)
-        return m_glView->m_bMovingCamera;
+        return m_glView->isCameraMoving();
     else
         return m_optixView->isCameraMoving();
 }
@@ -709,8 +715,6 @@ void DisplayWidget::afterRun()
 {
     if (m_glView)
     {
-        m_glView->updateLightOnce = true;
-
         Zenovis* pZenoVis = getZenoVis();
         ZASSERT_EXIT(pZenoVis);
         auto session = pZenoVis->getSession();

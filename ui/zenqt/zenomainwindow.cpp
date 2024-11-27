@@ -76,6 +76,7 @@ ZenoMainWindow::ZenoMainWindow(QWidget *parent, Qt::WindowFlags flags, PANEL_TYP
     , m_nResizeTimes(0)
     , m_bOnlyOptix(false)
     , m_pDockManager(nullptr)
+    , m_qml_gl(nullptr)
 {
     init(onlyView);
     setContextMenuPolicy(Qt::NoContextMenu);
@@ -497,6 +498,8 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
     {
         ZOpenGLQuickView* view = new ZOpenGLQuickView;
         QWidget* wid = QWidget::createWindowContainer(view);
+        wid->installEventFilter(this);
+        m_qml_gl = wid;
         pDockElem->setWidget(wid, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
@@ -605,6 +608,7 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
             {
                 ZOpenGLQuickView* view = new ZOpenGLQuickView;
                 QWidget* wid = QWidget::createWindowContainer(view);
+                m_qml_gl = wid;
                 pDockElem->setWidget(wid, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
@@ -1356,6 +1360,17 @@ void ZenoMainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
+bool ZenoMainWindow::eventFilter(QObject* obj, QEvent* e) {
+    if (e->type() == QEvent::Resize) {
+        int j;
+        j = 0;
+    }
+    if (obj == m_qml_gl) {
+
+    }
+    return QMainWindow::eventFilter(obj, e);
+}
+
 bool ZenoMainWindow::event(QEvent* event)
 {
     //if (QEvent::LayoutRequest == event->type())
@@ -1372,6 +1387,10 @@ bool ZenoMainWindow::event(QEvent* event)
     //        }
     //    }
     //}
+    if (event->type() == QEvent::Resize) {
+        int j;
+        j = 0;
+    }
     if (event->type() == QEvent::HoverMove) {
         if (m_bOnlyOptix) {
             DisplayWidget* pWid = getCurrentViewport();

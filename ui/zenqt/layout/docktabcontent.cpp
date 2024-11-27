@@ -10,7 +10,6 @@
 #include "panel/zenoimagepanel.h"
 #include "nodeeditor/gv/zenographseditor.h"
 #include "nodeeditor/gv/zenosubgraphview.h"
-#include "viewport/viewportwidget.h"
 #include "viewport/displaywidget.h"
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
@@ -189,6 +188,10 @@ QWidget* DockToolbarWidget::widget() const
     return m_pWidget;
 }
 
+void DockToolbarWidget::resizeEvent(QResizeEvent* event) {
+    auto& sz = event->size();
+    QWidget::resizeEvent(event);
+}
 
 
 DockContent_Parameter::DockContent_Parameter(QWidget* parent)

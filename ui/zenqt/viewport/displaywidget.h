@@ -5,17 +5,22 @@
 #include "uicommon.h"
 #include "recordvideomgr.h"
 #include "viewport/picker.h"
+
 #include "layout/docktabcontent.h"
 #include "layout/winlayoutrw.h"
 #include <zenovis/Camera.h>
 
 class ViewportWidget;
+class ZOpenGLQuickView;
 #ifdef ZENO_OPTIX_PROC
 class ZOptixProcViewport;
 #else
 class ZOptixViewport;
 #endif
 class CameraKeyframeWidget;
+
+#define BASE_QML_VIEWPORT
+
 
 class DisplayWidget : public QWidget
 {
@@ -113,7 +118,12 @@ private:
     void initRecordMgr();
     void sendTaskToServer(const VideoRecInfo& info);
 
+#ifdef BASE_QML_VIEWPORT
+    ZOpenGLQuickView* m_glView;
+#else
     ViewportWidget* m_glView;
+#endif
+
 #ifdef ZENO_OPTIX_PROC
     ZOptixProcViewport* m_optixView;
 #else

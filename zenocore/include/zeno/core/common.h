@@ -244,6 +244,7 @@ namespace zeno {
     typedef std::function<void(ObjPath, bool, NodeRunStatus)> F_NodeStatus;
 
     enum render_reload_policy {
+        Reload_Invalidate,      //无效的同步
         Reload_SwitchGraph,     //用户在编辑器上切换当前节点图的层次触发的Load
         Reload_ToggleView,      //用户在编辑器上当前节点图，切换节点间的view触发的load
         Reload_Calculation,     //由于标脏计算引发的load

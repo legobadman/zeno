@@ -27,6 +27,7 @@
 #include <QtMath>
 #include "viewport/zenovis.h"
 #include "viewport/cameracontrol.h"
+#include <zenovis/DrawOptions.h>
 
 
 namespace {
@@ -53,10 +54,15 @@ ZQmlRender::ZQmlRender(QObject* parent)
     , m_azimuth(0.0)
     , m_elevation(15.0)
     , m_distance(15.0)
+#else
+    , m_camera(nullptr)
 #endif
 {
 #ifndef BASE_KDAB
     m_zenovis = new Zenovis(this);
+    m_camera = new CameraControl(m_zenovis, m_fakeTrans, m_picker, this);
+    m_zenovis->m_camera_control = m_camera;
+    m_zenovis->initializeGL();  //actually, this is a func init session.
 #endif
 }
 
@@ -135,8 +141,8 @@ void ZQmlRender::initialize(QOpenGLContext* context, CoordinateMirroring cm)
     m_vao->release();
 #else
     OpenGLProcAddressHelper::ctx = context;
+    assert(OpenGLProcAddressHelper::ctx);
     m_zenovis->loadGLAPI((void*)OpenGLProcAddressHelper::getProcAddress);
-    m_zenovis->initializeGL();
 #endif
 }
 
@@ -209,6 +215,40 @@ void ZQmlRender::render()
 #endif
 }
 
+void ZQmlRender::fakeMousePressEvent(QMouseEvent* event) {
+#ifndef BASE_KDAB
+    m_camera->fakeMousePressEvent(event);
+#endif
+}
+
+void ZQmlRender::fakeMouseReleaseEvent(QMouseEvent* event) {
+#ifndef BASE_KDAB
+    m_camera->fakeMouseReleaseEvent(event);
+#endif
+}
+
+void ZQmlRender::fakeMouseMoveEvent(QMouseEvent* event) {
+#ifndef BASE_KDAB
+    m_camera->fakeMouseMoveEvent(event);
+#endif
+}
+
+void ZQmlRender::fakeWheelEvent(QWheelEvent* event) {
+#ifndef BASE_KDAB
+    m_camera->fakeWheelEvent(event);
+#endif
+}
+
+void ZQmlRender::resize(int nx, int ny)
+{
+#ifndef BASE_KDAB
+    if (m_camera) {
+        m_camera->setRes(QVector2D(nx, ny));
+        m_camera->updatePerspective();
+    }
+#endif
+}
+
 void ZQmlRender::invalidate()
 {
 #ifdef BASE_KDAB
@@ -220,6 +260,65 @@ void ZQmlRender::invalidate()
 #else
 
 #endif
+}
+
+void ZQmlRender::updatePerspective()
+{
+    m_camera->updatePerspective();
+}
+
+void ZQmlRender::setNumSamples(int samples) {
+    auto scene = getSession()->get_scene();
+    if (scene) {
+        scene->drawOptions->num_samples = samples;
+    }
+}
+
+void ZQmlRender::setCameraRes(const QVector2D& res) {
+    m_camera->setRes(res);
+}
+
+zenovis::Session* ZQmlRender::getSession() const
+{
+    return m_zenovis->getSession();
+}
+
+void ZQmlRender::setSafeFrames(bool bLock, int nx, int ny) {
+    auto scene = m_zenovis->getSession()->get_scene();
+    scene->camera->set_safe_frames(bLock, nx, ny);
+}
+
+void ZQmlRender::setSimpleRenderOption()
+{
+    auto scene = m_zenovis->getSession()->get_scene();
+    scene->drawOptions->simpleRender = true;
+    //m_pauseRenderDally->stop();
+    //m_pauseRenderDally->start(simpleRenderTime * 1000);  // Second to millisecond
+}
+
+void ZQmlRender::clearTransformer()
+{
+    m_camera->clearTransformer();
+}
+
+void ZQmlRender::changeTransformOperation(const QString& node)
+{
+    m_camera->changeTransformOperation(node);
+}
+
+void ZQmlRender::changeTransformOperation(int mode)
+{
+    m_camera->changeTransformOperation(mode);
+}
+
+void ZQmlRender::cameraLookTo(zenovis::CameraLookToDir dir)
+{
+    m_camera->lookTo(dir);
+}
+
+void ZQmlRender::setViewWidgetInfo(DockContentWidgetInfo& info)
+{
+
 }
 
 void ZQmlRender::setAzimuth(float azimuth)

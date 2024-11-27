@@ -64,6 +64,7 @@ protected:
     virtual void initToolbar(QHBoxLayout* pToolLayout) = 0;
     virtual QWidget *initWidget() = 0;
     virtual void initConnections() = 0;
+    void resizeEvent(QResizeEvent* event) override;
 
     QWidget* m_pWidget;
     static const int sToolbarHeight;

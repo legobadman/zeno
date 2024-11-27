@@ -36,6 +36,7 @@ public:
     std::shared_ptr<zeno::FakeTransformer> fakeTransformer() const;
     zenovis::Session* getSession() const;
     bool isPlaying() const;
+    bool isCameraMoving() const;
     void startPlay(bool bPlaying);
     void setCameraRes(const QVector2D& res);
     void setSafeFrames(bool bLock, int nx, int ny);
@@ -83,11 +84,10 @@ private:
 
     std::tuple<int, int, bool, double, double, double>viewInfo{ 0, 0, true, 0, 0, 0 };
     bool loadSettingFromZsg = false;
+    bool m_bMovingCamera;
 
 public:
     int simpleRenderTime;
-    bool updateLightOnce;
-    bool m_bMovingCamera;
 };
 
 #endif

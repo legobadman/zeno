@@ -14,6 +14,9 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 #include <zeno/core/common.h>
+#include <zenovis/Session.h>
+#include <zenovis/Camera.h>
+#include "layout/winlayoutrw.h"
 
 //#define BASE_KDAB
 
@@ -40,6 +43,24 @@ public:
     void setAzimuth(float azimuth);
     void setElevation(float elevation);
     void setDistance(float distance);
+    void resize(int nx, int ny);
+
+    void fakeMousePressEvent(QMouseEvent* event);
+    void fakeMouseReleaseEvent(QMouseEvent* event);
+    void fakeMouseMoveEvent(QMouseEvent* event);
+    void fakeWheelEvent(QWheelEvent* event);
+
+    void updatePerspective();
+    void setNumSamples(int samples);
+    void setCameraRes(const QVector2D& res);
+    zenovis::Session* ZQmlRender::getSession() const;
+    void setSafeFrames(bool bLock, int nx, int ny);
+    void setSimpleRenderOption();
+    void clearTransformer();
+    void changeTransformOperation(const QString& node);
+    void changeTransformOperation(int mode);
+    void cameraLookTo(zenovis::CameraLookToDir dir);
+    void setViewWidgetInfo(DockContentWidgetInfo& info);
 
 public slots:
     void reload_objects(const zeno::render_reload_info& info);

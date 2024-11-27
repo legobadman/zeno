@@ -186,6 +186,7 @@ public slots:
 protected:
     void resizeEvent(QResizeEvent* event) override;
     bool event(QEvent* event) override;
+    bool eventFilter(QObject* obj, QEvent* e) override;
     void closeEvent(QCloseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
@@ -241,6 +242,7 @@ private:
     bool m_bRecordByCommandLine = false;
 
     ads::CDockManager* m_pDockManager;
+    QWidget* m_qml_gl;
 };
 
 #endif
