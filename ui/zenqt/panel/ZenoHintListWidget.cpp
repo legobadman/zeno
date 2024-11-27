@@ -4,6 +4,7 @@
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include "zassert.h"
+#include <zeno/utils/string.h>
 
 ZenoHintListWidget::ZenoHintListWidget(ZenoPropPanel* panel)
     : QWidget(panel)
@@ -29,7 +30,7 @@ ZenoHintListWidget::ZenoHintListWidget(ZenoPropPanel* panel)
     m_listView->installEventFilter(this);
     m_listView->setModel(m_model);
     m_listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_listView->setStyleSheet("border: 0px; font: 14pt Microsoft Sans Serif");
+    m_listView->setStyleSheet("border: 0px; font: 11t Microsoft Sans Serif");
     connect(m_listView, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(sltItemSelect(const QModelIndex&)));
 
     qApp->installEventFilter(this);
@@ -250,7 +251,7 @@ ZenoFuncDescriptionLabel::ZenoFuncDescriptionLabel(ZenoPropPanel* panel)
     setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
     //setMinimumSize({ 100, 50 });
     m_label = new QLabel(this);
-    m_label->setStyleSheet("QLabel{ font: 12pt Microsoft Sans Serif; color: rgb(160, 178, 194)}");
+    m_label->setStyleSheet("QLabel{ font: 11pt Microsoft Sans Serif; color: rgb(160, 178, 194)}");
     
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(10, 10, 10, 10);
@@ -266,6 +267,9 @@ void ZenoFuncDescriptionLabel::setDesc(zeno::FUNC_INFO func, int pos)
     std::string txtToSet = func.rettype + " " + func.name + " " + "(";
     for (int i = 0; i < func.args.size(); i++) {
         std::string arg_content = func.args[i].type + " " + func.args[i].name;
+        if (i != func.args.size() - 1) {
+            arg_content += ",";
+        }
         if (i == pos) {
             txtToSet += "<b>" + arg_content + "</b> ";
         }
@@ -276,7 +280,17 @@ void ZenoFuncDescriptionLabel::setDesc(zeno::FUNC_INFO func, int pos)
     txtToSet += ")";
 
     txtToSet = "<p>" + txtToSet + "</p>";
-    txtToSet += "<p>" + func.tip + "</p>";
+    for (auto& line : zeno::split_str(func.tip, '\n', true)) {
+        std::stringstream newstr;
+        for (char& c: line) {
+            if (c == ' ') {
+                newstr << "&nbsp;";
+            } else {
+                newstr << c;
+            }
+        }
+        txtToSet += "<p>" + newstr.str() + "</p>";
+    }
     txtToSet = "<html><head><style> p { margin: 10; } </style></head><body><div>" + txtToSet + "</div></body></html>";
     m_label->setText(QString::fromStdString(txtToSet));
     m_label->setFont(QApplication::font());

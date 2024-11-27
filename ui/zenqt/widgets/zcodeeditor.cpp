@@ -12,6 +12,9 @@
 #include <zeno/core/data.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/FunctionManager.h>
+#include "zenoapplication.h"
+#include "zenomainwindow.h"
+#include "style/zenostyle.h"
 
 
 ZCodeEditor::ZCodeEditor(const QString& text, QWidget *parent)
@@ -38,6 +41,14 @@ void ZCodeEditor::focusOutEvent(QFocusEvent* e)
         emit editFinished(toPlainText());
 }
 
+void ZCodeEditor::keyPressEvent(QKeyEvent* e)
+{
+    if (e->key() == Qt::Key_Escape && m_descLabel->isVisible()) {
+        m_descLabel->hide();
+    }
+    QCodeEditor::keyPressEvent(e);
+}
+
 void ZCodeEditor::slt_showFuncDesc()
 {
     if (!m_descLabel)
@@ -56,12 +67,22 @@ void ZCodeEditor::slt_showFuncDesc()
         auto match = matchIterator.next();
         if (match.capturedStart(2) + match.capturedLength(2) + 1 == positionInLine) {
             zeno::FUNC_INFO info = zeno::getSession().funcManager->getFuncInfo(currLine.mid(match.capturedStart(2), match.capturedLength(2)).toStdString());
+            assert(zenoApp->getMainWindow());
             if (!info.name.empty()) {
                 m_descLabel->setDesc(info, 0);
                 m_descLabel->setCurrentFuncName(info.name);
 
                 m_descLabel->updateParent();
-                m_descLabel->move(m_descLabel->calculateNewPos(this, currLine.left(positionInLine)));
+                //m_descLabel->move(m_descLabel->calculateNewPos(this, currLine.left(positionInLine)));
+                auto cursRect = cursorRect();
+                auto globalpos = this->mapTo(zenoApp->getMainWindow(), { cursRect.x() + cursRect.width() + qCeil(ZenoStyle::dpiScaled(30)), cursRect.y() + cursRect.height()});
+                if (zenoApp->getMainWindow()->width() < globalpos.x() + m_descLabel->width()) {
+                    globalpos.setX(zenoApp->getMainWindow()->width() - m_descLabel->width());
+                }
+                if (zenoApp->getMainWindow()->height() < globalpos.y() + m_descLabel->height()) {
+                    globalpos.setY(zenoApp->getMainWindow()->height() - m_descLabel->height());
+                }
+                m_descLabel->move(globalpos);
                 m_descLabel->show();
                 return;
             }

@@ -19,6 +19,7 @@ signals:
 
 protected:
     void focusOutEvent(QFocusEvent* e) override;
+    void keyPressEvent(QKeyEvent* e) override;
 
 private slots:
     void slt_showFuncDesc();

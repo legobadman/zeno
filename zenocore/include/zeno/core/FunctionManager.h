@@ -35,7 +35,6 @@ namespace zeno {
         ZENO_API void testExp();
 
     private:
-        void init();
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);
         void pushStack();
         void popStack();
@@ -55,7 +54,6 @@ namespace zeno {
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
 
         VariableTable m_globalAttrCached;
-        std::map<std::string, FUNC_INFO> m_funcs;
         std::vector<ZfxStackEnv> m_stacks;
     };
 }
