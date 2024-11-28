@@ -6,6 +6,8 @@
 #include <QtWidgets>
 #include <QQuickView>
 #include "zqmlrender.h"
+#include <queue>
+#include <mutex>
 
 class ZQmlRender;
 class Camera;
@@ -71,6 +73,8 @@ private:
 #endif
     ZQmlRender* m_renderer;
     zeno::render_reload_info m_cache_info;
+    mutable std::mutex m_mtx;
+    std::queue<ViewMouseInfo> m_events;
 };
 
 class ZOpenGLQuickWidget : public QWidget

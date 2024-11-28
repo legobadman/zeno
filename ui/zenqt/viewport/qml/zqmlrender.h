@@ -45,10 +45,10 @@ public:
     void setDistance(float distance);
     void resize(int nx, int ny);
 
-    void fakeMousePressEvent(QMouseEvent* event);
-    void fakeMouseReleaseEvent(QMouseEvent* event);
-    void fakeMouseMoveEvent(QMouseEvent* event);
-    void fakeWheelEvent(QWheelEvent* event);
+    void fakeMousePressEvent(ViewMouseInfo event_info);
+    void fakeMouseReleaseEvent(ViewMouseInfo event_info);
+    void fakeMouseMoveEvent(ViewMouseInfo event_info);
+    void fakeWheelEvent(ViewMouseInfo event_info);
 
     void updatePerspective();
     void setNumSamples(int samples);

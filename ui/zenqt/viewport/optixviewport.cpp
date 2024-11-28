@@ -701,7 +701,8 @@ void ZOptixViewport::mousePressEvent(QMouseEvent* event)
         setSimpleRenderOption();
     }
     _base::mousePressEvent(event);
-    m_camera->fakeMousePressEvent(event);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+    m_camera->fakeMousePressEvent(info);
     update();
 }
 
@@ -711,7 +712,8 @@ void ZOptixViewport::mouseReleaseEvent(QMouseEvent* event)
         m_bMovingCamera = false;
     }
     _base::mouseReleaseEvent(event);
-    m_camera->fakeMouseReleaseEvent(event);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+    m_camera->fakeMouseReleaseEvent(info);
     update();
 }
 
@@ -723,14 +725,16 @@ void ZOptixViewport::mouseMoveEvent(QMouseEvent* event)
     setSimpleRenderOption();
 
     _base::mouseMoveEvent(event);
-    m_camera->fakeMouseMoveEvent(event);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+    m_camera->fakeMouseMoveEvent(info);
     update();
 }
 
 void ZOptixViewport::mouseDoubleClickEvent(QMouseEvent* event)
 {
     _base::mouseReleaseEvent(event);
-    m_camera->fakeMouseDoubleClickEvent(event);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+    m_camera->fakeMouseDoubleClickEvent(info);
     update();
 }
 
@@ -741,7 +745,8 @@ void ZOptixViewport::wheelEvent(QWheelEvent* event)
     setSimpleRenderOption();
 
     _base::wheelEvent(event);
-    m_camera->fakeWheelEvent(event);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos(), event->angleDelta() };
+    m_camera->fakeWheelEvent(info);
     update();
 }
 

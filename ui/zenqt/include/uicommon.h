@@ -5,6 +5,7 @@
 #include <QSize>
 #include <QDockWidget>
 #include <QString>
+#include <QEvent>
 #include <map>
 #include <unordered_map>
 #include <rapidjson/stringbuffer.h>
@@ -101,6 +102,15 @@ struct RoundRectInfo
     qreal lbradius = 0.;
     qreal rtradius = 0.;
     qreal rbradius = 0.;
+};
+
+struct ViewMouseInfo
+{
+    QEvent::Type type = QEvent::None;
+    Qt::KeyboardModifiers modifiers;
+    Qt::MouseButtons buttons;
+    QPointF pos;
+    QPoint angleDelta;
 };
 
 enum SearchType : unsigned int

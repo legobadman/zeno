@@ -68,6 +68,27 @@ void ZOpenGLQuickView::synchronizeUnderlay() {
     m_renderer->setElevation(m_camera->elevation());
     m_renderer->setDistance(m_camera->distance());
 #else
+    {
+        std::lock_guard lock(m_mtx);
+        while (!m_events.empty()) {
+             ViewMouseInfo event_info = m_events.front();
+            if (event_info.type != QEvent::None) {
+                if (QEvent::MouseButtonPress == event_info.type) {
+                    m_renderer->fakeMousePressEvent(event_info);
+                }
+                else if (QEvent::MouseButtonRelease == event_info.type) {
+                    m_renderer->fakeMouseReleaseEvent(event_info);
+                }
+                else if (QEvent::MouseMove == event_info.type) {
+                    m_renderer->fakeMouseMoveEvent(event_info);
+                }
+                else if (QEvent::Wheel == event_info.type) {
+                    m_renderer->fakeWheelEvent(event_info);
+                }
+            }
+            m_events.pop();
+        }
+    }
     if (m_cache_info.policy != zeno::Reload_Invalidate) {
         m_renderer->reload_objects(m_cache_info);
         m_cache_info.policy = zeno::Reload_Invalidate;
@@ -100,14 +121,22 @@ void ZOpenGLQuickView::mousePressEvent(QMouseEvent* event)
         //setSimpleRenderOption();
     }
     QQuickView::mousePressEvent(event);
-    m_renderer->fakeMousePressEvent(event);
+    {
+        std::lock_guard lck(m_mtx);
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+        m_events.push(info);
+    }
     update();
 }
 
 void ZOpenGLQuickView::mouseReleaseEvent(QMouseEvent* event)
 {
     QQuickView::mouseReleaseEvent(event);
-    m_renderer->fakeMouseReleaseEvent(event);
+    {
+        std::lock_guard lck(m_mtx);
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+        m_events.push(info);
+    }
     update();
 }
 
@@ -122,18 +151,27 @@ void ZOpenGLQuickView::mouseMoveEvent(QMouseEvent* event)
     //}
     //setSimpleRenderOption();
     QQuickView::mouseMoveEvent(event);
-    m_renderer->fakeMouseMoveEvent(event);
+    {
+        std::lock_guard lck(m_mtx);
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+        m_events.push(info);
+    }
     update();
 }
 
 void ZOpenGLQuickView::wheelEvent(QWheelEvent* event)
 {
     QQuickView::wheelEvent(event);
-    m_renderer->fakeWheelEvent(event);
+    {
+        std::lock_guard lck(m_mtx);
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos(), event->angleDelta() };
+        m_events.push(info);
+    }
     update();
 }
 
 void ZOpenGLQuickView::resizeEvent(QResizeEvent* event) {
+    //TODO: push event into queue
     //moc QGLWidget::resizeEvent
     QQuickView::resizeEvent(event);
     QSize sz = event->size();

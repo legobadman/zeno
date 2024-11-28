@@ -39,11 +39,11 @@ public:
 
     bool fakeKeyPressEvent(int uKey);
     bool fakeKeyReleaseEvent(int uKey);
-    void fakeMousePressEvent(QMouseEvent* event);
-    void fakeMouseReleaseEvent(QMouseEvent* event);
-    void fakeMouseMoveEvent(QMouseEvent* event);
-    void fakeWheelEvent(QWheelEvent* event);
-    void fakeMouseDoubleClickEvent(QMouseEvent* event);
+    void fakeMousePressEvent(ViewMouseInfo info);
+    void fakeMouseReleaseEvent(ViewMouseInfo info);
+    void fakeMouseMoveEvent(ViewMouseInfo info);
+    void fakeWheelEvent(ViewMouseInfo info);
+    void fakeMouseDoubleClickEvent(ViewMouseInfo info);
     void focus(QVector3D center, float radius);
     [[deprecated]]
     QVector3D realPos() const;

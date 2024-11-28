@@ -215,27 +215,27 @@ void ZQmlRender::render()
 #endif
 }
 
-void ZQmlRender::fakeMousePressEvent(QMouseEvent* event) {
+void ZQmlRender::fakeMousePressEvent(ViewMouseInfo event_info) {
 #ifndef BASE_KDAB
-    m_camera->fakeMousePressEvent(event);
+    m_camera->fakeMousePressEvent(event_info);
 #endif
 }
 
-void ZQmlRender::fakeMouseReleaseEvent(QMouseEvent* event) {
+void ZQmlRender::fakeMouseReleaseEvent(ViewMouseInfo event_info) {
 #ifndef BASE_KDAB
-    m_camera->fakeMouseReleaseEvent(event);
+    m_camera->fakeMouseReleaseEvent(event_info);
 #endif
 }
 
-void ZQmlRender::fakeMouseMoveEvent(QMouseEvent* event) {
+void ZQmlRender::fakeMouseMoveEvent(ViewMouseInfo event_info) {
 #ifndef BASE_KDAB
-    m_camera->fakeMouseMoveEvent(event);
+    m_camera->fakeMouseMoveEvent(event_info);
 #endif
 }
 
-void ZQmlRender::fakeWheelEvent(QWheelEvent* event) {
+void ZQmlRender::fakeWheelEvent(ViewMouseInfo event_info) {
 #ifndef BASE_KDAB
-    m_camera->fakeWheelEvent(event);
+    m_camera->fakeWheelEvent(event_info);
 #endif
 }
 
