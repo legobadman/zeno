@@ -24,15 +24,19 @@ namespace zeno
             return std::visit([](auto const& val) -> T {
                 using V = std::decay_t<decltype(val)>;
                 if constexpr (!std::is_constructible_v<T, V>) {
-                    if constexpr (std::is_same_v<T, glm::vec3> && std::is_same_v<V, zfxfloatarr>) {
+                    if constexpr (std::is_same_v<T, glm::vec3> && (std::is_same_v<V, zfxfloatarr> || std::is_same_v<V, zfxintarr>)) {
                         return glm::vec3(val[0], val[1], val[2]);
-                    }
+                    } else if constexpr (std::is_same_v<T, zeno::vec3f> && (std::is_same_v<V, zfxfloatarr> || std::is_same_v<V, zfxintarr>)) {
+                        return zeno::vec3f(val[0], val[1], val[2]);
+                    } else if constexpr (std::is_same_v<T, zeno::vec3i> && (std::is_same_v<V, zfxfloatarr> || std::is_same_v<V, zfxintarr>)) {
+                        return zeno::vec3i(val[0], val[1], val[2]);
+                    } 
                     throw makeError<TypeError>(typeid(T), typeid(V), "get<zfxvariant>");
                 }
                 else {
                     return T(val);
                 }
-            }, value);
+                }, value);
         }
 
         template <class T>
@@ -442,11 +446,16 @@ namespace zeno
                     int ptnum = -1;
                     std::visit([&](auto&& val) {
                         using T = std::decay_t<decltype(val)>;
-                        if constexpr (std::is_same_v<T, glm::vec3>) {
+                        if constexpr (std::is_same_v<T, glm::vec3> || std::is_same_v<T, zeno::vec3f> || std::is_same_v < T, zeno::vec3i > ) {
                             ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
-                        }
-                        else {
-                            //TODO: error
+                        } else if constexpr (std::is_same_v<T, zfxintarr> || std::is_same_v<T, zfxfloatarr>) {
+                            if (val.size() == 3) {
+                                ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
+                            } else {
+                                throw makeError<UnimplError>("the number of arguments of add_point is not matched.");
+                            }
+                        } else {
+                            throw makeError<UnimplError>("the type of arguments of add_point is not matched.");
                         }
                         }, varpos);
                     ZfxVariable res;
@@ -514,8 +523,12 @@ namespace zeno
 
                 /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                    bool ret = spGeo->remove_vertex(faceid, vertid);
-                    bSucceed = true;
+                    bSucceed = spGeo->remove_vertex(faceid, vertid);
+                }
+
+                if (bSucceed) {
+                } else {
+                    throw makeError<UnimplError>("error on removeVertex");
                 }
 #if 0
                 if (bSucceed) {
@@ -564,8 +577,7 @@ namespace zeno
 
                 /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                    spGeo->remove_point(currrem);
-                    bSucceed = true;
+                    bSucceed = spGeo->remove_point(currrem);
                 }
                 if (bSucceed) {
                     //要调整filter，移除掉第currrem位置的元素
@@ -606,8 +618,7 @@ namespace zeno
                     remPoints.pop_front();
                     bSucceed = false;
                     if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                        spGeo->remove_point(currrem);
-                        bSucceed = true;
+                        bSucceed = spGeo->remove_point(currrem);
                     }
                     if (bSucceed) {
                         //要调整filter，移除掉第currrem位置的元素

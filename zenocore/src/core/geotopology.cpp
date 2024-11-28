@@ -690,7 +690,7 @@ namespace zeno
 
     bool GeometryTopology::remove_vertex(int face_id, int vert_id) {
         if (face_id < 0 || face_id >= m_faces.size() || vert_id < 0 || vert_id >= nvertices(face_id)) {
-            return true;
+            return false;
         }
 
         HEdge* first = m_faces[face_id]->h;
@@ -757,7 +757,7 @@ namespace zeno
         std::set<Point*> remPtrPoints;
         for (auto face_id : faces) {
             if (face_id < 0 || face_id >= m_faces.size()) {
-                continue;
+                return false;
             }
 
             auto pFace = m_faces[face_id];

@@ -37,7 +37,7 @@ ZENO_API int ZfxExecute::parse() {
 ZENO_API int ZfxExecute::execute() {
     int ret = parse();
     if (ret != 0) {
-        zeno::log_error("parse error!");
+        throw makeError<ZfxParseError>();
         return ret;
     }
     //TODO: error exception catch.

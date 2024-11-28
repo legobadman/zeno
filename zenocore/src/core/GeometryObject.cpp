@@ -186,6 +186,7 @@ namespace zeno
             } else {
                 CALLBACK_NOTIFY(remove_vertex, linear_vertex)
             }
+            return true;
         } else {
             return false;
         }
@@ -337,7 +338,7 @@ namespace zeno
         }
 
         int n = get_attr_size(grp);
-        container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n)));
+        container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n == 0 ? 1 : n)));
 
         if (grp == ATTR_GEO) {
         }

@@ -530,10 +530,10 @@ namespace zeno {
             }
             case TYPE_INT_ARR: {
                 if (std::holds_alternative<zfxfloatarr>(newvar)) {
-                    zfxfloatarr floatarr;
+                    zfxintarr intarr;
                     for (auto&& val : std::get<zfxfloatarr>(newvar))
-                        floatarr.push_back(val);
-                    newvar = floatarr;
+                        intarr.push_back(val);
+                    newvar = intarr;
                 }
                 else if (!std::holds_alternative<zfxintarr>(newvar)) {
                     throw makeError<UnimplError>("type dismatch TYPE_INT_ARR");
@@ -554,10 +554,10 @@ namespace zeno {
             }
             case TYPE_FLOAT_ARR: {
                 if (std::holds_alternative<zfxintarr>(newvar)) {
-                    zfxintarr intarr;
+                    zfxfloatarr floatarr;
                     for (auto&& val : std::get<zfxintarr>(newvar))
-                        intarr.push_back(val);
-                    newvar = intarr;
+                        floatarr.push_back(val);
+                    newvar = floatarr;
                 }
                 else if (!std::holds_alternative<zfxfloatarr>(newvar)) {
                     throw makeError<UnimplError>("type dismatch TYPE_FLOAT_ARR");
@@ -1740,7 +1740,8 @@ namespace zeno {
             if (funcname == "ref") {
                 if (root->children.size() != 1)
                     throw makeError<UnimplError>();
-                const std::string ref = std::get<std::string>(calc(root->children[0], pContext));
+                const zeno::zfxvariant& res = calc(root->children[0], pContext);
+                const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                 //收集ref信息源，包括源节点和参数
 
                 std::string fullPath, graphAbsPath;

@@ -89,7 +89,7 @@ void ZCodeEditor::slt_showFuncDesc()
         }
     }
     if (m_descLabel->isVisible()) {
-        m_descLabel->hide();
+        //m_descLabel->hide();
     }
 }
 

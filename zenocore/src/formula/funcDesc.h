@@ -214,7 +214,7 @@ namespace zeno
                 "Remove faces from the geometry.\n"\
                 "faces:\n    The vector of pointId.\n"\
                 "includePoints:\n    If true, will also remove any points associated with the face that are not associated with any other faces.",
-                "bool", {{"remFaces", "vector<int>"}, {"includePoints", "bool"}}}
+                "bool", {{"remFace", "int"}, {"includePoints", "bool"}}}
             },
             { "remove_point",
                 { "remove_point",

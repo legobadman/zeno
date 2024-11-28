@@ -69,6 +69,11 @@ struct UnimplError : Error {
     ZENO_API ~UnimplError() noexcept override;
 };
 
+struct ZfxParseError : Error {
+    ZENO_API explicit ZfxParseError() noexcept;
+    ZENO_API ~ZfxParseError() noexcept override;
+};
+
 class ErrorException : public std::exception {
     std::shared_ptr<Error> const err;
 
