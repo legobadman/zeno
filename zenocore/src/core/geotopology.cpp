@@ -365,7 +365,7 @@ namespace zeno
     }
 
     std::vector<int> GeometryTopology::face_vertices(int face_id) {
-        if (face_id < 0 || face_id > m_faces.size())
+        if (face_id < 0 || face_id >= m_faces.size())
             return std::vector<int>();
 
         auto start_linear_idx = m_faces[face_id]->start_linearIdx;
@@ -756,6 +756,10 @@ namespace zeno
         std::set<int> remPoints;
         std::set<Point*> remPtrPoints;
         for (auto face_id : faces) {
+            if (face_id < 0 || face_id >= m_faces.size()) {
+                continue;
+            }
+
             auto pFace = m_faces[face_id];
 
             auto firsth = pFace->h;
