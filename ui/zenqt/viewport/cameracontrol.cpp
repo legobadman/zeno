@@ -272,7 +272,7 @@ void CameraControl::fakeMouseMoveEvent(ViewMouseInfo info)
     else if (!bTransform && ctrl_pressed && (info.buttons & Qt::MiddleButton)) {
         // rot roll
         float step = 1.0f;
-        float ratio = QApplication::desktop()->devicePixelRatio();
+        float ratio = 1.0;// QApplication::desktop()->devicePixelRatio();
         float dy = y - m_lastMidButtonPos.y();
         dy *= ratio / m_res[1] * step;
         {
@@ -283,7 +283,7 @@ void CameraControl::fakeMouseMoveEvent(ViewMouseInfo info)
         m_lastMidButtonPos = QPointF(x, y);
     }
     else if (!bTransform && (info.buttons & (rotateButton | moveButton))) {
-        float ratio = QApplication::desktop()->devicePixelRatio();
+        float ratio = 1.0;// QApplication::desktop()->devicePixelRatio();
         float dx = x - m_lastMidButtonPos.x(), dy = y - m_lastMidButtonPos.y();
         dx *= ratio / m_res[0];
         dy *= ratio / m_res[1];
@@ -469,11 +469,6 @@ void CameraControl::fakeWheelEvent(ViewMouseInfo info) {
         }
     }
     updatePerspective();
-    //TODO: need update light?
-    //if (zenoApp->getMainWindow()->lightPanel != nullptr) {
-    //    zenoApp->getMainWindow()->lightPanel->camApertureEdit->setText(QString::number(getAperture()));
-    //    zenoApp->getMainWindow()->lightPanel->camDisPlaneEdit->setText(QString::number(getDisPlane()));
-    //}
 }
 
 void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)

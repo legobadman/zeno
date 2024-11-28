@@ -1,3 +1,3 @@
 #pragma once
 
-//#define ENABLE_HIGHDPI_SCALE
+#define ENABLE_HIGHDPI_SCALE
