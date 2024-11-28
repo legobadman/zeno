@@ -12,6 +12,7 @@
 #include <QuickQanava>
 #include <QQuickStyle>
 #include "viewport/qml/zopenglquickview.h"
+#include "style/dpiscale.h"
 
 
 /* debug cutsom layout: ZGraphicsLayout */
@@ -46,7 +47,9 @@ int	main(int argc, char** argv)
 #else
 int main(int argc, char *argv[]) 
 {
+#ifdef ENABLE_HIGHDPI_SCALE
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
     glutInit(&argc, argv);
 
     ZenoApplication a(argc, argv);

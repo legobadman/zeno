@@ -284,6 +284,7 @@ void ZenoMainWindow::onMenuActionTriggered(bool bTriggered)
     case ACTION_OBJECT_DATA:
     case ACTION_GL_VIEWPORT:
     case ACTION_OPTIX_VIEW:
+    case ACTION_QML_PANEL:
     case ACTION_OPEN_PATH:
     case ACTION_NODE_PARAMETERS:
     case ACTION_LOG:
@@ -922,6 +923,12 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         title = tr("Optix Viewport");
         break;
     }
+    case ACTION_QML_PANEL: {
+        auto panel = new ZQmlPanel;
+        pWid = panel;
+        title = tr("QML Panel");
+        break;
+    }
     case ACTION_OPEN_PATH: {
         break;
     }
@@ -1055,7 +1062,7 @@ QVector<DisplayWidget*> ZenoMainWindow::viewports() const
     QVector<DisplayWidget*> views;
     for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
     {
-        if (dock->isVisible())
+        //if (dock->isVisible())
         {
             QWidget* wid = dock->widget();
             if (DockContent_View* view = qobject_cast<DockContent_View*>(wid)) {
@@ -1874,6 +1881,7 @@ void ZenoMainWindow::setActionProperty()
     m_ui->actionObject_data->setProperty("ActionType", ACTION_OBJECT_DATA);
     m_ui->actionLog->setProperty("ActionType", ACTION_LOG);
     m_ui->actionOptixView->setProperty("ActionType", ACTION_OPTIX_VIEW);
+    m_ui->actionQML_Panel->setProperty("ActionType", ACTION_QML_PANEL);
     m_ui->actionOpenPath->setProperty("ActionType", ACTION_OPEN_PATH);
     m_ui->actionImage->setProperty("ActionType", ACTION_IMAGE);
 

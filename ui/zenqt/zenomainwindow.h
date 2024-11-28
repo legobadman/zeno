@@ -116,6 +116,7 @@ public:
         ACTION_OBJECT_DATA,
         ACTION_LOG,
         ACTION_OPTIX_VIEW,
+        ACTION_QML_PANEL,
         ACTION_IMAGE,
         ACTION_COMMAND_ARGS,
         ACTION_OPEN_PATH,

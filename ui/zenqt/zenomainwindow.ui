@@ -23,7 +23,7 @@
      <x>0</x>
      <y>0</y>
      <width>809</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -98,6 +98,7 @@
     <addaction name="actionObject_data"/>
     <addaction name="actionLog"/>
     <addaction name="actionOptixView"/>
+    <addaction name="actionQML_Panel"/>
     <addaction name="actionImage"/>
     <addaction name="actionCommandArgs"/>
     <addaction name="actionOpenPath"/>
@@ -506,6 +507,11 @@ border-top: 1px solid black;</string>
   <action name="actionPreferences">
    <property name="text">
     <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionQML_Panel">
+   <property name="text">
+    <string>QML Panel</string>
    </property>
   </action>
  </widget>

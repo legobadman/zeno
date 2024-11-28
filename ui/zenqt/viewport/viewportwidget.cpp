@@ -23,6 +23,7 @@
 #include <zeno/types/UserData.h>
 #include "settings/zenosettingsmanager.h"
 #include "cameracontrol.h"
+#include "style/dpiscale.h"
 
 
 using std::string;
@@ -169,7 +170,11 @@ void ViewportWidget::initializeGL()
 
 void ViewportWidget::resizeGL(int nx, int ny)
 {
-    float ratio = 1.0;// devicePixelRatioF();
+#ifdef ENABLE_HIGHDPI_SCALE
+    float ratio = 1.0;
+#else
+    float ratio = devicePixelRatioF();
+#endif
     zeno::log_trace("nx={}, ny={}, dpr={}", nx, ny, ratio);
     m_camera->setRes(QVector2D(nx * ratio, ny * ratio));
     m_camera->updatePerspective();
