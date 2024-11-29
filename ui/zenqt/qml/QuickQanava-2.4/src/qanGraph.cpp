@@ -256,6 +256,12 @@ void    Graph::setContainerItem(QQuickItem* containerItem)
         emit containerItemChanged();
     }
 }
+
+void Graph::setModel(GraphModel* pModel)
+{
+    m_model = pModel;
+}
+
 //-----------------------------------------------------------------------------
 
 

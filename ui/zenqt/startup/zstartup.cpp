@@ -20,6 +20,7 @@
 void initQml()
 {
     qRegisterMetaType<LinkModel*>("LinkModel*");
+    qRegisterMetaType<GraphModel*>("GraphModel*");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
     zenoApp->initQuickQanavas();
 }

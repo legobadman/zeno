@@ -54,6 +54,7 @@
 #include "./qanNavigable.h"
 #include "./qanSelectable.h"
 #include "./qanConnector.h"
+#include "model/GraphModel.h"
 
 
 //! Main QuickQanava namespace
@@ -137,10 +138,13 @@ public:
      * graphics items.
      */
     Q_PROPERTY(QQuickItem*      containerItem READ getContainerItem NOTIFY containerItemChanged FINAL)
+    Q_PROPERTY(GraphModel*      model READ getModel WRITE setModel FINAL)
     //! \sa containerItem
     inline QQuickItem*          getContainerItem() noexcept { return _containerItem.data(); }
     inline const QQuickItem*    getContainerItem() const noexcept { return _containerItem.data(); }
     void                        setContainerItem(QQuickItem* containerItem);
+    GraphModel*                 getModel() const noexcept { return m_model; }
+    void                        setModel(GraphModel* pModel);
 signals:
     void                        containerItemChanged();
 private:
@@ -1121,6 +1125,9 @@ protected:
     auto    collectGroupNodes_rec(const qan::Group* group, std::unordered_set<const qan::Node*>& nodes) const -> void;
     //@}
     //-------------------------------------------------------------------------
+
+private:
+    GraphModel* m_model;
 };
 
 } // ::qan

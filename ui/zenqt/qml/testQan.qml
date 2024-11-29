@@ -45,15 +45,13 @@ Item {
         TabBar {
             id: tabBar
             Layout.preferredWidth: 450; Layout.fillHeight: false
-            TabButton { text: qsTr("Default Nodes") }
-            TabButton { text: qsTr("Custom Nodes") }
+            TabButton { text: qsTr("Zeno Nodes") }
         }
         StackLayout {
             clip: true
             Layout.fillWidth: true; Layout.fillHeight: true
             currentIndex: tabBar.currentIndex
-            Item { Loader { anchors.fill: parent; source: "qrc:/default.qml"} }
-            Item { Loader { anchors.fill: parent; source: "qrc:/custom.qml"} }
+            Item { Loader { anchors.fill: parent; source: "qrc:/zenographview.qml"} }
         }
     }
     RowLayout {

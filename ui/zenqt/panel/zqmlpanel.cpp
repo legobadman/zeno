@@ -1,6 +1,7 @@
 #include "zenoapplication.h"
 #include "zqmlpanel.h"
 #include "model/GraphModel.h"
+#include "model/graphsmanager.h"
 
 
 ZQmlPanel::ZQmlPanel(QWidget* parent)
@@ -8,8 +9,9 @@ ZQmlPanel::ZQmlPanel(QWidget* parent)
 {
     //QQuickStyle::setStyle("Material");
     //QQmlApplicationEngine* engine = zenoApp->getQmlEngine();
+    GraphModel* pGraphM = zenoApp->graphsManager()->getGraph({ "main" });
     setResizeMode(QQuickWidget::SizeRootObjectToView);
-    ////rootContext()->setContextProperty("nodesModel", pGraphM);
+    rootContext()->setContextProperty("nodesModel", pGraphM);
     setSource(QUrl(QStringLiteral("qrc:/testQan.qml")));
 }
 
