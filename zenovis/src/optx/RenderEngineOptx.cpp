@@ -1370,8 +1370,10 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             graphicsMan->graphics.clear();
 
             std::shared_ptr<zeno::Graph> spGraph = sess.getGraphByPath(info.current_ui_graph);
+            if (!spGraph) {
+                return;
+            }
             //TODO: 要考虑asset的情况
-            assert(spGraph);
             const auto& viewnodes = spGraph->get_viewnodes();
             //其实是否可以在外面提前准备好对象列表？
             for (auto viewnode : viewnodes) {

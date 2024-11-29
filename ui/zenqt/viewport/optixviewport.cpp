@@ -13,6 +13,7 @@
 #include <zenovis/ObjectsManager.h>
 #include "zassert.h"
 #include "nodeeditor/gv/zenographseditor.h"
+#include "style/dpiscale.h"
 
 
 std::vector<zeno::vec3f> computeLightPrim(zeno::vec3f position, zeno::vec3f rotate, zeno::vec3f scale) {
@@ -688,7 +689,11 @@ void ZOptixViewport::resizeEvent(QResizeEvent* event)
     int nx = sz.width();
     int ny = sz.height();
 
+#ifdef ENABLE_HIGHDPI_SCALE
+    float ratio = 1.0;
+#else
     float ratio = devicePixelRatioF();
+#endif
     zeno::log_trace("nx={}, ny={}, dpr={}", nx, ny, ratio);
     m_camera->setRes(QVector2D(nx * ratio, ny * ratio));
     m_camera->updatePerspective();

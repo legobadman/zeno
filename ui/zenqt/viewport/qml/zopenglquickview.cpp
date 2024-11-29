@@ -123,7 +123,8 @@ void ZOpenGLQuickView::mousePressEvent(QMouseEvent* event)
     QQuickView::mousePressEvent(event);
     {
         std::lock_guard lck(m_mtx);
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+        auto ratio = QApplication::desktop()->devicePixelRatio();
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
         m_events.push(info);
     }
     update();
@@ -134,7 +135,8 @@ void ZOpenGLQuickView::mouseReleaseEvent(QMouseEvent* event)
     QQuickView::mouseReleaseEvent(event);
     {
         std::lock_guard lck(m_mtx);
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+        auto ratio = QApplication::desktop()->devicePixelRatioF();
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
         m_events.push(info);
     }
     update();
@@ -153,7 +155,8 @@ void ZOpenGLQuickView::mouseMoveEvent(QMouseEvent* event)
     QQuickView::mouseMoveEvent(event);
     {
         std::lock_guard lck(m_mtx);
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+        auto ratio = QApplication::desktop()->devicePixelRatioF();
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
         m_events.push(info);
     }
     update();
@@ -164,7 +167,8 @@ void ZOpenGLQuickView::wheelEvent(QWheelEvent* event)
     QQuickView::wheelEvent(event);
     {
         std::lock_guard lck(m_mtx);
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos(), event->angleDelta() };
+        auto ratio = QApplication::desktop()->devicePixelRatioF();
+        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos(), event->angleDelta() };
         m_events.push(info);
     }
     update();
