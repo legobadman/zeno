@@ -38,6 +38,7 @@
 #include <QQuickItem>
 #include <QPointF>
 #include <QPolygonF>
+#include <QModelIndex>
 
 // QuickQanava headers
 #include "./gtpo/node.h"
@@ -75,7 +76,7 @@ public:
     using super_t = gtpo::node<QObject, qan::Graph, qan::Node, qan::Edge, qan::Group>;
 
     //! Node constructor.
-    explicit Node(QObject* parent=nullptr);
+    explicit Node(QModelIndex idx = QModelIndex(), QObject* parent = nullptr);
     virtual ~Node();
     Node(const Node&) = delete;
 
@@ -170,6 +171,7 @@ public:
     QString         getLabel() const { return _label; }
 private:
     QString         _label = "";
+    QPersistentModelIndex m_index;
 signals:
     void            labelChanged();
 

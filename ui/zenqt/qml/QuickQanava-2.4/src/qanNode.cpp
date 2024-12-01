@@ -46,8 +46,9 @@
 namespace qan { // ::qan
 
 /* Node Object Management *///-------------------------------------------------
-Node::Node(QObject* parent) :
-    super_t{parent}
+Node::Node(QModelIndex idx, QObject* parent)
+    : super_t{parent}
+    , m_index(idx)
 {
     Q_UNUSED(parent)
 

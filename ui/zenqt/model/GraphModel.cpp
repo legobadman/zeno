@@ -259,7 +259,7 @@ void GraphModel::registerCoreNotify()
             triggerView(nodepath, false);
         }
         removeRow(row);
-        GraphsManager::instance().currentModel()->markDirty(true);
+        zenoApp->graphsManager()->currentModel()->markDirty(true);
     });
 
     m_cbAddLink = coreGraph->register_addLink([&](zeno::EdgeInfo edge) -> bool {
@@ -954,7 +954,7 @@ void GraphModel::_addLink(const zeno::EdgeInfo link)
         toParams->addLink(to, linkIdx);
     }
 
-    GraphsManager::instance().currentModel()->markDirty(true);
+    zenoApp->graphsManager()->currentModel()->markDirty(true);
 }
 
 QVariant GraphModel::removeLink(const QString& nodeName, const QString& paramName, bool bInput)
@@ -1045,7 +1045,7 @@ bool GraphModel::_removeLink(const zeno::EdgeInfo& edge)
         if (linkIdx.isValid())
             m_linkModel->removeRow(linkIdx.row());
     }
-    GraphsManager::instance().currentModel()->markDirty(true);
+    zenoApp->graphsManager()->currentModel()->markDirty(true);
     return true;
 }
 
@@ -1068,7 +1068,7 @@ void GraphModel::_updateName(const QString& oldName, const QString& newName)
     QModelIndex idx = createIndex(row, 0);
     emit dataChanged(idx, idx, QVector<int>{ ROLE_NODE_NAME });
     emit nameUpdated(idx, oldName);
-    GraphsManager::instance().currentModel()->markDirty(true);
+    zenoApp->graphsManager()->currentModel()->markDirty(true);
 }
 
 zeno::NodeData GraphModel::createNode(const QString& nodeCls, const QString& cate, const QPointF& pos)
@@ -1105,12 +1105,12 @@ void GraphModel::_appendNode(void* _spNode)
 
     endInsertRows();
 
-    GraphsManager::instance().currentModel()->markDirty(true);
+    zenoApp->graphsManager()->currentModel()->markDirty(true);
 }
 
 zeno::NodeData GraphModel::_createNodeImpl(const QString& cate, zeno::NodeData& nodedata, bool endTransaction)
 {
-    bool bEnableIoProc = GraphsManager::instance().isInitializing() || GraphsManager::instance().isImporting();
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
 
@@ -1174,7 +1174,7 @@ zeno::NodeData GraphModel::_createNodeImpl(const QString& cate, zeno::NodeData& 
                         if (zeno::isDerivedFromSubnetNodeName(nodedata.cls)) {   //if is subnet, create recursively
                             QStringList cur = currentPath();
                             cur.append(QString::fromStdString(spNode->get_name()));
-                            GraphModel* model = GraphsManager::instance().getGraph(cur);
+                            GraphModel* model = zenoApp->graphsManager()->getGraph(cur);
                             if (model)
                                 model->_createNodeImpl(cate, nodedata, false);
                         }
@@ -1213,7 +1213,7 @@ zeno::NodeData GraphModel::_createNodeImpl(const QString& cate, zeno::NodeData& 
 
 bool GraphModel::_removeNodeImpl(const QString& name, bool endTransaction)
 {
-    bool bEnableIoProc = GraphsManager::instance().isInitializing() || GraphsManager::instance().isImporting();
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
 
@@ -1266,7 +1266,7 @@ bool GraphModel::_removeNodeImpl(const QString& name, bool endTransaction)
 
 void GraphModel::_addLinkImpl(const zeno::EdgeInfo& link, bool endTransaction)
 {
-    bool bEnableIoProc = GraphsManager::instance().isInitializing() || GraphsManager::instance().isImporting();
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
 
@@ -1286,7 +1286,7 @@ void GraphModel::_addLinkImpl(const zeno::EdgeInfo& link, bool endTransaction)
 
 void GraphModel::_removeLinkImpl(const zeno::EdgeInfo& link, bool endTransaction)
 {
-    bool bEnableIoProc = GraphsManager::instance().isInitializing() || GraphsManager::instance().isImporting();
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
 
@@ -1321,7 +1321,8 @@ bool GraphModel::setModelData(const QModelIndex& index, const QVariant& newValue
 
 void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransaction)
 {
-    bool bEnableIoProc = GraphsManager::instance().isInitializing() || GraphsManager::instance().isImporting();
+    
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
 
@@ -1344,7 +1345,7 @@ void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransact
 
 void GraphModel::_setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransaction)
 {
-    bool bEnableIoProc = GraphsManager::instance().isInitializing() || GraphsManager::instance().isImporting();
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
 
@@ -1627,5 +1628,5 @@ void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData
 
 GraphModel* GraphModel::getTopLevelGraph(const QStringList& currentPath)
 {
-    return GraphsManager::instance().getGraph({ currentPath[0] });
+    return zenoApp->graphsManager()->getGraph({ currentPath[0] });
 }

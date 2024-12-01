@@ -1236,7 +1236,7 @@ void ZenoGraphsEditor::onAction(QAction* pAction, const QVariantList& args, bool
         //TODO: refactor undo/redo
         if (m_ui->graphsViewTab->count() > 0)
         {
-            GraphModel* pModel = GraphsManager::instance().getGraph({ m_ui->graphsViewTab->tabText(m_ui->graphsViewTab->currentIndex()) });
+            GraphModel* pModel = zenoApp->graphsManager()->getGraph({ m_ui->graphsViewTab->tabText(m_ui->graphsViewTab->currentIndex()) });
             if (pModel)
                 pModel->undo();
         }
@@ -1245,7 +1245,7 @@ void ZenoGraphsEditor::onAction(QAction* pAction, const QVariantList& args, bool
     {
         if (m_ui->graphsViewTab->count() > 0)
         {
-            GraphModel* pModel = GraphsManager::instance().getGraph({ m_ui->graphsViewTab->tabText(m_ui->graphsViewTab->currentIndex()) });
+            GraphModel* pModel = zenoApp->graphsManager()->getGraph({ m_ui->graphsViewTab->tabText(m_ui->graphsViewTab->currentIndex()) });
             if (pModel)
                 pModel->redo();
         }

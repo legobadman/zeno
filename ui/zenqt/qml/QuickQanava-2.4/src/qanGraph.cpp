@@ -257,9 +257,20 @@ void    Graph::setContainerItem(QQuickItem* containerItem)
     }
 }
 
-void Graph::setModel(GraphModel* pModel)
+void Graph::setModel(GraphModel* pGraphM)
 {
-    m_model = pModel;
+    if (!pGraphM)
+        return;
+    //模型不能随意切换，一般来说一个GraphModel唯一对应一个qan::Graph.
+    m_model = pGraphM;
+    for (int r = 0; r < pGraphM->rowCount(); r++)
+    {
+        const QModelIndex& idx = pGraphM->index(r, 0);
+        //init node.
+        //TODO: delegate?
+        qan::Node* pNode = insertNode(idx);
+
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -604,9 +615,9 @@ auto    Graph::insertNonVisualNode(Node* node) -> bool
     return false;
 }
 
-qan::Node*  Graph::insertNode(QQmlComponent* nodeComponent, qan::NodeStyle* nodeStyle)
+qan::Node*  Graph::insertNode(const QModelIndex& idx, QQmlComponent* nodeComponent, qan::NodeStyle* nodeStyle)
 {
-    return insertNode<qan::Node>(nodeComponent, nodeStyle);
+    return insertNode<qan::Node>(idx, nodeComponent, nodeStyle);
 }
 
 bool    Graph::insertNode(Node* node, QQmlComponent* nodeComponent, qan::NodeStyle* nodeStyle)

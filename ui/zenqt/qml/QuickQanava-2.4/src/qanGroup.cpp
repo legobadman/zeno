@@ -47,7 +47,7 @@ namespace qan { // ::qan
 
 /* Group Object Management *///------------------------------------------------
 Group::Group(QObject* parent) :
-    qan::Node{parent}
+    qan::Node{QModelIndex(), parent}
 {
     set_is_group(true);
 }

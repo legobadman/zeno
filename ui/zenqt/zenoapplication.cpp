@@ -16,6 +16,7 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
     , m_bUIApp(true)
     , m_calcMgr(new CalculationMgr(this))
+    , m_graphsMgr(new GraphsManager(this))
     , m_engine(nullptr)
 {
     initMetaTypes();
@@ -56,29 +57,28 @@ void ZenoApplication::onThreadLogReady(const QString& msg)
         QMessageLogger logger("zeno", 0, 0);
         QChar tip = msg.at(1);
 
-        auto& mgr = GraphsManager::instance();
+        auto mgr = m_graphsMgr;
         if (tip == 'T') {
-            mgr.appendLog(QtDebugMsg, "zeno", 0, msg);
+            mgr->appendLog(QtDebugMsg, "zeno", 0, msg);
         }
         else if (tip == 'D') {
-            mgr.appendLog(QtDebugMsg, "zeno", 0, msg);
+            mgr->appendLog(QtDebugMsg, "zeno", 0, msg);
         }
         else if (tip == 'I') {
-            mgr.appendLog(QtInfoMsg, "zeno", 0, msg);
+            mgr->appendLog(QtInfoMsg, "zeno", 0, msg);
         }
         else if (tip == 'C') {
-            mgr.appendLog(QtCriticalMsg, "zeno", 0, msg);
+            mgr->appendLog(QtCriticalMsg, "zeno", 0, msg);
         }
         else if (tip == 'W') {
-            mgr.appendLog(QtWarningMsg, "zeno", 0, msg);
+            mgr->appendLog(QtWarningMsg, "zeno", 0, msg);
         }
         else if (tip == 'E') {
-            mgr.appendLog(QtFatalMsg, "zeno", 0, msg);
+            mgr->appendLog(QtFatalMsg, "zeno", 0, msg);
         }
     }
     else {
-        auto& mgr = GraphsManager::instance();
-        mgr.appendLog(QtDebugMsg, "zeno", 0, msg);
+        m_graphsMgr->appendLog(QtDebugMsg, "zeno", 0, msg);
     }
 }
 
@@ -177,7 +177,7 @@ void ZenoApplication::initFonts()
 
 GraphsManager* ZenoApplication::graphsManager() const
 {
-    return &GraphsManager::instance();
+    return m_graphsMgr;
 }
 
 CalculationMgr* ZenoApplication::calculationMgr() const

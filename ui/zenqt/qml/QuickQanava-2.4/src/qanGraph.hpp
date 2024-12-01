@@ -37,7 +37,7 @@ namespace qan { // ::qan
 
 /* Graph Factories *///--------------------------------------------------------
 template <class Node_t>
-qan::Node*  Graph::insertNode(QQmlComponent* nodeComponent, qan::NodeStyle* nodeStyle)
+qan::Node*  Graph::insertNode(const QModelIndex& idx, QQmlComponent* nodeComponent, qan::NodeStyle* nodeStyle)
 {
     if (nodeComponent == nullptr) {
         const auto engine = qmlEngine(this);
@@ -51,7 +51,7 @@ qan::Node*  Graph::insertNode(QQmlComponent* nodeComponent, qan::NodeStyle* node
         qWarning() << "Component error: " << nodeComponent->errors();
         return nullptr;
     }
-    const auto node = new Node_t{};   // Might leak, but using unique_ptr is unsafe given current mxed bool/except error handling
+    const auto node = new Node_t(idx);   // Might leak, but using unique_ptr is unsafe given current mxed bool/except error handling
     try {
         QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);
         if (nodeStyle == nullptr)
@@ -110,7 +110,7 @@ qan::Node*  Graph::insertNode(QQmlComponent* nodeComponent, qan::NodeStyle* node
 template <class Node_t>
 qan::Node*  Graph::insertNonVisualNode()
 {
-    const auto node = new Node_t();
+    const auto node = new Node_t(QModelIndex());
     try {
         QQmlEngine::setObjectOwnership(node, QQmlEngine::CppOwnership);
         if (!insert_node(node))

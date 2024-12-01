@@ -40,6 +40,7 @@ private:
 
     std::shared_ptr<ZWidgetErrStream> m_spUILogStream;
     std::shared_ptr<ProcessClipboard> m_spProcClipboard;
+    GraphsManager* m_graphsMgr;
     CalculationMgr* m_calcMgr;
     QQmlApplicationEngine* m_engine;
     QDir m_appDataPath;

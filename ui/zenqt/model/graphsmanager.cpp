@@ -18,6 +18,26 @@
 #include "zenomainwindow.h"
 
 
+GraphsTotalView::GraphsTotalView()
+    : _graphMgr(zenoApp->graphsManager())
+{
+    connect(_graphMgr, &GraphsManager::modelInited, this, &GraphsTotalView::modelInited);
+    connect(_graphMgr, &GraphsManager::modelDataChanged, this, &GraphsTotalView::modelDataChanged);
+    connect(_graphMgr, &GraphsManager::fileOpened, this, &GraphsTotalView::fileOpened);
+    connect(_graphMgr, &GraphsManager::fileClosed, this, &GraphsTotalView::fileClosed);
+    connect(_graphMgr, &GraphsManager::fileSaved, this, &GraphsTotalView::fileSaved);
+    connect(_graphMgr, &GraphsManager::dirtyChanged, this, &GraphsTotalView::dirtyChanged);
+}
+
+GraphsTotalView::GraphsTotalView(const GraphsTotalView& graphsview) {
+    _graphMgr = graphsview._graphMgr;
+}
+
+void GraphsTotalView::setGraphsMgr(GraphsManager* graph) {
+    _graphMgr = zenoApp->graphsManager();
+}
+
+
 GraphsManager::GraphsManager(QObject* parent)
     : QObject(parent)
     , m_model(nullptr)
@@ -35,13 +55,12 @@ GraphsManager::GraphsManager(QObject* parent)
     m_assets = new AssetsModel(this);
 }
 
-GraphsManager::~GraphsManager()
-{
+GraphsManager::GraphsManager(const GraphsManager& rhs) {
+    assert(false);
 }
 
-GraphsManager& GraphsManager::instance() {
-    static GraphsManager inst;
-    return inst;
+GraphsManager::~GraphsManager()
+{
 }
 
 void GraphsManager::registerCoreNotify() {

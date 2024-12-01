@@ -340,14 +340,17 @@ public:
      * \note trigger nodeInserted() signal after insertion and generate a call to onNodeInserted().
      * \note graph has ownership for returned node.
      */
+#if 0
     Q_INVOKABLE qan::Node*  insertNode(QQmlComponent* nodeComponent = nullptr, qan::NodeStyle* nodeStyle = nullptr);
+#endif
+    qan::Node* insertNode(const QModelIndex& idx, QQmlComponent* nodeComponent = nullptr, qan::NodeStyle* nodeStyle = nullptr);
 
     /*! \brief Insert a node using Node_t::delegate() and Node_t::style(), if no delegate is defined, default on graph \c nodeDelegate.
      *
      * \note trigger nodeInserted() signal after insertion and generate a call to onNodeInserted().
      */
     template <class Node_t>
-    qan::Node*              insertNode(QQmlComponent* nodeComponent = nullptr, qan::NodeStyle* nodeStyle = nullptr);
+    qan::Node* insertNode(const QModelIndex& idx, QQmlComponent* nodeComponent = nullptr, qan::NodeStyle* nodeStyle = nullptr);
 
     /*! \brief Same semantic than insertNode<>() but for non visual nodes.
      *

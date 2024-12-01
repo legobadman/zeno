@@ -11,6 +11,7 @@
 #include <zeno/utils/helper.h>
 #include "declmetatype.h"
 #include <zeno/extra/SubnetNode.h>
+#include "zenoapplication.h"
 
 
 class CustomUIProxyModel : public QStandardItemModel
@@ -389,7 +390,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         if (spNode) {
             spNode->update_param(param.name.toStdString(), anyVal);
             break;
-            //GraphsManager::instance().currentModel()->markDirty(true);
+            //zenoApp->graphsManager()->currentModel()->markDirty(true);
             //return true;        //the dataChanged signal will be emitted by registered callback function.
         }
         return false;
@@ -443,7 +444,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
     }
 
     emit dataChanged(index, index, QVector<int>{role});
-    GraphsManager::instance().currentModel()->markDirty(true);
+    zenoApp->graphsManager()->currentModel()->markDirty(true);
     return true;
 }
 

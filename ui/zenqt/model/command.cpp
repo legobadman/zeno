@@ -4,11 +4,12 @@
 #include <zeno/core/typeinfo.h>
 #include <zeno/extra/SubnetNode.h>
 #include "model/parammodel.h"
+#include "zenoapplication.h"
 
 
 AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QStringList& graphPath)
     : QUndoCommand()
-    , m_model(GraphsManager::instance().getGraph(graphPath))
+    , m_model(zenoApp->graphsManager()->getGraph(graphPath))
     , m_graphPath(graphPath)
     , m_nodeData(nodedata)
     , m_pos(nodedata.uipos)
@@ -66,7 +67,7 @@ AddNodeCommand::~AddNodeCommand()
 
 void AddNodeCommand::redo()
 {
-    m_model = GraphsManager::instance().getGraph(m_graphPath);
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
     if (m_model) {
         m_nodeData.uipos = m_pos;
         m_nodeData = m_model->_createNodeImpl(m_cate, m_nodeData, false);
@@ -92,7 +93,7 @@ zeno::NodeData AddNodeCommand::getNodeData()
 
 RemoveNodeCommand::RemoveNodeCommand(zeno::NodeData& nodeData, QStringList& graphPath)
     : QUndoCommand()
-    , m_model(GraphsManager::instance().getGraph(graphPath))
+    , m_model(zenoApp->graphsManager()->getGraph(graphPath))
     , m_nodeData(nodeData)
     , m_graphPath(graphPath)
     , m_cate("")
@@ -140,7 +141,7 @@ void RemoveNodeCommand::redo()
 
 void RemoveNodeCommand::undo()
 {
-    m_model = GraphsManager::instance().getGraph(m_graphPath);
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
     if (m_model)
         m_nodeData = m_model->_createNodeImpl(m_cate, m_nodeData, false);
 }
@@ -149,7 +150,7 @@ LinkCommand::LinkCommand(bool bAddLink, const zeno::EdgeInfo& link, QStringList&
     : QUndoCommand()
     , m_bAdd(bAddLink)
     , m_link(link)
-    , m_model(GraphsManager::instance().getGraph(graphPath))
+    , m_model(zenoApp->graphsManager()->getGraph(graphPath))
     , m_graphPath(graphPath)
 {
 }
@@ -158,7 +159,7 @@ void LinkCommand::redo()
 {
     if (m_bAdd)
     {
-        m_model = GraphsManager::instance().getGraph(m_graphPath);
+        m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
         if (m_model)
             m_model->_addLinkImpl(m_link);
     }
@@ -178,7 +179,7 @@ void LinkCommand::undo()
     }
     else
     {
-        m_model = GraphsManager::instance().getGraph(m_graphPath);
+        m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
         if (m_model)
             m_model->_addLinkImpl(m_link);
     }
@@ -200,7 +201,7 @@ ModelDataCommand::ModelDataCommand(const QModelIndex& index, const QVariant& old
 
 void ModelDataCommand::redo()
 {
-    m_model = GraphsManager::instance().getGraph(m_graphPath);
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
     if (m_model)
     {
         auto nodeIdx = m_model->indexFromName(m_nodeName);
@@ -223,7 +224,7 @@ void ModelDataCommand::redo()
 
 void ModelDataCommand::undo()
 {
-    m_model = GraphsManager::instance().getGraph(m_graphPath);
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
     if (m_model)
     {
         auto nodeIdx = m_model->indexFromName(m_nodeName);
@@ -256,7 +257,7 @@ NodeStatusCommand::NodeStatusCommand(bool isSetView, const QString& name, bool b
 
 void NodeStatusCommand::redo()
 {
-    m_model = GraphsManager::instance().getGraph(m_graphPath);
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
     if (m_model)
     {
         auto idx = m_model->indexFromName(m_nodeName);
@@ -274,7 +275,7 @@ void NodeStatusCommand::redo()
 
 void NodeStatusCommand::undo()
 {
-    m_model = GraphsManager::instance().getGraph(m_graphPath);
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
     if (m_model)
     {
         auto idx = m_model->indexFromName(m_nodeName);

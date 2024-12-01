@@ -6,17 +6,22 @@
 #include "uicommon.h"
 #include <zeno/io/iocommon.h>
 #include <QStandardItemModel>
+#include <QQuickItem>
 
 class AssetsModel;
 class GraphsTreeModel;
 class ZenoSubGraphScene;
 class GraphModel;
 
+class GraphsManager;
+
 class GraphsManager : public QObject
 {
     Q_OBJECT
+    QML_ELEMENT
 public:
-    static GraphsManager& instance();
+    GraphsManager(QObject* parent = nullptr);
+    GraphsManager(const GraphsManager& rhs);
     ~GraphsManager();
 
     void createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult);
@@ -65,7 +70,6 @@ private slots:
     void onRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last);
 
 private:
-    GraphsManager(QObject *parent = nullptr);
     void registerCoreNotify();
 
     GraphsTreeModel* m_model;
@@ -81,6 +85,29 @@ private:
     zeno::ZSG_VERSION m_version;
     bool m_bIniting;
     bool m_bImporting;
+};
+
+class GraphsTotalView : public QQuickItem
+{
+    Q_OBJECT
+public:
+    GraphsTotalView();
+    GraphsTotalView(const GraphsTotalView& graphsview);
+    //! Graph that should be displayed in this graph view.
+    Q_PROPERTY(GraphsManager* graphsMgr READ getGraphsMgr WRITE setGraphsMgr FINAL)
+        void setGraphsMgr(GraphsManager* graph);
+    inline GraphsManager* getGraphsMgr() const noexcept { return _graphMgr; }
+
+signals:
+    void modelInited();
+    void modelDataChanged();
+    void fileOpened(QString);
+    void fileClosed();
+    void fileSaved(QString);
+    void dirtyChanged(bool);
+
+private:
+    GraphsManager* _graphMgr = nullptr;
 };
 
 #endif
