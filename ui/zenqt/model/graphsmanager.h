@@ -56,6 +56,7 @@ public:
     zeno::NodeCates getCates() const;
     void setIOVersion(zeno::ZSG_VERSION ver);
     void clearMarkOnGv();
+    void initRootObjects();
 
 signals:
     void modelInited();

@@ -24,11 +24,13 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import QtQuick                   2.8
-import QtQuick.Controls          2.1
+import QtQuick                   2.12
+import QtQuick.Controls          2.15
 import QtQuick.Controls.Material 2.1
 import QtQuick.Layouts           1.3
 import QtQuick.Shapes            1.0
+import QtQuick.Controls.Styles   1.4
+import Qt.labs.settings 1.1
 
 import QuickQanava 2.0 as Qan
 import "qrc:/QuickQanava" as Qan
@@ -38,7 +40,7 @@ import "./container/TabView"
 
 
 Zen.GraphsTotalView {
-    id: window
+    id: totalview
     visible: true
     width: 1280; height: 720
     //anchors.fill: parent
@@ -46,13 +48,13 @@ Zen.GraphsTotalView {
         id: graphs
     }
 
-    // 定义全局对象，通过 editor 来访问
+    // 定义全局对象，通过 nodeseditor 来访问
     Item {
-        id: editor
+        id: nodeseditor
 
         // 标签页逻辑控制器
         TabViewController { id: tab_ }
-        property var tab: tab_ // 通过 editor.tab 来访问
+        property var tab: tab_ // 通过 nodeseditor.tab 来访问
 
         // 持久化存储
         Settings { 
@@ -71,10 +73,21 @@ Zen.GraphsTotalView {
         }
     }
 
+    Rectangle {
+        id: ztoolbar
+        height: 64
+        anchors.left: parent.left
+        anchors.right: parent.right
+        color: "#00ff00"
+    }
+
     SplitView {
         id: mainLayout
         spacing: 10
-        anchors.fill: parent
+        anchors.top: ztoolbar.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
         orientation: Qt.Horizontal
 
         handle: Item {
@@ -84,61 +97,88 @@ Zen.GraphsTotalView {
                 implicitWidth: 2
                 anchors.horizontalCenter: parent.horizontalCenter
                 height: parent.height
-
                 color: SplitHandle.hovered ? "#00ff00" : "#2B2B2B"
             }
         }
 
-        Rectangle {
-            SplitView.preferredWidth: 340
+        StackLayout {
+            id: stack_main_or_asset
+            clip: true
             anchors.top: parent.top
-            color: "#181818"
+            anchors.bottom: parent.bottom
+            Layout.fillWidth: true; Layout.fillHeight: true
+            currentIndex: 0
 
-            TreeView {
-                id: styledTreeView
+            Rectangle {
+                width: 200
+                implicitWidth: 200
+                Layout.maximumWidth: 400
+                color: "#ff0000"
+                Layout.fillHeight: true
+            }
 
-                anchors.fill: parent
-                anchors.margins: 1
+            Rectangle {
+                SplitView.preferredWidth: 340
+                anchors.top: parent.top
+                color: "#181818"
 
-                model: treeModel
-                selectionEnabled: true
-                hoverEnabled: true
+                TreeView {
+                    id: styledTreeView
 
-                color: "#AAAACC"
-                handleColor: "#B0CCCC"
-                hoverColor: "#2A2D2E"
-                selectedColor: "#37373D"
-                selectedItemColor: "white"
-                handleStyle: TreeView.Handle.TriangleOutline
-                rowHeight: 40
-                rowPadding: 30
-                rowSpacing: 12
-                font.pixelSize: 20
+                    Layout.fillHeight: true
 
-                onCurrentIndexChanged: {
-                    //var graphM = model.graph(currentIndex)
-                    //var ident = model.ident(currentIndex)
-                    //var owner = graphM.owner()
-                    //console.log("ident: " + ident)
-                    //console.log("owner: " + owner)
-                    //tabView打开标签为owner的图，并且把焦点focus在ident上。
-                    //app.tab.activatePage(owner, graphM)
-                }
-                onCurrentDataChanged: {
-                    //console.log("current data is " + currentData)
-                }
-                onCurrentItemChanged: {
-                    //console.log("current item is " + currentItem)
+                    model: treeModel
+                    selectionEnabled: true
+                    hoverEnabled: true
+
+                    color: "#AAAACC"
+                    handleColor: "#B0CCCC"
+                    hoverColor: "#2A2D2E"
+                    selectedColor: "#37373D"
+                    selectedItemColor: "white"
+                    handleStyle: TreeView.Handle.TriangleOutline
+                    rowHeight: 40
+                    rowPadding: 30
+                    rowSpacing: 12
+                    font.pixelSize: 20
+
+                    onCurrentIndexChanged: {
+                        //var graphM = model.graph(currentIndex)
+                        //var ident = model.ident(currentIndex)
+                        //var owner = graphM.owner()
+                        //console.log("ident: " + ident)
+                        //console.log("owner: " + owner)
+                        //tabView打开标签为owner的图，并且把焦点focus在ident上。
+                        //app.tab.activatePage(owner, graphM)
+                    }
+                    onCurrentDataChanged: {
+                        //console.log("current data is " + currentData)
+                    }
+                    onCurrentItemChanged: {
+                        //console.log("current item is " + currentItem)
+                    }
                 }
             }
         }
 
-        TabView_ { 
-            id: tabEditor
-            SplitView.fillWidth: true
+        StackLayout {
+            id: stack_editorzone
+            clip: true
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            currentIndex: 0
+            TabView_ { 
+                id: tabEditor
+                width: 200
+            }
+
+            Rectangle {
+                width: 200
+                implicitWidth: 200
+                color: "#0000ff"
+            }
         }
     }
-
 
     /*
     Pane { anchors.fill: parent }

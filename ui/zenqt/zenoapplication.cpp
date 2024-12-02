@@ -15,9 +15,9 @@
 ZenoApplication::ZenoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
     , m_bUIApp(true)
+    , m_engine(nullptr)
     , m_calcMgr(new CalculationMgr(this))
     , m_graphsMgr(new GraphsManager(this))
-    , m_engine(nullptr)
 {
     initMetaTypes();
     initFonts();
@@ -209,6 +209,7 @@ void ZenoApplication::initQuickQanavas()
         QQuickStyle::setStyle("Material");
         m_engine = new QQmlApplicationEngine(this);
         QuickQanava::initialize(m_engine);
+        m_graphsMgr->initRootObjects();
     }
 }
 
