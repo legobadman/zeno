@@ -880,7 +880,7 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
         pVecEdit->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
     else if (ZCodeEditor* pCodeEditor = qobject_cast<ZCodeEditor*>(pControl)) {
-        pCodeEditor->setFuncDescLabel(m_descLabel.get());
+        pCodeEditor->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
 
     _PANEL_CONTROL panelCtrl;

@@ -20,6 +20,7 @@
 		<name>int</name>
 		<name>void</name>
 	</section>
+	<!--
 	<section name="Function">
 		<name>ref</name>
 		<name>param</name>
@@ -86,4 +87,5 @@
 		<name>vertex_face</name>
 		<name>vertex_face_index</name>
 	</section>
+	-->
 </root>
