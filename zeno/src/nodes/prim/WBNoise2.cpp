@@ -65,6 +65,24 @@ namespace zeno
 
     struct ZDEFNODE() WBPrimBend_G : zeno::INode
     {
+        ReflectCustomUI m_uilayout = {
+            //输入：
+            _Group {
+                {"input_obj", ParamObject("Input Geometry", Socket_Clone)},
+                {"limitDeformation",     ParamPrimitive("Limit Deformation")},
+                {"symmetricDeformation",     ParamPrimitive("Symmetric Deformation")},
+                {"angle", ParamPrimitive("Bend Angle (degree)")},
+                {"upVector", ParamPrimitive("Up Vector")},
+                {"capOrigin", ParamPrimitive("Capture Origin")},
+                {"dirVector", ParamPrimitive("Capture Direction")},
+                {"capLen", ParamPrimitive("Capture Length")},
+            },
+            //输出：
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
         std::shared_ptr<zeno::GeometryObject> apply(
                 std::shared_ptr<zeno::GeometryObject> input_obj,
                 int limitDeformation = 1,
@@ -86,9 +104,7 @@ namespace zeno
                                     axis1.x, axis1.y, axis1.z };
             glm::mat3 rotMat = glm::make_mat3x3(rotMatEle);
             glm::mat3 inverse = glm::transpose(rotMat);
-//            auto prim = get_input<PrimitiveObject>("prim");
 
-#if 0
             input_obj->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
 
                 glm::vec3 original = glm::vec3(old_pos[0], old_pos[1], old_pos[2]);
@@ -149,8 +165,7 @@ namespace zeno
                 auto newpos = vec3f(deformedPos.x, deformedPos.y, deformedPos.z);
                 return newpos;
             });
-#endif
-            zeno::log_critical("WBPrimBend_G::apply");
+
             return input_obj;
         }
     };
