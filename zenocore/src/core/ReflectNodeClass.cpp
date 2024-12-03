@@ -629,7 +629,7 @@ namespace zeno {
             if (funcname != "apply") {
                 continue;
             }
-            const RTTITypeInfo& ret_type = func->get_return_rtti();
+            const RTTITypeInfo ret_type = func->get_return_rtti();
             ParamType type = ret_type.get_decayed_hash() == 0 ? ret_type.hash_code() : ret_type.get_decayed_hash();
             bool isConstPtr = false;
             bool isObject = zeno::isObjectType(ret_type, isConstPtr);
