@@ -30,6 +30,7 @@ public:
     std::shared_ptr<ZfxASTNode> makeComponentVisit(std::shared_ptr<ZfxASTNode> pVarNode, std::string component);
     std::shared_ptr<ZfxASTNode> makeTypeNode(std::string text, bool bArray = false);
     std::shared_ptr<ZfxASTNode> makeEmptyNode();
+    ZENO_API std::shared_ptr<ZfxASTNode> getASTResult() const;
     void setASTResult(std::shared_ptr<ZfxASTNode> pNode);
     ZENO_API void ZfxExecute::printSyntaxTree();
 

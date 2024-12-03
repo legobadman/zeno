@@ -1723,39 +1723,20 @@ namespace zeno {
             return {};
         }
 
-        switch (root->type)
+        std::set<std::pair<std::string, std::string>> paths;
+        if (nodeType::FUNC != root->type)
         {
-        case nodeType::NUMBER:
-        case nodeType::STRING:
-        case nodeType::ZENVAR:
-            return {};
-        case nodeType::FOUROPERATIONS:
-        {
-            if (root->children.size() != 2)
+            for (auto _childNode : root->children)
             {
-                throw makeError<UnimplError>();
+                std::set<std::pair<std::string, std::string>> _paths = getReferSources(_childNode, pContext);
+                if (!_paths.empty()) {
+                    paths.insert(_paths.begin(), _paths.end());
+                }
             }
-            std::set<std::pair<std::string, std::string>> paths, lpaths, rpaths;
-            lpaths = getReferSources(root->children[0], pContext);
-            rpaths = getReferSources(root->children[1], pContext);
-            if (!lpaths.empty())
-                paths.insert(lpaths.begin(), lpaths.end());
-            if (!rpaths.empty())
-                paths.insert(rpaths.begin(), rpaths.end());
-            return paths;
         }
-        case nodeType::NEGATIVE:
-        {
-            if (root->children.size() != 1)
-            {
-                return {};
-            }
-            return getReferSources(root->children[0], pContext);
-        }
-        case nodeType::FUNC:
+        else
         {
             const std::string& funcname = std::get<std::string>(root->value);
-            std::set<std::pair<std::string, std::string>> paths;
             if (funcname == "ref") {
                 if (root->children.size() != 1)
                     throw makeError<UnimplError>();
@@ -1828,11 +1809,8 @@ namespace zeno {
                     }
                 }
             }
-            return paths;
         }
-        default:
-            return {};
-        }
+        return paths;
     }
 
     zfxvariant FunctionManager::calc(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext) {

@@ -198,6 +198,10 @@ std::shared_ptr<ZfxASTNode> ZfxExecute::makeEmptyNode() {
     return n;
 }
 
+ZENO_API std::shared_ptr<ZfxASTNode> ZfxExecute::getASTResult() const {
+    return m_root;
+}
+
 unsigned int ZfxExecute::location() const {
     return m_location;
 }

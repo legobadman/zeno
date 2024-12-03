@@ -1073,12 +1073,16 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
         ctx.spNode = shared_from_this();
         for (auto param_text : refSegments)
         {
-            Formula fmla(param_text, namePath);
-            int ret = fmla.parse();
+            ZfxContext ctx;
+            ctx.spNode = shared_from_this();
+            ctx.spObject = nullptr;
+            ctx.code = param_text;
+            ZfxExecute zfx(param_text, &ctx);
+            int ret = zfx.parse();
             if (ret == 0)
             {
                 ctx.code = param_text;
-                std::shared_ptr<ZfxASTNode> astRoot = fmla.getASTResult();
+                std::shared_ptr<ZfxASTNode> astRoot = zfx.getASTResult();
                 std::set<std::pair<std::string, std::string>> paths =
                     funcMgr->getReferSources(astRoot, &ctx);
                 if (!paths.empty()) {
