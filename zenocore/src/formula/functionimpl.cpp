@@ -679,8 +679,17 @@ namespace zeno
             std::set<int> remfaces;
             if (N < filter.size()) {
                 assert(N == 1);
-                int currrem = get_zfxvar<int>(arg.value[0]);
-                remfaces.insert(currrem);
+                std::visit([&remfaces](const auto& val) {//N为1的时候也可能是一个std::vector<int>，需判断
+                    using T = std::decay_t<decltype(val)>;
+                    if constexpr (std::is_same_v<T, int>) {
+                        int currrem = get_zfxvar<int>(val);
+                        remfaces.insert(currrem);
+                    } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+                        for (const auto& i : val) {
+                            remfaces.insert(i);
+                        }
+                    }
+                }, arg.value[0]);
             }
             else {
                 assert(N == filter.size());

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <root>
+	<!--
 	<section name="Keyword">
 		<name>break</name>
 		<name>continue</name>
@@ -20,7 +21,6 @@
 		<name>int</name>
 		<name>void</name>
 	</section>
-	<!--
 	<section name="Function">
 		<name>ref</name>
 		<name>param</name>
