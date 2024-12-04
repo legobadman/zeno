@@ -48,8 +48,11 @@ public:
 private:
     const bool m_bAdd;
     const zeno::EdgeInfo m_link;
+
     GraphModel* m_model;
     QStringList m_graphPath;
+
+    QString m_lastViewNodeName;
 };
 
 class ModelDataCommand : public QUndoCommand
@@ -79,6 +82,8 @@ public:
 
 private:
     bool m_isSetView;
+    QString m_lastViewNodeName;
+
     bool m_On;
     QStringList m_graphPath;
 
