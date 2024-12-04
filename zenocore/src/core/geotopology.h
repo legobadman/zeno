@@ -5,7 +5,7 @@
 #include <string>
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
-#include <zeno/core/FunctionManager.h>
+#include <zeno/types/PrimitiveObject.h>
 
 namespace zeno
 {

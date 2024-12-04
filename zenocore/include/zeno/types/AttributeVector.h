@@ -4,6 +4,7 @@
 #include <zeno/core/IObject.h>
 #include <zeno/core/data.h>
 #include <zeno/types/AttrColumn.h>
+#include <zeno/types/PrimitiveObject.h>
 
 
 namespace zeno {

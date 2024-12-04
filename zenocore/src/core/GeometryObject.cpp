@@ -480,6 +480,13 @@ namespace zeno
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
+            std::string _name = name;
+            if (name == "P" && grp == ATTR_POINT) {
+                iter = container.find("pos");
+                assert(iter != container.end());
+                auto& attrVec = iter->second;
+                return attrVec.type();
+            }
             return ATTR_TYPE_UNKNOWN;
         }
         auto& attrVec = iter->second;

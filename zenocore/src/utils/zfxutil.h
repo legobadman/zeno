@@ -14,7 +14,7 @@ namespace zeno
         std::vector<zfxvariant> extractAttrValue(zeno::reflect::Any anyval, int size);
         std::vector<zfxvariant> attrvarVecToZfxVec(AttrVarVec anyval, int size);
         AttrVar convertToAttrVar(const std::vector<zfxvariant>& zfxvec);
-        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext);
+        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext);
     }
 }
 

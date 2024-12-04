@@ -907,8 +907,8 @@ namespace zeno {
         }
     }
 
-    void FunctionManager::setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext) {
-        zeno::zfx::setAttrValue(attrname, channel, var, opVal, pContext);
+    void FunctionManager::setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
+        zeno::zfx::setAttrValue(attrname, channel, var, opVal, filter, pContext);
     }
 
     ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
@@ -1173,7 +1173,7 @@ namespace zeno {
                     else if (zenvarNode->opVal == Indexing) {
                         //todo
                     }
-                    setAttrValue(attrname, channel, res, root->opVal, pContext);
+                    setAttrValue(attrname, channel, res, root->opVal, filter, pContext);
                     return ZfxVariable();
                 }
 
