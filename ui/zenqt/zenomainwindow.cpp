@@ -996,6 +996,7 @@ void ZenoMainWindow::initTimeline()
 {
     auto pCalcMgr = zenoApp->calculationMgr();
     connect(m_pTimeline, &ZTimeline::playForward, pCalcMgr, &CalculationMgr::onPlayTriggered);
+    connect(m_pTimeline, &ZTimeline::playForward, this, &ZenoMainWindow::reload_qml);
     connect(m_pTimeline, &ZTimeline::sliderValueChanged, pCalcMgr, &CalculationMgr::onFrameSwitched);
     connect(m_pTimeline, &ZTimeline::sliderRangeChanged, [](int start, int end) {
         auto& sess = zeno::getSession();
@@ -1095,6 +1096,17 @@ DisplayWidget* ZenoMainWindow::getCurrentViewport() const
 void ZenoMainWindow::toggleTimelinePlay(bool bOn)
 {
     m_pTimeline->togglePlayButton(bOn);
+}
+
+void ZenoMainWindow::reload_qml() {
+    //TEMP: use to reload qml
+    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
+    {
+        QWidget* wid = dock->widget();
+        if (ZQmlPanel* view = qobject_cast<ZQmlPanel*>(wid)) {
+            view->reload();
+        }
+    }
 }
 
 void ZenoMainWindow::onRunTriggered(bool applyLightAndCameraOnly, bool applyMaterialOnly)

@@ -183,6 +183,7 @@ public slots:
     void onCheckUpdate();
     void onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg);
     void justLoadObjects();
+    void reload_qml();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

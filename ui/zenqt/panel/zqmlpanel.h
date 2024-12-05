@@ -12,6 +12,7 @@ class ZQmlPanel : public QQuickWidget
     Q_OBJECT
 public:
     ZQmlPanel(QWidget* parent = nullptr);
+    void reload();
 
 protected:
     void focusInEvent(QFocusEvent* event);

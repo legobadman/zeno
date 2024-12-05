@@ -66,6 +66,7 @@ GraphsManager::~GraphsManager()
 
 void GraphsManager::initRootObjects() {
     QQmlApplicationEngine* engine = zenoApp->getQmlEngine();
+    engine->rootContext()->setContextProperty("graphsmanager", this);
     engine->rootContext()->setContextProperty("nodesModel", m_main);
     engine->rootContext()->setContextProperty("treeModel", m_model);
 }
