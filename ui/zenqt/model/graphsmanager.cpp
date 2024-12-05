@@ -37,6 +37,14 @@ void GraphsTotalView::setGraphsMgr(GraphsManager* graph) {
     _graphMgr = zenoApp->graphsManager();
 }
 
+void GraphsTotalView::newFile() {
+    zenoApp->getMainWindow()->onNewFile();
+}
+
+void GraphsTotalView::openFile() {
+    zenoApp->getMainWindow()->openFileDialog();
+}
+
 
 GraphsManager::GraphsManager(QObject* parent)
     : QObject(parent)

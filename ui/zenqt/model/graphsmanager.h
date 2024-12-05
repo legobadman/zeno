@@ -96,8 +96,10 @@ public:
     GraphsTotalView(const GraphsTotalView& graphsview);
     //! Graph that should be displayed in this graph view.
     Q_PROPERTY(GraphsManager* graphsMgr READ getGraphsMgr WRITE setGraphsMgr FINAL)
-        void setGraphsMgr(GraphsManager* graph);
+    void setGraphsMgr(GraphsManager* graph);
     inline GraphsManager* getGraphsMgr() const noexcept { return _graphMgr; }
+    Q_INVOKABLE void newFile();
+    Q_INVOKABLE void openFile();
 
 signals:
     void modelInited();

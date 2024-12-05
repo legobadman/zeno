@@ -92,7 +92,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 hoverEnabled: true
                                 onClicked: {
-                                    console.log("hello2")
+                                    graphs.newFile();
                                 }
                                 onEntered: {
                                     text_new_project.font.underline = true;
@@ -123,7 +123,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 hoverEnabled: true
                                 onClicked: {
-                                    console.log("hello3")
+                                    graphs.openFile()
                                 }
                                 onEntered: {
                                     text_open_project.font.underline = true;
