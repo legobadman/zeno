@@ -75,7 +75,7 @@ Zen.GraphsTotalView {
 
     StackLayout {
         id: welcomepage_or_editor
-        currentIndex: 0
+        currentIndex: 1
         anchors.fill: parent
 
         WelcomePage {

@@ -57,9 +57,9 @@ GraphsManager::GraphsManager(QObject* parent)
     , m_bImporting(false)
 {
     m_logModel = new QStandardItemModel(this);
-    m_model = new GraphsTreeModel(this);
-    m_main = new GraphModel("/main", false, m_model, this);
-    m_model->init(m_main);
+    //m_model = new GraphsTreeModel(this);
+    //m_main = new GraphModel("/main", false, m_model, this);
+    //m_model->init(m_main);
     m_assets = new AssetsModel(this);
 
 }
@@ -75,8 +75,10 @@ GraphsManager::~GraphsManager()
 void GraphsManager::initRootObjects() {
     QQmlApplicationEngine* engine = zenoApp->getQmlEngine();
     engine->rootContext()->setContextProperty("graphsmanager", this);
-    engine->rootContext()->setContextProperty("nodesModel", m_main);
-    engine->rootContext()->setContextProperty("treeModel", m_model);
+    if (m_main)
+        engine->rootContext()->setContextProperty("nodesModel", m_main);
+    if (m_model)
+        engine->rootContext()->setContextProperty("treeModel", m_model);
 }
 
 void GraphsManager::registerCoreNotify() {

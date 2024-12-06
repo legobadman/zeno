@@ -2,10 +2,45 @@
 #include "uicommon.h"
 #include "variantptr.h"
 #include <zeno/core/common.h>
+#include "zassert.h"
+
+
+static void initGraphItems(QStandardItem* root, GraphModel* model)
+{
+    for (int r = 0; r < model->rowCount(); r++)
+    {
+        QPersistentModelIndex idx = model->index(r, 0);
+        const QString& name = idx.data(ROLE_NODE_NAME).toString();
+        QStandardItem* pItem = new QStandardItem(name);
+        //QVariant::PersistentModelIndex
+        pItem->setData(idx, Qt::UserRole + 1);
+        QVariant val = idx.data(ROLE_SUBGRAPH);
+        if (!val.isNull()) {
+            GraphModel* pSubgGraphM = idx.data(ROLE_SUBGRAPH).value<GraphModel*>();
+            initGraphItems(pItem, pSubgGraphM);
+        }
+        root->appendRow(pItem);
+    }
+}
+
+static QStandardItem* findGraphItem(QStandardItem* parentItem, QStringList graph_path) {
+    if (graph_path.isEmpty()) {
+        return parentItem;
+    }
+    const QString& nodename = graph_path.front();
+    graph_path.pop_front();
+    for (int r = 0; r < parentItem->rowCount(); r++) {
+        QStandardItem* item = parentItem->child(r);
+        if (item->text() == nodename) {
+            return findGraphItem(item, graph_path);
+        }
+    }
+    return nullptr;
+}
 
 
 GraphsTreeModel::GraphsTreeModel(QObject* parent)
-    : QAbstractItemModel(parent)
+    : _base(parent)
     , m_main(nullptr)
     , m_dirty(false)
 {
@@ -18,124 +53,9 @@ GraphsTreeModel::~GraphsTreeModel()
 void GraphsTreeModel::init(GraphModel* mainModel)
 {
     m_main = mainModel;
-}
-
-QModelIndex GraphsTreeModel::index(int row, int column, const QModelIndex& parent) const
-{
-    if (row < 0 || row >= rowCount(parent))
-        return QModelIndex();
-
-    if (parent.isValid()) {
-        GraphModel* pSubgraph = parent.data(ROLE_SUBGRAPH).value<GraphModel*>();
-        Q_ASSERT(pSubgraph);
-        return createIndex(row, column, pSubgraph);
-    }
-    else {
-        return createIndex(row, column, nullptr);
-    }
-}
-
-QModelIndex GraphsTreeModel::parent(const QModelIndex& child) const
-{
-    if (!child.isValid())
-        return QModelIndex();
-
-    if (child.internalId() == 0) {  //main item on root.
-        return QModelIndex();
-    }
-
-    QModelIndex innerChild = innerIndex(child);
-    auto pModel = innerChild.model();
-    if (!pModel) {
-        return QModelIndex();
-    }
-
-    QObject* nodeitem = pModel->parent();
-    if (nodeitem) {
-        if (GraphModel* parentModel = qobject_cast<GraphModel*>(nodeitem->parent())) {
-            QString uuidpath = nodeitem->property("uuid-path").toString();
-            QModelIndex idx = parentModel->indexFromUuidPath(uuidpath.toStdString());
-            return createIndex(idx.row(), 0, parentModel);
-        }
-    }
-    return createIndex(0, 0);   //main item
-}
-
-int GraphsTreeModel::rowCount(const QModelIndex& parent) const
-{
-    if (!parent.isValid()) {
-        //main item
-        return 1;
-    }
-    else {
-        GraphModel* pSubgraph = parent.data(ROLE_SUBGRAPH).value<GraphModel*>();
-        return pSubgraph ? pSubgraph->rowCount() : 0;
-    }
-}
-
-int GraphsTreeModel::columnCount(const QModelIndex& parent) const
-{
-    return 1;
-}
-
-bool GraphsTreeModel::hasChildren(const QModelIndex& parent) const
-{
-    if (!parent.isValid()) {
-        return true;    //the only child is `main` item.
-    }
-    else {
-        GraphModel* pSubgraph = parent.data(ROLE_SUBGRAPH).value<GraphModel*>();
-        return pSubgraph ? (pSubgraph->rowCount() > 0) : false;
-    }
-    return false;
-}
-
-QModelIndex GraphsTreeModel::innerIndex(const QModelIndex& treeIdx) const
-{
-    if (!treeIdx.isValid())
-        return QModelIndex();
-
-    //tree项的行号和图模型的行号是一致的。
-    GraphModel* ownerModel = static_cast<GraphModel*>(treeIdx.internalPointer());
-    Q_ASSERT(ownerModel);
-    return ownerModel->index(treeIdx.row(), 0);
-}
-
-QVariant GraphsTreeModel::data(const QModelIndex& index, int role) const
-{
-    if (!index.isValid())
-        return QVariant();
-
-    if (index.internalId() == 0) {
-        //main item
-        if (Qt::DisplayRole == role || ROLE_NODE_NAME == role || ROLE_CLASS_NAME == role) {
-            return "main";
-        }
-        else if (ROLE_SUBGRAPH == role) {   //相当于子图节点那样，main可以看作最根部的子图节点
-            return QVariant::fromValue(m_main);
-        }
-        else if (ROLE_OBJPATH == role) {
-            return "/main";
-        }
-        return QVariant();
-    }
-
-    QModelIndex innerIdx = innerIndex(index);
-    return innerIdx.data(role);
-}
-
-bool GraphsTreeModel::setData(const QModelIndex& index, const QVariant& value, int role)
-{
-    QModelIndex innerIdx = innerIndex(index);
-    QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(innerIdx.model());
-    return pModel ? pModel->setData(innerIdx, value, role) : false;
-}
-
-QModelIndexList GraphsTreeModel::match(const QModelIndex& start, int role,
-    const QVariant& value, int hits,
-    Qt::MatchFlags flags) const
-{
-    return QModelIndexList();
+    QStandardItem* main_item = new QStandardItem("main");
+    initGraphItems(main_item, mainModel);
+    appendRow(main_item);
 }
 
 QHash<int, QByteArray> GraphsTreeModel::roleNames() const
@@ -156,8 +76,20 @@ void GraphsTreeModel::onGraphRowsInserted(const QModelIndex& parent, int first, 
     if (pGraphM)
     {
         QStringList graphPath = pGraphM->currentPath();
-        QModelIndex treeParentItem = getIndexByPath(graphPath);
-        emit layoutChanged({ treeParentItem });
+        ZASSERT_EXIT(!graphPath.isEmpty());
+        QStandardItem* mainItem = itemFromIndex(this->index(0, 0));
+        graphPath.pop_front();  //"main"
+        QStandardItem* graphItem = findGraphItem(mainItem, graphPath);
+        ZASSERT_EXIT(graphItem);
+
+        QPersistentModelIndex newNodeIdx = pGraphM->index(first);
+        ZASSERT_EXIT(newNodeIdx.isValid());
+        QString nodename = newNodeIdx.data(ROLE_NODE_NAME).toString();
+        QStandardItem* pItem = new QStandardItem(nodename);
+        pItem->setData(newNodeIdx, Qt::UserRole + 1);
+        graphItem->appendRow(pItem);
+
+        emit layoutChanged({ graphItem->index() });
     }
 }
 
@@ -178,9 +110,14 @@ void GraphsTreeModel::onGraphRowsAboutToBeRemoved(const QModelIndex& parent, int
     GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
     if (pGraphM) {
         QStringList graphPath = pGraphM->currentPath();
-        QModelIndex treeParentItem = getIndexByPath(graphPath);
-        beginRemoveRows(treeParentItem, first, last);
-        endRemoveRows();
+        ZASSERT_EXIT(!graphPath.isEmpty());
+        QStandardItem* mainItem = itemFromIndex(this->index(0, 0));
+        graphPath.pop_front();  //"main"
+        QStandardItem* graphItem = findGraphItem(mainItem, graphPath);
+        ZASSERT_EXIT(graphItem);
+
+        graphItem->removeRow(first);
+        emit layoutChanged({ graphItem->index() });
     }
 }
 
@@ -189,8 +126,6 @@ void GraphsTreeModel::onGraphRowsRemoved(const QModelIndex& parent, int first, i
     GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
     if (pGraphM) {
         QStringList graphPath = pGraphM->currentPath();
-        QModelIndex treeParentItem = getIndexByPath(graphPath);
-        emit layoutChanged({ treeParentItem });
     }
 }
 
