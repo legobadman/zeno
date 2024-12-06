@@ -1,4 +1,4 @@
-#include <zeno/zeno.h>
+﻿#include <zeno/zeno.h>
 #include <zeno/core/reflectdef.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
@@ -46,6 +46,7 @@ namespace zeno {
             if (x_division < 2 || y_division < 2 || z_division < 2) {
                 throw makeError<UnimplError>("the division should be greater than 2");
             }
+
 
             bool bQuad = face_type == "Quadrilaterals";
             float xstep = 1.f / (x_division - 1), ystep = 1.f / (y_division - 1), zstep = 1.f / (z_division - 1);
