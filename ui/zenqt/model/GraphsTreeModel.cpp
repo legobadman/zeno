@@ -56,6 +56,7 @@ void GraphsTreeModel::init(GraphModel* mainModel)
     QStandardItem* main_item = new QStandardItem("main");
     initGraphItems(main_item, mainModel);
     appendRow(main_item);
+    emit layoutChanged({ main_item->index() });
 }
 
 QHash<int, QByteArray> GraphsTreeModel::roleNames() const
@@ -107,6 +108,11 @@ void GraphsTreeModel::onNameUpdated(const QModelIndex& nodeIdx, const QString& o
 
 void GraphsTreeModel::onGraphRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
+    //有可能tree已经提前被clear了，比如关闭工程的时候
+    if (rowCount() == 0) {
+        return;
+    }
+
     GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
     if (pGraphM) {
         QStringList graphPath = pGraphM->currentPath();
@@ -131,14 +137,15 @@ void GraphsTreeModel::onGraphRowsRemoved(const QModelIndex& parent, int first, i
 
 int GraphsTreeModel::depth(const QModelIndex& index) const
 {
-    int count = 0;
-    auto anchestor = index;
-    if (!index.isValid()) {
+    if (!index.isValid())
         return 0;
-    }
-    while (anchestor.parent().isValid()) {
-        anchestor = anchestor.parent();
-        ++count;
+
+    QStandardItem* pItem = itemFromIndex(index);
+    int count = 0;
+    while (pItem)
+    {
+        pItem = pItem->parent();
+        count++;
     }
     return count;
 }
@@ -148,9 +155,10 @@ GraphModel* GraphsTreeModel::graph(const QModelIndex& index) const
     if (index.isValid() && index.internalId() == 0)
         return nullptr;
 
-    GraphModel* ownerModel = static_cast<GraphModel*>(index.internalPointer());
-    Q_ASSERT(ownerModel);
-    return ownerModel;
+    QStandardItem* pItem = itemFromIndex(index);
+    QPersistentModelIndex idx = pItem->data(Qt::UserRole + 1).value<QPersistentModelIndex>();
+    QAbstractItemModel* ownerModel = const_cast<QAbstractItemModel*>(idx.model());
+    return qobject_cast<GraphModel*>(ownerModel);
 }
 
 QString GraphsTreeModel::name(const QModelIndex& index) const
@@ -161,12 +169,10 @@ QString GraphsTreeModel::name(const QModelIndex& index) const
 //! Clear the model.
 void GraphsTreeModel::clear()
 {
-    emit layoutAboutToBeChanged();
-    beginResetModel();
-    //delete m_main;
-    //m_main = new GraphModel("/main", false, this);
-    endResetModel();
-    emit layoutChanged();
+    //remove main
+    removeRow(0);
+    QModelIndex rootIndex = invisibleRootItem()->index();
+    m_main = nullptr;
     emit modelClear();
 }
 

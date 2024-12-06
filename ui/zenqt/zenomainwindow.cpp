@@ -2204,7 +2204,7 @@ bool ZenoMainWindow::saveAs() {
 QString ZenoMainWindow::getOpenFileByDialog() {
     DlgInEventLoopScope;
     const QString &initialPath = "";
-    QFileDialog fileDialog(this, tr("Open"), initialPath, "Legacy Zeno Graph File (*.zsg)\nZeno File (*.zen)\nAll Files (*)");
+    QFileDialog fileDialog(this, tr("Open"), initialPath, "Zeno File (*.zen)");
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
     fileDialog.setFileMode(QFileDialog::ExistingFile);
     if (fileDialog.exec() != QDialog::Accepted)

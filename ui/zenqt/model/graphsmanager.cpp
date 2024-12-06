@@ -57,7 +57,7 @@ GraphsManager::GraphsManager(QObject* parent)
     , m_bImporting(false)
 {
     m_logModel = new QStandardItemModel(this);
-    //m_model = new GraphsTreeModel(this);
+    m_model = new GraphsTreeModel(this);
     //m_main = new GraphModel("/main", false, m_model, this);
     //m_model->init(m_main);
     m_assets = new AssetsModel(this);
@@ -211,13 +211,8 @@ bool GraphsManager::saveFile(const QString& filePath, APP_SETTINGS)
 GraphsTreeModel* GraphsManager::newFile()
 {
     clear();
-
-    if (!m_model) {
-        m_model = new GraphsTreeModel(this);
-        auto& sess = zeno::getSession();
-        m_main = new GraphModel("/main", false, m_model, this);
-        m_model->init(m_main);
-    }
+    m_main = new GraphModel("/main", false, m_model, this);
+    m_model->init(m_main);
 
     //TODO: assets may be kept.
     initRootObjects();
@@ -252,9 +247,6 @@ void GraphsManager::clear()
     if (m_model)
     {
         m_model->clear();
-
-        delete m_model;
-        m_model = nullptr;
 
         for (auto scene : m_scenes)
         {
