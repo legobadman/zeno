@@ -4,6 +4,7 @@
 #include <zeno/core/typeinfo.h>
 #include <zeno/extra/SubnetNode.h>
 #include "model/parammodel.h"
+#include "util/uihelper.h"
 #include "zenoapplication.h"
 
 
@@ -160,8 +161,27 @@ void LinkCommand::redo()
     if (m_bAdd)
     {
         m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
-        if (m_model)
+        if (m_model) {
+            QStringList outNodeLinkedNodes = UiHelper::findAllLinkdNodes(m_model, QString::fromStdString(m_link.outNode));
+            bool outNodeChainHasViewNode = false;
+            for (auto& node : outNodeLinkedNodes) {
+                auto nodeidx = m_model->indexFromName(node);
+                if (nodeidx.data(ROLE_NODE_ISVIEW).toBool()) {
+                    outNodeChainHasViewNode = true;
+                    break;
+                }
+            }
+            QStringList intNodeLinkedNodes = UiHelper::findAllLinkdNodes(m_model, QString::fromStdString(m_link.inNode));
+            for (auto& node : intNodeLinkedNodes) {
+                auto nodeidx = m_model->indexFromName(node);
+                if (outNodeChainHasViewNode && nodeidx.data(ROLE_NODE_ISVIEW).toBool()) {
+                    m_lastViewNodeName = nodeidx.data(ROLE_NODE_NAME).toString();
+                    m_model->_setViewImpl(nodeidx, false);
+                    break;
+                }
+            }
             m_model->_addLinkImpl(m_link);
+    }
     }
     else
     {
@@ -174,8 +194,13 @@ void LinkCommand::undo()
 {
     if (m_bAdd)
     {
-        if (m_model)
+        if (m_model) {
+            if (!m_lastViewNodeName.isEmpty()) {
+                auto lastViewNodeIdx = m_model->indexFromName(m_lastViewNodeName);
+                m_model->_setViewImpl(lastViewNodeIdx, true);
+            }
             m_model->_removeLinkImpl(m_link);
+    }
     }
     else
     {
@@ -264,6 +289,17 @@ void NodeStatusCommand::redo()
         if (idx.isValid()) {
             if (m_isSetView)
             {
+                if (m_On) {
+                    QStringList linkedNodes = UiHelper::findAllLinkdNodes(m_model, m_nodeName);
+                    for (auto& node : linkedNodes) {
+                        auto nodeidx = m_model->indexFromName(node);
+                        if (nodeidx.data(ROLE_NODE_ISVIEW).toBool() && nodeidx.data(ROLE_NODE_NAME).toString() != m_nodeName) {
+                            m_lastViewNodeName = nodeidx.data(ROLE_NODE_NAME).toString();
+                            m_model->_setViewImpl(nodeidx, !m_On);
+                            break;
+                        }
+                    }
+                }
                 m_model->_setViewImpl(idx, m_On);
             }
             else {
@@ -282,6 +318,10 @@ void NodeStatusCommand::undo()
         if (idx.isValid()) {
             if (m_isSetView)
             {
+                if (m_On && !m_lastViewNodeName.isEmpty()) {
+                    auto lastViewNodeIdx = m_model->indexFromName(m_lastViewNodeName);
+                    m_model->_setViewImpl(lastViewNodeIdx, m_On);
+                }
                 m_model->_setViewImpl(idx, !m_On);
             }
             else {

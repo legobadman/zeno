@@ -425,6 +425,7 @@ namespace zenoui
                 QString text = QString::fromStdString(any_cast<std::string>(value));
 
                 ZCodeEditor* pCodeEditor = new ZCodeEditor(text);
+                pCodeEditor->setNodeIndex(nodeIdx);
                 QObject::connect(pCodeEditor, &ZCodeEditor::editFinished, [=](const QString& newText) {
                     cbSet.cbEditFinished(newText.toStdString());
                 });

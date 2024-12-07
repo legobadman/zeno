@@ -24,15 +24,19 @@ namespace zeno
             return std::visit([](auto const& val) -> T {
                 using V = std::decay_t<decltype(val)>;
                 if constexpr (!std::is_constructible_v<T, V>) {
-                    if constexpr (std::is_same_v<T, glm::vec3> && std::is_same_v<V, zfxfloatarr>) {
+                    if constexpr (std::is_same_v<T, glm::vec3> && (std::is_same_v<V, zfxfloatarr> || std::is_same_v<V, zfxintarr>)) {
                         return glm::vec3(val[0], val[1], val[2]);
-                    }
+                    } else if constexpr (std::is_same_v<T, zeno::vec3f> && (std::is_same_v<V, zfxfloatarr> || std::is_same_v<V, zfxintarr>)) {
+                        return zeno::vec3f(val[0], val[1], val[2]);
+                    } else if constexpr (std::is_same_v<T, zeno::vec3i> && (std::is_same_v<V, zfxfloatarr> || std::is_same_v<V, zfxintarr>)) {
+                        return zeno::vec3i(val[0], val[1], val[2]);
+                    } 
                     throw makeError<TypeError>(typeid(T), typeid(V), "get<zfxvariant>");
                 }
                 else {
                     return T(val);
                 }
-            }, value);
+                }, value);
         }
 
         template <class T>
@@ -442,11 +446,16 @@ namespace zeno
                     int ptnum = -1;
                     std::visit([&](auto&& val) {
                         using T = std::decay_t<decltype(val)>;
-                        if constexpr (std::is_same_v<T, glm::vec3>) {
+                        if constexpr (std::is_same_v<T, glm::vec3> || std::is_same_v<T, zeno::vec3f> || std::is_same_v < T, zeno::vec3i > ) {
                             ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
-                        }
-                        else {
-                            //TODO: error
+                        } else if constexpr (std::is_same_v<T, zfxintarr> || std::is_same_v<T, zfxfloatarr>) {
+                            if (val.size() == 3) {
+                                ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
+                            } else {
+                                throw makeError<UnimplError>("the number of arguments of add_point is not matched.");
+                            }
+                        } else {
+                            throw makeError<UnimplError>("the type of arguments of add_point is not matched.");
                         }
                         }, varpos);
                     ZfxVariable res;
@@ -498,12 +507,12 @@ namespace zeno
             const auto& arg = args[0];
             int N = arg.value.size();
             if (N == 0)
-                return ZfxVariable();
+                return ZfxVariable(false);
 
             const auto& arg2 = args[1];
             N = arg2.value.size();
             if (N == 0)
-                return ZfxVariable();
+                return ZfxVariable(false);
 
             bool bSucceed = false;
 
@@ -514,8 +523,12 @@ namespace zeno
 
                 /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                    bool ret = spGeo->remove_vertex(faceid, vertid);
-                    bSucceed = true;
+                    bSucceed = spGeo->remove_vertex(faceid, vertid);
+                }
+
+                if (bSucceed) {
+                } else {
+                    throw makeError<UnimplError>("error on removeVertex");
                 }
 #if 0
                 if (bSucceed) {
@@ -546,7 +559,7 @@ namespace zeno
                 //移除多个的情况
                 //TODO:
             }
-            return ZfxVariable();
+            return ZfxVariable(bSucceed);
         }
 
         ZfxVariable remove_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -555,7 +568,7 @@ namespace zeno
 
             const auto& arg = args[0];
             int N = arg.value.size();
-            if (N == 0) return ZfxVariable();
+            if (N == 0) return ZfxVariable(false);
             bool bSucceed = false;
 
             if (N < filter.size()) {
@@ -564,8 +577,7 @@ namespace zeno
 
                 /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                    spGeo->remove_point(currrem);
-                    bSucceed = true;
+                    bSucceed = spGeo->remove_point(currrem);
                 }
                 if (bSucceed) {
                     //要调整filter，移除掉第currrem位置的元素
@@ -606,8 +618,7 @@ namespace zeno
                     remPoints.pop_front();
                     bSucceed = false;
                     if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                        spGeo->remove_point(currrem);
-                        bSucceed = true;
+                        bSucceed = spGeo->remove_point(currrem);
                     }
                     if (bSucceed) {
                         //要调整filter，移除掉第currrem位置的元素
@@ -637,7 +648,7 @@ namespace zeno
                     }
                 }
             }
-            return ZfxVariable();
+            return ZfxVariable(bSucceed);
         }
 
         ZfxVariable add_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -662,14 +673,23 @@ namespace zeno
             }
 
             int N = arg.value.size();
-            if (N == 0) return ZfxVariable();
+            if (N == 0) return ZfxVariable(false);
             bool bSucceed = false;
 
             std::set<int> remfaces;
             if (N < filter.size()) {
                 assert(N == 1);
-                int currrem = get_zfxvar<int>(arg.value[0]);
-                remfaces.insert(currrem);
+                std::visit([&remfaces](const auto& val) {//N为1的时候也可能是一个std::vector<int>，需判断
+                    using T = std::decay_t<decltype(val)>;
+                    if constexpr (std::is_same_v<T, int>) {
+                        int currrem = get_zfxvar<int>(val);
+                        remfaces.insert(currrem);
+                    } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+                        for (const auto& i : val) {
+                            remfaces.insert(i);
+                        }
+                    }
+                }, arg.value[0]);
             }
             else {
                 assert(N == filter.size());
@@ -693,7 +713,8 @@ namespace zeno
             else {
                 throw makeError<UnimplError>("error on removeface");
             }
-            return ZfxVariable();
+            ZfxVariable varRet(bSucceed);
+            return varRet;
         }
 
         ZfxVariable create_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -712,8 +733,9 @@ namespace zeno
             else if (group == "geometry") grp = ATTR_GEO;
 
             AttrVar defl = zfxVarToAttrVar(args[2]);
-            spGeo->create_attr(grp, name, defl);
-            return ZfxVariable();
+            int ret = spGeo->create_attr(grp, name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable create_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -723,8 +745,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->create_face_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->create_face_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable create_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -734,8 +757,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->create_point_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->create_point_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable create_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -745,8 +769,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->create_vertex_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->create_vertex_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable create_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -756,8 +781,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->create_geometry_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->create_geometry_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable set_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -776,8 +802,9 @@ namespace zeno
             else if (group == "geometry") grp = ATTR_GEO;
 
             AttrVar defl = zfxVarToAttrVar(args[2]);
-            spGeo->set_attr(grp, name, defl);
-            return ZfxVariable();
+            int ret = spGeo->set_attr(grp, name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable set_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -787,8 +814,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->set_vertex_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->set_vertex_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable set_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -798,8 +826,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->set_point_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->set_point_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable set_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -809,8 +838,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->set_face_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->set_face_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable set_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -820,8 +850,9 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            spGeo->set_geometry_attr(name, defl);
-            return ZfxVariable();
+            int ret = spGeo->set_geometry_attr(name, defl);
+            ZfxVariable varRet(ret);
+            return varRet;
         }
 
         ZfxVariable has_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {

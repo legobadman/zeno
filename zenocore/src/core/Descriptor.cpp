@@ -44,6 +44,7 @@ ParamDescriptor::ParamDescriptor(std::string const& comboitemsDesc, std::string 
     , name(name)
     , comboxitems(comboitemsDesc)
     , defl(defl)
+    , control(zeno::Combobox)
 {
 }
 

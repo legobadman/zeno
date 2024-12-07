@@ -25,6 +25,9 @@ namespace zeno
         };
 
         std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> spGeo, std::string zfxCode) {
+            if (!spGeo)
+                return spGeo;
+
             ZfxContext ctx;
             ctx.spNode = shared_from_this();
             ctx.spObject = spGeo;

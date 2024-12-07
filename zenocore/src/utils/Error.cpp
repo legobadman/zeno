@@ -102,4 +102,9 @@ ZENO_API UnimplError::UnimplError(std::string_view hint) noexcept
 
 ZENO_API UnimplError::~UnimplError() noexcept = default;
 
+ZENO_API ZfxParseError::ZfxParseError() noexcept :Error("[ZfxParseError] zfx parse failed.")
+{
+}
+ZENO_API ZfxParseError::~ZfxParseError() noexcept = default;
+
 }

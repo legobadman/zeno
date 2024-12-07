@@ -648,10 +648,17 @@ namespace zenoio
         }
         }
         if (zeno::isPrimVarType(type)) {
-            if (type == gParamType_Int) {
-                defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::reflect::any_cast<int>(defl));
-            } else if (type == gParamType_Float) {
-                defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::reflect::any_cast<float>(defl));
+            if (type == gParamType_Int || type == gParamType_Float) {
+                zeno::ParamType deftype = defl.type().hash_code();
+                if (deftype == gParamType_Int) {
+                    defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::reflect::any_cast<int>(defl));
+                }
+                else if (deftype == gParamType_Float) {
+                    defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::reflect::any_cast<float>(defl));
+                }
+                else if (deftype == gParamType_String) {
+                    defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::reflect::any_cast<std::string>(defl));
+                }
             }
         }
         return defl;

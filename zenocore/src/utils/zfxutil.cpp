@@ -299,7 +299,15 @@ namespace zeno
         }
 
         template<class ElemType>
-        static void set_attr_by_zfx(std::shared_ptr<GeometryObject> spGeom, std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext) {
+        static void set_attr_by_zfx(
+                std::shared_ptr<GeometryObject> spGeom,
+                std::string attrname,
+                std::string channel,
+                const ZfxVariable& var,
+                operatorVals opVal,
+                const ZfxElemFilter& filter,
+                ZfxContext* pContext)
+        {
             GeoAttrGroup group = pContext->runover;
             int N = spGeom->get_group_count(group);
             int nVariable = var.value.size();
@@ -324,14 +332,14 @@ namespace zeno
                         if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
                             spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
                                 //单值？
-                                return old_val + vec[idx][chnidx];
-                                });
+                                return filter[idx] ? (old_val + vec[idx][chnidx]) : old_val;
+                            });
                         }
                     }
                     else {
                         spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
                             //单值？
-                            return old_val + vec[idx];
+                            return filter[idx] ? (old_val + vec[idx]) : old_val;
                         });
                     }
 
@@ -340,27 +348,27 @@ namespace zeno
                     if (chn != 0) {
                         if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
                             spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                return old_val - vec[idx][chnidx];
-                                });
+                                return filter[idx] ? (old_val - vec[idx][chnidx]) : old_val;
+                            });
                         }
                     }
                     else {
                         spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                            return old_val - vec[idx];
-                            });
+                            return filter[idx] ? (old_val - vec[idx]) : old_val;
+                        });
                     }
                 }
                 else if (opVal == MulAssign) {
                     if (chn != 0) {
                         if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
                             spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                return old_val * vec[idx][chnidx];
-                                });
+                                return filter[idx] ? (old_val * vec[idx][chnidx]) : old_val;
+                            });
                         }
                     }
                     else {
                         spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                            return old_val * vec[idx];
+                            return filter[idx] ? (old_val * vec[idx]) : old_val;
                             });
                     }
                 }
@@ -368,38 +376,43 @@ namespace zeno
                     if (chn != 0) {
                         if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
                             spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                return old_val / vec[idx][chnidx];
+                                return filter[idx] ? (old_val / vec[idx][chnidx]) : old_val;
                                 });
                         }
                     }
                     else {
                         spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                            return old_val / vec[idx];
-                            });
+                            return filter[idx] ? (old_val / vec[idx]) : old_val;
+                        });
                     }
                 }
                 else {
                     if (chn != 0) {
                         if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
                             spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                return vec[idx][chnidx];
-                                });
+                                return filter[idx] ? vec[idx][chnidx] : old_val;
+                            });
                         }
                     }else{
                         spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                            return vec[idx];
-                            });
+                            return filter[idx] ? vec[idx] : old_val;
+                        });
                     }
                 }
             }
             else {
+                //创建反正都需要整个创建，暂时不用filter，（或者filter掉的部分元素为0)
                 spGeom->create_attr(group, attrname, vec);
             }
         }
 
-        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext) {
+        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (attrname[0] == '@')
                 attrname = attrname.substr(1);
+
+            if (attrname == "P") {
+                attrname = "pos";
+            }
 
             std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
 
@@ -413,27 +426,27 @@ namespace zeno
             GeoAttrType type = spGeom->get_attr_type(group, attrname);
             switch (type) {
             case ATTR_INT: {
-                set_attr_by_zfx<int>(spGeom, attrname, channel, var, opVal, pContext);
+                set_attr_by_zfx<int>(spGeom, attrname, channel, var, opVal, filter, pContext);
                 break;
             }
             case ATTR_FLOAT: {
-                set_attr_by_zfx<float>(spGeom, attrname, channel, var, opVal, pContext);
+                set_attr_by_zfx<float>(spGeom, attrname, channel, var, opVal, filter, pContext);
                 break;
             }
             case ATTR_STRING: {
-                //set_attr_by_zfx<std::string>(spGeom, attrname, channel, var, pContext);
+                //set_attr_by_zfx<std::string>(spGeom, attrname, channel, var, filter, pContext);
                 break;
             }
             case ATTR_VEC2: {
-                set_attr_by_zfx<glm::vec2>(spGeom, attrname, channel, var, opVal, pContext);
+                set_attr_by_zfx<glm::vec2>(spGeom, attrname, channel, var, opVal, filter, pContext);
                 break;
             }
             case ATTR_VEC3: {
-                set_attr_by_zfx<glm::vec3>(spGeom, attrname, channel, var, opVal, pContext);
+                set_attr_by_zfx<glm::vec3>(spGeom, attrname, channel, var, opVal, filter, pContext);
                 break;
             }
             case ATTR_VEC4: {
-                set_attr_by_zfx<glm::vec4>(spGeom, attrname, channel, var, opVal, pContext);
+                set_attr_by_zfx<glm::vec4>(spGeom, attrname, channel, var, opVal, filter, pContext);
                 break;
             }
             default: {

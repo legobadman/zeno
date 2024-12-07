@@ -15,6 +15,7 @@
 #include <zeno/utils/vectorutil.h>
 #include "../utils/zfxutil.h"
 #include "functionimpl.h"
+#include "funcDesc.h"
 
 
 using namespace zeno::types;
@@ -24,7 +25,6 @@ using namespace zeno::zfx;
 namespace zeno {
 
     FunctionManager::FunctionManager() {
-        init();
     }
 
     std::vector<std::string> FunctionManager::getCandidates(const std::string& prefix, bool bFunc) const {
@@ -33,7 +33,7 @@ namespace zeno {
             return candidates;
 
         if (bFunc) {
-            for (auto& [k, v] : m_funcs) {
+            for (auto& [k, v] : funcsDesc) {
                 //TODO: optimize the search
                 if (k.substr(0, prefix.size()) == prefix) {
                     candidates.push_back(k);
@@ -52,8 +52,8 @@ namespace zeno {
     }
 
     std::string FunctionManager::getFuncTip(const std::string& funcName, bool& bExist) const {
-        auto iter = m_funcs.find(funcName);
-        if (iter == m_funcs.end()) {
+        auto iter = funcsDesc.find(funcName);
+        if (iter == funcsDesc.end()) {
             bExist = false;
             return "";
         }
@@ -62,8 +62,8 @@ namespace zeno {
     }
 
     ZENO_API FUNC_INFO FunctionManager::getFuncInfo(const std::string& funcName) const {
-        auto iter = m_funcs.find(funcName);
-        if (iter == m_funcs.end()) {
+        auto iter = funcsDesc.find(funcName);
+        if (iter == funcsDesc.end()) {
             return FUNC_INFO();
         }
         return iter->second;
@@ -530,10 +530,10 @@ namespace zeno {
             }
             case TYPE_INT_ARR: {
                 if (std::holds_alternative<zfxfloatarr>(newvar)) {
-                    zfxfloatarr floatarr;
+                    zfxintarr intarr;
                     for (auto&& val : std::get<zfxfloatarr>(newvar))
-                        floatarr.push_back(val);
-                    newvar = floatarr;
+                        intarr.push_back(val);
+                    newvar = intarr;
                 }
                 else if (!std::holds_alternative<zfxintarr>(newvar)) {
                     throw makeError<UnimplError>("type dismatch TYPE_INT_ARR");
@@ -554,10 +554,10 @@ namespace zeno {
             }
             case TYPE_FLOAT_ARR: {
                 if (std::holds_alternative<zfxintarr>(newvar)) {
-                    zfxintarr intarr;
+                    zfxfloatarr floatarr;
                     for (auto&& val : std::get<zfxintarr>(newvar))
-                        intarr.push_back(val);
-                    newvar = intarr;
+                        floatarr.push_back(val);
+                    newvar = floatarr;
                 }
                 else if (!std::holds_alternative<zfxfloatarr>(newvar)) {
                     throw makeError<UnimplError>("type dismatch TYPE_FLOAT_ARR");
@@ -907,8 +907,8 @@ namespace zeno {
         }
     }
 
-    void FunctionManager::setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext) {
-        zeno::zfx::setAttrValue(attrname, channel, var, opVal, pContext);
+    void FunctionManager::setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
+        zeno::zfx::setAttrValue(attrname, channel, var, opVal, filter, pContext);
     }
 
     ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
@@ -1173,7 +1173,7 @@ namespace zeno {
                     else if (zenvarNode->opVal == Indexing) {
                         //todo
                     }
-                    setAttrValue(attrname, channel, res, root->opVal, pContext);
+                    setAttrValue(attrname, channel, res, root->opVal, filter, pContext);
                     return ZfxVariable();
                 }
 
@@ -1723,43 +1723,25 @@ namespace zeno {
             return {};
         }
 
-        switch (root->type)
+        std::set<std::pair<std::string, std::string>> paths;
+        if (nodeType::FUNC != root->type)
         {
-        case nodeType::NUMBER:
-        case nodeType::STRING:
-        case nodeType::ZENVAR:
-            return {};
-        case nodeType::FOUROPERATIONS:
-        {
-            if (root->children.size() != 2)
+            for (auto _childNode : root->children)
             {
-                throw makeError<UnimplError>();
+                std::set<std::pair<std::string, std::string>> _paths = getReferSources(_childNode, pContext);
+                if (!_paths.empty()) {
+                    paths.insert(_paths.begin(), _paths.end());
+                }
             }
-            std::set<std::pair<std::string, std::string>> paths, lpaths, rpaths;
-            lpaths = getReferSources(root->children[0], pContext);
-            rpaths = getReferSources(root->children[1], pContext);
-            if (!lpaths.empty())
-                paths.insert(lpaths.begin(), lpaths.end());
-            if (!rpaths.empty())
-                paths.insert(rpaths.begin(), rpaths.end());
-            return paths;
         }
-        case nodeType::NEGATIVE:
-        {
-            if (root->children.size() != 1)
-            {
-                return {};
-            }
-            return getReferSources(root->children[0], pContext);
-        }
-        case nodeType::FUNC:
+        else
         {
             const std::string& funcname = std::get<std::string>(root->value);
-            std::set<std::pair<std::string, std::string>> paths;
             if (funcname == "ref") {
                 if (root->children.size() != 1)
                     throw makeError<UnimplError>();
-                const std::string ref = std::get<std::string>(calc(root->children[0], pContext));
+                const zeno::zfxvariant& res = calc(root->children[0], pContext);
+                const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                 //收集ref信息源，包括源节点和参数
 
                 std::string fullPath, graphAbsPath;
@@ -1828,11 +1810,8 @@ namespace zeno {
                     }
                 }
             }
-            return paths;
         }
-        default:
-            return {};
-        }
+        return paths;
     }
 
     zfxvariant FunctionManager::calc(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext) {
@@ -1968,47 +1947,6 @@ namespace zeno {
 
     ZfxVariable FunctionManager::eval(const std::string& funcname, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
         return callFunction(funcname, args, filter, pContext);
-    }
-
-    void FunctionManager::init() {
-        m_funcs = {
-            {"sin", 
-                {"sin",
-                "Return the sine of the argument",
-                "float",
-                {{"degree", "float"}}
-                }
-            },
-            {"cos",
-                {"cos",
-                "Return the cose of the argument",
-                "float",
-                { {"degree", "float"}}}
-            },
-            {"sinh",
-                {"sinh",
-                "Return the hyperbolic sine of the argument",
-                "float",
-                { {"number", "float"}}}
-            },
-            {"cosh",
-                {"cosh",
-                "Return the hyperbolic cose of the argument",
-                "float",
-                { {"number", "float"}}}
-            },
-            {"ref",
-                {"ref",
-                "Return the value of reference param of node",
-                "float",
-                { {"path-to-param", "string"}}}
-            },
-            {"rand",
-                {"rand",
-                "Returns a pseudo-number number from 0 to 1",
-                "float", {}}
-            }
-        };
     }
 
 }

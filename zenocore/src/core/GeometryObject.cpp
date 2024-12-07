@@ -137,18 +137,25 @@ namespace zeno
         }
 
         copyTopologyAccordtoUseCount();
+        std::vector<int>& linearVertexIdx = m_spTopology->point_vertices(ptnum);
+        std::vector<int>& facesIdx = m_spTopology->point_faces(ptnum);
 
         bool ret = m_spTopology->remove_point(ptnum);
         if (ret) {
             //属性也要同步删除,包括point和vertices
             for (auto& [name, attrib_vec] : m_point_attrs) {
-                attrib_vec.remove_elem<zeno::vec3f> (ptnum);
+                removeAttribElem(attrib_vec, ptnum);
             }
 
             for (auto& [name, attrib_vec] : m_vert_attrs) {
-                std::vector<int>& linearVertexIdx = m_spTopology->point_vertices(ptnum);
                 for (int i = linearVertexIdx.size() - 1; i >= 0; i--) {
-                    attrib_vec.remove_elem<zeno::vec3f>(linearVertexIdx[i]);
+                    removeAttribElem(attrib_vec, linearVertexIdx[i]);
+                }
+            }
+
+            for (auto& [name, attrib_vec] : m_face_attrs) {
+                for (int i = facesIdx.size() - 1; i >= 0; i--) {
+                    removeAttribElem(attrib_vec, facesIdx[i]);
                 }
             }
 
@@ -167,12 +174,19 @@ namespace zeno
 
         bool ret = m_spTopology->remove_vertex(face_id, vert_id);
         if (ret) {
+            for (auto& [name, attrib_vec] : m_vert_attrs) {
+                removeAttribElem(attrib_vec, linear_vertex);
+            }
+            for (auto& [name, attrib_vec] : m_face_attrs) {
+                removeAttribElem(attrib_vec, face_id);
+            }
             if (m_spTopology->is_base_triangle() || vertexCount == 3) {//如果有3个顶点删除一个也要删除face
                 CALLBACK_NOTIFY(reset_vertices)
                 CALLBACK_NOTIFY(remove_face, face_id)
             } else {
                 CALLBACK_NOTIFY(remove_vertex, linear_vertex)
             }
+            return true;
         } else {
             return false;
         }
@@ -255,6 +269,29 @@ namespace zeno
         }
     }
 
+    void GeometryObject::removeAttribElem(AttributeVector& attrib_vec, int idx)
+    {
+        GeoAttrType attrType = attrib_vec.type();
+        if (attrType == ATTR_INT) {
+            attrib_vec.remove_elem<int>(idx);
+        }
+        else if (attrType == ATTR_FLOAT) {
+            attrib_vec.remove_elem<float>(idx);
+        }
+        else if (attrType == ATTR_STRING) {
+            attrib_vec.remove_elem < std::string >(idx);
+        }
+        else if (attrType == ATTR_VEC2) {
+            attrib_vec.remove_elem<zeno::vec2f>(idx);
+        }
+        else if (attrType == ATTR_VEC3) {
+            attrib_vec.remove_elem<zeno::vec3f>(idx);
+        }
+        else if (attrType == ATTR_VEC4) {
+            attrib_vec.remove_elem<zeno::vec4f>(idx);
+        }
+    }
+
     ZENO_API std::map<std::string, AttributeVector>& GeometryObject::get_container(GeoAttrGroup grp) {
         if (grp == ATTR_GEO) {
             return m_geo_attrs;
@@ -301,7 +338,7 @@ namespace zeno
         }
 
         int n = get_attr_size(grp);
-        container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n)));
+        container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n == 0 ? 1 : n)));
 
         if (grp == ATTR_GEO) {
         }
@@ -443,6 +480,13 @@ namespace zeno
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
+            std::string _name = name;
+            if (name == "P" && grp == ATTR_POINT) {
+                iter = container.find("pos");
+                assert(iter != container.end());
+                auto& attrVec = iter->second;
+                return attrVec.type();
+            }
             return ATTR_TYPE_UNKNOWN;
         }
         auto& attrVec = iter->second;
@@ -643,8 +687,33 @@ namespace zeno
     */
     ZENO_API bool GeometryObject::remove_faces(const std::set<int>& faces, bool includePoints) {
         copyTopologyAccordtoUseCount();
-        bool ret = m_spTopology->remove_faces(faces, includePoints);
+
+        std::vector<int> removedPtnums;
+        std::vector<int> removedVertices;
+        for (auto& faceid: faces) {
+            std::vector<int>& vertices = m_spTopology->face_vertices(faceid);
+            std::copy(vertices.begin(), vertices.end(), std::back_inserter(removedVertices));
+        }
+
+        bool ret = m_spTopology->remove_faces(faces, includePoints, removedPtnums);
         if (ret) {
+            if (includePoints) {
+                for (auto& [name, attrib_vec] : m_point_attrs) {
+                    for (int i = removedPtnums.size() - 1; i >= 0; i--) {
+                        removeAttribElem(attrib_vec, removedPtnums[i]);
+                    }
+                }
+            }
+            for (auto& [name, attrib_vec] : m_vert_attrs) {
+                for (int i = removedVertices.size() - 1; i >= 0; i--) {
+                    removeAttribElem(attrib_vec, removedVertices[i]);
+                }
+            }
+            for (auto& [name, attrib_vec] : m_face_attrs) {
+                for (auto& it = faces.rbegin(); it != faces.rend(); ++it) {
+                    removeAttribElem(attrib_vec, *it);
+                }
+            }
             CALLBACK_NOTIFY(reset_faces)
             CALLBACK_NOTIFY(reset_vertices)
             return true;

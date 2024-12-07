@@ -37,7 +37,7 @@ ZENO_API int ZfxExecute::parse() {
 ZENO_API int ZfxExecute::execute() {
     int ret = parse();
     if (ret != 0) {
-        zeno::log_error("parse error!");
+        throw makeError<ZfxParseError>();
         return ret;
     }
     //TODO: error exception catch.
@@ -196,6 +196,10 @@ std::shared_ptr<ZfxASTNode> ZfxExecute::makeEmptyNode() {
     n->type = PLACEHOLDER;
     n->value = 0;
     return n;
+}
+
+ZENO_API std::shared_ptr<ZfxASTNode> ZfxExecute::getASTResult() const {
+    return m_root;
 }
 
 unsigned int ZfxExecute::location() const {

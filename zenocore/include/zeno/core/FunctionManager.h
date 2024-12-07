@@ -35,7 +35,6 @@ namespace zeno {
         ZENO_API void testExp();
 
     private:
-        void init();
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);
         void pushStack();
         void popStack();
@@ -50,12 +49,11 @@ namespace zeno {
         std::vector<ZfxVariable> process_args(std::shared_ptr<ZfxASTNode> parent, ZfxElemFilter& filter, ZfxContext* pContext);
 
         ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel = 0);
-        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxContext* pContext);
+        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext);
 
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
 
         VariableTable m_globalAttrCached;
-        std::map<std::string, FUNC_INFO> m_funcs;
         std::vector<ZfxStackEnv> m_stacks;
     };
 }

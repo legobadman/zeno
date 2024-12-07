@@ -107,6 +107,7 @@ public:
     static QStringList stdlistToQStringList(const zeno::ObjPath& objpath);
     static QStringList findPreviousNode(GraphModel* pModel, const QString& node);
     static QStringList findSuccessorNode(GraphModel* pModel, const QString& node);
+    static QStringList findAllLinkdNodes(GraphModel* pModel, const QString& node);
     static int getIndegree(const QModelIndex& nodeIdx);
     static PANEL_TYPE title2Type(const QString& title);
 

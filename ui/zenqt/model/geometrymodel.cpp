@@ -1,6 +1,6 @@
 #include "geometrymodel.h"
 
-void addCol(zeno::GeometryObject* pObject, zeno::GeoAttrGroup group, QMap<int, AttributeInfo>& colMapping, std::string name, int nCol) {
+void addCol(zeno::GeometryObject* pObject, zeno::GeoAttrGroup group, QMap<int, AttributeInfo>& colMapping, std::string name, int& nCol) {
     QString qName = QString::fromStdString(name);
     //TODO: pos这种要放到最前头
     zeno::GeoAttrType type = pObject->get_attr_type(group, name);
@@ -356,6 +356,19 @@ int FaceModel::columnCount(const QModelIndex& parent) const {
 
 bool FaceModel::removeRows(int row, int count, const QModelIndex& parent) {
     return QAbstractTableModel::removeRows(row, count, parent);
+}
+
+QVariant FaceModel::headerData(int section, Qt::Orientation orientation, int role /*= Qt::DisplayRole*/) const
+{
+    if (role == Qt::DisplayRole) {
+        if (orientation == Qt::Horizontal) {
+            return QString::fromStdString(m_colMap[section].showName);
+        }
+        else {
+            return QString::number(section);
+        }
+    }
+    return QAbstractTableModel::headerData(section, orientation, role);
 }
 
 void FaceModel::setGeoObject(zeno::GeometryObject* pObject)

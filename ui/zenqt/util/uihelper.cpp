@@ -20,6 +20,7 @@
 #include "zeno_types/reflect/reflection.generated.hpp"
 #include <regex>
 #include "declmetatype.h"
+#include <unordered_map>
 
 
 const char* g_setKey = "setKey";
@@ -2309,6 +2310,40 @@ QStringList UiHelper::findSuccessorNode(GraphModel* pModel, const QString& node)
         }
     }
     return nodes;
+}
+
+QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& node)
+{
+    std::unordered_set<std::string> nodesName;
+    std::function<void(GraphModel*, std::string, std::unordered_set<std::string>&)> findNodes = [&findNodes](GraphModel* pModel, std::string node, std::unordered_set<std::string>& nodesName) {
+        if (nodesName.count(node) || node.empty()) {
+            return;
+        } else {
+            nodesName.insert(node);
+        }
+        const QModelIndex& idx = pModel->indexFromName(QString::fromStdString(node));
+        if (ParamsModel* paramModel = QVariantPtr<ParamsModel>::asPtr(idx.data(ROLE_PARAMS))) {
+            for (int i = 0; i < paramModel->rowCount(); ++i) {
+                QModelIndex idx = paramModel->index(i, 0);
+                auto name = idx.data(ROLE_PARAM_NAME).toString();
+                PARAM_LINKS links = idx.data(ROLE_LINKS).value<PARAM_LINKS>();
+                for (auto link : links) {
+                    zeno::EdgeInfo edge = link.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+                    if (idx.data(ROLE_ISINPUT).toBool()) {
+                        findNodes(pModel, edge.outNode, nodesName);
+                    } else {
+                        findNodes(pModel, edge.inNode, nodesName);
+                    }
+                }
+            }
+        }
+    };
+    findNodes(pModel, node.toStdString(), nodesName);
+    QStringList list;
+    for (auto& i : nodesName) {
+        list.append(QString::fromStdString(i));
+    }
+    return list;
 }
 
 int UiHelper::getIndegree(const QModelIndex& nodeIdx)
