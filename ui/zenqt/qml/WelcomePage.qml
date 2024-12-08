@@ -40,7 +40,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 color: "#F0F0F0"
                 font.family: "微软雅黑"
-                font.pixelSize: 48
+                font.pixelSize: 32
                 text: "ZENO"
                 fontSizeMode: Text.Fit 
                 minimumPixelSize: 10
@@ -61,10 +61,10 @@ Item {
             Column {
                 spacing: 35
                 Column {
-                    spacing: 16
+                    spacing: 12
                     Text {
                         color: "#F0F0F0"
-                        font.pixelSize: 18
+                        font.pixelSize: 14
                         font.family: "微软雅黑"
                         text: "开始"
                         fontSizeMode: Text.Fit 
@@ -73,7 +73,7 @@ Item {
                     }
 
                     Row {
-                        spacing: 10
+                        spacing: 8
                         Image {
                             sourceSize.width: 24
                             sourceSize.height: 24
@@ -84,7 +84,7 @@ Item {
                         Text {
                             id: text_new_project
                             color: "#0078D4"
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.family: "微软雅黑"
                             text: "新建工程"
                             MouseArea {
@@ -104,7 +104,7 @@ Item {
                         }
                     }
                     Row {
-                        spacing: 10
+                        spacing: 8
                         Image {
                             sourceSize.width: 24
                             sourceSize.height: 24
@@ -115,7 +115,7 @@ Item {
                         Text {
                             id: text_open_project
                             color: "#0078D4"
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.family: "微软雅黑"
                             text: "打开工程"
                             MouseArea {
@@ -139,7 +139,7 @@ Item {
 
                 Text {
                     color: "#F0F0F0"
-                    font.pixelSize: 18
+                    font.pixelSize: 14
                     font.family: "微软雅黑"
                     text: "最近的文件"
                     fontSizeMode: Text.Fit 
@@ -153,7 +153,7 @@ Item {
 
                 Text {
                     color: "#F0F0F0"
-                    font.pixelSize: 18
+                    font.pixelSize: 14
                     font.family: "微软雅黑"
                     text: "资源"
                     fontSizeMode: Text.Fit 
@@ -168,7 +168,7 @@ Item {
                     radius: 10
                     
                     Column {
-                        padding: 12
+                        padding: 6
 
                         Image {
                             sourceSize.width: 24
@@ -180,7 +180,7 @@ Item {
                         Text {
                             id: zenus_website
                             color: "#F0F0F0"
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.family: "微软雅黑"
                             text: "泽森科工官网"
                             onLinkActivated: Qt.openUrlExternally(link)
@@ -209,7 +209,7 @@ Item {
                     radius: 10
                     
                     Column {
-                        padding: 12
+                        padding: 6
                         Image {
                             sourceSize.width: 24
                             sourceSize.height: 24
@@ -220,7 +220,7 @@ Item {
                         Text {
                             id: zeno_document
                             color: "#F0F0F0"
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.family: "微软雅黑"
                             text: "ZENO手册"
                             onLinkActivated: Qt.openUrlExternally(link)
@@ -249,7 +249,7 @@ Item {
                     radius: 10
                     
                     Column {
-                        padding: 12
+                        padding: 6
                         Image {
                             sourceSize.width: 24
                             sourceSize.height: 24
@@ -260,7 +260,7 @@ Item {
                         Text {
                             id: zenus_forum
                             color: "#F0F0F0"
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.family: "微软雅黑"
                             text: "论坛"
                             MouseArea {
@@ -288,7 +288,7 @@ Item {
                     radius: 10
                     
                     Column {
-                        padding: 12
+                        padding: 6
                         Image {
                             sourceSize.width: 24
                             sourceSize.height: 24
@@ -299,7 +299,7 @@ Item {
                         Text {
                             id: text_github
                             color: "#F0F0F0"
-                            font.pixelSize: 18
+                            font.pixelSize: 14
                             font.family: "微软雅黑"
                             text: "Github"
                             onLinkActivated: Qt.openUrlExternally(link)

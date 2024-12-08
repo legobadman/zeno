@@ -47,35 +47,10 @@ Zen.GraphsTotalView {
     graphsMgr: Zen.GraphsManager {
         id: graphs
     }
-  
-    // 定义全局对象，通过 nodeseditor 来访问
-    Item {
-        id: nodeseditor
-
-        // 标签页逻辑控制器
-        TabViewController { id: tab_ }
-        property var tab: tab_ // 通过 nodeseditor.tab 来访问
-
-        // 持久化存储
-        Settings { 
-            id: settings
-            fileName: "./.settings_ui.ini" // 配置文件名
-
-
-            property alias openPageList: tab_.openPageList
-            property alias showPageIndex: tab_.showPageIndex
-            property alias barIsLock: tab_.barIsLock
-
-            property bool refresh: false // 用于刷新
-            function save(){ // 手动刷新
-                refresh=!refresh
-            }
-        }
-    }
 
     StackLayout {
         id: welcomepage_or_editor
-        currentIndex: 1
+        currentIndex: 0
         anchors.fill: parent
 
         WelcomePage {
@@ -250,51 +225,55 @@ Zen.GraphsTotalView {
                 }
             }
 
-            StackLayout {
-                id: stack_editorzone
-                clip: true
+            Item {
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                currentIndex: 0
-                TabView_ { 
-                    id: tabEditor
-                    width: 200
+                Layout.fillWidth: true;
+                Layout.fillHeight: true
+
+                TabBar {
+                    id: bar
+                    TabButton {
+                        text: qsTr("main")
+                        width: implicitWidth
+                    }
+                    CustomTabButton {
+                        text: qsTr("Asset1")
+                        width: implicitWidth
+                    }
+                    CustomTabButton {
+                        text: qsTr("Asset2")
+                        width: implicitWidth
+                    }
+
                 }
 
-                Rectangle {
-                    width: 200
-                    implicitWidth: 200
-                    color: "#0000ff"
+                StackLayout {
+                    width: parent.width
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: bar.bottom
+                    anchors.bottom: parent.bottom
+                    currentIndex: bar.currentIndex
+                    Rectangle {
+                        id: homeTab
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        color: "red"
+                    }
+                    Item { 
+                        Loader { anchors.fill: parent; source: "qrc:/zenographview.qml"}
+                    }
+                    Rectangle {
+                        id: activityTab
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        color: "blue"
+                    }
                 }
             }
         }
-    }    
-
-    /*
-    Pane { anchors.fill: parent }
-    ColumnLayout {
-        anchors.fill: parent
-        TabBar {
-            id: tabBar
-            Layout.preferredWidth: 450; Layout.fillHeight: false
-            TabButton { text: qsTr("Zeno Nodes") }
-        }
-        StackLayout {
-            clip: true
-            Layout.fillWidth: true; Layout.fillHeight: true
-            currentIndex: tabBar.currentIndex
-            Item { Loader { anchors.fill: parent; source: "qrc:/zenographview.qml"} }
-        }
     }
-    RowLayout {
-        anchors.top: parent.top;    anchors.right: parent.right
-        CheckBox {
-            text: qsTr("Dark")
-            checked: ApplicationWindow.contentItem.Material.theme === Material.Dark
-            onClicked: ApplicationWindow.contentItem.Material.theme = checked ? Material.Dark : Material.Light
-        }
-    }
-    */
 
     onModelInited: function() {
         welcomepage_or_editor.currentIndex = 1

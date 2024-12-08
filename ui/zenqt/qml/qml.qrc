@@ -68,5 +68,7 @@
         <file>testParam.qml</file>
         <file>testQan.qml</file>
         <file>WelcomePage.qml</file>
+        <file>ZGraphsView.qml</file>
+        <file>CustomTabButton.qml</file>
     </qresource>
 </RCC>
