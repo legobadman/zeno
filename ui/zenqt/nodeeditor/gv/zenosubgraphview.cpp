@@ -203,38 +203,38 @@ _ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent)
     QAction* pActSave = new QAction("Save", this);
     pActSave->setShortcut(QKeySequence::Save);
     pActSave->setShortcutContext(Qt::WidgetShortcut);
-    connect(pActSave, SIGNAL(triggered()), this, SLOT(save()));
+    //connect(pActSave, SIGNAL(triggered()), this, SLOT(save()));
     addAction(pActSave);
 
     QAction *ctrlc = new QAction("Copy", this);
     ctrlc->setShortcut(QKeySequence::Copy);
     ctrlc->setShortcutContext(Qt::WidgetShortcut);
-    connect(ctrlc, SIGNAL(triggered()), this, SLOT(copy()));
+    //connect(ctrlc, SIGNAL(triggered()), this, SLOT(copy()));
     addAction(ctrlc);
 
     QAction *ctrlv = new QAction("Paste", this);
     ctrlv->setShortcut(QKeySequence::Paste);
     ctrlv->setShortcutContext(Qt::WidgetShortcut);
-    connect(ctrlv, SIGNAL(triggered()), this, SLOT(paste()));
+    //connect(ctrlv, SIGNAL(triggered()), this, SLOT(paste()));
     addAction(ctrlv);
 
     QAction *ctrlf = new QAction("Find", this);
     ctrlf->setShortcut(QKeySequence::Find);
     ctrlf->setShortcutContext(Qt::WidgetShortcut);
-    connect(ctrlf, SIGNAL(triggered()), this, SLOT(find()));
+    //connect(ctrlf, SIGNAL(triggered()), this, SLOT(find()));
     addAction(ctrlf);
 
     QAction* escape = new QAction("Esc", this);
     escape->setShortcut(QKeySequence("Escape"));
     escape->setShortcutContext(Qt::WidgetShortcut);
-    connect(escape, SIGNAL(triggered()), this, SLOT(esc()));
+    //connect(escape, SIGNAL(triggered()), this, SLOT(esc()));
     addAction(escape);
 
     ZenoSettingsManager &settings = ZenoSettingsManager::GetInstance();
     QAction* cameraFocus = new QAction("CameraFocus", this);
     cameraFocus->setShortcut(settings.getShortCut(ShortCut_Focus));
     cameraFocus->setShortcutContext(Qt::WidgetShortcut);
-    connect(cameraFocus, SIGNAL(triggered()), this, SLOT(cameraFocus()));
+    //connect(cameraFocus, SIGNAL(triggered()), this, SLOT(cameraFocus()));
     addAction(cameraFocus);
 
     QAction* mActZenoNewNode = new QAction();

@@ -10,36 +10,38 @@ import QuickQanava 2.0 as Qan
 import "qrc:/QuickQanava" as Qan
 import Zeno 1.0 as Zen
 import "./view"
-import "./container/TabView"
 
 
 Item {
-    id: wholeitem
-    property variant graphs
+    id: rootgraphsview
 
     Rectangle {
         id: zeditortoolbar
-        height: 64
         anchors.left: parent.left
+        anchors.top: parent.top
         anchors.right: parent.right
-        color: "#00ff00"
+        height: 24
+        color: "#1F1F1F"
     }
 
     Rectangle {
         id: speratorline
-        anchors.top: zeditortoolbar.bottom
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.top: zeditortoolbar.bottom
         height: 1
-        color: "red"
+        color: "black"
     }
     
     SplitView {
-        id: graphsview
-        spacing: 10
-        orientation: Qt.Horizontal
+        id: mainLayout
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.top: speratorline.bottom
         anchors.bottom: parent.bottom
+
+        spacing: 10
+        orientation: Qt.Horizontal
 
         handle: Item {
             implicitWidth: 2
@@ -48,8 +50,7 @@ Item {
                 implicitWidth: 2
                 anchors.horizontalCenter: parent.horizontalCenter
                 height: parent.height
-                color: "red"
-                //color: SplitHandle.hovered ? "#00ff00" : "#2B2B2B"
+                color: SplitHandle.hovered ? "#00ff00" : "#2B2B2B"
             }
         }
 
@@ -76,7 +77,7 @@ Item {
                         id: wrapper
                         width: parent.width
                         height: 30
-                                    
+
                         // 实现了鼠标点选高亮的效果
                         MouseArea {
                             anchors.fill: parent;
@@ -137,17 +138,17 @@ Item {
                             name: "iPhone 4"
                             cost: "1800"
                             manufacturer: "Apple"
-                        }            
+                        }
                         ListElement{
                             name: "iPhone 4S"
                             cost: "2300"
                             manufacturer: "Apple"
-                        } 
+                        }
                         ListElement{
                             name: "iPhone 5"
                             cost: "4900"
                             manufacturer: "Apple"
-                        }                                
+                        }
                     }
 
                     // 背景高亮
@@ -203,10 +204,52 @@ Item {
             }
         }
 
-        Rectangle {
-            width: 200
-            height: 200
-            color: "#0000ff"
+        Item {
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            Layout.fillWidth: true;
+            Layout.fillHeight: true
+
+            TabBar {
+                id: bar
+                TabButton {
+                    text: qsTr("main")
+                    width: implicitWidth
+                }
+                CustomTabButton {
+                    text: qsTr("Asset1")
+                    width: implicitWidth
+                }
+                CustomTabButton {
+                    text: qsTr("Asset2")
+                    width: implicitWidth
+                }
+            }
+
+            StackLayout {
+                width: parent.width
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: bar.bottom
+                anchors.bottom: parent.bottom
+                currentIndex: bar.currentIndex
+
+                Item { 
+                    Loader { anchors.fill: parent; source: "qrc:/zenographview.qml"}
+                }
+                Rectangle {
+                    id: homeTab
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: "red"
+                }
+                Rectangle {
+                    id: activityTab
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: "blue"
+                }
+            }
         }
     }
 }
