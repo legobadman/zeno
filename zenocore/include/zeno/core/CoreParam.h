@@ -68,7 +68,6 @@ namespace zeno {
         zeno::reflect::Any defl;
         zeno::reflect::Any result;
         std::list<std::shared_ptr<PrimitiveLink>> links;
-        std::list<std::shared_ptr<ReferLink>> reflinks;
         ParamControl control = NullControl;
         zeno::reflect::Any ctrlProps;
         zeno::SocketProperty sockprop = zeno::Socket_Normal;

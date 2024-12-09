@@ -1037,14 +1037,6 @@ void INode::initReferLinks(PrimitiveParam* target_param) {
             }
         }
     }
-    //在graph中增删这个ReferLink的param
-    if (std::shared_ptr<Graph> spGraph = graph.lock()) {
-        //if (!refSources.empty()) {
-        //    spGraph->addReferLinkParam(m_name, target_param->name);
-        //} else {
-        //    spGraph->removeReferLinkParam(m_name, target_param->name);
-        //}
-    }
 }
 
 std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const Any& param_defl) {
