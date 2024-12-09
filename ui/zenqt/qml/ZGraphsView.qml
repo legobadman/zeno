@@ -15,14 +15,113 @@ import "./view"
 Item {
     id: rootgraphsview
 
-    Rectangle {
+    ToolBar {
         id: zeditortoolbar
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.right: parent.right
-        height: 24
-        color: "#1F1F1F"
-    }
+        width: parent.width
+        property bool view_reentry: false       //用于记录treeview和listview之间互相通知的重入标志
+
+        background: Rectangle { // 自定义背景颜色
+            color: "#1F1F1F"  // 设置背景颜色
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.topMargin: 0
+            anchors.bottomMargin: 0
+            spacing: 0
+
+            ToolButton {
+                id: assets_list
+                checkable: true
+                checked: false
+                
+                icon.source: hovered || checked  ? "qrc:/icons/subnet-listview-on.svg" : "qrc:/icons/subnet-listview.svg"
+
+                onClicked: console.log("Save button clicked")
+
+                onCheckedChanged: {
+                    if (!zeditortoolbar.view_reentry) {
+                        zeditortoolbar.view_reentry = true
+                        
+                        tree_list.checked = false
+                        stack_main_or_asset.visible = checked
+                        stack_main_or_asset.currentIndex = 0
+
+                        zeditortoolbar.view_reentry = false
+                    }
+                }    
+
+                contentItem: Image {
+                    id: icon_image
+                    source: parent.icon.source
+                    sourceSize.width: 20
+                    sourceSize.height: 20
+                    smooth: true
+                    antialiasing: true
+                    //anchors.verticalCenter: parent.verticalCenter
+                }
+                
+                background: Rectangle {
+                    x: icon_image.x
+                    y: icon_image.y
+                    width: 20
+                    height: 20
+                    opacity: enabled ? 1 : 0.3
+                    color: parent.hovered || parent.checked ? "#4F5963" : "transparent"
+                    border.color: parent.down ? "#17a81a" : "#21be2b"
+                    border.width: 0
+                    radius: 2
+                }
+                
+            }
+
+            ToolButton {
+                id: tree_list
+                icon.source: hovered || checked  ? "qrc:/icons/nodeEditor_nodeTree_selected.svg" : "qrc:/icons/nodeEditor_nodeTree_unselected.svg"
+                checkable: true
+                checked: true
+                property bool reentry: false
+
+                onClicked: console.log("Settings button clicked")
+
+                onCheckedChanged: {
+                    if (!zeditortoolbar.view_reentry) {
+                        zeditortoolbar.view_reentry = true
+
+                        assets_list.checked = false
+                        stack_main_or_asset.visible = checked
+                        stack_main_or_asset.currentIndex = 1
+                        
+                        zeditortoolbar.view_reentry = false
+                    }
+                }    
+
+                contentItem: Image {
+                    source: parent.icon.source
+                    sourceSize.width: 20
+                    sourceSize.height: 20
+                    smooth: true
+                    antialiasing: true
+                    //anchors.verticalCenter: parent.verticalCenter
+                }
+
+                background: Rectangle {
+                    x: icon_image.x
+                    y: icon_image.y
+                    width: 20
+                    height: 20
+                    opacity: enabled ? 1 : 0.3
+                    color: parent.hovered || parent.checked ? "#4F5963" : "transparent"
+                    border.color: parent.down ? "#17a81a" : "#21be2b"
+                    border.width: 0
+                    radius: 2
+                }
+            }
+
+            Item { Layout.fillWidth: true }
+        }
+    }    
 
     Rectangle {
         id: speratorline
