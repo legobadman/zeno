@@ -23,7 +23,8 @@ using namespace zeno::zfx;
 
 namespace zeno {
 
-    std::regex FunctionManager::refStrPattern(R"([\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+)");
+    std::regex FunctionManager::refPattern(R"([\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+)");
+    std::regex FunctionManager::refStrPattern(R"(.*"[\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+".*)");
 
     FunctionManager::FunctionManager() {
     }
@@ -1803,7 +1804,7 @@ namespace zeno {
                     if (paramNode->type ==  nodeType::STRING) {
                         const zeno::zfxvariant& res = calc(paramNode, pContext);
                         const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
-                        if (std::regex_search(ref, refStrPattern)) {
+                        if (std::regex_search(ref, refPattern)) {
                             auto [spNode, paramname] = getNodeAndParamNameFromRef(ref, pContext);
                             if (spNode)
                                 paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));

@@ -995,7 +995,7 @@ namespace zeno
                 throw makeError<UnimplError>("the number of arguments of npoints is not matched.");
             } else if (args.size() == 1) {
                 std::string ref = get_zfxvar<std::string>(args[0].value[0]);
-                if (std::regex_search(ref, FunctionManager::refStrPattern)) {
+                if (std::regex_search(ref, FunctionManager::refPattern)) {
                     std::shared_ptr<IObject> spObj = getObjFromRef(ref, pContext);
                     if (std::shared_ptr<GeometryObject> spGeo = std::dynamic_pointer_cast<GeometryObject>(spObj)) {
                         return spGeo->npoints();

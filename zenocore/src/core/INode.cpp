@@ -1037,6 +1037,14 @@ void INode::initReferLinks(PrimitiveParam* target_param) {
             }
         }
     }
+    //在graph中增删这个ReferLink的param
+    if (std::shared_ptr<Graph> spGraph = graph.lock()) {
+        //if (!refSources.empty()) {
+        //    spGraph->addReferLinkParam(m_name, target_param->name);
+        //} else {
+        //    spGraph->removeReferLinkParam(m_name, target_param->name);
+        //}
+    }
 }
 
 std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const Any& param_defl) {
@@ -1044,12 +1052,10 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
     std::set<std::pair<std::string, std::string>> refSources;
     std::vector<std::string> refSegments;
 
-    std::regex refStrPattern(R"(.*"[\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+".*)");
-
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::reflect::any_cast<std::string>(param_defl);
-        if (!std::regex_search(param_text, refStrPattern)) {
+        if (!std::regex_search(param_text, FunctionManager::refStrPattern)) {
             return refSources;
         }
         refSegments.push_back(param_text);
@@ -1060,7 +1066,7 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (!std::regex_search(param_text, refStrPattern)) {
+        if (!std::regex_search(param_text, FunctionManager::refStrPattern)) {
             return refSources;
         }
         refSegments.push_back(param_text);
@@ -1072,7 +1078,7 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (std::regex_search(param_text, refStrPattern)) {
+            if (std::regex_search(param_text, FunctionManager::refStrPattern)) {
                 refSegments.push_back(param_text);
             }
         }

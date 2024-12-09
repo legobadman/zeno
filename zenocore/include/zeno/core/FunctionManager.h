@@ -35,7 +35,8 @@ namespace zeno {
 
         ZENO_API void testExp();
 
-        static std::regex refStrPattern;
+        static const std::regex refPattern;
+        static const std::regex refStrPattern;
 
     private:
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);

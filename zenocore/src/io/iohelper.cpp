@@ -466,7 +466,7 @@ namespace zenoio
             }
             else if (val.IsString()) {
                 std::string sval(val.GetString());
-                if (hasRef && sval.find("ref(") != std::string::npos) {
+                if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
                     *hasRef = true;
                 }
                 if (!sval.empty())
@@ -492,7 +492,7 @@ namespace zenoio
             else if (val.IsString())
             {
                 std::string sval(val.GetString());
-                if (hasRef && sval.find("ref(") != std::string::npos) {
+                if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
                     *hasRef = true;
                 }
                 if (!sval.empty())
@@ -522,7 +522,7 @@ namespace zenoio
         {
             if (val.IsString()) {
                 std::string sval = (std::string)val.GetString();
-                if (hasRef && sval.find("ref(") != std::string::npos) {
+                if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
                     *hasRef = true;
                 }
                 defl = sval;
@@ -583,7 +583,7 @@ namespace zenoio
                        may be we just want to k-frame for only one component.
                      */
                     std::string sval(arr[i].GetString());
-                    if (hasRef && sval.find("ref(") != std::string::npos) {
+                    if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
                         *hasRef = true;
                     }
                     editvec.push_back(sval);
