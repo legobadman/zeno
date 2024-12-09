@@ -17,6 +17,7 @@ namespace zeno {
     class INode;
     class ObjectParam;
     class PrimitiveParam;
+    class CoreParam;
 
     struct ObjectLink {
         ObjectParam* fromparam = nullptr;  //IParam stored as unique ptr in the INode, so we need no smart pointer.
@@ -35,7 +36,7 @@ namespace zeno {
     //引用连接，连接的双方都是基础类型的输入参数
     //目前是允许跨图层级的，也就是两个参数对应的节点不在同一个图里
     struct ReferLink {
-        PrimitiveParam* source_inparam = nullptr;
+        CoreParam* source_inparam = nullptr;
         PrimitiveParam* dest_inparam = nullptr;
     };
 
@@ -45,6 +46,7 @@ namespace zeno {
         std::weak_ptr<INode> m_wpNode;
         std::string wildCardGroup;
         std::string constrain;
+        std::list<std::shared_ptr<ReferLink>> reflinks;
 
         ParamType type = Param_Null;
         SocketType socketType = NoSocket;

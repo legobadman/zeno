@@ -467,6 +467,11 @@ void INode::mark_dirty(bool bOn, bool bWholeSubnet, bool bRecursively)
             }
         }
         for (auto& [name, param] : m_outputObjs) {
+            for (auto link : param.reflinks) {
+                assert(link->dest_inparam);
+                auto destNode = link->dest_inparam->m_wpNode.lock();
+                destNode->mark_dirty(true);
+            }
             for (auto link : param.links) {
                 auto inParam = link->toparam;
                 assert(inParam);
@@ -974,7 +979,7 @@ void INode::initReferLinks(PrimitiveParam* target_param) {
     {
         bool bExist = false;
         std::shared_ptr<ReferLink> spRefLink = (*iter);
-        PrimitiveParam* remote_source = spRefLink->source_inparam;
+        CoreParam* remote_source = spRefLink->source_inparam;
         assert(remote_source);
         if (remote_source == target_param) {
             iter++;
@@ -1019,6 +1024,17 @@ void INode::initReferLinks(PrimitiveParam* target_param) {
                 target_param->reflinks.push_back(reflink);
                 srcparam.reflinks.push_back(reflink);
             }
+        } else {
+            auto iterSrcObj = srcNode->m_outputObjs.find(source_param);
+            if (iterSrcObj != srcNode->m_outputObjs.end()) {
+                ObjectParam& srcObj = iterSrcObj->second;
+                //构造reflink
+                std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
+                reflink->source_inparam = &srcObj;
+                reflink->dest_inparam = target_param;
+                target_param->reflinks.push_back(reflink);
+                srcObj.reflinks.push_back(reflink);
+            }
         }
     }
 }
@@ -1028,10 +1044,12 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
     std::set<std::pair<std::string, std::string>> refSources;
     std::vector<std::string> refSegments;
 
+    std::regex refStrPattern(R"(.*"[\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+".*)");
+
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::reflect::any_cast<std::string>(param_defl);
-        if (param_text.find("ref(") == std::string::npos) {
+        if (!std::regex_search(param_text, refStrPattern)) {
             return refSources;
         }
         refSegments.push_back(param_text);
@@ -1042,7 +1060,7 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (param_text.find("ref(") == std::string::npos) {
+        if (!std::regex_search(param_text, refStrPattern)) {
             return refSources;
         }
         refSegments.push_back(param_text);
@@ -1054,7 +1072,7 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (param_text.find("ref(") != std::string::npos) {
+            if (std::regex_search(param_text, refStrPattern)) {
                 refSegments.push_back(param_text);
             }
         }

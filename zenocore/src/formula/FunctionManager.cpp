@@ -5,7 +5,6 @@
 #include <zeno/core/Graph.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/helper.h>
-#include <regex>
 #include <variant>
 #include <functional>
 #include <zeno/utils/format.h>
@@ -23,6 +22,8 @@ using namespace zeno::reflect;
 using namespace zeno::zfx;
 
 namespace zeno {
+
+    std::regex FunctionManager::refStrPattern(R"([\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+)");
 
     FunctionManager::FunctionManager() {
     }
@@ -828,6 +829,52 @@ namespace zeno {
         else {
             
         }
+    }
+
+    std::pair<std::shared_ptr<INode>, std::string> FunctionManager::getNodeAndParamNameFromRef(const std::string& ref, ZfxContext* pContext)
+    {
+        if (ref.empty()) {
+            zeno::log_warn("ref empty");
+        }
+        std::string fullPath, graphAbsPath;
+        auto thisNode = pContext->spNode.lock();
+        const std::string& thisnodePath = thisNode->get_path();
+        graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
+
+        if (ref.front() == '/') {
+            fullPath = ref;
+        }
+        else {
+            fullPath = graphAbsPath + "/" + ref;
+        }
+
+        size_t idx = fullPath.find_last_of('/');
+        if (idx == std::string::npos) {
+            zeno::log_warn("unresolve node");
+        }
+
+        const std::string& graph_correct_path = fullPath.substr(0, idx);
+        const std::string& nodePath = fullPath.substr(idx + 1);
+
+        idx = nodePath.find('.');
+        if (idx == std::string::npos) {
+            zeno::log_warn("no param name when resolve ref path");
+        }
+        std::string nodename = nodePath.substr(0, idx);
+        std::string parampath = nodePath.substr(idx + 1);
+
+        std::string nodeAbsPath = graph_correct_path + '/' + nodename;
+        std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
+        if (!spNode) {
+            //unresolve node. 也有一种可能，就是引用源调整名字，然后同步到各个引用节点，引用节点的参数还是
+            // 旧的，所以在这里resolve不到。
+            zeno::log_warn("unresolve node");
+        }
+
+        auto paramPathItems = split_str(parampath, '.');
+        std::string paramname = paramPathItems.empty() ? parampath : paramPathItems[0];
+
+        return std::make_pair(spNode, paramname);
     }
 
     static ZfxVariable getAttrValue_impl(std::shared_ptr<IObject> spObject, const std::string& attr_name) {
@@ -1744,67 +1791,26 @@ namespace zeno {
                 const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                 //收集ref信息源，包括源节点和参数
 
-                std::string fullPath, graphAbsPath;
-
-                if (ref.empty()) {
-                    zeno::log_warn("ref empty");
-                    return {};
-                }
-
-                auto thisNode = pContext->spNode.lock();
-                const std::string& thisnodePath = thisNode->get_path();
-                graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
-
-                if (ref.front() == '/') {
-                    fullPath = ref;
-                }
-                else {
-                    fullPath = graphAbsPath + "/" + ref;
-                }
-
-                size_t idx = fullPath.find_last_of('/');
-                if (idx == std::string::npos) {
-                    zeno::log_warn("unresolve node");
-                    return {};
-                }
-
-                const std::string& graph_correct_path = fullPath.substr(0, idx);
-                const std::string& nodePath = fullPath.substr(idx + 1);
-
-                idx = nodePath.find('.');
-                if (idx == std::string::npos) {
-                    zeno::log_warn("no param name when resolve ref path");
-                    return {};
-                }
-                std::string nodename = nodePath.substr(0, idx);
-                std::string parampath = nodePath.substr(idx + 1);
-
-                std::string nodeAbsPath = graph_correct_path + '/' + nodename;
-                std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
-                if (!spNode) {
-                    //unresolve node. 也有一种可能，就是引用源调整名字，然后同步到各个引用节点，引用节点的参数还是
-                    // 旧的，所以在这里resolve不到。
-                    zeno::log_warn("unresolve node");
-                    return {};
-                }
-
-                std::string paramname;
-                auto items = split_str(parampath, '.');
-                if (items.empty()) {
-                    paramname = parampath;
-                }
-                else {
-                    paramname = items[0];
-                }
-
-                std::string uuidpath = spNode->get_uuid_path();
-                paths.insert(std::make_pair(uuidpath, paramname));
+                auto [spNode, paramname] = getNodeAndParamNameFromRef(ref, pContext);
+                if (spNode)
+                    paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
             }
             else {
                 //函数参数也可能调用引用：
                 for (auto paramNode : root->children)
                 {
-                    std::set<std::pair<std::string, std::string>> _paths = getReferSources(paramNode, pContext);
+                    std::set<std::pair<std::string, std::string>> _paths;
+                    if (paramNode->type ==  nodeType::STRING) {
+                        const zeno::zfxvariant& res = calc(paramNode, pContext);
+                        const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
+                        if (std::regex_search(ref, refStrPattern)) {
+                            auto [spNode, paramname] = getNodeAndParamNameFromRef(ref, pContext);
+                            if (spNode)
+                                paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
+                        }
+                    } else {
+                        _paths = getReferSources(paramNode, pContext);
+                    }
                     if (!_paths.empty()) {
                         paths.insert(_paths.begin(), _paths.end());
                     }
