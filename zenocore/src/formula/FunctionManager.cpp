@@ -23,8 +23,8 @@ using namespace zeno::zfx;
 
 namespace zeno {
 
-    std::regex FunctionManager::refPattern(R"([\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+)");
-    std::regex FunctionManager::refStrPattern(R"(.*"[\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+".*)");
+    const std::regex FunctionManager::refPattern(R"([\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+)");
+    const std::regex FunctionManager::refStrPattern(R"(.*"[\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+".*)");
 
     FunctionManager::FunctionManager() {
     }
