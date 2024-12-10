@@ -35,7 +35,6 @@ import "qrc:/QuickQanava" as Qan
 Qan.GraphView {
     id: graphView
     property variant graphModel
-    anchors.fill: parent
     navigable   : true
     resizeHandlerColor: "#03a9f4"       // SAMPLE: Set resize handler color to blue for 'resizable' nodes
     gridThickColor: Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
@@ -52,7 +51,7 @@ Qan.GraphView {
     graph: Qan.Graph {
         parent: graphView
         id: graph
-        model: nodesModel
+        model: graphView.graphModel
         Component.onCompleted: {
             //var n1 = graph.insertNode()
             //n1.label = "Hello World"; n1.item.x=15; n1.item.y= 25

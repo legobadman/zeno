@@ -289,5 +289,7 @@ bool AssetsModel::removeRows(int row, int count, const QModelIndex& parent)
 
 QHash<int, QByteArray> AssetsModel::roleNames() const
 {
-    return QHash<int, QByteArray>();
+    QHash<int, QByteArray> roles;
+    roles[ROLE_CLASS_NAME] = "classname";
+    return roles;
 }

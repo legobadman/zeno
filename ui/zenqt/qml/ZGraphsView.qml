@@ -15,6 +15,13 @@ import "./view"
 Item {
     id: rootgraphsview
 
+    Component {
+       id: myTabButton
+       CustomTabButton {
+           
+       }
+    }
+
     ToolBar {
         id: zeditortoolbar
         width: parent.width
@@ -38,12 +45,14 @@ Item {
                 
                 icon.source: hovered || checked  ? "qrc:/icons/subnet-listview-on.svg" : "qrc:/icons/subnet-listview.svg"
 
-                onClicked: console.log("Save button clicked")
+                onClicked: {
+
+                }
 
                 onCheckedChanged: {
                     if (!zeditortoolbar.view_reentry) {
                         zeditortoolbar.view_reentry = true
-                        
+
                         tree_list.checked = false
                         stack_main_or_asset.visible = checked
                         stack_main_or_asset.currentIndex = 0
@@ -83,7 +92,9 @@ Item {
                 checked: true
                 property bool reentry: false
 
-                onClicked: console.log("Settings button clicked")
+                onClicked: {
+
+                }
 
                 onCheckedChanged: {
                     if (!zeditortoolbar.view_reentry) {
@@ -163,15 +174,16 @@ Item {
             currentIndex: 1
 
             Rectangle {
+                id: assets_block
                 width: 200
                 implicitWidth: 200
                 Layout.maximumWidth: 400
-                color: "#EEEEEE"
+                color: "#181818"
                 Layout.fillHeight: true
 
                 // 1.定义delegate，内嵌三个Text对象来展示Model定义的ListElement的三个role
                 Component {
-                    id: phoneDelegate
+                    id: assetItemDelegate
                     Item {
                         id: wrapper
                         width: parent.width
@@ -180,40 +192,46 @@ Item {
                         // 实现了鼠标点选高亮的效果
                         MouseArea {
                             anchors.fill: parent;
-                            onClicked: wrapper.ListView.view.currentIndex = index
+                            onClicked: {
+                                wrapper.ListView.view.currentIndex = index
+                                var idx = assetsModel.index(index, 0)
+                                var assetname = assetsModel.data(idx)
+                                var asset_graph_model = assetsModel.getAssetGraph(assetname)
+
+                                for (var i = 0; i < graphs_tabbar.count; i++) {
+                                    let tab = graphs_tabbar.itemAt(i);
+                                    if (tab.text == assetname) {
+                                        //已存在tab，直接激活即可
+                                        graphs_tabbar.currentIndex = i;
+                                        return;
+                                    }
+                                }
+
+                                graphs_tabbar.addItem(myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200}))
+                                const graphsview_comp = Qt.createComponent("qrc:/ZenoGraphView.qml")
+                                const newgraphview = graphsview_comp.createObject(graphs_stack, {graphModel: asset_graph_model})
+                                graphs_tabbar.currentIndex = graphs_tabbar.count - 1;
+                                //TODO: delete and adjust index
+                            }
                         }
-                            
-                        // 内嵌三个Text对象，水平布局
+
                         RowLayout {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
+                            anchors.leftMargin: 10
                             spacing: 8
 
-                            Text { 
-                                id: col1;
-                                text: name;
+                            Text {
+                                id: lbl_assetname
+                                text: classname
                                 // 是否是当前条目
-                                color: wrapper.ListView.isCurrentItem ? "red" : "black"
-                                font.pixelSize: wrapper.ListView.isCurrentItem ? 22 : 18
+                                color: wrapper.ListView.isCurrentItem ? "white" : "#C3D2DF"
+                                font.pixelSize: 22
                                 Layout.preferredWidth: 120
-                            }
-                                
-                            Text { 
-                                text: cost; 
-                                color: wrapper.ListView.isCurrentItem ? "red" : "black"
-                                font.pixelSize: wrapper.ListView.isCurrentItem ? 22 : 18
-                                Layout.preferredWidth: 80
-                            }
-                                
-                            Text { 
-                                text: manufacturer; 
-                                color: wrapper.ListView.isCurrentItem ? "red" : "black"
-                                font.pixelSize: wrapper.ListView.isCurrentItem ? 22 : 18
-                                Layout.fillWidth: true
                             }
                         }
                     }
-                } // phoneDelegate-END
+                }
                     
                 // 2.定义ListView
                 ListView {
@@ -221,39 +239,15 @@ Item {
                     anchors.fill: parent
 
                     // 使用先前设置的delegate
-                    delegate: phoneDelegate
+                    delegate: assetItemDelegate
                         
                     // 3.ListModel专门定义列表数据的，它内部维护一个 ListElement 的列表。
-                    model: ListModel {
-                        id: phoneModel
-
-                        // 一个 ListElement 对象就代表一条数据
-                        ListElement{
-                            name: "iPhone 3GS"
-                            cost: "1000"
-                            manufacturer: "Apple"
-                        }
-                        ListElement{
-                            name: "iPhone 4"
-                            cost: "1800"
-                            manufacturer: "Apple"
-                        }
-                        ListElement{
-                            name: "iPhone 4S"
-                            cost: "2300"
-                            manufacturer: "Apple"
-                        }
-                        ListElement{
-                            name: "iPhone 5"
-                            cost: "4900"
-                            manufacturer: "Apple"
-                        }
-                    }
+                    model: assetsModel
 
                     // 背景高亮
                     focus: true
                     highlight: Rectangle{
-                        color: "lightblue"
+                        color: "#3D3D3D"
                     }
                 }
             }
@@ -285,6 +279,9 @@ Item {
                     font.pixelSize: 20
 
                     onCurrentIndexChanged: {
+                        //main图现在都是默认打开的。
+                        graphs_tabbar.currentIndex = 0;
+
                         //var graphM = model.graph(currentIndex)
                         //var ident = model.ident(currentIndex)
                         //var owner = graphM.owner()
@@ -310,11 +307,13 @@ Item {
             Layout.fillHeight: true
 
             TabBar {
-                id: bar
+                id: graphs_tabbar
                 TabButton {
                     text: qsTr("main")
                     width: implicitWidth
                 }
+                
+                /*
                 CustomTabButton {
                     text: qsTr("Asset1")
                     width: implicitWidth
@@ -323,18 +322,25 @@ Item {
                     text: qsTr("Asset2")
                     width: implicitWidth
                 }
+                */
             }
 
             StackLayout {
+                id: graphs_stack
                 width: parent.width
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: bar.bottom
+                anchors.top: graphs_tabbar.bottom
                 anchors.bottom: parent.bottom
-                currentIndex: bar.currentIndex
+                currentIndex: graphs_tabbar.currentIndex
 
-                Item { 
-                    Loader { anchors.fill: parent; source: "qrc:/zenographview.qml"}
+                ZenoGraphView {
+                    graphModel: nodesModel
+                }
+
+                /*
+                Item {
+                    Loader { anchors.fill: parent; source: "qrc:/zenographview.qml";  }
                 }
                 Rectangle {
                     id: homeTab
@@ -348,6 +354,7 @@ Item {
                     Layout.fillHeight: true
                     color: "blue"
                 }
+                */
             }
         }
     }

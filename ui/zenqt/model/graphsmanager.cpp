@@ -79,6 +79,8 @@ void GraphsManager::initRootObjects() {
         engine->rootContext()->setContextProperty("nodesModel", m_main);
     if (m_model)
         engine->rootContext()->setContextProperty("treeModel", m_model);
+    if (m_assets)
+        engine->rootContext()->setContextProperty("assetsModel", m_assets);
 }
 
 void GraphsManager::registerCoreNotify() {

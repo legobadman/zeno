@@ -3,7 +3,6 @@
         <file>nodes.qml</file>
         <file>default.qml</file>
         <file>custom.qml</file>
-        <file>zenographview.qml</file>
         <file>CustomNode.qml</file>
         <file>ControlNode.qml</file>
         <file>DiamondNode.qml</file>
