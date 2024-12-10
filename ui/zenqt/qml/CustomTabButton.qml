@@ -39,9 +39,7 @@ TabButton {
                 	anchors.fill: parent
                 	hoverEnabled: true
                 	onClicked: {
-						console.log("Closing tab")
-						row.closeTab
-						root.closeTab
+						root.closeTab()
                     }
                     onEntered: {
                     }

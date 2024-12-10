@@ -60,6 +60,7 @@ Zen.GraphsTotalView {
         }
 
         ZGraphsView {
+            id: graphsallview
             Layout.fillHeight: true
             Layout.fillWidth: true
         }
@@ -71,6 +72,7 @@ Zen.GraphsTotalView {
 
     onFileClosed: function() {
         welcomepage_or_editor.currentIndex = 0
+        graphsallview.clearOtherTabsButMain()
     }
 }
 

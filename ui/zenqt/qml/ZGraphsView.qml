@@ -18,8 +18,18 @@ Item {
     Component {
        id: myTabButton
        CustomTabButton {
-           
+           Connections {
+                function onCloseTab() {
+                    
+                }
+           }
        }
+    }
+
+    function clearOtherTabsButMain() {
+        graphs_tabbar.removeItem(1)
+        graphs_tabbar.removeItem(2)
+        graphs_tabbar.currentIndex = 0
     }
 
     ToolBar {
@@ -82,7 +92,6 @@ Item {
                     border.width: 0
                     radius: 2
                 }
-                
             }
 
             ToolButton {
@@ -207,7 +216,21 @@ Item {
                                     }
                                 }
 
-                                graphs_tabbar.addItem(myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200}))
+                                //TODO: 如何为CustomTabButton指定合适的宽度？
+                                const newtabbutton = myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200})
+                                graphs_tabbar.addItem(newtabbutton)
+                                newtabbutton.closeTab.connect(function onCloseTab() {
+                                    for (var i = 0; i < graphs_tabbar.count; i++) {
+                                        let tab = graphs_tabbar.itemAt(i);
+                                        if (tab.text == assetname) {
+                                            //移除当前tab，同时也把stacklayout里面的graphview也一并移除
+                                            //目前将索引调为一致状态
+                                            graphs_tabbar.removeItem(i);
+                                            graphs_stack.children[i].destroy()
+                                        }
+                                    }
+                                })
+                                
                                 const graphsview_comp = Qt.createComponent("qrc:/ZenoGraphView.qml")
                                 const newgraphview = graphsview_comp.createObject(graphs_stack, {graphModel: asset_graph_model})
                                 graphs_tabbar.currentIndex = graphs_tabbar.count - 1;
@@ -310,9 +333,9 @@ Item {
                 id: graphs_tabbar
                 TabButton {
                     text: qsTr("main")
-                    width: implicitWidth
+                    width: 100
                 }
-                
+
                 /*
                 CustomTabButton {
                     text: qsTr("Asset1")
@@ -341,18 +364,6 @@ Item {
                 /*
                 Item {
                     Loader { anchors.fill: parent; source: "qrc:/zenographview.qml";  }
-                }
-                Rectangle {
-                    id: homeTab
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    color: "red"
-                }
-                Rectangle {
-                    id: activityTab
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    color: "blue"
                 }
                 */
             }
