@@ -70,6 +70,7 @@
         <file>WelcomePage.qml</file>
         <file>ZGraphsView.qml</file>
         <file>ZenoGraphView.qml</file>
+        <file>ZenoSubnetsView.qml</file>
         <file>CustomTabButton.qml</file>
     </qresource>
 </RCC>

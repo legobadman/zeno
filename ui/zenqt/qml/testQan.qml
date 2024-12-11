@@ -59,20 +59,27 @@ Zen.GraphsTotalView {
             graphs: totalview
         }
 
+        /*//如果提前初始化，那么主图的组件也会提前初始化，然而这时候主图model还没初始化（因为还没有打开/新建文件）
         ZGraphsView {
             id: graphsallview
             Layout.fillHeight: true
             Layout.fillWidth: true
         }
+        */
     }
 
     onModelInited: function() {
+        //动态添加ZGraphsView，这样主图模型就已经初始化了
+        const graphsview_comp = Qt.createComponent("qrc:/ZGraphsView.qml")
+        const newgraphsview = graphsview_comp.createObject(welcomepage_or_editor, { id: "graphsallview" })
         welcomepage_or_editor.currentIndex = 1
     }
 
     onFileClosed: function() {
-        welcomepage_or_editor.currentIndex = 0
-        graphsallview.clearOtherTabsButMain()
+        if (welcomepage_or_editor.currentIndex == 1) {
+            welcomepage_or_editor.currentIndex = 0
+            welcomepage_or_editor.children[1].destroy()
+        }
     }
 }
 

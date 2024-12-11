@@ -361,6 +361,11 @@ QString GraphModel::name() const
     return m_graphName;
 }
 
+QStringList GraphModel::path() const
+{
+    return currentPath();
+}
+
 QString GraphModel::owner() const
 {
     if (auto pItem = qobject_cast<NodeItem*>(parent()))

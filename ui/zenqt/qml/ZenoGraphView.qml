@@ -53,6 +53,8 @@ Qan.GraphView {
         id: graph
         model: graphView.graphModel
         Component.onCompleted: {
+            //graph.model.name()
+
             //var n1 = graph.insertNode()
             //n1.label = "Hello World"; n1.item.x=15; n1.item.y= 25
             //n1.item.ratio = 0.4
@@ -104,11 +106,67 @@ Qan.GraphView {
 
     ToolTip { id: toolTip; timeout: 2500 }
     function notifyUser(message) { toolTip.text=message; toolTip.open() }
-    Label {
-        anchors.left: parent.left; anchors.leftMargin: 15
-        anchors.bottom: parent.bottom; anchors.bottomMargin: 15
-        text: "Use CTRL+Click to select multiples nodes"
+
+    Component.onCompleted: {
+        navigator.reset_paths()
     }
+
+    Component {
+        id: myNavigator
+        Text {
+            color: "#000000"
+            font.pixelSize: 20
+            font.family: "微软雅黑"
+            text: "main"
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: {
+                    
+                }
+                onEntered: {
+                    parent.color = "#0078D4"
+                    parent.font.underline = true;
+                }
+                onExited: {
+                    parent.color = "#000000"
+                    parent.font.underline = false;
+                }
+            }
+        }
+    }    
+
+    //子图路径导航栏
+    Row {
+        id: navigator
+        anchors.left: parent.left
+        anchors.leftMargin: 15
+        anchors.top: parent.top
+        anchors.topMargin: 15
+        spacing: 8
+
+        function reset_paths() {
+            const lst = graphView.graphModel.path()
+            console.log("children len: " + navigator.children.length);
+            for (let i = navigator.children.length - 1; i >= 0; i--) {
+                let child = navigator.children[i];
+                if (child !== null) {
+                    child.destroy(); // 销毁子元素
+                }
+            }
+
+            for (var i = 0; i < lst.length; i++)
+            {
+                myNavigator.createObject(navigator, { text: lst[i] });
+                if (i < lst.length - 1) {
+                    myNavigator.createObject(navigator, { text: ">" });
+                }
+            }
+            console.log("len: " + lst.length);
+        }
+    }
+
     Pane {
         id: nodeEditor
         property var node: undefined

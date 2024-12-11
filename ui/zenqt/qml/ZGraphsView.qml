@@ -198,7 +198,7 @@ Item {
                         width: parent.width
                         height: 30
 
-                        // 实现了鼠标点选高亮的效果
+                        //资产列表被点击时，tab新增/跳转:
                         MouseArea {
                             anchors.fill: parent;
                             onClicked: {
@@ -231,8 +231,8 @@ Item {
                                     }
                                 })
                                 
-                                const graphsview_comp = Qt.createComponent("qrc:/ZenoGraphView.qml")
-                                const newgraphview = graphsview_comp.createObject(graphs_stack, {graphModel: asset_graph_model})
+                                const graphsview_comp = Qt.createComponent("qrc:/ZenoSubnetsView.qml")
+                                const newgraphview = graphsview_comp.createObject(graphs_stack, {root_graphmodel: asset_graph_model})
                                 graphs_tabbar.currentIndex = graphs_tabbar.count - 1;
                                 //TODO: delete and adjust index
                             }
@@ -304,6 +304,7 @@ Item {
                     onCurrentIndexChanged: {
                         //main图现在都是默认打开的。
                         graphs_tabbar.currentIndex = 0;
+                        stack_main_graphview.jumpTo();
 
                         //var graphM = model.graph(currentIndex)
                         //var ident = model.ident(currentIndex)
@@ -357,8 +358,9 @@ Item {
                 anchors.bottom: parent.bottom
                 currentIndex: graphs_tabbar.currentIndex
 
-                ZenoGraphView {
-                    graphModel: nodesModel
+                ZenoSubnetsView {
+                    id: stack_main_graphview
+                    root_graphmodel: nodesModel
                 }
 
                 /*

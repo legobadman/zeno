@@ -24,7 +24,6 @@ class GraphModel : public QAbstractListModel
     typedef QAbstractListModel _base;
 
     //Q_PROPERTY(CONTROL_TYPE control READ getControl WRITE setControl NOTIFY control_changed)
-
     QML_ELEMENT
 
 public:
@@ -36,6 +35,7 @@ public:
         const QString& toNodeStr, const QString& toParamStr);
     Q_INVOKABLE QVariant removeLink(const QString& nodeName, const QString& paramName, bool bInput);
     Q_INVOKABLE QString name() const;
+    Q_INVOKABLE QStringList path() const;
 
     //TEST API
     Q_INVOKABLE QString owner() const;
