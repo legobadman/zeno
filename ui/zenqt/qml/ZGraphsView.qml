@@ -303,10 +303,19 @@ Item {
 
                     onCurrentIndexChanged: {
                         //main图现在都是默认打开的。
-                        graphs_tabbar.currentIndex = 0;
-                        stack_main_graphview.jumpTo();
+                        if (currentIndex == null) {
+                            return;
+                        }
+                        var graphM = model.graph(currentIndex)
+                        if (graphM == null) {
+                            console.log("warning: graphM is null");
+                            return;
+                        }
 
-                        //var graphM = model.graph(currentIndex)
+                        var path_list = graphM.path()
+                        graphs_tabbar.currentIndex = 0;     //切换到主图的view
+                        stack_main_graphview.jumpTo(path_list);
+
                         //var ident = model.ident(currentIndex)
                         //var owner = graphM.owner()
                         //console.log("ident: " + ident)

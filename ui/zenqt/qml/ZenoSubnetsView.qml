@@ -14,8 +14,43 @@ StackLayout {
         graphModel: root_graphmodel
     }
 
-    function jumpTo() {
-        //TODO:
-        console.log("stack_subnet_views.jumpTo");
+    function arraysEqual(a, b) {
+        if (a === b) return true;
+        if (a == null || b == null) return false;
+        if (a.length !== b.length) return false;
+
+        // If you don't care about the order of the elements inside
+        // the array, you should sort both arrays here.
+        // Please note that calling sort on an array will modify that array.
+        // you might want to clone your array first.
+
+        for (var i = 0; i < a.length; ++i) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
+    }
+
+    function jumpTo(path_list) {
+        //寻找stack_subnet_views下所有的view对应到model，和当前的路径进行比较，如果找到，直接切换，找不到就新建并加入Layout
+        for (var i = 0; i < stack_subnet_views.children.length; i++) {
+            var child = stack_subnet_views.children[i];
+            var paths = child.graphModel.path();
+            if (arraysEqual(paths, path_list)) {
+                stack_subnet_views.currentIndex = i;
+                return;
+            }
+        }
+
+        //新建子图GraphView
+        const graphsview_comp = Qt.createComponent("qrc:/ZenoGraphView.qml")
+        //调用treemodel通过路径获得子图graphmodel
+        var subnet_model = treeModel.getGraphByPath(path_list)
+        const newgraphview = graphsview_comp.createObject(stack_subnet_views, {graphModel: subnet_model})
+        stack_subnet_views.currentIndex = stack_subnet_views.count - 1;
+
+        //跳转的信号
+        newgraphview.navigateRequest.connect(function onNavigateRequest(varlst) {
+            jumpTo(varlst)
+        })
     }
 }

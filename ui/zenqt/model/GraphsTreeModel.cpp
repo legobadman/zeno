@@ -152,10 +152,15 @@ int GraphsTreeModel::depth(const QModelIndex& index) const
 
 GraphModel* GraphsTreeModel::graph(const QModelIndex& index) const
 {
-    if (index.isValid() && index.internalId() == 0)
+    if (!index.isValid())
         return nullptr;
 
     QStandardItem* pItem = itemFromIndex(index);
+    QStandardItem* parentItem = pItem->parent();
+    if (parentItem == nullptr && pItem->text() == tr("main")) {
+        return m_main;
+    }
+
     QPersistentModelIndex idx = pItem->data(Qt::UserRole + 1).value<QPersistentModelIndex>();
     QAbstractItemModel* ownerModel = const_cast<QAbstractItemModel*>(idx.model());
     return qobject_cast<GraphModel*>(ownerModel);

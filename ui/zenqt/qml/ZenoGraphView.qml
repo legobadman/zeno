@@ -38,6 +38,8 @@ Qan.GraphView {
     navigable   : true
     resizeHandlerColor: "#03a9f4"       // SAMPLE: Set resize handler color to blue for 'resizable' nodes
     gridThickColor: Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
+    signal navigateRequest(var lst)
+
     PinchHandler {
         target: null
         onActiveScaleChanged: {
@@ -114,16 +116,18 @@ Qan.GraphView {
     Component {
         id: myNavigator
         Text {
+            id: navigatoritem
             color: "#000000"
             font.pixelSize: 20
             font.family: "微软雅黑"
-            text: "main"
+            signal graphitemClicked(int idx)
+            property int inneridx
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
                 onClicked: {
-                    
+                    navigatoritem.graphitemClicked(parent.inneridx)
                 }
                 onEntered: {
                     parent.color = "#0078D4"
@@ -135,7 +139,7 @@ Qan.GraphView {
                 }
             }
         }
-    }    
+    }
 
     //子图路径导航栏
     Row {
@@ -148,22 +152,34 @@ Qan.GraphView {
 
         function reset_paths() {
             const lst = graphView.graphModel.path()
-            console.log("children len: " + navigator.children.length);
             for (let i = navigator.children.length - 1; i >= 0; i--) {
                 let child = navigator.children[i];
                 if (child !== null) {
                     child.destroy(); // 销毁子元素
                 }
             }
-
             for (var i = 0; i < lst.length; i++)
             {
-                myNavigator.createObject(navigator, { text: lst[i] });
+                var graphitem = myNavigator.createObject(navigator, { text: lst[i], inneridx: i });
+                graphitem.graphitemClicked.connect(function onGraphitemClicked(inneridx) {
+                    //inneridx是点击的文本是第几个，比如 main > Subnet1，如果点击Subnet1则是1，main就是0
+                    var path_list = []
+                    for (let i = 0; i < navigator.children.length; i++) {
+                        let child = navigator.children[i];
+                        if (child.text != ">") {
+                            path_list.push(child.text);
+                            if (inneridx == 0) {
+                                graphView.navigateRequest(path_list)    //发送信号到上一层(ZenoSubnetsView，跳转图层)
+                                break;
+                            }
+                            --inneridx;
+                        }
+                    }
+                })
                 if (i < lst.length - 1) {
-                    myNavigator.createObject(navigator, { text: ">" });
+                    var seperatoritem = myNavigator.createObject(navigator, { text: ">", inneridx: i });
                 }
             }
-            console.log("len: " + lst.length);
         }
     }
 
