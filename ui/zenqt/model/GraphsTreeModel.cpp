@@ -99,10 +99,22 @@ void GraphsTreeModel::onNameUpdated(const QModelIndex& nodeIdx, const QString& o
     GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
     if (pGraphM)
     {
-        const QString& nodePath = nodeIdx.data(ROLE_OBJPATH).toString();
-        QStringList pathitems = nodePath.split("/", Qt::SkipEmptyParts);
-        QModelIndex nodeIdx = getIndexByPath(pathitems);
-        emit dataChanged(nodeIdx, nodeIdx, { Qt::DisplayRole, ROLE_NODE_NAME });
+        QStringList graphPath = pGraphM->currentPath();
+        ZASSERT_EXIT(!graphPath.isEmpty());
+        QStandardItem* mainItem = itemFromIndex(this->index(0, 0));
+        graphPath.pop_front();  //"main"
+        QStandardItem* graphItem = findGraphItem(mainItem, graphPath);
+        ZASSERT_EXIT(graphItem);
+
+        const QString& newName = nodeIdx.data(ROLE_NODE_NAME).toString();
+        //目前不建立索引，直接顺序遍历，待遇到性能问题再行优化
+        for (int i = 0; i < graphItem->rowCount(); i++) {
+            QStandardItem* pItem = graphItem->child(i);
+            if (pItem->text() == oldName) {
+                pItem->setText(newName);
+                break;
+            }
+        }
     }
 }
 
