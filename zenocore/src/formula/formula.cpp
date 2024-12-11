@@ -275,13 +275,15 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                     bool bExist = false;
                     FUNC_INFO info = zeno::getSession().funcManager->getFuncInfo(funcprefix);
                     if (!info.name.empty()) {
-                        if (last->children.size() == 1 && last->children[0] &&
-                            last->children[0]->type == nodeType::STRING) {
 
+                        bool normalFuncArgIsRef = false;
+                        if (last->children.size() == 1 && last->children[0] && last->children[0]->type == nodeType::STRING) {
                             std::regex prefixPattren(R"(^[\s]*.?[\s]*/.*)");    //普通函数参数以./或/开头，就提示引用
-                            bool normalFuncArgIsRef = std::regex_search(std::get<std::string>(last->children[0]->value), prefixPattren);
+                            normalFuncArgIsRef = std::regex_search(std::get<std::string>(last->children[0]->value), prefixPattren);
+                        }
 
-                            if (info.name == "ref" || normalFuncArgIsRef) {
+                        if (info.name == "ref" || normalFuncArgIsRef) {
+                            if (last->children.size() == 1 && last->children[0] && last->children[0]->type == nodeType::STRING) {
 
                                 const std::string& refcontent = std::get<std::string>(last->children[0]->value);
 
@@ -313,12 +315,12 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                                 ret = getNodesByPath(m_nodepath, graphpath, nodepath);
                                 break;
                             }
-                            else {
-                                ret.func_args.func = info;
-                                //TODO: 参数位置高亮
-                                ret.func_args.argidx = last->children.size();
-                                ret.type = FMLA_TIP_FUNC_ARGS;
-                            }
+                        }
+                        else {
+                            ret.func_args.func = info;
+                            //TODO: 参数位置高亮
+                            ret.func_args.argidx = last->children.size();
+                            ret.type = FMLA_TIP_FUNC_ARGS;
                         }
                     }
                     else {
