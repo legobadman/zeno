@@ -40,7 +40,7 @@ Qan.NodeItem {
 
     // 自动适应子布局的尺寸
     implicitWidth: main_layout.implicitWidth + 2 * backRadius
-    implicitHeight: main_layout.implicitHeight + 2 * backRadius
+    implicitHeight: main_layout.implicitHeight;// + 2 * backRadius
     resizable: false
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
@@ -77,28 +77,48 @@ Qan.NodeItem {
     ColumnLayout {
         id: main_layout
         anchors.fill: parent
-        anchors.margins: backRadius / 2.
+        anchors.margins: 0;//backRadius / 2.
 
         RowLayout {
+            id: nodeheader
             Layout.fillWidth: true
-      
-            Rectangle {
-                width: 32
-                Layout.fillHeight: true
-                color: "black"
-            }
+            spacing: 1
 
-            Label {
+            RowLayout {
+                id: nodenamelayout
                 Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: nodeItem.node.label
-                font.bold: true
+
+                Rectangle {
+                    width: 18
+                    Layout.fillHeight: true
+                    color: "transparent"
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    text: nodeItem.node.label
+                    font.bold: true
+                }
+
+                Rectangle {
+                    width: 18
+                    Layout.fillHeight: true
+                    color: "transparent"
+                }
             }
 
             Rectangle {
-                width: 32
-                Layout.fillHeight: true
-                color: "red"
+                width: 24
+                height: 48
+                color: "#E7CD2F"
+            }
+
+            Rectangle {
+                width: 24
+                height: 48
+                color: "#00ADF0"
+                radius: backRadius
             }    
         }
     }
