@@ -76,6 +76,14 @@ namespace zeno
             sp_attr_data.to_prim_attr(spPrim, false, m_spTopology->is_base_triangle(), name);
         }
 
+        auto linePtIter = m_point_attrs.find("lineNextPt");
+        if (linePtIter != m_point_attrs.end()) {
+            std::vector<zeno::vec2f> linesPt = linePtIter->second.get_attrs<zeno::vec2f>();
+            for (int i = 0; i < linesPt.size(); ++i) {
+                spPrim->lines->push_back(linesPt[i]);
+            }
+        }
+
         m_spTopology->toPrimitive(spPrim);
         spPrim->m_userData = m_userData;
         return spPrim;
@@ -145,6 +153,14 @@ namespace zeno
             //属性也要同步删除,包括point和vertices
             for (auto& [name, attrib_vec] : m_point_attrs) {
                 removeAttribElem(attrib_vec, ptnum);
+                if (name == "lineNextPt") {//如果是line，调整line的next ptnum；
+                    for (size_t pt = ptnum; pt < attrib_vec.size(); ++pt) {
+                        zeno::vec2f removePtNextPt = attrib_vec.get_elem < zeno::vec2f >(0, pt);
+                        removePtNextPt[0] -= 1;
+                        removePtNextPt[1] -= 1;
+                        attrib_vec.set_elem<zeno::vec2f>(pt, removePtNextPt);
+                    }
+                }
             }
 
             for (auto& [name, attrib_vec] : m_vert_attrs) {

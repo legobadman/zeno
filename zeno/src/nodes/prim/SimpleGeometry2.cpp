@@ -958,4 +958,288 @@ namespace zeno {
             return geo;
         }
     };
+
+    struct ZDEFNODE() Circle : INode {
+
+        enum PlaneDirection {
+            Dir_XY,
+            Dir_YZ,
+            Dir_ZX
+        };
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"segments", ParamPrimitive("Segments", 32, Lineedit)},
+                {"radius", ParamPrimitive("Radius", 1.0, Lineedit)},
+                {"arcType", ParamPrimitive("Arc Type", "Closed", Combobox, std::vector<std::string>{"Closed", "Open Arc", "Sliced Arc"})},
+                {"direction", ParamPrimitive("Direction", "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"})}
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
+            zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
+            float segments = 32,
+            float radius = 1.0,
+            std::string arcType = "Closed",
+            zeno::vec2f arcAngle = zeno::vec2i({ 0, 120 }),
+            //std::string face_type = "Quadrilaterals",
+            std::string direction = "ZX",
+            bool bCalcPointNormals = false
+        ) {
+            if (segments <= 0) {
+                throw makeError<UnimplError>("the segments should be positive");
+            }
+            if (radius < 0) {
+                throw makeError<UnimplError>("the segments should not be negative");
+            } 
+            int nPoints = segments + 1;
+            int nFaces = segments;
+
+            PlaneDirection dir;
+            Rotate_Orientaion ori;
+            if (direction == "ZX") {
+                dir = Dir_ZX;
+                ori = Orientaion_ZX;
+            }
+            else if (direction == "YZ") {
+                dir = Dir_YZ;
+                ori = Orientaion_YZ;
+            }
+            else if (direction == "XY") {
+                dir = Dir_XY;
+                ori = Orientaion_XY;
+            }
+            else {
+                throw makeError<UnimplError>("Unknown Direction");
+            }
+
+            std::vector<vec3f> points, normals;
+            points.resize(nPoints);
+            if (bCalcPointNormals)
+                normals.resize(nPoints);
+
+            std::shared_ptr<GeometryObject> spgeo;
+            if (arcType == "Closed") {
+                if (segments == 1) {
+                    std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, 1, 0);
+                    spgeo->initpoint(0);
+                    spgeo->create_attr(ATTR_POINT, "pos", { Center });
+                    return spgeo;
+                }
+                spgeo = std::make_shared<GeometryObject>(true, nPoints, nFaces);
+
+                points[0] = Center;//圆心
+                spgeo->initpoint(0);
+
+                for (int i = 1; i < nPoints; i++)
+                {
+                    float rad = 2.0 * M_PI * (i - 1) / (nPoints - 1);
+                    vec3f pt, nrm;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
+                        nrm = vec3f(0, 1, 0);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, cos(rad) * radius, -sin(rad) * radius);
+                        nrm = vec3f(1, 0, 0);
+                    }
+                    else {
+                        pt = vec3f(cos(rad) * radius, -sin(rad) * radius, 0);
+                        nrm = vec3f(0, 0, 1);
+                    }
+
+                    points[i] = pt;
+                    if (bCalcPointNormals)
+                        normals[i] = nrm;
+                    spgeo->initpoint(i);
+
+                    if (i > 1) {
+                        spgeo->add_face({ 0, i - 1, i });
+                    }
+                }
+                spgeo->add_face({ 0, nPoints - 1, 1 });
+
+                if (segments == 2) {//加一条线
+                    std::vector<zeno::vec2i> lines;
+                    lines.resize(nPoints);
+                    #pragma omp parallel for
+                    for (intptr_t x = 0; x < nPoints; x++) {
+                        lines[x][0] = x;
+                        lines[x][1] = x + 1;
+                    }
+                    spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
+                }
+            } else if (arcType == "Open Arc") {
+                spgeo = std::make_shared<GeometryObject>(true, nPoints, 0);
+
+                //points[0] = Center;//圆心
+                //spgeo->initpoint(0);
+
+                //float startAngle = arcAngle[0];
+                //while (startAngle > arcAngle[1]) {
+                //    startAngle -= 360;
+                //}
+                //float arcRange = arcAngle[1] - startAngle;
+                float startAngle = arcAngle[0];
+                float arcRange = arcAngle[1] - startAngle;
+                for (int i = 0; i < nPoints; i++)
+                {
+                    float rad = glm::radians(startAngle + arcRange * i / (nPoints - 1));
+                    vec3f pt, nrm;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
+                        nrm = vec3f(0, 1, 0);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, cos(rad) * radius, -sin(rad) * radius);
+                        nrm = vec3f(1, 0, 0);
+                    }
+                    else {
+                        pt = vec3f(cos(rad) * radius, -sin(rad) * radius, 0);
+                        nrm = vec3f(0, 0, 1);
+                    }
+                    points[i] = pt;
+                    spgeo->initpoint(i);
+                }
+                bCalcPointNormals = false;
+
+                std::vector<zeno::vec2i> lines;
+                lines.resize(nPoints);
+                #pragma omp parallel for
+                for (intptr_t x = 0; x < nPoints; x++) {
+                    lines[x][0] = x;
+                    lines[x][1] = x + 1;
+                }
+                spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
+            }else if (arcType == "Sliced Arc") {
+                nPoints += 1;
+                spgeo = std::make_shared<GeometryObject>(true, nPoints, nFaces);
+                points.resize(nPoints);
+
+                points[0] = Center;//圆心
+                spgeo->initpoint(0);
+
+                //float startAngle = arcAngle[0];
+                //while (startAngle > arcAngle[1]) {
+                //    startAngle -= 360;
+                //}
+                //float arcRange = arcAngle[1] - startAngle;
+                float startAngle = arcAngle[0];
+                float arcRange = arcAngle[1] - startAngle;
+                for (int i = 1; i < nPoints; i++)
+                {
+                    float rad = glm::radians(startAngle + arcRange * (i - 1) / (nPoints - 2));
+                    vec3f pt, nrm;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
+                        nrm = vec3f(0, 1, 0);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, cos(rad) * radius, -sin(rad) * radius);
+                        nrm = vec3f(1, 0, 0);
+                    }
+                    else {
+                        pt = vec3f(cos(rad) * radius, -sin(rad) * radius, 0);
+                        nrm = vec3f(0, 0, 1);
+                    }
+
+                    points[i] = pt;
+                    if (bCalcPointNormals)
+                        normals[i] = nrm;
+                    spgeo->initpoint(i);
+
+                    if (i > 1) {
+                        spgeo->add_face({ 0, i - 1, i });
+                    }
+                }
+                //spgeo->add_face({ 0, nPoints, nPoints - 1 });
+            }
+
+            glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], ori);
+            glm::mat4 transform = translate * rotation;
+            for (size_t i = arcType == "Open Arc" ? 0 : 1; i < points.size(); i++)
+            {
+                auto pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                if (bCalcPointNormals) {
+                    auto nrm = normals[i];
+                    glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                    normals[i] = zeno::vec3f(gnrm.x, gnrm.y, gnrm.z);
+                }
+            }
+
+            spgeo->create_attr(ATTR_POINT, "pos", points);
+            if (bCalcPointNormals) {
+                spgeo->create_attr(ATTR_POINT, "nrm", normals);
+            }
+            return spgeo;
+        }
+    };
+
+    struct ZDEFNODE() Line : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            int npoints = 1,
+            zeno::vec3f direction = zeno::vec3f({ 1,0,0 }),
+            zeno::vec3f origin = zeno::vec3f({ 0,0,0 }),
+            float length = 1.0,
+            bool isCentered = false,
+            bool hasLines = true
+        ) {
+            if (npoints <= 0) {
+                throw makeError<UnimplError>("the npoints should be positive");
+            }
+            if (length < 0) {
+                throw makeError<UnimplError>("the scale should be positive");
+            }
+            if (npoints == 1) {
+                std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, 1, 0);
+                spgeo->create_attr(ATTR_POINT, "pos", { origin });
+                return spgeo;
+            }
+
+            float scale = length / glm::sqrt(glm::pow(direction[0], 2) + glm::pow(direction[1], 2) + glm::pow(direction[2], 2)) / (npoints - 1);
+            zeno::vec3f ax = direction * scale;
+            if (isCentered) {
+                origin -= (ax * (npoints - 1)) / 2;
+            }
+
+            std::vector<vec3f> points;
+            points.resize(npoints);
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, npoints, 0);
+#pragma omp parallel for
+            for (intptr_t x = 0; x < npoints; x++) {
+                vec3f p = origin + x * ax;
+                points[x] = p;
+                spgeo->initpoint(x);
+            }
+            if (hasLines) {
+                std::vector<zeno::vec2i> lines;
+                lines.resize(npoints);
+#pragma omp parallel for
+                for (intptr_t x = 0; x < npoints; x++) {
+                    lines[x][0] = x;
+                    lines[x][1] = x + 1;
+                }
+                spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
+            }
+
+            spgeo->create_attr(ATTR_POINT, "pos", points);
+            return spgeo;
+        }
+    };
 }
