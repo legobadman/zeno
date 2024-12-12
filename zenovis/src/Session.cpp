@@ -174,14 +174,17 @@ void Session::do_screenshot(std::string path, std::string type, bool bOptix) {
         const char *err = nullptr;
 #ifdef ZENO_ENABLE_OPTIX
         using namespace zeno::ChiefDesignerEXR;
-#endif
-        int ret = SaveEXR((float *)pixels.data(), nx, ny, 3, 1, path.c_str(), &err);
+        int ret = SaveEXR((float*)pixels.data(), nx, ny, 3, 1, path.c_str(), &err);
         if (ret != 0) {
             if (err) {
                 zeno::log_error("failed to perform SaveEXR to {}: {}", path, err);
                 FreeEXRErrorMessage(err);
             }
         }
+#else
+        zeno::log_error("failed to perform SaveEXR, please Open ZENO_ENABLE_OPTIX");
+#endif
+
     }},
     {"hdr", [&] {
         stbi_flip_vertically_on_write(true);
