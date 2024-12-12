@@ -96,7 +96,7 @@ QQmlComponent*  Node::delegate(QQmlEngine& engine, QObject* parent) noexcept
     Q_UNUSED(parent)
     static std::unique_ptr<QQmlComponent>   delegate;
     if (!delegate)
-        delegate = std::make_unique<QQmlComponent>(&engine, "qrc:/QuickQanava/Node.qml",
+        delegate = std::make_unique<QQmlComponent>(&engine, "C:/zeno-qml/ui/zenqt/qml/NormalNode.qml",
                                                    QQmlComponent::PreferSynchronous);
     return delegate.get();
 }
@@ -176,6 +176,11 @@ bool    Node::setLabel(const QString& label)
         return true;
     }
     return false;
+}
+
+QString Node::getLabel() const {
+    const QString& name = m_index.data(ROLE_NODE_NAME).toString();
+    return name;
 }
 
 bool    Node::setIsProtected(bool isProtected)

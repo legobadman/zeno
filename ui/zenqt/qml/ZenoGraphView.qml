@@ -54,6 +54,8 @@ Qan.GraphView {
         parent: graphView
         id: graph
         model: graphView.graphModel
+        nodeDelegate: Qt.createComponent("qrc:/NormalNode.qml")
+
         Component.onCompleted: {
             //graph.model.name()
 

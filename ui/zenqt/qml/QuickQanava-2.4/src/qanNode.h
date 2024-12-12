@@ -168,7 +168,7 @@ public:
 public:
     Q_PROPERTY(QString label READ getLabel WRITE setLabel NOTIFY labelChanged FINAL)
     bool            setLabel(const QString& label);
-    QString         getLabel() const { return _label; }
+    QString         getLabel() const;
 private:
     QString         _label = "";
     QPersistentModelIndex m_index;
