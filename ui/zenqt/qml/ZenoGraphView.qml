@@ -193,6 +193,7 @@ Qan.GraphView {
         anchors.bottom: parent.bottom; anchors.bottomMargin: 15
         anchors.right: parent.right; anchors.rightMargin: 15
         padding: 0
+        visible: false
         Frame {
             ColumnLayout {
                 Label {

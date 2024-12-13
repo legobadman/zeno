@@ -602,6 +602,7 @@ QHash<int, QByteArray> ParamsModel::roleNames() const
     roles[ROLE_PARAM_TYPE] = "type";
     roles[ROLE_PARAM_CONTROL] = "control";
     roles[ROLE_ISINPUT] = "input";
+    roles[ROLE_PARAM_GROUP] = "group";
     return roles;
 }
 

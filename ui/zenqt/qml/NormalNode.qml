@@ -45,109 +45,127 @@ Qan.NodeItem {
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
 
-    /*
-    Loader {
-        id: delegateLoader
-        anchors.fill: parent
-        source: {
-            if (!nodeItem || !nodeItem.style)     // Defaul to solid no effect with unconfigured nodes
-                return "qrc:/QuickQanava/RectSolidBackground.qml";
-            switch (nodeItem.style.fillType) {  // Otherwise, select the delegate according to current style configuration
-                case Qan.NodeStyle.FillSolid:
-                switch (nodeItem.style.effectType) {
-                    case Qan.NodeStyle.EffectNone:   return "qrc:/QuickQanava/RectSolidBackground.qml";
-                    case Qan.NodeStyle.EffectShadow: return "qrc:/QuickQanava/RectSolidShadowBackground.qml";
-                    case Qan.NodeStyle.EffectGlow:   return "qrc:/QuickQanava/RectSolidGlowBackground.qml";
-                }
-                break;
-                case Qan.NodeStyle.FillGradient:
-                    switch (nodeItem.style.effectType) {
-                    case Qan.NodeStyle.EffectNone:   return "qrc:/QuickQanava/RectGradientBackground.qml";
-                    case Qan.NodeStyle.EffectShadow: return "qrc:/QuickQanava/RectGradientShadowBackground.qml";
-                    case Qan.NodeStyle.EffectGlow:   return "qrc:/QuickQanava/RectGradientGlowBackground.qml";
-                }
-                break;
-            } // case fillType
-        }
-        onItemChanged: {
-            if (item)
-                item.style = nodeItem.style
-        }
-    }
-    */
-
     ColumnLayout {
         id: mainmain_layout
-        implicitWidth: main_item.implicitWidth;
-        implicitHeight: main_item.implicitHeight + 32;
         spacing: 1
 
-        Rectangle {
-            width: 64
-            height: 32
-            color: "red"
-        }
+        RowLayout {
+            id: inputsocks_layout
 
-        Item {
-            id: main_item
-            implicitWidth: main_layout.implicitWidth// + 2 * backRadius
-            implicitHeight: main_layout.implicitHeight;// + 2 * backRadius
+            Item {
+                Layout.fillWidth: true
+            }
 
-            Loader {
-                id: delegateLoader
-                anchors.fill: parent
-                source: "qrc:/QuickQanava/RectSolidShadowBackground.qml"
+            Repeater{
+                id: inputobjparams
+                model: nodeItem.node.params
 
-                onItemChanged: {
-                    if (item)
-                        item.style = nodeItem.style
+                delegate: Text {
+                    color: "black"
+                    required property string name
+                    required property int group
+                    text: name
+                    visible: group == 0
                 }
             }
 
-            ColumnLayout {
-                id: main_layout
-                anchors.margins: 0;//backRadius / 2.
+            Item {
+                Layout.fillWidth: true
+            }           
+        }
 
-                RowLayout {
-                    id: nodeheader
-                    Layout.fillWidth: true
-                    spacing: 1
+        RowLayout {
+            //为了使节点框内的布局居中，所以在外面再套一个横向布局
+            id: title_prims_layout
+
+            Item {
+                Layout.fillWidth: true
+            }        
+
+            Item {
+                id: main_item
+                implicitWidth: main_layout.implicitWidth
+                implicitHeight: main_layout.implicitHeight
+
+                Loader {
+                    id: delegateLoader
+                    anchors.fill: parent
+                    source: "qrc:/QuickQanava/RectSolidShadowBackground.qml"
+
+                    onItemChanged: {
+                        if (item)
+                            item.style = nodeItem.style
+                    }
+                }
+
+                ColumnLayout {
+                    id: main_layout
+                    anchors.margins: 0
 
                     RowLayout {
-                        id: nodenamelayout
+                        id: nodeheader
                         Layout.fillWidth: true
+                        spacing: 1
 
-                        Rectangle {
-                            width: 18
-                            Layout.fillHeight: true
-                            color: "transparent"
-                        }
-
-                        Label {
+                        RowLayout {
+                            id: nodenamelayout
                             Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignHCenter
-                            text: nodeItem.node.label
-                            font.bold: true
+
+                            Rectangle {
+                                width: 18
+                                Layout.fillHeight: true
+                                color: "transparent"
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                horizontalAlignment: Text.AlignHCenter
+                                text: nodeItem.node.label
+                                font.bold: true
+                            }
+
+                            Rectangle {
+                                width: 18
+                                Layout.fillHeight: true
+                                color: "transparent"
+                            }
                         }
 
-                        Rectangle {
-                            width: 18
-                            Layout.fillHeight: true
-                            color: "transparent"
+                        StatusBtnGroup {
+                            radius: nodeItem.backRadius
                         }
-                    }
-
-                    StatusBtnGroup {
-                        radius: nodeItem.backRadius
                     }
                 }
             }
+
+            Item {
+                Layout.fillWidth: true
+            }
         }
 
-        Rectangle {
-            width: 64
-            height: 32
-            color: "green"
+        RowLayout {
+            id: outputsocks_layout
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Repeater{
+                id: outputobjparams
+                model: nodeItem.node.params
+
+                delegate: Text {
+                    color: "black"
+                    required property string name
+                    required property int group
+                    text: name
+                    visible: group == 2     //对应代码NodeDataGroup枚举值
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
         }
     }
 }

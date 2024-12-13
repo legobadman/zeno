@@ -46,6 +46,7 @@
 #include "./qanStyle.h"
 #include "./qanBehaviour.h"
 #include "./qanTableCell.h"
+#include "model/parammodel.h"
 
 namespace qan { // ::qan
 
@@ -169,6 +170,11 @@ public:
     Q_PROPERTY(QString label READ getLabel WRITE setLabel NOTIFY labelChanged FINAL)
     bool            setLabel(const QString& label);
     QString         getLabel() const;
+
+    //! Access the list of nodes with an abstract item model interface.
+    Q_PROPERTY(ParamsModel* params READ getParamsModel CONSTANT FINAL)
+    ParamsModel* getParamsModel() const;
+
 private:
     QString         _label = "";
     QPersistentModelIndex m_index;

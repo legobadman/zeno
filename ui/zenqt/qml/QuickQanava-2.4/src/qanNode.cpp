@@ -42,6 +42,7 @@
 #include "./qanGroup.h"
 #include "./qanGraph.h"
 #include "./qanTableCell.h"
+#include "variantptr.h"
 
 namespace qan { // ::qan
 
@@ -94,9 +95,9 @@ void    Node::setItem(qan::NodeItem* nodeItem) noexcept
 QQmlComponent*  Node::delegate(QQmlEngine& engine, QObject* parent) noexcept
 {
     Q_UNUSED(parent)
-    static std::unique_ptr<QQmlComponent>   delegate;
+    /*static */std::unique_ptr<QQmlComponent>   delegate;
     if (!delegate)
-        delegate = std::make_unique<QQmlComponent>(&engine, "C:/zeno-qml/ui/zenqt/qml/NormalNode.qml",
+        delegate = std::make_unique<QQmlComponent>(&engine, "D:/zeno/ui/zenqt/qml/NormalNode.qml",
                                                    QQmlComponent::PreferSynchronous);
     return delegate.get();
 }
@@ -181,6 +182,11 @@ bool    Node::setLabel(const QString& label)
 QString Node::getLabel() const {
     const QString& name = m_index.data(ROLE_NODE_NAME).toString();
     return name;
+}
+
+ParamsModel* Node::getParamsModel() const {
+    ParamsModel* viewParams = QVariantPtr<ParamsModel>::asPtr(m_index.data(ROLE_PARAMS));
+    return viewParams;
 }
 
 bool    Node::setIsProtected(bool isProtected)
