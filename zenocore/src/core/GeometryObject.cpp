@@ -76,14 +76,6 @@ namespace zeno
             sp_attr_data.to_prim_attr(spPrim, false, m_spTopology->is_base_triangle(), name);
         }
 
-        auto linePtIter = m_point_attrs.find("lineNextPt");
-        if (linePtIter != m_point_attrs.end()) {
-            std::vector<zeno::vec2f> linesPt = linePtIter->second.get_attrs<zeno::vec2f>();
-            for (int i = 0; i < linesPt.size(); ++i) {
-                spPrim->lines->push_back(linesPt[i]);
-            }
-        }
-
         m_spTopology->toPrimitive(spPrim);
         spPrim->m_userData = m_userData;
         return spPrim;
@@ -115,6 +107,10 @@ namespace zeno
         return m_spTopology->is_base_triangle();
     }
 
+    ZENO_API bool GeometryObject::is_Line() const {
+        return m_spTopology->is_line();
+    }
+
     ZENO_API int GeometryObject::get_group_count(GeoAttrGroup grp) const {
         switch (grp) {
         case ATTR_POINT: return m_spTopology->npoints();
@@ -133,6 +129,14 @@ namespace zeno
         }
         m_spTopology->geomTriangulate(info);
         //TODO: uv
+    }
+
+    ZENO_API void GeometryObject::setLineNextPt(int currPt, int nextPt) {
+        m_spTopology->setLineNextPt(currPt, nextPt);
+    }
+
+    ZENO_API int GeometryObject::getLineNextPt(int currPt) {
+        return m_spTopology->getLineNextPt(currPt);
     }
 
     ZENO_API bool GeometryObject::remove_point(int ptnum) {
@@ -600,6 +604,10 @@ namespace zeno
 
     void GeometryObject::initpoint(size_t point_id) {
         m_spTopology->initpoint(point_id);
+    }
+
+    ZENO_API void GeometryObject::initLineNextPoint(size_t point_id) {
+        m_spTopology->initLineNextPoint(point_id);
     }
 
     ZENO_API int GeometryObject::add_point(zeno::vec3f pos) {

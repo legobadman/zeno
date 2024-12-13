@@ -53,11 +53,16 @@ namespace zeno
         size_t getPointTo(HEdge* hedge) const;
 
         void initpoint(size_t idxPoint);
+        void initLineNextPoint(size_t point_id);   //对象是line时，init点的下一个点
         std::vector<vec3i> tri_indice() const;
         std::vector<int> edge_list() const;
         bool is_base_triangle() const;
+        bool is_line() const;
         int npoints_in_face(Face* face) const;
         void geomTriangulate(zeno::TriangulateInfo& info);
+
+        void setLineNextPt(int currPt, int nextPt); //对象是line时，修改当前点的下一个点为nextPt
+        int getLineNextPt(int currPt); //对象是line时，获取当前pt的下一个点的编号
 
         /* 添加元素 */
         int addface(const std::vector<int>& points);
@@ -102,6 +107,7 @@ namespace zeno
         std::vector<std::shared_ptr<Point>> m_points;
         std::vector<std::shared_ptr<Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;
+        std::vector<zeno::vec2i> m_linesPt;
         bool m_bTriangle = true;    //所有面都是三角面
     };
 

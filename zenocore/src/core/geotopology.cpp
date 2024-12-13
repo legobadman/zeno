@@ -102,6 +102,10 @@ namespace zeno
                 startIdx += sz;
             }
         }
+
+        if (is_line()) {
+            spPrim->lines = m_linesPt;
+        }
     }
 
     void GeometryTopology::initFromPrim(PrimitiveObject* prim) {
@@ -265,6 +269,10 @@ namespace zeno
         return m_bTriangle;
     }
 
+    bool GeometryTopology::is_line() const {
+        return !m_linesPt.empty();
+    }
+
     int GeometryTopology::npoints_in_face(Face* face) const {
         auto h = face->h;
         int ncount = 0;
@@ -333,6 +341,26 @@ namespace zeno
                 });
             }
         });
+    }
+
+    void GeometryTopology::initLineNextPoint(size_t point_id) {
+        if (m_linesPt.empty()) {
+            m_linesPt.resize(m_points.size());
+        }
+        m_linesPt[point_id][0] = point_id;
+        m_linesPt[point_id][1] = point_id + 1;
+    }
+
+    void GeometryTopology::setLineNextPt(int currPt, int nextPt) {
+        if (currPt < m_linesPt.size()) {
+            m_linesPt[currPt][1] = nextPt;
+        }
+    }
+
+    int GeometryTopology::getLineNextPt(int currPt) {
+        if (currPt < m_linesPt.size()) {
+            return m_linesPt[currPt][1];
+        }
     }
 
     int GeometryTopology::face_point(int face_id, int vert_id) const {

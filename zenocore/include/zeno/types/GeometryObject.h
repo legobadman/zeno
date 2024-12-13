@@ -34,11 +34,16 @@ namespace zeno
         ZENO_API std::vector<vec3i> tri_indice() const;
         ZENO_API std::vector<int> edge_list() const;
         ZENO_API bool is_base_triangle() const;
+        ZENO_API bool is_Line() const;
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
         ZENO_API GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
         ZENO_API std::vector<std::string> get_attr_names(GeoAttrGroup grp);
         ZENO_API void initpoint(size_t point_id);
+        ZENO_API void initLineNextPoint(size_t point_id);   //对象是line时，init点的下一个点
         ZENO_API void geomTriangulate(zeno::TriangulateInfo& info);
+
+        ZENO_API void setLineNextPt(int currPt, int nextPt);  //对象是line时，修改当前点的下一个点为nextPt
+        ZENO_API int getLineNextPt(int currPt); //对象是line时，获取当前pt的下一个点的编号
 
         //standard API
 

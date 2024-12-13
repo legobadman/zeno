@@ -996,8 +996,6 @@ namespace zeno {
             if (radius < 0) {
                 throw makeError<UnimplError>("the segments should not be negative");
             } 
-            int nPoints = segments + 1;
-            int nFaces = segments;
 
             PlaneDirection dir;
             Rotate_Orientaion ori;
@@ -1017,27 +1015,43 @@ namespace zeno {
                 throw makeError<UnimplError>("Unknown Direction");
             }
 
-            std::vector<vec3f> points, normals;
-            points.resize(nPoints);
-            if (bCalcPointNormals)
-                normals.resize(nPoints);
-
-            std::shared_ptr<GeometryObject> spgeo;
+            size_t pointNumber = 0, faceNumber = 0;
             if (arcType == "Closed") {
                 if (segments == 1) {
-                    std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, 1, 0);
+                    pointNumber = 1;
+                    faceNumber = 0;
+                } else {
+                    pointNumber = segments + 1;
+                    faceNumber = segments;
+                }
+            }else if (arcType == "Open Arc") {
+                pointNumber = segments + 1;
+                faceNumber = 0;
+            }else if (arcType == "Sliced Arc") {
+                pointNumber = segments + 2;
+                faceNumber = segments;
+            }
+
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, pointNumber, faceNumber);
+
+            std::vector<vec3f> points, normals;
+            points.resize(pointNumber);
+            if (bCalcPointNormals)
+                normals.resize(pointNumber);
+
+            if (arcType == "Closed") {
+                if (segments == 1) {
                     spgeo->initpoint(0);
                     spgeo->create_attr(ATTR_POINT, "pos", { Center });
                     return spgeo;
                 }
-                spgeo = std::make_shared<GeometryObject>(true, nPoints, nFaces);
 
                 points[0] = Center;//圆心
                 spgeo->initpoint(0);
 
-                for (int i = 1; i < nPoints; i++)
+                for (int i = 1; i < pointNumber; i++)
                 {
-                    float rad = 2.0 * M_PI * (i - 1) / (nPoints - 1);
+                    float rad = 2.0 * M_PI * (i - 1) / (pointNumber - 1);
                     vec3f pt, nrm;
                     if (dir == Dir_ZX) {
                         pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
@@ -1060,36 +1074,19 @@ namespace zeno {
                     if (i > 1) {
                         spgeo->add_face({ 0, i - 1, i });
                     }
-                }
-                spgeo->add_face({ 0, nPoints - 1, 1 });
 
-                if (segments == 2) {//加一条线
-                    std::vector<zeno::vec2i> lines(nPoints, zeno::vec2i());
-                    for (intptr_t x = 0; x < nPoints; x++) {
-                        lines[x][0] = x;
-                        lines[x][1] = x + 1;
-                        if (x == nPoints - 1) {
-                            lines[x][0] = lines[x][1] = x;
-                        }
+                    if (segments == 2) {//加一条线
+                        spgeo->initLineNextPoint(i);
                     }
-                    spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
                 }
+
+                spgeo->add_face({ 0, (int)pointNumber - 1, 1 });
             } else if (arcType == "Open Arc") {
-                spgeo = std::make_shared<GeometryObject>(true, nPoints, 0);
-
-                //points[0] = Center;//圆心
-                //spgeo->initpoint(0);
-
-                //float startAngle = arcAngle[0];
-                //while (startAngle > arcAngle[1]) {
-                //    startAngle -= 360;
-                //}
-                //float arcRange = arcAngle[1] - startAngle;
                 float startAngle = arcAngle[0];
                 float arcRange = arcAngle[1] - startAngle;
-                for (int i = 0; i < nPoints; i++)
+                for (int i = 0; i < pointNumber; i++)
                 {
-                    float rad = glm::radians(startAngle + arcRange * i / (nPoints - 1));
+                    float rad = glm::radians(startAngle + arcRange * i / (pointNumber - 1));
                     vec3f pt, nrm;
                     if (dir == Dir_ZX) {
                         pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
@@ -1105,38 +1102,18 @@ namespace zeno {
                     }
                     points[i] = pt;
                     spgeo->initpoint(i);
+                    spgeo->initLineNextPoint(i);
                 }
                 bCalcPointNormals = false;
-
-                std::vector<zeno::vec2i> lines;
-                lines.resize(nPoints);
-                #pragma omp parallel for
-                for (intptr_t x = 0; x < nPoints; x++) {
-                    lines[x][0] = x;
-                    lines[x][1] = x + 1;
-                    if (x == nPoints - 1) {
-                        lines[x][0] = lines[x][1] = x;
-                    }
-                }
-                spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
             }else if (arcType == "Sliced Arc") {
-                nPoints += 1;
-                spgeo = std::make_shared<GeometryObject>(true, nPoints, nFaces);
-                points.resize(nPoints);
-
                 points[0] = Center;//圆心
                 spgeo->initpoint(0);
 
-                //float startAngle = arcAngle[0];
-                //while (startAngle > arcAngle[1]) {
-                //    startAngle -= 360;
-                //}
-                //float arcRange = arcAngle[1] - startAngle;
                 float startAngle = arcAngle[0];
                 float arcRange = arcAngle[1] - startAngle;
-                for (int i = 1; i < nPoints; i++)
+                for (int i = 1; i < pointNumber; i++)
                 {
-                    float rad = glm::radians(startAngle + arcRange * (i - 1) / (nPoints - 2));
+                    float rad = glm::radians(startAngle + arcRange * (i - 1) / (pointNumber - 2));
                     vec3f pt, nrm;
                     if (dir == Dir_ZX) {
                         pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
@@ -1160,7 +1137,6 @@ namespace zeno {
                         spgeo->add_face({ 0, i - 1, i });
                     }
                 }
-                //spgeo->add_face({ 0, nPoints, nPoints - 1 });
             }
 
             glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
@@ -1213,8 +1189,10 @@ namespace zeno {
             if (direction == zeno::vec3f({0,0,0})) {
                 throw makeError<UnimplError>("the direction should not be {0,0,0}");
             }
+
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, npoints, 0);
+
             if (npoints == 1) {
-                std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, 1, 0);
                 spgeo->create_attr(ATTR_POINT, "pos", { origin });
                 return spgeo;
             }
@@ -1227,25 +1205,17 @@ namespace zeno {
 
             std::vector<vec3f> points;
             points.resize(npoints);
-            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, npoints, 0);
-#pragma omp parallel for
-            for (intptr_t x = 0; x < npoints; x++) {
-                vec3f p = origin + x * ax;
-                points[x] = p;
-                spgeo->initpoint(x);
-            }
-            if (hasLines) {
-                std::vector<zeno::vec2i> lines;
-                lines.resize(npoints);
-#pragma omp parallel for
-                for (intptr_t x = 0; x < npoints; x++) {
-                    lines[x][0] = x;
-                    lines[x][1] = x + 1;
-                    if (x == npoints - 1) {
-                        lines[x][0] = lines[x][1] = x;
+//#pragma omp parallel for
+            for (intptr_t pt = 0; pt < npoints; pt++) {
+                vec3f p = origin + pt * ax;
+                points[pt] = p;
+                spgeo->initpoint(pt);
+                if (hasLines) {
+                    spgeo->initLineNextPoint(pt);
+                    if (pt == npoints - 1) {
+                        spgeo->setLineNextPt(pt, pt);
                     }
                 }
-                spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
             }
 
             spgeo->create_attr(ATTR_POINT, "pos", points);
@@ -1289,12 +1259,16 @@ namespace zeno {
             std::vector<zeno::vec3f> inputNrm;
             std::vector<zeno::vec2f> inputLines;
             bool hasNrm = input_object->has_point_attr("nrm");
-            bool isLine = input_object->has_point_attr("lineNextPt");
-            if (hasNrm) {
+            bool isLine = input_object->is_Line();
+            if (hasNrm) { 
                 inputNrm = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
             }
             if (isLine) {
-                inputLines = input_object->get_attrs<zeno::vec2f>(ATTR_POINT, "lineNextPt");
+                inputLines.resize(input_object->npoints());
+                for (size_t i = 0; i < input_object->npoints(); ++i) {
+                    inputLines[i][0] = i;
+                    inputLines[i][1] = input_object->getLineNextPt(i);
+                }
             }
 
             zeno::vec3f originCenter, _min, _max;
@@ -1308,12 +1282,8 @@ namespace zeno {
 
             std::vector<zeno::vec3f> newObjPos(newObjPointsCount, zeno::vec3f());
             std::vector<zeno::vec3f> newObjNrm;
-            std::vector<zeno::vec2i> newObjLins;
             if (hasNrm) {
                 newObjNrm.resize(newObjPointsCount);
-            }
-            if (isLine) {
-                newObjLins.resize(newObjPointsCount);
             }
 
             std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newObjPointsCount, 0);
@@ -1338,10 +1308,9 @@ namespace zeno {
                     spgeo->initpoint(idx);
 
                     if (isLine) {
-                        newObjLins[idx][0] = inputLines[j][0] + offset;
-                        newObjLins[idx][1] = inputLines[j][1] + offset;
+                        spgeo->initLineNextPoint(idx);
                         if (j == inputObjPointsCount - 1) {
-                            newObjLins[idx][1] = newObjLins[idx][0];//复制line的时候，line末尾的nextPt设为自己
+                            spgeo->setLineNextPt(idx, idx);
                         }
                     }
                 }
@@ -1360,9 +1329,7 @@ namespace zeno {
             if (hasNrm) {
                 spgeo->create_attr(ATTR_POINT, "nrm", newObjNrm);
             }
-            if (isLine) {
-                spgeo->create_attr(ATTR_POINT, "lineNextPt", newObjLins);
-            }
+
             return spgeo;
         }
     };
