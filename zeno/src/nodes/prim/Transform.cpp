@@ -142,6 +142,9 @@ namespace zeno {
             std::string order = "YXZ",
             std::string measure = "Degree"
         ) {
+            if (!input_object) {
+                throw makeError<UnimplError>("empty input object.");
+            }
             glm::mat4 matTrans = glm::translate(glm::vec3(translate[0], translate[1], translate[2]));
             auto orderTyped = magic_enum::enum_cast<EulerAngle::RotationOrder>(order).value_or(EulerAngle::RotationOrder::YXZ);
             auto measureTyped = magic_enum::enum_cast<EulerAngle::Measure>(measure).value_or(EulerAngle::Measure::Radians);

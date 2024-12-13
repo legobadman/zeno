@@ -1064,12 +1064,13 @@ namespace zeno {
                 spgeo->add_face({ 0, nPoints - 1, 1 });
 
                 if (segments == 2) {//加一条线
-                    std::vector<zeno::vec2i> lines;
-                    lines.resize(nPoints);
-                    #pragma omp parallel for
+                    std::vector<zeno::vec2i> lines(nPoints, zeno::vec2i());
                     for (intptr_t x = 0; x < nPoints; x++) {
                         lines[x][0] = x;
                         lines[x][1] = x + 1;
+                        if (x == nPoints - 1) {
+                            lines[x][0] = lines[x][1] = x;
+                        }
                     }
                     spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
                 }
@@ -1113,6 +1114,9 @@ namespace zeno {
                 for (intptr_t x = 0; x < nPoints; x++) {
                     lines[x][0] = x;
                     lines[x][1] = x + 1;
+                    if (x == nPoints - 1) {
+                        lines[x][0] = lines[x][1] = x;
+                    }
                 }
                 spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
             }else if (arcType == "Sliced Arc") {
@@ -1206,6 +1210,9 @@ namespace zeno {
             if (length < 0) {
                 throw makeError<UnimplError>("the scale should be positive");
             }
+            if (direction == zeno::vec3f({0,0,0})) {
+                throw makeError<UnimplError>("the direction should not be {0,0,0}");
+            }
             if (npoints == 1) {
                 std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, 1, 0);
                 spgeo->create_attr(ATTR_POINT, "pos", { origin });
@@ -1234,11 +1241,128 @@ namespace zeno {
                 for (intptr_t x = 0; x < npoints; x++) {
                     lines[x][0] = x;
                     lines[x][1] = x + 1;
+                    if (x == npoints - 1) {
+                        lines[x][0] = lines[x][1] = x;
+                    }
                 }
                 spgeo->create_attr(ATTR_POINT, "lineNextPt", lines);
             }
 
             spgeo->create_attr(ATTR_POINT, "pos", points);
+            return spgeo;
+        }
+    };
+
+    struct ZDEFNODE() CopyToPoints : INode {
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input Geometry")},
+                {"target_Obj", ParamObject("Target Geometry")},
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            std::shared_ptr<zeno::GeometryObject> target_Obj
+        ) {
+            if (!input_object) {
+                throw makeError<UnimplError>("empty input object.");
+            } else if (!target_Obj) {
+                throw makeError<UnimplError>("empty target object.");
+            }
+            if (!input_object->has_point_attr("pos")) {
+                throw makeError<UnimplError>("invalid input object.");
+            }else if (!target_Obj->has_point_attr("pos")) {
+                throw makeError<UnimplError>("invalid target object.");
+            }
+
+            std::vector<zeno::vec3f> inputPos = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+            std::vector<std::vector<int>> inputFacesPoints(input_object->nfaces(), std::vector<int>());
+            for (int i = 0; i < input_object->nfaces(); ++i) {
+                inputFacesPoints[i] = input_object->face_points(i);
+            }
+
+
+            std::vector<zeno::vec3f> inputNrm;
+            std::vector<zeno::vec2f> inputLines;
+            bool hasNrm = input_object->has_point_attr("nrm");
+            bool isLine = input_object->has_point_attr("lineNextPt");
+            if (hasNrm) {
+                inputNrm = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+            }
+            if (isLine) {
+                inputLines = input_object->get_attrs<zeno::vec2f>(ATTR_POINT, "lineNextPt");
+            }
+
+            zeno::vec3f originCenter, _min, _max;
+            std::tie(_min, _max) = geomBoundingBox(input_object.get());
+            originCenter = (_min + _max) / 2;
+
+            size_t targetObjPointsCount = target_Obj->npoints();
+            size_t inputObjPointsCount = input_object->npoints();
+            size_t inputObjFacesCount = input_object->nfaces();
+            size_t newObjPointsCount = targetObjPointsCount * inputObjPointsCount;
+
+            std::vector<zeno::vec3f> newObjPos(newObjPointsCount, zeno::vec3f());
+            std::vector<zeno::vec3f> newObjNrm;
+            std::vector<zeno::vec2i> newObjLins;
+            if (hasNrm) {
+                newObjNrm.resize(newObjPointsCount);
+            }
+            if (isLine) {
+                newObjLins.resize(newObjPointsCount);
+            }
+
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newObjPointsCount, 0);
+            for (size_t i = 0; i < targetObjPointsCount; ++i) {
+                zeno::vec3f targetPos = target_Obj->get_elem<zeno::vec3f>(ATTR_POINT, "pos", 0, i);
+                zeno::vec3f dx = targetPos - originCenter;
+                glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(dx[0], dx[1], dx[2]));
+
+                size_t offset = i * inputObjPointsCount;
+                for (size_t j = 0; j < inputObjPointsCount; j++)
+                {
+                    auto idx = offset + j;
+
+                    auto& pt = inputPos[j];
+                    glm::vec4 gp = translate * glm::vec4(pt[0], pt[1], pt[2], 1);
+                    newObjPos[idx] =  zeno::vec3f(gp.x, gp.y, gp.z);
+
+                    if (hasNrm) {
+                        newObjNrm[idx] = inputNrm[j];
+                    }
+
+                    spgeo->initpoint(idx);
+
+                    if (isLine) {
+                        newObjLins[idx][0] = inputLines[j][0] + offset;
+                        newObjLins[idx][1] = inputLines[j][1] + offset;
+                        if (j == inputObjPointsCount - 1) {
+                            newObjLins[idx][1] = newObjLins[idx][0];//复制line的时候，line末尾的nextPt设为自己
+                        }
+                    }
+                }
+                for (size_t j = 0; j < inputObjFacesCount; ++j)
+                {
+                    std::vector<int> facePoints = inputFacesPoints[j];
+                    for (int k = 0; k < facePoints.size(); ++k) {
+                        facePoints[k] += offset;
+                    }
+                    spgeo->add_face(facePoints);
+                }
+            }
+
+
+            spgeo->create_attr(ATTR_POINT, "pos", newObjPos);
+            if (hasNrm) {
+                spgeo->create_attr(ATTR_POINT, "nrm", newObjNrm);
+            }
+            if (isLine) {
+                spgeo->create_attr(ATTR_POINT, "lineNextPt", newObjLins);
+            }
             return spgeo;
         }
     };
