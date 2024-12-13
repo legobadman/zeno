@@ -835,7 +835,10 @@ void INode::on_node_about_to_remove() {
                     std::visit([&](auto& arg) {
                         using T = std::decay_t<decltype(arg)>;
                         if constexpr (std::is_same_v<T, std::string>) {
-                            arg.replace(arg.find("ref("), 4, "ref_not_exist(");
+                            auto iter = arg.find("ref(");
+                            if (iter != std::string::npos) {
+                                arg.replace(arg.find("ref("), 4, "ref_not_exist(");
+                            }
                         }
                     }, var);
                     otherNode->update_param(reflink->dest_inparam->name, var);
@@ -846,7 +849,10 @@ void INode::on_node_about_to_remove() {
                         std::visit([&](auto& arg) {
                             using T = std::decay_t<decltype(arg)>;
                             if constexpr (std::is_same_v<T, std::string>) {
-                                arg.replace(arg.find("ref("), 4, "ref_not_exist(");
+                                auto iter = arg.find("ref(");
+                                if (iter != std::string::npos) {
+                                    arg.replace(iter, 4, "ref_not_exist(");
+                                }
                             }
                         }, elem);
                     }
@@ -866,6 +872,21 @@ void INode::on_node_about_to_remove() {
             }
         }
         input_param.reflinks.clear();
+    }
+    for (auto& [_, output_obj] : m_outputObjs)
+    {
+        for (const std::shared_ptr<ReferLink>& reflink : output_obj.reflinks) {
+            if (reflink->source_inparam == &output_obj) {
+                //当前参数是引用源
+                auto& otherLinks = reflink->dest_inparam->reflinks;
+                otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+
+                auto otherNode = reflink->dest_inparam->m_wpNode.lock();
+                assert(otherNode);
+                if (otherNode)
+                    otherNode->mark_dirty(true);
+            }
+        }
     }
 }
 
