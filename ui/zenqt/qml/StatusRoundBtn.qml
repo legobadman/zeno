@@ -14,6 +14,8 @@ Item {
 
     property int xoffset: 22
     property int side: 35
+    property bool isleft: false
+    property real radius: 4
 
     implicitWidth: xoffset + side
     implicitHeight: parent.height
@@ -51,8 +53,22 @@ Item {
 
             startX: comp.xoffset
             startY: 0
-            PathLine { x: comp.xoffset + comp.side; y: 0 }
-            PathLine { x: comp.side; y: comp.height}
+            PathLine { x: comp.side - comp.radius; y: 0 }
+            PathArc { 
+                relativeX: comp.radius
+                relativeY: comp.radius
+                radiusX: comp.radius
+                radiusY: comp.radius
+                direction: PathArc.Clockwise
+            }
+            PathLine { x: comp.side; y: comp.height - comp.radius}
+            PathArc { 
+                relativeX: -comp.radius
+                relativeY: comp.radius
+                radiusX: comp.radius
+                radiusY: comp.radius
+                direction: PathArc.Clockwise
+            }
             PathLine { x: 0; y: comp.height }
         }
         MouseArea {

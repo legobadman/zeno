@@ -108,18 +108,9 @@ Qan.NodeItem {
                 }
             }
 
-            Rectangle {
-                width: 24
-                height: 48
-                color: "#E7CD2F"
+            StatusBtnGroup {
+                radius: nodeItem.backRadius
             }
-
-            Rectangle {
-                width: 24
-                height: 48
-                color: "#00ADF0"
-                radius: backRadius
-            }    
         }
     }
 }
