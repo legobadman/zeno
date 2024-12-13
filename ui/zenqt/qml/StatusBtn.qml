@@ -18,12 +18,16 @@ Item {
     implicitWidth: xoffset + side
     implicitHeight: parent.height
 
+    // layer.enabled: true
+    // layer.samples: 64
+
     signal statusChanged(bool status)
 
     Shape {
         id: sp
         anchors.fill: parent
         antialiasing: true
+        smooth: true
 
         containsMode: Shape.FillContains
         property bool clicked: false
@@ -31,6 +35,7 @@ Item {
             id: path
             strokeColor: "transparent"
             strokeWidth: 0
+
             fillColor: sp.clicked ? basefillcolor : "#2E313A"
             capStyle: ShapePath.RoundCap
             

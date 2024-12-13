@@ -208,6 +208,11 @@ void ZenoApplication::initQuickQanavas()
     if (!m_engine) {
         QQuickStyle::setStyle("Material");
         m_engine = new QQmlApplicationEngine(this);
+
+        QSurfaceFormat format;
+        format.setSamples(8);
+        QSurfaceFormat::setDefaultFormat(format);
+
         QuickQanava::initialize(m_engine);
         m_graphsMgr->initRootObjects();
     }

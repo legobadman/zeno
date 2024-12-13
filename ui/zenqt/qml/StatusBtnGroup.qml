@@ -43,10 +43,11 @@ Item {
             }
         }
 
+        /*
         StatusBtnSeperator {
             xoffset: comp.xoffset
             x: comp.side
-        }
+        }*/
 
         StatusRoundBtn {
             id: view_btn
@@ -103,7 +104,7 @@ Item {
         }
         StatusImgBtn{
             id: imgView
-            x: view_btn.x + comp.xoffset
+            x: view_btn.x + bypass_btn.width - 1
             source: "qrc:/icons/VIEW_dark.svg"
             property bool is_entered : false
             

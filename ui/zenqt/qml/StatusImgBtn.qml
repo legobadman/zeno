@@ -10,8 +10,8 @@ Item {
 
     property bool clicked: false
 
-    implicitWidth: img.width
-    implicitHeight: img.height
+    implicitWidth: 64
+    implicitHeight: 64
 
     signal clickedSig()
     signal enteredSig()
@@ -22,6 +22,10 @@ Item {
 
     Image{
         id: img
+        sourceSize.width: 64
+        sourceSize.height: 64
+        smooth: true
+        antialiasing: true
     }
     Shape {
         id: sp

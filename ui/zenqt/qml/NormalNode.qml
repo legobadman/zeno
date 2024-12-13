@@ -39,12 +39,13 @@ Qan.NodeItem {
     //x: 15;      y: 15
 
     // 自动适应子布局的尺寸
-    implicitWidth: main_layout.implicitWidth + 2 * backRadius
-    implicitHeight: main_layout.implicitHeight;// + 2 * backRadius
+    implicitWidth: mainmain_layout.implicitWidth
+    implicitHeight: mainmain_layout.implicitHeight;
     resizable: false
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
 
+    /*
     Loader {
         id: delegateLoader
         anchors.fill: parent
@@ -72,102 +73,81 @@ Qan.NodeItem {
             if (item)
                 item.style = nodeItem.style
         }
-    } 
+    }
+    */
 
     ColumnLayout {
-        id: main_layout
-        anchors.fill: parent
-        anchors.margins: 0;//backRadius / 2.
+        id: mainmain_layout
+        implicitWidth: main_item.implicitWidth;
+        implicitHeight: main_item.implicitHeight + 32;
+        spacing: 1
 
-        RowLayout {
-            id: nodeheader
-            Layout.fillWidth: true
-            spacing: 1
+        Rectangle {
+            width: 64
+            height: 32
+            color: "red"
+        }
 
-            RowLayout {
-                id: nodenamelayout
-                Layout.fillWidth: true
+        Item {
+            id: main_item
+            implicitWidth: main_layout.implicitWidth// + 2 * backRadius
+            implicitHeight: main_layout.implicitHeight;// + 2 * backRadius
 
-                Rectangle {
-                    width: 18
-                    Layout.fillHeight: true
-                    color: "transparent"
+            Loader {
+                id: delegateLoader
+                anchors.fill: parent
+                source: "qrc:/QuickQanava/RectSolidShadowBackground.qml"
+
+                onItemChanged: {
+                    if (item)
+                        item.style = nodeItem.style
                 }
+            }
 
-                Label {
+            ColumnLayout {
+                id: main_layout
+                anchors.margins: 0;//backRadius / 2.
+
+                RowLayout {
+                    id: nodeheader
                     Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    text: nodeItem.node.label
-                    font.bold: true
-                }
+                    spacing: 1
 
-                Rectangle {
-                    width: 18
-                    Layout.fillHeight: true
-                    color: "transparent"
+                    RowLayout {
+                        id: nodenamelayout
+                        Layout.fillWidth: true
+
+                        Rectangle {
+                            width: 18
+                            Layout.fillHeight: true
+                            color: "transparent"
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
+                            text: nodeItem.node.label
+                            font.bold: true
+                        }
+
+                        Rectangle {
+                            width: 18
+                            Layout.fillHeight: true
+                            color: "transparent"
+                        }
+                    }
+
+                    StatusBtnGroup {
+                        radius: nodeItem.backRadius
+                    }
                 }
             }
+        }
 
-            StatusBtnGroup {
-                radius: nodeItem.backRadius
-            }
+        Rectangle {
+            width: 64
+            height: 32
+            color: "green"
         }
     }
 }
-
-
-/*
-Qan.NodeItem {
-    id: nodeItem
-    // 绑定到子组件的 implicitWidth 和 implicitHeight
-    width: template.implicitWidth
-    height: template.implicitHeight
-
-    Qan.RectNodeTemplate {
-        id: template
-        //anchors.fill: parent
-        nodeItem : parent
-
-        // 自动适应子布局的尺寸
-        implicitWidth: main_layout.implicitWidth
-        implicitHeight: main_layout.implicitHeight
-
-        ColumnLayout {
-            id: main_layout
-            anchors.fill: parent
-
-            Label {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                text: "Cube"
-                font.bold: true
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                
-                Rectangle {
-                    width: 32
-                    Layout.fillHeight: true
-                    color: "black"
-                }
-                Rectangle {
-                    width: 32
-                    Layout.fillHeight: true
-                    color: "red"
-                }
-                
-            }
-            
-
-            Slider {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                from: 0.; to: 1.0
-                onValueChanged: node.output = value
-            }
-        }
-    }
-}
-*/
