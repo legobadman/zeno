@@ -121,7 +121,7 @@ public:
     inline qreal    getBackRadius() const noexcept { return _backRadius; }
 protected:
     //! \copydoc backRadius
-    qreal           _backRadius = 4.;
+    qreal           _backRadius = 8.;   //4 -> 8 for zenonode style
 signals:
     //! \copydoc backRadius
     void            backRadiusChanged();

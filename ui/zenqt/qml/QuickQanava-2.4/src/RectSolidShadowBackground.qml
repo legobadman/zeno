@@ -50,8 +50,10 @@ Item {
         anchors.fill: parent
         style: background.style
     }
+    /*
     RectSolidBackground {
         anchors.fill: parent
         style: background.style
     }
+    */
 }

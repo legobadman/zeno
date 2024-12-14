@@ -101,38 +101,84 @@ Qan.NodeItem {
                 ColumnLayout {
                     id: main_layout
                     anchors.margins: 0
+                    spacing: 0
 
-                    RowLayout {
-                        id: nodeheader
+                    Item {
+                        id:nodeheader
+                        implicitWidth: nodeheader_layout.implicitWidth
+                        implicitHeight: nodeheader_layout.implicitHeight
                         Layout.fillWidth: true
-                        spacing: 1
 
-                        RowLayout {
-                            id: nodenamelayout
-                            Layout.fillWidth: true
-
-                            Rectangle {
-                                width: 18
-                                Layout.fillHeight: true
-                                color: "transparent"
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                horizontalAlignment: Text.AlignHCenter
-                                text: nodeItem.node.label
-                                font.bold: true
-                            }
-
-                            Rectangle {
-                                width: 18
-                                Layout.fillHeight: true
-                                color: "transparent"
-                            }
+                        ZRoundRect {
+                            anchors.fill: parent
+                            bgcolor: "yellow"
+                            radius: nodeItem.backRadius
                         }
 
-                        StatusBtnGroup {
+                        RowLayout {
+                            id: nodeheader_layout
+                            Layout.fillWidth: true
+                            spacing: 1
+
+                            RowLayout {
+                                id: nodenamelayout
+                                Layout.fillWidth: true
+
+                                Rectangle {
+                                    width: 18
+                                    Layout.fillHeight: true
+                                    color: "transparent"
+                                }
+
+                                Label {
+                                    Layout.fillWidth: true
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: nodeItem.node.label
+                                    font.bold: true
+                                }
+
+                                Rectangle {
+                                    width: 18
+                                    Layout.fillHeight: true
+                                    color: "transparent"
+                                }
+                            }
+
+                            StatusBtnGroup {
+                                id: right_status_group
+                                radius: nodeItem.backRadius
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: nodebody
+                        implicitWidth: nodebody_layout.implicitWidth
+                        implicitHeight: nodebody_layout.implicitHeight
+                        Layout.fillWidth: true
+
+                        ZRoundRect {
+                            anchors.fill: parent
+                            bgcolor: "black"
                             radius: nodeItem.backRadius
+                            top_radius: false
+                        }
+
+                        ColumnLayout {
+                            id: nodebody_layout
+
+                            Repeater{
+                                id: inputprimparams
+                                model: nodeItem.node.params
+
+                                delegate: Text {
+                                        color: "white"
+                                        required property string name
+                                        required property int group
+                                        text: name
+                                        visible: group == 1
+                                }
+                            }
                         }
                     }
                 }

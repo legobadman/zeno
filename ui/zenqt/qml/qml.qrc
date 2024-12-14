@@ -74,5 +74,6 @@
         <file>ZenoSubnetsView.qml</file>
         <file>CustomTabButton.qml</file>
         <file>NormalNode.qml</file>
+        <file>ZRoundRect.qml</file>
     </qresource>
 </RCC>
