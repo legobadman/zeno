@@ -15,6 +15,7 @@ Item {
     property int xoffset: 22
     property int side: 35
     property bool isleft: false
+    property bool round_last_btn: true
     property real radius: 4
 
     implicitWidth: xoffset + side
@@ -61,12 +62,12 @@ Item {
                 radiusY: comp.radius
                 direction: PathArc.Clockwise
             }
-            PathLine { x: comp.side; y: comp.height - comp.radius}
-            PathArc { 
-                relativeX: -comp.radius
-                relativeY: comp.radius
-                radiusX: comp.radius
-                radiusY: comp.radius
+            PathLine { x: comp.side; y: comp.height - (comp.round_last_btn ? comp.radius : 0)}
+            PathArc {
+                relativeX: comp.round_last_btn ? -comp.radius : 0
+                relativeY: comp.round_last_btn ? comp.radius : 0
+                radiusX: comp.round_last_btn ? comp.radius : 0
+                radiusY: comp.round_last_btn ? comp.radius : 0
                 direction: PathArc.Clockwise
             }
             PathLine { x: 0; y: comp.height }

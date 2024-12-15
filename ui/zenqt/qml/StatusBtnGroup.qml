@@ -12,6 +12,7 @@ Item {
     property int side: 24
     property int fixheight: 48
     property real radius: 4
+    property bool round_last_btn: true
 
     implicitWidth: 2 * comp.side
     implicitHeight: fixheight
@@ -56,6 +57,7 @@ Item {
             xoffset: comp.xoffset
             side: comp.side
             radius: comp.radius
+            round_last_btn: comp.round_last_btn
             x: comp.side + 1
             property bool is_entered : false
 

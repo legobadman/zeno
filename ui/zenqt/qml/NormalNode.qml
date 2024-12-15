@@ -109,10 +109,19 @@ Qan.NodeItem {
                         implicitHeight: nodeheader_layout.implicitHeight
                         Layout.fillWidth: true
 
+                        /*以下两个rect各选一，视乎数值参数是否隐藏*/
                         ZRoundRect {
                             anchors.fill: parent
                             bgcolor: "#5A9CE0"
                             radius: nodeItem.backRadius
+                            visible: nodebody.visible
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "#5A9CE0"
+                            radius: nodeItem.backRadius
+                            visible: !nodebody.visible
                         }
 
                         RowLayout {
@@ -148,6 +157,7 @@ Qan.NodeItem {
                             StatusBtnGroup {
                                 id: right_status_group
                                 radius: nodeItem.backRadius
+                                round_last_btn: !nodebody.visible
                             }
                         }
                     }
@@ -157,6 +167,7 @@ Qan.NodeItem {
                         implicitWidth: nodebody_layout.implicitWidth
                         implicitHeight: nodebody_layout.implicitHeight
                         Layout.fillWidth: true
+                        visible: true   //TODO: 由parammodel是否显示数值参数决定
 
                         ZRoundRect {
                             anchors.fill: parent
