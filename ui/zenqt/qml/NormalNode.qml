@@ -178,27 +178,26 @@ Qan.NodeItem {
                                 id: inputprimparams
                                 model: nodeItem.node.params
 
-                                delegate: 
-                                    RowLayout {
+                                delegate:
+                                    Text {
                                         required property string name
                                         required property int group
-
-                                        Layout.leftMargin: 10 // 左边距
-                                        Layout.rightMargin: 10 // 右边距
+                                        readonly property int hmargin: 10
 
                                         visible: group == 1
 
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            height: 32
-                                            color: "transparent"
+                                        color: "white"
+                                        text: name
+                                        Layout.alignment: Qt.AlignLeft
+                                        Layout.leftMargin: hmargin
 
-                                            Text {
-                                                color: "white"
-                                                text: parent.parent.name
-                                                anchors.left: parent.left
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
+                                        Rectangle {
+                                            height: parent.height * 0.8
+                                            width: height
+                                            radius: height / 2
+                                            color: "#CCA44E"
+                                            x: -parent.hmargin - width/2.
+                                            anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }
                             }
@@ -208,27 +207,26 @@ Qan.NodeItem {
                                 model: nodeItem.node.params
 
                                 delegate:
-                                    RowLayout {
+                                    Text {
                                         required property string name
                                         required property int group
+                                        readonly property int hmargin: 10
 
                                         visible: group == 3
 
-                                        Layout.leftMargin: 10 // 左边距
-                                        Layout.rightMargin: 10 // 右边距
+                                        color: "white"
+                                        text: name
+                                        Layout.alignment: Qt.AlignRight
+                                        Layout.rightMargin: 10
 
                                         Rectangle {
-                                            Layout.fillWidth: true
-                                            height: 32
-                                            color: "transparent"
-
-                                            Text {
-                                                color: "white"
-                                                text: parent.parent.name
-                                                anchors.right: parent.right
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
-                                        }    
+                                            height: parent.height * 0.8
+                                            width: height
+                                            radius: height / 2
+                                            color: "#CCA44E"
+                                            x: parent.width + parent.hmargin - width/2.
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
                                     }
                             }
 
