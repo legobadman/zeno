@@ -111,7 +111,7 @@ Qan.NodeItem {
 
                         ZRoundRect {
                             anchors.fill: parent
-                            bgcolor: "yellow"
+                            bgcolor: "#5A9CE0"
                             radius: nodeItem.backRadius
                         }
 
@@ -135,6 +135,7 @@ Qan.NodeItem {
                                     horizontalAlignment: Text.AlignHCenter
                                     text: nodeItem.node.label
                                     font.bold: true
+                                    color: "white"
                                 }
 
                                 Rectangle {
@@ -159,25 +160,81 @@ Qan.NodeItem {
 
                         ZRoundRect {
                             anchors.fill: parent
-                            bgcolor: "black"
+                            bgcolor: "#303030"
                             radius: nodeItem.backRadius
                             top_radius: false
                         }
 
                         ColumnLayout {
                             id: nodebody_layout
+                            anchors.fill: parent
+
+                            Item {
+                                id: just_top_margin
+                                height: 5
+                            }
 
                             Repeater{
                                 id: inputprimparams
                                 model: nodeItem.node.params
 
-                                delegate: Text {
-                                        color: "white"
+                                delegate: 
+                                    RowLayout {
                                         required property string name
                                         required property int group
-                                        text: name
+
+                                        Layout.leftMargin: 10 // 左边距
+                                        Layout.rightMargin: 10 // 右边距
+
                                         visible: group == 1
-                                }
+
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            height: 32
+                                            color: "transparent"
+
+                                            Text {
+                                                color: "white"
+                                                text: parent.parent.name
+                                                anchors.left: parent.left
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+                                    }
+                            }
+
+                            Repeater {
+                                id: outputprimparams
+                                model: nodeItem.node.params
+
+                                delegate:
+                                    RowLayout {
+                                        required property string name
+                                        required property int group
+
+                                        visible: group == 3
+
+                                        Layout.leftMargin: 10 // 左边距
+                                        Layout.rightMargin: 10 // 右边距
+
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            height: 32
+                                            color: "transparent"
+
+                                            Text {
+                                                color: "white"
+                                                text: parent.parent.name
+                                                anchors.right: parent.right
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }    
+                                    }
+                            }
+
+                            Item {
+                                id: just_bottom_margin
+                                height: 5
                             }
                         }
                     }
