@@ -659,6 +659,12 @@ void INode::reflectNode_apply()
                             inputAny = iter2->second.spObject;
                         }
                     }
+                    //类型不一致，数值类型可能需要转换
+                    ParamType outtype = inputAny.type().hash_code();
+                    ParamType intype = param_type.hash_code();
+                    if (intype != outtype && isNumericVecType(outtype)) {
+                        inputAny = convertNumericAnyType(outtype, intype, inputAny);
+                    }
                     paramValues.add_item(inputAny);
                 }
 
@@ -691,6 +697,12 @@ void INode::reflectNode_apply()
                                     if (iter2 != m_inputObjs.end()) {
                                         inputAny = iter2->second.spObject;
                                 }
+                                }
+                                //类型不一致，数值类型可能需要转换
+                                ParamType outtype = inputAny.type().hash_code();
+                                ParamType intype = field->get_field_type().type_hash();
+                                if (intype != outtype && isNumericVecType(outtype)) {
+                                    inputAny = convertNumericAnyType(outtype, intype, inputAny);
                                 }
                                 if (inputAny.has_value())
                                     field->set_field_value(this, inputAny);
