@@ -149,24 +149,28 @@ void ParamsModel::initParamItems()
     //primitive inputs
     const zeno::CustomUI& customui = spNode->export_customui();
     if (!customui.inputPrims.empty() && !customui.inputPrims[0].groups.empty()) {
-        auto inputs = customui.inputPrims[0].groups[0].params;
-        for (const zeno::ParamPrimitive& spParam : inputs) {
-            ParamItem item;
-            item.bInput = true;
-            item.control = spParam.control;
-            if (item.control == zeno::NullControl)
-                item.control = zeno::getDefaultControl(spParam.type);
-            item.optCtrlprops = spParam.ctrlProps;
-            item.name = QString::fromStdString(spParam.name);
-            item.type = spParam.type;
-            item.value = spParam.defl;
-            item.connectProp = zeno::Socket_Primitve;
-            item.bSocketVisible = spParam.bSocketVisible;
-            item.bVisible = spParam.bVisible;
-            item.bEnable = spParam.bEnable;
-            item.group = zeno::Role_InputPrimitive;
-            item.sockProp = spParam.sockProp;
-            m_items.append(item);
+        for (auto& tab : customui.inputPrims) {
+            for (auto& group: tab.groups) {
+                auto params = group.params;
+                for (const zeno::ParamPrimitive& spParam : params) {
+                    ParamItem item;
+                    item.bInput = true;
+                    item.control = spParam.control;
+                    if (item.control == zeno::NullControl)
+                        item.control = zeno::getDefaultControl(spParam.type);
+                    item.optCtrlprops = spParam.ctrlProps;
+                    item.name = QString::fromStdString(spParam.name);
+                    item.type = spParam.type;
+                    item.value = spParam.defl;
+                    item.connectProp = zeno::Socket_Primitve;
+                    item.bSocketVisible = spParam.bSocketVisible;
+                    item.bVisible = spParam.bVisible;
+                    item.bEnable = spParam.bEnable;
+                    item.group = zeno::Role_InputPrimitive;
+                    item.sockProp = spParam.sockProp;
+                    m_items.append(item);
+                }
+            }
         }
     }
     //object inputs

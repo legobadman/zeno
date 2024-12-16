@@ -259,11 +259,15 @@ void ZenoPropPanel::reset(GraphModel* subgraph, const QModelIndexList& nodes, bo
                 }
             }
         } else {
-            //普通节点布局
-            if (QWidget* wid = resetNormalNodeLayout()) {
-                pMainLayout->addWidget(wid);
+            //普通节点布局，有多个group或tab也按subnet处理
+            if (pInputs->rowCount() != 1 || pInputs->child(0)->rowCount() != 1) {
+                if (QWidget* wid = resetSubnetLayout())
+                    pMainLayout->addWidget(wid);
+            } else {
+                if (QWidget* wid = resetNormalNodeLayout())
+                    pMainLayout->addWidget(wid);
+            }
         }
-    }
     }
 }
 
