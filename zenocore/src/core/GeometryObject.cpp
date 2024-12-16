@@ -107,6 +107,10 @@ namespace zeno
         return m_spTopology->is_base_triangle();
     }
 
+    ZENO_API bool GeometryObject::is_Line() const {
+        return m_spTopology->is_line();
+    }
+
     ZENO_API int GeometryObject::get_group_count(GeoAttrGroup grp) const {
         switch (grp) {
         case ATTR_POINT: return m_spTopology->npoints();
@@ -127,6 +131,14 @@ namespace zeno
         //TODO: uv
     }
 
+    ZENO_API void GeometryObject::setLineNextPt(int currPt, int nextPt) {
+        m_spTopology->setLineNextPt(currPt, nextPt);
+    }
+
+    ZENO_API int GeometryObject::getLineNextPt(int currPt) {
+        return m_spTopology->getLineNextPt(currPt);
+    }
+
     ZENO_API bool GeometryObject::remove_point(int ptnum) {
         std::vector<vec3f>& vec_pos = points_pos();
         assert(m_spTopology->npoints() == vec_pos.size(), false);
@@ -145,6 +157,14 @@ namespace zeno
             //属性也要同步删除,包括point和vertices
             for (auto& [name, attrib_vec] : m_point_attrs) {
                 removeAttribElem(attrib_vec, ptnum);
+                if (name == "lineNextPt") {//如果是line，调整line的next ptnum；
+                    for (size_t pt = ptnum; pt < attrib_vec.size(); ++pt) {
+                        zeno::vec2f removePtNextPt = attrib_vec.get_elem < zeno::vec2f >(0, pt);
+                        removePtNextPt[0] -= 1;
+                        removePtNextPt[1] -= 1;
+                        attrib_vec.set_elem<zeno::vec2f>(pt, removePtNextPt);
+                    }
+                }
             }
 
             for (auto& [name, attrib_vec] : m_vert_attrs) {
@@ -584,6 +604,10 @@ namespace zeno
 
     void GeometryObject::initpoint(size_t point_id) {
         m_spTopology->initpoint(point_id);
+    }
+
+    ZENO_API void GeometryObject::initLineNextPoint(size_t point_id) {
+        m_spTopology->initLineNextPoint(point_id);
     }
 
     ZENO_API int GeometryObject::add_point(zeno::vec3f pos) {

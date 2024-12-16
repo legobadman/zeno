@@ -1077,6 +1077,63 @@ namespace zeno {
         return type == gParamType_Int || type == gParamType_Float || type == gParamType_String || type == gParamType_Curve;
     }
 
+    ZENO_API zeno::reflect::Any convertNumericAnyType(ParamType outType, ParamType inType, reflect::Any outputVal)
+    {
+        zeno::reflect::Any val;
+        if (outType == types::gParamType_Int) {
+            if (inType == types::gParamType_Float) {
+                val = zeno::reflect::make_any<float>(zeno::reflect::any_cast<int>(outputVal));
+            } else if (inType == types::gParamType_Vec2i) {
+                val = zeno::reflect::make_any<zeno::vec2i>(zeno::reflect::any_cast<int>(outputVal));
+            } else if (inType == types::gParamType_Vec2f) {
+                val = zeno::reflect::make_any<zeno::vec2f>(zeno::reflect::any_cast<int>(outputVal));
+            } else if (inType == types::gParamType_Vec3i) {
+                val = zeno::reflect::make_any<zeno::vec3i>(zeno::reflect::any_cast<int>(outputVal));
+            } else if (inType == types::gParamType_Vec3f) {
+                val = zeno::reflect::make_any<zeno::vec3f>(zeno::reflect::any_cast<int>(outputVal));
+            } else if (inType == types::gParamType_Vec4i) {
+                val = zeno::reflect::make_any<zeno::vec4i>(zeno::reflect::any_cast<int>(outputVal));
+            } else if (inType == types::gParamType_Vec4f) {
+                val = zeno::reflect::make_any<zeno::vec4f>(zeno::reflect::any_cast<int>(outputVal));
+            } else {
+                return val;
+            }
+        } else if (outType == types::gParamType_Float) {
+            if (inType == types::gParamType_Int) {
+                val = zeno::reflect::make_any<int>(zeno::reflect::any_cast<float>(outputVal));
+            } else if (inType == types::gParamType_Vec2i) {
+                val = zeno::reflect::make_any<zeno::vec2i>(zeno::reflect::any_cast<float>(outputVal));
+            }else if (inType == types::gParamType_Vec2f) {
+                val = zeno::reflect::make_any<zeno::vec2f>(zeno::reflect::any_cast<float>(outputVal));
+            }else if (inType == types::gParamType_Vec3i) {
+                val = zeno::reflect::make_any<zeno::vec3i>(zeno::reflect::any_cast<float>(outputVal));
+            }else if (inType == types::gParamType_Vec3f) {
+                val = zeno::reflect::make_any<zeno::vec3f>(zeno::reflect::any_cast<float>(outputVal));
+            }else if (inType == types::gParamType_Vec4i) {
+                val = zeno::reflect::make_any<zeno::vec4i>(zeno::reflect::any_cast<float>(outputVal));
+            }else if (inType == types::gParamType_Vec4f) {
+                val = zeno::reflect::make_any<zeno::vec4f>(zeno::reflect::any_cast<float>(outputVal));
+            } else {
+                return val;
+            }
+        } else if (outType == types::gParamType_Vec2i && inType == types::gParamType_Vec2f) {
+            val = zeno::reflect::make_any<zeno::vec2f>(zeno::reflect::any_cast<zeno::vec2i>(outputVal));
+        } else if (outType == types::gParamType_Vec2f && inType == types::gParamType_Vec2i) {
+            val = zeno::reflect::make_any<zeno::vec2i>(zeno::reflect::any_cast<zeno::vec2f>(outputVal));
+        } else if (outType == types::gParamType_Vec3i && inType == types::gParamType_Vec3f) {
+            val = zeno::reflect::make_any<zeno::vec3f>(zeno::reflect::any_cast<zeno::vec3i>(outputVal));
+        } else if (outType == types::gParamType_Vec3f && inType == types::gParamType_Vec3i) {
+            val = zeno::reflect::make_any<zeno::vec3i>(zeno::reflect::any_cast<zeno::vec3f>(outputVal));
+        } else if (outType == types::gParamType_Vec4i && inType == types::gParamType_Vec4f) {
+            val = zeno::reflect::make_any<zeno::vec4f>(zeno::reflect::any_cast<zeno::vec4i>(outputVal));
+        } else if (outType == types::gParamType_Vec4f && inType == types::gParamType_Vec4i) {
+            val = zeno::reflect::make_any<zeno::vec4i>(zeno::reflect::any_cast<zeno::vec4f>(outputVal));
+        } else {
+            return val;
+        }
+        return val;
+    }
+
     void getNameMappingFromReflectUI(
         reflect::TypeBase* typeBase,
         std::shared_ptr<INode> node,

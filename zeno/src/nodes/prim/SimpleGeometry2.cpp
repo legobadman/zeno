@@ -958,4 +958,379 @@ namespace zeno {
             return geo;
         }
     };
+
+    struct ZDEFNODE() Circle : INode {
+
+        enum PlaneDirection {
+            Dir_XY,
+            Dir_YZ,
+            Dir_ZX
+        };
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"segments", ParamPrimitive("Segments", 32, Lineedit)},
+                {"radius", ParamPrimitive("Radius", 1.0, Lineedit)},
+                {"arcType", ParamPrimitive("Arc Type", "Closed", Combobox, std::vector<std::string>{"Closed", "Open Arc", "Sliced Arc"})},
+                {"direction", ParamPrimitive("Direction", "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"})}
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
+            zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
+            float segments = 32,
+            float radius = 1.0,
+            std::string arcType = "Closed",
+            zeno::vec2f arcAngle = zeno::vec2i({ 0, 120 }),
+            //std::string face_type = "Quadrilaterals",
+            std::string direction = "ZX",
+            bool bCalcPointNormals = false
+        ) {
+            if (segments <= 0) {
+                throw makeError<UnimplError>("the segments should be positive");
+            }
+            if (radius < 0) {
+                throw makeError<UnimplError>("the segments should not be negative");
+            } 
+
+            PlaneDirection dir;
+            Rotate_Orientaion ori;
+            if (direction == "ZX") {
+                dir = Dir_ZX;
+                ori = Orientaion_ZX;
+            }
+            else if (direction == "YZ") {
+                dir = Dir_YZ;
+                ori = Orientaion_YZ;
+            }
+            else if (direction == "XY") {
+                dir = Dir_XY;
+                ori = Orientaion_XY;
+            }
+            else {
+                throw makeError<UnimplError>("Unknown Direction");
+            }
+
+            size_t pointNumber = 0, faceNumber = 0;
+            if (arcType == "Closed") {
+                if (segments == 1) {
+                    pointNumber = 1;
+                    faceNumber = 0;
+                } else {
+                    pointNumber = segments + 1;
+                    faceNumber = segments;
+                }
+            }else if (arcType == "Open Arc") {
+                pointNumber = segments + 1;
+                faceNumber = 0;
+            }else if (arcType == "Sliced Arc") {
+                pointNumber = segments + 2;
+                faceNumber = segments;
+            }
+
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, pointNumber, faceNumber);
+
+            std::vector<vec3f> points, normals;
+            points.resize(pointNumber);
+            if (bCalcPointNormals)
+                normals.resize(pointNumber);
+
+            if (arcType == "Closed") {
+                if (segments == 1) {
+                    spgeo->initpoint(0);
+                    spgeo->create_attr(ATTR_POINT, "pos", { Center });
+                    return spgeo;
+                }
+
+                points[0] = Center;//圆心
+                spgeo->initpoint(0);
+
+                for (int i = 1; i < pointNumber; i++)
+                {
+                    float rad = 2.0 * M_PI * (i - 1) / (pointNumber - 1);
+                    vec3f pt, nrm;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
+                        nrm = vec3f(0, 1, 0);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, cos(rad) * radius, -sin(rad) * radius);
+                        nrm = vec3f(1, 0, 0);
+                    }
+                    else {
+                        pt = vec3f(cos(rad) * radius, -sin(rad) * radius, 0);
+                        nrm = vec3f(0, 0, 1);
+                    }
+
+                    points[i] = pt;
+                    if (bCalcPointNormals)
+                        normals[i] = nrm;
+                    spgeo->initpoint(i);
+
+                    if (i > 1) {
+                        spgeo->add_face({ 0, i - 1, i });
+                    }
+
+                    if (segments == 2) {//加一条线
+                        spgeo->initLineNextPoint(i);
+                    }
+                }
+
+                spgeo->add_face({ 0, (int)pointNumber - 1, 1 });
+            } else if (arcType == "Open Arc") {
+                float startAngle = arcAngle[0];
+                float arcRange = arcAngle[1] - startAngle;
+                for (int i = 0; i < pointNumber; i++)
+                {
+                    float rad = glm::radians(startAngle + arcRange * i / (pointNumber - 1));
+                    vec3f pt, nrm;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
+                        nrm = vec3f(0, 1, 0);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, cos(rad) * radius, -sin(rad) * radius);
+                        nrm = vec3f(1, 0, 0);
+                    }
+                    else {
+                        pt = vec3f(cos(rad) * radius, -sin(rad) * radius, 0);
+                        nrm = vec3f(0, 0, 1);
+                    }
+                    points[i] = pt;
+                    spgeo->initpoint(i);
+                    spgeo->initLineNextPoint(i);
+                }
+                bCalcPointNormals = false;
+            }else if (arcType == "Sliced Arc") {
+                points[0] = Center;//圆心
+                spgeo->initpoint(0);
+
+                float startAngle = arcAngle[0];
+                float arcRange = arcAngle[1] - startAngle;
+                for (int i = 1; i < pointNumber; i++)
+                {
+                    float rad = glm::radians(startAngle + arcRange * (i - 1) / (pointNumber - 2));
+                    vec3f pt, nrm;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(cos(rad) * radius, 0, -sin(rad) * radius);
+                        nrm = vec3f(0, 1, 0);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, cos(rad) * radius, -sin(rad) * radius);
+                        nrm = vec3f(1, 0, 0);
+                    }
+                    else {
+                        pt = vec3f(cos(rad) * radius, -sin(rad) * radius, 0);
+                        nrm = vec3f(0, 0, 1);
+                    }
+
+                    points[i] = pt;
+                    if (bCalcPointNormals)
+                        normals[i] = nrm;
+                    spgeo->initpoint(i);
+
+                    if (i > 1) {
+                        spgeo->add_face({ 0, i - 1, i });
+                    }
+                }
+            }
+
+            glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], ori);
+            glm::mat4 transform = translate * rotation;
+            for (size_t i = arcType == "Open Arc" ? 0 : 1; i < points.size(); i++)
+            {
+                auto pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                if (bCalcPointNormals) {
+                    auto nrm = normals[i];
+                    glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                    normals[i] = zeno::vec3f(gnrm.x, gnrm.y, gnrm.z);
+                }
+            }
+
+            spgeo->create_attr(ATTR_POINT, "pos", points);
+            if (bCalcPointNormals) {
+                spgeo->create_attr(ATTR_POINT, "nrm", normals);
+            }
+            return spgeo;
+        }
+    };
+
+    struct ZDEFNODE() Line : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            int npoints = 1,
+            zeno::vec3f direction = zeno::vec3f({ 1,0,0 }),
+            zeno::vec3f origin = zeno::vec3f({ 0,0,0 }),
+            float length = 1.0,
+            bool isCentered = false,
+            bool hasLines = true
+        ) {
+            if (npoints <= 0) {
+                throw makeError<UnimplError>("the npoints should be positive");
+            }
+            if (length < 0) {
+                throw makeError<UnimplError>("the scale should be positive");
+            }
+            if (direction == zeno::vec3f({0,0,0})) {
+                throw makeError<UnimplError>("the direction should not be {0,0,0}");
+            }
+
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, npoints, 0);
+
+            if (npoints == 1) {
+                spgeo->create_attr(ATTR_POINT, "pos", { origin });
+                return spgeo;
+            }
+
+            float scale = length / glm::sqrt(glm::pow(direction[0], 2) + glm::pow(direction[1], 2) + glm::pow(direction[2], 2)) / (npoints - 1);
+            zeno::vec3f ax = direction * scale;
+            if (isCentered) {
+                origin -= (ax * (npoints - 1)) / 2;
+            }
+
+            std::vector<vec3f> points;
+            points.resize(npoints);
+//#pragma omp parallel for
+            for (intptr_t pt = 0; pt < npoints; pt++) {
+                vec3f p = origin + pt * ax;
+                points[pt] = p;
+                spgeo->initpoint(pt);
+                if (hasLines) {
+                    spgeo->initLineNextPoint(pt);
+                    if (pt == npoints - 1) {
+                        spgeo->setLineNextPt(pt, pt);
+                    }
+                }
+            }
+
+            spgeo->create_attr(ATTR_POINT, "pos", points);
+            return spgeo;
+        }
+    };
+
+    struct ZDEFNODE() CopyToPoints : INode {
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input Geometry")},
+                {"target_Obj", ParamObject("Target Geometry")},
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            std::shared_ptr<zeno::GeometryObject> target_Obj
+        ) {
+            if (!input_object) {
+                throw makeError<UnimplError>("empty input object.");
+            } else if (!target_Obj) {
+                throw makeError<UnimplError>("empty target object.");
+            }
+            if (!input_object->has_point_attr("pos")) {
+                throw makeError<UnimplError>("invalid input object.");
+            }else if (!target_Obj->has_point_attr("pos")) {
+                throw makeError<UnimplError>("invalid target object.");
+            }
+
+            std::vector<zeno::vec3f> inputPos = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+            std::vector<std::vector<int>> inputFacesPoints(input_object->nfaces(), std::vector<int>());
+            for (int i = 0; i < input_object->nfaces(); ++i) {
+                inputFacesPoints[i] = input_object->face_points(i);
+            }
+
+
+            std::vector<zeno::vec3f> inputNrm;
+            std::vector<zeno::vec2f> inputLines;
+            bool hasNrm = input_object->has_point_attr("nrm");
+            bool isLine = input_object->is_Line();
+            if (hasNrm) { 
+                inputNrm = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+            }
+            if (isLine) {
+                inputLines.resize(input_object->npoints());
+                for (size_t i = 0; i < input_object->npoints(); ++i) {
+                    inputLines[i][0] = i;
+                    inputLines[i][1] = input_object->getLineNextPt(i);
+                }
+            }
+
+            zeno::vec3f originCenter, _min, _max;
+            std::tie(_min, _max) = geomBoundingBox(input_object.get());
+            originCenter = (_min + _max) / 2;
+
+            size_t targetObjPointsCount = target_Obj->npoints();
+            size_t inputObjPointsCount = input_object->npoints();
+            size_t inputObjFacesCount = input_object->nfaces();
+            size_t newObjPointsCount = targetObjPointsCount * inputObjPointsCount;
+
+            std::vector<zeno::vec3f> newObjPos(newObjPointsCount, zeno::vec3f());
+            std::vector<zeno::vec3f> newObjNrm;
+            if (hasNrm) {
+                newObjNrm.resize(newObjPointsCount);
+            }
+
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newObjPointsCount, 0);
+            for (size_t i = 0; i < targetObjPointsCount; ++i) {
+                zeno::vec3f targetPos = target_Obj->get_elem<zeno::vec3f>(ATTR_POINT, "pos", 0, i);
+                zeno::vec3f dx = targetPos - originCenter;
+                glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(dx[0], dx[1], dx[2]));
+
+                size_t offset = i * inputObjPointsCount;
+                for (size_t j = 0; j < inputObjPointsCount; j++)
+                {
+                    auto idx = offset + j;
+
+                    auto& pt = inputPos[j];
+                    glm::vec4 gp = translate * glm::vec4(pt[0], pt[1], pt[2], 1);
+                    newObjPos[idx] =  zeno::vec3f(gp.x, gp.y, gp.z);
+
+                    if (hasNrm) {
+                        newObjNrm[idx] = inputNrm[j];
+                    }
+
+                    spgeo->initpoint(idx);
+
+                    if (isLine) {
+                        spgeo->initLineNextPoint(idx);
+                        if (j == inputObjPointsCount - 1) {
+                            spgeo->setLineNextPt(idx, idx);
+                        }
+                    }
+                }
+                for (size_t j = 0; j < inputObjFacesCount; ++j)
+                {
+                    std::vector<int> facePoints = inputFacesPoints[j];
+                    for (int k = 0; k < facePoints.size(); ++k) {
+                        facePoints[k] += offset;
+                    }
+                    spgeo->add_face(facePoints);
+                }
+            }
+
+
+            spgeo->create_attr(ATTR_POINT, "pos", newObjPos);
+            if (hasNrm) {
+                spgeo->create_attr(ATTR_POINT, "nrm", newObjNrm);
+            }
+
+            return spgeo;
+        }
+    };
 }

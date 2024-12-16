@@ -8,6 +8,7 @@
 #include <zeno/utils/api.h>
 #include <zeno/formula/syntax_tree.h>
 #include <stack>
+#include <regex>
 
 namespace zeno {
 
@@ -34,6 +35,9 @@ namespace zeno {
 
         ZENO_API void testExp();
 
+        static const std::regex refPattern;
+        static const std::regex refStrPattern;
+
     private:
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);
         void pushStack();
@@ -52,6 +56,7 @@ namespace zeno {
         void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext);
 
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
+        std::pair<std::shared_ptr<INode>, std::string> getNodeAndParamNameFromRef(const std::string& ref, ZfxContext* pContext);
 
         VariableTable m_globalAttrCached;
         std::vector<ZfxStackEnv> m_stacks;

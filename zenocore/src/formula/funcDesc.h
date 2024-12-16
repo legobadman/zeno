@@ -32,7 +32,8 @@ namespace zeno
             },
             {"ref",
                 {"ref",
-                "Return the value of reference param of node.",
+                "Return the value of reference param of node.\n"\
+                "path-to-param:\n    Reference path of parameter.",
                 "float",
                 { {"path-to-param", "string"}}}
             },
@@ -49,7 +50,7 @@ namespace zeno
             {"log",
                 {"log",
                 "Print variables.",
-                "void", {{"arg1", "any"}, {"arg2", "any"}, {"arg3...", "any"}}}
+                "void", {{"logFormat", "string"}, {"arg1", "any"}, {"arg2...", "any"}}}
             },
             {"vec3",
                 {"vec3",
@@ -231,8 +232,9 @@ namespace zeno
             },
             { "npoints",
                 { "npoints",
-                "Returns the number of points in the input or geometry.",
-                "int", {}}
+                "Returns the number of points in the input or geometry.\n"\
+                "path-to-obj(optional):\n    Reference path of obj",
+                "int", { {"path-to-obj", "string"} } }
             },
             { "nfaces",
                 { "nfaces",

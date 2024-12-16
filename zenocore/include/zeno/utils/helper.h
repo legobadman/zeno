@@ -54,6 +54,7 @@ namespace zeno {
     bool isSameDimensionNumericVecType(zeno::ParamType left, zeno::ParamType right);
     ZENO_API bool outParamTypeCanConvertInParamType(zeno::ParamType outType, zeno::ParamType inType, NodeDataGroup outGroup, NodeDataGroup inGroup);
     ZENO_API bool isPrimVarType(zeno::ParamType type);
+    ZENO_API zeno::reflect::Any convertNumericAnyType(zeno::ParamType outType, zeno::ParamType inType, zeno::reflect::Any outputVal);
 
     void getNameMappingFromReflectUI(
         zeno::reflect::TypeBase* typeBase,

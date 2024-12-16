@@ -342,8 +342,10 @@ ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path)
         return mainGraph->getGraphByPath(path);
     }
     else {
-        auto spGraph = assets->getAssetGraph(graph_name, true);
-        return spGraph->getGraphByPath(path);
+        if (auto spGraph = assets->getAssetGraph(graph_name, true)) {
+            return spGraph->getGraphByPath(path);
+        }
+        return nullptr;
     }
 }
 

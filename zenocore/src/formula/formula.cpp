@@ -275,9 +275,16 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                     bool bExist = false;
                     FUNC_INFO info = zeno::getSession().funcManager->getFuncInfo(funcprefix);
                     if (!info.name.empty()) {
-                        if (info.name == "ref") {
-                            if (last->children.size() == 1 && last->children[0] &&
-                                last->children[0]->type == nodeType::STRING) {
+
+                        bool normalFuncArgIsRef = false;
+                        if (last->children.size() == 1 && last->children[0] && last->children[0]->type == nodeType::STRING) {
+                            std::regex prefixPattren(R"(^[\s]*.?[\s]*/.*)");    //普通函数参数以./或/开头，就提示引用
+                            normalFuncArgIsRef = std::regex_search(std::get<std::string>(last->children[0]->value), prefixPattren);
+                        }
+
+                        if (info.name == "ref" || normalFuncArgIsRef) {
+                            if (last->children.size() == 1 && last->children[0] && last->children[0]->type == nodeType::STRING) {
+
                                 const std::string& refcontent = std::get<std::string>(last->children[0]->value);
 
                                 if (refcontent == "") {

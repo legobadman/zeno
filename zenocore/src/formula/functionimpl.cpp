@@ -129,20 +129,12 @@ namespace zeno
             }
         }
 
-
-        ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() != 1)
-                throw makeError<UnimplError>("only support non-attr value when using ref");
-
-            //TODO: vec type.
-            //TODO: resolve with zeno::reflect::any
-            std::string fullPath, graphAbsPath;
-            const std::string ref = get_zfxvar<std::string>(args[0].value[0]);
+        std::pair<std::shared_ptr<INode>, std::string> getNodeAndParamPathFromRef(const std::string& ref, ZfxContext* pContext) {
             if (ref.empty()) {
                 throw makeError<UnimplError>();
             }
+            std::string fullPath, graphAbsPath;
 
-            float res = 0.f;
             auto thisNode = pContext->spNode.lock();
             const std::string& thisnodePath = thisNode->get_path();
             graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
@@ -176,6 +168,11 @@ namespace zeno
                 throw makeError<UnimplError>("the refer node doesn't exist, may be deleted before");
             }
 
+            return std::make_pair(spNode, parampath);
+        }
+
+        ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
+            auto [spNode, parampath] = getNodeAndParamPathFromRef(ref, pContext);
             auto items = split_str(parampath, '.');
             std::string paramname = items[0];
 
@@ -190,7 +187,7 @@ namespace zeno
             //如果取的是“静态值”，则不要求引用源必须执行，此时要拿的数据应该是defl.
 
             //以上方案取决于产品设计。
-
+            float res = 0.f;
             if (items.size() == 1) {
                 if (!paramData.result.has_value()) {
                     throw makeError<UnimplError>("there is no result on refer source, should calc the source first.");
@@ -261,6 +258,23 @@ namespace zeno
             ZfxVariable varres;
             varres.value.push_back(res);
             return varres;
+        };
+
+        std::shared_ptr<IObject> getObjFromRef(const std::string& ref, ZfxContext* pContext) {
+            auto [spNode, parampath] = getNodeAndParamPathFromRef(ref, pContext);
+            auto items = split_str(parampath, '.');
+            std::string paramname = items[0];
+            return spNode->get_output_obj(paramname);
+        }
+
+        ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("only support non-attr value when using ref");
+
+            //TODO: vec type.
+            //TODO: resolve with zeno::reflect::any
+            const std::string ref = get_zfxvar<std::string>(args[0].value[0]);
+            return getParamValueFromRef(ref, pContext);
         }
 
         ZfxVariable parameter(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -977,12 +991,25 @@ namespace zeno
         }
 
         ZfxVariable npoints(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() != 0)
+            if (args.size() > 1) {
                 throw makeError<UnimplError>("the number of arguments of npoints is not matched.");
-
-            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
-            int ret = spGeo->npoints();
-            return ret;
+            } else if (args.size() == 1) {
+                std::string ref = get_zfxvar<std::string>(args[0].value[0]);
+                if (std::regex_search(ref, FunctionManager::refPattern)) {
+                    std::shared_ptr<IObject> spObj = getObjFromRef(ref, pContext);
+                    if (std::shared_ptr<GeometryObject> spGeo = std::dynamic_pointer_cast<GeometryObject>(spObj)) {
+                        return spGeo->npoints();
+                    } else {
+                        throw makeError<UnimplError>("npoints function refers an empty output object.");
+                    }
+                } else {
+                    throw makeError<UnimplError>("npoints can not resolve ref.");
+                }
+            } else {
+                auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+                int ret = spGeo->npoints();
+                return ret;
+            }
         }
 
         ZfxVariable nfaces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
