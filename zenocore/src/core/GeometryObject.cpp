@@ -421,6 +421,7 @@ namespace zeno
             return -1;   //already exist
         }
         m_geo_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, 1)));
+        CALLBACK_NOTIFY(create_geometry_attr, attr_name)
         return 0;
     }
 

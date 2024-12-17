@@ -373,10 +373,61 @@ QVariant FaceModel::headerData(int section, Qt::Orientation orientation, int rol
 
 void FaceModel::setGeoObject(zeno::GeometryObject* pObject)
 {
-
     beginResetModel();
     m_object = pObject;
     m_nfaces = m_object->nfaces();
     m_colMap = initColMapping(m_object, zeno::ATTR_FACE);
+    endResetModel();
+}
+
+
+GeomDetailModel::GeomDetailModel(zeno::GeometryObject* pObject, QObject* parent)
+    : QAbstractTableModel(parent)
+    , m_object(pObject)
+{
+    m_colMap = initColMapping(m_object, zeno::ATTR_GEO);
+}
+
+QVariant GeomDetailModel::data(const QModelIndex& index, int role) const
+{
+    int row = index.row(), col = index.column();
+    if (role == Qt::DisplayRole) {
+        const AttributeInfo& info = m_colMap[col];
+        if (info.type == AttrFloat) {
+            float val = m_object->get_elem<float>(zeno::ATTR_GEO, info.name, info.channel, row);
+            return QString::number(val);
+        }
+        else if (info.type == AttrInt) {
+            int val = m_object->get_elem<int>(zeno::ATTR_GEO, info.name, info.channel, row);
+            return QString::number(val);
+        }
+        else if (info.type == AttrString) {
+            std::string val = m_object->get_elem<std::string>(zeno::ATTR_GEO, info.name, info.channel, row);
+            return QString::fromStdString(val);
+        }
+    }
+    return QVariant();
+}
+
+int GeomDetailModel::columnCount(const QModelIndex& parent) const {
+    return m_colMap.size();
+}
+
+QVariant GeomDetailModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    if (role == Qt::DisplayRole) {
+        if (orientation == Qt::Horizontal) {
+            return QString::fromStdString(m_colMap[section].showName);
+        }
+        else {
+            return QString::number(section);
+        }
+    }
+    return QAbstractTableModel::headerData(section, orientation, role);
+}
+
+void GeomDetailModel::setGeoObject(zeno::GeometryObject* pObject) {
+    beginResetModel();
+    m_object = pObject;
+    m_colMap = initColMapping(m_object, zeno::ATTR_GEO);
     endResetModel();
 }

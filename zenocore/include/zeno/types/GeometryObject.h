@@ -56,6 +56,7 @@ namespace zeno
         ZENO_API int create_vertex_attr(std::string const& attr_name, const AttrVar& defl);
         CALLBACK_REGIST(create_vertex_attr, void, std::string)
         ZENO_API int create_geometry_attr(std::string const& attr_name, const AttrVar& defl);
+        CALLBACK_REGIST(create_geometry_attr, void, std::string)
 
         //设置属性
         ZENO_API int set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);

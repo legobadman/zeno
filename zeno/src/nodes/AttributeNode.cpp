@@ -25,7 +25,7 @@ namespace zeno {
                 throw makeError<UnimplError>("the attribute name cannot be empty.");
             }
 
-            Any attr_value;
+            AttrVar attr_value;
             if (m_type == "Vector2") {
                 attr_value = m_vec2Value;
             }

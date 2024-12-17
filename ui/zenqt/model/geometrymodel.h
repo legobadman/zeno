@@ -65,7 +65,6 @@ public:
 private:
     QMap<int, AttributeInfo> m_colMap;
     zeno::GeometryObject* m_object;
-
     int m_npoints;
 };
 
@@ -87,6 +86,22 @@ private:
     zeno::GeometryObject* m_object;
 
     int m_nfaces;
+};
+
+class GeomDetailModel : public QAbstractTableModel
+{
+    Q_OBJECT
+public:
+    GeomDetailModel(zeno::GeometryObject* pObject, QObject* parent = nullptr);
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override { return 1; }
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    void setGeoObject(zeno::GeometryObject* pObject);
+
+private:
+    QMap<int, AttributeInfo> m_colMap;
+    zeno::GeometryObject* m_object;
 };
 
 #endif

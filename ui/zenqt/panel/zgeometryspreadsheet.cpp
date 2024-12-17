@@ -107,7 +107,13 @@ void ZGeometrySpreadsheet::setGeometry(GraphModel* subgraph, QModelIndex nodeidx
         view->setModel(new FaceModel(pObject));
     }
 
-    mmm = pObject;
+    view = qobject_cast<QTableView*>(m_views->widget(3));
+    if (GeomDetailModel* model = qobject_cast<GeomDetailModel*>(view->model())) {
+        model->setGeoObject(pObject);
+    }
+    else {
+        view->setModel(new GeomDetailModel(pObject));
+    }
     //TODO: geom model
 }
 
