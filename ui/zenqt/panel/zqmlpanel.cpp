@@ -19,7 +19,7 @@ void ZQmlPanel::reload()
 {
     setSource(QUrl());
     engine()->clearComponentCache();
-    setSource(QUrl::fromLocalFile("C:/zeno-qml/ui/zenqt/qml/testQan.qml"));
+    setSource(QUrl::fromLocalFile("D:/zeno/ui/zenqt/qml/testQan.qml"));
 }
 
 void ZQmlPanel::focusInEvent(QFocusEvent* event)
