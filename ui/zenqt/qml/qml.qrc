@@ -75,5 +75,8 @@
         <file>CustomTabButton.qml</file>
         <file>NormalNode.qml</file>
         <file>ZRoundRect.qml</file>
+        <file>ZPropPanel.qml</file>
+        <file>ZPropPanel_Tab.qml</file>
+        <file>ZPropPanel_Group.qml</file>
     </qresource>
 </RCC>

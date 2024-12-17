@@ -39,13 +39,15 @@ struct ParamItem
 class ParamsModel : public QAbstractListModel
 {
     Q_OBJECT
-        QML_ELEMENT
+    QML_ELEMENT
 
 public:
     ParamsModel(zeno::INode* spNode, QObject* parent = nullptr);
 
     Q_INVOKABLE int indexFromName(const QString& name, bool bInput) const;
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
+    Q_INVOKABLE QStandardItemModel* customParamModel();
+
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
@@ -68,7 +70,7 @@ public:
     PARAMS_INFO getOutputs();
 
     //temp:
-    QStandardItemModel* customParamModel();
+
     void batchModifyParams(const zeno::ParamsUpdateInfo& params, bool bSubnetInit = false);
     void updateUiLinksSockets(zeno::params_change_info& changes);
     void resetCustomUi(const zeno::CustomUI& customui);

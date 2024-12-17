@@ -24,6 +24,7 @@ void initQml()
     qRegisterMetaType<LinkModel*>("LinkModel*");
     qRegisterMetaType<GraphModel*>("GraphModel*");
     qRegisterMetaType<ParamsModel*>("ParamsModel*");
+    qRegisterMetaType<QStandardItemModel*>("QStandardItemModel*");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
     qmlRegisterType<GraphsManager>("Zeno", 1, 0, "GraphsManager");
     qmlRegisterType<GraphsTotalView>("Zeno", 1, 0, "GraphsTotalView");

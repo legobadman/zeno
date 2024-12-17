@@ -38,7 +38,9 @@ Qan.GraphView {
     navigable   : true
     resizeHandlerColor: "#03a9f4"       // SAMPLE: Set resize handler color to blue for 'resizable' nodes
     gridThickColor: Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
+
     signal navigateRequest(var lst)
+    signal nodeClicked(var node)
 
     PinchHandler {
         target: null
@@ -69,8 +71,9 @@ Qan.GraphView {
             //defaultEdgeStyle.lineType = Qan.EdgeStyle.Curved
         }
         onNodeClicked: function(node) {
-            notifyUser( "Node <b>" + node.label + "</b> clicked" )
-            nodeEditor.node = node
+            graphView.nodeClicked(node)
+            //notifyUser( "Node <b>" + node.label + "</b> clicked" )
+            //nodeEditor.node = node
         }
         onNodeRightClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> right clicked" ) }
         onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }
@@ -185,52 +188,26 @@ Qan.GraphView {
         }
     }
 
-    Pane {
-        id: nodeEditor
-        property var node: undefined
-        onNodeChanged: nodeItem = node ? node.item : undefined
-        property var nodeItem: undefined
+    Loader {
+        id: proppaneLoader
         anchors.bottom: parent.bottom; anchors.bottomMargin: 15
         anchors.right: parent.right; anchors.rightMargin: 15
-        padding: 0
-        visible: false
-        Frame {
-            ColumnLayout {
-                Label {
-                    text: nodeEditor.node ? "Editing node <b>" + nodeEditor.node.label + "</b>": "Select a node..."
-                }
-                CheckBox {
-                    text: "Draggable"
-                    enabled: nodeEditor.nodeItem !== undefined
-                    checked: nodeEditor.nodeItem ? nodeEditor.nodeItem.draggable : false
-                    onClicked: nodeEditor.nodeItem.draggable = checked
-                }
-                CheckBox {
-                    text: "Resizable"
-                    enabled: nodeEditor.nodeItem !== undefined
-                    checked: nodeEditor.nodeItem ? nodeEditor.nodeItem.resizable : false
-                    onClicked: nodeEditor.nodeItem.resizable = checked
-                }
-                CheckBox {
-                    text: "Selected (read-only)"
-                    enabled: false
-                    checked: nodeEditor.nodeItem ? nodeEditor.nodeItem.selected : false
-                }
-                CheckBox {
-                    text: "Selectable"
-                    enabled: nodeEditor.nodeItem != null
-                    checked: nodeEditor.nodeItem ? nodeEditor.nodeItem.selectable : false
-                    onClicked: nodeEditor.nodeItem.selectable = checked
-                }
-                Label { text: "style.backRadius" }
-                Slider {
-                    from: 0.; to: 15.0;
-                    value: defaultNodeStyle.backRadius
-                    stepSize: 1.0
-                    onMoved: defaultNodeStyle.backRadius = value
-                }
-            }
+        property var selectedNode: undefined
+
+        sourceComponent: ZPropPanel {
+            id: proppanel
+            node:  proppaneLoader.selectedNode     
         }
+    }
+
+    Connections {
+        target: graphView
+        onNodeClicked: function(node){
+            proppaneLoader.active = false
+            proppaneLoader.selectedNode = node
+            proppaneLoader.active = true
+        }
+
     }
 }  // Qan.GraphView
 
