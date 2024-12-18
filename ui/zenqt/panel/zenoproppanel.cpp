@@ -740,6 +740,7 @@ QWidget* ZenoPropPanel::resetNormalNodeLayout()
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setWidgetResizable(true);
+
     ZContentWidget* pWidget = new ZContentWidget(scrollArea);
     pWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     QGridLayout* pLayout = new QGridLayout(pWidget);

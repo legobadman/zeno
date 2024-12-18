@@ -78,5 +78,6 @@
         <file>ZPropPanel.qml</file>
         <file>ZPropPanel_Tab.qml</file>
         <file>ZPropPanel_Group.qml</file>
+        <file>ZPropPanel_Control.qml</file>
     </qresource>
 </RCC>
