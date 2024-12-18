@@ -1060,8 +1060,34 @@ void DockContent_View::initConnections()
     });
 
     connect(m_pointIndicator, &ZToolBarButton::toggled, this, [=](bool bToggled) {
-        m_pDisplay->getZenoVis()->getSession()->set_show_ptnum(bToggled);
-        m_pDisplay->updateFrame();
+        ZenoGraphsEditor* pGraphEditor = zenoApp->getMainWindow()->getAnyEditor();
+        if (pGraphEditor) {
+            QStringList paths = pGraphEditor->getCurrentGraphPath();
+            QString path = '/' + paths.join('/');
+            GraphModel* pModel = zenoApp->graphsManager()->getGraph(paths);
+            ZASSERT_EXIT(pModel);
+
+            zeno::render_reload_info info;
+            info.current_ui_graph = path.toStdString();
+            info.policy = zeno::Reload_ToggleView;
+
+            const auto& viewnodes = pModel->getViewNodePath();
+            for (auto nodeuuidpath : viewnodes) {
+                zeno::render_update_info update;
+                update.reason = zeno::Update_View;
+                update.uuidpath_node_objkey = nodeuuidpath;
+                info.objs.push_back(update);
+            }
+
+            m_pDisplay->getZenoVis()->getSession()->set_show_ptnum(bToggled);
+
+            const auto& views = zenoApp->getMainWindow()->viewports();
+            for (DisplayWidget* view : views) {
+                view->reload(info);
+            }
+            //need to reload
+            m_pDisplay->updateFrame();
+        }
     });
 
     connect(m_wire_frame, &ZToolBarButton::toggled, this, [=](bool bToggled) {
