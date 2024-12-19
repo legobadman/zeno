@@ -19,6 +19,19 @@ class CustomUIProxyModel : public QStandardItemModel
 public:
     CustomUIProxyModel(ParamsModel* parent = nullptr) : QStandardItemModel(parent), m_baseM(parent) {}
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
+        if (role > Qt::UserRole) {
+            //一律到本parammodel去取，避免冗长而麻烦的两端同步数据，让tree uimodel顶多存一个显示的名字和ui布局。
+            //然而，如果走的是QStandardItem->data，它就没法走到这里，不过qml代码没法这么操作，所以widget的情况只能手动在
+            //两个模型间同步数据了。
+            QString paramName = index.data(Qt::DisplayRole).toString(); //目前都规定Display的就是真正的名字
+            QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
+            ZASSERT_EXIT(idxparam.isValid(), QVariant());
+            return idxparam.data(role);
+        }
+        else {
+            return QStandardItemModel::data(index, role);
+        }
+        /*
         if (role == ROLE_PARAM_VALUE) {
             QString paramName = index.data(ROLE_PARAM_NAME).toString();
             QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
@@ -28,6 +41,7 @@ public:
         else {
             return QStandardItemModel::data(index, role);
         }
+        */
     }
 
 private:
@@ -269,7 +283,7 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
 
 QStandardItemModel* ParamsModel::constructProxyModel()
 {
-    QStandardItemModel* pModel = new QStandardItemModel(this);
+    QStandardItemModel* pModel = new CustomUIProxyModel(this);
     connect(pModel, &QStandardItemModel::dataChanged, [=](const QModelIndex& topLeft, const QModelIndex&, const QVector<int>& roles) {
         bool bInput = topLeft.data(ROLE_ISINPUT).toBool();
         if (!bInput)
@@ -474,6 +488,20 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
         else
             return QVariant();
     }
+    case ROLE_PARAM_CONTROL_PROPS: {
+        QVariantMap map;
+        if (param.optCtrlprops.has_value()) {
+            if (param.optCtrlprops.type().hash_code() == zeno::types::gParamType_StringList) {
+                const auto& items = zeno::reflect::any_cast<std::vector<std::string>>(param.optCtrlprops);
+                QStringList qitems;
+                for (const auto& item : items) {
+                    qitems.append(QString::fromStdString(item));
+                }
+                map["combobox_items"] = qitems;
+            }
+        }
+        return map;
+    }
     case ROLE_PARAM_INFO: {
         zeno::ParamPrimitive info;
         info.name = param.name.toStdString();
@@ -607,6 +635,7 @@ QHash<int, QByteArray> ParamsModel::roleNames() const
     roles[ROLE_PARAM_CONTROL] = "control";
     roles[ROLE_ISINPUT] = "input";
     roles[ROLE_PARAM_GROUP] = "group";
+    roles[ROLE_PARAM_CONTROL_PROPS] = "control_properties";
     return roles;
 }
 

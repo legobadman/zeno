@@ -14,14 +14,14 @@ Item {
     property var parentIndex
     property var childCount
 
-    implicitWidth: mainmain_layout.implicitWidth
-    implicitHeight: mainmain_layout.implicitHeight
+    implicitWidth: gridlayout.implicitWidth
+    implicitHeight: gridlayout.implicitHeight
 
     // 定义不同组件
     Component {
         id: paramText
         Text {
-            text: model.data(model.index(_index, 0, parentIndex))
+            text: model.data(mindex)    //默认是DisplayRole
         }
     }
 
@@ -61,6 +61,13 @@ Item {
     }
 
     Component {
+        id: compCombobox
+        ComboBox {
+            model: root.model.data(mindex, 273)["combobox_items"]
+        }
+    }
+
+    Component {
         id: compCheckbox
         ZCheckBox {
 
@@ -87,59 +94,59 @@ Item {
 
     //Body
     GridLayout {
-        id: mainmain_layout
+        id: gridlayout
         anchors.fill: parent
-        columns: 2  // 每行显示 2 个元素
+        property int nCol: 2
+        columns: nCol  // 每行显示 2 个元素
         rowSpacing: 5
         columnSpacing: 30
 
         Repeater {
-            model: childCount * 2  // 数据模型，创建childCount个子项
+            model: childCount * gridlayout.nCol  // 数据模型，创建childCount个子项
             delegate: 
                 Loader {
                     sourceComponent: {
-                        var realindex = index / 2
-                        var mindex = root.model.index(realindex, 0, parentIndex)
-                        var qvar = root.model.data(mindex, 270)
-                        if (index % 2 == 0) {
+                        var realindex = index / gridlayout.nCol   //index是grid的项数计数，由于只有两列，所以index/2就是模型的项行号
+                        var ctrl = root.model.data(root.model.index(realindex, 0, parentIndex), 270)  //ParamControl
+                        if (index % gridlayout.nCol == 0) {
                             return paramText
                         } 
-                        else if (qvar == ParamControl.Lineedit){
+                        else if (ctrl == ParamControl.Lineedit){
                             return complineedit
                         }
-                        else if (qvar == ParamControl.Combobox){
+                        else if (ctrl == ParamControl.Combobox){
+                            return compCombobox
+                        }
+                        else if (ctrl == ParamControl.Multiline){
                             return nullControl
                         }
-                        else if (qvar == ParamControl.Multiline){
-                            return nullControl
-                        }
-                        else if (qvar == ParamControl.Checkbox){
+                        else if (ctrl == ParamControl.Checkbox){
                             return compCheckbox
                         }
-                        else if (qvar == ParamControl.Vec2edit){
+                        else if (ctrl == ParamControl.Vec2edit){
                             return compVec2edit
                         }
-                        else if (qvar == ParamControl.Vec3edit){
+                        else if (ctrl == ParamControl.Vec3edit){
                             return compVec3edit
                         }
-                        else if (qvar == ParamControl.Vec4edit){
+                        else if (ctrl == ParamControl.Vec4edit){
                             return compVec4edit
                         }
-                        else if (qvar == ParamControl.CodeEditor){
+                        else if (ctrl == ParamControl.CodeEditor){
                             return nullControl
                         }
-                        else if (qvar == ParamControl.Slider){
+                        else if (ctrl == ParamControl.Slider){
                             return nullControl
                         }
                         else{
-                            console.log("qvar = " + qvar)
-                            console.log("control = " + ParamControl.Vec3edit)
+                            //console.log("ctrl = " + ctrl)
+                            //console.log("control = " + ParamControl.Vec3edit)
                             return componentB
                         }
                     }
                     //Loader binds properties to the source component
                     //passed to the delegate
-                    property int _index: index / 2
+                    property var mindex: root.model.index(index / gridlayout.nCol, 0, parentIndex)
                 }
         }
     }
