@@ -4,20 +4,20 @@ import QtQuick.Controls 2.0
 
 Item{
     width: 96
-    height: 26
+    height: 20
     property alias text: textInput.text
 
     TextField{
         id : textInput
         //anchors.margins: 0
         anchors.fill: parent
-        //verticalAlignment: TextInput.AlignVCenter
+        verticalAlignment: TextInput.AlignVCenter
         clip:true
         padding: 0
 
-        color: "#FFF"
+        color: "#000000"
         selectionColor: "#0078D7"
-        font.pointSize: 12
+        //font.pointSize: 12
         font.family: "Consolas"
 
         focus: true
@@ -26,8 +26,8 @@ Item{
 
         background:Rectangle {
             id: backGround
-            color: "#191D21"
-            //border.color: "grey"
+            color: "white"
+            border.color: "grey"
         }
     }
 }

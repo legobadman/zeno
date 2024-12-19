@@ -3,7 +3,7 @@ import QtQuick.Controls 2.0
 
 Item{
     width: 64
-    height: 26
+    height: 32
 
     property alias text: textInput.text
 
@@ -11,23 +11,25 @@ Item{
         id : textInput
         //anchors.margins: 0
         anchors.fill: parent
-        //verticalAlignment: TextInput.AlignVCenter
+        height: 32
+        verticalAlignment: Text.AlignVCenter
         clip:true
         padding: 0
 
-        color: "#FFF"
+        //color: "#FFF"
         selectionColor: "#0078D7"
-        font.pointSize: 12
+        font.pointSize: 10
         font.family: "Consolas"
 
         focus: true
         selectByMouse: true
         Keys.onEscapePressed: focus = false
 
-        background:Rectangle {
-            id: backGround
-            color: "#191D21"
-            //border.color: "grey"
+        background: Rectangle {
+            color: "white"
+            border.color: textInput.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
+            border.width: 1
+            radius: 0
         }
     }
 }
