@@ -654,6 +654,57 @@ namespace zeno {
                 else if constexpr (std::is_same_v<T, vec4f>) {
 
                 }
+                else if constexpr (std::is_same_v<T, glm::vec2>) {
+                    if (x_comp.use_count() > 1)
+                        x_comp = std::make_shared<AttrColumn>(*x_comp);
+                    if (y_comp.use_count() > 1)
+                        y_comp = std::make_shared<AttrColumn>(*y_comp);
+                    AttrVarVec& xvar = x_comp->value();
+                    AttrVarVec& yvar = y_comp->value();
+                    auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                    auto pYVec = std::get_if<std::vector<float>>(&yvar);
+                    if (!pXVec || !pYVec)
+                        throw makeError<UnimplError>("type dismatch");
+                    int nx = pXVec->size(), ny = pYVec->size();
+#pragma omp parallel for
+                    for (int i = 0; i < m_size; i++) {
+                        int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1);
+                        T old_val((*pXVec)[ix], (*pYVec)[iy]);
+                        T new_val = evalf(i, old_val);
+                        (*pXVec)[ix] = new_val[0];
+                        (*pYVec)[iy] = new_val[1];
+                    }
+                }
+                else if constexpr (std::is_same_v<T, glm::vec3>) {
+                    if (x_comp.use_count() > 1)
+                        x_comp = std::make_shared<AttrColumn>(*x_comp);
+                    if (y_comp.use_count() > 1)
+                        y_comp = std::make_shared<AttrColumn>(*y_comp);
+                    if (z_comp.use_count() > 1)
+                        z_comp = std::make_shared<AttrColumn>(*z_comp);
+
+                    AttrVarVec& xvar = x_comp->value();
+                    AttrVarVec& yvar = y_comp->value();
+                    AttrVarVec& zvar = z_comp->value();
+                    auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                    auto pYVec = std::get_if<std::vector<float>>(&yvar);
+                    auto pZVec = std::get_if<std::vector<float>>(&zvar);
+                    if (!pXVec || !pYVec || !pZVec)
+                        throw makeError<UnimplError>("type dismatch");
+                    int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
+#pragma omp parallel for
+                    for (int i = 0; i < m_size; i++) {
+                        int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1), iz = std::min(i, nz - 1);
+                        T old_val((*pXVec)[ix], (*pYVec)[iy], (*pZVec)[iz]);
+                        T new_val = evalf(i, old_val);
+                        (*pXVec)[ix] = new_val[0];
+                        (*pYVec)[iy] = new_val[1];
+                        (*pZVec)[iz] = new_val[2];
+                    }
+                }
+                else if constexpr (std::is_same_v<T, glm::vec4>) {
+
+                }
                 else {
                     AttrVarVec& attrval = self->value();
 

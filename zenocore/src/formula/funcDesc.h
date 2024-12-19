@@ -129,6 +129,37 @@ namespace zeno
                 "value:\n    The value to set, and determines the type of attribute to set.",
                 "int", {{"name", "string"}, {"value", "any"}}}
             },
+            { "get_attr",
+                {"get_attr",
+                "Get attribute from a geometry. \n"\
+                "group:\n    One of \"vertex\",\"point\",\"face\",\"geometry.\"\n"\
+                "name:\n    The name of the attribute to change.",
+                "int", { {"group", "string"}, {"name", "string"} }}
+            },
+            { "get_vertex_attr",
+                {"get_vertex_attr",
+                "Get vertex attribute from a geometry. \n"\
+                "name:\n    The name of the attribute to get.",
+                "int", {{"name", "string"}}}
+            },
+            { "get_point_attr",
+                {"get_point_attr",
+                "Get point attribute from a geometry. \n"\
+                "name:\n    The name of the attribute to get.",
+                "int", {{"name", "string"}}}
+            },
+            { "get_face_attr",
+                {"get_face_attr",
+                "Get face attribute from a geometry. \n"\
+                "name:\n    The name of the attribute to get.",
+                "int", {{"name", "string"}}}
+            },
+            { "get_geometry_attr",
+                {"get_geometry_attr",
+                "Get geometry attribute from a geometry. \n"\
+                "name:\n    The name of the attribute to get.",
+                "int", {{"name", "string"}}}
+            },
             { "has_attr",
                 {"has_attr",
                 "Checks whether an attribute exists. \n"\

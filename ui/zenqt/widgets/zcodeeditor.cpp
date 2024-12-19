@@ -28,6 +28,12 @@ ZCodeEditor::ZCodeEditor(const QString& text, QWidget *parent)
     initUI();
 
     connect(this, &QTextEdit::cursorPositionChanged, this, &ZCodeEditor::slt_showFuncDesc);
+    connect(this, &QTextEdit::textChanged, [this]() {
+        int currDocHeight = this->document()->size().height();
+        if (minimumHeight < currDocHeight && currDocHeight < 580) {
+            setFixedHeight(document()->size().height());
+        }
+    });
 }
 
 void ZCodeEditor::setHintListWidget(ZenoHintListWidget* hintlist, ZenoFuncDescriptionLabel* descLabel)
@@ -41,12 +47,27 @@ void ZCodeEditor::setNodeIndex(QModelIndex nodeIdx)
     m_nodeIdx = nodeIdx;
 }
 
+void ZCodeEditor::focusInEvent(QFocusEvent* e)
+{
+    QCodeEditor::focusInEvent(e);
+    int currDocHeight = this->document()->size().height();
+    if (currDocHeight < minimumHeight) {
+        setFixedHeight(minimumHeight);
+    } else if (minimumHeight < currDocHeight && currDocHeight < 580) {
+        setFixedHeight(document()->size().height());
+    } else {
+        setFixedHeight(580);
+    }
+}
+
 void ZCodeEditor::focusOutEvent(QFocusEvent* e)
 {
     QCodeEditor::focusOutEvent(e);
     Qt::FocusReason reason = e->reason();
     if (reason != Qt::ActiveWindowFocusReason)
         emit editFinished(toPlainText());
+
+    setFixedHeight(minimumHeight);
 }
 
 void ZCodeEditor::keyPressEvent(QKeyEvent* event)
@@ -249,6 +270,8 @@ void ZCodeEditor::initUI()
     setAutoIndentation(true);
     setTabReplace(true);
     setTabReplaceSize(4);
+
+    setMinimumHeight(minimumHeight);
 }
 
 QSyntaxStyle* ZCodeEditor::loadStyle(const QString& path)
