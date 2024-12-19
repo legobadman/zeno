@@ -1,35 +1,34 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.0
 
-Item{
-    width: 64
-    height: 32
+Rectangle {
+    id: container
+    width: inputField.width
+    height: inputField.height
+    property alias text: inputField.text
+    color: "transparent"
+    border.color: inputField.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
+    border.width: 1
 
-    property alias text: textInput.text
-
-    TextField{
-        id : textInput
-        //anchors.margins: 0
-        anchors.fill: parent
-        height: 32
+    TextInput {
+        id: inputField
+        anchors.centerIn: parent
         verticalAlignment: Text.AlignVCenter
-        clip:true
-        padding: 0
+        width: 48
+        height: 24
 
-        //color: "#FFF"
-        selectionColor: "#0078D7"
-        font.pointSize: 10
-        font.family: "Consolas"
+        topPadding: 5
+        bottomPadding: 5
+        leftPadding: 5
+        rightPadding: 5
+        font.pixelSize: 14
+        color: "black"
+        focus: true // 确保输入框可以获得焦点
+        selectByMouse: true // 启用鼠标选择文本功能
+        clip: true
 
-        focus: true
-        selectByMouse: true
-        Keys.onEscapePressed: focus = false
-
-        background: Rectangle {
-            color: "white"
-            border.color: textInput.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
-            border.width: 1
-            radius: 0
+        onTextChanged: {
+                    
         }
     }
 }

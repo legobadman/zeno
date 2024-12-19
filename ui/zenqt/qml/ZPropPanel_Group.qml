@@ -1,7 +1,8 @@
 import QtQuick                   2.12
-import QtQuick.Controls          2.1
+import QtQuick.Controls          2.15
 import QtQuick.Controls.Material 2.1
 import QtQuick.Layouts           1.3
+import QtQuick.Controls.Styles   1.4
 import zeno.enum 1.0
 import "./controls"
 
@@ -16,7 +17,6 @@ Item {
     implicitWidth: mainmain_layout.implicitWidth
     implicitHeight: mainmain_layout.implicitHeight
 
-    //定义各个Component
     // 定义不同组件
     Component {
         id: paramText
@@ -55,22 +55,8 @@ Item {
 
     Component {
         id: complineedit
-        TextField {
-            id: textField
-            width: 200
-            height: 32
-            placeholderText: "Enter text"
+        ZLineEditor {
 
-            verticalAlignment: Text.AlignVCenter
-            font.pointSize: 10
-            padding: 2  // 内边距，让文本和光标在高度上更协调
-
-            background: Rectangle {
-                color: "white"
-                border.color: textField.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
-                border.width: 1
-                radius: 0
-            }
         }
     }
 
@@ -111,8 +97,6 @@ Item {
             model: childCount * 2  // 数据模型，创建childCount个子项
             delegate: 
                 Loader {
-                    //Layout.fillWidth: true
-                    //sourceComponent: getComponent(index)
                     sourceComponent: {
                         var realindex = index / 2
                         var mindex = root.model.index(realindex, 0, parentIndex)
@@ -158,10 +142,5 @@ Item {
                     property int _index: index / 2
                 }
         }
-    }
-
-    // 定义函数，返回不同的组件
-    function getComponent(index) {
-        return paramText;
     }
 }
