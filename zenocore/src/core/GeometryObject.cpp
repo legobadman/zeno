@@ -360,18 +360,6 @@ namespace zeno
         int n = get_attr_size(grp);
         container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n == 0 ? 1 : n)));
 
-        if (grp == ATTR_GEO) {
-        }
-        else if (grp == ATTR_POINT) {
-            CALLBACK_NOTIFY(create_point_attr, attr_name);
-        }
-        else if (grp == ATTR_FACE) {
-            CALLBACK_NOTIFY(create_face_attr, attr_name);
-        }
-        else if (grp == ATTR_VERTEX) {
-            CALLBACK_NOTIFY(create_vertex_attr, attr_name);
-        }
-
         //返回啥？
         return 0;
     }
@@ -384,7 +372,6 @@ namespace zeno
         int n = m_spTopology->nfaces();
         m_face_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
 
-        CALLBACK_NOTIFY(create_face_attr, attr_name)
         return 0;
     }
 
@@ -396,7 +383,6 @@ namespace zeno
         int n = m_spTopology->npoints();
         m_point_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
 
-        CALLBACK_NOTIFY(create_point_attr, attr_name)
         return 0;
     }
 
@@ -411,7 +397,6 @@ namespace zeno
         int n = m_spTopology->nvertices();
         m_vert_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
 
-        CALLBACK_NOTIFY(create_vertex_attr, attr_name)
         return 0;
     }
 
@@ -421,7 +406,6 @@ namespace zeno
             return -1;   //already exist
         }
         m_geo_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, 1)));
-        CALLBACK_NOTIFY(create_geometry_attr, attr_name)
         return 0;
     }
 

@@ -5,6 +5,7 @@
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
 #include "declmetatype.h"
+#include "variantptr.h"
 
 
 ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
@@ -126,10 +127,17 @@ void ZGeometrySpreadsheet::onNodeRemoved(QString nodename)
 
 void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
 {
-    if (!roles.empty() && roles[0] == ROLE_NODE_RUN_STATE) {
-        zeno::NodeRunStatus currStatus = topLeft.data(ROLE_NODE_RUN_STATE).value<NodeState>().runstatus;
-        if (currStatus == zeno::Node_Running) {
-            clearModel();
+    if (topLeft.data(ROLE_NODE_NAME).toString() == m_nodeIdx.data(ROLE_NODE_NAME).toString()) {
+        if (!roles.empty() && roles[0] == ROLE_NODE_RUN_STATE) {
+            zeno::NodeRunStatus currStatus = topLeft.data(ROLE_NODE_RUN_STATE).value<NodeState>().runstatus;
+            if (currStatus == zeno::Node_Running) {
+                clearModel();
+            } else if (currStatus == zeno::Node_RunSucceed) {
+                zeno::zany pObject = m_nodeIdx.data(ROLE_OUTPUT_OBJS).value<zeno::zany>();
+                if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
+                    setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(ROLE_GRAPH)), m_nodeIdx, spGeom.get());
+                }
+            }
         }
     }
 }

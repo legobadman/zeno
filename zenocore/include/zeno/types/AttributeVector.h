@@ -77,18 +77,21 @@ namespace zeno {
 
                         if (is_point_attr) {
                             auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec4f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
                             }
                         }
                         else if (is_triangle) {
                             auto& vec_attr = spPrim->tris.add_attr<zeno::vec4f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec4f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
                             }
                         }
                         else {
                             auto& vec_attr = spPrim->polys.add_attr<zeno::vec4f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec4f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
                             }
@@ -97,18 +100,21 @@ namespace zeno {
                     else {
                         if (is_point_attr) {
                             auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec3f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
                             }
                         }
                         else if (is_triangle) {
                             auto& vec_attr = spPrim->tris.add_attr<zeno::vec3f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec3f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
                             }
                         }
                         else {
                             auto& vec_attr = spPrim->polys.add_attr<zeno::vec3f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec3f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
                             }
@@ -118,18 +124,21 @@ namespace zeno {
                 else {
                     if (is_point_attr) {
                         auto& vec_attr = spPrim->verts.add_attr<zeno::vec2f>(attr_name);
+                        vec_attr.resize(m_size, zeno::vec2f());
                         for (int i = 0; i < m_size; i++) {
                             vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                         }
                     }
                     else if (is_triangle) {
                         auto& vec_attr = spPrim->tris.add_attr<zeno::vec2f>(attr_name);
+                        vec_attr.resize(m_size, zeno::vec2f());
                         for (int i = 0; i < m_size; i++) {
                             vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                         }
                     }
                     else {
                         auto& vec_attr = spPrim->polys.add_attr<zeno::vec2f>(attr_name);
+                        vec_attr.resize(m_size, zeno::vec2f());
                         for (int i = 0; i < m_size; i++) {
                             vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                         }
