@@ -61,6 +61,30 @@ Item {
     }
 
     Component {
+        id: textedit
+        ScrollView {
+            id: view
+            width: 300
+            height: 100
+
+            TextArea {
+                id: textArea
+                anchors.margins: 10
+                placeholderText: "请输入文本..."
+                font.pixelSize: 16
+                wrapMode: TextArea.WordWrap // 自动换行模式
+                readOnly: false // 设置为 true 则为只读
+
+                background: Rectangle {
+                    color: "white" // 背景颜色
+                    border.color: textArea.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
+                    border.width: 1
+                }
+            }
+        }
+    }
+
+    Component {
         id: compCombobox
         ComboBox {
             model: root.model.data(mindex, 273)["combobox_items"]
@@ -78,17 +102,6 @@ Item {
         id: nullControl
         Text {
             text: ""
-        }
-    }
-
-    Component {
-        id: componentC
-        Rectangle {
-            color: "lightcoral"
-            Text {
-                text: "This is Component C"
-                anchors.centerIn: parent
-            }
         }
     }
 
@@ -118,7 +131,7 @@ Item {
                             return compCombobox
                         }
                         else if (ctrl == ParamControl.Multiline){
-                            return nullControl
+                            return textedit
                         }
                         else if (ctrl == ParamControl.Checkbox){
                             return compCheckbox
@@ -133,15 +146,14 @@ Item {
                             return compVec4edit
                         }
                         else if (ctrl == ParamControl.CodeEditor){
-                            return nullControl
+                            console.log("here")
+                            return textedit
                         }
                         else if (ctrl == ParamControl.Slider){
                             return nullControl
                         }
                         else{
-                            //console.log("ctrl = " + ctrl)
-                            //console.log("control = " + ParamControl.Vec3edit)
-                            return componentB
+                            return nullControl
                         }
                     }
                     //Loader binds properties to the source component

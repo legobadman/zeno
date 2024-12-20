@@ -1,4 +1,4 @@
-#ifndef __ZENO_UI_COMMON_H__
+ï»¿#ifndef __ZENO_UI_COMMON_H__
 #define __ZENO_UI_COMMON_H__
 
 #include <QModelIndex>
@@ -187,7 +187,7 @@ enum MODEL_ROLE {
     ROLE_PARAM_CONTROL,
     ROLE_PARAM_SOCKPROP,
     ROLE_PARAM_CTRL_PROPERTIES,
-    ROLE_PARAM_CONTROL_PROPS,   //¸øQMLÓÃ£¬¶¼·µ»ØList£¬ÏÖÔÚÓ¦¸ÃÖ»ÓÐcomboboxitemsºÍsliderµÄrange£¬Î´À´¿ÉÄÜ»á°üÀ¨½Úµã±à¼­Æ÷µÄÉèÖÃ
+    ROLE_PARAM_CONTROL_PROPS,   //ç»™QMLç”¨ï¼Œéƒ½è¿”å›žListï¼ŒçŽ°åœ¨åº”è¯¥åªæœ‰comboboxitemså’Œsliderçš„rangeï¼Œæœªæ¥å¯èƒ½ä¼šåŒ…æ‹¬èŠ‚ç‚¹ç¼–è¾‘å™¨çš„è®¾ç½®
     ROLE_PARAM_TOOLTIP,
     ROLE_PARAM_SOCKET_VISIBLE,
     ROLE_PARAM_ENABLE,
