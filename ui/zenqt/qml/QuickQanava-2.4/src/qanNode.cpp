@@ -95,10 +95,11 @@ void    Node::setItem(qan::NodeItem* nodeItem) noexcept
 QQmlComponent*  Node::delegate(QQmlEngine& engine, QObject* parent) noexcept
 {
     Q_UNUSED(parent)
-    /*static */std::unique_ptr<QQmlComponent>   delegate;
-    if (!delegate)
-        delegate = std::make_unique<QQmlComponent>(&engine, "D:/zeno/ui/zenqt/qml/NormalNode.qml",
-                                                   QQmlComponent::PreferSynchronous);
+    static std::unique_ptr<QQmlComponent> delegate;
+    if (!delegate) {
+        delegate = std::make_unique<QQmlComponent>(&engine, "qrc:/NormalNode.qml", 
+            QQmlComponent::PreferSynchronous);
+    }
     return delegate.get();
 }
 

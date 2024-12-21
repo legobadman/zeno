@@ -1,5 +1,5 @@
 import QtQuick                   2.12
-import QtQuick.Controls          2.1
+import QtQuick.Controls          2.15
 import QtQuick.Controls.Material 2.1
 import QtQuick.Layouts           1.3
 
@@ -9,8 +9,12 @@ Pane {
     property var node: undefined
     property var nodeItem: undefined
     property bool use_tabview: false
-    implicitWidth: panel_loader.implicitWidth
-    implicitHeight: panel_loader.implicitHeight
+    //implicitWidth: panel_loader.implicitWidth
+    //implicitHeight: panel_loader.implicitHeight
+    implicitWidth: 300
+    implicitHeight: 300
+    width: 300
+    height: 300
     padding: 0
 
     onNodeChanged: nodeItem = node ? node.item : undefined
@@ -65,15 +69,18 @@ Pane {
                     }
                 }
             }
-        }        
+        }
     }
 
-    Loader {
-        id: panel_loader
+    ScrollView {
         anchors.fill: parent
+        Loader {
+            id: panel_loader
+            anchors.fill: parent
 
-        sourceComponent: {
-            return comp.nodeItem ? compPropertyPane : compBlank
+            sourceComponent: {
+                return comp.nodeItem ? compPropertyPane : compBlank
+            }
         }
     }
 }
