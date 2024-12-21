@@ -61,10 +61,13 @@ Pane {
 
                     Repeater {
                         model: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
-                        delegate: ZPropPanel_Tab {
-                            model: base_tabview.treemodel
-                            parentIndex: model.index(index, 0, base_tabview.tabsindex)
-                            childCount: model.rowCount(parentIndex)
+                        delegate: ScrollView {
+                            clip: true
+                            ZPropPanel_Tab {
+                                model: base_tabview.treemodel
+                                parentIndex: model.index(index, 0, base_tabview.tabsindex)
+                                childCount: model.rowCount(parentIndex)
+                            }
                         }
                     }
                 }
@@ -72,15 +75,12 @@ Pane {
         }
     }
 
-    ScrollView {
+    Loader {
+        id: panel_loader
         anchors.fill: parent
-        Loader {
-            id: panel_loader
-            anchors.fill: parent
 
-            sourceComponent: {
-                return comp.nodeItem ? compPropertyPane : compBlank
-            }
+        sourceComponent: {
+            return comp.nodeItem ? compPropertyPane : compBlank
         }
     }
 }
