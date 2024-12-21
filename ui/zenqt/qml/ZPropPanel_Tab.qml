@@ -28,8 +28,10 @@ Item {
 
                 Button {
                     Layout.fillWidth: true
+                    //获取group标题：
                     text: root.model.data(root.model.index(index, 0, root.parentIndex))
                     onClicked: propGroup.shown = !propGroup.shown
+                    visible: root.childCount > 1   //只有一个group可能是默认的情况，不予以显示
                 }
 
                 //把整个group 显示出来

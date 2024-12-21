@@ -9,71 +9,71 @@ Pane {
     property var node: undefined
     property var nodeItem: undefined
     property bool use_tabview: false
-    implicitWidth: base_tabview.implicitWidth
-    implicitHeight: base_tabview.implicitHeight;
+    implicitWidth: panel_loader.implicitWidth
+    implicitHeight: panel_loader.implicitHeight
     padding: 0
 
     onNodeChanged: nodeItem = node ? node.item : undefined
 
-    Frame {
-        id: base_tabview
-        anchors.fill: parent
-        property var treemodel: comp.node.params.customParamModel()
-        property var tabsindex: treemodel.index(0, 0)
-
-        //为了调试方便，只拿第一个tab
-        ZPropPanel_Tab {
-            id: ptab
+    Component {
+        id: compBlank
+        Rectangle {
             anchors.fill: parent
-
-            model: base_tabview.treemodel
-            parentIndex: model.index(0, 0, base_tabview.tabsindex)
-            childCount: model.rowCount(parentIndex)
-
-            Component.onCompleted: {
-                
-            }
+            width: 200
+            height: 200
+            color: "red"
         }
     }
 
-    /*
-    Frame {
-        id: base_notabview
-        ColumnLayout {
-            Label {
-                text: comp.node ? "Editing node <b>" + comp.node.label + "</b>": "Select a node..."
+    Component {
+        id: compPropertyPane
+        Frame {
+            id: base_tabview
+            anchors.fill: parent
+            property var treemodel: comp.node ? comp.node.params.customParamModel() : undefined
+            property var tabsindex: treemodel ? treemodel.index(0, 0) : undefined
+
+            ColumnLayout {
+                id: tablayout
+                anchors.fill: parent
+
+                TabBar {
+                    id: property_tabbar
+                    property int tabcount: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
+                    visible: tabcount > 1
+                    Repeater {
+                        model: property_tabbar.tabcount
+                        delegate: TabButton {
+                            property var mtabindex: base_tabview.treemodel.index(index, 0, base_tabview.tabsindex)
+                            text: base_tabview.treemodel.data(mtabindex)
+                            width: 100
+                        }
+                    }
+                }
+
+                StackLayout {
+                    id: panel_stack
+                    currentIndex: property_tabbar.currentIndex
+
+                    Repeater {
+                        model: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
+                        delegate: ZPropPanel_Tab {
+                            model: base_tabview.treemodel
+                            parentIndex: model.index(index, 0, base_tabview.tabsindex)
+                            childCount: model.rowCount(parentIndex)
+                        }
+                    }
+                }
             }
-            CheckBox {
-                text: "Draggable"
-                enabled: comp.nodeItem !== undefined
-                checked: comp.nodeItem ? comp.nodeItem.draggable : false
-                onClicked: comp.nodeItem.draggable = checked
-            }
-            CheckBox {
-                text: "Resizable"
-                enabled: comp.nodeItem !== undefined
-                checked: comp.nodeItem ? comp.nodeItem.resizable : false
-                onClicked: comp.nodeItem.resizable = checked
-            }
-            CheckBox {
-                text: "Selected (read-only)"
-                enabled: false
-                checked: comp.nodeItem ? comp.nodeItem.selected : false
-            }
-            CheckBox {
-                text: "Selectable"
-                enabled: comp.nodeItem != null
-                checked: comp.nodeItem ? comp.nodeItem.selectable : false
-                onClicked: comp.nodeItem.selectable = checked
-            }
-            Label { text: "style.backRadius" }
-            Slider {
-                from: 0.; to: 15.0;
-                value: defaultNodeStyle.backRadius
-                stepSize: 1.0
-                onMoved: defaultNodeStyle.backRadius = value
-            }
+        }        
+    }
+
+    Loader {
+        id: panel_loader
+        anchors.fill: parent
+
+        sourceComponent: {
+            return comp.nodeItem ? compPropertyPane : compBlank
         }
     }
-    */
 }
