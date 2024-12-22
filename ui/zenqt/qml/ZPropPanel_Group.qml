@@ -20,8 +20,46 @@ Item {
     // 定义不同组件
     Component {
         id: paramText
-        Text {
-            text: model.data(mindex)    //默认是DisplayRole
+        Row {
+            ToolButton {
+                id: btn_show_prim_sock
+                checkable: true
+                checked: false
+                property bool reentry: false
+                icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
+
+                onClicked: {
+
+                }
+
+                onCheckedChanged: {
+                    
+                }    
+
+                contentItem: Image {
+                    source: parent.icon.source
+                    sourceSize.width: 20
+                    sourceSize.height: 20
+                    smooth: true
+                    antialiasing: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                background: Rectangle {
+                    x: icon_image.x + 3
+                    y: icon_image.y
+                    width: 14
+                    height: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: enabled ? 1 : 0.3
+                    color: parent.hovered ? "#f0f0f0" : "transparent"
+                    radius: width / 2
+                }
+            }
+            Text {
+                text: model.data(mindex)    //默认是DisplayRole，参数名
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
     }
 
@@ -64,7 +102,7 @@ Item {
         id: textedit
         ScrollView {
             id: view
-            width: 300
+            width: 200
             height: 100
 
             TextArea {
@@ -112,7 +150,7 @@ Item {
         property int nCol: 2
         columns: nCol  // 每行显示 2 个元素
         rowSpacing: 5
-        columnSpacing: 30
+        columnSpacing: 20
 
         Repeater {
             model: childCount * gridlayout.nCol  // 数据模型，创建childCount个子项

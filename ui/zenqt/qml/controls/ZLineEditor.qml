@@ -38,7 +38,7 @@ Rectangle {
         id: inputField
         anchors.centerIn: parent
         verticalAlignment: Text.AlignVCenter
-        width: 200
+        width: 120
         height: 24
 
         topPadding: 5

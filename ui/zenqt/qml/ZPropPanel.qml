@@ -21,11 +21,8 @@ Pane {
 
     Component {
         id: compBlank
-        Rectangle {
-            anchors.fill: parent
-            width: 200
-            height: 200
-            color: "red"
+        Item {
+
         }
     }
 
@@ -40,6 +37,16 @@ Pane {
             ColumnLayout {
                 id: tablayout
                 anchors.fill: parent
+
+                Text {
+                    text: comp.node.label;
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: "black"
+                }
 
                 TabBar {
                     id: property_tabbar
