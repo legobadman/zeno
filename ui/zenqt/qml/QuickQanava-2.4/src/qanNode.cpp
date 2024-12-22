@@ -96,7 +96,7 @@ QQmlComponent*  Node::delegate(QQmlEngine& engine, QObject* parent) noexcept
 {
     Q_UNUSED(parent)
     static std::unique_ptr<QQmlComponent> delegate;
-    if (!delegate) {
+    if (!delegate) { 
         delegate = std::make_unique<QQmlComponent>(&engine, "qrc:/NormalNode.qml", 
             QQmlComponent::PreferSynchronous);
     }

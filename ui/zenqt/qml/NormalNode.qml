@@ -42,6 +42,7 @@ Qan.NodeItem {
     implicitWidth: mainmain_layout.implicitWidth
     implicitHeight: mainmain_layout.implicitHeight;
     resizable: false
+    clip: true
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
 

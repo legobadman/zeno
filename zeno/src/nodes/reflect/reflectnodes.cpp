@@ -77,8 +77,15 @@ namespace zeno
                         ParamGroup {
                             "Group1",
                             {
-                                ParamPrimitive("Name 1"),
-                                ParamPrimitive("Name 2"),
+                                ParamPrimitive("c"),
+                                ParamPrimitive("d"),
+                                ParamPrimitive("e"),
+                                ParamPrimitive("f"),
+                                ParamPrimitive("g"),
+                                ParamPrimitive("h"),
+                                ParamPrimitive("i"),
+                                ParamPrimitive("j"),
+                                ParamPrimitive("k"),
                             }
                         },
                         ParamGroup {
@@ -86,6 +93,16 @@ namespace zeno
                             {
                                 ParamPrimitive("A"),
                                 ParamPrimitive("B"),
+                                ParamPrimitive("l"),
+                                ParamPrimitive("m"),
+                                ParamPrimitive("n"),
+                                ParamPrimitive("o"),
+                                ParamPrimitive("p"),
+                                ParamPrimitive("q"),
+                                ParamPrimitive("zzz"),
+                                ParamPrimitive("r4r"),
+                                ParamPrimitive("fwefew"),
+                                ParamPrimitive("af")
                             }
                         },
                     }
@@ -101,7 +118,26 @@ namespace zeno
             const std::string& name1 = "a16",
             const std::string& name2 = "a24",
             int a = 234,
-            float b = 456.234)
+            float b = 456.234,
+            int c = 6,
+            int d = 7,
+            int e = 8,
+            int f = 8,
+            int g = 9,
+            int h = 10,
+            int i = 11,
+            int j = 12,
+            int k = 13,
+            int l = 14,
+            int m = 15,
+            int n = 16,
+            int o = 4543,
+            int p = 3424,
+            int q =563,
+            int zzz = 45235,
+            int r4r = 3543,
+            std::string fwefew="fgrgreg",
+            float af = 3.4f)
         {
             std::shared_ptr<zeno::PrimitiveObject> res = std::const_pointer_cast<zeno::PrimitiveObject>(input_obj);
             return res;

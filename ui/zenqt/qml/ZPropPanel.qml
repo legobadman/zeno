@@ -63,6 +63,9 @@ Pane {
                         model: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
                         delegate: ScrollView {
                             clip: true
+                            ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+                            ScrollBar.vertical.policy: ScrollBar.AsNeeded
+
                             ZPropPanel_Tab {
                                 model: base_tabview.treemodel
                                 parentIndex: model.index(index, 0, base_tabview.tabsindex)
