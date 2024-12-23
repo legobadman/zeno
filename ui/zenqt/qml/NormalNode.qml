@@ -61,13 +61,23 @@ Qan.NodeItem {
                 id: inputobjparams
                 model: nodeItem.node.params
 
-                delegate: Text {
-                    color: "black"
-                    required property string name
-                    required property int group
-                    text: name
-                    visible: group == 0
-                }
+                delegate: 
+                    Rectangle {
+                        id: inputobj_sock
+                        required property string name
+                        required property int group
+                        required property color socket_color
+
+                        height: childrenRect.height
+                        width: childrenRect.width
+                        color: socket_color
+                        visible: group == 0
+
+                        Text {
+                            color: "black"
+                            text: inputobj_sock.name
+                        }
+                    }
             }
 
             Item {
@@ -269,13 +279,22 @@ Qan.NodeItem {
                 id: outputobjparams
                 model: nodeItem.node.params
 
-                delegate: Text {
-                    color: "black"
-                    required property string name
-                    required property int group
-                    text: name
-                    visible: group == 2     //对应代码NodeDataGroup枚举值
-                }
+                delegate: Rectangle {
+                        id: outputobj_sock
+                        required property string name
+                        required property int group
+                        required property color socket_color
+
+                        height: childrenRect.height
+                        width: childrenRect.width
+                        color: socket_color
+                        visible: group == 2  //对应代码NodeDataGroup枚举值
+
+                        Text {
+                            color: "black"
+                            text: outputobj_sock.name
+                        }
+                    }
             }
 
             Item {

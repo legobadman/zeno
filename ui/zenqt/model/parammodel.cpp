@@ -12,6 +12,7 @@
 #include "declmetatype.h"
 #include <zeno/extra/SubnetNode.h>
 #include "zenoapplication.h"
+#include "style/colormanager.h"
 
 
 class CustomUIProxyModel : public QStandardItemModel
@@ -560,6 +561,12 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
             return false;
         return param.bSocketVisible;
     }
+    case ROLE_PARAM_SOCKET_CLR:
+    {
+        QColor color = ZColorManager::getColorByType(param.type);
+        //QList<int> lstClr = { color.red(), color.green(), color.blue() };
+        return color;
+    }
     case ROLE_PARAM_GROUP:
         return param.group;
     }
@@ -660,6 +667,7 @@ QHash<int, QByteArray> ParamsModel::roleNames() const
     roles[ROLE_PARAM_GROUP] = "group";
     roles[ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";
     roles[ROLE_PARAM_CONTROL_PROPS] = "control_properties";
+    roles[ROLE_PARAM_SOCKET_CLR] = "socket_color";
     return roles;
 }
 
