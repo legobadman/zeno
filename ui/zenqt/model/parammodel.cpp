@@ -16,8 +16,14 @@
 
 class CustomUIProxyModel : public QStandardItemModel
 {
+    Q_OBJECT
 public:
-    CustomUIProxyModel(ParamsModel* parent = nullptr) : QStandardItemModel(parent), m_baseM(parent) {}
+    CustomUIProxyModel(ParamsModel* parent = nullptr) : QStandardItemModel(parent), m_baseM(parent) {
+        connect(m_baseM, &ParamsModel::showPrimSocks_changed, this, &CustomUIProxyModel::showPrimSocks_changed);
+    }
+
+    Q_PROPERTY(bool showPrimSocks READ getShowPrimSocks WRITE setShowPrimSocks NOTIFY showPrimSocks_changed)
+    
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
         if (role > Qt::UserRole) {
             //一律到本parammodel去取，避免冗长而麻烦的两端同步数据，让tree uimodel顶多存一个显示的名字和ui布局。
@@ -31,22 +37,38 @@ public:
         else {
             return QStandardItemModel::data(index, role);
         }
-        /*
-        if (role == ROLE_PARAM_VALUE) {
-            QString paramName = index.data(ROLE_PARAM_NAME).toString();
+    }
+
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override {
+        if (role > Qt::UserRole) {
+            QString paramName = index.data(Qt::DisplayRole).toString(); //目前都规定Display的就是真正的名字
             QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
-            QVariant wtf = idxparam.data(ROLE_PARAM_VALUE);
-            return wtf;
+            ZASSERT_EXIT(idxparam.isValid(), false);
+            return m_baseM->setData(idxparam, value, role);
         }
         else {
-            return QStandardItemModel::data(index, role);
+            return QStandardItemModel::setData(index, value, role);
         }
-        */
     }
+
+
+    bool getShowPrimSocks() const {
+        return m_baseM->getShowPrimSocks();
+    }
+
+    void setShowPrimSocks(bool bShowPrimSocks) {
+        //TODO: 通用设置？
+    }
+
+signals:
+    void showPrimSocks_changed();
 
 private:
     ParamsModel* m_baseM;
 };
+
+#include "parammodel.moc"
+
 
 class ParamModelImpl : public QObject
 {
@@ -446,6 +468,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             spNode->update_param_socket_visible(param.name.toStdString(), value.toBool(), param.bInput);
+            emit showPrimSocks_changed();
             return true;
         }
         return false;
@@ -635,6 +658,7 @@ QHash<int, QByteArray> ParamsModel::roleNames() const
     roles[ROLE_PARAM_CONTROL] = "control";
     roles[ROLE_ISINPUT] = "input";
     roles[ROLE_PARAM_GROUP] = "group";
+    roles[ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";
     roles[ROLE_PARAM_CONTROL_PROPS] = "control_properties";
     return roles;
 }
@@ -982,4 +1006,14 @@ int ParamsModel::numOfInputParams() const
             n++;
     }
     return n;
+}
+
+bool ParamsModel::getShowPrimSocks() const {
+    for (auto& item : m_items) {
+        if (item.group == zeno::Role_InputPrimitive || item.group == zeno::Role_OutputPrimitive) {
+            if (item.bSocketVisible)
+                return true;
+        }
+    }
+    return false;
 }

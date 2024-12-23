@@ -33,7 +33,7 @@ Item {
                 }
 
                 onCheckedChanged: {
-                    
+                    model.setData(mindex, btn_show_prim_sock.checked == true, 275); //ROLE_PARAM_SOCKET_VISIBLE
                 }    
 
                 contentItem: Image {

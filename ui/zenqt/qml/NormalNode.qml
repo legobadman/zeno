@@ -42,7 +42,7 @@ Qan.NodeItem {
     implicitWidth: mainmain_layout.implicitWidth
     implicitHeight: mainmain_layout.implicitHeight;
     resizable: false
-    clip: true
+    //clip: true        //设置会导致选框不出现
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
 
@@ -168,7 +168,7 @@ Qan.NodeItem {
                         implicitWidth: nodebody_layout.implicitWidth
                         implicitHeight: nodebody_layout.implicitHeight
                         Layout.fillWidth: true
-                        visible: true   //TODO: 由parammodel是否显示数值参数决定
+                        visible: nodeItem.node.params.showPrimSocks;
 
                         ZRoundRect {
                             anchors.fill: parent
@@ -194,9 +194,10 @@ Qan.NodeItem {
                                     Text {
                                         required property string name
                                         required property int group
+                                        required property bool socket_visible
                                         readonly property int hmargin: 10
 
-                                        visible: group == 1
+                                        visible: group == 1 && socket_visible
 
                                         color: "white"
                                         text: name
@@ -222,9 +223,10 @@ Qan.NodeItem {
                                     Text {
                                         required property string name
                                         required property int group
+                                        required property bool socket_visible
                                         readonly property int hmargin: 10
 
-                                        visible: group == 3
+                                        visible: group == 3 && socket_visible
 
                                         color: "white"
                                         text: name

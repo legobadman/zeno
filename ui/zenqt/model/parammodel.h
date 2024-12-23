@@ -44,6 +44,8 @@ class ParamsModel : public QAbstractListModel
 public:
     ParamsModel(zeno::INode* spNode, QObject* parent = nullptr);
 
+    Q_PROPERTY(bool showPrimSocks READ getShowPrimSocks WRITE setShowPrimSocks NOTIFY showPrimSocks_changed)
+
     Q_INVOKABLE int indexFromName(const QString& name, bool bInput) const;
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
     Q_INVOKABLE QStandardItemModel* customParamModel();
@@ -77,12 +79,15 @@ public:
 
     int getParamlinkCount(const QModelIndex& paramIdx);
     int numOfInputParams() const;
+    bool getShowPrimSocks() const;
+    void setShowPrimSocks(bool) {}
 
 signals:
     void linkAboutToBeInserted(const zeno::EdgeInfo& link);
     void linkAboutToBeRemoved(const zeno::EdgeInfo& link);
     void portTypeChanged(const QModelIndex& idx, bool bPrime);
     void enabledVisibleChanged();
+    void showPrimSocks_changed();
 
 private:
     void initParamItems();
