@@ -62,21 +62,17 @@ Qan.NodeItem {
                 model: nodeItem.node.params
 
                 delegate: 
-                    Rectangle {
-                        id: inputobj_sock
+                    ZObjSocket {
+                        id: input_obj_socket
                         required property string name
                         required property int group
                         required property color socket_color
 
-                        height: childrenRect.height
-                        width: childrenRect.width
-                        color: socket_color
-                        visible: group == 0
+                        socket_name: name
+                        socket_group: group
+                        bg_color: socket_color
 
-                        Text {
-                            color: "black"
-                            text: inputobj_sock.name
-                        }
+                        visible: group == 0                
                     }
             }
 

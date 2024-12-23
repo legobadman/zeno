@@ -79,5 +79,7 @@
         <file>ZPropPanel_Tab.qml</file>
         <file>ZPropPanel_Group.qml</file>
         <file>ZPropPanel_Control.qml</file>
+        <file>ZPrimSocket.qml</file>
+        <file>ZObjSocket.qml</file>
     </qresource>
 </RCC>
