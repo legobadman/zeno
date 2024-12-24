@@ -50,14 +50,6 @@ void ZCodeEditor::setNodeIndex(QModelIndex nodeIdx)
 void ZCodeEditor::focusInEvent(QFocusEvent* e)
 {
     QCodeEditor::focusInEvent(e);
-    int currDocHeight = this->document()->size().height();
-    if (currDocHeight < minimumHeight) {
-        setFixedHeight(minimumHeight);
-    } else if (minimumHeight < currDocHeight && currDocHeight < 580) {
-        setFixedHeight(document()->size().height());
-    } else {
-        setFixedHeight(580);
-    }
 }
 
 void ZCodeEditor::focusOutEvent(QFocusEvent* e)
@@ -67,7 +59,7 @@ void ZCodeEditor::focusOutEvent(QFocusEvent* e)
     if (reason != Qt::ActiveWindowFocusReason)
         emit editFinished(toPlainText());
 
-    setFixedHeight(minimumHeight);
+    //setFixedHeight(minimumHeight);
 }
 
 void ZCodeEditor::keyPressEvent(QKeyEvent* event)
@@ -271,7 +263,19 @@ void ZCodeEditor::initUI()
     setTabReplace(true);
     setTabReplaceSize(4);
 
-    setMinimumHeight(minimumHeight);
+    //初始化时显示所有内容
+    QFontMetrics fontMetrics(this->font());
+    int currDocHeight = this->document()->blockCount() * fontMetrics.height();
+    if (currDocHeight < minimumHeight) {
+        setFixedHeight(minimumHeight);
+    }
+    else if (minimumHeight < currDocHeight && currDocHeight < 630) {
+        setFixedHeight(currDocHeight + 10);
+    }
+    else {
+        setFixedHeight(630);
+    }
+    //setMinimumHeight(minimumHeight);
 }
 
 QSyntaxStyle* ZCodeEditor::loadStyle(const QString& path)
