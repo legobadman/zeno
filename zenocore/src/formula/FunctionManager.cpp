@@ -244,29 +244,15 @@ namespace zeno {
                         return method((int)lval, (int)rval);
                     }
                     throw makeError<UnimplError>("");
-                }
-                else if constexpr (std::is_same_v<T, int>) {
-                    if constexpr (std::is_same_v<E, int>) {
-                        return method(lval, rval);
-                    }
-                    else if constexpr (std::is_same_v<E, float>) {
-                        return method(E(lval), rval);
-                    }
-                    else {
-                        //暂不考虑一个元素和一个矩阵相加的情况。
-                        throw makeError<UnimplError>("");
-                    }
-                }
-                else if constexpr (std::is_same_v<T, float>) {
-                    if constexpr (std::is_same_v<E, int>) {
-                        return method(lval, T(rval));
-                    }
-                    else if constexpr (std::is_same_v<E, float>) {
-                        return method(lval, rval);
-                    }
-                    throw makeError<UnimplError>("");
-                }
-                else if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<T, E> ||
+                } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
+                    return method(lval, rval);
+                } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, float>) {
+                    return method(E(lval), rval);
+                } else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, int>) {
+                    return method(lval, T(rval));
+                } else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, float>) {
+                    return method(lval, rval);
+                } else if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::vec3> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::vec4> && std::is_same_v<T, E>)
                 {
@@ -292,8 +278,51 @@ namespace zeno {
                     {
                         return method(lval, rval);
                     }
+                } else if constexpr(std::is_same_v<T, glm::vec2> && (std::is_same_v<int, E> || std::is_same_v<float, E>) ||
+                    std::is_same_v<T, glm::vec3> && (std::is_same_v<int, E> || std::is_same_v<float, E>) ||
+                    std::is_same_v<T, glm::vec4> && (std::is_same_v<int, E> || std::is_same_v<float, E>))
+                {
+                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::less<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::greater<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
+                        throw makeError<UnimplError>("");
+                    } else {
+                        return method(lval, T(rval));
+                    }
                 }
-                else if constexpr (std::is_same_v<T, glm::mat3> && std::is_same_v<T, E> ||
+                else if constexpr ((std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec2> ||
+                    (std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec3> ||
+                    (std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec4>) {\
+                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::less<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::greater<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else {
+                        return method(E(lval), rval);
+                    }
+                } else if constexpr (std::is_same_v<T, glm::mat3> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::mat4> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::mat2> && std::is_same_v<T, E>) {
 
@@ -1212,7 +1241,7 @@ namespace zeno {
                 std::shared_ptr<ZfxASTNode> zenvarNode = root->children[0];
                 if (zenvarNode->bAttr) {
                     //无须把值拎出来再计算，直接往属性数据内部设置
-                    const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value);
+                    const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
                     std::string channel;
                     if (zenvarNode->opVal == COMPVISIT) {
                         assert(zenvarNode->children.size() == 1);
@@ -1221,6 +1250,31 @@ namespace zeno {
                     else if (zenvarNode->opVal == Indexing) {
                         //todo
                     }
+
+                    std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+                    if (!spGeom->has_point_attr(attrname) && !spGeom->has_face_attr(attrname) &&
+                        !spGeom->has_vertex_attr(attrname) && !spGeom->has_geometry_attr(attrname)
+                        ) {//attrname不存在就创建一个，valNode是属性就创建和valNode同类型属性，否则创建point属性
+                        AttrVar attrvar = zeno::zfx::convertToAttrVar(res.value);
+                        if (valNode->bAttr) {
+                            std::string valNodeAttrName = get_zfxvar<std::string>(valNode->value).substr(1);
+                            if (spGeom->has_point_attr(valNodeAttrName)) {
+                                spGeom->create_point_attr(attrname, attrvar);
+                            }
+                            else if (spGeom->has_face_attr(valNodeAttrName)) {
+                                spGeom->create_face_attr(attrname, attrvar);
+                            }
+                            else if (spGeom->has_vertex_attr(valNodeAttrName)) {
+                                spGeom->create_vertex_attr(attrname, attrvar);
+                            }
+                            else if (spGeom->has_geometry_attr(valNodeAttrName)) {
+                                spGeom->create_geometry_attr(attrname, attrvar);
+                            }
+                        } else {
+                            spGeom->create_point_attr(attrname, attrvar);
+                        }
+                    }
+
                     setAttrValue(attrname, channel, res, root->opVal, filter, pContext);
                     return ZfxVariable();
                 }

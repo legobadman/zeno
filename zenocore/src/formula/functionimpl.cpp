@@ -394,9 +394,12 @@ namespace zeno
                     zeno::log_only_print(ret);
                 }
             }
-            else if (maxSize == 1) {
+            else {
                 std::vector<zfxvariant> __args;
                 for (auto __arg : _args) {
+                    if (__arg.value.empty()) {
+                        continue;
+                    }
                     __args.push_back(__arg.value[0]);
                 }
                 std::string ret = format_variable_size(formatString.c_str(), __args);

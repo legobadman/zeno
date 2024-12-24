@@ -424,6 +424,24 @@ namespace zeno
             }
 
             GeoAttrType type = spGeom->get_attr_type(group, attrname);
+            if (type == ATTR_TYPE_UNKNOWN) {//attrname可能是其他类型,尝试设置为其他类型
+                if (spGeom->has_point_attr(attrname)) {
+                    pContext->runover = ATTR_POINT;
+                    type = spGeom->get_attr_type(ATTR_POINT, attrname);
+                }
+                else if (spGeom->has_face_attr(attrname)) {
+                    pContext->runover = ATTR_FACE;
+                    type = spGeom->get_attr_type(ATTR_FACE, attrname);
+                }
+                else if (spGeom->has_vertex_attr(attrname)) {
+                    pContext->runover = ATTR_VERTEX;
+                    type = spGeom->get_attr_type(ATTR_VERTEX, attrname);
+                }
+                else if (spGeom->has_geometry_attr(attrname)) {
+                    pContext->runover = ATTR_GEO;
+                    type = spGeom->get_attr_type(ATTR_GEO, attrname);
+                }
+            }
             switch (type) {
             case ATTR_INT: {
                 set_attr_by_zfx<int>(spGeom, attrname, channel, var, opVal, filter, pContext);
@@ -434,7 +452,18 @@ namespace zeno
                 break;
             }
             case ATTR_STRING: {
-                //set_attr_by_zfx<std::string>(spGeom, attrname, channel, var, filter, pContext);
+                int N = spGeom->get_group_count(pContext->runover), nVariable = var.value.size();
+                if (N != nVariable && nVariable != 1) {
+                    throw makeError<UnimplError>("size dismatch when assign value to attributes");
+                }
+                std::vector<std::string> vec(N);
+                for (int i = 0; i < N; i++) {
+                    vec[i] = get_zfxvar<std::string>(var.value[std::min(i, nVariable - 1)]);
+                }
+                spGeom->foreach_attr_update<std::string>(pContext->runover, attrname, 0, [&](int idx, std::string old_val)->std::string {
+                    return filter[idx] ? vec[idx] : old_val;
+                });
+                //set_attr_by_zfx<std::string>(spGeom, attrname, channel, var, opVal, filter, pContext);
                 break;
             }
             case ATTR_VEC2: {

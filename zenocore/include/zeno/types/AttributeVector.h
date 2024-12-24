@@ -706,8 +706,25 @@ namespace zeno {
 
                 }
                 else {
-                    AttrVarVec& attrval = self->value();
-
+                    if (self.use_count() > 1) {
+                        self = std::make_shared<AttrColumn>(*self);
+                    }
+                    AttrVarVec& selfvar = self->value();
+                    std::visit([&](auto&& val) {
+                        using E = std::decay_t<decltype(val)>;
+                        int sz = val.size();
+                        if constexpr (std::is_same_v<E, std::vector<T>>) {
+                            #pragma omp parallel for
+                            for (int i = 0; i < m_size; i++) {
+                                int ix = std::min(i, sz - 1);
+                                T old_val(val[ix]);
+                                T new_val = evalf(i, old_val);
+                                val[ix] = new_val;
+                            }
+                        } else {
+                            throw makeError<UnimplError>("type dismatch");
+                        }
+                    }, selfvar);
                 }
             }
         }
