@@ -53,7 +53,7 @@ number  {num1}|{num2}
 frame   \$F
 fps     \$FPS
 pi      \$PI
-varname [A-Za-z][A-Za-z_0-9]*
+varname [A-Za-z_][A-Za-z_0-9]*
 dollar \$
 zenvarname \$[A-Za-z_]+
 compareop (<|<=|>=|>)
