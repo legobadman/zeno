@@ -85,11 +85,16 @@ Qan.GraphView {
         onClicked:{
             mouse.accepted = false;
         }
+        onEntered:{
+        }
+        onExited:{
+        }
     }
 
     onClicked: {
         if (graphView.tempEdge != undefined && graphView.tempEdge.visible) {
             graphView.tempEdge.destroy()
+            graphEditorArea.hoverEnabled = false
         }
     }
 
@@ -99,6 +104,7 @@ Qan.GraphView {
         var is_start_to_link = false;
         if (!graphView.tempEdge) {
             graphView.tempEdge = edgeComponent.createObject(graphView.containerItem, {})
+            graphEditorArea.hoverEnabled = true
             is_start_to_link = true
         }
 
@@ -118,6 +124,8 @@ Qan.GraphView {
         } else{
             //闭合
             console.log("闭合边")
+            graphView.tempEdge.destroy()
+            graphEditorArea.hoverEnabled = false
         }
     }
 
