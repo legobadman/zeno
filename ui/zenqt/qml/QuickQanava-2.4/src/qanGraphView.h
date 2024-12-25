@@ -100,6 +100,7 @@ signals:
     void            groupDoubleClicked(qan::Group* group, QPointF pos);
     //@}
     //-------------------------------------------------------------------------
+    void            nodeSocketClicked(qan::Node* node, int group, QString socket_name, QPointF globalPos);
 
 
     /*! \name Selection Rectangle Management *///------------------------------

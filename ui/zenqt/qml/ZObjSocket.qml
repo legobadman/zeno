@@ -13,6 +13,8 @@ Item {
     property int socket_group;
     property color bg_color;
 
+    signal socketClicked()
+
     height: childrenRect.height
     width: childrenRect.width
 
@@ -24,6 +26,15 @@ Item {
         Text {
             color: "black"
             text: comp.socket_name
+        }
+    }
+
+    MouseArea {
+        id: comp_mousearea
+        anchors.fill: parent
+
+        onClicked: {
+            comp.socketClicked()
         }
     }
 }

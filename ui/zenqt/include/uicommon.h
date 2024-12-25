@@ -236,6 +236,21 @@ enum MODEL_ROLE {
     ROLE_DOPNETWORK_MEM
 };
 
+class QmlParamGroup
+{
+    Q_GADGET
+public:
+    explicit QmlParamGroup() {}
+
+    enum Value {    //对应common.h的NodeDataGroup
+        InputObject,
+        InputPrimitive,
+        OutputObject,
+        OutputPrimitive
+    };
+    Q_ENUM(Value)
+};
+
 class QmlParamControl
 {
     Q_GADGET

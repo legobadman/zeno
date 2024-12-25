@@ -423,6 +423,8 @@ signals:
      */
     void            nodeDoubleClicked(qan::Node* node, QPointF pos);
 
+    void            nodeSocketClicked(qan::Node* node, int group, QString socket_name, QPointF pos);
+
 signals:
     //! \brief Emitted _after_ a node (or a group...) has been grouped.
     void            nodeGrouped(qan::Node* node, qan::Group* group);

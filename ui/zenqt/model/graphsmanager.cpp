@@ -16,6 +16,7 @@
 #include "model/parammodel.h"
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
+#include <QQmlContext>
 
 
 GraphsTotalView::GraphsTotalView()

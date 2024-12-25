@@ -6,8 +6,8 @@
 #include "util/procclipboard.h"
 #include "uicommon.h"
 #include <zeno/utils/scope_exit.h>
-#include <QuickQanava>
-#include <QQuickStyle>
+#include <QQmlApplicationEngine>
+
 
 class GraphsManager;
 class ZenoMainWindow;

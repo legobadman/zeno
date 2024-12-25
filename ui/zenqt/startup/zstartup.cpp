@@ -17,6 +17,8 @@
 #include "model/parammodel.h"
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
+#include <QuickQanava>
+#include <QQuickStyle>
 
 
 void initQml()
@@ -26,6 +28,7 @@ void initQml()
     qRegisterMetaType<ParamsModel*>("ParamsModel*");
     qRegisterMetaType<QStandardItemModel*>("QStandardItemModel*");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
+    qmlRegisterUncreatableType<QmlParamGroup>("zeno.enum", 1, 0, "ParamGroup", "Not creatable as it is an enum type");
     qmlRegisterType<GraphsManager>("Zeno", 1, 0, "GraphsManager");
     qmlRegisterType<GraphsTotalView>("Zeno", 1, 0, "GraphsTotalView");
     //qRegisterMetaType<GraphsManager*>("GraphsManager*");

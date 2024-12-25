@@ -93,6 +93,13 @@ void    GraphView::setGraph(qan::Graph* graph)
                 this,   &qan::GraphView::groupRightClicked);
         connect(_graph, &qan::Graph::groupDoubleClicked,
                 this,   &qan::GraphView::groupDoubleClicked);
+
+        connect(_graph, &qan::Graph::nodeSocketClicked,
+            this, [this](qan::Node* node, int group, QString socket_name, QPointF globalSocketPos) {
+            QPointF containerPos = getContainerItem()->mapFromGlobal(globalSocketPos);
+            emit nodeSocketClicked(node, group, socket_name, containerPos);
+        });
+
         emit graphChanged();
     }
 }

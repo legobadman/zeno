@@ -2,6 +2,7 @@
 #include "zqmlpanel.h"
 #include "model/GraphModel.h"
 #include "model/graphsmanager.h"
+#include <QQmlContext>
 
 
 ZQmlPanel::ZQmlPanel(QWidget* parent)

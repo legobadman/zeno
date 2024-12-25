@@ -184,7 +184,6 @@ Item {
                             return compVec4edit
                         }
                         else if (ctrl == ParamControl.CodeEditor){
-                            console.log("here")
                             return textedit
                         }
                         else if (ctrl == ParamControl.Slider){

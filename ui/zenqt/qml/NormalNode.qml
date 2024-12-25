@@ -31,7 +31,7 @@ import QtQuick.Layouts           1.3
 
 import QuickQanava 2.0 as Qan
 import "qrc:/QuickQanava" as Qan
-
+import zeno.enum 1.0
 
 Qan.NodeItem {
     id: nodeItem
@@ -72,7 +72,13 @@ Qan.NodeItem {
                         socket_group: group
                         bg_color: socket_color
 
-                        visible: group == 0                
+                        visible: group == ParamGroup.InputObject
+
+                        onSocketClicked: function() {
+                            var globalPosition = input_obj_socket.mapToGlobal(Qt.point(0, 0))
+                            console.log("globalPosition: " + globalPosition.x + "," + globalPosition.y)
+                            nodeItem.socketClicked(nodeItem, ParamGroup.InputObject, socket_name, globalPosition)
+                        }          
                     }
             }
 
@@ -203,7 +209,7 @@ Qan.NodeItem {
                                         required property bool socket_visible
                                         readonly property int hmargin: 10
 
-                                        visible: group == 1 && socket_visible
+                                        visible: group == ParamGroup.InputPrimitive && socket_visible
 
                                         color: "white"
                                         text: name
@@ -232,7 +238,7 @@ Qan.NodeItem {
                                         required property bool socket_visible
                                         readonly property int hmargin: 10
 
-                                        visible: group == 3 && socket_visible
+                                        visible: group == ParamGroup.OutputPrimitive && socket_visible
 
                                         color: "white"
                                         text: name
@@ -275,22 +281,21 @@ Qan.NodeItem {
                 id: outputobjparams
                 model: nodeItem.node.params
 
-                delegate: Rectangle {
-                        id: outputobj_sock
-                        required property string name
-                        required property int group
-                        required property color socket_color
+                delegate: ZObjSocket {
+                    id: output_obj_socket
+                    required property string name
+                    required property int group
+                    required property color socket_color
 
-                        height: childrenRect.height
-                        width: childrenRect.width
-                        color: socket_color
-                        visible: group == 2  //对应代码NodeDataGroup枚举值
-
-                        Text {
-                            color: "black"
-                            text: outputobj_sock.name
-                        }
+                    socket_name: name
+                    socket_group: group
+                    bg_color: socket_color
+                    visible: group == ParamGroup.OutputObject  //对应代码NodeDataGroup枚举值
+                    onSocketClicked: function() {
+                        var globalPosition = output_obj_socket.mapToGlobal(Qt.point(0, 0))
+                        nodeItem.socketClicked(nodeItem, ParamGroup.OutputObject, socket_name, globalPosition)
                     }
+                }
             }
 
             Item {

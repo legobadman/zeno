@@ -90,6 +90,13 @@ qan::Node*  Graph::insertNode(const QModelIndex& idx, QQmlComponent* nodeCompone
                 _maxZ += 1;
                 nodeItem->setZ(_maxZ);
             }
+
+            auto notifySocketClicked = [this](qan::NodeItem* nodeItem, int group, QString socket_name, QPointF p) {
+                if (nodeItem && nodeItem->getNode()) {
+                    emit this->nodeSocketClicked(nodeItem->getNode(), group, socket_name, p);
+                }
+            };
+            connect(nodeItem, &qan::NodeItem::socketClicked, this, notifySocketClicked);
         }
         insert_node(node);        // Insert visual or non visual node
     } catch (const qan::Error& e) {

@@ -351,6 +351,7 @@ signals:
     void    nodeDoubleClicked(qan::NodeItem* node, QPointF p);
     //! Emitted whenever the node is right clicked.
     void    nodeRightClicked(qan::NodeItem* node, QPointF p);
+    void    socketClicked(qan::NodeItem* node, int group, QString socket_name, QPointF p);
 
 public:
     /*! \brief Polygon used for mouse event clipping, and edge arrow clipping (in item local coordinates).

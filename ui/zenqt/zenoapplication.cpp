@@ -10,6 +10,8 @@
 #include "calculation/calculationmgr.h"
 #include "uicommon.h"
 #include "declmetatype.h"
+#include <QuickQanava>
+#include <QQuickStyle>
 
 
 ZenoApplication::ZenoApplication(int &argc, char **argv)

@@ -669,6 +669,14 @@ bool    Graph::insertNode(Node* node, QQmlComponent* nodeComponent, qan::NodeSty
             };
             connect(nodeItem, &qan::NodeItem::nodeDoubleClicked,
                     this,     notifyNodeDoubleClicked);
+
+            auto notifySocketClicked = [this](qan::NodeItem* nodeItem, int group, QString socket_name, QPointF p) {
+                if (nodeItem && nodeItem->getNode()) {
+                    emit this->nodeSocketClicked(nodeItem->getNode(), group, socket_name, p);
+                }
+            };
+            connect(nodeItem, &qan::NodeItem::socketClicked, this, notifySocketClicked);
+
             node->setItem(nodeItem);
             {   // Send item to front
                 _maxZ += 1;

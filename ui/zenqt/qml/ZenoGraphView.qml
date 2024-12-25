@@ -52,6 +52,88 @@ Qan.GraphView {
             graphView.zoomOn(p, graphView.zoom + (f * 0.03))
         }
     }
+
+    property var tempEdge2: undefined
+
+    Edge {
+        id: tempEdge
+        visible: false
+        point1x: 0
+        point1y: 0
+        point2x: 200
+        point2y: 200
+        color: "#5FD2FF"
+        thickness: 4
+        isFromInput: false
+    }
+
+    Component {
+        id: edgeComponent
+        Edge {
+            visible: false
+            color: "#5FD2FF"
+            thickness: 4
+
+            // MouseArea {
+            //     anchors.fill: parent
+            // }
+        }
+    }
+
+    MouseArea {
+        id: graphEditorArea
+        anchors.fill: parent
+        hoverEnabled: true // 允许捕获鼠标悬停事件，这个很重要，没有这个，那么PositionChanged必须要按下鼠标才触发
+
+        onPositionChanged: {
+             //var globalPosition = mapToGlobal(mouse.x, mouse.y);
+             //console.log("全局鼠标位置:", globalPosition.x, globalPosition.y);
+             mouse.accepted = false; // 让事件继续传播到 C++
+        }
+
+        onPressed: {
+            //console.log("QML MouseArea onPressed");
+            //console.log("mouse = " + graphEditorArea.mouseX + "," + graphEditorArea.mouseY)
+            //var pos = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
+            //console.log("mouse in container = " + pos.x + "," + pos.y)
+            mouse.accepted = false;
+        }
+
+        onReleased: {
+            console.log("QML MouseArea onReleased");
+            mouse.accepted = false;
+        }
+        onClicked:{
+            console.log("QML MouseArea 点击事件");
+            mouse.accepted = false;
+        }
+    }
+
+    onNodeSocketClicked: function(node, group, name, socket_pos_in_grid) {
+        console.log("Qan.GraphView: node: " + node.label + ", group: " + group + ", socket_name:" + name + ",socket_pos_grid:" + socket_pos_in_grid)
+        var pos_ = socket_pos_in_grid
+        if (!graphView.tempEdge2) {
+            graphView.tempEdge2 = edgeComponent.createObject(graphView.containerItem, {})
+        }
+
+        if (graphView.tempEdge2.visible == false) {
+            graphView.tempEdge2.point1x = pos_.x
+            graphView.tempEdge2.point1y = pos_.y
+            // graphView.tempEdge2.point2x = pos_.x + 200
+            // graphView.tempEdge2.point2y = pos_.y + 200
+            graphView.tempEdge2.point2x = Qt.binding(function() {
+                                    //console.log("Qt.binding")
+                                    var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
+                                    return mouseInContainer.x
+                                })
+            graphView.tempEdge2.point2y = Qt.binding(function() {
+                                    var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
+                                    return mouseInContainer.y
+                                })
+            graphView.tempEdge2.visible = true
+        }  
+    }
+
     graph: Qan.Graph {
         parent: graphView
         id: graph
@@ -70,14 +152,18 @@ Qan.GraphView {
             //var e = graph.insertEdge(n1, n2);
             //defaultEdgeStyle.lineType = Qan.EdgeStyle.Curved
         }
-        onNodeClicked: function(node) {
+        onNodeClicked: function(node, pos) {
             graphView.nodeClicked(node)
+            //console.log("node pos: " + pos)
             //notifyUser( "Node <b>" + node.label + "</b> clicked" )
             //nodeEditor.node = node
         }
         onNodeRightClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> right clicked" ) }
         onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }
         onNodeMoved: function(node) { notifyUser("Node <b>" + node.label + "</b> moved") }
+
+        onNodeSocketClicked: function(node, group, name, socket_pos) {
+        }
     } // Qan.Graph
 
     Menu {      // Context menu demonstration
@@ -106,6 +192,7 @@ Qan.GraphView {
     } // Menu
 
     onRightClicked: function(pos) {
+        //console.log("rightclick: " + pos.x + "," + pos.y)
         contextMenu.x = pos.x
         contextMenu.y = pos.y
         contextMenu.open()
