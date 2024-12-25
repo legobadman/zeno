@@ -28,12 +28,12 @@ ZCodeEditor::ZCodeEditor(const QString& text, QWidget *parent)
     initUI();
 
     connect(this, &QTextEdit::cursorPositionChanged, this, &ZCodeEditor::slt_showFuncDesc);
-    connect(this, &QTextEdit::textChanged, [this]() {
-        int currDocHeight = this->document()->size().height();
-        if (minimumHeight < currDocHeight && currDocHeight < 580) {
-            setFixedHeight(document()->size().height());
-        }
-    });
+    //connect(this, &QTextEdit::textChanged, [this]() {
+    //    int currDocHeight = this->document()->size().height();
+    //    if (minimumHeight < currDocHeight && currDocHeight < ZenoStyle::dpiScaled(680)) {
+    //        setFixedHeight(document()->size().height());
+    //    }
+    //});
 }
 
 void ZCodeEditor::setHintListWidget(ZenoHintListWidget* hintlist, ZenoFuncDescriptionLabel* descLabel)
@@ -263,19 +263,21 @@ void ZCodeEditor::initUI()
     setTabReplace(true);
     setTabReplaceSize(4);
 
-    //初始化时显示所有内容
-    QFontMetrics fontMetrics(this->font());
-    int currDocHeight = this->document()->blockCount() * fontMetrics.height();
-    if (currDocHeight < minimumHeight) {
-        setFixedHeight(minimumHeight);
-    }
-    else if (minimumHeight < currDocHeight && currDocHeight < 630) {
-        setFixedHeight(currDocHeight + 10);
-    }
-    else {
-        setFixedHeight(630);
-    }
-    //setMinimumHeight(minimumHeight);
+    setLineWrapMode(QTextEdit::WidgetWidth);
+
+    ////初始化时显示所有内容
+    //QFontMetrics fontMetrics(this->font());
+    //int currDocHeight = this->document()->blockCount() * fontMetrics.height();
+    //if (currDocHeight < minimumHeight) {
+    //    setFixedHeight(minimumHeight);
+    //}
+    //else if (minimumHeight < currDocHeight && currDocHeight < ZenoStyle::dpiScaled(680)) {
+    //    setFixedHeight(currDocHeight + ZenoStyle::dpiScaled(10));
+    //}
+    //else {
+    //    setFixedHeight(ZenoStyle::dpiScaled(680));
+    //}
+    ////setMinimumHeight(minimumHeight);
 }
 
 QSyntaxStyle* ZCodeEditor::loadStyle(const QString& path)

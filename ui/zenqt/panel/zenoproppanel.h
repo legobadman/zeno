@@ -58,6 +58,7 @@ public slots:
 protected:
     bool eventFilter(QObject* obj, QEvent* event);
     void paintEvent(QPaintEvent* event) override;
+    void resizeEvent(QResizeEvent* e) override;
 
 private slots:
     void onNodeRemoved(QString nodeName);
