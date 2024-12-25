@@ -53,34 +53,19 @@ Qan.GraphView {
         }
     }
 
-    property var tempEdge2: undefined
-
-    Edge {
-        id: tempEdge
-        visible: false
-        point1x: 0
-        point1y: 0
-        point2x: 200
-        point2y: 200
-        color: "#5FD2FF"
-        thickness: 4
-        isFromInput: false
-    }
+    property var tempEdge: undefined
 
     Component {
         id: edgeComponent
         Edge {
-            visible: false
+            visible: true
             color: "#5FD2FF"
             thickness: 4
-
-            // MouseArea {
-            //     anchors.fill: parent
-            // }
         }
     }
 
     MouseArea {
+        //似乎只是为了拿到鼠标坐标，和临时边绑定
         id: graphEditorArea
         anchors.fill: parent
         hoverEnabled: true // 允许捕获鼠标悬停事件，这个很重要，没有这个，那么PositionChanged必须要按下鼠标才触发
@@ -88,50 +73,52 @@ Qan.GraphView {
         onPositionChanged: {
              //var globalPosition = mapToGlobal(mouse.x, mouse.y);
              //console.log("全局鼠标位置:", globalPosition.x, globalPosition.y);
-             mouse.accepted = false; // 让事件继续传播到 C++
+            mouse.accepted = false; // 让事件继续传播到 C++
         }
-
         onPressed: {
-            //console.log("QML MouseArea onPressed");
-            //console.log("mouse = " + graphEditorArea.mouseX + "," + graphEditorArea.mouseY)
-            //var pos = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
-            //console.log("mouse in container = " + pos.x + "," + pos.y)
+            //这个点击无法区分是析构临时边，还是点击了socket，需要针对事件的对象进行处理，比如点击网格是navigable的事件
             mouse.accepted = false;
         }
-
         onReleased: {
-            console.log("QML MouseArea onReleased");
             mouse.accepted = false;
         }
         onClicked:{
-            console.log("QML MouseArea 点击事件");
             mouse.accepted = false;
         }
     }
 
+    onClicked: {
+        if (graphView.tempEdge != undefined && graphView.tempEdge.visible) {
+            graphView.tempEdge.destroy()
+        }
+    }
+
     onNodeSocketClicked: function(node, group, name, socket_pos_in_grid) {
-        console.log("Qan.GraphView: node: " + node.label + ", group: " + group + ", socket_name:" + name + ",socket_pos_grid:" + socket_pos_in_grid)
+        //console.log("Qan.GraphView: node: " + node.label + ", group: " + group + ", socket_name:" + name + ",socket_pos_grid:" + socket_pos_in_grid)
         var pos_ = socket_pos_in_grid
-        if (!graphView.tempEdge2) {
-            graphView.tempEdge2 = edgeComponent.createObject(graphView.containerItem, {})
+        var is_start_to_link = false;
+        if (!graphView.tempEdge) {
+            graphView.tempEdge = edgeComponent.createObject(graphView.containerItem, {})
+            is_start_to_link = true
         }
 
-        if (graphView.tempEdge2.visible == false) {
-            graphView.tempEdge2.point1x = pos_.x
-            graphView.tempEdge2.point1y = pos_.y
-            // graphView.tempEdge2.point2x = pos_.x + 200
-            // graphView.tempEdge2.point2y = pos_.y + 200
-            graphView.tempEdge2.point2x = Qt.binding(function() {
+        if (is_start_to_link) {
+            graphView.tempEdge.point1x = pos_.x
+            graphView.tempEdge.point1y = pos_.y
+            graphView.tempEdge.point2x = Qt.binding(function() {
                                     //console.log("Qt.binding")
                                     var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
                                     return mouseInContainer.x
                                 })
-            graphView.tempEdge2.point2y = Qt.binding(function() {
+            graphView.tempEdge.point2y = Qt.binding(function() {
                                     var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
                                     return mouseInContainer.y
                                 })
-            graphView.tempEdge2.visible = true
-        }  
+            graphView.tempEdge.visible = true
+        } else{
+            //闭合
+            console.log("闭合边")
+        }
     }
 
     graph: Qan.Graph {

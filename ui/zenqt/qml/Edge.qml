@@ -1,5 +1,6 @@
 ﻿import QtQuick 2.15
 import QtQuick.Shapes 1.15
+import zeno.enum 1.0
 
 Shape {
     id: root
@@ -10,6 +11,7 @@ Shape {
     property real point2x
     property real point2y
     property bool isFromInput: false
+    property int sourcegroup: -1
 
     property string nodeId
     property string paramName
@@ -51,14 +53,51 @@ Shape {
         dashPattern: [6/visualWidth, 4/visualWidth]
         capStyle: ShapePath.RoundCap
 
+        //prim output:
+        // PathCubic {
+        //     id: cubic
+        //     property real ctrlPtDist: 60
+        //     x: root.endX
+        //     y: root.endY
+        //     relativeControl1X: ctrlPtDist; 
+        //     relativeControl1Y: 0
+        //     control2X: x - ctrlPtDist; 
+        //     control2Y: y
+        // }
+
+        //object output:
+        // PathCubic {
+        //     id: cubic
+        //     property real ctrlPtDist: 60
+        //     x: root.endX
+        //     y: root.endY
+        //     relativeControl1X: 0; 
+        //     relativeControl1Y: ctrlPtDist
+        //     control2X: x
+        //     control2Y: y - ctrlPtDist
+        // }
+
+        //object input:
+        // PathCubic {
+        //     id: cubic
+        //     property real ctrlPtDist: 60
+        //     x: root.endX
+        //     y: root.endY
+        //     relativeControl1X: x + ctrlPtDist
+        //     relativeControl1Y: y
+        //     control2X: -ctrlPtDist
+        //     control2Y: 0
+        // }
+
+        //prim input:
         PathCubic {
             id: cubic
             property real ctrlPtDist: 60
             x: root.endX
             y: root.endY
-            relativeControl1X: ctrlPtDist; 
+            relativeControl1X: x - ctrlPtDist
             relativeControl1Y: 0
-            control2X: x - ctrlPtDist; 
+            control2X: ctrlPtDist
             control2Y: y
         }
     }

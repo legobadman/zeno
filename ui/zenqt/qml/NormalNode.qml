@@ -76,7 +76,7 @@ Qan.NodeItem {
 
                         onSocketClicked: function() {
                             var globalPosition = input_obj_socket.mapToGlobal(Qt.point(0, 0))
-                            console.log("globalPosition: " + globalPosition.x + "," + globalPosition.y)
+                            //console.log("ObjSocket onSocketClicked")
                             nodeItem.socketClicked(nodeItem, ParamGroup.InputObject, socket_name, globalPosition)
                         }          
                     }
