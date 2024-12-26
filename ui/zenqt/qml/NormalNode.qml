@@ -256,12 +256,22 @@ Qan.NodeItem {
                                         Layout.rightMargin: 10
 
                                         Rectangle {
+                                            id: output_prim_socket
                                             height: parent.height * 0.8
                                             width: height
                                             radius: height / 2
                                             color: "#CCA44E"
                                             x: parent.width + parent.hmargin - width/2.
                                             anchors.verticalCenter: parent.verticalCenter
+                                            
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: function() {
+                                                    var centerpos = Qt.point(output_prim_socket.width / 2, output_prim_socket.height / 2)
+                                                    var globalPosition = output_prim_socket.mapToGlobal(centerpos)
+                                                    nodeItem.socketClicked(nodeItem, ParamGroup.OutputPrimitive, name, globalPosition)
+                                                }
+                                            }
                                         }
                                     }
                             }

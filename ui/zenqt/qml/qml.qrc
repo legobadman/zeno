@@ -81,5 +81,6 @@
         <file>ZPropPanel_Control.qml</file>
         <file>ZPrimSocket.qml</file>
         <file>ZObjSocket.qml</file>
+        <file>EdgesContainer.qml</file>
     </qresource>
 </RCC>

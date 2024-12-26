@@ -198,8 +198,23 @@ Qan.GraphView {
     ToolTip { id: toolTip; timeout: 2500 }
     function notifyUser(message) { toolTip.text=message; toolTip.open() }
 
+    Component {
+        id: edgescomp
+        EdgesContainer {
+
+        }
+    }
+
     Component.onCompleted: {
         navigator.reset_paths()
+
+        var edgesobj = edgescomp.createObject(graphView.containerItem, {
+            "graphModel": graphView.graphModel,
+            "graphView": graphView
+        });
+        if (edgesobj === null) {
+            console.error("Failed to create edges object")
+        }
     }
 
     Component {
