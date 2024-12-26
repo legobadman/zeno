@@ -1133,6 +1133,7 @@ protected:
 
 private:
     GraphModel* m_model;
+    QMap<QString, qan::Node*> m_nodes;
 };
 
 } // ::qan

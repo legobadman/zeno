@@ -74,6 +74,7 @@ Graph::~Graph()
         node->disconnect(node, 0, 0, 0);
     for (const auto edge: get_edges())
         edge->disconnect(edge, 0, 0, 0);
+    m_nodes.clear();
 }
 
 void    Graph::classBegin()
@@ -261,16 +262,34 @@ void Graph::setModel(GraphModel* pGraphM)
 {
     if (!pGraphM)
         return;
+
     //模型不能随意切换，一般来说一个GraphModel唯一对应一个qan::Graph.
     m_model = pGraphM;
     for (int r = 0; r < pGraphM->rowCount(); r++)
     {
         const QModelIndex& idx = pGraphM->index(r, 0);
         //init node.
-        //TODO: delegate?
         qan::Node* pNode = insertNode(idx);
-
+        const QString& uuid = idx.data(ROLE_NODE_UUID_PATH).toString();
+        m_nodes[uuid] = pNode;
     }
+
+    connect(m_model, &GraphModel::rowsAboutToBeRemoved, this, [this](const QModelIndex& parent, int first, int last) {
+        QModelIndex idx = m_model->index(first, 0, parent);
+        const QString& uuid = idx.data(ROLE_NODE_UUID_PATH).toString();
+        if (m_nodes.find(uuid) != m_nodes.end()) {
+            removeNode(m_nodes[uuid]);
+        }
+        else {
+            //ASSERT
+        }
+    });
+    connect(m_model, &GraphModel::rowsInserted, this, [this](const QModelIndex& parent, int first, int last) {
+        QModelIndex idx = m_model->index(first, 0, parent);
+        qan::Node* pNode = insertNode(idx);
+        const QString& uuid = idx.data(ROLE_NODE_UUID_PATH).toString();
+        m_nodes[uuid] = pNode;
+    });
 }
 
 //-----------------------------------------------------------------------------

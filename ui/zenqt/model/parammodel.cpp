@@ -32,12 +32,11 @@ public:
             //两个模型间同步数据了。
             QString paramName = index.data(Qt::DisplayRole).toString(); //目前都规定Display的就是真正的名字
             QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
-            ZASSERT_EXIT(idxparam.isValid(), QVariant());
-            return idxparam.data(role);
+            if (idxparam.isValid()) {
+                return idxparam.data(role);
+            }
         }
-        else {
-            return QStandardItemModel::data(index, role);
-        }
+        return QStandardItemModel::data(index, role);
     }
 
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override {
