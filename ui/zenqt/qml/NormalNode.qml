@@ -46,6 +46,25 @@ Qan.NodeItem {
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
 
+    function getSocketObject(paramName, group) {
+        if (group == ParamGroup.InputObject) {
+            var idx = nodeItem.node.params.indexFromName(paramName, true);
+            var instZObjSock = inputobjparams.itemAt(idx)
+            return instZObjSock;
+        }
+        else if (group == ParamGroup.InputPrimitive) {
+
+        }
+        else if (group == ParamGroup.OutputPrimitive) {
+
+        }
+        else if (group == ParamGroup.OutputObject) {
+            var idx = nodeItem.node.params.indexFromName(paramName, false);
+            var instZObjSock = outputobjparams.itemAt(idx)
+            return instZObjSock
+        }
+    }
+
     ColumnLayout {
         id: mainmain_layout
         spacing: 1

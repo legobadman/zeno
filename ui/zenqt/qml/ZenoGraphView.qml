@@ -100,6 +100,7 @@ Qan.GraphView {
 
     onNodeSocketClicked: function(node, group, name, socket_pos_in_grid) {
         //console.log("Qan.GraphView: node: " + node.label + ", group: " + group + ", socket_name:" + name + ",socket_pos_grid:" + socket_pos_in_grid)
+
         var pos_ = socket_pos_in_grid
         var is_start_to_link = false;
         if (!graphView.tempEdge) {
