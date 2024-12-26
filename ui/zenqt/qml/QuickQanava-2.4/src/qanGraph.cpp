@@ -739,6 +739,16 @@ bool    Graph::removeNode(qan::Node* node, bool force)
 
 int     Graph::getNodeCount() const noexcept { return super_t::get_node_count(); }
 
+qan::Node* Graph::getNode(const QString& uuidpath) const {
+    auto iter = m_nodes.find(uuidpath);
+    if (iter != m_nodes.end()) {
+        return iter.value();
+    }
+    else {
+        return nullptr;
+    }
+}
+
 bool    Graph::hasNode(const qan::Node* node) const { return super_t::contains(node); }
 
 void    Graph::onNodeInserted(qan::Node& node) { Q_UNUSED(node) /* Nil */ }

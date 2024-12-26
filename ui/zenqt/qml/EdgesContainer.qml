@@ -18,6 +18,29 @@ Item {
 
             text: '(' + fromParam[0] + ',' + fromParam[1] + ') -> (' + toParam[0] + ',' + toParam[1] + ')';
             color: root.graphView.resizeHandlerColor
+
+            Component.onCompleted: {
+                var qannode = root.graphView.graph.getNode(fromParam[0]);
+                if (qannode === null) {
+                    console.log("cannot get qannode");
+                }
+                var nodeitem = qannode.item
+                console.log("pos:" + nodeitem.x + "," + nodeitem.y + "  width=" + nodeitem.width + ",height=" + nodeitem.height);
+                console.log("backRadius: " + nodeitem.backRadius)
+                var wtf = nodeitem.findChild("input_obj_socket");
+                console.log("wtf = " + wtf);
+            }
         }
+
+        // delegate: Edge {
+        //     required property var fromParam
+        //     required property var toParam
+
+
+        // }
+    }
+
+    Component.onCompleted: {
+        
     }
 }

@@ -27,7 +27,8 @@ QVariant LinkModel::data(const QModelIndex& index, int role) const
         {
             const auto& info = m_items[index.row()];
             QModelIndex nodeIdx = info.fromParam.data(ROLE_NODEIDX).toModelIndex();
-            const QString& nodeName = nodeIdx.data(ROLE_NODE_NAME).toString();
+            QString nodeName = nodeIdx.data(ROLE_NODE_NAME).toString();
+            nodeName = nodeIdx.data(ROLE_NODE_UUID_PATH).toString();
             const QString& paramName = info.fromParam.data(ROLE_PARAM_NAME).toString();
             return QVariantList{ nodeName, paramName, false};
         }
@@ -35,7 +36,8 @@ QVariant LinkModel::data(const QModelIndex& index, int role) const
         {
             const auto& info = m_items[index.row()];
             QModelIndex nodeIdx = info.toParam.data(ROLE_NODEIDX).toModelIndex();
-            const QString& nodeName = nodeIdx.data(ROLE_NODE_NAME).toString();
+            QString nodeName = nodeIdx.data(ROLE_NODE_NAME).toString();
+            nodeName = nodeIdx.data(ROLE_NODE_UUID_PATH).toString();
             const QString& paramName = info.toParam.data(ROLE_PARAM_NAME).toString();
             return QVariantList{ nodeName, paramName, true };
         }

@@ -378,6 +378,8 @@ public:
     //! Shortcut to gtpo::GenGraph<>::getNodeCount().
     Q_INVOKABLE int         getNodeCount() const noexcept;
 
+    Q_INVOKABLE qan::Node*  getNode(const QString& uuidpath) const;
+
     //! Return true if \c node is registered in graph.
     bool                    hasNode(const qan::Node* node) const;
 
