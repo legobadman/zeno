@@ -75,10 +75,10 @@ Qan.NodeItem {
                         visible: group == ParamGroup.InputObject
 
                         onSocketClicked: function() {
-                            var globalPosition = input_obj_socket.mapToGlobal(Qt.point(0, 0))
-                            //console.log("ObjSocket onSocketClicked")
+                            var centerpos = Qt.point(input_obj_socket.width / 2, input_obj_socket.height / 2)
+                            var globalPosition = input_obj_socket.mapToGlobal(centerpos)
                             nodeItem.socketClicked(nodeItem, ParamGroup.InputObject, socket_name, globalPosition)
-                        }          
+                        }
                     }
             }
 
@@ -217,12 +217,22 @@ Qan.NodeItem {
                                         Layout.leftMargin: hmargin
 
                                         Rectangle {
+                                            id: input_prim_socket
                                             height: parent.height * 0.8
                                             width: height
                                             radius: height / 2
                                             color: "#CCA44E"
                                             x: -parent.hmargin - width/2.
                                             anchors.verticalCenter: parent.verticalCenter
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                onClicked: function() {
+                                                    var centerpos = Qt.point(input_prim_socket.width / 2, input_prim_socket.height / 2)
+                                                    var globalPosition = input_prim_socket.mapToGlobal(centerpos)
+                                                    nodeItem.socketClicked(nodeItem, ParamGroup.InputPrimitive, name, globalPosition)
+                                                }
+                                            }
                                         }
                                     }
                             }
@@ -292,7 +302,8 @@ Qan.NodeItem {
                     bg_color: socket_color
                     visible: group == ParamGroup.OutputObject  //对应代码NodeDataGroup枚举值
                     onSocketClicked: function() {
-                        var globalPosition = output_obj_socket.mapToGlobal(Qt.point(0, 0))
+                        var centerpos = Qt.point(output_obj_socket.width / 2, output_obj_socket.height / 2)
+                        var globalPosition = output_obj_socket.mapToGlobal(centerpos)
                         nodeItem.socketClicked(nodeItem, ParamGroup.OutputObject, socket_name, globalPosition)
                     }
                 }

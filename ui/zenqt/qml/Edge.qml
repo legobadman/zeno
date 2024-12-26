@@ -6,12 +6,12 @@ Shape {
     id: root
 
     //property var edge
-    property real point1x
+    property real point1x       //point1一般是临时边的发起点
     property real point1y
     property real point2x
     property real point2y
     property bool isFromInput: false
-    property int sourcegroup: -1
+    property int p1_group: ParamGroup.InputObject       //point1的group
 
     property string nodeId
     property string paramName
@@ -53,52 +53,71 @@ Shape {
         dashPattern: [6/visualWidth, 4/visualWidth]
         capStyle: ShapePath.RoundCap
 
-        //prim output:
-        // PathCubic {
-        //     id: cubic
-        //     property real ctrlPtDist: 60
-        //     x: root.endX
-        //     y: root.endY
-        //     relativeControl1X: ctrlPtDist; 
-        //     relativeControl1Y: 0
-        //     control2X: x - ctrlPtDist; 
-        //     control2Y: y
-        // }
-
-        //object output:
-        // PathCubic {
-        //     id: cubic
-        //     property real ctrlPtDist: 60
-        //     x: root.endX
-        //     y: root.endY
-        //     relativeControl1X: 0; 
-        //     relativeControl1Y: ctrlPtDist
-        //     control2X: x
-        //     control2Y: y - ctrlPtDist
-        // }
-
-        //object input:
-        // PathCubic {
-        //     id: cubic
-        //     property real ctrlPtDist: 60
-        //     x: root.endX
-        //     y: root.endY
-        //     relativeControl1X: x + ctrlPtDist
-        //     relativeControl1Y: y
-        //     control2X: -ctrlPtDist
-        //     control2Y: 0
-        // }
-
-        //prim input:
         PathCubic {
             id: cubic
             property real ctrlPtDist: 60
             x: root.endX
             y: root.endY
-            relativeControl1X: x - ctrlPtDist
-            relativeControl1Y: 0
-            control2X: ctrlPtDist
-            control2Y: y
+            relativeControl1X: {
+                if (root.p1_group == ParamGroup.InputObject) {
+                    return x + ctrlPtDist;
+                }
+                else if (root.p1_group == ParamGroup.InputPrimitive){
+                    return x - ctrlPtDist;
+                }
+                else if (root.p1_group == ParamGroup.OutputObject){
+                    return 0;
+                }
+                else if (root.p1_group == ParamGroup.OutputPrimitive){
+                    return ctrlPtDist;
+                }
+                return -1;
+            }
+            relativeControl1Y: {
+                if (root.p1_group == ParamGroup.InputObject) {
+                    return y;
+                }
+                else if (root.p1_group == ParamGroup.InputPrimitive){
+                    return 0;
+                }
+                else if (root.p1_group == ParamGroup.OutputObject){
+                    return ctrlPtDist;
+                }
+                else if (root.p1_group == ParamGroup.OutputPrimitive){
+                    return 0;
+                }
+                return -1;
+            }
+            control2X: {
+                if (root.p1_group == ParamGroup.InputObject) {
+                    return -ctrlPtDist;
+                }
+                else if (root.p1_group == ParamGroup.InputPrimitive){
+                    return ctrlPtDist;
+                }
+                else if (root.p1_group == ParamGroup.OutputObject){
+                    return x;
+                }
+                else if (root.p1_group == ParamGroup.OutputPrimitive){
+                    return x - ctrlPtDist;
+                }
+                return -1;
+            }
+            control2Y: {
+                if (root.p1_group == ParamGroup.InputObject) {
+                    return 0;
+                }
+                else if (root.p1_group == ParamGroup.InputPrimitive){
+                    return y;
+                }
+                else if (root.p1_group == ParamGroup.OutputObject){
+                    return y - ctrlPtDist;
+                }
+                else if (root.p1_group == ParamGroup.OutputPrimitive){
+                    return y;
+                }
+                return -1;
+            }
         }
     }
 

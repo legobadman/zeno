@@ -68,7 +68,7 @@ Qan.GraphView {
         //似乎只是为了拿到鼠标坐标，和临时边绑定
         id: graphEditorArea
         anchors.fill: parent
-        hoverEnabled: true // 允许捕获鼠标悬停事件，这个很重要，没有这个，那么PositionChanged必须要按下鼠标才触发
+        hoverEnabled: false // 允许捕获鼠标悬停事件，这个很重要，没有这个，那么PositionChanged必须要按下鼠标才触发，但另一方面这个会filter掉节点组件的Hover事件，所以只能给临时边拿坐标用
 
         onPositionChanged: {
              //var globalPosition = mapToGlobal(mouse.x, mouse.y);
@@ -94,7 +94,7 @@ Qan.GraphView {
     onClicked: {
         if (graphView.tempEdge != undefined && graphView.tempEdge.visible) {
             graphView.tempEdge.destroy()
-            graphEditorArea.hoverEnabled = false
+            graphEditorArea.hoverEnabled = false    //需要把hover置灰，否则节点的hover事件会被editorarea拦截
         }
     }
 
@@ -109,6 +109,7 @@ Qan.GraphView {
         }
 
         if (is_start_to_link) {
+            //初始化临时边
             graphView.tempEdge.point1x = pos_.x
             graphView.tempEdge.point1y = pos_.y
             graphView.tempEdge.point2x = Qt.binding(function() {
@@ -120,12 +121,13 @@ Qan.GraphView {
                                     var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
                                     return mouseInContainer.y
                                 })
+            graphView.tempEdge.p1_group = group
             graphView.tempEdge.visible = true
-        } else{
+        } else {
             //闭合
             console.log("闭合边")
             graphView.tempEdge.destroy()
-            graphEditorArea.hoverEnabled = false
+            graphEditorArea.hoverEnabled = false    //需要把hover置灰，否则节点的hover事件会被editorarea拦截
         }
     }
 
