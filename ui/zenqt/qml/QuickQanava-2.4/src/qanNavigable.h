@@ -343,6 +343,7 @@ protected:
 
 protected:
     bool        _leftButtonPressed = false;
+    bool        _midButtonPressed = false;
     QPointF     _lastPan{};
     //@}
     //-------------------------------------------------------------------------

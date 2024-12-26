@@ -52,7 +52,7 @@ Navigable::Navigable(QQuickItem* parent) :
             this->_containerItem->setHeight(cr.height());
         }
     });
-    setAcceptedMouseButtons(Qt::RightButton | Qt::LeftButton);
+    setAcceptedMouseButtons(Qt::RightButton | Qt::LeftButton | Qt::MidButton);
     setTransformOrigin(TransformOrigin::TopLeft);
 
     _defaultGrid = std::make_unique<qan::Grid>();
@@ -355,7 +355,7 @@ void    Navigable::mouseMoveEvent(QMouseEvent* event)
         QQuickItem::mouseMoveEvent(event);
         return;
     }
-    if (_leftButtonPressed &&               // Left click panning /////////////
+    if (_midButtonPressed &&               // mid button click panning /////////////
         !_lastPan.isNull()) {
         const QPointF delta = _lastPan - event->localPos();
         const auto p = QPointF{_containerItem->x(),
@@ -418,6 +418,12 @@ void    Navigable::mousePressEvent(QMouseEvent* event)
         event->accept();
         return;
     }
+    if (event->button() == Qt::MidButton) {
+        _midButtonPressed = true;
+        _lastPan = event->localPos();
+        event->accept();
+        return;
+    }
     event->ignore();
 }
 
@@ -435,6 +441,7 @@ void    Navigable::mouseReleaseEvent(QMouseEvent* event)
         }
         setDragActive(false);
         _leftButtonPressed = false;
+        _midButtonPressed = false;
 
         _ctrlLeftButtonPressed = false;     // End selection rect resizing
         _selectRectActive = false;
