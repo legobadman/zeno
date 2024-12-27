@@ -98,7 +98,7 @@ Item {
                 id: tree_list
                 icon.source: hovered || checked  ? "qrc:/icons/nodeEditor_nodeTree_selected.svg" : "qrc:/icons/nodeEditor_nodeTree_unselected.svg"
                 checkable: true
-                checked: true
+                checked: false
                 property bool reentry: false
 
                 onClicked: {
@@ -181,6 +181,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             currentIndex: 1
+            visible: false
 
             Rectangle {
                 id: assets_block

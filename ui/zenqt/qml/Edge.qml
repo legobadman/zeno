@@ -27,18 +27,26 @@ Shape {
     signal pressed(var event)
     signal released(var event)
 
-    x: point1x
-    y: point1y
-    width: point2x - point1x
-    height: point2y - point1y
+    x: Math.min(point1x, point2x)
+    y: Math.min(point1y, point2y)
 
-    property real startX: 0
-    property real startY: 0
-    property real endX: width
-    property real endY: height
+    width: Math.abs(point2x - point1x)
+    height: Math.abs(point2y - point1y)
+
+    property real startX: (point1x > point2x) ? width : 0
+    property real startY: (point1y > point2y) ? height : 0
+    property real endX: (point1x > point2x) ? 0 : width
+    property real endY: (point1y > point2y) ? 0 : height
 
     // cause rendering artifacts when enabled (and don't support hot reload really well)
     vendorExtensionsEnabled: false
+
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.color: "red"
+        border.width: 2
+    }
 
     ShapePath {
         id: path

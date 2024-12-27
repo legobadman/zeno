@@ -211,7 +211,8 @@ Qan.GraphView {
 
         var edgesobj = edgescomp.createObject(graphView.containerItem, {
             "graphModel": graphView.graphModel,
-            "graphView": graphView
+            "graphView": graphView,
+            "z": 100
         });
         if (edgesobj === null) {
             console.error("Failed to create edges object")
@@ -293,6 +294,7 @@ Qan.GraphView {
         anchors.bottom: parent.bottom; anchors.bottomMargin: 15
         anchors.right: parent.right; anchors.rightMargin: 15
         property var selectedNode: undefined
+        visible: false
 
         sourceComponent: ZPropPanel {
             id: proppanel
