@@ -5,7 +5,6 @@ import zeno.enum 1.0
 Shape {
     id: root
 
-    //property var edge
     property real point1x       //point1一般是临时边的发起点
     property real point1y
     property real point2x
@@ -123,22 +122,44 @@ Shape {
         }
     }
 
-    /*
     MouseArea {
+        id: mouseArea
         anchors.fill: parent
+
         onClicked: {
-            console.log("edge clicked")
-            root.isSelected = !root.isSelected;
+            const threshold = 20; // 点击检测的阈值
+            console.log("mouseArea. onclicked")
+
+            // 判断鼠标点击点是否接近曲线
+            function isPointCloseToCurve(px, py) {
+                const steps = 10; // 将曲线分成 100 个点
+                for (let t = 0; t <= 1; t += 1 / steps) {
+                    let bx = Math.pow(1 - t, 3) * root.startX +
+                             3 * Math.pow(1 - t, 2) * t * cubic.control1X +
+                             3 * (1 - t) * Math.pow(t, 2) * cubic.control2X +
+                             Math.pow(t, 3) * root.endX;
+
+                    let by = Math.pow(1 - t, 3) * root.startY +
+                             3 * Math.pow(1 - t, 2) * t * cubic.control1Y +
+                             3 * (1 - t) * Math.pow(t, 2) * cubic.control2Y +
+                             Math.pow(t, 3) * root.endY;
+
+                    // console.log("px = " + px + ", py = " + py)
+                    // console.log("bx = " + bx + ", by = " + by)
+                    let distance = Math.sqrt(Math.pow(px - bx, 2) + Math.pow(py - by, 2));
+                    // console.log("distance: " + distance)
+                    if (distance < threshold) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            if (isPointCloseToCurve(mouse.x, mouse.y)) {
+                console.log("曲线被点击！");
+            } else {
+                console.log("点击区域未覆盖曲线");
+            }
         }
     }
-
-    EdgeMouseArea {
-        id: edgeArea
-        anchors.fill: parent
-        curveScale: cubic.ctrlPtDist / root.width  // normalize by width
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        thickness: root.thickness + 4
-        onPressed: root.pressed(arguments[0])   // can't get named args, use arguments array
-        onReleased: root.released(arguments[0])
-    }*/
 }

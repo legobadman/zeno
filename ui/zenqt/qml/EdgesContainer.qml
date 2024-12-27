@@ -26,7 +26,8 @@ Item {
             point2x: 0
             point2y: 0
             p1_group: out_group
-            color: "#4E9EF4"
+            color: fromParam[2] ? "#7D2020" : "#4E9EF4"
+            thickness: 4
 
             Component.onCompleted: {
                 point1x = Qt.binding(function() {
