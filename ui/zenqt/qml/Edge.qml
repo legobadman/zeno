@@ -13,6 +13,8 @@ Shape {
     property bool isFromInput: false
     property int p1_group: ParamGroup.InputObject       //point1的group
 
+    property bool isSelected: false
+
     property string nodeId
     property string paramName
     property bool isMatch: false
@@ -58,70 +60,79 @@ Shape {
             property real ctrlPtDist: 60
             x: root.endX
             y: root.endY
-            relativeControl1X: {
+            control1X: {
                 if (root.p1_group == ParamGroup.InputObject) {
-                    return x + ctrlPtDist;
+                    return path.startX;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
-                    return x - ctrlPtDist;
+                    return path.startX - ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
-                    return 0;
+                    return path.startX;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){
-                    return ctrlPtDist;
+                    return path.startX + ctrlPtDist;
                 }
                 return -1;
             }
-            relativeControl1Y: {
+            control1Y: {
                 if (root.p1_group == ParamGroup.InputObject) {
-                    return y;
+                    return path.startY - ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
-                    return 0;
+                    return path.startY;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
-                    return ctrlPtDist;
+                    return path.startY + ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){
-                    return 0;
+                    return path.startY;
                 }
                 return -1;
             }
             control2X: {
                 if (root.p1_group == ParamGroup.InputObject) {
-                    return -ctrlPtDist;
+                    return root.endX;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
-                    return ctrlPtDist;
+                    return root.endX + ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
-                    return x;
+                    return root.endX;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){
-                    return x - ctrlPtDist;
+                    return root.endX - ctrlPtDist;
                 }
                 return -1;
             }
             control2Y: {
                 if (root.p1_group == ParamGroup.InputObject) {
-                    return 0;
+                    return root.endY + ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
-                    return y;
+                    return root.endY;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
-                    return y - ctrlPtDist;
+                    return root.endY - ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){
-                    return y;
+                    return root.endY;
                 }
                 return -1;
             }
         }
     }
 
-    /*EdgeMouseArea {
+    /*
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            console.log("edge clicked")
+            root.isSelected = !root.isSelected;
+        }
+    }
+
+    EdgeMouseArea {
         id: edgeArea
         anchors.fill: parent
         curveScale: cubic.ctrlPtDist / root.width  // normalize by width

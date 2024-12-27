@@ -24,7 +24,7 @@ Item {
             ToolButton {
                 id: btn_show_prim_sock
                 checkable: true
-                checked: false
+                checked: model.data(mindex, 275)    //ROLE_PARAM_SOCKET_VISIBLE
                 property bool reentry: false
                 icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
 

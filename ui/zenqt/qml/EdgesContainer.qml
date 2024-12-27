@@ -17,17 +17,24 @@ Item {
             required property var fromParam
             required property var toParam
 
+            property int out_group: fromParam[2] ? ParamGroup.OutputObject : ParamGroup.OutputPrimitive
+            property int in_group: toParam[2] ? ParamGroup.InputObject : ParamGroup.InputPrimitive
+
             visible: true
             point1x: 0
             point1y: 0
             point2x: 0
             point2y: 0
+            p1_group: out_group
             color: "#4E9EF4"
 
             Component.onCompleted: {
                 point1x = Qt.binding(function() {
-                    var out_nodeitem = root.graphView.graph.getNode(fromParam[0]).item
-                    var out_sockitem = out_nodeitem.getSocketObject(fromParam[1], ParamGroup.OutputObject)
+                    var out_node_uuidpath = fromParam[0]
+                    var out_nodeitem = root.graphView.graph.getNode(out_node_uuidpath).item
+
+                    var out_sock_name = fromParam[1]
+                    var out_sockitem = out_nodeitem.getSocketObject(out_sock_name, out_group)
                     var outsock_pos_in_grid = root.graphView.containerItem.mapFromGlobal(out_sockitem.mapToGlobal(Qt.point(out_sockitem.width/2, out_sockitem.height/2)))
 
                     out_nodeitem.x
@@ -39,7 +46,7 @@ Item {
 
                 point1y = Qt.binding(function() {
                     var out_nodeitem = root.graphView.graph.getNode(fromParam[0]).item
-                    var out_sockitem = out_nodeitem.getSocketObject(fromParam[1], ParamGroup.OutputObject)
+                    var out_sockitem = out_nodeitem.getSocketObject(fromParam[1], out_group)
                     var outsock_pos_in_grid = root.graphView.containerItem.mapFromGlobal(out_sockitem.mapToGlobal(Qt.point(out_sockitem.width/2, out_sockitem.height/2)))
                     
                     out_nodeitem.x
@@ -51,7 +58,7 @@ Item {
 
                 point2x = Qt.binding(function() {
                     var in_nodeitem = root.graphView.graph.getNode(toParam[0]).item
-                    var in_sockitem = in_nodeitem.getSocketObject(toParam[1], ParamGroup.InputObject);
+                    var in_sockitem = in_nodeitem.getSocketObject(toParam[1], in_group);
                     var insock_pos_in_grid = root.graphView.containerItem.mapFromGlobal(in_sockitem.mapToGlobal(Qt.point(in_sockitem.width/2, in_sockitem.height/2)))
 
                     in_nodeitem.x
@@ -63,7 +70,7 @@ Item {
 
                 point2y = Qt.binding(function() {
                     var in_nodeitem = root.graphView.graph.getNode(toParam[0]).item
-                    var in_sockitem = in_nodeitem.getSocketObject(toParam[1], ParamGroup.InputObject);
+                    var in_sockitem = in_nodeitem.getSocketObject(toParam[1], in_group);
                     var insock_pos_in_grid = root.graphView.containerItem.mapFromGlobal(in_sockitem.mapToGlobal(Qt.point(in_sockitem.width/2, in_sockitem.height/2)))
 
                     in_nodeitem.x
