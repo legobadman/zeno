@@ -26,14 +26,32 @@ public:
     Q_PROPERTY(bool showPrimSocks READ getShowPrimSocks WRITE setShowPrimSocks NOTIFY showPrimSocks_changed)
     
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
+        //涉及到具体参数的自定义role组别的数据，一律到本model去取，避免冗长而麻烦的两端同步数据，让tree uimodel顶多存一个显示的名字和ui布局。
+        //然而，如果走的是QStandardItem->data，它就没法走到这里，不过qml代码没法这么操作，所以widget的情况只能手动在两个模型间同步数据了。
+        //但考虑到后面推行quick，而quick不能用standarditem，所以这样做受益
+
         if (role > Qt::UserRole) {
-            //一律到本parammodel去取，避免冗长而麻烦的两端同步数据，让tree uimodel顶多存一个显示的名字和ui布局。
-            //然而，如果走的是QStandardItem->data，它就没法走到这里，不过qml代码没法这么操作，所以widget的情况只能手动在
-            //两个模型间同步数据了。
-            QString paramName = index.data(Qt::DisplayRole).toString(); //目前都规定Display的就是真正的名字
-            QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
-            if (idxparam.isValid()) {
-                return idxparam.data(role);
+            //一律到本parammodel去取，，让tree uimodel顶多存一个显示的名字和ui布局。
+            QStandardItem* pItem = this->itemFromIndex(index);
+            QString paramName = pItem->text(); //目前都规定Display的就是真正的名字
+            QVariant varGroup = pItem->data(ROLE_PARAM_GROUP);
+            if (!varGroup.isNull() && varGroup.canConvert<int>()) {
+                bool bOk = false;
+                zeno::NodeDataGroup group = (zeno::NodeDataGroup)varGroup.toInt(&bOk);
+                if (bOk) {
+                    if (group == zeno::Role_InputObject || group == zeno::Role_InputPrimitive) {
+                        QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
+                        if (idxparam.isValid()) {
+                            return idxparam.data(role);
+                        }
+                    }
+                    else if (group == zeno::Role_OutputObject || group == zeno::Role_OutputPrimitive) {
+                        QModelIndex idxparam = m_baseM->paramIdx(paramName, false);
+                        if (idxparam.isValid()) {
+                            return idxparam.data(role);
+                        }
+                    }
+                }
             }
         }
         return QStandardItemModel::data(index, role);
@@ -41,14 +59,29 @@ public:
 
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override {
         if (role > Qt::UserRole) {
-            QString paramName = index.data(Qt::DisplayRole).toString(); //目前都规定Display的就是真正的名字
-            QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
-            ZASSERT_EXIT(idxparam.isValid(), false);
-            return m_baseM->setData(idxparam, value, role);
+            QStandardItem* pItem = this->itemFromIndex(index);
+            QString paramName = pItem->text(); //目前都规定Display的就是真正的名字
+            QVariant varGroup = pItem->data(ROLE_PARAM_GROUP);
+            if (!varGroup.isNull() && varGroup.canConvert<int>()) {
+                bool bOk = false;
+                zeno::NodeDataGroup group = (zeno::NodeDataGroup)varGroup.toInt(&bOk);
+                if (bOk) {
+                    if (group == zeno::Role_InputObject || group == zeno::Role_InputPrimitive) {
+                        QModelIndex idxparam = m_baseM->paramIdx(paramName, true);
+                        if (idxparam.isValid()) {
+                            return m_baseM->setData(idxparam, value, role);
+                        }
+                    }
+                    else if (group == zeno::Role_OutputObject || group == zeno::Role_OutputPrimitive) {
+                        QModelIndex idxparam = m_baseM->paramIdx(paramName, false);
+                        if (idxparam.isValid()) {
+                            return m_baseM->setData(idxparam, value, role);
+                        }
+                    }
+                }
+            }
         }
-        else {
-            return QStandardItemModel::setData(index, value, role);
-        }
+        return QStandardItemModel::setData(index, value, role);
     }
 
 
@@ -307,10 +340,6 @@ QStandardItemModel* ParamsModel::constructProxyModel()
 {
     QStandardItemModel* pModel = new CustomUIProxyModel(this);
     connect(pModel, &QStandardItemModel::dataChanged, [=](const QModelIndex& topLeft, const QModelIndex&, const QVector<int>& roles) {
-        bool bInput = topLeft.data(ROLE_ISINPUT).toBool();
-        if (!bInput)
-            return;
-
         for (int role : roles)
         {
             //if (role != ROLE_PARAM_VALUE)

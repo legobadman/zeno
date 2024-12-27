@@ -33,6 +33,7 @@ Pane {
             anchors.fill: parent
             property var treemodel: comp.node ? comp.node.params.customParamModel() : undefined
             property var tabsindex: treemodel ? treemodel.index(0, 0) : undefined
+            property var outputsindex: treemodel ? treemodel.index(1, 0) : undefined
 
             ColumnLayout {
                 id: tablayout
@@ -80,6 +81,26 @@ Pane {
                             }
                         }
                     }
+                }
+
+                //输出的prim类型的参数组，主要是为了让用户勾选显示/隐藏输出socket.
+                ZPropPanel_Group {
+                    id: propGroup
+                    height: implicitHeight
+                    Behavior on height {
+                        NumberAnimation {
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+                    //Behavior on height { NumberAnimation { duration: 200 } }
+
+                    clip: true
+
+                    Layout.fillWidth: true
+                    model: base_tabview.treemodel
+                    parentIndex: outputsindex
+                    childCount: base_tabview.treemodel.rowCount(outputsindex)
+                    visible: childCount > 0
                 }
             }
         }
