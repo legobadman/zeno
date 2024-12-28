@@ -116,11 +116,12 @@ Qan.GraphView {
             graphView.tempEdge.point2x = Qt.binding(function() {
                                     //console.log("Qt.binding")
                                     var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
-                                    return mouseInContainer.x
+                                    //留一定的空隙，否则在释放的时候会触发临时边的鼠标事件
+                                    return mouseInContainer.x - 3
                                 })
             graphView.tempEdge.point2y = Qt.binding(function() {
                                     var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
-                                    return mouseInContainer.y
+                                    return mouseInContainer.y - 3
                                 })
             graphView.tempEdge.p1_group = group
             graphView.tempEdge.visible = true

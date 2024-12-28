@@ -369,8 +369,7 @@ void    Navigable::mouseMoveEvent(QMouseEvent* event)
         setDragActive(true);
 
         updateGrid();
-    } else if (_selectionRectItem != nullptr &&
-               _ctrlLeftButtonPressed) {    // Ctrl+Left click selection //////
+    } else if (_selectionRectItem != nullptr) {
         const auto& p = event->localPos();
         _selectionRectItem->setX(std::min(p.x(), _startSelectRect.x()));
         _selectionRectItem->setY(std::min(p.y(), _startSelectRect.y()));
@@ -380,6 +379,7 @@ void    Navigable::mouseMoveEvent(QMouseEvent* event)
         const auto selectionRect = mapRectToItem(_containerItem,
                                                  QRectF{_selectionRectItem->x(), _selectionRectItem->y(),
                                                         _selectionRectItem->width(), _selectionRectItem->height()});
+        _selectRectActive = true;
         selectionRectActivated(selectionRect);
     }
     QQuickItem::mouseMoveEvent(event);
@@ -392,8 +392,13 @@ void    Navigable::mousePressEvent(QMouseEvent* event)
         return;
     }
     if (event->button() == Qt::LeftButton) {
-        if (getSelectionRectEnabled() &&
-            event->modifiers() == Qt::ControlModifier) {
+        _leftButtonPressed = true;
+        _lastPan = event->localPos();
+        if (event->modifiers() != Qt::ControlModifier) {
+            navigableClicked(event->localPos());
+        }
+
+        if (getSelectionRectEnabled()) {
             _ctrlLeftButtonPressed = true;          // SELECT = Left button + CTRL //////
             _lastSelectRect = event->localPos();
             _startSelectRect = event->localPos();
@@ -403,13 +408,10 @@ void    Navigable::mousePressEvent(QMouseEvent* event)
                 _selectionRectItem->setWidth(1.);
                 _selectionRectItem->setHeight(1.);
                 _selectionRectItem->setVisible(true);
-                _selectRectActive = true;
             }
             event->accept();
             return;
         } else {
-            _leftButtonPressed = true;              // PAN = Left button ////////////////
-            _lastPan = event->localPos();
             event->accept();
             return;
         }
@@ -430,11 +432,8 @@ void    Navigable::mousePressEvent(QMouseEvent* event)
 void    Navigable::mouseReleaseEvent(QMouseEvent* event)
 {
     if (getNavigable()) {
-        if (event->button() == Qt::LeftButton &&
-            !_dragActive &&
-            !_selectRectActive) {       // Do not emit clicked when dragging occurs
+        if (event->button() == Qt::LeftButton && !_dragActive) {
             emit clicked(event->localPos());
-            navigableClicked(event->localPos());
         } else if (event->button() == Qt::RightButton) {
             emit rightClicked(event->localPos());
             navigableRightClicked(event->localPos());
