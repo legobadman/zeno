@@ -212,8 +212,7 @@ Qan.GraphView {
 
         var edgesobj = edgescomp.createObject(graphView.containerItem, {
             "graphModel": graphView.graphModel,
-            "graphView": graphView,
-            "z": 100
+            "graphView": graphView
         });
         if (edgesobj === null) {
             console.error("Failed to create edges object")
