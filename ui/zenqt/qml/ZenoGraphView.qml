@@ -37,7 +37,11 @@ Qan.GraphView {
     property variant graphModel
     navigable   : true
     resizeHandlerColor: "#03a9f4"       // SAMPLE: Set resize handler color to blue for 'resizable' nodes
-    gridThickColor: Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
+    gridThickColor: Qt.rgba(34/255, 34/255, 34/255, 1.0)// Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
+    grid: null
+
+    //internal property:
+    property var edgesobj
 
     signal navigateRequest(var lst)
     signal nodeClicked(var node)
@@ -54,6 +58,12 @@ Qan.GraphView {
     }
 
     property var tempEdge: undefined
+
+    Rectangle {
+        anchors.fill: parent
+        color: Qt.rgba(48/255, 48/255, 48/255, 1)
+        z: -10
+    }
 
     Component {
         id: edgeComponent
@@ -92,10 +102,19 @@ Qan.GraphView {
     }
 
     onClicked: {
+        //console.log("Graphview.onClicked")
         if (graphView.tempEdge != undefined && graphView.tempEdge.visible) {
             graphView.tempEdge.destroy()
             graphEditorArea.hoverEnabled = false    //需要把hover置灰，否则节点的hover事件会被editorarea拦截
         }
+        edgesobj.clear_selection()
+    }
+
+    onRightClicked: function(pos) {
+        //console.log("rightclick: " + pos.x + "," + pos.y)
+        contextMenu.x = pos.x
+        contextMenu.y = pos.y
+        contextMenu.open()
     }
 
     onNodeSocketClicked: function(node, group, name, socket_pos_in_grid) {
@@ -190,13 +209,6 @@ Qan.GraphView {
         }
     } // Menu
 
-    onRightClicked: function(pos) {
-        //console.log("rightclick: " + pos.x + "," + pos.y)
-        contextMenu.x = pos.x
-        contextMenu.y = pos.y
-        contextMenu.open()
-    }
-
     ToolTip { id: toolTip; timeout: 2500 }
     function notifyUser(message) { toolTip.text=message; toolTip.open() }
 
@@ -210,7 +222,7 @@ Qan.GraphView {
     Component.onCompleted: {
         navigator.reset_paths()
 
-        var edgesobj = edgescomp.createObject(graphView.containerItem, {
+        edgesobj = edgescomp.createObject(graphView.containerItem, {
             "graphModel": graphView.graphModel,
             "graphView": graphView
         });
@@ -223,7 +235,7 @@ Qan.GraphView {
         id: myNavigator
         Text {
             id: navigatoritem
-            color: "#000000"
+            color: Qt.rgba(125/255, 125/255, 125/255, 1)
             font.pixelSize: 20
             font.family: "微软雅黑"
             signal graphitemClicked(int idx)
@@ -240,7 +252,7 @@ Qan.GraphView {
                     parent.font.underline = true;
                 }
                 onExited: {
-                    parent.color = "#000000"
+                    parent.color =  Qt.rgba(125/255, 125/255, 125/255, 1)
                     parent.font.underline = false;
                 }
             }

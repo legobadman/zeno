@@ -19,13 +19,17 @@ Shape {
     property bool isMatch: false
 
     property alias thickness: path.strokeWidth
-    property alias color: path.strokeColor
+
+    property color color: Qt.rgba(192/255, 36/255, 36/255, 0.6)
+    property color color_hover: "#FFFFFF"
+    property color color_selected: Qt.rgba(250/255, 100/255, 0, 1.0)
+
 
     // BUG: edgeArea is destroyed before path, need to test if not null to avoid warnings
     //readonly property bool containsMouse: edgeArea && edgeArea.containsMouse
 
-    signal pressed(var event)
-    signal released(var event)
+    signal clicked
+    signal clicked_outof_curve
 
     x: Math.min(point1x, point2x)
     y: Math.min(point1y, point2y)
@@ -42,10 +46,11 @@ Shape {
     vendorExtensionsEnabled: false
 
     Rectangle {
+        //用于调试点击测试区域
         anchors.fill: parent
         color: "transparent"
-        border.color: "red"
-        border.width: 2
+        // border.color: "red"
+        // border.width: 2
     }
 
     ShapePath {
@@ -53,7 +58,7 @@ Shape {
         startX: root.startX
         startY: root.startY
         fillColor: "transparent"
-        strokeColor: "#4E9EF4"
+        strokeColor: root.isSelected ? root.color_selected : root.color
         //strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
         strokeStyle: ShapePath.SolidLine
         strokeWidth: 4
@@ -136,7 +141,6 @@ Shape {
 
         onClicked: {
             const threshold = 20; // 点击检测的阈值
-            console.log("mouseArea. onclicked")
 
             // 判断鼠标点击点是否接近曲线
             function isPointCloseToCurve(px, py) {
@@ -164,9 +168,11 @@ Shape {
             }
 
             if (isPointCloseToCurve(mouse.x, mouse.y)) {
-                console.log("曲线被点击！");
+                // console.log("曲线被点击！");
+                root.clicked()
             } else {
-                console.log("点击区域未覆盖曲线");
+                // console.log("点击区域未覆盖曲线");
+                root.clicked_outof_curve()
             }
         }
     }

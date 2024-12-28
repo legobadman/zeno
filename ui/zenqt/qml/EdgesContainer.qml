@@ -9,11 +9,20 @@ Item {
     id: root
     property var graphModel: undefined
     property var graphView: undefined
+    property var selected_edge: undefined
+
+    function clear_selection() {
+        if (selected_edge != null) {
+            selected_edge.isSelected = false
+            selected_edge = null
+        }
+    }
 
     Repeater {
         model: root.graphModel.getLinkModel()
  
         delegate: Edge {
+            id: current_edge
             required property var fromParam
             required property var toParam
 
@@ -26,8 +35,28 @@ Item {
             point2x: 0
             point2y: 0
             p1_group: out_group
-            color: fromParam[2] ? "#7D2020" : "#4E9EF4"
+            //color: fromParam[2] ? "#7D2020" : "#4E9EF4"
+            property color color: Qt.rgba(192/255, 36/255, 36/255, 0.6)
+            property color color_hover: "#FFFFFF"
+            property color color_selected: Qt.rgba(250/255, 100/255, 0, 1.0)
+
             thickness: 4
+
+            onClicked: function () {
+                if (root.selected_edge && root.selected_edge != current_edge) {
+                    root.selected_edge.isSelected = false
+                }
+                root.selected_edge = current_edge
+                root.selected_edge.isSelected = true
+            }
+
+            onClicked_outof_curve: function () {
+                if (root.selected_edge) {
+                    root.selected_edge.isSelected = current_edge.isSelected = false
+                    root.selected_edge = null
+                }
+                current_edge.isSelected = false
+            }
 
             Component.onCompleted: {
                 point1x = Qt.binding(function() {
