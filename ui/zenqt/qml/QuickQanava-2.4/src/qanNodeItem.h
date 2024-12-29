@@ -172,6 +172,7 @@ signals:
     void            selectableChanged();
     void            selectedChanged();
     void            selectionItemChanged();
+    void            dataChanged(const QVariant& data, int role);
 
 protected slots:
     virtual void    onWidthChanged();

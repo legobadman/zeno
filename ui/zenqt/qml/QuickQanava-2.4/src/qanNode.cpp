@@ -52,16 +52,6 @@ Node::Node(QModelIndex idx, QObject* parent)
     , m_index(idx)
 {
     Q_UNUSED(parent)
-
-    // Bind in/out nodes model lengthChanged() signal to in/ou degree modified signal.
-    const auto inNodesModel = get_in_nodes().model();
-    if (inNodesModel != nullptr)
-        connect( inNodesModel, &qcm::ContainerModel::lengthChanged,
-                 this,         &qan::Node::inDegreeChanged);
-    const auto outNodesModel = get_out_nodes().model();
-    if (outNodesModel != nullptr)
-        connect( outNodesModel, &qcm::ContainerModel::lengthChanged,
-                 this,          &qan::Node::outDegreeChanged);
 }
 
 Node::~Node()
@@ -188,6 +178,10 @@ QString Node::getLabel() const {
 ParamsModel* Node::getParamsModel() const {
     ParamsModel* viewParams = QVariantPtr<ParamsModel>::asPtr(m_index.data(ROLE_PARAMS));
     return viewParams;
+}
+
+QPersistentModelIndex Node::getIndex() const {
+    return m_index;
 }
 
 bool    Node::setIsProtected(bool isProtected)

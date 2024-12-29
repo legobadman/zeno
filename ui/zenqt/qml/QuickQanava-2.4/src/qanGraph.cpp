@@ -50,6 +50,7 @@
 #include "./qanGroup.h"
 #include "./qanGroupItem.h"
 #include "./qanConnector.h"
+#include "zassert.h"
 
 namespace qan { // ::qan
 
@@ -320,6 +321,13 @@ void Graph::setModel(GraphModel* pGraphM)
         qan::Node* pNode = insertNode(idx);
         const QString& uuid = idx.data(ROLE_NODE_UUID_PATH).toString();
         m_nodes[uuid] = pNode;
+    });
+    connect(m_model, &GraphModel::dataChanged, this, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+        const QString& uuid = topLeft.data(ROLE_NODE_UUID_PATH).toString();
+        ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end());
+        int role = roles[0];
+        const QVariant& dat = topLeft.data(role);
+        m_nodes[uuid]->getItem()->dataChanged(dat, role);
     });
 }
 

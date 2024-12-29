@@ -38,8 +38,8 @@ Qan.GraphView {
     property variant graphModel
     navigable   : true
     resizeHandlerColor: "#03a9f4"       // SAMPLE: Set resize handler color to blue for 'resizable' nodes
-    gridThickColor: Qt.rgba(34/255, 34/255, 34/255, 1.0)// Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
-    grid: null
+    gridThickColor: Qt.rgba(46/255, 46/255, 46/255, 1.0)// Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
+    //grid: null
 
     //internal property:
     property var edgesobj

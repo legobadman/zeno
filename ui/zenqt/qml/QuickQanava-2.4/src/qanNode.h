@@ -175,6 +175,9 @@ public:
     Q_PROPERTY(ParamsModel* params READ getParamsModel CONSTANT FINAL)
     ParamsModel* getParamsModel() const;
 
+    Q_PROPERTY(QPersistentModelIndex index READ getIndex CONSTANT FINAL)
+    QPersistentModelIndex getIndex() const;
+
 private:
     QString         _label = "";
     QPersistentModelIndex m_index;

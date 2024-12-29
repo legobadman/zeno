@@ -364,4 +364,17 @@ Qan.NodeItem {
             }
         }
     }
+
+    Component.onCompleted: {
+        //初始化位置:
+        var graphM = nodeItem.graph.model;
+        var idx = nodeItem.node.index;
+        var nodename = graphM.data(idx, 257)   //ROLE_NODE_NAME
+
+        var pos = graphM.data(idx, 288);       //ROLE_OBJPOS
+        nodeItem.x = pos.x
+        nodeItem.y = pos.y
+
+        console.log("node " + nodename + " has been inited")
+    }
 }
