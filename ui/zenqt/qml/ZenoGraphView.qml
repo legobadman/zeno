@@ -31,6 +31,7 @@ import QtQuick.Layouts           1.3
 
 import QuickQanava 2.0 as Qan
 import "qrc:/QuickQanava" as Qan
+import zeno.enum 1.0
 
 Qan.GraphView {
     id: graphView
@@ -59,9 +60,10 @@ Qan.GraphView {
 
     property var tempEdge: undefined
 
+    //background
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(48/255, 48/255, 48/255, 1)
+        color: Qt.rgba(31/255, 31/255, 31/255, 1)
         z: -10
     }
 
@@ -71,42 +73,32 @@ Qan.GraphView {
             visible: true
             color: "#5FD2FF"
             thickness: 4
+
+            onClicked_outof_curve: function () {
+                graphView.clear_temp_edge()
+            }
+            onClicked: function () {
+                //临时边可能会点击到自身的鼠标区域，如果不被别的socket捕获，就认为是点击grid
+                graphView.clear_temp_edge()             
+            }
         }
     }
 
-    MouseArea {
-        //似乎只是为了拿到鼠标坐标，和临时边绑定
-        id: graphEditorArea
-        anchors.fill: parent
-        hoverEnabled: false // 允许捕获鼠标悬停事件，这个很重要，没有这个，那么PositionChanged必须要按下鼠标才触发，但另一方面这个会filter掉节点组件的Hover事件，所以只能给临时边拿坐标用
+    function clear_temp_edge() {
+        if (graphView.tempEdge != undefined && graphView.tempEdge.visible) {
+            graphView.tempEdge.destroy()
+            graphView.tryconnect = false
+        }        
+    }
 
-        onPositionChanged: {
-             //var globalPosition = mapToGlobal(mouse.x, mouse.y);
-             //console.log("全局鼠标位置:", globalPosition.x, globalPosition.y);
-            mouse.accepted = false; // 让事件继续传播到 C++
-        }
-        onPressed: {
-            //这个点击无法区分是析构临时边，还是点击了socket，需要针对事件的对象进行处理，比如点击网格是navigable的事件
-            mouse.accepted = false;
-        }
-        onReleased: {
-            mouse.accepted = false;
-        }
-        onClicked:{
-            mouse.accepted = false;
-        }
-        onEntered:{
-        }
-        onExited:{
-        }
+    function invalide_edgearea_clicked() {
+        console.log("invalide_edgearea_clicked")
+        clear_temp_edge()
     }
 
     onClicked: {
         //console.log("Graphview.onClicked")
-        if (graphView.tempEdge != undefined && graphView.tempEdge.visible) {
-            graphView.tempEdge.destroy()
-            graphEditorArea.hoverEnabled = false    //需要把hover置灰，否则节点的hover事件会被editorarea拦截
-        }
+        clear_temp_edge()
         edgesobj.clear_selection()
     }
 
@@ -117,6 +109,46 @@ Qan.GraphView {
         contextMenu.open()
     }
 
+    onHoverInfoChanged: function() {
+        var nodeitem = graphView.hoverInfo["node"]
+        var hoverpos = graphView.hoverInfo["pos"]
+
+        if (nodeitem) {
+            //console.log("hover node: " + nodeitem.node.label)
+        }
+        if (nodeitem == null) {
+            //console.log("no nodeitem hover")
+            graphView.tempEdge.point2x = hoverpos.x
+            graphView.tempEdge.point2y = hoverpos.y            
+            return
+        }
+
+        var nearest_sock = null
+        var p1_group = graphView.tempEdge.p1_group
+        if (p1_group == ParamGroup.InputObject) {
+            nearest_sock = nodeitem.getNearestSocket(ParamGroup.OutputObject, hoverpos)
+        }
+        else if (p1_group == ParamGroup.InputPrimitive) {
+
+        }
+        else if (p1_group == ParamGroup.OutputPrimitive) {
+
+        }
+        else if (p1_group == ParamGroup.OutputObject) {
+            nearest_sock = nodeitem.getNearestSocket(ParamGroup.InputObject, hoverpos)
+        }
+
+        if (nearest_sock) {
+            var sock_pos_in_grid = graphView.containerItem.mapFromGlobal(nearest_sock.mapToGlobal(Qt.point(nearest_sock.width/2, nearest_sock.height/2)))
+            graphView.tempEdge.point2x = sock_pos_in_grid.x
+            graphView.tempEdge.point2y = sock_pos_in_grid.y
+        }
+        else{
+            graphView.tempEdge.point2x = hoverpos.x
+            graphView.tempEdge.point2y = hoverpos.y
+        }
+    }
+
     onNodeSocketClicked: function(node, group, name, socket_pos_in_grid) {
         //console.log("Qan.GraphView: node: " + node.label + ", group: " + group + ", socket_name:" + name + ",socket_pos_grid:" + socket_pos_in_grid)
 
@@ -124,7 +156,6 @@ Qan.GraphView {
         var is_start_to_link = false;
         if (!graphView.tempEdge) {
             graphView.tempEdge = edgeComponent.createObject(graphView.containerItem, {})
-            graphEditorArea.hoverEnabled = true
             is_start_to_link = true
         }
 
@@ -132,23 +163,13 @@ Qan.GraphView {
             //初始化临时边
             graphView.tempEdge.point1x = pos_.x
             graphView.tempEdge.point1y = pos_.y
-            graphView.tempEdge.point2x = Qt.binding(function() {
-                                    //console.log("Qt.binding")
-                                    var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
-                                    //留一定的空隙，否则在释放的时候会触发临时边的鼠标事件
-                                    return mouseInContainer.x - 3
-                                })
-            graphView.tempEdge.point2y = Qt.binding(function() {
-                                    var mouseInContainer = graphView.containerItem.mapFromItem(graphView, Qt.point(graphEditorArea.mouseX, graphEditorArea.mouseY))
-                                    return mouseInContainer.y - 3
-                                })
             graphView.tempEdge.p1_group = group
             graphView.tempEdge.visible = true
+            graphView.tryconnect = true
         } else {
             //闭合
-            console.log("闭合边")
-            graphView.tempEdge.destroy()
-            graphEditorArea.hoverEnabled = false    //需要把hover置灰，否则节点的hover事件会被editorarea拦截
+            //console.log("闭合边")
+            clear_temp_edge()
         }
     }
 
@@ -157,6 +178,7 @@ Qan.GraphView {
         id: graph
         model: graphView.graphModel
         nodeDelegate: Qt.createComponent("qrc:/NormalNode.qml")
+        selectionColor: Qt.rgba(250/255, 100/255, 0, 1.0)
 
         Component.onCompleted: {
             //graph.model.name()
@@ -215,7 +237,9 @@ Qan.GraphView {
     Component {
         id: edgescomp
         EdgesContainer {
-
+            onInvalidarea_clicked: function() {
+                graphView.invalide_edgearea_clicked();
+            }
         }
     }
 

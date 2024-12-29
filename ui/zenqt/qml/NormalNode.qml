@@ -46,6 +46,20 @@ Qan.NodeItem {
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
 
+    function getNearestSocket(group, pos) {
+        if (group == ParamGroup.InputObject) {
+            var instZObjSock = inputobjparams.itemAt(0)
+            return instZObjSock;            
+        } else if (group == ParamGroup.InputPrimitive) {
+
+        } else if (group == ParamGroup.OutputPrimitive) {
+
+        } else if (group == ParamGroup.OutputObject) {
+            var instZObjSock = outputobjparams.itemAt(0)
+            return instZObjSock;
+        }
+    }
+
     function getSocketObject(paramName, group) {
         if (group == ParamGroup.InputObject) {
             var idx = nodeItem.node.params.indexFromName(paramName, true);

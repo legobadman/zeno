@@ -71,6 +71,24 @@ private:
 signals:
     void                    graphChanged();
 
+public:
+    Q_PROPERTY(bool tryconnect READ getTryConnect WRITE setTryConnect NOTIFY tryConnectChanged FINAL)
+    void setTryConnect(bool bOn) { _tryconnect = bOn; }
+    bool getTryConnect() const noexcept { return _tryconnect; }
+private:
+    bool _tryconnect = false;
+signals:
+    void tryConnectChanged();
+
+public:
+    Q_PROPERTY(QVariant hoverInfo READ getHoverInfo NOTIFY hoverInfoChanged)
+    QVariant getHoverInfo();
+private:
+    QPointF _hoverpos;
+    qan::NodeItem* _hoverNode = nullptr;
+signals:
+    void hoverInfoChanged();
+
 protected:
     //! Called when the mouse is clicked in the container (base implementation empty).
     virtual void    navigableClicked(QPointF pos) override;
@@ -101,7 +119,7 @@ signals:
     //@}
     //-------------------------------------------------------------------------
     void            nodeSocketClicked(qan::Node* node, int group, QString socket_name, QPointF globalPos);
-
+    void            nodeHovered(qan::Node* node);
 
     /*! \name Selection Rectangle Management *///------------------------------
     //@{
@@ -116,6 +134,7 @@ private:
 
 protected:
     virtual void    keyPressEvent(QKeyEvent *event) override;
+    virtual void    hoverMoveEvent(QHoverEvent* event) override;
     //@}
     //-------------------------------------------------------------------------
 };

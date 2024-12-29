@@ -49,6 +49,7 @@ GraphView::GraphView(QQuickItem* parent) :
     setAntialiasing(true);
     setSmooth(true);
     setFocus(true);
+    setAcceptHoverEvents(true);
 }
 
 void    GraphView::setGraph(qan::Graph* graph)
@@ -176,6 +177,30 @@ void    GraphView::selectionRectActivated(const QRectF& rect)
 void    GraphView::selectionRectEnd()
 {
     _selectedItems.clear();  // Clear selection cache
+}
+
+QVariant GraphView::getHoverInfo()
+{
+    QVariantMap map;
+    //QPointF gridpos = getContainerItem()->mapFromItem(this, _hoverpos);
+    map["pos"] = _hoverpos;
+    map["node"] = QVariant::fromValue(_hoverNode);
+    return map;
+}
+
+void    GraphView::hoverMoveEvent(QHoverEvent* event)
+{
+    if (_tryconnect) {
+        QPoint pt = event->pos();
+        _hoverpos = getContainerItem()->mapFromItem(this, pt);
+        _hoverNode = _graph->nodeItemAt(pt.x(), pt.y());
+        emit hoverInfoChanged();
+    }
+    else {
+        _hoverpos = QPointF();
+        _hoverNode = nullptr;
+    }
+    qan::Navigable::hoverMoveEvent(event);
 }
 
 void    GraphView::keyPressEvent(QKeyEvent *event)

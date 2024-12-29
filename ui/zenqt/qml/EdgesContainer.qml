@@ -11,12 +11,26 @@ Item {
     property var graphView: undefined
     property var selected_edge: undefined
 
+    signal invalidarea_clicked
+
     function clear_selection() {
         if (selected_edge != null) {
             selected_edge.isSelected = false
             selected_edge = null
         }
     }
+
+    // MouseArea {
+    //     anchors.fill: parent
+    //     onClicked:{
+    //         console.log("QML edgescontainer onClick")
+    //         mouse.accepted = false;
+    //     }
+    //     onEntered:{
+    //     }
+    //     onExited:{
+    //     }
+    // }    
 
     Repeater {
         model: root.graphModel.getLinkModel()
@@ -56,6 +70,7 @@ Item {
                     root.selected_edge = null
                 }
                 current_edge.isSelected = false
+                root.invalidarea_clicked()
             }
 
             Component.onCompleted: {

@@ -49,8 +49,8 @@ Shape {
         //用于调试点击测试区域
         anchors.fill: parent
         color: "transparent"
-        // border.color: "red"
-        // border.width: 2
+        border.color: "red"
+        border.width: 2
     }
 
     ShapePath {
@@ -141,6 +141,7 @@ Shape {
 
         onClicked: {
             const threshold = 20; // 点击检测的阈值
+            //console.log("edge mouse on click")
 
             // 判断鼠标点击点是否接近曲线
             function isPointCloseToCurve(px, py) {
@@ -170,9 +171,11 @@ Shape {
             if (isPointCloseToCurve(mouse.x, mouse.y)) {
                 // console.log("曲线被点击！");
                 root.clicked()
+                mouse.accepted = true;
             } else {
-                // console.log("点击区域未覆盖曲线");
+                console.log("点击区域未覆盖曲线");
                 root.clicked_outof_curve()
+                mouse.accepted = false;
             }
         }
     }
