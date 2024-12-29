@@ -20,18 +20,6 @@ Item {
         }
     }
 
-    // MouseArea {
-    //     anchors.fill: parent
-    //     onClicked:{
-    //         console.log("QML edgescontainer onClick")
-    //         mouse.accepted = false;
-    //     }
-    //     onEntered:{
-    //     }
-    //     onExited:{
-    //     }
-    // }    
-
     Repeater {
         model: root.graphModel.getLinkModel()
  

@@ -688,6 +688,7 @@ PARAMS_INFO ParamsModel::getOutputs()
 QHash<int, QByteArray> ParamsModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
+    roles[ROLE_NODE_NAME] = "nodename";
     roles[ROLE_PARAM_NAME] = "name";
     roles[ROLE_PARAM_TYPE] = "type";
     roles[ROLE_PARAM_CONTROL] = "control";

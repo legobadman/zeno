@@ -12,6 +12,9 @@ Shape {
     property bool isFromInput: false
     property int p1_group: ParamGroup.InputObject       //point1的group
 
+    property var tempedge_from_sock: undefined      //临时边起始的socket对象，可以是input或者output
+    property var tempedge_to_sock: undefined      //吸附时记录的目标socket对象,只有临时边会用
+
     property bool isSelected: false
 
     property string nodeId
@@ -49,8 +52,8 @@ Shape {
         //用于调试点击测试区域
         anchors.fill: parent
         color: "transparent"
-        border.color: "red"
-        border.width: 2
+        // border.color: "red"
+        // border.width: 2
     }
 
     ShapePath {

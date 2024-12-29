@@ -87,12 +87,41 @@ Qan.GraphView {
     function clear_temp_edge() {
         if (graphView.tempEdge != undefined && graphView.tempEdge.visible) {
             graphView.tempEdge.destroy()
+            graphView.tempEdge = null
             graphView.tryconnect = false
         }        
     }
 
     function invalide_edgearea_clicked() {
         console.log("invalide_edgearea_clicked")
+        clear_temp_edge()
+    }
+
+    function temp_edge_close() {
+        //console.log("边闭合，信息如下：")
+
+        var from_node = tempEdge.tempedge_from_sock["node_name"]
+        var from_sock = tempEdge.tempedge_from_sock["sock_name"]
+        var from_group = tempEdge.tempedge_from_sock["group"]
+        //console.log("from_node = " + from_node + ", from_sock = " + from_sock + ", from_group = " + from_group)
+
+        var to_node = tempEdge.tempedge_to_sock["node_name"]
+        var to_sock = tempEdge.tempedge_to_sock["sock_name"]
+        var to_group = tempEdge.tempedge_to_sock["group"]
+        //console.log("to_node = " + to_node + ", to_sock = " + to_sock + ", to_group = " + to_group)
+        
+        if (from_group == ParamGroup.OutputObject) {
+            graphView.graph.model.addLink(from_node, from_sock, to_node, to_sock)
+        }
+        else if (from_group == ParamGroup.InputObject){
+            graphView.graph.model.addLink(to_node, to_sock, from_node, from_sock)
+        }
+        else if (from_group == ParamGroup.OutputPrimitive){
+            graphView.graph.model.addLink(from_node, from_sock, to_node, to_sock)
+        }
+        else if (from_group == ParamGroup.InputPrimitive) {
+            graphView.graph.model.addLink(to_node, to_sock, from_node, from_sock)
+        }
         clear_temp_edge()
     }
 
@@ -116,36 +145,43 @@ Qan.GraphView {
         if (nodeitem) {
             //console.log("hover node: " + nodeitem.node.label)
         }
-        if (nodeitem == null) {
+        if (nodeitem == null || 
+                p1_group == ParamGroup.InputPrimitive ||
+                p1_group == ParamGroup.OutputPrimitive) {
+            //不处理数值类型的吸附，因为本来就不提倡这种用法
             //console.log("no nodeitem hover")
             graphView.tempEdge.point2x = hoverpos.x
-            graphView.tempEdge.point2y = hoverpos.y            
+            graphView.tempEdge.point2y = hoverpos.y
+            graphView.tempEdge.tempedge_to_sock = null    
             return
         }
 
         var nearest_sock = null
         var p1_group = graphView.tempEdge.p1_group
+        var params_repeater = null
         if (p1_group == ParamGroup.InputObject) {
-            nearest_sock = nodeitem.getNearestSocket(ParamGroup.OutputObject, hoverpos)
-        }
-        else if (p1_group == ParamGroup.InputPrimitive) {
-
-        }
-        else if (p1_group == ParamGroup.OutputPrimitive) {
-
+            nearest_sock = nodeitem.getNearestSocket(ParamGroup.OutputObject, hoverpos, graphView.containerItem)
         }
         else if (p1_group == ParamGroup.OutputObject) {
-            nearest_sock = nodeitem.getNearestSocket(ParamGroup.InputObject, hoverpos)
+            nearest_sock = nodeitem.getNearestSocket(ParamGroup.InputObject, hoverpos, graphView.containerItem)
         }
 
         if (nearest_sock) {
             var sock_pos_in_grid = graphView.containerItem.mapFromGlobal(nearest_sock.mapToGlobal(Qt.point(nearest_sock.width/2, nearest_sock.height/2)))
             graphView.tempEdge.point2x = sock_pos_in_grid.x
             graphView.tempEdge.point2y = sock_pos_in_grid.y
+
+            var end_sock_info = {
+                "node_name": nearest_sock.nodename,
+                "sock_name": nearest_sock.name,
+                "group": (p1_group == ParamGroup.InputObject) ? ParamGroup.OutputObject : ParamGroup.InputObject                
+            }
+            graphView.tempEdge.tempedge_to_sock = end_sock_info
         }
         else{
             graphView.tempEdge.point2x = hoverpos.x
             graphView.tempEdge.point2y = hoverpos.y
+            graphView.tempEdge.tempedge_to_sock = null
         }
     }
 
@@ -165,11 +201,26 @@ Qan.GraphView {
             graphView.tempEdge.point1y = pos_.y
             graphView.tempEdge.p1_group = group
             graphView.tempEdge.visible = true
+
+            var start_sock_info = {
+                "node_name": node.label,
+                "sock_name": name,
+                "group": group
+            }
+            graphView.tempEdge.tempedge_from_sock = start_sock_info
+            graphView.tempEdge.tempedge_to_sock = null
             graphView.tryconnect = true
         } else {
             //闭合
-            //console.log("闭合边")
-            clear_temp_edge()
+            var end_sock_info = {
+                "node_name": node.label,
+                "sock_name": name,
+                "group": group                
+            }
+            graphView.tempEdge.tempedge_to_sock = end_sock_info
+            console.log("闭合边")
+
+            graphView.temp_edge_close()
         }
     }
 
@@ -193,6 +244,9 @@ Qan.GraphView {
             //defaultEdgeStyle.lineType = Qan.EdgeStyle.Curved
         }
         onNodeClicked: function(node, pos) {
+            if (graphView.tempEdge && graphView.tempEdge.tempedge_to_sock) {
+                graphView.temp_edge_close()
+            }
             graphView.nodeClicked(node)
             //console.log("node pos: " + pos)
             //notifyUser( "Node <b>" + node.label + "</b> clicked" )

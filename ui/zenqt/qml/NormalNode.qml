@@ -46,18 +46,23 @@ Qan.NodeItem {
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
 
-    function getNearestSocket(group, pos) {
-        if (group == ParamGroup.InputObject) {
-            var instZObjSock = inputobjparams.itemAt(0)
-            return instZObjSock;            
-        } else if (group == ParamGroup.InputPrimitive) {
-
-        } else if (group == ParamGroup.OutputPrimitive) {
-
-        } else if (group == ParamGroup.OutputObject) {
-            var instZObjSock = outputobjparams.itemAt(0)
-            return instZObjSock;
+    function getNearestSocket(group, pos, containeritem) {
+        //pos是grid层面的pos
+        var paramsgroup = (group == ParamGroup.InputObject) ? inputobjparams : outputobjparams;
+        var min_dist = 10000000
+        var nearest_obj = null
+        for (var i = 0; i < paramsgroup.count; i++) {
+            var instZObjSock = paramsgroup.itemAt(i)
+            if (instZObjSock.visible) {
+                var sockpos = containeritem.mapFromGlobal(instZObjSock.mapToGlobal(Qt.point(instZObjSock.width/2, instZObjSock.height/2)))
+                let distance = Math.sqrt(Math.pow(sockpos.x - pos.x, 2) + Math.pow(sockpos.y - pos.y, 2));
+                if (distance < min_dist) {
+                    min_dist = distance
+                    nearest_obj = instZObjSock
+                }
+            }
         }
+        return nearest_obj
     }
 
     function getSocketObject(paramName, group) {
@@ -98,6 +103,7 @@ Qan.NodeItem {
                     ZObjSocket {
                         id: input_obj_socket
                         required property string name
+                        required property string nodename
                         required property int group
                         required property color socket_color
 
@@ -336,6 +342,7 @@ Qan.NodeItem {
 
                 delegate: ZObjSocket {
                     id: output_obj_socket
+                    required property string nodename
                     required property string name
                     required property int group
                     required property color socket_color
