@@ -9,19 +9,21 @@ import QtQuick.Shapes 1.15
 Item {
     id: comp
     property var basefillcolor
-    property alias color: path.fillColor
     property alias mouseAreaAlias: mouseArea
 
     property int xoffset: 22
     property int side: 35
+    // property bool checked: false     //外部已定义alias
+    property bool hovered: false
+    property bool is_left_or_right: false        //是否为左边
+    property bool round_last_btn: false  //底部是否使用圆弧
+    property real radius: 4
 
     implicitWidth: xoffset + side
     implicitHeight: parent.height
 
     // layer.enabled: true
     // layer.samples: 64
-
-    signal statusChanged(bool status)
 
     Shape {
         id: sp
@@ -30,13 +32,13 @@ Item {
         smooth: true
 
         containsMode: Shape.FillContains
-        property bool clicked: false
+
         ShapePath {
             id: path
             strokeColor: "transparent"
             strokeWidth: 0
 
-            fillColor: sp.clicked ? basefillcolor : "#2E313A"
+            fillColor: (comp.checked || comp.hovered) ? comp.basefillcolor : "#2E313A"
             capStyle: ShapePath.RoundCap
             
             property int joinStyleIndex: 0
@@ -56,9 +58,45 @@ Item {
 
             startX: comp.xoffset
             startY: 0
-            PathLine { x: comp.xoffset + comp.side; y: 0 }
-            PathLine { x: comp.side; y: comp.height}
-            PathLine { x: 0; y: comp.height }
+            PathLine { 
+                x: {
+                    if (comp.is_left_or_right) {
+                        return comp.side - comp.radius;
+                    }else{
+                        return comp.xoffset + comp.side;
+                    }
+                }
+                y: 0
+            }
+            PathArc {
+                relativeX: comp.is_left_or_right ? comp.radius : 0
+                relativeY: comp.is_left_or_right ? comp.radius : 0
+                radiusX: comp.is_left_or_right ? comp.radius : 0
+                radiusY: comp.is_left_or_right ? comp.radius : 0
+                direction: PathArc.Clockwise
+            }
+            PathLine {
+                x: comp.side
+                y: {
+                    if (comp.round_last_btn) {
+                        return comp.height - comp.radius;
+                    }
+                    else{
+                        return comp.height;
+                    }
+                }
+            }
+            PathArc {
+                relativeX: comp.round_last_btn ? -comp.radius : 0
+                relativeY: comp.round_last_btn ? comp.radius : 0
+                radiusX: comp.round_last_btn ? comp.radius : 0
+                radiusY: comp.round_last_btn ? comp.radius : 0
+                direction: PathArc.Clockwise
+            }
+            PathLine { 
+                x: 0;
+                y: comp.height
+            }
         }
         MouseArea {
             id: mouseArea
@@ -67,28 +105,14 @@ Item {
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton
             onClicked: {
-                doClick()
+                comp.checked = !comp.checked
+                hovered = false     //等再次进入再点亮
             }
             onEntered:{
-                path.fillColor = basefillcolor
-                statusChanged(true)
+                hovered = true
             }
             onExited:{
-                if(!parent.clicked){
-                    path.fillColor = "#2E313A"
-                    statusChanged(false)
-                }
-            }
-            function doClick(){
-                parent.clicked = !parent.clicked
-                if(parent.clicked){
-                    path.fillColor = basefillcolor
-                    statusChanged(true)
-                }
-                else{
-                    path.fillColor = "#2E313A"
-                    statusChanged(false)
-                }
+                hovered = false
             }
         }
     }

@@ -8,16 +8,14 @@ Item {
     property int side: 35
     property bool lastBtn: false
 
-    property bool clicked: false
+    //property bool checked: false
+    //property bool hovered: false  //外部定义已经alias
 
     implicitWidth: 64
     implicitHeight: 64
 
-    signal clickedSig()
-    signal enteredSig()
-    signal exitedSig()
-
-    property alias source: img.source
+    property string source: ""
+    property string source_on: ""
     property alias mouseArea: mouseArea
 
     Image{
@@ -26,6 +24,7 @@ Item {
         sourceSize.height: 64
         smooth: true
         antialiasing: true
+        source: (comp.checked || comp.hovered) ? comp.source_on : comp.source
     }
     Shape {
         id: sp
@@ -51,9 +50,16 @@ Item {
             containmentMask: parent
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton
-            onClicked: clickedSig()
-            onEntered: enteredSig()
-            onExited: exitedSig()
+            onClicked: {
+                comp.checked = !comp.checked
+                comp.hovered = false
+            }
+            onEntered: {
+                comp.hovered = true
+            }
+            onExited: {
+                comp.hovered = false
+            }
         }
     }
 }

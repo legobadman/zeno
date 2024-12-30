@@ -216,6 +216,7 @@ public:
         ROLE_OUTPUTS,
         ROLE_NODE_STATUS,
         ROLE_NODE_ISVIEW,
+        ROLE_NODE_BYPASS,
         ROLE_NODE_DIRTY,
         ROLE_NODE_RUN_STATE,
         ROLE_NODEDATA,

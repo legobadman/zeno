@@ -42,6 +42,10 @@ Qan.NodeItem {
     implicitWidth: mainmain_layout.implicitWidth
     implicitHeight: mainmain_layout.implicitHeight;
     resizable: false
+
+    property alias isview : right_status_group.isview
+    property alias isbypass: right_status_group.isbypass
+
     //clip: true        //设置会导致选框不出现
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
@@ -84,8 +88,33 @@ Qan.NodeItem {
         }
     }
 
+    onIsviewChanged: function() {
+        var graphM = nodeItem.graph.model;
+        var idx = nodeItem.node.index;
+        graphM.setData(idx, nodeItem.isview, Model.ROLE_NODE_ISVIEW)
+        // console.log("onIsviewChanged: " + nodeItem.isview)
+    }
+
+    onIsbypassChanged: function() {
+        var graphM = nodeItem.graph.model;
+        var idx = nodeItem.node.index;
+        graphM.setData(idx, nodeItem.isbypass, Model.ROLE_NODE_BYPASS)
+        //console.log("onIsbypassChanged: " + nodeItem.isbypass)
+    }
+
     onDataChanged: function(data, role) {
-        console.log("onDataChanged: " + data + ", role = " + role)
+        //console.log(nodeItem.node.label + " onDataChanged: " + data + ", role = " + role)
+        if (role == Model.ROLE_NODE_ISVIEW) {
+            //console.log("data = " + data)
+            nodeItem.isview = data
+        }
+        if (role == Model.ROLE_NODE_BYPASS) {
+            nodeItem.isbypass = data
+        }
+        if (role == Model.ROLE_OBJPOS) {
+            nodeItem.x = data.x
+            nodeItem.y = data.y           
+        }
     }
 
     ColumnLayout {
@@ -370,12 +399,13 @@ Qan.NodeItem {
     }
 
     Component.onCompleted: {
-        //初始化位置:
+        //初始化基本数据:
         var graphM = nodeItem.graph.model;
         var idx = nodeItem.node.index;
         var nodename = graphM.data(idx, Model.ROLE_NODE_NAME)   //ROLE_NODE_NAME
         var pos = graphM.data(idx, Model.ROLE_OBJPOS);       //ROLE_OBJPOS
         nodeItem.x = pos.x
         nodeItem.y = pos.y
+        nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
     }
 }

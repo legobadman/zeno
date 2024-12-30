@@ -13,6 +13,8 @@ Item {
     property int fixheight: 48
     property real radius: 4
     property bool round_last_btn: true
+    property bool isview: false
+    property bool isbypass: false
 
     implicitWidth: 2 * comp.side
     implicitHeight: fixheight
@@ -22,8 +24,9 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         onExited: {
-            if(!groupContainsMouse())
+            if(!groupContainsMouse(mouseX, mouseY)) {
                 statusImgGroup.visible = false
+            }
         }
 
         StatusBtn {
@@ -32,14 +35,13 @@ Item {
             height: fixheight
             xoffset: comp.xoffset
             side: comp.side
-            property bool is_entered : false
+            round_last_btn: false
+            is_left_or_right: false
+            property alias checked: comp.isbypass
 
-            onStatusChanged: (status)=> {
-                if (!bypass_btn.is_entered) {
-                    bypass_btn.is_entered = true
-                    statusImgGroup.visible = true
-                    imgByPass.source = status ? "qrc:/icons/MUTE_light.svg" : "qrc:/icons/MUTE_dark.svg"
-                    bypass_btn.is_entered = false
+            onHoveredChanged: {
+                if (bypass_btn.hovered) {
+                    statusImgGroup.visible = true;
                 }
             }
         }
@@ -50,7 +52,7 @@ Item {
             x: comp.side
         }*/
 
-        StatusRoundBtn {
+        StatusBtn {
             id: view_btn
             basefillcolor: "#30BDD4"
             height: fixheight
@@ -58,15 +60,13 @@ Item {
             side: comp.side
             radius: comp.radius
             round_last_btn: comp.round_last_btn
+            is_left_or_right: true
             x: comp.side + 1
-            property bool is_entered : false
+            property alias checked: comp.isview
 
-            onStatusChanged: (status)=> {
-                if (!view_btn.is_entered) {
-                    view_btn.is_entered = true
-                    statusImgGroup.visible = true
-                    imgView.source = status ? "qrc:/icons/VIEW_light.svg" : "qrc:/icons/VIEW_dark.svg"
-                    view_btn.is_entered = false
+            onHoveredChanged: {
+                if (view_btn.hovered) {
+                    statusImgGroup.visible = true;
                 }
             }
         }
@@ -84,54 +84,27 @@ Item {
             id: imgByPass
             x: bypass_btn.x + comp.xoffset - 2
             source: "qrc:/icons/MUTE_dark.svg"
-            property bool is_entered : false
-
-            onClickedSig: bypass_btn.mouseAreaAlias.doClick()
-            onEnteredSig: {
-                if (!imgByPass.is_entered) {
-                    imgByPass.is_entered = true
-                    bypass_btn.mouseAreaAlias.entered()
-                    imgByPass.is_entered = false
-                }
-            }
-            onExitedSig: {
-                if (!imgByPass.is_entered) {
-                    imgByPass.is_entered = true
-                    bypass_btn.mouseAreaAlias.exited()
-                    if(!groupContainsMouse())
-                        statusImgGroup.visible = false
-                    imgByPass.is_entered = false
-                }
-            }
+            source_on: "qrc:/icons/MUTE_light.svg"
+            property alias checked: comp.isbypass
+            property alias hovered: bypass_btn.hovered
         }
         StatusImgBtn{
             id: imgView
-            x: view_btn.x + bypass_btn.width - 1
+            x: imgByPass.x + imgByPass.width - imgByPass.xoffset - 2
             source: "qrc:/icons/VIEW_dark.svg"
-            property bool is_entered : false
-            
-            onClickedSig: view_btn.mouseAreaAlias.doClick()
-            onEnteredSig: {
-                if (!imgView.is_entered) {
-                    imgView.is_entered = true;
-                    view_btn.mouseAreaAlias.entered()
-                    bypass_btn.mouseAreaAlias.exited()
-                    imgView.is_entered = false;
-                }
-            }
-            onExitedSig: {
-                if (!imgView.is_entered) {
-                    imgView.is_entered = true;
-                    view_btn.mouseAreaAlias.exited()
-                    if(!groupContainsMouse())
-                        statusImgGroup.visible = false
-                    imgView.is_entered = false;
-                }
-            }
+            source_on: "qrc:/icons/VIEW_light.svg"
+            property alias checked: comp.isview
+            property alias hovered: view_btn.hovered
         }
     }
-    function groupContainsMouse(){
+
+    function groupContainsMouse(x, y){
+        //console.log("mouse.x,y = " + x + "," + y)
+        var under_imgs = false;
+        // if (x < 100 && y < 48) {
+        //     under_imgs = true;
+        // }
         return bypass_btn.mouseAreaAlias.containsMouse || view_btn.mouseAreaAlias.containsMouse ||
-            imgByPass.containsMouse || imgView.containsMouse
+            imgByPass.containsMouse || imgView.containsMouse || under_imgs
     }
 }

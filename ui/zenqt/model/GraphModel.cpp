@@ -57,6 +57,7 @@ public:
 
     std::string m_cbSetPos;
     std::string m_cbSetView;
+    std::string m_cbSetByPass;
     //for DopnetWork
     std::string m_cbFrameCached;
     std::string m_cbFrameRemoved;
@@ -64,6 +65,7 @@ public:
     zeno::INode* m_wpNode = nullptr;
     ParamsModel* params = nullptr;
     bool bView = false;
+    bool bByPass = false;
     bool bCollasped = false;
     NodeState runState;
 
@@ -97,6 +99,8 @@ void NodeItem::unregister()
         bool ret = spNode->unregister_set_pos(m_cbSetPos);
         ZASSERT_EXIT(ret);
         ret = spNode->unregister_set_view(m_cbSetView);
+        ZASSERT_EXIT(ret);
+        ret = spNode->unregister_set_mute(m_cbSetByPass);
         ZASSERT_EXIT(ret);
         //DopNetwork
         if (auto subnetnode = dynamic_cast<zeno::DopNetwork*>(spNode))
@@ -136,12 +140,19 @@ void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
         triggerView(nodepath, bView);
     });
 
+    m_cbSetByPass = spNode->register_set_mute([=](bool bypass) {
+        this->bByPass = bypass;
+        QModelIndex idx = pGraphM->indexFromName(this->name);
+        emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_BYPASS });
+    });
+
     this->params = new ParamsModel(spNode, this);
     this->name = QString::fromStdString(spNode->get_name());
     this->cls = QString::fromStdString(spNode->get_nodecls());
     this->dispName = QString::fromStdString(spNode->get_show_name());
     this->dispIcon = QString::fromStdString(spNode->get_show_icon());
     this->bView = spNode->is_view();
+    this->bByPass = spNode->is_mute();
     this->runState.bDirty = spNode->is_dirty();
     this->runState.runstatus = spNode->get_run_status();
     auto pair = spNode->get_pos();
@@ -446,7 +457,8 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             int options = zeno::None;
             if (item->bView)
                 options |= zeno::View;
-            //if (item->bMute)
+            if (item->bByPass)
+                options |= zeno::Mute;
             return QVariant(options);
         }
         case QtRole::ROLE_OUTPUT_OBJS:
@@ -465,6 +477,10 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         case QtRole::ROLE_NODE_ISVIEW:
         {
             return item->bView;
+        }
+        case QtRole::ROLE_NODE_BYPASS:
+        {
+            return item->bByPass;
         }
         case QtRole::ROLE_NODE_RUN_STATE:
         {
@@ -623,6 +639,12 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
         }
         case QtRole::ROLE_NODE_ISVIEW:
         {
+            setView(index, value.toBool());
+            break;
+        }
+        case QtRole::ROLE_NODE_BYPASS:
+        {
+            setMute(index, value.toBool());
             break;
         }
         case QtRole::ROLE_INPUTS:
