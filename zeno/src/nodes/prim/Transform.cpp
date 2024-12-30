@@ -125,8 +125,8 @@ namespace zeno {
             user_data.del("_bboxMax");
         }
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
+        std::shared_ptr<zeno::IObject> apply(
+            std::shared_ptr<zeno::IObject> input_object,
             zeno::vec3f translate = zeno::vec3f({ 0,0,0 }),
             zeno::vec3f eulerXYZ = zeno::vec3f({ 0,0,0 }),
             zeno::vec4f rotation = zeno::vec4f({ 0,0,0,1 }),
@@ -172,20 +172,34 @@ namespace zeno {
 
             auto matrix = pre_mat * local * matTrans * matRotate * matQuat * matScal * matShearZ * matShearY * matShearX * glm::inverse(local) * pre_apply;
 
-            transformObj(input_object, matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
+            std::function<void(std::shared_ptr<IObject>)> transformListObj = [&](std::shared_ptr<IObject> obj) {
+                if (std::shared_ptr<ListObject> listobj = std::dynamic_pointer_cast<ListObject>(obj)) {
+                    for (int i = 0; i < listobj->size(); ++i) {
+                        transformListObj(listobj->get(i));
+                    }
+                } else if (std::shared_ptr<DictObject> dictobj = std::dynamic_pointer_cast<DictObject>(obj)) {
+                    for (auto& [key, obj] : dictobj->get()) {
+                        transformListObj(obj);
+                    }
+                } else if (std::shared_ptr<GeometryObject> geoObj = std::dynamic_pointer_cast<GeometryObject>(obj)) {
+                    transformObj(geoObj, matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
 
-            auto transform_ptr = glm::value_ptr(matrix);
+                    auto transform_ptr = glm::value_ptr(matrix);
 
-            zeno::vec4f row0, row1, row2, row3;
-            memcpy(row0.data(), transform_ptr, sizeof(float) * 4);
-            memcpy(row1.data(), transform_ptr + 4, sizeof(float) * 4);
-            memcpy(row2.data(), transform_ptr + 8, sizeof(float) * 4);
-            memcpy(row3.data(), transform_ptr + 12, sizeof(float) * 4);
+                    zeno::vec4f row0, row1, row2, row3;
+                    memcpy(row0.data(), transform_ptr, sizeof(float) * 4);
+                    memcpy(row1.data(), transform_ptr + 4, sizeof(float) * 4);
+                    memcpy(row2.data(), transform_ptr + 8, sizeof(float) * 4);
+                    memcpy(row3.data(), transform_ptr + 12, sizeof(float) * 4);
 
-            input_object->userData().set2("_transform_row0", row0);
-            input_object->userData().set2("_transform_row1", row1);
-            input_object->userData().set2("_transform_row2", row2);
-            input_object->userData().set2("_transform_row3", row3);
+                    geoObj->userData().set2("_transform_row0", row0);
+                    geoObj->userData().set2("_transform_row1", row1);
+                    geoObj->userData().set2("_transform_row2", row2);
+                    geoObj->userData().set2("_transform_row3", row3);
+                }
+            };
+
+            transformListObj(input_object);
 
             return input_object;
         }
