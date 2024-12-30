@@ -844,11 +844,11 @@ void ZenoSubGraphView::onRowsAboutToBeRemoved(const QModelIndex& parent, int fir
     for (int r = first; r <= last; r++)
     {
         QModelIndex idx = model->index(r, 0, parent);
-        int nodeType = idx.data(ROLE_NODETYPE).toInt();
+        int nodeType = idx.data(QtRole::ROLE_NODETYPE).toInt();
         if (nodeType == zeno::Node_SubgraphNode || nodeType == zeno::Node_AssetInstance)
         {
             //移除view scene
-            GraphModel* pSubnetModel = idx.data(ROLE_SUBGRAPH).value<GraphModel*>();;
+            GraphModel* pSubnetModel = idx.data(QtRole::ROLE_SUBGRAPH).value<GraphModel*>();;
             auto graphsMgr = zenoApp->graphsManager();
             auto path = pSubnetModel->currentPath();
             auto subScenes = graphsMgr->gvSubScenes(path);
@@ -998,8 +998,8 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
         GraphModel* pGraphM = zenoApp->graphsManager()->getGraph(path);
         QModelIndex nodeIdx = pGraphM->indexFromName(objId);
         ZASSERT_EXIT(nodeIdx.isValid());
-        QString name = nodeIdx.data(ROLE_NODE_NAME).toString();
-        QPointF pos = nodeIdx.data(ROLE_OBJPOS).toPointF();
+        QString name = nodeIdx.data(QtRole::ROLE_NODE_NAME).toString();
+        QPointF pos = nodeIdx.data(QtRole::ROLE_OBJPOS).toPointF();
         if (pCurrentView) {
             pCurrentView->focusOn(name, pos, isError);
         }

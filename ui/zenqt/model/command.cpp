@@ -80,7 +80,7 @@ void AddNodeCommand::undo()
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
         QModelIndex idx = m_model->indexFromName(nodename);
-        QPointF pos = idx.data(ROLE_OBJPOS).toPointF();
+        QPointF pos = idx.data(QtRole::ROLE_OBJPOS).toPointF();
         m_pos = { pos.x(), pos.y() };
         m_model->_removeNodeImpl(nodename);
     }
@@ -103,8 +103,8 @@ RemoveNodeCommand::RemoveNodeCommand(zeno::NodeData& nodeData, QStringList& grap
 
     ////all links will be removed when remove node, for caching other type data,
     ////we have to clean the data here.
-    //OUTPUT_SOCKETS outputs = m_data[ROLE_OUTPUTS].value<OUTPUT_SOCKETS>();
-    //INPUT_SOCKETS inputs = m_data[ROLE_INPUTS].value<INPUT_SOCKETS>();
+    //OUTPUT_SOCKETS outputs = m_data[QtRole::ROLE_OUTPUTS].value<OUTPUT_SOCKETS>();
+    //INPUT_SOCKETS inputs = m_data[QtRole::ROLE_INPUTS].value<INPUT_SOCKETS>();
     //for (auto it = outputs.begin(); it != outputs.end(); it++)
     //{
     //    it->second.info.links.clear();
@@ -113,8 +113,8 @@ RemoveNodeCommand::RemoveNodeCommand(zeno::NodeData& nodeData, QStringList& grap
     //{
     //    it->second.info.links.clear();
     //}
-    //m_data[ROLE_INPUTS] = QVariant::fromValue(inputs);
-    //m_data[ROLE_OUTPUTS] = QVariant::fromValue(outputs);
+    //m_data[QtRole::ROLE_INPUTS] = QVariant::fromValue(inputs);
+    //m_data[QtRole::ROLE_OUTPUTS] = QVariant::fromValue(outputs);
 }
 
 RemoveNodeCommand::~RemoveNodeCommand()
@@ -126,7 +126,7 @@ void RemoveNodeCommand::redo()
     if (m_model) {
         auto nodename = QString::fromStdString(m_nodeData.name);
         QModelIndex idx = m_model->indexFromName(nodename);
-        zeno::NodeType type = (zeno::NodeType)idx.data(ROLE_NODETYPE).toInt();
+        zeno::NodeType type = (zeno::NodeType)idx.data(QtRole::ROLE_NODETYPE).toInt();
         if (type == zeno::Node_AssetInstance) {
             m_cate = "assets";
         }
@@ -166,7 +166,7 @@ void LinkCommand::redo()
             bool outNodeChainHasViewNode = false;
             for (auto& node : outNodeLinkedNodes) {
                 auto nodeidx = m_model->indexFromName(node);
-                if (nodeidx.data(ROLE_NODE_ISVIEW).toBool()) {
+                if (nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool()) {
                     outNodeChainHasViewNode = true;
                     break;
                 }
@@ -174,8 +174,8 @@ void LinkCommand::redo()
             QStringList intNodeLinkedNodes = UiHelper::findAllLinkdNodes(m_model, QString::fromStdString(m_link.inNode));
             for (auto& node : intNodeLinkedNodes) {
                 auto nodeidx = m_model->indexFromName(node);
-                if (outNodeChainHasViewNode && nodeidx.data(ROLE_NODE_ISVIEW).toBool()) {
-                    m_lastViewNodeName = nodeidx.data(ROLE_NODE_NAME).toString();
+                if (outNodeChainHasViewNode && nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool()) {
+                    m_lastViewNodeName = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
                     m_model->_setViewImpl(nodeidx, false);
                     break;
                 }
@@ -219,9 +219,9 @@ ModelDataCommand::ModelDataCommand(const QModelIndex& index, const QVariant& old
     , m_nodeName("")
     , m_paramName("")
 {
-    m_nodeName = index.data(ROLE_NODE_NAME).toString();
-    if (m_role == ROLE_PARAM_VALUE)  //index of paramsModel, need record paramName
-        m_paramName = index.data(ROLE_PARAM_NAME).toString();
+    m_nodeName = index.data(QtRole::ROLE_NODE_NAME).toString();
+    if (m_role == QtRole::ROLE_PARAM_VALUE)  //index of paramsModel, need record paramName
+        m_paramName = index.data(QtRole::ROLE_PARAM_NAME).toString();
 }
 
 void ModelDataCommand::redo()
@@ -232,12 +232,12 @@ void ModelDataCommand::redo()
         auto nodeIdx = m_model->indexFromName(m_nodeName);
         if (nodeIdx.isValid())
         {
-            if (m_role == ROLE_OBJPOS || m_role == ROLE_COLLASPED)
+            if (m_role == QtRole::ROLE_OBJPOS || m_role == QtRole::ROLE_COLLASPED)
             {
                 m_model->setData(nodeIdx, m_newData, m_role);
-            }else if (m_role == ROLE_PARAM_VALUE)
+            }else if (m_role == QtRole::ROLE_PARAM_VALUE)
             {
-                if (ParamsModel* paramsModel = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(ROLE_PARAMS)))
+                if (ParamsModel* paramsModel = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(QtRole::ROLE_PARAMS)))
                 {
                     auto paramIdx = paramsModel->paramIdx(m_paramName, true);
                     paramsModel->setData(paramIdx, m_newData, m_role);
@@ -255,13 +255,13 @@ void ModelDataCommand::undo()
         auto nodeIdx = m_model->indexFromName(m_nodeName);
         if (nodeIdx.isValid())
         {
-            if (m_role == ROLE_OBJPOS || m_role == ROLE_COLLASPED)
+            if (m_role == QtRole::ROLE_OBJPOS || m_role == QtRole::ROLE_COLLASPED)
             {
                 m_model->setData(nodeIdx, m_oldData, m_role);
             }
-            else if (m_role == ROLE_PARAM_VALUE)
+            else if (m_role == QtRole::ROLE_PARAM_VALUE)
             {
-                if (ParamsModel* paramsModel = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(ROLE_PARAMS)))
+                if (ParamsModel* paramsModel = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(QtRole::ROLE_PARAMS)))
                 {
                     auto paramIdx = paramsModel->paramIdx(m_paramName, true);
                     paramsModel->setData(paramIdx, m_oldData, m_role);
@@ -293,8 +293,8 @@ void NodeStatusCommand::redo()
                     QStringList linkedNodes = UiHelper::findAllLinkdNodes(m_model, m_nodeName);
                     for (auto& node : linkedNodes) {
                         auto nodeidx = m_model->indexFromName(node);
-                        if (nodeidx.data(ROLE_NODE_ISVIEW).toBool() && nodeidx.data(ROLE_NODE_NAME).toString() != m_nodeName) {
-                            m_lastViewNodeName = nodeidx.data(ROLE_NODE_NAME).toString();
+                        if (nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool() && nodeidx.data(QtRole::ROLE_NODE_NAME).toString() != m_nodeName) {
+                            m_lastViewNodeName = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
                             m_model->_setViewImpl(nodeidx, !m_On);
                             break;
                         }

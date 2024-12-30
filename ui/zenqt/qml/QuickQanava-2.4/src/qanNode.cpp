@@ -171,12 +171,12 @@ bool    Node::setLabel(const QString& label)
 }
 
 QString Node::getLabel() const {
-    const QString& name = m_index.data(ROLE_NODE_NAME).toString();
+    const QString& name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
     return name;
 }
 
 ParamsModel* Node::getParamsModel() const {
-    ParamsModel* viewParams = QVariantPtr<ParamsModel>::asPtr(m_index.data(ROLE_PARAMS));
+    ParamsModel* viewParams = QVariantPtr<ParamsModel>::asPtr(m_index.data(QtRole::ROLE_PARAMS));
     return viewParams;
 }
 

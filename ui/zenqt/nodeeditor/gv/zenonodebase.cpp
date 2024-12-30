@@ -110,15 +110,15 @@ void ZenoNodeBase::initUI(const QModelIndex& index)
     ZASSERT_EXIT(index.isValid());
     m_index = QPersistentModelIndex(index);
 
-    QPointF pos = m_index.data(ROLE_OBJPOS).toPointF();
-    const QString &id = m_index.data(ROLE_NODE_NAME).toString();
+    QPointF pos = m_index.data(QtRole::ROLE_OBJPOS).toPointF();
+    const QString &id = m_index.data(QtRole::ROLE_NODE_NAME).toString();
     setPos(pos);
     initLayout();
     // setPos will send geometry, but it's not supposed to happend during initialization.
     setFlag(ItemSendsGeometryChanges);
     setFlag(ItemSendsScenePositionChanges);
 
-    bool bCollasped = m_index.data(ROLE_COLLASPED).toBool();
+    bool bCollasped = m_index.data(QtRole::ROLE_COLLASPED).toBool();
     onCollaspeUpdated(bCollasped);
 
     m_bUIInited = true;
@@ -161,19 +161,19 @@ QPointF ZenoNodeBase::getSocketPos(const QModelIndex& sockIdx, const QString key
 QString ZenoNodeBase::nodeId() const
 {
     ZASSERT_EXIT(m_index.isValid(), "");
-    return m_index.data(ROLE_NODE_NAME).toString();
+    return m_index.data(QtRole::ROLE_NODE_NAME).toString();
 }
 
 QString ZenoNodeBase::nodeClass() const
 {
     ZASSERT_EXIT(m_index.isValid(), "");
-    return m_index.data(ROLE_CLASS_NAME).toString();
+    return m_index.data(QtRole::ROLE_CLASS_NAME).toString();
 }
 
 QPointF ZenoNodeBase::nodePos() const
 {
     ZASSERT_EXIT(m_index.isValid(), QPointF());
-    return m_index.data(ROLE_OBJPOS).toPointF();
+    return m_index.data(QtRole::ROLE_OBJPOS).toPointF();
 }
 
 void ZenoNodeBase::setMoving(bool isMoving)
@@ -211,7 +211,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
     auto graphsMgr = zenoApp->graphsManager();
     QPointF pos = event->pos();
-    if (m_index.data(ROLE_NODETYPE) == zeno::Node_SubgraphNode)
+    if (m_index.data(QtRole::ROLE_NODETYPE) == zeno::Node_SubgraphNode)
     {
         scene()->clearSelection();
         this->setSelected(true);
@@ -221,7 +221,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         QAction *pDelete = new QAction("Delete");
 
         connect(pDelete, &QAction::triggered, this, [=]() {
-            //pGraphsModel->removeNode(m_index.data(ROLE_NODE_NAME).toString(), m_subGpIndex, true);
+            //pGraphsModel->removeNode(m_index.data(QtRole::ROLE_NODE_NAME).toString(), m_subGpIndex, true);
         });
 
         nodeMenu->addAction(pCopy);
@@ -230,7 +230,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         QAction* propDlg = new QAction(tr("Custom Param"));
         nodeMenu->addAction(propDlg);
         connect(propDlg, &QAction::triggered, this, [=]() {
-            ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_index.data(ROLE_PARAMS));
+            ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_index.data(QtRole::ROLE_PARAMS));
 
             ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(scene());
             ZASSERT_EXIT(pScene && !pScene->views().isEmpty());
@@ -249,7 +249,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         QAction* saveAsset = new QAction(tr("Save as asset"));
         nodeMenu->addAction(saveAsset);
         connect(saveAsset, &QAction::triggered, this, [=]() {
-            QString name = m_index.data(ROLE_NODE_NAME).toString();
+            QString name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
             AssetsModel* pModel = zenoApp->graphsManager()->assetsModel();
             if (pModel->getAssetGraph(name))
             {
@@ -266,7 +266,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             asset.info.path = path.toStdString();
             asset.info.majorVer = 1;
             asset.info.minorVer = 0;
-            zeno::NodeData data = m_index.data(ROLE_NODEDATA).value<zeno::NodeData>();
+            zeno::NodeData data = m_index.data(QtRole::ROLE_NODEDATA).value<zeno::NodeData>();
             asset.object_inputs = data.customUi.inputObjs;
             asset.object_outputs = data.customUi.outputObjs;
             asset.primitive_inputs = zeno::customUiToParams(data.customUi.inputPrims);
@@ -281,9 +281,9 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         nodeMenu->exec(QCursor::pos());
         nodeMenu->deleteLater();
     }
-    else if (m_index.data(ROLE_NODETYPE) == zeno::Node_AssetInstance)
+    else if (m_index.data(QtRole::ROLE_NODETYPE) == zeno::Node_AssetInstance)
     {
-        GraphModel* pSubgGraphM = m_index.data(ROLE_SUBGRAPH).value<GraphModel*>();
+        GraphModel* pSubgGraphM = m_index.data(QtRole::ROLE_SUBGRAPH).value<GraphModel*>();
         ZASSERT_EXIT(pSubgGraphM);
         bool bLocked = pSubgGraphM->isLocked();
         QMenu* nodeMenu = new QMenu;
@@ -300,7 +300,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
                 ZenoGraphsEditor* pEditor = getEditorViewByViewport(event->widget());
             if (pEditor)
             {
-                QString assetName = m_index.data(ROLE_CLASS_NAME).toString();
+                QString assetName = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
                 pEditor->onAssetsCustomParamsClicked(assetName);
             }
             });
@@ -309,7 +309,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         nodeMenu->deleteLater();
     }
 #if 0
-    else if (m_index.data(ROLE_CLASS_NAME).toString() == "BindMaterial")
+    else if (m_index.data(QtRole::ROLE_CLASS_NAME).toString() == "BindMaterial")
     {
         QAction* newSubGraph = new QAction(tr("Create Material Subgraph"));
         connect(newSubGraph, &QAction::triggered, this, [=]() {
@@ -317,7 +317,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             ZASSERT_EXIT(pNodeParams);
             const auto& paramIdx = pNodeParams->getParam(PARAM_INPUT, "mtlid");
             ZASSERT_EXIT(paramIdx.isValid());
-            QString mtlid = paramIdx.data(ROLE_PARAM_VALUE).toString();
+            QString mtlid = paramIdx.data(QtRole::ROLE_PARAM_VALUE).toString();
             if (!pGraphsModel->newMaterialSubgraph(m_subGpIndex, mtlid, this->pos() + QPointF(800, 0)))
                 QMessageBox::warning(nullptr, tr("Info"), tr("Create material subgraph '%1' failed.").arg(mtlid));
         });
@@ -329,16 +329,16 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 #endif
     else
     {
-        ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_index.data(ROLE_PARAMS));
+        ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_index.data(QtRole::ROLE_PARAMS));
         ZASSERT_EXIT(paramsM);
         QModelIndexList indexs;
         for (int r = 0; r < paramsM->rowCount(); r++)
         {
             const QModelIndex& paramIdx = paramsM->index(r, 0);
-            bool bInput = paramIdx.data(ROLE_ISINPUT).toBool();
+            bool bInput = paramIdx.data(QtRole::ROLE_ISINPUT).toBool();
             if (!bInput)
                 continue;
-            auto type = paramIdx.data(ROLE_SOCKET_TYPE).toInt();
+            auto type = paramIdx.data(QtRole::ROLE_SOCKET_TYPE).toInt();
             if (type == zeno::Socket_ReadOnly || type == zeno::Socket_Clone || type == zeno::Socket_Owning)
             {
                 indexs << paramIdx;
@@ -364,7 +364,7 @@ void ZenoNodeBase::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     {
         m_bMoving = false;
         QPointF newPos = this->scenePos();
-        QPointF oldPos = m_index.data(ROLE_OBJPOS).toPointF();
+        QPointF oldPos = m_index.data(QtRole::ROLE_OBJPOS).toPointF();
 
         QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
         GraphModel* model = qobject_cast<GraphModel*>(pModel);
@@ -373,7 +373,7 @@ void ZenoNodeBase::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
         if (newPos != oldPos)
         {
-            model->setModelData(m_index, m_lastMoving, ROLE_OBJPOS);
+            model->setModelData(m_index, m_lastMoving, QtRole::ROLE_OBJPOS);
 
             emit inSocketPosChanged();
             emit outSocketPosChanged();
@@ -386,7 +386,7 @@ void ZenoNodeBase::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
                 if (item == this || !dynamic_cast<ZenoNodeBase*>(item))
                     continue;
                 ZenoNodeBase *pNode = dynamic_cast<ZenoNodeBase *>(item);
-                model->setModelData(pNode->index(), pNode->scenePos(), ROLE_OBJPOS);
+                model->setModelData(pNode->index(), pNode->scenePos(), QtRole::ROLE_OBJPOS);
             }
         }
     }
@@ -403,7 +403,7 @@ QVariant ZenoNodeBase::itemChange(GraphicsItemChange change, const QVariant &val
 
         ZenoSubGraphScene *pScene = qobject_cast<ZenoSubGraphScene *>(scene());
         ZASSERT_EXIT(pScene, value);
-        const QString& name = m_index.data(ROLE_NODE_NAME).toString();
+        const QString& name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
         pScene->collectNodeSelChanged(name, bSelected);
     }
     else if (change == QGraphicsItem::ItemPositionChange)
@@ -441,7 +441,7 @@ QVariant ZenoNodeBase::itemChange(GraphicsItemChange change, const QVariant &val
     }
     else if (change == ItemZValueHasChanged)
     {
-        int type = m_index.data(ROLE_NODETYPE).toInt();
+        int type = m_index.data(QtRole::ROLE_NODETYPE).toInt();
         if (type == zeno::Node_Group && zValue() != ZVALUE_BLACKBOARD)
         {
             setZValue(ZVALUE_BLACKBOARD);

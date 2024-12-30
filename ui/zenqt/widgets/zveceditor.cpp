@@ -251,7 +251,7 @@ void ZVecEditor::setVec(const zeno::vecvar& editVec, bool bFloat)
     if (bFloat != m_bFloat || editVec.size() != size)
     {
         //类型大小发生了变化，应该只有子图参数才能发生
-        Q_ASSERT(m_nodeIdx.data(ROLE_NODETYPE) == zeno::Node_SubgraphNode);
+        Q_ASSERT(m_nodeIdx.data(QtRole::ROLE_NODETYPE) == zeno::Node_SubgraphNode);
         initUI(editVec);
     }
     else

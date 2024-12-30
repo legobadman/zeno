@@ -118,21 +118,21 @@ void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
     m_cbSetPos = spNode->register_set_pos([=](std::pair<float, float> pos) {
         this->pos = { pos.first, pos.second };  //update the cache
         QModelIndex idx = pGraphM->indexFromName(this->name);
-        emit pGraphM->dataChanged(idx, idx, QVector<int>{ ROLE_OBJPOS });
+        emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_OBJPOS });
     });
 
     m_cbSetView = spNode->register_set_view([=](bool bView) {
         this->bView = bView;
         QModelIndex idx = pGraphM->indexFromName(this->name);
-        emit pGraphM->dataChanged(idx, idx, QVector<int>{ ROLE_NODE_ISVIEW });
+        emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_ISVIEW });
 
         //直接就在这里触发绘制更新，不再往外传递了
         //不过有一种例外，就是当前打view会触发计算的话，后续由计算触发绘制更新就可以了
         auto& session = zeno::getSession();
-        if (bView && session.is_auto_run() && idx.data(ROLE_NODE_DIRTY).toBool()) {
+        if (bView && session.is_auto_run() && idx.data(QtRole::ROLE_NODE_DIRTY).toBool()) {
             return;
         }
-        const QString& nodepath = idx.data(ROLE_NODE_UUID_PATH).toString();
+        const QString& nodepath = idx.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         triggerView(nodepath, bView);
     });
 
@@ -389,59 +389,59 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
 
     switch (role) {
         case Qt::DisplayRole:
-        case ROLE_NODE_NAME: {
+        case QtRole::ROLE_NODE_NAME: {
             return item->name;
         }
-        case ROLE_NODE_DISPLAY_NAME: {
+        case QtRole::ROLE_NODE_DISPLAY_NAME: {
             return item->dispName;
         }
-        case ROLE_NODE_DISPLAY_ICON: {
+        case QtRole::ROLE_NODE_DISPLAY_ICON: {
             return item->dispIcon;
         }
-        case ROLE_NODE_UUID_PATH: {
+        case QtRole::ROLE_NODE_UUID_PATH: {
             return QString::fromStdString(item->uuidPath);
         }
-        case ROLE_CLASS_NAME: {
+        case QtRole::ROLE_CLASS_NAME: {
             return item->cls;
         }
-        case ROLE_OBJPOS: {
+        case QtRole::ROLE_OBJPOS: {
             return item->pos;
         }
-        case ROLE_PARAMS:
+        case QtRole::ROLE_PARAMS:
         {
             return QVariantPtr<ParamsModel>::asVariant(item->params);
         }
-        case ROLE_SUBGRAPH:
+        case QtRole::ROLE_SUBGRAPH:
         {
             if (item->optSubgraph.has_value())
                 return QVariant::fromValue(item->optSubgraph.value());
             else
                 return QVariant();  
         }
-        case ROLE_GRAPH:
+        case QtRole::ROLE_GRAPH:
         {
             return QVariantPtr<GraphModel>::asVariant(const_cast<GraphModel*>(this));
         }
-        case ROLE_INPUTS:
+        case QtRole::ROLE_INPUTS:
         {
             if (item->params)
                 return QVariant::fromValue(item->params->getInputs());
             return QVariant();
         }
-        case ROLE_OUTPUTS:
+        case QtRole::ROLE_OUTPUTS:
         {
             if (item->params)
                 return QVariant::fromValue(item->params->getOutputs());
             return QVariant();
         }
-        case ROLE_NODEDATA:
+        case QtRole::ROLE_NODEDATA:
         {
             zeno::NodeData data;
             auto spNode = item->m_wpNode;
             ZASSERT_EXIT(spNode, QVariant());
             return QVariant::fromValue(spNode->exportInfo());
         }
-        case ROLE_NODE_STATUS:
+        case QtRole::ROLE_NODE_STATUS:
         {
             int options = zeno::None;
             if (item->bView)
@@ -449,7 +449,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             //if (item->bMute)
             return QVariant(options);
         }
-        case ROLE_OUTPUT_OBJS:
+        case QtRole::ROLE_OUTPUT_OBJS:
         {
             auto spNode = item->m_wpNode;
             ZASSERT_EXIT(spNode, QVariant());
@@ -462,19 +462,19 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
                 return QVariant();
             }
         }
-        case ROLE_NODE_ISVIEW:
+        case QtRole::ROLE_NODE_ISVIEW:
         {
             return item->bView;
         }
-        case ROLE_NODE_RUN_STATE:
+        case QtRole::ROLE_NODE_RUN_STATE:
         {
             return QVariant::fromValue(item->runState);
         }
-        case ROLE_NODE_DIRTY:
+        case QtRole::ROLE_NODE_DIRTY:
         {
             return item->runState.bDirty;
         }
-        case ROLE_NODETYPE:
+        case QtRole::ROLE_NODETYPE:
         {
             auto spNode = item->m_wpNode;
             auto spSubnetNode = dynamic_cast<zeno::SubnetNode*>(spNode);
@@ -492,7 +492,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
                 return zeno::Node_Group;
             return zeno::Node_Normal;
         }
-        case ROLE_NODE_CATEGORY:
+        case QtRole::ROLE_NODE_CATEGORY:
         {
             auto spNode = item->m_wpNode;
             if (spNode->nodeClass)
@@ -504,7 +504,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
                 return "";
             }
         }
-        case ROLE_OBJPATH:
+        case QtRole::ROLE_OBJPATH:
         {
             auto spNode = item->m_wpNode;
             if (spNode) {
@@ -514,11 +514,11 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             //path.append(item->name);
             return "";
         }
-        case ROLE_COLLASPED:
+        case QtRole::ROLE_COLLASPED:
         {
             return item->bCollasped;
         }
-        case ROLE_KEYFRAMES: 
+        case QtRole::ROLE_KEYFRAMES: 
         {
             QVector<int> keys;
             for (const zeno::ParamPrimitive& info : item->params->getInputs()) {
@@ -545,28 +545,28 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             return QVariant::fromValue(keys);
         }
         //Dopnetwork
-        case ROLE_DOPNETWORK_ENABLECACHE: {
+        case QtRole::ROLE_DOPNETWORK_ENABLECACHE: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     return spDop->m_bEnableCache;
                 }
             }
         }
-        case ROLE_DOPNETWORK_CACHETODISK: {
+        case QtRole::ROLE_DOPNETWORK_CACHETODISK: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     return spDop->m_bAllowCacheToDisk;
                 }
             }
         }
-        case ROLE_DOPNETWORK_MAXMEM: {
+        case QtRole::ROLE_DOPNETWORK_MAXMEM: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     return spDop->m_maxCacheMemoryMB;
                 }
             }
         }
-        case ROLE_DOPNETWORK_MEM: {
+        case QtRole::ROLE_DOPNETWORK_MEM: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     return spDop->m_currCacheMemoryMB;
@@ -583,12 +583,12 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
     NodeItem* item = m_nodes[m_row2uuid[index.row()]];
 
     switch (role) {
-        case ROLE_CLASS_NAME: {
+        case QtRole::ROLE_CLASS_NAME: {
             //TODO: rename by core graph
             emit dataChanged(index, index, QVector<int>{role});
             return true;
         }
-        case ROLE_OBJPOS:
+        case QtRole::ROLE_OBJPOS:
         {
             auto spNode = item->m_wpNode;
             if (value.type() == QVariant::PointF) {
@@ -603,61 +603,61 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
             }
             return true;
         }
-        case ROLE_COLLASPED:
+        case QtRole::ROLE_COLLASPED:
         {
             item->bCollasped = value.toBool();
             emit dataChanged(index, index, QVector<int>{role});
             return true;
         }
-        case ROLE_NODE_RUN_STATE:
+        case QtRole::ROLE_NODE_RUN_STATE:
         {
             item->runState = value.value<NodeState>();
             emit dataChanged(index, index, QVector<int>{role});
             return true;
         }
-        case ROLE_NODE_STATUS:
+        case QtRole::ROLE_NODE_STATUS:
         {
             setView(index, value.toInt() & zeno::View);
             // setMute();
             break;
         }
-        case ROLE_NODE_ISVIEW:
+        case QtRole::ROLE_NODE_ISVIEW:
         {
             break;
         }
-        case ROLE_INPUTS:
+        case QtRole::ROLE_INPUTS:
         {
             PARAMS_INFO paramsInfo = value.value<PARAMS_INFO>();
             for (auto&[key, param] : paramsInfo)
             {
                 QModelIndex idx = item->params->paramIdx(key, true);
-                item->params->setData(idx, QVariant::fromValue(param.defl), ROLE_PARAM_VALUE);
+                item->params->setData(idx, QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
             }
             return true;
         }
         //Dopnetwork
-        case ROLE_DOPNETWORK_ENABLECACHE: {
+        case QtRole::ROLE_DOPNETWORK_ENABLECACHE: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     spDop->setEnableCache(value.toBool());
                 }
             }
         }
-        case ROLE_DOPNETWORK_CACHETODISK: {
+        case QtRole::ROLE_DOPNETWORK_CACHETODISK: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     spDop->setAllowCacheToDisk(value.toBool());
                 }
             }
         }
-        case ROLE_DOPNETWORK_MAXMEM: {
+        case QtRole::ROLE_DOPNETWORK_MAXMEM: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     spDop->setMaxCacheMemoryMB(value.toInt());
                 }
             }
         }
-        case ROLE_DOPNETWORK_MEM: {
+        case QtRole::ROLE_DOPNETWORK_MEM: {
             if (auto spNode = item->m_wpNode) {
                 if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
                     spDop->setCurrCacheMemoryMB(value.toInt());
@@ -673,7 +673,7 @@ QModelIndexList GraphModel::match(const QModelIndex& start, int role,
     Qt::MatchFlags flags) const
 {
     QModelIndexList result;
-    if (role == ROLE_CLASS_NAME) {
+    if (role == QtRole::ROLE_CLASS_NAME) {
         auto spGraph = m_impl->m_wpCoreGraph;
         ZASSERT_EXIT(spGraph, result);
         std::string content = value.toString().toStdString();
@@ -700,7 +700,7 @@ QList<SEARCH_RESULT> GraphModel::search(const QString& content, SearchType searc
                 lst.append(idx);
         }
         else {
-            lst = _base::match(this->index(0, 0), ROLE_NODE_NAME, content, -1, Qt::MatchContains);
+            lst = _base::match(this->index(0, 0), QtRole::ROLE_NODE_NAME, content, -1, Qt::MatchContains);
         }
         if (!lst.isEmpty()) {
             for (const QModelIndex& nodeIdx : lst) {
@@ -973,7 +973,7 @@ QVariant GraphModel::removeLink(const QString& nodeName, const QString& paramNam
         if (nRow != -1)
         {
             QModelIndex linkIndex = m_linkModel->index(nRow);
-            QVariant var = m_linkModel->data(linkIndex, ROLE_LINK_FROMPARAM_INFO);
+            QVariant var = m_linkModel->data(linkIndex, QtRole::ROLE_LINK_FROMPARAM_INFO);
             QVariantList varList = var.toList();
 
             QString fromNodeName = varList.isEmpty() ? "" : varList[0].toString();
@@ -992,7 +992,7 @@ QVariant GraphModel::removeLink(const QString& nodeName, const QString& paramNam
 
 void GraphModel::removeLink(const QModelIndex& linkIdx)
 {
-    zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+    zeno::EdgeInfo edge = linkIdx.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
     removeLink(edge);
 }
 
@@ -1005,21 +1005,21 @@ bool GraphModel::updateLink(const QModelIndex& linkIdx, bool bInput, const QStri
 {
     auto spGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(spGraph, false);
-    zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+    zeno::EdgeInfo edge = linkIdx.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
     bool ret = spGraph->updateLink(edge, bInput, oldkey.toStdString(), newkey.toStdString());
     if (!ret)
         return ret;
 
     QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(linkIdx.model());
     LinkModel* linksM = qobject_cast<LinkModel*>(pModel);
-    linksM->setData(linkIdx, newkey, ROLE_LINK_INKEY);
+    linksM->setData(linkIdx, newkey, QtRole::ROLE_LINK_INKEY);
 }
 
 void GraphModel::moveUpLinkKey(const QModelIndex& linkIdx, bool bInput, const std::string& keyName)
 {
     auto spGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(spGraph);
-    zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+    zeno::EdgeInfo edge = linkIdx.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
     spGraph->moveUpLinkKey(edge, bInput, keyName);
 }
 
@@ -1070,7 +1070,7 @@ void GraphModel::_updateName(const QString& oldName, const QString& newName)
 
     int row = m_uuid2Row[uuid];
     QModelIndex idx = createIndex(row, 0);
-    emit dataChanged(idx, idx, QVector<int>{ ROLE_NODE_NAME });
+    emit dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_NAME });
     emit nameUpdated(idx, oldName);
     zenoApp->graphsManager()->currentModel()->markDirty(true);
 }
@@ -1333,7 +1333,7 @@ void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransact
     if (endTransaction)
     {
         auto currtPath = currentPath();
-        NodeStatusCommand* pCmd = new NodeStatusCommand(true, idx.data(ROLE_NODE_NAME).toString(), bOn, currtPath);
+        NodeStatusCommand* pCmd = new NodeStatusCommand(true, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
         if (auto topLevelGraph = getTopLevelGraph(currtPath))
             topLevelGraph->pushToplevelStack(pCmd);
     }
@@ -1356,7 +1356,7 @@ void GraphModel::_setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransact
     if (endTransaction)
     {
         auto currtPath = currentPath();
-        NodeStatusCommand* pCmd = new NodeStatusCommand(false, idx.data(ROLE_NODE_NAME).toString(), bOn, currtPath);
+        NodeStatusCommand* pCmd = new NodeStatusCommand(false, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
         if (auto topLevelGraph = getTopLevelGraph(currtPath))
             topLevelGraph->pushToplevelStack(pCmd);
     }
@@ -1418,7 +1418,7 @@ QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)
     auto spCoreGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(spCoreGraph, false);
 
-    std::string oldName = idx.data(ROLE_NODE_NAME).toString().toStdString();
+    std::string oldName = idx.data(QtRole::ROLE_NODE_NAME).toString().toStdString();
     newName = QString::fromStdString(spCoreGraph->updateNodeName(oldName, newName.toStdString()));
     return newName;
 }
@@ -1429,19 +1429,19 @@ void GraphModel::updateSocketValue(const QModelIndex& nodeidx, const QString soc
     if (ParamsModel* paramModel = params(nodeidx))
     {
         QModelIndex& socketIdx = paramModel->paramIdx(socketName, true);
-        paramModel->setData(socketIdx, newValue, ROLE_PARAM_VALUE);
+        paramModel->setData(socketIdx, newValue, QtRole::ROLE_PARAM_VALUE);
     }
 }
 
 QHash<int, QByteArray> GraphModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
-    roles[ROLE_CLASS_NAME] = "classname";
-    roles[ROLE_NODE_NAME] = "name";
-    roles[ROLE_PARAMS] = "params";
-    roles[ROLE_LINKS] = "linkModel";
-    roles[ROLE_OBJPOS] = "pos";
-    roles[ROLE_SUBGRAPH] = "subgraph";
+    roles[QtRole::ROLE_CLASS_NAME] = "classname";
+    roles[QtRole::ROLE_NODE_NAME] = "name";
+    roles[QtRole::ROLE_PARAMS] = "params";
+    roles[QtRole::ROLE_LINKS] = "linkModel";
+    roles[QtRole::ROLE_OBJPOS] = "pos";
+    roles[QtRole::ROLE_SUBGRAPH] = "subgraph";
     return roles;
 }
 
@@ -1487,11 +1487,11 @@ bool GraphModel::removeRows(int row, int count, const QModelIndex& parent)
 
 void GraphModel::syncToAssetsInstance(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui)
 {
-    QModelIndexList results = match(QModelIndex(), ROLE_CLASS_NAME, assetsName);
+    QModelIndexList results = match(QModelIndex(), QtRole::ROLE_CLASS_NAME, assetsName);
     for (QModelIndex res : results) {
-        zeno::NodeType type = (zeno::NodeType)res.data(ROLE_NODETYPE).toInt();
+        zeno::NodeType type = (zeno::NodeType)res.data(QtRole::ROLE_NODETYPE).toInt();
         if (type == zeno::Node_AssetInstance || type == zeno::Node_AssetReference) {
-            ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(res.data(ROLE_PARAMS));
+            ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(res.data(QtRole::ROLE_PARAMS));
             ZASSERT_EXIT(paramsM);
             paramsM->resetCustomUi(customui);
             paramsM->batchModifyParams(info);
@@ -1531,7 +1531,7 @@ void GraphModel::syncToAssetsInstance(const QString& assetsName)
                 continue;
             while (pSubgM->rowCount() > 0)
             {
-                const QString& nodeName = pSubgM->index(0, 0).data(ROLE_NODE_NAME).toString();
+                const QString& nodeName = pSubgM->index(0, 0).data(QtRole::ROLE_NODE_NAME).toString();
                 pSubgM->removeNode(nodeName);
             }
             auto spNode = m_nodes[uuid]->m_wpNode;
@@ -1563,7 +1563,7 @@ void GraphModel::updateParamName(QModelIndex nodeIdx, int row, QString newName)
 {
     NodeItem* item = m_nodes[m_row2uuid[nodeIdx.row()]];
     QModelIndex paramIdx = item->params->index(row, 0);
-    item->params->setData(paramIdx, newName, ROLE_PARAM_NAME);
+    item->params->setData(paramIdx, newName, QtRole::ROLE_PARAM_NAME);
 }
 
 void GraphModel::removeParam(QModelIndex nodeIdx, int row)

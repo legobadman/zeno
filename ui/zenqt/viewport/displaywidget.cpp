@@ -1225,7 +1225,7 @@ void DisplayWidget::onNodeSelected(GraphModel* subgraph, const QModelIndexList &
         return;
 
     ZASSERT_EXIT(m_glView);
-    auto node_id = nodes[0].data(ROLE_CLASS_NAME).toString();
+    auto node_id = nodes[0].data(QtRole::ROLE_CLASS_NAME).toString();
     if (node_id == "PrimitiveAttrPicker") {
         auto scene = m_glView->getSession()->get_scene();
         ZASSERT_EXIT(scene);

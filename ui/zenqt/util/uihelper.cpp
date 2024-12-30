@@ -1760,11 +1760,11 @@ QVariant UiHelper::getQVarFromCurves(const zeno::CurvesData& curves) {
 
 QString UiHelper::getNaiveParamPath(const QModelIndex& param, int dim)
 {
-    auto nodeIdx = param.data(ROLE_NODEIDX).toModelIndex();
+    auto nodeIdx = param.data(QtRole::ROLE_NODEIDX).toModelIndex();
     if (!nodeIdx.isValid())
         return "";
-    QString path = nodeIdx.data(ROLE_OBJPATH).toString();
-    QString paramName = param.data(ROLE_PARAM_NAME).toString();
+    QString path = nodeIdx.data(QtRole::ROLE_OBJPATH).toString();
+    QString paramName = param.data(QtRole::ROLE_PARAM_NAME).toString();
     if (dim == 0) {
         paramName += ".x";
     }
@@ -1788,7 +1788,7 @@ zeno::NodesData UiHelper::dumpNodes(const QModelIndexList &nodeIndice)
     QSet<QString> existedNodes;
     for (const auto& idx : nodeIndice)
     {
-        zeno::NodeData data = idx.data(ROLE_NODEDATA).value<zeno::NodeData>();
+        zeno::NodeData data = idx.data(QtRole::ROLE_NODEDATA).value<zeno::NodeData>();
         nodes[data.name] = data;
     }
     return nodes;
@@ -1868,12 +1868,12 @@ QStandardItemModel* UiHelper::genParamsModel(const std::vector<zeno::ParamPrimit
         QStandardItem* paramItem = new QStandardItem(QString::fromStdString(info.name));
         const QString& paramName = QString::fromStdString(info.name);
         paramItem->setData(paramName, Qt::DisplayRole);
-        paramItem->setData(paramName, ROLE_PARAM_NAME);
+        paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(QVariant::fromValue(info.defl), ROLE_PARAM_VALUE);
-        paramItem->setData(info.control, ROLE_PARAM_CONTROL);
-        paramItem->setData(info.type, ROLE_PARAM_TYPE);
-        paramItem->setData(true, ROLE_ISINPUT);
+        paramItem->setData(QVariant::fromValue(info.defl), QtRole::ROLE_PARAM_VALUE);
+        paramItem->setData(info.control, QtRole::ROLE_PARAM_CONTROL);
+        paramItem->setData(info.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData(true, QtRole::ROLE_ISINPUT);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
         paramItem->setEditable(true);
         pInputs->appendRow(paramItem);
@@ -1883,12 +1883,12 @@ QStandardItemModel* UiHelper::genParamsModel(const std::vector<zeno::ParamPrimit
         QStandardItem* paramItem = new QStandardItem(QString::fromStdString(info.name));
         const QString& paramName = QString::fromStdString(info.name);
         paramItem->setData(paramName, Qt::DisplayRole);
-        paramItem->setData(paramName, ROLE_PARAM_NAME);
+        paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(QVariant::fromValue(info.defl), ROLE_PARAM_VALUE);
-        paramItem->setData(info.control, ROLE_PARAM_CONTROL);
-        paramItem->setData(info.type, ROLE_PARAM_TYPE);
-        paramItem->setData(false, ROLE_ISINPUT);
+        paramItem->setData(QVariant::fromValue(info.defl), QtRole::ROLE_PARAM_VALUE);
+        paramItem->setData(info.control, QtRole::ROLE_PARAM_CONTROL);
+        paramItem->setData(info.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData(false, QtRole::ROLE_ISINPUT);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
         paramItem->setEditable(true);
         pOutputs->appendRow(paramItem);
@@ -1921,16 +1921,16 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
         const QString& tabName = QString::fromStdString(tab.name);
         QStandardItem* pTab = new QStandardItem(tabName);
         pTab->setData(VPARAM_TAB, ROLE_ELEMENT_TYPE);
-        pTab->setData(zeno::Role_InputPrimitive, ROLE_PARAM_GROUP);
-        pTab->setData(tabName, ROLE_PARAM_NAME);
+        pTab->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
+        pTab->setData(tabName, QtRole::ROLE_PARAM_NAME);
 
         for (const zeno::ParamGroup& group : tab.groups)
         {
             const QString& groupName = QString::fromStdString(group.name);
             QStandardItem* pGroup = new QStandardItem(groupName);
             pGroup->setData(VPARAM_GROUP, ROLE_ELEMENT_TYPE);
-            pGroup->setData(zeno::Role_InputPrimitive, ROLE_PARAM_GROUP);
-            pGroup->setData(groupName, ROLE_PARAM_NAME);
+            pGroup->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
+            pGroup->setData(groupName, QtRole::ROLE_PARAM_NAME);
 
             for (const zeno::ParamPrimitive& param : group.params)
             {
@@ -1939,17 +1939,17 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
 
                 const QString& paramName = QString::fromStdString(param.name);
                 paramItem->setData(paramName, Qt::DisplayRole);
-                paramItem->setData(paramName, ROLE_PARAM_NAME);
+                paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-                paramItem->setData(QVariant::fromValue(param.defl), ROLE_PARAM_VALUE);
-                paramItem->setData(param.control, ROLE_PARAM_CONTROL);
-                paramItem->setData(param.type, ROLE_PARAM_TYPE);
-                paramItem->setData(true, ROLE_ISINPUT);
-                paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
-                paramItem->setData(param.bSocketVisible, ROLE_PARAM_SOCKET_VISIBLE);
+                paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
+                paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
+                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData(true, QtRole::ROLE_ISINPUT);
+                paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
+                paramItem->setData(param.bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE);
                 if (param.ctrlProps.has_value())
-                    paramItem->setData(QVariant::fromValue(param.ctrlProps), ROLE_PARAM_CTRL_PROPERTIES);
-                paramItem->setData(zeno::Role_InputPrimitive, ROLE_PARAM_GROUP);
+                    paramItem->setData(QVariant::fromValue(param.ctrlProps), QtRole::ROLE_PARAM_CTRL_PROPERTIES);
+                paramItem->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
                 pGroup->appendRow(paramItem);
             }
             pTab->appendRow(pGroup);
@@ -1964,18 +1964,18 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
         const QString& paramName = QString::fromStdString(param.name);
         QStandardItem* paramItem = new QStandardItem(paramName);
         paramItem->setData(paramName, Qt::DisplayRole);
-        paramItem->setData(paramName, ROLE_PARAM_NAME);
+        paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(QVariant::fromValue(param.defl), ROLE_PARAM_VALUE);
-        paramItem->setData(param.control, ROLE_PARAM_CONTROL);
-        paramItem->setData(param.type, ROLE_PARAM_TYPE);
-        paramItem->setData(false, ROLE_ISINPUT);
-        paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
+        paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
+        paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
+        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData(false, QtRole::ROLE_ISINPUT);
+        paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
         if (param.ctrlProps.has_value())
-            paramItem->setData(QVariant::fromValue(param.ctrlProps), ROLE_PARAM_CTRL_PROPERTIES);
+            paramItem->setData(QVariant::fromValue(param.ctrlProps), QtRole::ROLE_PARAM_CTRL_PROPERTIES);
         pOutputs->appendRow(paramItem);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
-        paramItem->setData(zeno::Role_OutputPrimitive, ROLE_PARAM_GROUP);
+        paramItem->setData(zeno::Role_OutputPrimitive, QtRole::ROLE_PARAM_GROUP);
         paramItem->setEditable(true);
     }
     //object params
@@ -1986,13 +1986,13 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
         const QString& paramName = QString::fromStdString(param.name);
         QStandardItem* paramItem = new QStandardItem(paramName);
         paramItem->setData(paramName, Qt::DisplayRole);
-        paramItem->setData(paramName, ROLE_PARAM_NAME);
+        paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(param.type, ROLE_PARAM_TYPE);
-        paramItem->setData(true, ROLE_ISINPUT);
-        paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
+        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData(true, QtRole::ROLE_ISINPUT);
+        paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
-        paramItem->setData(zeno::Role_InputObject, ROLE_PARAM_GROUP);
+        paramItem->setData(zeno::Role_InputObject, QtRole::ROLE_PARAM_GROUP);
         paramItem->setEditable(true);
         pObjInputs->appendRow(paramItem);
     }
@@ -2004,13 +2004,13 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
         const QString& paramName = QString::fromStdString(param.name);
         QStandardItem* paramItem = new QStandardItem(paramName);
         paramItem->setData(paramName, Qt::DisplayRole);
-        paramItem->setData(paramName, ROLE_PARAM_NAME);
+        paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(param.type, ROLE_PARAM_TYPE);
-        paramItem->setData(false, ROLE_ISINPUT);
-        paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
+        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData(false, QtRole::ROLE_ISINPUT);
+        paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
-        paramItem->setData(zeno::Role_OutputObject, ROLE_PARAM_GROUP);
+        paramItem->setData(zeno::Role_OutputObject, QtRole::ROLE_PARAM_GROUP);
         paramItem->setEditable(true);
         pObjOutputs->appendRow(paramItem);
     }
@@ -2034,7 +2034,7 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
         return;
     auto const& renameItem = [](QStandardItem* item, const std::string& name) {
         item->setData(QString::fromStdString(name), Qt::DisplayRole);
-        item->setData(QString::fromStdString(name), ROLE_PARAM_NAME);
+        item->setData(QString::fromStdString(name), QtRole::ROLE_PARAM_NAME);
         item->setData(QString::fromStdString(name), ROLE_MAP_TO_PARAMNAME);
     };
     auto const& makeInputPrimItem = [](zeno::ParamPrimitive const& param) -> QStandardItem* {
@@ -2042,30 +2042,30 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
         const QString& paramName = QString::fromStdString(param.name);
         paramItem->setData(paramName, Qt::DisplayRole);
-        paramItem->setData(paramName, ROLE_PARAM_NAME);
+        paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(QVariant::fromValue(param.defl), ROLE_PARAM_VALUE);
-        paramItem->setData(param.control, ROLE_PARAM_CONTROL);
-        paramItem->setData(param.type, ROLE_PARAM_TYPE);
-        paramItem->setData(true, ROLE_ISINPUT);
-        paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
-        paramItem->setData(param.bSocketVisible, ROLE_PARAM_SOCKET_VISIBLE);
+        paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
+        paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
+        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData(true, QtRole::ROLE_ISINPUT);
+        paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
+        paramItem->setData(param.bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE);
         if (param.ctrlProps.has_value())
-            paramItem->setData(QVariant::fromValue(param.ctrlProps), ROLE_PARAM_CTRL_PROPERTIES);
-        paramItem->setData(zeno::Role_InputPrimitive, ROLE_PARAM_GROUP);
+            paramItem->setData(QVariant::fromValue(param.ctrlProps), QtRole::ROLE_PARAM_CTRL_PROPERTIES);
+        paramItem->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
         return paramItem;
     };
     auto const& updateGroup = [&changes, &renameItem, &makeInputPrimItem](QStandardItem* pItemGroup, zeno::PrimitiveParams const& inputPrims) {
         for (int i = 0; i < inputPrims.size(); i++) {
             bool defaultInitCase = i >= pItemGroup->rowCount();
             auto const& param = inputPrims[i];
-            if (defaultInitCase || param.name != pItemGroup->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+            if (defaultInitCase || param.name != pItemGroup->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
                 if (defaultInitCase || changes.new_inputs.find(param.name) != changes.new_inputs.end()) {
                     pItemGroup->insertRow(i, makeInputPrimItem(param));
                     continue;
                 }
                 for (auto& pair : changes.rename_inputs) {
-                    if (pair.first == pItemGroup->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+                    if (pair.first == pItemGroup->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
                         renameItem(pItemGroup->child(i), pair.second);
                         break;
                     }
@@ -2085,13 +2085,13 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
         for (int groupCount = tabitem->rowCount() - 1; groupCount >= 0; groupCount--) {
             QStandardItem* groupitem = tabitem->child(groupCount);
             for (int paramCount = groupitem->rowCount() - 1; paramCount >= 0; paramCount--) {
-                if (changes.remove_inputs.find(groupitem->child(paramCount)->data(ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_inputs.end())
+                if (changes.remove_inputs.find(groupitem->child(paramCount)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_inputs.end())
                     groupitem->removeRow(paramCount);
             }
-            if (groupitem->rowCount() == 0 && !groupnames.count(groupitem->data(ROLE_PARAM_NAME).toString().toStdString()))
+            if (groupitem->rowCount() == 0 && !groupnames.count(groupitem->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()))
                 tabitem->removeRow(groupCount);
         }
-        if (tabitem->rowCount() == 0 && !tabnames.count(tabitem->data(ROLE_PARAM_NAME).toString().toStdString()))
+        if (tabitem->rowCount() == 0 && !tabnames.count(tabitem->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()))
             pInputsRoot->removeRow(tabCount);
     }
     for (int tabCount = 0; tabCount < customui.inputPrims.size(); tabCount++) {
@@ -2100,14 +2100,14 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
         if (pInputsRoot->rowCount() < tabCount + 1) {
             QStandardItem* pTab = new QStandardItem(QString::fromStdString(tabName));
             pTab->setData(VPARAM_TAB, ROLE_ELEMENT_TYPE);
-            pTab->setData(zeno::Role_InputPrimitive, ROLE_PARAM_GROUP);
-            pTab->setData(QString::fromStdString(tabName), ROLE_PARAM_NAME);
+            pTab->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
+            pTab->setData(QString::fromStdString(tabName), QtRole::ROLE_PARAM_NAME);
             for (const zeno::ParamGroup& group : customui.inputPrims[tabCount].groups) {
                 const QString& groupName = QString::fromStdString(group.name);
                 QStandardItem* pGroup = new QStandardItem(groupName);
                 pGroup->setData(VPARAM_GROUP, ROLE_ELEMENT_TYPE);
-                pGroup->setData(zeno::Role_InputPrimitive, ROLE_PARAM_GROUP);
-                pGroup->setData(groupName, ROLE_PARAM_NAME);
+                pGroup->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
+                pGroup->setData(groupName, QtRole::ROLE_PARAM_NAME);
                 for (const zeno::ParamPrimitive& param : group.params) {
                     pGroup->appendRow(makeInputPrimItem(param));
                 }
@@ -2116,7 +2116,7 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
             pInputsRoot->appendRow(pTab);
         }
         else {
-            if (tabItem->data(ROLE_PARAM_NAME).toString().toStdString() != tabName)
+            if (tabItem->data(QtRole::ROLE_PARAM_NAME).toString().toStdString() != tabName)
                 renameItem(tabItem, tabName);
             for (int groupCount = 0; groupCount < customui.inputPrims[tabCount].groups.size(); groupCount++) {
                 const auto& groupItem = tabItem->child(groupCount);
@@ -2124,15 +2124,15 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
                 if (tabItem->rowCount() < groupCount + 1) {
                     QStandardItem* pGroup = new QStandardItem(QString::fromStdString(groupName));
                     pGroup->setData(VPARAM_GROUP, ROLE_ELEMENT_TYPE);
-                    pGroup->setData(zeno::Role_InputPrimitive, ROLE_PARAM_GROUP);
-                    pGroup->setData(QString::fromStdString(groupName), ROLE_PARAM_NAME);
+                    pGroup->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
+                    pGroup->setData(QString::fromStdString(groupName), QtRole::ROLE_PARAM_NAME);
                     for (const zeno::ParamPrimitive& param : customui.inputPrims[tabCount].groups[groupCount].params) {
                         pGroup->appendRow(makeInputPrimItem(param));
                     }
                     tabItem->appendRow(pGroup);
                 }
                 else {
-                    if (groupItem->data(ROLE_PARAM_NAME).toString().toStdString() != groupName)
+                    if (groupItem->data(QtRole::ROLE_PARAM_NAME).toString().toStdString() != groupName)
                         renameItem(groupItem, groupName);
                     updateGroup(groupItem, customui.inputPrims[tabCount].groups[groupCount].params);
                 }
@@ -2141,30 +2141,30 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
     }
     //inputObjs
     for (int i = pObjInputsRoot->rowCount() - 1; i >= 0; i--) {
-        if (changes.remove_inputs.find(pObjInputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_inputs.end())
+        if (changes.remove_inputs.find(pObjInputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_inputs.end())
             pObjInputsRoot->removeRow(i);
     }
     for (int i = 0; i < customui.inputObjs.size(); i++) {
         bool defaultInitCase = i >= pObjInputsRoot->rowCount();
         auto const& param = customui.inputObjs[i];
-        if (defaultInitCase || param.name != pObjInputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+        if (defaultInitCase || param.name != pObjInputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
             if (defaultInitCase || changes.new_inputs.find(param.name) != changes.new_inputs.end()) {
                 const QString& paramName = QString::fromStdString(param.name);
                 QStandardItem* paramItem = new QStandardItem(paramName);
                 paramItem->setData(paramName, Qt::DisplayRole);
-                paramItem->setData(paramName, ROLE_PARAM_NAME);
+                paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-                paramItem->setData(param.type, ROLE_PARAM_TYPE);
-                paramItem->setData(true, ROLE_ISINPUT);
-                paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
+                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData(true, QtRole::ROLE_ISINPUT);
+                paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
                 paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
-                paramItem->setData(zeno::Role_InputObject, ROLE_PARAM_GROUP);
+                paramItem->setData(zeno::Role_InputObject, QtRole::ROLE_PARAM_GROUP);
                 paramItem->setEditable(true);
                 pObjInputsRoot->insertRow(i, paramItem);
                 continue;
             }
             for (auto& pair : changes.rename_inputs) {
-                if (pair.first == pObjInputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+                if (pair.first == pObjInputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
                     renameItem(pObjInputsRoot->child(i), pair.second);
                     break;
                 }
@@ -2173,34 +2173,34 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
     }
     //outputPrims
     for (int i = pOutputsRoot->rowCount() - 1; i >= 0; i--) {
-        if (changes.remove_outputs.find(pOutputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_outputs.end())
+        if (changes.remove_outputs.find(pOutputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_outputs.end())
             pOutputsRoot->removeRow(i);
     }
     for (int i = 0; i < customui.outputPrims.size(); i++) {
         bool defaultInitCase = i >= pOutputsRoot->rowCount();
         auto const& param = customui.outputPrims[i];
-        if (defaultInitCase || param.name != pOutputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+        if (defaultInitCase || param.name != pOutputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
             if (defaultInitCase || changes.new_outputs.find(param.name) != changes.new_outputs.end()) {
                 const QString& paramName = QString::fromStdString(param.name);
                 QStandardItem* paramItem = new QStandardItem(paramName);
                 paramItem->setData(paramName, Qt::DisplayRole);
-                paramItem->setData(paramName, ROLE_PARAM_NAME);
+                paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-                paramItem->setData(QVariant::fromValue(param.defl), ROLE_PARAM_VALUE);
-                paramItem->setData(param.control, ROLE_PARAM_CONTROL);
-                paramItem->setData(param.type, ROLE_PARAM_TYPE);
-                paramItem->setData(false, ROLE_ISINPUT);
-                paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
+                paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
+                paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
+                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData(false, QtRole::ROLE_ISINPUT);
+                paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
                 if (param.ctrlProps.has_value())
-                    paramItem->setData(QVariant::fromValue(param.ctrlProps), ROLE_PARAM_CTRL_PROPERTIES);
+                    paramItem->setData(QVariant::fromValue(param.ctrlProps), QtRole::ROLE_PARAM_CTRL_PROPERTIES);
                 paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
-                paramItem->setData(zeno::Role_OutputPrimitive, ROLE_PARAM_GROUP);
+                paramItem->setData(zeno::Role_OutputPrimitive, QtRole::ROLE_PARAM_GROUP);
                 paramItem->setEditable(true);
                 pOutputsRoot->insertRow(i, paramItem);
                 continue;
             }
             for (auto& pair : changes.rename_outputs) {
-                if (pair.first == pOutputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+                if (pair.first == pOutputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
                     renameItem(pOutputsRoot->child(i), pair.second);
                     break;
                 }
@@ -2209,30 +2209,30 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
     }
     //outputObjs
     for (int i = pObjOutputsRoot->rowCount() - 1; i >= 0; i--) {
-        if (changes.remove_outputs.find(pObjOutputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_outputs.end())
+        if (changes.remove_outputs.find(pObjOutputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) != changes.remove_outputs.end())
             pObjOutputsRoot->removeRow(i);
     }
     for (int i = 0; i < customui.outputObjs.size(); i++) {
         bool defaultInitCase = i >= pObjOutputsRoot->rowCount();
         auto const& param = customui.outputObjs[i];
-        if (defaultInitCase || param.name != pObjOutputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+        if (defaultInitCase || param.name != pObjOutputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
             if (defaultInitCase || changes.new_outputs.find(param.name) != changes.new_outputs.end()) {
                 const QString& paramName = QString::fromStdString(param.name);
                 QStandardItem* paramItem = new QStandardItem(paramName);
                 paramItem->setData(paramName, Qt::DisplayRole);
-                paramItem->setData(paramName, ROLE_PARAM_NAME);
+                paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-                paramItem->setData(param.type, ROLE_PARAM_TYPE);
-                paramItem->setData(false, ROLE_ISINPUT);
-                paramItem->setData(param.socketType, ROLE_SOCKET_TYPE);
+                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData(false, QtRole::ROLE_ISINPUT);
+                paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
                 paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
-                paramItem->setData(zeno::Role_OutputObject, ROLE_PARAM_GROUP);
+                paramItem->setData(zeno::Role_OutputObject, QtRole::ROLE_PARAM_GROUP);
                 paramItem->setEditable(true);
                 pObjOutputsRoot->insertRow(i, paramItem);
                 continue;
             }
             for (auto& pair : changes.rename_outputs) {
-                if (pair.first == pObjOutputsRoot->child(i)->data(ROLE_PARAM_NAME).toString().toStdString()) {
+                if (pair.first == pObjOutputsRoot->child(i)->data(QtRole::ROLE_PARAM_NAME).toString().toStdString()) {
                     renameItem(pObjOutputsRoot->child(i), pair.second);
                     break;
                 }
@@ -2282,7 +2282,7 @@ QStringList UiHelper::findPreviousNode(GraphModel* pModel, const QString& node)
     if (!nodeIdx.isValid())
         return nodes;
 
-    zeno::NodeData nodeDat = nodeIdx.data(ROLE_NODEDATA).value<zeno::NodeData>();
+    zeno::NodeData nodeDat = nodeIdx.data(QtRole::ROLE_NODEDATA).value<zeno::NodeData>();
     auto inputs = zeno::customUiToParams(nodeDat.customUi.inputPrims);
     for (const zeno::ParamPrimitive& param : inputs)
     {
@@ -2301,7 +2301,7 @@ QStringList UiHelper::findSuccessorNode(GraphModel* pModel, const QString& node)
     if (!nodeIdx.isValid())
         return nodes;
 
-    zeno::NodeData nodeDat = nodeIdx.data(ROLE_NODEDATA).value<zeno::NodeData>();
+    zeno::NodeData nodeDat = nodeIdx.data(QtRole::ROLE_NODEDATA).value<zeno::NodeData>();
     for (const zeno::ParamPrimitive& param : nodeDat.customUi.outputPrims)
     {
         for (const zeno::EdgeInfo& link : param.links)
@@ -2322,14 +2322,14 @@ QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& node)
             nodesName.insert(node);
         }
         const QModelIndex& idx = pModel->indexFromName(QString::fromStdString(node));
-        if (ParamsModel* paramModel = QVariantPtr<ParamsModel>::asPtr(idx.data(ROLE_PARAMS))) {
+        if (ParamsModel* paramModel = QVariantPtr<ParamsModel>::asPtr(idx.data(QtRole::ROLE_PARAMS))) {
             for (int i = 0; i < paramModel->rowCount(); ++i) {
                 QModelIndex idx = paramModel->index(i, 0);
-                auto name = idx.data(ROLE_PARAM_NAME).toString();
-                PARAM_LINKS links = idx.data(ROLE_LINKS).value<PARAM_LINKS>();
+                auto name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+                PARAM_LINKS links = idx.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
                 for (auto link : links) {
-                    zeno::EdgeInfo edge = link.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
-                    if (idx.data(ROLE_ISINPUT).toBool()) {
+                    zeno::EdgeInfo edge = link.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+                    if (idx.data(QtRole::ROLE_ISINPUT).toBool()) {
                         findNodes(pModel, edge.outNode, nodesName);
                     } else {
                         findNodes(pModel, edge.inNode, nodesName);
@@ -2350,7 +2350,7 @@ int UiHelper::getIndegree(const QModelIndex& nodeIdx)
 {
     if (!nodeIdx.isValid())
         return 0;
-    ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(ROLE_PARAMS));
+    ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(QtRole::ROLE_PARAMS));
     ZASSERT_EXIT(paramsM, 0);
     int inDegrees = 0, outDegrees = 0;
     paramsM->getDegrees(inDegrees, outDegrees);

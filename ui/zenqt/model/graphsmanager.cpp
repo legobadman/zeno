@@ -276,7 +276,7 @@ void GraphsManager::onRowsAboutToBeRemoved(const QModelIndex& parent, int first,
     const QModelIndex& idx = m_model->index(first, 0);
     if (idx.isValid())
     {
-        const QString& subgName = idx.data(ROLE_CLASS_NAME).toString();
+        const QString& subgName = idx.data(QtRole::ROLE_CLASS_NAME).toString();
         if (m_scenes.find(subgName) != m_scenes.end())
         {
             delete m_scenes[subgName];
@@ -290,8 +290,8 @@ void GraphsManager::onModelDataChanged(const QModelIndex& subGpIdx, const QModel
 {
     switch (role)
     {
-    case ROLE_OBJPOS:
-    case ROLE_COLLASPED:
+    case QtRole::ROLE_OBJPOS:
+    case QtRole::ROLE_COLLASPED:
         break;
     default:
         emit modelDataChanged();
@@ -324,7 +324,7 @@ QGraphicsScene* GraphsManager::gvScene(const QModelIndex& subgIdx) const
     if (!subgIdx.isValid())
         return nullptr;
 
-    const QString& subgName = subgIdx.data(ROLE_CLASS_NAME).toString();
+    const QString& subgName = subgIdx.data(QtRole::ROLE_CLASS_NAME).toString();
     if (m_scenes.find(subgName) == m_scenes.end())
         return nullptr;
 
@@ -350,7 +350,7 @@ void GraphsManager::addScene(const QModelIndex& subgIdx, ZenoSubGraphScene* scen
 {
     //TODO: deprecated
     /*
-    const QString& subgName = subgIdx.data(ROLE_CLASS_NAME).toString();
+    const QString& subgName = subgIdx.data(QtRole::ROLE_CLASS_NAME).toString();
     if (m_scenes.find(subgName) != m_scenes.end() || !scene)
         return;
     m_scenes.insert(subgName, scene);
@@ -417,7 +417,7 @@ zeno::NodeCates GraphsManager::getCates() const
     for (int r = 0; r < m_assets->rowCount(); r++)
     {
         QModelIndex idx = m_assets->index(r);
-        const QString& asset = idx.data(ROLE_CLASS_NAME).toString();
+        const QString& asset = idx.data(QtRole::ROLE_CLASS_NAME).toString();
         assetsNames.push_back(asset.toStdString());
     }
 

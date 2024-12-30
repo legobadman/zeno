@@ -124,7 +124,7 @@ void ZenoSpreadsheet::clear() {
 
 void ZenoSpreadsheet::onNodeSelected(const QModelIndex& idx) {
     ZASSERT_EXIT(idx.isValid());
-    zeno::zany pObject = idx.data(ROLE_OUTPUT_OBJS).value<zeno::zany>();
+    zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
     if (!pObject)
     {
         this->dataModel->setModelData(nullptr);

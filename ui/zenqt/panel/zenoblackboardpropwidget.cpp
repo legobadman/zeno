@@ -24,17 +24,17 @@ ZenoBlackboardPropWidget::ZenoBlackboardPropWidget(const QPersistentModelIndex &
     pGroupLayout->setColumnStretch(1, 1);
     pGroupLayout->setColumnStretch(2, 3);
     pGroupLayout->setSpacing(10);
-    if (ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(ROLE_PARAMS)))
+    if (ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS)))
     {
         auto index = paramsM->index(paramsM->indexFromName("background", true), 0);
         if (index.isValid())
         {
-            insertRow("background", zeno::ColorVec, index.data(ROLE_PARAM_VALUE), 0, pGroupLayout);
+            insertRow("background", zeno::ColorVec, index.data(QtRole::ROLE_PARAM_VALUE), 0, pGroupLayout);
         }
         index = paramsM->index(paramsM->indexFromName("title", true), 0);
         if (index.isValid())
         {
-            insertRow("title", zeno::Multiline, index.data(ROLE_PARAM_VALUE), 1, pGroupLayout);
+            insertRow("title", zeno::Multiline, index.data(QtRole::ROLE_PARAM_VALUE), 1, pGroupLayout);
         }
         connect(paramsM, &ParamsModel::dataChanged, this, &ZenoBlackboardPropWidget::onDataChanged);
     }
@@ -47,14 +47,14 @@ ZenoBlackboardPropWidget::~ZenoBlackboardPropWidget()
 void ZenoBlackboardPropWidget::onDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
     if (roles.isEmpty())
         return;
-    if (roles[0] == ROLE_PARAM_VALUE ) {
-        if (topLeft.data(ROLE_PARAM_NAME).toString() == "title")
+    if (roles[0] == QtRole::ROLE_PARAM_VALUE ) {
+        if (topLeft.data(QtRole::ROLE_PARAM_NAME).toString() == "title")
         {
-            m_pTitle->setText(topLeft.data(ROLE_PARAM_VALUE).toString());
+            m_pTitle->setText(topLeft.data(QtRole::ROLE_PARAM_VALUE).toString());
         }
-        else if (topLeft.data(ROLE_PARAM_NAME).toString() == "background")
+        else if (topLeft.data(QtRole::ROLE_PARAM_NAME).toString() == "background")
         {
-            auto val = topLeft.data(ROLE_PARAM_VALUE).value<UI_VECTYPE>();
+            auto val = topLeft.data(QtRole::ROLE_PARAM_VALUE).value<UI_VECTYPE>();
             if (val.size() == 3)
             {
                 QColor col = QColor::fromRgbF(val[0], val[1], val[2]);
@@ -81,12 +81,12 @@ void ZenoBlackboardPropWidget::insertRow(const QString &desc, const zeno::ParamC
 
     CallbackCollection cbSet;
     cbSet.cbEditFinished = [=](zeno::reflect::Any newValue) {
-        if (ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(ROLE_PARAMS)))
+        if (ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS)))
         {
             auto index = paramsM->index(paramsM->indexFromName(desc, true), 0);
             if (!index.isValid())
                 return;
-            UiHelper::qIndexSetData(index, QVariant::fromValue(newValue), ROLE_PARAM_VALUE);
+            UiHelper::qIndexSetData(index, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
         }
     };
     zeno::ParamType type = desc == "title" ? ui_gParamType_String : ui_gParamType_Vec3f;

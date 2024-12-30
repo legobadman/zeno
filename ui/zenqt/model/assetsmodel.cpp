@@ -101,7 +101,7 @@ QVariant AssetsModel::data(const QModelIndex& index, int role) const
 {
     int row = index.row();
     if (row >= 0 && row < m_assets.size()) {
-        if (Qt::DisplayRole == role || ROLE_CLASS_NAME == role) {
+        if (Qt::DisplayRole == role || QtRole::ROLE_CLASS_NAME == role) {
             return QString::fromStdString(m_assets[row].info.name);
         }
     }
@@ -290,6 +290,6 @@ bool AssetsModel::removeRows(int row, int count, const QModelIndex& parent)
 QHash<int, QByteArray> AssetsModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
-    roles[ROLE_CLASS_NAME] = "classname";
+    roles[QtRole::ROLE_CLASS_NAME] = "classname";
     return roles;
 }

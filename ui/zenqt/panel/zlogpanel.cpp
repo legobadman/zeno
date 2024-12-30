@@ -246,15 +246,15 @@ bool LogItemDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, cons
                 QModelIndex idx = pModel->nodeIndex(ident);
                 if (idx.isValid())
                 {
-                    const QString& objPath = idx.data(ROLE_OBJPATH).toString();
+                    const QString& objPath = idx.data(QtRole::ROLE_OBJPATH).toString();
                     ZenoMainWindow* pWin = zenoApp->getMainWindow();
                     ZenoGraphsEditor* pEditor = pWin->getAnyEditor();
                     if (pEditor) {
                         pEditor->activateTab2(objPath);
                     }
 
-                    QModelIndex subgIdx = idx.data(ROLE_SUBGRAPH_IDX).toModelIndex();
-                    const QString& subgName = subgIdx.data(ROLE_CLASS_NAME).toString();
+                    QModelIndex subgIdx = idx.data(QtRole::ROLE_SUBGRAPH_IDX).toModelIndex();
+                    const QString& subgName = subgIdx.data(QtRole::ROLE_CLASS_NAME).toString();
                     
                     ZASSERT_EXIT(pWin, false);
                     

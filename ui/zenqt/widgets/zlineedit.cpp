@@ -63,7 +63,7 @@ void ZLineEdit::init()
         if (m_hintlist && m_descLabel && hasFocus() && m_bShowHintList && m_nodeIdx.isValid())
         {
             QString txt = text.left(cursorPosition());
-            QString nodePath = m_nodeIdx.data(ROLE_OBJPATH).toString();
+            QString nodePath = m_nodeIdx.data(QtRole::ROLE_OBJPATH).toString();
             zeno::Formula fmla(txt.toStdString(), nodePath.toStdString());
 
             //函数说明

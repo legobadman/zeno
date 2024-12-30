@@ -170,70 +170,79 @@ enum SOCKET_PROPERTY {
     SOCKPROP_LEGACY = 1 << 5,
 };
 
-enum MODEL_ROLE {
-    ROLE_NODE_NAME = Qt::UserRole + 1,  //node name, like `box1`, `cube1`...
-    ROLE_CLASS_NAME,    //asset name, or node class name, like `CreateCube`.
-    ROLE_NODE_UUID_PATH,
-    ROLE_NODE_DISPLAY_NAME,     //the name displayed on node ui.
-    ROLE_NODE_CATEGORY,
-    ROLE_NODE_DISPLAY_ICON,     //the res path, like `:/icons/add.svg`.
-    ROLE_PARAMS,        //paramsmodel
-    ROLE_SUBGRAPH,      //get the subgraph by the subgraph node.
-    ROLE_GRAPH,         //get the graph which owns the current node index.
-    ROLE_PARAM_NAME,
-    ROLE_PARAM_VALUE,
-    ROLE_PARAM_TYPE,
-    ROLE_PARAM_RTTICODE,
-    ROLE_PARAM_CONTROL,
-    ROLE_PARAM_SOCKPROP,
-    ROLE_PARAM_CTRL_PROPERTIES,
-    ROLE_PARAM_CONTROL_PROPS,   //给QML用，都返回List，现在应该只有comboboxitems和slider的range，未来可能会包括节点编辑器的设置
-    ROLE_PARAM_TOOLTIP,
-    ROLE_PARAM_SOCKET_VISIBLE,
-    ROLE_PARAM_ENABLE,
-    ROLE_PARAM_VISIBLE,
-    ROLE_PARAM_SOCKET_CLR,
-    ROLE_PARAM_GROUP,
-    ROLE_PARAM_IS_WILDCARD,
-    ROLE_SOCKET_TYPE,
-    ROLE_PARAM_INFO,
-    ROLE_VPARAM_TYPE,
-    ROLE_ISINPUT,
-    ROLE_LINKS,
-    ROLE_LINKID,        //a uuid for a specific link
-    ROLE_LINK_OBJECT,
-    ROLE_OBJPOS,
-    ROLE_OBJPATH,
-    ROLE_COLLASPED,
-    ROLE_INPUTS,
-    ROLE_OUTPUTS,
-    ROLE_NODE_STATUS,
-    ROLE_NODE_ISVIEW,
-    ROLE_NODE_DIRTY,
-    ROLE_NODE_RUN_STATE,
-    ROLE_NODEDATA,
-    ROLE_OUTPUT_OBJS,
+class QtRole
+{
+    Q_GADGET
+public:
+    explicit QtRole() {}
 
-    ROLE_NODEIDX,
-    ROLE_LINK_FROM_IDX,
-    ROLE_LINK_TO_IDX,
-    ROLE_LINK_FROMPARAM_INFO,
-    ROLE_LINK_TOPARAM_INFO,
-    ROLE_LINK_OUTKEY,
-    ROLE_LINK_INKEY,
-    ROLE_LINK_INFO,
-    ROLE_INSOCK_IDX,
-    ROLE_OUTSOCK_IDX,
-    ROLE_NODE_IDX,
-    ROLE_MTLID,
-    ROLE_KEYFRAMES,
-    ROLE_NODETYPE,
+    enum MODEL_ROLE {
+        ROLE_NODE_NAME = Qt::UserRole + 1,  //node name, like `box1`, `cube1`...
+        ROLE_CLASS_NAME,    //asset name, or node class name, like `CreateCube`.
+        ROLE_NODE_UUID_PATH,
+        ROLE_NODE_DISPLAY_NAME,     //the name displayed on node ui.
+        ROLE_NODE_CATEGORY,
+        ROLE_NODE_DISPLAY_ICON,     //the res path, like `:/icons/add.svg`.
+        ROLE_PARAMS,        //paramsmodel
+        ROLE_SUBGRAPH,      //get the subgraph by the subgraph node.
+        ROLE_GRAPH,         //get the graph which owns the current node index.
+        ROLE_PARAM_NAME,
+        ROLE_PARAM_VALUE,
+        ROLE_PARAM_TYPE,
+        ROLE_PARAM_RTTICODE,
+        ROLE_PARAM_CONTROL,
+        ROLE_PARAM_SOCKPROP,
+        ROLE_PARAM_CTRL_PROPERTIES,
+        ROLE_PARAM_CONTROL_PROPS,   //给QML用，都返回List，现在应该只有comboboxitems和slider的range，未来可能会包括代码编辑器的设置
+        ROLE_PARAM_TOOLTIP,
+        ROLE_PARAM_SOCKET_VISIBLE,
+        ROLE_PARAM_ENABLE,
+        ROLE_PARAM_VISIBLE,
+        ROLE_PARAM_SOCKET_CLR,
+        ROLE_PARAM_GROUP,
+        ROLE_PARAM_IS_WILDCARD,
+        ROLE_SOCKET_TYPE,
+        ROLE_PARAM_INFO,
 
-    //only for Dopnetwork
-    ROLE_DOPNETWORK_ENABLECACHE,
-    ROLE_DOPNETWORK_CACHETODISK,
-    ROLE_DOPNETWORK_MAXMEM,
-    ROLE_DOPNETWORK_MEM
+        ROLE_VPARAM_TYPE,
+        ROLE_ISINPUT,
+        ROLE_LINKS,
+        ROLE_LINKID,        //a uuid for a specific link
+        ROLE_LINK_OBJECT,
+        ROLE_OBJPOS,
+        ROLE_OBJPATH,
+        ROLE_COLLASPED,
+        ROLE_INPUTS,
+        ROLE_OUTPUTS,
+        ROLE_NODE_STATUS,
+        ROLE_NODE_ISVIEW,
+        ROLE_NODE_DIRTY,
+        ROLE_NODE_RUN_STATE,
+        ROLE_NODEDATA,
+        ROLE_OUTPUT_OBJS,
+
+        ROLE_NODEIDX,
+        ROLE_LINK_FROM_IDX,
+        ROLE_LINK_TO_IDX,
+        ROLE_LINK_FROMPARAM_INFO,
+        ROLE_LINK_TOPARAM_INFO,
+        ROLE_LINK_OUTKEY,
+        ROLE_LINK_INKEY,
+        ROLE_LINK_INFO,
+        ROLE_INSOCK_IDX,
+        ROLE_OUTSOCK_IDX,
+        ROLE_NODE_IDX,
+        ROLE_MTLID,
+        ROLE_KEYFRAMES,
+        ROLE_NODETYPE,
+
+        //only for Dopnetwork
+        ROLE_DOPNETWORK_ENABLECACHE,
+        ROLE_DOPNETWORK_CACHETODISK,
+        ROLE_DOPNETWORK_MAXMEM,
+        ROLE_DOPNETWORK_MEM
+    };
+    Q_ENUM(MODEL_ROLE)
 };
 
 class QmlParamGroup

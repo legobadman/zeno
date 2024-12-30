@@ -32,7 +32,7 @@ public:
         const int cSocketHeight = ZenoStyle::dpiScaled(12);
 
         m_socket = new ZenoSocketItem(paramIdx, QSizeF(cSocketWidth, cSocketHeight), true);
-        const bool bInput = paramIdx.data(ROLE_ISINPUT).toBool();
+        const bool bInput = paramIdx.data(QtRole::ROLE_ISINPUT).toBool();
         m_socket->setInnerKey(m_key);
 
         QObject::connect(m_socket, &ZenoSocketItem::clicked, [=](bool bInput) {
@@ -149,14 +149,14 @@ ZDictPanel::ZDictPanel(ZDictSocketLayout* pLayout, const QPersistentModelIndex& 
     pVLayout->setContentsMargin(8, 0, 8, 8);
     pVLayout->setSpacing(ZenoStyle::dpiScaled(8));
 
-    const zeno::ParamType type = (zeno::ParamType)m_paramIdx.data(ROLE_PARAM_TYPE).toLongLong();
+    const zeno::ParamType type = (zeno::ParamType)m_paramIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
 
-    const QString& coreType = m_paramIdx.data(ROLE_PARAM_TYPE).toString();
+    const QString& coreType = m_paramIdx.data(QtRole::ROLE_PARAM_TYPE).toString();
     m_bDict = true;// type == gParamType_Dict;
 
-    bool bInput = m_paramIdx.data(ROLE_ISINPUT).toBool();
+    bool bInput = m_paramIdx.data(QtRole::ROLE_ISINPUT).toBool();
 
-    zeno::ParamPrimitive paramInfo = m_paramIdx.data(ROLE_PARAM_INFO).value<zeno::ParamPrimitive>();
+    zeno::ParamPrimitive paramInfo = m_paramIdx.data(QtRole::ROLE_PARAM_INFO).value<zeno::ParamPrimitive>();
     for (int r = 0; r < paramInfo.links.size(); r++)
     {
         zeno::EdgeInfo edge = paramInfo.links[r];
@@ -266,13 +266,13 @@ void ZDictPanel::removeKey(const QString& keyName)
 
 void ZDictPanel::onRemovedBtnClicked(const QString& keyName)
 {
-    bool bInput = m_paramIdx.data(ROLE_ISINPUT).toBool();
-    PARAM_LINKS links = m_paramIdx.data(ROLE_LINKS).value<PARAM_LINKS>();
+    bool bInput = m_paramIdx.data(QtRole::ROLE_ISINPUT).toBool();
+    PARAM_LINKS links = m_paramIdx.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
     QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_paramIdx.model());
     ParamsModel* paramsM = qobject_cast<ParamsModel*>(pModel);
 
     for (auto linkIdx : links) {
-        zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+        zeno::EdgeInfo edge = linkIdx.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
         if (bInput && edge.inKey == keyName.toStdString()) {
             paramsM->getGraph()->removeLink(edge);
             removeKey(keyName);
@@ -291,7 +291,7 @@ void ZDictPanel::onRemovedBtnClicked(const QString& keyName)
 
 void ZDictPanel::onMoveUpBtnClicked(const QString& keyName)
 {
-    bool bInput = m_paramIdx.data(ROLE_ISINPUT).toBool();
+    bool bInput = m_paramIdx.data(QtRole::ROLE_ISINPUT).toBool();
     QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_paramIdx.model());
     ParamsModel* paramsM = qobject_cast<ParamsModel*>(pModel);
 
@@ -299,9 +299,9 @@ void ZDictPanel::onMoveUpBtnClicked(const QString& keyName)
     if (!pGraphM)
         return;
 
-    PARAM_LINKS links = m_paramIdx.data(ROLE_LINKS).value<PARAM_LINKS>();
+    PARAM_LINKS links = m_paramIdx.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
     for (auto linkIdx : links) {
-        zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+        zeno::EdgeInfo edge = linkIdx.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
         if (bInput && edge.inKey == keyName.toStdString()) {
             pGraphM->moveUpLinkKey(linkIdx, bInput, edge.inKey);
             break;
@@ -333,13 +333,13 @@ void ZDictPanel::onMoveUpBtnClicked(const QString& keyName)
 
 void ZDictPanel::onKeyEdited(const QString& oldKey, const QString& newKey)
 {
-    bool bInput = m_paramIdx.data(ROLE_ISINPUT).toBool();
-    PARAM_LINKS links = m_paramIdx.data(ROLE_LINKS).value<PARAM_LINKS>();
+    bool bInput = m_paramIdx.data(QtRole::ROLE_ISINPUT).toBool();
+    PARAM_LINKS links = m_paramIdx.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
     QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_paramIdx.model());
     ParamsModel* paramsM = qobject_cast<ParamsModel*>(pModel);
 
     for (auto linkIdx : links) {
-        zeno::EdgeInfo edge = linkIdx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+        zeno::EdgeInfo edge = linkIdx.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
         if (bInput && edge.inKey == oldKey.toStdString()) {
             paramsM->getGraph()->updateLink(linkIdx, bInput, oldKey, newKey);
             break;

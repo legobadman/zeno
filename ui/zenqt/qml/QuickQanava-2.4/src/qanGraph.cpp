@@ -302,13 +302,13 @@ void Graph::setModel(GraphModel* pGraphM)
         const QModelIndex& idx = pGraphM->index(r, 0);
         //init node.
         qan::Node* pNode = insertNode(idx);
-        const QString& uuid = idx.data(ROLE_NODE_UUID_PATH).toString();
+        const QString& uuid = idx.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         m_nodes[uuid] = pNode;
     }
 
     connect(m_model, &GraphModel::rowsAboutToBeRemoved, this, [this](const QModelIndex& parent, int first, int last) {
         QModelIndex idx = m_model->index(first, 0, parent);
-        const QString& uuid = idx.data(ROLE_NODE_UUID_PATH).toString();
+        const QString& uuid = idx.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         if (m_nodes.find(uuid) != m_nodes.end()) {
             removeNode(m_nodes[uuid]);
         }
@@ -319,11 +319,11 @@ void Graph::setModel(GraphModel* pGraphM)
     connect(m_model, &GraphModel::rowsInserted, this, [this](const QModelIndex& parent, int first, int last) {
         QModelIndex idx = m_model->index(first, 0, parent);
         qan::Node* pNode = insertNode(idx);
-        const QString& uuid = idx.data(ROLE_NODE_UUID_PATH).toString();
+        const QString& uuid = idx.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         m_nodes[uuid] = pNode;
     });
     connect(m_model, &GraphModel::dataChanged, this, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
-        const QString& uuid = topLeft.data(ROLE_NODE_UUID_PATH).toString();
+        const QString& uuid = topLeft.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end());
         int role = roles[0];
         const QVariant& dat = topLeft.data(role);

@@ -10,13 +10,13 @@ static void initGraphItems(QStandardItem* root, GraphModel* model)
     for (int r = 0; r < model->rowCount(); r++)
     {
         QPersistentModelIndex idx = model->index(r, 0);
-        const QString& name = idx.data(ROLE_NODE_NAME).toString();
+        const QString& name = idx.data(QtRole::ROLE_NODE_NAME).toString();
         QStandardItem* pItem = new QStandardItem(name);
         //QVariant::PersistentModelIndex
         pItem->setData(idx, Qt::UserRole + 1);
-        QVariant val = idx.data(ROLE_SUBGRAPH);
+        QVariant val = idx.data(QtRole::ROLE_SUBGRAPH);
         if (!val.isNull()) {
-            GraphModel* pSubgGraphM = idx.data(ROLE_SUBGRAPH).value<GraphModel*>();
+            GraphModel* pSubgGraphM = idx.data(QtRole::ROLE_SUBGRAPH).value<GraphModel*>();
             initGraphItems(pItem, pSubgGraphM);
         }
         root->appendRow(pItem);
@@ -62,12 +62,12 @@ void GraphsTreeModel::init(GraphModel* mainModel)
 QHash<int, QByteArray> GraphsTreeModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
-    roles[ROLE_CLASS_NAME] = "class";
-    roles[ROLE_NODE_NAME] = "name";
-    roles[ROLE_PARAMS] = "params";
-    roles[ROLE_LINKS] = "linkModel";
-    roles[ROLE_OBJPOS] = "pos";
-    roles[ROLE_SUBGRAPH] = "subgraph";
+    roles[QtRole::ROLE_CLASS_NAME] = "class";
+    roles[QtRole::ROLE_NODE_NAME] = "name";
+    roles[QtRole::ROLE_PARAMS] = "params";
+    roles[QtRole::ROLE_LINKS] = "linkModel";
+    roles[QtRole::ROLE_OBJPOS] = "pos";
+    roles[QtRole::ROLE_SUBGRAPH] = "subgraph";
     return roles;
 }
 
@@ -85,7 +85,7 @@ void GraphsTreeModel::onGraphRowsInserted(const QModelIndex& parent, int first, 
 
         QPersistentModelIndex newNodeIdx = pGraphM->index(first);
         ZASSERT_EXIT(newNodeIdx.isValid());
-        QString nodename = newNodeIdx.data(ROLE_NODE_NAME).toString();
+        QString nodename = newNodeIdx.data(QtRole::ROLE_NODE_NAME).toString();
         QStandardItem* pItem = new QStandardItem(nodename);
         pItem->setData(newNodeIdx, Qt::UserRole + 1);
         graphItem->appendRow(pItem);
@@ -106,7 +106,7 @@ void GraphsTreeModel::onNameUpdated(const QModelIndex& nodeIdx, const QString& o
         QStandardItem* graphItem = findGraphItem(mainItem, graphPath);
         ZASSERT_EXIT(graphItem);
 
-        const QString& newName = nodeIdx.data(ROLE_NODE_NAME).toString();
+        const QString& newName = nodeIdx.data(QtRole::ROLE_NODE_NAME).toString();
         //目前不建立索引，直接顺序遍历，待遇到性能问题再行优化
         for (int i = 0; i < graphItem->rowCount(); i++) {
             QStandardItem* pItem = graphItem->child(i);
@@ -180,7 +180,7 @@ GraphModel* GraphsTreeModel::graph(const QModelIndex& index) const
 
 QString GraphsTreeModel::name(const QModelIndex& index) const
 {
-    return index.data(ROLE_NODE_NAME).toString();
+    return index.data(QtRole::ROLE_NODE_NAME).toString();
 }
 
 //! Clear the model.
@@ -248,7 +248,7 @@ QModelIndex GraphsTreeModel::getIndexByPath(const QStringList& objPath)
                 QModelIndex innerIdx = pGraphM->indexFromName(node);
                 curNode = createIndex(innerIdx.row(), 0, pGraphM);
                 items.removeAt(0);
-                pGraphM = innerIdx.data(ROLE_SUBGRAPH).value<GraphModel*>();
+                pGraphM = innerIdx.data(QtRole::ROLE_SUBGRAPH).value<GraphModel*>();
             }
             return curNode;
         }

@@ -24,7 +24,7 @@ Item {
             ToolButton {
                 id: btn_show_prim_sock
                 checkable: true
-                checked: model.data(mindex, 275)    //ROLE_PARAM_SOCKET_VISIBLE
+                checked: model.data(mindex, Model.ROLE_PARAM_SOCKET_VISIBLE)
                 property bool reentry: false
                 icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
 
@@ -33,7 +33,7 @@ Item {
                 }
 
                 onCheckedChanged: {
-                    model.setData(mindex, btn_show_prim_sock.checked == true, 275); //ROLE_PARAM_SOCKET_VISIBLE
+                    model.setData(mindex, btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
                 }    
 
                 contentItem: Image {
@@ -125,7 +125,7 @@ Item {
     Component {
         id: compCombobox
         ComboBox {
-            model: root.model.data(mindex, 273)["combobox_items"]
+            model: root.model.data(mindex, Model.ROLE_PARAM_CONTROL_PROPS)["combobox_items"]
         }
     }
 
@@ -158,7 +158,7 @@ Item {
                 Loader {
                     sourceComponent: {
                         var realindex = index / gridlayout.nCol   //index是grid的项数计数，由于只有两列，所以index/2就是模型的项行号
-                        var ctrl = root.model.data(root.model.index(realindex, 0, parentIndex), 270)  //ParamControl
+                        var ctrl = root.model.data(root.model.index(realindex, 0, parentIndex), Model.ROLE_PARAM_CONTROL)
                         if (index % gridlayout.nCol == 0) {
                             return paramText
                         } 

@@ -278,8 +278,8 @@ void DockContent_Parameter::onNodesSelected(GraphModel* subgraph, const QModelIn
             }
 
             if (select) {
-                //m_plblName->setText(idx.data(ROLE_NODE_NAME).toString());
-                m_pNameLineEdit->setText(idx.data(ROLE_NODE_NAME).toString());
+                //m_plblName->setText(idx.data(QtRole::ROLE_NODE_NAME).toString());
+                m_pNameLineEdit->setText(idx.data(QtRole::ROLE_NODE_NAME).toString());
                 return;
             }
         }
@@ -292,9 +292,9 @@ void DockContent_Parameter::onDataChanged(const QModelIndex& topLeft, const QMod
     if (roles.isEmpty() || !topLeft.isValid())
         return;
     int role = roles[0];
-    if (role != ROLE_NODE_NAME)
+    if (role != QtRole::ROLE_NODE_NAME)
         return;
-    m_pNameLineEdit->setText(topLeft.data(ROLE_NODE_NAME).toString());
+    m_pNameLineEdit->setText(topLeft.data(QtRole::ROLE_NODE_NAME).toString());
 }
 
 void DockContent_Parameter::onNodeRemoved(QString nodeName)

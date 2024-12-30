@@ -120,8 +120,8 @@ void ZGeometrySpreadsheet::onNodeRemoved(QString nodename)
 
 void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles)
 {
-    if (!roles.empty() && roles[0] == ROLE_NODE_RUN_STATE) {
-        zeno::NodeRunStatus currStatus = topLeft.data(ROLE_NODE_RUN_STATE).value<NodeState>().runstatus;
+    if (!roles.empty() && roles[0] == QtRole::ROLE_NODE_RUN_STATE) {
+        zeno::NodeRunStatus currStatus = topLeft.data(QtRole::ROLE_NODE_RUN_STATE).value<NodeState>().runstatus;
         if (currStatus == zeno::Node_Running) {
             clearModel();
         }

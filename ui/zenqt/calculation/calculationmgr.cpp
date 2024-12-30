@@ -78,7 +78,7 @@ void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState stat
     if (pMainTree) {
         const QModelIndex targetNode = pMainTree->getIndexByUuidPath(uuidPath);
         if (targetNode.isValid()) {
-            UiHelper::qIndexSetData(targetNode, QVariant::fromValue(state), ROLE_NODE_RUN_STATE);
+            UiHelper::qIndexSetData(targetNode, QVariant::fromValue(state), QtRole::ROLE_NODE_RUN_STATE);
             if (!m_bMultiThread) {
                 //TODO: 处理的时间里可能会包括改变节点状态和数据的操作，比如滑动时间轴，所以必须要控制事件的范围
                 //zenoApp->processEvents();

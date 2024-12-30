@@ -1017,7 +1017,7 @@ void ZenoMainWindow::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
             GraphsTreeModel* pTreeM = zenoApp->graphsManager()->currentModel();
             if (pTreeM) {
                 QModelIndex nodeIdx = pTreeM->getIndexByUuidPath(nodeUuidPath);
-                const QString& nodePath = nodeIdx.data(ROLE_OBJPATH).toString();
+                const QString& nodePath = nodeIdx.data(QtRole::ROLE_OBJPATH).toString();
                 QStringList pathitems = nodePath.split("/", Qt::SkipEmptyParts);
                 ZASSERT_EXIT(!pathitems.isEmpty());
                 QString nodeName = pathitems.back();
@@ -1615,7 +1615,7 @@ void ZenoMainWindow::importGraph(bool bPreset)
             QModelIndex index = pGraphs->currentModel()->index(name);
             if (index.isValid())
             {
-                pGraphs->currentModel()->setData(index, SUBGRAPH_PRESET, ROLE_SUBGRAPH_TYPE);
+                pGraphs->currentModel()->setData(index, SUBGRAPH_PRESET, QtRole::ROLE_SUBGRAPH_TYPE);
             }
         }
         ZenoSettingsManager::GetInstance().setValue(zsSubgraphType, SUBGRAPH_PRESET);
@@ -2233,7 +2233,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                 {
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
-                    zeno::zany pObject = idx.data(ROLE_OUTPUT_OBJS).value<zeno::zany>();
+                    zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
                     if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
                         panel->setGeometry(subgraph, idx, spGeom.get());
                     }
@@ -2246,7 +2246,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     const QModelIndex& idx = nodes[0];
                     panel->onNodeSelected(idx);
 
-                    QString nodeId = idx.data(ROLE_NODE_NAME).toString();
+                    QString nodeId = idx.data(QtRole::ROLE_NODE_NAME).toString();
 
                     ZenoMainWindow* pWin = zenoApp->getMainWindow();
                     ZASSERT_EXIT(pWin);
@@ -2283,7 +2283,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                 if (select && nodes.size() == 1)
                 {
                     const QModelIndex& idx = nodes[0];
-                    image->setPrim(idx.data(ROLE_NODE_NAME).toString().toStdString());
+                    image->setPrim(idx.data(QtRole::ROLE_NODE_NAME).toString().toStdString());
                 }
                 if (!select)
                 {

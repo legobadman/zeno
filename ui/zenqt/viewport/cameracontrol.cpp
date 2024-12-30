@@ -505,15 +505,15 @@ void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
             const auto& lst = pModel->subgraphsIndice(SUBGRAPH_METERIAL);
             for (const auto& index : lst)
             {
-                if (index.data(ROLE_MTLID).toString() == mtlid)
-                    subgraph_name = index.data(ROLE_CLASS_NAME).toString();
+                if (index.data(QtRole::ROLE_MTLID).toString() == mtlid)
+                    subgraph_name = index.data(QtRole::ROLE_CLASS_NAME).toString();
             }
         }
         if (subgraph_name.isEmpty())
         {
             auto obj_node_location = zeno::NodeSyncMgr::GetInstance().searchNodeOfPrim(picked_prim);
-            subgraph_name = obj_node_location->subgraph.data(ROLE_CLASS_NAME).toString();
-            obj_node_name = obj_node_location->node.data(ROLE_NODE_NAME).toString();
+            subgraph_name = obj_node_location->subgraph.data(QtRole::ROLE_CLASS_NAME).toString();
+            obj_node_name = obj_node_location->node.data(QtRole::ROLE_NODE_NAME).toString();
         }
 
         ZenoMainWindow *pWin = zenoApp->getMainWindow();
@@ -655,8 +655,8 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
 //                auto picked_prim = m_picker->just_pick_prim(pos.x(), pos.y());
 //                if (!picked_prim.empty()) {
 //                    auto obj_node_location = zeno::NodeSyncMgr::GetInstance().searchNodeOfPrim(picked_prim);
-//                    auto subgraph_name = obj_node_location->subgraph.data(ROLE_CLASS_NAME).toString();
-//                    auto obj_node_name = obj_node_location->node.data(ROLE_NODE_NAME).toString();
+//                    auto subgraph_name = obj_node_location->subgraph.data(QtRole::ROLE_CLASS_NAME).toString();
+//                    auto obj_node_name = obj_node_location->node.data(QtRole::ROLE_NODE_NAME).toString();
 //                    ZenoMainWindow *pWin = zenoApp->getMainWindow();
 //                    if (pWin) {
 //                        ZenoGraphsEditor *pEditor = pWin->getAnyEditor();
@@ -732,7 +732,7 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
                             return;
                         }
                         auto subgraph_name = obj_node_location.value().subgraph->name();
-                        auto obj_node_name = obj_node_location->node.data(ROLE_NODE_NAME).toString();
+                        auto obj_node_name = obj_node_location->node.data(QtRole::ROLE_NODE_NAME).toString();
                         nodes.push_back(obj_node_name);
 //                        ZenoMainWindow *pWin = zenoApp->getMainWindow();
 //                        if (pWin) {
@@ -828,5 +828,5 @@ bool CameraControl::fakeKeyReleaseEvent(int uKey) {
 //STATUS_UPDATE_INFO info;
 //info.role = ROLE_OPTIONS;
 //info.newValue = OPT_VIEW;
-//pModel->updateNodeStatus(tmpNodeInfo[ROLE_NODE_NAME].toString(), info, subgIdx, true);
+//pModel->updateNodeStatus(tmpNodeInfo[QtRole::ROLE_NODE_NAME].toString(), info, subgIdx, true);
 //}

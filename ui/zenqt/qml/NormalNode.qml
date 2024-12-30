@@ -84,6 +84,10 @@ Qan.NodeItem {
         }
     }
 
+    onDataChanged: function(data, role) {
+        console.log("onDataChanged: " + data + ", role = " + role)
+    }
+
     ColumnLayout {
         id: mainmain_layout
         spacing: 1
@@ -369,12 +373,9 @@ Qan.NodeItem {
         //初始化位置:
         var graphM = nodeItem.graph.model;
         var idx = nodeItem.node.index;
-        var nodename = graphM.data(idx, 257)   //ROLE_NODE_NAME
-
-        var pos = graphM.data(idx, 288);       //ROLE_OBJPOS
+        var nodename = graphM.data(idx, Model.ROLE_NODE_NAME)   //ROLE_NODE_NAME
+        var pos = graphM.data(idx, Model.ROLE_OBJPOS);       //ROLE_OBJPOS
         nodeItem.x = pos.x
         nodeItem.y = pos.y
-
-        console.log("node " + nodename + " has been inited")
     }
 }

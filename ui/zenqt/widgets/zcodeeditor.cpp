@@ -122,7 +122,7 @@ void ZCodeEditor::slt_showFuncDesc()
             auto match = matchIterator.next();
             if (match.capturedStart(2) + match.capturedLength(2) == positionInLine) {
                 txt = currLine.mid(match.capturedStart(2), match.capturedLength(2));
-                nodePath = m_nodeIdx.data(ROLE_OBJPATH).toString();
+                nodePath = m_nodeIdx.data(QtRole::ROLE_OBJPATH).toString();
             }
         }
     } else {
@@ -131,7 +131,7 @@ void ZCodeEditor::slt_showFuncDesc()
             auto match = matchHintIterator.next();
             if (match.capturedStart(1) + match.capturedLength(1) == positionInLine) {
                 txt = currLine.mid(match.capturedStart(1), match.capturedLength(1));
-                nodePath = m_nodeIdx.data(ROLE_OBJPATH).toString();
+                nodePath = m_nodeIdx.data(QtRole::ROLE_OBJPATH).toString();
             }
         }
     }

@@ -23,9 +23,9 @@ void IconDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, 
 
 DragDropModel::DragDropModel(const QModelIndex& inputObjsIdx, int allowDragColumn, QObject* parent) : m_objsParamIdx(inputObjsIdx), m_allowDragColumn(allowDragColumn), QAbstractTableModel(parent)
 {
-    QList<QPersistentModelIndex> linksIdx = m_objsParamIdx.data(ROLE_LINKS).value<QList<QPersistentModelIndex>>();
+    QList<QPersistentModelIndex> linksIdx = m_objsParamIdx.data(QtRole::ROLE_LINKS).value<QList<QPersistentModelIndex>>();
     for (auto& idx : linksIdx) {
-        insertLink(idx.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>());
+        insertLink(idx.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>());
     }
     horizontalHeaderLabels << "" << "key" << "out node" << "";
 }
@@ -205,9 +205,9 @@ void DragDropModel::insertLink(const zeno::EdgeInfo& edge)
 QList<QPair<QString, QModelIndex>> DragDropModel::linksNeedUpdate()
 {
     QList<QPair<QString, QModelIndex>> updateLinks;
-    QList<QPersistentModelIndex> currLinkIdxs = m_objsParamIdx.data(ROLE_LINKS).value<QList<QPersistentModelIndex>>();
+    QList<QPersistentModelIndex> currLinkIdxs = m_objsParamIdx.data(QtRole::ROLE_LINKS).value<QList<QPersistentModelIndex>>();
     for (auto& link : currLinkIdxs) {
-        zeno::EdgeInfo edge = link.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+        zeno::EdgeInfo edge = link.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
         auto inkey = getInKeyFromOutnodeName(QString::fromStdString(edge.outNode + ":" + edge.outParam));
         if (inkey != "" && inkey.toStdString() != edge.inKey) {
             updateLinks.append({inkey, link});
@@ -219,9 +219,9 @@ QList<QPair<QString, QModelIndex>> DragDropModel::linksNeedUpdate()
 QList<QModelIndex> DragDropModel::linksNeedRemove()
 {
     QList<QModelIndex> removeLinks;
-    QList<QPersistentModelIndex> currLinkIdxs = m_objsParamIdx.data(ROLE_LINKS).value<QList<QPersistentModelIndex>>();
+    QList<QPersistentModelIndex> currLinkIdxs = m_objsParamIdx.data(QtRole::ROLE_LINKS).value<QList<QPersistentModelIndex>>();
     for (auto& link : currLinkIdxs) {
-        zeno::EdgeInfo edge = link.data(ROLE_LINK_INFO).value<zeno::EdgeInfo>();
+        zeno::EdgeInfo edge = link.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
         auto inkey = getInKeyFromOutnodeName(QString::fromStdString(edge.outNode + ":" + edge.outParam));
         if (inkey == "") {
             removeLinks.append(link);
