@@ -217,12 +217,47 @@ struct GraphicsManager {
                 if (spObject) {
                     //可能是对象没有通过子图的Suboutput连出来
                     if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                        {//可能有和listobj同名但不是list类型的对象存在，需先清除
+                            auto& graphics_ = graphics.m_curr.m_curr;
+                            const auto& it = _spList->key().find('\\');
+                            const std::string& key = it == std::string::npos ? _spList->key() : _spList->key().substr(0, it);
+                            for (auto it = graphics_.begin(); it != graphics_.end(); ) {
+                                if (it->first == key)
+                                    it = graphics_.erase(it);
+                                else
+                                    ++it;
+                            }
+                        }
+
                         process_listobj(_spList);
-                    } 
-                    if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                    }
+                    else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
+                        {//可能有和dictobj同名但不是dict类型的对象存在，需先清除
+                            auto& graphics_ = graphics.m_curr.m_curr;
+                            const auto& it = _spList->key().find('\\');
+                            const std::string& key = it == std::string::npos ? _spList->key() : _spList->key().substr(0, it);
+                            for (auto it = graphics_.begin(); it != graphics_.end(); ) {
+                                if (it->first == key)
+                                    it = graphics_.erase(it);
+                                else
+                                    ++it;
+                            }
+                        }
+
                         process_dictobj(_spDict);
-                    } 
+                    }
                     else {
+                        {//可能有和obj同名但是list类型或dict类型的对象存在，需先清除
+                            auto& graphics_ = graphics.m_curr.m_curr;
+                            for (auto it = graphics_.begin(); it != graphics_.end(); ) {
+                                if (it->first.find(spObject->key() + '\\') != std::string::npos) {
+                                    it = graphics_.erase(it);
+                                }
+                                else
+                                    ++it;
+                            }
+                        }
+
                         add_object(spObject);
                     }
                 }
