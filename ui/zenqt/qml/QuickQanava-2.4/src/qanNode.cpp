@@ -51,6 +51,7 @@ Node::Node(QModelIndex idx, QObject* parent)
     : super_t{parent}
     , m_index(idx)
 {
+    _label = m_index.data(QtRole::ROLE_NODE_NAME).toString();
     Q_UNUSED(parent)
 }
 
@@ -171,8 +172,7 @@ bool    Node::setLabel(const QString& label)
 }
 
 QString Node::getLabel() const {
-    const QString& name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
-    return name;
+    return _label;
 }
 
 ParamsModel* Node::getParamsModel() const {

@@ -329,6 +329,10 @@ void Graph::setModel(GraphModel* pGraphM)
         const QVariant& dat = topLeft.data(role);
         m_nodes[uuid]->getItem()->dataChanged(dat, role);
     });
+    connect(this, &qan::Graph::nodeLabelChanged, this, [this](qan::Node* item) {
+        QModelIndex idx = item->getIndex();
+        m_model->setData(idx, item->getLabel(), QtRole::ROLE_NODE_NAME);
+    });
 }
 
 //-----------------------------------------------------------------------------

@@ -46,6 +46,8 @@ Qan.NodeItem {
     property alias isview : right_status_group.isview
     property alias isbypass: right_status_group.isbypass
 
+    property string defattr: "abc"
+
     //clip: true        //设置会导致选框不出现
 
     readonly property real backRadius: nodeItem && nodeItem.style ? nodeItem.style.backRadius : 4.    
@@ -114,6 +116,16 @@ Qan.NodeItem {
         if (role == Model.ROLE_OBJPOS) {
             nodeItem.x = data.x
             nodeItem.y = data.y           
+        }
+    }
+
+    //event:
+    onNodeDoubleClicked: function(node, pos) {
+        var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
+        if (pos2.x > 0 && pos2.y > 0 &&
+            pos2.x < nodename_editor.width &&
+            pos2.y < nodename_editor.height) {
+            nodename_editor.isEditing = true
         }
     }
 
@@ -225,20 +237,15 @@ Qan.NodeItem {
                                 }
 
                                 EditableText {
+                                    id: nodename_editor
                                     Layout.fillWidth: true
                                     //horizontalAlignment: Text.AlignHCenter
                                     text: nodeItem.node.label
-                                }
 
-                                /*
-                                Label {
-                                    Layout.fillWidth: true
-                                    horizontalAlignment: Text.AlignHCenter
-                                    text: nodeItem.node.label
-                                    font.bold: true
-                                    color: "white"
+                                    onTextChanged: {
+                                        nodeItem.node.label = text
+                                    }
                                 }
-                                */
 
                                 Rectangle {
                                     width: 18

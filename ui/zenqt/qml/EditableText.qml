@@ -16,21 +16,45 @@ Column {
         id: displayText
         visible: !comp.isEditing
         text: comp.text
-
-        MouseArea{
-            anchors.fill: parent
-            onDoubleClicked: comp.isEditing = true
-        }
     }
 
-    TextEdit {
-        id: editableText
+    Rectangle {
         visible: comp.isEditing
-        text: comp.text
+        color: "lightgray"
+        width: editableText.width
+        height: editableText.height
+        border.color: editableText.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
+        border.width: 1
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: editableText.forceActiveFocus()
+        TextInput {
+            id: editableText
+            anchors.centerIn: parent
+            //anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            verticalAlignment: Text.AlignVCenter
+            text: comp.text
+            focus: comp.isEditing // 自动聚焦
+            // width: 120
+            height: 24
+
+            // 监听 focus 属性的变化
+            onFocusChanged: {
+                if (!focus) {
+                    //console.log("focus out, comp.text: " + comp.text)
+                    comp.isEditing = false; // 退出编辑模式
+                    if (comp.text != text) {
+                        comp.text = text
+                    }
+                }
+            }
+
+            Keys.onReturnPressed: {
+                comp.isEditing = false // 回车退出编辑模式
+                if (comp.text != text) {
+                    comp.text = text
+                }
+            }
         }
     }
 }

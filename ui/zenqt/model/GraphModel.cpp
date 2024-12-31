@@ -604,6 +604,10 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
             emit dataChanged(index, index, QVector<int>{role});
             return true;
         }
+        case QtRole::ROLE_NODE_NAME: {
+            updateNodeName(index, value.toString());
+            return true;
+        }
         case QtRole::ROLE_OBJPOS:
         {
             auto spNode = item->m_wpNode;
