@@ -1425,7 +1425,7 @@ namespace zeno {
                 }
             }
             case IF:{
-                if (root->children.size() != 2) {
+                if (root->children.size() != 2 && root->children.size() != 3) {
                     throw makeError<UnimplError>("if cond failed.");
                 }
                 auto pCondExp = root->children[0];
@@ -1435,6 +1435,9 @@ namespace zeno {
                 if (hasTrue(cond, filter, newFilter)) {
                     auto pCodesExp = root->children[1];
                     execute(pCodesExp, newFilter, pContext);
+                } else if (root->children.size() == 3) {
+                    auto pelseExp = root->children[2];
+                    execute(pelseExp, filter, pContext);
                 }
                 break;
             }
