@@ -511,6 +511,25 @@ namespace zeno
             return res;
         }
 
+        ZfxVariable pow(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>();
+            const auto& arg = args[0];
+            const auto& idx = args[1];
+            if (idx.value.size() != 1) {
+                throw makeError<UnimplError>();
+            }
+            ZfxVariable res;
+            res.value.resize(arg.value.size());
+            for (int i = 0; i < arg.value.size(); i++)
+            {
+                if (!filter[i]) continue;
+                float val = get_zfxvar<float>(arg.value[i]);
+                res.value[i] = std::pow(val, get_zfxvar<float>(idx.value[0]));
+            }
+            return res;
+        }
+
         ZfxVariable add_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() == 1) {
                 const auto& arg = args[0];
@@ -1327,6 +1346,9 @@ namespace zeno
             }
             if (funcname == "rand") {
                 return rand(args, filter, pContext);
+            }
+            if (funcname == "pow") {
+                return pow(args, filter, pContext);
             }
             if (funcname == "create_attr") {
                 return create_attr(args, filter, pContext);

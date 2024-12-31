@@ -42,6 +42,11 @@ namespace zeno
                 "Returns a pseudo-number number from 0 to 1.",
                 "float", {}}
             },
+            {"pow",
+                {"pow",
+                "Find first param raised to the second param power.",
+                "float", {{"number", "float"}, {"exponent", "float"}}}
+            },
             {"param",
                 {"param",
                 "Get parameter from the previous node.",
