@@ -81,5 +81,6 @@
         <file>ZPrimSocket.qml</file>
         <file>ZObjSocket.qml</file>
         <file>EdgesContainer.qml</file>
+        <file>EditableText.qml</file>
     </qresource>
 </RCC>

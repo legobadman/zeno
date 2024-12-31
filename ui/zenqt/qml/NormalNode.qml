@@ -224,6 +224,13 @@ Qan.NodeItem {
                                     color: "transparent"
                                 }
 
+                                EditableText {
+                                    Layout.fillWidth: true
+                                    //horizontalAlignment: Text.AlignHCenter
+                                    text: nodeItem.node.label
+                                }
+
+                                /*
                                 Label {
                                     Layout.fillWidth: true
                                     horizontalAlignment: Text.AlignHCenter
@@ -231,6 +238,7 @@ Qan.NodeItem {
                                     font.bold: true
                                     color: "white"
                                 }
+                                */
 
                                 Rectangle {
                                     width: 18
