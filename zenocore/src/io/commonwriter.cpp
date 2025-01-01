@@ -143,7 +143,7 @@ namespace zenoio
         writer.Key("nickname");
         writer.String(customUi.nickname.c_str());
         writer.Key("iconResPath");
-        writer.String(customUi.iconResPath.c_str());
+        writer.String(customUi.uistyle.iconResPath.c_str());
         writer.Key("category");
         writer.String(customUi.category.c_str());
         writer.Key("doc");

@@ -14,6 +14,12 @@ struct Subnet : zeno::SubnetNode {
     virtual void apply() override {
         zeno::SubnetNode::apply();
     }
+    CustomUI export_customui() const override {
+        CustomUI ui = zeno::SubnetNode::export_customui();
+        ui.uistyle.background = "#1A5447";
+        ui.uistyle.iconResPath = "";
+        return ui;
+    }
 };
 
 ZENDEFNODE(Subnet, {

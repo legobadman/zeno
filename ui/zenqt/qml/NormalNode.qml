@@ -208,6 +208,7 @@ Qan.NodeItem {
 
                         /*以下两个rect各选一，视乎数值参数是否隐藏*/
                         ZRoundRect {
+                            id: roundrectheader
                             anchors.fill: parent
                             bgcolor: "#5A9CE0"
                             radius: nodeItem.backRadius
@@ -215,6 +216,7 @@ Qan.NodeItem {
                         }
 
                         Rectangle {
+                            id: rectheader
                             anchors.fill: parent
                             color: "#5A9CE0"
                             radius: nodeItem.backRadius
@@ -422,5 +424,10 @@ Qan.NodeItem {
         nodeItem.x = pos.x
         nodeItem.y = pos.y
         nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
+
+        var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
+        if (uistyle["background"] != "") {
+            roundrectheader.bgcolor = rectheader.color = uistyle["background"];
+        }
     }
 }

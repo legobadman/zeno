@@ -183,6 +183,7 @@ public:
         ROLE_NODE_DISPLAY_NAME,     //the name displayed on node ui.
         ROLE_NODE_CATEGORY,
         ROLE_NODE_DISPLAY_ICON,     //the res path, like `:/icons/add.svg`.
+        ROLE_NODE_UISTYLE,          //ui issues, like icon, background color and so on.
         ROLE_PARAMS,        //paramsmodel
         ROLE_SUBGRAPH,      //get the subgraph by the subgraph node.
         ROLE_GRAPH,         //get the graph which owns the current node index.

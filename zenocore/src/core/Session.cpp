@@ -72,7 +72,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
     CustomUI ui;
 
     ui.nickname = desc.displayName;
-    ui.iconResPath = desc.iconResPath;
+    ui.uistyle.iconResPath = desc.iconResPath;
     ui.doc = desc.doc;
     if (!desc.categories.empty())
         ui.category = desc.categories[0];   //很多cate都只有一个

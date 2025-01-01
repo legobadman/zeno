@@ -309,12 +309,12 @@ namespace zeno {
                             if constexpr (std::is_same_v<T, ParamObject>) {
                                 arg.name = reflectCustomUi.retInfo.dispName;
                                 arg.wildCardGroup = reflectCustomUi.retInfo.wildCardGroup;
-                                customui.refltctReturnName = arg.name;
+                                customui.reflectReturnName = arg.name;
                             }
                             else if constexpr (std::is_same_v<T, ParamPrimitive>) {
                                 arg.name = reflectCustomUi.retInfo.dispName;
                                 arg.wildCardGroup = reflectCustomUi.retInfo.wildCardGroup;
-                                customui.refltctReturnName = arg.name;
+                                customui.reflectReturnName = arg.name;
                             }
                             }, paramsMapping.retInfo);
                     }

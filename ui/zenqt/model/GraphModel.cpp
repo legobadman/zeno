@@ -68,6 +68,7 @@ public:
     bool bByPass = false;
     bool bCollasped = false;
     NodeState runState;
+    zeno::NodeUIStyle uistyle;
 
     //for subgraph, but not include assets:
     std::optional<GraphModel*> optSubgraph;
@@ -158,6 +159,8 @@ void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
     auto pair = spNode->get_pos();
     this->pos = QPointF(pair.first, pair.second);
     this->uuidPath = spNode->get_uuid_path();
+    this->uistyle = spNode->export_customui().uistyle;
+
     setProperty("uuid-path", QString::fromStdString(uuidPath));
     if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode))
     {
@@ -408,6 +411,12 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         }
         case QtRole::ROLE_NODE_DISPLAY_ICON: {
             return item->dispIcon;
+        }
+        case QtRole::ROLE_NODE_UISTYLE: {
+            QVariantMap map;
+            map["icon"] = QString::fromStdString(item->uistyle.iconResPath);
+            map["background"] = QString::fromStdString(item->uistyle.background);
+            return map;
         }
         case QtRole::ROLE_NODE_UUID_PATH: {
             return QString::fromStdString(item->uuidPath);
@@ -1464,6 +1473,7 @@ QHash<int, QByteArray> GraphModel::roleNames() const
     QHash<int, QByteArray> roles;
     roles[QtRole::ROLE_CLASS_NAME] = "classname";
     roles[QtRole::ROLE_NODE_NAME] = "name";
+    //roles[QtRole::ROLE_NODE_UISTYLE] = "uistyle";
     roles[QtRole::ROLE_PARAMS] = "params";
     roles[QtRole::ROLE_LINKS] = "linkModel";
     roles[QtRole::ROLE_OBJPOS] = "pos";

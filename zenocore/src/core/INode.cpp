@@ -115,7 +115,7 @@ std::string INode::get_show_name() const {
 
 std::string INode::get_show_icon() const {
     if (nodeClass) {
-        return nodeClass->m_customui.iconResPath;
+        return nodeClass->m_customui.uistyle.iconResPath;
     }
     else {
         return "";
@@ -196,7 +196,7 @@ CustomUI INode::export_customui() const
 
 
     exportui.nickname = origin.nickname;
-    exportui.iconResPath = origin.iconResPath;
+    exportui.uistyle = origin.uistyle;
     exportui.doc = origin.doc;
     if (!origin.category.empty())
         exportui.category = origin.category;

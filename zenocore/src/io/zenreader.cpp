@@ -540,7 +540,7 @@ namespace zenoio
             }
 
             ui.nickname = cusomui["nickname"].GetString();
-            ui.iconResPath = cusomui["iconResPath"].GetString();
+            ui.uistyle.iconResPath = cusomui["iconResPath"].GetString();
             ui.category = cusomui["category"].GetString();
             ui.doc = cusomui["doc"].GetString();
         }

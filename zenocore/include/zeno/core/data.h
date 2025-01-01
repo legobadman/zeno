@@ -134,6 +134,11 @@ namespace zeno {
 
     using CustomUIParams = std::vector<ParamTab>;   //custom ui for input primitive params
 
+    struct NodeUIStyle {
+        std::string iconResPath;        //是否可以直接用svg的字符串，这样不用管理资源文件
+        std::string background;
+    };
+
     //CustomUI is structure for input params of primitive types, like vec3f int string, etc.
     struct CustomUI {
         ObjectParams inputObjs;
@@ -141,11 +146,12 @@ namespace zeno {
         PrimitiveParams outputPrims;
         ObjectParams outputObjs;
 
+        NodeUIStyle uistyle;
+
         std::string category;
         std::string nickname;
-        std::string iconResPath;
         std::string doc;
-        std::string refltctReturnName;      //the name of return value on reflected function.
+        std::string reflectReturnName;      //the name of return value on reflected function.
     };
 
     struct ParamUpdateInfo {
