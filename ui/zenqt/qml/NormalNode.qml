@@ -129,6 +129,19 @@ Qan.NodeItem {
         }
     }
 
+    EditableText {
+        id: detach_name_editor
+        anchors.right: nodeItem.left
+        y: right_status_group.y + right_status_group.height / 2 - height / 2
+        //anchors.verticalCenter: right_status_group.verticalCenter
+        //anchors.verticalCenter: mainmain_layout.verticalCenter
+        text: nodeItem.node.label
+
+        onTextChanged: {
+            nodeItem.node.label = text
+        }
+    }
+
     ColumnLayout {
         id: mainmain_layout
         spacing: 1
@@ -243,11 +256,19 @@ Qan.NodeItem {
                                     Layout.fillWidth: true
                                     //horizontalAlignment: Text.AlignHCenter
                                     text: nodeItem.node.label
+                                    handle_mouseevent: false
 
                                     onTextChanged: {
                                         nodeItem.node.label = text
                                     }
                                 }
+
+                                Image {
+                                    id: nodeicon
+                                    width: 20
+                                    height: 20
+                                    //source: "data:image/svg+xml;utf8," + ""
+                                }    
 
                                 Rectangle {
                                     width: 18
@@ -426,6 +447,18 @@ Qan.NodeItem {
         nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
 
         var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
+        if (uistyle["icon"] != "") {
+            nodeicon.visible = true
+            detach_name_editor.visible = true
+            nodename_editor.visible = false
+            nodeicon.source = "data:image/svg+xml;utf8," + uistyle["icon"]
+        }
+        else {
+            nodeicon.visible = false
+            detach_name_editor.visible = false
+            nodename_editor.visible = true
+        }
+        //console.log("ui.icon = " + uistyle["icon"])
         if (uistyle["background"] != "") {
             roundrectheader.bgcolor = rectheader.color = uistyle["background"];
         }

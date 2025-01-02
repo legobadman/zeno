@@ -11,11 +11,27 @@ Column {
     id: comp
     property bool isEditing: false
     property string text: ""
+    property bool handle_mouseevent: true
 
     Text {
         id: displayText
         visible: !comp.isEditing
         text: comp.text
+        color: "#FFFFFF"
+
+        MouseArea{
+            anchors.fill: parent
+            // onDoubleClicked: comp.isEditing = true
+            onPressed: {
+                if (!comp.handle_mouseevent) {
+                    mouse.accepted = false
+                    return
+                }
+                else{
+                    comp.isEditing = true
+                }
+            }
+        }
     }
 
     Rectangle {
