@@ -590,6 +590,9 @@ namespace zeno {
                     using E = std::decay_t<decltype(vec)>;
                     if constexpr (std::is_same_v<std::vector<T>, E>) {
                         int sz = vec.size();
+                        if (sz != m_size) {
+                            vec.resize(m_size);
+                        }
                         for (int i = 0; i < m_size; i++) {
                             int idx = std::min(i, sz - 1);
                             T old_val(vec[idx]);
@@ -615,6 +618,12 @@ namespace zeno {
                     if (!pXVec || !pYVec)
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size();
+                    if (nx != m_size) {
+                        pXVec->resize(m_size);
+                    }
+                    if (ny != m_size) {
+                        pYVec->resize(m_size);
+                    }
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
                         int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1);
@@ -641,6 +650,15 @@ namespace zeno {
                     if (!pXVec || !pYVec || !pZVec)
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
+                    if (nx != m_size) {
+                        pXVec->resize(m_size);
+                    }
+                    if (ny != m_size) {
+                        pYVec->resize(m_size);
+                    }
+                    if (nz != m_size) {
+                        pZVec->resize(m_size);
+                    }
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
                         int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1), iz = std::min(i, nz - 1);
@@ -666,6 +684,12 @@ namespace zeno {
                     if (!pXVec || !pYVec)
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size();
+                    if (nx != m_size) {
+                        pXVec->resize(m_size);
+                    }
+                    if (ny != m_size) {
+                        pYVec->resize(m_size);
+                    }
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
                         int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1);
@@ -692,6 +716,15 @@ namespace zeno {
                     if (!pXVec || !pYVec || !pZVec)
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
+                    if (nx != m_size) {
+                        pXVec->resize(m_size);
+                    }
+                    if (ny != m_size) {
+                        pYVec->resize(m_size);
+                    }
+                    if (nz != m_size) {
+                        pZVec->resize(m_size);
+                    }
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
                         int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1), iz = std::min(i, nz - 1);
@@ -713,6 +746,9 @@ namespace zeno {
                     std::visit([&](auto&& val) {
                         using E = std::decay_t<decltype(val)>;
                         int sz = val.size();
+                        if (sz != m_size) {
+                            val.resize(m_size);
+                        }
                         if constexpr (std::is_same_v<E, std::vector<T>>) {
                             #pragma omp parallel for
                             for (int i = 0; i < m_size; i++) {
