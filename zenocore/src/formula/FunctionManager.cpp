@@ -1431,14 +1431,27 @@ namespace zeno {
                 auto pCondExp = root->children[0];
                 //todo: self inc
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
-                ZfxElemFilter newFilter;
-                if (hasTrue(cond, filter, newFilter)) {
-                    auto pCodesExp = root->children[1];
-                    execute(pCodesExp, newFilter, pContext);
-                } else if (root->children.size() == 3) {
-                    auto pelseExp = root->children[2];
-                    execute(pelseExp, filter, pContext);
+                if (cond.value.size() == 1) {//不是向量的情况
+                    ZfxElemFilter newFilter;
+                    if (hasTrue(cond, filter, newFilter)) {
+                        auto pCodesExp = root->children[1];
+                        execute(pCodesExp, newFilter, pContext);
+                    } else if (root->children.size() == 3) {
+                        auto pelseExp = root->children[2];
+                        execute(pelseExp, filter, pContext);
+                    }
+                } else {//向量的情况，每个分支都要执行
+                    ZfxElemFilter ifFilter, elseFilter;
+                    if (hasTrue(cond, filter, ifFilter)) {
+                        auto pCodesExp = root->children[1];
+                        execute(pCodesExp, ifFilter, pContext);
+                    }
+                    if (root->children.size() == 3) {
+                        auto pelseExp = root->children[2];
+                        execute(pelseExp, filter, pContext);
+                    }
                 }
+
                 break;
             }
             case FOR:{
