@@ -592,6 +592,7 @@ namespace zeno {
                         int sz = vec.size();
                         if (sz != m_size) {
                             vec.resize(m_size);
+                            sz = m_size;
                         }
                         for (int i = 0; i < m_size; i++) {
                             int idx = std::min(i, sz - 1);
@@ -619,9 +620,11 @@ namespace zeno {
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size();
                     if (nx != m_size) {
+                        nx = m_size;
                         pXVec->resize(m_size);
                     }
                     if (ny != m_size) {
+                        ny = m_size;
                         pYVec->resize(m_size);
                     }
 #pragma omp parallel for
@@ -651,12 +654,15 @@ namespace zeno {
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
                     if (nx != m_size) {
+                        nx = m_size;
                         pXVec->resize(m_size);
                     }
                     if (ny != m_size) {
+                        ny = m_size;
                         pYVec->resize(m_size);
                     }
                     if (nz != m_size) {
+                        nz = m_size;
                         pZVec->resize(m_size);
                     }
 #pragma omp parallel for
@@ -685,9 +691,11 @@ namespace zeno {
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size();
                     if (nx != m_size) {
+                        nx = m_size;
                         pXVec->resize(m_size);
                     }
                     if (ny != m_size) {
+                        ny = m_size;
                         pYVec->resize(m_size);
                     }
 #pragma omp parallel for
@@ -718,12 +726,15 @@ namespace zeno {
                     int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
                     if (nx != m_size) {
                         pXVec->resize(m_size);
+                        nx = m_size;
                     }
                     if (ny != m_size) {
                         pYVec->resize(m_size);
+                        ny = m_size;
                     }
                     if (nz != m_size) {
                         pZVec->resize(m_size);
+                        nz = m_size;
                     }
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
@@ -748,6 +759,7 @@ namespace zeno {
                         int sz = val.size();
                         if (sz != m_size) {
                             val.resize(m_size);
+                            sz = m_size;
                         }
                         if constexpr (std::is_same_v<E, std::vector<T>>) {
                             #pragma omp parallel for
