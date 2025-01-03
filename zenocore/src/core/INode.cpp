@@ -1771,13 +1771,13 @@ void INode::doApply(CalcContext* pContext) {
         registerObjToManager();
         reportStatus(true, Node_DirtyReadyToRun);
     } else {
-        if (m_nodecls == "ForEachEnd") {
-            reportStatus(true, Node_Running);
-            registerObjToManager();
-        } else {
+        //if (m_nodecls == "ForEachEnd") {
+        //    reportStatus(true, Node_Running);
+        //    registerObjToManager();
+        //} else {
             registerObjToManager();
             reportStatus(false, Node_RunSucceed);
-        }
+        //}
     }
     if (m_bView) {
         commit_to_render(Update_Reconstruct);
