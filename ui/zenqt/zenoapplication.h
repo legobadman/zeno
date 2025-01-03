@@ -12,6 +12,7 @@
 class GraphsManager;
 class ZenoMainWindow;
 class CalculationMgr;
+class NodeCateModel;
 
 class ZenoApplication : public QApplication
 {
@@ -21,6 +22,7 @@ public:
     ~ZenoApplication();
     GraphsManager* graphsManager() const;
     CalculationMgr* calculationMgr() const;
+    NodeCateModel* nodecateModel() const;
     void initFonts();
     void initStyleSheets();
     void initQuickQanavas();
@@ -41,6 +43,7 @@ private:
     std::shared_ptr<ZWidgetErrStream> m_spUILogStream;
     std::shared_ptr<ProcessClipboard> m_spProcClipboard;
     GraphsManager* m_graphsMgr;
+    NodeCateModel* m_nodecates;
     CalculationMgr* m_calcMgr;
     QQmlApplicationEngine* m_engine;
     QDir m_appDataPath;

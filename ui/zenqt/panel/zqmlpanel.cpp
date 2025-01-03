@@ -13,6 +13,19 @@ ZQmlPanel::ZQmlPanel(QWidget* parent)
     GraphModel* pGraphM = zenoApp->graphsManager()->getGraph({ "main" });
     setResizeMode(QQuickWidget::SizeRootObjectToView);
     rootContext()->setContextProperty("nodesModel", pGraphM);
+
+    //测试组件获取报错信息
+#if 0
+    QQmlComponent component(this->engine(), QUrl(QStringLiteral("qrc:/ZenoGraphView.qml")));
+    if (component.status() != QQmlComponent::Ready) {
+        qWarning() << "Error loading QML:";
+        for (const QQmlError& error : component.errors()) {
+            qWarning() << error.toString();
+        }
+        //return -1;
+    }
+#endif
+
     setSource(QUrl(QStringLiteral("qrc:/testQan.qml")));
 }
 

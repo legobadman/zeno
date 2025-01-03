@@ -299,11 +299,14 @@ Qan.GraphView {
         }        
 
         Instantiator {
-            model: graphsmanager.getNodeCates()
+            model: nodecatesmodel       //global model
 
             delegate: Menu {
-                id: submenu
-                title: modelData[0]
+                id: catemenu
+                required property string category
+                required property var nodelist
+
+                title: category
                 //visible: newnode_menu.catemode
                 property bool contentLoaded: false // 标记是否已加载
 
@@ -321,14 +324,14 @@ Qan.GraphView {
                 Component {
                     id: menuItemComponent1
                     Instantiator {
-                        model: modelData[1]
+                        model: catemenu.nodelist
                         delegate: MenuItem {
                             text: modelData
                             onTriggered: {
                                 console.log(text + " triggered")
                             }
                         }
-                        onObjectAdded: submenu.addItem(object)
+                        onObjectAdded: catemenu.addItem(object)
                     }
                 }
             }

@@ -8,6 +8,7 @@
 #include <style/zenostyle.h>
 #include "settings/zenosettingsmanager.h"
 #include "calculation/calculationmgr.h"
+#include "model/nodecatemodel.h"
 #include "uicommon.h"
 #include "declmetatype.h"
 #include <QuickQanava>
@@ -20,6 +21,7 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
     , m_engine(nullptr)
     , m_calcMgr(new CalculationMgr(this))
     , m_graphsMgr(new GraphsManager(this))
+    , m_nodecates(new NodeCateModel(this))
 {
     initMetaTypes();
     initFonts();
@@ -182,6 +184,10 @@ GraphsManager* ZenoApplication::graphsManager() const
     return m_graphsMgr;
 }
 
+NodeCateModel* ZenoApplication::nodecateModel() const {
+    return m_nodecates;
+}
+
 CalculationMgr* ZenoApplication::calculationMgr() const
 {
     return m_calcMgr;
@@ -214,6 +220,8 @@ void ZenoApplication::initQuickQanavas()
         QSurfaceFormat format;
         format.setSamples(8);
         QSurfaceFormat::setDefaultFormat(format);
+
+        m_engine->rootContext()->setContextProperty("nodecatesmodel", m_nodecates);
 
         QuickQanava::initialize(m_engine);
         m_graphsMgr->initRootObjects();
