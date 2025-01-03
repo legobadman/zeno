@@ -409,6 +409,23 @@ RECORD_SETTING GraphsManager::recordSettings() const
     return RECORD_SETTING();
 }
 
+QVariantList GraphsManager::getNodeCates() const
+{
+    zeno::NodeCates cates = getCates();
+    QVariantList _cates;
+    for (auto& [cate, lst] : cates) {
+        QStringList nodes;
+        std::transform(lst.begin(), lst.end(), std::back_inserter(nodes), [](const std::string& v) { return QString::fromStdString(v); });
+
+        QString _cate = QString::fromStdString(cate);
+        QVariantList item;
+        item.append(_cate);
+        item.append(nodes);
+        _cates.push_back(item);
+    }
+    return _cates;
+}
+
 zeno::NodeCates GraphsManager::getCates() const
 {
     zeno::NodeCates cates = zeno::getSession().dumpCoreCates();

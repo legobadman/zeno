@@ -25,7 +25,7 @@
 */
 
 import QtQuick                   2.12
-import QtQuick.Controls          2.1
+import QtQuick.Controls          2.3
 import QtQuick.Controls.Material 2.1
 import QtQuick.Layouts           1.3
 
@@ -133,9 +133,9 @@ Qan.GraphView {
 
     onRightClicked: function(pos) {
         //console.log("rightclick: " + pos.x + "," + pos.y)
-        contextMenu.x = pos.x
-        contextMenu.y = pos.y
-        contextMenu.open()
+        newnode_menu.x = pos.x
+        newnode_menu.y = pos.y
+        newnode_menu.open()
     }
 
     onHoverInfoChanged: function() {
@@ -260,30 +260,35 @@ Qan.GraphView {
         }
     } // Qan.Graph
 
-    Menu {      // Context menu demonstration
-        id: contextMenu
-        property var node: undefined
-        MenuItem {
-            text: "Insert Node"
-            onClicked: {
-                let n = graph.insertNode()
-                n.label = 'New Node'
-                n.item.x = contextMenu.x
-                n.item.y = contextMenu.y
+    Menu {
+        id: newnode_menu
+
+        Instantiator {
+            model: graphsmanager.getNodeCates()
+            delegate: Menu {
+                id: submenu
+                title: modelData[0]
+                property bool contentLoaded: false // 标记是否已加载
+
+                onAboutToShow: {
+                    if (contentLoaded) return; // 避免重复加载
+                    contentLoaded = true;
+
+                    // 模拟动态加载的子菜单项
+                    for (let i = 0; i < modelData[1].length; i++) {
+                        let menuItem = Qt.createQmlObject(`
+                        import QtQuick.Controls 2.15
+                        MenuItem { text: "${modelData[1][i]}" }
+                        `, this);
+                        insertItem(i-1, menuItem)
+                    }
+                }
             }
+
+            // The trick is on those two lines
+            onObjectAdded: newnode_menu.insertMenu(index, object)
         }
-        MenuItem {
-            text: "Remove node"
-            enabled: contextMenu.node !== undefined
-            onClicked: {
-                graph.removeNode(contextMenu.node)
-                contextMenu.node = undefined
-            }
-        }
-        onClosed: { // Clean internal state when context menu us closed
-            contextMenu.node = undefined
-        }
-    } // Menu
+    }
 
     ToolTip { id: toolTip; timeout: 2500 }
     function notifyUser(message) { toolTip.text=message; toolTip.open() }

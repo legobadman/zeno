@@ -24,6 +24,8 @@ public:
     GraphsManager(const GraphsManager& rhs);
     ~GraphsManager();
 
+    Q_INVOKABLE QVariantList getNodeCates() const;
+
     void createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult);
     inline GraphsTreeModel* currentModel() const { return m_model; }
     AssetsModel* assetsModel() const;
