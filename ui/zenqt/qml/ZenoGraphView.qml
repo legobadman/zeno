@@ -308,55 +308,29 @@ Qan.GraphView {
                 property bool contentLoaded: false // 标记是否已加载
 
                 onAboutToShow: {
-                    // loader1.sourceComponent = null  //清空之前的项目，（有必要吗）
-                    // loader1.sourceComponent = menuItemComponent1
-                    
-                    if (contentLoaded) return; // 避免重复加载
-                    contentLoaded = true;
-
-                    // 模拟动态加载的子菜单项
-                    for (let i = 0; i < modelData[1].length; i++) {
-                        let menuItem = Qt.createQmlObject(`
-                            import QtQuick.Controls 2.15
-                            MenuItem {
-                                text: "${modelData[1][i]}"
-
-                                onTriggered: {
-                                    console.log("Triggered Item: " + text);
-                                }
-                            }
-                            `, this);
-                        addItem(menuItem)
-                    }
+                    loader1.sourceComponent = null  //清空之前的项目，（有必要吗）
+                    loader1.sourceComponent = menuItemComponent1
                 }
 
                 // Loader 组件用于动态加载 MenuItem
-                // Loader {
-                //     id: loader1
-                // }
+                Loader {
+                    id: loader1
+                }
 
-                // Component {
-                //     id: menuItemComponent1
-                //     MenuItem {
-                //         text: "Dynamic Option 1"
-                //         onTriggered: console.log("Option 1 triggered")
-                //     }
-                // }
                 // 预定义的组件，动态加载时使用
-                // Component {
-                //     id: menuItemComponent1
-                //     Repeater {
-                //         model: modelData[1]
-                //         MenuItem {
-                //             text: modelData
-                //             onTriggered: console.log(text + " triggered")
-
-                //             Component.onCompleted: {
-                //                 newnode_menu.addItem(this)
-                //             }
-                //         }   
-                //     }
-                // }
+                Component {
+                    id: menuItemComponent1
+                    Instantiator {
+                        model: modelData[1]
+                        delegate: MenuItem {
+                            text: modelData
+                            onTriggered: {
+                                console.log(text + " triggered")
+                            }
+                        }
+                        onObjectAdded: submenu.addItem(object)
+                    }
+                }
             }
             // The trick is on those two lines
             onObjectAdded: newnode_menu.addMenu(object)
