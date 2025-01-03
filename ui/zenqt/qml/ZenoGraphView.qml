@@ -259,34 +259,181 @@ Qan.GraphView {
         onNodeSocketClicked: function(node, group, name, socket_pos) {
         }
     } // Qan.Graph
-
+ 
     Menu {
         id: newnode_menu
 
+        property var catemenuitems: []
+        property bool catemode: true
+
+        focus: true  // 确保 Menu 可以接收焦点
+
+        TextInput  {
+            id: searchItem
+            height: 24
+            //width: 64
+            focus: true // 初始设置为焦点
+
+            onFocusChanged: {
+                if (!focus) {
+                    searchItem.forceActiveFocus();
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    searchItem.forceActiveFocus(); // 鼠标点击时强制聚焦
+                }
+            }
+
+            onTextChanged: {
+                console.log("onTextChanged")
+                if (text != "") {
+                    newnode_menu.catemode = false
+                }
+                else {
+                    newnode_menu.catemode = true
+                }
+            }
+        }        
+
         Instantiator {
             model: graphsmanager.getNodeCates()
+
             delegate: Menu {
                 id: submenu
                 title: modelData[0]
+                //visible: newnode_menu.catemode
                 property bool contentLoaded: false // 标记是否已加载
 
                 onAboutToShow: {
+                    // loader1.sourceComponent = null  //清空之前的项目，（有必要吗）
+                    // loader1.sourceComponent = menuItemComponent1
+                    
                     if (contentLoaded) return; // 避免重复加载
                     contentLoaded = true;
 
                     // 模拟动态加载的子菜单项
                     for (let i = 0; i < modelData[1].length; i++) {
                         let menuItem = Qt.createQmlObject(`
-                        import QtQuick.Controls 2.15
-                        MenuItem { text: "${modelData[1][i]}" }
-                        `, this);
-                        insertItem(i-1, menuItem)
+                            import QtQuick.Controls 2.15
+                            MenuItem {
+                                text: "${modelData[1][i]}"
+
+                                onTriggered: {
+                                    console.log("Triggered Item: " + text);
+                                }
+                            }
+                            `, this);
+                        addItem(menuItem)
                     }
                 }
-            }
 
+                // Loader 组件用于动态加载 MenuItem
+                // Loader {
+                //     id: loader1
+                // }
+
+                // Component {
+                //     id: menuItemComponent1
+                //     MenuItem {
+                //         text: "Dynamic Option 1"
+                //         onTriggered: console.log("Option 1 triggered")
+                //     }
+                // }
+                // 预定义的组件，动态加载时使用
+                // Component {
+                //     id: menuItemComponent1
+                //     Repeater {
+                //         model: modelData[1]
+                //         MenuItem {
+                //             text: modelData
+                //             onTriggered: console.log(text + " triggered")
+
+                //             Component.onCompleted: {
+                //                 newnode_menu.addItem(this)
+                //             }
+                //         }   
+                //     }
+                // }
+            }
             // The trick is on those two lines
-            onObjectAdded: newnode_menu.insertMenu(index, object)
+            onObjectAdded: newnode_menu.addMenu(object)
+        }
+
+        Component.onCompleted: {
+            // 动态创建子菜单和菜单项
+
+            //首先加上搜索项
+            // var cates = graphsmanager.getNodeCates()
+            // for (var i = 0; i < cates.length; i++) {
+            //     var subMenu = createSubMenu(i, cates[i][0], cates[i][1]);
+            //     if (subMenu) {
+            //         catemenuitems.push(subMenu)
+            //     }
+            // }
+
+            // for (var i = 0; i < catemenuitems.length; i++) {
+            //     //newnode_menu.addMenu(catemenuitems[i])
+            // }
+        }
+
+        function createSubMenu(index, title, nodes) {
+            // 创建一个子菜单
+            var subMenu = Qt.createQmlObject(`
+                import QtQuick.Controls 2.15;
+                Menu {
+                    title: "${title}"
+                    property bool contentLoaded: false // 标记是否已加载
+
+                    onAboutToShow: {
+                        if (contentLoaded) return; // 避免重复加载
+                        contentLoaded = true;
+
+                        // 模拟动态加载的子菜单项
+                        var nodeitems = JSON.parse('${JSON.stringify(nodes)}');
+                        for (let i = 0; i < nodeitems.length; i++) {
+                            var nodename = nodeitems[i]
+                            let menuItem = Qt.createQmlObject(\`
+                                import QtQuick.Controls 2.15
+                                MenuItem { 
+                                    text: \"\$\{nodename\}\"        //实在是够绕的。。。
+
+                                    onTriggered: {
+                                        console.log("Triggered Item: " + text);
+                                    }
+                                }
+                                \`, this);
+                            addItem(menuItem)
+                        }
+                    }
+                }
+            `, newnode_menu);
+
+            // if (subMenu) {
+            //     // 动态添加菜单项到子菜单
+            //     for (var j = 0; j < nodes.length; j++) {
+            //         var item = createMenuItem(nodes[j]);
+            //         if (item) {
+            //             subMenu.addItem(item);
+            //         }
+            //     }
+            // }
+            return subMenu;
+        }
+
+        function createMenuItem(nodename) {
+            // 创建一个菜单项
+            return Qt.createQmlObject(`
+                import QtQuick.Controls 2.15;
+                MenuItem {
+                    text: "${nodename}";
+                    onTriggered: {
+                        console.log("Triggered Item ${nodename}");
+                    }
+                }
+            `, newnode_menu);
         }
     }
 

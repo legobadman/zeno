@@ -82,5 +82,7 @@
         <file>ZObjSocket.qml</file>
         <file>EdgesContainer.qml</file>
         <file>EditableText.qml</file>
+        <file>SubMenu.qml</file>
+        <file>MenuItem.qml</file>
     </qresource>
 </RCC>
