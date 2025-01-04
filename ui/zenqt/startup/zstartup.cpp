@@ -34,6 +34,8 @@ void initQml()
     qmlRegisterUncreatableType<QtRole>("zeno.enum", 1, 0, "Model", "Not creatable as it is an enum type");
     qmlRegisterType<GraphsManager>("Zeno", 1, 0, "GraphsManager");
     qmlRegisterType<GraphsTotalView>("Zeno", 1, 0, "GraphsTotalView");
+    qRegisterMetaType<MenuEventFilter*>("MenuEventFilter*");
+
     //qRegisterMetaType<GraphsManager*>("GraphsManager*");
     //qRegisterMetaType<GraphsTotalView*>("GraphsTotalView*");
     zenoApp->initQuickQanavas();

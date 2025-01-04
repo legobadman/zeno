@@ -39,3 +39,21 @@ QHash<int, QByteArray> NodeCateModel::roleNames() const
     values[Qt::DecorationRole] = "nodelist";
     return values;
 }
+
+bool NodeCateModel::removeRows(int row, int count, const QModelIndex& parent) {
+    beginRemoveRows(parent, row, row);
+    m_cates.removeAt(row);
+    endRemoveRows();
+    return true;
+}
+
+void NodeCateModel::search(const QString& name) {
+    //removeRows(0, 1);
+
+    //beginInsertRows(QModelIndex(), m_cates.size() - 1, m_cates.size() - 1);
+    //_CateItem newitem;
+    //newitem.cate = "fuckyou";
+    //newitem.nodes = QStringList({ "abc", "dec" });
+    //m_cates.push_back(newitem);
+    //endInsertRows();
+}

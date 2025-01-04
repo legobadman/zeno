@@ -12,7 +12,7 @@ class AssetsModel;
 class GraphsTreeModel;
 class ZenoSubGraphScene;
 class GraphModel;
-
+class NodeCateModel;
 class GraphsManager;
 
 class GraphsManager : public QObject

@@ -8,6 +8,40 @@
 #include <QString>
 #include <QQuickItem>
 
+class MenuEventFilter : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+
+public:
+    explicit MenuEventFilter(QObject* parent = nullptr) : QObject(parent) {}
+
+    Q_INVOKABLE void listenTo(QObject* object)
+    {
+        if (!object)
+            return;
+
+        QObjectList children = object->children();
+        for (auto pObject : children) {
+            pObject->installEventFilter(this);
+        }
+    }
+
+protected:
+    bool eventFilter(QObject* obj, QEvent* event) override {
+        if (event->type() == QEvent::KeyPress) {
+            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+            int key = keyEvent->key();
+            QChar c(key);
+            if (c.isLetterOrNumber())
+            {
+                return true;
+            }
+        }
+        return QObject::eventFilter(obj, event);
+    }
+};
+
 class NodeCateModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -26,6 +60,9 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
+
+    Q_INVOKABLE void search(const QString& name);
+    bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
 
 private:
     QVector<_CateItem> m_cates;

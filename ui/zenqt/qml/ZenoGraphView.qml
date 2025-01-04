@@ -288,7 +288,7 @@ Qan.GraphView {
             }
 
             onTextChanged: {
-                console.log("onTextChanged")
+                nodecatesmodel.search(text)
                 if (text != "") {
                     newnode_menu.catemode = false
                 }
@@ -334,83 +334,23 @@ Qan.GraphView {
                         onObjectAdded: catemenu.addItem(object)
                     }
                 }
+
+                Component.onCompleted: {
+                    // 创建一个 EventFilter 实例
+                    menueventFilter.listenTo(catemenu)
+                }
             }
             // The trick is on those two lines
             onObjectAdded: newnode_menu.addMenu(object)
+            onObjectRemoved: {
+                newnode_menu.removeMenu(object)
+            }
         }
 
         Component.onCompleted: {
-            // 动态创建子菜单和菜单项
-
-            //首先加上搜索项
-            // var cates = graphsmanager.getNodeCates()
-            // for (var i = 0; i < cates.length; i++) {
-            //     var subMenu = createSubMenu(i, cates[i][0], cates[i][1]);
-            //     if (subMenu) {
-            //         catemenuitems.push(subMenu)
-            //     }
-            // }
-
-            // for (var i = 0; i < catemenuitems.length; i++) {
-            //     //newnode_menu.addMenu(catemenuitems[i])
-            // }
-        }
-
-        function createSubMenu(index, title, nodes) {
-            // 创建一个子菜单
-            var subMenu = Qt.createQmlObject(`
-                import QtQuick.Controls 2.15;
-                Menu {
-                    title: "${title}"
-                    property bool contentLoaded: false // 标记是否已加载
-
-                    onAboutToShow: {
-                        if (contentLoaded) return; // 避免重复加载
-                        contentLoaded = true;
-
-                        // 模拟动态加载的子菜单项
-                        var nodeitems = JSON.parse('${JSON.stringify(nodes)}');
-                        for (let i = 0; i < nodeitems.length; i++) {
-                            var nodename = nodeitems[i]
-                            let menuItem = Qt.createQmlObject(\`
-                                import QtQuick.Controls 2.15
-                                MenuItem { 
-                                    text: \"\$\{nodename\}\"        //实在是够绕的。。。
-
-                                    onTriggered: {
-                                        console.log("Triggered Item: " + text);
-                                    }
-                                }
-                                \`, this);
-                            addItem(menuItem)
-                        }
-                    }
-                }
-            `, newnode_menu);
-
-            // if (subMenu) {
-            //     // 动态添加菜单项到子菜单
-            //     for (var j = 0; j < nodes.length; j++) {
-            //         var item = createMenuItem(nodes[j]);
-            //         if (item) {
-            //             subMenu.addItem(item);
-            //         }
-            //     }
-            // }
-            return subMenu;
-        }
-
-        function createMenuItem(nodename) {
-            // 创建一个菜单项
-            return Qt.createQmlObject(`
-                import QtQuick.Controls 2.15;
-                MenuItem {
-                    text: "${nodename}";
-                    onTriggered: {
-                        console.log("Triggered Item ${nodename}");
-                    }
-                }
-            `, newnode_menu);
+            //console.log(menueventFilter)
+            menueventFilter.listenTo(newnode_menu)
+            //installEventFilter(menueventFilter)
         }
     }
 

@@ -13,6 +13,7 @@ class GraphsManager;
 class ZenoMainWindow;
 class CalculationMgr;
 class NodeCateModel;
+class MenuEventFilter;
 
 class ZenoApplication : public QApplication
 {
@@ -44,6 +45,7 @@ private:
     std::shared_ptr<ProcessClipboard> m_spProcClipboard;
     GraphsManager* m_graphsMgr;
     NodeCateModel* m_nodecates;
+    MenuEventFilter* m_menuEventFilter;
     CalculationMgr* m_calcMgr;
     QQmlApplicationEngine* m_engine;
     QDir m_appDataPath;
