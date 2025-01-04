@@ -32,6 +32,7 @@ import QtQuick.Layouts           1.3
 import QuickQanava 2.0 as Qan
 import "qrc:/QuickQanava" as Qan
 import zeno.enum 1.0
+import Zeno 1.0
 
 Qan.GraphView {
     id: graphView
@@ -259,6 +260,17 @@ Qan.GraphView {
         onNodeSocketClicked: function(node, group, name, socket_pos) {
         }
     } // Qan.Graph
+
+    MenuEventFilter {
+        id: menuKeyFilter
+
+        onTextAppended: function(newtext) {
+            searchItem.focus = true
+            searchItem.forceActiveFocus()
+            searchItem.text = searchItem.text + newtext
+            console.log("onTextAppended: " + searchItem.text)
+        }
+    }
  
     Menu {
         id: newnode_menu
@@ -271,7 +283,6 @@ Qan.GraphView {
         TextInput  {
             id: searchItem
             height: 24
-            //width: 64
             focus: true // 初始设置为焦点
 
             onFocusChanged: {
@@ -289,14 +300,8 @@ Qan.GraphView {
 
             onTextChanged: {
                 nodecatesmodel.search(text)
-                if (text != "") {
-                    newnode_menu.catemode = false
-                }
-                else {
-                    newnode_menu.catemode = true
-                }
             }
-        }        
+        }
 
         Instantiator {
             model: nodecatesmodel       //global model
@@ -305,6 +310,7 @@ Qan.GraphView {
                 id: catemenu
                 required property string category
                 required property var nodelist
+                required property bool iscate
 
                 title: category
                 //visible: newnode_menu.catemode
@@ -337,9 +343,10 @@ Qan.GraphView {
 
                 Component.onCompleted: {
                     // 创建一个 EventFilter 实例
-                    menueventFilter.listenTo(catemenu)
+                    menuKeyFilter.listenTo(catemenu)
                 }
             }
+
             // The trick is on those two lines
             onObjectAdded: newnode_menu.addMenu(object)
             onObjectRemoved: {
@@ -348,9 +355,8 @@ Qan.GraphView {
         }
 
         Component.onCompleted: {
-            //console.log(menueventFilter)
-            menueventFilter.listenTo(newnode_menu)
-            //installEventFilter(menueventFilter)
+            //由于只有子菜单才会抢焦点，而外面的一级菜单的焦点已经被键盘事件获取了，所以不必设置eventFilter
+            //menuKeyFilter.listenTo(newnode_menu)
         }
     }
 

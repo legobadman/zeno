@@ -223,7 +223,6 @@ void ZenoApplication::initQuickQanavas()
         QSurfaceFormat::setDefaultFormat(format);
 
         m_engine->rootContext()->setContextProperty("nodecatesmodel", m_nodecates);
-        m_engine->rootContext()->setContextProperty("menueventFilter", m_menuEventFilter);
 
         QuickQanava::initialize(m_engine);
         m_graphsMgr->initRootObjects();

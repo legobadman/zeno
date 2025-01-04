@@ -1,6 +1,7 @@
 #include "nodecatemodel.h"
 #include "graphsmanager.h"
 #include "zenoapplication.h"
+#include "zassert.h"
 
 
 NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
@@ -20,11 +21,12 @@ int NodeCateModel::rowCount(const QModelIndex& parent) const {
 }
 
 QVariant NodeCateModel::data(const QModelIndex& index, int role) const {
-    if (role == Qt::DisplayRole) {
-        return m_cates[index.row()].cate;
-    }
-    else {
-        return m_cates[index.row()].nodes;
+    switch (role)
+    {
+    case QmlNodeCateRole::Category:  return m_cates[index.row()].cate;
+    case QmlNodeCateRole::CateNodes: return m_cates[index.row()].nodes;
+    case QmlNodeCateRole::IsCategory:return m_cates[index.row()].iscate;
+    case QmlNodeCateRole::Keywords:  return m_search;
     }
 }
 
@@ -35,8 +37,10 @@ bool NodeCateModel::setData(const QModelIndex& index, const QVariant& value, int
 QHash<int, QByteArray> NodeCateModel::roleNames() const
 {
     QHash<int, QByteArray> values;
-    values[Qt::DisplayRole] = "category";
-    values[Qt::DecorationRole] = "nodelist";
+    values[QmlNodeCateRole::Category] = "category";
+    values[QmlNodeCateRole::CateNodes] = "nodelist";
+    values[QmlNodeCateRole::IsCategory] = "iscate";
+    values[QmlNodeCateRole::Keywords] = "keywords";
     return values;
 }
 
@@ -47,8 +51,33 @@ bool NodeCateModel::removeRows(int row, int count, const QModelIndex& parent) {
     return true;
 }
 
+void NodeCateModel::clear() {
+    beginResetModel();
+    m_cates.clear();
+    endResetModel();
+}
+
 void NodeCateModel::search(const QString& name) {
     //removeRows(0, 1);
+    if (m_search.isEmpty()) {
+        //清空原有所有的分类菜单项
+        //removeRows(0, rowCount());
+        clear();
+        //添加搜索项
+        beginInsertRows(QModelIndex(), 0, 0);
+        _CateItem newitem;
+        newitem.cate = "fuckyou";
+        newitem.iscate = false;
+        //newitem.nodes = QStringList({ "abc", "dec" });
+        m_cates.push_back(newitem);
+        endInsertRows();
+    }
+    else if (name.length() < m_search.length()) {
+        //关键字删减，搜索范围要扩大，还是把之前的全清理掉
+    }
+    else {
+        ZASSERT_EXIT(name.length() > m_search.length());
+    }
 
     //beginInsertRows(QModelIndex(), m_cates.size() - 1, m_cates.size() - 1);
     //_CateItem newitem;
@@ -56,4 +85,5 @@ void NodeCateModel::search(const QString& name) {
     //newitem.nodes = QStringList({ "abc", "dec" });
     //m_cates.push_back(newitem);
     //endInsertRows();
+    m_search = name;
 }

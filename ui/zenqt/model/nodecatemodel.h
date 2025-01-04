@@ -27,6 +27,9 @@ public:
         }
     }
 
+signals:
+    void textAppended(QString);
+
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override {
         if (event->type() == QEvent::KeyPress) {
@@ -35,6 +38,7 @@ protected:
             QChar c(key);
             if (c.isLetterOrNumber())
             {
+                emit textAppended(c);
                 return true;
             }
         }
@@ -52,6 +56,7 @@ class NodeCateModel : public QAbstractListModel
     {
         QString cate;
         QStringList nodes;
+        bool iscate = true;
     };
 
 public:
@@ -63,9 +68,11 @@ public:
 
     Q_INVOKABLE void search(const QString& name);
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
+    void clear();
 
 private:
     QVector<_CateItem> m_cates;
+    QString m_search;
 };
 
 #endif
