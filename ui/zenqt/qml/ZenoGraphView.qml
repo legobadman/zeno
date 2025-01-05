@@ -267,16 +267,26 @@ Qan.GraphView {
         onTextAppended: function(newtext) {
             searchItem.focus = true
             searchItem.forceActiveFocus()
+
             searchItem.text = searchItem.text + newtext
-            console.log("onTextAppended: " + searchItem.text)
+            // console.log("onTextAppended: " + searchItem.text)
+        }
+        onTextRemoved: function() {
+            if (searchItem.text != "") {
+                searchItem.text = searchItem.text.substring(0, searchItem.text.length - 1)
+            }
+            searchItem.focus = true
+            searchItem.forceActiveFocus()
         }
     }
- 
+
     Menu {
         id: newnode_menu
 
         property var catemenuitems: []
         property bool catemode: true
+
+        height: childrenRect.height;
 
         focus: true  // 确保 Menu 可以接收焦点
 
@@ -285,11 +295,11 @@ Qan.GraphView {
             height: 24
             focus: true // 初始设置为焦点
 
-            onFocusChanged: {
-                if (!focus) {
-                    searchItem.forceActiveFocus();
-                }
-            }
+            // onFocusChanged: {
+            //     if (!focus) {
+            //         searchItem.forceActiveFocus();
+            //     }
+            // }
 
             MouseArea {
                 anchors.fill: parent
@@ -301,20 +311,34 @@ Qan.GraphView {
             onTextChanged: {
                 nodecatesmodel.search(text)
             }
+
+            Keys.onReturnPressed: {
+                console.log("Enter pressed on TextInput")
+                if (newnode_menu.count > 1) {
+                    newnode_menu.itemAt(1).triggered()
+                        // console.log("count = " + newnode_menu.count)
+                        // console.log("itemAt = " + newnode_menu.itemAt(1))
+                        // console.log("itemAt = " + newnode_menu.itemAt(1))
+                }
+            }
+
+            Keys.onPressed: {
+                if (event.key === Qt.Key_Up) {
+                    console.log("Enter Up")
+                } else if (event.key === Qt.Key_Down) {
+                    console.log("Enter Down")
+                }
+            }
         }
 
-        Instantiator {
-            model: nodecatesmodel       //global model
-
-            delegate: Menu {
+        Component {
+            id: comp_catemenu
+            Menu {
                 id: catemenu
-                required property string category
-                required property var nodelist
-                required property bool iscate
+                property var _nodelist: nodelist
+                property bool ismenu: true
 
                 title: category
-                //visible: newnode_menu.catemode
-                property bool contentLoaded: false // 标记是否已加载
 
                 onAboutToShow: {
                     loader1.sourceComponent = null  //清空之前的项目，（有必要吗）
@@ -330,7 +354,7 @@ Qan.GraphView {
                 Component {
                     id: menuItemComponent1
                     Instantiator {
-                        model: catemenu.nodelist
+                        model: catemenu._nodelist
                         delegate: MenuItem {
                             text: modelData
                             onTriggered: {
@@ -345,18 +369,62 @@ Qan.GraphView {
                     // 创建一个 EventFilter 实例
                     menuKeyFilter.listenTo(catemenu)
                 }
+            }            
+        }
+
+        Component {
+            id: comp_searchitem
+            MenuItem {
+                property bool ismenu: false
+                text: category
+
+                Keys.onReturnPressed: {
+                    console.log("Enter pressed on " + category)
+                    triggered()
+                }
+
+                onTriggered: {
+                    console.log(category + " onTriggered")
+                }
+            }
+        }
+
+        Instantiator {
+            model: nodecatesmodel       //global model
+
+            delegate: {
+                if (searchItem.text == "") {
+                    return comp_catemenu;
+                }
+                else {
+                    return comp_searchitem;
+                }
             }
 
             // The trick is on those two lines
-            onObjectAdded: newnode_menu.addMenu(object)
+            onObjectAdded: {
+                if (object.ismenu) {
+                    newnode_menu.addMenu(object)
+                }
+                else {
+                    if (newnode_menu.count == 1) {
+                        object.highlighted = true
+                    }
+                    newnode_menu.addItem(object)
+                }
+            }
             onObjectRemoved: {
-                newnode_menu.removeMenu(object)
+                if (object.ismenu) {
+                    newnode_menu.removeMenu(object)
+                }
+                else {
+                    newnode_menu.removeItem(object)
+                }
             }
         }
 
         Component.onCompleted: {
-            //由于只有子菜单才会抢焦点，而外面的一级菜单的焦点已经被键盘事件获取了，所以不必设置eventFilter
-            //menuKeyFilter.listenTo(newnode_menu)
+            menuKeyFilter.listenTo(newnode_menu)
         }
     }
 

@@ -29,6 +29,7 @@ public:
 
 signals:
     void textAppended(QString);
+    void textRemoved();
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override {
@@ -39,6 +40,11 @@ protected:
             if (c.isLetterOrNumber())
             {
                 emit textAppended(c);
+                return true;
+            }
+            if (c == Qt::Key_Backspace)
+            {
+                emit textRemoved();
                 return true;
             }
         }
@@ -67,6 +73,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void search(const QString& name);
+    Q_INVOKABLE bool iscatepage() const;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     void clear();
 

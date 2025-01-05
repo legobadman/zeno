@@ -57,6 +57,10 @@ void NodeCateModel::clear() {
     endResetModel();
 }
 
+bool NodeCateModel::iscatepage() const {
+    return m_search.isEmpty();
+}
+
 void NodeCateModel::search(const QString& name) {
     //removeRows(0, 1);
     if (m_search.isEmpty()) {
@@ -64,16 +68,32 @@ void NodeCateModel::search(const QString& name) {
         //removeRows(0, rowCount());
         clear();
         //添加搜索项
-        beginInsertRows(QModelIndex(), 0, 0);
+        beginInsertRows(QModelIndex(), 0, 1);
         _CateItem newitem;
-        newitem.cate = "fuckyou";
+        newitem.cate = name;
         newitem.iscate = false;
         //newitem.nodes = QStringList({ "abc", "dec" });
+        m_cates.push_back(newitem);
+        newitem.cate = "f2";
         m_cates.push_back(newitem);
         endInsertRows();
     }
     else if (name.length() < m_search.length()) {
         //关键字删减，搜索范围要扩大，还是把之前的全清理掉
+        clear();
+        if (name.isEmpty()) {
+            //把分类菜单加回来
+            zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
+            beginInsertRows(QModelIndex(), 0, cates.size() - 1);
+            m_cates.resize(cates.size());
+            int i = 0;
+            for (auto& [cate, lst] : cates) {
+                m_cates[i].cate = QString::fromStdString(cate);
+                std::transform(lst.begin(), lst.end(), std::back_inserter(m_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
+                i++;
+            }
+            endInsertRows();
+        }
     }
     else {
         ZASSERT_EXIT(name.length() > m_search.length());
