@@ -79,6 +79,7 @@ public:
 
 private:
     QVector<_CateItem> m_cates;
+    QVector<_CateItem> m_cache_cates;
     QString m_search;
 };
 

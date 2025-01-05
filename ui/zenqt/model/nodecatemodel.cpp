@@ -6,13 +6,14 @@
 
 NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
     zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
-    m_cates.resize(cates.size());
+    m_cache_cates.resize(cates.size());
     int i = 0;
     for (auto& [cate, lst] : cates) {
-        m_cates[i].cate = QString::fromStdString(cate);
-        std::transform(lst.begin(), lst.end(), std::back_inserter(m_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
+        m_cache_cates[i].cate = QString::fromStdString(cate);
+        std::transform(lst.begin(), lst.end(), std::back_inserter(m_cache_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
         i++;
     }
+    m_cates = m_cache_cates;
     //TODO: sync with graphsmanager when assets insert/remove.
 }
 
@@ -23,7 +24,7 @@ int NodeCateModel::rowCount(const QModelIndex& parent) const {
 QVariant NodeCateModel::data(const QModelIndex& index, int role) const {
     switch (role)
     {
-    case QmlNodeCateRole::Category:  return m_cates[index.row()].cate;
+    case QmlNodeCateRole::Name:  return m_cates[index.row()].cate;
     case QmlNodeCateRole::CateNodes: return m_cates[index.row()].nodes;
     case QmlNodeCateRole::IsCategory:return m_cates[index.row()].iscate;
     case QmlNodeCateRole::Keywords:  return m_search;
@@ -37,7 +38,7 @@ bool NodeCateModel::setData(const QModelIndex& index, const QVariant& value, int
 QHash<int, QByteArray> NodeCateModel::roleNames() const
 {
     QHash<int, QByteArray> values;
-    values[QmlNodeCateRole::Category] = "category";
+    values[QmlNodeCateRole::Name] = "name";
     values[QmlNodeCateRole::CateNodes] = "nodelist";
     values[QmlNodeCateRole::IsCategory] = "iscate";
     values[QmlNodeCateRole::Keywords] = "keywords";
@@ -85,13 +86,7 @@ void NodeCateModel::search(const QString& name) {
             //把分类菜单加回来
             zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
             beginInsertRows(QModelIndex(), 0, cates.size() - 1);
-            m_cates.resize(cates.size());
-            int i = 0;
-            for (auto& [cate, lst] : cates) {
-                m_cates[i].cate = QString::fromStdString(cate);
-                std::transform(lst.begin(), lst.end(), std::back_inserter(m_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
-                i++;
-            }
+            m_cates = m_cache_cates;
             endInsertRows();
         }
     }

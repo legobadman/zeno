@@ -338,11 +338,12 @@ Qan.GraphView {
                 property var _nodelist: nodelist
                 property bool ismenu: true
 
-                title: category
+                title: name
 
                 onAboutToShow: {
-                    loader1.sourceComponent = null  //清空之前的项目，（有必要吗）
-                    loader1.sourceComponent = menuItemComponent1
+                    if (loader1.sourceComponent == null) {
+                        loader1.sourceComponent = menuItemComponent1
+                    }
                 }
 
                 // Loader 组件用于动态加载 MenuItem
@@ -360,6 +361,8 @@ Qan.GraphView {
                             onTriggered: {
                                 console.log(text + " triggered")
                             }
+                            Component.onCompleted: {
+                            }
                         }
                         onObjectAdded: catemenu.addItem(object)
                     }
@@ -376,15 +379,15 @@ Qan.GraphView {
             id: comp_searchitem
             MenuItem {
                 property bool ismenu: false
-                text: category
+                text: name
 
                 Keys.onReturnPressed: {
-                    console.log("Enter pressed on " + category)
+                    console.log("Enter pressed on " + name)
                     triggered()
                 }
 
                 onTriggered: {
-                    console.log(category + " onTriggered")
+                    console.log(name + " onTriggered")
                 }
             }
         }
@@ -421,6 +424,10 @@ Qan.GraphView {
                     newnode_menu.removeItem(object)
                 }
             }
+        }
+
+        onAboutToHide: {
+            searchItem.text = "";
         }
 
         Component.onCompleted: {

@@ -254,10 +254,10 @@ public:
     explicit QmlNodeCateRole() {}
 
     enum Value {    //对应common.h的NodeDataGroup
-        Category,
+        Name,       //category name or nodename
         CateNodes,
         IsCategory,
-        Keywords
+        Keywords,
     };
     Q_ENUM(Value)
 };
