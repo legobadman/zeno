@@ -2,16 +2,25 @@
 #include "graphsmanager.h"
 #include "zenoapplication.h"
 #include "zassert.h"
+#include "nodeeditor/gv/fuzzy_search.h"
 
 
 NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
     zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
     m_cache_cates.resize(cates.size());
     int i = 0;
-    for (auto& [cate, lst] : cates) {
+    for (auto& [cate, nodes] : cates) {
         m_cache_cates[i].cate = QString::fromStdString(cate);
-        std::transform(lst.begin(), lst.end(), std::back_inserter(m_cache_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
+        std::transform(nodes.begin(), nodes.end(), std::back_inserter(m_cache_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
         i++;
+
+        for (const auto& node : nodes) {
+            QString nodecls = QString::fromStdString(node);
+            if (nodecls == "SubInput" || nodecls == "SubOutput")
+                continue;
+            m_nodeToCate[nodecls] = QString::fromStdString(cate);
+            m_condidates.push_back(nodecls);
+        }
     }
     m_cates = m_cache_cates;
     //TODO: sync with graphsmanager when assets insert/remove.
@@ -27,7 +36,7 @@ QVariant NodeCateModel::data(const QModelIndex& index, int role) const {
     case QmlNodeCateRole::Name:  return m_cates[index.row()].cate;
     case QmlNodeCateRole::CateNodes: return m_cates[index.row()].nodes;
     case QmlNodeCateRole::IsCategory:return m_cates[index.row()].iscate;
-    case QmlNodeCateRole::Keywords:  return m_search;
+    case QmlNodeCateRole::Keywords:  return m_cates[index.row()].matchIndices;
     }
 }
 
@@ -63,42 +72,30 @@ bool NodeCateModel::iscatepage() const {
 }
 
 void NodeCateModel::search(const QString& name) {
-    //removeRows(0, 1);
-    if (m_search.isEmpty()) {
-        //清空原有所有的分类菜单项
-        //removeRows(0, rowCount());
-        clear();
-        //添加搜索项
-        beginInsertRows(QModelIndex(), 0, 1);
-        _CateItem newitem;
-        newitem.cate = name;
-        newitem.iscate = false;
-        //newitem.nodes = QStringList({ "abc", "dec" });
-        m_cates.push_back(newitem);
-        newitem.cate = "f2";
-        m_cates.push_back(newitem);
+    zeno::scope_exit sp([&]() { m_search = name; });
+
+    clear();
+    if (name.isEmpty()) {
+        //搜索项是空的，于是把分类菜单加回来
+        beginInsertRows(QModelIndex(), 0, m_cache_cates.size() - 1);
+        m_cates = m_cache_cates;
         endInsertRows();
-    }
-    else if (name.length() < m_search.length()) {
-        //关键字删减，搜索范围要扩大，还是把之前的全清理掉
-        clear();
-        if (name.isEmpty()) {
-            //把分类菜单加回来
-            zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
-            beginInsertRows(QModelIndex(), 0, cates.size() - 1);
-            m_cates = m_cache_cates;
-            endInsertRows();
-        }
+        return;
     }
     else {
-        ZASSERT_EXIT(name.length() > m_search.length());
+        const QList<FuzzyMatchKey>& searchResult = fuzzy_search(name, m_condidates);
+        beginInsertRows(QModelIndex(), 0, searchResult.size() - 1);
+        int deprecatedIndex = searchResult.size();
+        for (int i = 0; i < searchResult.size(); i++) {
+            auto& [name, matchIndices] = searchResult[i];
+            _CateItem newitem;
+            newitem.cate = name;
+            newitem.iscate = false;
+            for (auto idx : matchIndices) {
+                newitem.matchIndices.append(idx);
+            }
+            m_cates.push_back(newitem);
+        }
+        endInsertRows();
     }
-
-    //beginInsertRows(QModelIndex(), m_cates.size() - 1, m_cates.size() - 1);
-    //_CateItem newitem;
-    //newitem.cate = "fuckyou";
-    //newitem.nodes = QStringList({ "abc", "dec" });
-    //m_cates.push_back(newitem);
-    //endInsertRows();
-    m_search = name;
 }

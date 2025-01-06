@@ -62,6 +62,7 @@ class NodeCateModel : public QAbstractListModel
     {
         QString cate;
         QStringList nodes;
+        QVariantList matchIndices;
         bool iscate = true;
     };
 
@@ -79,8 +80,12 @@ public:
 
 private:
     QVector<_CateItem> m_cates;
-    QVector<_CateItem> m_cache_cates;
+    QVector<_CateItem> m_cache_cates;   //TODO: 如果ASSET发送增删，要同步到这里
     QString m_search;
+
+    //internal:
+    QMap<QString, QString> m_nodeToCate;
+    QList<QString> m_condidates;
 };
 
 #endif

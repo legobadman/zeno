@@ -378,8 +378,29 @@ Qan.GraphView {
         Component {
             id: comp_searchitem
             MenuItem {
+                id: searchresult_item
                 property bool ismenu: false
                 text: name
+                property var _matchindice: keywords
+
+                // 动态生成带颜色的富文本字符串
+                function getColoredText(text, indices) {
+                    var result = "";
+                    for (var i = 0; i < text.length; i++) {
+                        if (indices.indexOf(i) !== -1) {
+                            result += "<span style='color:red;'>" + text[i] + "</span>";
+                        } else {
+                            result += text[i];
+                        }
+                    }
+                    return result;
+                }
+
+                contentItem: Text {
+                    textFormat: Text.RichText
+                    text: getColoredText(searchresult_item.text, searchresult_item._matchindice)
+                    font.pointSize: 12
+                }
 
                 Keys.onReturnPressed: {
                     console.log("Enter pressed on " + name)
