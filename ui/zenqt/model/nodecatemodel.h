@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef __NODE_CATE_MODEL_H__
 #define __NODE_CATE_MODEL_H__
@@ -58,9 +58,10 @@ class NodeCateModel : public QAbstractListModel
     typedef QAbstractListModel _base;
     QML_ELEMENT
 
-    struct _CateItem
+    struct MenuOrItem
     {
-        QString cate;
+        QString name;
+        QString category;
         QStringList nodes;
         QVariantList matchIndices;
         bool iscate = true;
@@ -79,8 +80,8 @@ public:
     void clear();
 
 private:
-    QVector<_CateItem> m_cates;
-    QVector<_CateItem> m_cache_cates;   //TODO: Èç¹ûASSET·¢ËÍÔöÉ¾£¬ÒªÍ¬²½µ½ÕâÀï
+    QVector<MenuOrItem> m_items;
+    QVector<MenuOrItem> m_cache_cates;   //TODO: å¦‚æœASSETå‘é€å¢åˆ ï¼Œè¦åŒæ­¥åˆ°è¿™é‡Œ
     QString m_search;
 
     //internal:

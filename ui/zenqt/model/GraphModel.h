@@ -36,6 +36,7 @@ public:
     Q_INVOKABLE QVariant removeLink(const QString& nodeName, const QString& paramName, bool bInput);
     Q_INVOKABLE QString name() const;
     Q_INVOKABLE QStringList path() const;
+    Q_INVOKABLE void insertNode(const QString& nodeCls, const QString& cate, const QPointF& pos);
 
     //TEST API
     Q_INVOKABLE QString owner() const;

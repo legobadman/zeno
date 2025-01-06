@@ -380,6 +380,10 @@ QStringList GraphModel::path() const
     return currentPath();
 }
 
+void GraphModel::insertNode(const QString& nodeCls, const QString& cate, const QPointF& pos) {
+    zeno::NodeData dat = createNode(nodeCls, cate, pos);
+}
+
 QString GraphModel::owner() const
 {
     if (auto pItem = qobject_cast<NodeItem*>(parent()))

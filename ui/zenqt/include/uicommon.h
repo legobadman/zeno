@@ -258,6 +258,7 @@ public:
         CateNodes,
         IsCategory,
         Keywords,
+        Category,   //搜索节点时对应的Category名字，如果是Category菜单，用Name就行
     };
     Q_ENUM(Value)
 };

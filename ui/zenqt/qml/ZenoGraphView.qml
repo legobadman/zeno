@@ -324,9 +324,11 @@ Qan.GraphView {
 
             Keys.onPressed: {
                 if (event.key === Qt.Key_Up) {
-                    console.log("Enter Up")
+                    
                 } else if (event.key === Qt.Key_Down) {
-                    console.log("Enter Down")
+                    var firstItem = newnode_menu.itemAt(1)
+                    firstItem.focus = true
+                    firstItem.forceActiveFocus()
                 }
             }
         }
@@ -359,7 +361,7 @@ Qan.GraphView {
                         delegate: MenuItem {
                             text: modelData
                             onTriggered: {
-                                console.log(text + " triggered")
+                                graphModel.insertNode(modelData, catemenu.title, Qt.point(newnode_menu.x, newnode_menu.y))
                             }
                             Component.onCompleted: {
                             }
@@ -403,12 +405,11 @@ Qan.GraphView {
                 }
 
                 Keys.onReturnPressed: {
-                    console.log("Enter pressed on " + name)
                     triggered()
                 }
 
                 onTriggered: {
-                    console.log(name + " onTriggered")
+                    graphModel.insertNode(name, category, Qt.point(newnode_menu.x, newnode_menu.y))
                 }
             }
         }
@@ -447,8 +448,12 @@ Qan.GraphView {
             }
         }
 
-        onAboutToHide: {
+        onAboutToShow: {
             searchItem.text = "";
+        }
+
+        onAboutToHide: {
+            
         }
 
         Component.onCompleted: {
