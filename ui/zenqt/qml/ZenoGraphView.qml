@@ -134,7 +134,7 @@ Qan.GraphView {
 
     onRightClicked: function(pos) {
         //console.log("rightclick: " + pos.x + "," + pos.y)
-        newnode_menu.x = pos.x
+        newnode_menu.x = pos.x + 10
         newnode_menu.y = pos.y
         newnode_menu.open()
     }
@@ -286,7 +286,7 @@ Qan.GraphView {
         property var catemenuitems: []
         property bool catemode: true
 
-        height: childrenRect.height;
+        // height: 256;
 
         focus: true  // 确保 Menu 可以接收焦点
 
@@ -295,11 +295,11 @@ Qan.GraphView {
             height: 24
             focus: true // 初始设置为焦点
 
-            // onFocusChanged: {
-            //     if (!focus) {
-            //         searchItem.forceActiveFocus();
-            //     }
-            // }
+            onFocusChanged: {
+                if (!focus) {
+                    searchItem.forceActiveFocus();
+                }
+            }
 
             MouseArea {
                 anchors.fill: parent
@@ -309,7 +309,12 @@ Qan.GraphView {
             }
 
             onTextChanged: {
-                nodecatesmodel.search(text)
+                nodesearchmodel.search(text)
+                var flickable = newnode_menu.contentItem; // 获取内置的滚动控件
+                if (flickable && flickable.contentY !== undefined) {
+                    flickable.contentY = 0; // 滚动到顶部
+                    newnode_menu.itemAt(1).highlighted = true
+                }
             }
 
             Keys.onReturnPressed: {
@@ -414,36 +419,37 @@ Qan.GraphView {
         }
 
         Instantiator {
-            model: nodecatesmodel       //global model
+            model: nodesearchmodel       //global model
 
-            delegate: {
-                if (searchItem.text == "") {
-                    return comp_catemenu;
-                }
-                else {
-                    return comp_searchitem;
-                }
-            }
+            delegate: comp_searchitem
 
             // The trick is on those two lines
             onObjectAdded: {
-                if (object.ismenu) {
-                    newnode_menu.addMenu(object)
-                }
-                else {
-                    if (newnode_menu.count == 1) {
-                        object.highlighted = true
-                    }
-                    newnode_menu.addItem(object)
-                }
+                // newnode_menu.addItem(object)
+                var nRes = nodesearchmodel.rowCount()
+                newnode_menu.insertItem(1, object)  //0是编辑框的位置
             }
             onObjectRemoved: {
-                if (object.ismenu) {
-                    newnode_menu.removeMenu(object)
-                }
-                else {
-                    newnode_menu.removeItem(object)
-                }
+                newnode_menu.removeItem(object)
+            }
+        }
+
+        // 分割线
+        // MenuSeparator {
+        //     visible: nodesearchmodel.rowCount() > 0
+        // }
+
+        Instantiator {
+            model: nodecatesmodel       //global model
+
+            delegate: comp_catemenu
+
+            // The trick is on those two lines
+            onObjectAdded: {
+                newnode_menu.addMenu(object)
+            }
+            onObjectRemoved: {
+                newnode_menu.removeMenu(object)
             }
         }
 

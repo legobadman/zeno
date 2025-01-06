@@ -67,7 +67,7 @@ class NodeCateModel : public QAbstractListModel
     };
 
 public:
-    NodeCateModel(QObject* parent = nullptr);
+    NodeCateModel(bool bShowResult, QObject* parent = nullptr);
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
@@ -86,6 +86,7 @@ private:
     //internal:
     QMap<QString, QString> m_nodeToCate;
     QList<QString> m_condidates;
+    bool m_bShowResult = false;
 };
 
 #endif
