@@ -21,8 +21,7 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
     , m_engine(nullptr)
     , m_calcMgr(new CalculationMgr(this))
     , m_graphsMgr(new GraphsManager(this))
-    , m_nodecates(new NodeCateModel(false, this))
-    , m_searchnodes(new NodeCateModel(true, this))
+    , m_nodecates(new NodeCateModel(this))
     , m_menuEventFilter(new MenuEventFilter(this))
 {
     initMetaTypes();
@@ -224,7 +223,6 @@ void ZenoApplication::initQuickQanavas()
         QSurfaceFormat::setDefaultFormat(format);
 
         m_engine->rootContext()->setContextProperty("nodecatesmodel", m_nodecates);
-        m_engine->rootContext()->setContextProperty("nodesearchmodel", m_searchnodes);
 
         QuickQanava::initialize(m_engine);
         m_graphsMgr->initRootObjects();

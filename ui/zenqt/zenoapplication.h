@@ -45,7 +45,6 @@ private:
     std::shared_ptr<ProcessClipboard> m_spProcClipboard;
     GraphsManager* m_graphsMgr;
     NodeCateModel* m_nodecates;
-    NodeCateModel* m_searchnodes;
     MenuEventFilter* m_menuEventFilter;
     CalculationMgr* m_calcMgr;
     QQmlApplicationEngine* m_engine;

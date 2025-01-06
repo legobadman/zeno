@@ -5,10 +5,7 @@
 #include "nodeeditor/gv/fuzzy_search.h"
 
 
-NodeCateModel::NodeCateModel(bool bShowResult, QObject* parent)
-    : _base(parent)
-    , m_bShowResult(bShowResult)
-{
+NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
     zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
     m_cache_cates.resize(cates.size());
     int i = 0;
@@ -25,9 +22,7 @@ NodeCateModel::NodeCateModel(bool bShowResult, QObject* parent)
             m_condidates.push_back(nodecls);
         }
     }
-    if (!m_bShowResult) {
-        m_cates = m_cache_cates;
-    }
+    m_cates = m_cache_cates;
     //TODO: sync with graphsmanager when assets insert/remove.
 }
 
@@ -79,30 +74,28 @@ bool NodeCateModel::iscatepage() const {
 void NodeCateModel::search(const QString& name) {
     zeno::scope_exit sp([&]() { m_search = name; });
 
-    if (!m_bShowResult)
-        return;
-
     clear();
     if (name.isEmpty()) {
+        //搜索项是空的，于是把分类菜单加回来
+        beginInsertRows(QModelIndex(), 0, m_cache_cates.size() - 1);
+        m_cates = m_cache_cates;
+        endInsertRows();
         return;
     }
     else {
         const QList<FuzzyMatchKey>& searchResult = fuzzy_search(name, m_condidates);
-        if (!searchResult.isEmpty())
-        {
-            beginInsertRows(QModelIndex(), 0, searchResult.size() - 1);
-            int deprecatedIndex = searchResult.size();
-            for (int i = 0; i < searchResult.size(); i++) {
-                auto& [name, matchIndices] = searchResult[i];
-                _CateItem newitem;
-                newitem.cate = name;
-                newitem.iscate = false;
-                for (auto idx : matchIndices) {
-                    newitem.matchIndices.append(idx);
-                }
-                m_cates.push_back(newitem);
+        beginInsertRows(QModelIndex(), 0, searchResult.size() - 1);
+        int deprecatedIndex = searchResult.size();
+        for (int i = 0; i < searchResult.size(); i++) {
+            auto& [name, matchIndices] = searchResult[i];
+            _CateItem newitem;
+            newitem.cate = name;
+            newitem.iscate = false;
+            for (auto idx : matchIndices) {
+                newitem.matchIndices.append(idx);
             }
-            endInsertRows();
+            m_cates.push_back(newitem);
         }
+        endInsertRows();
     }
 }
