@@ -14,6 +14,9 @@
 #include "zenoapplication.h"
 #include "style/colormanager.h"
 
+using namespace zeno::types;
+using namespace zeno::reflect;
+
 
 class CustomUIProxyModel : public QStandardItemModel
 {
@@ -29,6 +32,11 @@ public:
         //涉及到具体参数的自定义role组别的数据，一律到本model去取，避免冗长而麻烦的两端同步数据，让tree uimodel顶多存一个显示的名字和ui布局。
         //然而，如果走的是QStandardItem->data，它就没法走到这里，不过qml代码没法这么操作，所以widget的情况只能手动在两个模型间同步数据了。
         //但考虑到后面推行quick，而quick不能用standarditem，所以这样做受益
+        if (!index.isValid()) {
+            //TODO: 要分析一下什么情况会是非法索引
+            //ZASSERT_EXIT(false);
+            return QStandardItemModel::data(index, role);
+        }
 
         if (role > Qt::UserRole) {
             //一律到本parammodel去取，，让tree uimodel顶多存一个显示的名字和ui布局。
@@ -596,7 +604,57 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
         return color;
     }
     case QtRole::ROLE_PARAM_GROUP:
+    {
         return param.group;
+    }
+    case QtRole::ROLE_PARAM_QML_VALUE:
+    {
+        const zeno::ParamType paramType = param.value.type().hash_code();
+        switch (paramType)
+        {
+        case gParamType_String:     return QString::fromStdString(any_cast<std::string>(param.value));
+        case gParamType_Float:      return any_cast<float>(param.value);
+        case gParamType_Int:        return any_cast<int>(param.value);
+        case gParamType_Vec2f: {
+            auto& vec = any_cast<zeno::vec2f>(param.value);
+            return QVariantList{ vec[0], vec[1] };
+        }
+        case gParamType_Vec3f: {
+            auto& vec = any_cast<zeno::vec3f>(param.value);
+            return QVariantList{ vec[0], vec[1], vec[2]};
+        }
+        case gParamType_Vec4f: {
+            auto& vec = any_cast<zeno::vec4f>(param.value);
+            return QVariantList{ vec[0], vec[1], vec[2], vec[3] };
+        }
+        case gParamType_Vec2i: {
+            auto& vec = any_cast<zeno::vec2i>(param.value);
+            return QVariantList{ vec[0], vec[1] };
+        }
+        case gParamType_Vec3i: {
+            auto& vec = any_cast<zeno::vec3i>(param.value);
+            return QVariantList{ vec[0], vec[1], vec[2] };
+        }
+        case gParamType_Vec4i: {
+            auto& vec = any_cast<zeno::vec4i>(param.value);
+            return QVariantList{ vec[0], vec[1], vec[2], vec[3] };
+        }
+        case gParamType_Bool:   return any_cast<bool>(param.value);
+        case gParamType_VecEdit: {
+            const zeno::vecvar& vecvar = any_cast<zeno::vecvar>(param.value);
+            QVariantList vec;
+            for (const auto& primvar : vecvar) {
+                vec.append(UiHelper::primvarToQVariant(primvar));
+            }
+            return vec;
+        }
+        case gParamType_PrimVariant:
+        {
+            const zeno::PrimVar& var = any_cast<zeno::PrimVar>(param.value);
+            return UiHelper::primvarToQVariant(var);
+        }
+        }
+    }
     }
     return QVariant();
 }

@@ -833,7 +833,8 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
 
     bool bFloat = UiHelper::isFloatType(type);
     cbSet.cbEditFinished = [=](zeno::reflect::Any newValue) {
-        paramItem->setData(QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        paramsM->setData(idxCoreParam, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        //paramItem->setData(QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
     };
     cbSet.cbSwitch = [=](bool bOn) {
         zenoApp->getMainWindow()->setInDlgEventLoop(bOn);   //deal with ubuntu dialog slow problem when update viewport.

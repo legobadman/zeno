@@ -40,7 +40,7 @@ Qan.GraphView {
     navigable   : true
     resizeHandlerColor: "#03a9f4"       // SAMPLE: Set resize handler color to blue for 'resizable' nodes
     gridThickColor: Qt.rgba(46/255, 46/255, 46/255, 1.0)// Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
-    //grid: null
+    grid: null      //不需要grid
 
     //internal property:
     property var edgesobj
@@ -602,6 +602,16 @@ Qan.GraphView {
                 proppanel.height = newHeight
             }
         }
+    }
+
+    Qan.GraphPreview {
+        id: graphPreview
+        source: graphView
+        viewWindowColor: Qt.rgba(1, 0, 0, 1)//Material.accent
+        anchors.right: graphView.right; anchors.bottom: graphView.bottom
+        anchors.rightMargin: 8; anchors.bottomMargin: 8
+        width: 250
+        height: 141
     }
 
     Connections {

@@ -1152,6 +1152,25 @@ QString UiHelper::editVariantToQString(const zeno::PrimVar& var)
         }, var);
 }
 
+QVariant UiHelper::primvarToQVariant(const zeno::PrimVar& var)
+{
+    return std::visit([&](auto&& val)->QVariant {
+        using T = std::decay_t<decltype(val)>;
+        if constexpr (std::is_same_v<T, int>) {
+            return val;
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            return val;
+        }
+        else if constexpr (std::is_same_v<T, std::string>) {
+            return QString::fromStdString(val);
+        }
+        else {
+            return QVariant();
+        }
+        }, var);
+}
+
 float UiHelper::parseNumeric(const QVariant& val, bool castStr, bool& bSucceed)
 {
     float num = 0;

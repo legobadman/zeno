@@ -74,28 +74,28 @@ Item {
     Component {
         id: compVec2edit
         ZVec2Editor {
-            
+            value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
         }
     }
 
     Component {
         id: compVec3edit
         ZVec3Editor {
-
+            value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
         }
     }
 
     Component {
         id: compVec4edit
         ZVec4Editor {
-            
+            value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
         }
     }
 
     Component {
         id: complineedit
         ZLineEditor {
-
+            text: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
         }
     }
 
@@ -126,14 +126,20 @@ Item {
     Component {
         id: compCombobox
         ComboBox {
+            id: comboboxitem
             model: root.model.data(mindex, Model.ROLE_PARAM_CONTROL_PROPS)["combobox_items"]
+            currentIndex: {
+                var currtext = root.model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
+                return comboboxitem.model.indexOf(currtext)
+            }
         }
     }
 
     Component {
         id: compCheckbox
-        ZCheckBox {
-
+        CheckBox {
+            id: checkbox
+            // checkState: model.data(mindex, Model.ROLE_PARAM_QML_VALUE) ? Qt.Checked : Qt.Unchecked
         }
     }
 

@@ -15,7 +15,7 @@ ZQmlPanel::ZQmlPanel(QWidget* parent)
     rootContext()->setContextProperty("nodesModel", pGraphM);
 
     //测试组件获取报错信息
-#if 0
+#if 1
     QQmlComponent component(this->engine(), QUrl(QStringLiteral("qrc:/ZenoGraphView.qml")));
     if (component.status() != QQmlComponent::Ready) {
         qWarning() << "Error loading QML:";

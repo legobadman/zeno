@@ -189,6 +189,7 @@ public:
         ROLE_GRAPH,         //get the graph which owns the current node index.
         ROLE_PARAM_NAME,
         ROLE_PARAM_VALUE,
+        ROLE_PARAM_QML_VALUE,   //the paramvalue which can be recognized by qml.
         ROLE_PARAM_TYPE,
         ROLE_PARAM_RTTICODE,
         ROLE_PARAM_CONTROL,
