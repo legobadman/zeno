@@ -36,6 +36,7 @@ Item {
         id: zeditortoolbar
         width: parent.width
         property bool view_reentry: false       //用于记录treeview和listview之间互相通知的重入标志
+        z: 1000
 
         background: Rectangle { // 自定义背景颜色
             color: "#1F1F1F"  // 设置背景颜色
@@ -141,22 +142,13 @@ Item {
 
             Item { Layout.fillWidth: true }
         }
-    }    
-
-    Rectangle {
-        id: speratorline
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: zeditortoolbar.bottom
-        height: 1
-        color: "black"
     }
     
     SplitView {
         id: mainLayout
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: speratorline.bottom
+        anchors.top: zeditortoolbar.bottom
         anchors.bottom: parent.bottom
 
         spacing: 10
@@ -182,6 +174,7 @@ Item {
             Layout.fillHeight: true
             currentIndex: 1
             visible: false
+            z: 1000
 
             Rectangle {
                 id: assets_block
@@ -218,7 +211,7 @@ Item {
                                 }
 
                                 //TODO: 如何为CustomTabButton指定合适的宽度？
-                                const newtabbutton = myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200})
+                                const newtabbutton = myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200, z:1000})
                                 graphs_tabbar.addItem(newtabbutton)
                                 newtabbutton.closeTab.connect(function onCloseTab() {
                                     for (var i = 0; i < graphs_tabbar.count; i++) {
@@ -342,9 +335,19 @@ Item {
 
             TabBar {
                 id: graphs_tabbar
-                TabButton {
+                z: 1000
+                anchors.left: parent.left
+                anchors.right: parent.right
+
+                background: Rectangle {
+                    color: Qt.rgba(59./255, 59./255, 59./255,1.0) // 设置背景颜色
+                }
+
+                CustomTabButton {
                     text: qsTr("main")
                     width: 100
+                    z: 1000
+                    closable: false
                 }
 
                 /*

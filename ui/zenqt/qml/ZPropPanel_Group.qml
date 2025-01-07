@@ -58,6 +58,7 @@ Item {
             }
             Text {
                 text: model.data(mindex)    //默认是DisplayRole，参数名
+                color: Qt.rgba(210.0/255, 210.0/255, 210.0/255, 1.0) //"white"
                 anchors.verticalCenter: parent.verticalCenter
             }
         }

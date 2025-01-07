@@ -17,6 +17,11 @@ Pane {
 
     onNodeChanged: nodeItem = node ? node.item : undefined
 
+    background: Rectangle {
+        // color: "transparent" // 设置 Pane 的背景颜色
+        color: Qt.rgba(51./255, 51./255, 51./255, 1.0)
+    }
+
     Component {
         id: compBlank
         Item {
@@ -33,18 +38,25 @@ Pane {
             property var tabsindex: treemodel ? treemodel.index(0, 0) : undefined
             property var outputsindex: treemodel ? treemodel.index(1, 0) : undefined
 
+            background: Rectangle {
+                color: "transparent" // 背景颜色（可以设置为透明或其他颜色）
+                border.color: "white" // 设置边框颜色
+                border.width: 0 // 设置边框宽度
+            }
+
             ColumnLayout {
                 id: tablayout
                 anchors.fill: parent
 
                 Text {
                     text: comp.node.label;
+                    color: Qt.rgba(210.0/255, 210.0/255, 210.0/255, 1.0)//"white"
                 }
 
                 Rectangle {
                     Layout.fillWidth: true
                     height: 1
-                    color: "black"
+                    color: "white"
                 }
 
                 TabBar {

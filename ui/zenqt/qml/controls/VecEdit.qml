@@ -22,7 +22,7 @@ Rectangle {
         leftPadding: 5
         rightPadding: 5
         font.pixelSize: 14
-        color: "black"
+        color: "white"
         focus: true // 确保输入框可以获得焦点
         selectByMouse: true // 启用鼠标选择文本功能
         clip: true

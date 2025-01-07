@@ -9,6 +9,10 @@ import Qt.labs.settings 1.1
 
 TabButton {
 	id: root
+	property bool closable: true
+	property color textClr: "white"
+	property color textOnClr: "white"
+
 	signal closeTab
 	contentItem: RowLayout {
 		id: row
@@ -20,11 +24,16 @@ TabButton {
 			id: txtLabel
 			text: root.text
 			font: root.font
-			color: root.checked ? "black" : "black"
+			color: root.checked ? root.textClr : root.textOnClr
+		}
+		Item {
+			width: 20
+			visible: !root.closable
 		}
 		Item {
 			width:  16
 			height: 16
+			visible: root.closable
 
 			Image {
 				id: closesvg
