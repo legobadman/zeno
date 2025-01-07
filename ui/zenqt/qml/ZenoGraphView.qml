@@ -555,27 +555,59 @@ Qan.GraphView {
         }
     }
 
-    Loader {
-        id: proppaneLoader
-        anchors.bottom: parent.bottom; anchors.bottomMargin: 15
-        anchors.right: parent.right; anchors.rightMargin: 15
-        property var selectedNode: undefined
-        visible: false
+    Keys.onPressed: {
+        if (event.key === Qt.Key_P) {
+            proppanel.visible = !proppanel.visible
+        }
+    }
 
-        sourceComponent: ZPropPanel {
-            id: proppanel
-            node:  proppaneLoader.selectedNode     
+    ZPropPanel {
+        id: proppanel
+        anchors.top: parent.top; anchors.topMargin: 15
+        anchors.right: parent.right; anchors.rightMargin: 15
+
+        // 左侧拖动区域
+        MouseArea {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: 5
+            cursorShape: Qt.SizeHorCursor
+            drag.axis: Drag.XAxis
+            drag.target: proppanel
+            onPositionChanged: {
+                var pt = graphView.mapFromItem(proppanel, Qt.point(mouse.x, 0))
+                var mouseX = pt.x
+                let newWidth = proppanel.width + (proppanel.x - mouseX)
+                proppanel.x = mouseX
+                proppanel.width = newWidth
+            }
+        }
+
+        // 下侧拖动区域
+        MouseArea {
+            id: down_area
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 5
+            cursorShape: Qt.SizeVerCursor
+
+            onPositionChanged: {
+                var globalpos = down_area.mapToGlobal(mouse.x, mouse.y)
+                var globalY = globalpos.y
+                var viewY = graphView.mapFromGlobal(0, globalY).y
+                let newHeight = viewY - proppanel.y
+                proppanel.height = newHeight
+            }
         }
     }
 
     Connections {
         target: graphView
         onNodeClicked: function(node){
-            proppaneLoader.active = false
-            proppaneLoader.selectedNode = node
-            proppaneLoader.active = true
+            proppanel.node = node
         }
-
     }
 }  // Qan.GraphView
 

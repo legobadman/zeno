@@ -13,8 +13,6 @@ Pane {
     //implicitHeight: panel_loader.implicitHeight
     implicitWidth: 300
     implicitHeight: 300
-    width: 300
-    height: 300
     padding: 0
 
     onNodeChanged: nodeItem = node ? node.item : undefined
