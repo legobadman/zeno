@@ -8,6 +8,31 @@
 #include <QString>
 #include <QQuickItem>
 
+class GraphModel;
+
+class QmlNodeCateRole
+{
+    Q_GADGET
+public:
+    explicit QmlNodeCateRole() {}
+
+    enum Value {    //对应common.h的NodeDataGroup
+        Name,       //category name or nodename
+        CateNodes,
+        IsCategory,
+        Keywords,
+        Category,   //搜索节点时对应的Category名字，如果是Category菜单，用Name就行
+    };
+    Q_ENUM(Value)
+};
+
+enum NewNodeCase
+{
+    Case_Normal,
+    Case_Foreach_Count,
+    Case_Foreach_PrimAttr
+};
+
 class MenuEventFilter : public QObject
 {
     Q_OBJECT
@@ -64,6 +89,7 @@ class NodeCateModel : public QAbstractListModel
         QString category;
         QStringList nodes;
         QVariantList matchIndices;
+        NewNodeCase newcase = Case_Normal;
         bool iscate = true;
     };
 
@@ -76,10 +102,13 @@ public:
 
     Q_INVOKABLE void search(const QString& name);
     Q_INVOKABLE bool iscatepage() const;
+    Q_INVOKABLE void execute(GraphModel* pGraphM, const QString& name, const QPoint& pt);
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     void clear();
 
 private:
+    void initNewNodeCase();
+
     QVector<MenuOrItem> m_items;
     QVector<MenuOrItem> m_cache_cates;   //TODO: 如果ASSET发送增删，要同步到这里
     QString m_search;

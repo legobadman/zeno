@@ -41,6 +41,7 @@ Item {
             property color color: Qt.rgba(192/255, 36/255, 36/255, 0.6)
             property color color_hover: "#FFFFFF"
             property color color_selected: Qt.rgba(250/255, 100/255, 0, 1.0)
+            z: 100
 
             thickness: 4
 
@@ -74,6 +75,11 @@ Item {
                     out_nodeitem.y
                     out_nodeitem.width
 
+                    if (out_nodeitem.node.group) {
+                        out_nodeitem.node.group.item.x
+                        out_nodeitem.node.group.item.y
+                    }
+
                     return outsock_pos_in_grid.x
                 })
 
@@ -86,6 +92,11 @@ Item {
                     out_nodeitem.y
                     out_nodeitem.height
 
+                    if (out_nodeitem.node.group) {
+                        out_nodeitem.node.group.item.x
+                        out_nodeitem.node.group.item.y
+                    }
+
                     return outsock_pos_in_grid.y
                 })
 
@@ -97,6 +108,11 @@ Item {
                     in_nodeitem.x
                     in_nodeitem.y
                     in_nodeitem.width
+
+                    if (in_nodeitem.node.group) {
+                        in_nodeitem.node.group.item.x
+                        in_nodeitem.node.group.item.y
+                    }
                     
                     return insock_pos_in_grid.x
                 })
@@ -109,6 +125,11 @@ Item {
                     in_nodeitem.x
                     in_nodeitem.y
                     in_nodeitem.height
+
+                    if (in_nodeitem.node.group) {
+                        in_nodeitem.node.group.item.x
+                        in_nodeitem.node.group.item.y
+                    }
 
                     return insock_pos_in_grid.y
                 })

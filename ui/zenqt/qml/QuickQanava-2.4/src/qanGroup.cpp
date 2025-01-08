@@ -127,12 +127,12 @@ qan::NodeStyle* Group::style(QObject* parent) noexcept
         qan_Group_style.reset(new qan::NodeStyle{parent});
         qan_Group_style->setFontPointSize(11);
         qan_Group_style->setFontBold(true);
-        qan_Group_style->setLabelColor(QColor{"black"});
+        qan_Group_style->setLabelColor(QColor{"white"});
         qan_Group_style->setBorderWidth(2.);
         qan_Group_style->setBackRadius(8.);
-        qan_Group_style->setBackOpacity(0.90);
-        qan_Group_style->setBaseColor(QColor(240, 245, 250));
-        qan_Group_style->setBackColor(QColor(242, 248, 255));
+        qan_Group_style->setBackOpacity(0.20);
+        qan_Group_style->setBaseColor(QColor(255, 100, 0));
+        qan_Group_style->setBackColor(QColor(255, 0, 0));
     }
     return qan_Group_style.get();
 }

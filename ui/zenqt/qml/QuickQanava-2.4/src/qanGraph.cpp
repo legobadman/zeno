@@ -333,6 +333,13 @@ void Graph::setModel(GraphModel* pGraphM)
         QModelIndex idx = item->getIndex();
         m_model->setData(idx, item->getLabel(), QtRole::ROLE_NODE_NAME);
     });
+    connect(m_model, &GraphModel::nodesAboutToBeGroup, this, [this](const QStringList& uuids) {
+        qan::Group* group = this->insertGroup();
+        for (auto uuid : uuids) {
+            qan::Node* node = m_nodes[uuid];
+            this->groupNode(group, node);
+        }
+    });
 }
 
 //-----------------------------------------------------------------------------

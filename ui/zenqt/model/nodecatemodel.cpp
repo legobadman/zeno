@@ -3,6 +3,7 @@
 #include "zenoapplication.h"
 #include "zassert.h"
 #include "nodeeditor/gv/fuzzy_search.h"
+#include "model/GraphModel.h"
 
 
 NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
@@ -22,8 +23,22 @@ NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
             m_condidates.push_back(nodecls);
         }
     }
+
     m_items = m_cache_cates;
     //TODO: sync with graphsmanager when assets insert/remove.
+}
+
+void NodeCateModel::initNewNodeCase() {
+    MenuOrItem item;
+    item.category = "control";
+    item.newcase = Case_Foreach_Count;
+    item.name = "ForEach-Count";
+    m_items.push_back(item);
+
+    item.category = "control";
+    item.newcase = Case_Foreach_PrimAttr;
+    item.name = "ForEach-Prim-Attribute";
+    m_items.push_back(item);
 }
 
 int NodeCateModel::rowCount(const QModelIndex& parent) const {
@@ -71,6 +86,39 @@ void NodeCateModel::clear() {
 
 bool NodeCateModel::iscatepage() const {
     return m_search.isEmpty();
+}
+
+void NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoint& pt) {
+    if (m_nodeToCate.find(name) == m_nodeToCate.end()) {
+        zeno::log_error("cannot find {}", name.toStdString());
+        return;
+    }
+    const QString& cate = m_nodeToCate[name];
+    if (cate != "control") {
+        pGraphM->createNode(name, cate, pt);
+    }
+    else {
+        if (name == "Foreach-Count") {
+            zeno::NodeData foreachbegin = pGraphM->createNode("ForEachBegin", "reflect", pt); //TODO: cate以后优化一下
+            zeno::NodeData foreachend = pGraphM->createNode("ForEachEnd", "reflect", QPointF(pt.x(), pt.y() + 400));
+
+            const QString& beginNode = QString::fromStdString(foreachbegin.name);
+            const QString& endNode = QString::fromStdString(foreachend.name);
+
+            pGraphM->addLink(beginNode, "Output Object", endNode, "Iterate Object");
+            
+            QStringList uuids;
+            uuids.append(pGraphM->indexFromName(beginNode).data(QtRole::ROLE_NODE_UUID_PATH).toString());
+            uuids.append(pGraphM->indexFromName(endNode).data(QtRole::ROLE_NODE_UUID_PATH).toString());
+            emit pGraphM->nodesAboutToBeGroup(uuids);
+        }
+        else if (name == "Foreach-Geometry-attr") {
+
+        }
+        else if (name == "Foreach-StopCond") {
+
+        }
+    }
 }
 
 void NodeCateModel::search(const QString& name) {
