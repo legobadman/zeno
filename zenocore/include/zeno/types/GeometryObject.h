@@ -180,6 +180,9 @@ namespace zeno
         ZENO_API int vertex_face_index(int linear_vertex_id);
         ZENO_API std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
+        //特殊功能
+        ZENO_API void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
+
     private:
         void initFromPrim(PrimitiveObject* prim);
         ZENO_API std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);

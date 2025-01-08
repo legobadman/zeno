@@ -157,14 +157,6 @@ namespace zeno
             //属性也要同步删除,包括point和vertices
             for (auto& [name, attrib_vec] : m_point_attrs) {
                 removeAttribElem(attrib_vec, ptnum);
-                if (name == "lineNextPt") {//如果是line，调整line的next ptnum；
-                    for (size_t pt = ptnum; pt < attrib_vec.size(); ++pt) {
-                        zeno::vec2f removePtNextPt = attrib_vec.get_elem < zeno::vec2f >(0, pt);
-                        removePtNextPt[0] -= 1;
-                        removePtNextPt[1] -= 1;
-                        attrib_vec.set_elem<zeno::vec2f>(pt, removePtNextPt);
-                    }
-                }
             }
 
             for (auto& [name, attrib_vec] : m_vert_attrs) {
@@ -678,6 +670,22 @@ namespace zeno
 
     ZENO_API std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) {
         return m_spTopology->vertex_info(linear_vertex_id);
+    }
+
+    ZENO_API void GeometryObject::fusePoints(std::vector<int>& fusedPoints) {
+        int npoints = this->npoints();
+        m_spTopology->fusePoints(fusedPoints);
+
+        bool isline = m_spTopology->is_line();
+        for (std::vector<int>::reverse_iterator it = fusedPoints.rbegin(); it != fusedPoints.rend(); ++it) {
+            if ((*it) != -1) {
+                int ptToRemove = npoints - 1 - (it - fusedPoints.rbegin());
+                remove_point(ptToRemove);
+                if (isline && (ptToRemove == npoints - 1)) {
+                    m_spTopology->setLineNextPt(ptToRemove - 1, fusedPoints[ptToRemove]);
+                }
+            }
+        }
     }
 
     ZENO_API int GeometryObject::add_face(const std::vector<int>& points) {

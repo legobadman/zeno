@@ -1103,6 +1103,9 @@ namespace zeno {
                     points[i] = pt;
                     spgeo->initpoint(i);
                     spgeo->initLineNextPoint(i);
+                    if (i == pointNumber - 1) {
+                        spgeo->setLineNextPt(i, i);
+                    }
                 }
                 bCalcPointNormals = false;
             }else if (arcType == "Sliced Arc") {
