@@ -105,6 +105,7 @@ signals:
     void nameUpdated(const QModelIndex& nodeIdx, const QString& oldName);
     void nodeRemoved(QString nodeId);
     void lockStatusChanged();
+    void nodesAboutToBeGroup(const QStringList& uuids);
 
 private:
     std::optional<QUndoStack*> m_undoRedoStack;

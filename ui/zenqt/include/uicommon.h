@@ -248,22 +248,6 @@ public:
     Q_ENUM(MODEL_ROLE)
 };
 
-class QmlNodeCateRole
-{
-    Q_GADGET
-public:
-    explicit QmlNodeCateRole() {}
-
-    enum Value {    //对应common.h的NodeDataGroup
-        Name,       //category name or nodename
-        CateNodes,
-        IsCategory,
-        Keywords,
-        Category,   //搜索节点时对应的Category名字，如果是Category菜单，用Name就行
-    };
-    Q_ENUM(Value)
-};
-
 class QmlParamGroup
 {
     Q_GADGET

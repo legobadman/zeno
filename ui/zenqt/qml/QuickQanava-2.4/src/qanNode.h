@@ -229,13 +229,15 @@ public:
      *
      * \note nullptr if group or node is ungrouped.
      */
-    Q_PROPERTY(qan::Group* group READ getGroup FINAL)
+    Q_PROPERTY(qan::Group* group READ getGroup NOTIFY groupChanged FINAL)
     const qan::Group*    getGroup() const { return get_group(); }
     qan::Group*          getGroup() { return get_group(); }
     Q_INVOKABLE bool     hasGroup() const { return get_group() != nullptr; }
 
     //! Shortcut to base is_group() (ie return true if this node is a group and castable to qan::Group)..
     Q_INVOKABLE bool     isGroup() const { return is_group(); }
+signals:
+    void                    groupChanged();
 
 public:
     Q_PROPERTY(qan::TableCell* cell READ getCell NOTIFY cellChanged FINAL)

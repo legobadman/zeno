@@ -361,7 +361,7 @@ Qan.GraphView {
                         delegate: MenuItem {
                             text: modelData
                             onTriggered: {
-                                graphModel.insertNode(modelData, catemenu.title, Qt.point(newnode_menu.x, newnode_menu.y))
+                                nodecatesmodel.execute(graphModel, modelData, Qt.point(newnode_menu.x, newnode_menu.y))
                             }
                             Component.onCompleted: {
                             }
@@ -409,7 +409,7 @@ Qan.GraphView {
                 }
 
                 onTriggered: {
-                    graphModel.insertNode(name, category, Qt.point(newnode_menu.x, newnode_menu.y))
+                    nodecatesmodel.execute(graphModel, name, Qt.point(newnode_menu.x, newnode_menu.y))
                 }
             }
         }
