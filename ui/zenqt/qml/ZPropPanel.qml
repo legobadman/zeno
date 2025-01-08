@@ -196,6 +196,8 @@ Pane {
                                         text: name
                                         color: "white"
                                         visible: group == ParamGroup.InputPrimitive
+                                        Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
+                                        Layout.alignment: Qt.AlignLeft
                                     }
                                     Loader {
                                         sourceComponent: {
