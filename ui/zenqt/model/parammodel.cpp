@@ -4,6 +4,7 @@
 #include <zeno/core/data.h>
 #include "model/LinkModel.h"
 #include "model/GraphModel.h"
+#include "model/customuimodel.h"
 #include "variantptr.h"
 #include "model/graphsmanager.h"
 #include "model/graphstreemodel.h"
@@ -127,6 +128,7 @@ ParamsModel::ParamsModel(zeno::INode* spNode, QObject* parent)
     : QAbstractListModel(parent)
     , m_wpNode(spNode)
     , m_customParamsM(nullptr)
+    , m_customUIM(nullptr)
 {
     initParamItems();
     initCustomUI(spNode->export_customui());
@@ -296,6 +298,10 @@ void ParamsModel::initParamItems()
     //initCustomUI(spNode->get_customui());
 }
 
+zeno::CustomUI ParamsModel::customUI() const {
+    return m_wpNode->export_customui();
+}
+
 void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
 {
     if (m_customParamsM) {
@@ -341,6 +347,17 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
         paramItem->setData(m_items[row].bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE);
         paramItem->setData(m_items[row].bVisible, QtRole::ROLE_PARAM_VISIBLE);
         paramItem->setData(m_items[row].bEnable, QtRole::ROLE_PARAM_ENABLE);
+    }
+
+    //判断customui是否为默认的情况，即只有一个tab一个group
+    if (customui.inputPrims.size() == 1 &&
+        customui.inputPrims[0].name == "Tab1" &&
+        customui.inputPrims[0].groups.size() == 1 &&
+        customui.inputPrims[0].groups[0].name == "Group1") {
+        return;
+    }
+    else {
+        m_customUIM = new CustomUIModel(this, this);
     }
 }
 
@@ -466,6 +483,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             spNode->update_param(param.name.toStdString(), anyVal);
+            emit dataChanged(index, index, {QtRole::ROLE_PARAM_QML_VALUE});	//同时要发送信号，让QML端可以捕捉到信号变化从而更新
             break;
             //zenoApp->graphsManager()->currentModel()->markDirty(true);
             //return true;        //the dataChanged signal will be emitted by registered callback function.
@@ -609,6 +627,9 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     }
     case QtRole::ROLE_PARAM_QML_VALUE:
     {
+        if (!param.value.has_value()) {
+            return QVariant();
+        }
         const zeno::ParamType paramType = param.value.type().hash_code();
         switch (paramType)
         {
@@ -750,6 +771,7 @@ QHash<int, QByteArray> ParamsModel::roleNames() const
     roles[QtRole::ROLE_PARAM_NAME] = "name";
     roles[QtRole::ROLE_PARAM_TYPE] = "type";
     roles[QtRole::ROLE_PARAM_CONTROL] = "control";
+    roles[QtRole::ROLE_PARAM_QML_VALUE] = "value";
     roles[QtRole::ROLE_ISINPUT] = "input";
     roles[QtRole::ROLE_PARAM_GROUP] = "group";
     roles[QtRole::ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";
@@ -851,6 +873,11 @@ GraphModel* ParamsModel::parentGraph() const
 QStandardItemModel* ParamsModel::customParamModel()
 {
     return m_customParamsM;
+}
+
+CustomUIModel* ParamsModel::customUIModel()
+{
+    return m_customUIM;
 }
 
 void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params, bool bSubnetInit)

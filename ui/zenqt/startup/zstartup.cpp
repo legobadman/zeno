@@ -15,6 +15,7 @@
 #include "uicommon.h"
 #include "model/LinkModel.h"
 #include "model/parammodel.h"
+#include "model/customuimodel.h"
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
 #include "model/nodecatemodel.h"
@@ -27,6 +28,7 @@ void initQml()
     qRegisterMetaType<LinkModel*>("LinkModel*");
     qRegisterMetaType<GraphModel*>("GraphModel*");
     qRegisterMetaType<ParamsModel*>("ParamsModel*");
+    qRegisterMetaType<CustomUIModel*>("CustomUIModel*");
     qRegisterMetaType<NodeCateModel*>("NodeCateModel*");
     qRegisterMetaType<QStandardItemModel*>("QStandardItemModel*");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");

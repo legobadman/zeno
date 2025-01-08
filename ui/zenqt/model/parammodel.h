@@ -8,6 +8,7 @@
 
 class GraphModel;
 class ParamModelImpl;
+class CustomUIModel;
 
 namespace zeno
 {
@@ -49,6 +50,7 @@ public:
     Q_INVOKABLE int indexFromName(const QString& name, bool bInput) const;
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
     Q_INVOKABLE QStandardItemModel* customParamModel();
+    Q_INVOKABLE CustomUIModel* customUIModel();
 
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
@@ -70,6 +72,7 @@ public:
 
     PARAMS_INFO getInputs();
     PARAMS_INFO getOutputs();
+    zeno::CustomUI customUI() const;
 
     //temp:
 
@@ -101,6 +104,7 @@ private:
     QPersistentModelIndex m_nodeIdx;
     QVector<ParamItem> m_items;
 
+    CustomUIModel* m_customUIM;
     QStandardItemModel* m_customParamsM;
 
     zeno::INode* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了
