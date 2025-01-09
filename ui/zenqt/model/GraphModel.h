@@ -33,10 +33,18 @@ public:
     Q_INVOKABLE int indexFromId(const QString& name) const;
     Q_INVOKABLE void addLink(const QString& fromNodeStr, const QString& fromParamStr,
         const QString& toNodeStr, const QString& toParamStr);
-    Q_INVOKABLE QVariant removeLink(const QString& nodeName, const QString& paramName, bool bInput);
+
+    Q_INVOKABLE bool removeLink(
+        const QString& outNode,
+        const QString& outParam,
+        const QString& inNode,
+        const QString& inParam,
+        const QString& outKey = "",
+        const QString& inKey = "");
     Q_INVOKABLE QString name() const;
     Q_INVOKABLE QStringList path() const;
     Q_INVOKABLE void insertNode(const QString& nodeCls, const QString& cate, const QPointF& pos);
+    Q_INVOKABLE bool removeNode(const QString& name);
 
     //TEST API
     Q_INVOKABLE QString owner() const;
@@ -53,7 +61,6 @@ public:
     //GraphModel:
     zeno::NodeData createNode(const QString& nodeCls, const QString& cate, const QPointF& pos);
     void appendSubgraphNode(QString name, QString cls, NODE_DESCRIPTOR desc, GraphModel* subgraph, const QPointF& pos);
-    bool removeNode(const QString& name);
     void setView(const QModelIndex& idx, bool bOn);
     void setMute(const QModelIndex& idx, bool bOn);
     QString updateNodeName(const QModelIndex& idx, QString newName);

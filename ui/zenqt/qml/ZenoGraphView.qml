@@ -559,6 +559,27 @@ Qan.GraphView {
         if (event.key === Qt.Key_P) {
             proppanel.visible = !proppanel.visible
         }
+        else if (event.key == Qt.Key_Delete) {
+            var edges = []
+            if (edgesobj.selected_edge) {
+                var inobj = edgesobj.selected_edge.toParam
+                var outobj = edgesobj.selected_edge.fromParam
+                var in_node_name = graphView.graph.getNode(inobj[0]).label
+                var out_node_name = graphView.graph.getNode(outobj[0]).label
+                var in_param = inobj[1]
+                var out_param = outobj[1]
+                graphView.graph.model.removeLink(out_node_name, out_param, in_node_name, in_param)
+            }
+
+            var nodes = []
+            for (var i = 0; i < graph.selectedNodes.length; i++) {
+                var selectNode = graph.selectedNodes.at(i)
+                nodes.push(selectNode.label)
+            }
+            for (var i = 0; i < nodes.length; i++) {
+                graphView.graph.model.removeNode(nodes[i])
+            }
+        }
     }
 
     ZPropPanel {
