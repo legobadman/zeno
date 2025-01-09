@@ -1000,33 +1000,23 @@ void GraphModel::_addLink(const zeno::EdgeInfo link)
     zenoApp->graphsManager()->currentModel()->markDirty(true);
 }
 
-QVariant GraphModel::removeLink(const QString& nodeName, const QString& paramName, bool bInput)
+bool GraphModel::removeLink(
+    const QString& outNode,
+    const QString& outParam,
+    const QString& inNode,
+    const QString& inParam,
+    const QString& outKey,
+    const QString& inKey)
 {
-    if (bInput)
-    {
-        ZASSERT_EXIT(m_name2uuid.find(nodeName) != m_name2uuid.end(), QVariant());
-        ParamsModel* toParamM = m_nodes[m_name2uuid[nodeName]]->params;
-        QModelIndex toIndex = toParamM->paramIdx(paramName, bInput);
-        int nRow = toParamM->removeLink(toIndex);
-
-        if (nRow != -1)
-        {
-            QModelIndex linkIndex = m_linkModel->index(nRow);
-            QVariant var = m_linkModel->data(linkIndex, QtRole::ROLE_LINK_FROMPARAM_INFO);
-            QVariantList varList = var.toList();
-
-            QString fromNodeName = varList.isEmpty() ? "" : varList[0].toString();
-            ZASSERT_EXIT(m_name2uuid.find(fromNodeName) != m_name2uuid.end(), QVariant());
-
-            ParamsModel* fromParamM = m_nodes[m_name2uuid[fromNodeName]]->params;
-            QModelIndex fromIndex = fromParamM->paramIdx(varList[1].toString(), varList[2].toBool());
-            fromParamM->removeLink(fromIndex);
-
-            m_linkModel->removeRows(nRow, 1);
-            return var;
-        }
-    }
-    return QVariant();
+    zeno::EdgeInfo edge;
+    edge.inKey = inKey.toStdString();
+    edge.inParam = inParam.toStdString();
+    edge.inNode = inNode.toStdString();
+    edge.outKey = outKey.toStdString();
+    edge.outParam = outParam.toStdString();
+    edge.outNode = outNode.toStdString();
+    removeLink(edge);
+    return true;
 }
 
 void GraphModel::removeLink(const QModelIndex& linkIdx)

@@ -106,11 +106,12 @@ void NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoi
             const QString& endNode = QString::fromStdString(foreachend.name);
 
             pGraphM->addLink(beginNode, "Output Object", endNode, "Iterate Object");
-            
-            QStringList uuids;
-            uuids.append(pGraphM->indexFromName(beginNode).data(QtRole::ROLE_NODE_UUID_PATH).toString());
-            uuids.append(pGraphM->indexFromName(endNode).data(QtRole::ROLE_NODE_UUID_PATH).toString());
-            emit pGraphM->nodesAboutToBeGroup(uuids);
+
+            //TODO: 以后再加上分组框
+            //QStringList uuids;
+            //uuids.append(pGraphM->indexFromName(beginNode).data(QtRole::ROLE_NODE_UUID_PATH).toString());
+            //uuids.append(pGraphM->indexFromName(endNode).data(QtRole::ROLE_NODE_UUID_PATH).toString());
+            //emit pGraphM->nodesAboutToBeGroup(uuids);
         }
         else if (name == "Foreach-Geometry-attr") {
 
@@ -134,6 +135,9 @@ void NodeCateModel::search(const QString& name) {
     }
     else {
         const QList<FuzzyMatchKey>& searchResult = fuzzy_search(name, m_condidates);
+        if (searchResult.isEmpty()) {
+            return;
+        }
         beginInsertRows(QModelIndex(), 0, searchResult.size() - 1);
         int deprecatedIndex = searchResult.size();
         for (int i = 0; i < searchResult.size(); i++) {

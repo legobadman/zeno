@@ -1250,10 +1250,10 @@ bool Graph::removeLink(const EdgeInfo& edge) {
 
     //pre checking for param.
     bool bExist = false;
-    bool bPrimType = outNode->isPrimitiveType(false, edge.outParam, bExist);
+    bool bPrimType = outNode->isPrimitiveType(/*bool bInput*/false, edge.outParam, bExist);
     if (!bExist)
         return false;
-    bool bPrimType2 = inNode->isPrimitiveType(true, edge.inParam, bExist);
+    bool bPrimType2 = inNode->isPrimitiveType(/*bool bInput*/true, edge.inParam, bExist);
     if (!bExist && bPrimType != bPrimType2)
         return false;
 
