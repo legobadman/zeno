@@ -94,7 +94,7 @@ Qan.GraphView {
     }
 
     function invalide_edgearea_clicked() {
-        console.log("invalide_edgearea_clicked")
+        // console.log("invalide_edgearea_clicked")
         clear_temp_edge()
     }
 
@@ -225,6 +225,10 @@ Qan.GraphView {
         }
     }
 
+    onNodeClicked: function(node){
+        proppanel.node = node
+    }
+
     graph: Qan.Graph {
         parent: graphView
         id: graph
@@ -258,6 +262,9 @@ Qan.GraphView {
         onNodeMoved: function(node) { notifyUser("Node <b>" + node.label + "</b> moved") }
 
         onNodeSocketClicked: function(node, group, name, socket_pos) {
+        }
+        onSelectedNodesChanged: {
+            graphView.edgesobj.clear_selection()
         }
     } // Qan.Graph
 
@@ -470,6 +477,9 @@ Qan.GraphView {
             onInvalidarea_clicked: function() {
                 graphView.invalide_edgearea_clicked();
             }
+            onEdge_selected: function() {
+                graphView.graph.clearSelection()
+            }
         }
     }
 
@@ -634,12 +644,4 @@ Qan.GraphView {
         width: 250
         height: 141
     }
-
-    Connections {
-        target: graphView
-        onNodeClicked: function(node){
-            proppanel.node = node
-        }
-    }
 }  // Qan.GraphView
-
