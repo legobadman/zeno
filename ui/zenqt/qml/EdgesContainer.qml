@@ -12,6 +12,7 @@ Item {
     property var selected_edge: undefined
 
     signal invalidarea_clicked
+    signal edge_selected
 
     function clear_selection() {
         if (selected_edge != null) {
@@ -51,6 +52,7 @@ Item {
                 }
                 root.selected_edge = current_edge
                 root.selected_edge.isSelected = true
+                root.edge_selected()
             }
 
             onClicked_outof_curve: function () {

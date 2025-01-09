@@ -143,7 +143,7 @@ Shape {
         anchors.fill: parent
 
         onClicked: {
-            const threshold = 20; // 点击检测的阈值
+            const threshold = 50; // 点击检测的阈值
             //console.log("edge mouse on click")
 
             // 判断鼠标点击点是否接近曲线
@@ -176,7 +176,7 @@ Shape {
                 root.clicked()
                 mouse.accepted = true;
             } else {
-                console.log("点击区域未覆盖曲线");
+                //console.log("点击区域未覆盖曲线");
                 root.clicked_outof_curve()
                 mouse.accepted = false;
             }
