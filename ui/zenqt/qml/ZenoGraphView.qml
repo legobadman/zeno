@@ -142,43 +142,47 @@ Qan.GraphView {
         if (nodeitem) {
             //console.log("hover node: " + nodeitem.node.label)
         }
-        if (nodeitem == null || 
-                p1_group == ParamGroup.InputPrimitive ||
-                p1_group == ParamGroup.OutputPrimitive) {
-            //不处理数值类型的吸附，因为本来就不提倡这种用法
-            //console.log("no nodeitem hover")
-            graphView.tempEdge.point2x = hoverpos.x
-            graphView.tempEdge.point2y = hoverpos.y
-            graphView.tempEdge.tempedge_to_sock = null    
-            return
-        }
+        //console.log("hoverpos: " + hoverpos)
 
-        var nearest_sock = null
-        var p1_group = graphView.tempEdge.p1_group
-        var params_repeater = null
-        if (p1_group == ParamGroup.InputObject) {
-            nearest_sock = nodeitem.getNearestSocket(ParamGroup.OutputObject, hoverpos, graphView.containerItem)
-        }
-        else if (p1_group == ParamGroup.OutputObject) {
-            nearest_sock = nodeitem.getNearestSocket(ParamGroup.InputObject, hoverpos, graphView.containerItem)
-        }
-
-        if (nearest_sock) {
-            var sock_pos_in_grid = graphView.containerItem.mapFromGlobal(nearest_sock.mapToGlobal(Qt.point(nearest_sock.width/2, nearest_sock.height/2)))
-            graphView.tempEdge.point2x = sock_pos_in_grid.x
-            graphView.tempEdge.point2y = sock_pos_in_grid.y
-
-            var end_sock_info = {
-                "node_name": nearest_sock.nodename,
-                "sock_name": nearest_sock.name,
-                "group": (p1_group == ParamGroup.InputObject) ? ParamGroup.OutputObject : ParamGroup.InputObject                
+        if (graphView.tempEdge) {
+            if (nodeitem == null || 
+                    p1_group == ParamGroup.InputPrimitive ||
+                    p1_group == ParamGroup.OutputPrimitive) {
+                //不处理数值类型的吸附，因为本来就不提倡这种用法
+                //console.log("no nodeitem hover")
+                graphView.tempEdge.point2x = hoverpos.x
+                graphView.tempEdge.point2y = hoverpos.y
+                graphView.tempEdge.tempedge_to_sock = null    
+                return
             }
-            graphView.tempEdge.tempedge_to_sock = end_sock_info
-        }
-        else{
-            graphView.tempEdge.point2x = hoverpos.x
-            graphView.tempEdge.point2y = hoverpos.y
-            graphView.tempEdge.tempedge_to_sock = null
+
+            var nearest_sock = null
+            var p1_group = graphView.tempEdge.p1_group
+            var params_repeater = null
+            if (p1_group == ParamGroup.InputObject) {
+                nearest_sock = nodeitem.getNearestSocket(ParamGroup.OutputObject, hoverpos, graphView.containerItem)
+            }
+            else if (p1_group == ParamGroup.OutputObject) {
+                nearest_sock = nodeitem.getNearestSocket(ParamGroup.InputObject, hoverpos, graphView.containerItem)
+            }
+
+            if (nearest_sock) {
+                var sock_pos_in_grid = graphView.containerItem.mapFromGlobal(nearest_sock.mapToGlobal(Qt.point(nearest_sock.width/2, nearest_sock.height/2)))
+                graphView.tempEdge.point2x = sock_pos_in_grid.x
+                graphView.tempEdge.point2y = sock_pos_in_grid.y
+
+                var end_sock_info = {
+                    "node_name": nearest_sock.nodename,
+                    "sock_name": nearest_sock.name,
+                    "group": (p1_group == ParamGroup.InputObject) ? ParamGroup.OutputObject : ParamGroup.InputObject                
+                }
+                graphView.tempEdge.tempedge_to_sock = end_sock_info
+            }
+            else{
+                graphView.tempEdge.point2x = hoverpos.x
+                graphView.tempEdge.point2y = hoverpos.y
+                graphView.tempEdge.tempedge_to_sock = null
+            }
         }
     }
 
@@ -215,7 +219,6 @@ Qan.GraphView {
                 "group": group                
             }
             graphView.tempEdge.tempedge_to_sock = end_sock_info
-            console.log("闭合边")
 
             graphView.temp_edge_close()
         }
@@ -363,7 +366,9 @@ Qan.GraphView {
                         delegate: MenuItem {
                             text: modelData
                             onTriggered: {
-                                nodecatesmodel.execute(graphModel, modelData, Qt.point(newnode_menu.x, newnode_menu.y))
+                                var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+                                // console.log("mousepos: " + mousepos)
+                                nodecatesmodel.execute(graphModel, modelData, mousepos)
                             }
                             Component.onCompleted: {
                             }
@@ -411,7 +416,9 @@ Qan.GraphView {
                 }
 
                 onTriggered: {
-                    nodecatesmodel.execute(graphModel, name, Qt.point(newnode_menu.x, newnode_menu.y))
+                    var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+                    console.log("mousepos: " + mousepos)
+                    nodecatesmodel.execute(graphModel, name, mousepos)
                 }
             }
         }

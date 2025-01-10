@@ -9,10 +9,14 @@
 #include "settings/zenosettingsmanager.h"
 #include "calculation/calculationmgr.h"
 #include "model/nodecatemodel.h"
+#include "model/mouseutils.h"
 #include "uicommon.h"
 #include "declmetatype.h"
 #include <QuickQanava>
 #include <QQuickStyle>
+
+
+static MouseUtils mouseUtils;
 
 
 ZenoApplication::ZenoApplication(int &argc, char **argv)
@@ -223,6 +227,7 @@ void ZenoApplication::initQuickQanavas()
         QSurfaceFormat::setDefaultFormat(format);
 
         m_engine->rootContext()->setContextProperty("nodecatesmodel", m_nodecates);
+        m_engine->rootContext()->setContextProperty("MouseUtils", &mouseUtils);
 
         QuickQanava::initialize(m_engine);
         m_graphsMgr->initRootObjects();
