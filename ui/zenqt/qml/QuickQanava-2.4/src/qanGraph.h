@@ -467,6 +467,8 @@ signals:
     void            nodeLabelChanged(qan::Node* node);
     //-------------------------------------------------------------------------
 
+    void            notifyClearSelection();
+
     /*! \name Graph Edge Management *///---------------------------------------
     //@{
 public:

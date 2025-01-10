@@ -152,6 +152,17 @@ qan::NodeItem* Graph::nodeItemAt(qreal x, qreal y) const
         QQuickItem* child = children.at(i);
 
         const QPointF point = mapToItem(child, QPointF(x, y));  // Map coordinates to the child element's coordinate space
+        if (child->isVisible() &&
+            child->contains(point) &&    // Note 20160508: childAt do not call contains()
+            point.x() > -0.0001 &&
+            child->width() > point.x() &&
+            point.y() > -0.0001 &&
+            child->height() > point.y()) {
+            //TODO: if (child->inherits("qan::GroupItem"))  // For group, look in group childs
+            int j;
+            j = 0;
+        }
+
         if (qan::NodeItem* pNode = qobject_cast<qan::NodeItem*>(child)) {
             if (child->isVisible() &&
                 child->contains(point) &&    // Note 20160508: childAt do not call contains()
@@ -1503,6 +1514,8 @@ void    Graph::clearSelection()
             edge->getItem() != nullptr)
             edge->getItem()->setSelected(false);
     _selectedEdges.clear();
+
+    emit notifyClearSelection();
 }
 
 bool    Graph::hasSelection() const

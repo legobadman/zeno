@@ -380,7 +380,8 @@ void    Navigable::mouseMoveEvent(QMouseEvent* event)
                                                  QRectF{_selectionRectItem->x(), _selectionRectItem->y(),
                                                         _selectionRectItem->width(), _selectionRectItem->height()});
         _selectRectActive = true;
-        selectionRectActivated(selectionRect);
+        bool bCtrlPressed = event->modifiers() == Qt::ControlModifier;
+        selectionRectActivated(selectionRect, bCtrlPressed);
     }
     QQuickItem::mouseMoveEvent(event);
 }
@@ -489,7 +490,7 @@ void    Navigable::setSelectionRectItem(QQuickItem* selectionRectItem)
     emit selectionRectChanged();
 }
 
-void    Navigable::selectionRectActivated(const QRectF& rect) { Q_UNUSED(rect); }
+void    Navigable::selectionRectActivated(const QRectF& rect, bool bCtrlPressed) { Q_UNUSED(rect); }
 
 void    Navigable::selectionRectEnd() { }
 //-----------------------------------------------------------------------------

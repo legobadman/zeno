@@ -138,6 +138,9 @@ Shape {
         }
     }
 
+    //暂时不处理边的鼠标事件，因为点击测试不好做，对于不在曲线有效区域内的事件，还得filter掉事件，同时view其他区域也没法接收这个事件
+    //如果需要选择边，用qan的区选框进行选择，参考代码：ui\zenqt\qml\QuickQanava-2.4\src\qanGraphView.cpp
+    /*
     MouseArea {
         id: mouseArea
         anchors.fill: parent
@@ -182,4 +185,5 @@ Shape {
             }
         }
     }
+    */
 }
