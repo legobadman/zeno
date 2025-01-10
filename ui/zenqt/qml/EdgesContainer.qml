@@ -9,17 +9,6 @@ Item {
     id: root
     property var graphModel: undefined
     property var graphView: undefined
-    property var selected_edge: undefined
-
-    signal invalidarea_clicked
-    signal edge_selected
-
-    function clear_selection() {
-        if (selected_edge != null) {
-            selected_edge.isSelected = false
-            selected_edge = null
-        }
-    }
 
     Repeater {
         model: root.graphModel.getLinkModel()
@@ -46,22 +35,8 @@ Item {
 
             thickness: 4
 
-            onClicked: function () {
-                if (root.selected_edge && root.selected_edge != current_edge) {
-                    root.selected_edge.isSelected = false
-                }
-                root.selected_edge = current_edge
-                root.selected_edge.isSelected = true
-                root.edge_selected()
-            }
-
-            onClicked_outof_curve: function () {
-                if (root.selected_edge) {
-                    root.selected_edge.isSelected = current_edge.isSelected = false
-                    root.selected_edge = null
-                }
-                current_edge.isSelected = false
-                root.invalidarea_clicked()
+            onStateChanged: function (state) {
+                isSelected = (state == "select") ? true : false;
             }
 
             Component.onCompleted: {

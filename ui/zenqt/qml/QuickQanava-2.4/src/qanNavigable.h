@@ -396,7 +396,7 @@ private:
 
 protected:
     //! Called when the selectionRectItem is activated, ie it's geometry has changed, \c rect is in containerItem space.
-    virtual void    selectionRectActivated(const QRectF& rect);
+    virtual void    selectionRectActivated(const QRectF& rect, bool bCtrlPressed);
 
     //! Called when the selectionRectItem interaction ends.
     virtual void    selectionRectEnd();

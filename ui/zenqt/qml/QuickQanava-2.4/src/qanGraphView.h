@@ -71,6 +71,9 @@ private:
 signals:
     void                    graphChanged();
 
+private slots:
+    void                    onGraphClearSelection();
+
 public:
     Q_PROPERTY(bool tryconnect READ getTryConnect WRITE setTryConnect NOTIFY tryConnectChanged FINAL)
     void setTryConnect(bool bOn) { _tryconnect = bOn; }
@@ -88,6 +91,13 @@ private:
     qan::NodeItem* _hoverNode = nullptr;
 signals:
     void hoverInfoChanged();
+
+public:
+    Q_PROPERTY(QQuickItem* edges READ getEdges WRITE setEdges FINAL)
+    void setEdges(QQuickItem* item) { _edges = item; }
+    QQuickItem* getEdges() const { return _edges; }
+private:
+    QQuickItem* _edges;
 
 protected:
     //! Called when the mouse is clicked in the container (base implementation empty).
@@ -125,7 +135,7 @@ signals:
     //@{
 protected:
     //! \copydoc qan::Navigable::selectionRectActivated()
-    virtual void    selectionRectActivated(const QRectF& rect) override;
+    virtual void    selectionRectActivated(const QRectF& rect, bool bCtrlPressed) override;
 
     //! \copydoc qan::Navigable::selectionRectEnd()
     virtual void    selectionRectEnd() override;

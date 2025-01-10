@@ -42,9 +42,6 @@ Qan.GraphView {
     gridThickColor: Qt.rgba(46/255, 46/255, 46/255, 1.0)// Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
     grid: null      //不需要grid
 
-    //internal property:
-    property var edgesobj
-
     signal navigateRequest(var lst)
     signal nodeClicked(var node)
 
@@ -129,7 +126,6 @@ Qan.GraphView {
     onClicked: {
         //console.log("Graphview.onClicked")
         clear_temp_edge()
-        edgesobj.clear_selection()
     }
 
     onRightClicked: function(pos) {
@@ -264,7 +260,6 @@ Qan.GraphView {
         onNodeSocketClicked: function(node, group, name, socket_pos) {
         }
         onSelectedNodesChanged: {
-            graphView.edgesobj.clear_selection()
         }
     } // Qan.Graph
 
@@ -473,24 +468,17 @@ Qan.GraphView {
 
     Component {
         id: edgescomp
-        EdgesContainer {
-            onInvalidarea_clicked: function() {
-                graphView.invalide_edgearea_clicked();
-            }
-            onEdge_selected: function() {
-                graphView.graph.clearSelection()
-            }
-        }
+        EdgesContainer { }
     }
 
     Component.onCompleted: {
         navigator.reset_paths()
 
-        edgesobj = edgescomp.createObject(graphView.containerItem, {
+        edges = edgescomp.createObject(graphView.containerItem, {
             "graphModel": graphView.graphModel,
             "graphView": graphView
         });
-        if (edgesobj === null) {
+        if (edges === null) {
             console.error("Failed to create edges object")
         }
     }
@@ -570,10 +558,17 @@ Qan.GraphView {
             proppanel.visible = !proppanel.visible
         }
         else if (event.key == Qt.Key_Delete) {
-            var edges = []
-            if (edgesobj.selected_edge) {
-                var inobj = edgesobj.selected_edge.toParam
-                var outobj = edgesobj.selected_edge.fromParam
+            var selected_edges = []
+            for (var i = 0; i < edges.children.length; i++) {
+                var edge = edges.children[i]
+                if (edge.state == "select") {
+                    selected_edges.push(edge)
+                }
+            }
+            for (var i = 0; i < selected_edges.length; i++) {
+                var selected_edge = selected_edges[i]
+                var inobj = selected_edge.toParam
+                var outobj = selected_edge.fromParam
                 var in_node_name = graphView.graph.getNode(inobj[0]).label
                 var out_node_name = graphView.graph.getNode(outobj[0]).label
                 var in_param = inobj[1]

@@ -101,6 +101,8 @@ void    GraphView::setGraph(qan::Graph* graph)
             emit nodeSocketClicked(node, group, socket_name, containerPos);
         });
 
+        connect(_graph, &qan::Graph::notifyClearSelection, this, &qan::GraphView::onGraphClearSelection);
+
         emit graphChanged();
     }
 }
@@ -110,6 +112,19 @@ void    GraphView::navigableClicked(QPointF pos)
     Q_UNUSED(pos)
     if (_graph)
         _graph->clearSelection();
+    onGraphClearSelection();
+}
+
+void    GraphView::onGraphClearSelection()
+{
+    //clear selected edges of qml.
+    if (_edges) {
+        const QList<QQuickItem*> children = _edges->childItems();
+        for (int i = 0; i < children.size(); i++) {
+            QQuickItem* edgeItem = children.at(i);
+            edgeItem->setState("");
+        }
+    }
 }
 
 void    GraphView::navigableRightClicked(QPointF pos)
@@ -127,7 +142,7 @@ QString GraphView::urlToLocalFile(QUrl url) const noexcept
 
 
 /* Selection Rectangle Management *///-----------------------------------------
-void    GraphView::selectionRectActivated(const QRectF& rect)
+void    GraphView::selectionRectActivated(const QRectF& rect, bool bCtrlPressed)
 {
     if (!_graph ||
         _graph->getContainerItem() == nullptr)
@@ -148,9 +163,23 @@ void    GraphView::selectionRectActivated(const QRectF& rect)
             nodeItem->getNode() != nullptr ) {
             const auto itemBr = item->mapRectToItem(_graph->getContainerItem(),
                                                     item->boundingRect());
-            if (!rect.contains(itemBr)) {
+            if (!rect.intersects(itemBr)) { //只要相交就可以选中
+            //if (!rect.contains(itemBr)) {
                 _graph->setNodeSelected(*nodeItem->getNode(), false);
                 _selectedItems.remove(item);
+            }
+        }
+    }
+    //同时检测一下边的选择情况
+    if (_edges && !bCtrlPressed) {
+        const QList<QQuickItem*> children = _edges->childItems();
+        for (int i = 0; i < children.size(); i++) {
+            QQuickItem* edgeItem = children.at(i);
+            if (edgeItem && edgeItem->state() == "select") {
+                const auto itemBr = edgeItem->mapRectToItem(_graph->getContainerItem(), edgeItem->boundingRect());
+                if (!rect.intersects(itemBr)) {
+                    edgeItem->setState("");
+                }
             }
         }
     }
@@ -164,11 +193,24 @@ void    GraphView::selectionRectActivated(const QRectF& rect)
             auto node = nodeItem->getNode();
             const auto itemBr = item->mapRectToItem(_graph->getContainerItem(),
                                                     item->boundingRect());
-            if (rect.contains(itemBr)) {
+            if (rect.intersects(itemBr)) {
+            //if (rect.contains(itemBr)) {
                 _graph->setNodeSelected(*node, true);
                 // Note we assume that items are not deleted while the selection
                 // is in progress... (QPointer can't be trivially inserted in QSet)
                 _selectedItems.insert(nodeItem);
+            }
+        }
+    }
+    if (_edges) {
+        const QList<QQuickItem*> children = _edges->childItems();
+        for (int i = 0; i < children.size(); i++) {
+            QQuickItem* edgeItem = children.at(i);
+            if (edgeItem && edgeItem->state() == "") {
+                const auto itemBr = edgeItem->mapRectToItem(_graph->getContainerItem(), edgeItem->boundingRect());
+                if (rect.intersects(itemBr)) {
+                    edgeItem->setState("select");
+                }
             }
         }
     }
