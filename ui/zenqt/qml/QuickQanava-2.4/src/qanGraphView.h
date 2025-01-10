@@ -74,23 +74,20 @@ signals:
 private slots:
     void                    onGraphClearSelection();
 
+
+/* 用于提供标记临时边鼠标变化的信号 */
 public:
     Q_PROPERTY(bool tryconnect READ getTryConnect WRITE setTryConnect NOTIFY tryConnectChanged FINAL)
     void setTryConnect(bool bOn) { _tryconnect = bOn; }
     bool getTryConnect() const noexcept { return _tryconnect; }
+    Q_PROPERTY(QVariant hoverInfo READ getHoverInfo NOTIFY hoverInfoChanged)
+    QVariant getHoverInfo() const { return QVariant(); }
 private:
     bool _tryconnect = false;
 signals:
     void tryConnectChanged();
-
-public:
-    Q_PROPERTY(QVariant hoverInfo READ getHoverInfo NOTIFY hoverInfoChanged)
-    QVariant getHoverInfo();
-private:
-    QPointF _hoverpos;
-    qan::NodeItem* _hoverNode = nullptr;
-signals:
     void hoverInfoChanged();
+
 
 public:
     Q_PROPERTY(QQuickItem* edges READ getEdges WRITE setEdges FINAL)

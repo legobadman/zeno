@@ -56,7 +56,7 @@ Qan.GraphView {
         }
     }
 
-    property var tempEdge: undefined
+    property var tempEdge: undefined    //由于tempEdge需要挂在containerItem下，所以不能以组件的方式直接定义
 
     //background
     Rectangle {
@@ -66,19 +66,28 @@ Qan.GraphView {
     }
 
     Component {
-        id: edgeComponent
+        id: tmp_edge_component
         Edge {
             visible: true
             color: "#5FD2FF"
             thickness: 4
 
-            onClicked_outof_curve: function () {
-                graphView.clear_temp_edge()
+            /*
+            //此方式没法动态更新，因为没法捕获globalpos的changed信号，必须要加上hoverInfo才能捕获，干脆在onHoverInfoChanged做好了
+            //除非以后想到如何动态捕获鼠标的变化（不需要添加额外的MouseArea为前提）
+            Component.onCompleted: {
+                point2x = Qt.binding(function() {
+                    graphView.hoverInfo;
+                    var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+                    return mousepos.x
+                })
+                point2y = Qt.binding(function() {
+                    graphView.hoverInfo;
+                    var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+                    return mousepos.y
+                })
             }
-            onClicked: function () {
-                //临时边可能会点击到自身的鼠标区域，如果不被别的socket捕获，就认为是点击grid
-                graphView.clear_temp_edge()             
-            }
+            */
         }
     }
 
@@ -136,8 +145,11 @@ Qan.GraphView {
     }
 
     onHoverInfoChanged: function() {
-        var nodeitem = graphView.hoverInfo["node"]
-        var hoverpos = graphView.hoverInfo["pos"]
+        var global_pos = MouseUtils.getGlobalMousePosition()
+        var mousepos = graphView.containerItem.mapFromGlobal(global_pos)
+        var mouse_in_view = graphView.mapFromGlobal(global_pos)
+        var nodeitem = graphView.graph.nodeItemAt(mouse_in_view.x, mouse_in_view.y) // graphView.hoverInfo["node"]
+        var hoverpos = mousepos
 
         if (nodeitem) {
             //console.log("hover node: " + nodeitem.node.label)
@@ -192,7 +204,7 @@ Qan.GraphView {
         var pos_ = socket_pos_in_grid
         var is_start_to_link = false;
         if (!graphView.tempEdge) {
-            graphView.tempEdge = edgeComponent.createObject(graphView.containerItem, {})
+            graphView.tempEdge = tmp_edge_component.createObject(graphView.containerItem, {})
             is_start_to_link = true
         }
 
@@ -417,7 +429,7 @@ Qan.GraphView {
 
                 onTriggered: {
                     var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
-                    console.log("mousepos: " + mousepos)
+                    // console.log("mousepos: " + mousepos)
                     nodecatesmodel.execute(graphModel, name, mousepos)
                 }
             }
