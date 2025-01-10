@@ -125,7 +125,7 @@ public:
      */
     Q_INVOKABLE QQuickItem* graphChildAt(qreal x, qreal y) const;
 
-    qan::NodeItem* nodeItemAt(qreal x, qreal y) const;
+    Q_INVOKABLE qan::NodeItem* nodeItemAt(qreal x, qreal y) const;
 
     /*! \brief Similar to QQuickItem::childAt() method, except that it only take groups into account (and is hence faster, but still O(n)).
      *
