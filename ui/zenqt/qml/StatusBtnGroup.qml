@@ -23,11 +23,11 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        onExited: {
-            if(!groupContainsMouse(mouseX, mouseY)) {
-                statusImgGroup.visible = false
-            }
-        }
+        // onExited: {
+        //     if(!groupContainsMouse(mouseX, mouseY)) {
+        //         statusImgGroup.visible = false
+        //     }
+        // }
 
         StatusBtn {
             id: bypass_btn
@@ -71,32 +71,92 @@ Item {
             }
         }
     }
-    Rectangle{
+
+    Item {
         id: statusImgGroup
-        anchors.bottom: mouseArea.top
-
-        width:childrenRect.width
-        height:childrenRect.height
-        color: "transparent"
         visible: false
+        implicitWidth: imggroup_layout.implicitWidth
+        implicitHeight: imggroup_layout.implicitHeight
+        y: bypass_btn.y - imgByPass.height
 
-        StatusImgBtn{
-            id: imgByPass
-            x: bypass_btn.x + comp.xoffset - 2
-            source: "qrc:/icons/MUTE_dark.svg"
-            source_on: "qrc:/icons/MUTE_light.svg"
-            property alias checked: comp.isbypass
-            property alias hovered: bypass_btn.hovered
+        Rectangle {
+            anchors.fill: parent
+            // color: "red"
+            color: "transparent"
         }
-        StatusImgBtn{
-            id: imgView
-            x: imgByPass.x + imgByPass.width - imgByPass.xoffset - 2
-            source: "qrc:/icons/VIEW_dark.svg"
-            source_on: "qrc:/icons/VIEW_light.svg"
-            property alias checked: comp.isview
-            property alias hovered: view_btn.hovered
+
+        ColumnLayout {
+            id: imggroup_layout
+
+            Rectangle{
+                id: img_group
+                width:childrenRect.width
+                height:childrenRect.height
+                color: "transparent"
+                
+                StatusImgBtn{
+                    id: imgByPass
+                    x: bypass_btn.x + comp.xoffset - 2
+                    source: "qrc:/icons/MUTE_dark.svg"
+                    source_on: "qrc:/icons/MUTE_light.svg"
+                    property alias checked: comp.isbypass
+                    property alias hovered: bypass_btn.hovered
+                }
+                StatusImgBtn{
+                    id: imgView
+                    x: imgByPass.x + imgByPass.width - imgByPass.xoffset - 2
+                    source: "qrc:/icons/VIEW_dark.svg"
+                    source_on: "qrc:/icons/VIEW_light.svg"
+                    property alias checked: comp.isview
+                    property alias hovered: view_btn.hovered
+                }
+            }
+            Rectangle{
+                id: rc_placeholder
+                width: img_group.width
+                height: 64
+                color: "transparent"
+            }
+
+        }
+
+        MouseArea {
+            id: mouse_area_imggroup
+            hoverEnabled: true
+            anchors.fill: parent
+
+            onEntered: {
+
+            }
+
+            onPositionChanged: {
+                if (mouse.x < imgView.x) {
+                    imgByPass.hovered = true
+                    imgView.hovered = false
+                }
+                else {
+                    imgView.hovered = true
+                    imgByPass.hovered = false
+                }
+                // console.log("mouse.x = " + mouse.x)
+                // console.log("parent.x = " + statusImgGroup.x)
+                // console.log("imgByPass.x = " + imgByPass.x)
+                // console.log("imgView.x = " + imgView.x)
+            }
+
+            onExited: {
+                imgByPass.hovered = false
+                imgView.hovered = false
+                statusImgGroup.visible = false
+            }
+
+            onPressed: {
+
+            }
         }
     }
+
+
 
     function groupContainsMouse(x, y){
         //console.log("mouse.x,y = " + x + "," + y)
@@ -104,7 +164,9 @@ Item {
         // if (x < 100 && y < 48) {
         //     under_imgs = true;
         // }
-        return bypass_btn.mouseAreaAlias.containsMouse || view_btn.mouseAreaAlias.containsMouse ||
-            imgByPass.containsMouse || imgView.containsMouse || under_imgs
+        console.log("mouse_area_imggroup.containsMouse: " + mouse_area_imggroup.containsMouse)
+
+        return bypass_btn.mouseAreaAlias.containsMouse || view_btn.mouseAreaAlias.containsMouse || mouse_area_imggroup.containsMouse
+            // imgByPass.containsMouse || imgView.containsMouse || under_imgs
     }
 }
