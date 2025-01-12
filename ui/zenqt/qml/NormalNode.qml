@@ -281,6 +281,7 @@ Qan.NodeItem {
                                 id: right_status_group
                                 radius: nodeItem.backRadius
                                 round_last_btn: !nodebody.visible
+                                z: -50
                             }
                         }
                     }
