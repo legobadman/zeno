@@ -2047,10 +2047,10 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
     QStandardItem* pObjOutputsRoot = customParamsM->item(3);
     if (!pInputsRoot || !pOutputsRoot || !pObjInputsRoot || !pObjOutputsRoot)
         return;
-    if (!pInputsRoot->hasChildren() || !pInputsRoot->child(0)->hasChildren())
-        return;
-    if (customui.inputPrims.empty() || customui.inputPrims[0].groups.empty())
-        return;
+    //if (!pInputsRoot->hasChildren() || !pInputsRoot->child(0)->hasChildren())
+    //    return;
+    //if (customui.inputPrims.empty() || customui.inputPrims[0].groups.empty())
+    //    return;
     auto const& renameItem = [](QStandardItem* item, const std::string& name) {
         item->setData(QString::fromStdString(name), Qt::DisplayRole);
         item->setData(QString::fromStdString(name), QtRole::ROLE_PARAM_NAME);

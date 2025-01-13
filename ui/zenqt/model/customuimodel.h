@@ -37,6 +37,7 @@ public:
     Q_INVOKABLE ParamTabModel* tabModel() const;
     Q_INVOKABLE ParamOutputModel* outputModel() const;
     Q_INVOKABLE ParamsModel* coreModel() const;
+    void initCustomuiConnections(QStandardItemModel* customuiStandarditemModel);
 
 private:
     ParamsModel* m_params;
@@ -64,6 +65,9 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
+    bool insertRow(int row, QString& name);
+    bool removeRow(int row);
+
 private:
     QVector<_TabItem> m_items;
     CustomUIModel* m_customuiM;
@@ -77,7 +81,7 @@ class ParamGroupModel : public QAbstractListModel
 
     struct _GroupItem {
         QString name;
-        ParamPlainModel* paramM;    //Ò»¸ögroupÏÂËùÓĞµÄ²ÎÊı
+        ParamPlainModel* paramM;    //ä¸€ä¸ªgroupä¸‹æ‰€æœ‰çš„å‚æ•°
     };
 
 public:
@@ -88,6 +92,9 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
+
+    bool insertRow(int row, QString& name);
+    bool removeRow(int row);
 
 private:
     QVector<_GroupItem> m_items;
@@ -101,7 +108,7 @@ class ParamPlainModel : public QAbstractListModel
     typedef QAbstractListModel _base;
 
     struct _ParamItem {
-        QPersistentModelIndex m_index;  //Ö¸ÏòParamsModelÕæÕı´¢´æµÄ²ÎÊı
+        QPersistentModelIndex m_index;  //æŒ‡å‘ParamsModelçœŸæ­£å‚¨å­˜çš„å‚æ•°
     };
 
 public:
@@ -113,8 +120,11 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
+    bool insertRow(int row, QString& name);
+    bool removeRow(int row);
+
 private:
-    QVector<QPersistentModelIndex> m_items;    //Ò»¸ögroupÏÂËùÓĞµÄparam
+    QVector<QPersistentModelIndex> m_items;    //ä¸€ä¸ªgroupä¸‹æ‰€æœ‰çš„param
     ParamGroupModel* m_groupModel;
 };
 
@@ -125,7 +135,7 @@ class ParamOutputModel : public QAbstractListModel
     typedef QAbstractListModel _base;
 
     struct _ParamItem {
-        QPersistentModelIndex m_index;  //Ö¸ÏòParamsModelÕæÕı´¢´æµÄ²ÎÊı
+        QPersistentModelIndex m_index;  //æŒ‡å‘ParamsModelçœŸæ­£å‚¨å­˜çš„å‚æ•°
     };
 
 public:
@@ -136,7 +146,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
 private:
-    QVector<QPersistentModelIndex> m_items;    //Ò»¸ögroupÏÂËùÓĞµÄparam
+    QVector<QPersistentModelIndex> m_items;    //ä¸€ä¸ªgroupä¸‹æ‰€æœ‰çš„param
 };
 
 #endif

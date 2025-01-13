@@ -353,11 +353,13 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
     if (customui.inputPrims.size() == 1 &&
         customui.inputPrims[0].name == "Tab1" &&
         customui.inputPrims[0].groups.size() == 1 &&
-        customui.inputPrims[0].groups[0].name == "Group1") {
+        customui.inputPrims[0].groups[0].name == "Group1" &&
+        !dynamic_cast<zeno::SubnetNode*>(m_wpNode)) {
         return;
     }
     else {
         m_customUIM = new CustomUIModel(this, this);
+        m_customUIM->initCustomuiConnections(m_customParamsM);
     }
 }
 

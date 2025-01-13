@@ -187,13 +187,14 @@ Pane {
                     ScrollBar.horizontal.policy: ScrollBar.AsNeeded
                     ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
+                    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
                     ColumnLayout {
                         Repeater {
-                            model: comp.node.params
+                            model: comp.node.params     //关联的是ParamsModel
                             delegate:
                                 RowLayout {
                                     Text {
-                                        text: name
+                                        text: name  /* c++导出的名字, 可到 ParamsModel::roleNames()查看 */
                                         color: "white"
                                         visible: group == ParamGroup.InputPrimitive
                                         Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
@@ -236,12 +237,13 @@ Pane {
                                                 return nullControl
                                             }
                                         }
-                                        property var mvalue: value
-                                        property var m_control_properties: control_properties
+                                        property var mvalue: value /* value是c++导出的名字 */
+                                        property var m_control_properties: control_properties /* value是c++导出的名字 */
                                     }
                                 }
                         }
                     }
+                    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
                 }
             }
 
@@ -264,13 +266,13 @@ Pane {
 
                     TabBar {
                         id: property_tabbar
-                        property int tabcount: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
-                        visible: tabcount > 1
+                        property int tabcount: base_tabview.customuimodel.tabModel().rowCount()
+                        // visible: tabcount > 1
                         Repeater {
-                            model: property_tabbar.tabcount
+                            model: base_tabview.customuimodel.tabModel()
                             delegate: TabButton {
-                                property var mtabindex: base_tabview.treemodel.index(index, 0, base_tabview.tabsindex)
-                                text: base_tabview.treemodel.data(mtabindex)
+                                property var mtabindex: base_tabview.customuimodel.tabModel().index(index, 0)
+                                text: name
                                 width: 100
                             }
                         }
@@ -281,16 +283,17 @@ Pane {
                         currentIndex: property_tabbar.currentIndex
 
                         Repeater {
-                            model: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
+                            // model: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
+                            model: base_tabview.customuimodel.tabModel()
                             delegate: ScrollView {
                                 clip: true
                                 ScrollBar.horizontal.policy: ScrollBar.AsNeeded
                                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
                                 ZPropPanel_Tab {
-                                    model: base_tabview.treemodel
-                                    parentIndex: model.index(index, 0, base_tabview.tabsindex)
-                                    childCount: model.rowCount(parentIndex)
+                                    model: groups
+                                    parentIndex: model.index(index, 0)
+                                    childCount: model.rowCount()
                                 }
                             }
                         }
@@ -310,9 +313,11 @@ Pane {
                         clip: true
 
                         Layout.fillWidth: true
-                        model: base_tabview.treemodel
-                        parentIndex: outputsindex
-                        childCount: base_tabview.treemodel.rowCount(outputsindex)
+                        // model: base_tabview.treemodel
+                        model: base_tabview.customuimodel.outputModel()
+                        // parentIndex: outputsindex
+                        childCount: base_tabview.customuimodel.outputModel().rowCount()
+                        // childCount: base_tabview.treemodel.rowCount(outputsindex)
                         visible: childCount > 0
                     }
                 }

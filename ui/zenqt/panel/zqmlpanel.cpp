@@ -14,7 +14,7 @@ ZQmlPanel::ZQmlPanel(QWidget* parent)
     setResizeMode(QQuickWidget::SizeRootObjectToView);
     rootContext()->setContextProperty("nodesModel", pGraphM);
 
-    //²âÊÔ×é¼þ»ñÈ¡±¨´íÐÅÏ¢
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 #if 1
     QQmlComponent component(this->engine(), QUrl(QStringLiteral("qrc:/ZenoGraphView.qml")));
     if (component.status() != QQmlComponent::Ready) {

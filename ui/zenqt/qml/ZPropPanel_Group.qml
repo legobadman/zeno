@@ -24,131 +24,132 @@ Item {
             ToolButton {
                 id: btn_show_prim_sock
                 checkable: true
-                checked: model.data(mindex, Model.ROLE_PARAM_SOCKET_VISIBLE)
-                property bool reentry: false
-                icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
+                // checked: model.data(mindex, Model.ROLE_PARAM_SOCKET_VISIBLE)
+                // property bool reentry: false
+                // icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
 
-                onClicked: {
+                // onClicked: {
 
-                }
+                // }
 
-                onCheckedChanged: {
-                    model.setData(mindex, btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
-                }    
+                // onCheckedChanged: {
+                //     model.setData(mindex, btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
+                // }    
 
-                contentItem: Image {
-                    source: parent.icon.source
-                    sourceSize.width: 20
-                    sourceSize.height: 20
-                    smooth: true
-                    antialiasing: true
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                // contentItem: Image {
+                //     source: parent.icon.source
+                //     sourceSize.width: 20
+                //     sourceSize.height: 20
+                //     smooth: true
+                //     antialiasing: true
+                //     anchors.verticalCenter: parent.verticalCenter
+                // }
 
-                background: Rectangle {
-                    x: icon_image.x + 3
-                    y: icon_image.y
-                    width: 14
-                    height: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: enabled ? 1 : 0.3
-                    color: parent.hovered ? "#f0f0f0" : "transparent"
-                    radius: width / 2
-                }
+                // background: Rectangle {
+                //     x: icon_image.x + 3
+                //     y: icon_image.y
+                //     width: 14
+                //     height: 14
+                //     anchors.verticalCenter: parent.verticalCenter
+                //     opacity: enabled ? 1 : 0.3
+                //     color: parent.hovered ? "#f0f0f0" : "transparent"
+                //     radius: width / 2
+                // }
             }
             Text {
-                text: model.data(mindex)    //默认是DisplayRole，参数名
+                text: model.data(mindex, Model.ROLE_PARAM_NAME)    //默认是DisplayRole，参数名
+                // text: mindex
                 color: Qt.rgba(210.0/255, 210.0/255, 210.0/255, 1.0) //"white"
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
     }
 
-    Component {
-        id: componentB
-        Text {
-            text: "BBB"
-        }
-    }
+    // Component {
+    //     id: componentB
+    //     Text {
+    //         text: "BBB"
+    //     }
+    // }
 
-    Component {
-        id: compVec2edit
-        ZVec2Editor {
-            value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
-        }
-    }
+    // Component {
+    //     id: compVec2edit
+    //     ZVec2Editor {
+    //         value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
+    //     }
+    // }
 
-    Component {
-        id: compVec3edit
-        ZVec3Editor {
-            value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
-        }
-    }
+    // Component {
+    //     id: compVec3edit
+    //     ZVec3Editor {
+    //         value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
+    //     }
+    // }
 
-    Component {
-        id: compVec4edit
-        ZVec4Editor {
-            value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
-        }
-    }
+    // Component {
+    //     id: compVec4edit
+    //     ZVec4Editor {
+    //         value: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
+    //     }
+    // }
 
-    Component {
-        id: complineedit
-        ZLineEditor {
-            text: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
-        }
-    }
+    // Component {
+    //     id: complineedit
+    //     ZLineEditor {
+    //         text: model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
+    //     }
+    // }
 
-    Component {
-        id: textedit
-        ScrollView {
-            id: view
-            width: 200
-            height: 100
+    // Component {
+    //     id: textedit
+    //     ScrollView {
+    //         id: view
+    //         width: 200
+    //         height: 100
 
-            TextArea {
-                id: textArea
-                anchors.margins: 10
-                placeholderText: "请输入文本..."
-                font.pixelSize: 16
-                wrapMode: TextArea.WordWrap // 自动换行模式
-                readOnly: false // 设置为 true 则为只读
+    //         TextArea {
+    //             id: textArea
+    //             anchors.margins: 10
+    //             placeholderText: "请输入文本..."
+    //             font.pixelSize: 16
+    //             wrapMode: TextArea.WordWrap // 自动换行模式
+    //             readOnly: false // 设置为 true 则为只读
 
-                background: Rectangle {
-                    color: "white" // 背景颜色
-                    border.color: textArea.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
-                    border.width: 1
-                }
-            }
-        }
-    }
+    //             background: Rectangle {
+    //                 color: "white" // 背景颜色
+    //                 border.color: textArea.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
+    //                 border.width: 1
+    //             }
+    //         }
+    //     }
+    // }
 
-    Component {
-        id: compCombobox
-        ComboBox {
-            id: comboboxitem
-            model: root.model.data(mindex, Model.ROLE_PARAM_CONTROL_PROPS)["combobox_items"]
-            currentIndex: {
-                var currtext = root.model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
-                return comboboxitem.model.indexOf(currtext)
-            }
-        }
-    }
+    // Component {
+    //     id: compCombobox
+    //     ComboBox {
+    //         id: comboboxitem
+    //         model: root.model.data(mindex, Model.ROLE_PARAM_CONTROL_PROPS)["combobox_items"]
+    //         currentIndex: {
+    //             var currtext = root.model.data(mindex, Model.ROLE_PARAM_QML_VALUE)
+    //             return comboboxitem.model.indexOf(currtext)
+    //         }
+    //     }
+    // }
 
-    Component {
-        id: compCheckbox
-        CheckBox {
-            id: checkbox
-            // checkState: model.data(mindex, Model.ROLE_PARAM_QML_VALUE) ? Qt.Checked : Qt.Unchecked
-        }
-    }
+    // Component {
+    //     id: compCheckbox
+    //     CheckBox {
+    //         id: checkbox
+    //         // checkState: model.data(mindex, Model.ROLE_PARAM_QML_VALUE) ? Qt.Checked : Qt.Unchecked
+    //     }
+    // }
 
-    Component {
-        id: nullControl
-        Text {
-            text: ""
-        }
-    }
+    // Component {
+    //     id: nullControl
+    //     Text {
+    //         text: ""
+    //     }
+    // }
 
     //Body
     GridLayout {
@@ -161,48 +162,56 @@ Item {
 
         Repeater {
             model: childCount * gridlayout.nCol  // 数据模型，创建childCount个子项
+            // model: root.model
             delegate: 
                 Loader {
                     sourceComponent: {
-                        var realindex = index / gridlayout.nCol   //index是grid的项数计数，由于只有两列，所以index/2就是模型的项行号
-                        var ctrl = root.model.data(root.model.index(realindex, 0, parentIndex), Model.ROLE_PARAM_CONTROL)
-                        if (index % gridlayout.nCol == 0) {
-                            return paramText
-                        } 
-                        else if (ctrl == ParamControl.Lineedit){
-                            return complineedit
-                        }
-                        else if (ctrl == ParamControl.Combobox){
-                            return compCombobox
-                        }
-                        else if (ctrl == ParamControl.Multiline){
-                            return textedit
-                        }
-                        else if (ctrl == ParamControl.Checkbox){
-                            return compCheckbox
-                        }
-                        else if (ctrl == ParamControl.Vec2edit){
-                            return compVec2edit
-                        }
-                        else if (ctrl == ParamControl.Vec3edit){
-                            return compVec3edit
-                        }
-                        else if (ctrl == ParamControl.Vec4edit){
-                            return compVec4edit
-                        }
-                        else if (ctrl == ParamControl.CodeEditor){
-                            return textedit
-                        }
-                        else if (ctrl == ParamControl.Slider){
-                            return nullControl
-                        }
-                        else{
-                            return nullControl
-                        }
+                        return paramText
+                        // var realindex = index / gridlayout.nCol   //index是grid的项数计数，由于只有两列，所以index/2就是模型的项行号
+                        // // var realindex = index
+                        // var ctrl = root.model.data(root.model.index(realindex, 0, parentIndex), Model.ROLE_PARAM_CONTROL)
+                        // if (index % gridlayout.nCol == 0) {
+                        //     return paramText
+                        // } else{
+                        //     return complineedit
+                        // }
+
+                        // } 
+                        // else if (ctrl == ParamControl.Lineedit){
+                        //     return complineedit
+                        // }
+                        // else if (ctrl == ParamControl.Combobox){
+                        //     return compCombobox
+                        // }
+                        // else if (ctrl == ParamControl.Multiline){
+                        //     return textedit
+                        // }
+                        // else if (ctrl == ParamControl.Checkbox){
+                        //     return compCheckbox
+                        // }
+                        // else if (ctrl == ParamControl.Vec2edit){
+                        //     return compVec2edit
+                        // }
+                        // else if (ctrl == ParamControl.Vec3edit){
+                        //     return compVec3edit
+                        // }
+                        // else if (ctrl == ParamControl.Vec4edit){
+                        //     return compVec4edit
+                        // }
+                        // else if (ctrl == ParamControl.CodeEditor){
+                        //     return textedit
+                        // }
+                        // else if (ctrl == ParamControl.Slider){
+                        //     return nullControl
+                        // }
+                        // else{
+                        //     return nullControl
+                        // }
                     }
-                    //Loader binds properties to the source component
-                    //passed to the delegate
-                    property var mindex: root.model.index(index / gridlayout.nCol, 0, parentIndex)
+                    // //Loader binds properties to the source component
+                    // //passed to the delegate
+                    // property var mindex: root.model.index(index / gridlayout.nCol, 0, parentIndex)
+                    property var mindex: root.model.index(index / gridlayout.nCol, 0)
                 }
         }
     }

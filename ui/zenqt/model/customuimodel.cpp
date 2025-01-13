@@ -26,6 +26,46 @@ ParamsModel* CustomUIModel::coreModel() const {
     return m_params;
 }
 
+void CustomUIModel::initCustomuiConnections(QStandardItemModel* customuiStandarditemModel)
+{
+    connect(customuiStandarditemModel, &QStandardItemModel::rowsInserted, [customuiStandarditemModel, this](const QModelIndex& parent, int first, int last) {
+        QStandardItem* parentItem = customuiStandarditemModel->itemFromIndex(parent);
+        QStandardItem* newItem = parentItem->child(first);
+        int elemtype = newItem->data(ROLE_ELEMENT_TYPE).toInt();
+        ParamTabModel* tabmodel = tabModel();
+        if (elemtype == VPARAM_TAB) {
+            tabmodel->insertRow(first, newItem->data(QtRole::ROLE_PARAM_NAME).toString());
+        } 
+        else if (elemtype == VPARAM_GROUP) {
+            ParamGroupModel* group = tabmodel->index(parent.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>();
+            group->insertRow(first, newItem->data(QtRole::ROLE_PARAM_NAME).toString());
+        }
+        else if (elemtype == VPARAM_PARAM) {
+            QModelIndex& tabindx = parent.parent();
+            if (ParamGroupModel* groupmodel = tabmodel->index(tabindx.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>()) {
+                ParamPlainModel* paramsmodel = groupmodel->index(parent.row()).data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
+                paramsmodel->insertRow(first, newItem->data(QtRole::ROLE_PARAM_NAME).toString());
+            }
+        }
+    });
+    connect(customuiStandarditemModel, &QStandardItemModel::rowsAboutToBeRemoved, [customuiStandarditemModel, this](const QModelIndex& parent, int first, int last) {
+        QStandardItem* parentItem = customuiStandarditemModel->itemFromIndex(parent);
+        QStandardItem* removeItem = parentItem->child(first);
+        int elemtype = removeItem->data(ROLE_ELEMENT_TYPE).toInt();
+        if (elemtype == VPARAM_TAB) {
+            ParamTabModel* tabmodel = tabModel();
+            tabmodel->removeRow(first);
+        }
+        });
+    connect(customuiStandarditemModel, &QStandardItemModel::dataChanged, [customuiStandarditemModel, this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+        if (roles.size() == 1 && roles[0] == QtRole::ROLE_PARAM_NAME) {
+            if (topLeft.data(ROLE_ELEMENT_TYPE).toInt() == VPARAM_TAB) {
+                ParamTabModel* tabmodel = tabModel();
+                tabmodel->setData(topLeft, topLeft.data(QtRole::ROLE_PARAM_NAME));
+            }
+        }
+    });
+}
 
 //////////////////////////////////////////////////////////
 ParamTabModel::ParamTabModel(zeno::CustomUIParams tabs, CustomUIModel* pModel)
@@ -57,6 +97,11 @@ QVariant ParamTabModel::data(const QModelIndex& index, int role) const {
 }
 
 bool ParamTabModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+    switch (role) {
+    case QtRole::ROLE_PARAM_NAME:
+        m_items[index.row()].name = value.toString();
+        return true;
+    }
     return false;
 }
 
@@ -67,6 +112,32 @@ QHash<int, QByteArray> ParamTabModel::roleNames() const {
     return values;
 }
 
+
+bool ParamTabModel::insertRow(int row, QString& name) {
+    if (row < 0 || row > m_items.size()) {
+        return false;
+    }
+
+    beginInsertRows(QModelIndex(), row, row);
+    _TabItem item;
+    item.name = name;
+    item.groupM = new ParamGroupModel(zeno::ParamTab{name.toStdString()}, this);
+    m_items.insert(row, std::move(item));
+    endInsertRows();
+    return true;
+}
+
+bool ParamTabModel::removeRow(int row)
+{
+    if (row < 0 || row >= m_items.size()) {
+        return false;
+    }
+
+    beginRemoveRows(QModelIndex(), row, row);
+    m_items.erase(m_items.begin() + row);
+    endRemoveRows();
+    return true;
+}
 
 //////////////////////////////////////////////////
 ParamGroupModel::ParamGroupModel(zeno::ParamTab tab, ParamTabModel* pModel)
@@ -107,6 +178,16 @@ QHash<int, QByteArray> ParamGroupModel::roleNames() const {
 }
 
 
+bool ParamGroupModel::insertRow(int row, QString& name)
+{
+    return false;
+}
+
+bool ParamGroupModel::removeRow(int row)
+{
+    return false;
+}
+
 ////////////////////////////////////////////////////////
 ParamPlainModel::ParamPlainModel(zeno::ParamGroup group, ParamGroupModel* pModel)
     : QAbstractListModel(pModel)
@@ -136,7 +217,7 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
     //copy from ParamsModel::roleNames()
     QHash<int, QByteArray> roles;
     roles[QtRole::ROLE_NODE_NAME] = "nodename";
-    roles[QtRole::ROLE_PARAM_NAME] = "name";
+    roles[QtRole::ROLE_PARAM_NAME] = "paramname";
     roles[QtRole::ROLE_PARAM_TYPE] = "type";
     roles[QtRole::ROLE_PARAM_CONTROL] = "control";
     roles[QtRole::ROLE_ISINPUT] = "input";
@@ -147,6 +228,16 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
     return roles;
 }
 
+
+bool ParamPlainModel::insertRow(int row, QString& name)
+{
+    return false;
+}
+
+bool ParamPlainModel::removeRow(int row)
+{
+    return false;
+}
 
 ///////////////////////////////////////////////////////////////
 ParamOutputModel::ParamOutputModel(zeno::PrimitiveParams params, CustomUIModel* pModel)
@@ -176,7 +267,7 @@ QHash<int, QByteArray> ParamOutputModel::roleNames() const {
     //copy from ParamsModel::roleNames()
     QHash<int, QByteArray> roles;
     roles[QtRole::ROLE_NODE_NAME] = "nodename";
-    roles[QtRole::ROLE_PARAM_NAME] = "name";
+    roles[QtRole::ROLE_PARAM_NAME] = "paramname";
     roles[QtRole::ROLE_PARAM_TYPE] = "type";
     roles[QtRole::ROLE_PARAM_CONTROL] = "control";
     roles[QtRole::ROLE_ISINPUT] = "input";

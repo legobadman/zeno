@@ -20,7 +20,7 @@ Item {
 
         Repeater {
             id: repeater
-            model: root.childCount
+            model: root.model
 
             //显示一个group name
             delegate: ColumnLayout {
@@ -29,16 +29,17 @@ Item {
                 Button {
                     Layout.fillWidth: true
                     //获取group标题：
-                    text: root.model.data(root.model.index(index, 0, root.parentIndex))
+                    // text: root.model.data(root.model.index(index, 0, root.parentIndex))
+                    text: name
                     onClicked: propGroup.shown = !propGroup.shown
-                    visible: root.childCount > 1   //只有一个group可能是默认的情况，不予以显示
+                    // visible: root.childCount > 1   //只有一个group可能是默认的情况，不予以显示
                 }
 
                 //把整个group 显示出来
                 //获取group标题：text: root.model.data(group_item.currentIndex)
                 ZPropPanel_Group {
                     id: propGroup
-                    property var currentIndex: root.model.index(index, 0, root.parentIndex)
+                    // property var currentIndex: root.model.index(index, 0, root.parentIndex)
                     property bool shown: true
                     visible: shown
                     //height: implicitHeight
@@ -53,9 +54,9 @@ Item {
                     clip: true
 
                     Layout.fillWidth: true
-                    model: root.model
-                    parentIndex: currentIndex
-                    childCount: root.model.rowCount(currentIndex)
+                    model: params
+                    parentIndex: model.index(index, 0)
+                    childCount: model.rowCount()
                 }
             }
         }
