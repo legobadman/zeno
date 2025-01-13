@@ -44,6 +44,10 @@ Item {
                     statusImgGroup.visible = true;
                 }
             }
+
+            onCheckedChanged: {
+                statusImgGroup.visible = false;
+            }
         }
 
         /*
@@ -69,6 +73,10 @@ Item {
                     statusImgGroup.visible = true;
                 }
             }
+
+            onCheckedChanged: {
+                statusImgGroup.visible = false;
+            }
         }
     }
 
@@ -78,6 +86,7 @@ Item {
         implicitWidth: imggroup_layout.implicitWidth
         implicitHeight: imggroup_layout.implicitHeight
         y: bypass_btn.y - imgByPass.height
+        z: -100
 
         Rectangle {
             anchors.fill: parent
@@ -125,12 +134,17 @@ Item {
             hoverEnabled: true
             anchors.fill: parent
 
-            onEntered: {
-
+            function isbypass(mousepos) {
+                if (mousepos.x < imgView.x && mousepos.y < imgByPass.y + imgByPass.height) {
+                    return true
+                }
+                else {
+                    return false
+                }
             }
 
             onPositionChanged: {
-                if (mouse.x < imgView.x) {
+                if (isbypass(mouse)) {
                     imgByPass.hovered = true
                     imgView.hovered = false
                 }
@@ -151,7 +165,13 @@ Item {
             }
 
             onPressed: {
-
+                if (isbypass(mouse)) {
+                    imgByPass.checked = !imgByPass.checked
+                }
+                else{
+                    imgView.checked = !imgView.checked
+                }
+                statusImgGroup.visible = false
             }
         }
     }
