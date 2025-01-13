@@ -126,6 +126,7 @@ public:
 private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
     ParamGroupModel* m_groupModel;
+    ParamsModel* m_paramsModel;
 };
 
 

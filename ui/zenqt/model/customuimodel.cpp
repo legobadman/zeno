@@ -192,11 +192,12 @@ bool ParamGroupModel::removeRow(int row)
 ParamPlainModel::ParamPlainModel(zeno::ParamGroup group, ParamGroupModel* pModel)
     : QAbstractListModel(pModel)
     , m_groupModel(pModel)
+    , m_paramsModel(nullptr)
 {
-    ParamsModel* paramM = m_groupModel->tabModel()->uimodel()->coreModel();
+    m_paramsModel = m_groupModel->tabModel()->uimodel()->coreModel();
     for (const zeno::ParamPrimitive& param : group.params) {
-        int r = paramM->indexFromName(QString::fromStdString(param.name), true);
-        QPersistentModelIndex idx = paramM->index(r);
+        int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), true);
+        QPersistentModelIndex idx = m_paramsModel->index(r);
         m_items.push_back(idx);
     }
 }
@@ -210,6 +211,7 @@ QVariant ParamPlainModel::data(const QModelIndex& index, int role) const {
 }
 
 bool ParamPlainModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+    m_paramsModel->setData(m_items[index.row()], value, role);
     return false;
 }
 

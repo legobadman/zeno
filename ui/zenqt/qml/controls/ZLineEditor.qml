@@ -12,6 +12,8 @@ Rectangle {
 
     property alias text: inputField.text
 
+    signal editingFinished
+
     TextInput {
         id: inputField
         anchors.centerIn: parent
@@ -31,6 +33,15 @@ Rectangle {
 
         onTextChanged: {
             //console.log("Text changed:", text)
+        }
+
+        Keys.onReturnPressed: {
+                // 按下回车键时失去焦点
+            focus = false;
+        }
+
+        onEditingFinished: {
+            container.editingFinished()
         }
     }
 }

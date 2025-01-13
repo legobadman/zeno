@@ -198,6 +198,7 @@ public:
         ROLE_PARAM_CONTROL_PROPS,   //给QML用，都返回List，现在应该只有comboboxitems和slider的range，未来可能会包括代码编辑器的设置
         ROLE_PARAM_TOOLTIP,
         ROLE_PARAM_SOCKET_VISIBLE,
+        ROLE_PARAM_PERSISTENT_INDEX,
         ROLE_PARAM_ENABLE,
         ROLE_PARAM_VISIBLE,
         ROLE_PARAM_SOCKET_CLR,

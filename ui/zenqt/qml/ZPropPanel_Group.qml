@@ -40,6 +40,11 @@ Item {
         id: complineedit
         ZLineEditor {
             text: mvalue
+
+            onEditingFinished: {
+                // console.log("onEditingFinished2: " + text)
+                root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
+            }
         }
     }
 
@@ -106,9 +111,10 @@ Item {
                         checkable: true
                         checked: socket_visible
                         icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
+                        visible: group == ParamGroup.InputPrimitive
 
                         onCheckedChanged: {
-                            //model.setData(mindex, btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
+                            root.model.setData(root.model.index(index, 0), btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
                         }    
 
                         contentItem: Image {
@@ -176,6 +182,7 @@ Item {
                         }
                         property var mvalue: value /* value是c++导出的名字 */
                         property var m_control_properties: control_properties /* value是c++导出的名字 */
+                        property var mindex: per_index
                     }
                 }
         }

@@ -475,6 +475,12 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         param.type = (zeno::ParamType)value.toLongLong();
         break;
 
+    case QtRole::ROLE_PARAM_QML_VALUE:
+    {
+        const zeno::reflect::Any& anyVal = UiHelper::qvarToAny(value, param.type, param.control == zeno::Lineedit);
+        setData(index, QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
+        break;
+    }
     case QtRole::ROLE_PARAM_VALUE:
     {
         const zeno::reflect::Any& anyVal = value.value<zeno::reflect::Any>();
@@ -520,14 +526,20 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
     }
     case QtRole::ROLE_PARAM_SOCKET_VISIBLE:
     {
-        if (param.sockProp == zeno::Socket_Disable)
+        if (param.sockProp == zeno::Socket_Disable || param.group == zeno::Role_InputObject ||
+            param.group == zeno::Role_OutputObject) {
             return false;
+        }
         auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             spNode->update_param_socket_visible(param.name.toStdString(), value.toBool(), param.bInput);
             emit showPrimSocks_changed();
             return true;
         }
+        return false;
+    }
+    case QtRole::ROLE_PARAM_PERSISTENT_INDEX:
+    {
         return false;
     }
     case QtRole::ROLE_NODE_DIRTY:
@@ -555,6 +567,7 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     case QtRole::ROLE_PARAM_NAME:       return param.name;
     case QtRole::ROLE_PARAM_TYPE:       return param.type;
     case QtRole::ROLE_PARAM_VALUE:      return QVariant::fromValue(param.value);
+    case QtRole::ROLE_PARAM_PERSISTENT_INDEX: return QPersistentModelIndex(index);
     case QtRole::ROLE_PARAM_CONTROL:    return param.control;
     case QtRole::ROLE_SOCKET_TYPE:      return param.connectProp;
     case QtRole::ROLE_PARAM_IS_WILDCARD:return param.bWildcard;
@@ -777,6 +790,7 @@ QHash<int, QByteArray> ParamsModel::roleNames() const
     roles[QtRole::ROLE_ISINPUT] = "input";
     roles[QtRole::ROLE_PARAM_GROUP] = "group";
     roles[QtRole::ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";
+    roles[QtRole::ROLE_PARAM_PERSISTENT_INDEX] = "per_index";
     roles[QtRole::ROLE_PARAM_CONTROL_PROPS] = "control_properties";
     roles[QtRole::ROLE_PARAM_SOCKET_CLR] = "socket_color";
     return roles;
@@ -880,6 +894,13 @@ QStandardItemModel* ParamsModel::customParamModel()
 CustomUIModel* ParamsModel::customUIModel()
 {
     return m_customUIM;
+}
+
+Qt::ItemFlags ParamsModel::flags(const QModelIndex& index) const
+{
+    if (!index.isValid())
+        return Qt::NoItemFlags;
+    return Qt::ItemIsEditable | QAbstractListModel::flags(index);
 }
 
 void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params, bool bSubnetInit)

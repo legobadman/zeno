@@ -70,19 +70,37 @@ QVariant UiHelper::parseTextValue(const zeno::ParamType& type, const QString& te
     return QVariant();
 }
 
-zeno::reflect::Any UiHelper::qvarToAny(const QVariant& var, const zeno::ParamType type)
+zeno::reflect::Any UiHelper::qvarToAny(const QVariant& var, const zeno::ParamType type, bool is_prim_var)
 {
     if (var.type() == QVariant::String)
     {
-        return var.toString().toStdString();
+        auto val = var.toString().toStdString();
+        if (is_prim_var) {
+            return zeno::PrimVar(val);
+        }
+        else {
+            return val;
+        }
     }
     else if (var.type() == QVariant::Double || var.type() == QMetaType::Float)
     {
-        return var.toFloat();
+        auto val = var.toFloat();
+        if (is_prim_var) {
+            return zeno::PrimVar(val);
+        }
+        else {
+            return val;
+        }
     }
     else if (var.type() == QVariant::Int)
     {
-        return var.toInt();
+        auto val = var.toInt();
+        if (is_prim_var) {
+            return zeno::PrimVar(val);
+        }
+        else {
+            return val;
+        }
     }
     else if (var.type() == QVariant::Bool)
     {
