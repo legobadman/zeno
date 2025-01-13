@@ -32,6 +32,7 @@ void initQml()
     qRegisterMetaType<CustomUIModel*>("ParamTabModel*");
     qRegisterMetaType<CustomUIModel*>("ParamGroupModel*");
     qRegisterMetaType<CustomUIModel*>("ParamPlainModel*");
+    qRegisterMetaType<ParamOutputModel*>("ParamOutputModel*");
     qRegisterMetaType<NodeCateModel*>("NodeCateModel*");
     qRegisterMetaType<QStandardItemModel*>("QStandardItemModel*");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");

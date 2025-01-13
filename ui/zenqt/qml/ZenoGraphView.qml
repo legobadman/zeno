@@ -330,7 +330,6 @@ Qan.GraphView {
             }
 
             Keys.onReturnPressed: {
-                console.log("Enter pressed on TextInput")
                 if (newnode_menu.count > 1) {
                     newnode_menu.itemAt(1).triggered()
                         // console.log("count = " + newnode_menu.count)

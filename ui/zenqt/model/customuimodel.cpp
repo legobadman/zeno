@@ -220,6 +220,7 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
     roles[QtRole::ROLE_PARAM_NAME] = "paramname";
     roles[QtRole::ROLE_PARAM_TYPE] = "type";
     roles[QtRole::ROLE_PARAM_CONTROL] = "control";
+    roles[QtRole::ROLE_PARAM_QML_VALUE] = "value";
     roles[QtRole::ROLE_ISINPUT] = "input";
     roles[QtRole::ROLE_PARAM_GROUP] = "group";
     roles[QtRole::ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";

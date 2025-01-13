@@ -31,139 +31,6 @@ Pane {
         }
     }
 
-    // 定义参数的各个组件，包括参数名，socket和控件
-    Component {
-        id: paramText
-        Row {
-            ToolButton {
-                id: btn_show_prim_sock
-                checkable: true
-                checked: socket_visible
-                property bool reentry: false
-                icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
-
-                onClicked: {
-
-                }
-
-                onCheckedChanged: {
-                    //model.setData(mindex, btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
-                }    
-
-                contentItem: Image {
-                    source: parent.icon.source
-                    sourceSize.width: 20
-                    sourceSize.height: 20
-                    smooth: true
-                    antialiasing: true
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                background: Rectangle {
-                    x: icon_image.x + 3
-                    y: icon_image.y
-                    width: 14
-                    height: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: enabled ? 1 : 0.3
-                    color: parent.hovered ? "#f0f0f0" : "transparent"
-                    radius: width / 2
-                }
-            }
-            Text {
-                text: name    //默认是DisplayRole，参数名
-                color: Qt.rgba(210.0/255, 210.0/255, 210.0/255, 1.0) //"white"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-    }
-
-    Component {
-        id: componentB
-        Text {
-            text: "BBB"
-        }
-    }
-
-    Component {
-        id: compVec2edit
-        ZVec2Editor {
-            value: mvalue
-        }
-    }
-
-    Component {
-        id: compVec3edit
-        ZVec3Editor {
-            value: mvalue
-        }
-    }
-
-    Component {
-        id: compVec4edit
-        ZVec4Editor {
-            value: mvalue
-        }
-    }
-
-    Component {
-        id: complineedit
-        ZLineEditor {
-            text: mvalue
-        }
-    }
-
-    Component {
-        id: textedit
-        ScrollView {
-            id: view
-            width: 200
-            height: 100
-
-            TextArea {
-                id: textArea
-                anchors.margins: 10
-                placeholderText: "请输入文本..."
-                font.pixelSize: 16
-                wrapMode: TextArea.WordWrap // 自动换行模式
-                readOnly: false // 设置为 true 则为只读
-                text: mvalue
-
-                background: Rectangle {
-                    color: "white" // 背景颜色
-                    border.color: textArea.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
-                    border.width: 1
-                }
-            }
-        }
-    }
-
-    Component {
-        id: compCombobox
-        ComboBox {
-            id: comboboxitem
-            model: m_control_properties["combobox_items"]
-            currentIndex: {
-                return model.indexOf(mvalue)
-            }
-        }
-    }
-
-    Component {
-        id: compCheckbox
-        CheckBox {
-            id: checkbox
-            checkState: mvalue ? Qt.Checked : Qt.Unchecked
-        }
-    }
-
-    Component {
-        id: nullControl
-        Text {
-            text: ""
-        }
-    }
-
     Component {
         id: compPropertyPane
         Frame {
@@ -187,63 +54,14 @@ Pane {
                     ScrollBar.horizontal.policy: ScrollBar.AsNeeded
                     ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-                    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-                    ColumnLayout {
-                        Repeater {
-                            model: comp.node.params     //关联的是ParamsModel
-                            delegate:
-                                RowLayout {
-                                    Text {
-                                        text: name  /* c++导出的名字, 可到 ParamsModel::roleNames()查看 */
-                                        color: "white"
-                                        visible: group == ParamGroup.InputPrimitive
-                                        Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
-                                        Layout.alignment: Qt.AlignLeft
-                                    }
-                                    Loader {
-                                        sourceComponent: {
-                                            if (group != ParamGroup.InputPrimitive) {
-                                                return compBlank;
-                                            }
-
-                                            if (control == ParamControl.Lineedit){
-                                                return complineedit
-                                            }
-                                            else if (control == ParamControl.Combobox){
-                                                return compCombobox
-                                            }
-                                            else if (control == ParamControl.Multiline){
-                                                return textedit
-                                            }
-                                            else if (control == ParamControl.Checkbox){
-                                                return compCheckbox
-                                            }
-                                            else if (control == ParamControl.Vec2edit){
-                                                return compVec2edit
-                                            }
-                                            else if (control == ParamControl.Vec3edit){
-                                                return compVec3edit
-                                            }
-                                            else if (control == ParamControl.Vec4edit){
-                                                return compVec4edit
-                                            }
-                                            else if (control == ParamControl.CodeEditor){
-                                                return textedit
-                                            }
-                                            else if (control == ParamControl.Slider){
-                                                return nullControl
-                                            }
-                                            else{
-                                                return nullControl
-                                            }
-                                        }
-                                        property var mvalue: value /* value是c++导出的名字 */
-                                        property var m_control_properties: control_properties /* value是c++导出的名字 */
-                                    }
-                                }
-                        }
+                    ZPropPanel_Group {
+                        id: propGroup
+                        visible: true
+                        height: implicitHeight
+                        clip: true
+                        Layout.fillWidth: true
+                        model: comp.node.params     //关联的是ParamsModel
                     }
-                    /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
                 }
             }
 
@@ -283,7 +101,6 @@ Pane {
                         currentIndex: property_tabbar.currentIndex
 
                         Repeater {
-                            // model: base_tabview.treemodel.rowCount(base_tabview.tabsindex)
                             model: base_tabview.customuimodel.tabModel()
                             delegate: ScrollView {
                                 clip: true
@@ -291,9 +108,7 @@ Pane {
                                 ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
                                 ZPropPanel_Tab {
-                                    model: groups
-                                    parentIndex: model.index(index, 0)
-                                    childCount: model.rowCount()
+                                    model: groups   //ParamTabModel::roleNames()
                                 }
                             }
                         }
@@ -313,12 +128,7 @@ Pane {
                         clip: true
 
                         Layout.fillWidth: true
-                        // model: base_tabview.treemodel
                         model: base_tabview.customuimodel.outputModel()
-                        // parentIndex: outputsindex
-                        childCount: base_tabview.customuimodel.outputModel().rowCount()
-                        // childCount: base_tabview.treemodel.rowCount(outputsindex)
-                        visible: childCount > 0
                     }
                 }
             }
