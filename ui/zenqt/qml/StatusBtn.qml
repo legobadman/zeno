@@ -22,6 +22,8 @@ Item {
     implicitWidth: xoffset + side
     implicitHeight: parent.height
 
+    signal checkedChanged
+
     // layer.enabled: true
     // layer.samples: 64
 
@@ -107,6 +109,7 @@ Item {
             onClicked: {
                 comp.checked = !comp.checked
                 hovered = false     //等再次进入再点亮
+                comp.checkedChanged()
             }
             onEntered:{
                 hovered = true
