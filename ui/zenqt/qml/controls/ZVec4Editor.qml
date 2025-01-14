@@ -4,17 +4,52 @@ import QtQuick.Layouts 1.3
 
 
 Item {
+    id: root
     implicitWidth:  mainLayout.implicitWidth
     implicitHeight: mainLayout.implicitHeight
-    property var value: [0,0,0,0]
+    property var value: ["0","0","0","0"]
+    signal editingFinished
+
+    function get_value() {
+        var vec = []
+        vec.push(xedit.text)
+        vec.push(yedit.text)
+        vec.push(zedit.text)
+        vec.push(wedit.text)
+        return vec
+    }
 
     RowLayout {
         id: mainLayout
         anchors.fill: parent
         spacing: 10
-        VecEdit { text: value[0] }
-        VecEdit { text: value[1] }
-        VecEdit { text: value[2] }
-        VecEdit { text: value[3] }
+        VecEdit {
+            id: xedit
+            text: value[0]
+            onEditingFinished: {
+                root.editingFinished()
+            }
+        }
+        VecEdit {
+            id: yedit
+            text: value[1]
+            onEditingFinished: {
+                root.editingFinished()
+            }    
+        }
+        VecEdit {
+            id: zedit
+            text: value[2]
+            onEditingFinished: {
+                root.editingFinished()
+            }    
+        }
+        VecEdit {
+            id: wedit
+            text: value[3]
+            onEditingFinished: {
+                root.editingFinished()
+            }    
+        }
     }
 }

@@ -10,6 +10,8 @@ Rectangle {
     border.color: inputField.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
     border.width: 1
 
+    signal editingFinished
+
     TextInput {
         id: inputField
         anchors.centerIn: parent
@@ -29,6 +31,15 @@ Rectangle {
 
         onTextChanged: {
                     
+        }
+
+        Keys.onReturnPressed: {
+                // 按下回车键时失去焦点
+            focus = false;
+        }
+
+        onEditingFinished: {
+            container.editingFinished()
         }
     }
 }

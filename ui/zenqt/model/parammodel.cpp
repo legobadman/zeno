@@ -477,7 +477,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
 
     case QtRole::ROLE_PARAM_QML_VALUE:
     {
-        const zeno::reflect::Any& anyVal = UiHelper::qvarToAny(value, param.type, param.control == zeno::Lineedit);
+        const zeno::reflect::Any& anyVal = UiHelper::qvarToAnyByType(value, param.type, param.control == zeno::Lineedit);
         setData(index, QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
         break;
     }

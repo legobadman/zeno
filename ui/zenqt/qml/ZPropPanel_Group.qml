@@ -19,6 +19,11 @@ Item {
         id: compVec2edit
         ZVec2Editor {
             value: mvalue
+
+            onEditingFinished: {
+                var vec = get_value()
+                root.model.setData(mindex, vec, Model.ROLE_PARAM_QML_VALUE)                
+            }
         }
     }
 
@@ -26,6 +31,11 @@ Item {
         id: compVec3edit
         ZVec3Editor {
             value: mvalue
+
+            onEditingFinished: {
+                var vec = get_value()
+                root.model.setData(mindex, vec, Model.ROLE_PARAM_QML_VALUE)
+            }
         }
     }
 
@@ -33,6 +43,10 @@ Item {
         id: compVec4edit
         ZVec4Editor {
             value: mvalue
+            onEditingFinished: {
+                var vec = get_value()
+                root.model.setData(mindex, vec, Model.ROLE_PARAM_QML_VALUE)
+            }
         }
     }
 
@@ -43,6 +57,7 @@ Item {
 
             onEditingFinished: {
                 // console.log("onEditingFinished2: " + text)
+                console.log("mindex = " + mindex)
                 root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
             }
         }

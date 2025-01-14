@@ -228,6 +228,7 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
     roles[QtRole::ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";
     roles[QtRole::ROLE_PARAM_CONTROL_PROPS] = "control_properties";
     roles[QtRole::ROLE_PARAM_SOCKET_CLR] = "socket_color";
+    roles[QtRole::ROLE_PARAM_PERSISTENT_INDEX] = "per_index";
     return roles;
 }
 

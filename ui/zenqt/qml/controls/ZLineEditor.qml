@@ -41,6 +41,7 @@ Rectangle {
         }
 
         onEditingFinished: {
+            //暂时不判断value是否有更改，留给model层或内核层去处理
             container.editingFinished()
         }
     }

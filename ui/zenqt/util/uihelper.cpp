@@ -70,6 +70,196 @@ QVariant UiHelper::parseTextValue(const zeno::ParamType& type, const QString& te
     return QVariant();
 }
 
+zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::ParamType type, bool is_prim_var)
+{
+    QVariant::Type varType = var.type();
+    bool bok = false;
+    switch (type)
+    {
+    case gParamType_Float: {
+        if (varType == QVariant::Double || varType == QMetaType::Float) {
+            float fVal = var.toFloat(&bok);
+            if (!bok)
+                return zeno::reflect::Any();
+            return is_prim_var ? zeno::PrimVar(fVal) : fVal;
+        }
+        else if (varType == QVariant::Int) {
+            float fVal = var.toInt(&bok);
+            if (!bok)
+                return zeno::reflect::Any();
+            return is_prim_var ? zeno::PrimVar(fVal) : fVal;
+        }
+        else if (varType == QVariant::String) {
+            QString sVal = var.toString();
+            float fVal = sVal.toFloat(&bok);
+            if (bok) {
+                return is_prim_var ? zeno::PrimVar(fVal) : fVal;
+            }
+            else {
+                return is_prim_var ? zeno::PrimVar(sVal.toStdString()) : sVal.toStdString();
+            }
+        }
+        else {
+            return zeno::reflect::Any();
+        }
+        break;
+    }
+    case gParamType_Int: {
+        if (varType == QVariant::Double || varType == QMetaType::Float) {
+            int iVal = var.toFloat(&bok);
+            if (!bok)
+                return zeno::reflect::Any();
+            return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+        }
+        else if (varType == QVariant::Int) {
+            int iVal = var.toInt(&bok);
+            if (!bok)
+                return zeno::reflect::Any();
+            return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+        }
+        else if (varType == QVariant::String) {
+            QString sVal = var.toString();
+            int iVal = sVal.toInt(&bok);
+            if (bok) {
+                return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+            }
+            else {
+                //再试试能不能转float
+                iVal = sVal.toFloat(&bok);
+                if (bok) {
+                    return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+                }
+                else {
+                    return is_prim_var ? zeno::PrimVar(sVal.toStdString()) : sVal.toStdString();
+                }
+            }
+        }
+        else {
+            return zeno::reflect::Any();
+        }
+        break;
+    }
+    case gParamType_String: {
+        if (varType == QVariant::String) {
+            QString sVal = var.toString();
+            return is_prim_var ? zeno::PrimVar(sVal.toStdString()) : sVal.toStdString();
+        }
+        break;
+    }
+    case gParamType_Bool: {
+        if (varType == QVariant::Bool) {
+            bool bVal = var.toBool();
+            return bVal;
+        }
+        else if (varType == QVariant::Int) {
+            bool bVal = var.toInt();
+            return bVal;
+        }
+        break;
+    }
+    case gParamType_Vec2i:
+    case gParamType_Vec2f:
+    case gParamType_Vec3i:
+    case gParamType_Vec3f:
+    case gParamType_Vec4i:
+    case gParamType_Vec4f:
+    {
+        bool bFloat = (gParamType_Vec2f == type || gParamType_Vec3f == type || gParamType_Vec4f == type);
+        int nSize = 0;
+        if (gParamType_Vec2i == type || gParamType_Vec2f == type) {
+            nSize = 2;
+        }
+        else if (gParamType_Vec3i == type || gParamType_Vec3f == type) {
+            nSize = 3;
+        }
+        else if (gParamType_Vec4i == type || gParamType_Vec4f == type) {
+            nSize = 4;
+        }
+
+        if (var.userType() == QMetaTypeId<UI_VECTYPE>::qt_metatype_id())
+        {
+            UI_VECTYPE qvec = var.value<UI_VECTYPE>();
+            //默认都是转为VecEdit
+            if (qvec.size() == nSize) {
+                zeno::vecvar vec(nSize);
+                for (int i = 0; i < nSize; i++) {
+                    vec[i] = zeno::PrimVar(bFloat ? (float)qvec[i] : (int)qvec[i]);
+                }
+                return vec;
+            }
+        }
+        else if (varType == QVariant::StringList)
+        {
+            QStringList qvec = var.toStringList();
+            if (qvec.size() == nSize) {
+                zeno::vecvar vec(nSize);
+                for (int i = 0; i < nSize; i++) {
+                    const auto& anyPrimvar = qvarToAnyByType(qvec[i], bFloat ? gParamType_Float : gParamType_Int, true);
+                    if (anyPrimvar.type().hash_code() == zeno::types::gParamType_PrimVariant)
+                    {
+                        const auto& primvar = zeno::reflect::any_cast<zeno::PrimVar>(anyPrimvar);
+                        vec[i] = primvar;
+                    }
+                }
+                return vec;
+            }
+        }
+        else if (varType == QVariant::UserType)
+        {
+            int usrType = var.userType();
+            if (usrType == QMetaTypeId<UI_VECSTRING>::qt_metatype_id())
+            {
+                //TODO:
+            }
+            if (usrType == QMetaTypeId<QJSValue>::qt_metatype_id())
+            {
+                const QJSValue& jsval = var.value<QJSValue>();
+                if (jsval.isArray())
+                {
+                    QVariant var2 = jsval.toVariant();
+                    if (var2.canConvert<QVariantList>())
+                    {
+                        const QVariantList& lst = var2.toList();
+                        if (lst.size() == nSize) {
+                            zeno::vecvar vec(nSize);
+                            for (int i = 0; i < nSize; i++) {
+                                const auto& anyPrimvar = qvarToAnyByType(lst[i], bFloat ? gParamType_Float : gParamType_Int, true);
+                                if (anyPrimvar.type().hash_code() == zeno::types::gParamType_PrimVariant)
+                                {
+                                    const auto& primvar =zeno::reflect::any_cast<zeno::PrimVar>(anyPrimvar);
+                                    vec[i] = primvar;
+                                }
+                            }
+                            return vec;
+                        }
+                    }
+                }
+            }
+        }
+        break;
+    }
+    case gParamType_List: {
+
+    }
+    case gParamType_Dict: {
+
+    }
+    case gParamType_Heatmap: {
+
+    }
+    case gParamType_IObject: {
+
+    }
+    case gParamType_Primitive: {
+
+    }
+    case Param_Null:
+    default:
+        return zeno::reflect::Any();
+    }
+    return zeno::reflect::Any();
+}
+
 zeno::reflect::Any UiHelper::qvarToAny(const QVariant& var, const zeno::ParamType type, bool is_prim_var)
 {
     if (var.type() == QVariant::String)

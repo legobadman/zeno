@@ -41,6 +41,7 @@ public:
     static QVariant zvarToQVar(const zeno::zvariant& var);
     static zeno::zvariant qvarToZVar(const QVariant& var, const zeno::ParamType type);
     static zeno::reflect::Any qvarToAny(const QVariant& var, const zeno::ParamType type = Param_Null, bool is_prim_var = false);
+    static zeno::reflect::Any qvarToAnyByType(const QVariant& var, const zeno::ParamType type, bool is_prim_var = false);
     static QVariant anyToQvar(zeno::reflect::Any any);
     static QVariant initDefaultValue(const zeno::ParamType& type);
     static QVariant parseTextValue(const zeno::ParamType& type, const QString& textValue);
