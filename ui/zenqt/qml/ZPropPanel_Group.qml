@@ -56,8 +56,6 @@ Item {
             text: mvalue
 
             onEditingFinished: {
-                // console.log("onEditingFinished2: " + text)
-                console.log("mindex = " + mindex)
                 root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
             }
         }
@@ -84,6 +82,10 @@ Item {
                     border.color: textArea.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
                     border.width: 1
                 }
+
+                onEditingFinished: {
+                    root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
+                }
             }
         }
     }
@@ -96,6 +98,10 @@ Item {
             currentIndex: {
                 return model.indexOf(mvalue)
             }
+            onCurrentTextChanged: {
+                //初始化此控件的时候会调用一次，确保ViewModel会过滤到相同的值
+                root.model.setData(mindex, currentText, Model.ROLE_PARAM_QML_VALUE)
+            }
         }
     }
 
@@ -104,6 +110,10 @@ Item {
         CheckBox {
             id: checkbox
             checkState: mvalue ? Qt.Checked : Qt.Unchecked
+
+            onCheckStateChanged: {
+                root.model.setData(mindex, checkState == Qt.Checked, Model.ROLE_PARAM_QML_VALUE)
+            }
         }
     }
 

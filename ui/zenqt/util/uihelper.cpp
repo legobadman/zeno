@@ -81,22 +81,34 @@ zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::Pa
             float fVal = var.toFloat(&bok);
             if (!bok)
                 return zeno::reflect::Any();
-            return is_prim_var ? zeno::PrimVar(fVal) : fVal;
+            if (is_prim_var)
+                return zeno::PrimVar(fVal);
+            else
+                return fVal;
         }
         else if (varType == QVariant::Int) {
             float fVal = var.toInt(&bok);
             if (!bok)
                 return zeno::reflect::Any();
-            return is_prim_var ? zeno::PrimVar(fVal) : fVal;
+            if (is_prim_var)
+                return zeno::PrimVar(fVal);
+            else
+                return fVal;
         }
         else if (varType == QVariant::String) {
             QString sVal = var.toString();
             float fVal = sVal.toFloat(&bok);
             if (bok) {
-                return is_prim_var ? zeno::PrimVar(fVal) : fVal;
+                if (is_prim_var)
+                    return zeno::PrimVar(fVal);
+                else
+                    return fVal;
             }
             else {
-                return is_prim_var ? zeno::PrimVar(sVal.toStdString()) : sVal.toStdString();
+                if (is_prim_var)
+                    return zeno::PrimVar(sVal.toStdString());
+                else
+                    return sVal.toStdString();
             }
         }
         else {
@@ -109,28 +121,45 @@ zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::Pa
             int iVal = var.toFloat(&bok);
             if (!bok)
                 return zeno::reflect::Any();
-            return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+            if (is_prim_var)
+                return zeno::PrimVar(iVal);
+            else
+                return iVal;
         }
         else if (varType == QVariant::Int) {
             int iVal = var.toInt(&bok);
             if (!bok)
                 return zeno::reflect::Any();
-            return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+            if (is_prim_var)
+                return zeno::PrimVar(iVal);
+            else
+                return iVal;
         }
         else if (varType == QVariant::String) {
             QString sVal = var.toString();
             int iVal = sVal.toInt(&bok);
             if (bok) {
-                return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+                if (is_prim_var) {
+                    return zeno::PrimVar(iVal);
+                }
+                else {
+                    return iVal;
+                }
             }
             else {
                 //再试试能不能转float
                 iVal = sVal.toFloat(&bok);
                 if (bok) {
-                    return is_prim_var ? zeno::PrimVar(iVal) : iVal;
+                    if (is_prim_var)
+                        return zeno::PrimVar(iVal);
+                    else
+                        return iVal;
                 }
                 else {
-                    return is_prim_var ? zeno::PrimVar(sVal.toStdString()) : sVal.toStdString();
+                    if (is_prim_var)
+                        return zeno::PrimVar(sVal.toStdString());
+                    else
+                        return sVal.toStdString();
                 }
             }
         }
@@ -142,7 +171,12 @@ zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::Pa
     case gParamType_String: {
         if (varType == QVariant::String) {
             QString sVal = var.toString();
-            return is_prim_var ? zeno::PrimVar(sVal.toStdString()) : sVal.toStdString();
+            if (is_prim_var) {
+                return zeno::PrimVar(sVal.toStdString());
+            }
+            else {
+                return sVal.toStdString();
+            }
         }
         break;
     }
@@ -183,7 +217,12 @@ zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::Pa
             if (qvec.size() == nSize) {
                 zeno::vecvar vec(nSize);
                 for (int i = 0; i < nSize; i++) {
-                    vec[i] = zeno::PrimVar(bFloat ? (float)qvec[i] : (int)qvec[i]);
+                    if (bFloat) {
+                        vec[i] = zeno::PrimVar((float)qvec[i]);
+                    }
+                    else {
+                        vec[i] = zeno::PrimVar((int)qvec[i]);
+                    }
                 }
                 return vec;
             }
