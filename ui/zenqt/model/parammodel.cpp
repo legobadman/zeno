@@ -593,6 +593,14 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
                 }
                 map["combobox_items"] = qitems;
             }
+            if (param.optCtrlprops.type().hash_code() == zeno::types::gParamType_IntList) {
+                const auto& items = zeno::reflect::any_cast<std::vector<int>>(param.optCtrlprops);
+                QVariantList qitems;
+                for (int item : items) {
+                    qitems.append(item);
+                }
+                map["slider"] = qitems;
+            }
         }
         return map;
     }

@@ -1,25 +1,30 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.0
 
-Rectangle {
+Item {
     id: container
-    width: inputField.width
-    height: inputField.height
-    color: "transparent"
-    border.color: inputField.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
-    border.width: 1
-    anchors.centerIn: parent
+    width: 120
+    height: 24
+    //anchors.centerIn: parent
 
     property alias text: inputField.text
 
     signal editingFinished
 
+    Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.color: inputField.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
+        border.width: 1
+    }
+
     TextInput {
         id: inputField
-        anchors.centerIn: parent
+        anchors.fill: parent
+        // anchors.centerIn: parent
         verticalAlignment: Text.AlignVCenter
-        width: 120
-        height: 24
+        // width: inputField.width
+        // height: inputField.height
 
         topPadding: 5
         bottomPadding: 5

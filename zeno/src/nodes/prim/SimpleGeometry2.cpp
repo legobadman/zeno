@@ -380,6 +380,8 @@ namespace zeno {
                 {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
                 {"Direction", ParamPrimitive("Direction", "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"})},
                 {"bCalcPointNormals", ParamPrimitive("Point Normals")},
+                {"Rows", ParamPrimitive("Rows", 2, Slider, std::vector<int>{1,100,1})},
+                {"Columns", ParamPrimitive("Columns", 2, Slider, std::vector<int>{1,100,1})}
             },
             _Group {
                 {"", ParamObject("Output")},

@@ -99,8 +99,43 @@ Item {
                 return model.indexOf(mvalue)
             }
             onCurrentTextChanged: {
-                //初始化此控件的时候会调用一次，确保ViewModel会过滤到相同的值
-                root.model.setData(mindex, currentText, Model.ROLE_PARAM_QML_VALUE)
+                //这个条件是为了过滤初始化值时的value changed
+                if (currentText != mvalue) {
+                    root.model.setData(mindex, currentText, Model.ROLE_PARAM_QML_VALUE)
+                }
+            }
+        }
+    }
+
+    Component {
+        id: compSlider
+        RowLayout {
+            ZLineEditor {
+                text: "0"
+                width: 40
+                property alias val: slideritem.value
+                onEditingFinished: {
+                    val = text
+                }
+                onValChanged: {
+                    text = val
+                }
+            }            
+            Slider {
+                id: slideritem
+                property var list: m_control_properties["slider"]
+                from: list[0]
+                value: mvalue
+                to: list[1]
+                stepSize: list[2]
+
+                onValueChanged: {
+                    //这个条件是为了过滤初始化值时的value changed
+                    if (value != mvalue) {
+                        // console.log("slider value changed")
+                        root.model.setData(mindex, value, Model.ROLE_PARAM_QML_VALUE)
+                    }
+                }
             }
         }
     }
@@ -199,7 +234,7 @@ Item {
                                 return textedit
                             }
                             else if (control == ParamControl.Slider){
-                                return nullControl
+                                return compSlider
                             }
                             else{
                                 return nullControl
