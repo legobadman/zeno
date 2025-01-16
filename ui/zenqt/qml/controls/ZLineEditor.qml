@@ -32,12 +32,16 @@ Item {
         rightPadding: 5
         font.pixelSize: 14
         color: "white"
-        focus: true // 确保输入框可以获得焦点
+        //focus: true // 确保输入框可以获得焦点
         selectByMouse: true // 启用鼠标选择文本功能
         clip: true
 
         onTextChanged: {
             //console.log("Text changed:", text)
+        }
+
+        onFocusChanged: {
+            console.log("TextInput focus changed")
         }
 
         Keys.onReturnPressed: {
@@ -47,7 +51,9 @@ Item {
 
         onEditingFinished: {
             //暂时不判断value是否有更改，留给model层或内核层去处理
+            console.log("onEditingFinished")
             container.editingFinished()
+            focus = false
         }
     }
 }

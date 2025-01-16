@@ -35,6 +35,19 @@ Item {
                 root.editingFinished()
             }
         }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    console.log("empty area of vec2editor onClicked")
+                    parent.forceActiveFocus();
+                }
+            }
+        }
     }
 }
 

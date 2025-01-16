@@ -162,16 +162,24 @@ Item {
     //Body
     ColumnLayout {
         id: mainlayout
+        spacing: 0
+        Layout.fillWidth: true
+
         Repeater {
             model: root.model     //关联的是ParamPlainModel
             delegate:
                 RowLayout {
+                    spacing: 0
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.fillWidth: true
+
                     ToolButton {
                         id: btn_show_prim_sock
                         checkable: true
                         checked: socket_visible
                         icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
                         visible: group == ParamGroup.InputPrimitive
+                        Layout.leftMargin: 0
 
                         onCheckedChanged: {
                             root.model.setData(root.model.index(index, 0), btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
@@ -196,6 +204,14 @@ Item {
                             color: parent.hovered ? "#f0f0f0" : "transparent"
                             radius: width / 2
                         }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                console.log("btn_show_prim_sock name onClicked")
+                                parent.forceActiveFocus();
+                            }
+                        }
                     }                    
                     Text {
                         text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
@@ -203,6 +219,14 @@ Item {
                         visible: group == ParamGroup.InputPrimitive
                         Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
                         Layout.alignment: Qt.AlignLeft
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                console.log("socket name onClicked")
+                                parent.forceActiveFocus();
+                            }
+                        }
                     }
                     Loader {
                         sourceComponent: {
@@ -244,7 +268,42 @@ Item {
                         property var m_control_properties: control_properties /* value是c++导出的名字 */
                         property var mindex: per_index
                     }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                console.log("empty area of RowLayout onClicked")
+                                parent.forceActiveFocus();
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "green"
+                        }
+                    }
                 }
         }
     }
+
+    // 背景点击区域
+    // MouseArea {
+    //     anchors.fill: parent
+    //     onClicked: {
+    //         // 如果 TextInput 有焦点，则清除
+    //         console.log("background onclick")
+    //         mouse.accept = false
+    //         // inputField.focus = false;
+    //     }
+    //     onPressed: {
+    //         mouse.accept = false
+    //     }
+    //     onReleased: {
+    //         mouse.accept = false
+    //     }
+    // }
 }
