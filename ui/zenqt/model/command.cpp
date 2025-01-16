@@ -16,50 +16,6 @@ AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QS
     , m_pos(nodedata.uipos)
     , m_cate(cate)
 {
-    if (zeno::isDerivedFromSubnetNodeName(m_nodeData.cls)) //init subnet default socket
-    {
-        zeno::ParamTab tab;
-        zeno::ParamGroup default;
-
-        zeno::ParamUpdateInfo info;
-
-        zeno::ParamPrimitive param;
-        param.bInput = true;
-        param.name = "int1";
-        param.defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::PrimVar(0));;
-        param.type = zeno::types::gParamType_Int;
-        param.socketType = zeno::Socket_Primitve;
-        param.control = zeno::Lineedit;
-        param.bSocketVisible = false;
-        info.param = param;
-        default.params.push_back(param);
-
-        zeno::ParamPrimitive outputparam;
-        outputparam.bInput = false;
-        outputparam.name = "output1";
-        outputparam.defl = zeno::reflect::Any();
-        outputparam.type = Param_Wildcard;
-        outputparam.socketType = zeno::Socket_Primitve;
-        outputparam.bSocketVisible = false;
-        info.param = outputparam;
-
-        zeno::ParamObject objInput;
-        objInput.bInput = true;
-        objInput.name = "objInput1";
-        objInput.type = gParamType_Geometry;
-
-        zeno::ParamObject objOutput;
-        objOutput.bInput = false;
-        objOutput.name = "objOutput1";
-        objOutput.type = gParamType_Geometry;
-        objOutput.socketType = zeno::Socket_Output;
-
-        tab.groups.emplace_back(std::move(default));
-        m_nodeData.customUi.inputPrims.emplace_back(std::move(tab));
-        m_nodeData.customUi.inputObjs.push_back(objInput);
-        m_nodeData.customUi.outputPrims.push_back(outputparam);
-        m_nodeData.customUi.outputObjs.push_back(objOutput);
-    }
 }
 
 AddNodeCommand::~AddNodeCommand()

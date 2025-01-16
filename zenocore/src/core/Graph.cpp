@@ -809,6 +809,10 @@ std::shared_ptr<INode> Graph::createNode(std::string const& cls, const std::stri
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {
         subnet_nodes.insert(uuid);
+
+        zeno::ParamsUpdateInfo updateInfo;
+        zeno::parseUpdateInfo(node->get_customui(), updateInfo);
+        node->update_editparams(updateInfo);
     }
     if (cls == "SubInput") {
         subinput_nodes.insert(uuid);

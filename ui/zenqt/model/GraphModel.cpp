@@ -1215,10 +1215,10 @@ zeno::NodeData GraphModel::_createNodeImpl(const QString& cate, zeno::NodeData& 
                     const auto asset = zeno::getSession().assets->getAsset(nodedata.cls);
                     nodedata.customUi = asset.m_customui;
                 }
-                zeno::ParamsUpdateInfo updateInfo;
-                zeno::parseUpdateInfo(nodedata.customUi, updateInfo);
-                paramsM->resetCustomUi(nodedata.customUi);
-                paramsM->batchModifyParams(updateInfo, true);
+                //zeno::ParamsUpdateInfo updateInfo;
+                //zeno::parseUpdateInfo(nodedata.customUi, updateInfo);
+                //paramsM->resetCustomUi(nodedata.customUi);
+                //paramsM->batchModifyParams(updateInfo, true);
 
                 if (nodedata.subgraph.has_value())
                 {

@@ -22,7 +22,50 @@ ZENO_API SubnetNode::SubnetNode() : subgraph(std::make_shared<Graph>(""))
     subgraph->optParentSubgNode = this;
 
     auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
-    m_customUi = cl->m_customui;
+    //m_customUi = cl->m_customui;
+    {   //添加一些default的输入输出
+        zeno::ParamTab tab;
+        zeno::ParamGroup default;
+
+        zeno::ParamUpdateInfo info;
+
+        zeno::ParamPrimitive param;
+        param.bInput = true;
+        param.name = "int1";
+        param.defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::PrimVar(0));;
+        param.type = zeno::types::gParamType_Int;
+        param.socketType = zeno::Socket_Primitve;
+        param.control = zeno::Lineedit;
+        param.bSocketVisible = false;
+        info.param = param;
+        default.params.push_back(param);
+
+        zeno::ParamPrimitive outputparam;
+        outputparam.bInput = false;
+        outputparam.name = "output1";
+        outputparam.defl = zeno::reflect::Any();
+        outputparam.type = Param_Wildcard;
+        outputparam.socketType = zeno::Socket_Primitve;
+        outputparam.bSocketVisible = false;
+        info.param = outputparam;
+
+        zeno::ParamObject objInput;
+        objInput.bInput = true;
+        objInput.name = "objInput1";
+        objInput.type = gParamType_Geometry;
+
+        zeno::ParamObject objOutput;
+        objOutput.bInput = false;
+        objOutput.name = "objOutput1";
+        objOutput.type = gParamType_Geometry;
+        objOutput.socketType = zeno::Socket_Output;
+
+        tab.groups.emplace_back(std::move(default));
+        m_customUi.inputPrims.emplace_back(std::move(tab));
+        m_customUi.inputObjs.push_back(objInput);
+        m_customUi.outputPrims.push_back(outputparam);
+        m_customUi.outputObjs.push_back(objOutput);
+    }
 }
 
 ZENO_API SubnetNode::~SubnetNode() = default;
