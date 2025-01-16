@@ -17,6 +17,9 @@ Pane {
     implicitHeight: 300
     padding: 0
 
+    //internal property:
+    property var scrollitem: undefined
+
     onNodeChanged: nodeItem = node ? node.item : undefined
 
     background: Rectangle {
@@ -61,6 +64,10 @@ Pane {
                         clip: true
                         Layout.fillWidth: true
                         model: comp.node.params     //关联的是ParamsModel
+
+                        Component.onCompleted: {
+                            comp.scrollitem = this
+                        }
                     }
                 }
             }
@@ -109,6 +116,12 @@ Pane {
 
                                 ZPropPanel_Tab {
                                     model: groups   //ParamTabModel::roleNames()
+
+                                    Component.onCompleted: {
+                                        if (index == 0) {
+                                            comp.scrollitem = this
+                                        }
+                                    }
                                 }
                             }
                         }

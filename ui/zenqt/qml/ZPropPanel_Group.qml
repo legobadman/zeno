@@ -280,11 +280,6 @@ Item {
                                 parent.forceActiveFocus();
                             }
                         }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            color: "green"
-                        }
                     }
                 }
         }

@@ -58,10 +58,4 @@ Item {
             }
         }
     }
-
-    Rectangle {
-        anchors.fill: parent
-        color: "red"
-        z: -10
-    }
 }
