@@ -204,14 +204,6 @@ Item {
                             color: parent.hovered ? "#f0f0f0" : "transparent"
                             radius: width / 2
                         }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("btn_show_prim_sock name onClicked")
-                                parent.forceActiveFocus();
-                            }
-                        }
                     }                    
                     Text {
                         text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
@@ -219,14 +211,6 @@ Item {
                         visible: group == ParamGroup.InputPrimitive
                         Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
                         Layout.alignment: Qt.AlignLeft
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("socket name onClicked")
-                                parent.forceActiveFocus();
-                            }
-                        }
                     }
                     Loader {
                         sourceComponent: {
@@ -268,42 +252,7 @@ Item {
                         property var m_control_properties: control_properties /* value是c++导出的名字 */
                         property var mindex: per_index
                     }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("empty area of RowLayout onClicked")
-                                parent.forceActiveFocus();
-                            }
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            color: "green"
-                        }
-                    }
                 }
         }
     }
-
-    // 背景点击区域
-    // MouseArea {
-    //     anchors.fill: parent
-    //     onClicked: {
-    //         // 如果 TextInput 有焦点，则清除
-    //         console.log("background onclick")
-    //         mouse.accept = false
-    //         // inputField.focus = false;
-    //     }
-    //     onPressed: {
-    //         mouse.accept = false
-    //     }
-    //     onReleased: {
-    //         mouse.accept = false
-    //     }
-    // }
 }

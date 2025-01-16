@@ -44,24 +44,5 @@ Item {
                 root.editingFinished()
             }    
         }
-
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    console.log("empty area of vec3editor onClicked")
-                    parent.forceActiveFocus();
-                }
-            }
-        }
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        color: "red"
-        z: -10
     }
 }

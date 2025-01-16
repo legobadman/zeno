@@ -53,6 +53,7 @@ Pane {
                     clip: true
                     ScrollBar.horizontal.policy: ScrollBar.AsNeeded
                     ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                    anchors.fill: parent
 
                     ZPropPanel_Group {
                         id: propGroup
@@ -61,6 +62,19 @@ Pane {
                         clip: true
                         Layout.fillWidth: true
                         model: comp.node.params     //关联的是ParamsModel
+                    }
+
+                    Item {
+                        //通过设置一个Item来接收空白处的点击事件，从而迫使编辑框等控件的焦点可以丢失，完成编辑
+                        z: -30
+                        anchors.fill: parent
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                //console.log("empty area of ScrollView")
+                                parent.forceActiveFocus();
+                            }
+                        }
                     }
                 }
             }
