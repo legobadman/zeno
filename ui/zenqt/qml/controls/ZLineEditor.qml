@@ -5,6 +5,7 @@ Item {
     id: container
     width: 120
     height: 24
+    //anchors.centerIn: parent
 
     property alias text: inputField.text
 
@@ -40,7 +41,7 @@ Item {
         }
 
         onFocusChanged: {
-            //console.log("TextInput focus changed")
+            console.log("TextInput focus changed")
         }
 
         Keys.onReturnPressed: {
@@ -50,7 +51,7 @@ Item {
 
         onEditingFinished: {
             //暂时不判断value是否有更改，留给model层或内核层去处理
-            //console.log("onEditingFinished")
+            console.log("onEditingFinished")
             container.editingFinished()
             focus = false
         }
