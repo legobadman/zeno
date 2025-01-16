@@ -208,7 +208,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                console.log("btn_show_prim_sock name onClicked")
+                                // console.log("btn_show_prim_sock name onClicked")
                                 parent.forceActiveFocus();
                             }
                         }
@@ -223,7 +223,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                console.log("socket name onClicked")
+                                // console.log("socket name onClicked")
                                 parent.forceActiveFocus();
                             }
                         }
@@ -276,7 +276,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                console.log("empty area of RowLayout onClicked")
+                                // console.log("empty area of RowLayout onClicked")
                                 parent.forceActiveFocus();
                             }
                         }
@@ -291,19 +291,16 @@ Item {
     }
 
     // 背景点击区域
-    // MouseArea {
-    //     anchors.fill: parent
-    //     onClicked: {
-    //         // 如果 TextInput 有焦点，则清除
-    //         console.log("background onclick")
-    //         mouse.accept = false
-    //         // inputField.focus = false;
-    //     }
-    //     onPressed: {
-    //         mouse.accept = false
-    //     }
-    //     onReleased: {
-    //         mouse.accept = false
-    //     }
-    // }
+    Item
+    {
+        z: -100
+        anchors.fill: parent
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                //console.log("empty area of Group Item")
+                parent.forceActiveFocus();
+            }
+        }        
+    }
 }
