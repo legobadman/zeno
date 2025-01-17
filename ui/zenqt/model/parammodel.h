@@ -46,6 +46,7 @@ public:
     ParamsModel(zeno::INode* spNode, QObject* parent = nullptr);
 
     Q_PROPERTY(bool showPrimSocks READ getShowPrimSocks WRITE setShowPrimSocks NOTIFY showPrimSocks_changed)
+    Q_PROPERTY(int numOfOutputPrims READ getNumOfOutputPrims NOTIFY numOfOutputPrims_changed)
 
     Q_INVOKABLE int indexFromName(const QString& name, bool bInput) const;
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
@@ -76,6 +77,8 @@ public:
     PARAMS_INFO getOutputs();
     zeno::CustomUI customUI() const;
 
+    int getNumOfOutputPrims() const;
+
     //temp:
 
     void batchModifyParams(const zeno::ParamsUpdateInfo& params, bool bSubnetInit = false);
@@ -93,6 +96,7 @@ signals:
     void portTypeChanged(const QModelIndex& idx, bool bPrime);
     void enabledVisibleChanged();
     void showPrimSocks_changed();
+    void numOfOutputPrims_changed();
 
 private:
     void initParamItems();

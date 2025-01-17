@@ -17,14 +17,34 @@ Pane {
     implicitHeight: 300
     padding: 0
 
+    property real realWidth: 0
+    property real realHeight: 0
+
     //internal property:
     property var scrollitem: undefined
+    property var output_scrollitem: undefined
 
     onNodeChanged: nodeItem = node ? node.item : undefined
 
     background: Rectangle {
         // color: "transparent" // 设置 Pane 的背景颜色
         color: Qt.rgba(51./255, 51./255, 51./255, 1.0)
+    }
+
+    function calc_content_height() {
+        // console.log("scrollitem.height: " + scrollitem.height)
+        // if (output_scrollitem) {
+        //     console.log("output_scrollitem.height: " + output_scrollitem.height)
+        // }
+        var H = scrollitem.height + output_scrollitem.height + 50
+        if (output_scrollitem.height > 0) {
+            H += 50
+        }
+        return H
+    }
+
+    function calc_content_width() {
+        return scrollitem.width + 32;
     }
 
     Component {
@@ -74,29 +94,54 @@ Pane {
                             ScrollBar.horizontal.policy: ScrollBar.AsNeeded
                             ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-                            ZPropPanel_Group {
-                                visible: true
-                                height: implicitHeight
-                                clip: true
-                                Layout.fillWidth: true
-                                is_input_prim: true
-                                model: comp.node.params     //关联的是ParamsModel
+                            ColumnLayout {
+                                ZPropPanel_Group {
+                                    visible: true
+                                    height: implicitHeight
+                                    clip: true
+                                    Layout.fillWidth: true
+                                    is_input_prim: true
+                                    model: comp.node.params     //关联的是ParamsModel
 
-                                Component.onCompleted: {
-                                    comp.scrollitem = this
+                                    Component.onCompleted: {
+                                        comp.scrollitem = this
+                                    }
                                 }
                             }
                         }
                     }
+
+                    Item {
+                        visible: comp.node.params.numOfOutputPrims
+                        height: 32
+                    }
+
+                    Text {
+                        visible: comp.node.params.numOfOutputPrims
+                        text: "Output Parameter";
+                        color: Qt.rgba(210.0/255, 210.0/255, 210.0/255, 1.0)//"white"
+                    }
+
+                    Rectangle {
+                        visible: comp.node.params.numOfOutputPrims
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "white"
+                    }                    
 
                     //输出的prim类型的参数组，主要是为了让用户勾选显示/隐藏输出socket.
                     ZPropPanel_Group {
                         height: implicitHeight
                         clip: true
                         is_input_prim: false
+                        visible: comp.node.params.numOfOutputPrims
 
                         Layout.fillWidth: true
                         model: comp.node.params
+
+                        Component.onCompleted: {
+                            comp.output_scrollitem = this
+                        }
                     }
                 }
             }
@@ -171,6 +216,10 @@ Pane {
 
                         Layout.fillWidth: true
                         model: base_tabview.customuimodel.outputModel()
+
+                        Component.onCompleted: {
+                            comp.output_scrollitem = this
+                        }
                     }
                 }
             }

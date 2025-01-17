@@ -238,8 +238,10 @@ Qan.GraphView {
 
     onNodeClicked: function(node){
         proppanel.node = node
-        proppanel.width = Math.min(graphView.width * 0.4, proppanel.scrollitem.width + 32)
-        proppanel.height = Math.min(graphView.height * 0.6, proppanel.scrollitem.height + 32)
+        var contentW = proppanel.calc_content_width()
+        var contentH = proppanel.calc_content_height()
+        proppanel.width = Math.min(graphView.width * 0.4, contentW)
+        proppanel.height = Math.min(graphView.height * 0.6, contentH)
     }
 
     graph: Qan.Graph {
@@ -626,14 +628,9 @@ Qan.GraphView {
                 var pt = graphView.mapFromItem(proppanel, Qt.point(mouse.x, 0))
                 var mouseX = pt.x
                 let newWidth = proppanel.width + (proppanel.x - mouseX)
+                var contentW = proppanel.calc_content_width()
                 proppanel.x = mouseX
-                if (proppanel.scrollitem) {
-                    proppanel.width = Math.min(newWidth, proppanel.scrollitem.width + 32)
-                    //console.log("scroll content: " + proppanel.scrollitem.width + "," + proppanel.scrollitem.height)
-                }
-                else{
-                    proppanel.width = newWidth
-                }
+                proppanel.width = Math.min(newWidth, contentW)
             }
         }
 
@@ -652,13 +649,8 @@ Qan.GraphView {
                 var viewY = graphView.mapFromGlobal(0, globalY).y
                 let newHeight = viewY - proppanel.y
 
-                if (proppanel.scrollitem) {
-                    proppanel.height = Math.min(newHeight, proppanel.scrollitem.height + 32)
-                    //console.log("scroll content: " + proppanel.scrollitem.width + "," + proppanel.scrollitem.height)
-                }
-                else{
-                    proppanel.height = newHeight
-                }                
+                var contentH = proppanel.calc_content_height()
+                proppanel.height = Math.min(newHeight, contentH)
             }
         }
     }

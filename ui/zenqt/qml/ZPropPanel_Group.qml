@@ -207,15 +207,7 @@ Item {
                             color: parent.hovered ? "#f0f0f0" : "transparent"
                             radius: width / 2
                         }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                // console.log("btn_show_prim_sock name onClicked")
-                                parent.forceActiveFocus();
-                            }
-                        }
-                    }                    
+                    }
                     Text {
                         text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
                         color: "white"

@@ -1162,6 +1162,15 @@ int ParamsModel::numOfInputParams() const
     return n;
 }
 
+int ParamsModel::getNumOfOutputPrims() const {
+    int n = 0;
+    for (auto item : m_items) {
+        if (item.group == zeno::Role_OutputPrimitive)
+            n++;
+    }
+    return n;
+}
+
 bool ParamsModel::getShowPrimSocks() const {
     for (auto& item : m_items) {
         if (item.group == zeno::Role_InputPrimitive || item.group == zeno::Role_OutputPrimitive) {
