@@ -3,6 +3,7 @@ import QtQuick.Controls          2.15
 import QtQuick.Controls.Material 2.1
 import QtQuick.Layouts           1.3
 import QtQuick.Controls.Styles   1.4
+import QtQuick.Dialogs 1.3
 import zeno.enum 1.0
 import "./controls"
 
@@ -154,6 +155,54 @@ Item {
     }
 
     Component {
+        id: colorDialogComponent
+        ColorDialog { }
+    }
+
+    function hexToRgb(hex) {
+        // 检查是否是有效的 Hex 颜色值
+        let match = /^#([0-9a-fA-F]{6})$/.exec(hex);
+        if (!match) return null;
+
+        let r = parseInt(match[1].substring(0, 2), 16) / 255.0;
+        let g = parseInt(match[1].substring(2, 4), 16) / 255.0;
+        let b = parseInt(match[1].substring(4, 6), 16) / 255.0;
+
+        return [r,g,b];
+    }
+
+    Component {
+        id: compColorWidget
+
+        Rectangle {
+            id: colorBlock
+            width: 96
+            height: 24
+            color: Qt.rgba(mvalue[0], mvalue[1], mvalue[2], 1)//"red"
+            radius: 2
+
+            MouseArea {
+                anchors.fill: parent
+
+                onClicked: {
+                    var dialog = colorDialogComponent.createObject(colorBlock, {
+                        title: "select color"
+                    })
+                    dialog.onAccepted.connect(function() {
+                        var rgbval = hexToRgb(dialog.color)
+                        root.model.setData(mindex, rgbval, Model.ROLE_PARAM_QML_VALUE)
+                    })
+                    dialog.open()
+                }
+            }
+
+            Component.onCompleted: {
+                console.log("mvalue: " + mvalue)
+            }
+        }
+    }
+
+    Component {
         id: nullControl
         Text {
             text: ""
@@ -251,6 +300,9 @@ Item {
                             }
                             else if (control == ParamControl.CodeEditor){
                                 return textedit
+                            }
+                            else if (control == ParamControl.ColorVec) {
+                                return compColorWidget
                             }
                             else if (control == ParamControl.Slider){
                                 return compSlider
