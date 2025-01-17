@@ -277,7 +277,7 @@ void GraphModel::registerCoreNotify()
     });
 
     m_cbAddLink = coreGraph->register_addLink([&](zeno::EdgeInfo edge) -> bool {
-        _addLink(edge);
+        _addLink_callback(edge);
         return true;
     });
 
@@ -361,13 +361,12 @@ void GraphModel::addLink(const QString& fromNodeStr, const QString& fromParamStr
     link.inParam = toParamStr.toStdString();
     link.outNode = fromNodeStr.toStdString();
     link.outParam = fromParamStr.toStdString();
-    _addLink(link);
-    //_addLinkImpl(link, true);
+    _addLink_apicall(link, true);
 }
 
 void GraphModel::addLink(const zeno::EdgeInfo& link)
 {
-    _addLinkImpl(link, true);
+    _addLink_apicall(link, true);
 }
 
 QString GraphModel::name() const
@@ -944,7 +943,7 @@ void GraphModel::_initLink()
         for (auto param : nodedata.customUi.inputObjs) {
             for (auto link : param.links) {
                 link.bObjLink = true;
-                _addLink(link);
+                _addLink_callback(link);
             }
         }
         //primitives links init
@@ -953,7 +952,7 @@ void GraphModel::_initLink()
                 for (auto param : group.params) {
                     for (auto link : param.links) {
                         link.bObjLink = false;
-                        _addLink(link);
+                        _addLink_callback(link);
                     }
                 }
             }
@@ -961,7 +960,7 @@ void GraphModel::_initLink()
     }
 }
 
-void GraphModel::_addLink(const zeno::EdgeInfo link)
+void GraphModel::_addLink_callback(const zeno::EdgeInfo link)
 {
     QModelIndex from, to;
 
@@ -1297,7 +1296,7 @@ bool GraphModel::_removeNodeImpl(const QString& name, bool endTransaction)
     }
 }
 
-void GraphModel::_addLinkImpl(const zeno::EdgeInfo& link, bool endTransaction)
+void GraphModel::_addLink_apicall(const zeno::EdgeInfo& link, bool endTransaction)
 {
     bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)

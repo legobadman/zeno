@@ -180,7 +180,7 @@ void LinkCommand::redo()
                     break;
                 }
             }
-            m_model->_addLinkImpl(m_link);
+            m_model->_addLink_apicall(m_link);
     }
     }
     else
@@ -206,7 +206,7 @@ void LinkCommand::undo()
     {
         m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
         if (m_model)
-            m_model->_addLinkImpl(m_link);
+            m_model->_addLink_apicall(m_link);
     }
 }
 

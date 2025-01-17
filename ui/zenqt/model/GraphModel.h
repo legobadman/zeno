@@ -100,7 +100,7 @@ public:
     //undo, redo
     zeno::NodeData _createNodeImpl(const QString& cate, zeno::NodeData& nodedata, bool endTransaction = false);
     bool _removeNodeImpl(const QString& name, bool endTransaction = false);
-    void _addLinkImpl(const zeno::EdgeInfo& link, bool endTransaction = false);
+    void _addLink_apicall(const zeno::EdgeInfo& link, bool endTransaction = false);
     void _removeLinkImpl(const zeno::EdgeInfo& link, bool endTransaction = false);
     bool setModelData(const QModelIndex& index, const QVariant& newValue, int role);
     void _setViewImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
@@ -121,7 +121,7 @@ private:
     void unRegisterCoreNotify();
     void _appendNode(void* spNode);
     void _initLink();
-    void _addLink(const zeno::EdgeInfo link);
+    void _addLink_callback(const zeno::EdgeInfo link);
     bool _removeLink(const zeno::EdgeInfo& edge);
     void _updateName(const QString& oldName, const QString& newName);
     void _clear();
