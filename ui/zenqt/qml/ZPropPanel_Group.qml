@@ -155,6 +155,56 @@ Item {
     }
 
     Component {
+        id: compFileDialog
+
+        FileDialog {
+            id: fileDialog
+            title: "选择一个文件"
+            selectExisting: true // 只允许选择现有文件
+
+            onRejected: {
+                
+            }
+        }
+    }
+
+    Component {
+        id: compPathEdit
+
+        Row {
+            id: controlPathEdit
+            spacing: 10
+
+            TextField {
+                id: pathField
+                width: 250
+                placeholderText: "请输入路径或选择文件"
+                placeholderTextColor: "gray"
+                selectByMouse: true // 启用鼠标选择文本功能
+                text: mvalue
+                color: "white"
+            }
+
+            Button {
+                text: "Select File"
+                onClicked: {
+                    var dialog = compFileDialog.createObject(controlPathEdit, {
+                        title: "select file"
+                    })
+                    dialog.onAccepted.connect(function() {
+                        var filePath = dialog.fileUrl.toString()
+                        console.log("fileUrl = " + filePath)
+                        //TODO: 这种fileUrl是file:// 需要转为普通的路径，否则不好处理
+                        root.model.setData(mindex, filePath, Model.ROLE_PARAM_QML_VALUE)
+                    })
+                    dialog.open()
+                }
+            }
+        }
+    }
+
+
+    Component {
         id: colorDialogComponent
         ColorDialog { }
     }
@@ -303,6 +353,9 @@ Item {
                             }
                             else if (control == ParamControl.ColorVec) {
                                 return compColorWidget
+                            }
+                            else if (control == ParamControl.ReadPathEdit || control == ParamControl.WritePathEdit) {
+                                return compPathEdit
                             }
                             else if (control == ParamControl.Slider){
                                 return compSlider
