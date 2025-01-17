@@ -11,6 +11,7 @@ Item {
     id: root
 
     property var model          //ParamPlainModel*
+    property bool is_input_prim: true
 
     implicitWidth: mainlayout.implicitWidth
     implicitHeight: mainlayout.implicitHeight
@@ -173,12 +174,14 @@ Item {
                     Layout.alignment: Qt.AlignLeft
                     Layout.fillWidth: true
 
+                    property bool is_match_group: (root.is_input_prim && group == ParamGroup.InputPrimitive) || (!root.is_input_prim && group == ParamGroup.OutputPrimitive)
+
                     ToolButton {
                         id: btn_show_prim_sock
                         checkable: true
                         checked: socket_visible
                         icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
-                        visible: group == ParamGroup.InputPrimitive
+                        visible: is_match_group
                         Layout.leftMargin: 0
 
                         onCheckedChanged: {
@@ -216,7 +219,7 @@ Item {
                     Text {
                         text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
                         color: "white"
-                        visible: group == ParamGroup.InputPrimitive
+                        visible: is_match_group
                         Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
                         Layout.alignment: Qt.AlignLeft
 
@@ -230,7 +233,7 @@ Item {
                     }
                     Loader {
                         sourceComponent: {
-                            if (group != ParamGroup.InputPrimitive) {
+                            if (!is_match_group) {
                                 return compBlank;
                             }
                             if (control == ParamControl.Lineedit){

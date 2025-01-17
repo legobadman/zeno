@@ -52,22 +52,51 @@ Pane {
 
             Component {
                 id: comp_plain_proppane
-                ScrollView {
-                    clip: true
-                    ScrollBar.horizontal.policy: ScrollBar.AsNeeded
-                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
+                ColumnLayout {
+                    id: plainlayout
+
+                    Text {
+                        text: comp.node.label;
+                        color: Qt.rgba(210.0/255, 210.0/255, 210.0/255, 1.0)//"white"
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "white"
+                    }
+
+                    //ScrollView必须要套一个StackLayout，否则滚动区域不显示
+                    StackLayout {
+                        ScrollView {
+                            clip: true
+                            ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+                            ScrollBar.vertical.policy: ScrollBar.AsNeeded
+
+                            ZPropPanel_Group {
+                                visible: true
+                                height: implicitHeight
+                                clip: true
+                                Layout.fillWidth: true
+                                is_input_prim: true
+                                model: comp.node.params     //关联的是ParamsModel
+
+                                Component.onCompleted: {
+                                    comp.scrollitem = this
+                                }
+                            }
+                        }
+                    }
+
+                    //输出的prim类型的参数组，主要是为了让用户勾选显示/隐藏输出socket.
                     ZPropPanel_Group {
-                        id: propGroup
-                        visible: true
                         height: implicitHeight
                         clip: true
-                        Layout.fillWidth: true
-                        model: comp.node.params     //关联的是ParamsModel
+                        is_input_prim: false
 
-                        Component.onCompleted: {
-                            comp.scrollitem = this
-                        }
+                        Layout.fillWidth: true
+                        model: comp.node.params
                     }
                 }
             }
@@ -129,8 +158,8 @@ Pane {
 
                     //输出的prim类型的参数组，主要是为了让用户勾选显示/隐藏输出socket.
                     ZPropPanel_Group {
-                        id: propGroup
                         height: implicitHeight
+                        is_input_prim: false
                         Behavior on height {
                             NumberAnimation {
                                 easing.type: Easing.InOutQuad
