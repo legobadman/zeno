@@ -53,6 +53,7 @@ QVariant NodeCateModel::data(const QModelIndex& index, int role) const {
     case QmlNodeCateRole::IsCategory:return m_items[index.row()].iscate;
     case QmlNodeCateRole::Keywords:  return m_items[index.row()].matchIndices;
     case QmlNodeCateRole::Category:  return m_items[index.row()].category;
+    case QmlNodeCateRole::LastItem:  return m_items[index.row()].islastitem;
     }
 }
 
@@ -68,6 +69,7 @@ QHash<int, QByteArray> NodeCateModel::roleNames() const
     values[QmlNodeCateRole::IsCategory] = "iscate";
     values[QmlNodeCateRole::Keywords] = "keywords";
     values[QmlNodeCateRole::Category] = "category";
+    values[QmlNodeCateRole::LastItem] = "lastitem";
     return values;
 }
 
@@ -138,9 +140,10 @@ void NodeCateModel::search(const QString& name) {
         if (searchResult.isEmpty()) {
             return;
         }
-        beginInsertRows(QModelIndex(), 0, searchResult.size() - 1);
-        int deprecatedIndex = searchResult.size();
-        for (int i = 0; i < searchResult.size(); i++) {
+        const int N = searchResult.size();
+        beginInsertRows(QModelIndex(), 0, N - 1);
+        int deprecatedIndex = N;
+        for (int i = 0; i < N; i++) {
             auto& [name, matchIndices] = searchResult[i];
             MenuOrItem newitem;
             newitem.name = name;
@@ -149,6 +152,9 @@ void NodeCateModel::search(const QString& name) {
             newitem.iscate = false;
             for (auto idx : matchIndices) {
                 newitem.matchIndices.append(idx);
+            }
+            if (i == N - 1) {
+                newitem.islastitem = true;
             }
             m_items.push_back(newitem);
         }

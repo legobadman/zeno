@@ -22,6 +22,7 @@ public:
         IsCategory,
         Keywords,
         Category,   //搜索节点时对应的Category名字，如果是Category菜单，用Name就行
+        LastItem,   //是否为搜索项的最后一项，用于提示UI做些事情
     };
     Q_ENUM(Value)
 };
@@ -91,6 +92,7 @@ class NodeCateModel : public QAbstractListModel
         QVariantList matchIndices;
         NewNodeCase newcase = Case_Normal;
         bool iscate = true;
+        bool islastitem = false;
     };
 
 public:

@@ -301,11 +301,23 @@ Qan.GraphView {
         }
     }
 
+    Timer {
+        id: newmenuTimer
+        interval: 500 // 1秒，单位为毫秒
+        repeat: false
+        running: false
+
+        onTriggered: {
+            //console.log("times out!")
+            newnode_menu.canhighlight = true
+        }
+    }
+
     Menu {
         id: newnode_menu
 
         property var catemenuitems: []
-        property bool catemode: true
+        property bool canhighlight: true
 
         height: childrenRect.height;
 
@@ -316,12 +328,6 @@ Qan.GraphView {
             height: 24
             focus: true // 初始设置为焦点
 
-            // onFocusChanged: {
-            //     if (!focus) {
-            //         searchItem.forceActiveFocus();
-            //     }
-            // }
-
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
@@ -331,6 +337,8 @@ Qan.GraphView {
 
             onTextChanged: {
                 nodecatesmodel.search(text)
+                newnode_menu.canhighlight = false
+                newmenuTimer.start()
             }
 
             Keys.onReturnPressed: {
@@ -396,7 +404,7 @@ Qan.GraphView {
                     // 创建一个 EventFilter 实例
                     menuKeyFilter.listenTo(catemenu)
                 }
-            }            
+            }
         }
 
         Component {
@@ -404,6 +412,7 @@ Qan.GraphView {
             MenuItem {
                 id: searchresult_item
                 property bool ismenu: false
+                property bool islastitem: lastitem
                 text: name
                 property var _matchindice: keywords
 
@@ -438,6 +447,17 @@ Qan.GraphView {
             }
         }
 
+        function highlight_firstresult() {
+            //确保currentIndex==1是一个有效值
+            if (this.count > 1) {
+                this.currentIndex = 1
+                var item = this.itemAt(1);
+                if (item) {
+                    item.highlighted = true; // 手动设置 Hover 效果
+                }
+            }
+        }
+
         Instantiator {
             model: nodecatesmodel       //global model
 
@@ -456,10 +476,10 @@ Qan.GraphView {
                     newnode_menu.addMenu(object)
                 }
                 else {
-                    if (newnode_menu.count == 1) {
-                        object.highlighted = true
-                    }
                     newnode_menu.addItem(object)
+                    if (object.islastitem) {
+                        newnode_menu.highlight_firstresult()
+                    }
                 }
             }
             onObjectRemoved: {
@@ -478,6 +498,25 @@ Qan.GraphView {
 
         onAboutToHide: {
             
+        }
+
+        onCurrentIndexChanged: {
+            //console.log("onCurrentIndexChanged: " + newnode_menu.currentIndex)
+            if (newnode_menu.currentIndex != 1) {
+                //如果第一个搜索项highlighted了，把它的highlighted去掉
+                if (this.count > 1) {
+                    var item = this.itemAt(1);
+                    if (item) {
+                        item.highlighted = false; // 手动设置 Hover 效果
+                    }
+                }
+            }
+
+            //timer结束前，如果发生了currentIndex的改变，几乎肯定时弹出时的鼠标恰好hover住了，这种都要过滤掉
+            if (!canhighlight) {
+                highlight_firstresult()
+            }
+
         }
 
         Component.onCompleted: {
