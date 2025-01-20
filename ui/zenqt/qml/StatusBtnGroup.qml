@@ -45,8 +45,8 @@ Item {
         x: comp.side + 1
         width: comp.side
         height: fixheight
-        source: "qrc:/icons/view-off.svg"
-        source_on: "qrc:/icons/view-on.svg"
+        source: comp.round_last_btn ? "qrc:/icons/view-off.svg" : "qrc:/icons/view-noradius-off.svg"
+        source_on: comp.round_last_btn ? "qrc:/icons/view-on.svg" : "qrc:/icons/view-noradius-on.svg"
         property bool hovered: false
         property alias checked: comp.isview
 

@@ -381,5 +381,7 @@
     <file>icons/bypass-off.svg</file>
     <file>icons/view-on.svg</file>
     <file>icons/view-off.svg</file>
+    <file>icons/view-noradius-on.svg</file>
+    <file>icons/view-noradius-off.svg</file>
 </qresource>
 </RCC>
