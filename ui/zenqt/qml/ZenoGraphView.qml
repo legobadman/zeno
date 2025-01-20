@@ -344,9 +344,6 @@ Qan.GraphView {
             Keys.onReturnPressed: {
                 if (newnode_menu.count > 1) {
                     newnode_menu.itemAt(1).triggered()
-                        // console.log("count = " + newnode_menu.count)
-                        // console.log("itemAt = " + newnode_menu.itemAt(1))
-                        // console.log("itemAt = " + newnode_menu.itemAt(1))
                 }
             }
 
@@ -435,11 +432,8 @@ Qan.GraphView {
                     font.pointSize: 12
                 }
 
-                Keys.onReturnPressed: {
-                    triggered()
-                }
-
                 onTriggered: {
+                    //console.log("searchresult_item onTriggered")
                     var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
                     // console.log("mousepos: " + mousepos)
                     nodecatesmodel.execute(graphModel, name, mousepos)
