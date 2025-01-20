@@ -377,5 +377,9 @@
     <file>icons/checkbox-disable.svg</file>
     <file>icons/lock.svg</file>
     <file>icons/unlock.svg</file>
+    <file>icons/bypass-on.svg</file>
+    <file>icons/bypass-off.svg</file>
+    <file>icons/view-on.svg</file>
+    <file>icons/view-off.svg</file>
 </qresource>
 </RCC>

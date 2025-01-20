@@ -11,8 +11,8 @@ Item {
     property var basefillcolor
     property alias mouseAreaAlias: mouseArea
 
-    property int xoffset: 22
-    property int side: 35
+    property int xoffset: 12
+    property int side: 24
     // property bool checked: false     //外部已定义alias
     property bool hovered: false
     property bool is_left_or_right: false        //是否为左边

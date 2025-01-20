@@ -11,8 +11,8 @@ Item {
     //property bool checked: false
     //property bool hovered: false  //外部定义已经alias
 
-    implicitWidth: 64
-    implicitHeight: 64
+    implicitWidth: width
+    implicitHeight: height
 
     property string source: ""
     property string source_on: ""
@@ -20,8 +20,8 @@ Item {
 
     Image{
         id: img
-        sourceSize.width: 64
-        sourceSize.height: 64
+        sourceSize.width: comp.width
+        sourceSize.height: comp.height
         smooth: true
         antialiasing: true
         source: (comp.checked || comp.hovered) ? comp.source_on : comp.source

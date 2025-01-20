@@ -19,64 +19,45 @@ Item {
     implicitWidth: 2 * comp.side
     implicitHeight: fixheight
 
-    MouseArea{
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        // onExited: {
-        //     if(!groupContainsMouse(mouseX, mouseY)) {
-        //         statusImgGroup.visible = false
-        //     }
-        // }
+    StatusImgBtn{
+        id: bypass_btn
+        x: 0
+        width: comp.xoffset + comp.side
+        height: fixheight
+        source: "qrc:/icons/bypass-off.svg"
+        source_on: "qrc:/icons/bypass-on.svg"
+        property bool hovered: false
+        property alias checked: comp.isbypass
 
-        StatusBtn {
-            id: bypass_btn
-            basefillcolor: "#FFBD21"
-            height: fixheight
-            xoffset: comp.xoffset
-            side: comp.side
-            round_last_btn: false
-            is_left_or_right: false
-            property alias checked: comp.isbypass
-
-            onHoveredChanged: {
-                if (bypass_btn.hovered) {
-                    statusImgGroup.visible = true;
-                }
-            }
-
-            onCheckedChanged: {
-                statusImgGroup.visible = false;
+        onHoveredChanged: {
+            if (bypass_btn.hovered) {
+                statusImgGroup.visible = true;
             }
         }
 
-        /*
-        StatusBtnSeperator {
-            xoffset: comp.xoffset
-            x: comp.side
-        }*/
+        onCheckedChanged: {
+            statusImgGroup.visible = false;
+        }
+    }
 
-        StatusBtn {
-            id: view_btn
-            basefillcolor: "#30BDD4"
-            height: fixheight
-            xoffset: comp.xoffset
-            side: comp.side
-            radius: comp.radius
-            round_last_btn: comp.round_last_btn
-            is_left_or_right: true
-            x: comp.side + 1
-            property alias checked: comp.isview
+    StatusImgBtn{
+        id: view_btn
+        x: comp.side + 1
+        width: comp.side
+        height: fixheight
+        source: "qrc:/icons/view-off.svg"
+        source_on: "qrc:/icons/view-on.svg"
+        property bool hovered: false
+        property alias checked: comp.isview
 
-            onHoveredChanged: {
-                if (view_btn.hovered) {
-                    statusImgGroup.visible = true;
-                }
+        onHoveredChanged: {
+            if (view_btn.hovered) {
+                statusImgGroup.visible = true;
             }
+        }
 
-            onCheckedChanged: {
-                statusImgGroup.visible = false;
-            }
+        onCheckedChanged: {
+            statusImgGroup.visible = false;
         }
     }
 
@@ -106,6 +87,8 @@ Item {
                 StatusImgBtn{
                     id: imgByPass
                     x: bypass_btn.x + comp.xoffset - 2
+                    width: 64
+                    height: 64
                     source: "qrc:/icons/MUTE_dark.svg"
                     source_on: "qrc:/icons/MUTE_light.svg"
                     property alias checked: comp.isbypass
@@ -113,6 +96,8 @@ Item {
                 }
                 StatusImgBtn{
                     id: imgView
+                    width: 64
+                    height: 64
                     x: imgByPass.x + imgByPass.width - imgByPass.xoffset - 2
                     source: "qrc:/icons/VIEW_dark.svg"
                     source_on: "qrc:/icons/VIEW_light.svg"
@@ -174,19 +159,5 @@ Item {
                 statusImgGroup.visible = false
             }
         }
-    }
-
-
-
-    function groupContainsMouse(x, y){
-        //console.log("mouse.x,y = " + x + "," + y)
-        var under_imgs = false;
-        // if (x < 100 && y < 48) {
-        //     under_imgs = true;
-        // }
-        console.log("mouse_area_imggroup.containsMouse: " + mouse_area_imggroup.containsMouse)
-
-        return bypass_btn.mouseAreaAlias.containsMouse || view_btn.mouseAreaAlias.containsMouse || mouse_area_imggroup.containsMouse
-            // imgByPass.containsMouse || imgView.containsMouse || under_imgs
     }
 }
