@@ -478,6 +478,7 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
         graphpath = '/' + paths.join('/');
     }
 
+    //有memory leak
     m_worker = new OptixWorker(graphpath, m_zenovis);
     m_worker->moveToThread(&m_thdOptix);
     connect(&m_thdOptix, &QThread::finished, m_worker, &QObject::deleteLater);

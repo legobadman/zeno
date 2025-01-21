@@ -12,6 +12,8 @@
 class ZQmlRender;
 class Camera;
 
+Q_DECLARE_METATYPE(ViewMouseInfo);
+
 class ZOpenGLQuickView : public QQuickView
 {
     Q_OBJECT
@@ -51,9 +53,21 @@ public:
     void load_object(zeno::render_update_info info) {}
 
 signals:
-    void emitMousePress(QMouseEvent*);
-    void emitMouseMove(QMouseEvent*);
-    void emitMouseRelease(QMouseEvent*);
+    void sig_Reload(zeno::render_reload_info);
+    void sig_MouseEvent(ViewMouseInfo);
+    void sig_Resize(int, int);
+    void sig_UpdatePerspective();
+    void sig_SetNumSamples(int);
+    void sig_setCameraRes(const QVector2D&);
+    void sig_setSafeFrames(bool, int, int);
+    void sig_setSimpleRenderOption();
+    void sig_clearTransformer();
+    void sig_changeTransformOperationByNode(const QString&);
+    void sig_changeTransformOperation(int);
+    void sig_cameraLookTo(zenovis::CameraLookToDir);
+
+public slots:
+    void onUpdateRequest();
 
 protected:
     void resizeEvent(QResizeEvent*) override;
@@ -68,19 +82,7 @@ private:
     void renderUnderlay();
     void invalidateUnderlay();
 
-#ifdef BASE_KDAB
-    Camera* m_camera;
-#endif
-    ZQmlRender* m_renderer;
-    zeno::render_reload_info m_cache_info;
-    mutable std::mutex m_mtx;
-    std::queue<ViewMouseInfo> m_events;
-};
-
-class ZOpenGLQuickWidget : public QWidget
-{
-public:
-    explicit ZOpenGLQuickWidget(QWidget* parent = 0);
+    QScopedPointer<ZQmlRender> m_renderer;
 };
 
 #endif

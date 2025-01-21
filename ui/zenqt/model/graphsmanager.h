@@ -26,6 +26,10 @@ public:
 
     Q_INVOKABLE QVariantList getNodeCates() const;
 
+    Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath FINAL)
+    QString currentGraphPath() const;
+    void setCurrentGraphPath(const QString& path);
+
     void createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult);
     inline GraphsTreeModel* currentModel() const { return m_model; }
     AssetsModel* assetsModel() const;
@@ -81,6 +85,7 @@ private:
     AssetsModel* m_assets;
 
     QString m_filePath;
+    QString m_graphPath;
 
     mutable std::mutex m_mtx;
     zeno::TimelineInfo m_timerInfo;
@@ -100,6 +105,7 @@ public:
     Q_PROPERTY(GraphsManager* graphsMgr READ getGraphsMgr WRITE setGraphsMgr FINAL)
     void setGraphsMgr(GraphsManager* graph);
     inline GraphsManager* getGraphsMgr() const noexcept { return _graphMgr; }
+
     Q_INVOKABLE void newFile();
     Q_INVOKABLE void openFile();
 

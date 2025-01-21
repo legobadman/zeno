@@ -119,6 +119,16 @@ GraphModel* GraphsManager::getGraph(const QStringList& objPath) const
     }
 }
 
+QString GraphsManager::currentGraphPath() const
+{
+    return m_graphPath;
+}
+
+void GraphsManager::setCurrentGraphPath(const QString& path)
+{
+    m_graphPath = path;
+}
+
 GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE& code)
 {
     zeno::ZSG_VERSION ver = zenoio::getVersion(fn.toStdString());

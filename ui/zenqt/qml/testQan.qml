@@ -73,6 +73,7 @@ Zen.GraphsTotalView {
         const graphsview_comp = Qt.createComponent("qrc:/ZGraphsView.qml")
         const newgraphsview = graphsview_comp.createObject(welcomepage_or_editor, { id: "graphsallview" })
         welcomepage_or_editor.currentIndex = 1
+        graphsMgr.currentPath = "/main"
     }
 
     onFileClosed: function() {

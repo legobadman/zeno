@@ -8,10 +8,7 @@
 
 ZOpenGLQuickView::ZOpenGLQuickView(QWindow* parent)
     : QQuickView(parent)
-#ifdef BASE_KDAB
-    , m_camera(new Camera(this))
-#endif
-    , m_renderer(new ZQmlRender(this))
+    , m_renderer(nullptr)
 {
     QSurfaceFormat format;
     format.setMajorVersion(3);
@@ -38,28 +35,44 @@ ZOpenGLQuickView::ZOpenGLQuickView(QWindow* parent)
         this, &ZOpenGLQuickView::invalidateUnderlay,
         Qt::DirectConnection);
 
-#ifdef BASE_KDAB
-    connect(m_camera, &Camera::azimuthChanged,
-        this, &QQuickWindow::update);
-
-    connect(m_camera, &Camera::elevationChanged,
-        this, &QQuickWindow::update);
-
-    connect(m_camera, &Camera::distanceChanged,
-        this, &QQuickWindow::update);
-
-    rootContext()->setContextProperty("_camera", m_camera);
-    setSource(QUrl("qrc:///qml/mainview.qml"));
-#endif
     setClearBeforeRendering(false);
     setPersistentOpenGLContext(true);
     setResizeMode(SizeRootObjectToView);
 }
 
 void ZOpenGLQuickView::initializeUnderlay() {
+    //QSGRenderThread
     auto ctx = this->openglContext();
+    QSize sz = this->size();
+    const qreal scaleFactor = devicePixelRatio();
+    m_renderer.reset(new ZQmlRender(sz * scaleFactor, this));
     m_renderer->initialize(ctx);
     resetOpenGLState();
+
+    connect(this, &ZOpenGLQuickView::sig_Reload, m_renderer.get(),
+        &ZQmlRender::reload_objects, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_MouseEvent, m_renderer.get(),
+        &ZQmlRender::onMouseEvent, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_Resize, m_renderer.get(),
+        &ZQmlRender::resize, Qt::QueuedConnection);
+
+    connect(this, &ZOpenGLQuickView::sig_UpdatePerspective, m_renderer.get(), &ZQmlRender::updatePerspective, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_SetNumSamples, m_renderer.get(), &ZQmlRender::setNumSamples, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_setCameraRes, m_renderer.get(), &ZQmlRender::setCameraRes, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_setSafeFrames, m_renderer.get(), &ZQmlRender::setSafeFrames, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_setSimpleRenderOption, m_renderer.get(), &ZQmlRender::setSimpleRenderOption, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_clearTransformer, m_renderer.get(), &ZQmlRender::clearTransformer, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_cameraLookTo, m_renderer.get(), &ZQmlRender::cameraLookTo, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_changeTransformOperationByNode, m_renderer.get(), &ZQmlRender::changeTransformOperationByNode, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_changeTransformOperation, m_renderer.get(), &ZQmlRender::changeTransformOperation, Qt::QueuedConnection);
+
+    connect(m_renderer.get(), &ZQmlRender::requestUpdate, this,
+        &ZOpenGLQuickView::onUpdateRequest, Qt::QueuedConnection);
+}
+
+void ZOpenGLQuickView::onUpdateRequest()
+{
+    update();
 }
 
 void ZOpenGLQuickView::synchronizeUnderlay() {
@@ -67,47 +80,24 @@ void ZOpenGLQuickView::synchronizeUnderlay() {
     m_renderer->setAzimuth(m_camera->azimuth());
     m_renderer->setElevation(m_camera->elevation());
     m_renderer->setDistance(m_camera->distance());
-#else
-    {
-        std::lock_guard lock(m_mtx);
-        while (!m_events.empty()) {
-             ViewMouseInfo event_info = m_events.front();
-            if (event_info.type != QEvent::None) {
-                if (QEvent::MouseButtonPress == event_info.type) {
-                    m_renderer->fakeMousePressEvent(event_info);
-                }
-                else if (QEvent::MouseButtonRelease == event_info.type) {
-                    m_renderer->fakeMouseReleaseEvent(event_info);
-                }
-                else if (QEvent::MouseMove == event_info.type) {
-                    m_renderer->fakeMouseMoveEvent(event_info);
-                }
-                else if (QEvent::Wheel == event_info.type) {
-                    m_renderer->fakeWheelEvent(event_info);
-                }
-            }
-            m_events.pop();
-        }
-    }
-    if (m_cache_info.policy != zeno::Reload_Invalidate) {
-        m_renderer->reload_objects(m_cache_info);
-        m_cache_info.policy = zeno::Reload_Invalidate;
-    }
 #endif
 }
 
 void ZOpenGLQuickView::reload_objects(const zeno::render_reload_info& info) {
-    m_cache_info = info;
+    emit sig_Reload(info);
 }
 
 void ZOpenGLQuickView::renderUnderlay() {
-    m_renderer->render();
-    resetOpenGLState();
+    if (m_renderer) {
+        m_renderer->render();
+        resetOpenGLState();
+    }
 }
 
 void ZOpenGLQuickView::invalidateUnderlay() {
-    m_renderer->invalidate();
-    resetOpenGLState();
+    if (m_renderer) {
+        resetOpenGLState();
+    }
 }
 
 void ZOpenGLQuickView::mousePressEvent(QMouseEvent* event)
@@ -121,87 +111,67 @@ void ZOpenGLQuickView::mousePressEvent(QMouseEvent* event)
         //setSimpleRenderOption();
     }
     QQuickView::mousePressEvent(event);
-    {
-        std::lock_guard lck(m_mtx);
-        auto ratio = QApplication::desktop()->devicePixelRatio();
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
-        m_events.push(info);
-    }
+    auto ratio = QApplication::desktop()->devicePixelRatio();
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
+    emit sig_MouseEvent(info);
     update();
 }
 
 void ZOpenGLQuickView::mouseReleaseEvent(QMouseEvent* event)
 {
     QQuickView::mouseReleaseEvent(event);
-    {
-        std::lock_guard lck(m_mtx);
-        auto ratio = QApplication::desktop()->devicePixelRatioF();
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
-        m_events.push(info);
-    }
+    auto ratio = QApplication::desktop()->devicePixelRatioF();
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
+    emit sig_MouseEvent(info);
     update();
 }
 
 void ZOpenGLQuickView::mouseMoveEvent(QMouseEvent* event)
 {
-    //int button = Qt::NoButton;
-    //ZenoSettingsManager& settings = ZenoSettingsManager::GetInstance();
-    //settings.getViewShortCut(ShortCut_MovingView, button);
-    //settings.getViewShortCut(ShortCut_RotatingView, button);
-    //if (event->button() & button) {
-    //    m_bMovingCamera = true;
-    //}
-    //setSimpleRenderOption();
     QQuickView::mouseMoveEvent(event);
-    {
-        std::lock_guard lck(m_mtx);
-        auto ratio = QApplication::desktop()->devicePixelRatioF();
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
-        m_events.push(info);
-    }
+    auto ratio = QApplication::desktop()->devicePixelRatioF();
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos() };
+    emit sig_MouseEvent(info);
     update();
 }
 
 void ZOpenGLQuickView::wheelEvent(QWheelEvent* event)
 {
     QQuickView::wheelEvent(event);
-    {
-        std::lock_guard lck(m_mtx);
-        auto ratio = QApplication::desktop()->devicePixelRatioF();
-        ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos(), event->angleDelta() };
-        m_events.push(info);
-    }
+    auto ratio = QApplication::desktop()->devicePixelRatioF();
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), ratio * event->pos(), event->angleDelta() };
+    emit sig_MouseEvent(info);
     update();
 }
 
 void ZOpenGLQuickView::resizeEvent(QResizeEvent* event) {
-    //TODO: push event into queue
-    //moc QGLWidget::resizeEvent
+    //mock QGLWidget::resizeEvent
     QQuickView::resizeEvent(event);
     QSize sz = event->size();
     const qreal scaleFactor = devicePixelRatio();
-    m_renderer->resize(sz.width() * scaleFactor, sz.height() * scaleFactor);
+    int nx = sz.width() * scaleFactor, ny = sz.height() * scaleFactor;
+    emit sig_Resize(nx, ny);
 }
 
 void ZOpenGLQuickView::resizeGL(int nx, int ny) {
-    m_renderer->resize(nx, ny);
+    emit sig_Resize(nx, ny);
 }
 
 void ZOpenGLQuickView::updatePerspective()
 {
-    m_renderer->updatePerspective();
+    emit sig_UpdatePerspective();
 }
 
 void ZOpenGLQuickView::setNumSamples(int samples) {
-    m_renderer->setNumSamples(samples);
+    emit sig_SetNumSamples(samples);
 }
 
 void ZOpenGLQuickView::setCameraRes(const QVector2D& res) {
-    m_renderer->setCameraRes(res);
+    emit sig_setCameraRes(res);
 }
 
 void ZOpenGLQuickView::setSafeFrames(bool bLock, int nx, int ny) {
-    m_renderer->setSafeFrames(bLock, nx, ny);
+    emit sig_setSafeFrames(bLock, nx, ny);
 }
 
 bool ZOpenGLQuickView::isCameraMoving() const {
@@ -210,36 +180,32 @@ bool ZOpenGLQuickView::isCameraMoving() const {
 
 void ZOpenGLQuickView::setSimpleRenderOption()
 {
-    m_renderer->setSimpleRenderOption();
+    emit sig_setSimpleRenderOption();
 }
 
 void ZOpenGLQuickView::clearTransformer()
 {
-    m_renderer->clearTransformer();
+    emit sig_clearTransformer();
 }
 
 void ZOpenGLQuickView::changeTransformOperation(const QString& node)
 {
-    m_renderer->changeTransformOperation(node);
+    emit sig_changeTransformOperationByNode(node);
 }
 
 void ZOpenGLQuickView::changeTransformOperation(int mode)
 {
-    m_renderer->changeTransformOperation(mode);
+    emit sig_changeTransformOperation(mode);
 }
 
 void ZOpenGLQuickView::cameraLookTo(zenovis::CameraLookToDir dir)
 {
-    m_renderer->cameraLookTo(dir);
+    emit sig_cameraLookTo(dir);
 }
 
 void ZOpenGLQuickView::setViewWidgetInfo(DockContentWidgetInfo& info)
 {
-    m_renderer->setViewWidgetInfo(info);
-}
-
-ZOpenGLQuickWidget::ZOpenGLQuickWidget(QWidget* parent)
-    : QWidget(parent)
-{
-
+    if (m_renderer) {
+        m_renderer->setViewWidgetInfo(info);
+    }
 }

@@ -32,6 +32,13 @@ StackLayout {
 
     function jumpTo(path_list) {
         //寻找stack_subnet_views下所有的view对应到model，和当前的路径进行比较，如果找到，直接切换，找不到就新建并加入Layout
+        let path_str = ""
+        for (var i = 0; i < path_list.length; i++) {
+            path_str += "/"
+            path_str += path_list[i]
+        }
+        graphsmanager.currentPath = path_str
+
         for (var i = 0; i < stack_subnet_views.children.length; i++) {
             var child = stack_subnet_views.children[i];
             var paths = child.graphModel.path();
