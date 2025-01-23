@@ -66,8 +66,8 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
-    bool insertRow(int row, QString& name);
-    bool removeRow(int row);
+    Q_INVOKABLE bool insertRow(int row, QString name);
+    Q_INVOKABLE bool removeRow(int row);
 
 private:
     QVector<_TabItem> m_items;
@@ -94,8 +94,8 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
-    bool insertRow(int row, QString& name);
-    bool removeRow(int row);
+    Q_INVOKABLE bool insertRow(int row, QString name);
+    Q_INVOKABLE bool removeRow(int row);
 
 private:
     QVector<_GroupItem> m_items;
@@ -121,8 +121,8 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
-    bool insertRow(int row, QString& name);
-    bool removeRow(int row);
+    Q_INVOKABLE bool insertRow(int row, QString name);
+    Q_INVOKABLE bool removeRow(int row);
 
 private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param

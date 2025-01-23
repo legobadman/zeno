@@ -171,7 +171,7 @@ Pane {
                             model: base_tabview.customuimodel.tabModel()
                             delegate: TabButton {
                                 property var mtabindex: base_tabview.customuimodel.tabModel().index(index, 0)
-                                text: name
+                                text: tabname
                                 width: 100
                             }
                         }

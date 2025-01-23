@@ -26,7 +26,7 @@ Item {
 
                 Button {
                     Layout.fillWidth: true
-                    text: name
+                    text: groupname
                     onClicked: propGroup.shown = !propGroup.shown
                     // visible: root.childCount > 1   //只有一个group可能是默认的情况，不予以显示
                 }

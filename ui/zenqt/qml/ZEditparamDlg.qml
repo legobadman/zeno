@@ -196,140 +196,149 @@ Window {
     modality: Qt.ApplicationModal  // 将窗口设置为模态
     property var node: undefined
 
-    // 对话框内容
-    Rectangle {
-        width: parent.width
-        height: parent.height
-        // color: "lightgray"
+    MouseArea {
+        anchors.fill: parent
+        // 对话框内容
+        Rectangle {
+            width: parent.width
+            height: parent.height
+            // color: "lightgray"
 
-        // Text {
-        //     text: "这是一个带标题栏的可移动对话框。\n您确定要继续吗？"
-        //     anchors.centerIn: parent
-        //     horizontalAlignment: Text.AlignHCenter
-        //     wrapMode: Text.WordWrap
-        // }
+            // Text {
+            //     text: "这是一个带标题栏的可移动对话框。\n您确定要继续吗？"
+            //     anchors.centerIn: parent
+            //     horizontalAlignment: Text.AlignHCenter
+            //     wrapMode: Text.WordWrap
+            // }
 
-        RowLayout {  // 水平布局分为三部分
-            anchors.fill: parent
-        
-            // 左侧列表视图
-            ListView {
-                id: leftListView
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredWidth: parent.width / 3
+            RowLayout {  // 水平布局分为三部分
+                anchors.fill: parent
+            
+                // 左侧列表视图
+                ListView {
+                    id: leftListView
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: parent.width / 3
 
-                model: ListModel {
-                    ListElement { name: "Tab" }
-                    ListElement { name: "Group" }
-                    ListElement { name: "Integer" }
-                    ListElement { name: "Float" }
-                }
-                delegate: Item {
-                    width: parent.width
-                    height: 30
-                    Text {
-                        anchors.centerIn: parent
-                        text: model.name
+                    model: ListModel {
+                        ListElement { name: "Tab" }
+                        ListElement { name: "Group" }
+                        ListElement { name: "Integer" }
+                        ListElement { name: "Float" }
                     }
-                }
-            }
-
-            // 中间部分
-            Item {//使用item做一层隔离，否则会报：QML QQuickLayoutAttached: Binding loop detected for property循环绑定警告
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredWidth: parent.width / 3
-
-                ColumnLayout {
-                    // 下方三个列表视图
-                    anchors.fill: parent
-
-                    Loader {
-                        id: treeviewLoader
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.preferredHeight: parent.height * 2 / 5
-                        sourceComponent: {
-                            return treeview
+                    delegate: Item {
+                        width: parent.width
+                        height: 30
+                        Text {
+                            anchors.centerIn: parent
+                            text: model.name
                         }
                     }
-                    ListView {
-                        id: listView1
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.preferredHeight: parent.height / 5
-                        model: ListModel { ListElement { name: "output1" } }
-                        delegate: Text { text: model.name }
-                    }
+                }
 
-                    ListView {
-                        id: listView2
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.preferredHeight: parent.height / 5
-                        model: ListModel { ListElement { name: "objInput1" } }
-                        delegate: Text { text: model.name }
-                    }
+                // 中间部分
+                Item {//使用item做一层隔离，否则会报：QML QQuickLayoutAttached: Binding loop detected for property循环绑定警告
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: parent.width / 3
 
-                    ListView {
-                        id: listView3
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.preferredHeight: parent.height / 5
-                        model: ListModel { ListElement { name: "objOutput1" } }
-                        delegate: Text { text: model.name }
+                    ColumnLayout {
+                        // 下方三个列表视图
+                        anchors.fill: parent
+
+                        Loader {
+                            id: treeviewLoader
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: parent.height * 2 / 5
+                            sourceComponent: {
+                                return treeview
+                            }
+                        }
+                        ListView {
+                            id: listView1
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: parent.height / 5
+                            model: ListModel { ListElement { name: "output1" } }
+                            delegate: Text { text: model.name }
+                        }
+
+                        ListView {
+                            id: listView2
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: parent.height / 5
+                            model: ListModel { ListElement { name: "objInput1" } }
+                            delegate: Text { text: model.name }
+                        }
+
+                        ListView {
+                            id: listView3
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: parent.height / 5
+                            model: ListModel { ListElement { name: "objOutput1" } }
+                            delegate: Text { text: model.name }
+                        }
                     }
                 }
+
+                // 右侧部分
+                ColumnLayout {
+                    spacing: 10
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: parent.width / 3
+
+                    TextField {
+                        id: inputName
+                        placeholderText: "名称"
+                    }
+
+                    TextField {
+                        id: inputLabel
+                        placeholderText: "标签"
+                    }
+
+                    ComboBox {
+                        id: socketProperty
+                        model: ["Property 1", "Property 2", "Property 3"]
+                        currentIndex: 0
+                    }
+                }
+
             }
 
-            // 右侧部分
-            ColumnLayout {
-                spacing: 10
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredWidth: parent.width / 3
+            RowLayout {
+                spacing: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 20
 
-                TextField {
-                    id: inputName
-                    placeholderText: "名称"
+                Button {
+                    text: "确定"
+                    onClicked: {
+                        console.log("点击了确定")
+                        dialog.visible = false
+                    }
                 }
 
-                TextField {
-                    id: inputLabel
-                    placeholderText: "标签"
-                }
-
-                ComboBox {
-                    id: socketProperty
-                    model: ["Property 1", "Property 2", "Property 3"]
-                    currentIndex: 0
-                }
+                // Button {
+                //     text: "取消"
+                //     onClicked: {
+                //         console.log("点击了取消")
+                //         dialog.visible = false
+                //     }
+                // }
             }
 
         }
-
-        RowLayout {
-            spacing: 20
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 20
-
-            Button {
-                text: "确定"
-                onClicked: {
-                    console.log("点击了确定")
-                    dialog.visible = false
-                }
-            }
-
-            // Button {
-            //     text: "取消"
-            //     onClicked: {
-            //         console.log("点击了取消")
-            //         dialog.visible = false
-            //     }
-            // }
+        //为了让textfield失去焦点
+        onClicked: {
+            // console.log(textField.textContent)
+            forceActiveFocus()
         }
     }
 
@@ -339,29 +348,38 @@ Window {
 
     Component {
         id: treeview
-        // ZPropPanel {
-        //     id: proppanel
-        //     node: dialog.node
-        // }
         Item {
             id: treeviewItem
             anchors.fill: parent
             property var customuimodel : dialog.node.params.customUIModel().tabModel()
 
-            property int currentIndex: -1 // 当前右键点击的条目索引
             Menu {
                 id: contextMenu
-                property var curidx : undefined
+                property var modelRef
+                property var curRow : undefined
                 MenuItem {
                     text: "新增条目"
+                    property var nameSet: {}
+                    property int subfix: 0
+                    property string newname: "newitem" + subfix
                     onTriggered: {
-                        curidx.insert(currentIndex + 1, { name: "New Item", selected: false });
+                        nameSet = {}
+                        subfix = 0
+                        newname = "newItem" + subfix
+                        for (var i = 0; i < contextMenu.modelRef.rowCount(); i++) {
+                            nameSet[contextMenu.modelRef.data(contextMenu.modelRef.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+                        }
+                        while (nameSet[newname] !== undefined) {
+                            subfix++
+                            newname = "newitem" + subfix
+                        }
+                        contextMenu.modelRef.insertRow(contextMenu.curRow + 1, newname)
                     }
                 }
                 MenuItem {
                     text: "删除条目"
                     onTriggered: {
-                        curidx.remove(currentIndex);
+                        contextMenu.modelRef.removeRow(contextMenu.curRow)
                     }
                 }
             }
@@ -374,6 +392,7 @@ Window {
                 ColumnLayout {
                     id: treeLayout
                     anchors.fill: parent
+                    spacing: 0
                     // width: parent.width // 确保宽度与 ScrollView 一致
                     Repeater {
                         model: customuimodel
@@ -383,9 +402,24 @@ Window {
 
                             sourceComponent: tabComp
                             onLoaded: {
-                                item.tabname = tabname
-                                item.groupmodel = groups
-                                // item.indent = 0
+                                // item.tabname = tabname
+                                // item.groupmodel = groups
+                                // item.tabindex = index
+                            }
+                            Binding {
+                                target: item
+                                property: "tabindex"
+                                value: index
+                            }
+                            Binding {
+                                target: item
+                                property: "groupmodel"
+                                value: groups
+                            }
+                            Binding {
+                                target: item
+                                property: "tabname"
+                                value: tabname
                             }
                         }
                     }
@@ -443,13 +477,50 @@ Window {
                     }
                 }
             }
+            Component {
+                id: textEditComp
+                Item {
+                    anchors.fill: parent
+                    property string textContent
+                    property bool editMode: false
+                    property alias inputfield : inputField
+                    signal editfinish()
+
+                    TextInput {
+                        id: inputField
+                        anchors.fill: parent
+                        text: textContent
+                        verticalAlignment: Text.AlignVCenter
+                        selectByMouse: true // 启用鼠标选择文本功能
+                        clip: true
+                        focus: editMode // 聚焦逻辑绑定到 editMode
+                        Keys.onReturnPressed: {
+                            textContent = text;
+                            editMode = false;   // 取消编辑并切回文本显示
+                            editfinish()
+                        }
+                        Keys.onEscapePressed: {
+                            textContent = text;
+                            editMode = false;   // 取消编辑并切回文本显示
+                            editfinish()
+                        }
+                        onEditingFinished: {
+                            textContent = text;
+                            editMode = false;
+                            editfinish()
+                        }
+                    }
+                }
+            }
             // treeNode：用于显示每个节点及其子节点
             Component {
                 id: tabComp
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    spacing: 0
                     property string tabname: ""
+                    property var tabindex: undefined
                     property var groupmodel: undefined
 
                     Rectangle {
@@ -457,15 +528,16 @@ Window {
                         height: 20
                         color: "lightgray"
                         Layout.fillWidth: true
-                        Row {
+                        RowLayout  {
                             spacing: 10
                             anchors.fill: parent
                             
                             Loader {
                                 id: tabtriangleArrowLoader
                                 height: parent.height
+                                Layout.preferredWidth: 20
                                 // Layout.fillWidth: true
-                                anchors.verticalCenter: parent.verticalCenter
+                                // anchors.verticalCenter: parent.verticalCenter
                                 sourceComponent: triangleArrow
                             }
                             Connections {
@@ -474,9 +546,52 @@ Window {
                                     groupComp.visible = tabtriangleArrowLoader.item.isExpanded
                                 }
                             }
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: tabname
+                            Rectangle {
+                                height: parent.height
+                                Layout.fillWidth: true
+                                color: "transparent"
+
+                                Loader {
+                                    id: tabtextEditLoader
+                                    anchors.fill: parent
+                                    sourceComponent: textEditComp
+                                    Binding {
+                                        target: tabtextEditLoader.item
+                                        property: "textContent"
+                                        value: tabname
+                                    }
+                                }
+                                Connections {
+                                    target: tabtextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
+                                    function onEditfinish() {
+                                        dialog.node.params.customUIModel().tabModel().setData(dialog.node.params.customUIModel().tabModel().index(tabindex, 0), tabtextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
+                                    }
+                                }
+                                // Text {
+                                //     text: tabname
+                                // }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: !tabtextEditLoader.item.editMode
+                                    acceptedButtons: Qt.AllButtons
+                                    propagateComposedEvents: true
+                                    onClicked: {
+                                    }
+                                    // 右键弹出菜单
+                                    onPressed: if (mouse.button === Qt.RightButton) {
+                                        contextMenu.curRow = tabindex
+                                        contextMenu.modelRef = dialog.node.params.customUIModel().tabModel()
+                                        // console.log(dialog.node.params.customUIModel().tabModel().data(contextMenu.curIdx, Model.ROLE_PARAM_NAME))
+                                        contextMenu.x = mouse.x + parent.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
+                                        contextMenu.y = mouse.y + parent.mapToItem(treeviewItem, 0, 0).y;
+                                        contextMenu.open();
+                                    }
+                                    onDoubleClicked: {
+                                        tabtextEditLoader.item.editMode = true;
+                                        tabtextEditLoader.item.inputfield.forceActiveFocus();
+                                    }
+                                }
                             }
                         }
                     }
@@ -484,6 +599,7 @@ Window {
                     // 子节点递归显示
                     ColumnLayout {
                         id: groupComp
+                        spacing: 0
                         Layout.fillWidth: true
                         Layout.leftMargin: 20 // 设置缩进
                         visible: true
@@ -493,7 +609,9 @@ Window {
                             delegate:  
 
                             ColumnLayout {
+                                spacing: 0
                                 Layout.fillWidth: true
+                                property int groupindex: index
                                 // Layout.leftMargin: 20 // 设置缩进
 
                                 Rectangle {
@@ -503,7 +621,7 @@ Window {
                                     Layout.fillWidth: true
                                     // Layout.leftMargin: 20 // 设置缩进
 
-                                    Row {
+                                    RowLayout {
                                         spacing: 10
                                         anchors.fill: parent
 
@@ -511,7 +629,8 @@ Window {
                                             id: grouptriangleArrowLoader
                                             height: parent.height
                                             // Layout.fillWidth: true
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            Layout.preferredWidth: 20
+                                            // anchors.verticalCenter: parent.verticalCenter
                                             sourceComponent: triangleArrow
                                         }
                                         Connections {
@@ -520,14 +639,57 @@ Window {
                                                 paramComp.visible = grouptriangleArrowLoader.item.isExpanded
                                             }
                                         }
-                                        Text {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: groupname
+                                        Rectangle {
+                                            height: parent.height
+                                            Layout.fillWidth: true
+                                            color: "transparent"
+
+                                            Loader {
+                                                id: grouptextEditLoader
+                                                anchors.fill: parent
+                                                sourceComponent: textEditComp
+                                                Binding {
+                                                    target: grouptextEditLoader.item
+                                                    property: "textContent"
+                                                    value: groupname
+                                                }
+                                            }
+                                            Connections {
+                                                target: grouptextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
+                                                function onEditfinish() {
+                                                    groupmodel.setData(groupmodel.index(groupindex, 0), grouptextEditLoader.item.textContent, Qt.DisplayRole)
+                                                }
+                                            }
+                                            // Text {
+                                            //     text: groupname
+                                            // }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                enabled: !grouptextEditLoader.item.editMode
+                                                acceptedButtons: Qt.AllButtons
+                                                propagateComposedEvents: true
+                                                onClicked: {
+                                                }
+                                                // 右键弹出菜单
+                                                onPressed: if (mouse.button === Qt.RightButton) {
+                                                    contextMenu.curRow = groupindex
+                                                    contextMenu.modelRef = groupmodel
+                                                    contextMenu.x = mouse.x + parent.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
+                                                    contextMenu.y = mouse.y + parent.mapToItem(treeviewItem, 0, 0).y;
+                                                    contextMenu.open();
+                                                }
+                                                onDoubleClicked: {
+                                                    grouptextEditLoader.item.editMode = true;
+                                                    grouptextEditLoader.item.inputfield.forceActiveFocus();
+                                                }
+                                            }
                                         }
                                     }
                                 }
                                 ColumnLayout {
                                     id: paramComp
+                                    spacing: 0
                                     Layout.fillWidth: true
                                     Layout.leftMargin: 20 // 设置缩进
                                     property string nodeName: ""
@@ -546,16 +708,35 @@ Window {
                                             Row {
                                                 spacing: 10
                                                 anchors.fill: parent
-                                                Text {
-                                                    //id: toggle
-                                                    anchors.verticalCenter : parent.verticalCenter
-                                                    text : paramname
+
+                                                Loader {
+                                                    id: paramtextEditLoader
+                                                    anchors.fill: parent
+                                                    sourceComponent: textEditComp
+                                                    Binding {
+                                                        target: paramtextEditLoader.item
+                                                        property: "textContent"
+                                                        value: name
+                                                    }
                                                 }
+                                                Connections {
+                                                    target: paramtextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
+                                                    function onEditfinish() {
+                                                        params.setData(params.index(index, 0), paramtextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
+                                                    }
+                                                }
+                                                // Text {
+                                                //     //id: toggle
+                                                //     anchors.verticalCenter : parent.verticalCenter
+                                                //     text : paramname
+                                                // }
                                             }
 
                                             MouseArea {
                                                 anchors.fill: parent
+                                                enabled: !paramtextEditLoader.item.editMode
                                                 acceptedButtons: Qt.AllButtons
+                                                propagateComposedEvents: true
                                                 onClicked: {
                                                     // // 单击选中条目
                                                     // for (let i = 0; i < childrenNodes.count; i++) {
@@ -566,10 +747,15 @@ Window {
 
                                                 // 右键弹出菜单
                                                 onPressed: if (mouse.button === Qt.RightButton) {
-                                                    currentIndex = index; // 保存当前条目索引
+                                                    contextMenu.curRow = index
+                                                    contextMenu.modelRef = params
                                                     contextMenu.x = mouse.x + param.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
                                                     contextMenu.y = mouse.y + param.mapToItem(treeviewItem, 0, 0).y;
                                                     contextMenu.open();
+                                                }
+                                                onDoubleClicked: {
+                                                    paramtextEditLoader.item.editMode = true;
+                                                    paramtextEditLoader.item.inputfield.forceActiveFocus();
                                                 }
                                             }
 

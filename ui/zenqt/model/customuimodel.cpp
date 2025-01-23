@@ -147,7 +147,7 @@ Qt::ItemFlags ParamTabModel::flags(const QModelIndex& index) const
     return Qt::ItemIsEditable | QAbstractListModel::flags(index);
 }
 
-bool ParamTabModel::insertRow(int row, QString& name) {
+bool ParamTabModel::insertRow(int row, QString name) {
     if (row < 0 || row > m_items.size()) {
         return false;
     }
@@ -205,9 +205,9 @@ bool ParamGroupModel::setData(const QModelIndex& index, const QVariant& value, i
         return false;
     }
     switch (role) {
-    case QtRole::ROLE_PARAM_NAME:
+    case Qt::DisplayRole:
         m_items[index.row()].name = value.toString();
-        emit dataChanged(index, index, { QtRole::ROLE_PARAM_NAME });
+        emit dataChanged(index, index, { Qt::DisplayRole });
         return true;
     }
     return false;
@@ -221,7 +221,7 @@ QHash<int, QByteArray> ParamGroupModel::roleNames() const {
 }
 
 
-bool ParamGroupModel::insertRow(int row, QString& name)
+bool ParamGroupModel::insertRow(int row, QString name)
 {
     if (row < 0 || row > m_items.size()) {
         return false;
@@ -279,7 +279,7 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
     //copy from ParamsModel::roleNames()
     QHash<int, QByteArray> roles;
     roles[QtRole::ROLE_NODE_NAME] = "nodename";
-    roles[QtRole::ROLE_PARAM_NAME] = "paramname";
+    roles[QtRole::ROLE_PARAM_NAME] = "name";
     roles[QtRole::ROLE_PARAM_TYPE] = "type";
     roles[QtRole::ROLE_PARAM_CONTROL] = "control";
     roles[QtRole::ROLE_PARAM_QML_VALUE] = "value";
@@ -293,7 +293,7 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
 }
 
 
-bool ParamPlainModel::insertRow(int row, QString& name)
+bool ParamPlainModel::insertRow(int row, QString name)
 {
     if (row < 0 || row > m_items.size()) {
         return false;
