@@ -2368,18 +2368,18 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
             pTab->setData(VPARAM_TAB, ROLE_ELEMENT_TYPE);
             pTab->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
             pTab->setData(QString::fromStdString(tabName), QtRole::ROLE_PARAM_NAME);
+            pInputsRoot->appendRow(pTab);
             for (const zeno::ParamGroup& group : customui.inputPrims[tabCount].groups) {
                 const QString& groupName = QString::fromStdString(group.name);
                 QStandardItem* pGroup = new QStandardItem(groupName);
                 pGroup->setData(VPARAM_GROUP, ROLE_ELEMENT_TYPE);
                 pGroup->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
                 pGroup->setData(groupName, QtRole::ROLE_PARAM_NAME);
+                pTab->appendRow(pGroup);
                 for (const zeno::ParamPrimitive& param : group.params) {
                     pGroup->appendRow(makeInputPrimItem(param));
                 }
-                pTab->appendRow(pGroup);
             }
-            pInputsRoot->appendRow(pTab);
         }
         else {
             if (tabItem->data(QtRole::ROLE_PARAM_NAME).toString().toStdString() != tabName)
@@ -2392,10 +2392,10 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
                     pGroup->setData(VPARAM_GROUP, ROLE_ELEMENT_TYPE);
                     pGroup->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
                     pGroup->setData(QString::fromStdString(groupName), QtRole::ROLE_PARAM_NAME);
+                    tabItem->appendRow(pGroup);
                     for (const zeno::ParamPrimitive& param : customui.inputPrims[tabCount].groups[groupCount].params) {
                         pGroup->appendRow(makeInputPrimItem(param));
                     }
-                    tabItem->appendRow(pGroup);
                 }
                 else {
                     if (groupItem->data(QtRole::ROLE_PARAM_NAME).toString().toStdString() != groupName)
