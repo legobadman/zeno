@@ -19,6 +19,8 @@
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
 #include "model/nodecatemodel.h"
+#include "ScintillaEditBase.h"
+#include "Scintilla.h"
 #include <QuickQanava>
 #include <QQuickStyle>
 
@@ -42,6 +44,9 @@ void initQml()
     qmlRegisterType<GraphsManager>("Zeno", 1, 0, "GraphsManager");
     qmlRegisterType<GraphsTotalView>("Zeno", 1, 0, "GraphsTotalView");
     qmlRegisterType<MenuEventFilter>("Zeno", 1, 0, "MenuEventFilter");
+
+    qRegisterMetaType<SCNotification>("SCNotification");
+    qmlRegisterType<ScintillaEditBase>("Scintilla", 1, 0, "ScintillaEditBase");
 
     //qRegisterMetaType<GraphsManager*>("GraphsManager*");
     //qRegisterMetaType<GraphsTotalView*>("GraphsTotalView*");

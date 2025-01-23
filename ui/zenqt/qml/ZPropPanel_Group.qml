@@ -5,6 +5,7 @@ import QtQuick.Layouts           1.3
 import QtQuick.Controls.Styles   1.4
 import QtQuick.Dialogs 1.3
 import zeno.enum 1.0
+import Scintilla 1.0
 import "./controls"
 
 
@@ -66,27 +67,44 @@ Item {
     Component {
         id: textedit
         ScrollView {
-            id: view
-            width: 200
-            height: 100
+            id: scrollView
+            focus: true
+            //clip: true
 
-            TextArea {
-                id: textArea
-                anchors.margins: 10
-                placeholderText: "请输入文本..."
-                font.pixelSize: 16
-                wrapMode: TextArea.WordWrap // 自动换行模式
-                readOnly: false // 设置为 true 则为只读
-                text: mvalue
+            width: 300
+            height: 300
 
-                background: Rectangle {
-                    color: "white" // 背景颜色
-                    border.color: textArea.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
-                    border.width: 1
-                }
+            property alias quickScintillaEditor: quickScintillaEditor
+            property bool actionFromKeyboard: false
 
-                onEditingFinished: {
-                    root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOn
+            ScrollBar.vertical.policy: ScrollBar.AlwaysOn            
+
+            Rectangle {
+                id: editorFrame
+
+                anchors.fill: parent
+
+                implicitWidth: quickScintillaEditor.logicalWidth
+                implicitHeight: quickScintillaEditor.logicalHeight
+
+                ScintillaEditBase {
+                    id: quickScintillaEditor
+
+                    width: scrollView.availableWidth //+ 2*quickScintillaEditor.charHeight
+                    height: scrollView.availableHeight //+ 2*quickScintillaEditor.charWidth
+
+                    // position of the QuickScintilla controll will be changed in response of signals from the ScrollView
+                    x : 0
+                    y : 0
+
+                    Accessible.role: Accessible.EditableText
+
+                    font.family: "Courier New"  //*/ "Hack"
+                    font.pointSize: 18
+                    focus: true
+                    text: "Welcome scintilla in the Qt QML/Quick world !\nLine 2 for while if else blub done\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\nLine 11\nLine 12\nLine 13\nLine 14\nLine 15\nLine 16\nLine 17\nlast line is here!\n"+parent.x+ " "+parent.y+" "+x+" "+y
+
                 }
             }
         }

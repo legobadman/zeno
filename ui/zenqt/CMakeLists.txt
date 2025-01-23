@@ -56,13 +56,21 @@ if (WIN32)
 endif()
 
 target_link_libraries(zenqt PRIVATE zenocore zenovis)
-target_include_directories(zenqt PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2)
+target_link_libraries(zenqt PUBLIC ScintillaEditBase)
+
+target_include_directories(zenqt PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2 ScintillaEditBase ScintillaEdit)
 target_include_directories(zenqt PRIVATE 
     .
     ./include
     ../3rdparty/include
     ../3rdparty/Qt-Advanced-Docking-System/src
     ./qml/QuickQanava-2.4/src
+    ../3rdparty/QuickScintilla/scintilla/qt/ScintillaEdit
+    ../3rdparty/QuickScintilla/scintilla/qt/ScintillaEditBase
+    ../3rdparty/QuickScintilla/scintilla/include
+    ../3rdparty/QuickScintilla/scintilla/lexilla/src
+    ../3rdparty/QuickScintilla/scintilla/lexlib
+    ../3rdparty/QuickScintilla/scintilla/src
 )
 
 add_custom_command(TARGET zenqt PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/hdr ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/hdr)

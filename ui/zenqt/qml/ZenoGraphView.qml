@@ -663,7 +663,8 @@ Qan.GraphView {
                 let newWidth = proppanel.width + (proppanel.x - mouseX)
                 var contentW = proppanel.calc_content_width()
                 proppanel.x = mouseX
-                proppanel.width = Math.min(newWidth, contentW)
+                proppanel.width = newWidth
+                //proppanel.width = Math.min(newWidth, contentW) //宽度暂时不做限制
             }
         }
 
@@ -683,7 +684,8 @@ Qan.GraphView {
                 let newHeight = viewY - proppanel.y
 
                 var contentH = proppanel.calc_content_height()
-                proppanel.height = Math.min(newHeight, contentH)
+                proppanel.height = newHeight
+                // proppanel.height = Math.min(newHeight, contentH)
             }
         }
     }
