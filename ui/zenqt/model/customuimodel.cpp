@@ -52,16 +52,40 @@ void CustomUIModel::initCustomuiConnections(QStandardItemModel* customuiStandard
         QStandardItem* parentItem = customuiStandarditemModel->itemFromIndex(parent);
         QStandardItem* removeItem = parentItem->child(first);
         int elemtype = removeItem->data(ROLE_ELEMENT_TYPE).toInt();
+        ParamTabModel* tabmodel = tabModel();
         if (elemtype == VPARAM_TAB) {
-            ParamTabModel* tabmodel = tabModel();
             tabmodel->removeRow(first);
         }
-        });
+        else if (elemtype == VPARAM_GROUP) {
+            ParamGroupModel* group = tabmodel->index(parent.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>();
+            group->removeRow(first);
+        }
+        else if (elemtype == VPARAM_PARAM) {
+            QModelIndex& tabindx = parent.parent();
+            if (ParamGroupModel* groupmodel = tabmodel->index(tabindx.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>()) {
+                ParamPlainModel* paramsmodel = groupmodel->index(parent.row()).data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
+                paramsmodel->removeRow(first);
+
+                tabmodel->setData(tabmodel->index(0,0), "dddd", QtRole::ROLE_PARAM_NAME);
+            }
+        }
+    });
     connect(customuiStandarditemModel, &QStandardItemModel::dataChanged, [customuiStandarditemModel, this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
         if (roles.size() == 1 && roles[0] == QtRole::ROLE_PARAM_NAME) {
-            if (topLeft.data(ROLE_ELEMENT_TYPE).toInt() == VPARAM_TAB) {
-                ParamTabModel* tabmodel = tabModel();
-                tabmodel->setData(topLeft, topLeft.data(QtRole::ROLE_PARAM_NAME));
+            QStandardItem* changeItem = customuiStandarditemModel->itemFromIndex(topLeft);
+            int elemtype = changeItem->data(ROLE_ELEMENT_TYPE).toInt();
+            ParamTabModel* tabmodel = tabModel();
+            if (elemtype == VPARAM_TAB) {
+                tabmodel->setData(topLeft, topLeft.data(QtRole::ROLE_PARAM_NAME), QtRole::ROLE_PARAM_NAME);
+            } else if (elemtype == VPARAM_GROUP) {
+                ParamGroupModel* group = tabmodel->index(topLeft.parent().row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>();
+                group->setData(topLeft, topLeft.data(QtRole::ROLE_PARAM_NAME), QtRole::ROLE_PARAM_NAME);
+            } else if (elemtype == VPARAM_PARAM) {
+                QModelIndex& tabindx = topLeft.parent().parent();
+                if (ParamGroupModel* groupmodel = tabmodel->index(tabindx.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>()) {
+                    ParamPlainModel* paramsmodel = groupmodel->index(topLeft.parent().row()).data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
+                    paramsmodel->setData(topLeft, topLeft.data(QtRole::ROLE_PARAM_NAME), QtRole::ROLE_PARAM_NAME);
+                }
             }
         }
     });
@@ -85,7 +109,7 @@ int ParamTabModel::rowCount(const QModelIndex& parent) const {
 }
 
 QVariant ParamTabModel::data(const QModelIndex& index, int role) const {
-    if (role == Qt::DisplayRole) {
+    if (role == QtRole::ROLE_PARAM_NAME) {
         return m_items[index.row()].name;
     }
     else if (role == QmlCUIRole::GroupModel) {
@@ -97,9 +121,13 @@ QVariant ParamTabModel::data(const QModelIndex& index, int role) const {
 }
 
 bool ParamTabModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+    if (!index.isValid()) {
+        return false;
+    }
     switch (role) {
     case QtRole::ROLE_PARAM_NAME:
         m_items[index.row()].name = value.toString();
+        emit dataChanged(index, index, { QtRole::ROLE_PARAM_NAME });
         return true;
     }
     return false;
@@ -107,11 +135,17 @@ bool ParamTabModel::setData(const QModelIndex& index, const QVariant& value, int
 
 QHash<int, QByteArray> ParamTabModel::roleNames() const {
     QHash<int, QByteArray> values;
-    values[Qt::DisplayRole] = "name";
+    values[QtRole::ROLE_PARAM_NAME] = "tabname";
     values[QmlCUIRole::GroupModel] = "groups";
     return values;
 }
 
+Qt::ItemFlags ParamTabModel::flags(const QModelIndex& index) const
+{
+    if (!index.isValid())
+        return Qt::NoItemFlags;
+    return Qt::ItemIsEditable | QAbstractListModel::flags(index);
+}
 
 bool ParamTabModel::insertRow(int row, QString& name) {
     if (row < 0 || row > m_items.size()) {
@@ -167,12 +201,21 @@ QVariant ParamGroupModel::data(const QModelIndex& index, int role) const {
 }
 
 bool ParamGroupModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+    if (!index.isValid()) {
+        return false;
+    }
+    switch (role) {
+    case QtRole::ROLE_PARAM_NAME:
+        m_items[index.row()].name = value.toString();
+        emit dataChanged(index, index, { QtRole::ROLE_PARAM_NAME });
+        return true;
+    }
     return false;
 }
 
 QHash<int, QByteArray> ParamGroupModel::roleNames() const {
     QHash<int, QByteArray> values;
-    values[Qt::DisplayRole] = "name";
+    values[Qt::DisplayRole] = "groupname";
     values[QmlCUIRole::PrimModel] = "params";
     return values;
 }
@@ -180,12 +223,29 @@ QHash<int, QByteArray> ParamGroupModel::roleNames() const {
 
 bool ParamGroupModel::insertRow(int row, QString& name)
 {
-    return false;
+    if (row < 0 || row > m_items.size()) {
+        return false;
+    }
+
+    beginInsertRows(QModelIndex(), row, row);
+    _GroupItem item;
+    item.name = name;
+    item.paramM = new ParamPlainModel(zeno::ParamGroup{ name.toStdString() }, this);
+    m_items.insert(row, std::move(item));
+    endInsertRows();
+    return true;
 }
 
 bool ParamGroupModel::removeRow(int row)
 {
-    return false;
+    if (row < 0 || row >= m_items.size()) {
+        return false;
+    }
+
+    beginRemoveRows(QModelIndex(), row, row);
+    m_items.erase(m_items.begin() + row);
+    endRemoveRows();
+    return true;
 }
 
 ////////////////////////////////////////////////////////
@@ -235,12 +295,28 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
 
 bool ParamPlainModel::insertRow(int row, QString& name)
 {
-    return false;
+    if (row < 0 || row > m_items.size()) {
+        return false;
+    }
+
+    beginInsertRows(QModelIndex(), row, row);
+    int r = m_paramsModel->indexFromName(name, true);
+    QPersistentModelIndex idx = m_paramsModel->index(r);
+    m_items.insert(row, std::move(idx));
+    endInsertRows();
+    return true;
 }
 
 bool ParamPlainModel::removeRow(int row)
 {
-    return false;
+    if (row < 0 || row >= m_items.size()) {
+        return false;
+    }
+
+    beginRemoveRows(QModelIndex(), row, row);
+    m_items.erase(m_items.begin() + row);
+    endRemoveRows();
+    return true;
 }
 
 ///////////////////////////////////////////////////////////////

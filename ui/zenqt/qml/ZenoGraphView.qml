@@ -272,7 +272,9 @@ Qan.GraphView {
             //notifyUser( "Node <b>" + node.label + "</b> clicked" )
             //nodeEditor.node = node
         }
-        onNodeRightClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> right clicked" ) }
+        onNodeRightClicked: function(node) {
+            showDialog(node)
+        }
         onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }
         onNodeMoved: function(node) { notifyUser("Node <b>" + node.label + "</b> moved") }
 
@@ -652,6 +654,26 @@ Qan.GraphView {
                 var contentH = proppanel.calc_content_height()
                 proppanel.height = Math.min(newHeight, contentH)
             }
+        }
+    }
+
+    property var editparamDlg : undefined 
+    function showDialog(node) {
+        var component = Qt.createComponent("ZEditparamDlg.qml");
+        if (component.status === Component.Ready) {
+            if(!editparamDlg) {
+                var editparamDlg = component.createObject(null); // 创建顶层对象
+                if (editparamDlg) {
+                    editparamDlg.node = node
+                    editparamDlg.openDialog(); // 调用 openDialog 方法显示窗口
+                } else {
+                    console.error("对话框实例创建失败");
+                }
+            } else {
+                editparamDlg.node = node
+            }
+        } else if (component.status === Component.Error) {
+            console.error("加载对话框组件失败:", component.errorString());
         }
     }
 

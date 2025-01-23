@@ -84,5 +84,6 @@
         <file>EditableText.qml</file>
         <file>SubMenu.qml</file>
         <file>MenuItem.qml</file>
+		<file>ZEditparamDlg.qml</file>
     </qresource>
 </RCC>
