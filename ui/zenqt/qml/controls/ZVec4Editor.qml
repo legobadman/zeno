@@ -25,6 +25,7 @@ Item {
         spacing: 10
         VecEdit {
             id: xedit
+            Layout.fillWidth: true
             text: value[0]
             onEditingFinished: {
                 root.editingFinished()
@@ -32,6 +33,7 @@ Item {
         }
         VecEdit {
             id: yedit
+            Layout.fillWidth: true
             text: value[1]
             onEditingFinished: {
                 root.editingFinished()
@@ -39,6 +41,7 @@ Item {
         }
         VecEdit {
             id: zedit
+            Layout.fillWidth: true
             text: value[2]
             onEditingFinished: {
                 root.editingFinished()
@@ -46,6 +49,7 @@ Item {
         }
         VecEdit {
             id: wedit
+            Layout.fillWidth: true
             text: value[3]
             onEditingFinished: {
                 root.editingFinished()

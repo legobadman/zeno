@@ -25,6 +25,7 @@ Item {
 
         VecEdit {
             id: xedit
+            Layout.fillWidth: true
             text: value[0]
             onEditingFinished: {
                 root.editingFinished()
@@ -32,6 +33,7 @@ Item {
         }
         VecEdit {
             id: yedit
+            Layout.fillWidth: true
             text: value[1]
             onEditingFinished: {
                 root.editingFinished()
@@ -39,23 +41,11 @@ Item {
         }
         VecEdit {
             id: zedit
+            Layout.fillWidth: true
             text: value[2]
             onEditingFinished: {
                 root.editingFinished()
             }    
-        }
-
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    console.log("empty area of vec3editor onClicked")
-                    parent.forceActiveFocus();
-                }
-            }
         }
     }
 }

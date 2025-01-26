@@ -87,26 +87,34 @@ Pane {
                         color: "white"
                     }
 
-                    //ScrollView必须要套一个StackLayout，否则滚动区域不显示
-                    StackLayout {
-                        ScrollView {
+                    ScrollView {
+                        id: scroolv
+                        implicitWidth: 300
+                        implicitHeight: 300
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        clip: true
+
+                        ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+                        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                        // ScrollBar.horizontal.policy: ScrollBar.AlwaysOn      //打开是为了方便查看scroll组件的范围
+                        // ScrollBar.vertical.policy: ScrollBar.AlwaysOn     
+
+                        ZPropPanel_Group {
+                            id: prop_onlygroup
+                            visible: true
+                            height: implicitHeight
+
+                            property int minContentWidth: 300       //如果拖动宽度小于这个值，就设定为这个值，其余部分以滚动方式显示, 否则，拖动宽度越大，控件组宽度就跟随变大
+                            implicitWidth: Math.max(scroolv.availableWidth, minContentWidth)    //TODO: 其实可以为每个内部组件设置最小大小，然后以某种方式计算出最小大小，然后设置到这里。
+
                             clip: true
-                            ScrollBar.horizontal.policy: ScrollBar.AsNeeded
-                            ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-                            ColumnLayout {
-                                ZPropPanel_Group {
-                                    visible: true
-                                    height: implicitHeight
-                                    clip: true
-                                    Layout.fillWidth: true
-                                    is_input_prim: true
-                                    model: comp.node.params     //关联的是ParamsModel
+                            is_input_prim: true
+                            model: comp.node.params     //关联的是ParamsModel
 
-                                    Component.onCompleted: {
-                                        comp.scrollitem = this
-                                    }
-                                }
+                            Component.onCompleted: {
+                                comp.scrollitem = this
                             }
                         }
                     }

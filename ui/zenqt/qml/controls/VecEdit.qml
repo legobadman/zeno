@@ -3,8 +3,8 @@ import QtQuick.Controls 2.0
 
 Rectangle {
     id: container
-    width: inputField.width
-    height: inputField.height
+    implicitWidth: inputField.width
+    implicitHeight: inputField.height
     property alias text: inputField.text
     color: "transparent"
     border.color: inputField.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
@@ -14,8 +14,10 @@ Rectangle {
 
     TextInput {
         id: inputField
-        anchors.centerIn: parent
+        anchors.fill: parent
+
         verticalAlignment: Text.AlignVCenter
+
         width: 48
         height: 24
 

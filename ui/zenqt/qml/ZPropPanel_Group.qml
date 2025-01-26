@@ -15,12 +15,16 @@ Item {
     property var model          //ParamPlainModel*
     property bool is_input_prim: true
 
-    implicitWidth: mainlayout.implicitWidth
+    implicitWidth: 300//mainlayout.implicitWidth      //宽度是由外部决定的，mainlayout的左右锚点要设定为这个，于是这里就给一个初始化宽度。
     implicitHeight: mainlayout.implicitHeight
 
     Component {
         id: compVec2edit
         ZVec2Editor {
+            Layout.fillWidth: true
+            anchors.left: parent.left
+            anchors.right: parent.right
+                        
             value: mvalue
 
             onEditingFinished: {
@@ -33,6 +37,10 @@ Item {
     Component {
         id: compVec3edit
         ZVec3Editor {
+            Layout.fillWidth: true
+            anchors.left: parent.left
+            anchors.right: parent.right
+
             value: mvalue
 
             onEditingFinished: {
@@ -45,6 +53,10 @@ Item {
     Component {
         id: compVec4edit
         ZVec4Editor {
+            Layout.fillWidth: true
+            anchors.left: parent.left
+            anchors.right: parent.right
+
             value: mvalue
             onEditingFinished: {
                 var vec = get_value()
@@ -56,6 +68,10 @@ Item {
     Component {
         id: complineedit
         ZLineEditor {
+            Layout.fillWidth: true
+            anchors.left: parent.left
+            anchors.right: parent.right
+
             text: mvalue
 
             onEditingFinished: {
@@ -69,10 +85,14 @@ Item {
         ScrollView {
             id: scrollView
             focus: true
-            //clip: true
+            clip: true
 
-            width: 300
-            height: 300
+            implicitWidth: 300
+            implicitHeight: 300
+
+            Layout.fillWidth: true
+            anchors.left: parent.left
+            anchors.right: parent.right
 
             property alias quickScintillaEditor: quickScintillaEditor
             property bool actionFromKeyboard: false
@@ -85,14 +105,26 @@ Item {
 
                 anchors.fill: parent
 
-                implicitWidth: quickScintillaEditor.logicalWidth
-                implicitHeight: quickScintillaEditor.logicalHeight
+                implicitWidth: {
+                    console.log("editframe.implicitWidth(logical width) = " + quickScintillaEditor.logicalWidth)
+                    return quickScintillaEditor.logicalWidth
+                }
+                implicitHeight: {
+                    console.log("editframe.implicitHeight(logical Height) = " + quickScintillaEditor.logicalHeight)
+                    return quickScintillaEditor.logicalHeight
+                }
 
                 ScintillaEditBase {
                     id: quickScintillaEditor
 
-                    width: scrollView.availableWidth //+ 2*quickScintillaEditor.charHeight
-                    height: scrollView.availableHeight //+ 2*quickScintillaEditor.charWidth
+                    width: {
+                        console.log("editbase width = " + scrollView.availableWidth)
+                        return scrollView.availableWidth //+ 2*quickScintillaEditor.charHeight
+                    }
+                    height: {
+                        console.log("editbase height = " + scrollView.availableHeight)
+                        return scrollView.availableHeight //+ 2*quickScintillaEditor.charWidth
+                    }
 
                     // position of the QuickScintilla controll will be changed in response of signals from the ScrollView
                     x : 0
@@ -244,8 +276,12 @@ Item {
 
         Rectangle {
             id: colorBlock
-            width: 96
-            height: 24
+            implicitWidth: 96
+            implicitHeight: 24
+            Layout.fillWidth: true
+            anchors.left: parent.left
+            anchors.right: parent.right
+
             color: Qt.rgba(mvalue[0], mvalue[1], mvalue[2], 1)//"red"
             radius: 2
 
@@ -281,16 +317,15 @@ Item {
     ColumnLayout {
         id: mainlayout
         spacing: 0
-        Layout.fillWidth: true
+        anchors.left: parent.left                  //我们支持动态拓宽面板时，也增大控件宽度，于是这里要锚定parent
+        anchors.right: parent.right
 
         Repeater {
             model: root.model     //关联的是ParamPlainModel
             delegate:
                 RowLayout {
                     spacing: 0
-                    Layout.alignment: Qt.AlignLeft
                     Layout.fillWidth: true
-
                     property bool is_match_group: (root.is_input_prim && group == ParamGroup.InputPrimitive) || (!root.is_input_prim && group == ParamGroup.OutputPrimitive)
 
                     ToolButton {
@@ -325,12 +360,13 @@ Item {
                             radius: width / 2
                         }
                     }
+
                     Text {
                         text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
                         color: "white"
                         visible: is_match_group
                         Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
-                        Layout.alignment: Qt.AlignLeft
+                        Layout.alignment: Qt.AlignVCenter
 
                         MouseArea {
                             anchors.fill: parent
@@ -340,7 +376,9 @@ Item {
                             }
                         }
                     }
+
                     Loader {
+                        Layout.fillWidth: true
                         sourceComponent: {
                             if (!is_match_group) {
                                 return compBlank;
@@ -382,24 +420,16 @@ Item {
                                 return nullControl
                             }
                         }
-                        property var mvalue: value /* value是c++导出的名字 */
-                        property var m_control_properties: control_properties /* value是c++导出的名字 */
+                        property var mvalue: value
+                        property var m_control_properties: control_properties
                         property var mindex: per_index
                     }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                // console.log("empty area of RowLayout onClicked")
-                                parent.forceActiveFocus();
-                            }
-                        }
-                    }
                 }
+        }
+
+        Item {
+            Layout.fillHeight: true
+            width: 10
         }
     }
 
