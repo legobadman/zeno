@@ -98,46 +98,54 @@ Item {
             property bool actionFromKeyboard: false
 
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOn
-            ScrollBar.vertical.policy: ScrollBar.AlwaysOn            
+            ScrollBar.vertical.policy: ScrollBar.AlwaysOn
+            // ScrollBar.horizontal.policy: ScrollBar.AsNeeded
+            // ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-            Rectangle {
-                id: editorFrame
+            // onWidthChanged: {
+            //     console.log("scrollview width = " + scrollView.width)
+            // }
+
+            // onHeightChanged: {
+            //     console.log("scrollview height = " + scrollView.height)
+            // }
+
+            ScintillaEditBase {
+                id: quickScintillaEditor
 
                 anchors.fill: parent
 
-                implicitWidth: {
-                    console.log("editframe.implicitWidth(logical width) = " + quickScintillaEditor.logicalWidth)
-                    return quickScintillaEditor.logicalWidth
-                }
-                implicitHeight: {
-                    console.log("editframe.implicitHeight(logical Height) = " + quickScintillaEditor.logicalHeight)
-                    return quickScintillaEditor.logicalHeight
-                }
+                property int minContentWidth: 1200       //如果拖动宽度小于这个值，就设定为这个值，其余部分以滚动方式显示, 否则，拖动宽度越大，控件组宽度就跟随变大
+                //implicitWidth: minContentWidth          //TODO: 其实可以为每个内部组件设置最小大小，然后以某种方式计算出最小大小，然后设置到这里。
 
-                ScintillaEditBase {
-                    id: quickScintillaEditor
+                property int minContentHeight: 1200
+                //implicitHeight: minContentHeight
 
-                    width: {
-                        console.log("editbase width = " + scrollView.availableWidth)
-                        return scrollView.availableWidth //+ 2*quickScintillaEditor.charHeight
-                    }
-                    height: {
-                        console.log("editbase height = " + scrollView.availableHeight)
-                        return scrollView.availableHeight //+ 2*quickScintillaEditor.charWidth
-                    }
+                //implicitWidth: Math.max(minContentWidth, logicalWidth)
+                //implicitHeight: Math.max(minContentHeight, logicalHeight)
 
-                    // position of the QuickScintilla controll will be changed in response of signals from the ScrollView
-                    x : 0
-                    y : 0
+                //width: Math.max(minContentWidth, logicalWidth)
+                //height: Math.max(minContentHeight, logicalHeight)
 
-                    Accessible.role: Accessible.EditableText
+                // width: {
+                //     console.log("editbase width = " + scrollView.availableWidth)
+                //     return scrollView.availableWidth //+ 2*quickScintillaEditor.charHeight
+                // }
+                // height: {
+                //     console.log("editbase height = " + scrollView.availableHeight)
+                //     return scrollView.availableHeight //+ 2*quickScintillaEditor.charWidth
+                // }
 
-                    font.family: "Courier New"  //*/ "Hack"
-                    font.pointSize: 18
-                    focus: true
-                    text: "Welcome scintilla in the Qt QML/Quick world !\nLine 2 for while if else blub done\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\nLine 11\nLine 12\nLine 13\nLine 14\nLine 15\nLine 16\nLine 17\nlast line is here!\n"+parent.x+ " "+parent.y+" "+x+" "+y
+                // position of the QuickScintilla controll will be changed in response of signals from the ScrollView
+                x : 0
+                y : 0
 
-                }
+                Accessible.role: Accessible.EditableText
+
+                font.family: "Courier New"  //*/ "Hack"
+                font.pointSize: 18
+                focus: true
+                text: "Welcome scintilla in the Qt QML/Quick world !\nLine 2 for while if else blub done\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\nLine 11\nLine 12\nLine 13\nLine 14\nLine 15\nLine 16\nLine 17\nlast line is here!\n"+parent.x+ " "+parent.y+" "+x+" "+y
             }
         }
     }
