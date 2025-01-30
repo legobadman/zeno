@@ -237,8 +237,9 @@ _ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent)
     //connect(cameraFocus, SIGNAL(triggered()), this, SLOT(cameraFocus()));
     addAction(cameraFocus);
 
-    QAction* mActZenoNewNode = new QAction();
+    QAction* mActZenoNewNode = new QAction(this);
     mActZenoNewNode->setShortcut(settings.getShortCut(ShortCut_NewNode));
+    mActZenoNewNode->setShortcutContext(Qt::WidgetShortcut);
     connect(mActZenoNewNode, &QAction::triggered, [=]() {
         QPoint pos = this->mapFromGlobal(QCursor::pos());
         QContextMenuEvent *e = new QContextMenuEvent(QContextMenuEvent::Reason::Mouse, pos, QCursor::pos());

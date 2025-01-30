@@ -145,6 +145,9 @@ border-top: 1px solid black;</string>
    <property name="shortcut">
     <string notr="true">Ctrl+Z</string>
    </property>
+   <property name="shortcutContext">
+    <enum>Qt::WidgetShortcut</enum>
+   </property>
   </action>
   <action name="actionRedo">
    <property name="text">
@@ -152,6 +155,9 @@ border-top: 1px solid black;</string>
    </property>
    <property name="shortcut">
     <string notr="true">Ctrl+Y</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::WidgetShortcut</enum>
    </property>
   </action>
   <action name="actionDefault_layout">

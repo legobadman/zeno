@@ -450,7 +450,6 @@ zeno::NodeCates GraphsManager::getCates() const
 
     cates.insert(std::make_pair("assets", assetsNames));
 
-    //添加几个特殊的case
     //1. foreach-count
     std::vector<std::string> control_cases = { "Foreach-Count", "Foreach-Geometry-attr", "Foreach-StopCond" };
     auto iter = cates.find("control");
