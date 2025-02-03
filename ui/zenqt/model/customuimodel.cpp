@@ -202,6 +202,18 @@ ParamPlainModel::ParamPlainModel(zeno::ParamGroup group, ParamGroupModel* pModel
     }
 }
 
+QString ParamPlainModel::getMaxLengthName() const
+{
+    QString maxName;
+    for (auto& idx : m_items) {
+         const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+         if (name.length() > maxName.length()) {
+             maxName = name;
+         }
+    }
+    return maxName;
+}
+
 int ParamPlainModel::rowCount(const QModelIndex& parent) const {
     return m_items.size();
 }
@@ -219,7 +231,7 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
     //copy from ParamsModel::roleNames()
     QHash<int, QByteArray> roles;
     roles[QtRole::ROLE_NODE_NAME] = "nodename";
-    roles[QtRole::ROLE_PARAM_NAME] = "paramname";
+    roles[QtRole::ROLE_PARAM_NAME] = "name";
     roles[QtRole::ROLE_PARAM_TYPE] = "type";
     roles[QtRole::ROLE_PARAM_CONTROL] = "control";
     roles[QtRole::ROLE_PARAM_QML_VALUE] = "value";
@@ -271,7 +283,7 @@ QHash<int, QByteArray> ParamOutputModel::roleNames() const {
     //copy from ParamsModel::roleNames()
     QHash<int, QByteArray> roles;
     roles[QtRole::ROLE_NODE_NAME] = "nodename";
-    roles[QtRole::ROLE_PARAM_NAME] = "paramname";
+    roles[QtRole::ROLE_PARAM_NAME] = "name";
     roles[QtRole::ROLE_PARAM_TYPE] = "type";
     roles[QtRole::ROLE_PARAM_CONTROL] = "control";
     roles[QtRole::ROLE_ISINPUT] = "input";

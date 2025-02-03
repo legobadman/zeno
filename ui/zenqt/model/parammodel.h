@@ -47,6 +47,7 @@ public:
 
     Q_PROPERTY(bool showPrimSocks READ getShowPrimSocks WRITE setShowPrimSocks NOTIFY showPrimSocks_changed)
     Q_PROPERTY(int numOfOutputPrims READ getNumOfOutputPrims NOTIFY numOfOutputPrims_changed)
+    Q_PROPERTY(QString maxLengthName READ getMaxLengthName NOTIFY maxLengthName_changed)
 
     Q_INVOKABLE int indexFromName(const QString& name, bool bInput) const;
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
@@ -97,6 +98,7 @@ signals:
     void enabledVisibleChanged();
     void showPrimSocks_changed();
     void numOfOutputPrims_changed();
+    void maxLengthName_changed();
 
 private:
     void initParamItems();
@@ -104,6 +106,7 @@ private:
     void updateCustomUiModelIncremental(const zeno::params_change_info& params, const zeno::CustomUI& customui); //增量更新m_customParamsM，防止zenoproppanl接收不到数据
     GraphModel* parentGraph() const;
     void test_customparamsmodel() const;
+    QString getMaxLengthName() const;
     void updateParamData(const QString& name, const QVariant& val, int role, bool bInput = true);
     QStandardItemModel* constructProxyModel();
 

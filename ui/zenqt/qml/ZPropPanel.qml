@@ -89,8 +89,6 @@ Pane {
 
                     ScrollView {
                         id: scroolv
-                        implicitWidth: 300
-                        implicitHeight: 300
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         clip: true
@@ -106,7 +104,8 @@ Pane {
                             height: implicitHeight
 
                             property int minContentWidth: 300       //如果拖动宽度小于这个值，就设定为这个值，其余部分以滚动方式显示, 否则，拖动宽度越大，控件组宽度就跟随变大
-                            implicitWidth: Math.max(scroolv.availableWidth, minContentWidth)    //TODO: 其实可以为每个内部组件设置最小大小，然后以某种方式计算出最小大小，然后设置到这里。
+                            implicitWidth: Math.max(scroolv.availableWidth, minContentWidth)    //控件组的宽度跟随整个面板的宽度，拖动越宽，则控件组占满多出的控件，同时设定一个最小值。
+                            //TODO: 其实可以为每个内部组件设置最小大小，然后以某种方式计算出最小大小，然后设置到这里。
 
                             clip: true
 

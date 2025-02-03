@@ -113,6 +113,9 @@ class ParamPlainModel : public QAbstractListModel
 
 public:
     ParamPlainModel(zeno::ParamGroup group, ParamGroupModel* pModel);
+
+    Q_PROPERTY(QString maxLengthName READ getMaxLengthName NOTIFY maxLengthName_changed)
+
     Q_INVOKABLE ParamGroupModel* groupModel() { return m_groupModel; }
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
@@ -123,7 +126,12 @@ public:
     bool insertRow(int row, QString& name);
     bool removeRow(int row);
 
+signals:
+    void maxLengthName_changed();
+
 private:
+    QString getMaxLengthName() const;
+
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
     ParamGroupModel* m_groupModel;
     ParamsModel* m_paramsModel;

@@ -1,4 +1,4 @@
-import QtQuick                   2.12
+import QtQuick                   2.15
 import QtQuick.Controls          2.15
 import QtQuick.Controls.Material 2.1
 import QtQuick.Layouts           1.3
@@ -102,14 +102,6 @@ Item {
             // ScrollBar.horizontal.policy: ScrollBar.AsNeeded
             // ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-            // onWidthChanged: {
-            //     console.log("scrollview width = " + scrollView.width)
-            // }
-
-            // onHeightChanged: {
-            //     console.log("scrollview height = " + scrollView.height)
-            // }
-
             ScintillaEditBase {
                 id: quickScintillaEditor
 
@@ -145,7 +137,19 @@ Item {
                 font.family: "Courier New"  //*/ "Hack"
                 font.pointSize: 18
                 focus: true
-                text: "Welcome scintilla in the Qt QML/Quick world !\nLine 2 for while if else blub done\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\nLine 11\nLine 12\nLine 13\nLine 14\nLine 15\nLine 16\nLine 17\nlast line is here!\n"+parent.x+ " "+parent.y+" "+x+" "+y
+                text: mvalue
+
+                onTextChanged: {
+                    // console.log("onTextChanged")
+                }
+
+                onFocusChanged: function(focus_in) {
+                    if (!focus_in) {
+                        if (text != mvalue) {
+                            root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
+                        }
+                    }
+                }
             }
         }
     }
@@ -329,7 +333,10 @@ Item {
         anchors.right: parent.right
 
         Repeater {
-            model: root.model     //关联的是ParamPlainModel
+            id: repeater_id
+            model: root.model     //关联的是ParamPlainModel或者ParamsModel
+            property string maxName: model.maxLengthName
+
             delegate:
                 RowLayout {
                     spacing: 0
@@ -373,7 +380,15 @@ Item {
                         text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
                         color: "white"
                         visible: is_match_group
-                        Layout.preferredWidth: 128      //TODO：calculate maximum width by all params.
+
+                        TextMetrics {
+                            id: textMetrics
+                            text: repeater_id.maxName
+                        }
+
+                        Layout.preferredWidth: {
+                            return Math.max(textMetrics.width, 50) + 16
+                        }
                         Layout.alignment: Qt.AlignVCenter
 
                         MouseArea {

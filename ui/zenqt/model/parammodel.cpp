@@ -1162,6 +1162,18 @@ int ParamsModel::numOfInputParams() const
     return n;
 }
 
+QString ParamsModel::getMaxLengthName() const {
+    QString maxName;
+    for (auto& item : m_items) {
+        if (item.group == zeno::Role_InputPrimitive) {
+            if (item.name.length() > maxName.length()) {
+                maxName = item.name;
+            }
+        }
+    }
+    return maxName;
+}
+
 int ParamsModel::getNumOfOutputPrims() const {
     int n = 0;
     for (auto item : m_items) {
