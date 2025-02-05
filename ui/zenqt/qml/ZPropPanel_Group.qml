@@ -356,6 +356,7 @@ Item {
                         }    
 
                         contentItem: Image {
+                            id: icon_image
                             source: parent.icon.source
                             sourceSize.width: 20
                             sourceSize.height: 20

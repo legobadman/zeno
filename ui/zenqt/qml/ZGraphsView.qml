@@ -9,6 +9,7 @@ import Qt.labs.settings 1.1
 import QuickQanava 2.0 as Qan
 import "qrc:/QuickQanava" as Qan
 import Zeno 1.0 as Zen
+import zeno.enum 1.0
 import "./view"
 
 
@@ -73,7 +74,7 @@ Item {
                 }    
 
                 contentItem: Image {
-                    id: icon_image
+                    id: icon_image1
                     source: parent.icon.source
                     sourceSize.width: 20
                     sourceSize.height: 20
@@ -83,8 +84,8 @@ Item {
                 }
                 
                 background: Rectangle {
-                    x: icon_image.x
-                    y: icon_image.y
+                    x: icon_image1.x
+                    y: icon_image1.y
                     width: 20
                     height: 20
                     opacity: enabled ? 1 : 0.3
@@ -102,10 +103,6 @@ Item {
                 checked: false
                 property bool reentry: false
 
-                onClicked: {
-
-                }
-
                 onCheckedChanged: {
                     if (!zeditortoolbar.view_reentry) {
                         zeditortoolbar.view_reentry = true
@@ -119,6 +116,7 @@ Item {
                 }    
 
                 contentItem: Image {
+                    id: icon_image2
                     source: parent.icon.source
                     sourceSize.width: 20
                     sourceSize.height: 20
@@ -128,12 +126,52 @@ Item {
                 }
 
                 background: Rectangle {
-                    x: icon_image.x
-                    y: icon_image.y
+                    x: icon_image2.x
+                    y: icon_image2.y
                     width: 20
                     height: 20
                     opacity: enabled ? 1 : 0.3
                     color: parent.hovered || parent.checked ? "#4F5963" : "transparent"
+                    border.color: parent.down ? "#17a81a" : "#21be2b"
+                    border.width: 0
+                    radius: 2
+                }
+            }
+
+            ToolButton {
+                id: run_buttons
+                checkable: true
+                checked: calcmgr.runStatus == RunStatus.Running
+                
+                icon.source: checked  ? "qrc:/icons/run_stop.svg" : "qrc:/icons/run_play.svg"
+
+                onCheckedChanged: {
+                    // console.log("checked: " + checked)
+                    if (checked) {
+                        calcmgr.runStatus = RunStatus.Running
+                    }
+                    else{
+                        calcmgr.runStatus = RunStatus.NoRun
+                    }
+                }    
+
+                contentItem: Image {
+                    id: icon_image3
+                    source: parent.icon.source
+                    sourceSize.width: 20
+                    sourceSize.height: 20
+                    smooth: true
+                    antialiasing: true
+                    //anchors.verticalCenter: parent.verticalCenter
+                }
+
+                background: Rectangle {
+                    x: icon_image3.x
+                    y: icon_image3.y
+                    width: 20
+                    height: 20
+                    opacity: enabled ? 1 : 0.3
+                    color: parent.hovered ? "#4F5963" : "transparent"
                     border.color: parent.down ? "#17a81a" : "#21be2b"
                     border.width: 0
                     radius: 2

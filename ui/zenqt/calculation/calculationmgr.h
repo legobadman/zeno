@@ -34,6 +34,10 @@ class CalculationMgr : public QObject
     Q_OBJECT
 public:
     CalculationMgr(QObject* parent);
+    Q_PROPERTY(RunStatus::Value runStatus READ getRunStatus WRITE setRunStatus NOTIFY runStatus_changed)
+    RunStatus::Value CalculationMgr::getRunStatus() const;
+    void setRunStatus(RunStatus::Value runstatus);
+
     void run();
     void kill();
     void registerRenderWid(DisplayWidget* pDisp);
@@ -44,6 +48,7 @@ signals:
     void calcFinished(bool, zeno::ObjPath, QString);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
     void commitRenderInfo(zeno::render_update_info);
+    void runStatus_changed();
 
 public slots:
     void onPlayTriggered(bool bToggled);
@@ -62,6 +67,7 @@ private:
     QTimer* m_playTimer;
     QSet<DisplayWidget*> m_registerRenders;
     QSet<DisplayWidget*> m_loadedRender;
+    RunStatus::Value m_runstatus;
 };
 
 #endif

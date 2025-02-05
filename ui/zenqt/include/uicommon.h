@@ -264,6 +264,21 @@ public:
     Q_ENUM(Value)
 };
 
+class RunStatus
+{
+    Q_GADGET
+public:
+    explicit RunStatus() {}
+
+    enum Value {
+        NoRun,
+        Running,
+        RunDone,
+        RunError
+    };
+    Q_ENUM(Value)
+};
+
 class QmlParamControl
 {
     Q_GADGET

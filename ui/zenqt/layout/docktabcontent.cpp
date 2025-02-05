@@ -641,8 +641,7 @@ void DockContent_Editor::initConnections()
             view->cleanUpScene();
         }
 
-
-        zenoApp->calculationMgr()->run();
+        zenoApp->calculationMgr()->setRunStatus(RunStatus::Running);
     });
     connect(m_btnRun, &ZToolMenuButton::textChanged, this, [=]() {
         QString text = m_btnRun->text();

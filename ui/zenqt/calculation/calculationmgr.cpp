@@ -54,9 +54,10 @@ void CalcWorker::run() {
 
 CalculationMgr::CalculationMgr(QObject* parent)
     : QObject(parent)
-    , m_bMultiThread(false)
+    , m_bMultiThread(true)
     , m_worker(nullptr)
     , m_playTimer(new QTimer(this))
+    , m_runstatus(RunStatus::NoRun)
 {
     m_worker = new CalcWorker(this);
     m_worker->moveToThread(&m_thread);
@@ -95,6 +96,7 @@ void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
         m_thread.quit();
         m_thread.wait();
     }
+    setRunStatus(RunStatus::NoRun);
     emit calcFinished(bSucceed, nodeUuidPath, msg);
 }
 
@@ -171,6 +173,28 @@ void CalculationMgr::kill()
 {
     zeno::getSession().interrupt();
     zeno::getSession().globalState->set_working(false);
+}
+
+RunStatus::Value CalculationMgr::getRunStatus() const
+{
+    return m_runstatus;
+}
+
+void CalculationMgr::setRunStatus(RunStatus::Value runstatus)
+{
+    if (m_runstatus == runstatus) {
+        return;
+    }
+    m_runstatus = runstatus;
+    emit runStatus_changed();
+    if (m_runstatus == RunStatus::Running)
+    {
+        run();
+    }
+    else if (m_runstatus == RunStatus::NoRun)
+    {
+        kill();
+    }
 }
 
 void CalculationMgr::registerRenderWid(DisplayWidget* pDisp)

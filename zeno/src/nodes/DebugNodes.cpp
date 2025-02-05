@@ -225,7 +225,7 @@ struct MockRunning : zeno::INode {
 
 ZENDEFNODE(MockRunning, {
     {{gParamType_List, "SRC"},
-     {gParamType_Int, "wait seconds", "1", zeno::NoSocket, zeno::SpinBox}
+     {gParamType_Int, "wait seconds", "1", zeno::NoSocket, zeno::Lineedit}
     },
     {{gParamType_IObject, "DST"}},
     {},

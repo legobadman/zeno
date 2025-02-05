@@ -383,5 +383,7 @@
     <file>icons/view-off.svg</file>
     <file>icons/view-noradius-on.svg</file>
     <file>icons/view-noradius-off.svg</file>
+    <file>icons/run_stop.svg</file>
+    <file>icons/run_play.svg</file>
 </qresource>
 </RCC>

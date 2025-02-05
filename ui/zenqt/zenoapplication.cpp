@@ -228,6 +228,7 @@ void ZenoApplication::initQuickQanavas()
 
         m_engine->rootContext()->setContextProperty("nodecatesmodel", m_nodecates);
         m_engine->rootContext()->setContextProperty("MouseUtils", &mouseUtils);
+        m_engine->rootContext()->setContextProperty("calcmgr", m_calcMgr);
 
         QuickQanava::initialize(m_engine);
         m_graphsMgr->initRootObjects();
