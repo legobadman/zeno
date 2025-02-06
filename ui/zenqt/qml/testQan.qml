@@ -48,6 +48,8 @@ Zen.GraphsTotalView {
         id: graphs
     }
 
+    Material.theme: Material.Dark
+
     StackLayout {
         id: welcomepage_or_editor
         currentIndex: 0

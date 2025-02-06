@@ -8,14 +8,12 @@
 ZQmlPanel::ZQmlPanel(QWidget* parent)
     : QQuickWidget(zenoApp->getQmlEngine(), parent)
 {
-    //QQuickStyle::setStyle("Material");
     //QQmlApplicationEngine* engine = zenoApp->getQmlEngine();
     GraphModel* pGraphM = zenoApp->graphsManager()->getGraph({ "main" });
     setResizeMode(QQuickWidget::SizeRootObjectToView);
     rootContext()->setContextProperty("nodesModel", pGraphM);
 
-    //���������ȡ������Ϣ
-#if 1
+#if 0
     QQmlComponent component(this->engine(), QUrl(QStringLiteral("qrc:/ZenoGraphView.qml")));
     if (component.status() != QQmlComponent::Ready) {
         qWarning() << "Error loading QML:";

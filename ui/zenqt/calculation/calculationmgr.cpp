@@ -102,6 +102,7 @@ void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
 
 void CalculationMgr::run()
 {
+    setRunStatus(RunStatus::Running);
     if (m_bMultiThread) {
         m_thread.start();
     }
@@ -187,14 +188,21 @@ void CalculationMgr::setRunStatus(RunStatus::Value runstatus)
     }
     m_runstatus = runstatus;
     emit runStatus_changed();
-    if (m_runstatus == RunStatus::Running)
-    {
-        run();
-    }
-    else if (m_runstatus == RunStatus::NoRun)
-    {
-        kill();
-    }
+}
+
+bool CalculationMgr::getAutoRun() const
+{
+    auto& sess = zeno::getSession();
+    return sess.is_auto_run();
+}
+
+void CalculationMgr::setAutoRun(bool autoRun)
+{
+    if (getAutoRun() == autoRun)
+        return;
+    auto& sess = zeno::getSession();
+    sess.set_auto_run(autoRun);
+    emit autorun_changed();
 }
 
 void CalculationMgr::registerRenderWid(DisplayWidget* pDisp)

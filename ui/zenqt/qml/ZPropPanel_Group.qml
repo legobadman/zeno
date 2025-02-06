@@ -159,6 +159,7 @@ Item {
         ComboBox {
             id: comboboxitem
             model: m_control_properties["combobox_items"]
+            //Material.theme: Material.Light
             currentIndex: {
                 return model.indexOf(mvalue)
             }
@@ -166,6 +167,29 @@ Item {
                 //这个条件是为了过滤初始化值时的value changed
                 if (currentText != mvalue) {
                     root.model.setData(mindex, currentText, Model.ROLE_PARAM_QML_VALUE)
+                }
+            }
+            // 自定义弹出菜单的样式
+            popup: Popup {
+                y: comboboxitem.height - 1
+                width: comboboxitem.width
+                height: Math.min(contentItem.implicitHeight + 2, 10000)//comboboxitem.Window.height - topMargin - bottomMargin)
+                padding: 1
+
+                contentItem: ListView {
+                    clip: true
+                    implicitHeight: contentHeight
+                    model: comboboxitem.popup.visible ? comboboxitem.delegateModel : null
+                    currentIndex: comboboxitem.highlightedIndex
+
+                    ScrollIndicator.vertical: ScrollIndicator { }
+                }
+
+                background: Rectangle {
+                    //border.color: "#21be2b"
+                    //color: ""
+                    //Material.theme: Material.Dark
+                    radius: 0
                 }
             }
         }

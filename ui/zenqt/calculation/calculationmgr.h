@@ -36,10 +36,14 @@ public:
     CalculationMgr(QObject* parent);
     Q_PROPERTY(RunStatus::Value runStatus READ getRunStatus WRITE setRunStatus NOTIFY runStatus_changed)
     RunStatus::Value CalculationMgr::getRunStatus() const;
-    void setRunStatus(RunStatus::Value runstatus);
 
-    void run();
-    void kill();
+    Q_PROPERTY(bool autoRun READ getAutoRun WRITE setAutoRun NOTIFY autorun_changed)
+    bool getAutoRun() const;
+    void setAutoRun(bool autoRun);
+
+    Q_INVOKABLE void run();
+    Q_INVOKABLE void kill();
+
     void registerRenderWid(DisplayWidget* pDisp);
     void unRegisterRenderWid(DisplayWidget* pDisp);
     bool isMultiThreadRunning() const;
@@ -49,6 +53,7 @@ signals:
     void nodeStatusChanged(zeno::ObjPath, NodeState);
     void commitRenderInfo(zeno::render_update_info);
     void runStatus_changed();
+    void autorun_changed();
 
 public slots:
     void onPlayTriggered(bool bToggled);
@@ -61,6 +66,8 @@ private slots:
     void onPlayReady();
 
 private:
+    void setRunStatus(RunStatus::Value runstatus);
+
     bool m_bMultiThread;
     CalcWorker* m_worker;
     QThread m_thread;

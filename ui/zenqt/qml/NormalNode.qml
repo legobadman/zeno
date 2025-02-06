@@ -45,6 +45,7 @@ Qan.NodeItem {
 
     property alias isview : right_status_group.isview
     property alias isbypass: right_status_group.isbypass
+    property var nodestatus: 0
 
     property string defattr: "abc"
 
@@ -117,6 +118,9 @@ Qan.NodeItem {
             nodeItem.x = data.x
             nodeItem.y = data.y           
         }
+        if (role == Model.ROLE_NODE_RUN_STATE) {
+            nodeItem.nodestatus = data
+        }
     }
 
     //event:
@@ -141,6 +145,17 @@ Qan.NodeItem {
             nodeItem.node.label = text
         }
     }
+
+    Image {
+        id: errormark
+        visible: nodeItem.nodestatus == NodeStatus.RunError
+        width: 64
+        height: 64
+        z: -10
+        source: "qrc:/icons/node/error.svg"
+        anchors.right: nodeItem.left
+        y: right_status_group.y + right_status_group.height / 2 - height / 2
+    }     
 
     ColumnLayout {
         id: mainmain_layout
@@ -181,7 +196,7 @@ Qan.NodeItem {
 
             Item {
                 Layout.fillWidth: true
-            }           
+            }
         }
 
         RowLayout {
@@ -214,7 +229,7 @@ Qan.NodeItem {
                     spacing: 0
 
                     Item {
-                        id:nodeheader
+                        id: nodeheader
                         implicitWidth: nodeheader_layout.implicitWidth
                         implicitHeight: nodeheader_layout.implicitHeight
                         Layout.fillWidth: true
@@ -399,6 +414,15 @@ Qan.NodeItem {
             Item {
                 Layout.fillWidth: true
             }
+        }
+
+        Rectangle {
+            id: dirtymark
+            color: "yellow"
+            height: 2
+            width: 48
+            visible: nodeItem.nodestatus != NodeStatus.RunSucceed
+            Layout.alignment: Qt.AlignHCenter
         }
 
         RowLayout {

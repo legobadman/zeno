@@ -622,4 +622,20 @@ struct NodeState
     bool bDirty;
 };
 
+class QmlNodeRunStatus
+{
+    Q_GADGET
+public:
+    explicit QmlNodeRunStatus() {}
+
+    enum Value {
+        DirtyReadyToRun,
+        Pending,
+        Running,
+        RunError,
+        RunSucceed
+    };
+    Q_ENUM(Value)
+};
+
 #endif

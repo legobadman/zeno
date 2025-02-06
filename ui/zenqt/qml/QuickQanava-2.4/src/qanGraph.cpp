@@ -51,6 +51,8 @@
 #include "./qanGroupItem.h"
 #include "./qanConnector.h"
 #include "zassert.h"
+#include "uicommon.h"
+#include "declmetatype.h"
 
 namespace qan { // ::qan
 
@@ -337,8 +339,16 @@ void Graph::setModel(GraphModel* pGraphM)
         const QString& uuid = topLeft.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end());
         int role = roles[0];
-        const QVariant& dat = topLeft.data(role);
-        m_nodes[uuid]->getItem()->dataChanged(dat, role);
+        if (role == QtRole::ROLE_NODE_RUN_STATE) {
+            const QVariant& dat = topLeft.data(role);
+            NodeState state = dat.value<NodeState>();
+            QmlNodeRunStatus::Value qmlstate = static_cast<QmlNodeRunStatus::Value>(state.runstatus);
+            m_nodes[uuid]->getItem()->dataChanged(qmlstate, role);
+        }
+        else {
+            const QVariant& dat = topLeft.data(role);
+            m_nodes[uuid]->getItem()->dataChanged(dat, role);
+        }
     });
     connect(this, &qan::Graph::nodeLabelChanged, this, [this](qan::Node* item) {
         QModelIndex idx = item->getIndex();

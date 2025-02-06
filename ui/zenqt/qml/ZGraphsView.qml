@@ -138,6 +138,21 @@ Item {
                 }
             }
 
+            Item { Layout.fillWidth: true }
+
+            Label {
+                text: "Auto"
+                font.pixelSize: 12
+            }
+            CheckBox {
+                id: cbAlways
+                checkState: calcmgr.autoRun ? Qt.Checked : Qt.Unchecked
+
+                onCheckStateChanged: {
+                    calcmgr.autoRun = checkState == Qt.Checked
+                }
+            }
+
             ToolButton {
                 id: run_buttons
                 checkable: true
@@ -148,10 +163,10 @@ Item {
                 onCheckedChanged: {
                     // console.log("checked: " + checked)
                     if (checked) {
-                        calcmgr.runStatus = RunStatus.Running
+                        calcmgr.run()
                     }
                     else{
-                        calcmgr.runStatus = RunStatus.NoRun
+                        calcmgr.kill()
                     }
                 }    
 
