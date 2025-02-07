@@ -25,6 +25,7 @@ public:
     ~GraphsManager();
 
     Q_INVOKABLE QVariantList getNodeCates() const;
+    Q_INVOKABLE void saveProject(const QString& name);
 
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath FINAL)
     QString currentGraphPath() const;

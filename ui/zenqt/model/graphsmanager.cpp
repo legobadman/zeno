@@ -436,6 +436,21 @@ QVariantList GraphsManager::getNodeCates() const
     return _cates;
 }
 
+void GraphsManager::saveProject(const QString& name)
+{
+    if (name == "main") {
+        zenoApp->getMainWindow()->save();
+    }
+    else {
+        zenoApp->graphsManager()->assetsModel()->saveAsset(name);
+        GraphModel* pModel = zenoApp->graphsManager()->getGraph({ "main" });
+        if (pModel)
+        {
+            pModel->syncToAssetsInstance(name);
+        }
+    }
+}
+
 zeno::NodeCates GraphsManager::getCates() const
 {
     zeno::NodeCates cates = zeno::getSession().dumpCoreCates();

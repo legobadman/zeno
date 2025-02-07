@@ -608,9 +608,23 @@ Qan.GraphView {
         }
     }
 
+    /*    //以下代码不起作用，无法设置widget shortcut
+    Shortcut {
+        sequence: "Ctrl+S" // 定义快捷键
+        context: Qt.WidgetShortcut
+        onActivated: {
+            console.log("Ctrl+S triggered")
+            graphsmanager.saveProject(graphView.graphModel.name())
+        }
+    }
+    */
+
     Keys.onPressed: {
         if (event.key === Qt.Key_P) {
             proppanel.visible = !proppanel.visible
+        }
+        else if ((event.key === Qt.Key_S) && (event.modifiers & Qt.ControlModifier)) {
+            graphsmanager.saveProject(graphView.graphModel.name())
         }
         else if (event.key == Qt.Key_Delete) {
             var selected_edges = []
