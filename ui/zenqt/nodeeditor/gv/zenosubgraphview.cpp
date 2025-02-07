@@ -128,7 +128,7 @@ protected:
     void scrollContentsBy(int dx, int dy) override;
     void showEvent(QShowEvent* event) override;
 
-public:
+public slots:
     void redo();
     void undo();
     void copy();
@@ -203,7 +203,7 @@ _ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent)
     QAction* pActSave = new QAction("Save", this);
     pActSave->setShortcut(QKeySequence::Save);
     pActSave->setShortcutContext(Qt::WidgetShortcut);
-    //connect(pActSave, SIGNAL(triggered()), this, SLOT(save()));
+    connect(pActSave, SIGNAL(triggered()), this, SLOT(save()));
     addAction(pActSave);
 
     QAction *ctrlc = new QAction("Copy", this);
@@ -804,12 +804,6 @@ ZenoSubGraphView::ZenoSubGraphView(QWidget* parent)
     pLayout->addWidget(m_stackedView);
 
     setLayout(pLayout);
-
-    QAction* pActSave = new QAction("Save", this);
-    pActSave->setShortcut(QKeySequence::Save);
-    pActSave->setShortcutContext(Qt::WidgetShortcut);
-    connect(pActSave, SIGNAL(triggered()), this, SLOT(save()));
-    addAction(pActSave);
 
     connect(m_pathWidget, SIGNAL(pathUpdated(QStringList)), this, SLOT(onPathUpdated(QStringList)));
 }
