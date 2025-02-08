@@ -72,6 +72,7 @@ public:
     QModelIndex removeOneLink(const QModelIndex& paramIdx, const zeno::EdgeInfo& link);
     bool removeSpecificLink(const QModelIndex& paramIdx, const QModelIndex& linkIdx);
     void addParam(const ParamItem& param);
+    void removeParam(const QString& name, bool bInput);
     GraphModel* getGraph() const;
 
     PARAMS_INFO getInputs();

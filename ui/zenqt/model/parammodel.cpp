@@ -894,7 +894,54 @@ void ParamsModel::addParam(const ParamItem& param)
     int nRows = m_items.size();
     beginInsertRows(QModelIndex(), nRows, nRows);
     m_items.append(param);
+
+    if (m_wpNode) {
+        if (param.group == zeno::Role_InputPrimitive || param.group == zeno::Role_OutputPrimitive) {
+            zeno::ParamPrimitive info;
+            info.bInput = param.bInput;
+            info.name = param.name.toStdString();
+            info.type = param.type;
+            info.control = param.control;
+            info.ctrlProps = param.optCtrlprops;
+            info.defl = param.value;
+            info.socketType = param.connectProp;
+
+            info.bSocketVisible = param.bSocketVisible;
+            info.bVisible = param.bVisible;
+            info.bEnable = param.bEnable;
+            info.bWildcard = param.bWildcard;
+            if (param.bInput) {
+                m_wpNode->add_input_prim_param(info);
+            } else {
+                m_wpNode->add_output_prim_param(info);
+            }
+        } else {
+            zeno::ParamObject info;
+            info.bInput = param.bInput;
+            info.type = param.type;
+            info.name = param.name.toStdString();
+            info.socketType = param.connectProp;
+            if (param.bInput) {
+                m_wpNode->add_input_obj_param(info);
+            }
+            else {
+                m_wpNode->add_output_obj_param(info);
+            }
+        }
+    }
     endInsertRows();
+}
+
+void ParamsModel::removeParam(const QString& name, bool bInput)
+{
+    for (int i = 0; i < m_items.size(); i++) {
+        if (m_items[i].name == name && m_items[i].bInput == bInput) {
+            beginRemoveRows(QModelIndex(), i, i);
+            m_items.erase(m_items.begin() + i);
+            endRemoveRows();
+            return;
+        }
+    }
 }
 
 GraphModel* ParamsModel::parentGraph() const

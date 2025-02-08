@@ -200,6 +200,8 @@ Window {
         anchors.fill: parent
         // 对话框内容
         Rectangle {
+            id: rootRec
+            color: "#1f1f1f"
             width: parent.width
             height: parent.height
             // color: "lightgray"
@@ -210,29 +212,58 @@ Window {
             //     horizontalAlignment: Text.AlignHCenter
             //     wrapMode: Text.WordWrap
             // }
+            property int currentTabRow: -1
+            property int currentGroupRow: -1
+            property int currentParamRow: -1
 
             RowLayout {  // 水平布局分为三部分
-                anchors.fill: parent
+                id: rootLayout
+                // anchors.fill: parent
+                anchors.top: parent.top
+                width: parent.width
+                height: parent.height * 14 / 15
             
                 // 左侧列表视图
-                ListView {
-                    id: leftListView
+                Rectangle {
+                    color: "#22252C"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: parent.width / 3
 
-                    model: ListModel {
-                        ListElement { name: "Tab" }
-                        ListElement { name: "Group" }
-                        ListElement { name: "Integer" }
-                        ListElement { name: "Float" }
-                    }
-                    delegate: Item {
-                        width: parent.width
-                        height: 30
-                        Text {
-                            anchors.centerIn: parent
-                            text: model.name
+                    ListView {
+                        id: leftListView
+                        anchors.fill: parent
+                        property int currentIdx : 0
+
+                        model: node.params.customUIModel().controlItemModel()
+                        delegate: Rectangle {
+                            width: parent.width
+                            height: 20
+                            color: leftListView.currentIdx === index ? "lightblue" : "transparent"
+
+                            Row {
+                                anchors.fill: parent
+                                spacing: 10 // 图标和文本之间的间距
+                                leftPadding: 15 // 左侧留白
+                                Image {
+                                    visible: model.ctrlItemICon !== ""
+                                    source: model.ctrlItemICon
+                                    width: parent.height
+                                    height: parent.height
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: model.ctrlItemName
+                                    color: leftListView.currentIdx === index ? "black" : "lightgray"
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    leftListView.currentIdx = index  // 设置当前选中的条目
+                                }
+                            }
                         }
                     }
                 }
@@ -247,41 +278,463 @@ Window {
                         // 下方三个列表视图
                         anchors.fill: parent
 
-                        Loader {
-                            id: treeviewLoader
+                        Rectangle {
+                            id: midRect1
+                            color: "transparent"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.preferredHeight: parent.height * 2 / 5
-                            sourceComponent: {
-                                return treeview
+
+                            RowLayout {
+                                anchors.fill: parent
+                                Button {
+                                    implicitWidth: 30
+                                    implicitHeight: 30
+                                    padding: 0
+                                    text: "add"
+                                    font.pointSize: 6
+                                    onClicked: {
+                                        var tabmodel = dialog.node.params.customUIModel().tabModel()
+                                        var modelRef = undefined
+                                        var curRow = -1
+                                        var newname = ""
+                                        console.log(leftListView.currentIdx)
+                                        if(leftListView.currentIdx == 2){return}//obj类型return
+                                        if(leftListView.currentIdx === 0){
+                                            modelRef = tabmodel
+                                            newname = getNewName(modelRef, false)
+                                            if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1){
+                                                curRow = rootRec.currentTabRow + 1
+                                            }else if(rootRec.currentTabRow === -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1){
+                                                curRow = modelRef.rowCount()
+                                            }else{
+                                                return
+                                            }
+                                            modelRef.insertRow(curRow, newname)
+                                        }else if(leftListView.currentIdx === 1){
+                                            if(rootRec.currentTabRow === -1){return}
+                                            modelRef = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                                            newname = getNewName(modelRef, true)
+                                            if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {
+                                                curRow = modelRef.rowCount()
+                                            }else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1){
+                                                curRow = rootRec.currentGroupRow + 1
+                                            }else{
+                                                return
+                                            }
+                                            modelRef.insertRow(curRow, newname)
+                                        }else{
+                                            if(rootRec.currentTabRow === -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1 ||
+                                            rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1
+                                            )
+                                            {return}
+                                            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                                            modelRef =  groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
+                                            newname = getNewName(modelRef, false)
+                                            if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {
+                                                curRow = modelRef.rowCount()
+                                            }else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow !== -1){
+                                                curRow = rootRec.currentParamRow + 1
+                                            }else{
+                                                return
+                                            }
+                                            modelRef.insertRow(curRow, newname, leftListView.currentIdx)
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    color: "#22252C"
+                                    Loader {
+                                        id: treeviewLoader
+                                        anchors.fill: parent
+                                        // Layout.fillWidth: true
+                                        // Layout.fillHeight: true
+                                        sourceComponent: {
+                                            return treeview
+                                        }
+                                    }
+                                }
+                            }
+                            Keys.onDeletePressed : {
+                                deleteItem()
                             }
                         }
-                        ListView {
-                            id: listView1
+
+                        Rectangle {
+                            color: "transparent"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.preferredHeight: parent.height / 5
-                            model: ListModel { ListElement { name: "output1" } }
-                            delegate: Text { text: model.name }
+                            RowLayout {
+                                anchors.fill: parent
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: parent.width / 10
+                                }    
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: parent.width * 9 / 10
+
+                                    ColumnLayout {
+                                        id: primoutColumn
+                                        anchors.fill: parent
+                                        property var primOutputModel : dialog.node.params.customUIModel().primOutputModel()
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 25
+
+                                            RowLayout{
+                                                anchors.fill: parent
+                                                Item {
+                                                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                                                    Layout.fillHeight: true
+                                                    Layout.fillWidth: true
+                                                    Text {
+                                                        color: "lightgray"
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        font.bold: true
+                                                        text: "OutputPrims"
+                                                    }
+                                                }
+                                                Button {
+                                                    Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                                                    implicitWidth: 30
+                                                    implicitHeight: 25
+                                                    padding: 0
+                                                    text: "add"
+                                                    font.pointSize: 6
+                                                    onClicked: {
+                                                        if(listView1.currentIdx === -1){
+                                                            primoutColumn.primOutputModel.insertRow(primoutColumn.primOutputModel.rowCount(), getNewName(primoutColumn.primOutputModel, false))
+                                                        }else{
+                                                            primoutColumn.primOutputModel.insertRow(listView1.currentIdx + 1, getNewName(primoutColumn.primOutputModel, false))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            color: "#22252C"
+                                            ListView {
+                                                id: listView1
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 20
+                                                // Layout.fillWidth: true
+                                                // Layout.fillHeight: true
+                                                property int currentIdx : -1
+                                                clip: true
+                                                // model: ListModel { ListElement { name: "output1" } }
+                                                model: primoutColumn.primOutputModel
+                                                delegate: Rectangle {
+                                                    width: parent.width
+                                                    height: 15
+                                                    color: listView1.currentIdx === index ? "lightblue" : "transparent"
+                                                    // Text { text: model.paramname }
+
+                                                    Loader {
+                                                        id: lstV1TextEditLoader
+                                                        anchors.fill: parent
+                                                        sourceComponent: textEditComp
+                                                        Binding {
+                                                            target: lstV1TextEditLoader.item
+                                                            property: "textContent"
+                                                            value: model.paramname
+                                                        }
+                                                        Binding {
+                                                            target: lstV1TextEditLoader.item
+                                                            property: "textClr"
+                                                            value: listView1.currentIdx === index ? "black" : "lightgray"
+                                                        }
+                                                    }
+                                                    Connections {
+                                                        target: lstV1TextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
+                                                        function onEditfinish() {
+                                                            primoutColumn.primOutputModel.setData(primoutColumn.primOutputModel.index(listView1.currentIdx, 0), lstV1TextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
+                                                        }
+                                                    }
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        enabled: !lstV1TextEditLoader.item.editMode
+                                                        onClicked: {
+                                                            listView1.currentIdx = index  // 设置当前选中的条目
+                                                            listView1.forceActiveFocus()
+                                                        }
+                                                        onDoubleClicked: {
+                                                            lstV1TextEditLoader.item.editMode = true;
+                                                            lstV1TextEditLoader.item.inputfield.forceActiveFocus();
+                                                        }
+                                                    }
+                                                }
+                                                Keys.onDeletePressed: {
+                                                    primoutColumn.primOutputModel.removeRow(listView1.currentIdx)
+                                                }
+                                            }
+                                        }
+                                        // Keys.onDeletePressed: {
+                                        //     if(listView1.currentIdx !== -1){
+                                        //         dialog.node.params.customUIModel().primOutputModel().removeRow(listView1.currentIdx)
+                                        //     }
+                                        // }
+                                    }
+                                }  
+                            }
                         }
 
-                        ListView {
-                            id: listView2
+                        Rectangle {
+                            color: "transparent"
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.preferredHeight: parent.height / 5
-                            model: ListModel { ListElement { name: "objInput1" } }
-                            delegate: Text { text: model.name }
+                            RowLayout {
+                                anchors.fill: parent
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: parent.width / 10
+                                }    
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: parent.width * 9 / 10
+
+                                    ColumnLayout {
+                                        id: objinColumn
+                                        anchors.fill: parent
+                                        property var objInputModel : dialog.node.params.customUIModel().objInputModel()
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 25
+
+                                            RowLayout{
+                                                anchors.fill: parent
+                                                Item {
+                                                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                                                    Layout.fillHeight: true
+                                                    Layout.fillWidth: true
+                                                    Text {
+                                                        color: "lightgray"
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        font.bold: true
+                                                        text: "InputObj"
+                                                    }
+                                                }
+                                                Button {
+                                                    Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                                                    implicitWidth: 30
+                                                    implicitHeight: 25
+                                                    padding: 0
+                                                    text: "add"
+                                                    font.pointSize: 6
+                                                    onClicked: {
+                                                        if(listView2.currentIdx === -1){
+                                                            objinColumn.objInputModel.insertRow(objinColumn.objInputModel.rowCount(), getNewName(objinColumn.objInputModel, false))
+                                                        }else{
+                                                            objinColumn.objInputModel.insertRow(listView2.currentIdx + 1, getNewName(objinColumn.objInputModel, false))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            color: "#22252C"
+                                            ListView {
+                                                id: listView2
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 20
+                                                // Layout.fillWidth: true
+                                                // Layout.fillHeight: true
+                                                property int currentIdx : -1
+                                                clip: true
+                                                model: objinColumn.objInputModel
+                                                delegate: Rectangle {
+                                                    width: parent.width
+                                                    height: 15
+                                                    color: listView2.currentIdx === index ? "lightblue" : "transparent"
+                                                    // Text { text: model.paramname }
+                                                    Loader {
+                                                        id: lstV2TextEditLoader
+                                                        anchors.fill: parent
+                                                        sourceComponent: textEditComp
+                                                        Binding {
+                                                            target: lstV2TextEditLoader.item
+                                                            property: "textContent"
+                                                            value: model.paramname
+                                                        }
+                                                        Binding {
+                                                            target: lstV2TextEditLoader.item
+                                                            property: "textClr"
+                                                            value: listView2.currentIdx === index ? "black" : "lightgray"
+                                                        }
+                                                    }
+                                                    Connections {
+                                                        target: lstV2TextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
+                                                        function onEditfinish() {
+                                                            objinColumn.objInputModel.setData(objinColumn.objInputModel.index(listView2.currentIdx, 0), lstV2TextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
+                                                        }
+                                                    }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        enabled: !lstV2TextEditLoader.item.editMode
+                                                        onClicked: {
+                                                            listView2.currentIdx = index  // 设置当前选中的条目
+                                                            listView2.forceActiveFocus()
+                                                        }
+                                                        onDoubleClicked: {
+                                                            lstV2TextEditLoader.item.editMode = true;
+                                                            lstV2TextEditLoader.item.inputfield.forceActiveFocus();
+                                                        }
+                                                    }
+                                                }
+                                                Keys.onDeletePressed: {
+                                                    objinColumn.objInputModel.removeRow(listView2.currentIdx)
+                                                }
+                                            }
+                                        }
+                                        // Keys.onDeletePressed: {
+                                        //     if(listView2.currentIdx !== -1){
+                                        //         dialog.node.params.customUIModel().objInputModel().removeRow(listView2.currentIdx)
+                                        //     }
+                                        // }
+                                    }
+                                }
+                            }
+                        }
+                        Rectangle {
+                            color: "transparent"
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredHeight: parent.height / 5
+                            RowLayout {
+                                anchors.fill: parent
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: parent.width / 10
+                                }    
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Layout.preferredWidth: parent.width * 9 / 10
+
+                                    ColumnLayout {
+                                        id: objoutColumn
+                                        anchors.fill: parent
+                                        property var objOutputModel : dialog.node.params.customUIModel().objOutputModel()
+
+                                        Item {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 25
+
+                                            RowLayout{
+                                                anchors.fill: parent
+                                                Item {
+                                                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                                                    Layout.fillHeight: true
+                                                    Layout.fillWidth: true
+                                                    Text {
+                                                        color: "lightgray"
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        font.bold: true
+                                                        text: "OutputObj"
+                                                    }
+                                                }
+                                                Button {
+                                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                                                    implicitWidth: 30
+                                                    implicitHeight: 25
+                                                    padding: 0
+                                                    text: "add"
+                                                    font.pointSize: 6
+                                                    onClicked: {
+                                                        if(listView3.currentIdx === -1){
+                                                            objoutColumn.objOutputModel.insertRow(objoutColumn.objOutputModel.rowCount(), getNewName(objoutColumn.objOutputModel, false))
+                                                        }else{
+                                                            objoutColumn.objOutputModel.insertRow(listView3.currentIdx + 1, getNewName(objoutColumn.objOutputModel, false))
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            color: "#22252C"
+                                            ListView {
+                                                id: listView3
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 20
+                                                // Layout.fillWidth: true
+                                                // Layout.fillHeight: true
+                                                property int currentIdx : -1
+                                                clip: true
+                                                model: objoutColumn.objOutputModel
+                                                delegate: Rectangle {
+                                                    width: parent.width
+                                                    height: 15
+                                                    color: listView3.currentIdx === index ? "lightblue" : "transparent"
+                                                    // Text { text: model.paramname }
+                                                    Loader {
+                                                        id: lstV3TextEditLoader
+                                                        anchors.fill: parent
+                                                        sourceComponent: textEditComp
+                                                        Binding {
+                                                            target: lstV3TextEditLoader.item
+                                                            property: "textContent"
+                                                            value: model.paramname
+                                                        }
+                                                        Binding {
+                                                            target: lstV3TextEditLoader.item
+                                                            property: "textClr"
+                                                            value: listView3.currentIdx === index ? "black" : "lightgray"
+                                                        }
+                                                    }
+                                                    Connections {
+                                                        target: lstV3TextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
+                                                        function onEditfinish() {
+                                                            objoutColumn.objOutputModel.setData(objoutColumn.objOutputModel.index(listView3.currentIdx, 0), lstV3TextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
+                                                        }
+                                                    }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        enabled: !lstV3TextEditLoader.item.editMode
+                                                        onClicked: {
+                                                            listView3.currentIdx = index  // 设置当前选中的条目
+                                                            listView3.forceActiveFocus()
+                                                        }
+                                                        onDoubleClicked: {
+                                                            lstV3TextEditLoader.item.editMode = true;
+                                                            lstV3TextEditLoader.item.inputfield.forceActiveFocus();
+                                                        }
+                                                    }
+                                                }
+                                                Keys.onDeletePressed: {
+                                                    objoutColumn.objOutputModel.removeRow(listView3.currentIdx)
+                                                }
+                                            }
+                                        }
+                                        // Keys.onDeletePressed: {
+                                        //     if(listView3.currentIdx !== -1){
+                                        //         dialog.node.params.customUIModel().objOutputModel().removeRow(listView3.currentIdx)
+                                        //     }
+                                        // }
+                                    }
+                                }
+                            }
                         }
 
-                        ListView {
-                            id: listView3
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            Layout.preferredHeight: parent.height / 5
-                            model: ListModel { ListElement { name: "objOutput1" } }
-                            delegate: Text { text: model.name }
-                        }
                     }
                 }
 
@@ -294,11 +747,15 @@ Window {
 
                     TextField {
                         id: inputName
+                        text: "AAA"
+                        color: "lightgray"
                         placeholderText: "名称"
                     }
 
                     TextField {
                         id: inputLabel
+                        text: "label"
+                        color: "lightgray"
                         placeholderText: "标签"
                     }
 
@@ -311,17 +768,46 @@ Window {
 
             }
 
-            RowLayout {
-                spacing: 20
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 20
+            Item {
+                width: parent.width
+                height: parent.height / 15
+                anchors.top: rootLayout.bottom
+                anchors.horizontalCenter: rootLayout.horizontalCenter
+                // anchors.bottom: parent.bottom
+                // anchors.bottomMargin: 5
 
-                Button {
-                    text: "确定"
-                    onClicked: {
-                        console.log("点击了确定")
-                        dialog.visible = false
+                RowLayout {
+                    anchors.fill: parent
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.preferredWidth : parent.width * 5 / 6
+                    }
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.preferredWidth : parent.width / 6
+                        Layout.rightMargin: 20
+                        Layout.alignment: Qt.AlignVCenter
+                        Button {
+                            anchors.left: parent.left
+                            implicitWidth: 60
+                            implicitHeight: 40
+                            text: "确定"
+                            onClicked: {
+                                dialog.visible = false
+                            }
+                        }
+                        Button {
+                            anchors.right: parent.right
+                            implicitWidth: 60
+                            implicitHeight: 40
+                            text: "取消"
+                            onClicked: {
+                                dialog.visible = false
+                            }
+                        }
                     }
                 }
 
@@ -345,6 +831,80 @@ Window {
     function openDialog() {
         dialog.visible = true
     }
+    function getNewName(modelRef, isDisplayRole) {
+        var nameSet = {}
+        var subfix = 0
+        var newname = "newitem" + subfix
+        for (var i = 0; i < modelRef.rowCount(); i++) {
+            nameSet[modelRef.data(modelRef.index(i, 0), isDisplayRole ? Qt.DisplayRole : Model.ROLE_PARAM_NAME)] = true
+        }
+        while (nameSet[newname] !== undefined) {
+            subfix++
+            newname = "newitem" + subfix
+        }
+        return newname
+    }
+
+    function deleteItem(){
+        var modelRef
+        var curRow = 0
+        var tabmodel = dialog.node.params.customUIModel().tabModel()
+        console.log(rootRec.currentTabRow + "tabrow" + rootRec.currentGroupRow + "grouprow" + rootRec.currentParamRow + "paramrow")
+        if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {//删tab
+            modelRef = tabmodel
+            curRow = rootRec.currentTabRow
+        } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {//删group
+            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+            modelRef = groupmodel
+            curRow = rootRec.currentGroupRow
+        } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow !== -1) {//删param
+            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+            modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
+            curRow = rootRec.currentParamRow
+        } else {
+            console.log("error index")
+            return false
+        }
+        modelRef.removeRow(curRow)
+        return true
+    }
+    Component {
+        id: textEditComp
+        Item {
+            anchors.fill: parent
+            property string textContent
+            property bool editMode: false
+            property alias inputfield : inputField
+            property alias textClr: inputField.color
+            signal editfinish()
+
+            TextInput {
+                id: inputField
+                color: "lightgray"
+                anchors.fill: parent
+                text: textContent
+                verticalAlignment: Text.AlignVCenter
+                selectByMouse: true // 启用鼠标选择文本功能
+                clip: true
+                focus: editMode // 聚焦逻辑绑定到 editMode
+                Keys.onReturnPressed: {
+                    textContent = text;
+                    editMode = false;   // 取消编辑并切回文本显示
+                    editfinish()
+                }
+                Keys.onEscapePressed: {
+                    textContent = text;
+                    editMode = false;   // 取消编辑并切回文本显示
+                    editfinish()
+                }
+                onEditingFinished: {
+                    textContent = text;
+                    editMode = false;
+                    editfinish()
+                }
+            }
+        }
+    }
 
     Component {
         id: treeview
@@ -359,27 +919,35 @@ Window {
                 property var curRow : undefined
                 MenuItem {
                     text: "新增条目"
-                    property var nameSet: {}
-                    property int subfix: 0
-                    property string newname: "newitem" + subfix
                     onTriggered: {
-                        nameSet = {}
-                        subfix = 0
-                        newname = "newItem" + subfix
-                        for (var i = 0; i < contextMenu.modelRef.rowCount(); i++) {
-                            nameSet[contextMenu.modelRef.data(contextMenu.modelRef.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+                        var tabmodel = dialog.node.params.customUIModel().tabModel()
+                        if(leftListView.currentIdx == 2){return}//obj类型return
+                        if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {
+                            contextMenu.modelRef = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                            contextMenu.curRow = contextMenu.modelRef.rowCount()
+                        } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {
+                            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                            contextMenu.modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
+                            contextMenu.curRow = contextMenu.modelRef.rowCount()
+                        } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow !== -1) {
+                            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                            contextMenu.modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
+                            contextMenu.curRow = rootRec.currentParamRow + 1
+                            var newname = getNewName(contextMenu.modelRef, rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1)
+                            contextMenu.modelRef.insertRow(contextMenu.curRow, newname, leftListView.currentIdx)
+                            return
+                        } else {
+                            console.log("error index")
+                            return
                         }
-                        while (nameSet[newname] !== undefined) {
-                            subfix++
-                            newname = "newitem" + subfix
-                        }
-                        contextMenu.modelRef.insertRow(contextMenu.curRow + 1, newname)
+                        var newname = getNewName(contextMenu.modelRef, rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1)
+                        contextMenu.modelRef.insertRow(contextMenu.curRow, newname)
                     }
                 }
                 MenuItem {
                     text: "删除条目"
                     onTriggered: {
-                        contextMenu.modelRef.removeRow(contextMenu.curRow)
+                        deleteItem()
                     }
                 }
             }
@@ -395,6 +963,7 @@ Window {
                     spacing: 0
                     // width: parent.width // 确保宽度与 ScrollView 一致
                     Repeater {
+                        id: tabrepeater
                         model: customuimodel
                         delegate: Loader {
                             // Layout.fillWidth: true
@@ -477,41 +1046,6 @@ Window {
                     }
                 }
             }
-            Component {
-                id: textEditComp
-                Item {
-                    anchors.fill: parent
-                    property string textContent
-                    property bool editMode: false
-                    property alias inputfield : inputField
-                    signal editfinish()
-
-                    TextInput {
-                        id: inputField
-                        anchors.fill: parent
-                        text: textContent
-                        verticalAlignment: Text.AlignVCenter
-                        selectByMouse: true // 启用鼠标选择文本功能
-                        clip: true
-                        focus: editMode // 聚焦逻辑绑定到 editMode
-                        Keys.onReturnPressed: {
-                            textContent = text;
-                            editMode = false;   // 取消编辑并切回文本显示
-                            editfinish()
-                        }
-                        Keys.onEscapePressed: {
-                            textContent = text;
-                            editMode = false;   // 取消编辑并切回文本显示
-                            editfinish()
-                        }
-                        onEditingFinished: {
-                            textContent = text;
-                            editMode = false;
-                            editfinish()
-                        }
-                    }
-                }
-            }
             // treeNode：用于显示每个节点及其子节点
             Component {
                 id: tabComp
@@ -524,9 +1058,10 @@ Window {
                     property var groupmodel: undefined
 
                     Rectangle {
+                        id: tabRec
                         //width: parent.width
-                        height: 20
-                        color: "lightgray"
+                        height: 15
+                        color: rootRec.currentTabRow === tabindex & rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1 ? "lightblue" : "transparent"
                         Layout.fillWidth: true
                         RowLayout  {
                             spacing: 10
@@ -560,6 +1095,11 @@ Window {
                                         property: "textContent"
                                         value: tabname
                                     }
+                                    Binding {
+                                        target: tabtextEditLoader.item
+                                        property: "textClr"
+                                        value: rootRec.currentTabRow === tabindex & rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1 ? "black" : "lightgray"
+                                    }
                                 }
                                 Connections {
                                     target: tabtextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
@@ -577,11 +1117,16 @@ Window {
                                     acceptedButtons: Qt.AllButtons
                                     propagateComposedEvents: true
                                     onClicked: {
+                                        rootRec.currentTabRow = tabindex
+                                        rootRec.currentGroupRow = -1
+                                        rootRec.currentParamRow = -1
+                                        // parent.forceActiveFocus()
+                                        midRect1.forceActiveFocus()
                                     }
                                     // 右键弹出菜单
                                     onPressed: if (mouse.button === Qt.RightButton) {
-                                        contextMenu.curRow = tabindex
-                                        contextMenu.modelRef = dialog.node.params.customUIModel().tabModel()
+                                        // contextMenu.curRow = tabindex
+                                        // contextMenu.modelRef = dialog.node.params.customUIModel().tabModel()
                                         // console.log(dialog.node.params.customUIModel().tabModel().data(contextMenu.curIdx, Model.ROLE_PARAM_NAME))
                                         contextMenu.x = mouse.x + parent.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
                                         contextMenu.y = mouse.y + parent.mapToItem(treeviewItem, 0, 0).y;
@@ -615,9 +1160,10 @@ Window {
                                 // Layout.leftMargin: 20 // 设置缩进
 
                                 Rectangle {
+                                    id: groupRec
                                     //width: parent.width
-                                    height: 20
-                                    color: "lightblue"
+                                    height: 15
+                                    color: rootRec.currentTabRow === tabindex & rootRec.currentGroupRow === groupindex && rootRec.currentParamRow === -1 ? "lightblue" : "transparent"
                                     Layout.fillWidth: true
                                     // Layout.leftMargin: 20 // 设置缩进
 
@@ -653,6 +1199,11 @@ Window {
                                                     property: "textContent"
                                                     value: groupname
                                                 }
+                                                Binding {
+                                                    target: grouptextEditLoader.item
+                                                    property: "textClr"
+                                                    value: rootRec.currentTabRow === tabindex & rootRec.currentGroupRow === groupindex && rootRec.currentParamRow === -1 ? "black" : "lightgray"
+                                                }
                                             }
                                             Connections {
                                                 target: grouptextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
@@ -670,11 +1221,16 @@ Window {
                                                 acceptedButtons: Qt.AllButtons
                                                 propagateComposedEvents: true
                                                 onClicked: {
+                                                    rootRec.currentTabRow = tabindex
+                                                    rootRec.currentGroupRow = groupindex
+                                                    rootRec.currentParamRow = -1
+                                                    // parent.forceActiveFocus()
+                                                    midRect1.forceActiveFocus()
                                                 }
                                                 // 右键弹出菜单
                                                 onPressed: if (mouse.button === Qt.RightButton) {
-                                                    contextMenu.curRow = groupindex
-                                                    contextMenu.modelRef = groupmodel
+                                                    // contextMenu.curRow = groupindex
+                                                    // contextMenu.modelRef = groupmodel
                                                     contextMenu.x = mouse.x + parent.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
                                                     contextMenu.y = mouse.y + parent.mapToItem(treeviewItem, 0, 0).y;
                                                     contextMenu.open();
@@ -696,27 +1252,45 @@ Window {
                                     property int indent: 20
 
                                     Repeater {
+                                        id: params_repeater
                                         model: params
                                         delegate: Rectangle {
-                                            id:param
+                                            id:paramRec
                                             //width: parent.width
-                                            height: 20
-                                            color: "lightgreen"
+                                            height: 15
+                                            color: rootRec.currentTabRow === tabindex & rootRec.currentGroupRow === groupindex && rootRec.currentParamRow === index ? "lightblue" : "transparent"
                                             Layout.fillWidth: true
                                             // Layout.leftMargin: 40 // 设置缩进
 
-                                            Row {
+                                            RowLayout {
                                                 spacing: 10
                                                 anchors.fill: parent
-
+                                                Image {
+                                                    source: model.paramIcon
+                                                    height: parent.height
+                                                    Layout.preferredWidth: 15
+                                                    Layout.leftMargin: 5
+                                                    // width: parent.height
+                                                    // height: parent.height
+                                                    // anchors.verticalCenter: parent.verticalCenter
+                                                }
                                                 Loader {
                                                     id: paramtextEditLoader
-                                                    anchors.fill: parent
+                                                    height: parent.height
+                                                    Layout.fillWidth: true
+                                                    Layout.leftMargin: 5
+                                                    // anchors.fill: parent
+                                                    // anchors.leftMargin: 20
                                                     sourceComponent: textEditComp
                                                     Binding {
                                                         target: paramtextEditLoader.item
                                                         property: "textContent"
                                                         value: name
+                                                    }
+                                                    Binding {
+                                                        target: paramtextEditLoader.item
+                                                        property: "textClr"
+                                                        value: rootRec.currentTabRow === tabindex & rootRec.currentGroupRow === groupindex && rootRec.currentParamRow === index ? "black" : "lightgray"
                                                     }
                                                 }
                                                 Connections {
@@ -743,14 +1317,19 @@ Window {
                                                     //     childrenNodes.setProperty(i, "selected", false);
                                                     // }
                                                     // childrenNodes.setProperty(index, "selected", true);
+                                                    rootRec.currentTabRow = tabindex
+                                                    rootRec.currentGroupRow = groupindex
+                                                    rootRec.currentParamRow = index
+                                                    // parent.forceActiveFocus()
+                                                    midRect1.forceActiveFocus()
                                                 }
 
                                                 // 右键弹出菜单
                                                 onPressed: if (mouse.button === Qt.RightButton) {
-                                                    contextMenu.curRow = index
-                                                    contextMenu.modelRef = params
-                                                    contextMenu.x = mouse.x + param.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
-                                                    contextMenu.y = mouse.y + param.mapToItem(treeviewItem, 0, 0).y;
+                                                    // contextMenu.curRow = index
+                                                    // contextMenu.modelRef = params
+                                                    contextMenu.x = mouse.x + paramRec.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
+                                                    contextMenu.y = mouse.y + paramRec.mapToItem(treeviewItem, 0, 0).y;
                                                     contextMenu.open();
                                                 }
                                                 onDoubleClicked: {

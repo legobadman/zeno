@@ -222,7 +222,7 @@ Pane {
                         clip: true
 
                         Layout.fillWidth: true
-                        model: base_tabview.customuimodel.outputModel()
+                        model: base_tabview.customuimodel.primOutputModel()
 
                         Component.onCompleted: {
                             comp.output_scrollitem = this

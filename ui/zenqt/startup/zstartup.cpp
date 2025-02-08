@@ -31,10 +31,13 @@ void initQml()
     qRegisterMetaType<GraphModel*>("GraphModel*");
     qRegisterMetaType<ParamsModel*>("ParamsModel*");
     qRegisterMetaType<CustomUIModel*>("CustomUIModel*");
-    qRegisterMetaType<CustomUIModel*>("ParamTabModel*");
-    qRegisterMetaType<CustomUIModel*>("ParamGroupModel*");
-    qRegisterMetaType<CustomUIModel*>("ParamPlainModel*");
-    qRegisterMetaType<ParamOutputModel*>("ParamOutputModel*");
+    qRegisterMetaType<ParamTabModel*>("ParamTabModel*");
+    qRegisterMetaType<ParamGroupModel*>("ParamGroupModel*");
+    qRegisterMetaType<ParamPlainModel*>("ParamPlainModel*");
+    qRegisterMetaType<PrimParamOutputModel*>("ParamOutputModel*");
+    qRegisterMetaType<objParamInputModel*>("objParamInputModel*");
+    qRegisterMetaType<objParamOutputModel*>("objParamOutputModel*");
+    qRegisterMetaType<ControlItemListModel*>("ControlItemListModel*");
     qRegisterMetaType<NodeCateModel*>("NodeCateModel*");
     qRegisterMetaType<QStandardItemModel*>("QStandardItemModel*");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
@@ -43,6 +46,7 @@ void initQml()
     qmlRegisterUncreatableType<QtRole>("zeno.enum", 1, 0, "Model", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlNodeCateRole>("zeno.enum", 1, 0, "NodeCate", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlNodeRunStatus>("zeno.enum", 1, 0, "NodeStatus", "");
+    qmlRegisterUncreatableType<QmlCUIRole>("zeno.enum", 1, 0, "CustomuiModelType", "Not creatable as it is an enum type");
     qmlRegisterType<GraphsManager>("Zeno", 1, 0, "GraphsManager");
     qmlRegisterType<GraphsTotalView>("Zeno", 1, 0, "GraphsTotalView");
     qmlRegisterType<MenuEventFilter>("Zeno", 1, 0, "MenuEventFilter");

@@ -11,7 +11,10 @@
 class ParamTabModel;
 class ParamGroupModel;
 class ParamPlainModel;
-class ParamOutputModel;
+class PrimParamOutputModel;
+class objParamInputModel;
+class objParamOutputModel;
+class ControlItemListModel;
 
 
 class QmlCUIRole
@@ -35,14 +38,42 @@ class CustomUIModel : public QObject {
 public:
     CustomUIModel(ParamsModel* params, QObject* parent = nullptr);
     Q_INVOKABLE ParamTabModel* tabModel() const;
-    Q_INVOKABLE ParamOutputModel* outputModel() const;
+    Q_INVOKABLE PrimParamOutputModel* primOutputModel() const;
+    Q_INVOKABLE objParamInputModel* objInputModel() const;
+    Q_INVOKABLE objParamOutputModel* objOutputModel() const;
     Q_INVOKABLE ParamsModel* coreModel() const;
+    Q_INVOKABLE ControlItemListModel* controlItemModel() const;
     void initCustomuiConnections(QStandardItemModel* customuiStandarditemModel);
 
 private:
     ParamsModel* m_params;
     ParamTabModel* m_tabModel;
-    ParamOutputModel* m_outputModel;
+    PrimParamOutputModel* m_primOutputModel;
+    objParamInputModel* m_objInputModel;
+    objParamOutputModel* m_objOutputModel;
+    ControlItemListModel* m_ctrlItemModel;
+};
+
+
+struct CUSTOMUI_CTRL_ITEM_INFO
+{
+    QString name;
+    zeno::ParamControl ctrl;
+    zeno::ParamType type;
+    QString icon;
+};
+class ControlItemListModel : public QAbstractListModel
+{
+    Q_OBJECT
+        typedef QAbstractListModel _base;
+
+public:
+    ControlItemListModel(CustomUIModel* pModel);
+
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames() const override;
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
 };
 
 
@@ -124,7 +155,7 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE bool insertRow(int row, QString name);
+    Q_INVOKABLE bool insertRow(int row, QString name, int ctrlItemRow);
     Q_INVOKABLE bool removeRow(int row);
 
 signals:
@@ -139,7 +170,7 @@ private:
 };
 
 
-class ParamOutputModel : public QAbstractListModel
+class PrimParamOutputModel : public QAbstractListModel
 {
     Q_OBJECT
     typedef QAbstractListModel _base;
@@ -149,14 +180,66 @@ class ParamOutputModel : public QAbstractListModel
     };
 
 public:
-    ParamOutputModel(zeno::PrimitiveParams params, CustomUIModel* pModel);
+    PrimParamOutputModel(zeno::PrimitiveParams params, CustomUIModel* pModel);
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
+    Q_INVOKABLE bool insertRow(int row, QString name);
+    Q_INVOKABLE bool removeRow(int row);
+
 private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
+    ParamsModel* m_paramsModel;
+};
+
+class objParamInputModel : public QAbstractListModel
+{
+    Q_OBJECT
+        typedef QAbstractListModel _base;
+
+    struct _ParamItem {
+        QPersistentModelIndex m_index;  //指向ParamsModel真正储存的参数
+    };
+
+public:
+    objParamInputModel(zeno::ObjectParams params, CustomUIModel* pModel);
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
+    QHash<int, QByteArray> roleNames() const override;
+
+    Q_INVOKABLE bool insertRow(int row, QString name);
+    Q_INVOKABLE bool removeRow(int row);
+
+private:
+    QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
+    ParamsModel* m_paramsModel;
+};
+
+class objParamOutputModel : public QAbstractListModel
+{
+    Q_OBJECT
+        typedef QAbstractListModel _base;
+
+    struct _ParamItem {
+        QPersistentModelIndex m_index;  //指向ParamsModel真正储存的参数
+    };
+
+public:
+    objParamOutputModel(zeno::ObjectParams params, CustomUIModel* pModel);
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
+    QHash<int, QByteArray> roleNames() const override;
+
+    Q_INVOKABLE bool insertRow(int row, QString name);
+    Q_INVOKABLE bool removeRow(int row);
+
+private:
+    QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
+    ParamsModel* m_paramsModel;
 };
 
 #endif
