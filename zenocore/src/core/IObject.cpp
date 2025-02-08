@@ -50,6 +50,10 @@ ZENO_API IObject* IObject::get_parent() const {
     return m_parent;
 }
 
+ZENO_API std::vector<std::string> IObject::paths() const {
+    return {};
+}
+
 ZENO_API UserData &IObject::userData() const {
     if (!m_userData.has_value())
         m_userData.emplace<UserData>();

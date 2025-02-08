@@ -51,6 +51,17 @@ struct ListObject : IObjectClone<ListObject> {
       return spList;
   }
 
+  std::vector<std::string> paths() const override {
+      std::vector<std::string> _paths;
+      for (const auto& obj : m_objects) {
+          std::vector<std::string> subpaths = obj->paths();
+          for (const std::string& subpath : subpaths) {
+              _paths.push_back(subpath);
+          }
+      }
+      return _paths;
+  }
+
   template <class T = IObject>
   std::vector<std::shared_ptr<T>> get() const {
       std::vector<std::shared_ptr<T>> res;

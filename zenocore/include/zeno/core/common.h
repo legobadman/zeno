@@ -253,6 +253,7 @@ namespace zeno {
     struct render_update_info {
         UpdateReason reason;
         std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
+        std::vector<std::string> remove_objs;
     };
     typedef std::function<void(render_update_info)> F_CommitRender;
 

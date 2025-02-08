@@ -41,6 +41,7 @@ struct IObject {
     ZENO_API virtual bool update_key(const std::string& key);
     ZENO_API virtual void set_parent(IObject* spParent);
     ZENO_API virtual IObject* get_parent() const;
+    ZENO_API virtual std::vector<std::string> paths() const;
     ZENO_API UserData &userData() const;
 #else
     virtual ~IObject() = default;
@@ -99,6 +100,10 @@ struct IObjectClone : CustomBase {
     virtual bool update_key(const std::string& key) override {
         m_key = key;
         return true;
+    }
+
+    virtual std::vector<std::string> paths() const override {
+        return { m_key };
     }
 
     virtual bool assign(IObject const *other) override {

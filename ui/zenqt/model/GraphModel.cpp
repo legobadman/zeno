@@ -32,6 +32,17 @@ static void triggerView(const QString& nodepath, bool bView) {
     zeno::render_update_info update;
     update.reason = bView ? zeno::Update_View : zeno::Update_Remove;
     update.uuidpath_node_objkey = nodepath.toStdString();
+    if (update.reason == zeno::Update_Remove)
+    {
+        //删除节点和绘制清除是异步执行，故不能用节点数据，必须要导出删除object(或者是list/dict下所有objs）的信息
+        auto& sess = zeno::getSession();
+        auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+        assert(spNode);
+        zeno::zany spObject = spNode->get_default_output_object();
+        if (spObject) {
+            update.remove_objs = spObject->paths();
+        }
+    }
     info.objs.push_back(update);
 
     const auto& views = zenoApp->getMainWindow()->viewports();

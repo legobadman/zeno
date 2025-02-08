@@ -83,6 +83,16 @@ struct GraphicsManager {
         return true;
     }
 
+    bool remove_object_bykey(const std::string& key) {
+        auto& graphics_ = graphics.m_curr.m_curr;
+        auto iter = graphics_.find(key);
+        if (iter == graphics_.end())
+            return false;
+
+        graphics_.erase(key);
+        return true;
+    }
+
     bool remove_object(zeno::zany spObj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(spObj)) {
             for (auto obj : spList->get()) {
@@ -193,20 +203,23 @@ struct GraphicsManager {
         else if (zeno::Reload_ToggleView == info.policy) {
             assert(info.objs.size() == 1);
             const auto& update = info.objs[0];
-            auto& wtf = graphics.m_curr.m_curr;
-            auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
-            assert(spNode);
-            zeno::zany spObject = spNode->get_default_output_object();
-            if (spObject) {
-                if (update.reason == zeno::Update_View) {
-                    add_object(spObject);
-                }
-                else if (update.reason == zeno::Update_Remove) {
-                    remove_object(spObject);
+            if (update.reason == zeno::Update_Remove) {
+                for (const std::string& remkey : update.remove_objs) {
+                    remove_object_bykey(remkey);
                 }
             }
             else {
-                //可能还没计算
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    if (update.reason == zeno::Update_View) {
+                        add_object(spObject);
+                    }
+                }
+                else {
+                    //可能还没计算
+                }
             }
         }
         else if (zeno::Reload_Calculation == info.policy) {
