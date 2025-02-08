@@ -66,6 +66,8 @@ namespace zeno
             m_faces[i]->h = spEdge.get();
             m_faces[i]->start_linearIdx = rhs.m_faces[i]->start_linearIdx;
         }
+
+        m_linesPt = rhs.m_linesPt;
 #endif
     }
 
@@ -352,7 +354,7 @@ namespace zeno
     }
 
     void GeometryTopology::setLineNextPt(int currPt, int nextPt) {
-        if (currPt < m_linesPt.size()) {
+        if (currPt > -1 && currPt < m_linesPt.size()) {
             m_linesPt[currPt][1] = nextPt;
         }
     }
@@ -612,6 +614,67 @@ namespace zeno
         }
     }
 
+    void GeometryTopology::fusePoints(std::vector<int>& fusedPoints) {
+        std::set<int> facesToremove;
+        std::vector<int> pointsToremove;
+
+        for (std::vector<int>::reverse_iterator it = fusedPoints.rbegin(); it != fusedPoints.rend(); ++it) {
+            int targetPt = *it;
+            if (targetPt != -1) {
+                int ptToRemove = npoints() - 1 - (it - fusedPoints.rbegin());
+
+                const std::vector<int>& targetPtRelatedFacesvec = point_faces(targetPt);
+                std::set<int> targetPtRelatedFaces(targetPtRelatedFacesvec.begin(), targetPtRelatedFacesvec.end());
+                std::vector<int> ptToRemoveRelatedFaces = point_faces(ptToRemove);
+                if (m_bTriangle) {
+                    for (auto& face : ptToRemoveRelatedFaces) {
+                        if (targetPtRelatedFaces.find(face) != targetPtRelatedFaces.end()) {//查询融合的面
+                            facesToremove.insert(face);
+                        }
+                        else {
+                            HEdge* inH,* outH;
+                            HEdge* start = m_faces[face]->h;
+                            do {
+                                if (start->point == ptToRemove) {
+                                    inH = start;
+                                } else if (start->next->next->point == ptToRemove) {
+                                    outH = start;
+                                }
+                                start = start->next;
+                            } while (start != m_faces[face]->h);
+                            //旧的点指向新的点
+                            inH->point = targetPt;
+                            m_points[ptToRemove]->edges.erase(outH);
+                            m_points[targetPt]->edges.insert(outH);
+                            //查询重复的面
+                            bool duplicate = false;
+                            for (std::set<HEdge*>::iterator it = m_points[targetPt]->edges.begin(); it != m_points[targetPt]->edges.end() && !duplicate; ++it) {
+                                HEdge* start = (*it);
+                                do {
+                                    if (start != outH && start->point == outH->point && start->next->point == outH->next->point ||
+                                        start->point == outH->next->point && start->next->point == outH->point) {
+                                        facesToremove.insert(face);
+                                        duplicate = true;
+                                        break;
+                                    }
+                                    start = start->next;
+                                } while (start != (*it));
+                            }
+                        }
+                    }
+                }
+                else {
+
+                }
+
+                pointsToremove.push_back(ptToRemove);
+            }
+        }
+        //移除面
+        std::vector<int> removepts;
+        remove_faces(facesToremove, false, removepts);
+    }
+
     bool GeometryTopology::remove_point(int ptnum) {
         if (ptnum < 0 || ptnum >= m_points.size())
             return false;
@@ -709,6 +772,14 @@ namespace zeno
                 assert(fh == ph || fh == ph->next || fh == ph->next->next);
             }
             */
+        }
+
+        if (!m_linesPt.empty()) {
+            for (size_t pt = ptnum; pt < m_linesPt.size(); ++pt) {
+                m_linesPt[pt][0] -= 1;
+                m_linesPt[pt][1] -= 1;
+            }
+            m_linesPt.erase(m_linesPt.end() - 1);
         }
 
         update_linear_vertex();

@@ -886,6 +886,7 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
         pVecEdit->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
     else if (ZCodeEditor* pCodeEditor = qobject_cast<ZCodeEditor*>(pControl)) {
+        pCodeEditor->setFixedHeight(this->height() - ZenoStyle::dpiScaled(30));
         pCodeEditor->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
 
@@ -1569,6 +1570,19 @@ void ZenoPropPanel::paintEvent(QPaintEvent* event)
     opt.init(this);
     QPainter p(this);
     style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
+
+void ZenoPropPanel::resizeEvent(QResizeEvent* e)
+{
+    for (auto& [_, tab] : m_inputControls) {
+        for (auto& [_, group] : tab) {
+            for (auto& [_, control] : group) {
+                if (ZCodeEditor* pCodeEditor = qobject_cast<ZCodeEditor*>(control.pControl)) {
+                    pCodeEditor->setFixedHeight(this->height() - ZenoStyle::dpiScaled(30));
+                }
+            }
+        }
+    }
 }
 
 void ZenoPropPanel::onNodeRemoved(QString nodeName)

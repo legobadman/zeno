@@ -16,6 +16,21 @@ struct ListObject : IObjectClone<ListObject> {
   explicit ListObject(std::vector<zany> arrin) : m_objects(std::move(arrin)) {
   }
 
+  ListObject(const ListObject& listobj) {
+      dirtyIndice = listobj.dirtyIndice;
+      m_key = listobj.m_key;
+
+      m_objects.resize(listobj.size());
+      for (int i = 0; i < listobj.size(); ++i) {
+          m_objects[i] = listobj.get(i)->clone();
+          m_objects[i]->update_key(listobj.get(i)->key());
+      }
+
+      m_modify = listobj.m_modify;
+      m_new_added = listobj.m_new_added;
+      m_new_removed = listobj.m_new_removed;
+  }
+
   std::shared_ptr<IObject> clone_by_key(std::string const& prefix) override {
       std::shared_ptr<ListObject> spList = std::make_shared<ListObject>();
       spList->update_key(prefix + '\\' + m_key);
@@ -115,6 +130,9 @@ struct ListObject : IObjectClone<ListObject> {
   }
 
   void clear() {
+      m_new_added.clear();
+      m_modify.clear();
+      m_new_removed.clear();
       m_objects.clear();
   }
 

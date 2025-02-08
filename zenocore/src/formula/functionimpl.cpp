@@ -67,6 +67,15 @@ namespace zeno
                         else if constexpr (std::is_same_v<T, std::string>) {
                             return format(toFmt, val);
                         }
+                        else if constexpr (std::is_same_v<T, glm::vec2>) {
+                            return format(toFmt, "{" + std::to_string(val.x) + "," + std::to_string(val.y) + "}");
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec3>) {
+                            return format(toFmt, "{" + std::to_string(val.x) + "," + std::to_string(val.y )+ "," + std::to_string(val.z) + "}");
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec4>) {
+                            return format(toFmt, "{" + std::to_string(val.x) + "," + std::to_string(val.y) + "," + std::to_string(val.z) + "," + std::to_string(val.w) + "}");
+                        }
                         else {
                             throw makeError<UnimplError>("error type on format string");
                         }
@@ -127,6 +136,54 @@ namespace zeno
                     }
                 }, var.value[0]);
             }
+        }
+
+        std::vector<zfxvariant> getAttrs(std::shared_ptr<GeometryObject> spGeo, GeoAttrGroup grp, std::string& name) {
+            GeoAttrType type = spGeo->get_attr_type(grp, name);
+            std::vector<zfxvariant> zfxvariantVector;
+            if (type == ATTR_INT) {
+                std::vector<int>& intVector = spGeo->get_attrs<int>(grp, name);
+                zfxvariantVector.resize(intVector.size());
+                for (size_t i = 0; i < intVector.size(); ++i) {
+                    zfxvariantVector[i] = intVector[i];
+                }
+            }
+            else if (type == ATTR_FLOAT) {
+                std::vector<float>& intVector = spGeo->get_attrs<float>(grp, name);
+                zfxvariantVector.resize(intVector.size());
+                for (size_t i = 0; i < intVector.size(); ++i) {
+                    zfxvariantVector[i] = intVector[i];
+                }
+            }
+            else if (type == ATTR_STRING) {
+                std::vector<std::string>& intVector = spGeo->get_attrs<std::string>(grp, name);
+                zfxvariantVector.resize(intVector.size());
+                for (size_t i = 0; i < intVector.size(); ++i) {
+                    zfxvariantVector[i] = intVector[i];
+                }
+            }
+            else if (type == ATTR_VEC2) {
+                std::vector<zeno::vec2f>& intVector = spGeo->get_attrs < zeno::vec2f > (grp, name);
+                zfxvariantVector.resize(intVector.size());
+                for (size_t i = 0; i < intVector.size(); ++i) {
+                    zfxvariantVector[i] = glm::vec2(intVector[i][0], intVector[i][1]); ;
+                }
+            }
+            else if (type == ATTR_VEC3) {
+                std::vector<zeno::vec3f>& intVector = spGeo->get_attrs < zeno::vec3f >(grp, name);
+                zfxvariantVector.resize(intVector.size());
+                for (size_t i = 0; i < intVector.size(); ++i) {
+                    zfxvariantVector[i] = glm::vec3(intVector[i][0], intVector[i][1], intVector[i][2]); ;
+                }
+            }
+            else if (type == ATTR_VEC4) {
+                std::vector<zeno::vec4f>& intVector = spGeo->get_attrs < zeno::vec4f >(grp, name);
+                zfxvariantVector.resize(intVector.size());
+                for (size_t i = 0; i < intVector.size(); ++i) {
+                    zfxvariantVector[i] = glm::vec4(intVector[i][0], intVector[i][1], intVector[i][2], intVector[i][3]); ;
+                }
+            }
+            return zfxvariantVector;
         }
 
         std::pair<std::shared_ptr<INode>, std::string> getNodeAndParamPathFromRef(const std::string& ref, ZfxContext* pContext) {
@@ -340,6 +397,9 @@ namespace zeno
             else {
                 std::vector<zfxvariant> __args;
                 for (auto __arg : _args) {
+                    if (__arg.value.empty()) {
+                        continue;
+                    }
                     __args.push_back(__arg.value[0]);
                 }
                 std::string ret = format_variable_size(formatString.c_str(), __args);
@@ -448,6 +508,25 @@ namespace zeno
             if (!args.empty()) throw makeError<UnimplError>();
             ZfxVariable res;
             res.value.push_back(std::rand());
+            return res;
+        }
+
+        ZfxVariable pow(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>();
+            const auto& arg = args[0];
+            const auto& idx = args[1];
+            if (idx.value.size() != 1) {
+                throw makeError<UnimplError>();
+            }
+            ZfxVariable res;
+            res.value.resize(arg.value.size());
+            for (int i = 0; i < arg.value.size(); i++)
+            {
+                if (!filter[i]) continue;
+                float val = get_zfxvar<float>(arg.value[i]);
+                res.value[i] = std::pow(val, get_zfxvar<float>(idx.value[0]));
+            }
             return res;
         }
 
@@ -1176,6 +1255,68 @@ namespace zeno
             return ret;
         }
 
+        ZfxVariable get_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of get_attr is not matched.");
+
+            std::string group = get_zfxvar<std::string>(args[0].value[0]);
+            std::string name = get_zfxvar<std::string>(args[1].value[0]);
+
+            GeoAttrGroup grp = ATTR_POINT;
+            if (group == "vertex") grp = ATTR_VERTEX;
+            else if (group == "point") grp = ATTR_POINT;
+            else if (group == "face") grp = ATTR_FACE;
+            else if (group == "geometry") grp = ATTR_GEO;
+            
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            ZfxVariable var;
+            var.value = getAttrs(spGeo, grp, name);
+            return var;
+        }
+
+        ZfxVariable get_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of get_vertex_attr is not matched.");
+
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            ZfxVariable var;
+            var.value = getAttrs(spGeo, ATTR_VERTEX, name);
+            return var;
+        }
+
+        ZfxVariable get_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of get_point_attr is not matched.");
+
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            ZfxVariable var;
+            var.value = getAttrs(spGeo, ATTR_POINT, name);
+            return var;
+        }
+
+        ZfxVariable get_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of get_face_attr is not matched.");
+
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            ZfxVariable var;
+            var.value = getAttrs(spGeo, ATTR_FACE, name);
+            return var;
+        }
+
+        ZfxVariable get_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>("the number of arguments of get_geometry_attr is not matched.");
+
+            std::string name = get_zfxvar<std::string>(args[0].value[0]);
+            auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            ZfxVariable var;
+            var.value = getAttrs(spGeo, ATTR_GEO, name);
+            return var;
+        }
 
         ZfxVariable callFunction(const std::string& funcname, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext)
         {
@@ -1205,6 +1346,9 @@ namespace zeno
             }
             if (funcname == "rand") {
                 return rand(args, filter, pContext);
+            }
+            if (funcname == "pow") {
+                return pow(args, filter, pContext);
             }
             if (funcname == "create_attr") {
                 return create_attr(args, filter, pContext);
@@ -1335,7 +1479,21 @@ namespace zeno
             if (funcname == "vertex_face_index") {
                 return vertex_face_index(args, filter, pContext);
             }
-
+            if (funcname == "get_attr") {
+                return get_attr(args, filter, pContext);
+            }            
+            if (funcname == "get_vertex_attr") {
+                return get_vertex_attr(args, filter, pContext);
+            }            
+            if (funcname == "get_point_attr") {
+                return get_point_attr(args, filter, pContext);
+            }
+            if (funcname == "get_face_attr") {
+                return get_face_attr(args, filter, pContext);
+            }
+            if (funcname == "get_geometry_attr") {
+                return get_geometry_attr(args, filter, pContext);
+            }
             throw makeError<UnimplError>("unknown function call");
         }
     }

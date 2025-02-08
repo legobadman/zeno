@@ -36,8 +36,6 @@ private:
 
     GraphModel* m_model;
     QPersistentModelIndex m_nodeIdx;
-
-    zeno::GeometryObject* mmm;
 };
 
 

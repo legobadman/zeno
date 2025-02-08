@@ -77,18 +77,21 @@ namespace zeno {
 
                         if (is_point_attr) {
                             auto& vec_attr = spPrim->verts.add_attr<zeno::vec4f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec4f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
                             }
                         }
                         else if (is_triangle) {
                             auto& vec_attr = spPrim->tris.add_attr<zeno::vec4f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec4f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
                             }
                         }
                         else {
                             auto& vec_attr = spPrim->polys.add_attr<zeno::vec4f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec4f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec4f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i), w_comp->get<float>(i));
                             }
@@ -97,18 +100,21 @@ namespace zeno {
                     else {
                         if (is_point_attr) {
                             auto& vec_attr = spPrim->verts.add_attr<zeno::vec3f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec3f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
                             }
                         }
                         else if (is_triangle) {
                             auto& vec_attr = spPrim->tris.add_attr<zeno::vec3f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec3f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
                             }
                         }
                         else {
                             auto& vec_attr = spPrim->polys.add_attr<zeno::vec3f>(attr_name);
+                            vec_attr.resize(m_size, zeno::vec3f());
                             for (int i = 0; i < m_size; i++) {
                                 vec_attr[i] = zeno::vec3f(x_comp->get<float>(i), y_comp->get<float>(i), z_comp->get<float>(i));
                             }
@@ -118,18 +124,21 @@ namespace zeno {
                 else {
                     if (is_point_attr) {
                         auto& vec_attr = spPrim->verts.add_attr<zeno::vec2f>(attr_name);
+                        vec_attr.resize(m_size, zeno::vec2f());
                         for (int i = 0; i < m_size; i++) {
                             vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                         }
                     }
                     else if (is_triangle) {
                         auto& vec_attr = spPrim->tris.add_attr<zeno::vec2f>(attr_name);
+                        vec_attr.resize(m_size, zeno::vec2f());
                         for (int i = 0; i < m_size; i++) {
                             vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                         }
                     }
                     else {
                         auto& vec_attr = spPrim->polys.add_attr<zeno::vec2f>(attr_name);
+                        vec_attr.resize(m_size, zeno::vec2f());
                         for (int i = 0; i < m_size; i++) {
                             vec_attr[i] = zeno::vec2f(x_comp->get<float>(i), y_comp->get<float>(i));
                         }
@@ -581,6 +590,10 @@ namespace zeno {
                     using E = std::decay_t<decltype(vec)>;
                     if constexpr (std::is_same_v<std::vector<T>, E>) {
                         int sz = vec.size();
+                        if (sz != m_size) {
+                            vec.resize(m_size);
+                            sz = m_size;
+                        }
                         for (int i = 0; i < m_size; i++) {
                             int idx = std::min(i, sz - 1);
                             T old_val(vec[idx]);
@@ -606,6 +619,14 @@ namespace zeno {
                     if (!pXVec || !pYVec)
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size();
+                    if (nx != m_size) {
+                        nx = m_size;
+                        pXVec->resize(m_size);
+                    }
+                    if (ny != m_size) {
+                        ny = m_size;
+                        pYVec->resize(m_size);
+                    }
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
                         int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1);
@@ -632,6 +653,18 @@ namespace zeno {
                     if (!pXVec || !pYVec || !pZVec)
                         throw makeError<UnimplError>("type dismatch");
                     int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
+                    if (nx != m_size) {
+                        nx = m_size;
+                        pXVec->resize(m_size);
+                    }
+                    if (ny != m_size) {
+                        ny = m_size;
+                        pYVec->resize(m_size);
+                    }
+                    if (nz != m_size) {
+                        nz = m_size;
+                        pZVec->resize(m_size);
+                    }
 #pragma omp parallel for
                     for (int i = 0; i < m_size; i++) {
                         int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1), iz = std::min(i, nz - 1);
@@ -645,9 +678,101 @@ namespace zeno {
                 else if constexpr (std::is_same_v<T, vec4f>) {
 
                 }
-                else {
-                    AttrVarVec& attrval = self->value();
+                else if constexpr (std::is_same_v<T, glm::vec2>) {
+                    if (x_comp.use_count() > 1)
+                        x_comp = std::make_shared<AttrColumn>(*x_comp);
+                    if (y_comp.use_count() > 1)
+                        y_comp = std::make_shared<AttrColumn>(*y_comp);
+                    AttrVarVec& xvar = x_comp->value();
+                    AttrVarVec& yvar = y_comp->value();
+                    auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                    auto pYVec = std::get_if<std::vector<float>>(&yvar);
+                    if (!pXVec || !pYVec)
+                        throw makeError<UnimplError>("type dismatch");
+                    int nx = pXVec->size(), ny = pYVec->size();
+                    if (nx != m_size) {
+                        nx = m_size;
+                        pXVec->resize(m_size);
+                    }
+                    if (ny != m_size) {
+                        ny = m_size;
+                        pYVec->resize(m_size);
+                    }
+#pragma omp parallel for
+                    for (int i = 0; i < m_size; i++) {
+                        int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1);
+                        T old_val((*pXVec)[ix], (*pYVec)[iy]);
+                        T new_val = evalf(i, old_val);
+                        (*pXVec)[ix] = new_val[0];
+                        (*pYVec)[iy] = new_val[1];
+                    }
+                }
+                else if constexpr (std::is_same_v<T, glm::vec3>) {
+                    if (x_comp.use_count() > 1)
+                        x_comp = std::make_shared<AttrColumn>(*x_comp);
+                    if (y_comp.use_count() > 1)
+                        y_comp = std::make_shared<AttrColumn>(*y_comp);
+                    if (z_comp.use_count() > 1)
+                        z_comp = std::make_shared<AttrColumn>(*z_comp);
 
+                    AttrVarVec& xvar = x_comp->value();
+                    AttrVarVec& yvar = y_comp->value();
+                    AttrVarVec& zvar = z_comp->value();
+                    auto pXVec = std::get_if<std::vector<float>>(&xvar);
+                    auto pYVec = std::get_if<std::vector<float>>(&yvar);
+                    auto pZVec = std::get_if<std::vector<float>>(&zvar);
+                    if (!pXVec || !pYVec || !pZVec)
+                        throw makeError<UnimplError>("type dismatch");
+                    int nx = pXVec->size(), ny = pYVec->size(), nz = pZVec->size();
+                    if (nx != m_size) {
+                        pXVec->resize(m_size);
+                        nx = m_size;
+                    }
+                    if (ny != m_size) {
+                        pYVec->resize(m_size);
+                        ny = m_size;
+                    }
+                    if (nz != m_size) {
+                        pZVec->resize(m_size);
+                        nz = m_size;
+                    }
+#pragma omp parallel for
+                    for (int i = 0; i < m_size; i++) {
+                        int ix = std::min(i, nx - 1), iy = std::min(i, ny - 1), iz = std::min(i, nz - 1);
+                        T old_val((*pXVec)[ix], (*pYVec)[iy], (*pZVec)[iz]);
+                        T new_val = evalf(i, old_val);
+                        (*pXVec)[ix] = new_val[0];
+                        (*pYVec)[iy] = new_val[1];
+                        (*pZVec)[iz] = new_val[2];
+                    }
+                }
+                else if constexpr (std::is_same_v<T, glm::vec4>) {
+
+                }
+                else {
+                    if (self.use_count() > 1) {
+                        self = std::make_shared<AttrColumn>(*self);
+                    }
+                    AttrVarVec& selfvar = self->value();
+                    std::visit([&](auto&& val) {
+                        using E = std::decay_t<decltype(val)>;
+                        int sz = val.size();
+                        if (sz != m_size) {
+                            val.resize(m_size);
+                            sz = m_size;
+                        }
+                        if constexpr (std::is_same_v<E, std::vector<T>>) {
+                            #pragma omp parallel for
+                            for (int i = 0; i < m_size; i++) {
+                                int ix = std::min(i, sz - 1);
+                                T old_val(val[ix]);
+                                T new_val = evalf(i, old_val);
+                                val[ix] = new_val;
+                            }
+                        } else {
+                            throw makeError<UnimplError>("type dismatch");
+                        }
+                    }, selfvar);
                 }
             }
         }

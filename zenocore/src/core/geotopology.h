@@ -103,6 +103,9 @@ namespace zeno
 
         void update_linear_vertex();
 
+        //特殊功能
+        void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
+
     private:
         std::vector<std::shared_ptr<Point>> m_points;
         std::vector<std::shared_ptr<Face>> m_faces;

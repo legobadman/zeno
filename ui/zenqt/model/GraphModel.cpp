@@ -25,7 +25,6 @@
 
 
 static void triggerView(const QString& nodepath, bool bView) {
-
     zeno::render_reload_info info;
     info.policy = zeno::Reload_ToggleView;
     info.current_ui_graph;  //由于这是在ui下直接点击view，因此一般都是当前图（api的情况暂不考虑）
@@ -351,6 +350,17 @@ QModelIndex GraphModel::indexFromName(const QString& name) const {
         return QModelIndex();
     }
     return createIndex(row, 0);
+}
+
+std::set<std::string> GraphModel::getViewNodePath() const {
+    auto viewnodenames = m_impl->m_wpCoreGraph->get_viewnodes();
+    std::set<std::string> nodes;
+    for (auto name : viewnodenames) {
+        QModelIndex idx = indexFromName(QString::fromStdString(name));
+        const QString& nodepath = idx.data(ROLE_NODE_UUID_PATH).toString();
+        nodes.insert(nodepath.toStdString());
+    }
+    return nodes;
 }
 
 void GraphModel::addLink(const QString& fromNodeStr, const QString& fromParamStr,

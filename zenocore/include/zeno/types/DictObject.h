@@ -9,11 +9,26 @@
 namespace zeno {
 
 struct DictObject : IObjectClone<DictObject> {
+
+    DictObject() = default;
+
   std::map<std::string, zany> lut;
 
   //一次计算中发生变化的元素记录，如果内部元素是dict/list，不记录嵌套的情况，只标记modify，详细信息通过访问子元素对象的这三个便可知。
   std::set<std::string> m_modify, m_new_added, m_new_removed; 
 
+
+  DictObject(const DictObject& dictObj) {
+      m_key = dictObj.m_key;
+      for (auto& [str, obj] : dictObj.lut) {
+          auto cloneobj = obj->clone();
+          cloneobj->update_key(obj->key());
+          lut.insert({str, cloneobj});
+      }
+      m_modify = dictObj.m_modify;
+      m_new_added = dictObj.m_new_added;
+      m_new_removed = dictObj.m_new_removed;
+  }
 
   std::shared_ptr<IObject> clone_by_key(std::string const& prefix) override {
       //不修改自身

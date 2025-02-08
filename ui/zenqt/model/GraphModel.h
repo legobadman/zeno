@@ -73,6 +73,7 @@ public:
     QModelIndex indexFromUuidPath(const zeno::ObjPath& uuidPath);
     QStringList currentPath() const;
     QModelIndex indexFromName(const QString& name) const;
+    std::set<std::string> getViewNodePath() const;
     void clear();
     void undo();
     void redo();

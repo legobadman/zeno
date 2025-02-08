@@ -50,12 +50,13 @@ namespace zeno
         //创建属性
         ZENO_API int create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
         ZENO_API int create_face_attr(std::string const& attr_name, const AttrVar& defl);
-        CALLBACK_REGIST(create_face_attr, void, std::string)
         ZENO_API int create_point_attr(std::string const& attr_name, const AttrVar& defl);
-        CALLBACK_REGIST(create_point_attr, void, std::string)
         ZENO_API int create_vertex_attr(std::string const& attr_name, const AttrVar& defl);
-        CALLBACK_REGIST(create_vertex_attr, void, std::string)
         ZENO_API int create_geometry_attr(std::string const& attr_name, const AttrVar& defl);
+        //CALLBACK_REGIST(create_face_attr, void, std::string)//暂时不需要
+        //CALLBACK_REGIST(create_point_attr, void, std::string)
+        //CALLBACK_REGIST(create_vertex_attr, void, std::string)
+        //CALLBACK_REGIST(create_geometry_attr, void, std::string)
 
         //设置属性
         ZENO_API int set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
@@ -178,6 +179,9 @@ namespace zeno
         ZENO_API int vertex_face(int linear_vertex_id);
         ZENO_API int vertex_face_index(int linear_vertex_id);
         ZENO_API std::tuple<int, int, int> vertex_info(int linear_vertex_id);
+
+        //特殊功能
+        ZENO_API void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
 
     private:
         void initFromPrim(PrimitiveObject* prim);

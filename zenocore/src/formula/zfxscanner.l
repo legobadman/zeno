@@ -53,7 +53,7 @@ number  {num1}|{num2}
 frame   \$F
 fps     \$FPS
 pi      \$PI
-varname [A-Za-z][A-Za-z_0-9]*
+varname [A-Za-z_][A-Za-z_0-9]*
 dollar \$
 zenvarname \$[A-Za-z_]+
 compareop (<|<=|>=|>)
@@ -116,6 +116,8 @@ equalto \=
             return zeno::ZfxParser::make_CONTINUE(yytext, loc);
         } else if (strcmp(yytext, "if") == 0) {
             return zeno::ZfxParser::make_IF(yytext, loc);
+        } else if (strcmp(yytext, "else") == 0) {
+            return zeno::ZfxParser::make_ELSE(yytext, loc);
         } else if (strcmp(yytext, "while") == 0) {
             return zeno::ZfxParser::make_WHILE(yytext, loc);
         } else if (strcmp(yytext, "for") == 0) {

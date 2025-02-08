@@ -1387,6 +1387,72 @@ namespace zeno {
         return false;
     }
 
+    void update_list_root_key(std::shared_ptr<ListObject> listobj, const std::string& key)
+    {
+        auto it = listobj->key().find_first_of('\\');
+        listobj->update_key(it == std::string::npos ? key : key + listobj->key().substr(it));
+
+        std::set<std::string> mmodify, mnew, mremove;
+        for (const auto& uuid : listobj->m_modify) {
+            auto it = uuid.find_first_of('\\');
+            mmodify.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
+        }
+        for (const auto& uuid : listobj->m_new_added) {
+            auto it = uuid.find_first_of('\\');
+            mnew.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
+        }
+        for (auto& uuid : listobj->m_new_removed) {
+            auto it = uuid.find_first_of('\\');
+            mremove.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
+        }
+        mmodify.swap(listobj->m_modify);
+        mnew.swap(listobj->m_new_added);
+        mremove.swap(listobj->m_new_removed);
+        for (std::shared_ptr<IObject> obj : listobj->get()) {
+            if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
+                update_list_root_key(plist, key);
+            } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
+                update_dict_root_key(pdict, key);
+            } else {
+                auto it = obj->key().find_first_of('\\');
+                obj->update_key(it == std::string::npos ? obj->key() : key + obj->key().substr(it));
+            }
+        }
+    }
+
+    void update_dict_root_key(std::shared_ptr<DictObject> dictobj, const std::string& key)
+    {
+        auto it = dictobj->key().find_first_of('\\');
+        dictobj->update_key(it == std::string::npos ? key : key + dictobj->key().substr(it));
+
+        std::set<std::string> mmodify, mnew, mremove;
+        for (const auto& uuid : dictobj->m_modify) {
+            auto it = uuid.find_first_of('\\');
+            mmodify.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
+        }
+        for (const auto& uuid : dictobj->m_new_added) {
+            auto it = uuid.find_first_of('\\');
+            mnew.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
+        }
+        for (auto& uuid : dictobj->m_new_removed) {
+            auto it = uuid.find_first_of('\\');
+            mremove.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
+        }
+        mmodify.swap(dictobj->m_modify);
+        mnew.swap(dictobj->m_new_added);
+        mremove.swap(dictobj->m_new_removed);
+        for (auto& [str, obj] : dictobj->lut) {
+            if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
+                update_list_root_key(plist, key);
+            } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
+                update_dict_root_key(pdict, key);
+            } else {
+                auto it = obj->key().find_first_of('\\');
+                obj->update_key(it == std::string::npos ? obj->key() : key + obj->key().substr(it));
+            }
+        }
+    }
+
     bool getParamInfo(const CustomUI& customui, std::vector<ParamPrimitive>& inputs, std::vector<ParamPrimitive>& outputs) {
         return false;
     }

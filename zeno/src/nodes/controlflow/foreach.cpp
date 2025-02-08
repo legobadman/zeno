@@ -6,6 +6,7 @@
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/core/FunctionManager.h>
 #include <zeno/types/GeometryObject.h>
+#include <zeno/utils/helper.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -33,6 +34,9 @@ namespace zeno
         }
 
         std::shared_ptr<IObject> apply(std::shared_ptr<IObject> init_object) {
+            if (!init_object) {
+                throw makeError<UnimplError>(this->get_name() + " get empty input object.");
+            }
             _out_iteration = m_current_iteration;
             auto foreach_end = get_foreachend();
 
@@ -154,15 +158,18 @@ namespace zeno
 
             if (iter_method == "By Count") {
                 if (m_iterations <= 0 || m_increment == 0) {//迭代次数非正或increment为0返回
+                    adjustCollectObjInfo();
                     return false;
                 }
                 else {
                     if (m_increment > 0) {//正增长
                         if (m_iterations <= current_iter - m_start_value || current_iter >= m_stop_condition) {
+                            adjustCollectObjInfo();
                             return false;
                         }
                     } else {//负增长
                         if (m_iterations <= m_start_value - current_iter || current_iter <= m_stop_condition) {
+                            adjustCollectObjInfo();
                             return false;
                         }
                     }
@@ -179,13 +186,20 @@ namespace zeno
                 }
                 if (auto spList = std::dynamic_pointer_cast<ListObject>(initobj)) {
                     int n = spList->size();
-                    return current_iter >= 0 && current_iter < n;
+                    if (current_iter >= 0 && current_iter < n) {
+                        return true;
+                    } else {
+                        adjustCollectObjInfo();
+                        return false;
+                    };
                 }
                 else {
+                    adjustCollectObjInfo();
                     return false;
                 }
             }
             else {
+                adjustCollectObjInfo();
                 return false;
             }
         }
@@ -211,26 +225,38 @@ namespace zeno
             m_iterate_object = iterate_object;
             if (m_iterate_method == "By Count" || m_iterate_method == "By Container") {
                 if (m_collect_method == "Feedback to Begin") {
-                    std::shared_ptr<ListObject> listobj = std::make_shared<ListObject>();
-                    if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(m_iterate_object)) {
-                        for (int i = 0; i < spList->size(); i++) {
-                            zany new_obj = spList->get(i)->clone();
-                            listobj->append(new_obj);
-                        }
+                    std::shared_ptr<IObject> iobj = m_iterate_object->clone();
+                    if (std::shared_ptr< zeno::ListObject> spList = std::dynamic_pointer_cast<zeno::ListObject>(iobj)) {
+                        update_list_root_key(spList, get_uuid_path());
+                    } else if (std::shared_ptr< zeno::DictObject> spDict = std::dynamic_pointer_cast<zeno::DictObject>(iobj)) {
+                        update_dict_root_key(spDict, get_uuid_path());
                     } else {
-                        listobj->append(m_iterate_object);
+                        iobj->update_key(get_uuid_path());
                     }
-                    return listobj;
-                }
-                else if (m_collect_method == "Gather Each Iteration") {
-                    if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(iterate_object)) {
+                    return iobj;
+                } else if (m_collect_method == "Gather Each Iteration") {
+                    std::shared_ptr<ForEachBegin> foreach_begin = get_foreach_begin();
+                    int current_iter = foreach_begin->get_current_iteration();
+
+                    std::shared_ptr<IObject> iobj = m_iterate_object->clone();
+                    if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(iobj)) {
+                        update_list_root_key(spList, get_uuid_path() + "\\iter" + std::to_string(current_iter));
                         for (int i = 0; i < spList->size(); i++) {
-                            zany new_obj = spList->get(i)->clone();
-                            m_collect_objs->append(new_obj);
+                            std::shared_ptr<IObject> cloneobj = spList->get(i);
+                            m_collect_objs->append(cloneobj);
+                            m_collect_objs->m_new_added.insert(cloneobj->key());
                         }
-                    } else {
-                        zany new_obj = iterate_object->clone();
-                        m_collect_objs->append(new_obj);
+                    } else if (auto spDict = std::dynamic_pointer_cast<zeno::DictObject>(iobj)) {
+                        update_dict_root_key(spDict, get_uuid_path() + "\\iter" + std::to_string(current_iter));
+                        for (auto& [key, obj] : spDict->get()) {
+                            m_collect_objs->append(obj);
+                            m_collect_objs->m_new_added.insert(obj->key());
+                        }
+                    } else { 
+                        std::string currIterKey = get_uuid_path() + '\\' + iterate_object->key() + ":iter:" + std::to_string(current_iter);
+                        iobj->update_key(currIterKey);
+                        m_collect_objs->append(iobj);
+                        m_collect_objs->m_new_added.insert(currIterKey);
                     }
                     return m_collect_objs;
                 }
@@ -243,6 +269,34 @@ namespace zeno
                 throw makeError<UnimplError>("only support By Count or By Container at ForeachEnd");
             }
             return nullptr;
+        }
+
+        void adjustCollectObjInfo() {
+            std::function<void(std::shared_ptr<IObject>)> flattenList = [&flattenList, this](std::shared_ptr<IObject> obj) {
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
+                    for (int i = 0; i < _spList->size(); ++i) {
+                        flattenList(_spList->get(i));
+                    }
+                } else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(obj)) {
+                    for (auto& [key, obj] : _spDict->get()) {
+                        flattenList(obj);
+                    }
+                } else {
+                    m_collect_objs->m_new_removed.insert(obj->key());
+                }
+            };
+            for (auto it = m_last_collect_objs.begin(); it != m_last_collect_objs.end();) {
+                if (m_collect_objs->m_new_added.find((*it)->key()) == m_collect_objs->m_new_added.end()) {
+                    flattenList(*it);
+                    it = m_last_collect_objs.erase(it);
+                } else {
+                    m_collect_objs->m_modify.insert((*it)->key());
+                    m_collect_objs->m_new_added.erase((*it)->key());
+                    ++it;
+                }
+            }
+            m_last_collect_objs.clear();
+            m_last_collect_objs = m_collect_objs->get();
         }
 
         ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "ForEachBegin Path")
@@ -271,5 +325,6 @@ namespace zeno
 
         std::shared_ptr<IObject> m_iterate_object;
         std::shared_ptr<ListObject> m_collect_objs;     //TODO: 如果foreach的对象是Dict，但这里收集的结果将会以list返回出去，以后再支持Dict的收集
+        std::vector<std::shared_ptr<IObject>> m_last_collect_objs;
     };
 }

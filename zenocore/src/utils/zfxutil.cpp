@@ -285,6 +285,174 @@ namespace zeno
             }, zfxvec[0]);
         }
 
+        zeno::ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
+            std::string attr_name = attrname;
+            if (attrname[0] == '@')
+                attr_name = attrname.substr(1);
+
+            std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+
+            //观察是否内置属性，目前内置属性统统在外部处理，不耦合到GeometryObject的api上
+            if (attr_name == "ptnum") {
+                int N = spGeom->npoints();
+                ZfxVariable res;
+                res.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    res.value[i] = i;
+                }
+                res.bAttr = true;
+                return res;
+            }
+            else if (attr_name == "primnum") {
+                int N = spGeom->nfaces();
+                ZfxVariable res;
+                res.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    res.value[i] = i;
+                }
+                res.bAttr = true;
+                return res;
+            }
+            else if (attr_name == "vtxnum") {
+                int N = spGeom->nvertices();
+                ZfxVariable res;
+                res.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    res.value[i] = i;
+                }
+                res.bAttr = true;
+                return res;
+            }
+            else if (attr_name == "pscale") {
+
+            }
+            else if (attr_name == "Frame") {
+
+            }
+            else if (attr_name == "P") {
+                attr_name = "pos";
+            }
+
+            GeoAttrType type = spGeom->get_attr_type(pContext->runover, attr_name);
+            if (type == ATTR_TYPE_UNKNOWN) {//attrname可能是其他类型,尝试设置为其他类型
+                if (spGeom->has_point_attr(attr_name)) {
+                    pContext->runover = ATTR_POINT;
+                    type = spGeom->get_attr_type(ATTR_POINT, attr_name);
+                }
+                else if (spGeom->has_face_attr(attr_name)) {
+                    pContext->runover = ATTR_FACE;
+                    type = spGeom->get_attr_type(ATTR_FACE, attr_name);
+                }
+                else if (spGeom->has_vertex_attr(attr_name)) {
+                    pContext->runover = ATTR_VERTEX;
+                    type = spGeom->get_attr_type(ATTR_VERTEX, attr_name);
+                }
+                else if (spGeom->has_geometry_attr(attr_name)) {
+                    pContext->runover = ATTR_GEO;
+                    type = spGeom->get_attr_type(ATTR_GEO, attr_name);
+                }
+            }
+
+            switch (type) {
+            case ATTR_INT: {
+                std::vector<int> vec(spGeom->get_attrs<int>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
+            }
+            case ATTR_FLOAT: {
+                std::vector<float> vec(spGeom->get_attrs<float>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
+            }
+            case ATTR_STRING: {
+                std::vector<std::string> vec(spGeom->get_attrs<std::string>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
+            }
+            case ATTR_VEC2: {
+                std::vector<glm::vec2> vec(spGeom->get_attrs<glm::vec2>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
+            }
+            case ATTR_VEC3: {
+                if (channel == 'x') {
+                    std::vector<float> vec(spGeom->get_attrs<float, 'x'>(pContext->runover, attr_name));
+                    ZfxVariable res;
+                    res.value.resize(vec.size());
+                    res.bAttr = true;
+                    for (int i = 0; i < vec.size(); i++) {
+                        res.value[i] = vec[i];
+                    }
+                    return res;
+                }
+                else if (channel == 'y') {
+                    std::vector<float> vec(spGeom->get_attrs<float, 'y'>(pContext->runover, attr_name));
+                    ZfxVariable res;
+                    res.value.resize(vec.size());
+                    res.bAttr = true;
+                    for (int i = 0; i < vec.size(); i++) {
+                        res.value[i] = vec[i];
+                    }
+                    return res;
+                }
+                else if (channel == 'z') {
+                    std::vector<float> vec(spGeom->get_attrs<float, 'z'>(pContext->runover, attr_name));
+                    ZfxVariable res;
+                    res.value.resize(vec.size());
+                    res.bAttr = true;
+                    for (int i = 0; i < vec.size(); i++) {
+                        res.value[i] = vec[i];
+                    }
+                    return res;
+                }
+                else {
+                    assert(channel == 0);
+                    std::vector<glm::vec3> vec(spGeom->get_attrs<glm::vec3>(pContext->runover, attr_name));
+                    ZfxVariable res;
+                    res.value.resize(vec.size());
+                    res.bAttr = true;
+                    for (int i = 0; i < vec.size(); i++) {
+                        res.value[i] = vec[i];
+                    }
+                    return res;
+                }
+            }
+            case ATTR_VEC4: {
+                std::vector<glm::vec4> vec(spGeom->get_attrs<glm::vec4>(pContext->runover, attr_name));
+                ZfxVariable res;
+                res.value.resize(vec.size());
+                res.bAttr = true;
+                for (int i = 0; i < vec.size(); i++) {
+                    res.value[i] = vec[i];
+                }
+                return res;
+            }
+            default:
+                throw makeError<UnimplError>("unknown attr type");
+            }
+        }
+
+
         template <class T>
         static T get_zfxvar(zfxvariant value) {
             return std::visit([](auto const& val) -> T {
@@ -424,6 +592,24 @@ namespace zeno
             }
 
             GeoAttrType type = spGeom->get_attr_type(group, attrname);
+            if (type == ATTR_TYPE_UNKNOWN) {//attrname可能是其他类型,尝试设置为其他类型
+                if (spGeom->has_point_attr(attrname)) {
+                    pContext->runover = ATTR_POINT;
+                    type = spGeom->get_attr_type(ATTR_POINT, attrname);
+                }
+                else if (spGeom->has_face_attr(attrname)) {
+                    pContext->runover = ATTR_FACE;
+                    type = spGeom->get_attr_type(ATTR_FACE, attrname);
+                }
+                else if (spGeom->has_vertex_attr(attrname)) {
+                    pContext->runover = ATTR_VERTEX;
+                    type = spGeom->get_attr_type(ATTR_VERTEX, attrname);
+                }
+                else if (spGeom->has_geometry_attr(attrname)) {
+                    pContext->runover = ATTR_GEO;
+                    type = spGeom->get_attr_type(ATTR_GEO, attrname);
+                }
+            }
             switch (type) {
             case ATTR_INT: {
                 set_attr_by_zfx<int>(spGeom, attrname, channel, var, opVal, filter, pContext);
@@ -434,7 +620,18 @@ namespace zeno
                 break;
             }
             case ATTR_STRING: {
-                //set_attr_by_zfx<std::string>(spGeom, attrname, channel, var, filter, pContext);
+                int N = spGeom->get_group_count(pContext->runover), nVariable = var.value.size();
+                if (N != nVariable && nVariable != 1) {
+                    throw makeError<UnimplError>("size dismatch when assign value to attributes");
+                }
+                std::vector<std::string> vec(N);
+                for (int i = 0; i < N; i++) {
+                    vec[i] = get_zfxvar<std::string>(var.value[std::min(i, nVariable - 1)]);
+                }
+                spGeom->foreach_attr_update<std::string>(pContext->runover, attrname, 0, [&](int idx, std::string old_val)->std::string {
+                    return filter[idx] ? vec[idx] : old_val;
+                });
+                //set_attr_by_zfx<std::string>(spGeom, attrname, channel, var, opVal, filter, pContext);
                 break;
             }
             case ATTR_VEC2: {

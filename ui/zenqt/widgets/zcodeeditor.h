@@ -19,6 +19,7 @@ signals:
     void editFinished(const QString& text);
 
 protected:
+    void focusInEvent(QFocusEvent* e) override;
     void focusOutEvent(QFocusEvent* e) override;
     void keyPressEvent(QKeyEvent* e) override;
 
@@ -38,6 +39,8 @@ private:
   QString m_firstCandidateWord;
 
   QModelIndex m_nodeIdx;
+
+  int minimumHeight = 220;
 };
 
 #endif

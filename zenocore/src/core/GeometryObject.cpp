@@ -157,14 +157,6 @@ namespace zeno
             //属性也要同步删除,包括point和vertices
             for (auto& [name, attrib_vec] : m_point_attrs) {
                 removeAttribElem(attrib_vec, ptnum);
-                if (name == "lineNextPt") {//如果是line，调整line的next ptnum；
-                    for (size_t pt = ptnum; pt < attrib_vec.size(); ++pt) {
-                        zeno::vec2f removePtNextPt = attrib_vec.get_elem < zeno::vec2f >(0, pt);
-                        removePtNextPt[0] -= 1;
-                        removePtNextPt[1] -= 1;
-                        attrib_vec.set_elem<zeno::vec2f>(pt, removePtNextPt);
-                    }
-                }
             }
 
             for (auto& [name, attrib_vec] : m_vert_attrs) {
@@ -360,18 +352,6 @@ namespace zeno
         int n = get_attr_size(grp);
         container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n == 0 ? 1 : n)));
 
-        if (grp == ATTR_GEO) {
-        }
-        else if (grp == ATTR_POINT) {
-            CALLBACK_NOTIFY(create_point_attr, attr_name);
-        }
-        else if (grp == ATTR_FACE) {
-            CALLBACK_NOTIFY(create_face_attr, attr_name);
-        }
-        else if (grp == ATTR_VERTEX) {
-            CALLBACK_NOTIFY(create_vertex_attr, attr_name);
-        }
-
         //返回啥？
         return 0;
     }
@@ -384,7 +364,6 @@ namespace zeno
         int n = m_spTopology->nfaces();
         m_face_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
 
-        CALLBACK_NOTIFY(create_face_attr, attr_name)
         return 0;
     }
 
@@ -396,7 +375,6 @@ namespace zeno
         int n = m_spTopology->npoints();
         m_point_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
 
-        CALLBACK_NOTIFY(create_point_attr, attr_name)
         return 0;
     }
 
@@ -411,7 +389,6 @@ namespace zeno
         int n = m_spTopology->nvertices();
         m_vert_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
 
-        CALLBACK_NOTIFY(create_vertex_attr, attr_name)
         return 0;
     }
 
@@ -693,6 +670,22 @@ namespace zeno
 
     ZENO_API std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) {
         return m_spTopology->vertex_info(linear_vertex_id);
+    }
+
+    ZENO_API void GeometryObject::fusePoints(std::vector<int>& fusedPoints) {
+        int npoints = this->npoints();
+        m_spTopology->fusePoints(fusedPoints);
+
+        bool isline = m_spTopology->is_line();
+        for (std::vector<int>::reverse_iterator it = fusedPoints.rbegin(); it != fusedPoints.rend(); ++it) {
+            if ((*it) != -1) {
+                int ptToRemove = npoints - 1 - (it - fusedPoints.rbegin());
+                remove_point(ptToRemove);
+                if (isline && (ptToRemove == npoints - 1)) {
+                    m_spTopology->setLineNextPt(ptToRemove - 1, fusedPoints[ptToRemove]);
+                }
+            }
+        }
     }
 
     ZENO_API int GeometryObject::add_face(const std::vector<int>& points) {

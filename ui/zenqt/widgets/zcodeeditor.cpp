@@ -28,6 +28,12 @@ ZCodeEditor::ZCodeEditor(const QString& text, QWidget *parent)
     initUI();
 
     connect(this, &QTextEdit::cursorPositionChanged, this, &ZCodeEditor::slt_showFuncDesc);
+    //connect(this, &QTextEdit::textChanged, [this]() {
+    //    int currDocHeight = this->document()->size().height();
+    //    if (minimumHeight < currDocHeight && currDocHeight < ZenoStyle::dpiScaled(680)) {
+    //        setFixedHeight(document()->size().height());
+    //    }
+    //});
 }
 
 void ZCodeEditor::setHintListWidget(ZenoHintListWidget* hintlist, ZenoFuncDescriptionLabel* descLabel)
@@ -41,12 +47,19 @@ void ZCodeEditor::setNodeIndex(QModelIndex nodeIdx)
     m_nodeIdx = nodeIdx;
 }
 
+void ZCodeEditor::focusInEvent(QFocusEvent* e)
+{
+    QCodeEditor::focusInEvent(e);
+}
+
 void ZCodeEditor::focusOutEvent(QFocusEvent* e)
 {
     QCodeEditor::focusOutEvent(e);
     Qt::FocusReason reason = e->reason();
     if (reason != Qt::ActiveWindowFocusReason)
         emit editFinished(toPlainText());
+
+    //setFixedHeight(minimumHeight);
 }
 
 void ZCodeEditor::keyPressEvent(QKeyEvent* event)
@@ -249,6 +262,22 @@ void ZCodeEditor::initUI()
     setAutoIndentation(true);
     setTabReplace(true);
     setTabReplaceSize(4);
+
+    setLineWrapMode(QTextEdit::WidgetWidth);
+
+    ////初始化时显示所有内容
+    //QFontMetrics fontMetrics(this->font());
+    //int currDocHeight = this->document()->blockCount() * fontMetrics.height();
+    //if (currDocHeight < minimumHeight) {
+    //    setFixedHeight(minimumHeight);
+    //}
+    //else if (minimumHeight < currDocHeight && currDocHeight < ZenoStyle::dpiScaled(680)) {
+    //    setFixedHeight(currDocHeight + ZenoStyle::dpiScaled(10));
+    //}
+    //else {
+    //    setFixedHeight(ZenoStyle::dpiScaled(680));
+    //}
+    ////setMinimumHeight(minimumHeight);
 }
 
 QSyntaxStyle* ZCodeEditor::loadStyle(const QString& path)

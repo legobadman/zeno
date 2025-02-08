@@ -345,11 +345,11 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
 
     std::unique_ptr<Buffer> ptnum_vbo;
     std::vector<CHAR_VBO_INFO> m_ptnum_data;
-    Program* ptnums_prog;
+    Program* ptnums_prog = nullptr;
 
     std::unique_ptr<Buffer> facenum_vbo;
     std::vector<CHAR_VBO_INFO> m_facenum_data;
-    Program* facenums_prog;
+    Program* facenums_prog = nullptr;
 
     //Program *points_prog;
     //std::unique_ptr<Buffer> points_ebo;
@@ -448,7 +448,9 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
             }
         }
 
-        init_facenum_data(prim);
+        if (scene->is_show_ptnum()) {
+            init_facenum_data(prim);
+        }
 
         if (!prim->attr_is<zeno::vec3f>("pos")) {
             auto &pos = prim->add_attr<zeno::vec3f>("pos");
@@ -635,7 +637,9 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         if (draw_all_points) {
             pointObj.prog = get_points_program();
         }
-        init_ptnum_data(pos);
+        if (scene->is_show_ptnum()) {
+            init_ptnum_data(pos);
+        }
     }
 
     explicit ZhxxGraphicPrimitive(Scene* scene_, zeno::GeometryObject* geo)
@@ -1104,11 +1108,15 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
     }
 
     void draw_ptnums() {
-        draw_elemnums(ptnums_prog, m_ptnum_data, ptnum_vbo.get());
+        if (ptnums_prog && !m_ptnum_data.empty() && ptnum_vbo) {
+            draw_elemnums(ptnums_prog, m_ptnum_data, ptnum_vbo.get());
+        }
     }
 
     void draw_facenums() {
-        draw_elemnums(facenums_prog, m_facenum_data, facenum_vbo.get());
+        if (facenums_prog && !m_facenum_data.empty() && facenums_prog) {
+            draw_elemnums(facenums_prog, m_facenum_data, facenum_vbo.get());
+        }
     }
 
     Program *get_points_program() {

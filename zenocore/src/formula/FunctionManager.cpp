@@ -244,29 +244,15 @@ namespace zeno {
                         return method((int)lval, (int)rval);
                     }
                     throw makeError<UnimplError>("");
-                }
-                else if constexpr (std::is_same_v<T, int>) {
-                    if constexpr (std::is_same_v<E, int>) {
-                        return method(lval, rval);
-                    }
-                    else if constexpr (std::is_same_v<E, float>) {
-                        return method(E(lval), rval);
-                    }
-                    else {
-                        //暂不考虑一个元素和一个矩阵相加的情况。
-                        throw makeError<UnimplError>("");
-                    }
-                }
-                else if constexpr (std::is_same_v<T, float>) {
-                    if constexpr (std::is_same_v<E, int>) {
-                        return method(lval, T(rval));
-                    }
-                    else if constexpr (std::is_same_v<E, float>) {
-                        return method(lval, rval);
-                    }
-                    throw makeError<UnimplError>("");
-                }
-                else if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<T, E> ||
+                } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
+                    return method(lval, rval);
+                } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, float>) {
+                    return method(E(lval), rval);
+                } else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, int>) {
+                    return method(lval, T(rval));
+                } else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, float>) {
+                    return method(lval, rval);
+                } else if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::vec3> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::vec4> && std::is_same_v<T, E>)
                 {
@@ -292,8 +278,51 @@ namespace zeno {
                     {
                         return method(lval, rval);
                     }
+                } else if constexpr(std::is_same_v<T, glm::vec2> && (std::is_same_v<int, E> || std::is_same_v<float, E>) ||
+                    std::is_same_v<T, glm::vec3> && (std::is_same_v<int, E> || std::is_same_v<float, E>) ||
+                    std::is_same_v<T, glm::vec4> && (std::is_same_v<int, E> || std::is_same_v<float, E>))
+                {
+                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::less<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::greater<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
+                        throw makeError<UnimplError>("");
+                    } else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
+                        throw makeError<UnimplError>("");
+                    } else {
+                        return method(lval, T(rval));
+                    }
                 }
-                else if constexpr (std::is_same_v<T, glm::mat3> && std::is_same_v<T, E> ||
+                else if constexpr ((std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec2> ||
+                    (std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec3> ||
+                    (std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec4>) {\
+                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::less<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::greater<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
+                        throw makeError<UnimplError>("");
+                    }
+                    else {
+                        return method(E(lval), rval);
+                    }
+                } else if constexpr (std::is_same_v<T, glm::mat3> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::mat4> && std::is_same_v<T, E> ||
                     std::is_same_v<T, glm::mat2> && std::is_same_v<T, E>) {
 
@@ -960,151 +989,7 @@ namespace zeno {
     }
 
     ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
-        std::string attr_name = attrname;
-        if (attrname[0] == '@')
-            attr_name = attrname.substr(1);
-
-        std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
-
-        //观察是否内置属性，目前内置属性统统在外部处理，不耦合到GeometryObject的api上
-        if (attr_name == "ptnum") {
-            int N = spGeom->npoints();
-            ZfxVariable res;
-            res.value.resize(N);
-            for (int i = 0; i < N; i++) {
-                res.value[i] = i;
-            }
-            res.bAttr = true;
-            return res;
-        }
-        else if (attr_name == "primnum") {
-            int N = spGeom->nfaces();
-            ZfxVariable res;
-            res.value.resize(N);
-            for (int i = 0; i < N; i++) {
-                res.value[i] = i;
-            }
-            res.bAttr = true;
-            return res;
-        }
-        else if (attr_name == "vtxnum") {
-            int N = spGeom->nvertices();
-            ZfxVariable res;
-            res.value.resize(N);
-            for (int i = 0; i < N; i++) {
-                res.value[i] = i;
-            }
-            res.bAttr = true;
-            return res;
-        }
-        else if (attr_name == "pscale") {
-            
-        }
-        else if (attr_name == "Frame") {
-
-        }
-        else if (attr_name == "P") {
-            attr_name = "pos";
-        }
-
-        GeoAttrType type = spGeom->get_attr_type(pContext->runover, attr_name);
-        switch (type) {
-        case ATTR_INT: {
-            std::vector<int> vec(spGeom->get_attrs<int>(pContext->runover, attr_name));
-            ZfxVariable res;
-            res.value.resize(vec.size());
-            res.bAttr = true;
-            for (int i = 0; i < vec.size(); i++) {
-                res.value[i] = vec[i];
-            }
-            return res;
-        }
-        case ATTR_FLOAT: {
-            std::vector<float> vec(spGeom->get_attrs<float>(pContext->runover, attr_name));
-            ZfxVariable res;
-            res.value.resize(vec.size());
-            res.bAttr = true;
-            for (int i = 0; i < vec.size(); i++) {
-                res.value[i] = vec[i];
-            }
-            return res;
-        }
-        case ATTR_STRING: {
-            std::vector<std::string> vec(spGeom->get_attrs<std::string>(pContext->runover, attr_name));
-            ZfxVariable res;
-            res.value.resize(vec.size());
-            res.bAttr = true;
-            for (int i = 0; i < vec.size(); i++) {
-                res.value[i] = vec[i];
-            }
-            return res;
-        }
-        case ATTR_VEC2: {
-            std::vector<glm::vec2> vec(spGeom->get_attrs<glm::vec2>(pContext->runover, attr_name));
-            ZfxVariable res;
-            res.value.resize(vec.size());
-            res.bAttr = true;
-            for (int i = 0; i < vec.size(); i++) {
-                res.value[i] = vec[i];
-            }
-            return res;
-        }
-        case ATTR_VEC3: {
-            if (channel == 'x') {
-                std::vector<float> vec(spGeom->get_attrs<float, 'x'>(pContext->runover, attr_name));
-                ZfxVariable res;
-                res.value.resize(vec.size());
-                res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
-                return res;
-            }
-            else if (channel == 'y') {
-                std::vector<float> vec(spGeom->get_attrs<float, 'y'>(pContext->runover, attr_name));
-                ZfxVariable res;
-                res.value.resize(vec.size());
-                res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
-                return res;
-            }
-            else if (channel == 'z') {
-                std::vector<float> vec(spGeom->get_attrs<float, 'z'>(pContext->runover, attr_name));
-                ZfxVariable res;
-                res.value.resize(vec.size());
-                res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
-                return res;
-            }
-            else {
-                assert(channel == 0);
-                std::vector<glm::vec3> vec(spGeom->get_attrs<glm::vec3>(pContext->runover, attr_name));
-                ZfxVariable res;
-                res.value.resize(vec.size());
-                res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
-                return res;
-            }
-        }
-        case ATTR_VEC4: {
-            std::vector<glm::vec4> vec(spGeom->get_attrs<glm::vec4>(pContext->runover, attr_name));
-            ZfxVariable res;
-            res.value.resize(vec.size());
-            res.bAttr = true;
-            for (int i = 0; i < vec.size(); i++) {
-                res.value[i] = vec[i];
-            }
-            return res;
-        }
-        default:
-            throw makeError<UnimplError>("unknown attr type");
-        }
+        return zeno::zfx::getAttrValue(attrname, pContext, channel);
     }
 
     ZfxVariable FunctionManager::execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -1212,7 +1097,7 @@ namespace zeno {
                 std::shared_ptr<ZfxASTNode> zenvarNode = root->children[0];
                 if (zenvarNode->bAttr) {
                     //无须把值拎出来再计算，直接往属性数据内部设置
-                    const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value);
+                    const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
                     std::string channel;
                     if (zenvarNode->opVal == COMPVISIT) {
                         assert(zenvarNode->children.size() == 1);
@@ -1221,6 +1106,31 @@ namespace zeno {
                     else if (zenvarNode->opVal == Indexing) {
                         //todo
                     }
+
+                    std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+                    if (!spGeom->has_point_attr(attrname) && !spGeom->has_face_attr(attrname) &&
+                        !spGeom->has_vertex_attr(attrname) && !spGeom->has_geometry_attr(attrname)
+                        ) {//attrname不存在就创建一个，valNode是属性就创建和valNode同类型属性，否则创建point属性
+                        AttrVar attrvar = zeno::zfx::convertToAttrVar(res.value);
+                        if (valNode->bAttr) {
+                            std::string valNodeAttrName = get_zfxvar<std::string>(valNode->value).substr(1);
+                            if (spGeom->has_point_attr(valNodeAttrName)) {
+                                spGeom->create_point_attr(attrname, attrvar);
+                            }
+                            else if (spGeom->has_face_attr(valNodeAttrName)) {
+                                spGeom->create_face_attr(attrname, attrvar);
+                            }
+                            else if (spGeom->has_vertex_attr(valNodeAttrName)) {
+                                spGeom->create_vertex_attr(attrname, attrvar);
+                            }
+                            else if (spGeom->has_geometry_attr(valNodeAttrName)) {
+                                spGeom->create_geometry_attr(attrname, attrvar);
+                            }
+                        } else {
+                            spGeom->create_point_attr(attrname, attrvar);
+                        }
+                    }
+
                     setAttrValue(attrname, channel, res, root->opVal, filter, pContext);
                     return ZfxVariable();
                 }
@@ -1515,17 +1425,33 @@ namespace zeno {
                 }
             }
             case IF:{
-                if (root->children.size() != 2) {
+                if (root->children.size() != 2 && root->children.size() != 3) {
                     throw makeError<UnimplError>("if cond failed.");
                 }
                 auto pCondExp = root->children[0];
                 //todo: self inc
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
-                ZfxElemFilter newFilter;
-                if (hasTrue(cond, filter, newFilter)) {
-                    auto pCodesExp = root->children[1];
-                    execute(pCodesExp, newFilter, pContext);
+                if (cond.value.size() == 1) {//不是向量的情况
+                    ZfxElemFilter newFilter;
+                    if (hasTrue(cond, filter, newFilter)) {
+                        auto pCodesExp = root->children[1];
+                        execute(pCodesExp, newFilter, pContext);
+                    } else if (root->children.size() == 3) {
+                        auto pelseExp = root->children[2];
+                        execute(pelseExp, filter, pContext);
+                    }
+                } else {//向量的情况，每个分支都要执行
+                    ZfxElemFilter ifFilter, elseFilter;
+                    if (hasTrue(cond, filter, ifFilter)) {
+                        auto pCodesExp = root->children[1];
+                        execute(pCodesExp, ifFilter, pContext);
+                    }
+                    if (root->children.size() == 3) {
+                        auto pelseExp = root->children[2];
+                        execute(pelseExp, filter, pContext);
+                    }
                 }
+
                 break;
             }
             case FOR:{

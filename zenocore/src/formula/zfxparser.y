@@ -91,6 +91,7 @@
 %token SEMICOLON
 %token ASSIGNTO
 %token IF
+%token ELSE
 %token FOR
 %token WHILE
 %token AUTOINC
@@ -127,10 +128,10 @@
 
 %left <string>LPAREN
 
-%type <std::shared_ptr<ZfxASTNode>> general-statement declare-statement jump-statement code-block assign-statement only-declare array-or-exp for-condition for-step exp-statement orexp andexp if-statement arrcontent addsubexp zfx-program multi-statements compareexp factor term func-content zenvar array-stmt for-begin loop-statement
+%type <std::shared_ptr<ZfxASTNode>> general-statement declare-statement jump-statement code-block assign-statement only-declare array-or-exp for-condition for-step exp-statement orexp andexp if-statement ifelse-statement arrcontent addsubexp zfx-program multi-statements compareexp factor term func-content zenvar array-stmt for-begin loop-statement
 %type <std::vector<std::shared_ptr<ZfxASTNode>>> funcargs arrcontents foreach-step
 %type <operatorVals> assign-op compare-op
-%type <string> LITERAL UNCOMPSTR DOLLAR DOLLARVARNAME RPAREN COMPARE QUESTION ZFXVAR LBRACKET RBRACKET DOT COLON TYPE ATTRAT VARNAME SEMICOLON ASSIGNTO IF FOR FOREACH DO WHILE AUTOINC AUTODEC LSQBRACKET RSQBRACKET ADDASSIGN MULASSIGN SUBASSIGN DIVASSIGN RETURN CONTINUE BREAK LESSTHAN LESSEQUAL GREATTHAN GREATEQUAL EQUALTO NOTEQUAL OR AND
+%type <string> LITERAL UNCOMPSTR DOLLAR DOLLARVARNAME RPAREN COMPARE QUESTION ZFXVAR LBRACKET RBRACKET DOT COLON TYPE ATTRAT VARNAME SEMICOLON ASSIGNTO IF ELSE FOR FOREACH DO WHILE AUTOINC AUTODEC LSQBRACKET RSQBRACKET ADDASSIGN MULASSIGN SUBASSIGN DIVASSIGN RETURN CONTINUE BREAK LESSTHAN LESSEQUAL GREATTHAN GREATEQUAL EQUALTO NOTEQUAL OR AND
 %type <bool> array-mark bool-stmt
 
 %start zfx-program
@@ -159,7 +160,7 @@ multi-statements: %empty {
 
 general-statement: declare-statement SEMICOLON { $$ = $1; }
     | assign-statement SEMICOLON { $$ = $1; }
-    | if-statement { $$ = $1; }
+    | ifelse-statement { $$ = $1; }
     | loop-statement { $$ = $1; }
     | jump-statement SEMICOLON { $$ = $1; }
     | exp-statement SEMICOLON { $$ = $1; }      /*可参与四则运算，以及普通的函数调用。 | code-block { $$ = $1; }*/
@@ -232,9 +233,14 @@ declare-statement: only-declare {
 
 
 
-if-statement: IF LPAREN exp-statement RPAREN code-block {
-            std::vector<std::shared_ptr<ZfxASTNode>> children({$3, $5});
-            $$ = driver.makeNewNode(IF, DEFAULT_FUNCVAL, children);
+ifelse-statement: if-statement { $$ = $1; }
+        | if-statement ELSE code-block {
+            appendChild($1, $3);
+            $$ = $1;
+        }
+        | if-statement ELSE ifelse-statement {
+            appendChild($1, $3);
+            $$ = $1;
         }
     /*  处理不带中括号的代码段很麻烦，先不支持
     | IF LPAREN exp-statement RPAREN general-statement {
@@ -243,6 +249,11 @@ if-statement: IF LPAREN exp-statement RPAREN code-block {
         }
     */
     ;
+
+if-statement : IF LPAREN exp-statement RPAREN code-block {
+    std::vector<std::shared_ptr<ZfxASTNode>> children({$3, $5});
+    $$ = driver.makeNewNode(IF, DEFAULT_FUNCVAL, children);
+};
 
 for-begin: SEMICOLON { $$ = driver.makeEmptyNode(); }
     | declare-statement SEMICOLON { $$ = $1; }
