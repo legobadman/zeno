@@ -357,7 +357,7 @@ std::set<std::string> GraphModel::getViewNodePath() const {
     std::set<std::string> nodes;
     for (auto name : viewnodenames) {
         QModelIndex idx = indexFromName(QString::fromStdString(name));
-        const QString& nodepath = idx.data(ROLE_NODE_UUID_PATH).toString();
+        const QString& nodepath = idx.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         nodes.insert(nodepath.toStdString());
     }
     return nodes;

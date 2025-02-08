@@ -133,9 +133,9 @@ void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const Q
             if (currStatus == zeno::Node_Running) {
                 clearModel();
             } else if (currStatus == zeno::Node_RunSucceed) {
-                zeno::zany pObject = m_nodeIdx.data(ROLE_OUTPUT_OBJS).value<zeno::zany>();
+                zeno::zany pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
                 if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
-                    setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(ROLE_GRAPH)), m_nodeIdx, spGeom.get());
+                    setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom.get());
         }
     }
 }
