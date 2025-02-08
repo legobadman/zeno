@@ -64,14 +64,17 @@ Item {
     Item {
         id: statusImgGroup
         visible: false
-        implicitWidth: imggroup_layout.implicitWidth
+        property real leftoffset: 20
+        implicitWidth: imggroup_layout.implicitWidth + leftoffset
         implicitHeight: imggroup_layout.implicitHeight
         y: bypass_btn.y - imgByPass.height
+        x: bypass_btn.x - leftoffset
         z: -100
 
         Rectangle {
             anchors.fill: parent
-            // color: "red"
+            //color: "red"
+            z: -10
             color: "transparent"
         }
 
@@ -86,7 +89,7 @@ Item {
                 
                 StatusImgBtn{
                     id: imgByPass
-                    x: bypass_btn.x + comp.xoffset - 2
+                    x: statusImgGroup.leftoffset + bypass_btn.x + comp.xoffset - 2
                     width: 64
                     height: 64
                     source: "qrc:/icons/MUTE_dark.svg"
@@ -137,7 +140,7 @@ Item {
                     imgView.hovered = true
                     imgByPass.hovered = false
                 }
-                // console.log("mouse.x = " + mouse.x)
+                // console.log("mouse.x = " + mouse.x + " mouse.y = " + mouse.y)
                 // console.log("parent.x = " + statusImgGroup.x)
                 // console.log("imgByPass.x = " + imgByPass.x)
                 // console.log("imgView.x = " + imgView.x)
