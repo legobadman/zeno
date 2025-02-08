@@ -304,14 +304,19 @@ void INode::set_name(const std::string& customname)
 void INode::set_view(bool bOn)
 {
     //这一类方法要和ui model端位于同一线程
-    CORE_API_BATCH
+    if (m_bView == bOn) {
+        return;
+    }
+    {
+        CORE_API_BATCH
 
-    m_bView = bOn;
-    CALLBACK_NOTIFY(set_view, m_bView)
+        m_bView = bOn;
+        CALLBACK_NOTIFY(set_view, m_bView)
 
-    std::shared_ptr<Graph> spGraph = graph.lock();
-    assert(spGraph);
-    spGraph->viewNodeUpdated(m_name, bOn);
+        std::shared_ptr<Graph> spGraph = graph.lock();
+        assert(spGraph);
+        spGraph->viewNodeUpdated(m_name, bOn);
+    }
 }
 
 bool INode::is_view() const
