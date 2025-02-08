@@ -65,6 +65,7 @@ void ZOpenGLQuickView::initializeUnderlay() {
     connect(this, &ZOpenGLQuickView::sig_cameraLookTo, m_renderer.get(), &ZQmlRender::cameraLookTo, Qt::QueuedConnection);
     connect(this, &ZOpenGLQuickView::sig_changeTransformOperationByNode, m_renderer.get(), &ZQmlRender::changeTransformOperationByNode, Qt::QueuedConnection);
     connect(this, &ZOpenGLQuickView::sig_changeTransformOperation, m_renderer.get(), &ZQmlRender::changeTransformOperation, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_cleanScene, m_renderer.get(), &ZQmlRender::cleanUpScene, Qt::QueuedConnection);
 
     connect(m_renderer.get(), &ZQmlRender::requestUpdate, this,
         &ZOpenGLQuickView::onUpdateRequest, Qt::QueuedConnection);
@@ -151,6 +152,11 @@ void ZOpenGLQuickView::resizeEvent(QResizeEvent* event) {
     const qreal scaleFactor = devicePixelRatio();
     int nx = sz.width() * scaleFactor, ny = sz.height() * scaleFactor;
     emit sig_Resize(nx, ny);
+}
+
+void ZOpenGLQuickView::cleanUpScene() {
+    emit sig_cleanScene();
+    update();
 }
 
 void ZOpenGLQuickView::resizeGL(int nx, int ny) {

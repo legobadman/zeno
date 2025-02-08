@@ -193,6 +193,40 @@ Item {
                 }
             }
 
+            ToolButton {
+                id: clean_project
+                checkable: false
+                
+                icon.source: "qrc:/icons/broom_clear_clean_tool.svg"
+
+                onClicked: {
+                    calcmgr.clear()
+                }
+
+                contentItem: Image {
+                    x: 2
+                    y: 2
+                    id: icon_clean_project
+                    source: parent.icon.source
+                    sourceSize.width: 16
+                    sourceSize.height: 16
+                    smooth: true
+                    antialiasing: true
+                }
+
+                background: Rectangle {
+                    x: icon_clean_project.x - 2
+                    y: icon_clean_project.y - 2
+                    width: 20
+                    height: 20
+                    opacity: enabled ? 1 : 0.3
+                    color: parent.hovered ? "#4F5963" : "transparent"
+                    border.color: parent.down ? "#17a81a" : "#21be2b"
+                    border.width: 0
+                    radius: 2
+                }
+            }
+
             Item { Layout.fillWidth: true }
         }
     }

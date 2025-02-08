@@ -123,6 +123,11 @@ void ZQmlRender::setCameraRes(const QVector2D& res) {
     m_camera->setRes(res);
 }
 
+void ZQmlRender::cleanUpScene() {
+    m_zenovis->cleanUpScene();
+    emit requestUpdate();
+}
+
 zenovis::Session* ZQmlRender::getSession() const
 {
     return m_zenovis->getSession();

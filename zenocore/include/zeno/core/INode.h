@@ -50,6 +50,7 @@ public:
     void doApply(CalcContext* pContext);
     void doApply_Parameter(std::string const &name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
     void doOnlyApply();
+    void clear();
 
     //BEGIN new api
     void init(const NodeData& dat);

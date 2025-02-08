@@ -176,6 +176,13 @@ void CalculationMgr::kill()
     zeno::getSession().globalState->set_working(false);
 }
 
+void CalculationMgr::clear()
+{
+    zeno::getSession().set_Rerun();
+    for (auto view : zenoApp->getMainWindow()->viewports())
+        view->cleanUpScene();
+}
+
 RunStatus::Value CalculationMgr::getRunStatus() const
 {
     return m_runstatus;

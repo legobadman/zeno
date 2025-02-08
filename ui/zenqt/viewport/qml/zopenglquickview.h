@@ -24,7 +24,7 @@ public:
 //TODO:
     void cleanUpView() {}
     void testCleanUp() {}
-    void cleanUpScene() {}
+    void cleanUpScene();
     Zenovis* getZenoVis() { return nullptr; }
     zenovis::Session* getSession() const { return m_renderer->getSession(); }
     void resizeGL(int nx, int ny);
@@ -56,6 +56,7 @@ signals:
     void sig_Reload(zeno::render_reload_info);
     void sig_MouseEvent(ViewMouseInfo);
     void sig_Resize(int, int);
+    void sig_cleanScene();
     void sig_UpdatePerspective();
     void sig_SetNumSamples(int);
     void sig_setCameraRes(const QVector2D&);

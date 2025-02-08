@@ -43,6 +43,7 @@ public:
 
     Q_INVOKABLE void run();
     Q_INVOKABLE void kill();
+    Q_INVOKABLE void clear();
 
     void registerRenderWid(DisplayWidget* pDisp);
     void unRegisterRenderWid(DisplayWidget* pDisp);

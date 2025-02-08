@@ -385,5 +385,6 @@
     <file>icons/view-noradius-off.svg</file>
     <file>icons/run_stop.svg</file>
     <file>icons/run_play.svg</file>
+    <file>icons/broom_clear_clean_tool.svg</file>
 </qresource>
 </RCC>

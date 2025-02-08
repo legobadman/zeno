@@ -373,6 +373,7 @@ void Graph::markDirtyAll()
 {
     for (const auto& [uuid, node] : m_nodes) {
         node->mark_dirty(true);
+        node->clear();  //clear all result prim and objs
     }
 }
 

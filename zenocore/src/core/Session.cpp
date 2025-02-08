@@ -428,7 +428,6 @@ ZENO_API bool Session::is_auto_run() const {
 ZENO_API void Session::set_Rerun()
 {
     mainGraph->markDirtyAll();
-    objsMan->clear();
 }
 
 ZENO_API void Session::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {

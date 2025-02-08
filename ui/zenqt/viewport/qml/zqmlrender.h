@@ -61,6 +61,7 @@ public slots:
     void updatePerspective();
     void setNumSamples(int samples);
     void setCameraRes(const QVector2D& res);
+    void cleanUpScene();
 
 private:
     std::shared_ptr<zeno::Picker> m_picker;

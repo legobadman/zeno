@@ -71,16 +71,14 @@ bool Scene::is_show_ptnum() const {
 
 void Scene::cleanUpScene()
 {
-        zeno::getSession().globalComm->clear_objects([this](){
-            if (!renderMan)
-                return;
+    if (!renderMan)
+        return;
 
-            RenderEngine* pEngine = renderMan->getEngine();
-            if (pEngine) {
-                pEngine->cleanupScene();
-                pEngine->cleanupAssets();
-            }
-        });
+    RenderEngine* pEngine = renderMan->getEngine();
+    if (pEngine) {
+        pEngine->cleanupScene();
+        pEngine->cleanupAssets();
+    }
 }
 
 void Scene::switchRenderEngine(std::string const &name) {

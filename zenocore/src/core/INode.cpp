@@ -1642,6 +1642,21 @@ void INode::doOnlyApply() {
     apply();
 }
 
+void INode::clear() {
+    for (auto& [key, param] : m_inputObjs) {
+        param.spObject.reset();
+    }
+    for (auto& [key, param] : m_outputObjs) {
+        param.spObject.reset();
+    }
+    for (auto& [key, param] : m_inputPrims) {
+        param.result.reset();
+    }
+    for (auto& [key, param] : m_outputPrims) {
+        param.result.reset();
+    }
+}
+
 void INode::doApply_Parameter(std::string const& name, CalcContext* pContext) {
     if (!m_dirty) {
         return;
