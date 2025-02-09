@@ -442,12 +442,35 @@ void GraphsManager::saveProject(const QString& name)
         zenoApp->getMainWindow()->save();
     }
     else {
-        zenoApp->graphsManager()->assetsModel()->saveAsset(name);
-        GraphModel* pModel = zenoApp->graphsManager()->getGraph({ "main" });
-        if (pModel)
+        assetsModel()->saveAsset(name);
+        if (m_main)
         {
-            pModel->syncToAssetsInstance(name);
+            m_main->syncToAssetsInstance(name);
         }
+    }
+}
+
+void GraphsManager::undo(const QString& name)
+{
+    if (name == "main") {
+        m_main->undo();
+    }
+    else {
+        GraphModel* pAssetM = assetsModel()->getAssetGraph(name);
+        ZASSERT_EXIT(pAssetM);
+        pAssetM->undo();
+    }
+}
+
+void GraphsManager::redo(const QString& name)
+{
+    if (name == "main") {
+        m_main->redo();
+    }
+    else {
+        GraphModel* pAssetM = assetsModel()->getAssetGraph(name);
+        ZASSERT_EXIT(pAssetM);
+        pAssetM->redo();
     }
 }
 

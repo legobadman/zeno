@@ -626,6 +626,12 @@ Qan.GraphView {
         else if ((event.key === Qt.Key_S) && (event.modifiers & Qt.ControlModifier)) {
             graphsmanager.saveProject(graphView.graphModel.name())
         }
+        else if ((event.key === Qt.Key_Z) && (event.modifiers & Qt.ControlModifier)) {
+            graphsmanager.undo(graphView.graphModel.name())
+        }
+        else if ((event.key === Qt.Key_Y) && (event.modifiers & Qt.ControlModifier)) {
+            graphsmanager.redo(graphView.graphModel.name())
+        }
         else if (event.key == Qt.Key_Delete) {
             var selected_edges = []
             for (var i = 0; i < edges.children.length; i++) {
