@@ -1,11 +1,10 @@
 {
     "Default Layout 1": {
-        "state": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><QtAdvancedDockingSystem Version=\"1\" UserVersion=\"0\" Containers=\"1\"><Container Floating=\"0\"><Splitter Orientation=\"-\" Count=\"1\"><Splitter Orientation=\"|\" Count=\"2\"><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"View\"><Widget Name=\"View\" Closed=\"0\"/></Area><Area Tabs=\"3\" Current=\"Parameter\"><Widget Name=\"Parameter\" Closed=\"0\"/><Widget Name=\"QML Panel\" Closed=\"0\"/><Widget Name=\"Logger\" Closed=\"0\"/></Area><Sizes>917 916 </Sizes></Splitter><Area Tabs=\"1\" Current=\"Editor\"><Widget Name=\"Editor\" Closed=\"0\"/></Area><Sizes>1946 1871 </Sizes></Splitter><Sizes>1840 </Sizes></Splitter></Container></QtAdvancedDockingSystem>", 
+        "state": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><QtAdvancedDockingSystem Version=\"1\" UserVersion=\"0\" Containers=\"1\"><Container Floating=\"0\"><Splitter Orientation=\"-\" Count=\"1\"><Splitter Orientation=\"|\" Count=\"2\"><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"View\"><Widget Name=\"View\" Closed=\"0\"/></Area><Area Tabs=\"1\" Current=\"Logger\"><Widget Name=\"Logger\" Closed=\"0\"/></Area><Sizes>698 210 </Sizes></Splitter><Area Tabs=\"2\" Current=\"QML Panel\"><Widget Name=\"QML Panel\" Closed=\"0\"/><Widget Name=\"Editor\" Closed=\"1\"/></Area><Sizes>885 850 </Sizes></Splitter><Sizes>913 </Sizes></Splitter></Container></QtAdvancedDockingSystem>\n",
         "widgets": [
-            "View", 
-            "QML Panel", 
-            "Logger", 
-            "Editor", 
+            "Editor",
+            "Logger",
+            "QML Panel",
             "View"
         ]
     }, 
