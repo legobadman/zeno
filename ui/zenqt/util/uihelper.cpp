@@ -2647,9 +2647,13 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("QML Opengl")) {
         type = PANEL_QML_GLVIEW;
     }
-    else if (title == QObject::tr("QML Panel"))
+    else if (title == QObject::tr("Node Editor(QML)"))
     {
         type = PANEL_QMLPANEL;
+    }
+    else if (title == QObject::tr("Geometry Data"))
+    {
+        type = PANEL_GEOM_DATA;
     }
     else if (title == QObject::tr("Light") || title == "Light") {
         type = PANEL_LIGHT;

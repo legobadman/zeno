@@ -268,9 +268,8 @@ Qan.GraphView {
                 graphView.temp_edge_close()
             }
             graphView.nodeClicked(node)
-            //console.log("node pos: " + pos)
-            //notifyUser( "Node <b>" + node.label + "</b> clicked" )
-            //nodeEditor.node = node
+            var graphname = graphView.graphModel.name()
+            graphsmanager.onNodeSelected(graphname, node.index)
         }
         onNodeRightClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> right clicked" ) }
         onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }

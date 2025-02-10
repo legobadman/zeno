@@ -282,9 +282,10 @@ void ZenoMainWindow::onMenuActionTriggered(bool bTriggered)
     }
     case ACTION_NODE_EDITOR:
     case ACTION_OBJECT_DATA:
+    case ACTION_OBJECT_DATA_QML:
     case ACTION_GL_VIEWPORT:
     case ACTION_OPTIX_VIEW:
-    case ACTION_QML_PANEL:
+    case ACTION_NODE_EDITOR_QML:
     case ACTION_OPEN_PATH:
     case ACTION_NODE_PARAMETERS:
     case ACTION_LOG:
@@ -909,6 +910,12 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         title = tr("Object Data");
         break;
     }
+    case ACTION_OBJECT_DATA_QML: {
+        auto pObjectData = new ZGeometrySpreadsheet;
+        pWid = pObjectData;
+        title = tr("Geometry Data");
+        break;
+    }
     case ACTION_GL_VIEWPORT: {
         auto pView = new DockContent_View(true);
         pView->initUI();
@@ -923,10 +930,10 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         title = tr("Optix Viewport");
         break;
     }
-    case ACTION_QML_PANEL: {
+    case ACTION_NODE_EDITOR_QML: {
         auto panel = new ZQmlPanel;
         pWid = panel;
-        title = tr("QML Panel");
+        title = tr("Node Editor(QML)");
         break;
     }
     case ACTION_OPEN_PATH: {
@@ -1893,7 +1900,8 @@ void ZenoMainWindow::setActionProperty()
     m_ui->actionObject_data->setProperty("ActionType", ACTION_OBJECT_DATA);
     m_ui->actionLog->setProperty("ActionType", ACTION_LOG);
     m_ui->actionOptixView->setProperty("ActionType", ACTION_OPTIX_VIEW);
-    m_ui->actionQML_Panel->setProperty("ActionType", ACTION_QML_PANEL);
+    m_ui->actionNode_Editor_QML->setProperty("ActionType", ACTION_NODE_EDITOR_QML);
+    m_ui->actionObject_data_QML->setProperty("ActionType", ACTION_OBJECT_DATA_QML);
     m_ui->actionOpenPath->setProperty("ActionType", ACTION_OPEN_PATH);
     m_ui->actionImage->setProperty("ActionType", ACTION_IMAGE);
 

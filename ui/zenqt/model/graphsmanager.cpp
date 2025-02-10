@@ -479,6 +479,13 @@ void GraphsManager::openProject(const QString& zsgpath) {
     zenoApp->getMainWindow()->openFile(zsgpath);
 }
 
+void GraphsManager::onNodeSelected(const QString& graphname, const QModelIndex& idx) {
+    if (graphname == "main") {
+        auto mainWin = zenoApp->getMainWindow();
+        mainWin->onNodesSelected(m_main, { idx }, true);
+    }
+}
+
 QStringList GraphsManager::recentFiles() const
 {
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
