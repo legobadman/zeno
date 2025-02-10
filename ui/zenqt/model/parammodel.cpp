@@ -561,6 +561,9 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
 
 QVariant ParamsModel::data(const QModelIndex& index, int role) const
 {
+    if (!index.isValid())
+        return QVariant();
+
     const ParamItem& param = m_items[index.row()];
 
     switch (role)

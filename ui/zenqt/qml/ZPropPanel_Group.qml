@@ -72,7 +72,17 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
 
-            text: mvalue
+
+            function formatWithSignificantDigits(num, significantDigits) {
+                //int类型的数值在model已经转了，这里拿到的都是int，而无需在意小数点的事情
+                return parseFloat(num.toPrecision(significantDigits)).toString();
+            }
+
+            text: {
+                //保留小数点7位，并自动舍弃无用的零
+                //console.log("text about to change: mvalue = " + mvalue)
+                return formatWithSignificantDigits(mvalue, 7)
+            }
 
             onEditingFinished: {
                 root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
@@ -232,9 +242,15 @@ Item {
         id: compCheckbox
         CheckBox {
             id: checkbox
+            property var inited: false
             checkState: mvalue ? Qt.Checked : Qt.Unchecked
 
             onCheckStateChanged: {
+                //初始化checkState也会触发此信号，故屏蔽初始的那一次change
+                if (inited == false) {
+                    inited = true
+                    return
+                }
                 root.model.setData(mindex, checkState == Qt.Checked, Model.ROLE_PARAM_QML_VALUE)
             }
         }
