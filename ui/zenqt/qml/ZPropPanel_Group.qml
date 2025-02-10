@@ -72,10 +72,19 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
 
+            function isNumeric(str) {
+                //console.log("str = " + str)
+                return Number.isFinite(Number(str));
+            }
 
             function formatWithSignificantDigits(num, significantDigits) {
                 //int类型的数值在model已经转了，这里拿到的都是int，而无需在意小数点的事情
-                return parseFloat(num.toPrecision(significantDigits)).toString();
+                if (isNumeric(num)) {
+                    return parseFloat(num.toPrecision(significantDigits)).toString();
+                }
+                else {
+                    return num  //公式或字符串
+                }
             }
 
             text: {
