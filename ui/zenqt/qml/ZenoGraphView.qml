@@ -274,7 +274,12 @@ Qan.GraphView {
         }
         onNodeRightClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> right clicked" ) }
         onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }
-        onNodeMoved: function(node) { notifyUser("Node <b>" + node.label + "</b> moved") }
+        onNodeMoved: function(node) {
+            var idx = node.index
+            var x = node.item.x
+            var y = node.item.y
+            model.setData(idx, Qt.point(x, y), Model.ROLE_OBJPOS)
+        }
 
         onNodeSocketClicked: function(node, group, name, socket_pos) {
         }

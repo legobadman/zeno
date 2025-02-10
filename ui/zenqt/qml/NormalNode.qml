@@ -105,18 +105,6 @@ Qan.NodeItem {
         //console.log("onIsbypassChanged: " + nodeItem.isbypass)
     }
 
-    onXChanged: {
-        var graphM = nodeItem.graph.model
-        var idx = nodeItem.node.index
-        graphM.setData(idx, Qt.point(x, y), Model.ROLE_OBJPOS)
-    }
-
-    onYChanged: {
-        var graphM = nodeItem.graph.model
-        var idx = nodeItem.node.index
-        graphM.setData(idx, Qt.point(x, y), Model.ROLE_OBJPOS)
-    }
-
     onDataChanged: function(data, role) {
         //console.log(nodeItem.node.label + " onDataChanged: " + data + ", role = " + role)
         if (role == Model.ROLE_NODE_ISVIEW) {

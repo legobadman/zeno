@@ -11,7 +11,7 @@ Item {
     property var graphView: undefined
 
     Repeater {
-        model: root.graphModel.getLinkModel()
+        model: root.graphModel ? root.graphModel.getLinkModel() : null
  
         delegate: Edge {
             id: current_edge
