@@ -28,6 +28,8 @@ public:
     Q_INVOKABLE void saveProject(const QString& name);
     Q_INVOKABLE void undo(const QString& name);
     Q_INVOKABLE void redo(const QString& name);
+    Q_INVOKABLE QStringList recentFiles() const;
+    Q_INVOKABLE void openProject(const QString& zsgpath);
 
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath FINAL)
     QString currentGraphPath() const;

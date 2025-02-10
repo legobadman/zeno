@@ -136,15 +136,46 @@ Item {
                     }
                 }
                 
+                Column {
+                    spacing: 12
 
-                Text {
-                    color: "#F0F0F0"
-                    font.pixelSize: 14
-                    font.family: "微软雅黑"
-                    text: "最近的文件"
-                    fontSizeMode: Text.Fit 
-                    minimumPixelSize: 10
-                    wrapMode: Text.WordWrap
+                    Text {
+                        color: "#F0F0F0"
+                        font.pixelSize: 14
+                        font.family: "微软雅黑"
+                        text: "最近的文件"
+                        fontSizeMode: Text.Fit 
+                        minimumPixelSize: 10
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Column {
+                        spacing: 8
+                        Repeater {
+                            model: graphsmanager.recentFiles()
+                            delegate: Text {
+                                font.pixelSize: 14
+                                font.family: "微软雅黑"
+                                text: modelData.split("/").pop();
+                                color: "#0078D4"
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        graphsmanager.openProject(modelData)
+                                        // console.log("opening " + modelData)
+                                    }
+                                    onEntered: {
+                                        parent.font.underline = true;
+                                    }
+                                    onExited: {
+                                        parent.font.underline = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

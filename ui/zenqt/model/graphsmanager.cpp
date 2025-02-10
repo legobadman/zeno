@@ -16,6 +16,7 @@
 #include "model/parammodel.h"
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
+#include "settings/zsettings.h"
 #include <QQmlContext>
 
 
@@ -472,6 +473,27 @@ void GraphsManager::redo(const QString& name)
         ZASSERT_EXIT(pAssetM);
         pAssetM->redo();
     }
+}
+
+void GraphsManager::openProject(const QString& zsgpath) {
+    zenoApp->getMainWindow()->openFile(zsgpath);
+}
+
+QStringList GraphsManager::recentFiles() const
+{
+    QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
+    settings.beginGroup("Recent File List");
+    QStringList lst = settings.childKeys();
+    zenoApp->getMainWindow()->sortRecentFile(lst);
+
+    QStringList paths;
+    for (int i = 0; i < lst.size(); i++)
+    {
+        const QString& key = lst[i];
+        const QString& path = settings.value(key).toString();
+        paths.append(path);
+    }
+    return paths;
 }
 
 zeno::NodeCates GraphsManager::getCates() const
