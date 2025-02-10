@@ -1653,8 +1653,12 @@ bool INode::requireInput(std::string const& ds, CalcContext* pContext) {
                         std::shared_ptr<Graph> spSrcGraph = spSrcNode->graph.lock();
                         assert(spSrcGraph);
                         //干脆整个apply，这样可以统一管理脏位，避免引用源一直处于脏状态无法传播
-                        spSrcNode->doApply(pContext);
-                        //spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
+                        //但这样麻烦之处是没法引用本节点其他参数
+                        //spSrcNode->doApply(pContext);
+
+                        //虽然引用源没法apply，但可以直接引用参数，也可以引用本节点，而且往往
+                        //只是引用一个简单的常量而已，暂时不考虑复杂的链式依赖情况
+                        spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
                     }
                 }
 
