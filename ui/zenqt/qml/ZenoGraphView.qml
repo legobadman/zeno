@@ -724,7 +724,9 @@ Qan.GraphView {
                 var editparamDlg = component.createObject(null); // 创建顶层对象
                 if (editparamDlg) {
                     editparamDlg.node = node
-                    editparamDlg.openDialog(); // 调用 openDialog 方法显示窗口
+                    if(node.params.customUIModelCloned().isSubnetNode()) {//只有subnet节点才允许编辑
+                        editparamDlg.openDialog(); // 调用 openDialog 方法显示窗口
+                    }
                 } else {
                     console.error("对话框实例创建失败");
                 }

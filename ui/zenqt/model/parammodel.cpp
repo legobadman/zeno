@@ -129,6 +129,7 @@ ParamsModel::ParamsModel(zeno::INode* spNode, QObject* parent)
     , m_wpNode(spNode)
     , m_customParamsM(nullptr)
     , m_customUIM(nullptr)
+    , m_customUIMCloned(nullptr)
 {
     initParamItems();
     initCustomUI(spNode->export_customui());
@@ -527,16 +528,6 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
     }
     case QtRole::ROLE_PARAM_SOCKET_VISIBLE:
     {
-        if (param.sockProp == zeno::Socket_Disable || param.group == zeno::Role_InputObject ||
-            param.group == zeno::Role_OutputObject) {
-            return false;
-        }
-        auto spNode = m_wpNode/*.lock()*/;
-        if (spNode) {
-            spNode->update_param_socket_visible(param.name.toStdString(), value.toBool(), param.bInput);
-            emit showPrimSocks_changed();
-            return true;
-        }
         return false;
     }
     case QtRole::ROLE_PARAM_PERSISTENT_INDEX:
@@ -963,6 +954,32 @@ QStandardItemModel* ParamsModel::customParamModel()
 CustomUIModel* ParamsModel::customUIModel()
 {
     return m_customUIM;
+}
+
+Q_INVOKABLE CustomUIModel* ParamsModel::customUIModelCloned()
+{
+    m_customUIMCloned = new CustomUIModel(this, this, true);
+    return m_customUIMCloned;
+}
+
+Q_INVOKABLE void ParamsModel::applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel)
+{
+    zeno::CustomUI customui;
+    zeno::ParamsUpdateInfo editUpdateInfo;
+    edittedCustomuiModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
+    resetCustomUi(customui);//重设customui
+    batchModifyParams(editUpdateInfo);//更新该节点参数，更新视图
+
+    m_customUIM->reset();//重置直接引用ParamsModel的index的模型
+
+    delete m_customUIMCloned;
+    m_customUIMCloned = nullptr;
+}
+
+Q_INVOKABLE void ParamsModel::cancleEditCustomUIModelCloned()
+{
+    delete m_customUIMCloned;
+    m_customUIMCloned = nullptr;
 }
 
 Qt::ItemFlags ParamsModel::flags(const QModelIndex& index) const

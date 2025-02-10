@@ -53,6 +53,9 @@ public:
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
     Q_INVOKABLE QStandardItemModel* customParamModel();
     Q_INVOKABLE CustomUIModel* customUIModel();
+    Q_INVOKABLE CustomUIModel* customUIModelCloned();
+    Q_INVOKABLE void applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel);
+    Q_INVOKABLE void cancleEditCustomUIModelCloned();
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
@@ -115,6 +118,7 @@ private:
     QVector<ParamItem> m_items;
 
     CustomUIModel* m_customUIM;
+    CustomUIModel* m_customUIMCloned;
     QStandardItemModel* m_customParamsM;
 
     zeno::INode* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了

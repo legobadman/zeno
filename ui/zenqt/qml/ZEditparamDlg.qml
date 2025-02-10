@@ -195,6 +195,7 @@ Window {
     flags: Qt.Dialog | Qt.WindowTitleHint | Qt.WindowCloseButtonHint // 设置窗口类型为对话框，带标题栏和关闭按钮
     modality: Qt.ApplicationModal  // 将窗口设置为模态
     property var node: undefined
+    property var customuimodel : node.params.customUIModelCloned()
 
     MouseArea {
         anchors.fill: parent
@@ -235,7 +236,7 @@ Window {
                         anchors.fill: parent
                         property int currentIdx : 0
 
-                        model: node.params.customUIModel().controlItemModel()
+                        model: customuimodel.controlItemModel()
                         delegate: Rectangle {
                             width: parent.width
                             height: 20
@@ -294,15 +295,14 @@ Window {
                                     text: "add"
                                     font.pointSize: 6
                                     onClicked: {
-                                        var tabmodel = dialog.node.params.customUIModel().tabModel()
+                                        var tabmodel = dialog.customuimodel.tabModel()
                                         var modelRef = undefined
                                         var curRow = -1
                                         var newname = ""
-                                        console.log(leftListView.currentIdx)
                                         if(leftListView.currentIdx == 2){return}//obj类型return
                                         if(leftListView.currentIdx === 0){
                                             modelRef = tabmodel
-                                            newname = getNewName(modelRef, false)
+                                            newname = getNewName()
                                             if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1){
                                                 curRow = rootRec.currentTabRow + 1
                                             }else if(rootRec.currentTabRow === -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1){
@@ -314,7 +314,7 @@ Window {
                                         }else if(leftListView.currentIdx === 1){
                                             if(rootRec.currentTabRow === -1){return}
                                             modelRef = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
-                                            newname = getNewName(modelRef, true)
+                                            newname = getNewName()
                                             if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {
                                                 curRow = modelRef.rowCount()
                                             }else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1){
@@ -330,7 +330,7 @@ Window {
                                             {return}
                                             var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
                                             modelRef =  groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
-                                            newname = getNewName(modelRef, false)
+                                            newname = getNewName()
                                             if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {
                                                 curRow = modelRef.rowCount()
                                             }else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow !== -1){
@@ -383,7 +383,7 @@ Window {
                                     ColumnLayout {
                                         id: primoutColumn
                                         anchors.fill: parent
-                                        property var primOutputModel : dialog.node.params.customUIModel().primOutputModel()
+                                        property var primOutputModel : dialog.customuimodel.primOutputModel()
 
                                         Item {
                                             Layout.fillWidth: true
@@ -411,9 +411,9 @@ Window {
                                                     font.pointSize: 6
                                                     onClicked: {
                                                         if(listView1.currentIdx === -1){
-                                                            primoutColumn.primOutputModel.insertRow(primoutColumn.primOutputModel.rowCount(), getNewName(primoutColumn.primOutputModel, false))
+                                                            primoutColumn.primOutputModel.insertRow(primoutColumn.primOutputModel.rowCount(), getNewName())
                                                         }else{
-                                                            primoutColumn.primOutputModel.insertRow(listView1.currentIdx + 1, getNewName(primoutColumn.primOutputModel, false))
+                                                            primoutColumn.primOutputModel.insertRow(listView1.currentIdx + 1, getNewName())
                                                         }
                                                     }
                                                 }
@@ -480,7 +480,7 @@ Window {
                                         }
                                         // Keys.onDeletePressed: {
                                         //     if(listView1.currentIdx !== -1){
-                                        //         dialog.node.params.customUIModel().primOutputModel().removeRow(listView1.currentIdx)
+                                        //         dialog.customuimodel.primOutputModel().removeRow(listView1.currentIdx)
                                         //     }
                                         // }
                                     }
@@ -508,7 +508,7 @@ Window {
                                     ColumnLayout {
                                         id: objinColumn
                                         anchors.fill: parent
-                                        property var objInputModel : dialog.node.params.customUIModel().objInputModel()
+                                        property var objInputModel : dialog.customuimodel.objInputModel()
 
                                         Item {
                                             Layout.fillWidth: true
@@ -536,9 +536,9 @@ Window {
                                                     font.pointSize: 6
                                                     onClicked: {
                                                         if(listView2.currentIdx === -1){
-                                                            objinColumn.objInputModel.insertRow(objinColumn.objInputModel.rowCount(), getNewName(objinColumn.objInputModel, false))
+                                                            objinColumn.objInputModel.insertRow(objinColumn.objInputModel.rowCount(), getNewName())
                                                         }else{
-                                                            objinColumn.objInputModel.insertRow(listView2.currentIdx + 1, getNewName(objinColumn.objInputModel, false))
+                                                            objinColumn.objInputModel.insertRow(listView2.currentIdx + 1, getNewName())
                                                         }
                                                     }
                                                 }
@@ -604,7 +604,7 @@ Window {
                                         }
                                         // Keys.onDeletePressed: {
                                         //     if(listView2.currentIdx !== -1){
-                                        //         dialog.node.params.customUIModel().objInputModel().removeRow(listView2.currentIdx)
+                                        //         dialog.customuimodel.objInputModel().removeRow(listView2.currentIdx)
                                         //     }
                                         // }
                                     }
@@ -631,7 +631,7 @@ Window {
                                     ColumnLayout {
                                         id: objoutColumn
                                         anchors.fill: parent
-                                        property var objOutputModel : dialog.node.params.customUIModel().objOutputModel()
+                                        property var objOutputModel : dialog.customuimodel.objOutputModel()
 
                                         Item {
                                             Layout.fillWidth: true
@@ -659,9 +659,9 @@ Window {
                                                     font.pointSize: 6
                                                     onClicked: {
                                                         if(listView3.currentIdx === -1){
-                                                            objoutColumn.objOutputModel.insertRow(objoutColumn.objOutputModel.rowCount(), getNewName(objoutColumn.objOutputModel, false))
+                                                            objoutColumn.objOutputModel.insertRow(objoutColumn.objOutputModel.rowCount(), getNewName())
                                                         }else{
-                                                            objoutColumn.objOutputModel.insertRow(listView3.currentIdx + 1, getNewName(objoutColumn.objOutputModel, false))
+                                                            objoutColumn.objOutputModel.insertRow(listView3.currentIdx + 1, getNewName())
                                                         }
                                                     }
                                                 }
@@ -727,7 +727,7 @@ Window {
                                         }
                                         // Keys.onDeletePressed: {
                                         //     if(listView3.currentIdx !== -1){
-                                        //         dialog.node.params.customUIModel().objOutputModel().removeRow(listView3.currentIdx)
+                                        //         dialog.customuimodel.objOutputModel().removeRow(listView3.currentIdx)
                                         //     }
                                         // }
                                     }
@@ -796,6 +796,7 @@ Window {
                             implicitHeight: 40
                             text: "确定"
                             onClicked: {
+                                node.params.applyParamsByEditparamDlg(dialog.customuimodel);
                                 dialog.visible = false
                             }
                         }
@@ -805,6 +806,7 @@ Window {
                             implicitHeight: 40
                             text: "取消"
                             onClicked: {
+                                node.params.cancleEditCustomUIModelCloned()
                                 dialog.visible = false
                             }
                         }
@@ -831,12 +833,34 @@ Window {
     function openDialog() {
         dialog.visible = true
     }
-    function getNewName(modelRef, isDisplayRole) {
+    function getNewName() {
         var nameSet = {}
         var subfix = 0
         var newname = "newitem" + subfix
-        for (var i = 0; i < modelRef.rowCount(); i++) {
-            nameSet[modelRef.data(modelRef.index(i, 0), isDisplayRole ? Qt.DisplayRole : Model.ROLE_PARAM_NAME)] = true
+
+        var tabmodel = dialog.customuimodel.tabModel()
+        for(var i = 0; i < tabmodel.rowCount(); i++) {
+            nameSet[tabmodel.data(tabmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+            var groupmodel = tabmodel.data(tabmodel.index(i, 0), CustomuiModelType.GroupModel)
+            for(var j = 0; j < groupmodel.rowCount(); ++j) {
+                nameSet[groupmodel.data(groupmodel.index(j, 0), Qt.DisplayRole)] = true
+                var parammodel = groupmodel.data(groupmodel.index(j, 0), CustomuiModelType.PrimModel)
+                for(var k = 0; k < parammodel.rowCount(); ++k) {
+                    nameSet[parammodel.data(parammodel.index(k, 0), Model.ROLE_PARAM_NAME)] = true
+                }
+            }
+        }
+        var outputPrimmodel = dialog.customuimodel.primOutputModel()
+        for(var i = 0; i < outputPrimmodel.rowCount(); i++){
+            nameSet[outputPrimmodel.data(outputPrimmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+        }
+        var inputObjmodel = dialog.customuimodel.objInputModel()
+        for(var i = 0; i < inputObjmodel.rowCount(); i++){
+            nameSet[inputObjmodel.data(inputObjmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+        }
+        var outputObjmodel = dialog.customuimodel.objOutputModel()
+        for(var i = 0; i < outputObjmodel.rowCount(); i++){
+            nameSet[outputObjmodel.data(outputObjmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
         }
         while (nameSet[newname] !== undefined) {
             subfix++
@@ -848,8 +872,7 @@ Window {
     function deleteItem(){
         var modelRef
         var curRow = 0
-        var tabmodel = dialog.node.params.customUIModel().tabModel()
-        console.log(rootRec.currentTabRow + "tabrow" + rootRec.currentGroupRow + "grouprow" + rootRec.currentParamRow + "paramrow")
+        var tabmodel = dialog.customuimodel.tabModel()
         if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {//删tab
             modelRef = tabmodel
             curRow = rootRec.currentTabRow
@@ -911,7 +934,7 @@ Window {
         Item {
             id: treeviewItem
             anchors.fill: parent
-            property var customuimodel : dialog.node.params.customUIModel().tabModel()
+            property var customuimodel : dialog.customuimodel.tabModel()
 
             Menu {
                 id: contextMenu
@@ -920,7 +943,7 @@ Window {
                 MenuItem {
                     text: "新增条目"
                     onTriggered: {
-                        var tabmodel = dialog.node.params.customUIModel().tabModel()
+                        var tabmodel = dialog.customuimodel.tabModel()
                         if(leftListView.currentIdx == 2){return}//obj类型return
                         if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {
                             contextMenu.modelRef = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
@@ -933,14 +956,14 @@ Window {
                             var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
                             contextMenu.modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
                             contextMenu.curRow = rootRec.currentParamRow + 1
-                            var newname = getNewName(contextMenu.modelRef, rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1)
+                            var newname = getNewName()
                             contextMenu.modelRef.insertRow(contextMenu.curRow, newname, leftListView.currentIdx)
                             return
                         } else {
                             console.log("error index")
                             return
                         }
-                        var newname = getNewName(contextMenu.modelRef, rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1)
+                        var newname = getNewName()
                         contextMenu.modelRef.insertRow(contextMenu.curRow, newname)
                     }
                 }
@@ -1104,7 +1127,7 @@ Window {
                                 Connections {
                                     target: tabtextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
                                     function onEditfinish() {
-                                        dialog.node.params.customUIModel().tabModel().setData(dialog.node.params.customUIModel().tabModel().index(tabindex, 0), tabtextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
+                                        dialog.customuimodel.tabModel().setData(dialog.customuimodel.tabModel().index(tabindex, 0), tabtextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
                                     }
                                 }
                                 // Text {
@@ -1126,8 +1149,8 @@ Window {
                                     // 右键弹出菜单
                                     onPressed: if (mouse.button === Qt.RightButton) {
                                         // contextMenu.curRow = tabindex
-                                        // contextMenu.modelRef = dialog.node.params.customUIModel().tabModel()
-                                        // console.log(dialog.node.params.customUIModel().tabModel().data(contextMenu.curIdx, Model.ROLE_PARAM_NAME))
+                                        // contextMenu.modelRef = dialog.customuimodel.tabModel()
+                                        // console.log(dialog.customuimodel.tabModel().data(contextMenu.curIdx, Model.ROLE_PARAM_NAME))
                                         contextMenu.x = mouse.x + parent.mapToItem(treeviewItem, 0, 0).x; // 使用全局坐标
                                         contextMenu.y = mouse.y + parent.mapToItem(treeviewItem, 0, 0).y;
                                         contextMenu.open();
