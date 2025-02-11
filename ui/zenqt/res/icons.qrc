@@ -330,6 +330,8 @@
     <file>icons/viewToolbar_smoothshading_light.svg</file>
     <file>icons/viewToolbar_wireframe_idle.svg</file>
     <file>icons/viewToolbar_wireframe_light.svg</file>
+    <file>icons/viewToolbar_pointnum_idle.svg</file>
+    <file>icons/viewToolbar_pointnum_light.svg</file>
     <file>icons/parameter_control_tab.svg</file>
     <file>icons/parameter_control_group.svg</file>
     <file>icons/parameter_control_integer.svg</file>
@@ -349,6 +351,14 @@
     <file>icons/parameter_control_spinbox.svg</file>
     <file>icons/parameter_control_slider.svg</file>
     <file>icons/parameter_control_divider.svg</file>
+    <file>icons/geomsheet_vertex_idle.svg</file>
+    <file>icons/geomsheet_vertex_on.svg</file>
+    <file>icons/geomsheet_point_idle.svg</file>
+    <file>icons/geomsheet_point_on.svg</file>
+    <file>icons/geomsheet_face_idle.svg</file>
+    <file>icons/geomsheet_face_on.svg</file>
+    <file>icons/geomsheet_geometry_idle.svg</file>
+    <file>icons/geomsheet_geometry_on.svg</file>
     <file>icons/file_newfile.svg</file>
     <file>icons/file_openfile.svg</file>
     <file>icons/file_zsgfile.svg</file>

@@ -66,6 +66,7 @@ void ZOpenGLQuickView::initializeUnderlay() {
     connect(this, &ZOpenGLQuickView::sig_changeTransformOperationByNode, m_renderer.get(), &ZQmlRender::changeTransformOperationByNode, Qt::QueuedConnection);
     connect(this, &ZOpenGLQuickView::sig_changeTransformOperation, m_renderer.get(), &ZQmlRender::changeTransformOperation, Qt::QueuedConnection);
     connect(this, &ZOpenGLQuickView::sig_cleanScene, m_renderer.get(), &ZQmlRender::cleanUpScene, Qt::QueuedConnection);
+    connect(this, &ZOpenGLQuickView::sig_showptnum, m_renderer.get(), &ZQmlRender::setShowptnum, Qt::QueuedConnection);
 
     connect(m_renderer.get(), &ZQmlRender::requestUpdate, this,
         &ZOpenGLQuickView::onUpdateRequest, Qt::QueuedConnection);
@@ -178,6 +179,10 @@ void ZOpenGLQuickView::setCameraRes(const QVector2D& res) {
 
 void ZOpenGLQuickView::setSafeFrames(bool bLock, int nx, int ny) {
     emit sig_setSafeFrames(bLock, nx, ny);
+}
+
+void ZOpenGLQuickView::setShowPtnum(bool bShow) {
+    emit sig_showptnum(bShow);
 }
 
 bool ZOpenGLQuickView::isCameraMoving() const {

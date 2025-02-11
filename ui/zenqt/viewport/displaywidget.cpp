@@ -298,6 +298,11 @@ ZOptixViewport* DisplayWidget::optixViewport() const
     return m_optixView;
 }
 
+ZOpenGLQuickView* DisplayWidget::quickGLViewport() const
+{
+    return m_glView;
+}
+
 void DisplayWidget::killOptix()
 {
 #ifndef ZENO_OPTIX_PROC

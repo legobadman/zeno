@@ -29,6 +29,7 @@
 #include "nodeeditor/gv/callbackdef.h"
 #include "zassert.h"
 #include "viewport/zenovis.h"
+#include "viewport/qml/zopenglquickview.h"
 #include "calculation/calculationmgr.h"
 #include "model/GraphModel.h"
 #include "dialog/ZOptixCameraSetting.h"
@@ -788,7 +789,7 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
     m_normal_check = new ZToolBarButton(true, ":/icons/viewToolbar_normalcheck_idle.svg", ":/icons/viewToolbar_normalcheck_light.svg");
     m_normal_check->setToolTip(tr("Normal Check"));
 
-    m_pointIndicator = new ZToolBarButton(true, ":/icons/viewToolbar_normalcheck_idle.svg", ":/icons/viewToolbar_normalcheck_light.svg");
+    m_pointIndicator = new ZToolBarButton(true, ":/icons/viewToolbar_pointnum_idle.svg", ":/icons/viewToolbar_pointnum_light.svg");
     m_pointIndicator->setToolTip(tr("Point Numbers"));
 
     m_wire_frame = new ZToolBarButton(true, ":/icons/viewToolbar_wireframe_idle.svg", ":/icons/viewToolbar_wireframe_light.svg");
@@ -1068,34 +1069,35 @@ void DockContent_View::initConnections()
     });
 
     connect(m_pointIndicator, &ZToolBarButton::toggled, this, [=](bool bToggled) {
+        GraphsManager* graphsMgr = zenoApp->graphsManager();
+        QString path = graphsMgr->currentGraphPath();
+
+        QStringList paths = path.split('/', Qt::SkipEmptyParts);
         ZenoGraphsEditor* pGraphEditor = zenoApp->getMainWindow()->getAnyEditor();
-        if (pGraphEditor) {
-            QStringList paths = pGraphEditor->getCurrentGraphPath();
-            QString path = '/' + paths.join('/');
-            GraphModel* pModel = zenoApp->graphsManager()->getGraph(paths);
-            ZASSERT_EXIT(pModel);
+        GraphModel* pModel = zenoApp->graphsManager()->getGraph(paths);
+        ZASSERT_EXIT(pModel);
 
-            zeno::render_reload_info info;
-            info.current_ui_graph = path.toStdString();
-            info.policy = zeno::Reload_ToggleView;
+        zeno::render_reload_info info;
+        info.current_ui_graph = path.toStdString();
+        info.policy = zeno::Reload_ToggleView;
 
-            const auto& viewnodes = pModel->getViewNodePath();
-            for (auto nodeuuidpath : viewnodes) {
-                zeno::render_update_info update;
-                update.reason = zeno::Update_View;
-                update.uuidpath_node_objkey = nodeuuidpath;
-                info.objs.push_back(update);
-            }
-
-            m_pDisplay->getZenoVis()->getSession()->set_show_ptnum(bToggled);
-
-            const auto& views = zenoApp->getMainWindow()->viewports();
-            for (DisplayWidget* view : views) {
-                view->reload(info);
-            }
-            //need to reload
-            m_pDisplay->updateFrame();
+        const auto& viewnodes = pModel->getViewNodePath();
+        for (auto nodeuuidpath : viewnodes) {
+            zeno::render_update_info update;
+            update.reason = zeno::Update_View;
+            update.uuidpath_node_objkey = nodeuuidpath;
+            info.objs.push_back(update);
         }
+
+        ZOpenGLQuickView* view = m_pDisplay->quickGLViewport();
+        view->setShowPtnum(bToggled);
+
+        const auto& views = zenoApp->getMainWindow()->viewports();
+        for (DisplayWidget* view : views) {
+            view->reload(info);
+        }
+        //need to reload
+        m_pDisplay->updateFrame();
     });
 
     connect(m_wire_frame, &ZToolBarButton::toggled, this, [=](bool bToggled) {

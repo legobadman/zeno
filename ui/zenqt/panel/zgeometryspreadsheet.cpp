@@ -12,10 +12,10 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     : QWidget(parent)
     , m_lblNode(new QLabel)
     , m_views(new QStackedWidget(this))
-    , m_vertex(new ZToolBarButton(true, ":/icons/fixpanel.svg", ":/icons/fixpanel-on.svg"))
-    , m_point(new ZToolBarButton(true, ":/icons/wiki.svg", ":/icons/wiki-on.svg"))
-    , m_face(new ZToolBarButton(true, ":/icons/settings.svg", ":/icons/settings-on.svg"))
-    , m_geom(new ZToolBarButton(true, ":/icons/toolbar_search_idle.svg", ":/icons/toolbar_search_light.svg"))
+    , m_vertex(new ZToolBarButton(true, ":/icons/geomsheet_vertex_idle.svg", ":/icons/geomsheet_vertex_on.svg"))
+    , m_point(new ZToolBarButton(true, ":/icons/geomsheet_point_idle.svg", ":/icons/geomsheet_point_on.svg"))
+    , m_face(new ZToolBarButton(true, ":/icons/geomsheet_face_idle.svg", ":/icons/geomsheet_face_on.svg"))
+    , m_geom(new ZToolBarButton(true, ":/icons/geomsheet_geometry_idle.svg", ":/icons/geomsheet_geometry_on.svg"))
     , m_model(nullptr)
     , m_nodeIdx(QModelIndex())
 {
@@ -41,6 +41,10 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_geom->setChecked(false);
 
     connect(m_vertex, &ZToolBarButton::toggled, [&](bool bChecked) {
+        if (!bChecked) {
+            m_vertex->setChecked(true);
+            return;
+        }
         m_point->setChecked(!bChecked);
         m_face->setChecked(!bChecked);
         m_geom->setChecked(!bChecked);
@@ -48,6 +52,10 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         });
 
     connect(m_point, &ZToolBarButton::toggled, [&](bool bChecked) {
+        if (!bChecked) {
+            m_point->setChecked(true);
+            return;
+        }
         m_vertex->setChecked(!bChecked);
         m_face->setChecked(!bChecked);
         m_geom->setChecked(!bChecked);
@@ -55,6 +63,10 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         });
 
     connect(m_face, &ZToolBarButton::toggled, [&](bool bChecked) {
+        if (!bChecked) {
+            m_face->setChecked(true);
+            return;
+        }
         m_vertex->setChecked(!bChecked);
         m_point->setChecked(!bChecked);
         m_geom->setChecked(!bChecked);
@@ -62,6 +74,10 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         });
 
     connect(m_geom, &ZToolBarButton::toggled, [&](bool bChecked) {
+        if (!bChecked) {
+            m_geom->setChecked(true);
+            return;
+        }
         m_vertex->setChecked(!bChecked);
         m_face->setChecked(!bChecked);
         m_point->setChecked(!bChecked);

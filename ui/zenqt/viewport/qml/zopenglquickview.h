@@ -37,6 +37,7 @@ public:
     void setNumSamples(int samples);
     void setCameraRes(const QVector2D& res);
     void setSafeFrames(bool bLock, int nx, int ny);
+    void setShowPtnum(bool bShow);
     bool isCameraMoving() const;
     void setSimpleRenderOption();
     void clearTransformer();
@@ -66,6 +67,7 @@ signals:
     void sig_changeTransformOperationByNode(const QString&);
     void sig_changeTransformOperation(int);
     void sig_cameraLookTo(zenovis::CameraLookToDir);
+    void sig_showptnum(bool);
 
 public slots:
     void onUpdateRequest();

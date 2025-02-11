@@ -60,6 +60,7 @@ public:
 #else
     ZOptixViewport* optixViewport() const;
 #endif
+    ZOpenGLQuickView* quickGLViewport() const;
     void killOptix();
     void moveToFrame(int frame);
     void setIsCurrent(bool isCurrent);
