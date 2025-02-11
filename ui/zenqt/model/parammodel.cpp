@@ -588,7 +588,8 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     case QtRole::ROLE_PARAM_CONTROL_PROPS: {
         QVariantMap map;
         if (param.optCtrlprops.has_value()) {
-            if (param.optCtrlprops.type().hash_code() == zeno::types::gParamType_StringList) {
+            auto typeHash = param.optCtrlprops.type().hash_code();
+            if (typeHash == zeno::types::gParamType_StringList) {
                 const auto& items = zeno::reflect::any_cast<std::vector<std::string>>(param.optCtrlprops);
                 QStringList qitems;
                 for (const auto& item : items) {
@@ -596,10 +597,18 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
                 }
                 map["combobox_items"] = qitems;
             }
-            if (param.optCtrlprops.type().hash_code() == zeno::types::gParamType_IntList) {
+            else if (typeHash == zeno::types::gParamType_IntList) {
                 const auto& items = zeno::reflect::any_cast<std::vector<int>>(param.optCtrlprops);
                 QVariantList qitems;
                 for (int item : items) {
+                    qitems.append(item);
+                }
+                map["slider"] = qitems;
+            }
+            else if (typeHash == zeno::types::gParamType_FloatList) {
+                const auto& items = zeno::reflect::any_cast<std::vector<float>>(param.optCtrlprops);
+                QVariantList qitems;
+                for (float item : items) {
                     qitems.append(item);
                 }
                 map["slider"] = qitems;
@@ -805,6 +814,7 @@ QHash<int, QByteArray> ParamsModel::roleNames() const
     roles[QtRole::ROLE_PARAM_PERSISTENT_INDEX] = "per_index";
     roles[QtRole::ROLE_PARAM_CONTROL_PROPS] = "control_properties";
     roles[QtRole::ROLE_PARAM_SOCKET_CLR] = "socket_color";
+    roles[QtRole::ROLE_PARAM_VISIBLE] = "param_visible";
     return roles;
 }
 

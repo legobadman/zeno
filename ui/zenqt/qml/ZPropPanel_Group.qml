@@ -219,13 +219,28 @@ Item {
         RowLayout {
             ZLineEditor {
                 text: "0"
-                width: 40
+                width: 60
                 property alias val: slideritem.value
+
+                function isNumeric(str) {
+                    return Number.isFinite(Number(str));
+                }
+
+                function formatWithSignificantDigits(num, significantDigits) {
+                    //int类型的数值在model已经转了，这里拿到的都是int，而无需在意小数点的事情
+                    if (isNumeric(num)) {
+                        return parseFloat(num.toPrecision(significantDigits)).toString();
+                    }
+                    else {
+                        return num  //公式或字符串
+                    }
+                }
+
                 onEditingFinished: {
                     val = text
                 }
                 onValChanged: {
-                    text = val
+                    text = formatWithSignificantDigits(val, 7)
                 }
             }            
             Slider {
@@ -397,7 +412,7 @@ Item {
                         checkable: true
                         checked: socket_visible
                         icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
-                        visible: is_match_group
+                        visible: is_match_group && param_visible
                         Layout.leftMargin: 0
 
                         onCheckedChanged: {
@@ -429,7 +444,7 @@ Item {
                     Text {
                         text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
                         color: "white"
-                        visible: is_match_group
+                        visible: is_match_group && param_visible
 
                         TextMetrics {
                             id: textMetrics
@@ -453,7 +468,7 @@ Item {
                     Loader {
                         Layout.fillWidth: true
                         sourceComponent: {
-                            if (!is_match_group) {
+                            if (!is_match_group || !param_visible) {
                                 return compBlank;
                             }
                             if (control == ParamControl.Lineedit){
