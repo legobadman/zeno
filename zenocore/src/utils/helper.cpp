@@ -507,7 +507,7 @@ namespace zeno {
 
     ZENO_API Any initAnyDeflValue(ParamType const& type)
     {
-        if (type == gParamType_String) {
+        if (type == gParamType_String || type == gParamType_PrimVariant) {
             return std::string("");     //要注意和char*常量区分，any::get_type的时候是不一样的
         }
         else if (type == gParamType_Float)

@@ -724,6 +724,12 @@ Qan.GraphView {
                 var editparamDlg = component.createObject(null); // 创建顶层对象
                 if (editparamDlg) {
                     editparamDlg.node = node
+                    var customuiModelCloned = node.params.customUIModelCloned()
+                    editparamDlg.controlItemM = customuiModelCloned.controlItemModel()
+                    editparamDlg.tabelM = customuiModelCloned.tabModel()
+                    editparamDlg.primOutputM = customuiModelCloned.primOutputModel()
+                    editparamDlg.objInputM = customuiModelCloned.objInputModel()
+                    editparamDlg.objOutputM = customuiModelCloned.objOutputModel()
                     if(node.params.customUIModelCloned().isSubnetNode()) {//只有subnet节点才允许编辑
                         editparamDlg.openDialog(); // 调用 openDialog 方法显示窗口
                     }

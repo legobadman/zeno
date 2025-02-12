@@ -370,12 +370,25 @@ bool INode::has_frame_relative_params() const {
         assert(param.type == Param_Wildcard || param.defl.has_value());
         const std::string& uuid = get_uuid();
         if (gParamType_String == param.type) {
-            std::string defl = zeno::reflect::any_cast<std::string>(param.defl);
-            if (defl.find("$F") != std::string::npos) {
-                return true;
+            if (param.defl.type().hash_code() == gParamType_PrimVariant) {//type是string，实际defl可能是primvar
+                const zeno::PrimVar& editVar = zeno::reflect::any_cast<zeno::PrimVar>(param.defl);
+                return std::visit([](auto&& arg)-> bool {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, std::string>) {
+                        std::string defl = zeno::reflect::any_cast<std::string>(arg);
+                        if (defl.find("$F") != std::string::npos)
+                            return true;
+                    }
+                    return false;
+                }, editVar);
+            } else if (param.defl.type().hash_code() == gParamType_String) {
+                std::string defl = zeno::reflect::any_cast<std::string>(param.defl);
+                if (defl.find("$F") != std::string::npos) {
+                    return true;
+                }
             }
         }
-        else if (gParamType_Int == param.type || gParamType_Float == param.type) {
+        else if (gParamType_Int == param.type || gParamType_Float == param.type || gParamType_PrimVariant == param.type) {
             assert(gParamType_PrimVariant == param.defl.type().hash_code());
             const zeno::PrimVar& editVar = zeno::reflect::any_cast<zeno::PrimVar>(param.defl);
             bool bFind = std::visit([=](auto&& arg)->bool {
@@ -2758,7 +2771,7 @@ params_change_info INode::update_editparams(const ParamsUpdateInfo& params, bool
 
                 PrimitiveParam sparam;
                 sparam.defl = param.defl;
-                if (param.type != sparam.type) {
+                if (param.type == sparam.type) {
                     sparam.defl = initAnyDeflValue(sparam.type);
                 }
                 convertToEditVar(sparam.defl, param.type);

@@ -195,7 +195,13 @@ Window {
     flags: Qt.Dialog | Qt.WindowTitleHint | Qt.WindowCloseButtonHint // 设置窗口类型为对话框，带标题栏和关闭按钮
     modality: Qt.ApplicationModal  // 将窗口设置为模态
     property var node: undefined
-    property var customuimodel : node.params.customUIModelCloned()
+
+    property var controlItemM : undefined
+    property var tabelM : undefined
+    property var primOutputM : undefined
+    property var objInputM : undefined
+    property var objOutputM : undefined
+
 
     MouseArea {
         anchors.fill: parent
@@ -220,7 +226,7 @@ Window {
             RowLayout {  // 水平布局分为三部分
                 id: rootLayout
                 // anchors.fill: parent
-                anchors.top: parent.top
+                // anchors.top: parent.top
                 width: parent.width
                 height: parent.height * 14 / 15
             
@@ -236,9 +242,9 @@ Window {
                         anchors.fill: parent
                         property int currentIdx : 0
 
-                        model: customuimodel.controlItemModel()
+                        model: controlItemM
                         delegate: Rectangle {
-                            width: parent.width
+                            width: ListView.view.width
                             height: 20
                             color: leftListView.currentIdx === index ? "lightblue" : "transparent"
 
@@ -295,7 +301,7 @@ Window {
                                     text: "add"
                                     font.pointSize: 6
                                     onClicked: {
-                                        var tabmodel = dialog.customuimodel.tabModel()
+                                        var tabmodel = dialog.tabelM
                                         var modelRef = undefined
                                         var curRow = -1
                                         var newname = ""
@@ -383,7 +389,7 @@ Window {
                                     ColumnLayout {
                                         id: primoutColumn
                                         anchors.fill: parent
-                                        property var primOutputModel : dialog.customuimodel.primOutputModel()
+                                        property var primOutputModel : dialog.primOutputM
 
                                         Item {
                                             Layout.fillWidth: true
@@ -397,7 +403,7 @@ Window {
                                                     Layout.fillWidth: true
                                                     Text {
                                                         color: "lightgray"
-                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        // anchors.verticalCenter: parent.verticalCenter
                                                         font.bold: true
                                                         text: "OutputPrims"
                                                     }
@@ -434,7 +440,7 @@ Window {
                                                 // model: ListModel { ListElement { name: "output1" } }
                                                 model: primoutColumn.primOutputModel
                                                 delegate: Rectangle {
-                                                    width: parent.width
+                                                    width: ListView.view.width
                                                     height: 15
                                                     color: listView1.currentIdx === index ? "lightblue" : "transparent"
                                                     // Text { text: model.paramname }
@@ -446,7 +452,7 @@ Window {
                                                         Binding {
                                                             target: lstV1TextEditLoader.item
                                                             property: "textContent"
-                                                            value: model.paramname
+                                                            value: model.name
                                                         }
                                                         Binding {
                                                             target: lstV1TextEditLoader.item
@@ -475,14 +481,12 @@ Window {
                                                 }
                                                 Keys.onDeletePressed: {
                                                     primoutColumn.primOutputModel.removeRow(listView1.currentIdx)
+                                                    if(primoutColumn.primOutputModel.rowCount() === 0 ){
+                                                        listView1.currentIdx = -1
+                                                    }
                                                 }
                                             }
                                         }
-                                        // Keys.onDeletePressed: {
-                                        //     if(listView1.currentIdx !== -1){
-                                        //         dialog.customuimodel.primOutputModel().removeRow(listView1.currentIdx)
-                                        //     }
-                                        // }
                                     }
                                 }  
                             }
@@ -508,7 +512,7 @@ Window {
                                     ColumnLayout {
                                         id: objinColumn
                                         anchors.fill: parent
-                                        property var objInputModel : dialog.customuimodel.objInputModel()
+                                        property var objInputModel : dialog.objInputM
 
                                         Item {
                                             Layout.fillWidth: true
@@ -522,7 +526,7 @@ Window {
                                                     Layout.fillWidth: true
                                                     Text {
                                                         color: "lightgray"
-                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        // anchors.verticalCenter: parent.verticalCenter
                                                         font.bold: true
                                                         text: "InputObj"
                                                     }
@@ -558,7 +562,7 @@ Window {
                                                 clip: true
                                                 model: objinColumn.objInputModel
                                                 delegate: Rectangle {
-                                                    width: parent.width
+                                                    width: ListView.view.width
                                                     height: 15
                                                     color: listView2.currentIdx === index ? "lightblue" : "transparent"
                                                     // Text { text: model.paramname }
@@ -599,14 +603,12 @@ Window {
                                                 }
                                                 Keys.onDeletePressed: {
                                                     objinColumn.objInputModel.removeRow(listView2.currentIdx)
+                                                    if(objinColumn.objInputModel.rowCount() === 0 ){
+                                                        listView2.currentIdx = -1
+                                                    }
                                                 }
                                             }
                                         }
-                                        // Keys.onDeletePressed: {
-                                        //     if(listView2.currentIdx !== -1){
-                                        //         dialog.customuimodel.objInputModel().removeRow(listView2.currentIdx)
-                                        //     }
-                                        // }
                                     }
                                 }
                             }
@@ -631,7 +633,7 @@ Window {
                                     ColumnLayout {
                                         id: objoutColumn
                                         anchors.fill: parent
-                                        property var objOutputModel : dialog.customuimodel.objOutputModel()
+                                        property var objOutputModel : dialog.objOutputM
 
                                         Item {
                                             Layout.fillWidth: true
@@ -645,7 +647,7 @@ Window {
                                                     Layout.fillWidth: true
                                                     Text {
                                                         color: "lightgray"
-                                                        anchors.verticalCenter: parent.verticalCenter
+                                                        // anchors.verticalCenter: parent.verticalCenter
                                                         font.bold: true
                                                         text: "OutputObj"
                                                     }
@@ -681,7 +683,7 @@ Window {
                                                 clip: true
                                                 model: objoutColumn.objOutputModel
                                                 delegate: Rectangle {
-                                                    width: parent.width
+                                                    width: ListView.view.width
                                                     height: 15
                                                     color: listView3.currentIdx === index ? "lightblue" : "transparent"
                                                     // Text { text: model.paramname }
@@ -722,14 +724,12 @@ Window {
                                                 }
                                                 Keys.onDeletePressed: {
                                                     objoutColumn.objOutputModel.removeRow(listView3.currentIdx)
+                                                     if(objoutColumn.objOutputModel.rowCount() === 0 ){
+                                                        listView3.currentIdx = -1
+                                                    }
                                                 }
                                             }
                                         }
-                                        // Keys.onDeletePressed: {
-                                        //     if(listView3.currentIdx !== -1){
-                                        //         dialog.customuimodel.objOutputModel().removeRow(listView3.currentIdx)
-                                        //     }
-                                        // }
                                     }
                                 }
                             }
@@ -738,34 +738,46 @@ Window {
                     }
                 }
 
-                // 右侧部分
-                ColumnLayout {
-                    spacing: 10
+                RowLayout{
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredWidth: parent.width / 3
 
-                    TextField {
-                        id: inputName
-                        text: "AAA"
-                        color: "lightgray"
-                        placeholderText: "名称"
+                    Item {
+                        implicitWidth: 30
+                        implicitHeight: 30
                     }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        color: "#22252C"
+                        // 右侧部分
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 10
 
-                    TextField {
-                        id: inputLabel
-                        text: "label"
-                        color: "lightgray"
-                        placeholderText: "标签"
-                    }
+                            TextField {
+                                id: inputName
+                                text: "AAA"
+                                color: "lightgray"
+                                placeholderText: "名称"
+                            }
 
-                    ComboBox {
-                        id: socketProperty
-                        model: ["Property 1", "Property 2", "Property 3"]
-                        currentIndex: 0
+                            TextField {
+                                id: inputLabel
+                                text: "label"
+                                color: "lightgray"
+                                placeholderText: "标签"
+                            }
+
+                            ComboBox {
+                                id: socketProperty
+                                model: ["Property 1", "Property 2", "Property 3"]
+                                currentIndex: 0
+                            }
+                        }
                     }
                 }
-
             }
 
             Item {
@@ -790,24 +802,28 @@ Window {
                         Layout.preferredWidth : parent.width / 6
                         Layout.rightMargin: 20
                         Layout.alignment: Qt.AlignVCenter
-                        Button {
-                            anchors.left: parent.left
-                            implicitWidth: 60
-                            implicitHeight: 40
-                            text: "确定"
-                            onClicked: {
-                                node.params.applyParamsByEditparamDlg(dialog.customuimodel);
-                                dialog.visible = false
+                        RowLayout {
+                            Layout.fillHeight: true
+                            Layout.fillWidth: true
+                            Button {
+                                // anchors.left: parent.left
+                                implicitWidth: 60
+                                implicitHeight: 40
+                                text: "确定"
+                                onClicked: {
+                                    node.params.applyParamsByEditparamDlg(dialog.tabelM.uimodel());
+                                    dialog.visible = false
+                                }
                             }
-                        }
-                        Button {
-                            anchors.right: parent.right
-                            implicitWidth: 60
-                            implicitHeight: 40
-                            text: "取消"
-                            onClicked: {
-                                node.params.cancleEditCustomUIModelCloned()
-                                dialog.visible = false
+                            Button {
+                                // anchors.right: parent.right
+                                implicitWidth: 60
+                                implicitHeight: 40
+                                text: "取消"
+                                onClicked: {
+                                    node.params.cancleEditCustomUIModelCloned()
+                                    dialog.visible = false
+                                }
                             }
                         }
                     }
@@ -838,10 +854,9 @@ Window {
         var subfix = 0
         var newname = "newitem" + subfix
 
-        var tabmodel = dialog.customuimodel.tabModel()
-        for(var i = 0; i < tabmodel.rowCount(); i++) {
-            nameSet[tabmodel.data(tabmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
-            var groupmodel = tabmodel.data(tabmodel.index(i, 0), CustomuiModelType.GroupModel)
+        for(var i = 0; i < dialog.tabelM.rowCount(); i++) {
+            nameSet[dialog.tabelM.data(dialog.tabelM.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+            var groupmodel = dialog.tabelM.data(dialog.tabelM.index(i, 0), CustomuiModelType.GroupModel)
             for(var j = 0; j < groupmodel.rowCount(); ++j) {
                 nameSet[groupmodel.data(groupmodel.index(j, 0), Qt.DisplayRole)] = true
                 var parammodel = groupmodel.data(groupmodel.index(j, 0), CustomuiModelType.PrimModel)
@@ -850,17 +865,14 @@ Window {
                 }
             }
         }
-        var outputPrimmodel = dialog.customuimodel.primOutputModel()
-        for(var i = 0; i < outputPrimmodel.rowCount(); i++){
-            nameSet[outputPrimmodel.data(outputPrimmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+        for(var i = 0; i < dialog.primOutputM.rowCount(); i++){
+            nameSet[dialog.primOutputM.data(dialog.primOutputM.index(i, 0), Model.ROLE_PARAM_NAME)] = true
         }
-        var inputObjmodel = dialog.customuimodel.objInputModel()
-        for(var i = 0; i < inputObjmodel.rowCount(); i++){
-            nameSet[inputObjmodel.data(inputObjmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+        for(var i = 0; i < dialog.objInputM.rowCount(); i++){
+            nameSet[dialog.objInputM.data(dialog.objInputM.index(i, 0), Model.ROLE_PARAM_NAME)] = true
         }
-        var outputObjmodel = dialog.customuimodel.objOutputModel()
-        for(var i = 0; i < outputObjmodel.rowCount(); i++){
-            nameSet[outputObjmodel.data(outputObjmodel.index(i, 0), Model.ROLE_PARAM_NAME)] = true
+        for(var i = 0; i < dialog.objOutputM.rowCount(); i++){
+            nameSet[dialog.objOutputM.data(dialog.objOutputM.index(i, 0), Model.ROLE_PARAM_NAME)] = true
         }
         while (nameSet[newname] !== undefined) {
             subfix++
@@ -872,16 +884,15 @@ Window {
     function deleteItem(){
         var modelRef
         var curRow = 0
-        var tabmodel = dialog.customuimodel.tabModel()
         if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {//删tab
-            modelRef = tabmodel
+            modelRef = dialog.tabelM
             curRow = rootRec.currentTabRow
         } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {//删group
-            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+            var groupmodel = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
             modelRef = groupmodel
             curRow = rootRec.currentGroupRow
         } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow !== -1) {//删param
-            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+            var groupmodel = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
             modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
             curRow = rootRec.currentParamRow
         } else {
@@ -934,7 +945,6 @@ Window {
         Item {
             id: treeviewItem
             anchors.fill: parent
-            property var customuimodel : dialog.customuimodel.tabModel()
 
             Menu {
                 id: contextMenu
@@ -943,17 +953,16 @@ Window {
                 MenuItem {
                     text: "新增条目"
                     onTriggered: {
-                        var tabmodel = dialog.customuimodel.tabModel()
                         if(leftListView.currentIdx == 2){return}//obj类型return
                         if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {
-                            contextMenu.modelRef = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                            contextMenu.modelRef = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
                             contextMenu.curRow = contextMenu.modelRef.rowCount()
                         } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {
-                            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                            var groupmodel = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
                             contextMenu.modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
                             contextMenu.curRow = contextMenu.modelRef.rowCount()
                         } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow !== -1) {
-                            var groupmodel = tabmodel.data(tabmodel.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+                            var groupmodel = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
                             contextMenu.modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
                             contextMenu.curRow = rootRec.currentParamRow + 1
                             var newname = getNewName()
@@ -987,7 +996,7 @@ Window {
                     // width: parent.width // 确保宽度与 ScrollView 一致
                     Repeater {
                         id: tabrepeater
-                        model: customuimodel
+                        model: dialog.tabelM
                         delegate: Loader {
                             // Layout.fillWidth: true
                             Layout.preferredWidth: parent.width // 确保填满父容器宽度
@@ -1127,7 +1136,7 @@ Window {
                                 Connections {
                                     target: tabtextEditLoader.item  // 这里使用 checkboxLoader.item 来引用加载后的复选框组件
                                     function onEditfinish() {
-                                        dialog.customuimodel.tabModel().setData(dialog.customuimodel.tabModel().index(tabindex, 0), tabtextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
+                                        dialog.tabelM.setData(dialog.tabelM.index(tabindex, 0), tabtextEditLoader.item.textContent, Model.ROLE_PARAM_NAME)
                                     }
                                 }
                                 // Text {

@@ -55,9 +55,8 @@ QVariant cloneItemGetData(const QVector<ParamItem>& clonedItems, const QModelInd
         return QVariant();
     }
     if (role == Qt::DecorationRole) {
-        auto currtype = clonedItems[index.row()].type;
         for (auto& item : customui_controlList) {
-            if (item.type == currtype) { return item.icon; }
+            if (item.ctrl == clonedItems[index.row()].control && item.type == clonedItems[index.row()].type) { return item.icon; }
         }
     }
     else if (role == QtRole::ROLE_NODE_NAME) {
@@ -530,11 +529,21 @@ ParamPlainModel::ParamPlainModel(zeno::ParamGroup group, ParamGroupModel* pModel
 QString ParamPlainModel::getMaxLengthName() const
 {
     QString maxName;
-    for (auto& idx : m_items) {
-         const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
-         if (name.length() > maxName.length()) {
-             maxName = name;
-         }
+    if (m_bIscloned) {
+        for (auto& item : m_clonedItems) {
+            const QString& name = item.name;
+            if (name.length() > maxName.length()) {
+                maxName = name;
+            }
+        }
+    }
+    else {
+        for (auto& idx : m_items) {
+             const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+             if (name.length() > maxName.length()) {
+                 maxName = name;
+             }
+        }
     }
     return maxName;
 }
@@ -647,6 +656,8 @@ void ParamPlainModel::exportCustomuiAndEdittedUpdateInfo(std::vector<zeno::Param
             param.defl = paramitem.value;
             param.control = paramitem.control;
             param.type = paramitem.type;
+            //lineEdit组件的值类型设为gParamType_PrimVariant（和ParamsModel::setData类型为QtRole::ROLE_PARAM_QML_VALUE的数据时的判断保持一致）
+            //param.type = paramitem.control == zeno::Lineedit ? zeno::types::gParamType_PrimVariant : paramitem.type;
             param.socketType = paramitem.connectProp;
             param.ctrlProps = paramitem.optCtrlprops;
             params.push_back(param);

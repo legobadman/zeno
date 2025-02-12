@@ -399,7 +399,7 @@ Item {
         Repeater {
             id: repeater_id
             model: root.model     //关联的是ParamPlainModel或者ParamsModel
-            property string maxName: model.maxLengthName
+            property string maxName: root.model.maxLengthName
 
             delegate:
                 RowLayout {
@@ -508,9 +508,9 @@ Item {
                                 return nullControl
                             }
                         }
-                        property var mvalue: value
-                        property var m_control_properties: control_properties
-                        property var mindex: per_index
+                        property var mvalue: model.value
+                        property var m_control_properties: model.control_properties
+                        property var mindex: root.model.index(index, 0)
                     }
                 }
         }
