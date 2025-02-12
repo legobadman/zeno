@@ -1184,8 +1184,8 @@ namespace zeno {
         };
 
         std::shared_ptr<GeometryObject> apply(
-            int npoints = 1,
-            zeno::vec3f direction = zeno::vec3f({ 1,0,0 }),
+            int npoints = 2,
+            zeno::vec3f direction = zeno::vec3f({ 0,1,0 }),
             zeno::vec3f origin = zeno::vec3f({ 0,0,0 }),
             float length = 1.0,
             bool isCentered = false,

@@ -126,6 +126,81 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Sweep : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"snapDistance", ParamPrimitive("Snap Distance")},
+                {"surface_shape", ParamPrimitive("Surface Shape", "Square Tube", Combobox, std::vector<std::string>{"Second Input", "Square Tube"})},
+                {"surface_width", ParamPrimitive("Width", 0.2, Slider, std::vector<float>{0.0, 1.0, 0.001}, "", "visible = parameter('Surface Shape').value == 'Square Tube';")},
+                {"surface_column", ParamPrimitive("Columns", 2, Slider, std::vector<int>{1, 20, 1}, "", "visible = parameter('Surface Shape').value == 'Square Tube';")},
+                {"input_object", ParamObject("Input")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            std::string surface_shape = "Square Tube",
+            float surface_width = 0.2f,
+            int surface_column = 2
+        )
+        {
+            const float w = surface_width;
+            if (input_object->is_Line()) {
+                std::vector<vec3f> pts = input_object->points_pos();
+                for (int i = 0; i < pts.size(); i++) {
+                    if (i > 0 && i < pts.size() - 1) {
+                        vec3f pt = pts[i];
+                        vec3f pt_1 = pts[i - 1];
+                        vec3f pt1 = pts[i + 1];
+                        vec3f v1 = zeno::normalize(pt1 - pt);
+                        vec3f v2 = zeno::normalize(pt_1 - pt);
+                        while (zeno::dot(v1, v2) == -1) {
+                            v1 += vec3f(0.0001, 0, 0);
+                            v2 += vec3f(0.0001, 0, 0);
+                        }
+
+                        vec3f hor_v = zeno::normalize(v1 + v2);
+                        vec3f ver_v = zeno::normalize(zeno::cross(v1, hor_v));
+
+                        //这个start_pt留到最后加
+                        vec3f start_pt = pt + w/2.f * (hor_v + ver_v);
+                        //逆时针转一圈
+                        vec3f curr_start = start_pt;
+                        vec3f curr_pt;
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * (-hor_v);
+                            int j;
+                            j = 0;
+                        }
+                        curr_start = curr_pt; //上一次遍历的终点是下一个线段的起点
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * (-ver_v);
+                            int j;
+                            j = 0;
+                        }
+                        curr_start = curr_pt;
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * hor_v;
+                            int j;
+                            j = 0;
+                        }
+                        curr_start = curr_pt;
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * ver_v;
+                            int j;
+                            j = 0;
+                        }
+                    }
+                }
+            }
+            return input_object;
+        }
+    };
+
     struct ZDEFNODE() AverageFuse : INode {
         //houdini fuse节点的average模式
 
