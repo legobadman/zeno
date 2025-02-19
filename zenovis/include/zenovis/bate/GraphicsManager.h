@@ -202,6 +202,7 @@ struct GraphicsManager {
         }
         else if (zeno::Reload_ToggleView == info.policy) {
             assert(info.objs.size() == 1);
+            //TODO: 谁说view只能一个的？？
             const auto& update = info.objs[0];
             if (update.reason == zeno::Update_Remove) {
                 for (const std::string& remkey : update.remove_objs) {

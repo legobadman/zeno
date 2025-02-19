@@ -149,52 +149,159 @@ namespace zeno {
         )
         {
             const float w = surface_width;
-            if (input_object->is_Line()) {
-                std::vector<vec3f> pts = input_object->points_pos();
-                for (int i = 0; i < pts.size(); i++) {
-                    if (i > 0 && i < pts.size() - 1) {
-                        vec3f pt = pts[i];
-                        vec3f pt_1 = pts[i - 1];
-                        vec3f pt1 = pts[i + 1];
-                        vec3f v1 = zeno::normalize(pt1 - pt);
-                        vec3f v2 = zeno::normalize(pt_1 - pt);
-                        while (zeno::dot(v1, v2) == -1) {
-                            v1 += vec3f(0.0001, 0, 0);
-                            v2 += vec3f(0.0001, 0, 0);
-                        }
-
-                        vec3f hor_v = zeno::normalize(v1 + v2);
-                        vec3f ver_v = zeno::normalize(zeno::cross(v1, hor_v));
-
-                        //这个start_pt留到最后加
-                        vec3f start_pt = pt + w/2.f * (hor_v + ver_v);
-                        //逆时针转一圈
-                        vec3f curr_start = start_pt;
-                        vec3f curr_pt;
-                        for (int i = 1; i <= surface_column; i++) {
-                            curr_pt = curr_start + w / surface_column * i * (-hor_v);
-                            int j;
-                            j = 0;
-                        }
-                        curr_start = curr_pt; //上一次遍历的终点是下一个线段的起点
-                        for (int i = 1; i <= surface_column; i++) {
-                            curr_pt = curr_start + w / surface_column * i * (-ver_v);
-                            int j;
-                            j = 0;
-                        }
-                        curr_start = curr_pt;
-                        for (int i = 1; i <= surface_column; i++) {
-                            curr_pt = curr_start + w / surface_column * i * hor_v;
-                            int j;
-                            j = 0;
-                        }
-                        curr_start = curr_pt;
-                        for (int i = 1; i <= surface_column; i++) {
-                            curr_pt = curr_start + w / surface_column * i * ver_v;
-                            int j;
-                            j = 0;
+            if (surface_shape == "Square Tube") {
+                if (input_object->is_Line()) {
+                    //先针对单位长度的竖线，以及给定的width和column,建模出基本的tube模型
+                    std::vector<vec3f> basepts;
+                    for (int iy = 0; iy <= 0/*只须考虑底部的面*/; iy++) {
+                        for (int iz = 0; iz <= surface_column; iz++) {
+                            for (int ix = 0; ix <= surface_column; ix++) {
+                                if (0 < ix && ix < surface_column &&
+                                    0 < iz && iz < surface_column) {
+                                    continue;
+                                }
+                                float step = surface_width / surface_column;
+                                float start = -surface_width / 2;
+                                basepts.push_back(vec3f(start + ix * step, iy, start + iz * step));
+                            }
                         }
                     }
+
+                    
+                    std::vector<vec3f> pts = input_object->points_pos();
+                    std::vector<vec3f> lastendface(basepts.size());
+                    vec3f originVec(0, 1, 0);
+
+                    for (int currPt = 0; currPt < pts.size(); currPt++) {
+                        int nextPt = input_object->getLineNextPt(currPt);
+                        if (currPt != nextPt) {
+                            vec3f p1 = pts[currPt];
+                            vec3f p2 = pts[nextPt];
+
+                            float vx = p2[0] - p1[0];
+                            float vy = p2[1] - p1[1];
+                            float vz = p2[2] - p1[2];
+                            float LB = zeno::sqrt(vx * vx + vy * vy + vz * vz);
+
+                            vec3f vpt(vx, vy, vz);
+                            vpt = zeno::normalize(vpt);
+
+                            //计算两个向量的叉积，得到旋转轴
+                            vec3f rot = zeno::cross(originVec, vpt);
+                            auto len = zeno::length(rot);
+                            glm::mat4 Rx(1.0);
+                            if (len == 0) {
+                                //考虑originVec和vpt平行的情况
+                                //只要单位矩阵即可
+                            }
+                            else {
+                                rot = zeno::normalize(rot);
+
+                                float cos_theta = zeno::dot(originVec, vpt);
+                                float sin_theta = zeno::sqrt(1 - cos_theta * cos_theta);
+
+                                float rx = rot[0], ry = rot[1], rz = rot[2];
+
+                                glm::mat3 K = glm::mat3(
+                                    0, rz, -ry,
+                                    -rz, 0, rx, 
+                                    ry, -rx, 0
+                                );
+                                glm::mat3 R_ = glm::mat3(1.0) + sin_theta * K + (1 - cos_theta) * K * K;
+                                Rx = glm::mat4(R_);
+                            }
+
+                            glm::mat4 transM(
+                                Rx[0][0], Rx[0][1], Rx[0][2], 0,
+                                Rx[1][0], Rx[1][1], Rx[1][2], 0,
+                                Rx[2][0], Rx[2][1], Rx[2][2], 0,
+                                p1[0], p1[1], p1[2], 1);
+
+                            std::vector<vec3f> istartface(basepts.size());
+                            for (int i = 0; i < basepts.size(); i++) {
+                                vec3f basept = basepts[i];
+                                glm::vec4 v(basept[0], basept[1], basept[2], 1.0);
+                                glm::vec4 newpt = transM * v;
+                                istartface[i] = vec3f(newpt[0], newpt[1], newpt[2]);
+                            }
+
+                            std::vector<vec3f> iendface(basepts.size());
+                            for (int i = 0; i < basepts.size(); i++) {
+                                iendface[i] = basepts[i] + LB * vpt;
+                            }
+
+                            if (currPt < pts.size() - 1) {
+                                //要先找到下一个点的startface
+                                std::vector<vec3f> i1startface(basepts.size());
+                                for (int i = 0; i < basepts.size(); i++) {
+                                    vec3f basept = basepts[i];
+                                    glm::vec4 v(basept[0], basept[1], basept[2], 1.0);
+                                    glm::vec4 newpt = transM * v;
+                                    i1startface[i] = vec3f(newpt[0], newpt[1], newpt[2]);
+                                }
+
+                                //直接求中点
+
+                            }
+                            else {
+                                //currPt是最后一个点
+                            }
+                        }
+                    }
+                    return 0;
+                    /*
+                    std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(false, newpts.size(), 0);
+                    spgeo->create_attr(ATTR_POINT, "pos", newpts);
+                    return spgeo;
+                    */
+#if 0
+                    std::vector<vec3f> pts = input_object->points_pos();
+                    for (int i = 0; i < pts.size(); i++) {
+                        if (i > 0 && i < pts.size() - 1) {
+                            vec3f pt = pts[i];
+                            vec3f pt_1 = pts[i - 1];
+                            vec3f pt1 = pts[i + 1];
+                            vec3f v1 = zeno::normalize(pt1 - pt);
+                            vec3f v2 = zeno::normalize(pt_1 - pt);
+                            while (zeno::dot(v1, v2) == -1) {
+                                v1 += vec3f(0.0001, 0, 0);
+                                v2 += vec3f(0.0001, 0, 0);
+                            }
+
+                            vec3f hor_v = zeno::normalize(v1 + v2);
+                            vec3f ver_v = zeno::normalize(zeno::cross(v1, hor_v));
+
+                            //这个start_pt留到最后加
+                            vec3f start_pt = pt + w / 2.f * (hor_v + ver_v);
+                            //逆时针转一圈
+                            vec3f curr_start = start_pt;
+                            vec3f curr_pt;
+                            for (int i = 1; i <= surface_column; i++) {
+                                curr_pt = curr_start + w / surface_column * i * (-hor_v);
+                                int j;
+                                j = 0;
+                            }
+                            curr_start = curr_pt; //上一次遍历的终点是下一个线段的起点
+                            for (int i = 1; i <= surface_column; i++) {
+                                curr_pt = curr_start + w / surface_column * i * (-ver_v);
+                                int j;
+                                j = 0;
+                            }
+                            curr_start = curr_pt;
+                            for (int i = 1; i <= surface_column; i++) {
+                                curr_pt = curr_start + w / surface_column * i * hor_v;
+                                int j;
+                                j = 0;
+                            }
+                            curr_start = curr_pt;
+                            for (int i = 1; i <= surface_column; i++) {
+                                curr_pt = curr_start + w / surface_column * i * ver_v;
+                                int j;
+                                j = 0;
+                            }
+                        }
+                    }
+#endif
                 }
             }
             return input_object;
