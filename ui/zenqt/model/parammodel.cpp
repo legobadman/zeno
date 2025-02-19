@@ -528,6 +528,16 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
     }
     case QtRole::ROLE_PARAM_SOCKET_VISIBLE:
     {
+        if (param.sockProp == zeno::Socket_Disable || param.group == zeno::Role_InputObject ||
+            param.group == zeno::Role_OutputObject) {
+            return false;
+        }
+        auto spNode = m_wpNode/*.lock()*/;
+        if (spNode) {
+            spNode->update_param_socket_visible(param.name.toStdString(), value.toBool(), param.bInput);
+            emit showPrimSocks_changed();
+            return true;
+        }
         return false;
     }
     case QtRole::ROLE_PARAM_PERSISTENT_INDEX:
