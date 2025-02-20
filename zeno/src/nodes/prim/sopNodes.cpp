@@ -167,14 +167,16 @@ namespace zeno {
                         }
                     }
 
-                    
+                    const int npts = basepts.size();
                     std::vector<vec3f> pts = input_object->points_pos();
-                    std::vector<vec3f> lastendface(basepts.size());
+                    std::vector<vec3f> lastendface(npts);
                     vec3f originVec(0, 1, 0);
 
+                    std::vector<vec3f> newpts;
                     for (int currPt = 0; currPt < pts.size(); currPt++) {
                         int nextPt = input_object->getLineNextPt(currPt);
                         if (currPt != nextPt) {
+                            //能进到这里，就不是最后一个点
                             vec3f p1 = pts[currPt];
                             vec3f p2 = pts[nextPt];
 
@@ -185,7 +187,77 @@ namespace zeno {
 
                             vec3f vpt(vx, vy, vz);
                             vpt = zeno::normalize(vpt);
+#if 1
+                            glm::vec3 vxz(vpt[0], 0, vpt[2]);
 
+                            //步骤一：绕x轴，将y轴旋转至z轴原来位置
+                            glm::mat4 M_toz(1.0);
+                            {
+                                M_toz = glm::rotate(M_toz, glm::pi<float>() / 2, glm::vec3(1, 0, 0));
+                            }
+
+                            //步骤二：旋转至xz平面的投影
+                            glm::mat4 M_toxz(1.0);
+                            {
+                                float theta = zeno::atan(vxz[0] / vxz[2]);
+                                glm::vec3 rotate_u = glm::vec3(0, 1, 0);
+                                M_toxz = glm::rotate(M_toxz, theta, rotate_u);   //绕y轴旋转theta度，将向量投影至x轴
+                            }
+
+                            //步骤三：往上提
+                            glm::mat4 M_up(1.0);
+                            if (vpt[1] != 0)
+                            {
+                                glm::vec3 vdir(vpt[0], vpt[1], vpt[2]);
+                                float tantheta = vpt[1] / zeno::sqrt(vpt[0] * vpt[0] + vpt[2] * vpt[2]);
+                                float theta = zeno::atan(tantheta);
+                                glm::vec3 rotate_u = glm::cross(glm::vec3(vpt[0], 0, vpt[2]), vdir);
+                                M_up = glm::rotate(M_up, theta, rotate_u);
+                            }
+
+                            //步骤四：平移
+                            glm::mat4 M_translate(1.0);
+                            M_translate = glm::translate(M_translate, glm::vec3(p1[0], p1[1], p1[2]));
+
+                            glm::mat4 transM = M_translate * M_up * M_toxz * M_toz;
+#endif
+
+#if 0
+                            //步骤一：先平移至原点
+                            glm::mat4 M_translate(1.0);
+                            M_translate = glm::translate(M_translate, -glm::vec3(p1[0], p1[1], p1[2]));
+
+                            //步骤二：投影至xz平面
+                            glm::mat4 M_toxz(1.0);
+                            {
+                                glm::vec3 vdir(vpt[0], vpt[1], vpt[2]);
+                                float tantheta = vdir[1] / zeno::sqrt(vdir[0] * vdir[0] + vdir[2] * vdir[2]);
+                                float theta = zeno::atan(tantheta);
+                                
+                                glm::vec3 rotate_u = glm::cross(vdir, glm::vec3(vpt[0], 0, vpt[2]));
+                                M_toxz = glm::rotate(M_toxz, theta, rotate_u);
+                            }
+
+                            //步骤三：投影至z轴
+                            glm::mat4 M_z(1.0);
+                            {
+                                glm::vec3 vxz(vpt[0], 0, vpt[2]);
+                                float theta = zeno::atan(vxz[0] / vxz[2]);
+                                glm::vec3 rotate_u = glm::vec3(0, 1, 0);
+                                M_z = glm::rotate(M_z, theta, rotate_u);   //绕y轴逆向旋转theta度，将向量投影至x轴
+                            }
+
+                            //步骤四：旋转至y轴
+                            glm::mat4 M_y(1.0);
+                            {
+                                M_y = glm::rotate(M_y, -glm::pi<float>()/2, glm::vec3(1, 0, 0));
+                            }
+                            glm::mat4 rev_transM = M_y * M_z * M_toxz * M_translate;
+                            glm::mat4 transM = glm::inverse(rev_transM);
+#endif
+
+
+#if 0
                             //计算两个向量的叉积，得到旋转轴
                             vec3f rot = zeno::cross(originVec, vpt);
                             auto len = zeno::length(rot);
@@ -199,7 +271,6 @@ namespace zeno {
 
                                 float cos_theta = zeno::dot(originVec, vpt);
                                 float sin_theta = zeno::sqrt(1 - cos_theta * cos_theta);
-
                                 float rx = rot[0], ry = rot[1], rz = rot[2];
 
                                 glm::mat3 K = glm::mat3(
@@ -216,44 +287,67 @@ namespace zeno {
                                 Rx[1][0], Rx[1][1], Rx[1][2], 0,
                                 Rx[2][0], Rx[2][1], Rx[2][2], 0,
                                 p1[0], p1[1], p1[2], 1);
+#endif
 
-                            std::vector<vec3f> istartface(basepts.size());
-                            for (int i = 0; i < basepts.size(); i++) {
-                                vec3f basept = basepts[i];
-                                glm::vec4 v(basept[0], basept[1], basept[2], 1.0);
-                                glm::vec4 newpt = transM * v;
-                                istartface[i] = vec3f(newpt[0], newpt[1], newpt[2]);
-                            }
-
-                            std::vector<vec3f> iendface(basepts.size());
-                            for (int i = 0; i < basepts.size(); i++) {
-                                iendface[i] = basepts[i] + LB * vpt;
-                            }
-
-                            if (currPt < pts.size() - 1) {
-                                //要先找到下一个点的startface
-                                std::vector<vec3f> i1startface(basepts.size());
-                                for (int i = 0; i < basepts.size(); i++) {
+                            std::vector<vec3f> istartface;
+                            {
+                                istartface.resize(npts);
+                                for (int i = 0; i < npts; i++) {
                                     vec3f basept = basepts[i];
                                     glm::vec4 v(basept[0], basept[1], basept[2], 1.0);
-                                    glm::vec4 newpt = transM * v;
-                                    i1startface[i] = vec3f(newpt[0], newpt[1], newpt[2]);
+
+#if 1
+                                    //M_translate* M_up* M_toxz* M_toz;
+                                    glm::vec4 _v1 = M_toz * v;
+                                    glm::vec4 _v2 = M_toxz * _v1;
+                                    glm::vec4 _v3 = M_up * _v2;
+                                    glm::vec4 _v4 = M_translate * _v3;
+#endif
+
+                                    glm::vec4 newpt = transM* v;
+                                    istartface[i] = vec3f(newpt[0], newpt[1], newpt[2]);
                                 }
-
-                                //直接求中点
-
                             }
-                            else {
-                                //currPt是最后一个点
+                            if (currPt >= 0) {
+                                if (false) {
+                                    //此时收集到istartface是当前点，需要考虑到上一线段的末尾点形成面与当前面的不一致情况
+                                    int _npoints = newpts.size();
+                                    assert(_npoints >= npts);
+                                    for (int i = 0; i < npts; i++) {
+                                        //修正当前面
+                                        istartface[i] = (istartface[i] + lastendface[i]) / 2;
+                                    }
+                                }
+                                //istartface = lastendface;
+                            }
+
+                            //先收集这些确定的点
+                            if (currPt >= 0) {
+                                for (auto pt : istartface) {
+                                    newpts.push_back(pt);
+                                }
+                            }
+
+                            std::vector<vec3f> iendface(npts);
+                            for (int i = 0; i < npts; i++) {
+                                iendface[i] = istartface[i] + LB * vpt;
+                                lastendface[i] = iendface[i];
+                            }
+
+                            //提前收集endface
+                            for (auto pt : iendface) {
+                                newpts.push_back(pt);
                             }
                         }
+                        else {
+                            //for (auto pt : lastendface) {
+                            //    newpts.push_back(pt);
+                            //}
+                        }
                     }
-                    return 0;
-                    /*
                     std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(false, newpts.size(), 0);
                     spgeo->create_attr(ATTR_POINT, "pos", newpts);
                     return spgeo;
-                    */
 #if 0
                     std::vector<vec3f> pts = input_object->points_pos();
                     for (int i = 0; i < pts.size(); i++) {

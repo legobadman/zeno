@@ -191,6 +191,7 @@ void GraphsTreeModel::clear()
     QModelIndex rootIndex = invisibleRootItem()->index();
     m_main = nullptr;
     emit modelClear();
+    m_dirty = false;
 }
 
 /*!

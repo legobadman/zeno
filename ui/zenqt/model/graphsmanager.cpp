@@ -261,7 +261,6 @@ void GraphsManager::clear()
     if (m_model)
     {
         m_model->clear();
-
         for (auto scene : m_scenes)
         {
             delete scene;
