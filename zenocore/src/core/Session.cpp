@@ -37,6 +37,9 @@
 #include "zeno_types/reflect/reflection.generated.hpp"
 #include "zeno_nodes/reflect/reflection.generated.hpp"
 
+//#include <Python.h>
+//#include <pybind11/pybind11.h>
+
 
 using namespace zeno::reflect;
 using namespace zeno::types;
@@ -546,5 +549,13 @@ ZENO_API Session &getSession() {
 #endif
     return *ptr;
 }
+
+//namespace py = pybind11;
+//
+//PYBIND11_MODULE(ze, z) {
+//    py::class_<Session>(z, "Session")
+//        .def("run", &Session::run)
+//        .def("interrupt", &Session::interrupt);
+//}
 
 }

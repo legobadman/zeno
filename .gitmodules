@@ -49,3 +49,6 @@
 [submodule "ui/3rdparty/QuickScintilla"]
 	path = ui/3rdparty/QuickScintilla
 	url = https://github.com/legobadman/QuickScintilla.git
+[submodule "zenocore/pybind11"]
+	path = api/python/pybind11
+	url = https://github.com/pybind/pybind11.git

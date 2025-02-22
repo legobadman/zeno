@@ -62,12 +62,34 @@ if (ZENO_ENABLE_BACKWARD)
     add_backward(zeno)
 endif()
 
+if (0)#ZENO_WITH_PYTHON)
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+
+    message(STATUS "python3 libraries for zenqt: ${Python3_LIBRARIES}")
+    message(STATUS "python3 include directories for zenqt: ${Python3_INCLUDE_DIRS}")
+    target_link_libraries(zenocore PUBLIC ${Python3_LIBRARIES})
+    target_include_directories(zenocore PUBLIC ${Python3_INCLUDE_DIRS})
+    target_compile_definitions(zenocore PRIVATE -DZENO_WITH_PYTHON)
+    #target_link_options(zenocore PRIVATE /NODEFAULTLIB:python311.lib)
+
+    add_subdirectory(pybind11)
+    pybind11_add_module(ze 
+        src/core/Session.cpp
+        src/core/ObjectManager.cpp
+        src/core/Graph.cpp
+        src/core/INode.cpp
+        src/core/ReflectNodeClass.cpp)
+    target_link_libraries(ze PRIVATE zenocore)
+    set_target_properties(ze PROPERTIES SUFFIX ".pyd")
+endif()
+
 if (ZENO_BUILD_SHARED)
     target_compile_definitions(zenocore PRIVATE -DZENO_DLLEXPORT INTERFACE -DZENO_DLLIMPORT)
 endif()
 
 target_include_directories(zenocore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    #$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/pybind11/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tpls/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tpls/deprecated>
     $<INSTALL_INTERFACE:include/Zeno/zeno/include>
