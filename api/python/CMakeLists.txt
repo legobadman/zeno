@@ -3,9 +3,11 @@ if (ZENO_WITH_PYTHON)
 
     add_subdirectory(pybind11)
     pybind11_add_module(ze 
-        zegraph.cpp
-        zenode.cpp
-        zesession.cpp)
+        zpygraph.cpp
+        zpygraph.h
+        zpynode.cpp
+        zpynode.h
+        zpysession.cpp)
 
     target_include_directories(ze PUBLIC ${CMAKE_SOURCE_DIR}/zenocore/include)
     target_link_libraries(ze PUBLIC zenocore)
