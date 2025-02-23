@@ -1,4 +1,4 @@
-#ifdef ZENO_WITH_PYTHON
+#if 0
 #include "zenopyapi.h"
 
 namespace zeno {

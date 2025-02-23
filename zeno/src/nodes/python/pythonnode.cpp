@@ -12,6 +12,8 @@ struct PythonNode : zeno::INode {
 
         std::string stdOutErr =
             "import sys\n\
+sys.path.append('D:/zeno/Debug/bin')\n\
+\
 class CatchOutErr:\n\
     def __init__(self):\n\
         self.value = ''\n\
@@ -26,10 +28,15 @@ sys.stderr = catchOutErr\n\
 
         Py_Initialize();
         PyObject* pModule = PyImport_AddModule("__main__"); //create main module
-        PyRun_SimpleString(stdOutErr.c_str()); //invoke code to redirect
+        int ret = PyRun_SimpleString(stdOutErr.c_str()); //invoke code to redirect
 
         auto prim = get_input_prim_param("script");
         std::string script = zeno::reflect::any_cast<std::string>(prim.result);
+
+        PyObject* zeModule = PyImport_ImportModule("ze"); //create main module
+        if (!zeModule) {
+            PyErr_Print();  // 打印错误信息
+        }
 
         //Py_Initialize();
         if (PyRun_SimpleString(script.c_str()) < 0) {
@@ -49,7 +56,7 @@ sys.stderr = catchOutErr\n\
             }
         }
         else {
-            zeno::log_warn("The option 'ZENO_WITH_PYTHON3' should be ON");
+            zeno::log_warn("The option 'ZENO_WITH_PYTHON' should be ON");
         }
     }
 };

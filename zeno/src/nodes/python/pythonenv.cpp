@@ -1,4 +1,4 @@
-#ifdef ZENO_WITH_PYTHON
+#if 0
 #include <Python.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>

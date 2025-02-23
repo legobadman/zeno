@@ -1,4 +1,4 @@
-#ifdef ZENO_WITH_PYTHON
+#if 0
 #define PY_SSIZE_T_CLEAN
 #include "zenopyapi.h"
 
