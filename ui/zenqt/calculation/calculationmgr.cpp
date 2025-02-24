@@ -54,7 +54,7 @@ void CalcWorker::run() {
 
 CalculationMgr::CalculationMgr(QObject* parent)
     : QObject(parent)
-    , m_bMultiThread(true)
+    , m_bMultiThread(false)
     , m_worker(nullptr)
     , m_playTimer(new QTimer(this))
     , m_runstatus(RunStatus::NoRun)

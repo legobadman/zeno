@@ -1,3 +1,6 @@
+#ifdef ZENO_PYAPI_STATICLIB
+#include <Python.h>
+#endif
 #include <pybind11/pybind11.h>
 #include <string>
 #include <zeno/core/Session.h>
@@ -48,7 +51,7 @@ private:
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(ze, m) {  // `ze` 是python里import的模块名
+PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
     py::class_<MyClass>(m, "MyClass")
         .def(py::init<const std::string&, int>())  // 绑定构造函数
         .def("setValue", &MyClass::setValue)       // 绑定成员函数

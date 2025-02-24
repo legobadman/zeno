@@ -94,7 +94,7 @@ if (ZENO_WITH_PYTHON)
 
     message(STATUS "python3 libraries for zenqt: ${Python3_LIBRARIES}")
     message(STATUS "python3 include directories for zenqt: ${Python3_INCLUDE_DIRS}")
-    target_link_libraries(zeno PRIVATE ${Python3_LIBRARIES})
+    target_link_libraries(zeno PRIVATE ${Python3_LIBRARIES} zenpybind)
     target_include_directories(zeno PRIVATE ${Python3_INCLUDE_DIRS})
 
     target_compile_definitions(zeno PRIVATE -DZENO_WITH_PYTHON)

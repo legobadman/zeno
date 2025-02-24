@@ -3,16 +3,17 @@
 #include <zeno/zeno.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/string.h>
+#include <Windows.h>
 
 
 namespace zeno {
 
 struct PythonNode : zeno::INode {
+
     virtual void apply() override {
 
         std::string stdOutErr =
             "import sys\n\
-sys.path.append('D:/zeno/Debug/bin')\n\
 \
 class CatchOutErr:\n\
     def __init__(self):\n\
@@ -26,19 +27,15 @@ sys.stdout = catchOutErr\n\
 sys.stderr = catchOutErr\n\
 "; //this is python code to redirect stdouts/stderr
 
-        Py_Initialize();
+        //Py_Initialize();
         PyObject* pModule = PyImport_AddModule("__main__"); //create main module
         int ret = PyRun_SimpleString(stdOutErr.c_str()); //invoke code to redirect
+
+        printf("Python version: %s\n", Py_GetVersion());
 
         auto prim = get_input_prim_param("script");
         std::string script = zeno::reflect::any_cast<std::string>(prim.result);
 
-        PyObject* zeModule = PyImport_ImportModule("ze"); //create main module
-        if (!zeModule) {
-            PyErr_Print();  // 打印错误信息
-        }
-
-        //Py_Initialize();
         if (PyRun_SimpleString(script.c_str()) < 0) {
             zeno::log_warn("Python Script run failed");
         }
@@ -54,9 +51,6 @@ sys.stderr = catchOutErr\n\
                     zeno::log_info(line);
                 }
             }
-        }
-        else {
-            zeno::log_warn("The option 'ZENO_WITH_PYTHON' should be ON");
         }
     }
 };
