@@ -301,6 +301,18 @@ namespace zeno {
             val = vecvar{ vec4[0], vec4[1], vec4[2], vec4[3] };
             return true;
         }
+        //else if (type == gParamType_AnyList) {
+        //    auto& vec = any_cast<std::vector<zeno::reflect::Any>>(val);
+        //    if (vec.size() == 2) {
+
+        //    }
+        //    else if (vec.size() == 3) {
+
+        //    }
+        //    else if (vec.size() == 4) {
+
+        //    }
+        //}
 
         if (anyType != type)
             return false;
