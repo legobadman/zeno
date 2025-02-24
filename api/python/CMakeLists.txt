@@ -23,6 +23,6 @@ if (ZENO_WITH_PYTHON)
     target_include_directories(zenpybind PRIVATE ${Python3_INCLUDE_DIRS})
     target_include_directories(zenpybind PUBLIC ${CMAKE_SOURCE_DIR}/zenocore/include pybind11/include)
     target_compile_definitions(zenpybind PUBLIC -DZENO_PYAPI_STATICLIB)
-    target_link_libraries(zenpybind PUBLIC zenocore)
+    target_link_libraries(zenpybind PRIVATE zenocore)
 
 endif()

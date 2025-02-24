@@ -338,16 +338,21 @@ void Graph::setModel(GraphModel* pGraphM)
     connect(m_model, &GraphModel::dataChanged, this, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
         const QString& uuid = topLeft.data(QtRole::ROLE_NODE_UUID_PATH).toString();
         ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end());
+        qan::Node* pNodeItem = m_nodes[uuid];
         int role = roles[0];
         if (role == QtRole::ROLE_NODE_RUN_STATE) {
             const QVariant& dat = topLeft.data(role);
             NodeState state = dat.value<NodeState>();
             QmlNodeRunStatus::Value qmlstate = static_cast<QmlNodeRunStatus::Value>(state.runstatus);
-            m_nodes[uuid]->getItem()->dataChanged(qmlstate, role);
+            pNodeItem->getItem()->dataChanged(qmlstate, role);
+        }
+        else if (role == QtRole::ROLE_NODE_NAME) {
+            const QVariant& dat = topLeft.data(role);
+            pNodeItem->setLabel(dat.toString());
         }
         else {
             const QVariant& dat = topLeft.data(role);
-            m_nodes[uuid]->getItem()->dataChanged(dat, role);
+            pNodeItem->getItem()->dataChanged(dat, role);
         }
     });
     connect(this, &qan::Graph::nodeLabelChanged, this, [this](qan::Node* item) {

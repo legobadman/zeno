@@ -62,9 +62,9 @@ public:
     virtual CustomUI export_customui() const;          //由此刻实际存在的节点输入输出导出的customUi
     ObjPath get_path() const;
     ObjPath get_graph_path() const;
-    ObjPath get_uuid_path() const { return m_uuidPath; }
+    ObjPath get_uuid_path() const;
     std::string get_uuid() const;
-    std::weak_ptr<Graph> getGraph() const { return graph; }
+    std::weak_ptr<Graph> getGraph() const;
     void initUuid(std::shared_ptr<Graph> pGraph, const std::string nodecls);
 
     void set_view(bool bOn);

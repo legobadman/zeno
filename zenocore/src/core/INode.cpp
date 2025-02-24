@@ -124,6 +124,10 @@ std::string INode::get_show_icon() const {
     }
 }
 
+ObjPath INode::get_uuid_path() const {
+    return m_uuidPath;
+}
+
 CustomUI INode::get_customui() const {
     if (nodeClass) {
         return nodeClass->m_customui;
@@ -131,6 +135,10 @@ CustomUI INode::get_customui() const {
     else {
         return CustomUI();
     }
+}
+
+std::weak_ptr<Graph> INode::getGraph() const {
+    return graph;
 }
 
 ObjPath INode::get_graph_path() const {
