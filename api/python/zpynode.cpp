@@ -1,5 +1,6 @@
 #include "zpynode.h"
 #include <zeno/core/Graph.h>
+#include "apiutil.h"
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -154,21 +155,7 @@ void Zpy_Node::update_param(const std::string& name, py::object obj) {
     }
     else if (py::isinstance<py::list>(obj)) {
         const py::list& lst = obj.cast<py::list>();
-        zeno::vecvar vec;
-        for (auto item : lst) {
-            if (py::isinstance<py::int_>(item)) {
-                int val = item.cast<int>();
-                vec.push_back(val);
-            }
-            else if (py::isinstance<py::float_>(item)) {
-                float val = item.cast<double>();
-                vec.push_back(val);
-            }
-            else if (py::isinstance<py::str>(item)) {
-                std::string val = item.cast<std::string>();
-                vec.push_back(val);
-            }
-        }
+        zeno::vecvar vec = zpyapi::pylist2vec(lst);
         spNode->update_param(name, vec);
     }
     else {

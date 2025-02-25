@@ -5,6 +5,7 @@
 #include <string>
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
+#include "zpyobject.h"
 #include "zpygraph.h"
 #include <memory>
 
@@ -57,6 +58,44 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
         .def("setValue", &MyClass::setValue)       // 绑定成员函数
         .def("getValue", &MyClass::getValue)
         .def("getName", &MyClass::testzeno);
+
+    py::class_<Zpy_Camera>(m, "Camera")
+        .def(py::init<py::list, py::list, py::list, float, float, float>(),
+            py::arg("pos") = py::list(py::make_tuple(0, 0, 5)),
+            py::arg("up") = py::list(py::make_tuple(0, 1, 0)),
+            py::arg("view") = py::list(py::make_tuple(0, 0, -1)),
+            py::arg("fov") = 45.f,
+            py::arg("aperture") = 11.0f,
+            py::arg("focalPlaneDistance") = 2.0f
+            )
+        .def("setPos", &Zpy_Camera::setPos)
+        .def("getPos", &Zpy_Camera::getPos)
+        .def_property("pos", &Zpy_Camera::getPos, &Zpy_Camera::setPos)
+        /**/
+        .def("setUp", &Zpy_Camera::setUp)
+        .def("getUp", &Zpy_Camera::getUp)
+        .def_property("up", &Zpy_Camera::getUp, &Zpy_Camera::setUp)
+        /**/
+        .def("setView", &Zpy_Camera::setView)
+        .def("getView", &Zpy_Camera::getView)
+        .def_property("view", &Zpy_Camera::getView, &Zpy_Camera::setView)
+        /**/
+        .def("setFar", &Zpy_Camera::setFar)
+        .def("getFar", &Zpy_Camera::getFar)
+        .def_property("far", &Zpy_Camera::getFar, &Zpy_Camera::setFar)
+        /**/
+        .def("setFov", &Zpy_Camera::setFov)
+        .def("getFov", &Zpy_Camera::getFov)
+        .def_property("fov", &Zpy_Camera::getFov, &Zpy_Camera::setFov)
+        /**/
+        .def("setAperture", &Zpy_Camera::setAperture)
+        .def("getAperture", &Zpy_Camera::getAperture)
+        .def_property("aperture", &Zpy_Camera::getAperture, &Zpy_Camera::setAperture)
+        /**/
+        .def("setFocalPlaneDistance", &Zpy_Camera::setFocalPlaneDistance)
+        .def("getFocalPlaneDistance", &Zpy_Camera::getFocalPlaneDistance)
+        .def_property("focalPlaneDistance", &Zpy_Camera::getFocalPlaneDistance, &Zpy_Camera::setFocalPlaneDistance)
+        ;
 
     py::class_<Zpy_Node>(m, "ZNode")     //其实并不希望用户在python允许构造这个，毕竟他只是一个proxy
         .def("setName", &Zpy_Node::set_name)

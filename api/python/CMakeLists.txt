@@ -3,10 +3,14 @@ if (ZENO_WITH_PYTHON)
 
     add_subdirectory(pybind11)
     pybind11_add_module(zen 
+        apiutil.cpp
+        apiutil.h
         zpygraph.cpp
         zpygraph.h
         zpynode.cpp
         zpynode.h
+        zpyobject.cpp
+        zpyobject.h
         zpysession.cpp)
 
     target_include_directories(zen PUBLIC ${CMAKE_SOURCE_DIR}/zenocore/include)
@@ -14,10 +18,14 @@ if (ZENO_WITH_PYTHON)
     set_target_properties(zen PROPERTIES SUFFIX ".pyd")
 
     add_library(zenpybind STATIC
+        apiutil.cpp
+        apiutil.h
         zpygraph.cpp
         zpygraph.h
         zpynode.cpp
         zpynode.h
+        zpyobject.cpp
+        zpyobject.h
         zpysession.cpp)
     #target_link_libraries(zenpybind PRIVATE ${Python3_LIBRARIES})
     target_include_directories(zenpybind PRIVATE ${Python3_INCLUDE_DIRS})

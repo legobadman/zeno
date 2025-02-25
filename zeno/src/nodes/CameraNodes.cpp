@@ -44,17 +44,17 @@ struct CameraNode: zeno::INode{
 
 ZENO_DEFNODE(CameraNode)({
      {
-         {"vec3f", "pos", "0,0,5"},
-         {"vec3f", "up", "0,1,0"},
-         {"vec3f", "view", "0,0,-1"},
-         {"float", "fov", "45"},
-         {"float", "aperture", "11"},
-         {"float", "focalPlaneDistance", "2.0"},
-         {"string", "other", ""},
-         {"int", "frame", "0"},
+         {gParamType_Vec3f, "pos", "0,0,5"},
+         {gParamType_Vec3f, "up", "0,1,0"},
+         {gParamType_Vec3f, "view", "0,0,-1"},
+         {gParamType_Float, "fov", "45"},
+         {gParamType_Float, "aperture", "11"},
+         {gParamType_Float, "focalPlaneDistance", "2.0"},
+         {gParamType_String, "other", ""},
+         {gParamType_Int, "frame", "0"},
      },
      {
-         {"CameraObject", "camera"},
+         {gParamType_Camera, "camera"},
      },
      {
      },
