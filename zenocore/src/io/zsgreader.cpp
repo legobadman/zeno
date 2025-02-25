@@ -14,7 +14,7 @@ namespace zenoio {
 
     ZsgReader::ZsgReader() : m_bDiskReading(true), m_ioVer(zeno::VER_3) {}
 
-    ZENO_API ZSG_PARSE_RESULT ZsgReader::openFile(const std::string& fn)
+    ZENO_API ZSG_PARSE_RESULT ZsgReader::openFile(const std::wstring& fn)
     {
         ZSG_PARSE_RESULT result;
         result.code = PARSE_ERROR;

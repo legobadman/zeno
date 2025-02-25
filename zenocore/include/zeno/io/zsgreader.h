@@ -11,7 +11,7 @@ namespace zenoio
     {
     public:
         ZsgReader();
-        ZENO_API ZSG_PARSE_RESULT openFile(const std::string& fn);
+        ZENO_API ZSG_PARSE_RESULT openFile(const std::wstring& fn);
 
     protected:
         virtual bool _parseMainGraph(const rapidjson::Document& doc, zeno::GraphData& ret);

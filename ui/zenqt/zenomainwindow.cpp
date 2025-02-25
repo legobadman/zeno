@@ -1531,7 +1531,7 @@ void ZenoMainWindow::importGraph(bool bPreset)
         reader.setDelayReadGraph(true);
         zeno::scope_exit sp([&] {reader.setDelayReadGraph(false); });
 
-        zenoio::ZSG_PARSE_RESULT result = reader.openFile(zdaPath);
+        zenoio::ZSG_PARSE_RESULT result = reader.openFile(filePath.toStdWString());
         if (result.code == zenoio::PARSE_NOERROR) {
             zeno::ZenoAsset zasset = reader.getParsedAsset();
             zasset.info.path = zdaPath;

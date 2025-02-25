@@ -301,7 +301,7 @@ namespace zenoio
         return curves;
     }
 
-    ZENO_API zeno::ZSG_VERSION getVersion(const std::string& fn)
+    ZENO_API zeno::ZSG_VERSION getVersion(const std::wstring& fn)
     {
         std::filesystem::path filePath(fn);
         if (!std::filesystem::exists(filePath)) {

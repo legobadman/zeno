@@ -174,11 +174,11 @@ struct ExtractMaterialShader : zeno::INode
       BindMaterial,
       {
           {
-              {gParamType_Primitive, "object", "", zeno::Socket_ReadOnly},
+              {gParamType_Primitive, "object", "", zeno::Socket_ReadOnly, zeno::NullControl, "wildcardgroup"},
               {gParamType_String, "mtlid", "Mat1"},
           },
           {
-              {gParamType_Primitive, "object"},
+              {gParamType_Primitive, "object", "", zeno::Socket_Output, zeno::NullControl, "wildcardgroup"},
           },
           {},
           {
