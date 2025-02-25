@@ -61,17 +61,24 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
     py::class_<Zpy_Node>(m, "ZNode")     //其实并不希望用户在python允许构造这个，毕竟他只是一个proxy
         .def("setName", &Zpy_Node::set_name)
         .def("getName", &Zpy_Node::get_name)
+        .def_property("name", &Zpy_Node::get_name, &Zpy_Node::set_name)
         .def("setView", &Zpy_Node::set_view)
         .def("isView", &Zpy_Node::is_view)
+        .def_property("view", &Zpy_Node::is_view, &Zpy_Node::set_view)
         .def("updateParam", &Zpy_Node::update_param)
         .def("paramValue", &Zpy_Node::param_value)
         .def("setPos", &Zpy_Node::set_pos)
         .def("getPos", &Zpy_Node::get_pos)
+        .def_property("pos", &Zpy_Node::get_pos, &Zpy_Node::set_pos)
         ;
 
     py::class_<Zpy_Graph>(m, "ZGraph")
-        .def("newNode", &Zpy_Graph::newNode)
+        .def("newNode", &Zpy_Graph::newNode,
+            py::arg("nodecls"),
+            py::arg("originalname") = "",
+            py::arg("bAssets") = false)
         .def("getName", &Zpy_Graph::getName)
+        .def_property_readonly("name", &Zpy_Graph::getName)
         .def("getNode", &Zpy_Graph::getNode)
         .def("removeNode", &Zpy_Graph::removeNode)
         .def("addEdge", &Zpy_Graph::addEdge)
