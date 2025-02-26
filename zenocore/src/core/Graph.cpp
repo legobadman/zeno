@@ -968,6 +968,18 @@ std::shared_ptr<zeno::INode> Graph::getNodeByPath(const std::string& pa)
     return spGraph->getNode(nodename);
 }
 
+std::vector<std::shared_ptr<INode>> Graph::getNodesByClass(const std::string& cls)
+{
+    std::vector<std::shared_ptr<INode>> nodes;
+    auto iter = node_set.find(cls);
+    if (iter != node_set.end()) {
+        for (auto name : iter->second) {
+            nodes.push_back(getNode(name));
+        }
+    }
+    return nodes;
+}
+
 std::map<std::string, std::shared_ptr<INode>> Graph::getNodes() const {
     std::map<std::string, std::shared_ptr<INode>> nodes;
     for (auto& [uuid, node] : m_nodes) {

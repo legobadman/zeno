@@ -59,6 +59,35 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
         .def("getValue", &MyClass::getValue)
         .def("getName", &MyClass::testzeno);
 
+    py::class_<Zpy_Light>(m, "Light")
+        .def(py::init<py::list, py::list, py::list, py::list, float>(),
+            py::arg("pos") = py::list(py::make_tuple(0, 0, 0)),
+            py::arg("scale") = py::list(py::make_tuple(1, 1, 1)),
+            py::arg("rotate") = py::list(py::make_tuple(0, 0, 0)),
+            py::arg("color") = py::list(py::make_tuple(1, 1, 1)),
+            py::arg("intensity") = 1.0f
+        )
+        .def("setPos", &Zpy_Light::setPos)
+        .def("getPos", &Zpy_Light::getPos)
+        .def_property("pos", &Zpy_Light::getPos, &Zpy_Light::setPos)
+        /**/
+        .def("setScale", &Zpy_Light::setScale)
+        .def("getScale", &Zpy_Light::getScale)
+        .def_property("scale", &Zpy_Light::getScale, &Zpy_Light::setScale)
+        /**/
+        .def("setRotate", &Zpy_Light::setRotate)
+        .def("getRotate", &Zpy_Light::getRotate)
+        .def_property("rotate", &Zpy_Light::getRotate, &Zpy_Light::setRotate)
+        /**/
+        .def("setColor", &Zpy_Light::setColor)
+        .def("getColor", &Zpy_Light::getColor)
+        .def_property("color", &Zpy_Light::getColor, &Zpy_Light::setColor)
+        /**/
+        .def("setIntensity", &Zpy_Light::setIntensity)
+        .def("getIntensity", &Zpy_Light::getIntensity)
+        .def_property("intensity", &Zpy_Light::getIntensity, &Zpy_Light::setIntensity)
+        ;
+
     py::class_<Zpy_Camera>(m, "Camera")
         .def(py::init<py::list, py::list, py::list, float, float, float>(),
             py::arg("pos") = py::list(py::make_tuple(0, 0, 5)),
@@ -97,7 +126,7 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
         .def_property("focalPlaneDistance", &Zpy_Camera::getFocalPlaneDistance, &Zpy_Camera::setFocalPlaneDistance)
         ;
 
-    py::class_<Zpy_Node>(m, "ZNode")     //其实并不希望用户在python允许构造这个，毕竟他只是一个proxy
+    py::class_<Zpy_Node>(m, "ZNode")     //TODO: 如果用户想直接构造，那需要指定一张图
         .def("setName", &Zpy_Node::set_name)
         .def("getName", &Zpy_Node::get_name)
         .def_property("name", &Zpy_Node::get_name, &Zpy_Node::set_name)
@@ -112,7 +141,7 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
         ;
 
     py::class_<Zpy_Graph>(m, "ZGraph")
-        .def("newNode", &Zpy_Graph::newNode,
+        .def("createNode", &Zpy_Graph::createNode,
             py::arg("nodecls"),
             py::arg("originalname") = "",
             py::arg("bAssets") = false)
@@ -121,6 +150,9 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
         .def("getNode", &Zpy_Graph::getNode)
         .def("removeNode", &Zpy_Graph::removeNode)
         .def("addEdge", &Zpy_Graph::addEdge)
+        .def("removeEdge", &Zpy_Graph::removeEdge)
+        .def("getCamera", &Zpy_Graph::getCamera)
+        .def("getLight", &Zpy_Graph::getLight)
         ;
 
     py::class_<Zpy_Session>(m, "Session")

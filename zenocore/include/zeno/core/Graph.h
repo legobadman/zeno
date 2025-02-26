@@ -80,7 +80,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     bool hasNode(std::string const& uuid_node_path);
     std::shared_ptr<INode> getNode(std::string const& name);
     std::shared_ptr<INode> getNodeByUuidPath(ObjPath path);
-    std::shared_ptr<zeno::INode> getNodeByPath(const std::string& path);
+    std::shared_ptr<INode> getNodeByPath(const std::string& path);
+    std::vector<std::shared_ptr<INode>> getNodesByClass(const std::string& cls);
     std::shared_ptr<Graph> getGraphByPath(const std::string& path);
     std::map<std::string, std::shared_ptr<INode>> getNodes() const;
     std::set<std::string> get_viewnodes() const;

@@ -14,7 +14,7 @@ Zpy_Graph::Zpy_Graph(std::shared_ptr<zeno::Graph> graph)
 
 }
 
-Zpy_Node Zpy_Graph::newNode(const std::string& nodecls, const std::string& originalname, bool bAssets)
+Zpy_Node Zpy_Graph::createNode(const std::string& nodecls, const std::string& originalname, bool bAssets)
 {
     THROW_WHEN_CORE_DESTROYED
     std::shared_ptr<zeno::INode> spNode = spGraph->createNode(nodecls, originalname, bAssets);
@@ -49,4 +49,45 @@ void Zpy_Graph::addEdge(const std::string& out_node, const std::string& out_para
     edge.inNode = in_node;
     edge.inParam = in_param;
     spGraph->addLink(edge);
+}
+
+void Zpy_Graph::removeEdge(const std::string& out_node, const std::string& out_param,
+    const std::string& in_node, const std::string& in_param)
+{
+    THROW_WHEN_CORE_DESTROYED
+    zeno::EdgeInfo edge;
+    edge.bObjLink = true;
+    edge.outNode = out_node;
+    edge.outParam = out_param;
+    edge.inNode = in_node;
+    edge.inParam = in_param;
+    spGraph->removeLink(edge);
+}
+
+py::object Zpy_Graph::getCamera() const {
+    THROW_WHEN_CORE_DESTROYED
+    auto vecNodes = spGraph->getNodesByClass("MakeCamera");
+    if (vecNodes.empty()) {
+        return py::none();
+    }
+
+    Zpy_Camera apiCamera(vecNodes[0]);
+    //要评估该节点是否有obj，否则只有节点而无obj违反了这个obj设计的初衷
+    if (apiCamera.getCamera()) {
+        return py::cast(apiCamera);
+    }
+    return py::none();
+}
+
+py::object Zpy_Graph::getLight() const {
+    THROW_WHEN_CORE_DESTROYED
+    auto vecNodes = spGraph->getNodesByClass("LightNode");
+    if (vecNodes.empty()) {
+        return py::none();
+    }
+    Zpy_Light apiLight(vecNodes[0]);
+    if (apiLight.getLight()) {
+        return py::cast(apiLight);
+    }
+    return py::none();
 }
