@@ -1,11 +1,12 @@
 {
     "Default Layout 1": {
-        "state": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><QtAdvancedDockingSystem Version=\"1\" UserVersion=\"0\" Containers=\"1\"><Container Floating=\"0\"><Splitter Orientation=\"-\" Count=\"1\"><Splitter Orientation=\"|\" Count=\"2\"><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"View\"><Widget Name=\"View\" Closed=\"0\"/></Area><Area Tabs=\"2\" Current=\"Geometry Data\"><Widget Name=\"Geometry Data\" Closed=\"0\"/><Widget Name=\"Logger\" Closed=\"0\"/></Area><Sizes>494 414 </Sizes></Splitter><Area Tabs=\"2\" Current=\"Node Editor(QML)\"><Widget Name=\"Node Editor(QML)\" Closed=\"0\"/><Widget Name=\"Editor\" Closed=\"1\"/></Area><Sizes>885 850 </Sizes></Splitter><Sizes>913 </Sizes></Splitter></Container></QtAdvancedDockingSystem>\n",
+        "state": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><QtAdvancedDockingSystem Version=\"1\" UserVersion=\"0\" Containers=\"1\"><Container Floating=\"0\"><Splitter Orientation=\"-\" Count=\"1\"><Splitter Orientation=\"|\" Count=\"2\"><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"View\"><Widget Name=\"View\" Closed=\"0\"/></Area><Area Tabs=\"3\" Current=\"Logger\"><Widget Name=\"Logger\" Closed=\"0\"/><Widget Name=\"Python Executor\" Closed=\"0\"/><Widget Name=\"Geometry Data\" Closed=\"0\"/></Area><Sizes>494 414 </Sizes></Splitter><Area Tabs=\"2\" Current=\"Node Editor(QML)\"><Widget Name=\"Node Editor(QML)\" Closed=\"0\"/><Widget Name=\"Editor\" Closed=\"1\"/></Area><Sizes>885 850 </Sizes></Splitter><Sizes>913 </Sizes></Splitter></Container></QtAdvancedDockingSystem>\n",
         "widgets": [
             "Editor",
+            "Geometry Data",
             "Logger",
             "Node Editor(QML)",
-            "Geometry Data",
+            "Python Executor",
             "View"
         ]
     }, 

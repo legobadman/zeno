@@ -11,6 +11,7 @@
 #include "panel/zlogpanel.h"
 #include "panel/zgeometryspreadsheet.h"
 #include "panel/zqmlpanel.h"
+#include "panel/pythonexecutor.h"
 #include "widgets/ztimeline.h"
 #include "widgets/ztoolbar.h"
 #include "viewport/viewportwidget.h"
@@ -289,6 +290,7 @@ void ZenoMainWindow::onMenuActionTriggered(bool bTriggered)
     case ACTION_OPEN_PATH:
     case ACTION_NODE_PARAMETERS:
     case ACTION_LOG:
+    case ACTION_PYTHON_EXECUTOR:
     case ACTION_IMAGE:
     case ACTION_COMMAND_ARGS:
     {
@@ -523,6 +525,12 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
         pDockElem->setWidget(pLog, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
+    case PANEL_PYTHON_EXECUTOR:
+    {
+        auto pane = new PythonExecutePane;
+        pDockElem->setWidget(pane, ads::CDockWidget::ForceNoScrollArea);
+        break;
+    }
     case PANEL_OPTIX_VIEW:
     {
         break;
@@ -650,6 +658,12 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
                 auto pLog = new DockContent_Log;
                 pLog->initUI();
                 pDockElem->setWidget(pLog, ads::CDockWidget::ForceNoScrollArea);
+                break;
+            }
+            case PANEL_PYTHON_EXECUTOR:
+            {
+                auto pane = new PythonExecutePane;
+                pDockElem->setWidget(pane, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
             case PANEL_OPTIX_VIEW:
@@ -951,6 +965,12 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         pLog->initUI();
         pWid = pLog;
         title = tr("Log");
+        break;
+    }
+    case ACTION_PYTHON_EXECUTOR: {
+        auto pane = new PythonExecutePane;
+        pWid = pane;
+        title = tr("Python Executor");
         break;
     }
     case ACTION_COMMAND_ARGS: {
@@ -1899,6 +1919,7 @@ void ZenoMainWindow::setActionProperty()
     m_ui->actionNode_Parameters->setProperty("ActionType", ACTION_NODE_PARAMETERS);
     m_ui->actionObject_data->setProperty("ActionType", ACTION_OBJECT_DATA);
     m_ui->actionLog->setProperty("ActionType", ACTION_LOG);
+    m_ui->actionPythonExecutor->setProperty("ActionType", ACTION_PYTHON_EXECUTOR);
     m_ui->actionOptixView->setProperty("ActionType", ACTION_OPTIX_VIEW);
     m_ui->actionNode_Editor_QML->setProperty("ActionType", ACTION_NODE_EDITOR_QML);
     m_ui->actionObject_data_QML->setProperty("ActionType", ACTION_OBJECT_DATA_QML);

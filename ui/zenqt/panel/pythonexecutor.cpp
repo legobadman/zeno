@@ -1,0 +1,83 @@
+#include "pythonexecutor.h"
+#include "layout/docktabcontent.h"
+#include <zeno/include/zenoutil.h>
+#include <zenoapplication.h>
+#include "model/graphsmanager.h"
+
+
+PythonExecutePane::PythonExecutePane(QWidget* parent)
+    : QWidget(parent)
+{
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+
+    // 创建标题栏
+    QHBoxLayout* titleBarLayout = new QHBoxLayout();
+
+    auto pBtnShowList = new ZToolBarButton(true, ":/icons/subnet-listview.svg", ":/icons/subnet-listview-on.svg");
+    QPushButton* runBtn = new QPushButton("Run");
+
+    pBtnShowList->setChecked(true);
+
+    titleBarLayout->addWidget(pBtnShowList);
+    titleBarLayout->addStretch();
+    titleBarLayout->addWidget(runBtn);
+
+    mainLayout->addLayout(titleBarLayout);
+
+    // 创建主内容区域
+    QHBoxLayout* contentLayout = new QHBoxLayout();
+    listWidget = new QListWidget();
+    listWidget->setStyleSheet("QListWidget { border: 1px solid gray; }");
+    listWidget->setFixedWidth(150);
+    stackedWidget = new QStackedWidget();
+
+    contentLayout->addWidget(listWidget);
+    contentLayout->addWidget(stackedWidget, 1);
+
+    mainLayout->addLayout(contentLayout);
+
+    QString name = QString("Session %1").arg(1);
+    listWidget->addItem(name);
+    QTextEdit* textEdit = new QTextEdit();
+    stackedWidget->addWidget(textEdit);
+
+    setAutoFillBackground(true);
+    QPalette pal = palette();
+    pal.setColor(QPalette::Window, QColor(31,31,31));
+    setPalette(pal);
+
+    connect(runBtn, &QPushButton::clicked, this, &PythonExecutePane::run);
+    connect(listWidget, &QListWidget::currentRowChanged, stackedWidget, &QStackedWidget::setCurrentIndex);
+    connect(pBtnShowList, &ZToolBarButton::toggled, listWidget, &QListWidget::setVisible);
+}
+
+void PythonExecutePane::run() {
+    GraphsManager* graphsMgr = zenoApp->graphsManager();
+    if (!graphsMgr->getGraph({ "main" })) {
+        QMessageBox::critical(this, "Run Failed", "the project has not been created.");
+        return;
+    }
+
+    QTextEdit* codeEditor = qobject_cast<QTextEdit*>(stackedWidget->currentWidget());
+    bool bSucceed = false;
+    if (codeEditor) {
+        QString text = codeEditor->toPlainText();
+        if (text.isEmpty())
+            return;
+
+        const std::string& script = text.toStdString();
+        bSucceed = zeno::runPython(script);
+    }
+    if (!bSucceed) {
+        QMessageBox::critical(this, "Run Failed", "The python script run failed, please read the log from log panel.");
+    }
+    else {
+        int nExists = listWidget->count();
+        QString name = QString("Session %1").arg(nExists + 1);
+        listWidget->addItem(name);
+        QTextEdit* textEdit = new QTextEdit();
+        stackedWidget->addWidget(textEdit);
+        stackedWidget->setCurrentWidget(textEdit);
+        listWidget->setCurrentRow(listWidget->count() - 1);
+    }
+}

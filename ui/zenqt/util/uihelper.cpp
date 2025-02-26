@@ -2644,6 +2644,9 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Logger") || title == "Logger" || title == QObject::tr("Log") || title == "Log") {
         type = PANEL_LOG;
     }
+    else if (title == QObject::tr("Python Executor") || title == "Python Executor") {
+        type = PANEL_PYTHON_EXECUTOR;
+    }
     else if (title == QObject::tr("QML Opengl")) {
         type = PANEL_QML_GLVIEW;
     }

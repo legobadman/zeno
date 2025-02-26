@@ -98,6 +98,7 @@
     <addaction name="actionObject_data"/>
     <addaction name="actionObject_data_QML"/>
     <addaction name="actionLog"/>
+    <addaction name="actionPythonExecutor"/>
     <addaction name="actionOptixView"/>
     <addaction name="actionNode_Editor_QML"/>
     <addaction name="actionImage"/>
@@ -376,6 +377,11 @@ border-top: 1px solid black;</string>
   <action name="actionLog">
    <property name="text">
     <string>Log</string>
+   </property>
+  </action>
+  <action name="actionPythonExecutor">
+   <property name="text">
+    <string>Python Executor</string>
    </property>
   </action>
   <action name="actionOptixView">

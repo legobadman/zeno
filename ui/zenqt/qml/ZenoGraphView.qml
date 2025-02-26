@@ -41,6 +41,7 @@ Qan.GraphView {
     resizeHandlerColor: "#03a9f4"       // SAMPLE: Set resize handler color to blue for 'resizable' nodes
     gridThickColor: Qt.rgba(46/255, 46/255, 46/255, 1.0)// Material.theme === Material.Dark ? "#4e4e4e" : "#c1c1c1"
     grid: null      //不需要grid
+    focus: true
 
     signal navigateRequest(var lst)
     signal nodeClicked(var node)
@@ -626,6 +627,7 @@ Qan.GraphView {
     */
 
     Keys.onPressed: {
+        console.log("Keys.onPressed on ZenoGraphView")
         if (event.key === Qt.Key_P) {
             proppanel.visible = !proppanel.visible
         }
