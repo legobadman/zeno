@@ -160,15 +160,15 @@ Item {
                 
                 icon.source: checked  ? "qrc:/icons/run_stop.svg" : "qrc:/icons/run_play.svg"
 
-                onCheckedChanged: {
-                    // console.log("checked: " + checked)
+                onClicked: {
+                    console.log("Button clicked, checked state:", checked)
                     if (checked) {
                         calcmgr.run()
                     }
                     else{
                         calcmgr.kill()
                     }
-                }    
+                }
 
                 contentItem: Image {
                     id: icon_image3

@@ -45,6 +45,9 @@ public:
     Zpy_Graph mainGraph() const {
         return Zpy_Graph(sess.mainGraph);
     }
+    void run() {
+        sess.run();
+    }
 private:
     zeno::Session& sess;
 };
@@ -53,6 +56,10 @@ private:
 namespace py = pybind11;
 
 PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
+    m.def("mainGraph", []() -> Zpy_Graph {
+        return Zpy_Graph(zeno::getSession().mainGraph);
+    });
+
     py::class_<MyClass>(m, "MyClass")
         .def(py::init<const std::string&, int>())  // 绑定构造函数
         .def("setValue", &MyClass::setValue)       // 绑定成员函数
@@ -157,5 +164,8 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
 
     py::class_<Zpy_Session>(m, "Session")
         .def(py::init<>())
-        .def("mainGraph", &Zpy_Session::mainGraph);
+        .def("mainGraph", &Zpy_Session::mainGraph)
+        .def("run", &Zpy_Session::run)
+        ;
+
 }

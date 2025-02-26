@@ -225,7 +225,7 @@ py::list Zpy_Light::getPos() const {
 
 void Zpy_Light::setPos(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("pos", zpyapi::pylist2vec(v));
+    spNode->update_param("position", zpyapi::pylist2vec(v));
     run();
 }
 
