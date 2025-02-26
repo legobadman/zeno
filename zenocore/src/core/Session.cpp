@@ -98,7 +98,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
                 //compatible with old case of combobox items.
                 param.type = zeno::types::gParamType_String;
                 param.control = Combobox;
-                std::vector<std::string> items = split_str(param_desc.comboxitems, ';');
+                std::vector<std::string> items = split_str(param_desc.comboxitems, ' ', false);
                 if (!items.empty()) {
                     items.erase(items.begin());
                     param.ctrlProps = items;
@@ -147,7 +147,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
             //compatible with old case of combobox items.
             param.type = zeno::types::gParamType_String;
             param.control = Combobox;
-            std::vector<std::string> items = split_str(param_desc.comboxitems, ' ');
+            std::vector<std::string> items = split_str(param_desc.comboxitems, ' ', false);
             if (!items.empty()) {
                 items.erase(items.begin());
                 param.ctrlProps = items;
@@ -205,7 +205,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
 }
 
 ZENO_API void Session::defNodeClass(std::shared_ptr<INode>(*ctor)(), std::string const &clsname, Descriptor const &desc) {
-    if (clsname == "CreateCube") {
+    if (clsname == "LightNode") {
         int j;
         j = 0;
     }
