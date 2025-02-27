@@ -61,7 +61,8 @@
 #include "DockContainerWidget.h"
 #include "DockManager.h"
 #include <zeno/io/zdareader.h>
-#include <QFileSystemWatcher> 
+#include <QFileSystemWatcher>
+#include "panel/pythonexecutor.h"
 
 
 const QString g_latest_layout = "LatestLayout";
@@ -118,6 +119,12 @@ void ZenoMainWindow::init(PANEL_TYPE onlyView)
     auto calcMgr = zenoApp->calculationMgr();
     if (calcMgr)
         connect(calcMgr, &CalculationMgr::calcFinished, this, &ZenoMainWindow::onCalcFinished);
+
+    QShortcut* shortcut = new QShortcut(QKeySequence("Alt+S"), this);
+    connect(shortcut, &QShortcut::activated, this, [=]() {
+        PythonAIDialog dialog(this);
+        dialog.exec();
+    });
 }
 
 void ZenoMainWindow::initWindowProperty()

@@ -11,6 +11,17 @@
 #include <QListWidget>
 #include <QStackedWidget>
 #include <QTextEdit>
+#include <QApplication>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QDialog>
+#include <QPushButton>
+#include <QShortcut>
+#include <QDebug>
+#include <QTcpServer>
+#include <QTcpSocket>
+
 
 class PythonExecutePane : public QWidget
 {
@@ -24,6 +35,14 @@ private slots:
 private:
     QListWidget* listWidget;
     QStackedWidget* stackedWidget;
+};
+
+class PythonAIDialog : public QDialog {
+public:
+    PythonAIDialog(QWidget* parent = nullptr);
+
+private:
+    QTcpSocket* m_clientSocket;
 };
 
 
