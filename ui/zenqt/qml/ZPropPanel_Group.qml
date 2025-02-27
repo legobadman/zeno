@@ -79,7 +79,7 @@ Item {
 
             function formatWithSignificantDigits(num, significantDigits) {
                 //int类型的数值在model已经转了，这里拿到的都是int，而无需在意小数点的事情
-                if (isNumeric(num)) {
+                if (isNumeric(num) && num != "") {
                     return parseFloat(num.toPrecision(significantDigits)).toString();
                 }
                 else {
@@ -375,10 +375,6 @@ Item {
                     dialog.open()
                 }
             }
-
-            Component.onCompleted: {
-                console.log("mvalue: " + mvalue)
-            }
         }
     }
 
@@ -410,6 +406,7 @@ Item {
                             control != ParamControl.Lineedit &&
                             control != ParamControl.ColorVec
 
+                    //这个margin竟然能决定显示warning:  Qt Quick Layouts: Detected recursive rearrange. Aborting after two iterations.
                     Layout.topMargin: showVertically ? 5 : 0
                     Layout.bottomMargin: showVertically ? 5 : 0
 
@@ -557,8 +554,6 @@ Item {
                         property var m_control_properties: model.control_properties
                         property var mindex: root.model.index(index, 0)
                     }   //end Loader
-
-                    //Item {visible: showVertically}
                 }
         }
 

@@ -565,8 +565,12 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    const ParamItem& param = m_items[index.row()];
+    int r = index.row();
+    if (r >= m_items.size()) {
+        return QVariant();
+    }
 
+    const ParamItem& param = m_items[r];
     switch (role)
     {
     case QtRole::ROLE_PARAM_NAME:       return param.name;
