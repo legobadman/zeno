@@ -402,7 +402,7 @@ Item {
             property string maxName: root.model.maxLengthName
 
             delegate:
-                ColumnLayout {
+                GridLayout {
                     Layout.fillWidth: true
                     property bool is_match_group: (root.is_input_prim && group == ParamGroup.InputPrimitive) || (!root.is_input_prim && group == ParamGroup.OutputPrimitive)
                     property bool showVertically: control != ParamControl.Checkbox && 
@@ -410,161 +410,156 @@ Item {
                             control != ParamControl.Lineedit &&
                             control != ParamControl.ColorVec
 
-                    spacing: 0
+                    Layout.topMargin: showVertically ? 5 : 0
+                    Layout.bottomMargin: showVertically ? 5 : 0
 
-                    RowLayout {
-                        spacing: 0
-                        Layout.fillWidth: true
+                    rows: showVertically ? 2 : 1
+                    columns: showVertically ? 2 : 3
+                    rowSpacing: 0
 
-                        ToolButton {
-                            id: btn_show_prim_sock
-                            checkable: true
-                            checked: socket_visible
-                            icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
-                            visible: is_match_group && param_visible
-                            Layout.leftMargin: 0
+                    ToolButton {
+                        id: btn_show_prim_sock
+                        checkable: true
+                        checked: socket_visible
+                        icon.source: checked ? "qrc:/icons/parameter_key-frame_correct.svg" : "qrc:/icons/parameter_key-frame_idle.svg"
+                        visible: is_match_group && param_visible
+                        Layout.leftMargin: 0
 
-                            onCheckedChanged: {
-                                root.model.setData(root.model.index(index, 0), btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
-                            }    
+                        onCheckedChanged: {
+                            root.model.setData(root.model.index(index, 0), btn_show_prim_sock.checked == true, Model.ROLE_PARAM_SOCKET_VISIBLE)
+                        }    
 
-                            contentItem: Image {
-                                id: icon_image
-                                source: parent.icon.source
-                                sourceSize.width: 20
-                                sourceSize.height: 20
-                                smooth: true
-                                antialiasing: true
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-
-                            background: Rectangle {
-                                x: icon_image.x + 3
-                                y: icon_image.y
-                                width: 14
-                                height: 14
-                                anchors.verticalCenter: parent.verticalCenter
-                                opacity: enabled ? 1 : 0.3
-                                color: parent.hovered ? "#f0f0f0" : "transparent"
-                                radius: width / 2
-                            }
+                        contentItem: Image {
+                            id: icon_image
+                            source: parent.icon.source
+                            sourceSize.width: 20
+                            sourceSize.height: 20
+                            smooth: true
+                            antialiasing: true
+                            anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        Text {
-                            text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
-                            color: "white"
-                            visible: is_match_group && param_visible
-
-                            TextMetrics {
-                                id: textMetrics
-                                text: repeater_id.maxName
-                            }
-
-                            Layout.preferredWidth: {
-                                return Math.max(textMetrics.width, 50) + 16
-                            }
-                            Layout.alignment: Qt.AlignVCenter
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    // console.log("socket name onClicked")
-                                    parent.forceActiveFocus();
-                                }
-                            }
-                        }
-
-                        Loader {
-                                visible: !showVertically
-                                Layout.fillWidth: control == ParamControl.Checkbox ? false : true
-                                sourceComponent: {
-                                    if (!is_match_group || !param_visible || showVertically) {
-                                        return compBlank;
-                                    }
-                                    if (control == ParamControl.Checkbox){
-                                        return compCheckbox
-                                    }
-                                    else if (control == ParamControl.Combobox){
-                                        return compCombobox
-                                    }
-                                    else if (control == ParamControl.Lineedit){
-                                        return complineedit
-                                    }
-                                    else if (control == ParamControl.ColorVec) {
-                                        return compColorWidget
-                                    }
-                                    else {
-                                        return nullControl
-                                    }
-                                }
-                                property var mvalue: model.value
-                                property var m_control_properties: model.control_properties
-                                property var mindex: root.model.index(index, 0)
-                        }
-
-                        Item {
-                            Layout.fillWidth: control == ParamControl.Checkbox
+                        background: Rectangle {
+                            x: icon_image.x + 3
+                            y: icon_image.y
+                            width: 14
+                            height: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                            opacity: enabled ? 1 : 0.3
+                            color: parent.hovered ? "#f0f0f0" : "transparent"
+                            radius: width / 2
                         }
                     }
-                    RowLayout {
-                        visible: showVertically
-                        spacing: 0
-                        Item {
-                            width: 32
+
+                    Text {
+                        text: name  /* c++导出的名字, 可到 ParamPlainModel::roleNames()查看 */
+                        color: "white"
+                        visible: is_match_group && param_visible
+
+                        TextMetrics {
+                            id: textMetrics
+                            text: repeater_id.maxName
                         }
-                        Loader {
-                                Layout.fillWidth: true
-                                sourceComponent: {
-                                    if (!is_match_group || !param_visible || !showVertically) {
-                                        return compBlank;
-                                    }
-                                    if (control == ParamControl.Lineedit){
-                                        return complineedit
-                                    }
-                                    else if (control == ParamControl.Checkbox){
-                                        return compCheckbox
-                                    }
-                                    else if (control == ParamControl.Combobox){
-                                        return compCombobox
-                                    }
-                                    else if (control == ParamControl.Multiline){
-                                        return textedit
-                                    }
-                                    else if (control == ParamControl.Vec2edit){
-                                        return compVec2edit
-                                    }
-                                    else if (control == ParamControl.Vec3edit){
-                                        return compVec3edit
-                                    }
-                                    else if (control == ParamControl.Vec4edit){
-                                        return compVec4edit
-                                    }
-                                    else if (control == ParamControl.CodeEditor){
-                                        return textedit
-                                    }
-                                    else if (control == ParamControl.ColorVec) {
-                                        return compColorWidget
-                                    }
-                                    else if (control == ParamControl.ReadPathEdit || control == ParamControl.WritePathEdit) {
-                                        return compPathEdit
-                                    }
-                                    else if (control == ParamControl.Slider){
-                                        return compSlider
-                                    }
-                                    else{
-                                        return nullControl
-                                    }
-                                }
-                                property var mvalue: model.value
-                                property var m_control_properties: model.control_properties
-                                property var mindex: root.model.index(index, 0)
+
+                        Layout.preferredWidth: {
+                            return Math.max(textMetrics.width, 50) + 16
+                        }
+                        Layout.alignment: Qt.AlignVCenter
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                // console.log("socket name onClicked")
+                                parent.forceActiveFocus();
+                            }
                         }
                     }
+
+                    Loader {
+                        visible: !showVertically
+                        Layout.fillWidth: control == ParamControl.Checkbox ? false : true
+                        sourceComponent: {
+                            if (!is_match_group || !param_visible || showVertically) {
+                                return compBlank;
+                            }
+                            if (control == ParamControl.Checkbox){
+                                return compCheckbox
+                            }
+                            else if (control == ParamControl.Combobox){
+                                return compCombobox
+                            }
+                            else if (control == ParamControl.Lineedit){
+                                return complineedit
+                            }
+                            else if (control == ParamControl.ColorVec) {
+                                return compColorWidget
+                            }
+                            else {
+                                return nullControl
+                            }
+                        }
+                        property var mvalue: model.value
+                        property var m_control_properties: model.control_properties
+                        property var mindex: root.model.index(index, 0)
+                    }
+
+                    //第二行
                     Item {
-                        height: 16
+                        Layout.fillWidth: true
+                        visible: showVertically
                     }
-                }
 
+                    Loader {
+                        Layout.fillWidth: true
+                        visible: showVertically
+                        sourceComponent: {
+                            if (!is_match_group || !param_visible || !showVertically) {
+                                return compBlank;
+                            }
+                            if (control == ParamControl.Lineedit){
+                                return complineedit
+                            }
+                            else if (control == ParamControl.Checkbox){
+                                return compCheckbox
+                            }
+                            else if (control == ParamControl.Combobox){
+                                return compCombobox
+                            }
+                            else if (control == ParamControl.Multiline){
+                                return textedit
+                            }
+                            else if (control == ParamControl.Vec2edit){
+                                return compVec2edit
+                            }
+                            else if (control == ParamControl.Vec3edit){
+                                return compVec3edit
+                            }
+                            else if (control == ParamControl.Vec4edit){
+                                return compVec4edit
+                            }
+                            else if (control == ParamControl.CodeEditor){
+                                return textedit
+                            }
+                            else if (control == ParamControl.ColorVec) {
+                                return compColorWidget
+                            }
+                            else if (control == ParamControl.ReadPathEdit || control == ParamControl.WritePathEdit) {
+                                return compPathEdit
+                            }
+                            else if (control == ParamControl.Slider){
+                                return compSlider
+                            }
+                            else{
+                                return nullControl
+                            }
+                        }
+                        property var mvalue: model.value
+                        property var m_control_properties: model.control_properties
+                        property var mindex: root.model.index(index, 0)
+                    }   //end Loader
+
+                    //Item {visible: showVertically}
+                }
         }
 
         Item {
