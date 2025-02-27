@@ -14,8 +14,8 @@ Item {
     Rectangle {
         anchors.fill: parent
         color: "transparent"
-        border.color: inputField.activeFocus ? "blue" : "gray"  // 焦点时改变边框颜色
-        border.width: 1
+        border.color: inputField.activeFocus ? "#4B9EF4" : "gray"  // 焦点时改变边框颜色
+        border.width: inputField.activeFocus ? 2 : 1
     }
 
     TextInput {
@@ -34,6 +34,7 @@ Item {
         color: "white"
         //focus: true // 确保输入框可以获得焦点
         selectByMouse: true // 启用鼠标选择文本功能
+        selectionColor: "#4B9EF4"  // 选中的背景色
         clip: true
 
         onTextChanged: {
