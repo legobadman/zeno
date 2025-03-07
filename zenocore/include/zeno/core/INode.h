@@ -50,6 +50,7 @@ public:
     void doApply(CalcContext* pContext);
     void doApply_Parameter(std::string const &name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
     void doOnlyApply();
+    virtual void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
     void clear();
 
     //BEGIN new api
@@ -75,7 +76,6 @@ public:
     CALLBACK_REGIST(set_mute, void, bool)
     bool is_mute() const;
 
-    void mark_dirty(bool bOn, bool bWholeSubnet = true, bool bRecursively = true);
     bool is_dirty() const { return m_dirty; }
     NodeRunStatus get_run_status() const { return m_status; }
 

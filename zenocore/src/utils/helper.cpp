@@ -1314,7 +1314,7 @@ namespace zeno {
 
         if (spCurrNode->is_dirty())
             return;
-        spCurrNode->mark_dirty(true, true, false);
+        spCurrNode->mark_dirty(true, Dirty_All, true, false);
 
         if (bOn) {
             auto spGraph = spCurrNode->getGraph().lock();
@@ -1383,7 +1383,7 @@ namespace zeno {
                     parentSubgNodeMarkDirty(link.inNode, link.inParam);
                 }
             }
-            spGraph->optParentSubgNode.value()->mark_dirty(true, true, false);
+            spGraph->optParentSubgNode.value()->mark_dirty(true, Dirty_All, true, false);
         }
     }
 

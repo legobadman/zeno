@@ -469,7 +469,7 @@ void INode::onInterrupted() {
     mark_previous_ref_dirty();
 }
 
-void INode::mark_dirty(bool bOn, bool bWholeSubnet, bool bRecursively)
+void INode::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively)
 {
     scope_exit sp([&] {
         m_status = Node_DirtyReadyToRun;  //修改了数据，标脏，并置为此状态。（后续在计算过程中不允许修改数据，所以markDirty理论上是前端驱动）
@@ -536,7 +536,7 @@ void INode::mark_dirty(bool bOn, bool bWholeSubnet, bool bRecursively)
     assert(spGraph);
     if (spGraph->optParentSubgNode.has_value())
     {
-        spGraph->optParentSubgNode.value()->mark_dirty(true, false);
+        spGraph->optParentSubgNode.value()->mark_dirty(true, Dirty_All, false);
     }
 }
 

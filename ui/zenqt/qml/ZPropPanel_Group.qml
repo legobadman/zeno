@@ -395,7 +395,14 @@ Item {
         Repeater {
             id: repeater_id
             model: root.model     //关联的是ParamPlainModel或者ParamsModel
-            property string maxName: root.model.maxLengthName
+            property string maxName: {
+                //输出参数一般很少，不需要对齐
+                if (root.is_input_prim) {
+                    return root.model.maxLengthName
+                } else {
+                    return ""
+                }
+            }
 
             delegate:
                 GridLayout {

@@ -156,6 +156,13 @@ namespace zeno {
         Node_RunSucceed             //计算成功并完成   (no dirty)
     };
 
+    enum DirtyReason
+    {
+        Dirty_All,
+        Dirty_FrameChanged,
+        Dirty_ParamChanged,
+    };
+
     //几何属性对应的分组
     enum GeoAttrGroup {
         ATTR_GEO,
