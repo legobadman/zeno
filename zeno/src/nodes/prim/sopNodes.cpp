@@ -5,6 +5,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/core/FunctionManager.h>
+#include <sstream>
+#include <zeno/formula/zfxexecute.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -424,15 +426,23 @@ namespace zeno {
             std::string group="Points",
             bool deleteNonSelected = false
         ) {
-            
-            //ZfxContext ctx;
-            //ctx.spNode = shared_from_this();
-            //ctx.spObject = spGeo;
-            //ctx.code = zfxCode;
-            //ZfxExecute zfx(zfxCode, &ctx);
-            //zfx.execute();
+            std::ostringstream ss;
+            ss << "if (" << (deleteNonSelected ? "!" : "") <<
+                "(" << zfx << ")) { " << (group=="Points" ? "remove_point" : "remove_face")
+                << "(@ptnum); }";
 
-            return input_object;
+            std::shared_ptr<zeno::GeometryObject> spOutput(input_object);
+
+            const std::string& finalZfx = ss.str();
+            zeno::ZfxContext ctx;
+            ctx.spNode = shared_from_this();
+            ctx.spObject = spOutput;
+            ctx.code = finalZfx;
+
+            zeno::ZfxExecute zfxexe(finalZfx, &ctx);
+            zfxexe.execute();
+
+            return spOutput;
         }
 
         zeno::CustomUI export_customui() const override {
