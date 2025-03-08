@@ -1312,6 +1312,41 @@ namespace zeno {
                 ZfxVariable result = eval(funcname, args, filter, pContext);
                 return result;
             }
+            case UNARY_EXP: {
+                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
+                if (args.size() != 1) {
+                    throw makeError<UnimplError>("num args of unary op should be 1");
+                }
+                const ZfxVariable& arg = args[0];
+                const int N = arg.value.size();
+                ZfxVariable result;
+                result.value.resize(N);
+                switch (root->opVal) {
+                case NOT: {
+                    for (int i = 0; i < N; i++)
+                    {
+                        result.value[i] = std::visit([&](auto&& argval)->zfxvariant {
+                            using T = std::decay_t<decltype(argval)>;
+                            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                                return (int)(argval <= 0);
+                            }
+                            else if constexpr (std::is_same_v<T, std::string>) {
+                                return !argval.empty();
+                            }
+                            else {
+                                //TODO: vectype
+                                throw makeError<UnimplError>("not support of nor operator for other types.");
+                            }
+                        }, arg.value[i]);
+                    }
+                    break;
+                }
+                default: {
+                    throw makeError<UnimplError>("unknown unary op.");
+                }
+                }
+                return result;
+            }
             case FOUROPERATIONS: {
                 //四则运算+ - * / %
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);

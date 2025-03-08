@@ -340,8 +340,8 @@ int yyFlexLexer::yylex()
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 44
-#define YY_END_OF_BUFFER 45
+#define YY_NUM_RULES 45
+#define YY_END_OF_BUFFER 46
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -351,10 +351,10 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[65] =
     {   0,
-        0,    0,   45,   43,    3,    4,   43,   23,   33,    9,
-       43,   43,   10,   11,    7,    5,   12,    6,   15,    8,
+        0,    0,   46,   44,    3,    4,   43,   23,   33,    9,
+       44,   44,   10,   11,    7,    5,   12,    6,   15,    8,
         1,   14,   27,   35,   28,   37,   13,   20,   26,   18,
-       19,   16,   43,   17,   40,   23,   34,   42,    0,   30,
+       19,   16,   44,   17,   40,   23,   34,   42,    0,   30,
        24,   29,   25,   31,    1,    2,   32,    1,    1,    0,
        36,   39,   38,   26,   41,   21,   22,    0,    2,    0,
         1,    0,    1,    0
@@ -951,23 +951,28 @@ YY_RULE_SETUP
 #line 165 "zfxscanner.l"
 { return zeno::ZfxParser::make_AND(yytext, loc); }
 	YY_BREAK
-case YY_STATE_EOF(INITIAL):
-#line 166 "zfxscanner.l"
-{ return yyterminate(); }
-	YY_BREAK
 case 43:
 YY_RULE_SETUP
+#line 166 "zfxscanner.l"
+{ return zeno::ZfxParser::make_NOT(yytext, loc); }
+	YY_BREAK
+case YY_STATE_EOF(INITIAL):
 #line 167 "zfxscanner.l"
+{ return yyterminate(); }
+	YY_BREAK
+case 44:
+YY_RULE_SETUP
+#line 168 "zfxscanner.l"
 {
              cout << "ZfxScanner: unknown character [" << yytext << "]" << endl;
           }
 	YY_BREAK
-case 44:
+case 45:
 YY_RULE_SETUP
-#line 171 "zfxscanner.l"
+#line 172 "zfxscanner.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 970 "zfxscanner.cpp"
+#line 975 "zfxscanner.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1928,6 +1933,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 171 "zfxscanner.l"
+#line 172 "zfxscanner.l"
 
 

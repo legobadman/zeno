@@ -162,6 +162,7 @@ equalto \=
 "!="        { return zeno::ZfxParser::make_NOTEQUAL(yytext, loc); }
 "||"        { return zeno::ZfxParser::make_OR(yytext, loc); }
 "&&"        { return zeno::ZfxParser::make_AND(yytext, loc); }
+"!"         { return zeno::ZfxParser::make_NOT(yytext, loc); }
 <<EOF>>   { return yyterminate(); }
 .         {
              cout << "ZfxScanner: unknown character [" << yytext << "]" << endl;

@@ -6,7 +6,6 @@
 #include <zeno/types/AttributeVector.h>
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
-#include <zeno/core/FunctionManager.h>
 #include <zeno/utils/api.h>
 
 

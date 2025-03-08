@@ -3,6 +3,8 @@
 #include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
 #include "glm/gtc/matrix_transform.hpp"
+#include <zeno/formula/zfxexecute.h>
+#include <zeno/core/FunctionManager.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -399,6 +401,44 @@ namespace zeno {
                 }
             }
             return input_object;
+        }
+    };
+
+    struct ZDEFNODE() Blast : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")},
+                {"zfx", ParamPrimitive("Zfx Expression")},
+                {"group", ParamPrimitive("Group", "Points", Combobox, std::vector<std::string>{"Points", "Faces"})},
+                {"deleteNonSelected", ParamPrimitive("Delete Non Selected")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            std::string zfx = "",
+            std::string group="Points",
+            bool deleteNonSelected = false
+        ) {
+            
+            //ZfxContext ctx;
+            //ctx.spNode = shared_from_this();
+            //ctx.spObject = spGeo;
+            //ctx.code = zfxCode;
+            //ZfxExecute zfx(zfxCode, &ctx);
+            //zfx.execute();
+
+            return input_object;
+        }
+
+        zeno::CustomUI export_customui() const override {
+            zeno::CustomUI ui = zeno::INode::export_customui();
+            ui.uistyle.background = "#DF7C1B";
+            return ui;
         }
     };
 

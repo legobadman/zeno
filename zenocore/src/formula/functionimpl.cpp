@@ -13,6 +13,7 @@
 #include <zeno/types/GeometryObject.h>
 #include <zeno/utils/vectorutil.h>
 #include <zeno/core/data.h>
+#include <zeno/core/FunctionManager.h>
 
 
 namespace zeno
