@@ -63,10 +63,21 @@ struct Route : zeno::INode {
             set_output("output", std::make_shared<zeno::DummyObject>());
         }
     }
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.background = "#99B2C4";
+        return ui;
+    }
 };
 
 ZENDEFNODE(Route, {
-    {{gParamType_IObject, "input", "", zeno::Socket_ReadOnly}},
+    {
+        {gParamType_IObject, "input", "", zeno::Socket_ReadOnly},
+        {gParamType_Float, "float_val", "0"},
+        {gParamType_Int, "int_val", "0"},
+        {gParamType_String, "string_val", "0"},
+        {gParamType_Vec3f, "vec3f_val", "0,0,0"}
+    },
     {{gParamType_IObject, "output"}},
     {},
     {"layout"},

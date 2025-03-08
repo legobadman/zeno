@@ -246,16 +246,37 @@ namespace zeno
             //以上方案取决于产品设计。
             float res = 0.f;
             if (items.size() == 1) {
-                if (!paramData.result.has_value()) {
+                auto refVal = paramData.defl;
+                if (!refVal.has_value()) {
                     throw makeError<UnimplError>("there is no result on refer source, should calc the source first.");
                 }
 
-                size_t primtype = paramData.result.type().hash_code();
+                size_t primtype = refVal.type().hash_code();
                 if (primtype == zeno::types::gParamType_Int) {
-                    res = zeno::reflect::any_cast<int>(paramData.result);
+                    res = zeno::reflect::any_cast<int>(refVal);
                 }
                 else if (primtype == zeno::types::gParamType_Float) {
-                    res = zeno::reflect::any_cast<float>(paramData.result);
+                    res = zeno::reflect::any_cast<float>(refVal);
+                }
+                else if (primtype == zeno::types::gParamType_PrimVariant) {
+                    auto refvar = zeno::reflect::any_cast<PrimVar>(refVal);
+                    res = std::visit([&](auto& arg)->float {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, float> || std::is_same_v<T, int>) {
+                            return (float)arg;
+                        }
+                        else if constexpr (std::is_same_v<T, std::string>) {
+                            if (arg.find("ref(") != std::string::npos) {
+                                throw makeError<UnimplError>("don't support recursive ref in this version");
+                            }
+                            else {
+                                throw makeError<UnimplError>("don't support string right now.");
+                            }
+                        }
+                        else {
+                            throw makeError<UnimplError>("error param type from primvar");
+                        }
+                    }, refvar);
                 }
                 else {
                     throw makeError<UnimplError>();
@@ -310,7 +331,6 @@ namespace zeno
             else {
                 throw makeError<UnimplError>();
             }
-
 
             ZfxVariable varres;
             varres.value.push_back(res);

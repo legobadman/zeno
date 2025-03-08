@@ -2629,6 +2629,9 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     if (title == QObject::tr("Parameter") || title == "Parameter") {
         type = PANEL_NODE_PARAMS;
     }
+    else if (title == QObject::tr("Node Parameters") || title == "Node Parameters") {
+        type = PANEL_NODE_PARAMS;
+    }
     else if (title == QObject::tr("View") || title == "View" || title == QObject::tr("Scene Viewport") || title == "Scene Viewport") {
         type = PANEL_GL_VIEW;
     }
