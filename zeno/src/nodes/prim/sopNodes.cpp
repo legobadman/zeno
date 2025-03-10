@@ -406,6 +406,33 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Merge : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"list_object", ParamObject("Input Of Objects")},
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::ListObject> list_object
+        ) {
+            int nPoints = 0, nFaces = 0;
+            const std::vector<std::shared_ptr<zeno::GeometryObject>>& geoobjs = list_object->get<zeno::GeometryObject>();
+            for (auto spObject : geoobjs) {
+                nPoints += spObject->npoints();
+                nFaces += spObject->nfaces();
+            }
+
+            std::shared_ptr<zeno::GeometryObject> mergedObj = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
+            mergedObj->merge(geoobjs);
+            return mergedObj;
+        }
+    };
+
     struct ZDEFNODE() Blast : INode {
 
         ReflectCustomUI m_uilayout = {

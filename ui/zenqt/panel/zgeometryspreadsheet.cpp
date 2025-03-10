@@ -91,7 +91,11 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     setLayout(pMainLayout);
 }
 
-void ZGeometrySpreadsheet::setGeometry(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject* pObject) {
+void ZGeometrySpreadsheet::setGeometry(
+        GraphModel* subgraph,
+        QModelIndex nodeidx,
+        std::shared_ptr<zeno::GeometryObject> spObject
+) {
     if (subgraph) {
         m_model = subgraph;
         connect(m_model, &GraphModel::nodeRemoved, this, &ZGeometrySpreadsheet::onNodeRemoved, Qt::UniqueConnection);
@@ -103,33 +107,33 @@ void ZGeometrySpreadsheet::setGeometry(GraphModel* subgraph, QModelIndex nodeidx
 
     QTableView* view = qobject_cast<QTableView*>(m_views->widget(0));
     if (VertexModel* model = qobject_cast<VertexModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     } else {
-        view->setModel(new VertexModel(pObject));
+        view->setModel(new VertexModel(spObject));
     }
 
     view = qobject_cast<QTableView*>(m_views->widget(1));
     if (PointModel* model = qobject_cast<PointModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     }
     else {
-        view->setModel(new PointModel(pObject));
+        view->setModel(new PointModel(spObject));
     }
 
     view = qobject_cast<QTableView*>(m_views->widget(2));
     if (FaceModel* model = qobject_cast<FaceModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     }
     else {
-        view->setModel(new FaceModel(pObject));
+        view->setModel(new FaceModel(spObject));
     }
 
     view = qobject_cast<QTableView*>(m_views->widget(3));
     if (GeomDetailModel* model = qobject_cast<GeomDetailModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     }
     else {
-        view->setModel(new GeomDetailModel(pObject));
+        view->setModel(new GeomDetailModel(spObject));
     }
     //TODO: geom model
 }
@@ -151,7 +155,7 @@ void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const Q
             } else if (currStatus == zeno::Node_RunSucceed) {
                 zeno::zany pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
                 if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
-                    setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom.get());
+                    setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom);
         }
     }
 }

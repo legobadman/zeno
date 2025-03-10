@@ -181,6 +181,7 @@ namespace zeno
 
         //特殊功能
         ZENO_API void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
+        ZENO_API void merge(std::vector<std::shared_ptr<GeometryObject>> objs);
 
     private:
         void initFromPrim(PrimitiveObject* prim);
