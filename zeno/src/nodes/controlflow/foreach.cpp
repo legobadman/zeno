@@ -7,6 +7,7 @@
 #include <zeno/core/FunctionManager.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/utils/helper.h>
+#include <zeno/geo/geometryutil.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -258,7 +259,11 @@ namespace zeno
                         m_collect_objs->append(iobj);
                         m_collect_objs->m_new_added.insert(currIterKey);
                     }
-                    return m_collect_objs;
+
+                    //先兼容Houdini，直接以merge的方式返回，如果日后有需求，再提供选项返回list
+                    std::shared_ptr<zeno::GeometryObject> mergedObj = zeno::mergeObjects(m_collect_objs);
+                    return mergedObj;
+                    //return m_collect_objs;
                 }
                 else {
                     assert(false);

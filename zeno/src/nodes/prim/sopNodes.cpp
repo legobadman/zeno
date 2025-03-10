@@ -7,6 +7,7 @@
 #include <zeno/core/FunctionManager.h>
 #include <sstream>
 #include <zeno/formula/zfxexecute.h>
+#include <zeno/geo/geometryutil.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -420,15 +421,7 @@ namespace zeno {
         std::shared_ptr<GeometryObject> apply(
             std::shared_ptr<zeno::ListObject> list_object
         ) {
-            int nPoints = 0, nFaces = 0;
-            const std::vector<std::shared_ptr<zeno::GeometryObject>>& geoobjs = list_object->get<zeno::GeometryObject>();
-            for (auto spObject : geoobjs) {
-                nPoints += spObject->npoints();
-                nFaces += spObject->nfaces();
-            }
-
-            std::shared_ptr<zeno::GeometryObject> mergedObj = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
-            mergedObj->merge(geoobjs);
+            std::shared_ptr<zeno::GeometryObject> mergedObj = zeno::mergeObjects(list_object);
             return mergedObj;
         }
     };

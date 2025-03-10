@@ -162,6 +162,18 @@ namespace zeno
         return parallel_reduce_minmax(verts.begin(), verts.end());
     }
 
+    ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList) {
+        int nPoints = 0, nFaces = 0;
+        const std::vector<std::shared_ptr<zeno::GeometryObject>>& geoobjs = spList->get<zeno::GeometryObject>();
+        for (auto spObject : geoobjs) {
+            nPoints += spObject->npoints();
+            nFaces += spObject->nfaces();
+        }
+        std::shared_ptr<zeno::GeometryObject> mergedObj = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
+        mergedObj->merge(geoobjs);
+        return mergedObj;
+    }
+
     ZENO_API glm::mat4 calc_rotate_matrix(
         float xangle,
         float yangle,

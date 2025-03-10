@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <array>
+#include <zeno/types/ListObject.h>
 #include <zeno/types/GeometryObject.h>
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
@@ -47,6 +48,8 @@ namespace zeno
         Rotate_Orientaion orientaion
         );
     ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo);
+
+    ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
 }
 
 
