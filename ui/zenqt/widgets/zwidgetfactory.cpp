@@ -40,6 +40,7 @@ namespace zenoui
         const Any& controlProps
     )
     {
+        size_t actualType = value.type().hash_code();
         switch (ctrl)
         {
             case zeno::Lineedit:
@@ -289,8 +290,16 @@ namespace zenoui
             }
             case zeno::Slider:
             {
-                ZASSERT_EXIT(paramType == gParamType_Int, nullptr);
-                int intVal = any_cast<int>(value);
+                int intVal = 0;
+                if (actualType == gParamType_PrimVariant) {
+                    const zeno::PrimVar& var = any_cast<zeno::PrimVar>(value);
+                    if (std::holds_alternative<int>(var)) {
+                        intVal = std::get<int>(var);
+                    }
+                }
+                else if (actualType == gParamType_Int) {
+                    intVal = any_cast<int>(value);
+                }
 
                 QSlider* pSlider = new QSlider(Qt::Horizontal);
                 pSlider->setStyleSheet(ZenoStyle::dpiScaleSheet("\
@@ -317,11 +326,21 @@ namespace zenoui
                 SLIDER_INFO sliderInfo;
                 
                 if (controlProps.has_value()) {
-                    auto& vec = zeno::reflect::any_cast<std::vector<float>>(controlProps);
-                    ZASSERT_EXIT(vec.size() == 3, nullptr);
-                    sliderInfo.min = vec[0];
-                    sliderInfo.max = vec[1];
-                    sliderInfo.step = vec[2];
+                    size_t ctrlPropsType = controlProps.type().hash_code();
+                    if (zeno::types::gParamType_IntList == ctrlPropsType) {
+                        auto& vec = zeno::reflect::any_cast<std::vector<int>>(controlProps);
+                        ZASSERT_EXIT(vec.size() == 3, nullptr);
+                        sliderInfo.min = vec[0];
+                        sliderInfo.max = vec[1];
+                        sliderInfo.step = vec[2];
+                    }
+                    else if (zeno::types::gParamType_FloatList == ctrlPropsType) {
+                        auto& vec = zeno::reflect::any_cast<std::vector<float>>(controlProps);
+                        ZASSERT_EXIT(vec.size() == 3, nullptr);
+                        sliderInfo.min = vec[0];
+                        sliderInfo.max = vec[1];
+                        sliderInfo.step = vec[2];
+                    }
                 }
                 pSlider->setSingleStep(sliderInfo.step);
                 pSlider->setRange(sliderInfo.min, sliderInfo.max);
@@ -349,8 +368,16 @@ namespace zenoui
             }
             case zeno::SpinBox:
             {
-                ZASSERT_EXIT(paramType == gParamType_Int, nullptr);
-                int intVal = any_cast<int>(value);
+                int intVal = 0;
+                if (paramType == gParamType_PrimVariant) {
+                    const zeno::PrimVar& var = any_cast<zeno::PrimVar>(value);
+                    if (std::holds_alternative<int>(var)) {
+                        intVal = std::get<int>(var);
+                    }
+                }
+                else if (paramType == gParamType_Int) {
+                    intVal = any_cast<int>(value);
+                }
 
                 QSpinBox* pSpinBox = new QSpinBox;
                 pSpinBox->setProperty("cssClass", "control");
@@ -358,14 +385,25 @@ namespace zenoui
                 pSpinBox->setValue(intVal);
                 pSpinBox->setFixedHeight(ZenoStyle::dpiScaled(zenoui::g_ctrlHeight));
                 SLIDER_INFO sliderInfo;
-                
+
                 if (controlProps.has_value()) {
-                    auto& vec = zeno::reflect::any_cast<std::vector<float>>(controlProps);
-                    ZASSERT_EXIT(vec.size() == 3, nullptr);
-                    sliderInfo.min = vec[0];
-                    sliderInfo.max = vec[1];
-                    sliderInfo.step = vec[2];
+                    size_t ctrlPropsType = controlProps.type().hash_code();
+                    if (zeno::types::gParamType_IntList == ctrlPropsType) {
+                        auto& vec = zeno::reflect::any_cast<std::vector<int>>(controlProps);
+                        ZASSERT_EXIT(vec.size() == 3, nullptr);
+                        sliderInfo.min = vec[0];
+                        sliderInfo.max = vec[1];
+                        sliderInfo.step = vec[2];
+                    }
+                    else if (zeno::types::gParamType_FloatList == ctrlPropsType) {
+                        auto& vec = zeno::reflect::any_cast<std::vector<float>>(controlProps);
+                        ZASSERT_EXIT(vec.size() == 3, nullptr);
+                        sliderInfo.min = vec[0];
+                        sliderInfo.max = vec[1];
+                        sliderInfo.step = vec[2];
+                    }
                 }
+
                 pSpinBox->setSingleStep(sliderInfo.step);
                 pSpinBox->setRange(sliderInfo.min, sliderInfo.max);
                 QObject::connect(pSpinBox, static_cast<void (QSpinBox::*)(int)>(& QSpinBox::valueChanged),[=](int newVal) { 
