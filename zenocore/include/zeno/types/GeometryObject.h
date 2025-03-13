@@ -32,6 +32,7 @@ namespace zeno
         ZENO_API std::vector<vec3f> points_pos();
         ZENO_API std::vector<vec3i> tri_indice() const;
         ZENO_API std::vector<int> edge_list() const;
+        ZENO_API std::vector<std::vector<int>> face_indice() const;
         ZENO_API bool is_base_triangle() const;
         ZENO_API bool is_Line() const;
         ZENO_API int get_group_count(GeoAttrGroup grp) const;

@@ -252,6 +252,15 @@ namespace zeno
         return indice;
     }
 
+    std::vector<std::vector<int>> GeometryTopology::face_indice() const {
+        std::vector<std::vector<int>> indice;
+        for (int i = 0; i < m_faces.size(); i++) {
+            std::vector<int> face = face_points(i);
+            indice.emplace_back(face);
+        }
+        return indice;
+    }
+
     std::vector<int> GeometryTopology::edge_list() const {
         std::vector<int> edges;
         for (auto spFace : m_faces) {
@@ -380,7 +389,7 @@ namespace zeno
         return -1;
     }
 
-    std::vector<int> GeometryTopology::face_points(int face_id) {
+    std::vector<int> GeometryTopology::face_points(int face_id) const {
         std::vector<int> pts;
         if (face_id < 0 || face_id >= m_faces.size())
             return pts;

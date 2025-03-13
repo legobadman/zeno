@@ -55,6 +55,7 @@ namespace zeno
         void initpoint(size_t idxPoint);
         void initLineNextPoint(size_t point_id);   //对象是line时，init点的下一个点
         std::vector<vec3i> tri_indice() const;
+        std::vector<std::vector<int>> face_indice() const;
         std::vector<int> edge_list() const;
         bool is_base_triangle() const;
         bool is_line() const;
@@ -87,7 +88,7 @@ namespace zeno
 
         /* 面相关 */
         int face_point(int face_id, int vert_id) const;
-        std::vector<int> face_points(int face_id);
+        std::vector<int> face_points(int face_id) const;
         int face_vertex(int face_id, int vert_id);
         int face_vertex_count(int face_id);
         std::vector<int> face_vertices(int face_id);

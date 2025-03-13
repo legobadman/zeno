@@ -8,6 +8,8 @@
 #include <sstream>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/geo/geometryutil.h>
+#include <unordered_set>
+#include <zeno/para/parallel_reduce.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -426,6 +428,350 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Divide : INode {
+
+        static const int Divide_X = 0;
+        static const int Divide_Y = 1;
+        static const int Divide_Z = 2;
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"input_object", ParamObject("Input")},
+                {"remove_shared_edge", ParamPrimitive("Remove Shared Edge")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        zeno::vec3f getInsetByInter(zeno::vec3f Pa, zeno::vec3f Pb, float axis_val, int axis) {
+            float t1 = (axis_val - Pa[axis]) / (Pb[axis] - Pa[axis]);
+            //如果t==0或者t==1，说明交点就是两侧顶点之一，或者都是（垂直的情况）
+            zeno::vec3f P1_inset = Pa + t1 * (Pb - Pa);
+            return P1_inset;
+        }
+
+        void removeRepeat(std::vector<zeno::vec3f>& vec) {
+            zeno::vec3f lastPos = vec[0];
+            for (auto iter = vec.begin(); iter != vec.end(); ) {
+                if (iter == vec.begin()) {
+                    iter++;
+                    continue;
+                }
+                if (*iter == lastPos) {
+                    //当前pos是重复的点
+                    lastPos = *iter;
+                    iter = vec.erase(iter);
+                }
+                else {
+                    lastPos = *iter;
+                    iter++;
+                }
+            }
+        }
+
+        bool splitFace(
+            const std::vector<zeno::vec3f>& facepts,        //当前面所有的点坐标，元素之间形成边，假定没有孤立点或者洞
+            int axis,    //分割轴
+            float axis_val,     //对应于axis分割轴下的分割面
+            ///*out*/std::vector<zeno::vec3f>& intersects,    //分割面和当前面进行求交，得到的相交点
+            /*out*/std::vector<zeno::vec3f>& left_face,     //分割出来“左”边的面，后续可能要继续分割
+            /*out*/std::vector<zeno::vec3f>& right_face    //分割出来“右”边的面，后续可能要继续分割
+            )
+        {
+            float axis_min = 0, axis_max = 0;
+            std::pair<vec3f, vec3f> bbox_info = parallel_reduce_minmax(facepts.begin(), facepts.end());
+            axis_min = bbox_info.first[axis];
+            axis_max = bbox_info.second[axis];
+
+            if (axis_val <= axis_min || axis_val >= axis_max) {
+                return false;
+            }
+
+            std::vector<int> left_points, right_points;
+            const int N = facepts.size();
+            for (int i = 0; i < N; i++) {
+                zeno::vec3f currPos = facepts[i];
+                if (currPos[axis] <= axis_val) {
+                    left_points.push_back(i);
+                }
+                if (currPos[axis] >= axis_val) {
+                    right_points.push_back(i);
+                }
+            }
+
+            std::sort(left_points.begin(), left_points.end());
+            std::sort(right_points.begin(), right_points.end());
+
+            const int leftN = left_points.size();
+            const int rightN = right_points.size();
+
+            //两个相交点的左右顶点的索引
+            //这个焦点信息要这么记录：
+            //inset的first值<=axis_val, second值>=axis_val
+            //inset的左右可以是同一个值，即，顶点就是交点
+            std::pair<int, int> inset1 = { -1,-1 }, inset2 = { -1,-1 };
+
+            //遍历左右两边的points，找到交点信息
+            bool bHasHole = false;
+            for (int i = 1; i < left_points.size(); i++) {
+                int Pi_1 = left_points[i - 1];
+                int Pi = left_points[i];
+                if (Pi - Pi_1 > 1) {
+                    //出现了洞，这样就可以直接提炼出两个交点信息
+                    bHasHole = true;
+                    //这时候要看right_points的首尾，因为可能出现重合点
+                    inset1 = { Pi_1, right_points.front() };
+                    inset2 = { Pi, right_points.back() };
+                    break;
+                }
+            }
+            for (int i = 1; i < right_points.size() && !bHasHole; i++) {
+                int Pi_1 = right_points[i - 1];
+                int Pi = right_points[i];
+                if (Pi - Pi_1 > 1) {
+                    bHasHole = true;
+                    inset1 = { left_points.front(), Pi_1};
+                    inset2 = { left_points.back(), Pi};
+                    break;
+                }
+            }
+            if (!bHasHole) {
+                //两个分割面的点序列都是顺序的，首尾相连
+                int left_first = left_points.front(), left_last = left_points.back();
+                int right_first = right_points.front(), right_last = right_points.back();
+
+                if ((left_first == right_last + 1 || left_first == right_last) && 
+                    left_last == N - 1 && right_first == 0) {
+                    //右边的尾巴接在左边的开头
+                    inset1 = { left_last, right_first };
+                    inset2 = { left_first, right_last };
+                }
+                else if ((right_first == left_last + 1 || right_first == left_last) && 
+                    right_last == N - 1 && left_first == 0) {
+                    inset1 = { left_first, right_last };
+                    inset2 = { left_last, right_first };
+                }
+            }
+
+            assert(inset1.first != -1 && inset1.second != -1 && inset2.first != -1 && inset2.second != -1);
+
+            //开始加点坐标，如果点旁边有交点，还得插值求交点
+            for (int i = 0; i < left_points.size(); i++) {
+                //当前点可能是交点边界
+                int Pi = left_points[i];
+                if (Pi == inset1.first || Pi == inset2.first) {
+                    //有可能inset1和inset2也重合了。。。
+                    int left = Pi, right = -1;
+                    if (Pi == inset1.first) {
+                        right = inset1.second;
+                    }
+                    else if (Pi == inset2.first) {
+                        right = inset2.second;
+                    }
+                    assert(right >= 0);
+
+                    if (left == right) {
+                        //顶点和交点重合
+                        left_face.push_back(facepts[left]);
+                    }
+                    else {
+                        vec3f P_inset = getInsetByInter(facepts[left], facepts[right], axis_val, axis);
+                        //先加交点还是先加点，根本取决于当前的点下一点，是否在本序列里
+                        if ((left + 1) % N == left_points[(i + 1) % leftN]) {
+                            //先加交点，再加点
+                            left_face.push_back(P_inset);
+                            left_face.push_back(facepts[left]);
+                        }
+                        else {
+                            left_face.push_back(facepts[left]);
+                            left_face.push_back(P_inset);
+                        }
+                    }
+                }
+                else if (Pi == inset1.second) {
+                    //Pi是左边面的点，只有重合点才能出现在inset右边，但这种情况在前面已经考虑了
+                    assert(false);
+                }
+                else {
+                    left_face.push_back(facepts[Pi]);
+                }
+            }
+
+            for (int i = 0; i < right_points.size(); i++) {
+                //当前点可能是交点边界
+                int Pi = right_points[i];
+                if (Pi == inset1.second || Pi == inset2.second) {
+                    //有可能inset1和inset2也重合了。。。
+                    int left = -1, right = Pi;
+                    if (Pi == inset1.second) {
+                        left = inset1.first;
+                    }
+                    else if (Pi == inset2.second) {
+                        left = inset2.first;
+                    }
+                    assert(left >= 0);
+
+                    if (left == right) {
+                        //顶点和交点重合
+                        right_face.push_back(facepts[right]);
+                    }
+                    else {
+                        vec3f P_inset = getInsetByInter(facepts[left], facepts[right], axis_val, axis);
+
+                        if ((right + 1) % N == right_points[(i + 1) % rightN]) {
+                            right_face.push_back(P_inset);
+                            right_face.push_back(facepts[right]);
+                        }
+                        else {
+                            right_face.push_back(facepts[right]);
+                            right_face.push_back(P_inset);
+                        }
+                    }
+                }
+                else if (Pi == inset1.second) {
+                    //Pi是左边面的点，只有重合点才能出现在inset右边，但这种情况在前面已经考虑了
+                    assert(false);
+                }
+                else {
+                    right_face.push_back(facepts[Pi]);
+                }
+            }
+
+            //removeRepeat(left_face);
+            //removeRepeat(right_face);
+            return true;
+        }
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            zeno::vec3f Size,
+            bool remove_shared_edge
+        ) {
+            auto bbox = geomBoundingBox(input_object.get());
+            float xmin = bbox.first[0], ymin = bbox.first[1], zmin = bbox.first[2],
+                xmax = bbox.second[0], ymax = bbox.second[1], zmax = bbox.second[2];
+            float dx = Size[0], dy = Size[1], dz = Size[2];
+            int nx = (dx == 0) ? 0 : (xmax - xmin) / dx;
+            int ny = (dy == 0) ? 0 : (ymax - ymin) / dy;
+            int nz = (dz == 0) ? 0 : (zmax - zmin) / dz;
+
+            std::vector<vec3f> pos = input_object->points_pos();
+            std::vector<std::vector<zeno::vec3f>> exist_faces;
+
+            int nFace = input_object->nfaces();
+            for (int f = 0; f < nFace; f++)
+            {
+                std::vector<vec3f> currFace;    //当前面所有点的坐标
+                std::vector<int> pts = input_object->face_points(f);
+                for (auto pt : pts) {
+                    currFace.push_back(pos[pt]);
+                }
+                exist_faces.push_back(currFace);
+
+                //直接开始遍历x切割平面，从“左”往“右”
+                for (int i = 0; i <= nx; i++) {
+                    float xi = xmin + i * dx;
+
+                    std::vector<std::vector<zeno::vec3f>> new_faces;
+                    for (auto iter = exist_faces.begin(); iter != exist_faces.end();) {
+                        std::vector<vec3f> leftFace, rightFace;
+                        bool bSuccess = splitFace(*iter, Divide_X, xi, leftFace, rightFace);
+                        if (bSuccess) {
+                            //移除当前迭代器，并且把leftFace和rightFace加到最前面。
+                            iter = exist_faces.erase(iter);
+                            new_faces.push_back(leftFace);
+                            new_faces.push_back(rightFace);
+                        }
+                        else {
+                            //当前无法拆分了(可能只是面恰好没法被平面切割，也可能是平面最小化），保留
+                            iter++;
+                        }
+                    }
+                    if (!new_faces.empty()) {
+                        exist_faces.insert(exist_faces.end(), new_faces.begin(), new_faces.end());
+                    }
+                }
+
+                for (int i = 0; i <= ny; i++) {
+                    float yi = ymin + i * dy;
+
+                    std::vector<std::vector<zeno::vec3f>> new_faces;
+                    for (auto iter = exist_faces.begin(); iter != exist_faces.end();) {
+                        std::vector<vec3f> leftFace, rightFace;
+                        bool bSuccess = splitFace(*iter, Divide_Y, yi, leftFace, rightFace);
+                        if (bSuccess) {
+                            //移除当前迭代器，并且把leftFace和rightFace加到最前面。
+                            iter = exist_faces.erase(iter);
+                            new_faces.push_back(leftFace);
+                            new_faces.push_back(rightFace);
+                        }
+                        else {
+                            //当前无法拆分了，保留
+                            iter++;
+                        }
+                    }
+                    if (!new_faces.empty()) {
+                        exist_faces.insert(exist_faces.end(), new_faces.begin(), new_faces.end());
+                    }
+                }
+
+                for (int i = 0; i <= nz; i++) {
+                    float zi = zmin + i * dz;
+
+                    std::vector<std::vector<zeno::vec3f>> new_faces;
+                    for (auto iter = exist_faces.begin(); iter != exist_faces.end();) {
+                        std::vector<vec3f> leftFace, rightFace;
+                        bool bSuccess = splitFace(*iter, Divide_Z, zi, leftFace, rightFace);
+                        if (bSuccess) {
+                            //移除当前迭代器，并且把leftFace和rightFace加到最前面。
+                            iter = exist_faces.erase(iter);
+                            new_faces.push_back(leftFace);
+                            new_faces.push_back(rightFace);
+                        }
+                        else {
+                            //当前无法拆分了，保留
+                            iter++;
+                        }
+                    }
+                    if (!new_faces.empty()) {
+                        exist_faces.insert(exist_faces.end(), new_faces.begin(), new_faces.end());
+                    }
+                }
+            }
+
+            assert(exist_faces.size() > 0);
+            if (exist_faces.size() == 1) {
+                return input_object;
+            }
+            else {
+                int nPoints = 0, nFaces = exist_faces.size();
+                for (auto& facePts : exist_faces) {
+                    nPoints += facePts.size();
+                }
+                auto spOutput = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
+                std::vector<vec3f> points;
+                points.resize(nPoints);
+                int nInitPoints = 0;
+                for (int iFace = 0; iFace < exist_faces.size(); iFace++) {
+                    const std::vector<zeno::vec3f>& facePts = exist_faces[iFace];
+                    std::vector<int> ptIndice;
+                    for (int iPt = 0; iPt < facePts.size(); iPt++) {
+                        int currIdx = nInitPoints + iPt;
+                        points[currIdx] = facePts[iPt];
+                        spOutput->initpoint(currIdx);
+                        ptIndice.push_back(currIdx);
+                    }
+                    nInitPoints += facePts.size();
+                    spOutput->add_face(ptIndice);
+                }
+                spOutput->create_attr(ATTR_POINT, "pos", points);
+                auto spFinal = zeno::fuseGeometry(spOutput, 0.05);
+                return spFinal;
+            }
+        }
+    };
+
     struct ZDEFNODE() Blast : INode {
 
         ReflectCustomUI m_uilayout = {
@@ -489,10 +835,13 @@ namespace zeno {
             std::shared_ptr<zeno::GeometryObject> input_object,
             float snapDistance = 0.01
         ) {
+
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
-
+#if 0
+            return fuseGeometry(input_object, snapDistance);
+#else
             int ptnumber = input_object->npoints();
             std::map < int, std::vector<int> > pointsToFuse;
             std::vector<int> fusedPoints(ptnumber, -1);
@@ -523,6 +872,7 @@ namespace zeno {
             input_object->fusePoints(fusedPoints);
 
             return input_object;
+#endif
         }
     };
 }

@@ -50,6 +50,8 @@ namespace zeno
     ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo);
 
     ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
+
+    ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold);
 }
 
 

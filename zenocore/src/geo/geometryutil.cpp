@@ -1,6 +1,7 @@
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/para/parallel_reduce.h>
+#include "kdsearch.h"
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -172,6 +173,64 @@ namespace zeno
         std::shared_ptr<zeno::GeometryObject> mergedObj = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
         mergedObj->merge(geoobjs);
         return mergedObj;
+    }
+
+    ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold) {
+        std::vector<vec3f> points = input->points_pos();
+
+        const int N = points.size();
+        zeno::KdTree kd(points, N);
+        std::unordered_map<int, int> mp;
+        std::unordered_map<int, vec3f> newpt_pos;
+
+        int nPointsRemoved = 0, max_pt_idx = -1;
+        for (int i = 0; i < N; i++) {
+            zeno::vec3f pt = points[i];
+            std::set<int> pts = kd.fix_radius_search(pt, 0);
+            int minIdx = *pts.begin();
+            int reduceIdx = minIdx;
+            if (reduceIdx == i) {
+                //没有被映射的，说明是独立点，但是由于前面移除了一些点，所以索引要减
+                reduceIdx -= nPointsRemoved;
+            }
+            else if (mp.find(reduceIdx) != mp.end()) {  //有可能reduceIdx本身要被减过的，所以要再检查一下
+                reduceIdx = mp[reduceIdx];
+            }
+            mp.insert(std::make_pair(i, reduceIdx));
+            max_pt_idx = std::max(max_pt_idx, reduceIdx);
+            if (minIdx < i) {
+                nPointsRemoved++;   //被映射的点算是“被移除”
+            }
+        }
+
+        std::vector<std::vector<int>> faces = input->face_indice();
+        for (std::vector<int>& face : faces) {
+            for (int i = 0; i < face.size(); i++) {
+                face[i] = mp[face[i]];
+            }
+        }
+
+        int N_pts = max_pt_idx + 1;
+
+        std::vector<vec3f> new_points;
+        new_points.resize(N_pts);
+
+        for (int i = 0; i < N; i++) {
+            int map_idx = mp[i];
+            vec3f pt = points[i];
+            new_points[map_idx] = pt;
+        }
+
+        auto spOutput = std::make_shared<zeno::GeometryObject>(false, N_pts, faces.size());
+        for (int i = 0; i < N_pts; i++) {
+            spOutput->initpoint(i);
+        }
+        for (int iFace = 0; iFace < faces.size(); iFace++) {
+            const std::vector<int>& facePts = faces[iFace];
+            spOutput->add_face(facePts);
+        }
+        spOutput->create_attr(ATTR_POINT, "pos", new_points);
+        return spOutput;
     }
 
     ZENO_API glm::mat4 calc_rotate_matrix(

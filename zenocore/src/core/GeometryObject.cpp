@@ -103,6 +103,10 @@ namespace zeno
         return m_spTopology->edge_list();
     }
 
+    ZENO_API std::vector<std::vector<int>> GeometryObject::face_indice() const {
+        return m_spTopology->face_indice();
+    }
+
     ZENO_API bool GeometryObject::is_base_triangle() const {
         return m_spTopology->is_base_triangle();
     }
