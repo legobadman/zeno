@@ -236,6 +236,17 @@ namespace zeno
         return m_spTopology->face_vertices(face_id);
     }
 
+    ZENO_API zeno::vec3f GeometryObject::face_normal(int face_id) {
+        const std::vector<int>& pts = face_points(face_id);
+        std::vector<vec3f> pos = points_pos();
+        if (pts.size() > 2) {
+            vec3f v12 = pos[pts[1]] - pos[pts[0]];
+            vec3f v23 = pos[pts[2]] - pos[pts[1]];
+            return zeno::normalize(zeno::cross(v12, v23));
+        }
+        return zeno::vec3f();
+    }
+
     //返回包含指定 point 的 face 列表。
     ZENO_API std::vector<int> GeometryObject::point_faces(int point_id)
     {

@@ -175,6 +175,31 @@ namespace zeno
         return mergedObj;
     }
 
+    ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
+        int nPoints = 0, nFaces = faces.size();
+        for (auto& facePts : faces) {
+            nPoints += facePts.size();
+        }
+        auto spOutput = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
+        std::vector<vec3f> points;
+        points.resize(nPoints);
+        int nInitPoints = 0;
+        for (int iFace = 0; iFace < faces.size(); iFace++) {
+            const std::vector<zeno::vec3f>& facePts = faces[iFace];
+            std::vector<int> ptIndice;
+            for (int iPt = 0; iPt < facePts.size(); iPt++) {
+                int currIdx = nInitPoints + iPt;
+                points[currIdx] = facePts[iPt];
+                spOutput->initpoint(currIdx);
+                ptIndice.push_back(currIdx);
+            }
+            nInitPoints += facePts.size();
+            spOutput->add_face(ptIndice);
+        }
+        spOutput->create_attr(ATTR_POINT, "pos", points);
+        return spOutput;
+    }
+
     ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold) {
         std::vector<vec3f> points = input->points_pos();
 
@@ -186,7 +211,7 @@ namespace zeno
         int nPointsRemoved = 0, max_pt_idx = -1;
         for (int i = 0; i < N; i++) {
             zeno::vec3f pt = points[i];
-            std::set<int> pts = kd.fix_radius_search(pt, 0);
+            std::set<int> pts = kd.fix_radius_search(pt, threshold);
             int minIdx = *pts.begin();
             int reduceIdx = minIdx;
             if (reduceIdx == i) {

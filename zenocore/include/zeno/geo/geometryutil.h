@@ -52,6 +52,8 @@ namespace zeno
     ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
 
     ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold);
+
+    ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
 }
 
 

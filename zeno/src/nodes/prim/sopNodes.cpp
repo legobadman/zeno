@@ -474,7 +474,6 @@ namespace zeno {
             const std::vector<zeno::vec3f>& facepts,        //当前面所有的点坐标，元素之间形成边，假定没有孤立点或者洞
             int axis,    //分割轴
             float axis_val,     //对应于axis分割轴下的分割面
-            ///*out*/std::vector<zeno::vec3f>& intersects,    //分割面和当前面进行求交，得到的相交点
             /*out*/std::vector<zeno::vec3f>& left_face,     //分割出来“左”边的面，后续可能要继续分割
             /*out*/std::vector<zeno::vec3f>& right_face    //分割出来“右”边的面，后续可能要继续分割
             )
@@ -637,9 +636,6 @@ namespace zeno {
                     right_face.push_back(facepts[Pi]);
                 }
             }
-
-            //removeRepeat(left_face);
-            //removeRepeat(right_face);
             return true;
         }
 
@@ -745,29 +741,136 @@ namespace zeno {
                 return input_object;
             }
             else {
-                int nPoints = 0, nFaces = exist_faces.size();
-                for (auto& facePts : exist_faces) {
-                    nPoints += facePts.size();
-                }
-                auto spOutput = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
-                std::vector<vec3f> points;
-                points.resize(nPoints);
-                int nInitPoints = 0;
-                for (int iFace = 0; iFace < exist_faces.size(); iFace++) {
-                    const std::vector<zeno::vec3f>& facePts = exist_faces[iFace];
-                    std::vector<int> ptIndice;
-                    for (int iPt = 0; iPt < facePts.size(); iPt++) {
-                        int currIdx = nInitPoints + iPt;
-                        points[currIdx] = facePts[iPt];
-                        spOutput->initpoint(currIdx);
-                        ptIndice.push_back(currIdx);
-                    }
-                    nInitPoints += facePts.size();
-                    spOutput->add_face(ptIndice);
-                }
-                spOutput->create_attr(ATTR_POINT, "pos", points);
+                auto spOutput = constructGeom(exist_faces);
                 auto spFinal = zeno::fuseGeometry(spOutput, 0.05);
                 return spFinal;
+            }
+        }
+    };
+
+    struct ZDEFNODE() Extrude : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")},
+                {"Distance", ParamPrimitive("Distance", 0.f)},//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
+                {"Inset", ParamPrimitive("Inset", 0.f)},//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
+                {"bOutputFrontAttr", ParamPrimitive("Output Front Attribute", false, Checkbox)},
+                {"front_attr", ParamPrimitive("Front Attribute", "extrudeFront", Lineedit, zeno::reflect::Any(), "", "enable = parameter('Output Front Attribute').value == 1;")},
+                {"bOutputBackAttr", ParamPrimitive("Output Back Attribute", false, Checkbox)},
+                {"back_attr", ParamPrimitive("Back Attribute", "extrudeBack", Lineedit, zeno::reflect::Any(), "", "enable = parameter('Output Back Attribute').value == 1;")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        zeno::vec3f getSpreadDirector(std::shared_ptr<GeometryObject> input_obj, int idxPt)
+        {
+            /* 根据给定的输入obj，以及顶点，得到这个点的挤出延长线方向向量 */
+            //找出这个点关联的所有面，然后得到各个面的法线，然后求和即可
+            std::vector<int> faces = input_obj->point_faces(idxPt);
+            zeno::vec3f nrm_sum(0,0,0);
+            for (auto f : faces) {
+                //TODO: 后续可以考虑提前缓存法线，目前基于实现方便先直接调用
+                zeno::vec3f face_nrm = input_obj->face_normal(f);
+                nrm_sum += face_nrm;
+            }
+            return zeno::normalize(nrm_sum);
+        }
+
+        std::pair<zeno::vec3f, zeno::vec3f> getExtrudeDest(
+            std::shared_ptr<GeometryObject> input_obj,
+            int lastPt,
+            int currPt,
+            int back_face,
+            float dist,
+            bool& needFace
+            )
+        {
+            /* 给定基准的back平面，以及这个平面上相邻的两个点lastPt,currPt，以dist的挤出距离，求出:
+            1. 这两个点延长至front平面时的终点位置
+            2. 这两个点的线在延申时形成的面，是否需要产生。（如果是两个面的共线，则不需要产生）
+             */
+            zeno::vec3f nrm = input_obj->face_normal(back_face);
+            const auto& pts = input_obj->points_pos();
+
+            zeno::vec3f last_pos = pts[lastPt];
+            zeno::vec3f last_spread_dir = getSpreadDirector(input_obj, lastPt);
+            float costheta = zeno::dot(last_spread_dir, nrm);
+            float k = 1. / costheta;
+            zeno::vec3f dest1 = k * dist * last_spread_dir + last_pos;
+
+            zeno::vec3f curr_pos = pts[currPt];
+            zeno::vec3f curr_spread_dir = getSpreadDirector(input_obj, currPt);
+            costheta = zeno::dot(curr_spread_dir, nrm);
+            k = 1. / costheta;
+            zeno::vec3f dest2 = k * dist * curr_spread_dir + curr_pos;
+
+            std::vector<int> faces1 = input_obj->point_faces(lastPt);
+            std::vector<int> faces2 = input_obj->point_faces(currPt);
+            //两个点关联的面，除了back_face，观察是否还有别的面。
+            needFace = true;
+            for (auto f1 : faces1) {
+                for (auto f2 : faces2) {
+                    if (f1 == f2 && f1 != back_face) {
+                        needFace = false;
+                        break;
+                    }
+                }
+            }
+            return { dest1, dest2 };
+        }
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            float Distance = 0.f,
+            float Inset = 0.f,
+            bool bOutputFrontAttr = false,
+            const std::string& front_attr = "",
+            bool bOutputBackAttr = false,
+            const std::string& back_attr = ""
+        ) {
+            if (Distance > 0) {
+                std::vector<std::vector<vec3f>> newFaces;
+                const std::vector<zeno::vec3f>& pos = input_object->points_pos();
+                for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
+                    std::vector<int> pts = input_object->face_points(iFace);
+                    std::vector<vec3f> dest_pts;
+
+                    std::vector<vec3f> front_pts;
+                    for (int i = 0; i < pts.size(); i++) {
+                        int lastPt = -1, currPt = -1;
+                        if (i == 0) {
+                            lastPt = pts[pts.size() - 1];
+                            currPt = pts[0];
+                        }
+                        else {
+                            lastPt = pts[i - 1];
+                            currPt = pts[i];
+                        }
+                        bool needFace = false;
+                        const auto& spread = getExtrudeDest(input_object, lastPt, currPt, iFace, Distance, needFace);
+                        zeno::vec3f last_spread = spread.first;
+                        zeno::vec3f curr_spread = spread.second;
+
+                        front_pts.push_back(last_spread);
+
+                        if (needFace) {
+                            //dest_pts[i], dest_pts[i-1], pts[i], pts[i-1]将构成一个平面
+                            std::vector<zeno::vec3f> new_face = { curr_spread, last_spread, pos[lastPt], pos[currPt] };
+                            newFaces.push_back(new_face);
+                        }
+                    }
+                    //front face
+                    newFaces.push_back(front_pts);  //todo: 需要传一个front的字段标记为front面。
+                }
+                auto spOutput = constructGeom(newFaces);
+                auto spFinal = zeno::fuseGeometry(spOutput, 0.005);
+                return spFinal;
+            }
+            else {
+                return input_object;
             }
         }
     };

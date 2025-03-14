@@ -170,6 +170,7 @@ namespace zeno
         ZENO_API int face_vertex(int face_id, int vert_id);
         ZENO_API int face_vertex_count(int face_id);
         ZENO_API std::vector<int> face_vertices(int face_id);
+        ZENO_API zeno::vec3f face_normal(int face_id);
 
         /* Vertex相关 */
         ZENO_API int vertex_index(int face_id, int vertex_id);

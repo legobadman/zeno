@@ -798,7 +798,12 @@ namespace zeno
                     if constexpr (std::is_same_v<T, int>) {
                         int currrem = get_zfxvar<int>(val);
                         remfaces.insert(currrem);
-                    } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+                    }
+                    else if constexpr (std::is_same_v<T, float>) {
+                        int currrem = static_cast<int>(get_zfxvar<float>(val));
+                        remfaces.insert(currrem);
+                    }
+                    else if constexpr (std::is_same_v<T, std::vector<int>>) {
                         for (const auto& i : val) {
                             remfaces.insert(i);
                         }
