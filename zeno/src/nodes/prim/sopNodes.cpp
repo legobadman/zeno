@@ -748,6 +748,98 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() PolyExpand : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")},
+                {"bOutputInside", ParamPrimitive("Output Inside")},
+                {"bOutputOutside", ParamPrimitive("Output Outside")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        void findOffsetPoints(
+            vec3f p1,
+            vec3f p2,
+            vec3f p3,
+            float offset,
+            vec3f& p1_inside,
+            vec3f& p1_outside,
+            vec3f& p2_inside,
+            vec3f& p2_outside)
+        {
+            vec3f v12 = p2 - p1, v23 = p3 - p2;
+            vec3f n1 = zeno::cross(v12, v23);
+            vec3f n2 = zeno::cross(v23, v12);
+            vec3f p1_inside_dir = zeno::normalize(zeno::cross(n1, v12));
+            vec3f p1_outside_dir = -p1_inside_dir;
+            vec3f p2_outside_dir = zeno::normalize(zeno::cross(n2, v23));
+            vec3f p2_inside_dir = -p2_outside_dir;
+            p1_inside = p1 + p1_inside_dir * offset;
+            p1_outside = p1 + p1_outside_dir * offset;
+            p2_inside = p2 + p2_inside_dir * offset;
+            p2_outside = p2 + p2_outside_dir * offset;
+        }
+
+        vec3f findIntersect(vec3f p1, vec3f v1, vec3f p2, vec3f v2)
+        {
+            float x1 = p1[0], y1 = p1[1], z1 = p1[2], x2 = p2[0], y2 = p2[1], z2 = p2[2];
+            float a1 = v1[0], b1 = v1[1], c1 = v1[2], a2 = v2[0], b2 = v2[1], c2 = v2[2];
+
+            float v1_dist = zeno::lengthSquared(v1);
+            float v2_dist = zeno::lengthSquared(v2);
+            float v1_v2 = zeno::dot(v1, v2);
+
+            float divider = v1_dist * v2_dist - zeno::pow(v1_v2, 2);
+
+            float t = (zeno::dot(p2-p1,v1) * v2_dist - zeno::dot(p2-p1,v2) * v1_v2) / divider;
+            float s = (zeno::dot(p2 - p1, v2) * v1_dist - zeno::dot(p2 - p1, v1) * v1_v2) / divider;
+
+            vec3f result = p1 + t * v1;
+            return result;
+        }
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            float Offset = 0.1,
+            bool bOutputInside = true,
+            bool bOutputOutside = true
+        ) {
+            const std::vector<vec3f>& pos = input_object->points_pos();
+            std::vector<std::vector<vec3f>> newFaces;
+            for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
+                std::vector<int> pts = input_object->face_points(iFace);
+                std::vector<vec3f> inside_face(pts.size()), outside_face(pts.size());
+                for (int i = 0; i < pts.size(); i++) {
+                    int p1 = pts[i];
+                    int p2 = pts[(i + 1) % pts.size()];
+                    int p3 = pts[(i + 2) % pts.size()];
+
+                    vec3f p1_inside, p1_outside, p2_inside, p2_outside;
+
+                    findOffsetPoints(pos[p1], pos[p2], pos[p3], Offset,
+                        p1_inside, p1_outside, p2_inside, p2_outside);
+                    vec3f v1 = zeno::normalize(pos[p2] - pos[p1]);
+                    vec3f v2 = zeno::normalize(pos[p3] - pos[p2]);
+                    vec3f pi_inside = findIntersect(p1_inside, v1, p2_inside, v2);
+                    vec3f pi_outside = findIntersect(p1_outside, v1, p2_outside, v2);
+                    inside_face[i] = pi_inside;
+                    outside_face[i] = pi_outside;
+                }
+                if (bOutputInside)
+                    newFaces.push_back(inside_face);
+                if (bOutputOutside)
+                    newFaces.push_back(outside_face);
+            }
+            auto spOutput = constructGeom(newFaces);
+            auto spFinal = zeno::fuseGeometry(spOutput, 0.005);
+            return spFinal;
+        }
+    };
+
     struct ZDEFNODE() Extrude : INode {
 
         ReflectCustomUI m_uilayout = {
