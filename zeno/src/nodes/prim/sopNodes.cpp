@@ -776,6 +776,49 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() UniquePoints : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")},
+                {"bPostComputeNormals", ParamPrimitive("Post-Compute Normals")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            bool bPostComputeNormals = false
+        ) {
+            std::vector<std::vector<vec3f>> newFaces;
+            const std::vector<zeno::vec3f>& pos = input_object->points_pos();
+            std::vector<vec3f> vertex_normals;
+            for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
+                std::vector<int> pts = input_object->face_points(iFace);
+                std::vector<vec3f> new_face(pts.size());
+                for (int i = 0; i < pts.size(); i++) {
+                    new_face[i] = pos[pts[i]];
+                }
+                newFaces.push_back(new_face);
+
+                if (bPostComputeNormals && new_face.size() > 2) {
+                    vec3f p01 = new_face[1] - new_face[0];
+                    vec3f p12 = new_face[2] - new_face[1];
+                    vec3f nrm = zeno::normalize(zeno::cross(p01, p12));
+                    for (int i = 0; i < new_face.size(); i++) {
+                        vertex_normals.push_back(nrm);
+                    }
+                }
+            }
+            auto spOutput = constructGeom(newFaces);
+            if (bPostComputeNormals)
+                spOutput->create_vertex_attr("nrm", vertex_normals);
+            return spOutput;
+        }
+    };
+
     struct ZDEFNODE() PolyExpand : INode {
 
         ReflectCustomUI m_uilayout = {

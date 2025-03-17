@@ -271,10 +271,11 @@ Item {
 
             onCheckStateChanged: {
                 //初始化checkState也会触发此信号，故屏蔽初始的那一次change
-                if (inited == false) {
-                    inited = true
-                    return
-                }
+                //但是初始化打开文件然后展示qml属性面板，勾选后inited是false，后续统一复现
+                // if (inited == false) {
+                //     inited = true
+                //     return
+                // }
                 root.model.setData(mindex, checkState == Qt.Checked, Model.ROLE_PARAM_QML_VALUE)
             }
         }
