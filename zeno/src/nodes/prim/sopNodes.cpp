@@ -748,6 +748,34 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Peak : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            float Distance = 0.2f
+        ) {
+            const std::vector<vec3f>& nrms = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+            input_object->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+                const vec3f& nrm = nrms[idx];
+                if (idx == 3) {
+                    int j;
+                    j = 0;
+                }
+                return old_pos + nrm * Distance;
+                });
+            return input_object;
+        }
+    };
+
     struct ZDEFNODE() PolyExpand : INode {
 
         ReflectCustomUI m_uilayout = {

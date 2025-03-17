@@ -89,7 +89,7 @@ namespace zeno {
                             if (bCalcPointNormals) {
                                 float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
                                 float ycomp = (y_div == 0) ? -1 : ((y_div == y_division - 1) ? 1 : 0);
-                                float zcomp = (z_div == 0) ? -1 : ((z_div == z_division - 1) ? 1 : 0);
+                                float zcomp = (z_div == 0) ? 1 : ((z_div == z_division - 1) ? -1 : 0);
                                 normals[idx] = normalize(zeno::vec3f(xcomp, ycomp, zcomp));
                             }
 
@@ -149,7 +149,7 @@ namespace zeno {
                             if (bCalcPointNormals) {
                                 float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
                                 float ycomp = (y_div == 0) ? -1 : ((y_div == y_division - 1) ? 1 : 0);
-                                float zcomp = (z_div == 0) ? -1 : ((z_div == z_division - 1) ? 1 : 0);
+                                float zcomp = (z_div == 0) ? 1 : ((z_div == z_division - 1) ? -1 : 0);
                                 normals[idx] = normalize(zeno::vec3f(xcomp, ycomp, zcomp));
                             }
 
@@ -233,7 +233,7 @@ namespace zeno {
                             if (bCalcPointNormals) {
                                 float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
                                 float ycomp = (y_div == 0) ? -1 : ((y_div == y_division - 1) ? 1 : 0);
-                                float zcomp = (z_div == 0) ? -1 : ((z_div == z_division - 1) ? 1 : 0);
+                                float zcomp = (z_div == 0) ? 1 : ((z_div == z_division - 1) ? -1 : 0);
                                 normals[idx] = normalize(zeno::vec3f(xcomp, ycomp, zcomp));
                             }
 
