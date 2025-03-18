@@ -803,6 +803,52 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() ConvertLine : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")},
+                {"bKeepOrder", ParamPrimitive("Keep Order")},
+                {"lengthAttr", ParamPrimitive("Length Attribute")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            bool bKeepOrder = true,
+            std::string lengthAttr = ""
+        ) {
+            int nPts = input_object->npoints();
+            const std::vector<std::vector<int>>& faces = input_object->face_indice();
+
+            std::unordered_set<uint64_t> hash;
+            std::vector<std::vector<int>> lines;
+            for (auto ind : faces) {
+                for (int i = 1; i < ind.size(); i++) {
+                    int from = ind[i - 1];
+                    int to = ind[i];
+                    std::pair<int, int> p = { from, to };
+                    uint64_t minidx = std::min(from, to), maxidx = std::max(from, to);
+                    uint64_t id = minidx + (maxidx << 32);
+                    if (hash.find(id) == hash.end()) {
+                        lines.push_back({ from, to });
+                        hash.insert(id);
+                    }
+                }
+            }
+
+            std::shared_ptr<zeno::GeometryObject> line_object = std::make_shared<zeno::GeometryObject>(false, nPts, lines.size());
+            line_object->create_point_attr("pos", input_object->points_pos());
+            for (auto line : lines) {
+                line_object->add_face(line, false);
+            }
+            return line_object;
+        }
+    };
+
     struct ZDEFNODE() UniquePoints : INode {
 
         ReflectCustomUI m_uilayout = {
