@@ -820,6 +820,74 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Mirror : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input Object")},
+                {"bKeepOriginal", ParamPrimitive("Keep Original")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            zeno::vec3f Position = zeno::vec3f(0, 0, 0),
+            zeno::vec3f Direction = zeno::vec3f(1, 0, 0),
+            float Distance = 1.f,
+            bool bKeepOriginal = true
+            )
+        {
+            const auto& pos = input_object->points_pos();
+            int npos = pos.size();
+            int nface = input_object->nfaces();
+
+            int Npos = bKeepOriginal ? 2 * npos : npos;
+            int Nface = bKeepOriginal ? 2 * nface : nface;
+
+            std::vector<vec3f> new_pos(Npos);
+
+            auto spOutput = std::make_shared<zeno::GeometryObject>(input_object->is_base_triangle(), Npos, Nface);
+            std::copy(pos.begin(), pos.end(), new_pos.begin());
+            if (bKeepOriginal) {
+                std::copy(pos.begin(), pos.end(), new_pos.begin() + npos);
+            }
+
+            if (bKeepOriginal) {
+                for (int iFace = 0; iFace < nface; iFace++) {
+                    std::vector<int> pts = input_object->face_points(iFace);
+                    spOutput->add_face(pts);
+                }
+            }
+
+            for (int iFace = 0; iFace < nface; iFace++) {
+                std::vector<int> pts = input_object->face_points(iFace);
+                std::reverse(pts.begin(), pts.end());
+                std::vector<int> offset_pts;
+                for (int pt : pts) {
+                    zeno::vec3f P = pos[pt];
+
+                    float A = Direction[0], B = Direction[1], C = Direction[2];
+                    float px = Position[0], py = Position[1], pz = Position[2];
+                    float D = -(A * px + B * py + C * pz);
+                    zeno::vec3f normal_vec(A, B, C);
+                    float normal_squared = zeno::dot(normal_vec, normal_vec);
+                    float dist = (zeno::dot(P, normal_vec) + D) / normal_squared;
+                    zeno::vec3f P_mirror = P - 2 * dist * normal_vec;
+
+                    pt += (bKeepOriginal ? npos : 0);
+                    new_pos[pt] = P_mirror;
+                    offset_pts.push_back(pt);
+                }
+                spOutput->add_face(offset_pts);
+            }
+            spOutput->create_point_attr("pos", new_pos);
+            return spOutput;
+        }
+    };
+
     struct ZDEFNODE() MatchSize : INode {
 
         ReflectCustomUI m_uilayout = {
