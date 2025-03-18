@@ -753,6 +753,128 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() MatchSize : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input Object")},
+                {"match_object", ParamObject("Match Object")},
+                {"TargetPosition", ParamPrimitive("Target Position", zeno::vec3f(0,0,0), Vec3edit, Any(), "", "visible = parameter('Match Object').connected == false;")},
+                {"TargetSize", ParamPrimitive("Target Size", zeno::vec3f(1,1,1), Vec3edit, Any(), "", "visible = parameter('Match Object').connected == false;")},
+                {"bTranslate", ParamPrimitive("Translate")},
+                {"TranslateXTo", ParamPrimitive("Translate X To", "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"})},
+                {"TranslateYTo", ParamPrimitive("Translate Y To", "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"})},
+                {"TranslateZTo", ParamPrimitive("Translate Z To", "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"})},
+                {"bScaleToFit", ParamPrimitive("Scale To Fit")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        static glm::vec3 mapplypos(glm::mat4 const& matrix, zeno::vec3f const& vector) {
+            auto vec = zeno::vec_to_other<glm::vec3>(vector);
+            auto vector4 = matrix * glm::vec4(vec, 1.0f);
+            return glm::vec3(vector4) / vector4.w;
+        }
+
+        static glm::vec3 mapplynrm(glm::mat4 const& matrix, zeno::vec3f const& vector) {
+            auto vec = zeno::vec_to_other<glm::vec3>(vector);
+            glm::mat3 normMatrix(matrix);
+            normMatrix = glm::transpose(glm::inverse(normMatrix));
+            auto vector3 = normMatrix * vec;
+            return glm::normalize(vector3);
+        }
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            std::shared_ptr<zeno::GeometryObject> match_object,
+            zeno::vec3f TargetPosition = zeno::vec3f(0,0,0),
+            zeno::vec3f TargetSize = zeno::vec3f(1,1,1),
+            bool bTranslate = true,
+            std::string TranslateXTo = "Center",
+            std::string TranslateYTo = "Center",
+            std::string TranslateZTo = "Center",
+            bool bScaleToFit = false
+        ) {
+            if (!bTranslate && !bScaleToFit) {
+                return input_object;
+            }
+
+            const auto& currbbox = geomBoundingBox(input_object.get());
+
+            zeno::vec3f boxmin, boxmax;
+            if (match_object) {
+                const auto& bbox = geomBoundingBox(match_object.get());
+                boxmin = bbox.first;
+                boxmax = bbox.second;
+            }
+            else {
+                boxmin = TargetPosition - 0.5 * TargetSize;
+                boxmax = TargetPosition + 0.5 * TargetSize;
+            }
+
+            vec3f boxsize = boxmax - boxmin;
+            if (TranslateXTo == "Min") {
+                boxmin[0] += boxsize[0] / 2.;
+                boxmax[0] += boxsize[0] / 2.;
+            }
+            else if (TranslateXTo == "Max") {
+                boxmin[0] -= boxsize[0] / 2.;
+                boxmax[0] -= boxsize[0] / 2.;
+            }
+
+            if (TranslateYTo == "Min") {
+                boxmin[1] += boxsize[1] / 2.;
+                boxmax[1] += boxsize[1] / 2.;
+            }
+            else if (TranslateYTo == "Max") {
+                boxmin[1] -= boxsize[1] / 2.;
+                boxmax[1] -= boxsize[1] / 2.;
+            }
+
+            if (TranslateZTo == "Min") {
+                boxmin[2] += boxsize[2] / 2.;
+                boxmax[2] += boxsize[2] / 2.;
+            }
+            else if (TranslateZTo == "Max") {
+                boxmin[2] -= boxsize[2] / 2.;
+                boxmax[2] -= boxsize[2] / 2.;
+            }
+
+            glm::mat4 matrix(1.);
+            if (bScaleToFit) {
+                vec3f boxsize = (boxmax - boxmin);
+                matrix = glm::scale(matrix, glm::vec3(boxsize[0], boxsize[1], boxsize[2]));
+            }
+            if (bTranslate) {
+                vec3f boxcenter = (boxmin + boxmax) / 2.;
+                vec3f center_offset = boxcenter - (currbbox.first + currbbox.second) / 2.;
+                matrix = glm::translate(matrix, glm::vec3(center_offset[0], center_offset[1], center_offset[2]));
+            }
+
+            if (input_object->has_attr(ATTR_POINT, "pos"))
+            {
+                input_object->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+                    auto p = mapplypos(matrix, old_pos);
+                    auto newpos = zeno::other_to_vec<3>(p);
+                    return newpos;
+                    });
+            }
+
+            if (input_object->has_attr(ATTR_POINT, "nrm"))
+            {
+                input_object->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
+                    auto n = mapplynrm(matrix, old_nrm);
+                    auto newnrm = zeno::other_to_vec<3>(n);
+                    return newnrm;
+                    });
+            }
+
+            return input_object;
+        }
+    };
+
     struct ZDEFNODE() Peak : INode {
 
         ReflectCustomUI m_uilayout = {

@@ -1151,6 +1151,23 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() PointCreate : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {},
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(zeno::vec3f Position = zeno::vec3f({ 0,0,0 }))
+        {
+            std::shared_ptr<GeometryObject> spPoint = std::make_shared<GeometryObject>(false, 1, 0);
+            spPoint->create_point_attr("pos", Position);
+            return spPoint;
+        }
+    };
+
     struct ZDEFNODE() Line : INode {
 
         ReflectCustomUI m_uilayout = {
