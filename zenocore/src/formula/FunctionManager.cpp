@@ -1403,7 +1403,7 @@ namespace zeno {
                             }
                             else if constexpr (std::is_same_v<E, ParamObject>) {
                                 if (visit_attr == "connected") {
-
+                                    return !nodeparam.links.empty();
                                 }
                                 else {
                                     throw makeError<UnimplError>("unknown attr when visit nodeparam");
