@@ -137,11 +137,11 @@ namespace zeno
 
     ZENO_API bool GeometryObject::remove_point(int ptnum) {
         std::vector<vec3f>& vec_pos = points_pos();
-        assert(m_spTopology->npoints() == vec_pos.size(), false);
+        assert(m_spTopology->npoints() == vec_pos.size());
 
         if (m_vert_attrs.size() > 0) {
             auto firstIter = m_vert_attrs.begin();
-            assert(firstIter->second.size() == m_spTopology->nvertices(), false);
+            assert(firstIter->second.size() == m_spTopology->nvertices());
         }
 
         copyTopologyAccordtoUseCount();

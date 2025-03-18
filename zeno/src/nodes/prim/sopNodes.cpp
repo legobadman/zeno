@@ -753,6 +753,32 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() RemoveUnusedPoints : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input Object")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> input_object) {
+            std::set<int> unused;
+            for (int i = 0; i < input_object->npoints(); i++) {
+                if (input_object->point_faces(i).empty()) {
+                    unused.insert(i);
+                }
+            }
+            for (auto iter = unused.rbegin(); iter != unused.rend(); iter++) {
+                //TODO: impl remove_points
+                input_object->remove_point(*iter);
+            }
+            return input_object;
+        }
+    };
+
     struct ZDEFNODE() MatchSize : INode {
 
         ReflectCustomUI m_uilayout = {

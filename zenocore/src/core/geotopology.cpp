@@ -14,7 +14,7 @@ namespace zeno
         m_points.resize(nPoints);
         m_faces.reserve(nFaces);    //面不好索引，只能逐个加，不过后续有很多节点都提前构造面的集合，然后整个一起加再fuse
         for (int i = 0; i < nPoints; i++) {
-            m_points[i] = std::make_shared<Point>();
+            m_points[i] = std::make_shared<HF_Point>();
         }
     }
 
@@ -28,7 +28,7 @@ namespace zeno
         m_faces.resize(rhs.m_faces.size());
 
         for (int i = 0; i < m_points.size(); i++) {
-            auto p = std::make_shared<Point>();
+            auto p = std::make_shared<HF_Point>();
             auto& rp = rhs.m_points[i];
             m_points[i] = std::move(p);
         }
@@ -43,7 +43,7 @@ namespace zeno
         }
 
         for (int i = 0; i < m_faces.size(); i++) {
-            m_faces[i] = std::make_shared<Face>();
+            m_faces[i] = std::make_shared<HF_Face>();
         }
 
         //adjust all pointers
@@ -73,7 +73,7 @@ namespace zeno
 #endif
     }
 
-    bool GeometryTopology::isLineFace(Face* f) {
+    bool GeometryTopology::isLineFace(HF_Face* f) {
         HEdge* firsth = f->h;
         HEdge* h = firsth;
         do {
@@ -134,7 +134,7 @@ namespace zeno
         int n = prim->verts->size();
         m_points.resize(n);
         for (int i = 0; i < m_points.size(); i++) {
-            m_points[i] = std::make_shared<Point>();
+            m_points[i] = std::make_shared<HF_Point>();
         }
 
         int nFace = -1;
@@ -167,7 +167,7 @@ namespace zeno
             }
 
             //TODO: init data for Face
-            auto pFace = std::make_shared<Face>();
+            auto pFace = std::make_shared<HF_Face>();
 
             HEdge* lastHedge = 0, * firstHedge = 0;
             for (int i = 0; i < points.size(); i++) {
@@ -237,9 +237,9 @@ namespace zeno
         return nullptr;
     }
 
-    std::tuple<Point*, HEdge*, HEdge*> GeometryTopology::getPrev(HEdge* outEdge) {
+    std::tuple<HF_Point*, HEdge*, HEdge*> GeometryTopology::getPrev(HEdge* outEdge) {
         HEdge* h = outEdge, * prev = nullptr;
-        Point* point = nullptr;
+        HF_Point* point = nullptr;
         do {
             prev = h;
             point = m_points[h->point].get();
@@ -301,7 +301,7 @@ namespace zeno
         //return !m_linesPt.empty();
     }
 
-    int GeometryTopology::npoints_in_face(Face* face) const {
+    int GeometryTopology::npoints_in_face(HF_Face* face) const {
         auto h = face->h;
         int ncount = 0;
         do {
@@ -343,7 +343,7 @@ namespace zeno
 
             {
                 parallel_for(m_faces.size(), [&](size_t i) {
-                    Face* f = m_faces[i].get();
+                    HF_Face* f = m_faces[i].get();
                     HEdge* hstart = f->h;
                     int start = hstart->find_from();
                     int len =  npoints_in_face(f);
@@ -641,7 +641,7 @@ namespace zeno
             int iToFace = iFromFace + rhs->m_faces.size() - 1;
 
             for (int i = offset_pts; i <= iToPt; i++) {
-                auto p = std::make_shared<Point>();
+                auto p = std::make_shared<HF_Point>();
                 m_points[i] = std::move(p);
             }
 
@@ -655,7 +655,7 @@ namespace zeno
 
             for (int i = iFromFace; i <= iToFace; i++) {
                 //前面的faces只是reserve
-                m_faces.emplace_back(std::make_shared<Face>());
+                m_faces.emplace_back(std::make_shared<HF_Face>());
             }
 
             //adjust all pointers
@@ -924,7 +924,7 @@ namespace zeno
         }
 
         std::set<int> remPoints;
-        std::set<Point*> remPtrPoints;
+        std::set<HF_Point*> remPtrPoints;
         for (auto face_id : faces) {
             if (face_id < 0 || face_id >= m_faces.size()) {
                 return false;
@@ -997,7 +997,7 @@ namespace zeno
     }
 
     int GeometryTopology::add_point() {
-        auto spPoint = std::make_shared<Point>();
+        auto spPoint = std::make_shared<HF_Point>();
         m_points.emplace_back(spPoint);
         return m_points.size() - 1;
     }
@@ -1035,7 +1035,7 @@ namespace zeno
 
     int GeometryTopology::addface(const std::vector<int>& points, bool bClose) {
         //points要按照逆时针方向
-        std::shared_ptr<Face> spFace = std::make_shared<Face>();
+        std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
         size_t face_id = m_faces.size();
 
         std::vector<HEdge*> edges;
