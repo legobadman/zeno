@@ -17,9 +17,11 @@ namespace zeno
         std::string id;
         HEdge* pair = 0, * next = 0;
         size_t point = -1;
+        size_t point_from = -1;
         size_t face = -1;
 
         size_t find_from() {
+            if (point_from != -1) return point_from;
             if (pair) return pair->point;
             HEdge* h = this;
             while (h->next != this) {
@@ -31,7 +33,7 @@ namespace zeno
 
     struct Face {
         int start_linearIdx;  //the vertex index of start vertex.
-        HEdge* h = 0;      //any h-edge of this face.
+        HEdge* h = 0;      //应该是起始边
     };
 
     struct Point {
@@ -52,8 +54,6 @@ namespace zeno
         size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
         size_t getPointTo(HEdge* hedge) const;
 
-        void initpoint(size_t idxPoint);
-        void initLineNextPoint(size_t point_id);   //对象是line时，init点的下一个点
         std::vector<vec3i> tri_indice() const;
         std::vector<std::vector<int>> face_indice() const;
         std::vector<int> edge_list() const;
@@ -62,11 +62,8 @@ namespace zeno
         int npoints_in_face(Face* face) const;
         void geomTriangulate(zeno::TriangulateInfo& info);
 
-        void setLineNextPt(int currPt, int nextPt); //对象是line时，修改当前点的下一个点为nextPt
-        int getLineNextPt(int currPt); //对象是line时，获取当前pt的下一个点的编号
-
         /* 添加元素 */
-        int addface(const std::vector<int>& points);
+        int addface(const std::vector<int>& points, bool bClose);
         int add_point();
         int add_vertex(int face_id, int point_id);
 
@@ -109,16 +106,13 @@ namespace zeno
         void merge(const std::vector<GeometryTopology*>& topos);
 
     private:
+        bool isLineFace(Face* f);
+
         std::vector<std::shared_ptr<Point>> m_points;
         std::vector<std::shared_ptr<Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;
-        std::vector<zeno::vec2i> m_linesPt;
         bool m_bTriangle = true;    //所有面都是三角面
     };
-
-
-
-
 }
 
 

@@ -135,14 +135,6 @@ namespace zeno
         //TODO: uv
     }
 
-    ZENO_API void GeometryObject::setLineNextPt(int currPt, int nextPt) {
-        m_spTopology->setLineNextPt(currPt, nextPt);
-    }
-
-    ZENO_API int GeometryObject::getLineNextPt(int currPt) {
-        return m_spTopology->getLineNextPt(currPt);
-    }
-
     ZENO_API bool GeometryObject::remove_point(int ptnum) {
         std::vector<vec3f>& vec_pos = points_pos();
         assert(m_spTopology->npoints() == vec_pos.size(), false);
@@ -594,14 +586,6 @@ namespace zeno
         return 0;
     }
 
-    void GeometryObject::initpoint(size_t point_id) {
-        m_spTopology->initpoint(point_id);
-    }
-
-    ZENO_API void GeometryObject::initLineNextPoint(size_t point_id) {
-        m_spTopology->initLineNextPoint(point_id);
-    }
-
     ZENO_API int GeometryObject::add_point(zeno::vec3f pos) {
         copyTopologyAccordtoUseCount();
 
@@ -774,6 +758,7 @@ namespace zeno
         int npoints = this->npoints();
         m_spTopology->fusePoints(fusedPoints);
 
+#if 0
         bool isline = m_spTopology->is_line();
         for (std::vector<int>::reverse_iterator it = fusedPoints.rbegin(); it != fusedPoints.rend(); ++it) {
             if ((*it) != -1) {
@@ -784,11 +769,12 @@ namespace zeno
                 }
             }
         }
+#endif
     }
 
-    ZENO_API int GeometryObject::add_face(const std::vector<int>& points) {
+    ZENO_API int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {
         copyTopologyAccordtoUseCount();
-        int faceid = m_spTopology->addface(points);
+        int faceid = m_spTopology->addface(points, bClose);
         CALLBACK_NOTIFY(add_face, faceid);
         CALLBACK_NOTIFY(reset_vertices)
         return faceid;

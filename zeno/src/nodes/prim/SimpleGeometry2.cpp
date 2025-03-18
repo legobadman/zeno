@@ -84,7 +84,6 @@ namespace zeno {
 
                             size_t idx = nPrevPoints + x_div % x_division + y_div * x_division;
                             points[idx] = pt;
-                            geo->initpoint(idx);
                             //init normals
                             if (bCalcPointNormals) {
                                 float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
@@ -144,7 +143,6 @@ namespace zeno {
                             }
 
                             points[idx] = pt;
-                            geo->initpoint(idx);
                             //init normals
                             if (bCalcPointNormals) {
                                 float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
@@ -228,7 +226,6 @@ namespace zeno {
                             }
 
                             points[idx] = pt;
-                            geo->initpoint(idx);
                             //init normals
                             if (bCalcPointNormals) {
                                 float xcomp = (x_div == 0) ? -1 : ((x_div == x_division - 1) ? 1 : 0);
@@ -457,7 +454,6 @@ namespace zeno {
 
                     int idx = i * Columns + j;
                     points[idx] = pt;
-                    geo->initpoint(idx);
                     if (bCalcPointNormals)
                         normals[idx] = nrm;
 
@@ -560,21 +556,16 @@ namespace zeno {
                     for (int col = 0; col < Columns; col++)
                     {
                         int up_idx = col;
-                        geo->initpoint(up_idx);
                         up_pts.push_back(up_idx);
                     }
                     for (int col = Columns - 1; col >= 0; col--) {
                         int down_idx = (Rows - 1) * Columns + col;
-                        geo->initpoint(down_idx);
                         down_pts.push_back(down_idx);
                     }
                     geo->add_face(up_pts);
                     geo->add_face(down_pts);
                 }
                 else {
-                    geo->initpoint(0);
-                    geo->initpoint(1);
-
                     if (Direction == "Y Axis") {
                         float up_y = Height / 2.0f, down_y = -Height / 2.0f;
                         points[0] = vec3f(0, up_y, 0);
@@ -594,7 +585,6 @@ namespace zeno {
                     for (int col = 0; col < Columns; col++)
                     {
                         int idx = col + 2;
-                        geo->initpoint(idx);
                         if (col > 0) {
                             geo->add_face({ 0, idx - 1, idx });
                         }
@@ -605,7 +595,6 @@ namespace zeno {
                     for (int col = 0; col < Columns; col++)
                     {
                         int idx = (Rows - 1) * Columns + col + 2;
-                        geo->initpoint(idx);
                         if (col > 0) {
                             geo->add_face({ 1, idx, idx - 1 });
                         }
@@ -658,7 +647,6 @@ namespace zeno {
 
                     vec3f pt = (float)row / (Rows - 1) * (down_pos - up_pos) + up_pos;
                     points[idx] = pt;
-                    geo->initpoint(idx);
                     if (bCalcPointNormals) {
                         normals[idx] = normalize(vec3f(cos_a, tan_belta * (sin_a * sin_a + cos_a * cos_a), -1 * sin_a));
                     }
@@ -806,7 +794,6 @@ namespace zeno {
 
             int idx = 0;
             points[idx] = topPos;
-            geo->initpoint(idx);
 
             vec3f bottomPos;
             if (dir == Y_Axis) {
@@ -820,7 +807,6 @@ namespace zeno {
             }
             idx = 1;    //兼容houdini
             points[idx] = bottomPos;
-            geo->initpoint(idx);
 
             float x, y, z;
 
@@ -855,7 +841,6 @@ namespace zeno {
                     vec3f pt = vec3f(x, y, z);
 
                     int idx = 2/*顶部底部两个点*/ + (row - 1) * Columns + col;
-                    geo->initpoint(idx);
                     points[idx] = pt;
                     if (col > 0) {
                         if (row == 1) {
@@ -1049,13 +1034,11 @@ namespace zeno {
 
             if (arcType == "Closed") {
                 if (segments == 1) {
-                    spgeo->initpoint(0);
                     spgeo->create_attr(ATTR_POINT, "pos", { Center });
                     return spgeo;
                 }
 
                 points[0] = Center;//圆心
-                spgeo->initpoint(0);
 
                 for (int i = 1; i < pointNumber; i++)
                 {
@@ -1077,14 +1060,13 @@ namespace zeno {
                     points[i] = pt;
                     if (bCalcPointNormals)
                         normals[i] = nrm;
-                    spgeo->initpoint(i);
 
                     if (i > 1) {
                         spgeo->add_face({ 0, i - 1, i });
                     }
 
                     if (segments == 2) {//加一条线
-                        spgeo->initLineNextPoint(i);
+                        //spgeo->initLineNextPoint(i);
                     }
                 }
 
@@ -1092,6 +1074,7 @@ namespace zeno {
             } else if (arcType == "Open Arc") {
                 float startAngle = arcAngle[0];
                 float arcRange = arcAngle[1] - startAngle;
+                std::vector<int> ptIndice;
                 for (int i = 0; i < pointNumber; i++)
                 {
                     float rad = glm::radians(startAngle + arcRange * i / (pointNumber - 1));
@@ -1109,16 +1092,12 @@ namespace zeno {
                         nrm = vec3f(0, 0, 1);
                     }
                     points[i] = pt;
-                    spgeo->initpoint(i);
-                    spgeo->initLineNextPoint(i);
-                    if (i == pointNumber - 1) {
-                        spgeo->setLineNextPt(i, i);
-                    }
+                    ptIndice.push_back(i);
                 }
+                spgeo->add_face(ptIndice, false);
                 bCalcPointNormals = false;
             }else if (arcType == "Sliced Arc") {
                 points[0] = Center;//圆心
-                spgeo->initpoint(0);
 
                 float startAngle = arcAngle[0];
                 float arcRange = arcAngle[1] - startAngle;
@@ -1142,7 +1121,6 @@ namespace zeno {
                     points[i] = pt;
                     if (bCalcPointNormals)
                         normals[i] = nrm;
-                    spgeo->initpoint(i);
 
                     if (i > 1) {
                         spgeo->add_face({ 0, i - 1, i });
@@ -1188,8 +1166,7 @@ namespace zeno {
             zeno::vec3f direction = zeno::vec3f({ 0,1,0 }),
             zeno::vec3f origin = zeno::vec3f({ 0,0,0 }),
             float length = 1.0,
-            bool isCentered = false,
-            bool hasLines = true
+            bool isCentered = false
         ) {
             if (npoints <= 0) {
                 throw makeError<UnimplError>("the npoints should be positive");
@@ -1215,20 +1192,26 @@ namespace zeno {
             }
 
             std::vector<vec3f> points;
+            std::vector<int> pts;
+            pts.resize(npoints);
             points.resize(npoints);
 //#pragma omp parallel for
-            for (intptr_t pt = 0; pt < npoints; pt++) {
+            for (int pt = 0; pt < npoints; pt++) {
                 vec3f p = origin + pt * ax;
                 points[pt] = p;
-                spgeo->initpoint(pt);
+                pts[pt] = pt;
+                /*
                 if (hasLines) {
                     spgeo->initLineNextPoint(pt);
                     if (pt == npoints - 1) {
                         spgeo->setLineNextPt(pt, pt);
                     }
                 }
+                */
             }
 
+            //兼容hou，用一个面作为所有线段的面
+            spgeo->add_face(pts, false);
             spgeo->create_attr(ATTR_POINT, "pos", points);
             return spgeo;
         }

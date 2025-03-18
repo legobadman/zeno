@@ -35,6 +35,8 @@ namespace zeno {
             std::shared_ptr<zeno::GeometryObject> input_object,
             std::shared_ptr<zeno::GeometryObject> target_Obj
         ) {
+            return nullptr;
+#if 0
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
@@ -104,8 +106,6 @@ namespace zeno {
                         newObjNrm[idx] = inputNrm[j];
                     }
 
-                    spgeo->initpoint(idx);
-
                     if (isLine) {
                         spgeo->initLineNextPoint(idx);
                         if (j == inputObjPointsCount - 1) {
@@ -130,7 +130,9 @@ namespace zeno {
             }
 
             return spgeo;
+#endif
         }
+
     };
 
     struct ZDEFNODE() Sweep : INode {
@@ -155,6 +157,8 @@ namespace zeno {
             int surface_column = 2
         )
         {
+            return nullptr;
+#if 0
             const float w = surface_width;
             if (surface_shape == "Square Tube") {
                 if (input_object->is_Line()) {
@@ -406,6 +410,7 @@ namespace zeno {
                 }
             }
             return input_object;
+#endif
         }
     };
 
@@ -773,6 +778,28 @@ namespace zeno {
                 return old_pos + nrm * Distance;
                 });
             return input_object;
+        }
+    };
+
+    struct ZDEFNODE() Scatter : INode {
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")},
+                {"Count", ParamPrimitive("Points Count", 10, Slider, std::vector<int>{0, 1000, 1})},
+                {"Seed", ParamPrimitive("Random Seed", 0, Slider, std::vector<int>{0, 100, 1})},
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            int Count = 10,
+            int Seed = 0
+        ) {
+            auto spOutput = scatter(input_object, Count, Seed);
+            return spOutput;
         }
     };
 

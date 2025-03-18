@@ -48,12 +48,10 @@ namespace zeno
         Rotate_Orientaion orientaion
         );
     ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo);
-
     ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
-
     ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold);
-
     ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(std::shared_ptr<zeno::GeometryObject> input, const int count, int seed);
 }
 
 

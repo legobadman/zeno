@@ -38,13 +38,7 @@ namespace zeno
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
         ZENO_API GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
         ZENO_API std::vector<std::string> get_attr_names(GeoAttrGroup grp);
-        ZENO_API void initpoint(size_t point_id);
-        ZENO_API void initLineNextPoint(size_t point_id);   //对象是line时，init点的下一个点
         ZENO_API void geomTriangulate(zeno::TriangulateInfo& info);
-
-        ZENO_API void setLineNextPt(int currPt, int nextPt);  //对象是line时，修改当前点的下一个点为nextPt
-        ZENO_API int getLineNextPt(int currPt); //对象是line时，获取当前pt的下一个点的编号
-
         //standard API
 
         //创建属性
@@ -139,7 +133,7 @@ namespace zeno
         CALLBACK_REGIST(add_vertex, void, int)
         ZENO_API int add_point(zeno::vec3f pos);
         CALLBACK_REGIST(add_point, void, int)
-        ZENO_API int add_face(const std::vector<int>& points);
+        ZENO_API int add_face(const std::vector<int>& points, bool bClose = true);
         CALLBACK_REGIST(add_face, void, int)
 
         /* 移除元素相关 */

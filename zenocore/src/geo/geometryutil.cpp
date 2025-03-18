@@ -2,6 +2,10 @@
 #include <zeno/types/GeometryObject.h>
 #include <zeno/para/parallel_reduce.h>
 #include "kdsearch.h"
+#include <zeno/para/parallel_for.h>
+#include <zeno/para/parallel_scan.h>
+#include <random>
+#include <zeno/utils/wangsrng.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -175,6 +179,60 @@ namespace zeno
         return mergedObj;
     }
 
+    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(std::shared_ptr<zeno::GeometryObject> input, const int nPointCount, int seed) {
+        auto spOutput = std::make_shared<zeno::GeometryObject>(input->is_base_triangle(), nPointCount, 0);
+        if (seed == -1) seed = std::random_device{}();
+
+        const int nFaces = input->nfaces();
+        std::vector<float> cdf(nFaces);
+        std::vector<vec3f> newPts(nPointCount);
+
+        const std::vector<vec3f>& pos = input->points_pos();
+        std::vector<std::vector<int>> faces = input->face_indice();
+
+        parallel_inclusive_scan_sum(faces.begin(), faces.end(), cdf.begin(), [&](std::vector<int> const& ind) {
+            auto i1 = ind[0];
+            auto i2 = ind[1];
+            auto i3 = ind[2];
+            auto i4 = ind[3];
+            auto area = length(cross(pos[i3] - pos[i2], pos[i2] - pos[i1]));
+            return area;
+        });
+
+        auto inv_total = 1 / cdf.back();
+        parallel_for((size_t)0, cdf.size(), [&](size_t i) {
+            cdf[i] *= inv_total;
+        });
+
+        if (false/*line*/) {
+            //todo
+        }
+        else {
+            parallel_for((size_t)0, (size_t)nPointCount, [&](size_t i) {
+                wangsrng rng(seed, i);
+                auto val = rng.next_float();
+                auto it = std::lower_bound(cdf.begin(), cdf.end(), val);
+                size_t index = it - cdf.begin();
+                assert(index < nFaces);
+                auto const& pointsIndice = faces[index];
+                auto r1 = std::sqrt(rng.next_float());
+                auto r2 = rng.next_float();
+                if (pointsIndice.size() == 4) {
+                    //目前只考虑直角四边形或平行四边形
+                    vec3f v01 = pos[pointsIndice[1]] - pos[pointsIndice[0]];
+                    vec3f v02 = pos[pointsIndice[2]] - pos[pointsIndice[1]];
+                    vec3f new_pt = pos[pointsIndice[0]] + v01 * r1 + v02 * r2;
+                    newPts[i] = new_pt;
+                }
+                else {
+                    //TODO: 三角面
+                }
+            });
+        }
+        spOutput->create_point_attr("pos", newPts);
+        return spOutput;
+    }
+
     ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
         int nPoints = 0, nFaces = faces.size();
         for (auto& facePts : faces) {
@@ -190,7 +248,6 @@ namespace zeno
             for (int iPt = 0; iPt < facePts.size(); iPt++) {
                 int currIdx = nInitPoints + iPt;
                 points[currIdx] = facePts[iPt];
-                spOutput->initpoint(currIdx);
                 ptIndice.push_back(currIdx);
             }
             nInitPoints += facePts.size();
@@ -247,9 +304,6 @@ namespace zeno
         }
 
         auto spOutput = std::make_shared<zeno::GeometryObject>(false, N_pts, faces.size());
-        for (int i = 0; i < N_pts; i++) {
-            spOutput->initpoint(i);
-        }
         for (int iFace = 0; iFace < faces.size(); iFace++) {
             const std::vector<int>& facePts = faces[iFace];
             spOutput->add_face(facePts);
