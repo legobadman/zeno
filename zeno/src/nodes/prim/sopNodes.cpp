@@ -779,6 +779,47 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() RemoveInlinePoints : INode {
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input Object")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> input_object)
+        {
+            const std::vector<vec3f> pos = input_object->points_pos();
+            std::set<int> unusedPoints;
+            for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
+                const std::vector<int>& pts = input_object->face_points(iFace);
+                for (int i = 1; i < pts.size() - 1; i++) {
+                    //观察pts[i]是否只有一个面
+                    const auto& _faces = input_object->point_faces(pts[i]);
+                    if (_faces.size() != 1) {
+                        continue;
+                    }
+                    assert(_faces[0] == iFace);
+
+                    vec3f pa = pos[pts[i - 1]];
+                    vec3f pb = pos[pts[i]];
+                    vec3f pc = pos[pts[i + 1]];
+                    //检查pa,pb,pc是否共线
+                    if (zeno::dot(zeno::normalize(pb - pa), zeno::normalize(pc - pa)) == 1) {
+                        unusedPoints.insert(pts[i]);
+                    }
+                }
+            }
+            for (auto iter = unusedPoints.rbegin(); iter != unusedPoints.rend(); iter++) {
+                //TODO: impl remove_points
+                input_object->remove_point(*iter);
+            }
+            return input_object;
+        }
+    };
+
     struct ZDEFNODE() MatchSize : INode {
 
         ReflectCustomUI m_uilayout = {
