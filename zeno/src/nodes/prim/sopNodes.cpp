@@ -820,6 +820,60 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Measure : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input Object")},
+                {"measure", ParamPrimitive("Measure", "Area", Combobox, std::vector<std::string>{"Area", "Length"})},
+                {"outputAttrName", ParamPrimitive("Output Attribute Name", "area")}
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object, 
+            const std::string& measure = "Area",
+            const std::string& outputAttrName = "area")
+        {
+            const auto& pos = input_object->points_pos();
+            int nFace = input_object->nfaces();
+            std::vector<float> measurements(nFace, 0.f);
+
+            for (int iFace = 0; iFace < nFace; iFace++) {
+                const std::vector<int>& pts = input_object->face_points(iFace);
+                int n = pts.size();
+                std::vector<vec3f> face_ptpos(n);
+                for (int i = 0; i < n; i++) {
+                    face_ptpos[i] = pos[pts[i]];
+                }
+                if (measure == "Area") {
+                    if (n < 3) continue;        //线段
+                    vec3f P0 = face_ptpos[0];
+                    float area = 0.f;
+                    for (int i = 1; i < pts.size() - 1; i++) {
+                        vec3f P1 = face_ptpos[i];
+                        vec3f P2 = face_ptpos[i + 1];
+
+                        vec3f v1 = P1 - P0;
+                        vec3f v2 = P2 - P0;
+
+                        vec3f cross_product = zeno::cross(v1, v2);
+                        area += 0.5f * zeno::length(cross_product);
+                    }
+                    measurements[iFace] = area;
+                }
+                else if (measure == "Length") {
+                    //TODO
+                }
+            }
+            input_object->create_face_attr(outputAttrName, measurements);
+            return input_object;
+        }
+    };
+
     struct ZDEFNODE() Mirror : INode {
 
         ReflectCustomUI m_uilayout = {
