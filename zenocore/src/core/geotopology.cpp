@@ -61,7 +61,8 @@ namespace zeno
             p->point = rhsptr->point;
             if (rhsptr->pair)
                 p->pair = m_hEdges[rhsptr->pair->id].get();
-            p->next = m_hEdges[rhsptr->next->id].get();
+            if (rhsptr->next)
+                p->next = m_hEdges[rhsptr->next->id].get();
         }
 
         for (int i = 0; i < m_faces.size(); i++) {
@@ -759,10 +760,82 @@ namespace zeno
         std::set<int> remFaces;
         std::set<std::string> remHEdges;
 
+        if (m_points[ptnum]->edges.empty()) {//line
+            for (auto& [_, e] : m_hEdges) {
+                if (e->next && e->next->point == ptnum) {
+                    remHEdges.insert(e->next->id);
+                    m_points[e->point]->edges.erase(e->next);
+                    e->next = nullptr;
+                    break;
+                } else if (!e->next && e->point == ptnum) {
+                    remHEdges.insert(e->id);
+                    m_points[e->point_from]->edges.erase(e.get());
+                    remFaces.insert(e->face);
+                }
+            }
+        }
+
         for (auto outEdge : m_points[ptnum]->edges) {
             assert(outEdge);
 
             HEdge* firstEdge = outEdge;
+
+            bool isline = false;//line
+            do 
+            {
+                firstEdge = firstEdge->next;
+                if (!firstEdge) {
+                    isline = true;
+                    break;
+                }
+            } while (firstEdge != outEdge);
+            if (isline) {
+                if (m_hEdges.size() == 1) {//one edge line case
+                    remHEdges.insert(outEdge->id);
+                    remFaces.insert(outEdge->face);
+                    m_points[ptnum]->edges.erase(outEdge);
+                } else {
+                    HF_Point* prevPoint = nullptr;
+                    HEdge* prevEdge = nullptr, *pprevEdge = nullptr;
+                    for (auto& [_, e] : m_hEdges) {
+                        if (e->next && e->next == outEdge) {
+                            prevEdge = e.get();
+                            prevPoint = m_points[prevEdge->point_from].get();
+                        } else if (e->next && e->next->next && e->next->next == outEdge) {
+                            pprevEdge = e.get();
+                        }
+                    }
+                    if (prevEdge) {
+                        remHEdges.insert(outEdge->id);
+                        remHEdges.insert(prevEdge->id);
+
+                        auto newEdge = std::make_shared<HEdge>();
+
+                        std::string id = generateUUID();
+                        newEdge->id = id;
+                        m_hEdges.insert(std::make_pair(id, newEdge));
+
+                        //connect between outEdge->point and prevPoint.
+                        newEdge->point = outEdge->point;
+                        newEdge->point_from = prevEdge->point_from;
+                        newEdge->pair = nullptr;
+                        newEdge->next = outEdge->next;
+                        newEdge->face = outEdge->face;
+                        if (pprevEdge) {
+                            pprevEdge->next = newEdge.get();
+                        } else {
+                            m_faces[newEdge->face]->h = newEdge.get();
+                        }
+                        prevPoint->edges.erase(prevEdge);
+                        prevPoint->edges.insert(newEdge.get());
+                    } else {
+                        m_faces[outEdge->face]->h = outEdge->next;
+                        remHEdges.insert(outEdge->id);
+                    }
+                }
+                break;
+            }
+
             HEdge* nextEdge = firstEdge->next;
             assert(nextEdge);
             HEdge* nnextEdge = nextEdge->next;
@@ -835,6 +908,9 @@ namespace zeno
             if (hedge->point >= ptnum) {
                 hedge->point--;
             }
+            if (hedge->point_from >= ptnum) {
+                hedge->point_from--;
+            }
             int nStep = 0;
             for (auto remFaceId : _remFaces) {
                 if (hedge->face >= remFaceId)
@@ -872,46 +948,117 @@ namespace zeno
             if (!vertEdge)
                 break;
         } while (vertEdge != first);
-        auto& [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
 
-        if (vertEdge->next == pprevedge) {
-            size_t removeFaceid = vertEdge->face;
-            HEdge* startRemove = prevedge;
-            do 
-            {
-                if (startRemove->pair) {
-                    startRemove->pair->pair = nullptr;
+        bool isline = false;//line
+        first = vertEdge;
+        do
+        {
+            if (first)
+                first = first->next;
+            if (!first) {
+                isline = true;
+                break;
+            }
+        } while (vertEdge != first);
+        if (isline) {
+            if (m_hEdges.size() == 1) {//one edge line case
+                HEdge* e = m_hEdges.begin()->second.get();
+                m_points[e->point_from]->edges.erase(e);
+                m_faces.erase(m_faces.begin() + e->face);
+                m_hEdges.clear();
+            }
+            else {
+                m_points[m_points.size() - 2]->edges.erase(vertEdge);
+
+                HF_Point* prevPoint = nullptr;
+                HEdge* prevEdge = nullptr, * pprevEdge = nullptr;
+                for (auto& [_, e] : m_hEdges) {
+                    if (e->next == vertEdge) {
+                        prevEdge = e.get();
+                        prevPoint = m_points[prevEdge->point_from].get();
+                    } else if (e->next && e->next->next == vertEdge) {
+                        pprevEdge = e.get();
+                    }
                 }
-                m_points[startRemove->point]->edges.erase(startRemove->next);
-                std::string removeEdgeId = startRemove->id;
-                startRemove = startRemove->next;
-                m_hEdges.erase(removeEdgeId);
-            } while (startRemove != prevedge);
+                if (!vertEdge) {//rm last vertex
+                    prevPoint->edges.erase(prevEdge);
+                    if (pprevEdge) {
+                        pprevEdge->next = nullptr;
+                    }
+                    if (prevEdge) {
+                        m_hEdges.erase(prevEdge->id);
+                    }
+                }
+                else {
+                    if (prevEdge) {
+                        std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
+                        newedge->id = generateUUID();
+                        newedge->pair = nullptr;
+                        newedge->next = vertEdge->next;
+                        newedge->point = vertEdge->point;
+                        newedge->point_from = prevEdge->point_from;
+                        newedge->face = vertEdge->face;
 
-            for (auto& [_, hedge] : m_hEdges) {
-                if (hedge->face >= removeFaceid) {
-                    hedge->face--;
+                        m_points[prevEdge->point]->edges.erase(vertEdge);
+                        prevPoint->edges.erase(prevEdge);
+                        prevPoint->edges.insert(newedge.get());
+                        if (pprevEdge) {
+                            pprevEdge->next = newedge.get();
+                        } else {
+                            m_faces[newedge->face]->h = newedge.get();
+                        }
+                        m_hEdges.erase(vertEdge->id);
+                        m_hEdges.erase(prevEdge->id);
+                        m_hEdges.insert({ newedge->id, newedge });
+                    } else {
+                        m_faces[vertEdge->face]->h = vertEdge->next;
+                        m_points[vertEdge->point_from]->edges.erase(vertEdge);
+                        m_hEdges.erase(vertEdge->id);
+                    }
                 }
             }
-            m_faces.erase(m_faces.begin() + removeFaceid);
         } else {
-            std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
-            newedge->id = generateUUID();
-            newedge->pair = nullptr;
-            newedge->next = vertEdge->next;
-            newedge->point = vertEdge->point;
-            newedge->face = vertEdge->face;
+            auto& [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
 
-            m_points[prevedge->point]->edges.erase(vertEdge);
-            m_points[pprevedge->point]->edges.erase(prevedge);
-            m_points[pprevedge->point]->edges.insert(newedge.get());
-            pprevedge->next = newedge.get();
+            if (vertEdge->next == pprevedge) {
+                size_t removeFaceid = vertEdge->face;
+                HEdge* startRemove = prevedge;
+                do 
+                {
+                    if (startRemove->pair) {
+                        startRemove->pair->pair = nullptr;
+                    }
+                    m_points[startRemove->point]->edges.erase(startRemove->next);
+                    std::string removeEdgeId = startRemove->id;
+                    startRemove = startRemove->next;
+                    m_hEdges.erase(removeEdgeId);
+                } while (startRemove != prevedge);
 
-            m_faces[newedge->face]->h = newedge.get();
+                for (auto& [_, hedge] : m_hEdges) {
+                    if (hedge->face >= removeFaceid) {
+                        hedge->face--;
+                    }
+                }
+                m_faces.erase(m_faces.begin() + removeFaceid);
+            } else {
+                std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
+                newedge->id = generateUUID();
+                newedge->pair = nullptr;
+                newedge->next = vertEdge->next;
+                newedge->point = vertEdge->point;
+                newedge->face = vertEdge->face;
 
-            m_hEdges.erase(vertEdge->id);
-            m_hEdges.erase(prevedge->id);
-            m_hEdges.insert({newedge->id, newedge});
+                m_points[prevedge->point]->edges.erase(vertEdge);
+                m_points[pprevedge->point]->edges.erase(prevedge);
+                m_points[pprevedge->point]->edges.insert(newedge.get());
+                pprevedge->next = newedge.get();
+
+                m_faces[newedge->face]->h = newedge.get();
+
+                m_hEdges.erase(vertEdge->id);
+                m_hEdges.erase(prevedge->id);
+                m_hEdges.insert({newedge->id, newedge});
+            }
         }
         update_linear_vertex();
 
