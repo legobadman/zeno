@@ -104,6 +104,7 @@ namespace zeno
         //特殊功能
         void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
         void merge(const std::vector<GeometryTopology*>& topos);
+        int isLineFace(int faceid) const;
 
     private:
         bool isLineFace(HF_Face* f) const;

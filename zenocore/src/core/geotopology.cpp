@@ -85,6 +85,15 @@ namespace zeno
         return false;
     }
 
+    int GeometryTopology::isLineFace(int faceid) const
+    {
+        if (faceid < m_faces.size()) {
+            return isLineFace(m_faces[faceid].get());
+        } else {
+            return -1;
+        }
+    }
+
     void GeometryTopology::toPrimitive(std::shared_ptr<PrimitiveObject> spPrim) {
         int startIdx = 0;
         AttrVector<vec2i> lines;

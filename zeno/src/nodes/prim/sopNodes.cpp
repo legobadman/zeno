@@ -49,9 +49,9 @@ namespace zeno {
             }
 
             std::vector<zeno::vec3f> inputPos = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
-            std::vector<std::vector<int>> inputFacesPoints(input_object->nfaces(), std::vector<int>());
+            std::vector <std::tuple< bool, std::vector<int >> > inputFacesPoints(input_object->nfaces(), std::tuple<bool, std::vector<int >>({false, std::vector<int>()}));
             for (int i = 0; i < input_object->nfaces(); ++i) {
-                inputFacesPoints[i] = input_object->face_points(i);
+                inputFacesPoints[i] = std::tuple(input_object->isLineFace(i), input_object->face_points(i));
             }
 
 
@@ -99,11 +99,11 @@ namespace zeno {
                 }
                 for (size_t j = 0; j < inputObjFacesCount; ++j)
                 {
-                    std::vector<int> facePoints = inputFacesPoints[j];
+                    std::vector<int> facePoints = std::get<1>(inputFacesPoints[j]);
                     for (int k = 0; k < facePoints.size(); ++k) {
                         facePoints[k] += offset;
                     }
-                    spgeo->add_face(facePoints, false);
+                    spgeo->add_face(facePoints, !std::get<0>(inputFacesPoints[j]));
                 }
             }
 

@@ -754,6 +754,11 @@ namespace zeno
         }
     }
 
+    ZENO_API int GeometryObject::isLineFace(int faceid)
+    {
+        return m_spTopology->isLineFace(faceid);
+    }
+
     ZENO_API void GeometryObject::fusePoints(std::vector<int>& fusedPoints) {
         int npoints = this->npoints();
         m_spTopology->fusePoints(fusedPoints);
