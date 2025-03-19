@@ -35,8 +35,6 @@ namespace zeno {
             std::shared_ptr<zeno::GeometryObject> input_object,
             std::shared_ptr<zeno::GeometryObject> target_Obj
         ) {
-            return nullptr;
-#if 0
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
@@ -63,13 +61,6 @@ namespace zeno {
             bool isLine = input_object->is_Line();
             if (hasNrm) {
                 inputNrm = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
-            }
-            if (isLine) {
-                inputLines.resize(input_object->npoints());
-                for (size_t i = 0; i < input_object->npoints(); ++i) {
-                    inputLines[i][0] = i;
-                    inputLines[i][1] = input_object->getLineNextPt(i);
-                }
             }
 
             zeno::vec3f originCenter, _min, _max;
@@ -105,13 +96,6 @@ namespace zeno {
                     if (hasNrm) {
                         newObjNrm[idx] = inputNrm[j];
                     }
-
-                    if (isLine) {
-                        spgeo->initLineNextPoint(idx);
-                        if (j == inputObjPointsCount - 1) {
-                            spgeo->setLineNextPt(idx, idx);
-                        }
-                    }
                 }
                 for (size_t j = 0; j < inputObjFacesCount; ++j)
                 {
@@ -119,7 +103,7 @@ namespace zeno {
                     for (int k = 0; k < facePoints.size(); ++k) {
                         facePoints[k] += offset;
                     }
-                    spgeo->add_face(facePoints);
+                    spgeo->add_face(facePoints, false);
                 }
             }
 
@@ -130,7 +114,6 @@ namespace zeno {
             }
 
             return spgeo;
-#endif
         }
 
     };

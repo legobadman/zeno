@@ -106,7 +106,7 @@ namespace zeno
         void merge(const std::vector<GeometryTopology*>& topos);
 
     private:
-        bool isLineFace(HF_Face* f);
+        bool isLineFace(HF_Face* f) const;
 
         std::vector<std::shared_ptr<HF_Point>> m_points;
         std::vector<std::shared_ptr<HF_Face>> m_faces;

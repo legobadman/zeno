@@ -74,7 +74,7 @@ namespace zeno
 #endif
     }
 
-    bool GeometryTopology::isLineFace(HF_Face* f) {
+    bool GeometryTopology::isLineFace(HF_Face* f) const {
         HEdge* firsth = f->h;
         HEdge* h = firsth;
         do {
@@ -382,14 +382,26 @@ namespace zeno
 
         auto h = m_faces[face_id]->h;
         auto firsth = h;
-        do {
-            if (vert_id-- == 0) {
-                return h->point;
-            }
-            h = h->next;
-            if (!h)
-                break;
-        } while (h != firsth);
+        if (isLineFace(m_faces[face_id].get())) {
+            HEdge* pre;
+            do {
+                if (vert_id-- == 0) {
+                    return h->point_from;
+                }
+                pre = h;
+                h = h->next;
+            } while (h);
+            return pre->point;
+        } else {
+            do {
+                if (vert_id-- == 0) {
+                    return h->point;
+                }
+                h = h->next;
+                if (!h)
+                    break;
+            } while (h != firsth);
+        }
         return -1;
     }
 
@@ -403,7 +415,10 @@ namespace zeno
         do {
             pts.push_back(h->point);
             h = h->next;
-            if (!h) break;
+            if (!h) {//line
+                pts.insert(pts.begin(), firsth->point_from);
+                break;
+            }
         } while (h != firsth);
         return pts;
     }
