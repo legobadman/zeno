@@ -22,6 +22,14 @@ namespace zeno
         Orientaion_ZX
     };
 
+    struct DividePoint
+    {
+        vec3f pos;
+        /*以下序号都是本地的顶点序号，不是外部的全局序号*/
+        int from;   //这个分割点一侧的点号
+        int to;     //这个分割点的另一侧的点号，与from形成偏序关系，则from < to
+    };
+
     struct GeometryObject;
 
     bool prim_remove_point(GeometryObject* prim, int ptnum);
@@ -52,6 +60,10 @@ namespace zeno
     ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold);
     ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
     ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(std::shared_ptr<zeno::GeometryObject> input, const int count, int seed);
+    ZENO_API bool dividePlane(const std::vector<vec3f>& face_pts, float A, float B, float C, float D,
+        /*out*/std::vector<std::vector<int>>& split_faces,
+        /*out*/std::map<int, DividePoint>& split_infos
+        );
 }
 
 

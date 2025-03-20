@@ -6,6 +6,7 @@
 #include <zeno/para/parallel_scan.h>
 #include <random>
 #include <zeno/utils/wangsrng.h>
+#include <unordered_set>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -177,6 +178,90 @@ namespace zeno
         std::shared_ptr<zeno::GeometryObject> mergedObj = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
         mergedObj->merge(geoobjs);
         return mergedObj;
+    }
+
+    ZENO_API bool dividePlane(
+        const std::vector<vec3f>& face_pts, /*容器的顺序就是面点的逆序排序*/
+        float A, float B, float C, float D,
+        /*out*/std::vector<std::vector<int>>& split_faces,
+        /*out*/std::map<int, DividePoint>& split_infos
+    ) {
+        enum PointSide {
+            UnDecided,
+            Below,
+            Above
+        };
+        //实现太困难了，先放着
+
+#if 0
+        int nCount = face_pts.size();
+        std::set<int> splitters;   //储存分割点的序号，注意，分割点也可以是顶点的序号
+        std::vector<int> newface_pt_seq;  //原有的点加上分割点形成的点序号序列，后续要遍历这个序列得到分割面
+        for (int i = 1; i < face_pts.size(); i++) {
+            //观察Pi-1和Pi之间是否有分割
+            vec3f p1 = face_pts[i - 1], p2 = face_pts[i];
+            float d1 = A * p1[0] + B * p1[1] + C * p1[2] + D;
+            float d2 = A * p2[0] + B * p2[1] + C * p2[2] + D;
+            newface_pt_seq.push_back(i - 1);
+            if (d1 * d2 < 0) {
+                //新增一个分割点
+                int new_splitter = nCount++;
+                splitters.insert(new_splitter);
+                newface_pt_seq.push_back(new_splitter);
+            }
+            else if (d1 * d2 == 0) {
+                if (d1 == 0) splitters.insert(i - 1);
+                if (d2 == 0) splitters.insert(i);
+            }
+            newface_pt_seq.push_back(i);
+        }
+
+        int nPoints = face_pts.size();
+        std::unordered_set<int> added_points;
+        //开始循环遍历newface_pt_seq，不断收集点以形成新面
+        while (added_points.size() < face_pts.size()) {
+            PointSide side = UnDecided;
+            std::vector<int> new_face;
+            for (int i = 0; ; i++) {
+                int curr_pt = newface_pt_seq[i];
+                if (!new_face.empty() && curr_pt == new_face[0]) {
+                    break;
+                }
+                vec3f curr_pos = face_pts[curr_pt];
+                if (added_points.find(curr_pt) != added_points.end()) {
+                    continue;
+                }
+                float metric = A * curr_pos[0] + B * curr_pos[1] + C * curr_pos[2] + D;
+                if (side == UnDecided) {
+                    if (metric < 0) {
+                        side = Below;
+                    }
+                    else if (metric > 0) {
+                        side = Above;
+                    }
+                    else {
+                        //这里的顶点和分割点重合，仍未决定哪一边，等下一圈再跑一边
+                        break;
+                    }
+                }
+                if (metric < 0 && side == Below) {
+                    new_face.push_back(curr_pt);
+                    added_points.insert(curr_pt);
+                }
+                else if (metric > 0 && side == Above) {
+                    new_face.push_back(curr_pt);
+                    added_points.insert(curr_pt);
+                }
+                else if (metric == 0) {
+                    //此时是分割点
+                    new_face.push_back(curr_pt);
+                }
+            }
+            split_faces.push_back(new_face);
+        }
+#endif
+
+        return false;
     }
 
     ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(std::shared_ptr<zeno::GeometryObject> input, const int nPointCount, int seed) {

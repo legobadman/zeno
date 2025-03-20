@@ -8,6 +8,7 @@
 #include <sstream>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/geo/geometryutil.h>
+#include <zeno/utils/format.h>
 #include <unordered_set>
 #include <zeno/para/parallel_reduce.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
@@ -736,6 +737,224 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Resample : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"input_object", ParamObject("Input Object")}
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            float Length = 0.1)
+        {
+            if (Length == 0)
+                return input_object;
+
+            const int nface = input_object->nfaces();
+            const auto& pos = input_object->points_pos();
+
+            std::vector<vec3f> newpos;
+            std::vector<std::vector<int>> newfaces;
+            for (int iFace = 0; iFace < nface; iFace++) {
+                std::vector<int> face_indice = input_object->face_points(iFace);
+                std::vector<int> newface;
+
+                for (int i = 0; i < face_indice.size(); i++) {
+                    int startPt = -1, endPt = -1;
+                    if (i == 0) {
+                        startPt = face_indice[face_indice.size() - 1];
+                        endPt = face_indice[0];
+                    }
+                    else {
+                        startPt = face_indice[i - 1];
+                        endPt = face_indice[i];
+                    }
+
+                    vec3f startPos = pos[startPt], endPos = pos[endPt];
+                    vec3f dir = zeno::normalize(endPos - startPos);
+                    int k = zeno::length(endPos - startPos) / Length;
+
+                    for (int j = 0; j < k; j++) {
+                        vec3f middlePos = startPos + j * Length * dir;
+                        newface.push_back(newpos.size());
+                        newpos.push_back(middlePos);
+                        //if (j == k) {
+                        //    if (!(middlePos == endPos)) {
+                        //        newface.push_back(newpos.size());
+                        //        newpos.push_back(endPos);
+                        //    }
+                        //}
+                    }
+                }
+                newfaces.push_back(newface);
+            }
+
+            auto spOutput = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newpos.size(), newfaces.size());
+            for (auto faceindice : newfaces) {
+                spOutput->add_face(faceindice);
+            }
+            spOutput->create_point_attr("pos", newpos);
+            return spOutput;
+        }
+    };
+
+    struct ZDEFNODE() Reverse : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"input_object", ParamObject("Input Object")}
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> input_object)
+        {
+            const int nface = input_object->nfaces();
+            const auto& pos = input_object->points_pos();
+            std::shared_ptr<zeno::GeometryObject> spOutput = std::make_shared<zeno::GeometryObject>(input_object->is_base_triangle(), pos.size(), nface);
+
+            for (int iFace = 0; iFace < nface; iFace++) {
+                std::vector<int> face_indice = input_object->face_points(iFace);
+                std::reverse(face_indice.begin() + 1, face_indice.end());
+                spOutput->add_face(face_indice); //TODO: line
+            }
+            spOutput->create_point_attr("pos", pos);    //暂时不考虑其他属性
+            return spOutput;
+        }
+    };
+
+    struct ZDEFNODE() Clip : INode {
+
+        ReflectCustomUI m_uilayout = {
+            _Group {
+                {"input_object", ParamObject("Input Object")},
+                {"Keep", ParamPrimitive("Keep", "All", Combobox, std::vector<std::string>{"All", "Part Below The Plane", "Part Above The Plane"})},
+                {"center_pos", ParamPrimitive("Center Position")},
+                {"direction", ParamPrimitive("Direction")}
+            },
+            _Group {
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            const std::string& Keep = "All",
+            zeno::vec3f center_pos = zeno::vec3f(0, 0, 0),
+            zeno::vec3f direction = zeno::vec3f(0, 1, 0))
+        {
+            return nullptr; //先不实现
+
+            const auto& pos = input_object->points_pos();
+            const int nface = input_object->nfaces();
+            std::vector<std::vector<int>> newFaces;
+            std::vector<vec3f> new_pos = pos;
+
+            float A = direction[0], B = direction[1], C = direction[2], 
+                D = -(A * center_pos[0] + B * center_pos[1] + C * center_pos[2]);
+
+            int nPoints = pos.size();
+
+            std::map<std::string, int> split_cache;
+
+            for (int iFace = 0; iFace < nface; iFace++) {
+                std::vector<int> face_indice = input_object->face_points(iFace);
+                std::vector<vec3f> face_pos(face_indice.size());
+                for (int i = 0; i < face_indice.size(); i++)
+                {
+                    face_pos[i] = pos[face_indice[i]];
+                }
+                std::vector<std::vector<int>> split_faces;
+                std::map<int, DividePoint> split_infos;
+                bool bSuccess = dividePlane(face_pos, A, B, C, D, split_faces, split_infos);
+                if (!bSuccess) {
+                    //观察当前这个平面在 Ax+By+Cz+D=0的下方还是上方
+                    float xp = face_pos[0][0], yp = face_pos[0][1], zp = face_pos[0][2];
+                    if (Keep == "All") {
+                        newFaces.push_back(face_indice);
+                    }
+                    else if (Keep == "Part Below The Plane") {
+                        //随便取一个点，观察是否在平面的下方
+                        if (A * xp + B * yp + C * zp + D <= 0) {
+                            newFaces.push_back(face_indice);
+                        }
+                        //被抛弃的面，就不加进去，让以前的点成为孤立点，然后再判断所处平面位置从而删掉
+                        //这样就不影响后续新面各个点的索引
+                    }
+                    else if (Keep == "Part Above The Plane") {
+                        if (A * yp + B * yp + C * zp + D >= 0) {
+                            newFaces.push_back(face_indice);
+                        }
+                    }
+                    continue;
+                }
+
+#if 0
+                assert(!split_infos.empty());
+                //随便取一个divide point，观察这个点是否被filter
+                if (Keep == "Part Below The Plane" || Keep == "Part Above The Plane")
+                {
+                    auto _split_pos = split_infos.begin()->second.pos;
+                    float calc = A * _split_pos[0] + B * _split_pos[1] + C * _split_pos[2] + D;
+                    if (Keep == "Part Below The Plane" && calc >= 0) {
+                        continue;
+                    }
+                    if (Keep == "Part Above The Plane" && calc <= 0) {
+                        continue;
+                    }
+                }
+#endif
+
+                for (const std::vector<int>& new_face_indice : split_faces)
+                {
+                    //new_face_indice是“相对索引”，现在要转为基于全局points的索引。
+                    std::vector<int> new_face_abs_indice;
+                    for (int relidx : new_face_indice) {
+                        int final_idx = -1;
+                        //TODO: 要区分这个面是Below还是Above
+
+                        if (relidx < face_indice.size()) {
+                            final_idx = face_indice[relidx];
+                        }
+                        else {
+                            //新增的分割点，需要查表看是不是缓存了
+                            DividePoint& split_info = split_infos[relidx];
+                            int rel_p1 = split_info.from, rel_p2 = split_info.to;
+                            int abs_p1 = face_indice[rel_p1], abs_p2 = face_indice[rel_p2];
+                            std::string key = zeno::format("{}->{}", std::min(abs_p1, abs_p2), std::max(abs_p1, abs_p2));
+                            //这个key能否维持不变？
+                            auto iter = split_cache.find(key);
+                            if (iter != split_cache.end()) {
+                                final_idx = iter->second;
+                            }
+                            else {
+                                final_idx = new_pos.size();
+                                new_pos.push_back(split_info.pos);
+                            }
+                        }
+                        new_face_abs_indice.push_back(final_idx);
+                    }
+                    newFaces.emplace_back(std::move(new_face_abs_indice));
+                }
+            }
+
+            auto spOutput = std::make_shared<GeometryObject>(false, new_pos.size(), newFaces.size());
+            for (const std::vector<int>& face_indice : newFaces) {
+                spOutput->add_face(face_indice, true);  //todo: 考虑线
+            }
+            spOutput->create_point_attr("pos", new_pos);
+            //TODO: 剩下位于平面之下的孤立点都要被去掉
+            return spOutput;
+        }
+    };
+
     struct ZDEFNODE() RemoveUnusedPoints : INode {
 
         ReflectCustomUI m_uilayout = {
@@ -1186,6 +1405,57 @@ namespace zeno {
         }
     };
 
+    struct ZDEFNODE() Sort : INode {
+        ReflectCustomUI m_uilayout = {
+            _Group{
+                {"input_object", ParamObject("Input")},
+                {"pointSort", ParamPrimitive("Point Sort", "No Change", Combobox, std::vector<std::string>{"No Change", "By Vertex Order", "Random", "Along Vector", "Near To Point"})},
+                {"alongVector", ParamPrimitive("Vector", zeno::vec3f(0,1,0), Vec3edit, Any(), "", "visible = parameter('Point Sort').value == 'Along Vector';")},
+                {"nearPoint", ParamPrimitive("Point", zeno::vec3f(0,1,0), Vec3edit, Any(), "", "visible = parameter('Point Sort').value == 'Near To Point';")},
+                {"bReversePointSort", ParamPrimitive("Reverse Point Sort")},
+                {"faceSort", ParamPrimitive("Face Sort", "No Change", Combobox, std::vector<std::string>{"No Change", "Random", "By Attribute"})},
+                {"byAttrName", ParamPrimitive("Attribute Name", "", Lineedit, Any(), "", "visible = parameter('Face Sort').value == 'By Attribute';")},
+                {"bReverseFaceSort", ParamPrimitive("Reverse Face Sort")},
+            },
+            _Group{
+                {"", ParamObject("Output")},
+            }
+        };
+
+        std::shared_ptr<zeno::GeometryObject> apply(
+            std::shared_ptr<zeno::GeometryObject> input_object,
+            const std::string & pointSort = "No Change",
+            zeno::vec3f alongVector = zeno::vec3f(0, 1, 0),
+            zeno::vec3f nearPoint = zeno::vec3f(0, 0, 0),
+            bool bReversePointSort = false,
+            const std::string & faceSort = "No Change",
+            const std::string& byAttrName = "",
+            bool bReverseFaceSort = false
+        ) {
+            int npts = input_object->npoints();
+            int nfaces = input_object->nfaces();
+            const auto& pos = input_object->points_pos();
+
+            if (pointSort == "By Vertex Order") {
+                std::vector<vec3f> new_pos = pos;
+                auto spOutput = std::make_shared<GeometryObject>(input_object->is_base_triangle(), npts, nfaces);
+                for (int iFace = 0; iFace < nfaces; iFace++) {
+                    const std::vector<int>& pts = input_object->face_points(iFace);
+                    std::vector<int> neworder = pts;
+                    std::sort(neworder.begin(), neworder.end());
+                    for (int i = 0; i < pts.size(); i++) {
+                        //交换坐标值
+                        new_pos[neworder[i]] = pos[pts[i]];
+                    }
+                    spOutput->add_face(neworder);
+                }
+                spOutput->create_point_attr("pos", new_pos);
+                return spOutput;
+            }
+            return nullptr;
+        }
+    };
+
     struct ZDEFNODE() PolyExpand : INode {
 
         ReflectCustomUI m_uilayout = {
@@ -1472,7 +1742,7 @@ namespace zeno {
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
-#if 0
+#if 1
             return fuseGeometry(input_object, snapDistance);
 #else
             int ptnumber = input_object->npoints();

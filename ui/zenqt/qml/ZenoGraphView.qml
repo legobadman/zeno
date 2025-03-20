@@ -674,7 +674,7 @@ Qan.GraphView {
         id: proppanel
         anchors.top: parent.top; anchors.topMargin: 15
         anchors.right: parent.right; anchors.rightMargin: 15
-        visible: false//node != undefined
+        visible: node != undefined
 
         // 左侧拖动区域
         MouseArea {
