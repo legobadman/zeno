@@ -74,7 +74,7 @@ ZENO_API void SubnetNode::initParams(const NodeData& dat)
 {
     INode::initParams(dat);
     //需要检查SubInput/SubOutput是否对的上？
-    if (dat.subgraph && subgraph->getNodes().empty())
+    if (dat.subgraph && !subgraph->getNodes().empty())
         subgraph->init(*dat.subgraph);
 }
 

@@ -62,7 +62,7 @@ Qan.GraphView {
     //background
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(31/255, 31/255, 31/255, 1)
+        color: Qt.rgba(26/255, 26/255, 26/255, 1)
         z: -10
     }
 
@@ -632,7 +632,9 @@ Qan.GraphView {
             proppanel.visible = !proppanel.visible
         }
         else if ((event.key === Qt.Key_S) && (event.modifiers & Qt.ControlModifier)) {
-            graphsmanager.saveProject(graphView.graphModel.name())
+            var graphM = graphView.graphModel;
+            var graph_path = graphM.path()
+            graphsmanager.saveProject(graph_path[0])
         }
         else if ((event.key === Qt.Key_Z) && (event.modifiers & Qt.ControlModifier)) {
             graphsmanager.undo(graphView.graphModel.name())

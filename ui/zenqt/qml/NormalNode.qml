@@ -131,12 +131,8 @@ Qan.NodeItem {
         if (nodetype >= 5) {
             //子图
             var graph_path = graphM.path()
-            var path_list = graphM.data(idx, Model.ROLE_OBJPATH)
-            console.log("path_list is " + path_list)
             var nodename = graphM.data(idx, Model.ROLE_NODE_NAME)   //ROLE_NODE_NAME
             graph_path.push(nodename)
-            console.log("graph_path is " + graph_path)
-
             stack_main_graphview.jumpTo(graph_path);
         } else {
             var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
@@ -253,7 +249,7 @@ Qan.NodeItem {
                         ZRoundRect {
                             id: roundrectheader
                             anchors.fill: parent
-                            bgcolor: "#5A9CE0"
+                            bgcolor: "#5F5F5F"
                             radius: nodeItem.backRadius
                             visible: nodebody.visible
                         }
@@ -261,7 +257,7 @@ Qan.NodeItem {
                         Rectangle {
                             id: rectheader
                             anchors.fill: parent
-                            color: "#5A9CE0"
+                            color: "#5F5F5F"
                             radius: nodeItem.backRadius
                             visible: !nodebody.visible
                         }
