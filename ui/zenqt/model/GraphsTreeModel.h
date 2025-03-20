@@ -69,6 +69,8 @@ public slots:
     void onNameUpdated(const QModelIndex& nodeIdx, const QString& oldName);
 
 private:
+    QStandardItem* initNodeItem(const QModelIndex& nodeidx) const;
+
     GraphModel* m_main;
     bool m_dirty;
 };

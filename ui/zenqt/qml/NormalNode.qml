@@ -125,11 +125,26 @@ Qan.NodeItem {
 
     //event:
     onNodeDoubleClicked: function(node, pos) {
-        var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
-        if (pos2.x > 0 && pos2.y > 0 &&
-            pos2.x < nodename_editor.width &&
-            pos2.y < nodename_editor.height) {
-            nodename_editor.isEditing = true
+        var graphM = nodeItem.graph.model;
+        var idx = nodeItem.node.index;
+        var nodetype = graphM.data(idx, Model.ROLE_NODETYPE);       //ROLE_OBJPOS
+        if (nodetype >= 5) {
+            //子图
+            var graph_path = graphM.path()
+            var path_list = graphM.data(idx, Model.ROLE_OBJPATH)
+            console.log("path_list is " + path_list)
+            var nodename = graphM.data(idx, Model.ROLE_NODE_NAME)   //ROLE_NODE_NAME
+            graph_path.push(nodename)
+            console.log("graph_path is " + graph_path)
+
+            stack_main_graphview.jumpTo(graph_path);
+        } else {
+            var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
+            if (pos2.x > 0 && pos2.y > 0 &&
+                pos2.x < nodename_editor.width &&
+                pos2.y < nodename_editor.height) {
+                nodename_editor.isEditing = true
+            }
         }
     }
 
