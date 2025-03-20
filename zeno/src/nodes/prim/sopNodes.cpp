@@ -731,8 +731,8 @@ namespace zeno {
             }
             else {
                 auto spOutput = constructGeom(exist_faces);
-                auto spFinal = zeno::fuseGeometry(spOutput, 0.05);
-                return spFinal;
+                //auto spOutput = zeno::fuseGeometry(spOutput, 0.05);   //fuse有bug，导致出现了重复点
+                return spOutput;
             }
         }
     };
@@ -1432,25 +1432,13 @@ namespace zeno {
             const std::string& byAttrName = "",
             bool bReverseFaceSort = false
         ) {
+            //Too difficult to hold the index.
+
             int npts = input_object->npoints();
             int nfaces = input_object->nfaces();
             const auto& pos = input_object->points_pos();
 
             if (pointSort == "By Vertex Order") {
-                std::vector<vec3f> new_pos = pos;
-                auto spOutput = std::make_shared<GeometryObject>(input_object->is_base_triangle(), npts, nfaces);
-                for (int iFace = 0; iFace < nfaces; iFace++) {
-                    const std::vector<int>& pts = input_object->face_points(iFace);
-                    std::vector<int> neworder = pts;
-                    std::sort(neworder.begin(), neworder.end());
-                    for (int i = 0; i < pts.size(); i++) {
-                        //交换坐标值
-                        new_pos[neworder[i]] = pos[pts[i]];
-                    }
-                    spOutput->add_face(neworder);
-                }
-                spOutput->create_point_attr("pos", new_pos);
-                return spOutput;
             }
             return nullptr;
         }

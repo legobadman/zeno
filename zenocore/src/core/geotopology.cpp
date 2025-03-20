@@ -421,14 +421,15 @@ namespace zeno
 
         auto h = m_faces[face_id]->h;
         auto firsth = h;
+        assert(firsth->point_from != -1);
+        pts.push_back(h->point_from);
         do {
             pts.push_back(h->point);
             h = h->next;
             if (!h) {//line
-                pts.insert(pts.begin(), firsth->point_from);
                 break;
             }
-        } while (h != firsth);
+        } while (h->next != firsth);
         return pts;
     }
 
@@ -1204,7 +1205,7 @@ namespace zeno
         }
     }
 
-    int GeometryTopology::addface(const std::vector<int>& points, bool bClose) {
+    int GeometryTopology::add_face(const std::vector<int>& points, bool bClose) {
         //points要按照逆时针方向
         std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
         size_t face_id = m_faces.size();
@@ -1212,18 +1213,16 @@ namespace zeno
         std::vector<HEdge*> edges;
         for (size_t i = 0; i < points.size(); i++) {
             size_t from_point = -1, to_point = -1;
-            if (i == 0) {
-                if (!bClose) {
-                    continue;
-                }
-                //edge: from N-1 to 0
-                from_point = points[points.size() - 1];
-                to_point = points[i];
+            if (i == points.size() - 1) {
+                if (!bClose)
+                    continue;   //line
+                from_point = points[i];
+                to_point = points[0];
             }
             else {
-                //edge: from i-1 to i
-                from_point = points[i - 1];
-                to_point = points[i];
+                //edge: from i to i+1
+                from_point = points[i];
+                to_point = points[i + 1];
             }
 
             //DEBUG:
@@ -1248,6 +1247,11 @@ namespace zeno
             hedge->point_from = from_point;
             std::string id = zeno::format("{}->{}", from_point, to_point);
             hedge->id = id;
+
+            if (hedge->point == hedge->point_from) {
+                int j;
+                j = 0;
+            }
 
             auto fromPoint = m_points[from_point];
             assert(fromPoint);

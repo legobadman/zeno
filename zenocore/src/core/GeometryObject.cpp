@@ -779,7 +779,7 @@ namespace zeno
 
     ZENO_API int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {
         copyTopologyAccordtoUseCount();
-        int faceid = m_spTopology->addface(points, bClose);
+        int faceid = m_spTopology->add_face(points, bClose);
         CALLBACK_NOTIFY(add_face, faceid);
         CALLBACK_NOTIFY(reset_vertices)
         return faceid;

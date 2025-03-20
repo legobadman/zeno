@@ -63,7 +63,7 @@ namespace zeno
         void geomTriangulate(zeno::TriangulateInfo& info);
 
         /* 添加元素 */
-        int addface(const std::vector<int>& points, bool bClose);
+        int add_face(const std::vector<int>& points, bool bClose);
         int add_point();
         int add_vertex(int face_id, int point_id);
 
