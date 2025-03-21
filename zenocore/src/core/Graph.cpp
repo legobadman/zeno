@@ -273,7 +273,7 @@ void Graph::init(const GraphData& graph) {
     //import nodes first.
     for (const auto& [name, node] : graph.nodes) {
         bool bAssets = node.asset.has_value();
-        std::shared_ptr<INode> spNode = createNode(node.cls, name, bAssets);
+        std::shared_ptr<INode> spNode = createNode(node.cls, name, bAssets, node.uipos, true);
         spNode->init(node);
         if (node.cls == "SubInput") {
             //TODO
@@ -775,7 +775,13 @@ void Graph::clear()
     ctx.reset();
 }
 
-std::shared_ptr<INode> Graph::createNode(std::string const& cls, const std::string& orgin_name, bool bAssets, std::pair<float, float> pos)
+std::shared_ptr<INode> Graph::createNode(
+    const std::string& cls,
+    const std::string& orgin_name,
+    bool bAssets,
+    std::pair<float, float> pos,
+    bool isIOInit
+    )
 {
     CORE_API_BATCH
 
@@ -811,10 +817,11 @@ std::shared_ptr<INode> Graph::createNode(std::string const& cls, const std::stri
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {
         subnet_nodes.insert(uuid);
-
-        zeno::ParamsUpdateInfo updateInfo;
-        zeno::parseUpdateInfo(node->get_customui(), updateInfo);
-        node->update_editparams(updateInfo);
+        if (!isIOInit) {
+            zeno::ParamsUpdateInfo updateInfo;
+            zeno::parseUpdateInfo(node->get_customui(), updateInfo);
+            node->update_editparams(updateInfo);
+        }
     }
     if (cls == "SubInput") {
         subinput_nodes.insert(uuid);

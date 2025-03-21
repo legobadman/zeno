@@ -249,7 +249,7 @@ Qan.NodeItem {
                         ZRoundRect {
                             id: roundrectheader
                             anchors.fill: parent
-                            bgcolor: "#5F5F5F"
+                            bgcolor: "#0277D1"
                             radius: nodeItem.backRadius
                             visible: nodebody.visible
                         }
@@ -257,7 +257,7 @@ Qan.NodeItem {
                         Rectangle {
                             id: rectheader
                             anchors.fill: parent
-                            color: "#5F5F5F"
+                            color: "#0277D1"
                             radius: nodeItem.backRadius
                             visible: !nodebody.visible
                         }

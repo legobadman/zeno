@@ -31,7 +31,7 @@ ZENO_API SubnetNode::SubnetNode() : subgraph(std::make_shared<Graph>(""))
 
         zeno::ParamPrimitive param;
         param.bInput = true;
-        param.name = "int1";
+        param.name = "data_input";
         param.defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::PrimVar(0));;
         param.type = zeno::types::gParamType_Int;
         param.socketType = zeno::Socket_Primitve;
@@ -42,21 +42,21 @@ ZENO_API SubnetNode::SubnetNode() : subgraph(std::make_shared<Graph>(""))
 
         zeno::ParamPrimitive outputparam;
         outputparam.bInput = false;
-        outputparam.name = "output1";
-        outputparam.defl = zeno::reflect::Any();
-        outputparam.type = Param_Wildcard;
+        outputparam.name = "data_output";
+        outputparam.defl = 2;
+        outputparam.type = gParamType_Int;
         outputparam.socketType = zeno::Socket_Primitve;
         outputparam.bSocketVisible = false;
         info.param = outputparam;
 
         zeno::ParamObject objInput;
         objInput.bInput = true;
-        objInput.name = "objInput1";
+        objInput.name = "Input";
         objInput.type = gParamType_Geometry;
 
         zeno::ParamObject objOutput;
         objOutput.bInput = false;
-        objOutput.name = "objOutput1";
+        objOutput.name = "Output";
         objOutput.type = gParamType_Geometry;
         objOutput.socketType = zeno::Socket_Output;
 
@@ -73,8 +73,7 @@ ZENO_API SubnetNode::~SubnetNode() = default;
 ZENO_API void SubnetNode::initParams(const NodeData& dat)
 {
     INode::initParams(dat);
-    //需要检查SubInput/SubOutput是否对的上？
-    if (dat.subgraph && !subgraph->getNodes().empty())
+    if (dat.subgraph)
         subgraph->init(*dat.subgraph);
 }
 
@@ -96,10 +95,10 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
             std::shared_ptr<INode> newNode = subgraph->createNode("SubInput", name);
 
             if (bSubnetInit) {
-                if (name == "int1") {
+                if (name == "data_input") {
                     newNode->set_pos({700, 0});
                 }
-                else if (name == "objInput1") {
+                else if (name == "Input") {
                     newNode->set_pos({0, 0});
                 }
             }
@@ -120,7 +119,6 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 paramObj.bInput = false;
                 paramObj.name = "port";
                 paramObj.type = gParamType_Geometry;
-                paramObj.bWildcard = true;
                 paramObj.socketType = Socket_Output;
                 newNode->add_output_obj_param(paramObj);
             }
@@ -150,10 +148,10 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
             std::shared_ptr<INode> newNode = subgraph->createNode("SubOutput", name);
 
             if (bSubnetInit) {
-                if (name == "output1") {
+                if (name == "data_output") {
                     newNode->set_pos({ 700, 500 });
                 }
-                else if (name == "objOutput1") {
+                else if (name == "Output") {
                     newNode->set_pos({ 0, 500 });
                     newNode->set_view(true);
                 }
@@ -165,8 +163,7 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 zeno::ParamPrimitive primitive;
                 primitive.bInput = true;
                 primitive.name = "port";
-                primitive.type = Param_Wildcard;
-                primitive.bWildcard = true;
+                primitive.type = gParamType_Int;
                 primitive.socketType = Socket_Primitve;
                 newNode->add_input_prim_param(primitive);
             }
@@ -175,7 +172,6 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 paramObj.bInput = true;
                 paramObj.name = "port";
                 paramObj.type = gParamType_Geometry;
-                paramObj.bWildcard = true;
                 paramObj.socketType = Socket_Clone;
                 newNode->add_input_obj_param(paramObj);
             }

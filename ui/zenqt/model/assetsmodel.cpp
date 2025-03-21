@@ -125,29 +125,29 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
     sample.name = info.name;
 
     zeno::NodeData input1;
-    input1.name = "input1";
+    input1.name = "data_input";
     input1.cls = "SubInput";
     input1.uipos = { 0, 0 };
 
     zeno::NodeData objInput1;
-    objInput1.name = "objInput1";
+    objInput1.name = "Input";
     objInput1.cls = "SubInput";
     objInput1.uipos = { 0,700 };
 
     zeno::NodeData output1;
-    output1.name = "output1";
+    output1.name = "data_output";
     output1.cls = "SubOutput";
     output1.uipos = { 1300, 250 };
 
     zeno::NodeData objOutput1;
-    objOutput1.name = "objOutput1";
+    objOutput1.name = "Output";
     objOutput1.cls = "SubOutput";
     objOutput1.uipos = { 1300, 900 };
 
-    sample.nodes.insert(std::make_pair("input1", input1));
-    sample.nodes.insert(std::make_pair("objInput1", objInput1));
-    sample.nodes.insert(std::make_pair("output1", output1));
-    sample.nodes.insert(std::make_pair("objOutput1", objOutput1));
+    sample.nodes.insert(std::make_pair("data_input", input1));
+    sample.nodes.insert(std::make_pair("Input", objInput1));
+    sample.nodes.insert(std::make_pair("data_output", output1));
+    sample.nodes.insert(std::make_pair("Output", objOutput1));
 
     asset.optGraph = sample;
 
@@ -160,7 +160,7 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
 
     zeno::ParamPrimitive param;
     param.bInput = true;
-    param.name = "input1";
+    param.name = "data_input";
     zeno::PrimVar def = int(0);
     param.defl = zeno::reflect::make_any<zeno::PrimVar>(def);
     param.type = gParamType_Int;
@@ -170,7 +170,7 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
 
     zeno::ParamPrimitive outputparam;
     outputparam.bInput = false;
-    outputparam.name = "output1";
+    outputparam.name = "data_output";
     outputparam.defl = 3;
     outputparam.type = gParamType_Int;
     outputparam.socketType = zeno::Socket_Clone;
@@ -179,14 +179,14 @@ void AssetsModel::newAsset(const zeno::AssetInfo info)
 
     zeno::ParamObject objInput;
     objInput.bInput = true;
-    objInput.name = "objInput1";
+    objInput.name = "Input";
     objInput.type = gParamType_Geometry;
     objInput.socketType = zeno::Socket_Clone;
     objInputs.push_back(objInput);
 
     zeno::ParamObject objOutput;
     objOutput.bInput = false;
-    objOutput.name = "objOutput1";
+    objOutput.name = "Output";
     objOutput.type = gParamType_Geometry;
     objOutputs.push_back(objOutput);
 

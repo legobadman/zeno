@@ -727,7 +727,30 @@ QHash<int, QByteArray> PrimParamOutputModel::roleNames() const {
     roles[QtRole::ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";
     roles[QtRole::ROLE_PARAM_CONTROL_PROPS] = "control_properties";
     roles[QtRole::ROLE_PARAM_SOCKET_CLR] = "socket_color";
+    roles[QtRole::ROLE_PARAM_VISIBLE] = "param_visible";
     return roles;
+}
+
+QString PrimParamOutputModel::getMaxLengthName() const
+{
+    QString maxName;
+    if (m_bIscloned) {
+        for (auto& item : m_clonedItems) {
+            const QString& name = item.name;
+            if (name.length() > maxName.length()) {
+                maxName = name;
+            }
+        }
+    }
+    else {
+        for (auto& idx : m_items) {
+            const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+            if (name.length() > maxName.length()) {
+                maxName = name;
+            }
+        }
+    }
+    return maxName;
 }
 
 Q_INVOKABLE bool PrimParamOutputModel::insertRow(int row, QString name)
