@@ -128,6 +128,7 @@ QString GraphsManager::currentGraphPath() const
 void GraphsManager::setCurrentGraphPath(const QString& path)
 {
     m_graphPath = path;
+    emit currentPathChanged(m_graphPath);
 }
 
 GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE& code)

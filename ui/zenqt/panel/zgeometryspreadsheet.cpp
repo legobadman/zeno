@@ -24,8 +24,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_views->addWidget(new QTableView); //face
     m_views->addWidget(new QTableView); //geom
 
-
-    QLabel* pLblBlank = new QLabel("Blank");
+    QLabel* pLblBlank = new QLabel("No object available, may be not apply or result is null");
     m_views->addWidget(pLblBlank);    //blank
 
     QPalette palette = m_lblNode->palette();
@@ -113,6 +112,19 @@ void ZGeometrySpreadsheet::setGeometry(
     if (!spObject) { 
         m_views->setCurrentIndex(m_views->count() - 1);
         return;
+    }
+    else {
+        if (m_vertex->isChecked())
+            m_views->setCurrentIndex(0);
+
+        if (m_point->isChecked())
+            m_views->setCurrentIndex(1);
+
+        if (m_face->isChecked())
+            m_views->setCurrentIndex(2);
+
+        if (m_geom->isChecked())
+            m_views->setCurrentIndex(3);
     }
 
     if (subgraph) {

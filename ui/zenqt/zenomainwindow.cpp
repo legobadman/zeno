@@ -150,6 +150,14 @@ void ZenoMainWindow::initWindowProperty()
         QString title = AppHelper::nativeWindowTitle(path);
         updateNativeWinTitle(title);
     });
+    connect(pGraphsMgm, &GraphsManager::currentPathChanged, this, [=](QString currpath) {
+        for (DisplayWidget* pWid : viewports()) {
+            zeno::render_reload_info info;
+            info.policy = zeno::Reload_SwitchGraph;
+            info.current_ui_graph = currpath.toStdString(); //中文？
+            pWid->reload(info);
+        }
+    });
     connect(this, &ZenoMainWindow::visFrameUpdated, this, &ZenoMainWindow::onZenovisFrameUpdate);
 }
 
