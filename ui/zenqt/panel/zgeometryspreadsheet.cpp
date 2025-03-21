@@ -24,6 +24,15 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_views->addWidget(new QTableView); //face
     m_views->addWidget(new QTableView); //geom
 
+
+    QLabel* pLblBlank = new QLabel("Blank");
+    m_views->addWidget(pLblBlank);    //blank
+
+    QPalette palette = m_lblNode->palette();
+    palette.setColor(QPalette::WindowText, Qt::white);  // 设置字体颜色为蓝色
+    m_lblNode->setPalette(palette);
+    pLblBlank->setPalette(palette);
+
     QHBoxLayout* pToolbarLayout = new QHBoxLayout;
     pToolbarLayout->addWidget(m_lblNode);
     pToolbarLayout->addWidget(m_vertex);
@@ -96,6 +105,16 @@ void ZGeometrySpreadsheet::setGeometry(
         QModelIndex nodeidx,
         std::shared_ptr<zeno::GeometryObject> spObject
 ) {
+    if (nodeidx.isValid()) {
+        QString nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
+        m_lblNode->setText(nodename);
+    }
+
+    if (!spObject) { 
+        m_views->setCurrentIndex(m_views->count() - 1);
+        return;
+    }
+
     if (subgraph) {
         m_model = subgraph;
         connect(m_model, &GraphModel::nodeRemoved, this, &ZGeometrySpreadsheet::onNodeRemoved, Qt::UniqueConnection);
@@ -166,6 +185,7 @@ void ZGeometrySpreadsheet::clearModel()
 {
     for (int i = 0; i < m_views->count(); ++i) {
         QTableView* view = qobject_cast<QTableView*>(m_views->widget(i));
+        if (!view) continue;
         if (QAbstractItemModel* model = view->model()) {
             view->setModel(nullptr);
             delete model;

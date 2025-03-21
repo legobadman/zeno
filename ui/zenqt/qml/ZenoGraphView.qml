@@ -269,8 +269,8 @@ Qan.GraphView {
                 graphView.temp_edge_close()
             }
             graphView.nodeClicked(node)
-            var graphname = graphView.graphModel.name()
-            graphsmanager.onNodeSelected(graphname, node.index)
+            var path_list = graphView.graphModel.path()
+            graphsmanager.onNodeSelected(path_list, node.index)
         }
         onNodeRightClicked: function(node) {
             showDialog(node)

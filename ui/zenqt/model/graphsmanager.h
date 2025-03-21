@@ -30,7 +30,7 @@ public:
     Q_INVOKABLE void redo(const QString& name);
     Q_INVOKABLE QStringList recentFiles() const;
     Q_INVOKABLE void openProject(const QString& zsgpath);
-    Q_INVOKABLE void onNodeSelected(const QString& graphname, const QModelIndex& idx);
+    Q_INVOKABLE void onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx);
 
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath FINAL)
     QString currentGraphPath() const;

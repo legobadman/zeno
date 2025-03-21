@@ -2270,9 +2270,8 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
                     zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                    if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
-                        panel->setGeometry(subgraph, idx, spGeom);
-                    }
+                    std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject);
+                    panel->setGeometry(subgraph, idx, spGeom);
                 }
             }
             else if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(wid))
