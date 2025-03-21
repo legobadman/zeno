@@ -86,7 +86,7 @@ void ZOpenGLQuickView::synchronizeUnderlay() {
 }
 
 void ZOpenGLQuickView::reload_objects(const zeno::render_reload_info& info) {
-    emit sig_Reload(info);
+    emit sig_Reload(info);  //connect to: ZQmlRender::reload_objects
 }
 
 void ZOpenGLQuickView::renderUnderlay() {

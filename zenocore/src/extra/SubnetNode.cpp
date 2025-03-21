@@ -153,7 +153,7 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 }
                 else if (name == "Output") {
                     newNode->set_pos({ 0, 500 });
-                    newNode->set_view(true);
+                    //newNode->set_view(true);
                 }
             }
 

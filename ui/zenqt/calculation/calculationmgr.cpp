@@ -44,7 +44,7 @@ void CalcWorker::run() {
         state.runstatus = zeno::Node_RunError;
         zeno::ObjPath path = sess.globalError->getNode();
         emit nodeStatusChanged(path, state);
-        emit calcFinished(false, path, errMsg);
+        emit calcFinished(false, path, errMsg); //会发送到：DisplayWidget::onCalcFinished
     }
     else {
         emit calcFinished(true, {}, "");
@@ -97,7 +97,7 @@ void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
         m_thread.wait();
     }
     setRunStatus(RunStatus::NoRun);
-    emit calcFinished(bSucceed, nodeUuidPath, msg);
+    emit calcFinished(bSucceed, nodeUuidPath, msg);  //会发送到：DisplayWidget::onCalcFinished
 }
 
 void CalculationMgr::run()
