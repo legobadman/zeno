@@ -826,7 +826,7 @@ std::shared_ptr<INode> Graph::createNode(
         if (!isIOInit) {
             zeno::ParamsUpdateInfo updateInfo;
             zeno::parseUpdateInfo(node->get_customui(), updateInfo);
-            node->update_editparams(updateInfo);
+            node->update_editparams(updateInfo, true);
         }
     }
     if (cls == "SubInput") {

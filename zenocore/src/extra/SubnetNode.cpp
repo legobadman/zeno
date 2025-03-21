@@ -165,6 +165,7 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 primitive.name = "port";
                 primitive.type = gParamType_Int;
                 primitive.socketType = Socket_Primitve;
+                primitive.defl = 0;
                 newNode->add_input_prim_param(primitive);
             }
             else if (!isprim && exist) {

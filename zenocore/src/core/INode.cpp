@@ -1460,6 +1460,7 @@ zeno::reflect::Any INode::processPrimitive(PrimitiveParam* in_param)
 
     const ParamType type = in_param->type;
     const auto& defl = in_param->defl;
+    assert(defl.has_value());
     zeno::reflect::Any result = defl;
     ParamType editType = defl.type().hash_code();
 
