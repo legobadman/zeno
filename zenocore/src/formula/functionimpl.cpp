@@ -14,6 +14,7 @@
 #include <zeno/utils/vectorutil.h>
 #include <zeno/core/data.h>
 #include <zeno/core/FunctionManager.h>
+#include <zeno/extra/CalcContext.h>
 
 
 namespace zeno
@@ -1344,6 +1345,22 @@ namespace zeno
             return var;
         }
 
+        ZfxVariable bbox(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 2)
+                throw makeError<UnimplError>("the number of arguments of get_geometry_attr is not matched.");
+
+            std::string nodepath = get_zfxvar<std::string>(args[0].value[0]);
+            std::string type = get_zfxvar<std::string>(args[1].value[0]);
+
+            auto [spNode, parampath] = getNodeAndParamPathFromRef(nodepath, pContext);
+            CalcContext ctx;
+            spNode->doApply(&ctx);
+            auto obj = getObjFromRef(nodepath, pContext);
+
+            int res = 0;
+            return res;
+        }
+
         ZfxVariable callFunction(const std::string& funcname, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext)
         {
             if (funcname == "ref") {
@@ -1519,6 +1536,9 @@ namespace zeno
             }
             if (funcname == "get_geometry_attr") {
                 return get_geometry_attr(args, filter, pContext);
+            }
+            if (funcname == "bbox") {
+                return bbox(args, filter, pContext);
             }
             throw makeError<UnimplError>("unknown function call");
         }

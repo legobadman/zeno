@@ -368,6 +368,13 @@ namespace zeno
                 "Converts a linear vertex index into a face vertex number.\n"\
                 "linearVertex:\n    Linear Vertex number of vertex",
                 "int", {{"linearVertex", "int"}} }
+            },
+            { "bbox",
+                { "bbox",
+                "Returns bounding box information for a surface node.\n"\
+                "path-to-node:\n    Reference path of node\n"\
+                "type:\n    can be one of D_XMIN, D_YMIN, D_ZMIN, D_XMAX, D_YMAX, D_ZMAX, D_XSIZE, D_YSIZE, or D_ZSIZE for the corresponding values of the bounding box, return -1 if there is no size attribute.",
+                "int", {{"size value", "int"}} }
             }
         };
     }
