@@ -288,14 +288,15 @@ ZENO_API void SubnetNode::apply() {
     bool bSetOutput = false;
     for (auto const &suboutput_node: suboutputs) {
         auto suboutput = subgraph->getNode(suboutput_node);
+        //suboutput的结果是放在Input的port上面（因为Suboutput放一个输出参数感觉怪怪的）
+        bool bPrimoutput = suboutput->get_input_object_params().empty();
         zany result = suboutput->get_input("port");
         if (result) {
-            if (bSetOutput) {
-                throw makeError<UnimplError>("only support at most one suboutput on subnet");
-            }
             bSetOutput = true;
             zany spObject = result->clone();
-            spObject->update_key(get_uuid_path());
+            if (!bPrimoutput) {
+                spObject->update_key(get_uuid_path());
+            }
             bool ret = set_output(suboutput_node, spObject);
             assert(ret);
         }

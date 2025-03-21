@@ -1760,13 +1760,8 @@ void INode::bypass() {
 
 void INode::doApply(CalcContext* pContext) {
 
-    if (!m_dirty) {
-        if (m_bView) {
-            //无须发送，已经存在于视图端了
-            //commit_to_render(Update_View);
-        }
+    if (!m_dirty)
         return;
-    }
 
     assert(pContext);
     std::string uuid_path = get_uuid_path();

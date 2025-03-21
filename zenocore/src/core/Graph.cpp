@@ -87,6 +87,12 @@ bool Graph::applyNode(std::string const &node_name) {
 
     CalcContext ctx;
 
+    if (optParentSubgNode.has_value() && 
+        optParentSubgNode.value())
+    {
+        ctx.isSubnetApply = true;
+    }
+
     GraphException::translated([&] {
         node->doApply(&ctx);
     }, node);
