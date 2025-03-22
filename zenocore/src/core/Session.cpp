@@ -392,7 +392,7 @@ ZENO_API bool Session::is_interrupted() const {
     return m_bInterrupted;
 }
 
-ZENO_API bool Session::run() {
+ZENO_API bool Session::run(const std::string& currgraph) {
     if (m_bDisableRunning)
         return false;
 
@@ -416,7 +416,13 @@ ZENO_API bool Session::run() {
     objsMan->clearLastUnregisterObjs();
     //对之前删除节点时记录的obj，对应的所有其他关联节点，都标脏
     objsMan->remove_attach_node_by_removing_objs();
-    mainGraph->runGraph();
+
+    if (!currgraph.empty()) {
+        getGraphByPath(currgraph);
+    }
+    else {
+        mainGraph->runGraph();
+    }
     return true;
 }
 

@@ -850,8 +850,6 @@ namespace zeno {
             zeno::vec3f center_pos = zeno::vec3f(0, 0, 0),
             zeno::vec3f direction = zeno::vec3f(0, 1, 0))
         {
-            return nullptr; //先不实现
-
             const auto& pos = input_object->points_pos();
             const int nface = input_object->nfaces();
             std::vector<std::vector<int>> newFaces;

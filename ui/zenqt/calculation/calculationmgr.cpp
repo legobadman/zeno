@@ -25,6 +25,10 @@ CalcWorker::CalcWorker(QObject* parent) {
     }
 }
 
+void CalcWorker::setCurrentGraphPath(const QString& current_graph_path) {
+    m_current_graph_path = current_graph_path;
+}
+
 void CalcWorker::run() {
     auto& sess = zeno::getSession();
 
@@ -33,7 +37,8 @@ void CalcWorker::run() {
     //});
 
     zeno::GraphException::catched([&] {
-        sess.run();
+        const std::string& currpath = m_current_graph_path.toStdString();
+        sess.run(/*currpath*/); //如果局部运行子图，可能要考虑subinput的外部前置计算是否要计算
         }, *sess.globalError);
     sess.globalState->set_working(false);
 
@@ -103,6 +108,7 @@ void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
 void CalculationMgr::run()
 {
     setRunStatus(RunStatus::Running);
+    m_worker->setCurrentGraphPath(zenoApp->graphsManager()->currentGraphPath());
     if (m_bMultiThread) {
         m_thread.start();
     }

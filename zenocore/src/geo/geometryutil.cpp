@@ -7,6 +7,7 @@
 #include <random>
 #include <zeno/utils/wangsrng.h>
 #include <unordered_set>
+#include <deque>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -191,31 +192,206 @@ namespace zeno
             Below,
             Above
         };
-        //实现太困难了，先放着
+        //TODO: 先用bbox过滤
+        {
+            bool hasbelow = false, hasabove = false;
+            for (auto pos : face_pts) {
+                float metric = A * pos[0] + B * pos[1] + C * pos[2] + D;
+                if (metric < 0) {
+                    hasbelow = true;
+                }
+                else if (metric > 0) {
+                    hasabove = true;
+                }
+            }
+            if (!(hasbelow && hasabove)) {
+                return false;
+            }
+        }
 
-#if 0
         int nCount = face_pts.size();
-        std::set<int> splitters;   //储存分割点的序号，注意，分割点也可以是顶点的序号
+        std::vector<int> splitters;   //储存分割点的序号，注意，分割点也可以是顶点的序号
         std::vector<int> newface_pt_seq;  //原有的点加上分割点形成的点序号序列，后续要遍历这个序列得到分割面
-        for (int i = 1; i < face_pts.size(); i++) {
+        std::map<int, vec3f> splitter_pos;
+        for (int i = 1; i <= face_pts.size(); i++) {
             //观察Pi-1和Pi之间是否有分割
-            vec3f p1 = face_pts[i - 1], p2 = face_pts[i];
+            int from = -1, to = -1;
+            if (i == face_pts.size()) {
+                //TODO: 如果是线段，就不考虑最后的闭合线
+                from = face_pts.size() - 1;
+                to = 0;
+            }
+            else {
+                from = i - 1;
+                to = i;
+            }
+            vec3f p1 = face_pts[from], p2 = face_pts[to];
             float d1 = A * p1[0] + B * p1[1] + C * p1[2] + D;
             float d2 = A * p2[0] + B * p2[1] + C * p2[2] + D;
-            newface_pt_seq.push_back(i - 1);
+            newface_pt_seq.push_back(from);
             if (d1 * d2 < 0) {
                 //新增一个分割点
                 int new_splitter = nCount++;
-                splitters.insert(new_splitter);
+                splitters.push_back(new_splitter);
                 newface_pt_seq.push_back(new_splitter);
+                float t = -(A*p1[0] + B*p1[1] + C*p1[2] + D) / (A*(p2[0]-p1[0]) + B*(p2[1]-p1[1]) + C * (p2[2]-p1[2]));
+                float newx = p1[0] + t * (p2[0] - p1[0]);
+                float newy = p1[1] + t * (p2[1] - p1[1]);
+                float newz = p1[2] + t * (p2[2] - p1[2]);
+                vec3f spliter_pos(newx, newy, newz);
+                splitter_pos.insert(std::make_pair(new_splitter, spliter_pos));
             }
             else if (d1 * d2 == 0) {
-                if (d1 == 0) splitters.insert(i - 1);
-                if (d2 == 0) splitters.insert(i);
+                if (d1 == 0) {
+                    splitters.push_back(from);
+                    splitter_pos.insert(std::make_pair(from, p1));
+                }
+                if (d2 == 0) {
+                    splitters.push_back(to);
+                    splitter_pos.insert(std::make_pair(to, p2));
+                }
             }
-            newface_pt_seq.push_back(i);
         }
 
+        std::vector<int> next_pts(nCount);
+        for (int i = 1; i < nCount; i++) {
+            if (i == 0) {
+                next_pts[newface_pt_seq[nCount - 1]] = newface_pt_seq[0];
+            }
+            next_pts[newface_pt_seq[i - 1]] = newface_pt_seq[i];
+        }
+
+        assert(splitters.size() > 1 && splitter_pos.size() > 1);
+
+        //要对分割点进行排序，以便于在分割点之间“跳跃”
+        {
+            //先确定方向，
+            vec3f sp1 = splitter_pos.begin()->second;
+            vec3f sp2 = splitter_pos.rbegin()->second;
+            vec3f d = sp2 - sp1;
+            float _x = std::abs(d[0]), _y = std::abs(d[1]), _z = std::abs(d[2]);
+            int proj = 0;
+            if (_x < _y) {
+                if (_y < _z) {
+                    proj = 2;
+                }
+                else {
+                    proj = 1;
+                }
+            }
+            else {
+                if (_x < _z) {
+                    proj = 2;
+                }
+                else {
+                    proj = 0;
+                }
+            }
+            std::sort(splitters.begin(), splitters.end(), [&](int splitter1, int splitter2) {
+                return splitter_pos[splitter1][proj] < splitter_pos[splitter2][proj];
+            });
+        }
+
+        //找到要遍历的起点（这些起点不能是分割点，如果分割点和顶点重合，也不能作为起点）
+        std::deque<int> start_pts;
+        for (int i = 0; i < face_pts.size(); i++) {
+            if (std::find(splitters.begin(), splitters.end(), i) == splitters.end()) {
+                start_pts.push_back(i);
+            }
+        }
+
+        std::function<bool(int, PointSide, std::vector<int>&)> search_ring = [&](
+                int currpt, 
+                PointSide side,
+                std::vector<int>& exist_pts)->bool {
+            //当前处在currpt点，已经收集到的点序（按逆时针排序）为exist_pts(不包含currpt)
+
+            //首先判断是否闭环
+            if (next_pts[currpt] == exist_pts[0]) {
+                exist_pts.push_back(currpt);
+                return true;
+            }
+
+            //其次判断是否有重复路径
+            if (std::find(exist_pts.begin(), exist_pts.end(), currpt) != exist_pts.end())
+                return false;
+
+            std::vector<int> temp_pts;
+            temp_pts.push_back(currpt);
+            int pt = next_pts[currpt];
+            
+            while (true) {
+                //首先判断pt是否分割点
+                vec3f ptpos;
+                auto iterSpliter = splitter_pos.find(pt);
+                if (iterSpliter != splitter_pos.end()) {
+                    break;
+                    ptpos = iterSpliter->second;
+                }
+                else {
+                    ptpos = face_pts[pt];
+                }
+                float metric = A * ptpos[0] + B * ptpos[1] + C * ptpos[2];
+                if (metric < 0 && side == Above ||
+                    metric > 0 && side == Below) {
+                    //应该是先遇到分割点，而不是跳到另一侧
+                    assert(false);
+                    break;
+                }
+                //从currpt到pt-1，都是同一侧的点，可以加入
+                temp_pts.push_back(pt);
+            }
+
+            //pt是一个分割点
+            int split_pt = pt;
+            //找pt的前一个分割点和后一个分割点，然后各自搜索下去，看能否形成闭环
+            int split_idx = std::find(splitters.begin(), splitters.end(), split_pt) - splitters.begin();
+            bool ret = false;
+            if (split_idx > 0) {
+                int prev_split_pt = splitters[split_idx - 1];
+                ret = search_ring(prev_split_pt, side, exist_pts);
+                if (ret)
+                    return ret;
+            }
+            if (split_idx < splitters.size() - 1) {
+                int next_split_pt = splitters[split_idx + 1];
+                ret = search_ring(next_split_pt, side, exist_pts);
+            }
+            return ret;
+        };
+
+        //遍历所有非分割点
+        std::set<int> visited;
+        assert(!start_pts.empty());
+        while (!start_pts.empty())
+        {
+            int start_pt = start_pts.front();
+            start_pts.pop_front();
+            if (visited.find(start_pt) != visited.end()) {
+                //这个非分割点已经被加到某一个面里了，不可能属于另一个面
+                continue;
+            }
+
+            vec3f start_pos = face_pts[start_pt];
+
+            float metric = A * start_pos[0] + B * start_pos[1] + C * start_pos[2] + D;
+            assert(metric != 0);
+
+            PointSide side = UnDecided;
+            if (metric < 0) side = Below;
+            else side = Above;
+
+            std::vector<int> exist_face;
+            bool ret = search_ring(start_pt, side, exist_face);
+            if (ret)
+                split_faces.push_back(exist_face);
+
+            for (auto pid : exist_face) {
+                visited.insert(pid);
+            }
+        }
+
+#if 0
         int nPoints = face_pts.size();
         std::unordered_set<int> added_points;
         //开始循环遍历newface_pt_seq，不断收集点以形成新面
@@ -260,8 +436,7 @@ namespace zeno
             split_faces.push_back(new_face);
         }
 #endif
-
-        return false;
+        return true;
     }
 
     ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(std::shared_ptr<zeno::GeometryObject> input, const int nPointCount, int seed) {

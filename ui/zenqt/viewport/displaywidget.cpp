@@ -425,7 +425,8 @@ void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
 
         reload.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
         if (reload.current_ui_graph.empty()) {
-            //默认主图
+            //以后可能有些情况是在非ui下跑的，此时是没有“当前图层级路径”这一说法，
+            //这种情况就默认从主图跑
             reload.current_ui_graph = "/main";
         }
 

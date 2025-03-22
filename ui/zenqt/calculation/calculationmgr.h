@@ -15,6 +15,7 @@ class CalcWorker : public QObject
     Q_OBJECT
 public:
     CalcWorker(QObject* parent = nullptr);
+    void setCurrentGraphPath(const QString& current_graph_path);
 
 signals:
     void calcFinished(bool, zeno::ObjPath, QString);
@@ -26,6 +27,7 @@ public slots:
 
 private:
     bool m_bReportNodeStatus = true;    //在正常运行模式下，是否发送每个节点的运行状态到前端
+    QString m_current_graph_path;       //记录当前运行开始时的图层级路径
 };
 
 
