@@ -869,55 +869,33 @@ namespace zeno {
                 {
                     face_pos[i] = pos[face_indice[i]];
                 }
-                std::vector<std::vector<int>> split_faces;
+                std::vector<DivideFace> split_faces;
                 std::map<int, DividePoint> split_infos;
-                bool bSuccess = dividePlane(face_pos, A, B, C, D, split_faces, split_infos);
+                bool onlyAbove = false;
+                bool bSuccess = dividePlane(face_pos, A, B, C, D, split_faces, split_infos, &onlyAbove);
                 if (!bSuccess) {
-                    //观察当前这个平面在 Ax+By+Cz+D=0的下方还是上方
-                    float xp = face_pos[0][0], yp = face_pos[0][1], zp = face_pos[0][2];
                     if (Keep == "All") {
                         newFaces.push_back(face_indice);
                     }
-                    else if (Keep == "Part Below The Plane") {
+                    else if (Keep == "Part Below The Plane" && !onlyAbove) {
                         //随便取一个点，观察是否在平面的下方
-                        if (A * xp + B * yp + C * zp + D <= 0) {
-                            newFaces.push_back(face_indice);
-                        }
+                        newFaces.push_back(face_indice);
                         //被抛弃的面，就不加进去，让以前的点成为孤立点，然后再判断所处平面位置从而删掉
                         //这样就不影响后续新面各个点的索引
+                        //也许需要记录这些点号，方便统一删除
                     }
-                    else if (Keep == "Part Above The Plane") {
-                        if (A * yp + B * yp + C * zp + D >= 0) {
-                            newFaces.push_back(face_indice);
-                        }
+                    else if (Keep == "Part Above The Plane" && onlyAbove) {
+                        newFaces.push_back(face_indice);
                     }
                     continue;
                 }
 
-#if 0
-                assert(!split_infos.empty());
-                //随便取一个divide point，观察这个点是否被filter
-                if (Keep == "Part Below The Plane" || Keep == "Part Above The Plane")
-                {
-                    auto _split_pos = split_infos.begin()->second.pos;
-                    float calc = A * _split_pos[0] + B * _split_pos[1] + C * _split_pos[2] + D;
-                    if (Keep == "Part Below The Plane" && calc >= 0) {
-                        continue;
-                    }
-                    if (Keep == "Part Above The Plane" && calc <= 0) {
-                        continue;
-                    }
-                }
-#endif
-
-                for (const std::vector<int>& new_face_indice : split_faces)
+                for (const DivideFace& divideFace : split_faces)
                 {
                     //new_face_indice是“相对索引”，现在要转为基于全局points的索引。
                     std::vector<int> new_face_abs_indice;
-                    for (int relidx : new_face_indice) {
+                    for (int relidx : divideFace.face_indice) {
                         int final_idx = -1;
-                        //TODO: 要区分这个面是Below还是Above
-
                         if (relidx < face_indice.size()) {
                             final_idx = face_indice[relidx];
                         }
@@ -927,7 +905,6 @@ namespace zeno {
                             int rel_p1 = split_info.from, rel_p2 = split_info.to;
                             int abs_p1 = face_indice[rel_p1], abs_p2 = face_indice[rel_p2];
                             std::string key = zeno::format("{}->{}", std::min(abs_p1, abs_p2), std::max(abs_p1, abs_p2));
-                            //这个key能否维持不变？
                             auto iter = split_cache.find(key);
                             if (iter != split_cache.end()) {
                                 final_idx = iter->second;
@@ -935,6 +912,7 @@ namespace zeno {
                             else {
                                 final_idx = new_pos.size();
                                 new_pos.push_back(split_info.pos);
+                                split_cache.insert(std::make_pair(key, final_idx));
                             }
                         }
                         new_face_abs_indice.push_back(final_idx);

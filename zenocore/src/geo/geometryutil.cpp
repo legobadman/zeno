@@ -184,14 +184,10 @@ namespace zeno
     ZENO_API bool dividePlane(
         const std::vector<vec3f>& face_pts, /*容器的顺序就是面点的逆序排序*/
         float A, float B, float C, float D,
-        /*out*/std::vector<std::vector<int>>& split_faces,
-        /*out*/std::map<int, DividePoint>& split_infos
+        /*out*/std::vector<DivideFace>& split_faces,
+        /*out*/std::map<int, DividePoint>& split_infos,
+        /*out*/bool* pOnlyAbove
     ) {
-        enum PointSide {
-            UnDecided,
-            Below,
-            Above
-        };
         //TODO: 先用bbox过滤
         {
             bool hasbelow = false, hasabove = false;
@@ -205,6 +201,9 @@ namespace zeno
                 }
             }
             if (!(hasbelow && hasabove)) {
+                if (pOnlyAbove) {
+                    *pOnlyAbove = hasabove;
+                }
                 return false;
             }
         }
@@ -240,15 +239,18 @@ namespace zeno
                 float newz = p1[2] + t * (p2[2] - p1[2]);
                 vec3f spliter_pos(newx, newy, newz);
                 splitter_pos.insert(std::make_pair(new_splitter, spliter_pos));
+                split_infos.insert(std::make_pair(new_splitter, DividePoint{ spliter_pos, from, to}));
             }
             else if (d1 * d2 == 0) {
                 if (d1 == 0) {
                     splitters.push_back(from);
                     splitter_pos.insert(std::make_pair(from, p1));
+                    split_infos.insert(std::make_pair(from, DividePoint{ p1, from, from }));
                 }
                 if (d2 == 0) {
                     splitters.push_back(to);
                     splitter_pos.insert(std::make_pair(to, p2));
+                    split_infos.insert(std::make_pair(to, DividePoint{ p2, to, to }));
                 }
             }
         }
@@ -300,14 +302,14 @@ namespace zeno
             }
         }
 
-        std::function<bool(int, PointSide, std::vector<int>&)> search_ring = [&](
+        std::function<bool(int, PointSide, std::vector<int>& )> search_ring = [&](
                 int currpt, 
                 PointSide side,
                 std::vector<int>& exist_pts)->bool {
             //当前处在currpt点，已经收集到的点序（按逆时针排序）为exist_pts(不包含currpt)
 
             //首先判断是否闭环
-            if (next_pts[currpt] == exist_pts[0]) {
+            if (!exist_pts.empty() && next_pts[currpt] == exist_pts[0]) {
                 exist_pts.push_back(currpt);
                 return true;
             }
@@ -316,7 +318,7 @@ namespace zeno
             if (std::find(exist_pts.begin(), exist_pts.end(), currpt) != exist_pts.end())
                 return false;
 
-            std::vector<int> temp_pts;
+            std::vector<int> temp_pts = exist_pts;
             temp_pts.push_back(currpt);
             int pt = next_pts[currpt];
             
@@ -325,8 +327,8 @@ namespace zeno
                 vec3f ptpos;
                 auto iterSpliter = splitter_pos.find(pt);
                 if (iterSpliter != splitter_pos.end()) {
+                    temp_pts.push_back(pt);
                     break;
-                    ptpos = iterSpliter->second;
                 }
                 else {
                     ptpos = face_pts[pt];
@@ -340,6 +342,7 @@ namespace zeno
                 }
                 //从currpt到pt-1，都是同一侧的点，可以加入
                 temp_pts.push_back(pt);
+                pt = next_pts[pt];      //取下一个点
             }
 
             //pt是一个分割点
@@ -349,13 +352,19 @@ namespace zeno
             bool ret = false;
             if (split_idx > 0) {
                 int prev_split_pt = splitters[split_idx - 1];
-                ret = search_ring(prev_split_pt, side, exist_pts);
-                if (ret)
+                ret = search_ring(prev_split_pt, side, temp_pts);
+                if (ret) {
+                    exist_pts = temp_pts;
                     return ret;
+                }
             }
             if (split_idx < splitters.size() - 1) {
                 int next_split_pt = splitters[split_idx + 1];
-                ret = search_ring(next_split_pt, side, exist_pts);
+                ret = search_ring(next_split_pt, side, temp_pts);
+                if (ret) {
+                    exist_pts = temp_pts;
+                    return true;
+                }
             }
             return ret;
         };
@@ -383,8 +392,12 @@ namespace zeno
 
             std::vector<int> exist_face;
             bool ret = search_ring(start_pt, side, exist_face);
-            if (ret)
-                split_faces.push_back(exist_face);
+            if (ret) {
+                DivideFace divideface;
+                divideface.face_indice = exist_face;
+                divideface.side = side;
+                split_faces.push_back(divideface);
+            }
 
             for (auto pid : exist_face) {
                 visited.insert(pid);
