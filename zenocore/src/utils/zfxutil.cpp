@@ -303,7 +303,7 @@ namespace zeno
                 res.bAttr = true;
                 return res;
             }
-            else if (attr_name == "primnum") {
+            else if (attr_name == "facenum") {
                 int N = spGeom->nfaces();
                 ZfxVariable res;
                 res.value.resize(N);
@@ -574,7 +574,7 @@ namespace zeno
             }
         }
 
-        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
+        void setAttrValue(std::string attrname, const std::string& channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (attrname[0] == '@')
                 attrname = attrname.substr(1);
 

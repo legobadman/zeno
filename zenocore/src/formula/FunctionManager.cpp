@@ -984,7 +984,7 @@ namespace zeno {
         }
     }
 
-    void FunctionManager::setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
+    void FunctionManager::setAttrValue(const std::string& attrname, const std::string& channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
         zeno::zfx::setAttrValue(attrname, channel, var, opVal, filter, pContext);
     }
 
@@ -1697,8 +1697,6 @@ namespace zeno {
                 break;
             }
             case CODEBLOCK:{
-                //??????????children??????
-                //???????????????
                 pushStack();
                 scope_exit sp([this]() {this->popStack(); });
                 for (auto pSegment : root->children) {

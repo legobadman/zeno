@@ -16,6 +16,7 @@ namespace zeno
             //输入：
             _Group {
                 {"spGeo", ParamObject("Input", Socket_Clone)},
+                {"runOver", ParamPrimitive("Run Over", "Points", Combobox, std::vector<std::string>{"Points", "Faces", "Geometry"})},
                 {"zfxCode", ParamPrimitive("Zfx Code", "", CodeEditor)},
             },
             //输出：
@@ -24,7 +25,7 @@ namespace zeno
             }
         };
 
-        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> spGeo, std::string zfxCode) {
+        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> spGeo, std::string zfxCode, const std::string& runOver) {
             if (!spGeo)
                 return spGeo;
 
@@ -32,6 +33,11 @@ namespace zeno
             ctx.spNode = shared_from_this();
             ctx.spObject = spGeo;
             ctx.code = zfxCode;
+
+            if (runOver == "Points") ctx.runover = ATTR_POINT;
+            else if (runOver == "Faces") ctx.runover = ATTR_FACE;
+            else if (runOver == "Geometry") ctx.runover = ATTR_GEO;
+
             ZfxExecute zfx(zfxCode, &ctx);
             zfx.execute();
             return spGeo;
