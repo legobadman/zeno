@@ -992,6 +992,25 @@ namespace zeno {
         return zeno::zfx::getAttrValue(attrname, pContext, channel);
     }
 
+    ZfxVariable FunctionManager::trunkVariable(ZfxVariable origin, const ZfxElemFilter& filter) {
+        int ndim = origin.value.size();
+        int nfilter = filter.size();
+        if (nfilter == ndim)
+            return origin;
+        else if (nfilter < ndim) {
+            //裁剪origin
+            ZfxVariable truncate;
+            truncate.value.resize(nfilter);
+            std::copy(origin.value.begin(), origin.value.begin() + nfilter, truncate.value.begin());
+            return truncate;
+        }
+        else {
+            //扩大origin
+            origin.value.resize(nfilter);
+            return origin;
+        }
+    }
+
     ZfxVariable FunctionManager::execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext) {
         if (!root) {
             throw makeError<UnimplError>("Indexing Error.");
@@ -1023,14 +1042,16 @@ namespace zeno {
                         channel = 'z';
                     else if (component == "w")
                         channel = 'w';
-                    return getAttrValue(varname, pContext, channel);
+                    ZfxVariable var = getAttrValue(varname, pContext, channel);
+                    return trunkVariable(var, filter);
                 }
                 else if (root->opVal == Indexing) {
 
                 }
 
                 if (root->bAttr && root->opVal == UNDEFINE_OP) {
-                    return getAttrValue(varname, pContext);
+                    ZfxVariable var = getAttrValue(varname, pContext);
+                    return trunkVariable(var, filter);
                 }
 
                 ZfxVariable& var = getVariableRef(varname, pContext);
