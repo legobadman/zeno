@@ -375,13 +375,17 @@ namespace zeno
     }
 
     ZENO_API int GeometryObject::create_point_attr(std::string const& attr_name, const AttrVar& defl) {
-        auto iter = m_point_attrs.find(attr_name);
+        std::string attr = attr_name;
+        if (attr == "P") {
+            attr = "pos";
+        }
+
+        auto iter = m_point_attrs.find(attr);
         if (iter != m_point_attrs.end()) {
             return -1;   //already exist
         }
         int n = m_spTopology->npoints();
-        m_point_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
-
+        m_point_attrs.insert(std::make_pair(attr, AttributeVector(defl, n)));
         return 0;
     }
 

@@ -375,6 +375,11 @@ namespace zeno
                 "path-to-node:\n    Reference path of node\n"\
                 "type:\n    can be one of D_XMIN, D_YMIN, D_ZMIN, D_XMAX, D_YMAX, D_ZMAX, D_XSIZE, D_YSIZE, or D_ZSIZE for the corresponding values of the bounding box, return -1 if there is no size attribute.",
                 "int", {{"size value", "int"}} }
+            },
+            { "rint",
+                { "rint", "i.e. rint(2.2) = 2; rint(2.6) = 3;",
+                {{"float"}}
+                }
             }
         };
     }

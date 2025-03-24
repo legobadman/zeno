@@ -452,17 +452,39 @@ namespace zeno
         return true;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(std::shared_ptr<zeno::GeometryObject> input, const int nPointCount, int seed) {
+    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(
+        std::shared_ptr<zeno::GeometryObject> input,
+        const std::string& sampleRegion,
+        const int nPointCount,
+        int seed)
+    {
         auto spOutput = std::make_shared<zeno::GeometryObject>(input->is_base_triangle(), nPointCount, 0);
         if (seed == -1) seed = std::random_device{}();
 
         const int nFaces = input->nfaces();
+        const std::vector<vec3f>& pos = input->points_pos();
         std::vector<float> cdf(nFaces);
         std::vector<vec3f> newPts(nPointCount);
 
-        const std::vector<vec3f>& pos = input->points_pos();
-        std::vector<std::vector<int>> faces = input->face_indice();
+        if (sampleRegion == "Volumn") {
+            const auto& bbox = geomBoundingBox(input.get());
+            //目前只考虑通过bbox直接采样，不考虑复杂的空间
+            parallel_for((size_t)0, (size_t)nPointCount, [&](size_t i) {
+                wangsrng rng(i);
+                float rx = rng.next_float();
+                float ry = rng.next_float();
+                float rz = rng.next_float();
+                float xp = bbox.first[0] + (bbox.second[0] - bbox.first[0]) * rx;
+                float yp = bbox.first[1] + (bbox.second[1] - bbox.first[1]) * ry;
+                float zp = bbox.first[2] + (bbox.second[2] - bbox.first[2]) * rz;
+                //TODO: 如果面对复杂的非矩形几何体，可以通过判断点是否在几何体内部。
+                newPts[i] = vec3f(xp, yp, zp);
+            });
+            spOutput->create_point_attr("pos", newPts);
+            return spOutput;
+        }
 
+        std::vector<std::vector<int>> faces = input->face_indice();
         parallel_inclusive_scan_sum(faces.begin(), faces.end(), cdf.begin(), [&](std::vector<int> const& ind) {
             auto i1 = ind[0];
             auto i2 = ind[1];

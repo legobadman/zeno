@@ -25,7 +25,7 @@ namespace zeno
             }
         };
 
-        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> spGeo, std::string zfxCode, const std::string& runOver) {
+        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> spGeo, std::string zfxCode, const std::string& runOver = "Points") {
             if (!spGeo)
                 return spGeo;
 

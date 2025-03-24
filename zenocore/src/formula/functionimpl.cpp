@@ -1540,6 +1540,14 @@ namespace zeno
             if (funcname == "bbox") {
                 return bbox(args, filter, pContext);
             }
+            if (funcname == "rint") {
+                ZfxVariable ret = args[0];
+                for (int i = 0; i < args[0].value.size(); i++) {
+                    float argval = get_zfxvar<float>(args[0].value[i]);
+                    ret.value[i] = std::round(argval);
+                }
+                return ret;
+            }
             throw makeError<UnimplError>("unknown function call");
         }
     }

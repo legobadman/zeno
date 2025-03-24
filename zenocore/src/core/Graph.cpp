@@ -752,6 +752,7 @@ std::string Graph::updateNodeName(const std::string oldName, const std::string n
     sync_to_set(m_viewnodes, oldName, name);
 
     spNode->onNodeNameUpdated(oldName, name);
+    spNode->mark_dirty(true);
 
     CALLBACK_NOTIFY(updateNodeName, oldName, name)
     return name;

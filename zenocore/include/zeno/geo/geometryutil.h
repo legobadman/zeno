@@ -70,7 +70,11 @@ namespace zeno
     ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
     ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold);
     ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
-    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(std::shared_ptr<zeno::GeometryObject> input, const int count, int seed);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(
+        std::shared_ptr<zeno::GeometryObject> input,
+        const std::string& sampleRegion,
+        const int count,
+        int seed);
     ZENO_API bool dividePlane(const std::vector<vec3f>& face_pts, float A, float B, float C, float D,
         /*out*/std::vector<DivideFace>& split_faces,
         /*out*/std::map<int, DividePoint>& split_infos,

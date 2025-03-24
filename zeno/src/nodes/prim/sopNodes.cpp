@@ -1276,6 +1276,7 @@ namespace zeno {
                 {"input_object", ParamObject("Input")},
                 {"Count", ParamPrimitive("Points Count", 10, Slider, std::vector<int>{0, 1000, 1})},
                 {"Seed", ParamPrimitive("Random Seed", 0, Slider, std::vector<int>{0, 100, 1})},
+                {"sampleRegion", ParamPrimitive("Sample Regin", "Face", Combobox, std::vector<std::string>{"Face", "Volumn"})}
             },
             _Group{
                 {"", ParamObject("Output")},
@@ -1284,10 +1285,11 @@ namespace zeno {
 
         std::shared_ptr<zeno::GeometryObject> apply(
             std::shared_ptr<zeno::GeometryObject> input_object,
+            const std::string& sampleRegion = "Face",
             int Count = 10,
             int Seed = 0
         ) {
-            auto spOutput = scatter(input_object, Count, Seed);
+            auto spOutput = scatter(input_object, sampleRegion, Count, Seed);
             return spOutput;
         }
     };
