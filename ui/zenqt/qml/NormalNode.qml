@@ -135,26 +135,27 @@ Qan.NodeItem {
             graph_path.push(nodename)
             stack_main_graphview.jumpTo(graph_path);
         } else {
-            var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
-            if (pos2.x > 0 && pos2.y > 0 &&
-                pos2.x < nodename_editor.width &&
-                pos2.y < nodename_editor.height) {
-                nodename_editor.isEditing = true
-            }
+            // var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
+            // if (pos2.x > 0 && pos2.y > 0 &&
+            //     pos2.x < nodename_editor.width &&
+            //     pos2.y < nodename_editor.height) {
+            //     nodename_editor.isEditing = true
+            // }
         }
     }
 
-    EditableText {
+    Text  {
         id: detach_name_editor
         anchors.right: nodeItem.left
         y: right_status_group.y + right_status_group.height / 2 - height / 2
         //anchors.verticalCenter: right_status_group.verticalCenter
         //anchors.verticalCenter: mainmain_layout.verticalCenter
         text: nodeItem.node.label
+        color: "white"
 
-        onTextChanged: {
-            nodeItem.node.label = text
-        }
+        // onTextChanged: {
+        //     nodeItem.node.label = text
+        // }
     }
 
     Image {
@@ -277,16 +278,17 @@ Qan.NodeItem {
                                     color: "transparent"
                                 }
 
-                                EditableText {
+                                Text {
                                     id: nodename_editor
                                     Layout.fillWidth: true
                                     //horizontalAlignment: Text.AlignHCenter
                                     text: nodeItem.node.label
-                                    handle_mouseevent: false
+                                    // handle_mouseevent: false
+                                    color: "white"
 
-                                    onTextChanged: {
-                                        nodeItem.node.label = text
-                                    }
+                                    // onTextChanged: {
+                                    //     nodeItem.node.label = text
+                                    // }
                                 }
 
                                 Image {
