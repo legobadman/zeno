@@ -171,12 +171,8 @@ zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::Pa
     case gParamType_String: {
         if (varType == QVariant::String) {
             QString sVal = var.toString();
-            if (is_prim_var) {
-                return zeno::PrimVar(sVal.toStdString());
-            }
-            else {
-                return sVal.toStdString();
-            }
+            //string类型不能是PrimVar
+            return sVal.toStdString();
         }
         break;
     }
@@ -215,16 +211,34 @@ zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::Pa
             UI_VECTYPE qvec = var.value<UI_VECTYPE>();
             //默认都是转为VecEdit
             if (qvec.size() == nSize) {
-                zeno::vecvar vec(nSize);
-                for (int i = 0; i < nSize; i++) {
+                if (is_prim_var) {
+                    zeno::vecvar vec(nSize);
+                    for (int i = 0; i < nSize; i++) {
+                        if (bFloat) {
+                            vec[i] = zeno::PrimVar((float)qvec[i]);
+                        }
+                        else {
+                            vec[i] = zeno::PrimVar((int)qvec[i]);
+                        }
+                    }
+                    return vec;
+                }
+                else {
                     if (bFloat) {
-                        vec[i] = zeno::PrimVar((float)qvec[i]);
+                        zeno::vec3f vec;
+                        for (int i = 0; i < nSize; i++) {
+                            vec[i] = (float)qvec[i];
+                        }
+                        return vec;
                     }
                     else {
-                        vec[i] = zeno::PrimVar((int)qvec[i]);
+                        zeno::vec3i vec;
+                        for (int i = 0; i < nSize; i++) {
+                            vec[i] = (int)qvec[i];
+                        }
+                        return vec;
                     }
                 }
-                return vec;
             }
         }
         else if (varType == QVariant::StringList)
