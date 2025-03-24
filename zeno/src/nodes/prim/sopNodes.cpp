@@ -1659,22 +1659,37 @@ namespace zeno {
             std::string group="Points",
             bool deleteNonSelected = false
         ) {
-            std::ostringstream ss;
-            ss << "if (" << (deleteNonSelected ? "!" : "") <<
-                "(" << zfx << ")) { " << (group=="Points" ? "remove_point" : "remove_face")
-                << "(@ptnum); }";
+            zeno::ZfxContext ctx;
+            std::string rem_what;
+            std::string idnum;
+            std::string nor = deleteNonSelected ? "!" : "";
+            if (group == "Points") {
+                rem_what = "point";
+                idnum = "@ptnum";
+                ctx.runover = ATTR_POINT;
+            }
+            else if (group == "Faces") {
+                rem_what = "face";
+                idnum = "@facenum";
+                ctx.runover = ATTR_FACE;
+            }
+            else {
+                throw UnimplError("Unknown group on blast");
+            }
+
+            std::string finalZfx;
+            finalZfx += "if (" + nor + zfx + ") {\n";
+            finalZfx += "    remove_" + rem_what + "(" + idnum + ");\n";
+            finalZfx += "}";
 
             std::shared_ptr<zeno::GeometryObject> spOutput(input_object);
-
-            const std::string& finalZfx = ss.str();
-            zeno::ZfxContext ctx;
+            
             ctx.spNode = shared_from_this();
             ctx.spObject = spOutput;
             ctx.code = finalZfx;
 
             zeno::ZfxExecute zfxexe(finalZfx, &ctx);
             zfxexe.execute();
-
             return spOutput;
         }
 
