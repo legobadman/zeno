@@ -661,10 +661,14 @@ Qan.GraphView {
                 graphView.graph.model.removeLink(out_node_name, out_param, in_node_name, in_param)
             }
 
-            var nodes = []
+        var nodes = []
+            var graphM = graphView.graphModel
             for (var i = 0; i < graph.selectedNodes.length; i++) {
                 var selectNode = graph.selectedNodes.at(i)
-                nodes.push(selectNode.label)
+                var clsname = graphM.data(selectNode.index, Model.ROLE_CLASS_NAME);
+                if(!(clsname == "SubInput" || clsname == "SubOutput" )) {
+                    nodes.push(selectNode.label)
+                }
             }
             for (var i = 0; i < nodes.length; i++) {
                 graphView.graph.model.removeNode(nodes[i])
