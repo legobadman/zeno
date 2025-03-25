@@ -1068,8 +1068,6 @@ void Graph::setName(const std::string& na) {
 }
 
 bool Graph::removeNode(std::string const& name) {
-    CALLBACK_NOTIFY(removeNode, name)
-
     auto it = m_name2uuid.find(name);
     std::string uuid = safe_at(m_name2uuid, name, "get uuid when calling removeNode");
     auto spNode = safe_at(m_nodes, uuid, "");
@@ -1094,6 +1092,8 @@ bool Graph::removeNode(std::string const& name) {
     asset_nodes.erase(uuid);
     m_viewnodes.erase(name);
     m_name2uuid.erase(name);
+
+    CALLBACK_NOTIFY(removeNode, name)
 
     return true;
 }

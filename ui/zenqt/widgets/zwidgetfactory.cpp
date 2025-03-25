@@ -58,8 +58,18 @@ namespace zenoui
                     return pLineEdit;
                 }
                 else {
-                    ZASSERT_EXIT(value.type().hash_code() == gParamType_PrimVariant, nullptr);
-                    const zeno::PrimVar& var = any_cast<zeno::PrimVar>(value);
+                    zeno::PrimVar var;
+                    if (value.type().hash_code() == gParamType_Int) {
+                        var = zeno::reflect::make_any<zeno::PrimVar>(any_cast<int>(value));
+                    } else if (value.type().hash_code() == gParamType_Float) {
+                        var = zeno::reflect::make_any<zeno::PrimVar>(any_cast<float>(value));
+                    } else if (value.type().hash_code() == gParamType_String) {
+                        var = zeno::reflect::make_any<zeno::PrimVar>(any_cast<std::string>(value));
+                    } else if (value.type().hash_code() == gParamType_PrimVariant) {
+                        var = any_cast<zeno::PrimVar>(value);
+                    } else {
+                        return nullptr;
+                    }
 
                     ZCoreParamLineEdit* pLineEdit = new ZCoreParamLineEdit(var, paramType);
 
