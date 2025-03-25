@@ -1108,8 +1108,8 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::reflect::any_cast<std::string>(param_defl);
-        if (!std::regex_search(param_text, FunctionManager::refStrPattern)) {
-            return refSources;
+        if (param_text.find("ref") != std::string::npos) {
+            refSegments.push_back(param_text);
         }
         refSegments.push_back(param_text);
     }
@@ -1119,8 +1119,8 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (!std::regex_search(param_text, FunctionManager::refStrPattern)) {
-            return refSources;
+        if (param_text.find("ref") != std::string::npos) {
+            refSegments.push_back(param_text);
         }
         refSegments.push_back(param_text);
     }
@@ -1131,7 +1131,7 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (std::regex_search(param_text, FunctionManager::refStrPattern)) {
+            if (param_text.find("ref") != std::string::npos) {
                 refSegments.push_back(param_text);
             }
         }
@@ -1676,13 +1676,14 @@ bool INode::requireInput(std::string const& ds, CalcContext* pContext) {
                         assert(spSrcNode);
                         std::shared_ptr<Graph> spSrcGraph = spSrcNode->graph.lock();
                         assert(spSrcGraph);
-                        //干脆整个apply，这样可以统一管理脏位，避免引用源一直处于脏状态无法传播
-                        //但这样麻烦之处是没法引用本节点其他参数
-                        //spSrcNode->doApply(pContext);
-
-                        //虽然引用源没法apply，但可以直接引用参数，也可以引用本节点，而且往往
-                        //只是引用一个简单的常量而已，暂时不考虑复杂的链式依赖情况
-                        spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
+                        //NOTE in 2025/3/25: 还是apply引用源，至于本节点参数循环引用的问题，走另外的路线
+                        if (spSrcNode.get() == this) {
+                            //引用自身的参数，直接拿defl，因为这种情况绝大多数是固定值，没必要执行计算，比如pos引用size的数据
+                            spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
+                        }
+                        else {
+                            spSrcNode->doApply(pContext);
+                        }
                     }
                 }
 

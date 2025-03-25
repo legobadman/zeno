@@ -16,7 +16,9 @@
 #include <zeno/core/FunctionManager.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/geo/kdsearch.h>
+#include "../utils/zfxutil.h"
 
+#define REF_DEPEND_APPLY
 
 namespace zeno
 {
@@ -189,50 +191,9 @@ namespace zeno
             return zfxvariantVector;
         }
 
-        std::pair<std::shared_ptr<INode>, std::string> getNodeAndParamPathFromRef(const std::string& ref, ZfxContext* pContext) {
-            if (ref.empty()) {
-                throw makeError<UnimplError>();
-            }
-            std::string fullPath, graphAbsPath;
-
-            auto thisNode = pContext->spNode.lock();
-            const std::string& thisnodePath = thisNode->get_path();
-            graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
-
-            if (ref.front() == '/') {
-                fullPath = ref;
-            }
-            else {
-                fullPath = graphAbsPath + "/" + ref;
-            }
-
-            int idx = fullPath.find_last_of('/');
-            if (idx == std::string::npos) {
-                throw makeError<UnimplError>();
-            }
-
-            const std::string& graph_correct_path = fullPath.substr(0, idx);
-            const std::string& nodePath = fullPath.substr(idx + 1);
-
-            idx = nodePath.find('.');
-            if (idx == std::string::npos) {
-                throw makeError<UnimplError>();
-            }
-            std::string nodename = nodePath.substr(0, idx);
-            std::string parampath = nodePath.substr(idx + 1);
-
-            std::string nodeAbsPath = graph_correct_path + '/' + nodename;
-            std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
-
-            if (!spNode) {
-                throw makeError<UnimplError>("the refer node doesn't exist, may be deleted before");
-            }
-
-            return std::make_pair(spNode, parampath);
-        }
-
         ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
-            auto [spNode, parampath] = getNodeAndParamPathFromRef(ref, pContext);
+            std::string parampath, _;
+            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
             auto items = split_str(parampath, '.');
             std::string paramname = items[0];
 
@@ -247,8 +208,27 @@ namespace zeno
             //如果取的是“静态值”，则不要求引用源必须执行，此时要拿的数据应该是defl.
 
             //以上方案取决于产品设计。
+
+            //NOTE in 2025/3/25: 应该拿计算结果而不是默认值，并且支持跨图层获取
+
             float res = 0.f;
             if (items.size() == 1) {
+#ifdef REF_DEPEND_APPLY
+                if (!paramData.result.has_value()) {
+                    throw makeError<UnimplError>("there is no result on refer source, should calc the source first.");
+                }
+
+                size_t primtype = paramData.result.type().hash_code();
+                if (primtype == zeno::types::gParamType_Int) {
+                    res = zeno::reflect::any_cast<int>(paramData.result);
+                }
+                else if (primtype == zeno::types::gParamType_Float) {
+                    res = zeno::reflect::any_cast<float>(paramData.result);
+                }
+                else {
+                    throw makeError<UnimplError>();
+                }
+#else
                 auto refVal = paramData.defl;
                 if (!refVal.has_value()) {
                     throw makeError<UnimplError>("there is no result on refer source, should calc the source first.");
@@ -284,6 +264,7 @@ namespace zeno
                 else {
                     throw makeError<UnimplError>();
                 }
+#endif
             }
             else if (items.size() == 2 &&
                 (paramData.type == zeno::types::gParamType_Vec2f || paramData.type == zeno::types::gParamType_Vec2i ||
@@ -341,7 +322,8 @@ namespace zeno
         };
 
         std::shared_ptr<IObject> getObjFromRef(const std::string& ref, ZfxContext* pContext) {
-            auto [spNode, parampath] = getNodeAndParamPathFromRef(ref, pContext);
+            std::string parampath, _;
+            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
             auto items = split_str(parampath, '.');
             std::string paramname = items[0];
             return spNode->get_output_obj(paramname);
@@ -1353,7 +1335,8 @@ namespace zeno
             std::string nodepath = get_zfxvar<std::string>(args[0].value[0]);
             std::string type = get_zfxvar<std::string>(args[1].value[0]);
 
-            auto [spNode, parampath] = getNodeAndParamPathFromRef(nodepath, pContext);
+            std::string parampath, _;
+            auto spNode = zfx::getNodeAndParamFromRefString(nodepath, pContext, _, parampath);
             CalcContext ctx;
             spNode->doApply(&ctx);
             auto obj = getObjFromRef(nodepath, pContext);

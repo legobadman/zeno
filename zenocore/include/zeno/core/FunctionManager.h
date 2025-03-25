@@ -57,7 +57,6 @@ namespace zeno {
 
         ZfxVariable trunkVariable(ZfxVariable origin, const ZfxElemFilter& filter);
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
-        std::pair<std::shared_ptr<INode>, std::string> getNodeAndParamNameFromRef(const std::string& ref, ZfxContext* pContext);
 
         VariableTable m_globalAttrCached;
         std::vector<ZfxStackEnv> m_stacks;

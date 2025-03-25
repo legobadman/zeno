@@ -1,4 +1,7 @@
 #include "zfxutil.h"
+#include <zeno/core/Session.h>
+#include <zeno/core/Graph.h>
+#include <zeno/utils/string.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -651,5 +654,62 @@ namespace zeno
             }
             }
         }
-}
+
+        std::shared_ptr<INode> getNodeAndParamFromRefString(
+            const std::string& ref, 
+            ZfxContext* pContext,
+            std::string& paramName,
+            std::string& paramPath)
+        {
+            if (ref.empty()) {
+                zeno::log_warn("ref empty");
+            }
+            std::string fullPath, graphAbsPath;
+            auto thisNode = pContext->spNode.lock();
+            const std::string& thisnodePath = thisNode->get_path();
+            graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
+
+            if (ref.front() == '/') {
+                fullPath = ref;
+            }
+            else {
+                fullPath = graphAbsPath + "/" + ref;
+            }
+
+            size_t idx = fullPath.find_last_of('/');
+            if (idx == std::string::npos) {
+                zeno::log_warn("unresolve node");
+            }
+
+            const std::string& graph_correct_path = fullPath.substr(0, idx);
+            //nodePrmPath可能是如下情况：
+            //1. 节点名称.参数：  Cube1.Size.y  Tube1.Height
+            //2. 参数名称.[通道]:  height  Size.y
+            const std::string& nodePrmPath = fullPath.substr(idx + 1);
+
+            idx = nodePrmPath.find('.');
+            if (idx == std::string::npos) {
+                zeno::log_warn("no param name when resolve ref path");
+            }
+
+            std::shared_ptr<INode> spNode;
+
+            {
+                //尝试按照 节点名称.参数的方式进行解析
+                std::string nodename = nodePrmPath.substr(0, idx);
+                paramPath = nodePrmPath.substr(idx + 1);
+                std::string nodeAbsPath = graph_correct_path + '/' + nodename;
+                spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
+                if (!spNode) {
+                    //找不到节点，说明可能是当前节点
+                    spNode = pContext->spNode.lock();
+                    paramPath = nodePrmPath;    //这个路径可能也是一个不合法的路径
+                }
+            }
+
+            auto paramPathItems = split_str(paramPath, '.');
+            paramName = paramPathItems.empty() ? paramPath : paramPathItems[0];
+            return spNode;
+        }
+    }
 }

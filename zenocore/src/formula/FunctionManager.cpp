@@ -861,52 +861,6 @@ namespace zeno {
         }
     }
 
-    std::pair<std::shared_ptr<INode>, std::string> FunctionManager::getNodeAndParamNameFromRef(const std::string& ref, ZfxContext* pContext)
-    {
-        if (ref.empty()) {
-            zeno::log_warn("ref empty");
-        }
-        std::string fullPath, graphAbsPath;
-        auto thisNode = pContext->spNode.lock();
-        const std::string& thisnodePath = thisNode->get_path();
-        graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
-
-        if (ref.front() == '/') {
-            fullPath = ref;
-        }
-        else {
-            fullPath = graphAbsPath + "/" + ref;
-        }
-
-        size_t idx = fullPath.find_last_of('/');
-        if (idx == std::string::npos) {
-            zeno::log_warn("unresolve node");
-        }
-
-        const std::string& graph_correct_path = fullPath.substr(0, idx);
-        const std::string& nodePath = fullPath.substr(idx + 1);
-
-        idx = nodePath.find('.');
-        if (idx == std::string::npos) {
-            zeno::log_warn("no param name when resolve ref path");
-        }
-        std::string nodename = nodePath.substr(0, idx);
-        std::string parampath = nodePath.substr(idx + 1);
-
-        std::string nodeAbsPath = graph_correct_path + '/' + nodename;
-        std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
-        if (!spNode) {
-            //unresolve node. 也有一种可能，就是引用源调整名字，然后同步到各个引用节点，引用节点的参数还是
-            // 旧的，所以在这里resolve不到。
-            zeno::log_warn("unresolve node");
-        }
-
-        auto paramPathItems = split_str(parampath, '.');
-        std::string paramname = paramPathItems.empty() ? parampath : paramPathItems[0];
-
-        return std::make_pair(spNode, paramname);
-    }
-
     static ZfxVariable getAttrValue_impl(std::shared_ptr<IObject> spObject, const std::string& attr_name) {
         if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
             if (attr_name == "pos")
@@ -1771,8 +1725,8 @@ namespace zeno {
                 const zeno::zfxvariant& res = calc(root->children[0], pContext);
                 const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                 //收集ref信息源，包括源节点和参数
-
-                auto [spNode, paramname] = getNodeAndParamNameFromRef(ref, pContext);
+                std::string paramname, _;
+                auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                 if (spNode)
                     paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
             }
@@ -1785,7 +1739,8 @@ namespace zeno {
                         const zeno::zfxvariant& res = calc(paramNode, pContext);
                         const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                         if (std::regex_search(ref, refPattern)) {
-                            auto [spNode, paramname] = getNodeAndParamNameFromRef(ref, pContext);
+                            std::string paramname, _;
+                            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                             if (spNode)
                                 paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
                         }
