@@ -380,6 +380,23 @@ namespace zeno
                 { "rint", "i.e. rint(2.2) = 2; rint(2.6) = 3;",
                 {{"float"}}
                 }
+            },
+            { "pcopen",
+                {"pcopen", "", "int", {
+                    {"input geometry", "string"},
+                    {"attr name", "string"},
+                    {"vector P", "vector"},
+                    {"radius", "float"},
+                    {"maxpoints", "int"}
+                }}
+            },
+            {
+                "pcnumfound",
+                {
+                    "pcnumfound", "", "int", {
+                        {"handle", "int"}
+                    }
+                }
             }
         };
     }

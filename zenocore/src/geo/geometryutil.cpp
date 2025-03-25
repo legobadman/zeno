@@ -1,7 +1,7 @@
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/para/parallel_reduce.h>
-#include "kdsearch.h"
+#include <zeno/geo/kdsearch.h>
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>
 #include <random>

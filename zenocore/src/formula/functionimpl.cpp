@@ -15,6 +15,7 @@
 #include <zeno/core/data.h>
 #include <zeno/core/FunctionManager.h>
 #include <zeno/extra/CalcContext.h>
+#include <zeno/geo/kdsearch.h>
 
 
 namespace zeno
@@ -1547,6 +1548,72 @@ namespace zeno
                     ret.value[i] = std::round(argval);
                 }
                 return ret;
+            }
+            if (funcname == "pcopen") {
+                std::string inputgeo = get_zfxvar<std::string>(args[0].value[0]);
+                std::string attrname = get_zfxvar<std::string>(args[1].value[0]);
+                const std::vector<zfxvariant>& testPts = args[2].value;
+                float radius = get_zfxvar<float>(args[3].value[0]);
+                int maxpoints = get_zfxvar<int>(args[4].value[0]);
+                if (attrname != "P") {
+                    throw makeError<UnimplError>("only support Pos as the base attribute of point clound");
+                }
+
+                std::vector<vec3f> points;
+                if (inputgeo == "0") {
+                    //this geometry.
+                    auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+                    assert(spGeo);
+                    points = spGeo->points_pos();
+                    //test:
+#if 0
+                    std::vector<int> pcnumfind;
+                    for (int i = 0; i < testPts.size(); i++) {
+                        glm::vec3 _pt = get_zfxvar<glm::vec3>(testPts[i]);
+                        zeno::vec3f pt(_pt[0], _pt[1], _pt[2]);
+                        std::set<int> pts = kd.fix_radius_search(pt, radius);
+                        pcnumfind.push_back(pts.size());
+                    }
+                    int j;
+                    j = 0;
+#endif
+                }
+                else {
+                    //todo: other geometry
+                }
+
+                PointCloud pc;
+                pc.radius = radius;
+                pc.maxpoints = maxpoints;
+                pc.pTree = std::make_shared<zeno::KdTree>(points, points.size());
+                pc.testPoints.resize(testPts.size());
+                for (int i = 0; i < pc.testPoints.size(); i++) {
+                    glm::vec3 _pt = get_zfxvar<glm::vec3>(testPts[i]);
+                    pc.testPoints[i] = zeno::vec3f(_pt[0], _pt[1], _pt[2]);
+                }
+                int handle = pContext->pchandles.size();
+                pContext->pchandles.push_back(pc);
+                return handle;
+            }
+            if (funcname == "pcnumfound") {
+                int handle = get_zfxvar<int>(args[0].value[0]);
+                if (handle < 0 || handle >= pContext->pchandles.size()) {
+                    throw makeError<UnimplError>("invalid pchandle");
+                }
+                else {
+                    PointCloud& pc = pContext->pchandles[handle];
+                    std::vector<int> pcnumfind;
+                    for (int i = 0; i < pc.testPoints.size(); i++) {
+                        zeno::vec3f pt = pc.testPoints[i];
+                        std::set<int> pts = pc.pTree->fix_radius_search(pt, pc.radius);
+                        pcnumfind.push_back(pts.size());
+                    }
+                    ZfxVariable ret;
+                    for (int i = 0; i < pcnumfind.size(); i++) {
+                        ret.value.push_back(pcnumfind[i]);
+                    }
+                    return ret;
+                }
             }
             throw makeError<UnimplError>("unknown function call");
         }

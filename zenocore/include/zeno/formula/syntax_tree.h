@@ -13,6 +13,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/geo/kdsearch.h>
 
 
 namespace zeno {
@@ -208,12 +209,23 @@ struct ZfxParamConstrain
     bool update_nodeparam_prop = false;      //参数属性是否更新了，比如可见性可用性
 };
 
+class KdTree;
+
+struct PointCloud
+{
+    std::shared_ptr<zeno::KdTree> pTree;
+    std::vector<vec3f> testPoints;
+    float radius = 0.f;
+    int maxpoints = 0;
+};
+
 struct ZfxContext
 {
     /* in */ std::shared_ptr<IObject> spObject;
     /* in */ std::weak_ptr<INode> spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;
+    /**/     std::vector<PointCloud> pchandles;
     /**/     VariableTable* zfxVariableTbl = nullptr;
     /* inout */ ZfxParamConstrain param_constrain;
     /* out */ std::string printContent;

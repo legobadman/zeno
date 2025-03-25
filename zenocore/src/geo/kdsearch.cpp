@@ -1,4 +1,5 @@
-#include "./kdsearch.h"
+#include <zeno/geo/kdsearch.h>
+
 
 namespace zeno{
 void KdTree::split(const std::pair<vec3f, vec3f> &bnds, int lid, int rid, int &cut_dim, float &cut_val, int &n_lo) {
