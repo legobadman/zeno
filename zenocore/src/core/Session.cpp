@@ -463,6 +463,7 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
 
     resetMainGraph();
     mainGraph->init(ioresult.mainGraph);
+    mainGraph->initRef(ioresult.mainGraph);
     //referManager->init(mainGraph);
 
     switchToFrame(ioresult.timeline.currFrame);

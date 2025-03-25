@@ -58,6 +58,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
 
     //BEGIN NEW STANDARD API
     void init(const GraphData& graph);
+    void initRef(const GraphData& graph);
 
     std::shared_ptr<INode> createNode(
         const std::string& cls,

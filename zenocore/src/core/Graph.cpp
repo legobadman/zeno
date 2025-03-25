@@ -352,12 +352,28 @@ void Graph::init(const GraphData& graph) {
             inNode->init_object_link(true, link.inParam, spLink, link.targetParam);
         }
     }
+}
 
+void Graph::initRef(const GraphData& graph) {
     for (const auto& [nodename, refparams] : graph.references) {
         std::shared_ptr<INode> refNode = getNode(nodename);
         const auto& uuidpath = refNode->get_uuid_path();
         for (auto paramname : refparams) {
             refNode->constructReference(paramname);
+        }
+    }
+    for (const std::string& subnetnode : subnet_nodes) {
+        auto spSubnetNode = std::dynamic_pointer_cast<SubnetNode>(m_nodes[subnetnode]);
+        assert(spSubnetNode);
+        if (spSubnetNode) {
+            NodesData nodes = graph.nodes;
+            const std::string& nodename = spSubnetNode->get_name();
+            const NodeData& node = nodes[nodename];
+            const std::optional<GraphData>& optSubg = node.subgraph;
+            if (optSubg.has_value()) {
+                const GraphData& subg = optSubg.value();
+                spSubnetNode->get_graph()->initRef(subg);
+            }
         }
     }
 }

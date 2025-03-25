@@ -560,6 +560,14 @@ void INode::preApply(CalcContext* pContext) {
     if (!m_dirty)
         return;
 
+    //debug
+#if 0
+    if (m_name == "Seed") {
+        int j;
+        j = 0;
+    }
+#endif
+
     reportStatus(true, Node_Pending);
 
     //TODO: the param order should be arranged by the descriptors.
@@ -1111,7 +1119,6 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
         if (param_text.find("ref") != std::string::npos) {
             refSegments.push_back(param_text);
         }
-        refSegments.push_back(param_text);
     }
     else if (deflType == zeno::types::gParamType_PrimVariant) {
         zeno::PrimVar var = zeno::reflect::any_cast<zeno::PrimVar>(param_defl);
@@ -1122,7 +1129,6 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
         if (param_text.find("ref") != std::string::npos) {
             refSegments.push_back(param_text);
         }
-        refSegments.push_back(param_text);
     }
     else if (deflType == zeno::types::gParamType_VecEdit) {
         const zeno::vecvar& vec = zeno::reflect::any_cast<zeno::vecvar>(param_defl);
@@ -1772,6 +1778,13 @@ void INode::doApply(CalcContext* pContext) {
     }
     pContext->visited_nodes.insert(uuid_path);
     scope_exit spUuidRecord([=] {pContext->visited_nodes.erase(uuid_path); });
+
+#if 0
+    if (m_name == "locate1") {
+        int j;
+        j = 0;
+    }
+#endif
 
     if (m_nodecls == "TimeShift") {
         preApplyTimeshift(pContext);
