@@ -2699,12 +2699,6 @@ QString UiHelper::getTypeNameFromRtti(zeno::ParamType type)
     if (type == Param_Null) {
         typeStr = "null";
         return typeStr;
-    } else if (type == Param_Wildcard) {
-        typeStr = "paramWildcard";
-        return typeStr;
-    } else if (type == Obj_Wildcard) {
-        typeStr = "objWildcard";
-        return typeStr;
     }
     else {
         const zeno::reflect::RTTITypeInfo& typeInfo = zeno::reflect::ReflectionRegistry::get().getRttiMap()->get(type);

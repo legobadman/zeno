@@ -143,34 +143,6 @@ namespace zeno
             return res;
         }
     };
-
-    struct ZDEFNODE() ReadOnlyNode2 : ReadOnlyNode
-    {
-
-    };
-
-    struct ZDEFNODE() WildcardNode : zeno::INode
-    {
-        ReflectCustomUI m_uilayout = {
-            //输入：
-            _Group {
-                    {"input_obj", ParamObject("Input Object", Socket_Owning)},
-                    {"name1", ParamPrimitive("Name 1")},
-                    {"name2", ParamPrimitive("Name 2")},
-                    {"a", ParamPrimitive("A")},
-                    {"b", ParamPrimitive("B")},
-            },
-            //输出：
-            _Group {
-                    {"", ParamObject("Output Object", Socket_Owning)},
-            }
-        };
-
-        int apply(zeno::reflect::Any name1, zeno::reflect::Any name2)
-        {
-            return 233;
-        }
-    };
 }
 
 REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(INode, INode)

@@ -101,12 +101,6 @@ namespace zeno {
         else if (type == "null") {
             return Param_Null;
         }
-        else if (type == "paramWildcard") {
-            return Param_Wildcard;
-        }
-        else if (type == "objWildcard") {
-            return Obj_Wildcard;
-        }
         else
             return gParamType_IObject;    //zeno各个模块定义的类型不规范程度很大，而且积累了很多，很难一下子改好，所以不明类型都转成obj
     }
@@ -202,8 +196,6 @@ namespace zeno {
         switch (type)
         {
         case Param_Null:    return "null";
-        case Param_Wildcard:    return "paramWildcard";
-        case Obj_Wildcard:      return "objWildcard";
         case gParamType_Bool:    return "bool";
         case gParamType_Int:     return "int";
         case gParamType_String:  return "string";
@@ -565,10 +557,6 @@ namespace zeno {
         else if (type == gParamType_IObject)
         {
             return nullptr;
-        }
-        else if (type == Param_Wildcard)
-        {
-            return Any();
         }
         return Any();
     }
@@ -1473,8 +1461,7 @@ namespace zeno {
         //这个是给旧式定义节点使用的，新的反射定义方式不再使用，其初始化过程也不会走到这里判断。
         return type == gParamType_String || type == gParamType_Int || type == gParamType_Float || type == gParamType_Vec2i ||
             type == gParamType_Vec3i || type == gParamType_Vec4i || type == gParamType_Vec2f || type == gParamType_Vec3f ||
-            type == gParamType_Vec4f || type == gParamType_Bool || type == gParamType_Heatmap || type == gParamType_Curve ||
-            type == Param_Wildcard;
+            type == gParamType_Vec4f || type == gParamType_Bool || type == gParamType_Heatmap || type == gParamType_Curve;
         //TODO: heatmap type.
     }
 

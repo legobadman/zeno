@@ -112,7 +112,6 @@ namespace zeno {
             ParamPrimitive wildCardPrim;
             wildCardPrim.name = name;
             wildCardPrim.bInput = bInput;
-            wildCardPrim.type = Param_Wildcard;
             wildCardPrim.bWildcard = true;
             wildCardPrim.wildCardGroup = wildCardGroup;
             return wildCardPrim;
@@ -446,7 +445,7 @@ namespace zeno {
                         //应该是成员变量定义的参数
                         //assert(false);
                     }
-                    if (!input_param.defl.has_value() && input_param.type != Param_Wildcard) {
+                    if (!input_param.defl.has_value()) {
                         input_param.defl = initAnyDeflValue(input_param.type);
                         convertToEditVar(input_param.defl, input_param.type);
                         assert(input_param.defl.has_value());

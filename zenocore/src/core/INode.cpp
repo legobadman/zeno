@@ -377,7 +377,7 @@ void INode::mark_previous_ref_dirty() {
 
 bool INode::has_frame_relative_params() const {
     for (auto& [name, param] : m_inputPrims) {
-        assert(param.type == Param_Wildcard || param.defl.has_value());
+        assert(param.defl.has_value());
         const std::string& uuid = get_uuid();
         if (gParamType_String == param.type) {
             if (param.defl.type().hash_code() == gParamType_PrimVariant) {//type是string，实际defl可能是primvar
@@ -1452,7 +1452,7 @@ std::shared_ptr<ListObject> INode::processList(ObjectParam* in_param, CalcContex
 
 zeno::reflect::Any INode::processPrimitive(PrimitiveParam* in_param)
 {
-    if (!in_param || in_param->type == Param_Wildcard) {
+    if (!in_param) {
         return nullptr;
     }
 

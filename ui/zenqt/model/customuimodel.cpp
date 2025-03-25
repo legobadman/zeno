@@ -766,7 +766,6 @@ Q_INVOKABLE bool PrimParamOutputModel::insertRow(int row, QString name)
         item.control = zeno::NullControl;
         //item.optCtrlprops = spParam.ctrlProps;
         item.name = name;
-        item.type = Param_Wildcard;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Primitve;
         item.bSocketVisible = true;
@@ -902,7 +901,6 @@ Q_INVOKABLE bool objParamInputModel::insertRow(int row, QString name)
         item.control = zeno::NullControl;
         //item.optCtrlprops = spParam.ctrlProps;
         item.name = name;
-        item.type = Obj_Wildcard;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Output;
         item.bSocketVisible = true;
@@ -1034,7 +1032,6 @@ Q_INVOKABLE bool objParamOutputModel::insertRow(int row, QString name)
         item.control = zeno::NullControl;
         //item.optCtrlprops = spParam.ctrlProps;
         item.name = name;
-        item.type = Obj_Wildcard;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Output;
         item.bSocketVisible = true;

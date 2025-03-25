@@ -128,7 +128,7 @@ void Graph::parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any
 {
     auto spNode = spParam->m_wpNode.lock();
     assert(spNode);
-    assert(spParam->type == Param_Wildcard || spParam->defl.has_value());
+    assert(spParam->defl.has_value());
     const std::string& uuid = spNode->get_uuid();
     if (gParamType_String == spParam->type)
     {
@@ -699,7 +699,6 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, std::shared_ptr<INode>&
     if (bParamWildcard || (!bPrimType && isSubnetInputOutputParam(node, paramName))) {
         if (linkedToSpecificType(shared_from_this(), node, paramName, bPrimType, std::set<std::string>()))
             return;
-        updateWildCardParamTypeRecursive(shared_from_this(), node, paramName, bPrimType, bInput, bPrimType ? Param_Wildcard : Obj_Wildcard);
     }
 }
 
@@ -1237,32 +1236,6 @@ bool Graph::addLink(const EdgeInfo& edge) {
     SocketType inSocketType;
     ParamType inParamType;
     inNode->getParamTypeAndSocketType(edge.inParam, bOutputPrim, true, inParamType, inSocketType, bInWildcard);
-    if (bOutWildcard && bInWildcard ||
-        (!bInputPrim && isSubnetInputOutputParam(inNode, edge.inParam)) && (!bOutputPrim && isSubnetInputOutputParam(outNode, edge.outParam)))
-    {
-        if (outParamType != inParamType) {
-            ParamType newType;
-            if (edge.targetParam == edge.outParam) {
-                if (inParamType == Param_Wildcard || inParamType == Obj_Wildcard)
-                    updateWildCardParamTypeRecursive(shared_from_this(), inNode, edge.inParam, bOutputPrim, true, outParamType);
-                else
-                    updateWildCardParamTypeRecursive(shared_from_this(), outNode, edge.outParam, bOutputPrim, false, inParamType);
-            }
-            else {
-                if (outParamType == Param_Wildcard || outParamType == Obj_Wildcard)
-                    updateWildCardParamTypeRecursive(shared_from_this(), outNode, edge.outParam, bInputPrim, false, inParamType);
-                else
-                    updateWildCardParamTypeRecursive(shared_from_this(), inNode, edge.inParam, bInputPrim, true, outParamType);
-            }
-        }
-    }
-    else if (bOutWildcard || (!bOutputPrim && isSubnetInputOutputParam(outNode, edge.outParam))) {
-        updateWildCardParamTypeRecursive(shared_from_this(), outNode, edge.outParam, bOutputPrim, false, inParamType);
-    }
-    else if (bInWildcard || (!bInputPrim && isSubnetInputOutputParam(inNode, edge.inParam))) {
-        updateWildCardParamTypeRecursive(shared_from_this(), inNode, edge.inParam, bInputPrim, true, outParamType);
-    }
-
     inNode->on_link_added_removed(true, edge.inParam, true);
     outNode->on_link_added_removed(false, edge.outParam, true);
 
