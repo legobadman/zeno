@@ -40,7 +40,7 @@ namespace zeno
             {"rand",
                 {"rand",
                 "Returns a pseudo-number number from 0 to 1.",
-                "float", {}}
+                "float", {{"seed", "int"}}}
             },
             {"pow",
                 {"pow",
@@ -395,6 +395,36 @@ namespace zeno
                 {
                     "pcnumfound", "", "int", {
                         {"handle", "int"}
+                    }
+                }
+            },
+            {
+                "append",
+                {
+                    "append", "append content into array", "array", {
+                        {"array", "T[]"},
+                        {"element", "T"}
+                    }
+                }
+            },
+            {
+                "len",
+                {
+                    "len", "get the length of an array", "int", {
+                        {"array", "T[]"}
+                    }
+                }
+            },
+            {
+                "fit",
+                {
+                    "fit", "Takes the value in one range and shifts it to the corresponding value in a new range. e.g. fit(.3, 0, 1, 10, 20) == 13",
+                    "float", {
+                        {"value", "float"},
+                        {"omin", "float"},
+                        {"omax", "float"},
+                        {"nmin", "float"},
+                        {"nmax", "float"}
                     }
                 }
             }

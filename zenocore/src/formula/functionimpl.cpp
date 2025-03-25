@@ -16,6 +16,7 @@
 #include <zeno/core/FunctionManager.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/geo/kdsearch.h>
+#include <random>
 #include "../utils/zfxutil.h"
 
 #define REF_DEPEND_APPLY
@@ -509,10 +510,58 @@ namespace zeno
             return res;
         }
 
+        ZfxVariable fit(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 5) throw makeError<UnimplError>();
+
+            //只考虑单值的情况: fit(.3, 0, 1, 10, 20) == 13
+            float value = get_zfxvar<float>(args[0].value[0]);
+            float omin = get_zfxvar<float>(args[1].value[0]);
+            float omax = get_zfxvar<float>(args[2].value[0]);
+            float nmin = get_zfxvar<float>(args[3].value[0]);
+            float nmax = get_zfxvar<float>(args[4].value[0]);
+
+            if (omin == omax || nmin == nmax) {
+                throw makeError<UnimplError>("the omin == omax or nmin == nmax");
+            }
+            if (value < omin || value >omax) {
+                throw makeError<UnimplError>("the value is not between omin and omax, when calling `fit`");
+            }
+            float mp_value = ((value - omin) / (omax - omin)) * (nmax - nmin) + nmin;
+            ZfxVariable ret;
+            ret.value.push_back(mp_value);
+            return ret;
+        }
+
         ZfxVariable rand(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (!args.empty()) throw makeError<UnimplError>();
+            if (args.size() > 1) throw makeError<UnimplError>();
+            int N = 1;
             ZfxVariable res;
-            res.value.push_back(std::rand());
+            if (args.size() == 1) {
+                N = args[0].value.size();
+                res.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    std::visit([&](auto&& arg) {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            //srand(arg);
+                            std::mt19937 rng(arg);
+                            std::uniform_real_distribution<float> dist(0.0, 1.0);
+                            res.value[i] = dist(rng);// std::rand();
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            //srand((int)arg);
+                            std::mt19937 rng(arg);
+                            std::uniform_real_distribution<float> dist(0.0, 1.0);
+                            res.value[i] = dist(rng);// std::rand();
+                        }
+                    }, args[0].value[i]);
+                }
+            }
+            else {
+                std::mt19937 rng(std::random_device{}());
+                std::uniform_real_distribution<float> dist(0.0, 1.0);
+                res.value.push_back(dist(rng));
+            }
             return res;
         }
 
@@ -1529,6 +1578,63 @@ namespace zeno
                 for (int i = 0; i < args[0].value.size(); i++) {
                     float argval = get_zfxvar<float>(args[0].value[i]);
                     ret.value[i] = std::round(argval);
+                }
+                return ret;
+            }
+            if (funcname == "fit") {
+                return fit(args, filter, pContext);
+            }
+            if (funcname == "append") {
+                const ZfxVariable& arr_var = args[0];
+                const ZfxVariable& elem_var = args[1];
+                const int N = arr_var.value.size();
+                if (N != elem_var.value.size()) {
+                    throw makeError<UnimplError>("the size of array and element doesn't match, when calling `append`");
+                }
+
+                ZfxVariable ret;    //引用机制实现有点麻烦，又得回填到局部变量表，目前先拷贝返回
+                ret = arr_var;
+                for (int i = 0; i < N; i++) {
+                    std::visit([&](auto& _arg) {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, zfxintarr>) {
+                            _arg.push_back(get_zfxvar<int>(elem_var.value[i]));
+                        }
+                        else if constexpr (std::is_same_v<T, zfxfloatarr>) {
+                            _arg.push_back(get_zfxvar<float>(elem_var.value[i]));
+                        }
+                        else if constexpr (std::is_same_v<T, zfxstringarr>) {
+                            _arg.push_back(get_zfxvar<std::string>(elem_var.value[i]));
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept arr type on `append`");
+                        }
+                    }, ret.value[i]);
+                }
+                return ret;
+            }
+            if (funcname == "len") {
+                //zfxintarr, zfxfloatarr, zfxstringarr,
+                const ZfxVariable& var = args[0];
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->int {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, zfxintarr>) {
+                            return _arg.size();
+                        }
+                        else if constexpr (std::is_same_v<T, zfxfloatarr>) {
+                            return _arg.size();
+                        }
+                        else if constexpr (std::is_same_v<T, zfxstringarr>) {
+                            return _arg.size();
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept arr type on `append`");
+                        }
+                        },var.value[i]);
                 }
                 return ret;
             }
