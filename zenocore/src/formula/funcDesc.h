@@ -427,6 +427,17 @@ namespace zeno
                         {"nmax", "float"}
                     }
                 }
+            },
+            {
+                "fit01",
+                {
+                    "fit01", "Returns a number between newmin and newmax that is relative to num in the range between 0 and 1. If the value is outside the 0 to 1 it will be clamped to the new range.",
+                    "float", {
+                        {"value", "float"},
+                        {"nmin", "float"},
+                        {"nmax", "float"}
+                    }
+                }
             }
         };
     }

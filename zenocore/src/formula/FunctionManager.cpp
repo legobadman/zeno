@@ -1917,11 +1917,17 @@ namespace zeno {
             }
             case nodeType::FUNC:
             {
-                const std::string& funcname = std::get<std::string>(root->value);
+                ZfxElemFilter filter;
+                filter.push_back(1);
+                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
+                const std::string& funcname = get_zfxvar<std::string>(root->value);
+                ZfxVariable result = eval(funcname, args, filter, pContext);
+                return result.value[0];
+#if 0
                 if (funcname == "ref") {
                     if (root->children.size() != 1) throw makeError<UnimplError>();
                     const std::string ref = std::get<std::string>(calc(root->children[0], pContext));
-                    ZfxElemFilter filter;
+                    
                     std::vector<ZfxVariable> args;
                     args.push_back(ZfxVariable(ref));
                     ZfxVariable res = callFunction("ref", args, filter, pContext);
@@ -1957,6 +1963,7 @@ namespace zeno {
                         throw makeError<UnimplError>();
                     }
                 }
+#endif
             }
             }
         }

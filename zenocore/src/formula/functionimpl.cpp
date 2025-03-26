@@ -513,6 +513,28 @@ namespace zeno
             return res;
         }
 
+        ZfxVariable fit01(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 3) throw makeError<UnimplError>();
+
+            //只考虑单值的情况: fit01(.3,5,20)=9.5
+            float value = get_zfxvar<float>(args[0].value[0]);
+            float omin = 0;
+            float omax = 1;
+            float nmin = get_zfxvar<float>(args[1].value[0]);
+            float nmax = get_zfxvar<float>(args[2].value[0]);
+
+            if (nmin == nmax) {
+                throw makeError<UnimplError>("the omin == omax or nmin == nmax");
+            }
+            if (value < omin || value >omax) {
+                throw makeError<UnimplError>("the value is not between 0 and 1, when calling `fit01`");
+            }
+            float mp_value = ((value - omin) / (omax - omin)) * (nmax - nmin) + nmin;
+            ZfxVariable ret;
+            ret.value.push_back(mp_value);
+            return ret;
+        }
+
         ZfxVariable fit(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 5) throw makeError<UnimplError>();
 
@@ -712,14 +734,67 @@ namespace zeno
             return ZfxVariable(bSucceed);
         }
 
+        bool _remove_points(std::deque<int> remPoints, ZfxElemFilter& filter, ZfxContext* pContext) {
+            bool bSucceed = false;
+            while (!remPoints.empty())
+            {
+                int currrem = remPoints.front();
+                remPoints.pop_front();
+                bSucceed = false;
+                if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
+                    bSucceed = spGeo->remove_point(currrem);
+                }
+                if (bSucceed) {
+                    //要调整filter，移除掉第currrem位置的元素
+                    filter.erase(filter.begin() + currrem);
+                    //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
+                    //afterRemovePoint(currrem);
+                    for (auto& [name, attrVar] : *pContext->zfxVariableTbl) {
+                        auto& attrvalues = attrVar.value;
+                        if (name == "@ptnum") {
+                            assert(currrem < attrvalues.size());
+                            for (int i = currrem + 1; i < attrvalues.size(); i++)
+                                attrvalues[i] = i - 1;
+                            attrvalues.erase(attrvalues.begin() + currrem);
+                        }
+                        else {
+                            attrvalues.erase(attrvalues.begin() + currrem);
+                        }
+                    }
+
+                    //最后将当前所有剩下的删除点的序号再自减
+                    for (auto iter = remPoints.begin(); iter != remPoints.end(); iter++) {
+                        *iter -= 1;
+                    }
+                }
+                else {
+                    throw makeError<UnimplError>("error on removePoint");
+                }
+            }
+            return bSucceed;
+        }
+
         ZfxVariable remove_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of remove_point is not matched.");
 
-            const auto& arg = args[0];
+            ZfxVariable arg = args[0];
             int N = arg.value.size();
             if (N == 0) return ZfxVariable(false);
             bool bSucceed = false;
+
+            if (N == 1) {
+                //可能是数组
+                if (std::holds_alternative<zfxintarr>(arg.value[0])) {
+                    const auto& arr = std::get<zfxintarr>(arg.value[0]);
+                    std::deque<int> remPoints;
+                    for (int pt : arr) {
+                        remPoints.push_back(pt);
+                    }
+                    bSucceed = _remove_points(remPoints, filter, pContext);
+                    return ZfxVariable(bSucceed);
+                }
+            }
 
             if (N < filter.size()) {
                 assert(N == 1);
@@ -754,49 +829,13 @@ namespace zeno
             }
             else {
                 std::deque<int> remPoints;
-
                 assert(N == filter.size());
                 for (int i = 0; i < N; i++) {
                     if (!filter[i]) continue;
                     int pointnum = get_zfxvar<int>(arg.value[i]);
                     remPoints.push_back(pointnum);
                 }
-
-                while (!remPoints.empty())
-                {
-                    int currrem = remPoints.front();
-                    remPoints.pop_front();
-                    bSucceed = false;
-                    if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
-                        bSucceed = spGeo->remove_point(currrem);
-                    }
-                    if (bSucceed) {
-                        //要调整filter，移除掉第currrem位置的元素
-                        filter.erase(filter.begin() + currrem);
-                        //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
-                        //afterRemovePoint(currrem);
-                        for (auto& [name, attrVar] : *pContext->zfxVariableTbl) {
-                            auto& attrvalues = attrVar.value;
-                            if (name == "@ptnum") {
-                                assert(currrem < attrvalues.size());
-                                for (int i = currrem + 1; i < attrvalues.size(); i++)
-                                    attrvalues[i] = i - 1;
-                                attrvalues.erase(attrvalues.begin() + currrem);
-                            }
-                            else {
-                                attrvalues.erase(attrvalues.begin() + currrem);
-                            }
-                        }
-
-                        //最后将当前所有剩下的删除点的序号再自减
-                        for (auto iter = remPoints.begin(); iter != remPoints.end(); iter++) {
-                            *iter -= 1;
-                        }
-                    }
-                    else {
-                        throw makeError<UnimplError>("error on removePoint");
-                    }
-                }
+                bSucceed = _remove_points(remPoints, filter, pContext);
             }
             return ZfxVariable(bSucceed);
         }
@@ -1586,7 +1625,7 @@ namespace zeno
             if (funcname == "bbox") {
                 return bbox(args, filter, pContext);
             }
-            if (funcname == "rint") {
+            if (funcname == "rint" || funcname == "round") {
                 ZfxVariable ret = args[0];
                 for (int i = 0; i < args[0].value.size(); i++) {
                     float argval = get_zfxvar<float>(args[0].value[i]);
@@ -1596,6 +1635,9 @@ namespace zeno
             }
             if (funcname == "fit") {
                 return fit(args, filter, pContext);
+            }
+            if (funcname == "fit01") {
+                return fit01(args, filter, pContext);
             }
             if (funcname == "append") {
                 const ZfxVariable& arr_var = args[0];
