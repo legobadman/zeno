@@ -79,10 +79,14 @@ Qan.NodeItem {
             return instZObjSock;
         }
         else if (group == ParamGroup.InputPrimitive) {
-
+            var idx = nodeItem.node.params.indexFromName(paramName, true);
+            var instZObjSock = inputprimparams.itemAt(idx)
+            return instZObjSock.sockid;
         }
         else if (group == ParamGroup.OutputPrimitive) {
-
+            var idx = nodeItem.node.params.indexFromName(paramName, false);
+            var instZObjSock = outputprimparams.itemAt(idx)
+            return instZObjSock.sockid;
         }
         else if (group == ParamGroup.OutputObject) {
             var idx = nodeItem.node.params.indexFromName(paramName, false);
@@ -347,6 +351,7 @@ Qan.NodeItem {
                                         required property int group
                                         required property bool socket_visible
                                         readonly property int hmargin: 10
+                                        property alias sockid: input_prim_socket
 
                                         visible: group == ParamGroup.InputPrimitive && socket_visible
 
@@ -386,6 +391,7 @@ Qan.NodeItem {
                                         required property int group
                                         required property bool socket_visible
                                         readonly property int hmargin: 10
+                                        property alias sockid: output_prim_socket
 
                                         visible: group == ParamGroup.OutputPrimitive && socket_visible
 
