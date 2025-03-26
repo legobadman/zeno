@@ -144,7 +144,10 @@ namespace zeno
             }
         }
 
-        std::vector<zfxvariant> getAttrs(std::shared_ptr<GeometryObject> spGeo, GeoAttrGroup grp, std::string& name) {
+        static std::vector<zfxvariant> getAttrs(std::shared_ptr<GeometryObject> spGeo, GeoAttrGroup grp, std::string name) {
+            if (name == "P") name = "pos";
+            if (name == "N") name = "nrm";
+            
             GeoAttrType type = spGeo->get_attr_type(grp, name);
             std::vector<zfxvariant> zfxvariantVector;
             if (type == ATTR_INT) {
@@ -1345,14 +1348,24 @@ namespace zeno
         }
 
         ZfxVariable get_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() != 1)
+            if (args.size() > 2)
                 throw makeError<UnimplError>("the number of arguments of get_point_attr is not matched.");
 
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
-            ZfxVariable var;
-            var.value = getAttrs(spGeo, ATTR_POINT, name);
-            return var;
+
+            ZfxVariable ret;
+            std::vector<zfxvariant> attrs = getAttrs(spGeo, ATTR_POINT, name);
+            if (args.size() == 2) {
+                //取索引，目前仅支持一个值的，否则会混乱
+                //TODO: 调getElem，就不用整个attrs都拿出来，因为可能在循环下调用的
+                int idx = get_zfxvar<int>(args[1].value[0]);
+                ret.value.push_back(attrs[idx]);
+            }
+            else {
+                ret.value = attrs;
+            }
+            return ret;
         }
 
         ZfxVariable get_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -1606,6 +1619,15 @@ namespace zeno
                         else if constexpr (std::is_same_v<T, zfxstringarr>) {
                             _arg.push_back(get_zfxvar<std::string>(elem_var.value[i]));
                         }
+                        else if constexpr (std::is_same_v<T, zfxvec2arr>) {
+                            _arg.push_back(get_zfxvar<glm::vec2>(elem_var.value[i]));
+                        }
+                        else if constexpr (std::is_same_v<T, zfxvec3arr>) {
+                            _arg.push_back(get_zfxvar<glm::vec3>(elem_var.value[i]));
+                        }
+                        else if constexpr (std::is_same_v<T, zfxvec4arr>) {
+                            _arg.push_back(get_zfxvar<glm::vec4>(elem_var.value[i]));
+                        }
                         else {
                             throw makeError<UnimplError>("only accept arr type on `append`");
                         }
@@ -1631,8 +1653,17 @@ namespace zeno
                         else if constexpr (std::is_same_v<T, zfxstringarr>) {
                             return _arg.size();
                         }
+                        else if constexpr (std::is_same_v<T, zfxvec2arr>) {
+                            return _arg.size();
+                        }
+                        else if constexpr (std::is_same_v<T, zfxvec3arr>) {
+                            return _arg.size();
+                        }
+                        else if constexpr (std::is_same_v<T, zfxvec4arr>) {
+                            return _arg.size();
+                        }
                         else {
-                            throw makeError<UnimplError>("only accept arr type on `append`");
+                            throw makeError<UnimplError>("only accept arr type on `len`");
                         }
                         },var.value[i]);
                 }

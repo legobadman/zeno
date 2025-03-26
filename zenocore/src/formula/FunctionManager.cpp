@@ -412,38 +412,55 @@ namespace zeno {
 
     static ZfxVariable get_array_element(const ZfxVariable& arr, const ZfxVariable& varidx) {
         int idx = 0;
-        if (varidx.value.size() == 1) {
+        int nIdx = varidx.value.size();
+        if (nIdx == 1) {
             idx = get_zfxvar<int>(varidx.value[0]);
         }
         else {
-            assert(arr.value.size() == varidx.value.size());
+            assert(arr.value.size() == nIdx);
         }
 
         ZfxVariable res;
-        for (int i = 0; i < arr.value.size(); i++) {
-            if (varidx.value.size() == 1)
-                idx = get_zfxvar<int>(varidx.value[0]);
-            else
-                idx = get_zfxvar<int>(varidx.value[i]);
+#if 0
+        if (false && arr.bArray) {
+            //形如 int[] vec3[] float[] 这种
+            for (int i = 0; i < nIdx; i++)
+            {
+                int idx = get_zfxvar<int>(varidx.value[i]);
+                res.value.push_back(arr.value[idx]);
+            }
+        }
+        else
+#endif
+        {
+            for (int i = 0; i < arr.value.size(); i++) {
+                if (varidx.value.size() == 1)
+                    idx = get_zfxvar<int>(varidx.value[0]);
+                else
+                    idx = get_zfxvar<int>(varidx.value[i]);
 
-            res.value.push_back(std::visit([idx](auto&& arg) -> zfxvariant {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, zfxintarr> ||
-                    std::is_same_v<T, zfxfloatarr> ||
-                    std::is_same_v<T, zfxstringarr> ||
-                    std::is_same_v<T, glm::vec2> ||
-                    std::is_same_v<T, glm::vec3> ||
-                    std::is_same_v<T, glm::vec4> ||
-                    std::is_same_v<T, glm::mat2> ||
-                    std::is_same_v<T, glm::mat3> ||
-                    std::is_same_v<T, glm::mat4>
-                    ) {
-                    return (T(arg))[idx];
-                }
-                else {
-                    throw makeError<UnimplError>("get elemvar from arr");
-                }
-            }, arr.value[i]));
+                res.value.push_back(std::visit([idx](auto&& arg) -> zfxvariant {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, zfxintarr> ||
+                        std::is_same_v<T, zfxfloatarr> ||
+                        std::is_same_v<T, zfxstringarr> ||
+                        std::is_same_v<T, zfxvec2arr> ||
+                        std::is_same_v<T, zfxvec3arr> ||
+                        std::is_same_v<T, zfxvec4arr> ||
+                        std::is_same_v<T, glm::vec2> ||
+                        std::is_same_v<T, glm::vec3> ||
+                        std::is_same_v<T, glm::vec4> ||
+                        std::is_same_v<T, glm::mat2> ||
+                        std::is_same_v<T, glm::mat3> ||
+                        std::is_same_v<T, glm::mat4>
+                        ) {
+                        return (T(arg))[idx];
+                    }
+                    else {
+                        throw makeError<UnimplError>("get elemvar from arr");
+                    }
+                }, arr.value[i]));
+            }
         }
         return res;
     }
@@ -787,6 +804,7 @@ namespace zeno {
         }
 
         ZfxVariable res;
+        res.bArray = true;
         res.value.push_back(current);
         return res;
     }
@@ -982,6 +1000,12 @@ namespace zeno {
             case ZENVAR: {
                 //这里指的是取zenvar的值用于上层的计算或者输出，赋值并不会走到这里
                 const std::string& varname = get_zfxvar<std::string>(root->value);
+#if 1
+                if (varname == "pos") {
+                    int j;
+                    j = 0;
+                }
+#endif
                 if (root->bAttr && root->opVal == COMPVISIT) {
                     if (root->children.size() != 1) {
                         throw makeError<UnimplError>("Indexing Error on NameVisit");
@@ -1250,11 +1274,23 @@ namespace zeno {
                         newvar.value.push_back(glm::vec2());
                         break;
                     }
+                    case TYPE_VECTOR2_ARR: {
+                        newvar.value.push_back(zfxvec2arr());
+                        break;
+                    }
                     case TYPE_VECTOR3: {
                         newvar.value.push_back(glm::vec3());
                         break;
                     }
+                    case TYPE_VECTOR3_ARR: {
+                        newvar.value.push_back(zfxvec3arr());
+                        break;
+                    }
                     case TYPE_VECTOR4:  newvar.value.push_back(glm::vec4()); break;
+                    case TYPE_VECTOR4_ARR: {
+                        newvar.value.push_back(zfxvec4arr());
+                        break;
+                    }
                     case TYPE_MATRIX2:  newvar.value.push_back(glm::mat2()); break;
                     case TYPE_MATRIX3:  newvar.value.push_back(glm::mat3()); break;
                     case TYPE_MATRIX4:  newvar.value.push_back(glm::mat4()); break;
@@ -1385,6 +1421,48 @@ namespace zeno {
                                 }
                             }
                         }, arg.var);
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec2>) {
+                        if (visit_attr == "x") {
+                            return arg[0];
+                        }
+                        else if (visit_attr == "y") {
+                            return arg[1];
+                        }
+                        else {
+                            throw makeError<UnimplError>("unknown comp in vec2");
+                        }
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec3>) {
+                        if (visit_attr == "x") {
+                            return arg[0];
+                        }
+                        else if (visit_attr == "y") {
+                            return arg[1];
+                        }
+                        else if (visit_attr == "z") {
+                            return arg[2];
+                        }
+                        else {
+                            throw makeError<UnimplError>("unknown comp in vec3");
+                        }
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec4>) {
+                        if (visit_attr == "x") {
+                            return arg[0];
+                        }
+                        else if (visit_attr == "y") {
+                            return arg[1];
+                        }
+                        else if (visit_attr == "z") {
+                            return arg[2];
+                        }
+                        else if (visit_attr == "w") {
+                            return arg[3];
+                        }
+                        else {
+                            throw makeError<UnimplError>("unknown comp in vec4");
+                        }
                     }
                     else {
                         throw makeError<UnimplError>("only support visit attr for ZfxLvalue");

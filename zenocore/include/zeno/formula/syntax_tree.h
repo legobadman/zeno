@@ -96,8 +96,11 @@ enum operatorVals {
     TYPE_STRING,
     TYPE_STRING_ARR,
     TYPE_VECTOR2,
+    TYPE_VECTOR2_ARR,
     TYPE_VECTOR3,
+    TYPE_VECTOR3_ARR,
     TYPE_VECTOR4,
+    TYPE_VECTOR4_ARR,
     TYPE_MATRIX2,
     TYPE_MATRIX3,
     TYPE_MATRIX4,
@@ -114,7 +117,9 @@ enum operatorVals {
 using zfxintarr = std::vector<int>;
 using zfxfloatarr = std::vector<float>;
 using zfxstringarr = std::vector<std::string>;
-
+using zfxvec2arr = std::vector<glm::vec2>;
+using zfxvec3arr = std::vector<glm::vec3>;
+using zfxvec4arr = std::vector<glm::vec4>;
 
 enum LValueType {
     LVal_NodeParam,
@@ -130,6 +135,7 @@ struct ZfxLValue {
 
 using zfxvariant = std::variant<int, float, std::string, ZfxLValue,
     zfxintarr, zfxfloatarr, zfxstringarr,
+    zfxvec2arr, zfxvec3arr, zfxvec4arr,
     glm::vec2, glm::vec3, glm::vec4, 
     glm::mat2, glm::mat3, glm::mat4>;
 
@@ -139,6 +145,7 @@ struct ZfxVariable
 
     bool bAttr = false;     //是否与属性关联（好像没什么用）
     bool bAttrUpdated = false;      //ZfxVariable也记录属性值（比如@P, @N @ptnum等），此标记记录在zfx执行中，属性值是否修改了
+    bool bArray = false;    //int[] float[] vectorN[]这种都array，而vec3这些不算
 
     ZfxVariable() {}
     ZfxVariable(zfxvariant&& var) {
