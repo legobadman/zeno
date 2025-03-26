@@ -676,6 +676,7 @@ namespace zeno
                 spEdge->id = uuid_base + rEdge->id;
                 spEdge->point = rEdge->point + iFromPt;
                 spEdge->face = rEdge->face + iFromFace;
+                spEdge->point_from = rEdge->point_from + iFromPt;
                 m_hEdges.insert(std::make_pair(spEdge->id, spEdge));
             }
 
@@ -900,6 +901,7 @@ namespace zeno
 
                 //connect between outEdge->point and prevPoint.
                 newEdge->point = outEdge->point;
+                newEdge->point_from = prevEdge->point_from;
                 newEdge->pair = nullptr;
                 newEdge->next = nextEdge;
                 newEdge->face = outEdge->face;
@@ -1071,6 +1073,7 @@ namespace zeno
                 newedge->pair = nullptr;
                 newedge->next = vertEdge->next;
                 newedge->point = vertEdge->point;
+                //TODO: newedge->point_from = ?
                 newedge->face = vertEdge->face;
 
                 m_points[prevedge->point]->edges.erase(vertEdge);
