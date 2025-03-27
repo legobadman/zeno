@@ -21,6 +21,7 @@ namespace zeno {
         ZENO_API void set(const AttrVar& val_or_vec, bool sigval_init = true);
         ZENO_API GeoAttrType type() const;
         ZENO_API AttrVarVec get();
+        ZENO_API AttrValue front() const;
         ZENO_API void copySlice(const AttributeVector& rhs, int fromIndex);
 
         void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {

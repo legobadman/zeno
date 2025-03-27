@@ -44,7 +44,7 @@ namespace zeno
     {
         GeometryTopology() = default;
         GeometryTopology(const GeometryTopology& rhs);
-        GeometryTopology(bool bTriangle, int nPoints, int nFaces);
+        GeometryTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
 
         void initFromPrim(PrimitiveObject* prim);
         void toPrimitive(std::shared_ptr<PrimitiveObject> spPrim);
@@ -64,6 +64,7 @@ namespace zeno
 
         /* 添加元素 */
         int add_face(const std::vector<int>& points, bool bClose);
+        void set_face(int idx, const std::vector<int>& points, bool bClose);
         int add_point();
         int add_vertex(int face_id, int point_id);
 

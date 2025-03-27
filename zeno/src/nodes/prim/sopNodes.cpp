@@ -26,6 +26,7 @@ namespace zeno {
             _Group{
                 {"input_object", ParamObject("Input Geometry")},
                 {"target_Obj", ParamObject("Target Geometry")},
+                {"alignTo", ParamPrimitive("Align To", "Align To Point Center", Combobox, std::vector<std::string>{"Align To Point Center", "Align To Min"})}
             },
             _Group{
                 {"", ParamObject("Output")},
@@ -34,7 +35,8 @@ namespace zeno {
 
         std::shared_ptr<GeometryObject> apply(
             std::shared_ptr<zeno::GeometryObject> input_object,
-            std::shared_ptr<zeno::GeometryObject> target_Obj
+            std::shared_ptr<zeno::GeometryObject> target_Obj,
+            const std::string& alignTo = "Align To Point Center"
         ) {
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
@@ -66,12 +68,18 @@ namespace zeno {
 
             zeno::vec3f originCenter, _min, _max;
             std::tie(_min, _max) = geomBoundingBox(input_object.get());
-            originCenter = (_min + _max) / 2;
+            if (alignTo == "Align To Point Center") {
+                originCenter = (_min + _max) / 2;
+            }
+            else {
+                originCenter = _min;
+            }
 
             size_t targetObjPointsCount = target_Obj->npoints();
             size_t inputObjPointsCount = input_object->npoints();
             size_t inputObjFacesCount = input_object->nfaces();
             size_t newObjPointsCount = targetObjPointsCount * inputObjPointsCount;
+            size_t newObjFacesCount = targetObjPointsCount * inputObjFacesCount;
 
             std::vector<zeno::vec3f> newObjPos(newObjPointsCount, zeno::vec3f());
             std::vector<zeno::vec3f> newObjNrm;
@@ -79,16 +87,17 @@ namespace zeno {
                 newObjNrm.resize(newObjPointsCount);
             }
 
-            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newObjPointsCount, 0);
+            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newObjPointsCount, newObjFacesCount, true);
             for (size_t i = 0; i < targetObjPointsCount; ++i) {
                 zeno::vec3f targetPos = target_Obj->get_elem<zeno::vec3f>(ATTR_POINT, "pos", 0, i);
                 zeno::vec3f dx = targetPos - originCenter;
                 glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(dx[0], dx[1], dx[2]));
 
-                size_t offset = i * inputObjPointsCount;
+                const size_t pt_offset = i * inputObjPointsCount;
+                const size_t face_offset = i * inputObjFacesCount;
                 for (size_t j = 0; j < inputObjPointsCount; j++)
                 {
-                    auto idx = offset + j;
+                    auto idx = pt_offset + j;
 
                     auto& pt = inputPos[j];
                     glm::vec4 gp = translate * glm::vec4(pt[0], pt[1], pt[2], 1);
@@ -102,12 +111,12 @@ namespace zeno {
                 {
                     std::vector<int> facePoints = std::get<1>(inputFacesPoints[j]);
                     for (int k = 0; k < facePoints.size(); ++k) {
-                        facePoints[k] += offset;
+                        facePoints[k] += pt_offset;
                     }
-                    spgeo->add_face(facePoints, !std::get<0>(inputFacesPoints[j]));
+                    spgeo->set_face(face_offset + j, facePoints, !std::get<0>(inputFacesPoints[j]));
                 }
+                spgeo->inheritAttributes(input_object, -1, pt_offset, {"pos", "nrm"}, face_offset, {});
             }
-
 
             spgeo->create_attr(ATTR_POINT, "pos", newObjPos);
             if (hasNrm) {
@@ -1680,7 +1689,7 @@ namespace zeno {
             }
 
             std::string finalZfx;
-            finalZfx += "if (" + nor + zfx + ") {\n";
+            finalZfx += "if (" + nor + "(" + zfx + ")" + ") {\n";
             finalZfx += "    remove_" + rem_what + "(" + idnum + ");\n";
             finalZfx += "}";
 

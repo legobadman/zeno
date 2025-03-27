@@ -73,6 +73,21 @@ namespace zeno {
             return m_data;
         }
 
+        AttrValue front() const {
+            return std::visit([&](auto&& vec)->AttrValue {
+                using E = std::decay_t<decltype(vec)>;
+                if constexpr (
+                    std::is_same_v<E, std::vector<int>> ||
+                    std::is_same_v < E, std::vector<float>> ||
+                    std::is_same_v < E, std::vector<std::string>> ||
+                    std::is_same_v<E, std::vector<vec2f>> ||
+                    std::is_same_v<E, std::vector<vec3f>> ||
+                    std::is_same_v<E, std::vector<vec4f>>) {
+                    return vec.front();
+                }
+            }, m_data);
+        }
+
         template<typename T>
         void insert(size_t index, T elemVal) {
             if (index < 0 || index >= m_size) {
@@ -141,14 +156,23 @@ namespace zeno {
                 using E = std::decay_t<decltype(vec)>;
                 if constexpr (std::is_same_v<E, std::vector<int>>) {
                     auto& rvec = std::get<std::vector<int>>(rattr.m_data);
+                    if (vec.size() < rvec.size() + fromIndex) {
+                        throw makeError<UnimplError>("data range exceeds when copy");
+                    }
                     std::copy(rvec.begin(), rvec.end(), vec.begin() + fromIndex);
                 }
                 else if constexpr (std::is_same_v<E, std::vector<float>>) {
                     auto& rvec = std::get<std::vector<float>>(rattr.m_data);
+                    if (vec.size() < rvec.size() + fromIndex) {
+                        throw makeError<UnimplError>("data range exceeds when copy");
+                    }
                     std::copy(rvec.begin(), rvec.end(), vec.begin() + fromIndex);
                 }
                 else if constexpr (std::is_same_v<E, std::vector<std::string>>) {
                     auto& rvec = std::get<std::vector<std::string>>(rattr.m_data);
+                    if (vec.size() < rvec.size() + fromIndex) {
+                        throw makeError<UnimplError>("data range exceeds when copy");
+                    }
                     std::copy(rvec.begin(), rvec.end(), vec.begin() + fromIndex);
                 }
                 //目前向量是独立通道储存的，所以先不写vec类型
@@ -177,6 +201,8 @@ namespace zeno {
         }
 
         AttrVarVec get() const;
+
+        AttrValue front() const;
 
         template<typename T>
         void set(size_t index, T val) {

@@ -633,12 +633,14 @@ void INode::reflectForeach_apply(CalcContext* pContext)
         for (reset_forloop_settings(); is_continue_to_run(); increment())
         {
             foreach_begin->mark_dirty(true);
+            pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
 
             preApply(pContext);
             reflectNode_apply();
         }
         auto output = get_output_obj("Output Object");
-        output->update_key(m_uuid);
+        if (output)
+            output->update_key(m_uuid);
     }
 }
 
@@ -1780,7 +1782,7 @@ void INode::doApply(CalcContext* pContext) {
     scope_exit spUuidRecord([=] {pContext->visited_nodes.erase(uuid_path); });
 
 #if 0
-    if (m_name == "locate1") {
+    if (m_name == "locate" && pContext->curr_iter == 1) {
         int j;
         j = 0;
     }

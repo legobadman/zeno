@@ -9,10 +9,13 @@
 namespace zeno
 {
 
-    GeometryTopology::GeometryTopology(bool bTriangle, int nPoints, int nFaces) {
+    GeometryTopology::GeometryTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
         m_bTriangle = bTriangle;
         m_points.resize(nPoints);
-        m_faces.reserve(nFaces);    //面不好索引，只能逐个加，不过后续有很多节点都提前构造面的集合，然后整个一起加再fuse
+        if (bInitFaces)
+            m_faces.resize(nFaces);
+        else
+            m_faces.reserve(nFaces);
         for (int i = 0; i < nPoints; i++) {
             m_points[i] = std::make_shared<HF_Point>();
         }
@@ -1135,6 +1138,8 @@ namespace zeno
             } while (firsth != h);
         }
 
+        std::sort(removedPtnum.begin(), removedPtnum.end());
+
         //边都已经删除了，现在只要删除点和面即可。
         removeElements(m_points, remPoints);
         removeElements(m_faces, faces);
@@ -1149,6 +1154,15 @@ namespace zeno
                     break;
             }
             hedge->point -= nStep;
+
+            nStep = 0;
+            for (auto remPointId : remPoints) {
+                if (hedge->point_from >= remPointId)
+                    nStep++;
+                else
+                    break;
+            }
+            hedge->point_from -= nStep;
 
             nStep = 0;
             for (auto remFaceId : faces) {
@@ -1206,6 +1220,88 @@ namespace zeno
         else {
             return -1;
         }
+    }
+
+    void GeometryTopology::set_face(int idx, const std::vector<int>& points, bool bClose) {
+        //points要按照逆时针方向
+        std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
+        size_t face_id = idx;
+
+        std::vector<HEdge*> edges;
+        for (size_t i = 0; i < points.size(); i++) {
+            size_t from_point = -1, to_point = -1;
+            if (i == points.size() - 1) {
+                if (!bClose)
+                    continue;   //line
+                from_point = points[i];
+                to_point = points[0];
+            }
+            else {
+                //edge: from i to i+1
+                from_point = points[i];
+                to_point = points[i + 1];
+            }
+
+            //DEBUG:
+            if (from_point == 1 && to_point == 0 || from_point == 7 && to_point == 5) {
+                int j;
+                j = 0;
+            }
+
+            if ((bClose && i == 0) || (!bClose && i == 1)) {
+                if (face_id == 0) {
+                    spFace->start_linearIdx = 0;
+                }
+                else {
+                    spFace->start_linearIdx = m_faces[face_id - 1]->start_linearIdx +
+                        nvertices(face_id - 1);
+                }
+            }
+
+            std::shared_ptr<HEdge> hedge = std::make_shared<HEdge>();
+            hedge->face = face_id;
+            hedge->point = to_point;
+            hedge->point_from = from_point;
+            std::string id = zeno::format("{}->{}", from_point, to_point);
+            hedge->id = id;
+
+            if (hedge->point == hedge->point_from) {
+                int j;
+                j = 0;
+            }
+
+            auto fromPoint = m_points[from_point];
+            assert(fromPoint);
+            fromPoint->edges.insert(hedge.get());
+
+            //check whether the edge from to_point to from_point.
+            auto toPoint = m_points[to_point];
+            assert(toPoint);
+            for (HEdge* outEdge : toPoint->edges) {
+                if (outEdge->point == from_point) {
+                    outEdge->pair = hedge.get();
+                    hedge->pair = outEdge;
+                    break;
+                }
+            }
+
+            m_hEdges.insert(std::make_pair(id, hedge));
+            edges.push_back(hedge.get());
+        }
+
+        for (size_t i = 0; i < edges.size(); i++) {
+            if (i == edges.size() - 1) {
+                if (bClose) {
+                    edges[i]->next = edges[0];
+                }
+            }
+            else {
+                edges[i]->next = edges[i + 1];
+            }
+        }
+
+        spFace->h = edges[0];
+        m_faces[idx] = spFace;
     }
 
     int GeometryTopology::add_face(const std::vector<int>& points, bool bClose) {

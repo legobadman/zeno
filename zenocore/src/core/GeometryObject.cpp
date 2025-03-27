@@ -33,8 +33,8 @@ namespace zeno
     {
     }
 
-    ZENO_API GeometryObject::GeometryObject(bool bTriangle, int nPoints, int nFaces)
-        : m_spTopology(std::make_shared<GeometryTopology>(bTriangle, nPoints, nFaces))
+    ZENO_API GeometryObject::GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
+        : m_spTopology(std::make_shared<GeometryTopology>(bTriangle, nPoints, nFaces, bInitFaces))
     {
     }
 
@@ -79,6 +79,62 @@ namespace zeno
         m_spTopology->toPrimitive(spPrim);
         spPrim->m_userData = m_userData;
         return spPrim;
+    }
+
+    static AttrVar get_init_value(GeoAttrType type) {
+        AttrVar init_val;
+        switch (type)
+        {
+        case ATTR_INT:      init_val = 0; break;
+        case ATTR_FLOAT:    init_val = 0.f; break;
+        case ATTR_STRING:   init_val = ""; break;
+        case ATTR_VEC2:     init_val = vec2f(); break;
+        case ATTR_VEC3:     init_val = vec3f(); break;
+        case ATTR_VEC4:     init_val = vec4f(); break;
+        }
+        return init_val;
+    }
+
+    void GeometryObject::inheritAttributes(
+        std::shared_ptr<GeometryObject> rhs,
+        int vtx_offset,
+        int pt_offset,
+        std::set<std::string> pt_nocopy,
+        int face_offset,
+        std::set<std::string> face_nocopy)
+    {
+        //这里假定了点和面是确定了的
+        //点属性
+        if (pt_offset != -1) {
+            for (const auto& [name, attr_vec] : rhs->m_point_attrs) {
+                if (pt_nocopy.find(name) != pt_nocopy.end())
+                    continue;
+                auto iter = m_point_attrs.find(name);
+                if (iter == m_point_attrs.end()) {
+                    GeoAttrType type = attr_vec.type();
+                    AttrVar init_val = get_init_value(type);
+                    create_point_attr(name, init_val);
+                    iter = m_point_attrs.find(name);
+                }
+                iter->second.copySlice(attr_vec, pt_offset);
+            }
+        }
+        if (face_offset != -1) {
+            //必须要在addface以后，否则大小还没定下来
+            for (const auto& [name, attr_vec] : rhs->m_face_attrs) {
+                auto iter = m_face_attrs.find(name);
+                if (face_nocopy.find(name) != face_nocopy.end())
+                    continue;
+                if (iter == m_face_attrs.end()) {
+                    GeoAttrType type = attr_vec.type();
+                    AttrValue val = attr_vec.front();
+                    AttrVar init_val = get_init_value(type);
+                    create_face_attr(name, init_val);
+                    iter = m_face_attrs.find(name);
+                }
+                iter->second.copySlice(attr_vec, face_offset);
+            }
+        }
     }
 
     void GeometryObject::initFromPrim(PrimitiveObject* prim) {
@@ -683,77 +739,10 @@ namespace zeno
         m_spTopology->merge(topos);
 
         //属性合并
-        int pointattrIndexOffset = 0;
+        int pointattrIndexOffset = 0, faceattrIndexOffset = 0;
         for (auto spObj : objs) {
-            for (auto& [attr, rvalvec] : spObj->m_point_attrs) {
-                auto iterAttr = m_point_attrs.find(attr);
-                if (iterAttr == m_point_attrs.end()) {
-                    const int N = m_spTopology->npoints();
-                    AttrVar deflVal;
-                    zeno::GeoAttrType type = rvalvec.type();
-                    if (type == ATTR_INT) {
-                        deflVal = 0;
-                    }
-                    else if (type == ATTR_FLOAT) {
-                        deflVal = 0.f;
-                    }
-                    else if (type == ATTR_STRING) {
-                        deflVal = "";
-                    }
-                    else if (type == ATTR_VEC2) {
-                        deflVal = zeno::vec2f(0, 0);
-                    }
-                    else if (type == ATTR_VEC3) {
-                        deflVal = zeno::vec3f(0, 0, 0);
-                    }
-                    else if (type == ATTR_VEC4) {
-                        deflVal = zeno::vec4f(0, 0, 0, 0);
-                    }
-
-                    AttributeVector attrVec(deflVal, m_spTopology->npoints(), false);
-                    m_point_attrs.insert(std::make_pair(attr, attrVec));
-                    iterAttr= m_point_attrs.find(attr);
-                }
-                AttributeVector& valvec = iterAttr->second;
-                valvec.copySlice(rvalvec, pointattrIndexOffset);
-            }
+            inheritAttributes(spObj, -1, pointattrIndexOffset, {}, faceattrIndexOffset, {});
             pointattrIndexOffset += spObj->npoints();
-        }
-
-        int faceattrIndexOffset = 0;
-        for (auto spObj : objs) {
-            for (auto& [attr, rvalvec] : spObj->m_face_attrs) {
-                auto iterAttr = m_face_attrs.find(attr);
-                if (iterAttr == m_face_attrs.end()) {
-                    const int N = m_spTopology->npoints();
-                    AttrVar deflVal;
-                    zeno::GeoAttrType type = rvalvec.type();
-                    if (type == ATTR_INT) {
-                        deflVal = std::vector<int>(N, 0);
-                    }
-                    else if (type == ATTR_FLOAT) {
-                        deflVal = std::vector<float>(N, 0.f);
-                    }
-                    else if (type == ATTR_STRING) {
-                        deflVal = std::vector<std::string>(N, "");
-                    }
-                    else if (type == ATTR_VEC2) {
-                        deflVal = std::vector<zeno::vec2f>(N, zeno::vec2f(0, 0));
-                    }
-                    else if (type == ATTR_VEC3) {
-                        deflVal = std::vector<zeno::vec3f>(N, zeno::vec3f(0, 0, 0));
-                    }
-                    else if (type == ATTR_VEC4) {
-                        deflVal = std::vector<zeno::vec4f>(N, zeno::vec4f(0, 0, 0, 0));
-                    }
-
-                    AttributeVector attrVec(deflVal, m_spTopology->nfaces());
-                    m_face_attrs.insert(std::make_pair(attr, attrVec));
-                    iterAttr = m_face_attrs.find(attr);
-                }
-                AttributeVector& valvec = iterAttr->second;
-                valvec.copySlice(rvalvec, faceattrIndexOffset);
-            }
             faceattrIndexOffset += spObj->nfaces();
         }
     }
@@ -787,6 +776,10 @@ namespace zeno
         CALLBACK_NOTIFY(add_face, faceid);
         CALLBACK_NOTIFY(reset_vertices)
         return faceid;
+    }
+
+    ZENO_API void GeometryObject::set_face(int idx, const std::vector<int>& points, bool bClose) {
+        m_spTopology->set_face(idx, points, bClose);
     }
 
     /*

@@ -23,10 +23,17 @@ namespace zeno
     class GeometryObject : public IObjectClone<GeometryObject> {
     public:
         ZENO_API GeometryObject();
-        ZENO_API GeometryObject(bool bTriangle, int nPoints, int nFaces);
+        ZENO_API GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         ZENO_API GeometryObject(const GeometryObject& rhs);
         ZENO_API GeometryObject(PrimitiveObject* prim);
         ZENO_API std::shared_ptr<PrimitiveObject> toPrimitive();
+        ZENO_API void inheritAttributes(
+            std::shared_ptr<GeometryObject> rhs,
+            int vtx_offset,
+            int pt_offset,
+            std::set<std::string> pt_nocopy,
+            int face_offset,
+            std::set<std::string> face_nocopy);
         ZENO_API ~GeometryObject();
 
         ZENO_API std::vector<vec3f> points_pos();
@@ -135,6 +142,7 @@ namespace zeno
         CALLBACK_REGIST(add_point, void, int)
         ZENO_API int add_face(const std::vector<int>& points, bool bClose = true);
         CALLBACK_REGIST(add_face, void, int)
+        ZENO_API void set_face(int idx, const std::vector<int>& points, bool bClose = true);
 
         /* 移除元素相关 */
         ZENO_API bool remove_faces(const std::set<int>& faces, bool includePoints);

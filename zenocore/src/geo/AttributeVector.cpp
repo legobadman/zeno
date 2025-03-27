@@ -34,6 +34,41 @@ namespace zeno {
         return self->value();
     }
 
+    ZENO_API AttrValue AttributeVector::front() const {
+        if (self)
+            return self->front();
+        switch (m_type)
+        {
+        case ATTR_INT:
+        case ATTR_FLOAT:
+        case ATTR_STRING:
+            return self->front();
+        case ATTR_VEC2:
+        {
+            vec2f vec(std::get<float>(x_comp->front()), 
+                std::get<float>(y_comp->front()));
+            return vec;
+        }
+        case ATTR_VEC3:
+        {
+            vec3f vec(std::get<float>(x_comp->front()),
+                std::get<float>(y_comp->front()),
+                std::get<float>(z_comp->front()));
+            return vec;
+        }
+        case ATTR_VEC4:
+        {
+            vec4f vec(std::get<float>(x_comp->front()),
+                std::get<float>(y_comp->front()),
+                std::get<float>(z_comp->front()),
+                std::get<float>(w_comp->front()));
+            return vec;
+        }
+        }
+        assert(false);
+        return AttrValue();
+    }
+
     ZENO_API void AttributeVector::copySlice(const AttributeVector& rhs, int fromIndex) {
         if (x_comp) {
             x_comp->copy(*rhs.x_comp, fromIndex);

@@ -28,6 +28,10 @@ namespace zeno {
         return m_pImpl->m_data;
     }
 
+    AttrValue AttrColumn::front() const {
+        return m_pImpl->front();
+    }
+
     void AttrColumn::set(const AttrVarVec& val) {
         return m_pImpl->set(val);
     }
