@@ -438,6 +438,20 @@ namespace zeno
                         {"nmax", "float"}
                     }
                 }
+            },
+            {
+                "get_bboxmin",
+                {
+                    "get_bboxmin", "Returns the min vec3 of the bbox of the geometry",
+                    "vec3", {}
+                }
+            },
+            {
+                "get_bboxmax",
+                {
+                    "get_bboxmax", "Returns the max vec3 of the bbox of the geometry",
+                    "vec3", {}
+                }
             }
         };
     }

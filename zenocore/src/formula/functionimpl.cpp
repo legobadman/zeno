@@ -1711,6 +1711,20 @@ namespace zeno
                 }
                 return ret;
             }
+            if (funcname == "get_bboxmin") {
+                auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+                assert(spGeo);
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo.get());
+                glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
+                return bmin;
+            }
+            if (funcname == "get_bboxmax") {
+                auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+                assert(spGeo);
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo.get());
+                glm::vec3 bmax(ret.second[0], ret.second[1], ret.second[2]);
+                return bmax;
+            }
             if (funcname == "pcopen") {
                 std::string inputgeo = get_zfxvar<std::string>(args[0].value[0]);
                 std::string attrname = get_zfxvar<std::string>(args[1].value[0]);

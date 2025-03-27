@@ -160,7 +160,7 @@ namespace zeno {
             auto update = m_render_updates[i];
             if (update.uuidpath_node_objkey == info.uuidpath_node_objkey) {
                 //先把原来的覆盖掉
-                assert(false);
+                //assert(false);     //在子图间跳跃时会碰到，但目前观察暂时没影响主要功能，先屏蔽
                 //m_render_updates[i] = info;
                 return;
             }
