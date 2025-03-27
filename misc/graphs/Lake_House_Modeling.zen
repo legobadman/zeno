@@ -1,0 +1,3022 @@
+{
+    "main": {
+        "type": 2,
+        "nodes": {
+            "Create_body_base": {
+                "name": "Create_body_base",
+                "class": "Subnet",
+                "object_inputs": {
+                    "Input": {
+                        "links": null,
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "data_input": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "data_output": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {
+                    "Output": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    31.0,
+                    219.0
+                ],
+                "status": [
+                    "View"
+                ],
+                "collasped": false,
+                "subnet-customUi": {
+                    "nickname": "",
+                    "iconResPath": "",
+                    "category": "",
+                    "doc": "",
+                    "tabs": {
+                        "Tab1": {
+                            "Group1": {
+                                "data_input": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 0,
+                                    "control": {
+                                        "name": "Integer"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            }
+                        }
+                    }
+                },
+                "subnet": {
+                    "type": 0,
+                    "nodes": {
+                        "Input": {
+                            "name": "Input",
+                            "class": "SubInput",
+                            "object_inputs": {},
+                            "primitive_inputs": {},
+                            "primitive_outputs": {
+                                "hasValue": {
+                                    "type": "bool",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "object_outputs": {
+                                "port": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                0.0,
+                                0.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "Output": {
+                            "name": "Output",
+                            "class": "SubOutput",
+                            "object_inputs": {
+                                "port": {
+                                    "links": [
+                                        {
+                                            "out-node": "stacked_boxes",
+                                            "out-socket": "Output",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {},
+                            "primitive_outputs": {},
+                            "object_outputs": {},
+                            "uipos": [
+                                0.0,
+                                500.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "data_input": {
+                            "name": "data_input",
+                            "class": "SubInput",
+                            "object_inputs": {},
+                            "primitive_inputs": {},
+                            "primitive_outputs": {
+                                "hasValue": {
+                                    "type": "bool",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "port": {
+                                    "type": "int",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "object_outputs": {},
+                            "uipos": [
+                                700.0,
+                                0.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "data_output": {
+                            "name": "data_output",
+                            "class": "SubOutput",
+                            "object_inputs": {},
+                            "primitive_inputs": {
+                                "port": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 0,
+                                    "control": {
+                                        "name": ""
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {},
+                            "uipos": [
+                                700.0,
+                                500.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "stacked_boxes": {
+                            "name": "stacked_boxes",
+                            "class": "Subnet",
+                            "object_inputs": {
+                                "Input": {
+                                    "links": null,
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "data_input": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 0,
+                                    "control": {
+                                        "name": "Integer"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {
+                                "data_output": {
+                                    "type": "int",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "object_outputs": {
+                                "Output": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                -7.0,
+                                245.0
+                            ],
+                            "status": [
+                                "View"
+                            ],
+                            "collasped": false,
+                            "subnet-customUi": {
+                                "nickname": "",
+                                "iconResPath": "",
+                                "category": "",
+                                "doc": "",
+                                "tabs": {
+                                    "Tab1": {
+                                        "Group1": {
+                                            "data_input": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 0,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "subnet": {
+                                "type": 0,
+                                "nodes": {
+                                    "AverageFuse1": {
+                                        "name": "AverageFuse1",
+                                        "class": "AverageFuse",
+                                        "object_inputs": {
+                                            "Input Geometry": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "Merge1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Snap Distance": {
+                                                "links": null,
+                                                "type": "float",
+                                                "default-value": 0.009999999776482582,
+                                                "control": {
+                                                    "name": "Float"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -176.0,
+                                            1528.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Blast1": {
+                                        "name": "Blast1",
+                                        "class": "Blast",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "pcloud",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Zfx Expression": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "@P.y < 3",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Group": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Points",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Delete Non Selected": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": true,
+                                                "control": {
+                                                    "name": "Boolean"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            318.0,
+                                            668.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Blast3": {
+                                        "name": "Blast3",
+                                        "class": "Blast",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "AverageFuse1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Zfx Expression": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "@P.y > 3",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Group": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Points",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Delete Non Selected": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": false,
+                                                "control": {
+                                                    "name": "Boolean"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -150.0,
+                                            1668.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "CopyToPoints1": {
+                                        "name": "CopyToPoints1",
+                                        "class": "CopyToPoints",
+                                        "object_inputs": {
+                                            "Input Geometry": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "CreateAttribute1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            },
+                                            "Target Geometry": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "pick_bbox_max",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Align To": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Align To Min",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -219.0,
+                                            2092.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "CreateAttribute1": {
+                                        "name": "CreateAttribute1",
+                                        "class": "CreateAttribute",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "original_box1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Attribute Type": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Integer",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Attribute Group": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Face",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Integer Value": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": "ref(\"./ForEachBegin1.Current Iteration\") + 1",
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Float Value": {
+                                                "links": null,
+                                                "type": "float",
+                                                "default-value": 0.0,
+                                                "control": {
+                                                    "name": "Float"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "String Value": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Boolean Value": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": false,
+                                                "control": {
+                                                    "name": "Boolean"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Vector2 Value": {
+                                                "links": null,
+                                                "type": "vec2f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 2"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Vector3 Value": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Vector4 Value": {
+                                                "links": null,
+                                                "type": "vec4f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0,
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 4"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "attr_name": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "box_id",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            305.0,
+                                            1840.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Cube1": {
+                                        "name": "Cube1",
+                                        "class": "Cube",
+                                        "object_inputs": {},
+                                        "primitive_inputs": {
+                                            "Center": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    "ref(\"./Cube1.Size.x\") / 2",
+                                                    "ref(\"./Cube1.Size.y\") / 2",
+                                                    "ref(\"./Cube1.Size.z\") / 2"
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Size": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    4.0,
+                                                    3.0,
+                                                    6.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Rotate": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "X Division": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 2,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Y Division": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 2,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Z Division": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 2,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Uniform Scale": {
+                                                "links": null,
+                                                "type": "float",
+                                                "default-value": 1.0,
+                                                "control": {
+                                                    "name": "Float"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Face Type": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Quadrilaterals",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Point Normals": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": false,
+                                                "control": {
+                                                    "name": "Boolean"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -24.0,
+                                            250.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "ForEachBegin1": {
+                                        "name": "ForEachBegin1",
+                                        "class": "ForEachBegin",
+                                        "object_inputs": {
+                                            "Initial Object": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "box_id",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Fetch Method": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "From Last Feedback",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "ForEachEnd Path": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "ForEachEnd1",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Current Iteration": {
+                                                "property": "normal",
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 4,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {
+                                            "Current Iteration": {
+                                                "type": "int",
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            }
+                                        },
+                                        "object_outputs": {
+                                            "Output Object": {
+                                                "type": "",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -285.0,
+                                            665.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "ForEachEnd1": {
+                                        "name": "ForEachEnd1",
+                                        "class": "ForEachEnd",
+                                        "object_inputs": {
+                                            "Iterate Object": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "Merge2",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "ForEachBegin Path": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "ForEachBegin1",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Iterations": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 5,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Increment": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 1,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Start Value": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 0,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Stop Condition": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 4,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Iterate Method": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "By Count",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Collect Method": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Feedback to Begin",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output Object": {
+                                                "type": "",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -399.0,
+                                            2373.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Input": {
+                                        "name": "Input",
+                                        "class": "SubInput",
+                                        "object_inputs": {},
+                                        "primitive_inputs": {},
+                                        "primitive_outputs": {
+                                            "hasValue": {
+                                                "type": "bool",
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            }
+                                        },
+                                        "object_outputs": {
+                                            "port": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            0.0,
+                                            0.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Merge1": {
+                                        "name": "Merge1",
+                                        "class": "Merge",
+                                        "object_inputs": {
+                                            "Input Of Objects": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "pcloud1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "obj0",
+                                                        "target-socket": ""
+                                                    },
+                                                    {
+                                                        "out-node": "Blast1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "obj1",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "list",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {},
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -157.0,
+                                            1388.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Merge2": {
+                                        "name": "Merge2",
+                                        "class": "Merge",
+                                        "object_inputs": {
+                                            "Input Of Objects": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "CopyToPoints1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "obj0",
+                                                        "target-socket": ""
+                                                    },
+                                                    {
+                                                        "out-node": "Seed",
+                                                        "out-socket": "output",
+                                                        "out-key": "",
+                                                        "in-key": "obj1",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "list",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {},
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -374.0,
+                                            2207.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Output": {
+                                        "name": "Output",
+                                        "class": "SubOutput",
+                                        "object_inputs": {
+                                            "port": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "ForEachEnd1",
+                                                        "out-socket": "Output Object",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {},
+                                        "primitive_outputs": {},
+                                        "object_outputs": {},
+                                        "uipos": [
+                                            -259.0,
+                                            2556.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "Seed": {
+                                        "name": "Seed",
+                                        "class": "Route",
+                                        "object_inputs": {
+                                            "input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "ForEachBegin1",
+                                                        "out-socket": "Output Object",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "float_val": {
+                                                "links": null,
+                                                "type": "float",
+                                                "default-value": "ref(\"/main/Settings.Global Seed\") + ref(\"./ForEachBegin1.Current Iteration\")",
+                                                "control": {
+                                                    "name": "Float"
+                                                },
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            },
+                                            "int_val": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 0,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            },
+                                            "string_val": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "0",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            },
+                                            "vec3f_val": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "output": {
+                                                "type": "",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -349.0,
+                                            895.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "box_id": {
+                                        "name": "box_id",
+                                        "class": "CreateAttribute",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "Cube1",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Attribute Type": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Integer",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Attribute Group": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Face",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Integer Value": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 0,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Float Value": {
+                                                "links": null,
+                                                "type": "float",
+                                                "default-value": 0.0,
+                                                "control": {
+                                                    "name": "Float"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "String Value": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Boolean Value": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": false,
+                                                "control": {
+                                                    "name": "Boolean"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Vector2 Value": {
+                                                "links": null,
+                                                "type": "vec2f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 2"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Vector3 Value": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Vector4 Value": {
+                                                "links": null,
+                                                "type": "vec4f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0,
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 4"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "attr_name": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "box_id",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -69.0,
+                                            459.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "data_input": {
+                                        "name": "data_input",
+                                        "class": "SubInput",
+                                        "object_inputs": {},
+                                        "primitive_inputs": {},
+                                        "primitive_outputs": {
+                                            "hasValue": {
+                                                "type": "bool",
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            },
+                                            "port": {
+                                                "type": "int",
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            }
+                                        },
+                                        "object_outputs": {},
+                                        "uipos": [
+                                            2091.0,
+                                            139.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "data_output": {
+                                        "name": "data_output",
+                                        "class": "SubOutput",
+                                        "object_inputs": {},
+                                        "primitive_inputs": {
+                                            "port": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 0,
+                                                "control": {
+                                                    "name": ""
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {},
+                                        "uipos": [
+                                            2075.0,
+                                            1301.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "locate": {
+                                        "name": "locate",
+                                        "class": "Blast",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "Seed",
+                                                        "out-socket": "output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Zfx Expression": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "@box_id == ref(\"./ForEachBegin1.Current Iteration\")",
+                                                "control": {
+                                                    "name": "String"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Group": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Faces",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Delete Non Selected": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": true,
+                                                "control": {
+                                                    "name": "Boolean"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -190.0,
+                                            1045.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "original_box1": {
+                                        "name": "original_box1",
+                                        "class": "Cube",
+                                        "object_inputs": {},
+                                        "primitive_inputs": {
+                                            "Center": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    "ref(\"Size.x\") / 2",
+                                                    "ref(\"Size.y\") / 2",
+                                                    "ref(\"Size.z\") / 2"
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Size": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    "round(fit01(rand(ref(\"./Seed.float_val\")), 2, 4))",
+                                                    3.0,
+                                                    "round(fit01(rand(ref(\"./Seed.float_val\")+54),2,4))"
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Rotate": {
+                                                "links": null,
+                                                "type": "vec3f",
+                                                "default-value": [
+                                                    0.0,
+                                                    0.0,
+                                                    0.0
+                                                ],
+                                                "control": {
+                                                    "name": "Float Vector 3"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "X Division": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 2,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Y Division": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 2,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Z Division": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 2,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Uniform Scale": {
+                                                "links": null,
+                                                "type": "float",
+                                                "default-value": 1.0,
+                                                "control": {
+                                                    "name": "Float"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Face Type": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Quadrilaterals",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Point Normals": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": false,
+                                                "control": {
+                                                    "name": "Boolean"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            312.0,
+                                            1678.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "pcloud": {
+                                        "name": "pcloud",
+                                        "class": "Subnet",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "box_id",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "data_input": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 0,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {
+                                            "data_output": {
+                                                "type": "int",
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            }
+                                        },
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            324.0,
+                                            527.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false,
+                                        "subnet-customUi": {
+                                            "nickname": "",
+                                            "iconResPath": "",
+                                            "category": "",
+                                            "doc": "",
+                                            "tabs": {
+                                                "Tab1": {
+                                                    "Group1": {
+                                                        "data_input": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 0,
+                                                            "control": {
+                                                                "name": "Integer"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "subnet": {
+                                            "type": 0,
+                                            "nodes": {
+                                                "AverageFuse1": {
+                                                    "name": "AverageFuse1",
+                                                    "class": "AverageFuse",
+                                                    "object_inputs": {
+                                                        "Input Geometry": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "make_grid",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Snap Distance": {
+                                                            "links": null,
+                                                            "type": "float",
+                                                            "default-value": 0.009999999776482582,
+                                                            "control": {
+                                                                "name": "Float"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -95.0,
+                                                        535.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "Input": {
+                                                    "name": "Input",
+                                                    "class": "SubInput",
+                                                    "object_inputs": {},
+                                                    "primitive_inputs": {},
+                                                    "primitive_outputs": {
+                                                        "hasValue": {
+                                                            "type": "bool",
+                                                            "socket-type": "clone",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "object_outputs": {
+                                                        "port": {
+                                                            "type": "",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        0.0,
+                                                        0.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "Output": {
+                                                    "name": "Output",
+                                                    "class": "SubOutput",
+                                                    "object_inputs": {
+                                                        "port": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "delete_edge_points",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {},
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {},
+                                                    "uipos": [
+                                                        -54.0,
+                                                        914.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "Scatter1": {
+                                                    "name": "Scatter1",
+                                                    "class": "Scatter",
+                                                    "object_inputs": {
+                                                        "Input": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "Input",
+                                                                    "out-socket": "port",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Sample Regin": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "Volumn",
+                                                            "control": {
+                                                                "name": "Enum"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Points Count": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 400,
+                                                            "control": {
+                                                                "name": "Slider"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Random Seed": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 0,
+                                                            "control": {
+                                                                "name": "Slider"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -20.0,
+                                                        172.0
+                                                    ],
+                                                    "status": [
+                                                        "View"
+                                                    ],
+                                                    "collasped": false
+                                                },
+                                                "data_input": {
+                                                    "name": "data_input",
+                                                    "class": "SubInput",
+                                                    "object_inputs": {},
+                                                    "primitive_inputs": {},
+                                                    "primitive_outputs": {
+                                                        "hasValue": {
+                                                            "type": "bool",
+                                                            "socket-type": "clone",
+                                                            "visible": false
+                                                        },
+                                                        "port": {
+                                                            "type": "int",
+                                                            "socket-type": "clone",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "object_outputs": {},
+                                                    "uipos": [
+                                                        700.0,
+                                                        0.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "data_output": {
+                                                    "name": "data_output",
+                                                    "class": "SubOutput",
+                                                    "object_inputs": {},
+                                                    "primitive_inputs": {
+                                                        "port": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 0,
+                                                            "control": {
+                                                                "name": ""
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {},
+                                                    "uipos": [
+                                                        700.0,
+                                                        500.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "delete_edge_points": {
+                                                    "name": "delete_edge_points",
+                                                    "class": "AttributeWrangle",
+                                                    "object_inputs": {
+                                                        "Input": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "AverageFuse1",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Zfx Code": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "int handle = pcopen(\"0\",\"P\",@P,2.1,10);\r\nif (pcnumfound(handle) < 5) {\r\n    remove_point(@ptnum);\r\n}",
+                                                            "control": {
+                                                                "name": "CodeEditor"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Run Over": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "Points",
+                                                            "control": {
+                                                                "name": "Enum"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -80.0,
+                                                        725.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "make_grid": {
+                                                    "name": "make_grid",
+                                                    "class": "AttributeWrangle",
+                                                    "object_inputs": {
+                                                        "Input": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "Scatter1",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Zfx Code": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "@P.x = rint(@P.x/2)*2;\r\n@P.y = rint(@P.y/3)*3;\r\n@P.z = rint(@P.z/2)*2;",
+                                                            "control": {
+                                                                "name": "CodeEditor"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Run Over": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "Points",
+                                                            "control": {
+                                                                "name": "Enum"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -60.0,
+                                                        379.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "pcloud1": {
+                                        "name": "pcloud1",
+                                        "class": "Subnet",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "locate",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "data_input": {
+                                                "links": null,
+                                                "type": "int",
+                                                "default-value": 0,
+                                                "control": {
+                                                    "name": "Integer"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {
+                                            "data_output": {
+                                                "type": "int",
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            }
+                                        },
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -187.0,
+                                            1212.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false,
+                                        "subnet-customUi": {
+                                            "nickname": "",
+                                            "iconResPath": "",
+                                            "category": "",
+                                            "doc": "",
+                                            "tabs": {
+                                                "Tab1": {
+                                                    "Group1": {
+                                                        "data_input": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 0,
+                                                            "control": {
+                                                                "name": "Integer"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "subnet": {
+                                            "type": 0,
+                                            "nodes": {
+                                                "AverageFuse1": {
+                                                    "name": "AverageFuse1",
+                                                    "class": "AverageFuse",
+                                                    "object_inputs": {
+                                                        "Input Geometry": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "make_grid",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Snap Distance": {
+                                                            "links": null,
+                                                            "type": "float",
+                                                            "default-value": 0.009999999776482582,
+                                                            "control": {
+                                                                "name": "Float"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -44.0,
+                                                        531.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "Input": {
+                                                    "name": "Input",
+                                                    "class": "SubInput",
+                                                    "object_inputs": {},
+                                                    "primitive_inputs": {},
+                                                    "primitive_outputs": {
+                                                        "hasValue": {
+                                                            "type": "bool",
+                                                            "socket-type": "clone",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "object_outputs": {
+                                                        "port": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        0.0,
+                                                        0.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "Output": {
+                                                    "name": "Output",
+                                                    "class": "SubOutput",
+                                                    "object_inputs": {
+                                                        "port": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "delete_edge_points",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "obj0",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {},
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {},
+                                                    "uipos": [
+                                                        -9.0,
+                                                        892.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "Scatter1": {
+                                                    "name": "Scatter1",
+                                                    "class": "Scatter",
+                                                    "object_inputs": {
+                                                        "Input": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "Input",
+                                                                    "out-socket": "port",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Sample Regin": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "Volumn",
+                                                            "control": {
+                                                                "name": "Enum"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Points Count": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 400,
+                                                            "control": {
+                                                                "name": "Slider"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Random Seed": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 0,
+                                                            "control": {
+                                                                "name": "Slider"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -25.0,
+                                                        162.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "data_input": {
+                                                    "name": "data_input",
+                                                    "class": "SubInput",
+                                                    "object_inputs": {},
+                                                    "primitive_inputs": {},
+                                                    "primitive_outputs": {
+                                                        "hasValue": {
+                                                            "type": "bool",
+                                                            "socket-type": "clone",
+                                                            "visible": false
+                                                        },
+                                                        "port": {
+                                                            "type": "int",
+                                                            "socket-type": "clone",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "object_outputs": {},
+                                                    "uipos": [
+                                                        700.0,
+                                                        0.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "data_output": {
+                                                    "name": "data_output",
+                                                    "class": "SubOutput",
+                                                    "object_inputs": {},
+                                                    "primitive_inputs": {
+                                                        "port": {
+                                                            "links": null,
+                                                            "type": "int",
+                                                            "default-value": 0,
+                                                            "control": {
+                                                                "name": ""
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {},
+                                                    "uipos": [
+                                                        700.0,
+                                                        500.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                },
+                                                "delete_edge_points": {
+                                                    "name": "delete_edge_points",
+                                                    "class": "AttributeWrangle",
+                                                    "object_inputs": {
+                                                        "Input": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "AverageFuse1",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Zfx Code": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "int handle = pcopen(\"0\",\"P\",@P,2.1,10);\r\nif (pcnumfound(handle) < 5) {\r\n    remove_point(@ptnum);\r\n}",
+                                                            "control": {
+                                                                "name": "CodeEditor"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Run Over": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "Points",
+                                                            "control": {
+                                                                "name": "Enum"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -73.0,
+                                                        711.0
+                                                    ],
+                                                    "status": [
+                                                        "View"
+                                                    ],
+                                                    "collasped": false
+                                                },
+                                                "make_grid": {
+                                                    "name": "make_grid",
+                                                    "class": "AttributeWrangle",
+                                                    "object_inputs": {
+                                                        "Input": {
+                                                            "links": [
+                                                                {
+                                                                    "out-node": "Scatter1",
+                                                                    "out-socket": "Output",
+                                                                    "out-key": "",
+                                                                    "in-key": "",
+                                                                    "target-socket": ""
+                                                                }
+                                                            ],
+                                                            "type": "geometry",
+                                                            "socket-type": "clone"
+                                                        }
+                                                    },
+                                                    "primitive_inputs": {
+                                                        "Zfx Code": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "@P.x = rint(@P.x/2)*2;\r\n@P.y = rint(@P.y/3)*3;\r\n@P.z = rint(@P.z/2)*2;",
+                                                            "control": {
+                                                                "name": "CodeEditor"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        },
+                                                        "Run Over": {
+                                                            "links": null,
+                                                            "type": "string",
+                                                            "default-value": "Points",
+                                                            "control": {
+                                                                "name": "Enum"
+                                                            },
+                                                            "socket-type": "primitive",
+                                                            "visible": false
+                                                        }
+                                                    },
+                                                    "primitive_outputs": {},
+                                                    "object_outputs": {
+                                                        "Output": {
+                                                            "type": "geometry",
+                                                            "socket-type": "output"
+                                                        }
+                                                    },
+                                                    "uipos": [
+                                                        -59.0,
+                                                        345.0
+                                                    ],
+                                                    "status": [],
+                                                    "collasped": false
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "pick_bbox_max": {
+                                        "name": "pick_bbox_max",
+                                        "class": "AttributeWrangle",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "Blast3",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Zfx Code": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "//用粗暴的方法找出bbox.max的点\nvector3 bmin = get_bboxmin();\nvector3 bmax = get_bboxmax();\n\nint rem_pts[];\n\nfor (int pt=0; pt < npoints(); pt++) { \n    vector3 pos = get_point_attr(\"P\", pt);\n    float x = pos[0];\n    float y = pos[1];\n    float z = pos[2];\n    if (pos != bmax) {\n        rem_pts = append(rem_pts, pt);\n    }\n}\nremove_point(rem_pts);",
+                                                "control": {
+                                                    "name": "CodeEditor"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Run Over": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Points",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -270.0,
+                                            1865.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    },
+                                    "pick_random": {
+                                        "name": "pick_random",
+                                        "class": "AttributeWrangle",
+                                        "object_inputs": {
+                                            "Input": {
+                                                "links": [
+                                                    {
+                                                        "out-node": "Blast3",
+                                                        "out-socket": "Output",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
+                                                "type": "geometry",
+                                                "socket-type": "clone"
+                                            }
+                                        },
+                                        "primitive_inputs": {
+                                            "Zfx Code": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "int top[];\nint bottom[];\n\nfor (int pt=0; pt < npoints(); pt++) { \n    vector3 pos = get_point_attr(\"P\", pt);\n    //log(\"x={}, y={}, z={}\", pos[0], pos[1], pos[2]);\n    if (rint(pos.y) == 0) {\n        bottom = append(bottom, pt);\n    }\n    else{\n        top = append(top, pt);    \n    }\n}\nfor (int i = 0;i < len(top); i++) {\n    //log(\"top[i]={}\", top[i]);\n}\nfor (int i = 0;i < len(bottom); i++) {\n    //log(\"bottom[i]={}\", bottom[i]);\n}\n\nfloat seed = ref(\"./Seed.float_val\");\nfloat bot_weight = 0.5;\n\nint rand_nm;\nint array_len;\nint array_pos;\nif (len(top) == 0 || len(bottom) == 0) {\n    rand_nm = rint(fit(rand(seed + 67), 0, 1, 0, npoints() - 1));\n}\nelse\n{\n    if (rand(seed) < bot_weight) {\n        array_len = len(bottom);\n        array_pos = rint(fit(rand(seed+67),0,1,0,array_len));\n        if (array_pos >= array_len) {\n            array_pos = array_len - 1;\n        }\n        rand_nm = bottom[array_pos];\n    }\n    else{\n        array_len = len(top);\n        array_pos = rint(fit(rand(seed+67),0,1,0,array_len));\n        if (array_pos >= array_len) {\n            array_pos = array_len - 1;\n        }\n        rand_nm = top[array_pos];  \n    }\n}\n\n//log(\"rand_nm = {}\", rand_nm);\nint npts = npoints();\n//log(\"npts = {}\", npts);\nint rem_pts[];\n\nfor (int pt=0; pt<npts; pt++) {\n    //log(\"pt = {}\", pt);\n    if (pt != rand_nm) {\n        rem_pts = append(rem_pts, pt);\n        //remove_point(pt);\n    }\n}\n\nremove_point(rem_pts);\n\n",
+                                                "control": {
+                                                    "name": "CodeEditor"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            },
+                                            "Run Over": {
+                                                "links": null,
+                                                "type": "string",
+                                                "default-value": "Points",
+                                                "control": {
+                                                    "name": "Enum"
+                                                },
+                                                "socket-type": "primitive",
+                                                "visible": false
+                                            }
+                                        },
+                                        "primitive_outputs": {},
+                                        "object_outputs": {
+                                            "Output": {
+                                                "type": "geometry",
+                                                "socket-type": "output"
+                                            }
+                                        },
+                                        "uipos": [
+                                            -10.0,
+                                            1842.0
+                                        ],
+                                        "status": [],
+                                        "collasped": false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Divide_into_pieces": {
+                "name": "Divide_into_pieces",
+                "class": "Subnet",
+                "object_inputs": {
+                    "Input": {
+                        "links": [
+                            {
+                                "out-node": "Create_body_base",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "data_input": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "data_output": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {
+                    "Output": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    -3.0,
+                    380.0
+                ],
+                "status": [],
+                "collasped": false,
+                "subnet-customUi": {
+                    "nickname": "",
+                    "iconResPath": "",
+                    "category": "",
+                    "doc": "",
+                    "tabs": {
+                        "Tab1": {
+                            "Group1": {
+                                "data_input": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 0,
+                                    "control": {
+                                        "name": "Integer"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            }
+                        }
+                    }
+                },
+                "subnet": {
+                    "type": 0,
+                    "nodes": {
+                        "AttributeWrangle1": {
+                            "name": "AttributeWrangle1",
+                            "class": "AttributeWrangle",
+                            "object_inputs": {
+                                "Input": {
+                                    "links": [
+                                        {
+                                            "out-node": "Scatter1",
+                                            "out-socket": "Output",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "Zfx Code": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "@P.x = rint(@P.x/2)*2;\r\n@P.y = rint(@P.y/3)*3;\r\n@P.z = rint(@P.z/2)*2;",
+                                    "control": {
+                                        "name": "CodeEditor"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Run Over": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "Points",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "Output": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                -56.0,
+                                345.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "AverageFuse1": {
+                            "name": "AverageFuse1",
+                            "class": "AverageFuse",
+                            "object_inputs": {
+                                "Input Geometry": {
+                                    "links": [
+                                        {
+                                            "out-node": "AttributeWrangle1",
+                                            "out-socket": "Output",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "Snap Distance": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 0.009999999776482582,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "Output": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                -74.0,
+                                505.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "Input": {
+                            "name": "Input",
+                            "class": "SubInput",
+                            "object_inputs": {},
+                            "primitive_inputs": {},
+                            "primitive_outputs": {
+                                "hasValue": {
+                                    "type": "bool",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "object_outputs": {
+                                "port": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                0.0,
+                                0.0
+                            ],
+                            "status": [
+                                "View"
+                            ],
+                            "collasped": false
+                        },
+                        "Output": {
+                            "name": "Output",
+                            "class": "SubOutput",
+                            "object_inputs": {
+                                "port": {
+                                    "links": [
+                                        {
+                                            "out-node": "AverageFuse1",
+                                            "out-socket": "Output",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {},
+                            "primitive_outputs": {},
+                            "object_outputs": {},
+                            "uipos": [
+                                -29.0,
+                                660.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "Scatter1": {
+                            "name": "Scatter1",
+                            "class": "Scatter",
+                            "object_inputs": {
+                                "Input": {
+                                    "links": [
+                                        {
+                                            "out-node": "Input",
+                                            "out-socket": "port",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "Sample Regin": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "Face",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Points Count": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 997,
+                                    "control": {
+                                        "name": "Slider"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Random Seed": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 0,
+                                    "control": {
+                                        "name": "Slider"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "Output": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                -24.0,
+                                182.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "data_input": {
+                            "name": "data_input",
+                            "class": "SubInput",
+                            "object_inputs": {},
+                            "primitive_inputs": {},
+                            "primitive_outputs": {
+                                "hasValue": {
+                                    "type": "bool",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "port": {
+                                    "type": "int",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "object_outputs": {},
+                            "uipos": [
+                                700.0,
+                                0.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "data_output": {
+                            "name": "data_output",
+                            "class": "SubOutput",
+                            "object_inputs": {},
+                            "primitive_inputs": {
+                                "port": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 0,
+                                    "control": {
+                                        "name": ""
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {},
+                            "uipos": [
+                                700.0,
+                                500.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        }
+                    }
+                }
+            },
+            "NumericInt1": {
+                "name": "NumericInt1",
+                "class": "NumericInt",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "value": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 1151,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "value": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -507.0,
+                    53.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "NumericInt2": {
+                "name": "NumericInt2",
+                "class": "NumericInt",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "value": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "value": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -494.0,
+                    -41.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "NumericInt3": {
+                "name": "NumericInt3",
+                "class": "NumericInt",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "value": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 3643,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "value": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -478.0,
+                    150.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "NumericInt4": {
+                "name": "NumericInt4",
+                "class": "NumericInt",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "value": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 2665,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "value": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -496.0,
+                    263.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "Settings": {
+                "name": "Settings",
+                "class": "LakeHouseSettings",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "Global Seed": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 2427,
+                        "control": {
+                            "name": "Slider"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "Roof Window Prob": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.6000000238418579,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "Chimney Prob": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.10000000149011612,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "Tower Prob": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.6000000238418579,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "Output Data": {
+                        "type": "",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -484.0,
+                    451.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "perfect": {
+                "name": "perfect",
+                "class": "NumericInt",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "value": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 2427,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "value": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -409.0,
+                    539.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "比较接近但还差一点": {
+                "name": "比较接近但还差一点",
+                "class": "NumericInt",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "value": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 2366,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "value": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -486.0,
+                    358.0
+                ],
+                "status": [],
+                "collasped": false
+            }
+        }
+    },
+    "views": {
+        "timeline": {
+            "start-frame": 0,
+            "end-frame": 100,
+            "curr-frame": 100,
+            "always": true,
+            "timeline-fps": 24
+        }
+    },
+    "version": "v3"
+}
