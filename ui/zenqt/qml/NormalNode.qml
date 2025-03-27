@@ -48,6 +48,7 @@ Qan.NodeItem {
     property var nodestatus: 0
 
     property string defattr: "abc"
+    property string clsname : ""
 
     //clip: true        //设置会导致选框不出现
 
@@ -143,7 +144,9 @@ Qan.NodeItem {
             if (pos2.x > 0 && pos2.y > 0 &&
                 pos2.x < nodename_editor.width &&
                 pos2.y < nodename_editor.height) {
-                nodename_editor.isEditing = true
+                    if(nodeItem.clsname !== "SubInput" && nodeItem.clsname !== "SubOutput"){
+                        nodename_editor.isEditing = true
+                    }
             }
         }
     }
@@ -156,6 +159,7 @@ Qan.NodeItem {
         //anchors.verticalCenter: mainmain_layout.verticalCenter
         text: nodeItem.node.label
 
+        handle_mouseevent : nodeItem.clsname !== "SubInput" && nodeItem.clsname !== "SubOutput"
         onTextChanged: {
             nodeItem.node.label = text
         }
@@ -487,6 +491,7 @@ Qan.NodeItem {
         nodeItem.x = pos.x
         nodeItem.y = pos.y
         nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
+        nodeItem.clsname = graphM.data(idx, Model.ROLE_CLASS_NAME)
 
         var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
         if (uistyle["icon"] != "") {
