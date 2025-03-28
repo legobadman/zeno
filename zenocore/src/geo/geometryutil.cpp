@@ -8,11 +8,43 @@
 #include <zeno/utils/wangsrng.h>
 #include <unordered_set>
 #include <deque>
+#include "nanoflann.hpp"
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno
 {
+    // KD-Tree 适配器
+    struct _PointCloud {
+        std::vector<vec3f> pts;
+
+        inline size_t kdtree_get_point_count() const { return pts.size(); }
+        inline double kdtree_get_pt(const size_t idx, int dim) const { return pts[idx][dim]; }
+        template <class BBOX>
+        bool kdtree_get_bbox(BBOX&) const { return false; }
+    };
+
+    // 并查集实现
+    class UnionFind {
+    private:
+        std::vector<int> parent, rank;
+    public:
+        explicit UnionFind(int n) : parent(n), rank(n, 0) {
+            for (int i = 0; i < n; ++i) parent[i] = i;
+        }
+        int find(int x) {
+            if (parent[x] == x) return x;
+            return parent[x] = find(parent[x]);
+        }
+        void unite(int x, int y) {
+            int rootX = find(x), rootY = find(y);
+            if (rootX == rootY) return;
+            if (rank[rootX] < rank[rootY]) std::swap(rootX, rootY);
+            parent[rootY] = rootX;
+            if (rank[rootX] == rank[rootY]) rank[rootX]++;
+        }
+    };
+
     bool prim_remove_point(GeometryObject* prim, int ptnum)
     {
         return false;
@@ -553,54 +585,77 @@ namespace zeno
     }
 
     ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold) {
+
         std::vector<vec3f> points = input->points_pos();
+        _PointCloud cloud{ points };
+        typedef nanoflann::KDTreeSingleIndexAdaptor<
+            nanoflann::L2_Simple_Adaptor<float, _PointCloud>,
+            _PointCloud, 3> KDTree;
 
-        const int N = points.size();
-        zeno::KdTree kd(points, N);
-        std::unordered_map<int, int> mp;
-        std::unordered_map<int, vec3f> newpt_pos;
+        KDTree tree(3, cloud, { 10 });
+        tree.buildIndex();
 
-        int nPointsRemoved = 0, max_pt_idx = -1;
-        for (int i = 0; i < N; i++) {
-            zeno::vec3f pt = points[i];
-            std::set<int> pts = kd.fix_radius_search(pt, threshold);
-            int minIdx = *pts.begin();
-            int reduceIdx = minIdx;
-            if (reduceIdx == i) {
-                //没有被映射的，说明是独立点，但是由于前面移除了一些点，所以索引要减
-                reduceIdx -= nPointsRemoved;
+        int n = points.size();
+        UnionFind uf(n);
+
+        std::vector<size_t> ret_indices(100);
+        std::vector<float> out_dist_sqr(100);
+
+        std::vector<nanoflann::ResultItem<uint32_t, float>> ret_matches;
+        nanoflann::SearchParameters params;
+
+        for (size_t i = 0; i < n; ++i) {
+            size_t count = tree.radiusSearch(&points[i][0], threshold * threshold, ret_matches, params);
+            assert(count == ret_matches.size());
+            for (size_t j = 0; j < count; ++j) {
+                uf.unite(i, ret_matches[j].first);
             }
-            else if (mp.find(reduceIdx) != mp.end()) {  //有可能reduceIdx本身要被减过的，所以要再检查一下
-                reduceIdx = mp[reduceIdx];
+        }
+
+        // 计算每个合并组的中心点
+        std::unordered_map<int, std::vector<int>> groups;
+        for (int i = 0; i < n; ++i) {
+            groups[uf.find(i)].push_back(i);
+        }
+
+        std::vector<vec3f> new_points;
+        std::unordered_map<int, int> newIndexMap;
+        for (const auto& group : groups) {
+            vec3f centroid = { 0, 0, 0 };
+            for (int idx : group.second) {
+                for (int d = 0; d < 3; ++d) {
+                    centroid[d] += points[idx][d];
+                }
             }
-            mp.insert(std::make_pair(i, reduceIdx));
-            max_pt_idx = std::max(max_pt_idx, reduceIdx);
-            if (minIdx < i) {
-                nPointsRemoved++;   //被映射的点算是“被移除”
-            }
+            for (float& c : centroid)
+                c /= group.second.size();
+            newIndexMap[group.first] = new_points.size();
+            new_points.push_back(centroid);
         }
 
         std::vector<std::vector<int>> faces = input->face_indice();
-        for (std::vector<int>& face : faces) {
-            for (int i = 0; i < face.size(); i++) {
-                face[i] = mp[face[i]];
+        // 更新面数据
+        std::vector<std::vector<int>> newFaces;
+        for (const auto& face : faces) {
+            std::vector<int> newFace;
+            for (int v : face) {
+                newFace.push_back(newIndexMap[uf.find(v)]);
+            }
+            // 防止生成重复面
+            std::vector<int> _face = newFace;
+            std::sort(_face.begin(), _face.end());
+            _face.erase(std::unique(_face.begin(), _face.end()), _face.end());
+            if (_face.size() >= 3) {
+                newFaces.push_back(newFace);
+            }
+            else {
+                int j = 0;
             }
         }
 
-        int N_pts = max_pt_idx + 1;
-
-        std::vector<vec3f> new_points;
-        new_points.resize(N_pts);
-
-        for (int i = 0; i < N; i++) {
-            int map_idx = mp[i];
-            vec3f pt = points[i];
-            new_points[map_idx] = pt;
-        }
-
-        auto spOutput = std::make_shared<zeno::GeometryObject>(false, N_pts, faces.size());
-        for (int iFace = 0; iFace < faces.size(); iFace++) {
-            const std::vector<int>& facePts = faces[iFace];
+        auto spOutput = std::make_shared<zeno::GeometryObject>(false, new_points.size(), newFaces.size());
+        for (int iFace = 0; iFace < newFaces.size(); iFace++) {
+            const std::vector<int>& facePts = newFaces[iFace];
             spOutput->add_face(facePts);
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);
