@@ -2,6 +2,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/MeshObject.h>
 #include <zeno/PrimitiveObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <openvdb/tools/Morphology.h>
 #include <openvdb/tools/MeshToVolume.h>
 #include <zeno/VDBGrid.h>
@@ -64,6 +65,61 @@ static int defMeshToSDF = zeno::defNodeClass<MeshToSDF>("MeshToSDF",
     }, /* category: */ {
     "deprecated",
     }});
+
+struct GeometryToSDF : zeno::INode {
+    virtual void apply() override {
+        auto h = get_input2<float>("Dx");
+        auto mesh = get_input("Mesh")->as<GeometryObject>();
+        auto result = zeno::IObject::make<VDBFloatGrid>();
+        int nfaces = mesh->nfaces();
+        const auto& pos = mesh->points_pos();
+        std::vector<openvdb::Vec3s> points(mesh->npoints());
+        std::vector<openvdb::Vec3I> triangles;
+        std::vector<openvdb::Vec4I> quads;
+
+        for (int i = 0; i < pos.size(); i++) {
+            points[i] = openvdb::Vec3s(pos[i][0], pos[i][1], pos[i][2]);
+        }
+
+        if (mesh->is_base_triangle()) {
+            //triangles
+        }
+        else {
+            quads.resize(nfaces);
+            for (int iFace = 0; iFace < nfaces; iFace++) {
+                const std::vector<int>& indice = mesh->face_points(iFace);
+                if (indice.size() != 4) {
+                    throw makeError<UnimplError>("there is a face which is a not a Quadrilateral");
+                }
+                quads[iFace] = openvdb::Vec4I(indice[0], indice[1], indice[2], indice[3]);
+            }
+        }
+
+        auto vdbtransform = openvdb::math::Transform::createLinearTransform(h);
+        if (get_param<std::string>(("type")) == std::string("vertex"))
+        {
+            vdbtransform->postTranslate(openvdb::Vec3d{ -0.5,-0.5,-0.5 }*double(h));
+        }
+        result->m_grid = openvdb::tools::meshToSignedDistanceField<openvdb::FloatGrid>(*vdbtransform, points, triangles, quads, 4, 4);
+        openvdb::tools::signedFloodFill(result->m_grid->tree());
+        set_output("sdf", result);
+    }
+};
+
+static int defGeomToSDF = zeno::defNodeClass<GeometryToSDF>("GeometryToSDF",
+    { /* inputs: */
+        {
+            {gParamType_Geometry, "Mesh"},
+            {gParamType_Float,    "Dx","0.08"},
+        }, /* outputs: */
+    {
+        {gParamType_VDBGrid, "sdf"},
+    }, /* params: */ {
+        //{"float", "voxel_size", "0.08 0"},
+        {"enum vertex cell", "type", "vertex"},
+    }, /* category: */ {
+    "openvdb",
+    } });
 
 
 
