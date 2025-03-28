@@ -1367,7 +1367,8 @@ namespace zeno {
         ) {
             std::vector<std::vector<vec3f>> newFaces;
             const std::vector<zeno::vec3f>& pos = input_object->points_pos();
-            std::vector<vec3f> vertex_normals;
+            std::vector<vec3f> point_normals;
+
             for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
                 std::vector<int> pts = input_object->face_points(iFace);
                 std::vector<vec3f> new_face(pts.size());
@@ -1381,13 +1382,13 @@ namespace zeno {
                     vec3f p12 = new_face[2] - new_face[1];
                     vec3f nrm = zeno::normalize(zeno::cross(p01, p12));
                     for (int i = 0; i < new_face.size(); i++) {
-                        vertex_normals.push_back(nrm);
+                        point_normals.push_back(nrm);
                     }
                 }
             }
             auto spOutput = constructGeom(newFaces);
             if (bPostComputeNormals)
-                spOutput->create_vertex_attr("nrm", vertex_normals);
+                spOutput->create_point_attr("nrm", point_normals);
             return spOutput;
         }
     };
