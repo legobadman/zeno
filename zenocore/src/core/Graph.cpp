@@ -1078,6 +1078,9 @@ bool Graph::removeNode(std::string const& name) {
         removeLink(edge);
     }
 
+    //再通知前端删节点
+    CALLBACK_NOTIFY(removeNode, name)
+
     spNode->mark_dirty_objs();
 
     const std::string nodecls = spNode->get_nodecls();
@@ -1092,8 +1095,6 @@ bool Graph::removeNode(std::string const& name) {
     asset_nodes.erase(uuid);
     m_viewnodes.erase(name);
     m_name2uuid.erase(name);
-
-    CALLBACK_NOTIFY(removeNode, name)
 
     return true;
 }
@@ -1262,6 +1263,8 @@ bool Graph::addLink(const EdgeInfo& edge) {
 bool Graph::removeLink(const EdgeInfo& edge) {
     CORE_API_BATCH
 
+    CALLBACK_NOTIFY(removeLink, edge)
+
     std::shared_ptr<INode> outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
@@ -1312,7 +1315,6 @@ bool Graph::removeLink(const EdgeInfo& edge) {
     inNode->on_link_added_removed(true, edge.inParam, false);
     outNode->on_link_added_removed(false, edge.outParam, false);
 
-    CALLBACK_NOTIFY(removeLink, edge)
     return true;
 }
 
