@@ -905,7 +905,7 @@ Window {
             curRow = rootRec.currentTabRow
         } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {//删group
             var groupmodel = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
-            var groupname =  groupmodel.data(groupmodel.index(rootRec.currentTabRow, 0),  Qt.DisplayRole)
+            var groupname =  groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0),  Qt.DisplayRole)
             if(groupname == "Group1"){
                 return false
             }

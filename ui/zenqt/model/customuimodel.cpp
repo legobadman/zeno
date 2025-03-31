@@ -322,6 +322,9 @@ int ParamTabModel::rowCount(const QModelIndex& parent) const {
 }
 
 QVariant ParamTabModel::data(const QModelIndex& index, int role) const {
+    if (!index.isValid()) {
+        return false;
+    }
     if (role == QtRole::ROLE_PARAM_NAME) {
         return m_items[index.row()].name;
     }
@@ -433,6 +436,9 @@ int ParamGroupModel::rowCount(const QModelIndex& parent) const {
 }
 
 QVariant ParamGroupModel::data(const QModelIndex& index, int role) const {
+    if (!index.isValid()) {
+        return false;
+    }
     if (role == Qt::DisplayRole) {
         return m_items[index.row()].name;
     }
@@ -550,7 +556,7 @@ QString ParamPlainModel::getMaxLengthName() const
 
 int ParamPlainModel::rowCount(const QModelIndex& parent) const {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
@@ -690,7 +696,7 @@ PrimParamOutputModel::PrimParamOutputModel(zeno::PrimitiveParams params, CustomU
 
 int PrimParamOutputModel::rowCount(const QModelIndex& parent) const {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
@@ -846,7 +852,7 @@ objParamInputModel::objParamInputModel(zeno::ObjectParams params, CustomUIModel*
 int objParamInputModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
@@ -977,7 +983,7 @@ objParamOutputModel::objParamOutputModel(zeno::ObjectParams params, CustomUIMode
 int objParamOutputModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
