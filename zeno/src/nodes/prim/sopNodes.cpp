@@ -1420,13 +1420,57 @@ namespace zeno {
             const std::string& byAttrName = "",
             bool bReverseFaceSort = false
         ) {
-            //Too difficult to hold the index.
-
             int npts = input_object->npoints();
             int nfaces = input_object->nfaces();
             const auto& pos = input_object->points_pos();
 
             if (pointSort == "By Vertex Order") {
+                std::set<std::string> edges;
+                std::vector<vec3f> new_pos(pos.size());
+                int nSortPoints = 0;
+                std::map<int, int> old2new;
+                auto spOutput = std::make_shared<GeometryObject>(false, npts, nfaces, true);
+                for (int iFace = 0; iFace < nfaces; iFace++) {
+                    std::vector<int> pts = input_object->face_points(iFace);
+                    std::vector<int> newface;
+                    for (int vertex = 0; vertex < pts.size(); vertex++) {
+                        int fromPt, toPt;
+
+                        fromPt = pts[vertex];
+
+                        if (vertex == pts.size() - 1) {
+                            toPt = pts[0];
+                        }
+                        else {
+                            toPt = pts[vertex + 1];
+                        }
+
+                        int newFrom, newTo;
+                        if (old2new.find(fromPt) != old2new.end()) {
+                            newFrom = old2new[fromPt];
+                        }
+                        else {
+                            newFrom = nSortPoints++;
+                        }
+                        if (old2new.find(toPt) != old2new.end()) {
+                            newTo = old2new[toPt];
+                        }
+                        else {
+                            newTo = nSortPoints++;
+                        }
+
+                        old2new.insert(std::make_pair(fromPt, newFrom));
+                        old2new.insert(std::make_pair(toPt, newTo));
+                        newface.push_back(newFrom);
+                    }
+                    spOutput->set_face(iFace, newface);
+                }
+                for (int oldpt = 0; oldpt < pos.size(); oldpt++) {
+                    int newpt = old2new[oldpt];
+                    new_pos[newpt] = pos[oldpt];
+                }
+                spOutput->create_point_attr("pos", new_pos);
+                return spOutput;
             }
             return nullptr;
         }
