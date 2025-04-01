@@ -859,127 +859,20 @@ namespace zeno {
             zeno::vec3f center_pos = zeno::vec3f(0, 0, 0),
             zeno::vec3f direction = zeno::vec3f(0, 1, 0))
         {
-            const auto& pos = input_object->points_pos();
-            const int nface = input_object->nfaces();
-            std::vector<std::vector<int>> newFaces;
-            std::vector<vec3f> new_pos = pos;
-
-            float A = direction[0], B = direction[1], C = direction[2], 
-                D = -(A * center_pos[0] + B * center_pos[1] + C * center_pos[2]);
-
-            int nPoints = pos.size();
-
-            std::map<std::string, int> split_cache;
-            std::set<int> rem_points;
-
-            for (int iFace = 0; iFace < nface; iFace++) {
-                std::vector<int> face_indice = input_object->face_points(iFace);
-                std::vector<vec3f> face_pos(face_indice.size());
-                for (int i = 0; i < face_indice.size(); i++)
-                {
-                    face_pos[i] = pos[face_indice[i]];
-                }
-                std::vector<DivideFace> split_faces;
-                std::map<int, DividePoint> split_infos;     //key: 相对索引，这个索引值是“内部的”
-                PointSide whichside_iffailed = UnDecided;
-                bool bSuccess = dividePlane(face_pos, A, B, C, D, split_faces, split_infos, whichside_iffailed);
-                if (!bSuccess) {
-                    //不需要分割
-                    if (Keep == "All") {
-                        newFaces.push_back(face_indice);
-                    }
-                    else if (Keep == "Part Below The Plane") {
-                        if (whichside_iffailed == Below) {
-                            newFaces.push_back(face_indice);
-                        }
-                        else {
-                            for (auto pt : face_indice)
-                                rem_points.insert(pt);
-                        }
-                    }
-                    else if (Keep == "Part Above The Plane") {
-                        if (whichside_iffailed == Above) {
-                            newFaces.push_back(face_indice);
-                        }
-                        else {
-                            for (int pt : face_indice)
-                                rem_points.insert(pt);
-                        }
-                    }
-                    continue;
-                }
-
-                for (const DivideFace& divideFace : split_faces)
-                {
-                    //new_face_indice是“相对索引”，现在要转为基于全局points的索引。
-                    std::vector<int> new_face_abs_indice;
-                    for (int relidx : divideFace.face_indice) {
-                        int final_idx = -1;
-                        if (relidx < face_indice.size()) {
-                            final_idx = face_indice[relidx];
-                        }
-                        else {
-                            //新增的分割点，需要查表看是不是缓存了
-                            DividePoint& split_info = split_infos[relidx];
-                            int rel_p1 = split_info.from, rel_p2 = split_info.to;
-                            int abs_p1 = face_indice[rel_p1], abs_p2 = face_indice[rel_p2];
-                            std::string key = zeno::format("{}->{}", std::min(abs_p1, abs_p2), std::max(abs_p1, abs_p2));
-                            auto iter = split_cache.find(key);
-                            if (iter != split_cache.end()) {
-                                final_idx = iter->second;
-                            }
-                            else {
-                                final_idx = new_pos.size();
-                                new_pos.push_back(split_info.pos);
-                                split_cache.insert(std::make_pair(key, final_idx));
-                            }
-                        }
-                        new_face_abs_indice.push_back(final_idx);
-                    }
-
-                    //这里要看保留哪部分
-                    if (Keep == "All") {
-                        newFaces.emplace_back(std::move(new_face_abs_indice));
-                    }
-                    else if (Keep == "Part Below The Plane") {
-                        if (divideFace.side == Below) {
-                            newFaces.emplace_back(std::move(new_face_abs_indice));
-                        }
-                        else {
-                            for (int relidx : divideFace.face_indice) {
-                                if (split_infos.find(relidx) == split_infos.end()) {
-                                    int rempt = face_indice[relidx];
-                                    rem_points.insert(rempt);
-                                }
-                            }
-                        }
-                    }
-                    else if (Keep == "Part Above The Plane") {
-                        if (divideFace.side == Above) {
-                            newFaces.emplace_back(std::move(new_face_abs_indice));
-                        }
-                        else {
-                            for (int relidx : divideFace.face_indice) {
-                                if (split_infos.find(relidx) == split_infos.end()) {
-                                    int rempt = face_indice[relidx];
-                                    rem_points.insert(rempt);
-                                }
-                            }
-                        }
-                    }
-                }
+            DivideKeep keep;
+            if (Keep == "All") {
+                keep = Keep_Both;
             }
-
-            auto spOutput = std::make_shared<GeometryObject>(false, new_pos.size(), newFaces.size());
-            for (const std::vector<int>& face_indice : newFaces) {
-                spOutput->add_face(face_indice, true);  //todo: 考虑线
+            else if (Keep == "Part Below The Plane") {
+                keep = Keep_Above;
             }
-            spOutput->create_point_attr("pos", new_pos);
-            //去除被排除的部分
-            for (auto iter = rem_points.rbegin(); iter != rem_points.rend(); iter++) {
-                spOutput->remove_point(*iter);
+            else if (Keep == "Part Above The Plane") {
+                keep = Keep_Below;
             }
-            return spOutput;
+            else {
+                throw makeError<UnimplError>("Keep Error");
+            }
+            return divideObject(input_object, keep, center_pos, direction);
         }
     };
 

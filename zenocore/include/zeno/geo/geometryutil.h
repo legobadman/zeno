@@ -36,6 +36,12 @@ namespace zeno
         int to;     //分割点所在线段的终点，并有from < to，如果分割点恰好是顶点，则from=to
     };
 
+    enum DivideKeep {
+        Keep_Both,
+        Keep_Below,
+        Keep_Above
+    };
+
     struct DivideFace
     {
         std::vector<int> face_indice;
@@ -76,6 +82,12 @@ namespace zeno
         const std::string& sampleRegion,
         const int count,
         int seed);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> divideObject(
+        std::shared_ptr<zeno::GeometryObject> input_object,
+        DivideKeep keep,
+        zeno::vec3f center_pos,
+        zeno::vec3f direction
+    );
     ZENO_API bool dividePlane(const std::vector<vec3f>& face_pts, float A, float B, float C, float D,
         /*out*/std::vector<DivideFace>& split_faces,
         /*out*/std::map<int, DividePoint>& split_infos,
