@@ -201,6 +201,35 @@ namespace zeno
             return res;
         }
 
+        AttrVar getInitValueFromVariant(const std::vector<zfxvariant>& zfxvec)
+        {
+            assert(!zfxvec.empty());
+            return std::visit([&](auto&& val)->AttrVar {
+                using E = std::decay_t<decltype(val)>;
+                if constexpr (std::is_same_v<E, int>) {
+                    return 0;
+                }
+                else if constexpr (std::is_same_v<E, float>) {
+                    return 0.0f;
+                }
+                else if constexpr (std::is_same_v<E, std::string>) {
+                    return "";
+                }
+                else if constexpr (std::is_same_v<E, glm::vec3>) {
+                    return glm::vec3(0, 0, 0);
+                }
+                else if constexpr (std::is_same_v<E, glm::vec2>) {
+                    return glm::vec2(0, 0);
+                }
+                else if constexpr (std::is_same_v<E, glm::vec4>) {
+                    return glm::vec4(0, 0, 0, 0);
+                }
+                else {
+                    throw makeError<UnimplError>("Unsupport type for converting to AttrVar");
+                }
+            }, zfxvec[0]);
+        }
+
         AttrVar convertToAttrVar(const std::vector<zfxvariant>& zfxvec)
         {
             AttrVar wtf;

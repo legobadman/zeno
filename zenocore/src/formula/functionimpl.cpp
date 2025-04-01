@@ -1258,8 +1258,14 @@ namespace zeno
                 throw makeError<UnimplError>("the number of arguments of face_points is not matched.");
 
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
-            int faceid = get_zfxvar<int>(args[0].value[0]);
-            std::vector<int> ret = spGeo->face_points(faceid);
+            int N = std::min(args[0].value.size(), filter.size());
+            ZfxVariable ret;
+            ret.value.resize(N);
+            for (int i = 0; i < N; i++) {
+                int faceid = get_zfxvar<int>(args[0].value[i]);
+                std::vector<int> pts = spGeo->face_points(faceid);
+                ret.value[i] = pts;
+            }
             return ret;
         }
 
@@ -1396,10 +1402,16 @@ namespace zeno
             ZfxVariable ret;
             std::vector<zfxvariant> attrs = getAttrs(spGeo, ATTR_POINT, name);
             if (args.size() == 2) {
-                //取索引，目前仅支持一个值的，否则会混乱
+                //取索引
                 //TODO: 调getElem，就不用整个attrs都拿出来，因为可能在循环下调用的
-                int idx = get_zfxvar<int>(args[1].value[0]);
-                ret.value.push_back(attrs[idx]);
+                int N = args[1].value.size();
+                if (N > attrs.size())
+                    throw makeError<UnimplError>("the attr size doesn't match");
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    int idx = get_zfxvar<int>(args[1].value[i]);
+                    ret.value[i] = attrs[idx];
+                }
             }
             else {
                 ret.value = attrs;
@@ -1414,7 +1426,14 @@ namespace zeno
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
             ZfxVariable var;
-            var.value = getAttrs(spGeo, ATTR_FACE, name);
+            std::vector<zfxvariant> attrs = getAttrs(spGeo, ATTR_FACE, name);
+            if (args.size() == 2) {
+                //TODO:
+                assert(false);
+            }
+            else {
+                var.value = getAttrs(spGeo, ATTR_FACE, name);
+            }
             return var;
         }
 

@@ -1104,32 +1104,31 @@ namespace zeno {
                     }
                     else if (zenvarNode->opVal == Indexing) {
                         //todo
+                        throw makeError<UnimplError>("Not support indexing for internal attributes");
                     }
 
+                    AttrVar initValue = getInitValueFromVariant(res.value); //拿初值就行
                     std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
-                    if (!spGeom->has_point_attr(attrname) && !spGeom->has_face_attr(attrname) &&
-                        !spGeom->has_vertex_attr(attrname) && !spGeom->has_geometry_attr(attrname)
-                        ) {//attrname不存在就创建一个，valNode是属性就创建和valNode同类型属性，否则创建point属性
-                        AttrVar attrvar = zeno::zfx::convertToAttrVar(res.value);
-                        if (valNode->bAttr) {
-                            std::string valNodeAttrName = get_zfxvar<std::string>(valNode->value).substr(1);
-                            if (spGeom->has_point_attr(valNodeAttrName)) {
-                                spGeom->create_point_attr(attrname, attrvar);
-                            }
-                            else if (spGeom->has_face_attr(valNodeAttrName)) {
-                                spGeom->create_face_attr(attrname, attrvar);
-                            }
-                            else if (spGeom->has_vertex_attr(valNodeAttrName)) {
-                                spGeom->create_vertex_attr(attrname, attrvar);
-                            }
-                            else if (spGeom->has_geometry_attr(valNodeAttrName)) {
-                                spGeom->create_geometry_attr(attrname, attrvar);
-                            }
-                        } else {
-                            spGeom->create_point_attr(attrname, attrvar);
+                    if (pContext->runover == ATTR_POINT) {
+                        if (!spGeom->has_point_attr(attrname)) {
+                            spGeom->create_point_attr(attrname, initValue);
                         }
                     }
-
+                    else if (pContext->runover == ATTR_VERTEX) {
+                        if (!spGeom->has_vertex_attr(attrname)) {
+                            spGeom->create_vertex_attr(attrname, initValue);
+                        }
+                    }
+                    else if (pContext->runover == ATTR_FACE) {
+                        if (!spGeom->has_face_attr(attrname)) {
+                            spGeom->create_face_attr(attrname, initValue);
+                        }
+                    }
+                    else if (pContext->runover == ATTR_GEO) {
+                        if (!spGeom->has_geometry_attr(attrname)) {
+                            spGeom->create_geometry_attr(attrname, initValue);
+                        }
+                    }
                     setAttrValue(attrname, channel, res, root->opVal, filter, pContext);
                     return ZfxVariable();
                 }
@@ -1383,7 +1382,9 @@ namespace zeno {
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 std::string visit_attr = get_zfxvar<std::string>(args[1].value[0]);
 
-                zfxvariant res = std::visit([&](auto&& arg) -> zfxvariant {
+                int nVarSize = args[0].value.size();
+
+                ZfxVariable res = std::visit([&](auto&& arg) -> ZfxVariable {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, ZfxLValue>) {
                         return std::visit([&](auto&& nodeparam) -> zfxvariant {
@@ -1438,7 +1439,18 @@ namespace zeno {
                             return arg[0];
                         }
                         else if (visit_attr == "y") {
-                            return arg[1];
+                            if (nVarSize > 1) {
+                                ZfxVariable ret;
+                                ret.value.resize(nVarSize);
+                                for (int i = 0; i < nVarSize; i++) {
+                                    auto& v = get_zfxvar<glm::vec3>(args[0].value[i]);
+                                    ret.value[i] = v[1];
+                                }
+                                return ret;
+                            }
+                            else {
+                                return arg[1];
+                            }
                         }
                         else if (visit_attr == "z") {
                             return arg[2];

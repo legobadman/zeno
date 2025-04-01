@@ -667,7 +667,7 @@
                                             "Zfx Code": {
                                                 "links": null,
                                                 "type": "string",
-                                                "default-value": "@sss = \"gre\";",
+                                                "default-value": "int pts[] = face_points(@facenum);\nvector3 normal = get_point_attr(\"nrm\",pts[0]);\nif (normal.y > 0) {\n    @type = \"roof\";\n}",
                                                 "control": {
                                                     "name": "CodeEditor"
                                                 },
@@ -696,7 +696,9 @@
                                             -86.0,
                                             663.0
                                         ],
-                                        "status": [],
+                                        "status": [
+                                            "View"
+                                        ],
                                         "collasped": false
                                     },
                                     "CreateAttribute1": {
@@ -842,9 +844,7 @@
                                             -85.0,
                                             485.0
                                         ],
-                                        "status": [
-                                            "View"
-                                        ],
+                                        "status": [],
                                         "collasped": false
                                     },
                                     "Input": {
