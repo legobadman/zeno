@@ -870,6 +870,7 @@ namespace zeno {
             int nPoints = pos.size();
 
             std::map<std::string, int> split_cache;
+            std::set<int> rem_points;
 
             for (int iFace = 0; iFace < nface; iFace++) {
                 std::vector<int> face_indice = input_object->face_points(iFace);
@@ -883,18 +884,27 @@ namespace zeno {
                 PointSide whichside_iffailed = UnDecided;
                 bool bSuccess = dividePlane(face_pos, A, B, C, D, split_faces, split_infos, whichside_iffailed);
                 if (!bSuccess) {
+                    //不需要分割
                     if (Keep == "All") {
                         newFaces.push_back(face_indice);
                     }
-                    else if (Keep == "Part Below The Plane" && whichside_iffailed == Below) {
-                        //随便取一个点，观察是否在平面的下方
-                        newFaces.push_back(face_indice);
-                        //被抛弃的面，就不加进去，让以前的点成为孤立点，然后再判断所处平面位置从而删掉
-                        //这样就不影响后续新面各个点的索引
-                        //也许需要记录这些点号，方便统一删除
+                    else if (Keep == "Part Below The Plane") {
+                        if (whichside_iffailed == Below) {
+                            newFaces.push_back(face_indice);
+                        }
+                        else {
+                            for (auto pt : face_indice)
+                                rem_points.insert(pt);
+                        }
                     }
-                    else if (Keep == "Part Above The Plane" && whichside_iffailed == Above) {
-                        newFaces.push_back(face_indice);
+                    else if (Keep == "Part Above The Plane") {
+                        if (whichside_iffailed == Above) {
+                            newFaces.push_back(face_indice);
+                        }
+                        else {
+                            for (int pt : face_indice)
+                                rem_points.insert(pt);
+                        }
                     }
                     continue;
                 }
@@ -926,7 +936,37 @@ namespace zeno {
                         }
                         new_face_abs_indice.push_back(final_idx);
                     }
-                    newFaces.emplace_back(std::move(new_face_abs_indice));
+
+                    //这里要看保留哪部分
+                    if (Keep == "All") {
+                        newFaces.emplace_back(std::move(new_face_abs_indice));
+                    }
+                    else if (Keep == "Part Below The Plane") {
+                        if (divideFace.side == Below) {
+                            newFaces.emplace_back(std::move(new_face_abs_indice));
+                        }
+                        else {
+                            for (int relidx : divideFace.face_indice) {
+                                if (split_infos.find(relidx) == split_infos.end()) {
+                                    int rempt = face_indice[relidx];
+                                    rem_points.insert(rempt);
+                                }
+                            }
+                        }
+                    }
+                    else if (Keep == "Part Above The Plane") {
+                        if (divideFace.side == Above) {
+                            newFaces.emplace_back(std::move(new_face_abs_indice));
+                        }
+                        else {
+                            for (int relidx : divideFace.face_indice) {
+                                if (split_infos.find(relidx) == split_infos.end()) {
+                                    int rempt = face_indice[relidx];
+                                    rem_points.insert(rempt);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -935,7 +975,10 @@ namespace zeno {
                 spOutput->add_face(face_indice, true);  //todo: 考虑线
             }
             spOutput->create_point_attr("pos", new_pos);
-            //TODO: 剩下位于平面之下的孤立点都要被去掉
+            //去除被排除的部分
+            for (auto iter = rem_points.rbegin(); iter != rem_points.rend(); iter++) {
+                spOutput->remove_point(*iter);
+            }
             return spOutput;
         }
     };
