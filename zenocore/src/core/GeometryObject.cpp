@@ -731,22 +731,6 @@ namespace zeno
         return m_spTopology->vertex_info(linear_vertex_id);
     }
 
-    ZENO_API void GeometryObject::merge(std::vector<std::shared_ptr<GeometryObject>> objs) {
-        std::vector<GeometryTopology*> topos;
-        for (auto spObj : objs) {
-            topos.push_back(spObj->m_spTopology.get());
-        }
-        m_spTopology->merge(topos);
-
-        //属性合并
-        int pointattrIndexOffset = 0, faceattrIndexOffset = 0;
-        for (auto spObj : objs) {
-            inheritAttributes(spObj, -1, pointattrIndexOffset, {}, faceattrIndexOffset, {});
-            pointattrIndexOffset += spObj->npoints();
-            faceattrIndexOffset += spObj->nfaces();
-        }
-    }
-
     ZENO_API int GeometryObject::isLineFace(int faceid)
     {
         return m_spTopology->isLineFace(faceid);

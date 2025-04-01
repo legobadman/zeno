@@ -202,14 +202,38 @@ namespace zeno
     }
 
     ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList) {
-        int nPoints = 0, nFaces = 0;
+        int nTotalPts = 0, nTotalFaces = 0;
         const std::vector<std::shared_ptr<zeno::GeometryObject>>& geoobjs = spList->get<zeno::GeometryObject>();
         for (auto spObject : geoobjs) {
-            nPoints += spObject->npoints();
-            nFaces += spObject->nfaces();
+            nTotalPts += spObject->npoints();
+            nTotalFaces += spObject->nfaces();
         }
-        std::shared_ptr<zeno::GeometryObject> mergedObj = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
-        mergedObj->merge(geoobjs);
+
+        std::vector<zeno::vec3f> newObjPos(nTotalPts);
+        auto mergedObj = std::make_shared<zeno::GeometryObject>(false, nTotalPts, nTotalFaces, true);
+        size_t pt_offset = 0, face_offset = 0;
+        for (int iGeom = 0; iGeom < geoobjs.size(); iGeom++)
+        {
+            auto elemObj = geoobjs[iGeom];
+            std::vector<vec3f> obj_pos = elemObj->points_pos();
+
+            int nPts = elemObj->npoints();
+            int nFaces = elemObj->nfaces();
+
+            std::copy(obj_pos.begin(), obj_pos.end(), newObjPos.begin() + pt_offset);
+            for (int iFace = 0; iFace < nFaces; iFace++) {
+                std::vector<int> facePoints = elemObj->face_points(iFace);
+                for (int k = 0; k < facePoints.size(); ++k) {
+                    facePoints[k] += pt_offset;
+                }
+                mergedObj->set_face(face_offset + iFace, facePoints, true); //TODO: case of Lines.
+            }
+            mergedObj->inheritAttributes(elemObj, -1, pt_offset, {"pos"}, face_offset, {});
+
+            pt_offset += nPts;
+            face_offset += nFaces;
+        }
+        mergedObj->create_attr(ATTR_POINT, "pos", newObjPos);
         return mergedObj;
     }
 

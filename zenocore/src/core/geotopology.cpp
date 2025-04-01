@@ -660,65 +660,6 @@ namespace zeno
         }
     }
 
-    void GeometryTopology::merge(const std::vector<GeometryTopology*>& topos) {
-        int offset_pts = 0, offset_faces = 0;
-        for (GeometryTopology* rhs : topos) {
-            const std::string& uuid_base = generateUUID() + "/";
-            int iFromPt = offset_pts;
-            int iToPt = iFromPt + rhs->m_points.size() - 1;  //闭区间
-            int iFromFace = offset_faces;
-            int iToFace = iFromFace + rhs->m_faces.size() - 1;
-
-            for (int i = offset_pts; i <= iToPt; i++) {
-                auto p = std::make_shared<HF_Point>();
-                m_points[i] = std::move(p);
-            }
-
-            for (auto& [keyName, rEdge] : rhs->m_hEdges) {
-                auto spEdge = std::make_shared<HEdge>();
-                spEdge->id = uuid_base + rEdge->id;
-                spEdge->point = rEdge->point + iFromPt;
-                spEdge->face = rEdge->face + iFromFace;
-                spEdge->point_from = rEdge->point_from + iFromPt;
-                m_hEdges.insert(std::make_pair(spEdge->id, spEdge));
-            }
-
-            for (int i = iFromFace; i <= iToFace; i++) {
-                //前面的faces只是reserve
-                m_faces.emplace_back(std::make_shared<HF_Face>());
-            }
-
-            //adjust all pointers
-            for (int i = iFromPt; i <= iToPt; i++) {
-                for (auto rEdge : rhs->m_points[i-iFromPt]->edges) {
-                    auto& spEdge = m_hEdges[uuid_base + rEdge->id];
-                    m_points[i]->edges.insert(spEdge.get());
-                }
-            }
-
-            for (auto& [keyName, rhsptr] : rhs->m_hEdges)
-            {
-                auto p = m_hEdges[uuid_base + keyName];
-                if (rhsptr->pair)
-                    p->pair = m_hEdges[uuid_base + rhsptr->pair->id].get();
-                p->next = m_hEdges[uuid_base + rhsptr->next->id].get();
-            }
-
-            for (int i = iFromFace; i <= iToFace; i++) {
-                auto p = m_faces[i].get();
-                auto spEdge = m_hEdges[uuid_base + rhs->m_faces[i - iFromFace]->h->id];
-                m_faces[i]->h = spEdge.get();
-                m_faces[i]->start_linearIdx = rhs->m_faces[i - iFromFace]->start_linearIdx + offset_faces;
-            }
-
-            offset_pts = iToPt + 1;
-            offset_faces = iToFace + 1;
-
-            //TODO
-            //m_linesPt = rhs->m_linesPt;
-        }
-    }
-
     void GeometryTopology::fusePoints(std::vector<int>& fusedPoints) {
         std::set<int> facesToremove;
         std::vector<int> pointsToremove;
