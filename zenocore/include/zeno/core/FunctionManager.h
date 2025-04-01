@@ -42,7 +42,7 @@ namespace zeno {
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);
         void pushStack();
         void popStack();
-        bool hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& newFilter) const;
+        bool hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const;
 
         ZfxVariable& getVariableRef(const std::string& name, ZfxContext* pContext);
         bool declareVariable(const std::string& name);

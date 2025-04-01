@@ -24,7 +24,7 @@
                     "Keep": {
                         "links": null,
                         "type": "string",
-                        "default-value": "All",
+                        "default-value": "Part Below The Plane",
                         "control": {
                             "name": "Enum"
                         },

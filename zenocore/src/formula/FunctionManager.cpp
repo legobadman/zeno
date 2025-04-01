@@ -809,10 +809,11 @@ namespace zeno {
         return res;
     }
 
-    bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& newFilter) const {
+    bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const {
         int N = cond.value.size();
         assert(N == filter.size() || N == 1);
-        newFilter = filter;
+        ifFilter = filter;
+        elseFilter = filter;
         bool bret = false;
         for (int i = 0; i < cond.value.size(); i++) {
             if (filter[i]) {
@@ -820,10 +821,11 @@ namespace zeno {
                     get_zfxvar<float>(cond.value[i]))
                 {
                     bret = true;
+                    elseFilter[i] = 0;
                 }
                 else
                 {
-                    newFilter[i] = 0;
+                    ifFilter[i] = 0;
                 }
             }
         }
@@ -1097,6 +1099,14 @@ namespace zeno {
                 if (zenvarNode->bAttr) {
                     //无须把值拎出来再计算，直接往属性数据内部设置
                     const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
+                    //DEBUG:
+#if 0
+                    if (attrname == "type") {
+                        int j;
+                        j = 0;
+                    }
+#endif
+
                     std::string channel;
                     if (zenvarNode->opVal == COMPVISIT) {
                         assert(zenvarNode->children.size() == 1);
@@ -1514,8 +1524,8 @@ namespace zeno {
                 }
                 auto& pCond = args[0];
 
-                ZfxElemFilter newFilter;
-                if (hasTrue(pCond, filter, newFilter)) {
+                ZfxElemFilter newFilter, elseFilter;
+                if (hasTrue(pCond, filter, newFilter, elseFilter)) {
                     auto pCodesExp = root->children[1];
                     return execute(pCodesExp, newFilter, pContext);
                 }
@@ -1532,8 +1542,8 @@ namespace zeno {
                 //todo: self inc
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
                 if (cond.value.size() == 1) {//不是向量的情况
-                    ZfxElemFilter newFilter;
-                    if (hasTrue(cond, filter, newFilter)) {
+                    ZfxElemFilter newFilter, elseFilter;
+                    if (hasTrue(cond, filter, newFilter, elseFilter)) {
                         auto pCodesExp = root->children[1];
                         execute(pCodesExp, newFilter, pContext);
                     } else if (root->children.size() == 3) {
@@ -1542,13 +1552,13 @@ namespace zeno {
                     }
                 } else {//向量的情况，每个分支都要执行
                     ZfxElemFilter ifFilter, elseFilter;
-                    if (hasTrue(cond, filter, ifFilter)) {
+                    if (hasTrue(cond, filter, ifFilter, elseFilter)) {
                         auto pCodesExp = root->children[1];
                         execute(pCodesExp, ifFilter, pContext);
                     }
                     if (root->children.size() == 3) {
                         auto pelseExp = root->children[2];
-                        execute(pelseExp, filter, pContext);
+                        execute(pelseExp, elseFilter, pContext);
                     }
                 }
 
@@ -1588,10 +1598,10 @@ namespace zeno {
                 }
 
                 ZfxVariable cond = execute(forCond, filter, pContext);
-                ZfxElemFilter newFilter;
-                while (hasTrue(cond, filter, newFilter)) {
+                ZfxElemFilter ifFilter, elseFilter;
+                while (hasTrue(cond, filter, ifFilter, elseFilter)) {
                     //TODO: check the passed element and mark in the newFilter.
-                    execute(loopContent, newFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
+                    execute(loopContent, ifFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
 
                     if (pContext->jumpFlag == JUMP_BREAK)
                         break;
@@ -1600,8 +1610,8 @@ namespace zeno {
                     if (pContext->jumpFlag == JUMP_RETURN)
                         return ZfxVariable();
 
-                    execute(forStep, newFilter, pContext);
-                    cond = execute(forCond, newFilter, pContext);
+                    execute(forStep, ifFilter, pContext);
+                    cond = execute(forCond, ifFilter, pContext);
                 }
                 break;
             }
@@ -1715,8 +1725,8 @@ namespace zeno {
                 scope_exit sp([this]() {this->popStack(); });
 
                 auto cond = execute(forCond, filter, pContext);
-                ZfxElemFilter newFilter;
-                while (hasTrue(cond, filter, newFilter)) {
+                ZfxElemFilter newFilter, elseFilter;
+                while (hasTrue(cond, filter, newFilter, elseFilter)) {
                     execute(loopContent, newFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
 
                     if (pContext->jumpFlag == JUMP_BREAK)
@@ -1744,7 +1754,7 @@ namespace zeno {
                 ZfxVariable cond;
 
                 ZfxElemFilter newFilter = filter;
-                ZfxElemFilter newFilter2;
+                ZfxElemFilter newFilter2, elsefilter;
 
                 do {
                     newFilter = newFilter2;
@@ -1757,7 +1767,7 @@ namespace zeno {
                     if (pContext->jumpFlag == JUMP_RETURN)
                         return ZfxVariable();
                     cond = execute(forCond, newFilter, pContext);
-                } while (hasTrue(cond, newFilter, newFilter2));
+                } while (hasTrue(cond, newFilter, newFilter2, elsefilter));
 
                 break;
             }

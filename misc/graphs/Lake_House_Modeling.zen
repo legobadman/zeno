@@ -667,7 +667,7 @@
                                             "Zfx Code": {
                                                 "links": null,
                                                 "type": "string",
-                                                "default-value": "int pts[] = face_points(@facenum);\nvector3 normal = get_point_attr(\"nrm\",pts[0]);\nif (normal.y > 0) {\n    @type = \"roof\";\n}",
+                                                "default-value": "int pts[] = face_points(@facenum);\nvector3 normal = get_point_attr(\"nrm\",pts[0]);\nif (normal.y > 0) {\n    log(\"goto normal.y > 0\");\n    @type = \"roof\";\n}\nelse if (normal.y < 0) {\n    \n    vector3 pos = get_point_attr(\"P\", pts[0]);\n    if (pos.y == 0) {\n        @type = \"floor\";\n    }\n    else {\n        if (@area < 4) {\n            @type = \"support_partial\";\n        }\n        else{\n            @type = \"support_full\";    \n        }\n    }\n}\nelse \n{\n    @type = \"wall\";\n}",
                                                 "control": {
                                                     "name": "CodeEditor"
                                                 },
