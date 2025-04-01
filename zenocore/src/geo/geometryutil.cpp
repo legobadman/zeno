@@ -218,7 +218,7 @@ namespace zeno
         float A, float B, float C, float D,
         /*out*/std::vector<DivideFace>& split_faces,
         /*out*/std::map<int, DividePoint>& split_infos,
-        /*out*/bool* pOnlyAbove
+        /*out*/PointSide& which_side_if_failed
     ) {
         //TODO: 先用bbox过滤
         {
@@ -233,9 +233,9 @@ namespace zeno
                 }
             }
             if (!(hasbelow && hasabove)) {
-                if (pOnlyAbove) {
-                    *pOnlyAbove = hasabove;
-                }
+                which_side_if_failed = Both;
+                if (hasbelow) which_side_if_failed = Below;
+                if (hasabove) which_side_if_failed = Above;
                 return false;
             }
         }
@@ -274,15 +274,25 @@ namespace zeno
                 split_infos.insert(std::make_pair(new_splitter, DividePoint{ spliter_pos, from, to}));
             }
             else if (d1 * d2 == 0) {
+                int new_splitter;
                 if (d1 == 0) {
-                    splitters.push_back(from);
-                    splitter_pos.insert(std::make_pair(from, p1));
-                    split_infos.insert(std::make_pair(from, DividePoint{ p1, from, from }));
+                    new_splitter = from;
+                    if (split_infos.find(new_splitter) == split_infos.end())
+                    {
+                        //顶点也是分割点的情况，会重复储存（因为当前边和下一条边都会访问到），所以要判断是否已经存了
+                        splitters.push_back(new_splitter);
+                        splitter_pos.insert(std::make_pair(new_splitter, p1));
+                        split_infos.insert(std::make_pair(new_splitter, DividePoint{ p1, from, from }));
+                    }
                 }
                 if (d2 == 0) {
-                    splitters.push_back(to);
-                    splitter_pos.insert(std::make_pair(to, p2));
-                    split_infos.insert(std::make_pair(to, DividePoint{ p2, to, to }));
+                    new_splitter = to;
+                    if (split_infos.find(new_splitter) == split_infos.end())
+                    {
+                        splitters.push_back(new_splitter);
+                        splitter_pos.insert(std::make_pair(new_splitter, p2));
+                        split_infos.insert(std::make_pair(new_splitter, DividePoint{ p2, to, to }));
+                    }
                 }
             }
         }

@@ -879,21 +879,21 @@ namespace zeno {
                     face_pos[i] = pos[face_indice[i]];
                 }
                 std::vector<DivideFace> split_faces;
-                std::map<int, DividePoint> split_infos;
-                bool onlyAbove = false;
-                bool bSuccess = dividePlane(face_pos, A, B, C, D, split_faces, split_infos, &onlyAbove);
+                std::map<int, DividePoint> split_infos;     //key: 相对索引，这个索引值是“内部的”
+                PointSide whichside_iffailed = UnDecided;
+                bool bSuccess = dividePlane(face_pos, A, B, C, D, split_faces, split_infos, whichside_iffailed);
                 if (!bSuccess) {
                     if (Keep == "All") {
                         newFaces.push_back(face_indice);
                     }
-                    else if (Keep == "Part Below The Plane" && !onlyAbove) {
+                    else if (Keep == "Part Below The Plane" && whichside_iffailed == Below) {
                         //随便取一个点，观察是否在平面的下方
                         newFaces.push_back(face_indice);
                         //被抛弃的面，就不加进去，让以前的点成为孤立点，然后再判断所处平面位置从而删掉
                         //这样就不影响后续新面各个点的索引
                         //也许需要记录这些点号，方便统一删除
                     }
-                    else if (Keep == "Part Above The Plane" && onlyAbove) {
+                    else if (Keep == "Part Above The Plane" && whichside_iffailed == Above) {
                         newFaces.push_back(face_indice);
                     }
                     continue;

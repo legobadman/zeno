@@ -25,7 +25,8 @@ namespace zeno
     enum PointSide {
         UnDecided,
         Below,
-        Above
+        Above,
+        Both,   //在平面上
     };
 
     struct DividePoint
@@ -78,7 +79,7 @@ namespace zeno
     ZENO_API bool dividePlane(const std::vector<vec3f>& face_pts, float A, float B, float C, float D,
         /*out*/std::vector<DivideFace>& split_faces,
         /*out*/std::map<int, DividePoint>& split_infos,
-        /*out*/bool* pOnlyAbove = nullptr
+        /*out*/PointSide& which_side_if_failed
         );
 }
 
