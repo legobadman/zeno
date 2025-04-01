@@ -37,7 +37,8 @@ struct SDFToGeometry : zeno::INode {
             for (int i = 0; i < quads.size(); i++)
             {
                 //TODO: 确实会溢出，后续要更改gemtopo内部的数值
-                std::vector<int> indice = { (int)quads[i][0], (int)quads[i][1], (int)quads[i][2], (int)quads[i][3] };
+                //目前“观察”得知，quads的坐标会走顺时针路线，所以这里调转一下
+                std::vector<int> indice = { (int)quads[i][3], (int)quads[i][2], (int)quads[i][1],  (int)quads[i][0],  };
                 mesh->set_face(i, indice);
             }
             mesh->create_point_attr("pos", pos);

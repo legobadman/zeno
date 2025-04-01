@@ -801,6 +801,13 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         for (int idxPoint = 0; idxPoint < pos.size(); idxPoint++)
         {
             zeno::vec3f basepos = pos[idxPoint];
+//DEBUG:
+#if 0
+            if (idxPoint > 20) {
+                break;
+            }
+#endif
+
             std::string drawNum = std::to_string(idxPoint);
             auto vec = gen_vbo_info(drawNum, basepos);
             m_ptnum_data.insert(m_ptnum_data.end(), vec.begin(), vec.end());
@@ -825,6 +832,13 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         else if (prim->loops.size() > 0) {
             for (int idxFace = 0; idxFace < prim->polys.size(); idxFace++)
             {
+                //DEBUG:
+#if 0
+                if (idxFace > 20) {
+                    break;
+                }
+#endif
+
                 auto& [startIdx, sz] = prim->polys[idxFace];
                 zeno::vec3f total(0, 0, 0);
                 for (int i = 0; i < sz; i++) {
