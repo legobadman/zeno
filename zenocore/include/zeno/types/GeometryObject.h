@@ -6,7 +6,6 @@
 #include <zeno/types/AttributeVector.h>
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
-#include <zeno/core/FunctionManager.h>
 #include <zeno/utils/api.h>
 
 
@@ -24,27 +23,29 @@ namespace zeno
     class GeometryObject : public IObjectClone<GeometryObject> {
     public:
         ZENO_API GeometryObject();
-        ZENO_API GeometryObject(bool bTriangle, int nPoints, int nFaces);
+        ZENO_API GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         ZENO_API GeometryObject(const GeometryObject& rhs);
         ZENO_API GeometryObject(PrimitiveObject* prim);
         ZENO_API std::shared_ptr<PrimitiveObject> toPrimitive();
+        ZENO_API void inheritAttributes(
+            std::shared_ptr<GeometryObject> rhs,
+            int vtx_offset,
+            int pt_offset,
+            std::set<std::string> pt_nocopy,
+            int face_offset,
+            std::set<std::string> face_nocopy);
         ZENO_API ~GeometryObject();
 
         ZENO_API std::vector<vec3f> points_pos();
         ZENO_API std::vector<vec3i> tri_indice() const;
         ZENO_API std::vector<int> edge_list() const;
+        ZENO_API std::vector<std::vector<int>> face_indice() const;
         ZENO_API bool is_base_triangle() const;
         ZENO_API bool is_Line() const;
         ZENO_API int get_group_count(GeoAttrGroup grp) const;
         ZENO_API GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
         ZENO_API std::vector<std::string> get_attr_names(GeoAttrGroup grp);
-        ZENO_API void initpoint(size_t point_id);
-        ZENO_API void initLineNextPoint(size_t point_id);   //对象是line时，init点的下一个点
         ZENO_API void geomTriangulate(zeno::TriangulateInfo& info);
-
-        ZENO_API void setLineNextPt(int currPt, int nextPt);  //对象是line时，修改当前点的下一个点为nextPt
-        ZENO_API int getLineNextPt(int currPt); //对象是line时，获取当前pt的下一个点的编号
-
         //standard API
 
         //创建属性
@@ -116,6 +117,9 @@ namespace zeno
             return iter->second.get_attrs<T, CHANNEL>();
         }
 
+        AttrValue get_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx);
+        void set_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx, AttrValue val);
+
         //获取属性对应某一个索引下的值
         template<class T>
         T get_elem(GeoAttrGroup grp, std::string const& attr_name, char channel, size_t idx) const {
@@ -139,8 +143,9 @@ namespace zeno
         CALLBACK_REGIST(add_vertex, void, int)
         ZENO_API int add_point(zeno::vec3f pos);
         CALLBACK_REGIST(add_point, void, int)
-        ZENO_API int add_face(const std::vector<int>& points);
+        ZENO_API int add_face(const std::vector<int>& points, bool bClose = true);
         CALLBACK_REGIST(add_face, void, int)
+        ZENO_API void set_face(int idx, const std::vector<int>& points, bool bClose = true);
 
         /* 移除元素相关 */
         ZENO_API bool remove_faces(const std::set<int>& faces, bool includePoints);
@@ -170,6 +175,7 @@ namespace zeno
         ZENO_API int face_vertex(int face_id, int vert_id);
         ZENO_API int face_vertex_count(int face_id);
         ZENO_API std::vector<int> face_vertices(int face_id);
+        ZENO_API zeno::vec3f face_normal(int face_id);
 
         /* Vertex相关 */
         ZENO_API int vertex_index(int face_id, int vertex_id);
@@ -182,6 +188,7 @@ namespace zeno
 
         //特殊功能
         ZENO_API void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
+        ZENO_API int isLineFace(int faceid);
 
     private:
         void initFromPrim(PrimitiveObject* prim);

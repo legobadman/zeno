@@ -128,6 +128,7 @@ QString GraphsManager::currentGraphPath() const
 void GraphsManager::setCurrentGraphPath(const QString& path)
 {
     m_graphPath = path;
+    emit currentPathChanged(m_graphPath);
 }
 
 GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE& code)
@@ -478,8 +479,10 @@ void GraphsManager::openProject(const QString& zsgpath) {
     zenoApp->getMainWindow()->openFile(zsgpath);
 }
 
-void GraphsManager::onNodeSelected(const QString& graphname, const QModelIndex& idx) {
-    if (graphname == "main") {
+void GraphsManager::onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx) {
+    if (graphs_path.empty())
+        return;
+    if (graphs_path[0] == "main") {
         auto mainWin = zenoApp->getMainWindow();
         mainWin->onNodesSelected(m_main, { idx }, true);
     }

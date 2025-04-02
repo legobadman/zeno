@@ -378,7 +378,6 @@ void ZEditParamLayoutDlg::initUI()
 
     m_ui->cbObjectType->addItem(tr("Geometry"), gParamType_Geometry);
     m_ui->cbObjectType->addItem(tr("Object"), gParamType_IObject);
-    m_ui->cbObjectType->addItem(tr("Wildcard"), Obj_Wildcard);
     m_ui->cbObjectType->hide();
 
     //m_ui->paramsView->setFocusPolicy(Qt::NoFocus);
@@ -768,7 +767,6 @@ void ZEditParamLayoutDlg::onBtnAddObjInputs()
     auto pNewItem = new QStandardItem(newParamName);
     pNewItem->setData(newParamName, QtRole::ROLE_PARAM_NAME);
     pNewItem->setData(zeno::NullControl, QtRole::ROLE_PARAM_CONTROL);
-    pNewItem->setData(Obj_Wildcard, QtRole::ROLE_PARAM_TYPE);
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), QtRole::ROLE_PARAM_VALUE);
     pNewItem->setData(zeno::Socket_Clone, QtRole::ROLE_SOCKET_TYPE);
@@ -786,7 +784,6 @@ void ZEditParamLayoutDlg::onBtnAddObjOutputs()
     auto pNewItem = new QStandardItem(newParamName);
     pNewItem->setData(newParamName, QtRole::ROLE_PARAM_NAME);
     pNewItem->setData(zeno::NullControl, QtRole::ROLE_PARAM_CONTROL);
-    pNewItem->setData(Obj_Wildcard, QtRole::ROLE_PARAM_TYPE);
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), QtRole::ROLE_PARAM_VALUE);
     pNewItem->setData(zeno::Socket_Clone, QtRole::ROLE_SOCKET_TYPE);
@@ -804,7 +801,6 @@ void ZEditParamLayoutDlg::onBtnAddOutputs()
     auto pNewItem = new QStandardItem(newParamName);
     pNewItem->setData(newParamName, QtRole::ROLE_PARAM_NAME);
     pNewItem->setData(zeno::NullControl, QtRole::ROLE_PARAM_CONTROL);
-    pNewItem->setData(Param_Wildcard, QtRole::ROLE_PARAM_TYPE);
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), QtRole::ROLE_PARAM_VALUE);
     pNewItem->setData(zeno::Socket_Clone, QtRole::ROLE_SOCKET_TYPE);

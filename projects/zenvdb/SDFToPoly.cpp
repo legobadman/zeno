@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <zeno/zeno.h>
 #include <zeno/PrimitiveObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <openvdb/tools/Morphology.h>
 #include <openvdb/tools/VolumeToMesh.h>
 #include <zeno/VDBGrid.h>
@@ -9,6 +10,59 @@
 
 
 namespace zeno {
+
+struct SDFToGeometry : zeno::INode {
+    virtual void apply() override {
+        auto sdf = get_input("SDF")->as<VDBFloatGrid>();
+        
+        auto adaptivity = get_param<float>(("adaptivity"));
+        auto isoValue = get_param<float>(("isoValue"));
+        auto allowQuads = get_param<bool>("allowQuads");
+
+        std::vector<openvdb::Vec3s> points(0);
+        std::vector<openvdb::Vec3I> tris(0);
+        std::vector<openvdb::Vec4I> quads(0);
+        openvdb::tools::volumeToMesh(*(sdf->m_grid), points, tris, quads, isoValue, adaptivity, true);
+
+        std::vector<vec3f> pos(points.size());
+#pragma omp parallel for
+        for (int i = 0; i < points.size(); i++)
+        {
+            pos[i] = zeno::vec3f(points[i][0], points[i][1], points[i][2]);
+        }
+
+        if (!quads.empty()) {
+            auto mesh = std::make_shared<GeometryObject>(false, points.size(), quads.size(), true);
+//#pragma omp parallel for
+            for (int i = 0; i < quads.size(); i++)
+            {
+                //TODO: 确实会溢出，后续要更改gemtopo内部的数值
+                //目前“观察”得知，quads的坐标会走顺时针路线，所以这里调转一下
+                std::vector<int> indice = { (int)quads[i][3], (int)quads[i][2], (int)quads[i][1],  (int)quads[i][0],  };
+                mesh->set_face(i, indice);
+            }
+            mesh->create_point_attr("pos", pos);
+            set_output("Mesh", mesh);
+        }
+        else {
+            throw makeError<UnimplError>("don't support trianglize when convert to mesh");
+        }
+    }
+};
+
+static int defSDFToGeom = zeno::defNodeClass<SDFToGeometry>("SDFToGeometry",
+    { /* inputs: */ {
+        {gParamType_VDBGrid,"SDF", "", zeno::Socket_ReadOnly},
+    }, /* outputs: */ {
+        {gParamType_Geometry, "Mesh"},
+    }, /* params: */ {
+        {gParamType_Float, "isoValue", "0"},
+        {gParamType_Float, "adaptivity", "0"},
+        {gParamType_Bool, "allowQuads", "0"},
+    }, /* category: */ {
+    "openvdb",
+    } });
+
 
 struct SDFToPoly : zeno::INode{
     virtual void apply() override {

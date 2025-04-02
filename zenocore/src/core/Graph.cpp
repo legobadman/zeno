@@ -87,6 +87,12 @@ bool Graph::applyNode(std::string const &node_name) {
 
     CalcContext ctx;
 
+    if (optParentSubgNode.has_value() && 
+        optParentSubgNode.value())
+    {
+        ctx.isSubnetApply = true;
+    }
+
     GraphException::translated([&] {
         node->doApply(&ctx);
     }, node);
@@ -122,7 +128,7 @@ void Graph::parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any
 {
     auto spNode = spParam->m_wpNode.lock();
     assert(spNode);
-    assert(spParam->type == Param_Wildcard || spParam->defl.has_value());
+    assert(spParam->defl.has_value());
     const std::string& uuid = spNode->get_uuid();
     if (gParamType_String == spParam->type)
     {
@@ -273,7 +279,7 @@ void Graph::init(const GraphData& graph) {
     //import nodes first.
     for (const auto& [name, node] : graph.nodes) {
         bool bAssets = node.asset.has_value();
-        std::shared_ptr<INode> spNode = createNode(node.cls, name, bAssets);
+        std::shared_ptr<INode> spNode = createNode(node.cls, name, bAssets, node.uipos, true);
         spNode->init(node);
         if (node.cls == "SubInput") {
             //TODO
@@ -346,12 +352,28 @@ void Graph::init(const GraphData& graph) {
             inNode->init_object_link(true, link.inParam, spLink, link.targetParam);
         }
     }
+}
 
+void Graph::initRef(const GraphData& graph) {
     for (const auto& [nodename, refparams] : graph.references) {
         std::shared_ptr<INode> refNode = getNode(nodename);
         const auto& uuidpath = refNode->get_uuid_path();
         for (auto paramname : refparams) {
             refNode->constructReference(paramname);
+        }
+    }
+    for (const std::string& subnetnode : subnet_nodes) {
+        auto spSubnetNode = std::dynamic_pointer_cast<SubnetNode>(m_nodes[subnetnode]);
+        assert(spSubnetNode);
+        if (spSubnetNode) {
+            NodesData nodes = graph.nodes;
+            const std::string& nodename = spSubnetNode->get_name();
+            const NodeData& node = nodes[nodename];
+            const std::optional<GraphData>& optSubg = node.subgraph;
+            if (optSubg.has_value()) {
+                const GraphData& subg = optSubg.value();
+                spSubnetNode->get_graph()->initRef(subg);
+            }
         }
     }
 }
@@ -693,7 +715,6 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, std::shared_ptr<INode>&
     if (bParamWildcard || (!bPrimType && isSubnetInputOutputParam(node, paramName))) {
         if (linkedToSpecificType(shared_from_this(), node, paramName, bPrimType, std::set<std::string>()))
             return;
-        updateWildCardParamTypeRecursive(shared_from_this(), node, paramName, bPrimType, bInput, bPrimType ? Param_Wildcard : Obj_Wildcard);
     }
 }
 
@@ -746,6 +767,7 @@ std::string Graph::updateNodeName(const std::string oldName, const std::string n
     sync_to_set(m_viewnodes, oldName, name);
 
     spNode->onNodeNameUpdated(oldName, name);
+    spNode->mark_dirty(true);
 
     CALLBACK_NOTIFY(updateNodeName, oldName, name)
     return name;
@@ -775,7 +797,13 @@ void Graph::clear()
     ctx.reset();
 }
 
-std::shared_ptr<INode> Graph::createNode(std::string const& cls, const std::string& orgin_name, bool bAssets, std::pair<float, float> pos)
+std::shared_ptr<INode> Graph::createNode(
+    const std::string& cls,
+    const std::string& orgin_name,
+    bool bAssets,
+    std::pair<float, float> pos,
+    bool isIOInit
+    )
 {
     CORE_API_BATCH
 
@@ -811,10 +839,11 @@ std::shared_ptr<INode> Graph::createNode(std::string const& cls, const std::stri
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {
         subnet_nodes.insert(uuid);
-
-        zeno::ParamsUpdateInfo updateInfo;
-        zeno::parseUpdateInfo(node->get_customui(), updateInfo);
-        node->update_editparams(updateInfo);
+        if (!isIOInit) {
+            zeno::ParamsUpdateInfo updateInfo;
+            zeno::parseUpdateInfo(node->get_customui(), updateInfo);
+            node->update_editparams(updateInfo, true);
+        }
     }
     if (cls == "SubInput") {
         subinput_nodes.insert(uuid);
@@ -1039,8 +1068,6 @@ void Graph::setName(const std::string& na) {
 }
 
 bool Graph::removeNode(std::string const& name) {
-    CALLBACK_NOTIFY(removeNode, name)
-
     auto it = m_name2uuid.find(name);
     std::string uuid = safe_at(m_name2uuid, name, "get uuid when calling removeNode");
     auto spNode = safe_at(m_nodes, uuid, "");
@@ -1050,6 +1077,9 @@ bool Graph::removeNode(std::string const& name) {
     for (auto edge : remLinks) {
         removeLink(edge);
     }
+
+    //再通知前端删节点
+    CALLBACK_NOTIFY(removeNode, name)
 
     spNode->mark_dirty_objs();
 
@@ -1223,32 +1253,6 @@ bool Graph::addLink(const EdgeInfo& edge) {
     SocketType inSocketType;
     ParamType inParamType;
     inNode->getParamTypeAndSocketType(edge.inParam, bOutputPrim, true, inParamType, inSocketType, bInWildcard);
-    if (bOutWildcard && bInWildcard ||
-        (!bInputPrim && isSubnetInputOutputParam(inNode, edge.inParam)) && (!bOutputPrim && isSubnetInputOutputParam(outNode, edge.outParam)))
-    {
-        if (outParamType != inParamType) {
-            ParamType newType;
-            if (edge.targetParam == edge.outParam) {
-                if (inParamType == Param_Wildcard || inParamType == Obj_Wildcard)
-                    updateWildCardParamTypeRecursive(shared_from_this(), inNode, edge.inParam, bOutputPrim, true, outParamType);
-                else
-                    updateWildCardParamTypeRecursive(shared_from_this(), outNode, edge.outParam, bOutputPrim, false, inParamType);
-            }
-            else {
-                if (outParamType == Param_Wildcard || outParamType == Obj_Wildcard)
-                    updateWildCardParamTypeRecursive(shared_from_this(), outNode, edge.outParam, bInputPrim, false, inParamType);
-                else
-                    updateWildCardParamTypeRecursive(shared_from_this(), inNode, edge.inParam, bInputPrim, true, outParamType);
-            }
-        }
-    }
-    else if (bOutWildcard || (!bOutputPrim && isSubnetInputOutputParam(outNode, edge.outParam))) {
-        updateWildCardParamTypeRecursive(shared_from_this(), outNode, edge.outParam, bOutputPrim, false, inParamType);
-    }
-    else if (bInWildcard || (!bInputPrim && isSubnetInputOutputParam(inNode, edge.inParam))) {
-        updateWildCardParamTypeRecursive(shared_from_this(), inNode, edge.inParam, bInputPrim, true, outParamType);
-    }
-
     inNode->on_link_added_removed(true, edge.inParam, true);
     outNode->on_link_added_removed(false, edge.outParam, true);
 
@@ -1258,6 +1262,8 @@ bool Graph::addLink(const EdgeInfo& edge) {
 
 bool Graph::removeLink(const EdgeInfo& edge) {
     CORE_API_BATCH
+
+    CALLBACK_NOTIFY(removeLink, edge)
 
     std::shared_ptr<INode> outNode = getNode(edge.outNode);
     if (!outNode)
@@ -1309,7 +1315,6 @@ bool Graph::removeLink(const EdgeInfo& edge) {
     inNode->on_link_added_removed(true, edge.inParam, false);
     outNode->on_link_added_removed(false, edge.outParam, false);
 
-    CALLBACK_NOTIFY(removeLink, edge)
     return true;
 }
 

@@ -6,10 +6,13 @@
 #include <zeno/utils/helper.h>
 #include <filesystem>
 #include <zeno/io/iotags.h>
+#include <regex>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
 using namespace zeno::reflect;
+
+//static const std::regex refStrPattern(R"(.*"[\.]?(\/\s*[a-zA-Z0-9\.]+\s*)+".*)");
 
 namespace zenoio
 {
@@ -466,7 +469,7 @@ namespace zenoio
             }
             else if (val.IsString()) {
                 std::string sval(val.GetString());
-                if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
+                if (hasRef && sval.find("ref") != std::string::npos) {
                     *hasRef = true;
                 }
                 if (!sval.empty())
@@ -492,7 +495,7 @@ namespace zenoio
             else if (val.IsString())
             {
                 std::string sval(val.GetString());
-                if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
+                if (hasRef && sval.find("ref") != std::string::npos) {
                     *hasRef = true;
                 }
                 if (!sval.empty())
@@ -522,7 +525,7 @@ namespace zenoio
         {
             if (val.IsString()) {
                 std::string sval = (std::string)val.GetString();
-                if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
+                if (hasRef && sval.find("ref") != std::string::npos) {
                     *hasRef = true;
                 }
                 defl = sval;
@@ -583,7 +586,7 @@ namespace zenoio
                        may be we just want to k-frame for only one component.
                      */
                     std::string sval(arr[i].GetString());
-                    if (hasRef && std::regex_search(sval, zeno::FunctionManager::refStrPattern)) {
+                    if (hasRef && sval.find("ref") != std::string::npos) {
                         *hasRef = true;
                     }
                     editvec.push_back(sval);

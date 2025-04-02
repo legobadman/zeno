@@ -322,6 +322,9 @@ int ParamTabModel::rowCount(const QModelIndex& parent) const {
 }
 
 QVariant ParamTabModel::data(const QModelIndex& index, int role) const {
+    if (!index.isValid()) {
+        return false;
+    }
     if (role == QtRole::ROLE_PARAM_NAME) {
         return m_items[index.row()].name;
     }
@@ -433,6 +436,9 @@ int ParamGroupModel::rowCount(const QModelIndex& parent) const {
 }
 
 QVariant ParamGroupModel::data(const QModelIndex& index, int role) const {
+    if (!index.isValid()) {
+        return false;
+    }
     if (role == Qt::DisplayRole) {
         return m_items[index.row()].name;
     }
@@ -550,7 +556,7 @@ QString ParamPlainModel::getMaxLengthName() const
 
 int ParamPlainModel::rowCount(const QModelIndex& parent) const {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
@@ -690,7 +696,7 @@ PrimParamOutputModel::PrimParamOutputModel(zeno::PrimitiveParams params, CustomU
 
 int PrimParamOutputModel::rowCount(const QModelIndex& parent) const {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
@@ -727,7 +733,30 @@ QHash<int, QByteArray> PrimParamOutputModel::roleNames() const {
     roles[QtRole::ROLE_PARAM_SOCKET_VISIBLE] = "socket_visible";
     roles[QtRole::ROLE_PARAM_CONTROL_PROPS] = "control_properties";
     roles[QtRole::ROLE_PARAM_SOCKET_CLR] = "socket_color";
+    roles[QtRole::ROLE_PARAM_VISIBLE] = "param_visible";
     return roles;
+}
+
+QString PrimParamOutputModel::getMaxLengthName() const
+{
+    QString maxName;
+    if (m_bIscloned) {
+        for (auto& item : m_clonedItems) {
+            const QString& name = item.name;
+            if (name.length() > maxName.length()) {
+                maxName = name;
+            }
+        }
+    }
+    else {
+        for (auto& idx : m_items) {
+            const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+            if (name.length() > maxName.length()) {
+                maxName = name;
+            }
+        }
+    }
+    return maxName;
 }
 
 Q_INVOKABLE bool PrimParamOutputModel::insertRow(int row, QString name)
@@ -743,7 +772,6 @@ Q_INVOKABLE bool PrimParamOutputModel::insertRow(int row, QString name)
         item.control = zeno::NullControl;
         //item.optCtrlprops = spParam.ctrlProps;
         item.name = name;
-        item.type = Param_Wildcard;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Primitve;
         item.bSocketVisible = true;
@@ -824,7 +852,7 @@ objParamInputModel::objParamInputModel(zeno::ObjectParams params, CustomUIModel*
 int objParamInputModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
@@ -879,7 +907,6 @@ Q_INVOKABLE bool objParamInputModel::insertRow(int row, QString name)
         item.control = zeno::NullControl;
         //item.optCtrlprops = spParam.ctrlProps;
         item.name = name;
-        item.type = Obj_Wildcard;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Output;
         item.bSocketVisible = true;
@@ -956,7 +983,7 @@ objParamOutputModel::objParamOutputModel(zeno::ObjectParams params, CustomUIMode
 int objParamOutputModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
     if (m_bIscloned) {
-        m_clonedItems.size();
+        return m_clonedItems.size();
     }
     else {
         return m_items.size();
@@ -1011,7 +1038,6 @@ Q_INVOKABLE bool objParamOutputModel::insertRow(int row, QString name)
         item.control = zeno::NullControl;
         //item.optCtrlprops = spParam.ctrlProps;
         item.name = name;
-        item.type = Obj_Wildcard;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Output;
         item.bSocketVisible = true;

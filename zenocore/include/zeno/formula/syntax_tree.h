@@ -13,6 +13,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/geo/kdsearch.h>
 
 
 namespace zeno {
@@ -23,6 +24,7 @@ enum nodeType {
     BOOLTYPE,
     FUNC,               //函数
     FOUROPERATIONS,     //四则运算+ - * / %
+    UNARY_EXP,           //一元运算符
     NEGATIVE,           //取负号
     STRING,             //字符串
     ZENVAR,
@@ -58,6 +60,7 @@ enum operatorVals {
     MOD,
     OR,
     AND,
+    NOT,    //非，即!
     NEG,    //取负
 
     //函数 nodeType对应FUNC
@@ -93,8 +96,11 @@ enum operatorVals {
     TYPE_STRING,
     TYPE_STRING_ARR,
     TYPE_VECTOR2,
+    TYPE_VECTOR2_ARR,
     TYPE_VECTOR3,
+    TYPE_VECTOR3_ARR,
     TYPE_VECTOR4,
+    TYPE_VECTOR4_ARR,
     TYPE_MATRIX2,
     TYPE_MATRIX3,
     TYPE_MATRIX4,
@@ -111,7 +117,9 @@ enum operatorVals {
 using zfxintarr = std::vector<int>;
 using zfxfloatarr = std::vector<float>;
 using zfxstringarr = std::vector<std::string>;
-
+using zfxvec2arr = std::vector<glm::vec2>;
+using zfxvec3arr = std::vector<glm::vec3>;
+using zfxvec4arr = std::vector<glm::vec4>;
 
 enum LValueType {
     LVal_NodeParam,
@@ -127,6 +135,7 @@ struct ZfxLValue {
 
 using zfxvariant = std::variant<int, float, std::string, ZfxLValue,
     zfxintarr, zfxfloatarr, zfxstringarr,
+    zfxvec2arr, zfxvec3arr, zfxvec4arr,
     glm::vec2, glm::vec3, glm::vec4, 
     glm::mat2, glm::mat3, glm::mat4>;
 
@@ -136,6 +145,7 @@ struct ZfxVariable
 
     bool bAttr = false;     //是否与属性关联（好像没什么用）
     bool bAttrUpdated = false;      //ZfxVariable也记录属性值（比如@P, @N @ptnum等），此标记记录在zfx执行中，属性值是否修改了
+    bool bArray = false;    //int[] float[] vectorN[]这种都array，而vec3这些不算
 
     ZfxVariable() {}
     ZfxVariable(zfxvariant&& var) {
@@ -206,12 +216,23 @@ struct ZfxParamConstrain
     bool update_nodeparam_prop = false;      //参数属性是否更新了，比如可见性可用性
 };
 
+class KdTree;
+
+struct PointCloud
+{
+    std::shared_ptr<zeno::KdTree> pTree;
+    std::vector<vec3f> testPoints;
+    float radius = 0.f;
+    int maxpoints = 0;
+};
+
 struct ZfxContext
 {
     /* in */ std::shared_ptr<IObject> spObject;
     /* in */ std::weak_ptr<INode> spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;
+    /**/     std::vector<PointCloud> pchandles;
     /**/     VariableTable* zfxVariableTbl = nullptr;
     /* inout */ ZfxParamConstrain param_constrain;
     /* out */ std::string printContent;

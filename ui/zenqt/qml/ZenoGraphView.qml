@@ -62,7 +62,7 @@ Qan.GraphView {
     //background
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(31/255, 31/255, 31/255, 1)
+        color: Qt.rgba(26/255, 26/255, 26/255, 1)
         z: -10
     }
 
@@ -269,8 +269,8 @@ Qan.GraphView {
                 graphView.temp_edge_close()
             }
             graphView.nodeClicked(node)
-            var graphname = graphView.graphModel.name()
-            graphsmanager.onNodeSelected(graphname, node.index)
+            var path_list = graphView.graphModel.path()
+            graphsmanager.onNodeSelected(path_list, node.index)
         }
         onNodeRightClicked: function(node) {
             showDialog(node)
@@ -632,7 +632,9 @@ Qan.GraphView {
             proppanel.visible = !proppanel.visible
         }
         else if ((event.key === Qt.Key_S) && (event.modifiers & Qt.ControlModifier)) {
-            graphsmanager.saveProject(graphView.graphModel.name())
+            var graphM = graphView.graphModel;
+            var graph_path = graphM.path()
+            graphsmanager.saveProject(graph_path[0])
         }
         else if ((event.key === Qt.Key_Z) && (event.modifiers & Qt.ControlModifier)) {
             graphsmanager.undo(graphView.graphModel.name())
@@ -659,10 +661,14 @@ Qan.GraphView {
                 graphView.graph.model.removeLink(out_node_name, out_param, in_node_name, in_param)
             }
 
-            var nodes = []
+        var nodes = []
+            var graphM = graphView.graphModel
             for (var i = 0; i < graph.selectedNodes.length; i++) {
                 var selectNode = graph.selectedNodes.at(i)
-                nodes.push(selectNode.label)
+                var clsname = graphM.data(selectNode.index, Model.ROLE_CLASS_NAME);
+                if(!(clsname == "SubInput" || clsname == "SubOutput" )) {
+                    nodes.push(selectNode.label)
+                }
             }
             for (var i = 0; i < nodes.length; i++) {
                 graphView.graph.model.removeNode(nodes[i])

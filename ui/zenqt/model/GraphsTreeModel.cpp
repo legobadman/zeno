@@ -71,6 +71,27 @@ QHash<int, QByteArray> GraphsTreeModel::roleNames() const
     return roles;
 }
 
+QStandardItem* GraphsTreeModel::initNodeItem(const QModelIndex& nodeidx) const
+{
+    QString nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
+    QStandardItem* pItem = new QStandardItem(nodename);
+    pItem->setData(nodeidx, Qt::UserRole + 1);
+
+    zeno::NodeType type = static_cast<zeno::NodeType>(nodeidx.data(QtRole::ROLE_NODETYPE).toInt());
+    if (type == zeno::Node_AssetInstance ||
+        type == zeno::Node_AssetReference ||
+        type == zeno::Node_SubgraphNode)
+    {
+        GraphModel* pSubgraph = nodeidx.data(QtRole::ROLE_SUBGRAPH).value<GraphModel*>();
+        for (int r = 0; r < pSubgraph->rowCount(); r++)
+        {
+            QStandardItem* pChildItem = initNodeItem(pSubgraph->index(r));
+            pItem->appendRow(pChildItem);
+        }
+    }
+    return pItem;
+}
+
 void GraphsTreeModel::onGraphRowsInserted(const QModelIndex& parent, int first, int last)
 {
     GraphModel* pGraphM = qobject_cast<GraphModel*>(sender());
@@ -85,9 +106,7 @@ void GraphsTreeModel::onGraphRowsInserted(const QModelIndex& parent, int first, 
 
         QPersistentModelIndex newNodeIdx = pGraphM->index(first);
         ZASSERT_EXIT(newNodeIdx.isValid());
-        QString nodename = newNodeIdx.data(QtRole::ROLE_NODE_NAME).toString();
-        QStandardItem* pItem = new QStandardItem(nodename);
-        pItem->setData(newNodeIdx, Qt::UserRole + 1);
+        QStandardItem* pItem = initNodeItem(newNodeIdx);
         graphItem->appendRow(pItem);
 
         emit layoutChanged({ graphItem->index() });

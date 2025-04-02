@@ -10,16 +10,18 @@
 namespace zeno
 {
     struct HEdge;
-    struct Face;
-    struct Point;
+    struct HF_Face;
+    struct HF_Point;
 
     struct HEdge {
         std::string id;
         HEdge* pair = 0, * next = 0;
         size_t point = -1;
+        size_t point_from = -1;
         size_t face = -1;
 
         size_t find_from() {
+            if (point_from != -1) return point_from;
             if (pair) return pair->point;
             HEdge* h = this;
             while (h->next != this) {
@@ -29,12 +31,12 @@ namespace zeno
         }
     };
 
-    struct Face {
+    struct HF_Face {
         int start_linearIdx;  //the vertex index of start vertex.
-        HEdge* h = 0;      //any h-edge of this face.
+        HEdge* h = 0;      //应该是起始边
     };
 
-    struct Point {
+    struct HF_Point {
         std::set<HEdge*> edges;    //all h-edge starting from this point.
     };
 
@@ -42,30 +44,27 @@ namespace zeno
     {
         GeometryTopology() = default;
         GeometryTopology(const GeometryTopology& rhs);
-        GeometryTopology(bool bTriangle, int nPoints, int nFaces);
+        GeometryTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
 
         void initFromPrim(PrimitiveObject* prim);
         void toPrimitive(std::shared_ptr<PrimitiveObject> spPrim);
 
         HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
-        std::tuple<Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
+        std::tuple<HF_Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
         size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
         size_t getPointTo(HEdge* hedge) const;
 
-        void initpoint(size_t idxPoint);
-        void initLineNextPoint(size_t point_id);   //对象是line时，init点的下一个点
         std::vector<vec3i> tri_indice() const;
+        std::vector<std::vector<int>> face_indice() const;
         std::vector<int> edge_list() const;
         bool is_base_triangle() const;
         bool is_line() const;
-        int npoints_in_face(Face* face) const;
+        int npoints_in_face(HF_Face* face) const;
         void geomTriangulate(zeno::TriangulateInfo& info);
 
-        void setLineNextPt(int currPt, int nextPt); //对象是line时，修改当前点的下一个点为nextPt
-        int getLineNextPt(int currPt); //对象是line时，获取当前pt的下一个点的编号
-
         /* 添加元素 */
-        int addface(const std::vector<int>& points);
+        int add_face(const std::vector<int>& points, bool bClose);
+        void set_face(int idx, const std::vector<int>& points, bool bClose);
         int add_point();
         int add_vertex(int face_id, int point_id);
 
@@ -87,7 +86,7 @@ namespace zeno
 
         /* 面相关 */
         int face_point(int face_id, int vert_id) const;
-        std::vector<int> face_points(int face_id);
+        std::vector<int> face_points(int face_id) const;
         int face_vertex(int face_id, int vert_id);
         int face_vertex_count(int face_id);
         std::vector<int> face_vertices(int face_id);
@@ -105,18 +104,16 @@ namespace zeno
 
         //特殊功能
         void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
+        int isLineFace(int faceid) const;
 
     private:
-        std::vector<std::shared_ptr<Point>> m_points;
-        std::vector<std::shared_ptr<Face>> m_faces;
+        bool isLineFace(HF_Face* f) const;
+
+        std::vector<std::shared_ptr<HF_Point>> m_points;
+        std::vector<std::shared_ptr<HF_Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;
-        std::vector<zeno::vec2i> m_linesPt;
         bool m_bTriangle = true;    //所有面都是三角面
     };
-
-
-
-
 }
 
 

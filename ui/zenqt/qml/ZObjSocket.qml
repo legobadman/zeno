@@ -15,18 +15,28 @@ Item {
 
     signal socketClicked()
 
-    height: childrenRect.height
-    width: childrenRect.width
+    height: mainLayout.implicitHeight
+    width: mainLayout.implicitWidth
+
+    RowLayout {
+        id: mainLayout
+        z: 100
+        //Layout.margins: 2
+        Text {
+            Layout.topMargin: 2
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            Layout.bottomMargin: 2
+            color: "white"
+            text: comp.socket_name
+            font.pixelSize: 14
+        }
+    }
 
     Rectangle {
-        height: childrenRect.height
-        width: childrenRect.width
+        anchors.fill: parent
         color: comp.bg_color
-
-        Text {
-            color: "black"
-            text: comp.socket_name
-        }
+        radius: 4
     }
 
     MouseArea {

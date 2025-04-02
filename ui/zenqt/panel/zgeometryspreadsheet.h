@@ -18,7 +18,7 @@ class ZGeometrySpreadsheet : public QWidget
     Q_OBJECT
 public:
     ZGeometrySpreadsheet(QWidget* parent = nullptr);
-    void setGeometry(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject* pObject);
+    void setGeometry(GraphModel* subgraph, QModelIndex nodeidx, std::shared_ptr<zeno::GeometryObject> spObject);
 
 public slots:
     void onNodeRemoved(QString nodename);

@@ -479,7 +479,17 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
     case QtRole::ROLE_PARAM_QML_VALUE:
     {
         //在QML初始化的时候，比如onValueChanged时也会直接调用，要考虑是不是做同值过滤
-        const zeno::reflect::Any& anyVal = UiHelper::qvarToAnyByType(value, param.type, param.control == zeno::Lineedit);
+        bool is_prim_var = false;
+        if (param.control == zeno::Lineedit && (param.type == gParamType_Int || param.type == gParamType_Float)) {
+            is_prim_var = true;
+        }
+        if ((param.control == zeno::Vec2edit && (param.type == gParamType_Vec2i || param.type == gParamType_Vec2f)) ||
+            (param.control == zeno::Vec3edit && (param.type == gParamType_Vec3i || param.type == gParamType_Vec3f)) ||
+            (param.control == zeno::Vec4edit && (param.type == gParamType_Vec4i || param.type == gParamType_Vec4f))) {
+            //有些vec3f不一定是PrimVar,比如颜色
+            is_prim_var = true;
+        }
+        const zeno::reflect::Any& anyVal = UiHelper::qvarToAnyByType(value, param.type, is_prim_var);
         setData(index, QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
         break;
     }

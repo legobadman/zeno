@@ -73,6 +73,36 @@ namespace zeno {
             return m_data;
         }
 
+        AttrValue front() const {
+            return std::visit([&](auto&& vec)->AttrValue {
+                using E = std::decay_t<decltype(vec)>;
+                if constexpr (
+                    std::is_same_v<E, std::vector<int>> ||
+                    std::is_same_v < E, std::vector<float>> ||
+                    std::is_same_v < E, std::vector<std::string>> ||
+                    std::is_same_v<E, std::vector<vec2f>> ||
+                    std::is_same_v<E, std::vector<vec3f>> ||
+                    std::is_same_v<E, std::vector<vec4f>>) {
+                    return vec.front();
+                }
+            }, m_data);
+        }
+
+        AttrValue get_elem(size_t idx) const {
+            return std::visit([&](auto&& vec)->AttrValue {
+                using E = std::decay_t<decltype(vec)>;
+                if constexpr (
+                    std::is_same_v<E, std::vector<int>> ||
+                    std::is_same_v < E, std::vector<float>> ||
+                    std::is_same_v < E, std::vector<std::string>> ||
+                    std::is_same_v<E, std::vector<vec2f>> ||
+                    std::is_same_v<E, std::vector<vec3f>> ||
+                    std::is_same_v<E, std::vector<vec4f>>) {
+                    return vec[idx];
+                }
+            }, m_data);
+        }
+
         template<typename T>
         void insert(size_t index, T elemVal) {
             if (index < 0 || index >= m_size) {
@@ -132,6 +162,41 @@ namespace zeno {
             m_size--;
         }
 
+        void copy(const AttributeImpl& rattr, int fromIndex) {
+            //将rattr整个vector的值，拷贝到m_data[fromIndex:]，特供给merge拷贝属性的时候用
+            if (rattr.m_data.index() != m_data.index()) {
+                throw makeError<UnimplError>("type dismatch when copy");
+            }
+            std::visit([&](auto&& vec) {
+                using E = std::decay_t<decltype(vec)>;
+                if constexpr (std::is_same_v<E, std::vector<int>>) {
+                    auto& rvec = std::get<std::vector<int>>(rattr.m_data);
+                    if (vec.size() < rvec.size() + fromIndex) {
+                        throw makeError<UnimplError>("data range exceeds when copy");
+                    }
+                    std::copy(rvec.begin(), rvec.end(), vec.begin() + fromIndex);
+                }
+                else if constexpr (std::is_same_v<E, std::vector<float>>) {
+                    auto& rvec = std::get<std::vector<float>>(rattr.m_data);
+                    if (vec.size() < rvec.size() + fromIndex) {
+                        throw makeError<UnimplError>("data range exceeds when copy");
+                    }
+                    std::copy(rvec.begin(), rvec.end(), vec.begin() + fromIndex);
+                }
+                else if constexpr (std::is_same_v<E, std::vector<std::string>>) {
+                    auto& rvec = std::get<std::vector<std::string>>(rattr.m_data);
+                    if (vec.size() < rvec.size() + fromIndex) {
+                        throw makeError<UnimplError>("data range exceeds when copy");
+                    }
+                    std::copy(rvec.begin(), rvec.end(), vec.begin() + fromIndex);
+                }
+                //目前向量是独立通道储存的，所以先不写vec类型
+                else {
+                    throw makeError<UnimplError>("unknown type in attrcolumn");
+                }
+            }, m_data);
+        }
+
         size_t m_size;
         //暂时不储存核心类型，不过有可能出现类型错误赋值的情况
         AttrVarVec m_data;
@@ -151,6 +216,8 @@ namespace zeno {
         }
 
         AttrVarVec get() const;
+        AttrValue get_elem(size_t idx) const;
+        AttrValue front() const;
 
         template<typename T>
         void set(size_t index, T val) {
@@ -162,6 +229,10 @@ namespace zeno {
         template<typename T>
         void insert(size_t index, T val) {
             m_pImpl->insert(index, val);
+        }
+
+        void copy(const AttrColumn& rCol, int fromIndex) {
+            m_pImpl->copy(*rCol.m_pImpl, fromIndex);
         }
 
         template<typename T>

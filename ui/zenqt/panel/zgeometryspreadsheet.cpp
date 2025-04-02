@@ -24,6 +24,14 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_views->addWidget(new QTableView); //face
     m_views->addWidget(new QTableView); //geom
 
+    QLabel* pLblBlank = new QLabel("No object available, may be not apply or result is null");
+    m_views->addWidget(pLblBlank);    //blank
+
+    QPalette palette = m_lblNode->palette();
+    palette.setColor(QPalette::WindowText, Qt::white);  // 设置字体颜色为蓝色
+    m_lblNode->setPalette(palette);
+    pLblBlank->setPalette(palette);
+
     QHBoxLayout* pToolbarLayout = new QHBoxLayout;
     pToolbarLayout->addWidget(m_lblNode);
     pToolbarLayout->addWidget(m_vertex);
@@ -91,7 +99,34 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     setLayout(pMainLayout);
 }
 
-void ZGeometrySpreadsheet::setGeometry(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject* pObject) {
+void ZGeometrySpreadsheet::setGeometry(
+        GraphModel* subgraph,
+        QModelIndex nodeidx,
+        std::shared_ptr<zeno::GeometryObject> spObject
+) {
+    if (nodeidx.isValid()) {
+        QString nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
+        m_lblNode->setText(nodename);
+    }
+
+    if (!spObject) { 
+        m_views->setCurrentIndex(m_views->count() - 1);
+        return;
+    }
+    else {
+        if (m_vertex->isChecked())
+            m_views->setCurrentIndex(0);
+
+        if (m_point->isChecked())
+            m_views->setCurrentIndex(1);
+
+        if (m_face->isChecked())
+            m_views->setCurrentIndex(2);
+
+        if (m_geom->isChecked())
+            m_views->setCurrentIndex(3);
+    }
+
     if (subgraph) {
         m_model = subgraph;
         connect(m_model, &GraphModel::nodeRemoved, this, &ZGeometrySpreadsheet::onNodeRemoved, Qt::UniqueConnection);
@@ -103,33 +138,33 @@ void ZGeometrySpreadsheet::setGeometry(GraphModel* subgraph, QModelIndex nodeidx
 
     QTableView* view = qobject_cast<QTableView*>(m_views->widget(0));
     if (VertexModel* model = qobject_cast<VertexModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     } else {
-        view->setModel(new VertexModel(pObject));
+        view->setModel(new VertexModel(spObject));
     }
 
     view = qobject_cast<QTableView*>(m_views->widget(1));
     if (PointModel* model = qobject_cast<PointModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     }
     else {
-        view->setModel(new PointModel(pObject));
+        view->setModel(new PointModel(spObject));
     }
 
     view = qobject_cast<QTableView*>(m_views->widget(2));
     if (FaceModel* model = qobject_cast<FaceModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     }
     else {
-        view->setModel(new FaceModel(pObject));
+        view->setModel(new FaceModel(spObject));
     }
 
     view = qobject_cast<QTableView*>(m_views->widget(3));
     if (GeomDetailModel* model = qobject_cast<GeomDetailModel*>(view->model())) {
-        model->setGeoObject(pObject);
+        model->setGeoObject(spObject);
     }
     else {
-        view->setModel(new GeomDetailModel(pObject));
+        view->setModel(new GeomDetailModel(spObject));
     }
     //TODO: geom model
 }
@@ -151,7 +186,7 @@ void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const Q
             } else if (currStatus == zeno::Node_RunSucceed) {
                 zeno::zany pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
                 if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
-                    setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom.get());
+                    setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom);
         }
     }
 }
@@ -162,6 +197,7 @@ void ZGeometrySpreadsheet::clearModel()
 {
     for (int i = 0; i < m_views->count(); ++i) {
         QTableView* view = qobject_cast<QTableView*>(m_views->widget(i));
+        if (!view) continue;
         if (QAbstractItemModel* model = view->model()) {
             view->setModel(nullptr);
             delete model;

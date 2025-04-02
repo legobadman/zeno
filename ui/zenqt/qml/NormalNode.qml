@@ -48,6 +48,7 @@ Qan.NodeItem {
     property var nodestatus: 0
 
     property string defattr: "abc"
+    property string clsname : ""
 
     //clip: true        //设置会导致选框不出现
 
@@ -79,10 +80,14 @@ Qan.NodeItem {
             return instZObjSock;
         }
         else if (group == ParamGroup.InputPrimitive) {
-
+            var idx = nodeItem.node.params.indexFromName(paramName, true);
+            var instZObjSock = inputprimparams.itemAt(idx)
+            return instZObjSock.sockid;
         }
         else if (group == ParamGroup.OutputPrimitive) {
-
+            var idx = nodeItem.node.params.indexFromName(paramName, false);
+            var instZObjSock = outputprimparams.itemAt(idx)
+            return instZObjSock.sockid;
         }
         else if (group == ParamGroup.OutputObject) {
             var idx = nodeItem.node.params.indexFromName(paramName, false);
@@ -125,11 +130,24 @@ Qan.NodeItem {
 
     //event:
     onNodeDoubleClicked: function(node, pos) {
-        var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
-        if (pos2.x > 0 && pos2.y > 0 &&
-            pos2.x < nodename_editor.width &&
-            pos2.y < nodename_editor.height) {
-            nodename_editor.isEditing = true
+        var graphM = nodeItem.graph.model;
+        var idx = nodeItem.node.index;
+        var nodetype = graphM.data(idx, Model.ROLE_NODETYPE);       //ROLE_OBJPOS
+        if (nodetype >= 5) {
+            //子图
+            var graph_path = graphM.path()
+            var nodename = graphM.data(idx, Model.ROLE_NODE_NAME)   //ROLE_NODE_NAME
+            graph_path.push(nodename)
+            stack_main_graphview.jumpTo(graph_path);
+        } else {
+            var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
+            if (pos2.x > 0 && pos2.y > 0 &&
+                pos2.x < nodename_editor.width &&
+                pos2.y < nodename_editor.height) {
+                    if(nodeItem.clsname !== "SubInput" && nodeItem.clsname !== "SubOutput"){
+                        nodename_editor.isEditing = true
+                    }
+            }
         }
     }
 
@@ -141,6 +159,7 @@ Qan.NodeItem {
         //anchors.verticalCenter: mainmain_layout.verticalCenter
         text: nodeItem.node.label
 
+        handle_mouseevent : nodeItem.clsname !== "SubInput" && nodeItem.clsname !== "SubOutput"
         onTextChanged: {
             nodeItem.node.label = text
         }
@@ -238,7 +257,7 @@ Qan.NodeItem {
                         ZRoundRect {
                             id: roundrectheader
                             anchors.fill: parent
-                            bgcolor: "#5A9CE0"
+                            bgcolor: "#0277D1"
                             radius: nodeItem.backRadius
                             visible: nodebody.visible
                         }
@@ -246,7 +265,7 @@ Qan.NodeItem {
                         Rectangle {
                             id: rectheader
                             anchors.fill: parent
-                            color: "#5A9CE0"
+                            color: "#0277D1"
                             radius: nodeItem.backRadius
                             visible: !nodebody.visible
                         }
@@ -334,6 +353,7 @@ Qan.NodeItem {
                                         required property int group
                                         required property bool socket_visible
                                         readonly property int hmargin: 10
+                                        property alias sockid: input_prim_socket
 
                                         visible: group == ParamGroup.InputPrimitive && socket_visible
 
@@ -373,6 +393,7 @@ Qan.NodeItem {
                                         required property int group
                                         required property bool socket_visible
                                         readonly property int hmargin: 10
+                                        property alias sockid: output_prim_socket
 
                                         visible: group == ParamGroup.OutputPrimitive && socket_visible
 
@@ -470,6 +491,7 @@ Qan.NodeItem {
         nodeItem.x = pos.x
         nodeItem.y = pos.y
         nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
+        nodeItem.clsname = graphM.data(idx, Model.ROLE_CLASS_NAME)
 
         var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
         if (uistyle["icon"] != "") {

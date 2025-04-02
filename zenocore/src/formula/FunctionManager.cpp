@@ -412,38 +412,55 @@ namespace zeno {
 
     static ZfxVariable get_array_element(const ZfxVariable& arr, const ZfxVariable& varidx) {
         int idx = 0;
-        if (varidx.value.size() == 1) {
+        int nIdx = varidx.value.size();
+        if (nIdx == 1) {
             idx = get_zfxvar<int>(varidx.value[0]);
         }
         else {
-            assert(arr.value.size() == varidx.value.size());
+            assert(arr.value.size() == nIdx);
         }
 
         ZfxVariable res;
-        for (int i = 0; i < arr.value.size(); i++) {
-            if (varidx.value.size() == 1)
-                idx = get_zfxvar<int>(varidx.value[0]);
-            else
-                idx = get_zfxvar<int>(varidx.value[i]);
+#if 0
+        if (false && arr.bArray) {
+            //形如 int[] vec3[] float[] 这种
+            for (int i = 0; i < nIdx; i++)
+            {
+                int idx = get_zfxvar<int>(varidx.value[i]);
+                res.value.push_back(arr.value[idx]);
+            }
+        }
+        else
+#endif
+        {
+            for (int i = 0; i < arr.value.size(); i++) {
+                if (varidx.value.size() == 1)
+                    idx = get_zfxvar<int>(varidx.value[0]);
+                else
+                    idx = get_zfxvar<int>(varidx.value[i]);
 
-            res.value.push_back(std::visit([idx](auto&& arg) -> zfxvariant {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, zfxintarr> ||
-                    std::is_same_v<T, zfxfloatarr> ||
-                    std::is_same_v<T, zfxstringarr> ||
-                    std::is_same_v<T, glm::vec2> ||
-                    std::is_same_v<T, glm::vec3> ||
-                    std::is_same_v<T, glm::vec4> ||
-                    std::is_same_v<T, glm::mat2> ||
-                    std::is_same_v<T, glm::mat3> ||
-                    std::is_same_v<T, glm::mat4>
-                    ) {
-                    return (T(arg))[idx];
-                }
-                else {
-                    throw makeError<UnimplError>("get elemvar from arr");
-                }
-            }, arr.value[i]));
+                res.value.push_back(std::visit([idx](auto&& arg) -> zfxvariant {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, zfxintarr> ||
+                        std::is_same_v<T, zfxfloatarr> ||
+                        std::is_same_v<T, zfxstringarr> ||
+                        std::is_same_v<T, zfxvec2arr> ||
+                        std::is_same_v<T, zfxvec3arr> ||
+                        std::is_same_v<T, zfxvec4arr> ||
+                        std::is_same_v<T, glm::vec2> ||
+                        std::is_same_v<T, glm::vec3> ||
+                        std::is_same_v<T, glm::vec4> ||
+                        std::is_same_v<T, glm::mat2> ||
+                        std::is_same_v<T, glm::mat3> ||
+                        std::is_same_v<T, glm::mat4>
+                        ) {
+                        return (T(arg))[idx];
+                    }
+                    else {
+                        throw makeError<UnimplError>("get elemvar from arr");
+                    }
+                }, arr.value[i]));
+            }
         }
         return res;
     }
@@ -787,14 +804,16 @@ namespace zeno {
         }
 
         ZfxVariable res;
+        res.bArray = true;
         res.value.push_back(current);
         return res;
     }
 
-    bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& newFilter) const {
+    bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const {
         int N = cond.value.size();
         assert(N == filter.size() || N == 1);
-        newFilter = filter;
+        ifFilter = filter;
+        elseFilter = filter;
         bool bret = false;
         for (int i = 0; i < cond.value.size(); i++) {
             if (filter[i]) {
@@ -802,10 +821,11 @@ namespace zeno {
                     get_zfxvar<float>(cond.value[i]))
                 {
                     bret = true;
+                    elseFilter[i] = 0;
                 }
                 else
                 {
-                    newFilter[i] = 0;
+                    ifFilter[i] = 0;
                 }
             }
         }
@@ -859,52 +879,6 @@ namespace zeno {
         else {
             
         }
-    }
-
-    std::pair<std::shared_ptr<INode>, std::string> FunctionManager::getNodeAndParamNameFromRef(const std::string& ref, ZfxContext* pContext)
-    {
-        if (ref.empty()) {
-            zeno::log_warn("ref empty");
-        }
-        std::string fullPath, graphAbsPath;
-        auto thisNode = pContext->spNode.lock();
-        const std::string& thisnodePath = thisNode->get_path();
-        graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
-
-        if (ref.front() == '/') {
-            fullPath = ref;
-        }
-        else {
-            fullPath = graphAbsPath + "/" + ref;
-        }
-
-        size_t idx = fullPath.find_last_of('/');
-        if (idx == std::string::npos) {
-            zeno::log_warn("unresolve node");
-        }
-
-        const std::string& graph_correct_path = fullPath.substr(0, idx);
-        const std::string& nodePath = fullPath.substr(idx + 1);
-
-        idx = nodePath.find('.');
-        if (idx == std::string::npos) {
-            zeno::log_warn("no param name when resolve ref path");
-        }
-        std::string nodename = nodePath.substr(0, idx);
-        std::string parampath = nodePath.substr(idx + 1);
-
-        std::string nodeAbsPath = graph_correct_path + '/' + nodename;
-        std::shared_ptr<INode> spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
-        if (!spNode) {
-            //unresolve node. 也有一种可能，就是引用源调整名字，然后同步到各个引用节点，引用节点的参数还是
-            // 旧的，所以在这里resolve不到。
-            zeno::log_warn("unresolve node");
-        }
-
-        auto paramPathItems = split_str(parampath, '.');
-        std::string paramname = paramPathItems.empty() ? parampath : paramPathItems[0];
-
-        return std::make_pair(spNode, paramname);
     }
 
     static ZfxVariable getAttrValue_impl(std::shared_ptr<IObject> spObject, const std::string& attr_name) {
@@ -984,12 +958,31 @@ namespace zeno {
         }
     }
 
-    void FunctionManager::setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
+    void FunctionManager::setAttrValue(const std::string& attrname, const std::string& channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
         zeno::zfx::setAttrValue(attrname, channel, var, opVal, filter, pContext);
     }
 
     ZfxVariable FunctionManager::getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
         return zeno::zfx::getAttrValue(attrname, pContext, channel);
+    }
+
+    ZfxVariable FunctionManager::trunkVariable(ZfxVariable origin, const ZfxElemFilter& filter) {
+        int ndim = origin.value.size();
+        int nfilter = filter.size();
+        if (nfilter == ndim)
+            return origin;
+        else if (nfilter < ndim) {
+            //裁剪origin
+            ZfxVariable truncate;
+            truncate.value.resize(nfilter);
+            std::copy(origin.value.begin(), origin.value.begin() + nfilter, truncate.value.begin());
+            return truncate;
+        }
+        else {
+            //扩大origin
+            origin.value.resize(nfilter);
+            return origin;
+        }
     }
 
     ZfxVariable FunctionManager::execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -1009,6 +1002,12 @@ namespace zeno {
             case ZENVAR: {
                 //这里指的是取zenvar的值用于上层的计算或者输出，赋值并不会走到这里
                 const std::string& varname = get_zfxvar<std::string>(root->value);
+#if 1
+                if (varname == "pos") {
+                    int j;
+                    j = 0;
+                }
+#endif
                 if (root->bAttr && root->opVal == COMPVISIT) {
                     if (root->children.size() != 1) {
                         throw makeError<UnimplError>("Indexing Error on NameVisit");
@@ -1023,14 +1022,16 @@ namespace zeno {
                         channel = 'z';
                     else if (component == "w")
                         channel = 'w';
-                    return getAttrValue(varname, pContext, channel);
+                    ZfxVariable var = getAttrValue(varname, pContext, channel);
+                    return trunkVariable(var, filter);
                 }
                 else if (root->opVal == Indexing) {
 
                 }
 
                 if (root->bAttr && root->opVal == UNDEFINE_OP) {
-                    return getAttrValue(varname, pContext);
+                    ZfxVariable var = getAttrValue(varname, pContext);
+                    return trunkVariable(var, filter);
                 }
 
                 ZfxVariable& var = getVariableRef(varname, pContext);
@@ -1098,6 +1099,14 @@ namespace zeno {
                 if (zenvarNode->bAttr) {
                     //无须把值拎出来再计算，直接往属性数据内部设置
                     const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
+                    //DEBUG:
+#if 0
+                    if (attrname == "type") {
+                        int j;
+                        j = 0;
+                    }
+#endif
+
                     std::string channel;
                     if (zenvarNode->opVal == COMPVISIT) {
                         assert(zenvarNode->children.size() == 1);
@@ -1105,32 +1114,31 @@ namespace zeno {
                     }
                     else if (zenvarNode->opVal == Indexing) {
                         //todo
+                        throw makeError<UnimplError>("Not support indexing for internal attributes");
                     }
 
+                    AttrVar initValue = getInitValueFromVariant(res.value); //拿初值就行
                     std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
-                    if (!spGeom->has_point_attr(attrname) && !spGeom->has_face_attr(attrname) &&
-                        !spGeom->has_vertex_attr(attrname) && !spGeom->has_geometry_attr(attrname)
-                        ) {//attrname不存在就创建一个，valNode是属性就创建和valNode同类型属性，否则创建point属性
-                        AttrVar attrvar = zeno::zfx::convertToAttrVar(res.value);
-                        if (valNode->bAttr) {
-                            std::string valNodeAttrName = get_zfxvar<std::string>(valNode->value).substr(1);
-                            if (spGeom->has_point_attr(valNodeAttrName)) {
-                                spGeom->create_point_attr(attrname, attrvar);
-                            }
-                            else if (spGeom->has_face_attr(valNodeAttrName)) {
-                                spGeom->create_face_attr(attrname, attrvar);
-                            }
-                            else if (spGeom->has_vertex_attr(valNodeAttrName)) {
-                                spGeom->create_vertex_attr(attrname, attrvar);
-                            }
-                            else if (spGeom->has_geometry_attr(valNodeAttrName)) {
-                                spGeom->create_geometry_attr(attrname, attrvar);
-                            }
-                        } else {
-                            spGeom->create_point_attr(attrname, attrvar);
+                    if (pContext->runover == ATTR_POINT) {
+                        if (!spGeom->has_point_attr(attrname)) {
+                            spGeom->create_point_attr(attrname, initValue);
                         }
                     }
-
+                    else if (pContext->runover == ATTR_VERTEX) {
+                        if (!spGeom->has_vertex_attr(attrname)) {
+                            spGeom->create_vertex_attr(attrname, initValue);
+                        }
+                    }
+                    else if (pContext->runover == ATTR_FACE) {
+                        if (!spGeom->has_face_attr(attrname)) {
+                            spGeom->create_face_attr(attrname, initValue);
+                        }
+                    }
+                    else if (pContext->runover == ATTR_GEO) {
+                        if (!spGeom->has_geometry_attr(attrname)) {
+                            spGeom->create_geometry_attr(attrname, initValue);
+                        }
+                    }
                     setAttrValue(attrname, channel, res, root->opVal, filter, pContext);
                     return ZfxVariable();
                 }
@@ -1275,11 +1283,23 @@ namespace zeno {
                         newvar.value.push_back(glm::vec2());
                         break;
                     }
+                    case TYPE_VECTOR2_ARR: {
+                        newvar.value.push_back(zfxvec2arr());
+                        break;
+                    }
                     case TYPE_VECTOR3: {
                         newvar.value.push_back(glm::vec3());
                         break;
                     }
+                    case TYPE_VECTOR3_ARR: {
+                        newvar.value.push_back(zfxvec3arr());
+                        break;
+                    }
                     case TYPE_VECTOR4:  newvar.value.push_back(glm::vec4()); break;
+                    case TYPE_VECTOR4_ARR: {
+                        newvar.value.push_back(zfxvec4arr());
+                        break;
+                    }
                     case TYPE_MATRIX2:  newvar.value.push_back(glm::mat2()); break;
                     case TYPE_MATRIX3:  newvar.value.push_back(glm::mat3()); break;
                     case TYPE_MATRIX4:  newvar.value.push_back(glm::mat4()); break;
@@ -1312,6 +1332,41 @@ namespace zeno {
                 ZfxVariable result = eval(funcname, args, filter, pContext);
                 return result;
             }
+            case UNARY_EXP: {
+                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
+                if (args.size() != 1) {
+                    throw makeError<UnimplError>("num args of unary op should be 1");
+                }
+                const ZfxVariable& arg = args[0];
+                const int N = arg.value.size();
+                ZfxVariable result;
+                result.value.resize(N);
+                switch (root->opVal) {
+                case NOT: {
+                    for (int i = 0; i < N; i++)
+                    {
+                        result.value[i] = std::visit([&](auto&& argval)->zfxvariant {
+                            using T = std::decay_t<decltype(argval)>;
+                            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                                return (int)(argval <= 0);
+                            }
+                            else if constexpr (std::is_same_v<T, std::string>) {
+                                return !argval.empty();
+                            }
+                            else {
+                                //TODO: vectype
+                                throw makeError<UnimplError>("not support of nor operator for other types.");
+                            }
+                        }, arg.value[i]);
+                    }
+                    break;
+                }
+                default: {
+                    throw makeError<UnimplError>("unknown unary op.");
+                }
+                }
+                return result;
+            }
             case FOUROPERATIONS: {
                 //四则运算+ - * / %
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
@@ -1337,7 +1392,9 @@ namespace zeno {
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 std::string visit_attr = get_zfxvar<std::string>(args[1].value[0]);
 
-                zfxvariant res = std::visit([&](auto&& arg) -> zfxvariant {
+                int nVarSize = args[0].value.size();
+
+                ZfxVariable res = std::visit([&](auto&& arg) -> ZfxVariable {
                     using T = std::decay_t<decltype(arg)>;
                     if constexpr (std::is_same_v<T, ZfxLValue>) {
                         return std::visit([&](auto&& nodeparam) -> zfxvariant {
@@ -1368,13 +1425,66 @@ namespace zeno {
                             }
                             else if constexpr (std::is_same_v<E, ParamObject>) {
                                 if (visit_attr == "connected") {
-
+                                    return !nodeparam.links.empty();
                                 }
                                 else {
                                     throw makeError<UnimplError>("unknown attr when visit nodeparam");
                                 }
                             }
                         }, arg.var);
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec2>) {
+                        if (visit_attr == "x") {
+                            return arg[0];
+                        }
+                        else if (visit_attr == "y") {
+                            return arg[1];
+                        }
+                        else {
+                            throw makeError<UnimplError>("unknown comp in vec2");
+                        }
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec3>) {
+                        if (visit_attr == "x") {
+                            return arg[0];
+                        }
+                        else if (visit_attr == "y") {
+                            if (nVarSize > 1) {
+                                ZfxVariable ret;
+                                ret.value.resize(nVarSize);
+                                for (int i = 0; i < nVarSize; i++) {
+                                    auto& v = get_zfxvar<glm::vec3>(args[0].value[i]);
+                                    ret.value[i] = v[1];
+                                }
+                                return ret;
+                            }
+                            else {
+                                return arg[1];
+                            }
+                        }
+                        else if (visit_attr == "z") {
+                            return arg[2];
+                        }
+                        else {
+                            throw makeError<UnimplError>("unknown comp in vec3");
+                        }
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec4>) {
+                        if (visit_attr == "x") {
+                            return arg[0];
+                        }
+                        else if (visit_attr == "y") {
+                            return arg[1];
+                        }
+                        else if (visit_attr == "z") {
+                            return arg[2];
+                        }
+                        else if (visit_attr == "w") {
+                            return arg[3];
+                        }
+                        else {
+                            throw makeError<UnimplError>("unknown comp in vec4");
+                        }
                     }
                     else {
                         throw makeError<UnimplError>("only support visit attr for ZfxLvalue");
@@ -1414,8 +1524,8 @@ namespace zeno {
                 }
                 auto& pCond = args[0];
 
-                ZfxElemFilter newFilter;
-                if (hasTrue(pCond, filter, newFilter)) {
+                ZfxElemFilter newFilter, elseFilter;
+                if (hasTrue(pCond, filter, newFilter, elseFilter)) {
                     auto pCodesExp = root->children[1];
                     return execute(pCodesExp, newFilter, pContext);
                 }
@@ -1432,8 +1542,8 @@ namespace zeno {
                 //todo: self inc
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
                 if (cond.value.size() == 1) {//不是向量的情况
-                    ZfxElemFilter newFilter;
-                    if (hasTrue(cond, filter, newFilter)) {
+                    ZfxElemFilter newFilter, elseFilter;
+                    if (hasTrue(cond, filter, newFilter, elseFilter)) {
                         auto pCodesExp = root->children[1];
                         execute(pCodesExp, newFilter, pContext);
                     } else if (root->children.size() == 3) {
@@ -1442,13 +1552,13 @@ namespace zeno {
                     }
                 } else {//向量的情况，每个分支都要执行
                     ZfxElemFilter ifFilter, elseFilter;
-                    if (hasTrue(cond, filter, ifFilter)) {
+                    if (hasTrue(cond, filter, ifFilter, elseFilter)) {
                         auto pCodesExp = root->children[1];
                         execute(pCodesExp, ifFilter, pContext);
                     }
                     if (root->children.size() == 3) {
                         auto pelseExp = root->children[2];
-                        execute(pelseExp, filter, pContext);
+                        execute(pelseExp, elseFilter, pContext);
                     }
                 }
 
@@ -1488,10 +1598,10 @@ namespace zeno {
                 }
 
                 ZfxVariable cond = execute(forCond, filter, pContext);
-                ZfxElemFilter newFilter;
-                while (hasTrue(cond, filter, newFilter)) {
+                ZfxElemFilter ifFilter, elseFilter;
+                while (hasTrue(cond, filter, ifFilter, elseFilter)) {
                     //TODO: check the passed element and mark in the newFilter.
-                    execute(loopContent, newFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
+                    execute(loopContent, ifFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
 
                     if (pContext->jumpFlag == JUMP_BREAK)
                         break;
@@ -1500,8 +1610,8 @@ namespace zeno {
                     if (pContext->jumpFlag == JUMP_RETURN)
                         return ZfxVariable();
 
-                    execute(forStep, newFilter, pContext);
-                    cond = execute(forCond, newFilter, pContext);
+                    execute(forStep, ifFilter, pContext);
+                    cond = execute(forCond, ifFilter, pContext);
                 }
                 break;
             }
@@ -1615,8 +1725,8 @@ namespace zeno {
                 scope_exit sp([this]() {this->popStack(); });
 
                 auto cond = execute(forCond, filter, pContext);
-                ZfxElemFilter newFilter;
-                while (hasTrue(cond, filter, newFilter)) {
+                ZfxElemFilter newFilter, elseFilter;
+                while (hasTrue(cond, filter, newFilter, elseFilter)) {
                     execute(loopContent, newFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
 
                     if (pContext->jumpFlag == JUMP_BREAK)
@@ -1644,7 +1754,7 @@ namespace zeno {
                 ZfxVariable cond;
 
                 ZfxElemFilter newFilter = filter;
-                ZfxElemFilter newFilter2;
+                ZfxElemFilter newFilter2, elsefilter;
 
                 do {
                     newFilter = newFilter2;
@@ -1657,13 +1767,11 @@ namespace zeno {
                     if (pContext->jumpFlag == JUMP_RETURN)
                         return ZfxVariable();
                     cond = execute(forCond, newFilter, pContext);
-                } while (hasTrue(cond, newFilter, newFilter2));
+                } while (hasTrue(cond, newFilter, newFilter2, elsefilter));
 
                 break;
             }
             case CODEBLOCK:{
-                //??????????children??????
-                //???????????????
                 pushStack();
                 scope_exit sp([this]() {this->popStack(); });
                 for (auto pSegment : root->children) {
@@ -1717,8 +1825,8 @@ namespace zeno {
                 const zeno::zfxvariant& res = calc(root->children[0], pContext);
                 const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                 //收集ref信息源，包括源节点和参数
-
-                auto [spNode, paramname] = getNodeAndParamNameFromRef(ref, pContext);
+                std::string paramname, _;
+                auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                 if (spNode)
                     paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
             }
@@ -1731,7 +1839,8 @@ namespace zeno {
                         const zeno::zfxvariant& res = calc(paramNode, pContext);
                         const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                         if (std::regex_search(ref, refPattern)) {
-                            auto [spNode, paramname] = getNodeAndParamNameFromRef(ref, pContext);
+                            std::string paramname, _;
+                            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                             if (spNode)
                                 paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
                         }
@@ -1830,11 +1939,17 @@ namespace zeno {
             }
             case nodeType::FUNC:
             {
-                const std::string& funcname = std::get<std::string>(root->value);
+                ZfxElemFilter filter;
+                filter.push_back(1);
+                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
+                const std::string& funcname = get_zfxvar<std::string>(root->value);
+                ZfxVariable result = eval(funcname, args, filter, pContext);
+                return result.value[0];
+#if 0
                 if (funcname == "ref") {
                     if (root->children.size() != 1) throw makeError<UnimplError>();
                     const std::string ref = std::get<std::string>(calc(root->children[0], pContext));
-                    ZfxElemFilter filter;
+                    
                     std::vector<ZfxVariable> args;
                     args.push_back(ZfxVariable(ref));
                     ZfxVariable res = callFunction("ref", args, filter, pContext);
@@ -1870,6 +1985,7 @@ namespace zeno {
                         throw makeError<UnimplError>();
                     }
                 }
+#endif
             }
             }
         }

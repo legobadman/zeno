@@ -377,7 +377,7 @@ void INode::mark_previous_ref_dirty() {
 
 bool INode::has_frame_relative_params() const {
     for (auto& [name, param] : m_inputPrims) {
-        assert(param.type == Param_Wildcard || param.defl.has_value());
+        assert(param.defl.has_value());
         const std::string& uuid = get_uuid();
         if (gParamType_String == param.type) {
             if (param.defl.type().hash_code() == gParamType_PrimVariant) {//type是string，实际defl可能是primvar
@@ -560,6 +560,14 @@ void INode::preApply(CalcContext* pContext) {
     if (!m_dirty)
         return;
 
+    //debug
+#if 0
+    if (m_name == "Seed") {
+        int j;
+        j = 0;
+    }
+#endif
+
     reportStatus(true, Node_Pending);
 
     //TODO: the param order should be arranged by the descriptors.
@@ -625,12 +633,14 @@ void INode::reflectForeach_apply(CalcContext* pContext)
         for (reset_forloop_settings(); is_continue_to_run(); increment())
         {
             foreach_begin->mark_dirty(true);
+            pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
 
             preApply(pContext);
             reflectNode_apply();
         }
         auto output = get_output_obj("Output Object");
-        output->update_key(m_uuid);
+        if (output)
+            output->update_key(m_uuid);
     }
 }
 
@@ -1108,10 +1118,9 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::reflect::any_cast<std::string>(param_defl);
-        if (!std::regex_search(param_text, FunctionManager::refStrPattern)) {
-            return refSources;
+        if (param_text.find("ref") != std::string::npos) {
+            refSegments.push_back(param_text);
         }
-        refSegments.push_back(param_text);
     }
     else if (deflType == zeno::types::gParamType_PrimVariant) {
         zeno::PrimVar var = zeno::reflect::any_cast<zeno::PrimVar>(param_defl);
@@ -1119,10 +1128,9 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (!std::regex_search(param_text, FunctionManager::refStrPattern)) {
-            return refSources;
+        if (param_text.find("ref") != std::string::npos) {
+            refSegments.push_back(param_text);
         }
-        refSegments.push_back(param_text);
     }
     else if (deflType == zeno::types::gParamType_VecEdit) {
         const zeno::vecvar& vec = zeno::reflect::any_cast<zeno::vecvar>(param_defl);
@@ -1131,7 +1139,7 @@ std::set<std::pair<std::string, std::string>> INode::resolveReferSource(const An
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (std::regex_search(param_text, FunctionManager::refStrPattern)) {
+            if (param_text.find("ref") != std::string::npos) {
                 refSegments.push_back(param_text);
             }
         }
@@ -1452,7 +1460,7 @@ std::shared_ptr<ListObject> INode::processList(ObjectParam* in_param, CalcContex
 
 zeno::reflect::Any INode::processPrimitive(PrimitiveParam* in_param)
 {
-    if (!in_param || in_param->type == Param_Wildcard) {
+    if (!in_param) {
         return nullptr;
     }
 
@@ -1460,6 +1468,7 @@ zeno::reflect::Any INode::processPrimitive(PrimitiveParam* in_param)
 
     const ParamType type = in_param->type;
     const auto& defl = in_param->defl;
+    assert(defl.has_value());
     zeno::reflect::Any result = defl;
     ParamType editType = defl.type().hash_code();
 
@@ -1675,13 +1684,14 @@ bool INode::requireInput(std::string const& ds, CalcContext* pContext) {
                         assert(spSrcNode);
                         std::shared_ptr<Graph> spSrcGraph = spSrcNode->graph.lock();
                         assert(spSrcGraph);
-                        //干脆整个apply，这样可以统一管理脏位，避免引用源一直处于脏状态无法传播
-                        //但这样麻烦之处是没法引用本节点其他参数
-                        //spSrcNode->doApply(pContext);
-
-                        //虽然引用源没法apply，但可以直接引用参数，也可以引用本节点，而且往往
-                        //只是引用一个简单的常量而已，暂时不考虑复杂的链式依赖情况
-                        spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
+                        //NOTE in 2025/3/25: 还是apply引用源，至于本节点参数循环引用的问题，走另外的路线
+                        if (spSrcNode.get() == this) {
+                            //引用自身的参数，直接拿defl，因为这种情况绝大多数是固定值，没必要执行计算，比如pos引用size的数据
+                            spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
+                        }
+                        else {
+                            spSrcNode->doApply(pContext);
+                        }
                     }
                 }
 
@@ -1760,13 +1770,8 @@ void INode::bypass() {
 
 void INode::doApply(CalcContext* pContext) {
 
-    if (!m_dirty) {
-        if (m_bView) {
-            //无须发送，已经存在于视图端了
-            //commit_to_render(Update_View);
-        }
+    if (!m_dirty)
         return;
-    }
 
     assert(pContext);
     std::string uuid_path = get_uuid_path();
@@ -1775,6 +1780,13 @@ void INode::doApply(CalcContext* pContext) {
     }
     pContext->visited_nodes.insert(uuid_path);
     scope_exit spUuidRecord([=] {pContext->visited_nodes.erase(uuid_path); });
+
+#if 0
+    if (m_name == "locate" && pContext->curr_iter == 1) {
+        int j;
+        j = 0;
+    }
+#endif
 
     if (m_nodecls == "TimeShift") {
         preApplyTimeshift(pContext);

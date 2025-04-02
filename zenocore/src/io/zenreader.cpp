@@ -292,6 +292,14 @@ namespace zenoio
         zeno::LinksData& links,
         zeno::ReferencesData& refs)
     {
+        //debug:
+#if 0
+        if (nodename == "Seed") {
+            int j;
+            j = 0;
+        }
+#endif
+
         std::string sockProp;
         if (sockObj.HasMember("property"))
         {

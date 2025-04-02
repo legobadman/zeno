@@ -123,13 +123,13 @@ std::shared_ptr<ZfxASTNode> ZfxExecute::makeTypeNode(std::string text, bool bArr
         spNode->opVal = bArray ? TYPE_STRING_ARR : TYPE_STRING;
     }
     else if (text == "vector2") {
-        spNode->opVal = TYPE_VECTOR2;
+        spNode->opVal = bArray ? TYPE_VECTOR2_ARR : TYPE_VECTOR2;
     }
     else if (text == "vector3") {
-        spNode->opVal = TYPE_VECTOR3;
+        spNode->opVal = bArray ? TYPE_VECTOR3_ARR : TYPE_VECTOR3;
     }
     else if (text == "vector4") {
-        spNode->opVal = TYPE_VECTOR4;
+        spNode->opVal = bArray ? TYPE_VECTOR4_ARR : TYPE_VECTOR4;
     }
     else if (text == "matrix2") {
         spNode->opVal = TYPE_MATRIX2;

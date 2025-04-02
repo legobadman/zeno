@@ -40,7 +40,7 @@ namespace zeno
             {"rand",
                 {"rand",
                 "Returns a pseudo-number number from 0 to 1.",
-                "float", {}}
+                "float", {{"seed", "int"}}}
             },
             {"pow",
                 {"pow",
@@ -368,6 +368,90 @@ namespace zeno
                 "Converts a linear vertex index into a face vertex number.\n"\
                 "linearVertex:\n    Linear Vertex number of vertex",
                 "int", {{"linearVertex", "int"}} }
+            },
+            { "bbox",
+                { "bbox",
+                "Returns bounding box information for a surface node.\n"\
+                "path-to-node:\n    Reference path of node\n"\
+                "type:\n    can be one of D_XMIN, D_YMIN, D_ZMIN, D_XMAX, D_YMAX, D_ZMAX, D_XSIZE, D_YSIZE, or D_ZSIZE for the corresponding values of the bounding box, return -1 if there is no size attribute.",
+                "int", {{"size value", "int"}} }
+            },
+            { "rint",
+                { "rint", "i.e. rint(2.2) = 2; rint(2.6) = 3;",
+                {{"float"}}
+                }
+            },
+            { "pcopen",
+                {"pcopen", "", "int", {
+                    {"input geometry", "string"},
+                    {"attr name", "string"},
+                    {"vector P", "vector"},
+                    {"radius", "float"},
+                    {"maxpoints", "int"}
+                }}
+            },
+            {
+                "pcnumfound",
+                {
+                    "pcnumfound", "", "int", {
+                        {"handle", "int"}
+                    }
+                }
+            },
+            {
+                "append",
+                {
+                    "append", "append content into array", "array", {
+                        {"array", "T[]"},
+                        {"element", "T"}
+                    }
+                }
+            },
+            {
+                "len",
+                {
+                    "len", "get the length of an array", "int", {
+                        {"array", "T[]"}
+                    }
+                }
+            },
+            {
+                "fit",
+                {
+                    "fit", "Takes the value in one range and shifts it to the corresponding value in a new range. e.g. fit(.3, 0, 1, 10, 20) == 13",
+                    "float", {
+                        {"value", "float"},
+                        {"omin", "float"},
+                        {"omax", "float"},
+                        {"nmin", "float"},
+                        {"nmax", "float"}
+                    }
+                }
+            },
+            {
+                "fit01",
+                {
+                    "fit01", "Returns a number between newmin and newmax that is relative to num in the range between 0 and 1. If the value is outside the 0 to 1 it will be clamped to the new range.",
+                    "float", {
+                        {"value", "float"},
+                        {"nmin", "float"},
+                        {"nmax", "float"}
+                    }
+                }
+            },
+            {
+                "get_bboxmin",
+                {
+                    "get_bboxmin", "Returns the min vec3 of the bbox of the geometry",
+                    "vec3", {}
+                }
+            },
+            {
+                "get_bboxmax",
+                {
+                    "get_bboxmax", "Returns the max vec3 of the bbox of the geometry",
+                    "vec3", {}
+                }
             }
         };
     }

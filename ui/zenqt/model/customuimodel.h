@@ -198,6 +198,9 @@ class PrimParamOutputModel : public QAbstractListModel
 
 public:
     PrimParamOutputModel(zeno::PrimitiveParams params, CustomUIModel* pModel);
+
+    Q_PROPERTY(QString maxLengthName READ getMaxLengthName NOTIFY maxLengthName_changed)
+
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
@@ -209,7 +212,12 @@ public:
     void reset();
     void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
 
+signals:
+    void maxLengthName_changed();
+
 private:
+    QString getMaxLengthName() const;
+
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
     ParamsModel* m_paramsModel;
 

@@ -498,10 +498,10 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         {
             auto spNode = item->m_wpNode;
             ZASSERT_EXIT(spNode, QVariant());
-            std::vector<zeno::zany> objs(spNode->get_output_objs());
+            zeno::zany spOutObj = spNode->get_default_output_object();
             //如果有多个，只取第一个。
-            if (!objs.empty()) {
-                return QVariant::fromValue(objs[0]);
+            if (spOutObj) {
+                return QVariant::fromValue(spOutObj);
             }
             else {
                 return QVariant();

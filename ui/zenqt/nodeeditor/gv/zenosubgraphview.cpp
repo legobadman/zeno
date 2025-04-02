@@ -896,52 +896,6 @@ void ZenoSubGraphView::onPathUpdated(QStringList path) {
 void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, bool isError)
 {
     ZASSERT_EXIT(!path.empty());
-#ifdef ZENO_QML_TEST
-    auto graphsMgr = zenoApp->graphsManager();
-    GraphModel* pGraphM = graphsMgr->getGraph(path);
-    ZASSERT_EXIT(pGraphM);
-
-    bool bFound = false;
-    QQuickWidget* pCurrentView = nullptr;
-    for (int i = 0; i < m_stackedView->count(); i++) {
-        QQuickWidget* pView = qobject_cast<QQuickWidget*>(m_stackedView->widget(i));
-        ZASSERT_EXIT(pView);
-        const QVariant& varModel = pView->rootContext()->contextProperty("nodesModel");
-        QObject* pWtf = varModel.value<QObject*>();
-        GraphModel* pViewModel = qobject_cast<GraphModel*>(pWtf);
-        auto currpath = pViewModel->currentPath();
-        if (currpath == path) {
-            m_stackedView->setCurrentIndex(i);
-            bFound = true;
-            pCurrentView = pView;
-            break;
-        }
-    }
-
-    if (!bFound) {
-        ZQmlGraphWidget* pView = new ZQmlGraphWidget(pGraphM);
-        m_stackedView->addWidget(pView);
-        m_stackedView->setCurrentWidget(pView);
-        pCurrentView = pView;
-    }
-
-    if (path.isEmpty())
-    {
-        m_pathWidget->hide();
-    }
-    else
-    {
-        m_pathWidget->show();
-        m_pathWidget->setPath(path);
-    }
-
-    if (!objId.isEmpty()) {
-        //TODO: focus on
-    }
-
-    bool bShowThumbnail = ZenoSettingsManager::GetInstance().getValue(zsShowThumbnail).toBool();
-    showThumbnail(bShowThumbnail);
-#else
     bool bFound = false;
     _ZenoSubGraphView* pCurrentView = nullptr;
     for (int i = 0; i < m_stackedView->count(); i++) {
@@ -1011,7 +965,6 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
 
     bool bShowThumbnail = ZenoSettingsManager::GetInstance().getValue(zsShowThumbnail).toBool();
     showThumbnail(bShowThumbnail);
-#endif
 }
 
 void ZenoSubGraphView::setZoom(const qreal& scale)

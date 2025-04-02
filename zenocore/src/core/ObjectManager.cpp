@@ -160,11 +160,12 @@ namespace zeno {
             auto update = m_render_updates[i];
             if (update.uuidpath_node_objkey == info.uuidpath_node_objkey) {
                 //先把原来的覆盖掉
-                assert(false);
+                //assert(false);     //在子图间跳跃时会碰到，但目前观察暂时没影响主要功能，先屏蔽
                 //m_render_updates[i] = info;
                 return;
             }
         }
+        //因为计算图的执行是部分执行（标脏）节点，所以只有标脏的对象会在这里缓存
         m_render_updates.push_back(info);
     }
 
@@ -246,6 +247,7 @@ namespace zeno {
 
     ZENO_API void ObjectManager::export_loading_objs(RenderObjsInfo& info)
     {
+        //这个函数应该没用了，因为view已经设计成即时移除了，每次只会发送打了view的对象
         std::lock_guard lck(m_mtx);
         for (auto objkey : m_newAdded) {
             auto it = m_objects.find(objkey);

@@ -5,16 +5,30 @@
 #include "nodeeditor/gv/fuzzy_search.h"
 #include "model/GraphModel.h"
 
+//#define DISABLE_CATE
 
 NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
     zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
+#ifdef DISABLE_CATE
+    m_cache_cates.resize(1);
+#else
     m_cache_cates.resize(cates.size());
+#endif
     int i = 0;
     for (auto& [cate, nodes] : cates) {
-        m_cache_cates[i].name = QString::fromStdString(cate);
-        std::transform(nodes.begin(), nodes.end(), std::back_inserter(m_cache_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
-        i++;
+#ifdef DISABLE_CATE
+        if (cate != "reflect" && cate != "prim" && cate != "subgraph" && cate != "layout")
+            continue;
+#endif
 
+#ifdef DISABLE_CATE
+        if (cate == "reflect")
+#endif
+        {
+            m_cache_cates[i].name = QString::fromStdString(cate);
+            std::transform(nodes.begin(), nodes.end(), std::back_inserter(m_cache_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
+            i++;
+        }
         for (const auto& node : nodes) {
             QString nodecls = QString::fromStdString(node);
             if (nodecls == "SubInput" || nodecls == "SubOutput")

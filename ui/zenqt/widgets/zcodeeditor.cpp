@@ -11,7 +11,6 @@
 #include <QSyntaxStyle>
 #include <zeno/core/data.h>
 #include <zeno/core/Session.h>
-#include <zeno/core/FunctionManager.h>
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include "style/zenostyle.h"

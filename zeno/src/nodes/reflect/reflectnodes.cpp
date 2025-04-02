@@ -54,6 +54,23 @@ namespace zeno
         }
     };
 
+    struct ZDEFNODE() LakeHouseSettings : zeno::INode
+    {
+        ReflectCustomUI m_uilayout = {
+             _Group{
+                {"global_seed", ParamPrimitive("Global Seed", 2983, Slider, std::vector<int>{1, 4000, 1})},
+                {"roof_window_prob", ParamPrimitive("Roof Window Prob")},
+                {"chimney_prob", ParamPrimitive("Chimney Prob")},
+                {"tower_prob", ParamPrimitive("Tower Prob")},
+             },
+        };
+
+        void apply(int global_seed = 1, float roof_window_prob = 0.6f, float chimney_prob = 0.1f, float tower_prob = 0.6f)
+        {
+
+        }
+    };
+
     struct ZDEFNODE() ReadOnlyNode : zeno::INode
     {
         ReflectCustomUI m_uilayout = {
@@ -141,34 +158,6 @@ namespace zeno
         {
             std::shared_ptr<zeno::PrimitiveObject> res = std::const_pointer_cast<zeno::PrimitiveObject>(input_obj);
             return res;
-        }
-    };
-
-    struct ZDEFNODE() ReadOnlyNode2 : ReadOnlyNode
-    {
-
-    };
-
-    struct ZDEFNODE() WildcardNode : zeno::INode
-    {
-        ReflectCustomUI m_uilayout = {
-            //输入：
-            _Group {
-                    {"input_obj", ParamObject("Input Object", Socket_Owning)},
-                    {"name1", ParamPrimitive("Name 1")},
-                    {"name2", ParamPrimitive("Name 2")},
-                    {"a", ParamPrimitive("A")},
-                    {"b", ParamPrimitive("B")},
-            },
-            //输出：
-            _Group {
-                    {"", ParamObject("Output Object", Socket_Owning)},
-            }
-        };
-
-        int apply(zeno::reflect::Any name1, zeno::reflect::Any name2)
-        {
-            return 233;
         }
     };
 }

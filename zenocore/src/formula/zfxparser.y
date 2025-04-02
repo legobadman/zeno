@@ -117,6 +117,7 @@
 %token NOTEQUAL
 %token OR
 %token AND
+%token NOT
 
 %left ADD "+"
 %left SUB "-"
@@ -131,7 +132,7 @@
 %type <std::shared_ptr<ZfxASTNode>> general-statement declare-statement jump-statement code-block assign-statement only-declare array-or-exp for-condition for-step exp-statement orexp andexp if-statement ifelse-statement arrcontent addsubexp zfx-program multi-statements compareexp factor term func-content zenvar array-stmt for-begin loop-statement
 %type <std::vector<std::shared_ptr<ZfxASTNode>>> funcargs arrcontents foreach-step
 %type <operatorVals> assign-op compare-op
-%type <string> LITERAL UNCOMPSTR DOLLAR DOLLARVARNAME RPAREN COMPARE QUESTION ZFXVAR LBRACKET RBRACKET DOT COLON TYPE ATTRAT VARNAME SEMICOLON ASSIGNTO IF ELSE FOR FOREACH DO WHILE AUTOINC AUTODEC LSQBRACKET RSQBRACKET ADDASSIGN MULASSIGN SUBASSIGN DIVASSIGN RETURN CONTINUE BREAK LESSTHAN LESSEQUAL GREATTHAN GREATEQUAL EQUALTO NOTEQUAL OR AND
+%type <string> LITERAL UNCOMPSTR DOLLAR DOLLARVARNAME RPAREN COMPARE QUESTION ZFXVAR LBRACKET RBRACKET DOT COLON TYPE ATTRAT VARNAME SEMICOLON ASSIGNTO IF ELSE FOR FOREACH DO WHILE AUTOINC AUTODEC LSQBRACKET RSQBRACKET ADDASSIGN MULASSIGN SUBASSIGN DIVASSIGN RETURN CONTINUE BREAK LESSTHAN LESSEQUAL GREATTHAN GREATEQUAL EQUALTO NOTEQUAL OR AND NOT
 %type <bool> array-mark bool-stmt
 
 %start zfx-program
@@ -314,6 +315,10 @@ compare-op: LESSTHAN { $$ = Less; }
     ;
 
 exp-statement: orexp           { $$ = $1; }
+    | NOT exp-statement        {
+        std::vector<std::shared_ptr<ZfxASTNode>>children({$2});
+        $$ = driver.makeNewNode(UNARY_EXP, NOT, children);
+    }
     ;
 
 orexp: andexp           { $$ = $1; }

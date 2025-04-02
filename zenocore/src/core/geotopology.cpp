@@ -9,10 +9,16 @@
 namespace zeno
 {
 
-    GeometryTopology::GeometryTopology(bool bTriangle, int nPoints, int nFaces) {
+    GeometryTopology::GeometryTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
         m_bTriangle = bTriangle;
         m_points.resize(nPoints);
-        m_faces.reserve(nFaces);    //面不好索引，只能逐个加
+        if (bInitFaces)
+            m_faces.resize(nFaces);
+        else
+            m_faces.reserve(nFaces);
+        for (int i = 0; i < nPoints; i++) {
+            m_points[i] = std::make_shared<HF_Point>();
+        }
     }
 
     GeometryTopology::GeometryTopology(const GeometryTopology& rhs) {
@@ -25,7 +31,7 @@ namespace zeno
         m_faces.resize(rhs.m_faces.size());
 
         for (int i = 0; i < m_points.size(); i++) {
-            auto p = std::make_shared<Point>();
+            auto p = std::make_shared<HF_Point>();
             auto& rp = rhs.m_points[i];
             m_points[i] = std::move(p);
         }
@@ -34,12 +40,13 @@ namespace zeno
             auto spEdge = std::make_shared<HEdge>();
             spEdge->id = rEdge->id;
             spEdge->point = rEdge->point;
+            spEdge->point_from = rEdge->point_from;
             spEdge->face = rEdge->face;
             m_hEdges.insert(std::make_pair(spEdge->id, spEdge));
         }
 
         for (int i = 0; i < m_faces.size(); i++) {
-            m_faces[i] = std::make_shared<Face>();
+            m_faces[i] = std::make_shared<HF_Face>();
         }
 
         //adjust all pointers
@@ -57,7 +64,8 @@ namespace zeno
             p->point = rhsptr->point;
             if (rhsptr->pair)
                 p->pair = m_hEdges[rhsptr->pair->id].get();
-            p->next = m_hEdges[rhsptr->next->id].get();
+            if (rhsptr->next)
+                p->next = m_hEdges[rhsptr->next->id].get();
         }
 
         for (int i = 0; i < m_faces.size(); i++) {
@@ -66,47 +74,72 @@ namespace zeno
             m_faces[i]->h = spEdge.get();
             m_faces[i]->start_linearIdx = rhs.m_faces[i]->start_linearIdx;
         }
-
-        m_linesPt = rhs.m_linesPt;
 #endif
+    }
+
+    bool GeometryTopology::isLineFace(HF_Face* f) const {
+        HEdge* firsth = f->h;
+        HEdge* h = firsth;
+        do {
+            if (!h)
+                return true;
+            h = h->next;
+        } while (firsth != h);
+        return false;
+    }
+
+    int GeometryTopology::isLineFace(int faceid) const
+    {
+        if (faceid < m_faces.size()) {
+            return isLineFace(m_faces[faceid].get());
+        } else {
+            return -1;
+        }
     }
 
     void GeometryTopology::toPrimitive(std::shared_ptr<PrimitiveObject> spPrim) {
         int startIdx = 0;
-        if (m_bTriangle) {
-            spPrim->tris->resize(m_faces.size());
-        }
-        else {
-            spPrim->polys->resize(m_faces.size());
-        }
-
+        AttrVector<vec2i> lines;
         for (int iFace = 0; iFace < m_faces.size(); iFace++) {
             auto face = m_faces[iFace].get();
             HEdge* firsth = face->h;
             HEdge* h = firsth;
+            assert(h != nullptr);
             std::vector<int> points;
+            bool isLine = isLineFace(face);
+            if (isLine) {
+                points.push_back(firsth->point_from);
+            }
             do {
+                if (h == nullptr) {
+                    break;
+                }
                 int index = getPointTo(h);
                 points.push_back(index);
                 h = h->next;
             } while (firsth != h);
 
-            if (m_bTriangle) {
+            if (isLine) {
+                for (int i = 1; i < points.size(); i++) {
+                    lines->push_back({ points[i - 1], points[i] });
+                }
+            }
+            else if (m_bTriangle) {
                 vec3i tri = { points[0],points[1], points[2] };
-                spPrim->tris[iFace] = std::move(tri);
+                spPrim->tris.push_back(std::move(tri));
             }
             else {
                 int sz = points.size();
                 for (auto pt : points) {
                     spPrim->loops.push_back(pt);
                 }
-                spPrim->polys[iFace] = { startIdx, sz };
+                spPrim->polys.push_back({ startIdx, sz });
                 startIdx += sz;
             }
         }
 
-        if (is_line()) {
-            spPrim->lines = m_linesPt;
+        if (lines.size() > 0) {
+            spPrim->lines = lines;
         }
     }
 
@@ -114,7 +147,7 @@ namespace zeno
         int n = prim->verts->size();
         m_points.resize(n);
         for (int i = 0; i < m_points.size(); i++) {
-            m_points[i] = std::make_shared<Point>();
+            m_points[i] = std::make_shared<HF_Point>();
         }
 
         int nFace = -1;
@@ -147,7 +180,7 @@ namespace zeno
             }
 
             //TODO: init data for Face
-            auto pFace = std::make_shared<Face>();
+            auto pFace = std::make_shared<HF_Face>();
 
             HEdge* lastHedge = 0, * firstHedge = 0;
             for (int i = 0; i < points.size(); i++) {
@@ -217,9 +250,9 @@ namespace zeno
         return nullptr;
     }
 
-    std::tuple<Point*, HEdge*, HEdge*> GeometryTopology::getPrev(HEdge* outEdge) {
+    std::tuple<HF_Point*, HEdge*, HEdge*> GeometryTopology::getPrev(HEdge* outEdge) {
         HEdge* h = outEdge, * prev = nullptr;
-        Point* point = nullptr;
+        HF_Point* point = nullptr;
         do {
             prev = h;
             point = m_points[h->point].get();
@@ -236,11 +269,6 @@ namespace zeno
         return hedge->point;
     }
 
-    void GeometryTopology::initpoint(size_t idxPoint) {
-        if (!m_points[idxPoint])
-            m_points[idxPoint] = std::make_shared<Point>();
-    }
-
     std::vector<vec3i> GeometryTopology::tri_indice() const {
         std::vector<vec3i> indice;
         for (auto spFace : m_faces) {
@@ -248,6 +276,15 @@ namespace zeno
             vec3i tri(h->point, h->next->point, h->next->next->point);
             indice.push_back(tri);
             indice.push_back(vec3i(h->next->next->next->point, h->point, h->next->next->point));
+        }
+        return indice;
+    }
+
+    std::vector<std::vector<int>> GeometryTopology::face_indice() const {
+        std::vector<std::vector<int>> indice;
+        for (int i = 0; i < m_faces.size(); i++) {
+            std::vector<int> face = face_points(i);
+            indice.emplace_back(face);
         }
         return indice;
     }
@@ -272,14 +309,20 @@ namespace zeno
     }
 
     bool GeometryTopology::is_line() const {
-        return !m_linesPt.empty();
+        //可能是线和面混用，所以这个api的意义是什么？
+        return false;
+        //return !m_linesPt.empty();
     }
 
-    int GeometryTopology::npoints_in_face(Face* face) const {
+    int GeometryTopology::npoints_in_face(HF_Face* face) const {
         auto h = face->h;
         int ncount = 0;
         do {
             ncount++;
+            if (h == nullptr) {
+                //line
+                break;
+            }
             h = h->next;
         } while (face->h != h);
         return ncount;
@@ -313,7 +356,7 @@ namespace zeno
 
             {
                 parallel_for(m_faces.size(), [&](size_t i) {
-                    Face* f = m_faces[i].get();
+                    HF_Face* f = m_faces[i].get();
                     HEdge* hstart = f->h;
                     int start = hstart->find_from();
                     int len =  npoints_in_face(f);
@@ -345,52 +388,51 @@ namespace zeno
         });
     }
 
-    void GeometryTopology::initLineNextPoint(size_t point_id) {
-        if (m_linesPt.empty()) {
-            m_linesPt.resize(m_points.size());
-        }
-        m_linesPt[point_id][0] = point_id;
-        m_linesPt[point_id][1] = point_id + 1;
-    }
-
-    void GeometryTopology::setLineNextPt(int currPt, int nextPt) {
-        if (currPt > -1 && currPt < m_linesPt.size()) {
-            m_linesPt[currPt][1] = nextPt;
-        }
-    }
-
-    int GeometryTopology::getLineNextPt(int currPt) {
-        if (currPt < m_linesPt.size()) {
-            return m_linesPt[currPt][1];
-        }
-    }
-
     int GeometryTopology::face_point(int face_id, int vert_id) const {
         if (face_id < 0 || face_id >= m_faces.size())
             return -1;
 
         auto h = m_faces[face_id]->h;
         auto firsth = h;
-        do {
-            if (vert_id-- == 0) {
-                return h->point;
-            }
-            h = h->next;
-        } while (h != firsth);
+        if (isLineFace(m_faces[face_id].get())) {
+            HEdge* pre;
+            do {
+                if (vert_id-- == 0) {
+                    return h->point_from;
+                }
+                pre = h;
+                h = h->next;
+            } while (h);
+            return pre->point;
+        } else {
+            do {
+                if (vert_id-- == 0) {
+                    return h->point;
+                }
+                h = h->next;
+                if (!h)
+                    break;
+            } while (h != firsth);
+        }
         return -1;
     }
 
-    std::vector<int> GeometryTopology::face_points(int face_id) {
+    std::vector<int> GeometryTopology::face_points(int face_id) const {
         std::vector<int> pts;
         if (face_id < 0 || face_id >= m_faces.size())
             return pts;
 
         auto h = m_faces[face_id]->h;
         auto firsth = h;
+        assert(firsth->point_from != -1);
+        pts.push_back(h->point_from);
         do {
             pts.push_back(h->point);
             h = h->next;
-        } while (h != firsth);
+            if (!h) {//line
+                break;
+            }
+        } while (h->next != firsth);
         return pts;
     }
 
@@ -444,6 +486,7 @@ namespace zeno
                 while (h->point != point_id) {
                     h = h->next;
                     nCount++;
+                    if (!h) break;
                 }
                 vertices.push_back(spFace->start_linearIdx + nCount);
             }
@@ -550,6 +593,9 @@ namespace zeno
 
         auto h = spFace->h;
         while (--offset) {
+            if (!h) {
+                break;
+            }
             h = h->next;
         }
         return { faceid, linear_vertex_id - spFace->start_linearIdx, h->point };
@@ -641,6 +687,8 @@ namespace zeno
                                     outH = start;
                                 }
                                 start = start->next;
+                                if (!start)
+                                    break;
                             } while (start != m_faces[face]->h);
                             //旧的点指向新的点
                             inH->point = targetPt;
@@ -682,10 +730,82 @@ namespace zeno
         std::set<int> remFaces;
         std::set<std::string> remHEdges;
 
+        if (m_points[ptnum]->edges.empty()) {//line
+            for (auto& [_, e] : m_hEdges) {
+                if (e->next && e->next->point == ptnum) {
+                    remHEdges.insert(e->next->id);
+                    m_points[e->point]->edges.erase(e->next);
+                    e->next = nullptr;
+                    break;
+                } else if (!e->next && e->point == ptnum) {
+                    remHEdges.insert(e->id);
+                    m_points[e->point_from]->edges.erase(e.get());
+                    remFaces.insert(e->face);
+                }
+            }
+        }
+
         for (auto outEdge : m_points[ptnum]->edges) {
             assert(outEdge);
 
             HEdge* firstEdge = outEdge;
+
+            bool isline = false;//line
+            do 
+            {
+                firstEdge = firstEdge->next;
+                if (!firstEdge) {
+                    isline = true;
+                    break;
+                }
+            } while (firstEdge != outEdge);
+            if (isline) {
+                if (m_hEdges.size() == 1) {//one edge line case
+                    remHEdges.insert(outEdge->id);
+                    remFaces.insert(outEdge->face);
+                    m_points[ptnum]->edges.erase(outEdge);
+                } else {
+                    HF_Point* prevPoint = nullptr;
+                    HEdge* prevEdge = nullptr, *pprevEdge = nullptr;
+                    for (auto& [_, e] : m_hEdges) {
+                        if (e->next && e->next == outEdge) {
+                            prevEdge = e.get();
+                            prevPoint = m_points[prevEdge->point_from].get();
+                        } else if (e->next && e->next->next && e->next->next == outEdge) {
+                            pprevEdge = e.get();
+                        }
+                    }
+                    if (prevEdge) {
+                        remHEdges.insert(outEdge->id);
+                        remHEdges.insert(prevEdge->id);
+
+                        auto newEdge = std::make_shared<HEdge>();
+
+                        std::string id = generateUUID();
+                        newEdge->id = id;
+                        m_hEdges.insert(std::make_pair(id, newEdge));
+
+                        //connect between outEdge->point and prevPoint.
+                        newEdge->point = outEdge->point;
+                        newEdge->point_from = prevEdge->point_from;
+                        newEdge->pair = nullptr;
+                        newEdge->next = outEdge->next;
+                        newEdge->face = outEdge->face;
+                        if (pprevEdge) {
+                            pprevEdge->next = newEdge.get();
+                        } else {
+                            m_faces[newEdge->face]->h = newEdge.get();
+                        }
+                        prevPoint->edges.erase(prevEdge);
+                        prevPoint->edges.insert(newEdge.get());
+                    } else {
+                        m_faces[outEdge->face]->h = outEdge->next;
+                        remHEdges.insert(outEdge->id);
+                    }
+                }
+                break;
+            }
+
             HEdge* nextEdge = firstEdge->next;
             assert(nextEdge);
             HEdge* nnextEdge = nextEdge->next;
@@ -710,6 +830,7 @@ namespace zeno
                     }
                     prev = h;
                     h = h->next;
+                    //TODO: 线段的情况会不会Nullptr
                 } while (h != outEdge);
             }
             else {
@@ -724,6 +845,7 @@ namespace zeno
 
                 //connect between outEdge->point and prevPoint.
                 newEdge->point = outEdge->point;
+                newEdge->point_from = prevEdge->point_from;
                 newEdge->pair = nullptr;
                 newEdge->next = nextEdge;
                 newEdge->face = outEdge->face;
@@ -757,6 +879,9 @@ namespace zeno
             if (hedge->point >= ptnum) {
                 hedge->point--;
             }
+            if (hedge->point_from >= ptnum) {
+                hedge->point_from--;
+            }
             int nStep = 0;
             for (auto remFaceId : _remFaces) {
                 if (hedge->face >= remFaceId)
@@ -774,16 +899,7 @@ namespace zeno
             */
         }
 
-        if (!m_linesPt.empty()) {
-            for (size_t pt = ptnum; pt < m_linesPt.size(); ++pt) {
-                m_linesPt[pt][0] -= 1;
-                m_linesPt[pt][1] -= 1;
-            }
-            m_linesPt.erase(m_linesPt.end() - 1);
-        }
-
         update_linear_vertex();
-
         return true;
     }
 
@@ -800,47 +916,121 @@ namespace zeno
                 break;
             }
             vertEdge = vertEdge->next;
+            if (!vertEdge)
+                break;
         } while (vertEdge != first);
-        auto& [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
 
-        if (vertEdge->next == pprevedge) {
-            size_t removeFaceid = vertEdge->face;
-            HEdge* startRemove = prevedge;
-            do 
-            {
-                if (startRemove->pair) {
-                    startRemove->pair->pair = nullptr;
+        bool isline = false;//line
+        first = vertEdge;
+        do
+        {
+            if (first)
+                first = first->next;
+            if (!first) {
+                isline = true;
+                break;
+            }
+        } while (vertEdge != first);
+        if (isline) {
+            if (m_hEdges.size() == 1) {//one edge line case
+                HEdge* e = m_hEdges.begin()->second.get();
+                m_points[e->point_from]->edges.erase(e);
+                m_faces.erase(m_faces.begin() + e->face);
+                m_hEdges.clear();
+            }
+            else {
+                m_points[m_points.size() - 2]->edges.erase(vertEdge);
+
+                HF_Point* prevPoint = nullptr;
+                HEdge* prevEdge = nullptr, * pprevEdge = nullptr;
+                for (auto& [_, e] : m_hEdges) {
+                    if (e->next == vertEdge) {
+                        prevEdge = e.get();
+                        prevPoint = m_points[prevEdge->point_from].get();
+                    } else if (e->next && e->next->next == vertEdge) {
+                        pprevEdge = e.get();
+                    }
                 }
-                m_points[startRemove->point]->edges.erase(startRemove->next);
-                std::string removeEdgeId = startRemove->id;
-                startRemove = startRemove->next;
-                m_hEdges.erase(removeEdgeId);
-            } while (startRemove != prevedge);
+                if (!vertEdge) {//rm last vertex
+                    prevPoint->edges.erase(prevEdge);
+                    if (pprevEdge) {
+                        pprevEdge->next = nullptr;
+                    }
+                    if (prevEdge) {
+                        m_hEdges.erase(prevEdge->id);
+                    }
+                }
+                else {
+                    if (prevEdge) {
+                        std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
+                        newedge->id = generateUUID();
+                        newedge->pair = nullptr;
+                        newedge->next = vertEdge->next;
+                        newedge->point = vertEdge->point;
+                        newedge->point_from = prevEdge->point_from;
+                        newedge->face = vertEdge->face;
 
-            for (auto& [_, hedge] : m_hEdges) {
-                if (hedge->face >= removeFaceid) {
-                    hedge->face--;
+                        m_points[prevEdge->point]->edges.erase(vertEdge);
+                        prevPoint->edges.erase(prevEdge);
+                        prevPoint->edges.insert(newedge.get());
+                        if (pprevEdge) {
+                            pprevEdge->next = newedge.get();
+                        } else {
+                            m_faces[newedge->face]->h = newedge.get();
+                        }
+                        m_hEdges.erase(vertEdge->id);
+                        m_hEdges.erase(prevEdge->id);
+                        m_hEdges.insert({ newedge->id, newedge });
+                    } else {
+                        m_faces[vertEdge->face]->h = vertEdge->next;
+                        m_points[vertEdge->point_from]->edges.erase(vertEdge);
+                        m_hEdges.erase(vertEdge->id);
+                    }
                 }
             }
-            m_faces.erase(m_faces.begin() + removeFaceid);
         } else {
-            std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
-            newedge->id = generateUUID();
-            newedge->pair = nullptr;
-            newedge->next = vertEdge->next;
-            newedge->point = vertEdge->point;
-            newedge->face = vertEdge->face;
+            auto& [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
 
-            m_points[prevedge->point]->edges.erase(vertEdge);
-            m_points[pprevedge->point]->edges.erase(prevedge);
-            m_points[pprevedge->point]->edges.insert(newedge.get());
-            pprevedge->next = newedge.get();
+            if (vertEdge->next == pprevedge) {
+                size_t removeFaceid = vertEdge->face;
+                HEdge* startRemove = prevedge;
+                do 
+                {
+                    if (startRemove->pair) {
+                        startRemove->pair->pair = nullptr;
+                    }
+                    m_points[startRemove->point]->edges.erase(startRemove->next);
+                    std::string removeEdgeId = startRemove->id;
+                    startRemove = startRemove->next;
+                    m_hEdges.erase(removeEdgeId);
+                } while (startRemove != prevedge);
 
-            m_faces[newedge->face]->h = newedge.get();
+                for (auto& [_, hedge] : m_hEdges) {
+                    if (hedge->face >= removeFaceid) {
+                        hedge->face--;
+                    }
+                }
+                m_faces.erase(m_faces.begin() + removeFaceid);
+            } else {
+                std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
+                newedge->id = generateUUID();
+                newedge->pair = nullptr;
+                newedge->next = vertEdge->next;
+                newedge->point = vertEdge->point;
+                //TODO: newedge->point_from = ?
+                newedge->face = vertEdge->face;
 
-            m_hEdges.erase(vertEdge->id);
-            m_hEdges.erase(prevedge->id);
-            m_hEdges.insert({newedge->id, newedge});
+                m_points[prevedge->point]->edges.erase(vertEdge);
+                m_points[pprevedge->point]->edges.erase(prevedge);
+                m_points[pprevedge->point]->edges.insert(newedge.get());
+                pprevedge->next = newedge.get();
+
+                m_faces[newedge->face]->h = newedge.get();
+
+                m_hEdges.erase(vertEdge->id);
+                m_hEdges.erase(prevedge->id);
+                m_hEdges.insert({newedge->id, newedge});
+            }
         }
         update_linear_vertex();
 
@@ -853,7 +1043,7 @@ namespace zeno
         }
 
         std::set<int> remPoints;
-        std::set<Point*> remPtrPoints;
+        std::set<HF_Point*> remPtrPoints;
         for (auto face_id : faces) {
             if (face_id < 0 || face_id >= m_faces.size()) {
                 return false;
@@ -884,8 +1074,12 @@ namespace zeno
                 //h的依赖都解除了，现在就可以删除了。
                 m_hEdges.erase(h->id);
                 h = nexth;
+                if (!h)
+                    break;
             } while (firsth != h);
         }
+
+        std::sort(removedPtnum.begin(), removedPtnum.end());
 
         //边都已经删除了，现在只要删除点和面即可。
         removeElements(m_points, remPoints);
@@ -901,6 +1095,15 @@ namespace zeno
                     break;
             }
             hedge->point -= nStep;
+
+            nStep = 0;
+            for (auto remPointId : remPoints) {
+                if (hedge->point_from >= remPointId)
+                    nStep++;
+                else
+                    break;
+            }
+            hedge->point_from -= nStep;
 
             nStep = 0;
             for (auto remFaceId : faces) {
@@ -924,7 +1127,7 @@ namespace zeno
     }
 
     int GeometryTopology::add_point() {
-        auto spPoint = std::make_shared<Point>();
+        auto spPoint = std::make_shared<HF_Point>();
         m_points.emplace_back(spPoint);
         return m_points.size() - 1;
     }
@@ -960,23 +1163,24 @@ namespace zeno
         }
     }
 
-    int GeometryTopology::addface(const std::vector<int>& points) {
+    void GeometryTopology::set_face(int idx, const std::vector<int>& points, bool bClose) {
         //points要按照逆时针方向
-        std::shared_ptr<Face> spFace = std::make_shared<Face>();
-        size_t face_id = m_faces.size();
+        std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
+        size_t face_id = idx;
 
         std::vector<HEdge*> edges;
         for (size_t i = 0; i < points.size(); i++) {
             size_t from_point = -1, to_point = -1;
-            if (i == 0) {
-                //edge: from N-1 to 0
-                from_point = points[points.size() - 1];
-                to_point = points[i];
+            if (i == points.size() - 1) {
+                if (!bClose)
+                    continue;   //line
+                from_point = points[i];
+                to_point = points[0];
             }
             else {
-                //edge: from i-1 to i
-                from_point = points[i - 1];
-                to_point = points[i];
+                //edge: from i to i+1
+                from_point = points[i];
+                to_point = points[i + 1];
             }
 
             //DEBUG:
@@ -985,12 +1189,12 @@ namespace zeno
                 j = 0;
             }
 
-            if (i == 0) {
+            if ((bClose && i == 0) || (!bClose && i == 1)) {
                 if (face_id == 0) {
                     spFace->start_linearIdx = 0;
                 }
                 else {
-                    spFace->start_linearIdx = m_faces[face_id - 1]->start_linearIdx + 
+                    spFace->start_linearIdx = m_faces[face_id - 1]->start_linearIdx +
                         nvertices(face_id - 1);
                 }
             }
@@ -998,8 +1202,14 @@ namespace zeno
             std::shared_ptr<HEdge> hedge = std::make_shared<HEdge>();
             hedge->face = face_id;
             hedge->point = to_point;
+            hedge->point_from = from_point;
             std::string id = zeno::format("{}->{}", from_point, to_point);
             hedge->id = id;
+
+            if (hedge->point == hedge->point_from) {
+                int j;
+                j = 0;
+            }
 
             auto fromPoint = m_points[from_point];
             assert(fromPoint);
@@ -1022,12 +1232,97 @@ namespace zeno
 
         for (size_t i = 0; i < edges.size(); i++) {
             if (i == edges.size() - 1) {
-                edges[i]->next = edges[0];
+                if (bClose) {
+                    edges[i]->next = edges[0];
+                }
             }
             else {
                 edges[i]->next = edges[i + 1];
             }
         }
+
+        spFace->h = edges[0];
+        m_faces[idx] = spFace;
+    }
+
+    int GeometryTopology::add_face(const std::vector<int>& points, bool bClose) {
+        //points要按照逆时针方向
+        std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
+        size_t face_id = m_faces.size();
+
+        std::vector<HEdge*> edges;
+        for (size_t i = 0; i < points.size(); i++) {
+            size_t from_point = -1, to_point = -1;
+            if (i == points.size() - 1) {
+                if (!bClose)
+                    continue;   //line
+                from_point = points[i];
+                to_point = points[0];
+            }
+            else {
+                //edge: from i to i+1
+                from_point = points[i];
+                to_point = points[i + 1];
+            }
+
+            //DEBUG:
+            if (from_point == 1 && to_point == 0 || from_point == 7 && to_point == 5) {
+                int j;
+                j = 0;
+            }
+
+            if ((bClose && i == 0) || (!bClose && i == 1)) {
+                if (face_id == 0) {
+                    spFace->start_linearIdx = 0;
+                }
+                else {
+                    spFace->start_linearIdx = m_faces[face_id - 1]->start_linearIdx + 
+                        nvertices(face_id - 1);
+                }
+            }
+
+            std::shared_ptr<HEdge> hedge = std::make_shared<HEdge>();
+            hedge->face = face_id;
+            hedge->point = to_point;
+            hedge->point_from = from_point;
+            std::string id = zeno::format("{}->{}", from_point, to_point);
+            hedge->id = id;
+
+            if (hedge->point == hedge->point_from) {
+                int j;
+                j = 0;
+            }
+
+            auto fromPoint = m_points[from_point];
+            assert(fromPoint);
+            fromPoint->edges.insert(hedge.get());
+
+            //check whether the edge from to_point to from_point.
+            auto toPoint = m_points[to_point];
+            assert(toPoint);
+            for (HEdge* outEdge : toPoint->edges) {
+                if (outEdge->point == from_point) {
+                    outEdge->pair = hedge.get();
+                    hedge->pair = outEdge;
+                    break;
+                }
+            }
+
+            m_hEdges.insert(std::make_pair(id, hedge));
+            edges.push_back(hedge.get());
+        }
+
+        for (size_t i = 0; i < edges.size(); i++) {
+            if (i == edges.size() - 1) {
+                if (bClose) {
+                    edges[i]->next = edges[0];
+                }
+            }
+            else {
+                edges[i]->next = edges[i + 1];
+            }
+        }
+
         spFace->h = edges[0];
         m_faces.emplace_back(spFace);
         return m_faces.size() - 1;

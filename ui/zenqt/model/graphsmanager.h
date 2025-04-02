@@ -30,9 +30,9 @@ public:
     Q_INVOKABLE void redo(const QString& name);
     Q_INVOKABLE QStringList recentFiles() const;
     Q_INVOKABLE void openProject(const QString& zsgpath);
-    Q_INVOKABLE void onNodeSelected(const QString& graphname, const QModelIndex& idx);
+    Q_INVOKABLE void onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx);
 
-    Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath FINAL)
+    Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath NOTIFY currentPathChanged)
     QString currentGraphPath() const;
     void setCurrentGraphPath(const QString& path);
 
@@ -77,6 +77,7 @@ signals:
     void fileClosed();
     void fileSaved(QString);
     void dirtyChanged(bool);
+    void currentPathChanged(QString);
 
 private slots:
     void onModelDataChanged(const QModelIndex& subGpIdx, const QModelIndex& idx, int role);

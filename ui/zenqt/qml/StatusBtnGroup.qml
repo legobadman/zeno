@@ -9,14 +9,14 @@ import QtQuick.Shapes 1.6
 Item {
     id: comp
     property int xoffset: 12
-    property int side: 24
+    property int side: 20
     property int fixheight: 48
     property real radius: 4
     property bool round_last_btn: true
     property bool isview: false
     property bool isbypass: false
 
-    implicitWidth: 2 * comp.side
+    implicitWidth: 2 * comp.side + 2
     implicitHeight: fixheight
 
     StatusImgBtn{
@@ -42,7 +42,7 @@ Item {
 
     StatusImgBtn{
         id: view_btn
-        x: comp.side + 1
+        x: comp.side + 3
         width: comp.side
         height: fixheight
         source: comp.round_last_btn ? "qrc:/icons/view-off.svg" : "qrc:/icons/view-noradius-off.svg"

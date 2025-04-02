@@ -16,8 +16,8 @@ struct Subnet : zeno::SubnetNode {
     }
     CustomUI export_customui() const override {
         CustomUI ui = zeno::SubnetNode::export_customui();
-        ui.uistyle.background = "#1A5447";
-        ui.uistyle.iconResPath = "<svg width=\"30\" height=\"24\" viewBox=\"0 0 30 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M24.3807 8.74361L7.07678 9.38639C6.50413 9.38639 6.17022 9.60077 6.01249 10.1514L2.42052 22.4397C2.27201 22.962 1.56007 23.2063 1.0648 23.2063C0.56987 23.2063 0.164835 22.8013 0.164835 22.3064V18.8626V4.75384V4.07977V2.01409C0.164835 1.32158 0.726286 0.760132 1.4188 0.760132H10.3283C10.6608 0.760132 10.9796 0.89218 11.2147 1.1273L13.7997 3.71228C14.0348 3.9474 14.3539 4.07944 14.6862 4.07944H23.1267C23.8192 4.07944 24.3807 4.6409 24.3807 5.33341V5.76182V8.74361Z\" fill=\"#E0AD31\"/><path d=\"M1.0648 23.2063C1.55974 23.2063 1.81626 22.8286 1.96477 22.3063L5.58572 9.67383C5.74345 9.12325 6.24695 8.7439 6.81993 8.7439H29.0076C29.5375 8.7439 29.9181 9.25299 29.7686 9.76142L26.1806 21.954C26.0186 22.5306 25.6633 23.2112 24.9283 23.2063H1.0648Z\" fill=\"#FFC843\"/></svg>";
+        ui.uistyle.background = "#1D5F51";
+        ui.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
         return ui;
     }
 };
@@ -53,6 +53,7 @@ struct SubInput : zeno::INode {
         for (auto param : get_output_object_params()) {
             ui.outputObjs.emplace_back(param);
         }
+        ui.uistyle.background = "#5F5F5F";
         return ui;
     }
 };
@@ -88,6 +89,7 @@ struct SubOutput : zeno::INode {
         for (auto param : get_input_object_params()) {
             ui.inputObjs.emplace_back(param);
         }
+        ui.uistyle.background = "#5F5F5F";
         return ui;
     }
 };

@@ -150,6 +150,14 @@ void ZenoMainWindow::initWindowProperty()
         QString title = AppHelper::nativeWindowTitle(path);
         updateNativeWinTitle(title);
     });
+    connect(pGraphsMgm, &GraphsManager::currentPathChanged, this, [=](QString currpath) {
+        for (DisplayWidget* pWid : viewports()) {
+            zeno::render_reload_info info;
+            info.policy = zeno::Reload_SwitchGraph;
+            info.current_ui_graph = currpath.toStdString(); //中文？
+            pWid->reload(info);
+        }
+    });
     connect(this, &ZenoMainWindow::visFrameUpdated, this, &ZenoMainWindow::onZenovisFrameUpdate);
 }
 
@@ -2270,9 +2278,8 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
                     zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                    if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
-                        panel->setGeometry(subgraph, idx, spGeom.get());
-                    }
+                    std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject);
+                    panel->setGeometry(subgraph, idx, spGeom);
                 }
             }
             else if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(wid))

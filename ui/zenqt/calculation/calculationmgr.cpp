@@ -25,6 +25,10 @@ CalcWorker::CalcWorker(QObject* parent) {
     }
 }
 
+void CalcWorker::setCurrentGraphPath(const QString& current_graph_path) {
+    m_current_graph_path = current_graph_path;
+}
+
 void CalcWorker::run() {
     auto& sess = zeno::getSession();
 
@@ -33,7 +37,8 @@ void CalcWorker::run() {
     //});
 
     zeno::GraphException::catched([&] {
-        sess.run();
+        const std::string& currpath = m_current_graph_path.toStdString();
+        sess.run(/*currpath*/); //如果局部运行子图，可能要考虑subinput的外部前置计算是否要计算
         }, *sess.globalError);
     sess.globalState->set_working(false);
 
@@ -44,7 +49,7 @@ void CalcWorker::run() {
         state.runstatus = zeno::Node_RunError;
         zeno::ObjPath path = sess.globalError->getNode();
         emit nodeStatusChanged(path, state);
-        emit calcFinished(false, path, errMsg);
+        emit calcFinished(false, path, errMsg); //会发送到：DisplayWidget::onCalcFinished
     }
     else {
         emit calcFinished(true, {}, "");
@@ -97,12 +102,13 @@ void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
         m_thread.wait();
     }
     setRunStatus(RunStatus::NoRun);
-    emit calcFinished(bSucceed, nodeUuidPath, msg);
+    emit calcFinished(bSucceed, nodeUuidPath, msg);  //会发送到：DisplayWidget::onCalcFinished
 }
 
 void CalculationMgr::run()
 {
     setRunStatus(RunStatus::Running);
+    m_worker->setCurrentGraphPath(zenoApp->graphsManager()->currentGraphPath());
     if (m_bMultiThread) {
         m_thread.start();
     }

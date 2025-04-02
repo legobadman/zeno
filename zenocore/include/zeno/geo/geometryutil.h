@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <array>
+#include <zeno/types/ListObject.h>
 #include <zeno/types/GeometryObject.h>
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
@@ -19,6 +20,32 @@ namespace zeno
         Orientaion_YZ,
         Orientaion_XY,
         Orientaion_ZX
+    };
+
+    enum PointSide {
+        UnDecided,
+        Below,
+        Above,
+        Both,   //在平面上
+    };
+
+    struct DividePoint
+    {
+        vec3f pos;  //分割点的坐标
+        int from;   //分割点所在线段的起点
+        int to;     //分割点所在线段的终点，并有from < to，如果分割点恰好是顶点，则from=to
+    };
+
+    enum DivideKeep {
+        Keep_Both,
+        Keep_Below,
+        Keep_Above
+    };
+
+    struct DivideFace
+    {
+        std::vector<int> face_indice;
+        PointSide side;
     };
 
     struct GeometryObject;
@@ -47,6 +74,25 @@ namespace zeno
         Rotate_Orientaion orientaion
         );
     ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(
+        std::shared_ptr<zeno::GeometryObject> input,
+        const std::string& sampleRegion,
+        const int count,
+        int seed);
+    ZENO_API std::shared_ptr<zeno::GeometryObject> divideObject(
+        std::shared_ptr<zeno::GeometryObject> input_object,
+        DivideKeep keep,
+        zeno::vec3f center_pos,
+        zeno::vec3f direction
+    );
+    ZENO_API bool dividePlane(const std::vector<vec3f>& face_pts, float A, float B, float C, float D,
+        /*out*/std::vector<DivideFace>& split_faces,
+        /*out*/std::map<int, DividePoint>& split_infos,
+        /*out*/PointSide& which_side_if_failed
+        );
 }
 
 

@@ -409,7 +409,6 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     paramOutput.name = "port";
     paramOutput.defl = newAsst.primitive_outputs[0].defl;   //仅仅保证有个值，实质没什么意义
     paramOutput.type = newAsst.primitive_outputs[0].type;
-    paramOutput.bWildcard = true;
     output1Node->add_input_prim_param(paramOutput);
 
     std::shared_ptr<zeno::INode> objInput1Node = newAsst.sharedGraph->getNode("objInput1");
@@ -417,7 +416,6 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     paramObj.bInput = false;
     paramObj.name = "port";
     paramObj.type = newAsst.object_inputs[0].type;
-    paramObj.bWildcard = newAsst.object_inputs[0].bWildcard;
     objInput1Node->add_output_obj_param(paramObj);
 
     std::shared_ptr<zeno::INode> objOutput1Node = newAsst.sharedGraph->getNode("objOutput1");

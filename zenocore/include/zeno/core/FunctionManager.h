@@ -42,7 +42,7 @@ namespace zeno {
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);
         void pushStack();
         void popStack();
-        bool hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& newFilter) const;
+        bool hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const;
 
         ZfxVariable& getVariableRef(const std::string& name, ZfxContext* pContext);
         bool declareVariable(const std::string& name);
@@ -53,10 +53,10 @@ namespace zeno {
         std::vector<ZfxVariable> process_args(std::shared_ptr<ZfxASTNode> parent, ZfxElemFilter& filter, ZfxContext* pContext);
 
         ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel = 0);
-        void setAttrValue(std::string attrname, std::string channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext);
+        void setAttrValue(const std::string& attrname, const std::string& channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext);
 
+        ZfxVariable trunkVariable(ZfxVariable origin, const ZfxElemFilter& filter);
         void commitToPrim(const std::string& attrname, const ZfxVariable& val, ZfxElemFilter& filter, ZfxContext* pContext);
-        std::pair<std::shared_ptr<INode>, std::string> getNodeAndParamNameFromRef(const std::string& ref, ZfxContext* pContext);
 
         VariableTable m_globalAttrCached;
         std::vector<ZfxStackEnv> m_stacks;

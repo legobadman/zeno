@@ -480,6 +480,10 @@ Window {
                                                     }
                                                 }
                                                 Keys.onDeletePressed: {
+                                                    var name = primoutColumn.primOutputModel.data(primoutColumn.primOutputModel.index(listView1.currentIdx, 0), Model.ROLE_PARAM_NAME)
+                                                    if(name == "data_output"){
+                                                        return
+                                                    }
                                                     primoutColumn.primOutputModel.removeRow(listView1.currentIdx)
                                                     if(primoutColumn.primOutputModel.rowCount() === 0 ){
                                                         listView1.currentIdx = -1
@@ -602,6 +606,10 @@ Window {
                                                     }
                                                 }
                                                 Keys.onDeletePressed: {
+                                                    var name = objinColumn.objInputModel.data(objinColumn.objInputModel.index(listView2.currentIdx, 0), Model.ROLE_PARAM_NAME)
+                                                    if(name == "Input"){
+                                                        return
+                                                    }
                                                     objinColumn.objInputModel.removeRow(listView2.currentIdx)
                                                     if(objinColumn.objInputModel.rowCount() === 0 ){
                                                         listView2.currentIdx = -1
@@ -723,6 +731,10 @@ Window {
                                                     }
                                                 }
                                                 Keys.onDeletePressed: {
+                                                    var name = objoutColumn.objOutputModel.data(objoutColumn.objOutputModel.index(listView3.currentIdx, 0), Model.ROLE_PARAM_NAME)
+                                                    if(name == "Output"){
+                                                        return
+                                                    }
                                                     objoutColumn.objOutputModel.removeRow(listView3.currentIdx)
                                                      if(objoutColumn.objOutputModel.rowCount() === 0 ){
                                                         listView3.currentIdx = -1
@@ -885,15 +897,27 @@ Window {
         var modelRef
         var curRow = 0
         if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow === -1 && rootRec.currentParamRow === -1) {//删tab
+            var tabname =  dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0),  Model.ROLE_PARAM_NAME)
+            if(tabname == "Tab1"){
+                return false
+            }
             modelRef = dialog.tabelM
             curRow = rootRec.currentTabRow
         } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow === -1) {//删group
             var groupmodel = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
+            var groupname =  groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0),  Qt.DisplayRole)
+            if(groupname == "Group1"){
+                return false
+            }
             modelRef = groupmodel
             curRow = rootRec.currentGroupRow
         } else if(rootRec.currentTabRow !== -1 && rootRec.currentGroupRow !== -1 && rootRec.currentParamRow !== -1) {//删param
             var groupmodel = dialog.tabelM.data(dialog.tabelM.index(rootRec.currentTabRow, 0), CustomuiModelType.GroupModel)
             modelRef = groupmodel.data(groupmodel.index(rootRec.currentGroupRow, 0), CustomuiModelType.PrimModel)
+            var paramname = modelRef.data(modelRef.index(rootRec.currentParamRow, 0), Model.ROLE_PARAM_NAME)
+            if(paramname == "data_input"){
+                return false
+            }
             curRow = rootRec.currentParamRow
         } else {
             console.log("error index")

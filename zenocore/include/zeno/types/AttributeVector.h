@@ -15,12 +15,15 @@ namespace zeno {
     {
     public:
         AttributeVector() = delete;
-        ZENO_API AttributeVector(const AttrVar& val_or_vec, size_t size);
+        ZENO_API AttributeVector(const AttrVar& val_or_vec, size_t size, bool sigval_init = true);
         ZENO_API AttributeVector(const AttributeVector& rhs);
         ZENO_API size_t size() const;
-        ZENO_API void set(const AttrVar& val_or_vec);
+        ZENO_API void set(const AttrVar& val_or_vec, bool sigval_init = true);
         ZENO_API GeoAttrType type() const;
         ZENO_API AttrVarVec get();
+        ZENO_API AttrValue front() const;
+        ZENO_API AttrValue getelem(size_t idx) const;
+        ZENO_API void copySlice(const AttributeVector& rhs, int fromIndex);
 
         void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {
             if (self) {
