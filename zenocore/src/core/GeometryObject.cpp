@@ -514,6 +514,52 @@ namespace zeno
         return 1;
     }
 
+    AttrValue GeometryObject::get_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx)
+    {
+        const std::map<std::string, AttributeVector>& container = get_container(grp);
+        auto iterContainer = container.find(attr_name);
+        if (iterContainer != container.end()) {
+            const AttributeVector& attrVec = iterContainer->second;
+            return attrVec.getelem(idx);
+        }
+        else {
+            throw makeError<UnimplError>("Unknown attr");
+        }
+    }
+
+    void GeometryObject::set_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx, AttrValue val)
+    {
+        std::map<std::string, AttributeVector>& container = get_container(grp);
+        auto iterContainer = container.find(attr_name);
+        if (iterContainer != container.end()) {
+            AttributeVector& attrVec = iterContainer->second;
+            std::visit([&](auto&& arg) {
+                using T = std::decay<decltype(arg)>;
+                if constexpr (std::is_same_v<T, float>) {
+                    set_elem(idx, arg);
+                }
+                else if constexpr (std::is_same_v<T, int>) {
+                    set_elem(idx, arg);
+                }
+                else if constexpr (std::is_same_v<T, vec2f>) {
+                    set_elem(idx, arg);
+                }
+                else if constexpr (std::is_same_v<T, vec3f>) {
+                    set_elem(idx, arg);
+                }
+                else if constexpr (std::is_same_v<T, vec4f>) {
+                    set_elem(idx, arg);
+                }
+                else if constexpr (std::is_same_v<T, std::string>) {
+                    set_elem(idx, arg);
+                }
+            }, val);
+        }
+        else {
+            throw makeError<UnimplError>("Unknown attr");
+        }
+    }
+
     ZENO_API bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name)
     {
         std::map<std::string, AttributeVector>& container = get_container(grp);

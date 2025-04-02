@@ -117,6 +117,9 @@ namespace zeno
             return iter->second.get_attrs<T, CHANNEL>();
         }
 
+        AttrValue get_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx);
+        void set_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx, AttrValue val);
+
         //获取属性对应某一个索引下的值
         template<class T>
         T get_elem(GeoAttrGroup grp, std::string const& attr_name, char channel, size_t idx) const {

@@ -747,6 +747,25 @@ namespace zeno
         return spOutput;
     }
 
+    static void copyAttribute(
+        GeometryObject* srcObj,
+        GeometryObject* destObj,
+        GeoAttrGroup group,
+        std::unordered_map<int, int> oldtonew,
+        std::set<std::string> excludeNames)
+    {
+        std::vector<std::string> attrnames = srcObj->get_attr_names(group);
+        for (auto attr : attrnames) {
+            if (excludeNames.find(attr) != excludeNames.end())
+                continue;
+            for (int i = 0; i < destObj->get_group_count(group); i++) {
+                int newidx = oldtonew[i];
+                AttrValue val = srcObj->get_attr_elem(group, attr, i);
+                destObj->set_attr_elem(group, attr, newidx, val);
+            }
+        }
+    }
+
     ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold) {
 
         std::vector<vec3f> points = input->points_pos();
@@ -782,7 +801,7 @@ namespace zeno
         }
 
         std::vector<vec3f> new_points;
-        std::unordered_map<int, int> newIndexMap;
+        std::unordered_map<int, int> pointMapping;
         for (const auto& group : groups) {
             vec3f centroid = { 0, 0, 0 };
             for (int idx : group.second) {
@@ -792,7 +811,7 @@ namespace zeno
             }
             for (float& c : centroid)
                 c /= group.second.size();
-            newIndexMap[group.first] = new_points.size();
+            pointMapping[group.first] = new_points.size();
             new_points.push_back(centroid);
         }
 
@@ -802,7 +821,7 @@ namespace zeno
         for (const auto& face : faces) {
             std::vector<int> newFace;
             for (int v : face) {
-                newFace.push_back(newIndexMap[uf.find(v)]);
+                newFace.push_back(pointMapping[uf.find(v)]);
             }
             // 防止生成重复面
             std::vector<int> _face = newFace;
@@ -822,6 +841,7 @@ namespace zeno
             spOutput->add_face(facePts);
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);
+        copyAttribute(input.get(), spOutput.get(), ATTR_POINT, pointMapping, { "pos" });
         return spOutput;
     }
 

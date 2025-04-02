@@ -32,6 +32,10 @@ namespace zeno {
         return m_pImpl->front();
     }
 
+    AttrValue AttrColumn::get_elem(size_t idx) const {
+        return m_pImpl->get_elem(idx);
+    }
+
     void AttrColumn::set(const AttrVarVec& val) {
         return m_pImpl->set(val);
     }

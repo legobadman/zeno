@@ -34,6 +34,41 @@ namespace zeno {
         return self->value();
     }
 
+    ZENO_API AttrValue AttributeVector::getelem(size_t idx) const {
+        if (self)
+            return self->get_elem(idx);
+        switch (m_type)
+        {
+        case ATTR_INT:
+        case ATTR_FLOAT:
+        case ATTR_STRING:
+            return self->get_elem(idx);
+        case ATTR_VEC2:
+        {
+            vec2f vec(std::get<float>(x_comp->get_elem(idx)),
+                std::get<float>(y_comp->get_elem(idx)));
+            return vec;
+        }
+        case ATTR_VEC3:
+        {
+            vec3f vec(std::get<float>(x_comp->get_elem(idx)),
+                std::get<float>(y_comp->get_elem(idx)),
+                std::get<float>(z_comp->get_elem(idx)));
+            return vec;
+        }
+        case ATTR_VEC4:
+        {
+            vec4f vec(std::get<float>(x_comp->get_elem(idx)),
+                std::get<float>(y_comp->get_elem(idx)),
+                std::get<float>(z_comp->get_elem(idx)),
+                std::get<float>(w_comp->get_elem(idx)));
+            return vec;
+        }
+        }
+        assert(false);
+        return AttrValue();
+    }
+
     ZENO_API AttrValue AttributeVector::front() const {
         if (self)
             return self->front();

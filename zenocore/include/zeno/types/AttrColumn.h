@@ -88,6 +88,21 @@ namespace zeno {
             }, m_data);
         }
 
+        AttrValue get_elem(size_t idx) const {
+            return std::visit([&](auto&& vec)->AttrValue {
+                using E = std::decay_t<decltype(vec)>;
+                if constexpr (
+                    std::is_same_v<E, std::vector<int>> ||
+                    std::is_same_v < E, std::vector<float>> ||
+                    std::is_same_v < E, std::vector<std::string>> ||
+                    std::is_same_v<E, std::vector<vec2f>> ||
+                    std::is_same_v<E, std::vector<vec3f>> ||
+                    std::is_same_v<E, std::vector<vec4f>>) {
+                    return vec[idx];
+                }
+            }, m_data);
+        }
+
         template<typename T>
         void insert(size_t index, T elemVal) {
             if (index < 0 || index >= m_size) {
@@ -201,7 +216,7 @@ namespace zeno {
         }
 
         AttrVarVec get() const;
-
+        AttrValue get_elem(size_t idx) const;
         AttrValue front() const;
 
         template<typename T>
