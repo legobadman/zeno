@@ -534,24 +534,16 @@ namespace zeno
         if (iterContainer != container.end()) {
             AttributeVector& attrVec = iterContainer->second;
             std::visit([&](auto&& arg) {
-                using T = std::decay<decltype(arg)>;
-                if constexpr (std::is_same_v<T, float>) {
-                    set_elem(idx, arg);
-                }
-                else if constexpr (std::is_same_v<T, int>) {
-                    set_elem(idx, arg);
-                }
-                else if constexpr (std::is_same_v<T, vec2f>) {
-                    set_elem(idx, arg);
-                }
-                else if constexpr (std::is_same_v<T, vec3f>) {
-                    set_elem(idx, arg);
-                }
-                else if constexpr (std::is_same_v<T, vec4f>) {
-                    set_elem(idx, arg);
-                }
-                else if constexpr (std::is_same_v<T, std::string>) {
-                    set_elem(idx, arg);
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (
+                    std::is_same_v<T, float> ||
+                    std::is_same_v<T, int> ||
+                    std::is_same_v<T, vec2f> ||
+                    std::is_same_v<T, vec3f> ||
+                    std::is_same_v<T, vec4f> ||
+                    std::is_same_v<T, std::string>
+                    ) {
+                    set_elem(grp, attr_name, idx, arg);
                 }
             }, val);
         }

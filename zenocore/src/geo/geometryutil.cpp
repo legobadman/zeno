@@ -758,6 +758,22 @@ namespace zeno
         for (auto attr : attrnames) {
             if (excludeNames.find(attr) != excludeNames.end())
                 continue;
+
+            if (!destObj->has_attr(group, attr)) {
+                zeno::GeoAttrType type = srcObj->get_attr_type(group, attr);
+                AttrVar init_val;
+                switch (type)
+                {
+                case ATTR_INT:      init_val = 0; break;
+                case ATTR_FLOAT:    init_val = 0.f; break;
+                case ATTR_STRING:   init_val = ""; break;
+                case ATTR_VEC2:     init_val = vec2f(); break;
+                case ATTR_VEC3:     init_val = vec3f(); break;
+                case ATTR_VEC4:     init_val = vec4f(); break;
+                }
+                destObj->create_attr(group, attr, init_val);
+            }
+
             for (int i = 0; i < destObj->get_group_count(group); i++) {
                 int newidx = oldtonew[i];
                 AttrValue val = srcObj->get_attr_elem(group, attr, i);
@@ -842,6 +858,10 @@ namespace zeno
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);
         copyAttribute(input.get(), spOutput.get(), ATTR_POINT, pointMapping, { "pos" });
+        if (newFaces.size() == faces.size()) {
+            //just a patch...
+            spOutput->inheritAttributes(input, -1, -1, {}, 0, {});
+        }
         return spOutput;
     }
 
