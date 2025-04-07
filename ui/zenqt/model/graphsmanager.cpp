@@ -488,6 +488,19 @@ void GraphsManager::onNodeSelected(const QStringList& graphs_path, const QModelI
     }
 }
 
+void GraphsManager::addPlugin()
+{
+    ZenoMainWindow* mainWin = zenoApp->getMainWindow();
+    QString filePath = QFileDialog::getOpenFileName(mainWin, "File to Open", "", "Zeno Module (*.dll)");
+    if (!filePath.isEmpty()) {
+        HMODULE hDll = LoadLibrary(filePath.toUtf8().data());
+        if (hDll) {
+            int j;
+            j = 0;
+        }
+    }
+}
+
 QStringList GraphsManager::recentFiles() const
 {
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);

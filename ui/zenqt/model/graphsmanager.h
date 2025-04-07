@@ -31,6 +31,7 @@ public:
     Q_INVOKABLE QStringList recentFiles() const;
     Q_INVOKABLE void openProject(const QString& zsgpath);
     Q_INVOKABLE void onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx);
+    Q_INVOKABLE void addPlugin();
 
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath NOTIFY currentPathChanged)
     QString currentGraphPath() const;
