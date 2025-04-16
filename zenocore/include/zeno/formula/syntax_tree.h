@@ -8,7 +8,7 @@
 #include <cmath>
 #include <memory>
 #include <zeno/core/common.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -228,8 +228,8 @@ struct PointCloud
 
 struct ZfxContext
 {
-    /* in */ std::shared_ptr<IObject> spObject;
-    /* in */ std::weak_ptr<INode> spNode;
+    /* in */ zany spObject;
+    /* in */ NodeImpl* spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;
     /**/     std::vector<PointCloud> pchandles;

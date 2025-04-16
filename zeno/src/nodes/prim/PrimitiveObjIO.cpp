@@ -93,7 +93,7 @@ void read_obj_file(
 
 struct ReadObjPrimitive : zeno::INode {
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
+        auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
         auto prim = std::make_shared<zeno::PrimitiveObject>();
         auto &pos = prim->verts;
         auto &uv = prim->verts.add_attr<zeno::vec3f>("uv");
@@ -103,7 +103,7 @@ struct ReadObjPrimitive : zeno::INode {
         //auto &trinorm = prim->tris.add_attr<zeno::vec3i>("nrm");
         read_obj_file(pos, uv, norm, tris, /*triuv, trinorm,*/ path.c_str());
         prim->resize(pos.size());
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -173,8 +173,8 @@ static void writeobj(
 
 struct WriteObjPrimitive : zeno::INode {
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
-        auto prim = get_input<zeno::PrimitiveObject>("prim");
+        auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
+        auto prim = ZImpl(get_input<zeno::PrimitiveObject>("prim"));
         auto &pos = prim->attr<zeno::vec3f>("pos");
         writeobj(prim, path.c_str());
     }
@@ -192,8 +192,8 @@ ZENDEFNODE(WriteObjPrimitive,
 
 struct ExportObjPrimitive : WriteObjPrimitive {
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
-        auto prim = get_input<zeno::PrimitiveObject>("prim");
+        auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
+        auto prim = ZImpl(get_input<zeno::PrimitiveObject>("prim"));
         auto &pos = prim->attr<zeno::vec3f>("pos");
         writeobj(prim, path.c_str());
     }
@@ -313,7 +313,7 @@ read_obj_file_dict(
 }
 struct ReadObjPrimitiveDict : zeno::INode {
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
+        auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
         auto prim = std::make_shared<zeno::PrimitiveObject>();
         auto &pos = prim->verts;
         //auto &uv = prim->verts.add_attr<zeno::vec3f>("uv");
@@ -322,8 +322,8 @@ struct ReadObjPrimitiveDict : zeno::INode {
         //auto &triuv = prim->tris.add_attr<zeno::vec3i>("uv");
         //auto &trinorm = prim->tris.add_attr<zeno::vec3i>("nrm");
         auto prims = read_obj_file_dict(pos, /*uv, norm,*/ tris, /*triuv, trinorm,*/ path.c_str());
-        set_output("prim", std::move(prim));
-        set_output("dict", std::move(prims));
+        ZImpl(set_output("prim", std::move(prim)));
+        ZImpl(set_output("dict", std::move(prims)));
     }
 };
 

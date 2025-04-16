@@ -39,7 +39,7 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, GlobalComm::ViewObjec
 
         size_t bufsize =0;
         std::string nodeName = key.substr(key.find("-") + 1, key.find(":") - key.find("-") -1);
-        if (cacheLightCameraOnly && (lightCameraNodes.count(nodeName) || obj->userData().get2<int>("isL", 0) || std::dynamic_pointer_cast<CameraObject>(obj)))
+        if (cacheLightCameraOnly && (lightCameraNodes.count(nodeName) || obj->userData()->get_int("isL") || std::dynamic_pointer_cast<CameraObject>(obj)))
         {
             bufsize = bufCaches[0].size();
             if (encodeObject(obj.get(), bufCaches[0]))
@@ -61,7 +61,7 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, GlobalComm::ViewObjec
         }
         if (!cacheLightCameraOnly && !cacheMaterialOnly)
         {
-            if (lightCameraNodes.count(nodeName) || obj->userData().get2<int>("isL", 0) || std::dynamic_pointer_cast<CameraObject>(obj)) {
+            if (lightCameraNodes.count(nodeName) || obj->userData()->get_int("isL") || std::dynamic_pointer_cast<CameraObject>(obj)) {
                 bufsize = bufCaches[0].size();
                 if (encodeObject(obj.get(), bufCaches[0]))
                 {

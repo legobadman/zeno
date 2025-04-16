@@ -144,11 +144,11 @@ struct NumericOperator : zeno::INode {
 #undef _PER_OP1
 
     virtual void apply() override {
-        auto op = get_param<std::string>("op_type");
+        auto op = ZImpl(get_param<std::string>("op_type"));
         zeno::reflect::Any ret;
-        auto lhs = get_input<zeno::NumericObject>("lhs");
-        auto rhs = has_input("rhs") ?
-            get_input<zeno::NumericObject>("rhs")
+        auto lhs = ZImpl(get_input<zeno::NumericObject>("lhs"));
+        auto rhs = ZImpl(has_input("rhs")) ?
+            ZImpl(get_input<zeno::NumericObject>("rhs"))
             : std::make_shared<zeno::NumericObject>(0);
         
         // todo: no ternary ops..
@@ -213,7 +213,7 @@ _PER_OP(distance)
 
         }, lhs->value, rhs->value);
 
-        set_primitive_output("ret", ret);
+        ZImpl(set_primitive_output("ret", ret));
     }
 };
 

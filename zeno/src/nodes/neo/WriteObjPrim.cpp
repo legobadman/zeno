@@ -47,16 +47,16 @@ void dump_obj(PrimitiveObject *prim, std::ostream &fout) {
 
 struct WriteObjPrim : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto path = get_input<StringObject>("path")->get();
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto path = ZImpl(get_input<StringObject>("path"))->get();
         path = create_directories_when_write_file(path);
 
-        if (get_param<bool>("polygonate")) {
+        if (ZImpl(get_param<bool>("polygonate"))) {
             primPolygonate(prim.get());
         }
         std::ofstream fout(path);
         dump_obj(prim.get(), fout);
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 

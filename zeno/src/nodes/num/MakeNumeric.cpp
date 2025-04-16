@@ -5,7 +5,7 @@ namespace {
 
 struct NumericInt : zeno::INode {
     virtual void apply() override {
-        set_primitive_output("value", get_param<int>("value"));
+        ZImpl(set_primitive_output("value", ZImpl(get_param<int>("value"))));
     }
 };
 
@@ -19,9 +19,9 @@ ZENDEFNODE(NumericInt, {
 
 struct NumericIntVec2 : zeno::INode {
     virtual void apply() override {
-        auto x = get_param<int>("x");
-        auto y = get_param<int>("y");
-        set_primitive_output("vec2", zeno::vec2i(x, y));
+        auto x = ZImpl(get_param<int>("x"));
+        auto y = ZImpl(get_param<int>("y"));
+        ZImpl(set_primitive_output("vec2", zeno::vec2i(x, y)));
     }
 };
 
@@ -35,9 +35,9 @@ ZENDEFNODE(NumericIntVec2, {
 
 struct PackNumericIntVec2 : zeno::INode {
     virtual void apply() override {
-        auto x = get_input2<int>("x");
-        auto y = get_input2<int>("y");
-        set_primitive_output("vec2", zeno::vec2i(x, y));
+        auto x = ZImpl(get_input2<int>("x"));
+        auto y = ZImpl(get_input2<int>("y"));
+        ZImpl(set_primitive_output("vec2", zeno::vec2i(x, y)));
     }
 };
 
@@ -51,10 +51,10 @@ ZENDEFNODE(PackNumericIntVec2, {
 
 struct NumericIntVec3 : zeno::INode {
     virtual void apply() override {
-        auto x = get_param<int>("x");
-        auto y = get_param<int>("y");
-        auto z = get_param<int>("z");
-        set_primitive_output("vec3", zeno::vec3i(x, y, z));
+        auto x = ZImpl(get_param<int>("x"));
+        auto y = ZImpl(get_param<int>("y"));
+        auto z = ZImpl(get_param<int>("z"));
+        ZImpl(set_primitive_output("vec3", zeno::vec3i(x, y, z)));
     }
 };
 
@@ -68,11 +68,11 @@ ZENDEFNODE(NumericIntVec3, {
 
 struct NumericIntVec4 : zeno::INode {
     virtual void apply() override {
-        auto x = get_param<int>("x");
-        auto y = get_param<int>("y");
-        auto z = get_param<int>("z");
-        auto w = get_param<int>("w");
-        set_primitive_output("vec4", zeno::vec4i(x, y, z, w));
+        auto x = ZImpl(get_param<int>("x"));
+        auto y = ZImpl(get_param<int>("y"));
+        auto z = ZImpl(get_param<int>("z"));
+        auto w = ZImpl(get_param<int>("w"));
+        ZImpl(set_primitive_output("vec4", zeno::vec4i(x, y, z, w)));
     }
 };
 
@@ -87,7 +87,7 @@ ZENDEFNODE(NumericIntVec4, {
 
 struct NumericFloat : zeno::INode {
     virtual void apply() override {
-        set_primitive_output("value", get_param<float>("value"));
+        ZImpl(set_primitive_output("value", ZImpl(get_param<float>("value"))));
     }
 };
 
@@ -101,9 +101,9 @@ ZENDEFNODE(NumericFloat, {
 
 struct NumericVec2 : zeno::INode {
     virtual void apply() override {
-        auto x = get_param<float>("x");
-        auto y = get_param<float>("y");
-        set_primitive_output("vec2", zeno::vec2f(x, y));
+        auto x = ZImpl(get_param<float>("x"));
+        auto y = ZImpl(get_param<float>("y"));
+        ZImpl(set_primitive_output("vec2", zeno::vec2f(x, y)));
     }
 };
 
@@ -117,10 +117,10 @@ ZENDEFNODE(NumericVec2, {
 
 struct NumericVec3 : zeno::INode {
     virtual void apply() override {
-        auto x = get_param<float>("x");
-        auto y = get_param<float>("y");
-        auto z = get_param<float>("z");
-        set_primitive_output("vec3", zeno::vec3f(x, y, z));
+        auto x = ZImpl(get_param<float>("x"));
+        auto y = ZImpl(get_param<float>("y"));
+        auto z = ZImpl(get_param<float>("z"));
+        ZImpl(set_primitive_output("vec3", zeno::vec3f(x, y, z)));
     }
 };
 
@@ -134,11 +134,11 @@ ZENDEFNODE(NumericVec3, {
 
 struct NumericVec4 : zeno::INode {
     virtual void apply() override {
-        auto x = get_param<float>("x");
-        auto y = get_param<float>("y");
-        auto z = get_param<float>("z");
-        auto w = get_param<float>("w");
-        set_primitive_output("vec2", zeno::vec4f(x, y, z, w));
+        auto x = ZImpl(get_param<float>("x"));
+        auto y = ZImpl(get_param<float>("y"));
+        auto z = ZImpl(get_param<float>("z"));
+        auto w = ZImpl(get_param<float>("w"));
+        ZImpl(set_primitive_output("vec2", zeno::vec4f(x, y, z, w)));
     }
 };
 
@@ -152,19 +152,19 @@ ZENDEFNODE(NumericVec4, {
 
 struct PackNumericVecInt : zeno::INode {
     virtual void apply() override {
-        auto _type = get_param<std::string>("type");
-        auto x = get_input2<int>("x");
-        auto y = get_input2<int>("y");
-        auto z = get_input2<int>("z");
-        auto w = get_input2<int>("w");
+        auto _type = ZImpl(get_param<std::string>("type"));
+        auto x = ZImpl(get_input2<int>("x"));
+        auto y = ZImpl(get_input2<int>("y"));
+        auto z = ZImpl(get_input2<int>("z"));
+        auto w = ZImpl(get_input2<int>("w"));
         if (_type == "int") {
-            set_primitive_output("veci", x);
+            ZImpl(set_primitive_output("veci", x));
         } else if (_type == "vec2i") {
-            set_primitive_output("veci", zeno::vec2i(x, y));
+            ZImpl(set_primitive_output("veci", zeno::vec2i(x, y)));
         } else if (_type == "vec3i") {
-            set_primitive_output("veci", zeno::vec3i(x, y, z));
+            ZImpl(set_primitive_output("veci", zeno::vec3i(x, y, z)));
         } else if (_type == "vec4i") {
-            set_primitive_output("veci", zeno::vec4f(x, y, z, w));
+            ZImpl(set_primitive_output("veci", zeno::vec4f(x, y, z, w)));
         }
     }
 };
@@ -185,19 +185,19 @@ ZENDEFNODE(PackNumericVecInt, {
 
 struct PackNumericVec : zeno::INode {
     virtual void apply() override {
-        auto _type = get_param<std::string>("type");
-        auto x = get_input2<float>("x");
-        auto y = get_input2<float>("y");
-        auto z = get_input2<float>("z");
-        auto w = get_input2<float>("w");
+        auto _type = ZImpl(get_param<std::string>("type"));
+        auto x = ZImpl(get_input2<float>("x"));
+        auto y = ZImpl(get_input2<float>("y"));
+        auto z = ZImpl(get_input2<float>("z"));
+        auto w = ZImpl(get_input2<float>("w"));
         if (_type == "float") {
-            set_primitive_output("vec", x);
+            ZImpl(set_primitive_output("vec", x));
         } else if (_type == "vec2f") {
-            set_primitive_output("vec", zeno::vec2f(x, y));
+            ZImpl(set_primitive_output("vec", zeno::vec2f(x, y)));
         } else if (_type == "vec3f") {
-            set_primitive_output("vec", zeno::vec3f(x, y, z));
+            ZImpl(set_primitive_output("vec", zeno::vec3f(x, y, z)));
         } else if (_type == "vec4f") {
-            set_primitive_output("vec", zeno::vec4f(x, y, z, w));
+            ZImpl(set_primitive_output("vec", zeno::vec4f(x, y, z, w)));
         }
     }
 };

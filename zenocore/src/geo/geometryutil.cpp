@@ -1,5 +1,9 @@
 #include <zeno/geo/geometryutil.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/GeometryObject.h>
+#include <zeno/types/ListObject_impl.h>
+#include <zeno/utils/helper.h>
+#include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/para/parallel_reduce.h>
 #include <zeno/geo/kdsearch.h>
 #include <zeno/para/parallel_for.h>
@@ -8,6 +12,7 @@
 #include <zeno/utils/wangsrng.h>
 #include <unordered_set>
 #include <deque>
+#include <zeno/utils/interfaceutil.h>
 #include "nanoflann.hpp"
 #include "zeno_types/reflect/reflection.generated.hpp"
 
@@ -201,35 +206,36 @@ namespace zeno
         return parallel_reduce_minmax(verts.begin(), verts.end());
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList) {
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> mergeObjects(std::shared_ptr<zeno::ListObject> spList) {
         int nTotalPts = 0, nTotalFaces = 0;
-        const std::vector<std::shared_ptr<zeno::GeometryObject>>& geoobjs = spList->get<zeno::GeometryObject>();
+        const std::vector<zeno::SharedPtr<zeno::GeometryObject_Adapter>>& geoobjs = spList->m_impl->get<zeno::GeometryObject_Adapter>();
         for (auto spObject : geoobjs) {
             nTotalPts += spObject->npoints();
             nTotalFaces += spObject->nfaces();
         }
 
         std::vector<zeno::vec3f> newObjPos(nTotalPts);
-        auto mergedObj = std::make_shared<zeno::GeometryObject>(false, nTotalPts, nTotalFaces, true);
+
+        auto mergedObj = create_GeometryObject(false, nTotalPts, nTotalFaces, true);
         size_t pt_offset = 0, face_offset = 0;
         for (int iGeom = 0; iGeom < geoobjs.size(); iGeom++)
         {
             auto elemObj = geoobjs[iGeom];
-            std::vector<vec3f> obj_pos = elemObj->points_pos();
+            std::vector<vec3f> obj_pos = elemObj->m_impl->points_pos();
 
             int nPts = elemObj->npoints();
             int nFaces = elemObj->nfaces();
 
             std::copy(obj_pos.begin(), obj_pos.end(), newObjPos.begin() + pt_offset);
             for (int iFace = 0; iFace < nFaces; iFace++) {
-                std::vector<int> facePoints = elemObj->face_points(iFace);
+                std::vector<int> facePoints = elemObj->m_impl->face_points(iFace);
                 for (int k = 0; k < facePoints.size(); ++k) {
                     facePoints[k] += pt_offset;
                 }
-                mergedObj->set_face(face_offset + iFace, facePoints, true); //TODO: case of Lines.
+                mergedObj->m_impl->set_face(face_offset + iFace, facePoints, true); //TODO: case of Lines.
             }
-            mergedObj->inheritAttributes(elemObj, -1, pt_offset, {"pos"}, face_offset, {});
 
+            mergedObj->inheritAttributes(elemObj.get(), -1, pt_offset, {"pos"}, face_offset, {});
             pt_offset += nPts;
             face_offset += nFaces;
         }
@@ -518,15 +524,15 @@ namespace zeno
         return true;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject> divideObject(
-        std::shared_ptr<zeno::GeometryObject> input_object,
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> divideObject(
+        std::shared_ptr<zeno::GeometryObject_Adapter> input_object,
         DivideKeep keep,
         zeno::vec3f center_pos,
         zeno::vec3f direction
     )
     {
-        const auto& pos = input_object->points_pos();
-        const int nface = input_object->nfaces();
+        const auto& pos = input_object->m_impl->points_pos();
+        const int nface = input_object->m_impl->nfaces();
         std::vector<std::vector<int>> newFaces;
         std::vector<vec3f> new_pos = pos;
 
@@ -538,7 +544,7 @@ namespace zeno
         std::set<int> rem_points;
 
         for (int iFace = 0; iFace < nface; iFace++) {
-            std::vector<int> face_indice = input_object->face_points(iFace);
+            std::vector<int> face_indice = input_object->m_impl->face_points(iFace);
             std::vector<vec3f> face_pos(face_indice.size());
             for (int i = 0; i < face_indice.size(); i++)
             {
@@ -635,34 +641,34 @@ namespace zeno
             }
         }
 
-        auto spOutput = std::make_shared<GeometryObject>(false, new_pos.size(), newFaces.size());
+        auto spOutput = create_GeometryObject(false, new_pos.size(), newFaces.size());
         for (const std::vector<int>& face_indice : newFaces) {
-            spOutput->add_face(face_indice, true);  //todo: 考虑线
+            spOutput->m_impl->add_face(face_indice, true);  //todo: 考虑线
         }
-        spOutput->create_point_attr("pos", new_pos);
+        spOutput->m_impl->create_point_attr("pos", new_pos);
         //去除被排除的部分
         for (auto iter = rem_points.rbegin(); iter != rem_points.rend(); iter++) {
-            spOutput->remove_point(*iter);
+            spOutput->m_impl->remove_point(*iter);
         }
         return spOutput;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(
-        std::shared_ptr<zeno::GeometryObject> input,
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> scatter(
+        std::shared_ptr<zeno::GeometryObject_Adapter> input,
         const std::string& sampleRegion,
         const int nPointCount,
         int seed)
     {
-        auto spOutput = std::make_shared<zeno::GeometryObject>(input->is_base_triangle(), nPointCount, 0);
+        auto spOutput = create_GeometryObject(input->is_base_triangle(), nPointCount, 0);
         if (seed == -1) seed = std::random_device{}();
 
-        const int nFaces = input->nfaces();
-        const std::vector<vec3f>& pos = input->points_pos();
+        const int nFaces = input->m_impl->nfaces();
+        const std::vector<vec3f>& pos = input->m_impl->points_pos();
         std::vector<float> cdf(nFaces);
         std::vector<vec3f> newPts(nPointCount);
 
         if (sampleRegion == "Volumn") {
-            const auto& bbox = geomBoundingBox(input.get());
+            const auto& bbox = geomBoundingBox(input->m_impl);
             //目前只考虑通过bbox直接采样，不考虑复杂的空间
             parallel_for((size_t)0, (size_t)nPointCount, [&](size_t i) {
                 wangsrng rng(i);
@@ -679,7 +685,7 @@ namespace zeno
             return spOutput;
         }
 
-        std::vector<std::vector<int>> faces = input->face_indice();
+        std::vector<std::vector<int>> faces = input->m_impl->face_indice();
         parallel_inclusive_scan_sum(faces.begin(), faces.end(), cdf.begin(), [&](std::vector<int> const& ind) {
             auto i1 = ind[0];
             auto i2 = ind[1];
@@ -723,18 +729,18 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
         int nPoints = 0, nFaces = faces.size();
         for (auto& facePts : faces) {
             nPoints += facePts.size();
         }
-        auto spOutput = std::make_shared<zeno::GeometryObject>(false, nPoints, nFaces);
+        auto spOutput = create_GeometryObject(false, nPoints, nFaces);
         std::vector<vec3f> points;
         points.resize(nPoints);
         int nInitPoints = 0;
         for (int iFace = 0; iFace < faces.size(); iFace++) {
             const std::vector<zeno::vec3f>& facePts = faces[iFace];
-            std::vector<int> ptIndice;
+            zeno::Vector<int> ptIndice;
             for (int iPt = 0; iPt < facePts.size(); iPt++) {
                 int currIdx = nInitPoints + iPt;
                 points[currIdx] = facePts[iPt];
@@ -782,9 +788,9 @@ namespace zeno
         }
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold) {
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold) {
 
-        std::vector<vec3f> points = input->points_pos();
+        std::vector<vec3f> points = input->m_impl->points_pos();
         _PointCloud cloud{ points };
         typedef nanoflann::KDTreeSingleIndexAdaptor<
             nanoflann::L2_Simple_Adaptor<float, _PointCloud>,
@@ -831,7 +837,7 @@ namespace zeno
             new_points.push_back(centroid);
         }
 
-        std::vector<std::vector<int>> faces = input->face_indice();
+        std::vector<std::vector<int>> faces = input->m_impl->face_indice();
         // 更新面数据
         std::vector<std::vector<int>> newFaces;
         for (const auto& face : faces) {
@@ -851,13 +857,14 @@ namespace zeno
             }
         }
 
-        auto spOutput = std::make_shared<zeno::GeometryObject>(false, new_points.size(), newFaces.size());
+        auto spOutput = create_GeometryObject(false, new_points.size(), newFaces.size());
         for (int iFace = 0; iFace < newFaces.size(); iFace++) {
             const std::vector<int>& facePts = newFaces[iFace];
-            spOutput->add_face(facePts);
+            const zeno::Vector<int>& _facePts = stdVec2zeVec(facePts);
+            spOutput->add_face(_facePts);
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);
-        copyAttribute(input.get(), spOutput.get(), ATTR_POINT, pointMapping, { "pos" });
+        copyAttribute(input->m_impl, spOutput->m_impl, ATTR_POINT, pointMapping, { "pos" });
         if (newFaces.size() == faces.size()) {
             //just a patch...
             spOutput->inheritAttributes(input, -1, -1, {}, 0, {});

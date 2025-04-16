@@ -351,7 +351,7 @@ namespace zeno
                 throw makeError<UnimplError>("only support indexing param for param constrain");
             }
             const std::string& param = get_zfxvar<std::string>(args[0].value[0]);
-            auto pnode = pContext->spNode.lock();
+            auto pnode = pContext->spNode;
             ZfxLValue lval;
             bool bExist = false;
             lval.var = pnode->get_input_obj_param(param, &bExist);

@@ -1,8 +1,30 @@
+
 #include <zeno/core/IObject.h>
 #include <zeno/types/UserData.h>
 
 namespace zeno {
 
+    IObject::IObject() {
+        m_usrData = new UserData;
+    }
+
+    String IObject::key() const {
+        return m_key;
+    }
+
+    void IObject::update_key(const String& key) {
+        m_key = key;
+    }
+
+    IUserData* IObject::userData() {
+        return m_usrData;
+    }
+
+    void IObject::Delete() {
+        delete m_usrData;
+    }
+
+#if 0
 ZENO_API IObject::IObject() = default;
 ZENO_API IObject::IObject(IObject const &) = default;
 ZENO_API IObject::IObject(IObject &&) = default;
@@ -59,5 +81,5 @@ ZENO_API UserData &IObject::userData() const {
         m_userData.emplace<UserData>();
     return std::any_cast<UserData &>(m_userData);
 }
-
+#endif
 }

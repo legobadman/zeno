@@ -1,44 +1,46 @@
 #pragma once
 
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/Descriptor.h>
+#include <zeno/utils/uuid.h>
 
 namespace zeno {
 
 struct SubnetNode : INode {
-    std::shared_ptr<Graph> subgraph;
+    std::shared_ptr<Graph> subgraph;    //assets subnetnode
 
     CustomUI m_customUi;
 
-    ZENO_API SubnetNode();
-    ZENO_API ~SubnetNode();
+    SubnetNode();
+    ~SubnetNode();
 
-    ZENO_API void initParams(const NodeData& dat) override;
-    ZENO_API params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false) override;
-    ZENO_API std::shared_ptr<Graph> get_graph() const;
-    ZENO_API bool isAssetsNode() const;
-    ZENO_API void apply() override;
-    ZENO_API NodeData exportInfo() const override;
+    void apply() override;
 
-    ZENO_API CustomUI get_customui() const override;
-    ZENO_API CustomUI export_customui() const override;
+    void initParams(const NodeData& dat);
+    params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
+    Graph* get_graph() const;
+    bool isAssetsNode() const;
+    
+    NodeData exportInfo() const;
+    CustomUI get_customui() const;
+    CustomUI export_customui() const;
 
-    ZENO_API void setCustomUi(const CustomUI& ui);
+    void setCustomUi(const CustomUI& ui);
     void mark_subnetdirty(bool bOn);
 };
 
 struct DopNetwork : zeno::SubnetNode {
 
     DopNetwork();
-    ZENO_API void apply() override;
+     void apply() override;
 
-    ZENO_API void setEnableCache(bool enable);
-    ZENO_API void setAllowCacheToDisk(bool enable);
-    ZENO_API void setMaxCacheMemoryMB(int size);
-    ZENO_API void setCurrCacheMemoryMB(int size);
-    static size_t getObjSize(std::shared_ptr<IObject> obj);
+     void setEnableCache(bool enable);
+     void setAllowCacheToDisk(bool enable);
+     void setMaxCacheMemoryMB(int size);
+     void setCurrCacheMemoryMB(int size);
+    static size_t getObjSize(IObject* obj);
     void resetFrameState();
 
     CALLBACK_REGIST(dopnetworkFrameRemoved, void, int)

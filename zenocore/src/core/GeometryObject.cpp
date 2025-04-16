@@ -28,17 +28,17 @@ namespace zeno
             }, value);
     }
 
-    ZENO_API GeometryObject::GeometryObject()
+    GeometryObject::GeometryObject()
         : m_spTopology(std::make_shared<GeometryTopology>())
     {
     }
 
-    ZENO_API GeometryObject::GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
+    GeometryObject::GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
         : m_spTopology(std::make_shared<GeometryTopology>(bTriangle, nPoints, nFaces, bInitFaces))
     {
     }
 
-    ZENO_API GeometryObject::GeometryObject(const GeometryObject& rhs)
+    GeometryObject::GeometryObject(const GeometryObject& rhs)
         : m_spTopology(rhs.m_spTopology)
     {
         m_point_attrs = rhs.m_point_attrs;
@@ -46,16 +46,16 @@ namespace zeno
         m_geo_attrs = rhs.m_geo_attrs;
     }
 
-    ZENO_API GeometryObject::~GeometryObject() {
+    GeometryObject::~GeometryObject() {
     }
 
-    ZENO_API GeometryObject::GeometryObject(PrimitiveObject* prim)
+    GeometryObject::GeometryObject(PrimitiveObject* prim)
         : m_spTopology(std::make_shared<GeometryTopology>())
     {
         initFromPrim(prim);
     }
 
-    ZENO_API std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
+    std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
         std::shared_ptr<PrimitiveObject> spPrim = std::make_shared<PrimitiveObject>();
         std::vector<vec3f>& vec_pos = points_pos();
         int nPoints = m_spTopology->npoints();
@@ -77,7 +77,7 @@ namespace zeno
         }
 
         m_spTopology->toPrimitive(spPrim);
-        spPrim->m_userData = m_userData;
+        //spPrim->m_userData = m_userData; //TODO: usrdata copy from geom to prim.
         return spPrim;
     }
 
@@ -96,7 +96,7 @@ namespace zeno
     }
 
     void GeometryObject::inheritAttributes(
-        std::shared_ptr<GeometryObject> rhs,
+        GeometryObject* rhs,
         int vtx_offset,
         int pt_offset,
         std::set<std::string> pt_nocopy,
@@ -151,27 +151,27 @@ namespace zeno
         return iter->second.get_attrs<vec3f>();
     }
 
-    ZENO_API std::vector<vec3i> GeometryObject::tri_indice() const {
+    std::vector<vec3i> GeometryObject::tri_indice() const {
         return m_spTopology->tri_indice();
     }
 
-    ZENO_API std::vector<int> GeometryObject::edge_list() const {
+    std::vector<int> GeometryObject::edge_list() const {
         return m_spTopology->edge_list();
     }
 
-    ZENO_API std::vector<std::vector<int>> GeometryObject::face_indice() const {
+    std::vector<std::vector<int>> GeometryObject::face_indice() const {
         return m_spTopology->face_indice();
     }
 
-    ZENO_API bool GeometryObject::is_base_triangle() const {
+    bool GeometryObject::is_base_triangle() const {
         return m_spTopology->is_base_triangle();
     }
 
-    ZENO_API bool GeometryObject::is_Line() const {
+    bool GeometryObject::is_Line() const {
         return m_spTopology->is_line();
     }
 
-    ZENO_API int GeometryObject::get_group_count(GeoAttrGroup grp) const {
+    int GeometryObject::get_group_count(GeoAttrGroup grp) const {
         switch (grp) {
         case ATTR_POINT: return m_spTopology->npoints();
         case ATTR_FACE: return m_spTopology->nfaces();
@@ -182,7 +182,7 @@ namespace zeno
         }
     }
 
-    ZENO_API void GeometryObject::geomTriangulate(zeno::TriangulateInfo& info) {
+    void GeometryObject::geomTriangulate(zeno::TriangulateInfo& info) {
         if (is_base_triangle()) {
             //TODO
             return;
@@ -191,7 +191,7 @@ namespace zeno
         //TODO: uv
     }
 
-    ZENO_API bool GeometryObject::remove_point(int ptnum) {
+    bool GeometryObject::remove_point(int ptnum) {
         std::vector<vec3f>& vec_pos = points_pos();
         assert(m_spTopology->npoints() == vec_pos.size());
 
@@ -230,7 +230,7 @@ namespace zeno
         return ret;
     }
 
-    ZENO_API bool GeometryObject::remove_vertex(int face_id, int vert_id) {
+    bool GeometryObject::remove_vertex(int face_id, int vert_id) {
         copyTopologyAccordtoUseCount();
 
         size_t linear_vertex = m_spTopology->vertex_index(face_id, vert_id);
@@ -257,34 +257,34 @@ namespace zeno
     }
 
     //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。
-    ZENO_API int GeometryObject::face_point(int face_id, int vert_id) const
+    int GeometryObject::face_point(int face_id, int vert_id) const
     {
         return m_spTopology->face_point(face_id, vert_id);
     }
 
     //通过 face_id，获取此 face 所有 points 索引编号。
-    ZENO_API std::vector<int> GeometryObject::face_points(int face_id)
+    std::vector<int> GeometryObject::face_points(int face_id)
     {
         return m_spTopology->face_points(face_id);
     }
 
     //通过 face_id和内部的vertex_id索引，返回其linearindex.
-    ZENO_API int GeometryObject::face_vertex(int face_id, int vert_id)
+    int GeometryObject::face_vertex(int face_id, int vert_id)
     {
         return m_spTopology->face_vertex(face_id, vert_id);
     }
 
-    ZENO_API int GeometryObject::face_vertex_count(int face_id)
+    int GeometryObject::face_vertex_count(int face_id)
     {
         return m_spTopology->face_vertex_count(face_id);
     }
 
-    ZENO_API std::vector<int> GeometryObject::face_vertices(int face_id)
+    std::vector<int> GeometryObject::face_vertices(int face_id)
     {
         return m_spTopology->face_vertices(face_id);
     }
 
-    ZENO_API zeno::vec3f GeometryObject::face_normal(int face_id) {
+    zeno::vec3f GeometryObject::face_normal(int face_id) {
         const std::vector<int>& pts = face_points(face_id);
         std::vector<vec3f> pos = points_pos();
         if (pts.size() > 2) {
@@ -296,7 +296,7 @@ namespace zeno
     }
 
     //返回包含指定 point 的 face 列表。
-    ZENO_API std::vector<int> GeometryObject::point_faces(int point_id)
+    std::vector<int> GeometryObject::point_faces(int point_id)
     {
         return m_spTopology->point_faces(point_id);
     }
@@ -305,7 +305,7 @@ namespace zeno
         Returns the linear vertex number of the first vertex to share this point.
         Returns -1 if no vertices share this point.
     */
-    ZENO_API int GeometryObject::point_vertex(int point_id)
+    int GeometryObject::point_vertex(int point_id)
     {
         return m_spTopology->point_vertex(point_id);
     }
@@ -315,12 +315,12 @@ namespace zeno
 
         If the given point contains no vertices, the array will be empty.
      */
-    ZENO_API std::vector<int> GeometryObject::point_vertices(int point_id)
+    std::vector<int> GeometryObject::point_vertices(int point_id)
     {
         return m_spTopology->point_vertices(point_id);
     }
 
-    ZENO_API size_t GeometryObject::get_attr_size(GeoAttrGroup grp) const {
+    size_t GeometryObject::get_attr_size(GeoAttrGroup grp) const {
         if (grp == ATTR_GEO) {
             return 1;
         }
@@ -367,7 +367,7 @@ namespace zeno
         }
     }
 
-    ZENO_API std::map<std::string, AttributeVector>& GeometryObject::get_container(GeoAttrGroup grp) {
+    std::map<std::string, AttributeVector>& GeometryObject::get_container(GeoAttrGroup grp) {
         if (grp == ATTR_GEO) {
             return m_geo_attrs;
         }
@@ -385,7 +385,7 @@ namespace zeno
         }
     }
 
-    ZENO_API const std::map<std::string, AttributeVector>& GeometryObject::get_const_container(GeoAttrGroup grp) const {
+    const std::map<std::string, AttributeVector>& GeometryObject::get_const_container(GeoAttrGroup grp) const {
         if (grp == ATTR_GEO) {
             return m_geo_attrs;
         }
@@ -404,7 +404,7 @@ namespace zeno
     }
 
 
-    ZENO_API int GeometryObject::create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& val_or_vec)
+    int GeometryObject::create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& val_or_vec)
     {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(attr_name);
@@ -419,7 +419,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::create_face_attr(std::string const& attr_name, const AttrVar& defl) {
+    int GeometryObject::create_face_attr(std::string const& attr_name, const AttrVar& defl) {
         auto iter = m_face_attrs.find(attr_name);
         if (iter != m_face_attrs.end()) {
             return -1;   //already exist
@@ -430,7 +430,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::create_point_attr(std::string const& attr_name, const AttrVar& defl) {
+    int GeometryObject::create_point_attr(std::string const& attr_name, const AttrVar& defl) {
         std::string attr = attr_name;
         if (attr == "P") {
             attr = "pos";
@@ -445,7 +445,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::create_vertex_attr(std::string const& attr_name, const AttrVar& defl) {
+    int GeometryObject::create_vertex_attr(std::string const& attr_name, const AttrVar& defl) {
         if (attr_name == "Point Number") {
             throw makeError<UnimplError>("Point Number is an internal attribute");
         }
@@ -459,7 +459,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::create_geometry_attr(std::string const& attr_name, const AttrVar& defl) {
+    int GeometryObject::create_geometry_attr(std::string const& attr_name, const AttrVar& defl) {
         auto iter = m_geo_attrs.find(attr_name);
         if (iter != m_geo_attrs.end()) {
             return -1;   //already exist
@@ -468,7 +468,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
+    int GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
     {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(attr_name);
@@ -478,7 +478,7 @@ namespace zeno
         return 1;
     }
 
-    ZENO_API int GeometryObject::delete_vertex_attr(std::string const& attr_name)
+    int GeometryObject::delete_vertex_attr(std::string const& attr_name)
     {
         auto iter = m_vert_attrs.find(attr_name);
         if (iter == m_vert_attrs.end())
@@ -487,7 +487,7 @@ namespace zeno
         return 1;
     }
 
-    ZENO_API int GeometryObject::delete_point_attr(std::string const& attr_name)
+    int GeometryObject::delete_point_attr(std::string const& attr_name)
     {
         auto iter = m_point_attrs.find(attr_name);
         if (iter == m_point_attrs.end())
@@ -496,7 +496,7 @@ namespace zeno
         return 1;
     }
 
-    ZENO_API int GeometryObject::delete_face_attr(std::string const& attr_name)
+    int GeometryObject::delete_face_attr(std::string const& attr_name)
     {
         auto iter = m_face_attrs.find(attr_name);
         if (iter == m_face_attrs.end())
@@ -505,7 +505,7 @@ namespace zeno
         return 1;
     }
 
-    ZENO_API int GeometryObject::delete_geometry_attr(std::string const& attr_name)
+    int GeometryObject::delete_geometry_attr(std::string const& attr_name)
     {
         auto iter = m_geo_attrs.find(attr_name);
         if (iter == m_geo_attrs.end())
@@ -552,33 +552,33 @@ namespace zeno
         }
     }
 
-    ZENO_API bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name)
+    bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name)
     {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         return container.find(name) != container.end();
     }
 
-    ZENO_API bool GeometryObject::has_vertex_attr(std::string const& name) const
+    bool GeometryObject::has_vertex_attr(std::string const& name) const
     {
         return m_vert_attrs.find(name) != m_vert_attrs.end();
     }
 
-    ZENO_API bool GeometryObject::has_point_attr(std::string const& name) const
+    bool GeometryObject::has_point_attr(std::string const& name) const
     {
         return m_point_attrs.find(name) != m_point_attrs.end();
     }
 
-    ZENO_API bool GeometryObject::has_face_attr(std::string const& name) const
+    bool GeometryObject::has_face_attr(std::string const& name) const
     {
         return m_face_attrs.find(name) != m_face_attrs.end();
     }
 
-    ZENO_API bool GeometryObject::has_geometry_attr(std::string const& name) const
+    bool GeometryObject::has_geometry_attr(std::string const& name) const
     {
         return m_geo_attrs.find(name) != m_geo_attrs.end();
     }
 
-    ZENO_API GeoAttrType GeometryObject::get_attr_type(GeoAttrGroup grp, std::string const& name) {
+    GeoAttrType GeometryObject::get_attr_type(GeoAttrGroup grp, std::string const& name) {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
@@ -595,7 +595,7 @@ namespace zeno
         return attrVec.type();
     }
 
-    ZENO_API std::vector<std::string> GeometryObject::get_attr_names(GeoAttrGroup grp) {
+    std::vector<std::string> GeometryObject::get_attr_names(GeoAttrGroup grp) {
         std::vector<std::string> names;
         switch (grp) {
         case ATTR_GEO:
@@ -622,7 +622,7 @@ namespace zeno
         return names;
     }
 
-    ZENO_API int GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val)
+    int GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val)
     {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
@@ -636,7 +636,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::set_vertex_attr(std::string const& attr_name, const AttrVar& defl)
+    int GeometryObject::set_vertex_attr(std::string const& attr_name, const AttrVar& defl)
     {
         auto iter = m_vert_attrs.find(attr_name);
         if (iter == m_vert_attrs.end()) {
@@ -648,7 +648,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::set_point_attr(std::string const& attr_name, const AttrVar& defl)
+    int GeometryObject::set_point_attr(std::string const& attr_name, const AttrVar& defl)
     {
         auto iter = m_point_attrs.find(attr_name);
         if (iter == m_point_attrs.end()) {
@@ -660,7 +660,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::set_face_attr(std::string const& attr_name, const AttrVar& defl)
+    int GeometryObject::set_face_attr(std::string const& attr_name, const AttrVar& defl)
     {
         auto iter = m_face_attrs.find(attr_name);
         if (iter == m_face_attrs.end()) {
@@ -672,7 +672,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::set_geometry_attr(std::string const& attr_name, const AttrVar& defl)
+    int GeometryObject::set_geometry_attr(std::string const& attr_name, const AttrVar& defl)
     {
         auto iter = m_geo_attrs.find(attr_name);
         if (iter == m_geo_attrs.end()) {
@@ -684,7 +684,7 @@ namespace zeno
         return 0;
     }
 
-    ZENO_API int GeometryObject::add_point(zeno::vec3f pos) {
+    int GeometryObject::add_point(zeno::vec3f pos) {
         copyTopologyAccordtoUseCount();
 
         auto pointAttrIter = m_point_attrs.find("pos");
@@ -698,7 +698,7 @@ namespace zeno
         return ptnum;
     }
         
-    ZENO_API int GeometryObject::add_vertex(int face_id, int point_id) {
+    int GeometryObject::add_vertex(int face_id, int point_id) {
         copyTopologyAccordtoUseCount();
         int ret = m_spTopology->add_vertex(face_id, point_id);
         if (ret != -1) {
@@ -726,55 +726,55 @@ namespace zeno
       根据face_id和vertex_id(vertex在面内部的索引，起始值为0）
       返回linear_vertex_idx.
      */
-    ZENO_API int GeometryObject::vertex_index(int face_id, int vertex_id) {
+    int GeometryObject::vertex_index(int face_id, int vertex_id) {
         return m_spTopology->vertex_index(face_id, vertex_id);
     }
 
     /*
      * 与linear_vertex_id共享一个point的下一个vertex的linear_vertex_id;
      */
-    ZENO_API int GeometryObject::vertex_next(int linear_vertex_id) {
+    int GeometryObject::vertex_next(int linear_vertex_id) {
         return m_spTopology->vertex_next(linear_vertex_id);
     }
 
     /*
      * 与linear_vertex_id共享一个point的上一个vertex的linear_vertex_id;
      */
-    ZENO_API int GeometryObject::vertex_prev(int linear_vertex_id) {
+    int GeometryObject::vertex_prev(int linear_vertex_id) {
         return m_spTopology->vertex_prev(linear_vertex_id);
     }
 
     /*
      * 与linear_vertex_id关联的point的id;
      */
-    ZENO_API int GeometryObject::vertex_point(int linear_vertex_id) {
+    int GeometryObject::vertex_point(int linear_vertex_id) {
         return m_spTopology->vertex_point(linear_vertex_id);
     }
 
     /*
      * 与linear_vertex_id关联的face的id;
      */
-    ZENO_API int GeometryObject::vertex_face(int linear_vertex_id) {
+    int GeometryObject::vertex_face(int linear_vertex_id) {
         return m_spTopology->vertex_face(linear_vertex_id);
     }
 
     /*
      * 将linear_vertex_id转为它所在的那个面上的idx（就是2:3里面的3);
      */
-    ZENO_API int GeometryObject::vertex_face_index(int linear_vertex_id) {
+    int GeometryObject::vertex_face_index(int linear_vertex_id) {
         return m_spTopology->vertex_face_index(linear_vertex_id);
     }
 
-    ZENO_API std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) {
+    std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) {
         return m_spTopology->vertex_info(linear_vertex_id);
     }
 
-    ZENO_API int GeometryObject::isLineFace(int faceid)
+    int GeometryObject::isLineFace(int faceid)
     {
         return m_spTopology->isLineFace(faceid);
     }
 
-    ZENO_API void GeometryObject::fusePoints(std::vector<int>& fusedPoints) {
+    void GeometryObject::fusePoints(std::vector<int>& fusedPoints) {
         int npoints = this->npoints();
         m_spTopology->fusePoints(fusedPoints);
 
@@ -792,7 +792,7 @@ namespace zeno
 #endif
     }
 
-    ZENO_API int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {
+    int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {
         copyTopologyAccordtoUseCount();
         int faceid = m_spTopology->add_face(points, bClose);
         CALLBACK_NOTIFY(add_face, faceid);
@@ -800,7 +800,7 @@ namespace zeno
         return faceid;
     }
 
-    ZENO_API void GeometryObject::set_face(int idx, const std::vector<int>& points, bool bClose) {
+    void GeometryObject::set_face(int idx, const std::vector<int>& points, bool bClose) {
         m_spTopology->set_face(idx, points, bClose);
     }
 
@@ -810,7 +810,7 @@ namespace zeno
         andPoints = 1，则还将删除与 face 关联但与任何其他 face 无关
         的任何点。
     */
-    ZENO_API bool GeometryObject::remove_faces(const std::set<int>& faces, bool includePoints) {
+    bool GeometryObject::remove_faces(const std::set<int>& faces, bool includePoints) {
         copyTopologyAccordtoUseCount();
 
         std::vector<int> removedPtnums;
@@ -847,23 +847,23 @@ namespace zeno
         }
     }
 
-    ZENO_API int GeometryObject::npoints() const {
+    int GeometryObject::npoints() const {
         return m_spTopology->npoints();
     }
 
-    ZENO_API int GeometryObject::nfaces() const {
+    int GeometryObject::nfaces() const {
         return m_spTopology->nfaces();
     }
 
-    ZENO_API int GeometryObject::nvertices() const {
+    int GeometryObject::nvertices() const {
         return m_spTopology->nvertices();
     }
 
-    ZENO_API int GeometryObject::nvertices(int face_id) const {
+    int GeometryObject::nvertices(int face_id) const {
         return m_spTopology->nvertices(face_id);
     }
 
-    ZENO_API int GeometryObject::nattributes(GeoAttrGroup grp) const {
+    int GeometryObject::nattributes(GeoAttrGroup grp) const {
         switch (grp) {
         case ATTR_GEO: return m_geo_attrs.size();
         case ATTR_FACE: return m_face_attrs.size();

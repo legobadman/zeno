@@ -1,5 +1,5 @@
 #include <zeno/extra/GlobalError.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/utils/log.h>
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>

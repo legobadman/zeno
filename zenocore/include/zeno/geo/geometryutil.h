@@ -6,6 +6,7 @@
 #include <array>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/GeometryObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -74,16 +75,16 @@ namespace zeno
         Rotate_Orientaion orientaion
         );
     ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo);
-    ZENO_API std::shared_ptr<zeno::GeometryObject> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
-    ZENO_API std::shared_ptr<zeno::GeometryObject> fuseGeometry(std::shared_ptr<zeno::GeometryObject> input, float threshold);
-    ZENO_API std::shared_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
-    ZENO_API std::shared_ptr<zeno::GeometryObject> scatter(
-        std::shared_ptr<zeno::GeometryObject> input,
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold);
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> scatter(
+        std::shared_ptr<zeno::GeometryObject_Adapter> input,
         const std::string& sampleRegion,
         const int count,
         int seed);
-    ZENO_API std::shared_ptr<zeno::GeometryObject> divideObject(
-        std::shared_ptr<zeno::GeometryObject> input_object,
+    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> divideObject(
+        std::shared_ptr<zeno::GeometryObject_Adapter> input_object,
         DivideKeep keep,
         zeno::vec3f center_pos,
         zeno::vec3f direction

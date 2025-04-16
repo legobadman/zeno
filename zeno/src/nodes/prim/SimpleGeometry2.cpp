@@ -1,9 +1,8 @@
 ﻿#include <zeno/zeno.h>
-#include <zeno/core/reflectdef.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
+#include <zeno/utils/interfaceutil.h>
 #include "glm/gtc/matrix_transform.hpp"
-#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 #ifndef M_PI
@@ -15,38 +14,28 @@ namespace zeno {
 
     using namespace zeno::reflect;
 
-    struct ZDEFNODE() Cube : INode {
+    struct Cube : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"x_division", ParamPrimitive("X Division")},
-                {"y_division", ParamPrimitive("Y Division")},
-                {"z_division", ParamPrimitive("Z Division")},
-                {"uniform_scale", ParamPrimitive("Uniform Scale")},
-                {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
-                {"bCalcPointNormals", ParamPrimitive("Point Normals")},
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
+        CustomUI export_customui() const override {
+            CustomUI ui = INode::export_customui();
+            ui.uistyle.iconResPath = "<svg width=\"26\" height=\"26\" viewBox=\"0 0 26 26\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.7307 0.664335L0.976013 4.90657C0.682147 5.00639 0.486237 5.30584 0.486237 5.60529V20.5779C0.486237 20.9023 0.682147 21.1768 0.976013 21.2766L12.7307 25.5188C12.8041 25.5438 12.9021 25.5688 12.9755 25.5688C13.0245 25.5688 13.049 25.5688 13.098 25.5688H13.1225C13.147 25.5688 13.1715 25.5438 13.1959 25.5438L24.9506 21.3016C25.2445 21.2017 25.4404 20.9023 25.4404 20.6028V5.60529V5.58034C25.4404 5.55538 25.4404 5.50548 25.4404 5.48052V5.45557C25.3914 5.20602 25.22 4.98143 24.9751 4.90657L19.0978 2.78545H19.0733C18.9263 2.73554 18.7304 2.71059 18.559 2.78545L7.09822 6.90292C6.80436 7.00274 6.60845 7.30219 6.60845 7.60164V10.3466C6.60845 10.7708 6.9268 11.0952 7.34311 11.0952C7.75942 11.0952 8.07778 10.7708 8.07778 10.3466V8.12568L18.8039 4.25776L22.5262 5.60529L12.7307 9.14881C12.4368 9.24862 12.2409 9.52312 12.2409 9.84753C12.2409 9.84753 12.2409 9.84753 12.2409 9.87248V23.797L1.95557 20.0538V6.12933L13.2204 2.06178C13.6123 1.91205 13.8082 1.48783 13.6612 1.11351C13.5388 0.714244 13.1225 0.514609 12.7307 0.664335ZM13.7102 10.3716L23.9955 6.65337V20.0289L13.7102 23.7471V10.3716Z\" fill=\"#FFFFFF\"/></svg>";
+            return ui;
+        }
 
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
-            zeno::vec3f Size = zeno::vec3f({ 1,1,1 }),
-            zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
-            int x_division = 2,
-            int y_division = 2,
-            int z_division = 2,
-            float uniform_scale = 1.f,
-            std::string face_type = "Quadrilaterals",
-            bool bCalcPointNormals = false
-        )
-        {
+        void apply() override {
+            zeno::vec3f Center = ZImpl(get_input2<zeno::vec3f>("Center"));
+            zeno::vec3f Size = ZImpl(get_input2<zeno::vec3f>("Size"));
+            zeno::vec3f Rotate = ZImpl(get_input2<zeno::vec3f>("Rotate"));
+            int x_division = ZImpl(get_input2<int>("X Division"));
+            int y_division = ZImpl(get_input2<int>("Y Division"));
+            int z_division = ZImpl(get_input2<int>("Z Division"));
+            float uniform_scale = ZImpl(get_input2<float>("Uniform Scale"));
+            std::string face_type = ZImpl(get_input2<std::string>("Face Type"));
+            bool bCalcPointNormals = ZImpl(get_input2<bool>("Point Normals"));
+
             if (x_division < 2 || y_division < 2 || z_division < 2) {
                 throw makeError<UnimplError>("the division should be greater than 2");
             }
-
 
             bool bQuad = face_type == "Quadrilaterals";
             float xstep = 1.f / (x_division - 1), ystep = 1.f / (y_division - 1), zstep = 1.f / (z_division - 1);
@@ -61,8 +50,8 @@ namespace zeno {
             int nPoints = 2 * (x_division * y_division) + (z_division - 2) * (2 * y_division + 2 * x_division - 4);
             int nFaces = 2 * (x_division - 1) * (y_division - 1) + 2 * (x_division - 1) * (z_division - 1) + 2 * (y_division - 1) * (z_division - 1);
 
-            auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
-            std::vector<vec3f> points, normals;
+            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
+            std::vector<zeno::vec3f> points, normals;
             points.resize(nPoints);
             if (bCalcPointNormals)
                 normals.resize(nPoints);
@@ -101,20 +90,26 @@ namespace zeno {
 
                                 if (bFirstFace) {
                                     if (bQuad) {
-                                        geo->add_face({ leftdown, rightdown, rightup, leftup });
+                                        std::vector _newface = { leftdown, rightdown, rightup, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                     else {
-                                        geo->add_face({ leftdown, rightdown, leftup });
-                                        geo->add_face({ rightdown, rightup, leftup });
+                                        std::vector _newface = { leftdown, rightdown, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
+                                        _newface = { rightdown, rightup, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        geo->add_face({ leftdown, leftup, rightup, rightdown });
+                                        std::vector _newface = { leftdown, leftup, rightup, rightdown };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                     else {
-                                        geo->add_face({ leftdown, leftup, rightup });
-                                        geo->add_face({ rightup, rightdown, leftdown });
+                                        std::vector _newface = { leftdown, leftup, rightup };
+                                        geo->add_face(stdVec2zeVec(_newface));
+                                        _newface = { rightup, rightdown, leftdown };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                 }
                             }
@@ -178,20 +173,26 @@ namespace zeno {
 
                                 if (bTop) {
                                     if (bQuad) {
-                                        geo->add_face({ leftdown, rightdown, rightup, leftup });
+                                        std::vector _newface = { leftdown, rightdown, rightup, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                     else {
-                                        geo->add_face({ leftdown, rightdown, leftup });
-                                        geo->add_face({ rightdown, rightup, leftup });
+                                        std::vector _newface = { leftdown, rightdown, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
+                                        _newface = { rightdown, rightup, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        geo->add_face({ leftdown, leftup, rightup, rightdown });
+                                        std::vector _newface = { leftdown, leftup, rightup, rightdown };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                     else {
-                                        geo->add_face({ leftdown, leftup, rightup });
-                                        geo->add_face({ rightdown, leftdown, rightup });
+                                        std::vector _newface = { leftdown, leftup, rightup };
+                                        geo->add_face(stdVec2zeVec(_newface));
+                                        _newface = { rightdown, leftdown, rightup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                 }
                             }
@@ -297,20 +298,26 @@ namespace zeno {
 
                                 if (bRight) {
                                     if (bQuad) {
-                                        geo->add_face({ leftdown, rightdown, rightup, leftup });
+                                        std::vector _newface = { leftdown, rightdown, rightup, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                     else {
-                                        geo->add_face({ leftdown, rightdown, leftup });
-                                        geo->add_face({ rightdown, rightup, leftup });
+                                        std::vector _newface = { leftdown, rightdown, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
+                                        _newface = { rightdown, rightup, leftup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        geo->add_face({ leftdown, leftup, rightup, rightdown });
+                                        std::vector _newface = { leftdown, leftup, rightup, rightdown };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                     else {
-                                        geo->add_face({ leftdown, leftup, rightup });
-                                        geo->add_face({ rightdown, leftdown, rightup });
+                                        std::vector _newface = { leftdown, leftup, rightup };
+                                        geo->add_face(stdVec2zeVec(_newface));
+                                        _newface = { rightdown, leftdown, rightup };
+                                        geo->add_face(stdVec2zeVec(_newface));
                                     }
                                 }
                             }
@@ -338,33 +345,32 @@ namespace zeno {
             geo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
-            return geo;
-        }
 
-        CustomUI export_customui() const {
-            CustomUI ui = INode::export_customui();
-            ui.uistyle.iconResPath = "<svg width=\"26\" height=\"26\" viewBox=\"0 0 26 26\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.7307 0.664335L0.976013 4.90657C0.682147 5.00639 0.486237 5.30584 0.486237 5.60529V20.5779C0.486237 20.9023 0.682147 21.1768 0.976013 21.2766L12.7307 25.5188C12.8041 25.5438 12.9021 25.5688 12.9755 25.5688C13.0245 25.5688 13.049 25.5688 13.098 25.5688H13.1225C13.147 25.5688 13.1715 25.5438 13.1959 25.5438L24.9506 21.3016C25.2445 21.2017 25.4404 20.9023 25.4404 20.6028V5.60529V5.58034C25.4404 5.55538 25.4404 5.50548 25.4404 5.48052V5.45557C25.3914 5.20602 25.22 4.98143 24.9751 4.90657L19.0978 2.78545H19.0733C18.9263 2.73554 18.7304 2.71059 18.559 2.78545L7.09822 6.90292C6.80436 7.00274 6.60845 7.30219 6.60845 7.60164V10.3466C6.60845 10.7708 6.9268 11.0952 7.34311 11.0952C7.75942 11.0952 8.07778 10.7708 8.07778 10.3466V8.12568L18.8039 4.25776L22.5262 5.60529L12.7307 9.14881C12.4368 9.24862 12.2409 9.52312 12.2409 9.84753C12.2409 9.84753 12.2409 9.84753 12.2409 9.87248V23.797L1.95557 20.0538V6.12933L13.2204 2.06178C13.6123 1.91205 13.8082 1.48783 13.6612 1.11351C13.5388 0.714244 13.1225 0.514609 12.7307 0.664335ZM13.7102 10.3716L23.9955 6.65337V20.0289L13.7102 23.7471V10.3716Z\" fill=\"#FFFFFF\"/></svg>";
-            return ui;
+            ZImpl(set_output("Output", geo));
         }
     };
 
-    struct ZDEFNODE() Disk : INode {
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Position,
-            zeno::vec3f Scale,
-            zeno::vec3f Rotate,
-            bool HasNormal = false,
-            bool HasVertUV = false,
-            bool IsFlipFace = false,
-            float radius = 1.f,
-            int divisions = 32
-        ) {
-            auto geo = std::make_shared<zeno::GeometryObject>();
-            return geo;
-        }
-    };
+    ZENDEFNODE(Cube, {
+        {/*inputs:*/
+            ParamPrimitive("Center", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Size", gParamType_Vec3f, zeno::vec3f({1,1,1})),
+            ParamPrimitive("Rotate", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("X Division", gParamType_Int, 2, Lineedit),
+            ParamPrimitive("Y Division", gParamType_Int, 2, Lineedit),
+            ParamPrimitive("Z Division", gParamType_Int, 2, Lineedit),
+            ParamPrimitive("Uniform Scale", gParamType_Float, 1.f, Lineedit),
+            ParamPrimitive("Face Type", gParamType_String, "Quadrilaterals", zeno::Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"}),
+            ParamPrimitive("Point Normals", gParamType_Bool, false, Checkbox)
+        },
+        {/*outputs:*/
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"create"},
+    });
 
-    struct ZDEFNODE() Grid : INode {
+
+    struct Grid : INode {
 
         enum PlaneDirection {
             Dir_XY,
@@ -372,37 +378,24 @@ namespace zeno {
             Dir_ZX
         };
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
-                {"Direction", ParamPrimitive("Direction", "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"})},
-                {"bCalcPointNormals", ParamPrimitive("Point Normals")},
-                {"Rows", ParamPrimitive("Rows", 2, Slider, std::vector<int>{1,100,1})},
-                {"Columns", ParamPrimitive("Columns", 2, Slider, std::vector<int>{1,100,1})}
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
+        void apply() override {
+            zeno::vec3f Center = ZImpl(get_input2<zeno::vec3f>("Center"));
+            zeno::vec3f Rotate = ZImpl(get_input2<zeno::vec3f>("Rotate"));
+            zeno::vec2f Size = ZImpl(get_input2<zeno::vec2f>("Size"));
+            int Rows = ZImpl(get_input2<int>("Rows"));
+            int Columns = ZImpl(get_input2<int>("Columns"));
+            std::string face_type = ZImpl(get_input2<std::string>("Face Type"));
+            std::string Direction = ZImpl(get_input2<std::string>("Direction"));
+            bool bCalcPointNormals = ZImpl(get_input2<bool>("Point Normal"));
 
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
-            zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
-            zeno::vec2f Size = zeno::vec2f({ 1,1 }),
-            int Rows = 2,
-            int Columns = 2,
-            std::string face_type = "Quadrilaterals",
-            std::string Direction = "ZX",
-            bool bCalcPointNormals = false
-        ) {
             if (Rows < 2 || Columns < 2) {
                 throw makeError<UnimplError>("the division should be greater than 2");
             }
 
             float size1 = Size[0], size2 = Size[1];
             float step1 = size1 / (Rows - 1), step2 = size2 / (Columns - 1);
-            float bottom1 = - size1 / 2, up1 = bottom1 + size1;
-            float bottom2 = - size2 / 2, up2 = bottom2 + size2;
+            float bottom1 = -size1 / 2, up1 = bottom1 + size1;
+            float bottom2 = -size2 / 2, up2 = bottom2 + size2;
             bool bQuad = face_type == "Quadrilaterals";
 
             int nPoints = Rows * Columns;
@@ -429,7 +422,7 @@ namespace zeno {
                 throw makeError<UnimplError>("Unknown Direction");
             }
 
-            auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
+            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
             std::vector<vec3f> points, normals;
             points.resize(nPoints);
             if (bCalcPointNormals)
@@ -464,11 +457,14 @@ namespace zeno {
                         int i_1j_1 = i_1j - 1;
 
                         if (bQuad) {
-                            geo->add_face({ ij, i_1j, i_1j_1, ij_1 });
+                            std::vector<int> _face = { ij, i_1j, i_1j_1, ij_1 };
+                            geo->add_face(stdVec2zeVec(_face));
                         }
                         else {
-                            geo->add_face({ ij, i_1j, i_1j_1 });
-                            geo->add_face({ ij, i_1j_1, ij_1 });
+                            std::vector<int> _face = { ij, i_1j, i_1j_1 };
+                            geo->add_face(stdVec2zeVec(_face));
+                            _face = { ij, i_1j_1, ij_1 };
+                            geo->add_face(stdVec2zeVec(_face));
                         }
                     }
                 }
@@ -492,42 +488,46 @@ namespace zeno {
             geo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
-            return geo;
+
+            ZImpl(set_output("Output", std::move(geo)));
         }
     };
 
-    struct ZDEFNODE() Tube : INode {
+    ZENDEFNODE(Grid, {
+        {/*inputs:*/
+            ParamPrimitive("Center", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Size", gParamType_Vec3f, zeno::vec3f({1,1,1})),
+            ParamPrimitive("Rotate", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Rows", gParamType_Int, 2, Slider, std::vector<int>{1,100,1}),
+            ParamPrimitive("Columns", gParamType_Int, 2, Slider, std::vector<int>{1,100,1}),
+            ParamPrimitive("Direction", gParamType_String, "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"}),
+            ParamPrimitive("Uniform Scale", gParamType_Float, 1.f, Lineedit),
+            ParamPrimitive("Face Type", gParamType_String, "Quadrilaterals", zeno::Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"}),
+            ParamPrimitive("Point Normals", gParamType_Bool, false, Checkbox)
+        },
+        {/*outputs:*/
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"create"},
+    });
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"up_radius", ParamPrimitive("Up Radius")},
-                {"down_radius", ParamPrimitive("Down Radius")},
-                {"uniform_scale", ParamPrimitive("Uniform Scale")},
-                {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
-                {"Direction", ParamPrimitive("Direction", "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"})},
-                {"bCalcPointNormals", ParamPrimitive("Point Normals")},
-                {"end_caps", ParamPrimitive("End Caps")},
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
 
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Center,
-            zeno::vec3f Rotate,
-            float up_radius = 1.f,
-            float down_radius = 1.f,
-            float uniform_scale = 1.f,
-            float Height = 2.0f,
-            int Rows = 2,
-            int Columns = 12,
-            std::string Direction = "Y Axis",
-            std::string face_type = "Quadrilaterals",
-            bool bCalcPointNormals = false,
-            bool end_caps = true
-        )
-        {
+    struct Tube : INode {
+        void apply() override {
+            zeno::vec3f Center = ZImpl(get_input2<vec3f>("Center"));
+            zeno::vec3f Rotate = ZImpl(get_input2<vec3f>("Rotate"));
+            float up_radius = ZImpl(get_input2<float>("Up Radius"));
+            float down_radius = ZImpl(get_input2<float>("Down Radius"));
+            float uniform_scale = ZImpl(get_input2<float>("Uniform Scale"));
+            float Height = ZImpl(get_input2<float>("Height"));
+            int Rows = ZImpl(get_input2<int>("Rows"));
+            int Columns = ZImpl(get_input2<int>("Columns"));
+            std::string Direction = ZImpl(get_input2<std::string>("Direction"));
+            std::string face_type = ZImpl(get_input2<std::string>("Face Type"));
+            bool bCalcPointNormals = ZImpl(get_input2<bool>("Point Normals"));
+            bool end_caps = ZImpl(get_input2<bool>("End Caps"));
+
             bool bQuad = face_type == "Quadrilaterals";
             int nPoints = Rows * Columns;
             int nFaces = (Rows - 1) * Columns;    //暂不考虑end_caps
@@ -543,7 +543,7 @@ namespace zeno {
                 nPoints += 2;
             }
 
-            auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
+            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
             std::vector<vec3f> points, normals;
             points.resize(nPoints);
             if (bCalcPointNormals)
@@ -562,8 +562,8 @@ namespace zeno {
                         int down_idx = (Rows - 1) * Columns + col;
                         down_pts.push_back(down_idx);
                     }
-                    geo->add_face(up_pts);
-                    geo->add_face(down_pts);
+                    geo->add_face(stdVec2zeVec(up_pts));
+                    geo->add_face(stdVec2zeVec(down_pts));
                 }
                 else {
                     if (Direction == "Y Axis") {
@@ -586,21 +586,21 @@ namespace zeno {
                     {
                         int idx = col + 2;
                         if (col > 0) {
-                            geo->add_face({ 0, idx - 1, idx });
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx - 1, idx }));
                         }
                         if (col == Columns - 1) {
-                            geo->add_face({ 0, idx, 2 });
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx, 2 }));
                         }
                     }
                     for (int col = 0; col < Columns; col++)
                     {
                         int idx = (Rows - 1) * Columns + col + 2;
                         if (col > 0) {
-                            geo->add_face({ 1, idx, idx - 1 });
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ 1, idx, idx - 1 }));
                         }
                         if (col == Columns - 1) {
                             int last_start = (Rows - 1) * Columns + 2;
-                            geo->add_face({ 1, last_start, idx});
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ 1, last_start, idx }));
                         }
                     }
                 }
@@ -658,11 +658,11 @@ namespace zeno {
                         int left_top = right_top - 1;
 
                         if (bQuad) {
-                            geo->add_face({ left_top, left_bottom, right_bottom, right_top });
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom, right_top }));
                         }
                         else {
-                            geo->add_face({ left_top, left_bottom, right_bottom });
-                            geo->add_face({ left_top, right_bottom, right_top });
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom }));
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, right_bottom, right_top }));
                         }
 
                         if (col == Columns - 1) {
@@ -673,11 +673,11 @@ namespace zeno {
                             right_top = right_bottom - Columns;
 
                             if (bQuad) {
-                                geo->add_face({ left_top, left_bottom, right_bottom, right_top });
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom, right_top }));
                             }
                             else {
-                                geo->add_face({ left_top, left_bottom, right_bottom });
-                                geo->add_face({ left_top, right_bottom, right_top });
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom }));
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, right_bottom, right_top }));
                             }
                         }
                     }
@@ -703,11 +703,35 @@ namespace zeno {
             geo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
-            return geo;
+
+            ZImpl(set_output("Output", std::move(geo)));
         }
     };
 
-    struct ZDEFNODE() Sphere : INode {
+    ZENDEFNODE(Tube, {
+        {/*inputs:*/
+            ParamPrimitive("Center", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Rotate", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Up Radius", gParamType_Float, 1.f),
+            ParamPrimitive("Down Radius", gParamType_Float, 1.f),
+            ParamPrimitive("Uniform Scale", gParamType_Float, 1.f),
+            ParamPrimitive("Height", gParamType_Float, 2.f),
+            ParamPrimitive("Rows", gParamType_Int, 2, Slider, std::vector<int>{1,100,1}),
+            ParamPrimitive("Columns", gParamType_Int, 12, Slider, std::vector<int>{1,100,1}),
+            ParamPrimitive("Direction", gParamType_String, "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"}),
+            ParamPrimitive("Face Type", gParamType_String, "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"}),
+            ParamPrimitive("Point Normals", gParamType_Bool, false, Checkbox),
+            ParamPrimitive("End Caps", gParamType_Bool, true, Checkbox),
+        },
+        {/*outputs:*/
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"create"},
+    });
+
+
+    struct Sphere : INode {
 
         enum AxisDirection {
             Y_Axis,
@@ -715,27 +739,16 @@ namespace zeno {
             Z_Axis
         };
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"uniform_scale", ParamPrimitive("Uniform Scale")},
-                {"face_type", ParamPrimitive("Face Type", "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"})},
-                {"Direction", ParamPrimitive("Direction", "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"})},
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
+        void apply() override {
+            zeno::vec3f Center = ZImpl(get_input2<vec3f>("Center"));
+            zeno::vec3f Rotate = ZImpl(get_input2<vec3f>("Rotate"));
+            zeno::vec3f Radius = ZImpl(get_input2<vec3f>("Radius"));
+            float uniform_scale = ZImpl(get_input2<float>("Uniform Scale"));
+            std::string Direction = ZImpl(get_input2<std::string>("Direction"));
+            int Rows = ZImpl(get_input2<int>("Rows"));
+            int Columns = ZImpl(get_input2<int>("Columns"));
+            std::string face_type = ZImpl(get_input2<std::string>("Face Type"));
 
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Center,
-            zeno::vec3f Rotate,
-            zeno::vec3f Radius = zeno::vec3f(1.f, 1.f, 1.f),
-            float uniform_scale = 1.f,
-            std::string Direction = "Y Axis",
-            int Rows = 13,
-            int Columns = 24,
-            std::string face_type = "Quadrilaterals")
-        {
             bool bQuad = face_type == "Quadrilaterals";
 
             if (Rows < 3) {
@@ -778,7 +791,7 @@ namespace zeno {
             std::vector<vec3f> points;
             points.resize(nPoints);
 
-            auto geo = std::make_shared<zeno::GeometryObject>(!bQuad, nPoints, nFaces);
+            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
 
             //先加顶部和底部两个顶点
             vec3f topPos;
@@ -845,9 +858,9 @@ namespace zeno {
                     if (col > 0) {
                         if (row == 1) {
                             //与顶部顶点构成三角面
-                            geo->add_face({ 0, idx - 1, idx });
+                            geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx - 1, idx }));
                             if (col == Columns - 1) {
-                                geo->add_face({ 0, idx, startIdx });
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx, startIdx }));
                             }
                         }
                         else {
@@ -856,11 +869,11 @@ namespace zeno {
                             int rightup = 2/*顶部底部两个点*/ + (row - 2) * Columns + col;
                             int leftup = rightup - 1;
                             if (bQuad) {
-                                geo->add_face({ rightdown, rightup, leftup, leftdown });
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup, leftdown }));
                             }
                             else {
-                                geo->add_face({ rightdown, rightup, leftup });
-                                geo->add_face({ rightdown, leftup, leftdown });
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup }));
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, leftup, leftdown }));
                             }
 
                             if (col == Columns - 1) {
@@ -870,19 +883,19 @@ namespace zeno {
                                 rightup = 2 + (row - 2) * Columns;
 
                                 if (bQuad) {
-                                    geo->add_face({ rightdown, rightup, leftup, leftdown });
+                                    geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup, leftdown }));
                                 }
                                 else {
-                                    geo->add_face({ rightdown, rightup, leftup });
-                                    geo->add_face({ rightdown, leftup, leftdown });
+                                    geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup }));
+                                    geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, leftup, leftdown }));
                                 }
                             }
 
                             if (row == Rows - 2) {
                                 //与底部顶点构成三角面
-                                geo->add_face({ idx, idx - 1, 1 });
+                                geo->add_face(stdVec2zeVec(std::vector<int>{ idx, idx - 1, 1 }));
                                 if (col == Columns - 1) {
-                                    geo->add_face({ 1, startIdx, idx });
+                                    geo->add_face(stdVec2zeVec(std::vector<int>{ 1, startIdx, idx }));
                                 }
                             }
                         }
@@ -905,54 +918,29 @@ namespace zeno {
             }
 
             geo->create_attr(ATTR_POINT, "pos", points);
-            return geo;
+            ZImpl(set_output("Output", std::move(geo)));
         }
     };
 
-    struct ZDEFNODE() Cone : INode {
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Position,
-            zeno::vec3f Scale,
-            float radius = 1.f,
-            float height = 2.f,
-            int lons = 32
-        ) {
-            auto geo = std::make_shared<zeno::GeometryObject>();
-            return geo;
-        }
-    };
+    ZENDEFNODE(Sphere, {
+        {/*inputs:*/
+            ParamPrimitive("Center", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Rotate", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Radius", gParamType_Vec3f, zeno::vec3f({1,1,1})),
+            ParamPrimitive("Uniform Scale", gParamType_Float, 1.f),
+            ParamPrimitive("Direction", gParamType_String, "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"}),
+            ParamPrimitive("Rows", gParamType_Int, 13, Slider, std::vector<int>{1,100,1}),
+            ParamPrimitive("Columns", gParamType_Int, 24, Slider, std::vector<int>{1,100,1}),
+            ParamPrimitive("Face Type", gParamType_String, "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"}),
+        },
+        {/*outputs:*/
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"create"},
+    });
 
-    struct ZDEFNODE() Torus : INode {
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Position,
-            zeno::vec3f Rotate,
-            float MajorRadius = 1.f,
-            float MinorRadius = 0.25f,
-            bool HasNormal = false,
-            bool HasVertUV = false,
-            int MajorSegment = 48,
-            int MinorSegment = 12,
-            bool quads = false
-        ) {
-            auto geo = std::make_shared<zeno::GeometryObject>();
-            return geo;
-        }
-    };
-
-    struct ZDEFNODE() Cylinder : INode {
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Position,
-            zeno::vec3f Scale,
-            float radius = 1.f,
-            float height = 2.f,
-            int lons = 32
-        ) {
-            auto geo = std::make_shared<zeno::GeometryObject>();
-            return geo;
-        }
-    };
-
-    struct ZDEFNODE() Circle : INode {
+    struct Circle : INode {
 
         enum PlaneDirection {
             Dir_XY,
@@ -960,35 +948,22 @@ namespace zeno {
             Dir_ZX
         };
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"segments", ParamPrimitive("Segments", 32, Lineedit)},
-                {"radius", ParamPrimitive("Radius", 1.0, Lineedit)},
-                {"arcType", ParamPrimitive("Arc Type", "Closed", Combobox, std::vector<std::string>{"Closed", "Open Arc", "Sliced Arc"})},
-                {"direction", ParamPrimitive("Direction", "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"})}
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
+        void apply() override {
+            zeno::vec3f Center = ZImpl(get_input2<vec3f>("Center"));
+            zeno::vec3f Rotate = ZImpl(get_input2<vec3f>("Rotate"));
+            float segments = ZImpl(get_input2<float>("Segments"));
+            float radius = ZImpl(get_input2<float>("Radius"));
+            std::string arcType = ZImpl(get_input2<std::string>("Arc Type"));
+            zeno::vec2f arcAngle = ZImpl(get_input2<zeno::vec2i>("Arc Angle"));
+            std::string direction = ZImpl(get_input2<std::string>("ZX"));
+            bool bCalcPointNormals = ZImpl(get_input2<bool>("Point Normals"));
 
-        std::shared_ptr<GeometryObject> apply(
-            zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
-            zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
-            float segments = 32,
-            float radius = 1.0,
-            std::string arcType = "Closed",
-            zeno::vec2f arcAngle = zeno::vec2i({ 0, 120 }),
-            //std::string face_type = "Quadrilaterals",
-            std::string direction = "ZX",
-            bool bCalcPointNormals = false
-        ) {
             if (segments <= 0) {
                 throw makeError<UnimplError>("the segments should be positive");
             }
             if (radius < 0) {
                 throw makeError<UnimplError>("the segments should not be negative");
-            } 
+            }
 
             PlaneDirection dir;
             Rotate_Orientaion ori;
@@ -1013,19 +988,22 @@ namespace zeno {
                 if (segments == 1) {
                     pointNumber = 1;
                     faceNumber = 0;
-                } else {
+                }
+                else {
                     pointNumber = segments + 1;
                     faceNumber = segments;
                 }
-            }else if (arcType == "Open Arc") {
+            }
+            else if (arcType == "Open Arc") {
                 pointNumber = segments + 1;
                 faceNumber = 0;
-            }else if (arcType == "Sliced Arc") {
+            }
+            else if (arcType == "Sliced Arc") {
                 pointNumber = segments + 2;
                 faceNumber = segments;
             }
 
-            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, pointNumber, faceNumber);
+            auto spgeo = create_GeometryObject(true, pointNumber, faceNumber);
 
             std::vector<vec3f> points, normals;
             points.resize(pointNumber);
@@ -1035,7 +1013,8 @@ namespace zeno {
             if (arcType == "Closed") {
                 if (segments == 1) {
                     spgeo->create_attr(ATTR_POINT, "pos", { Center });
-                    return spgeo;
+                    ZImpl(set_output("Output", spgeo));
+                    return;
                 }
 
                 points[0] = Center;//圆心
@@ -1062,7 +1041,7 @@ namespace zeno {
                         normals[i] = nrm;
 
                     if (i > 1) {
-                        spgeo->add_face({ 0, i - 1, i });
+                        spgeo->add_face(stdVec2zeVec(std::vector<int>{ 0, i - 1, i }));
                     }
 
                     if (segments == 2) {//加一条线
@@ -1070,8 +1049,9 @@ namespace zeno {
                     }
                 }
 
-                spgeo->add_face({ 0, (int)pointNumber - 1, 1 });
-            } else if (arcType == "Open Arc") {
+                spgeo->add_face(stdVec2zeVec(std::vector<int>{ 0, (int)pointNumber - 1, 1 }));
+            }
+            else if (arcType == "Open Arc") {
                 float startAngle = arcAngle[0];
                 float arcRange = arcAngle[1] - startAngle;
                 std::vector<int> ptIndice;
@@ -1094,9 +1074,10 @@ namespace zeno {
                     points[i] = pt;
                     ptIndice.push_back(i);
                 }
-                spgeo->add_face(ptIndice, false);
+                spgeo->add_face(stdVec2zeVec(ptIndice), false);
                 bCalcPointNormals = false;
-            }else if (arcType == "Sliced Arc") {
+            }
+            else if (arcType == "Sliced Arc") {
                 points[0] = Center;//圆心
 
                 float startAngle = arcAngle[0];
@@ -1123,7 +1104,7 @@ namespace zeno {
                         normals[i] = nrm;
 
                     if (i > 1) {
-                        spgeo->add_face({ 0, i - 1, i });
+                        spgeo->add_face(stdVec2zeVec(std::vector<int>{ 0, i - 1, i }));
                     }
                 }
             }
@@ -1147,59 +1128,73 @@ namespace zeno {
             if (bCalcPointNormals) {
                 spgeo->create_attr(ATTR_POINT, "nrm", normals);
             }
-            return spgeo;
+            ZImpl(set_output("Output", spgeo));
         }
     };
 
-    struct ZDEFNODE() PointCreate : INode {
+    ZENDEFNODE(Circle, {
+        {/*inputs:*/
+            ParamPrimitive("Center", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Rotate", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("Segments", gParamType_Int, 32, Lineedit),
+            ParamPrimitive("Radius", gParamType_Float, 1.0, Lineedit),
+            ParamPrimitive("Arc Type", gParamType_String, "Closed", Combobox, std::vector<std::string>{"Closed", "Open Arc", "Sliced Arc"}),
+            ParamPrimitive("Arc Angle", gParamType_Vec2f, zeno::vec2f({ 0, 120 })),
+            ParamPrimitive("Direction", gParamType_String, "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"}),
+            ParamPrimitive("Point Normals", gParamType_Bool, false, Checkbox)
+        },
+        {/*outputs:*/
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"create"},
+    });
 
-        ReflectCustomUI m_uilayout = {
-            _Group {},
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<GeometryObject> apply(zeno::vec3f Position = zeno::vec3f({ 0,0,0 }))
-        {
-            std::shared_ptr<GeometryObject> spPoint = std::make_shared<GeometryObject>(false, 1, 0);
+    struct PointCreate : INode {
+        void apply() override {
+            zeno::vec3f Position = ZImpl(get_input2<vec3f>("Position"));
+            auto spPoint = create_GeometryObject(false, 1, 0);
             spPoint->create_point_attr("pos", Position);
-            return spPoint;
+            ZImpl(set_output("Output", spPoint));
         }
     };
 
-    struct ZDEFNODE() Line : INode {
+    ZENDEFNODE(PointCreate, {
+        {
+            ParamPrimitive("Position", gParamType_Vec3f, zeno::vec3f({0,0,0}))
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"create"},
+    });
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
 
-        std::shared_ptr<GeometryObject> apply(
-            int npoints = 2,
-            zeno::vec3f direction = zeno::vec3f({ 0,1,0 }),
-            zeno::vec3f origin = zeno::vec3f({ 0,0,0 }),
-            float length = 1.0,
-            bool isCentered = false
-        ) {
+    struct Line : INode {
+        void apply() override {
+            int npoints = ZImpl(get_input2<int>("npoints"));
+            zeno::vec3f direction = ZImpl(get_input2<zeno::vec3f>("direction"));
+            zeno::vec3f origin = ZImpl(get_input2<zeno::vec3f>("origin"));
+            float length = ZImpl(get_input2<float>("length"));
+            bool isCentered = ZImpl(get_input2<bool>("isCentered"));
+
             if (npoints <= 0) {
                 throw makeError<UnimplError>("the npoints should be positive");
             }
             if (length < 0) {
                 throw makeError<UnimplError>("the scale should be positive");
             }
-            if (direction == zeno::vec3f({0,0,0})) {
+            if (direction == zeno::vec3f({ 0,0,0 })) {
                 throw makeError<UnimplError>("the direction should not be {0,0,0}");
             }
 
-            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(true, npoints, 0);
+            auto spgeo = create_GeometryObject(true, npoints, 0);
 
             if (npoints == 1) {
                 spgeo->create_attr(ATTR_POINT, "pos", { origin });
-                return spgeo;
+                ZImpl(set_output("Output", spgeo));
+                return;
             }
 
             float scale = length / glm::sqrt(glm::pow(direction[0], 2) + glm::pow(direction[1], 2) + glm::pow(direction[2], 2)) / (npoints - 1);
@@ -1212,7 +1207,7 @@ namespace zeno {
             std::vector<int> pts;
             pts.resize(npoints);
             points.resize(npoints);
-//#pragma omp parallel for
+            //#pragma omp parallel for
             for (int pt = 0; pt < npoints; pt++) {
                 vec3f p = origin + pt * ax;
                 points[pt] = p;
@@ -1228,9 +1223,24 @@ namespace zeno {
             }
 
             //兼容hou，用一个面作为所有线段的面
-            spgeo->add_face(pts, false);
+            spgeo->add_face(stdVec2zeVec(pts), false);
             spgeo->create_attr(ATTR_POINT, "pos", points);
-            return spgeo;
+            ZImpl(set_output("Output", spgeo));
         }
     };
+
+    ZENDEFNODE(Line, {
+        {
+            ParamPrimitive("direction", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("origin", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("npoints", gParamType_Int, 2),
+            ParamPrimitive("length", gParamType_Float, 1.0),
+            ParamPrimitive("isCentered", gParamType_Bool, false)
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"create"},
+    });
 }

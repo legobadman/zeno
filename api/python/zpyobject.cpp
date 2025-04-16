@@ -21,7 +21,7 @@ Zpy_Camera::Zpy_Camera(
 )
 {
     //先默认在mainGraph里创建，避免还要指定一个graph这种麻烦（而且Camera这种大概率只要在main创建）
-    std::shared_ptr<zeno::INode> spNode = zeno::getSession().mainGraph->createNode("MakeCamera");
+    std::shared_ptr<zeno::NodeImpl> spNode = zeno::getSession().mainGraph->createNode("MakeCamera");
     if (!spNode) {
         throw std::runtime_error("cannot create camera because of internal error");
     }
@@ -49,7 +49,7 @@ Zpy_Camera::Zpy_Camera(
     zeno::getSession().mainGraph->applyNodes({ nodename });
 }
 
-Zpy_Camera::Zpy_Camera(std::weak_ptr<zeno::INode> wpNode)
+Zpy_Camera::Zpy_Camera(std::weak_ptr<zeno::NodeImpl> wpNode)
     : m_wpNode(wpNode)
 {
 }
@@ -180,7 +180,7 @@ Zpy_Light::Zpy_Light(
 )
 {
     //先默认在mainGraph里创建，避免还要指定一个graph这种麻烦（而且Camera这种大概率只要在main创建）
-    std::shared_ptr<zeno::INode> spNode = zeno::getSession().mainGraph->createNode("LightNode");
+    std::shared_ptr<zeno::NodeImpl> spNode = zeno::getSession().mainGraph->createNode("LightNode");
     if (!spNode) {
         throw std::runtime_error("cannot create light because of internal error");
     }
@@ -210,7 +210,7 @@ Zpy_Light::Zpy_Light(
     zeno::getSession().mainGraph->applyNodes({ nodename });
 }
 
-Zpy_Light::Zpy_Light(std::weak_ptr<zeno::INode> wpNode)
+Zpy_Light::Zpy_Light(std::weak_ptr<zeno::NodeImpl> wpNode)
     : m_wpNode(wpNode)
 {
 }

@@ -82,11 +82,11 @@ static std::variant
 
 struct PrimitiveFilterByAttr : INode {
   virtual void apply() override {
-    auto prim = get_input<PrimitiveObject>("prim");
-    auto attrName = get_param<std::string>("attrName");
-    auto acceptIf = get_param<std::string>("acceptIf");
-    auto vecSelType = get_param<std::string>("vecSelType");
-    auto valueObj = get_input<NumericObject>("value");
+    auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+    auto attrName = ZImpl(get_param<std::string>("attrName"));
+    auto acceptIf = ZImpl(get_param<std::string>("acceptIf"));
+    auto vecSelType = ZImpl(get_param<std::string>("vecSelType"));
+    auto valueObj = ZImpl(get_input<NumericObject>("value"));
     
     std::vector<int> revamp;
     revamp.reserve(prim->size());
@@ -113,7 +113,7 @@ struct PrimitiveFilterByAttr : INode {
     auto old_prim_size = prim->size();
     prim->resize(revamp.size());
 
-    if (get_param<bool>("mockTopos") && (0
+    if (ZImpl(get_param<bool>("mockTopos")) && (0
             || prim->tris.size()
             || prim->quads.size()
             || prim->lines.size()
@@ -236,7 +236,7 @@ struct PrimitiveFilterByAttr : INode {
 
     }
     
-    set_output("prim", get_input("prim"));
+    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
   }
 };
 
@@ -259,11 +259,11 @@ ZENDEFNODE(PrimitiveFilterByAttr,
 
 struct SubLine : INode { // deprecated zhxx-happy-node, FilterByAttr already auto-mock lines!
   virtual void apply() override {
-    auto prim = get_input<PrimitiveObject>("line");
-    auto attrName = get_param<std::string>("attrName");
-    auto acceptIf = get_param<std::string>("acceptIf");
-    auto vecSelType = get_param<std::string>("vecSelType");
-    auto valueObj = get_input<NumericObject>("value");
+    auto prim = ZImpl(get_input<PrimitiveObject>("line"));
+    auto attrName = ZImpl(get_param<std::string>("attrName"));
+    auto acceptIf = ZImpl(get_param<std::string>("acceptIf"));
+    auto vecSelType = ZImpl(get_param<std::string>("vecSelType"));
+    auto valueObj = ZImpl(get_input<NumericObject>("value"));
     
     std::vector<int> revamp;
     prim->attr_visit(attrName, [&] (auto const &attr) {
@@ -294,7 +294,7 @@ struct SubLine : INode { // deprecated zhxx-happy-node, FilterByAttr already aut
     }
     prim->lines.resize(i);
     
-    set_output("prim", get_input("line"));
+    ZImpl(set_output("prim", ZImpl(get_input("line"))));
   }
 };
 ZENDEFNODE(SubLine,

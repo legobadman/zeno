@@ -1,11 +1,10 @@
 #include <zeno/core/GlobalVariable.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
 #include <zeno/extra/SubnetNode.h>
-#include "reflect/metadata.hpp"
-#include "reflect/registry.hpp"
-#include "reflect/container/object_proxy"
-#include "reflect/container/arraylist"
+#include <reflect/metadata.hpp>
+#include <reflect/registry.hpp>
+#include <reflect/container/arraylist>
 #include <zeno/utils/helper.h>
 
 
@@ -94,12 +93,13 @@ namespace zeno {
         return globalVariableStack.getVariable(varname);
     }
 
-    ZENO_API GlobalVariableOverride::GlobalVariableOverride(std::weak_ptr<INode> wknode, std::string gvarName, zeno::reflect::Any var): currNode(wknode)
+    ZENO_API GlobalVariableOverride::GlobalVariableOverride(NodeImpl* pNode, std::string gvarName, zeno::reflect::Any var)
+        : currNode(pNode)
     {
         gvar = GVariable(gvarName, var);
         overrideSuccess = zeno::getSession().globalVariableManager->overrideVariable(gvar);
         if (overrideSuccess) {
-            propagateDirty(currNode.lock(), gvar.name);
+            propagateDirty(currNode, gvar.name);
         }
     }
 
@@ -114,7 +114,7 @@ namespace zeno {
     ZENO_API bool GlobalVariableOverride::updateGlobalVariable(GVariable globalVariable)
     {
         if (zeno::getSession().globalVariableManager->updateVariable(globalVariable)) {
-            propagateDirty(currNode.lock(), gvar.name);
+            propagateDirty(currNode, gvar.name);
             return true;
         }
         return false;

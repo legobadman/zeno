@@ -1,14 +1,21 @@
 #include <zeno/utils/helper.h>
 #include <regex>
 #include <zeno/core/CoreParam.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/ObjectDef.h>
 #include <zeno/core/reflectdef.h>
 #include <regex>
 #include <zeno/core/typeinfo.h>
+#include <reflect/type.hpp>
 #include <zeno/core/Graph.h>
 #include <zeno/extra/SubnetNode.h>
+#include <zeno/types/DictObject.h>
+#include <zeno/types/ListObject.h>
+#include <zeno/utils/interfaceutil.h>
+#include "reflect/reflection.generated.hpp"
+
 
 using namespace zeno::types;
 using namespace zeno::reflect;
@@ -620,8 +627,8 @@ namespace zeno {
         if (!spOutParam || !spInParam)
             return edge;
 
-        auto spOutNode = spOutParam->m_wpNode.lock();
-        auto spInNode = spInParam->m_wpNode.lock();
+        auto spOutNode = spOutParam->m_wpNode;
+        auto spInNode = spInParam->m_wpNode;
         if (!spOutNode || !spInNode)
             return edge;
 
@@ -640,8 +647,8 @@ namespace zeno {
         if (!spOutParam || !spInParam)
             return edge;
 
-        auto spOutNode = spOutParam->m_wpNode.lock();
-        auto spInNode = spInParam->m_wpNode.lock();
+        auto spOutNode = spOutParam->m_wpNode;
+        auto spInNode = spInParam->m_wpNode;
         if (!spOutNode || !spInNode)
             return edge;
 
@@ -815,7 +822,7 @@ namespace zeno {
         const std::string& param_part = node_items.size() >= 2 ? node_items[1] : "";
         const std::string& param_component = node_items.size() >= 3 ? node_items[2] : "";
 
-        std::map<std::string, std::shared_ptr<INode>> nodes = spGraph->getNodes();
+        std::map<std::string, NodeImpl*> nodes = spGraph->getNodes();
         for (auto& [name, spNode] : nodes) {
             if (name.find(node_name) != std::string::npos) {
                 if (!param_part.empty() || (param_part.empty() && bEndsWithDot)) {
@@ -1136,7 +1143,7 @@ namespace zeno {
 
     void getNameMappingFromReflectUI(
         reflect::TypeBase* typeBase,
-        std::shared_ptr<INode> node,
+        NodeImpl* node,
         std::map<std::string, std::string>& inputParams,
         std::vector<std::string>& outputParams
     )
@@ -1146,7 +1153,7 @@ namespace zeno {
         }
         for (IMemberField* field : typeBase->get_member_fields()) {
             if (field->get_field_type() == get_type<ReflectCustomUI>()) {
-                Any reflectCustomUiAny = field->get_field_value(node.get());
+                Any reflectCustomUiAny = field->get_field_value(node);
                 if (reflectCustomUiAny.has_value()) {
                     ReflectCustomUI reflectCustomUi = any_cast<ReflectCustomUI>(reflectCustomUiAny);
                     for (_CommonParam& param : reflectCustomUi.inputParams) {
@@ -1185,7 +1192,12 @@ namespace zeno {
         return false;
     }
 
-    void propagateDirty(std::shared_ptr<INode> spCurrNode, std::string varName)
+    ZENO_API zeno::SubnetNode* getSubnetNode(zeno::INodeImpl* pAdapter) {
+        if (!pAdapter || !pAdapter->m_pImpl) return nullptr;
+        return dynamic_cast<zeno::SubnetNode*>(pAdapter->m_pImpl->coreNode());
+    }
+
+    void propagateDirty(NodeImpl* spCurrNode, std::string varName)
     {
         std::set<ObjPath> upstreamDepNodes;
         std::set<ObjPath> upstreams;
@@ -1199,11 +1211,11 @@ namespace zeno {
         }
     }
 
-    void getUpstreamNodes(std::shared_ptr<INode> spCurrNode, std::set<ObjPath>& upstreamDepNodes, std::set<ObjPath>& upstreams, std::string outParamName)
+    void getUpstreamNodes(NodeImpl* spCurrNode, std::set<ObjPath>& upstreamDepNodes, std::set<ObjPath>& upstreams, std::string outParamName)
     {
         if (!spCurrNode)
             return;
-        if (auto spGraph = spCurrNode->getGraph().lock())
+        if (auto spGraph = spCurrNode->getGraph())
         {
             spGraph->isFrameNode(spCurrNode->get_uuid());
             upstreamDepNodes.insert(spCurrNode->get_uuid_path());
@@ -1212,8 +1224,9 @@ namespace zeno {
         if (upstreams.find(spCurrNode->get_uuid_path()) != upstreams.end()) {
             return;
         }
-        if (std::shared_ptr<SubnetNode> pSubnetNode = std::dynamic_pointer_cast<SubnetNode>(spCurrNode))
+        if (SubnetNode* pSubnetNode = dynamic_cast<SubnetNode*>(spCurrNode->coreNode()))
         {
+            auto pImpl = pSubnetNode->m_pAdapter->m_pImpl;
             auto suboutoutGetUpstreamFunc = [&pSubnetNode, &upstreamDepNodes, &upstreams](std::string paramName) {
                 if (auto suboutput = pSubnetNode->subgraph->getNode(paramName)) {
                     getUpstreamNodes(suboutput, upstreamDepNodes, upstreams);
@@ -1224,23 +1237,23 @@ namespace zeno {
                 suboutoutGetUpstreamFunc(outParamName);
             }
             else {
-                for (auto& param : pSubnetNode->get_output_primitive_params()) {
+                for (auto& param : pImpl->get_output_primitive_params()) {
                     suboutoutGetUpstreamFunc(param.name);
                 }
-                for (auto& param : pSubnetNode->get_output_object_params()) {
+                for (auto& param : pImpl->get_output_object_params()) {
                     suboutoutGetUpstreamFunc(param.name);
                 }
             }
-            upstreams.insert(pSubnetNode->get_uuid_path());
+            upstreams.insert(pImpl->get_uuid_path());
         }
         else {
-            auto spGraph = spCurrNode->getGraph().lock();
+            auto spGraph = spCurrNode->getGraph();
             for (auto& param : spCurrNode->get_input_primitive_params()) {
                 for (auto link : param.links) {
                     if (spGraph)
                     {
                         auto outParam = link.outParam;
-                        std::shared_ptr<INode> outNode = spGraph->getNode(link.outNode);
+                        auto outNode = spGraph->getNode(link.outNode);
                         assert(outNode);
                         getUpstreamNodes(outNode, upstreamDepNodes, upstreams, outParam);
                         upstreams.insert(outNode->get_uuid_path());
@@ -1252,7 +1265,7 @@ namespace zeno {
                     if (spGraph)
                     {
                         auto outParam = link.outParam;
-                        std::shared_ptr<INode> outNode = spGraph->getNode(link.outNode);
+                        auto outNode = spGraph->getNode(link.outNode);
                         assert(outNode);
                         getUpstreamNodes(outNode, upstreams, upstreamDepNodes, outParam);
                         upstreams.insert(outNode->get_uuid_path());
@@ -1261,29 +1274,29 @@ namespace zeno {
             }
             upstreams.insert(spCurrNode->get_uuid_path());
         }
-        std::shared_ptr<Graph> spGraph = spCurrNode->getGraph().lock();
+        auto spGraph = spCurrNode->getGraph();
         assert(spGraph);
-        if (spGraph->optParentSubgNode.has_value() && spCurrNode->get_nodecls() == "SubInput")
+        if (spGraph->optParentSubgNode && spCurrNode->get_nodecls() == "SubInput")
         {
-            upstreams.insert(spGraph->optParentSubgNode.value()->get_uuid_path());
-            auto parentSubgNode = spGraph->optParentSubgNode.value();
+            upstreams.insert(spGraph->optParentSubgNode->m_pImpl->get_uuid_path());
+            auto parentSubgNode = spGraph->optParentSubgNode;
             auto parentSubgNodeGetUpstreamFunc = [ &upstreams, &upstreamDepNodes, &parentSubgNode](std::string outNode, std::string outParam) {
-                if (std::shared_ptr<Graph> graph = parentSubgNode->getThisGraph()) {
-                    std::shared_ptr<INode> node = graph->getNode(outNode);
+                if (auto graph = parentSubgNode->m_pImpl->getThisGraph()) {
+                    auto node = graph->getNode(outNode);
                     assert(node);
                     getUpstreamNodes(node, upstreams, upstreamDepNodes, outParam);
                     upstreams.insert(node->get_uuid_path());
                 }
             };
             bool find = false;
-            const auto& parentSubgNodePrimsInput = parentSubgNode->get_input_prim_param(spCurrNode->get_name(), &find);
+            const auto& parentSubgNodePrimsInput = parentSubgNode->m_pImpl->get_input_prim_param(spCurrNode->get_name(), &find);
             if (find) {
                 for (auto link : parentSubgNodePrimsInput.links) {
                     parentSubgNodeGetUpstreamFunc(link.outNode, link.outParam);
                 }
             }
             bool find2 = false;
-            const auto& parentSubgNodeObjsInput = parentSubgNode->get_input_obj_param(spCurrNode->get_name(), &find2);
+            const auto& parentSubgNodeObjsInput = parentSubgNode->m_pImpl->get_input_obj_param(spCurrNode->get_name(), &find2);
             if (find2) {
                 for (auto link : parentSubgNodeObjsInput.links) {
                     parentSubgNodeGetUpstreamFunc(link.outNode, link.outParam);
@@ -1292,7 +1305,7 @@ namespace zeno {
         }
     }
 
-    void mark_dirty_by_dependNodes(std::shared_ptr<INode> spCurrNode, bool bOn, std::set<ObjPath> nodesRange, std::string inParamName /*= ""*/)
+    void mark_dirty_by_dependNodes(NodeImpl* spCurrNode, bool bOn, std::set<ObjPath> nodesRange, std::string inParamName /*= ""*/)
     {
         if (!nodesRange.empty()) {
             if (nodesRange.find(spCurrNode->get_uuid_path()) == nodesRange.end()) {
@@ -1305,12 +1318,12 @@ namespace zeno {
         spCurrNode->mark_dirty(true, Dirty_All, true, false);
 
         if (bOn) {
-            auto spGraph = spCurrNode->getGraph().lock();
+            auto spGraph = spCurrNode->getGraph();
             for (auto& param : spCurrNode->get_output_primitive_params()) {
                 for (auto link : param.links) {
                     if (spGraph) {
                         auto inParam = link.inParam;
-                        std::shared_ptr<INode> inNode = spGraph->getNode(link.inNode);
+                        auto inNode = spGraph->getNode(link.inNode);
                         assert(inNode);
                         mark_dirty_by_dependNodes(inNode, bOn, nodesRange, inParam);
                     }
@@ -1320,7 +1333,7 @@ namespace zeno {
                 for (auto link : param.links) {
                     if (spGraph) {
                         auto inParam = link.inParam;
-                        std::shared_ptr<INode> inNode = spGraph->getNode(link.inNode);
+                        auto inNode = spGraph->getNode(link.inNode);
                         assert(inNode);
                         mark_dirty_by_dependNodes(inNode, bOn, nodesRange, inParam);
                     }
@@ -1328,7 +1341,7 @@ namespace zeno {
             }
         }
 
-        if (std::shared_ptr<SubnetNode> pSubnetNode = std::dynamic_pointer_cast<SubnetNode>(spCurrNode))
+        if (auto pSubnetNode = dynamic_cast<SubnetNode*>(spCurrNode->coreNode()))
         {
             auto subinputMarkDirty = [&pSubnetNode, &nodesRange](bool dirty, std::string paramName) {
                 if (auto subinput = pSubnetNode->subgraph->getNode(paramName))
@@ -1338,46 +1351,47 @@ namespace zeno {
                 subinputMarkDirty(bOn, inParamName);
             }
             else {
-                for (auto& param : pSubnetNode->get_input_primitive_params())
+                auto pImpl = pSubnetNode->m_pAdapter->m_pImpl;
+                for (auto& param : pImpl->get_input_primitive_params())
                     subinputMarkDirty(bOn, param.name);
-                for (auto& param : pSubnetNode->get_input_object_params())
+                for (auto& param : pImpl->get_input_object_params())
                     subinputMarkDirty(bOn, param.name);
             }
         }
 
-        std::shared_ptr<Graph> spGraph = spCurrNode->getGraph().lock();
+        auto spGraph = spCurrNode->getGraph();
         assert(spGraph);
-        if (spGraph->optParentSubgNode.has_value() && spCurrNode->get_nodecls() == "SubOutput")
+        if (spGraph->optParentSubgNode && spCurrNode->get_nodecls() == "SubOutput")
         {
-            auto parentSubgNode = spGraph->optParentSubgNode.value();
+            auto parentSubgNode = spGraph->optParentSubgNode;
             auto parentSubgNodeMarkDirty = [&nodesRange, &parentSubgNode](std::string innode, std::string inParam) {
-                if (std::shared_ptr<Graph> graph = parentSubgNode->getThisGraph()) {
-                    std::shared_ptr<INode> inNode = graph->getNode(innode);
+                if (auto graph = parentSubgNode->m_pImpl->getThisGraph()) {
+                    auto inNode = graph->getNode(innode);
                     assert(inNode);
                     mark_dirty_by_dependNodes(inNode, true, nodesRange, inParam);
                 }
             };
             bool find = false;
-            const auto& parentSubgNodeOutputPrim = parentSubgNode->get_output_prim_param(spCurrNode->get_name(), &find);
+            const auto& parentSubgNodeOutputPrim = parentSubgNode->m_pImpl->get_output_prim_param(spCurrNode->get_name(), &find);
             if (find) {
                 for (auto link : parentSubgNodeOutputPrim.links) {
                     parentSubgNodeMarkDirty(link.inNode, link.inParam);
                 }
             }
             bool find2 = false;
-            const auto& parentSubgNodeOutputObjs = parentSubgNode->get_output_obj_param(spCurrNode->get_name(), &find2);
+            const auto& parentSubgNodeOutputObjs = parentSubgNode->m_pImpl->get_output_obj_param(spCurrNode->get_name(), &find2);
             if (find2) {
                 for (auto link : parentSubgNodeOutputObjs.links) {
                     parentSubgNodeMarkDirty(link.inNode, link.inParam);
                 }
             }
-            spGraph->optParentSubgNode.value()->mark_dirty(true, Dirty_All, true, false);
+            spGraph->optParentSubgNode->m_pImpl->mark_dirty(true, Dirty_All, true, false);
         }
     }
 
-    bool isSubnetInputOutputParam(std::shared_ptr<INode> spParentnode, std::string paramName)
+    bool isSubnetInputOutputParam(NodeImpl* spParentnode, std::string paramName)
     {
-        if (std::shared_ptr<SubnetNode> spSubnetnode = std::dynamic_pointer_cast<SubnetNode>(spParentnode)) {
+        if (SubnetNode* spSubnetnode = dynamic_cast<SubnetNode*>(spParentnode->coreNode())) {
             if (auto node = spSubnetnode->subgraph->getNode(paramName)) {
                 if (node->get_nodecls() == "SubInput" || node->get_nodecls() == "SubOutput") {
                     return true;
@@ -1387,43 +1401,254 @@ namespace zeno {
         return false;
     }
 
-    void update_list_root_key(std::shared_ptr<ListObject> listobj, const std::string& key)
+    AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval) {
+        //可以支持原有的非abi兼容的类型
+        size_t code = anyval.type().hash_code();
+        if (code == zeno::reflect::type_info<int>().get_decayed_hash()) {
+            return zeno::reflect::any_cast<int>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<float>().get_decayed_hash()) {
+            return zeno::reflect::any_cast<float>(anyval);
+        }
+        else if (code == gParamType_String) {
+            return zeno::reflect::any_cast<std::string>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::String>().get_decayed_hash()) {
+            return zsString2Std(zeno::reflect::any_cast<zeno::String>(anyval));
+        }
+        else if (code == gParamType_Vec3f) {
+            return zeno::reflect::any_cast<zeno::vec3f>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vec3f>().get_decayed_hash()) {
+            return toVec3f(zeno::reflect::any_cast<zeno::Vec3f>(anyval));
+        }
+        else if (code == gParamType_Vec3i) {
+            return zeno::reflect::any_cast<zeno::vec3i>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vec3i>().get_decayed_hash()) {
+            return toVec3i(zeno::reflect::any_cast<zeno::Vec3i>(anyval));
+        }
+        else if (code == gParamType_Vec2i) {
+            return zeno::reflect::any_cast<zeno::vec2i>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vec2i>().get_decayed_hash()) {
+            return toVec2i(zeno::reflect::any_cast<zeno::Vec2i>(anyval));
+        }
+        else if (code == gParamType_Vec2f) {
+            return zeno::reflect::any_cast<zeno::vec2f>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vec2f>().get_decayed_hash()) {
+            return toVec2f(zeno::reflect::any_cast<zeno::Vec2f>(anyval));
+        }
+        else if (code == gParamType_Vec4i) {
+            return zeno::reflect::any_cast<zeno::vec4i>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vec4i>().get_decayed_hash()) {
+            return toVec4i(zeno::reflect::any_cast<zeno::Vec4i>(anyval));
+        }
+        else if (code == gParamType_Vec4f) {
+            return zeno::reflect::any_cast<zeno::vec4f>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vec4f>().get_decayed_hash()) {
+            return toVec4f(zeno::reflect::any_cast<zeno::Vec4f>(anyval));
+        }
+        else if (code == gParamType_IntList) {
+            return zeno::reflect::any_cast<std::vector<int>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<int>>().get_decayed_hash()) {
+            return zeVec2stdVec(any_cast<zeno::Vector<int>>(anyval));
+        }
+        else if (code == gParamType_FloatList) {
+            return zeno::reflect::any_cast<std::vector<float>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<float>>().get_decayed_hash()) {
+            return zeVec2stdVec(any_cast<zeno::Vector<float>>(anyval));
+        }
+        else if (code == gParamType_StringList) {
+            return zeno::reflect::any_cast<std::vector<std::string>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::String>>().get_decayed_hash()) {
+            auto& zvec = any_cast<zeno::Vector<zeno::String>>(anyval);
+            std::vector<std::string> vec(zvec.size());
+            for (int i = 0; i < zvec.size(); i++) {
+                vec[i] = zsString2Std(zvec[i]);
+            }
+            return vec;
+        }
+        else if (code == gParamType_Vec3iList) {
+            return zeno::reflect::any_cast<std::vector<zeno::vec3i>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3i>>().get_decayed_hash()) {
+            auto& zvec = any_cast<zeno::Vector<zeno::Vec3i>>(anyval);
+            std::vector<zeno::vec3i> vec(zvec.size());
+            for (int i = 0; i < zvec.size(); i++) {
+                vec[i] = toVec3i(zvec[i]);
+            }
+            return vec;
+        }
+        else if (code == gParamType_Vec3fList) {
+            return zeno::reflect::any_cast<std::vector<zeno::vec3f>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3f>>().get_decayed_hash()) {
+            auto& zvec = any_cast<zeno::Vector<zeno::Vec3f>>(anyval);
+            std::vector<zeno::vec3f> vec(zvec.size());
+            for (int i = 0; i < zvec.size(); i++) {
+                vec[i] = toVec3f(zvec[i]);
+            }
+            return vec;
+        }
+        else if (code == gParamType_Vec2iList) {
+            return zeno::reflect::any_cast<std::vector<zeno::vec2i>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2i>>().get_decayed_hash()) {
+            auto& zvec = any_cast<zeno::Vector<zeno::Vec2i>>(anyval);
+            std::vector<zeno::vec2i> vec(zvec.size());
+            for (int i = 0; i < zvec.size(); i++) {
+                vec[i] = toVec2i(zvec[i]);
+            }
+            return vec;
+        }
+        else if (code == gParamType_Vec2fList) {
+            return zeno::reflect::any_cast<std::vector<zeno::vec2f>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2f>>().get_decayed_hash()) {
+            auto& zvec = any_cast<zeno::Vector<zeno::Vec2f>>(anyval);
+            std::vector<zeno::vec2f> vec(zvec.size());
+            for (int i = 0; i < zvec.size(); i++) {
+                vec[i] = toVec2f(zvec[i]);
+            }
+            return vec;
+        }
+        else if (code == gParamType_Vec4fList) {
+            return zeno::reflect::any_cast<std::vector<zeno::vec4f>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4f>>().get_decayed_hash()) {
+            auto& zvec = any_cast<zeno::Vector<zeno::Vec4f>>(anyval);
+            std::vector<zeno::vec4f> vec(zvec.size());
+            for (int i = 0; i < zvec.size(); i++) {
+                vec[i] = toVec4f(zvec[i]);
+            }
+            return vec;
+        }
+        else if (code == gParamType_Vec4iList) {
+            return zeno::reflect::any_cast<std::vector<zeno::vec4i>>(anyval);
+        }
+        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4i>>().get_decayed_hash()) {
+            auto& zvec = any_cast<zeno::Vector<zeno::Vec4i>>(anyval);
+            std::vector<zeno::vec4i> vec(zvec.size());
+            for (int i = 0; i < zvec.size(); i++) {
+                vec[i] = toVec4i(zvec[i]);
+            }
+            return vec;
+        }
+        else {
+            return AttrVar();
+        }
+    }
+
+    void update_list_root_key(ListObject* listobj, const std::string& key)
     {
-        auto it = listobj->key().find_first_of('\\');
-        listobj->update_key(it == std::string::npos ? key : key + listobj->key().substr(it));
+        std::string listkey = zsString2Std(listobj->key());
+        auto it = listkey.find_first_of('\\');
+        std::string newkey = it == std::string::npos ? listkey : (key + listkey.substr(it));
+        listobj->update_key(stdString2zs(newkey));
 
         std::set<std::string> mmodify, mnew, mremove;
-        for (const auto& uuid : listobj->m_modify) {
+        for (const auto& uuid : listobj->m_impl->m_modify) {
             auto it = uuid.find_first_of('\\');
             mmodify.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
         }
-        for (const auto& uuid : listobj->m_new_added) {
+        for (const auto& uuid : listobj->m_impl->m_new_added) {
             auto it = uuid.find_first_of('\\');
             mnew.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
         }
-        for (auto& uuid : listobj->m_new_removed) {
+        for (auto& uuid : listobj->m_impl->m_new_removed) {
             auto it = uuid.find_first_of('\\');
             mremove.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
         }
-        mmodify.swap(listobj->m_modify);
-        mnew.swap(listobj->m_new_added);
-        mremove.swap(listobj->m_new_removed);
-        for (std::shared_ptr<IObject> obj : listobj->get()) {
+        mmodify.swap(listobj->m_impl->m_modify);
+        mnew.swap(listobj->m_impl->m_new_added);
+        mremove.swap(listobj->m_impl->m_new_removed);
+        for (zany obj : listobj->m_impl->get()) {
             if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
-                update_list_root_key(plist, key);
+                update_list_root_key(plist.get(), key);
             } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
-                update_dict_root_key(pdict, key);
+                update_dict_root_key(pdict.get(), key);
             } else {
-                auto it = obj->key().find_first_of('\\');
-                obj->update_key(it == std::string::npos ? obj->key() : key + obj->key().substr(it));
+                std::string objkey = zsString2Std(obj->key());
+                auto it = objkey.find_first_of('\\');
+                newkey = it == std::string::npos ? objkey : (key + objkey.substr(it));
+                obj->update_key(stdString2zs(newkey));
             }
         }
     }
 
-    void update_dict_root_key(std::shared_ptr<DictObject> dictobj, const std::string& key)
+    zany clone_by_key(IObject* pObject, const std::string& prefix) {
+        if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
+            auto newList = create_ListObject();
+            zeno::String newKey = stdString2zs(prefix) + '\\' + pList->key();
+            newList->update_key(newKey);
+            for (const auto& uuid : pList->m_impl->m_modify) {
+                std::string _key = prefix + '\\' + uuid;
+                newList->m_impl->m_modify.insert(_key);
+            }
+            for (const auto& uuid : pList->m_impl->m_new_added) {
+                std::string _key = prefix + '\\' + uuid;
+                newList->m_impl->m_new_added.insert(_key);
+            }
+            for (const auto& uuid : pList->m_impl->m_new_removed) {
+                std::string _key = prefix + '\\' + uuid;
+                newList->m_impl->m_new_removed.insert(_key);
+            }
+
+            for (auto& spObject : pList->m_impl->m_objects) {
+                auto newObj = clone_by_key(spObject.get(), prefix);
+                newList->m_impl->m_objects.push_back(newObj);
+            }
+            return newList;
+        }
+        else if (DictObject* pDict = dynamic_cast<DictObject*>(pObject)) {
+            //不修改自身
+            zeno::SharedPtr<DictObject> newDict = create_DictObject();
+            //DictObject* newDict = create_DictObject();
+            newDict->update_key(stdString2zs(prefix) + '\\' + pDict->key());
+
+            for (const auto& uuid : pDict->m_modify) {
+                newDict->m_modify.insert(prefix + '\\' + uuid);
+            }
+            for (const auto& uuid : pDict->m_new_added) {
+                newDict->m_new_added.insert(prefix + '\\' + uuid);
+            }
+            for (const auto& uuid : pDict->m_new_removed) {
+                newDict->m_new_removed.insert(prefix + '\\' + uuid);
+            }
+            for (auto& [key, spObject] : pDict->lut) {
+                std::string new_key = prefix + '\\' + key;
+                auto newObj = clone_by_key(spObject.get(), prefix);
+                newDict->lut.insert(std::make_pair(key, newObj));
+            }
+            return newDict;
+        }
+        else {
+            auto spClonedObj = pObject->clone();
+            zeno::String newkey = stdString2zs(prefix) + '\\' + pObject->key();
+            spClonedObj->update_key(newkey);
+            return spClonedObj;
+        }
+    }
+
+    std::vector<std::string> get_obj_paths(IObject* pObject) {
+        std::vector<std::string> _paths;
+        
+        return _paths;
+    }
+
+    void update_dict_root_key(DictObject* dictobj, const std::string& key)
     {
-        auto it = dictobj->key().find_first_of('\\');
-        dictobj->update_key(it == std::string::npos ? key : key + dictobj->key().substr(it));
+        std::string dictkey = zsString2Std(dictobj->key());
+        auto it = dictkey.find_first_of('\\');
+        std::string newkey = it == std::string::npos ? key : (key + dictkey.substr(it));
+        dictobj->update_key(stdString2zs(newkey));
 
         std::set<std::string> mmodify, mnew, mremove;
         for (const auto& uuid : dictobj->m_modify) {
@@ -1443,12 +1668,14 @@ namespace zeno {
         mremove.swap(dictobj->m_new_removed);
         for (auto& [str, obj] : dictobj->lut) {
             if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
-                update_list_root_key(plist, key);
+                update_list_root_key(plist.get(), key);
             } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
-                update_dict_root_key(pdict, key);
+                update_dict_root_key(pdict.get(), key);
             } else {
-                auto it = obj->key().find_first_of('\\');
-                obj->update_key(it == std::string::npos ? obj->key() : key + obj->key().substr(it));
+                std::string objkey = zsString2Std(obj->key());
+                auto it = objkey.find_first_of('\\');
+                newkey = it == std::string::npos ? objkey : (key + objkey.substr(it));
+                obj->update_key(stdString2zs(newkey));
             }
         }
     }

@@ -12,6 +12,7 @@
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/utils/vectorutil.h>
+#include <reflect/type.hpp>
 #include "../utils/zfxutil.h"
 #include "functionimpl.h"
 #include "funcDesc.h"
@@ -1166,7 +1167,7 @@ namespace zeno {
                     //能赋值的变量只有：1.普通zfx定义的变量    2.参数约束的参数变量
                     std::string nodeparam = pContext->param_constrain.constrain_param;
                     if (!nodeparam.empty()) {
-                        auto spNode = pContext->spNode.lock();
+                        auto spNode = pContext->spNode;
                         bool bInputParam = pContext->param_constrain.bInput;
                         bool bVal = get_zfxvar<int>(res.value[0]);
                         if (targetvar == "visible") {

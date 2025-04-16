@@ -26,27 +26,27 @@ namespace zeno {
         std::set<std::string> anyOutputs;
     };
 
-    static void initCoreParams(std::shared_ptr<INode> spNode, CustomUI customui)
+    static void initCoreParams(INodeImpl* spNode, CustomUI customui)
     {
         //init all params, and set defl value
         for (const ParamObject& param : customui.inputObjs)
         {
-            spNode->add_input_obj_param(param);
+            spNode->m_pImpl->add_input_obj_param(param);
         }
         for (const ParamPrimitive& param : customUiToParams(customui.inputPrims))
         {
-            spNode->add_input_prim_param(param);
+            spNode->m_pImpl->add_input_prim_param(param);
         }
         for (const ParamPrimitive& param : customui.outputPrims)
         {
-            spNode->add_output_prim_param(param);
+            spNode->m_pImpl->add_output_prim_param(param);
         }
         for (const ParamObject& param : customui.outputObjs)
         {
-            spNode->add_output_obj_param(param);
+            spNode->m_pImpl->add_output_obj_param(param);
         }
         //根据customui上的约束信息调整所有控件的可见可用情况
-        spNode->checkParamsConstrain();
+        spNode->m_pImpl->checkParamsConstrain();
     }
 
     static ParamControl parseControlProps(const zeno::reflect::IRawMetadata* metadata, ParamType type, zeno::reflect::Any& controlProps) {
@@ -103,7 +103,7 @@ namespace zeno {
 
     //整理customui层级
     static void adjustCustomUiStructure(
-        std::shared_ptr<INode> spTempNode,
+        INode* spTempNode,
         zeno::reflect::TypeBase* typebase,
         CustomUI& customui,
         ParamMappingInfo& paramsMapping)
@@ -145,7 +145,7 @@ namespace zeno {
         for (IMemberField* field : typebase->get_member_fields()) {
             zeno::reflect::TypeHandle fieldType = field->get_field_type();
             if (fieldType == zeno::reflect::get_type<ReflectCustomUI>()) {
-                zeno::reflect::Any defl = field->get_field_value(spTempNode.get());
+                zeno::reflect::Any defl = field->get_field_value(spTempNode);
                 if (defl.has_value()) {
                     bUseReflectUI = true;
 
@@ -456,7 +456,7 @@ namespace zeno {
     }
 
     static void collectParamsFromMember(
-        std::shared_ptr<INode> spTempNode,
+        INode* spTempNode,
         zeno::reflect::TypeBase* typebase,
         ParamMappingInfo& paramsMapping
     )
@@ -560,7 +560,7 @@ namespace zeno {
                 }
                 else if (role == Role_InputPrimitive)
                 {
-                    zeno::reflect::Any defl = field->get_field_value(spTempNode.get());
+                    zeno::reflect::Any defl = field->get_field_value(spTempNode);
                     zeno::reflect::Any controlProps;
                     ParamPrimitive prim;
                     ParamControl ctrl = parseControlProps(metadata, type, controlProps);
@@ -616,7 +616,7 @@ namespace zeno {
     }
 
     static void collectParamsFromApply(
-        std::shared_ptr<INode> spTempNode,
+        INode* spTempNode,
         zeno::reflect::TypeBase* typebase,
         ParamMappingInfo& paramsMapping
     )
@@ -769,7 +769,7 @@ namespace zeno {
         }
     }
 
-    ReflectNodeClass::ReflectNodeClass(std::function<std::shared_ptr<INode>()> ctor, std::string const& nodecls, zeno::reflect::TypeBase* pTypeBase)
+    ReflectNodeClass::ReflectNodeClass(std::function<INode*()> ctor, std::string const& nodecls, zeno::reflect::TypeBase* pTypeBase)
         : INodeClass(CustomUI(), nodecls)
         , ctor(ctor)
         , typebase(pTypeBase)
@@ -793,7 +793,7 @@ namespace zeno {
 
         ParamMappingInfo paramsMapping;
 
-        std::shared_ptr<INode> spTempNode = ctor();     //临时节点用于取初始化信息，不参与后续节点过程
+        INode* spTempNode = ctor();     //临时节点用于取初始化信息，不参与后续节点过程
 
         //先遍历所有成员，并收集其中的参数，目前假定所有成员变量都作为节点的参数存在，后续看情况可以指定
         collectParamsFromMember(spTempNode, typebase, paramsMapping);
@@ -806,11 +806,11 @@ namespace zeno {
         m_customui.category = "reflect";
     }
 
-    std::shared_ptr<INode> ReflectNodeClass::new_instance(std::shared_ptr<Graph> pGraph, std::string const& name) {
-        std::shared_ptr<INode> spNode = ctor();
-        spNode->initUuid(pGraph, classname);
-        spNode->set_name(name);
-        initCoreParams(spNode, m_customui);
+    std::unique_ptr<INodeImpl> ReflectNodeClass::new_instance(Graph* pGraph, std::string const& name) {
+        std::unique_ptr<INodeImpl> spNode = std::make_unique<INodeImpl>(ctor());
+        spNode->m_pImpl->initUuid(pGraph, classname);
+        spNode->m_pImpl->set_name(name);
+        initCoreParams(spNode.get(), m_customui);
         return spNode;
     }
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zeno/core/IObject.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/utils/PolymorphicMap.h>
 #include <zeno/utils/api.h>
 #include <memory>
@@ -32,7 +32,7 @@ namespace zeno {
     struct ObjectNodeInfo {
         std::optional<zany> rootObj;        //list/dict case.
         zany transformingObj;
-        std::shared_ptr<INode> spViewNode;
+        NodeImpl* spViewNode;
     };
 
 
@@ -69,18 +69,18 @@ public:
 
     ZENO_API void collect_render_update(zeno::render_update_info info);
 
-    ZENO_API void collectingObject(std::shared_ptr<IObject> obj, std::shared_ptr<INode> view_node, bool bView);
-    CALLBACK_REGIST(collectingObject, void, std::shared_ptr<IObject>, bool)
+    ZENO_API void collectingObject(zany, NodeImpl* view_node, bool bView);
+    CALLBACK_REGIST(collectingObject, void, zany, bool)
 
     ZENO_API void removeObject(const std::string& id);
     CALLBACK_REGIST(removeObject, void, std::string)
     ZENO_API void revertRemoveObject(const std::string& id);
 
-    ZENO_API void notifyTransfer(std::shared_ptr<IObject> obj);
-    CALLBACK_REGIST(notifyTransfer, void, std::shared_ptr<IObject>)
+    ZENO_API void notifyTransfer(zany obj);
+    CALLBACK_REGIST(notifyTransfer, void, zany)
 
-    ZENO_API void viewObject(std::shared_ptr<IObject> obj, bool bView);
-    CALLBACK_REGIST(viewObject, void, std::shared_ptr<IObject>, bool)
+    ZENO_API void viewObject(zany obj, bool bView);
+    CALLBACK_REGIST(viewObject, void, zany, bool)
 
     ZENO_API int registerObjId(const std::string& objprefix);
 
@@ -93,8 +93,8 @@ public:
     ZENO_API void export_render_infos(std::vector<zeno::render_update_info>& infos);
     ZENO_API void export_light_objs(RenderObjsInfo& info);
     ZENO_API void export_all_view_objs(RenderObjsInfo& info);
-    ZENO_API void export_all_view_objs(std::map<std::string, std::shared_ptr<zeno::IObject>>& info);
-    ZENO_API std::shared_ptr<IObject> getObj(const std::string& name);
+    ZENO_API void export_all_view_objs(std::map<std::string, zany>& info);
+    ZENO_API zany getObj(const std::string& name);
     ZENO_API ObjectNodeInfo getObjectAndViewNode(const std::string& name);
     ZENO_API void clear_last_run();
     ZENO_API void collect_removing_objs(const std::string& objkey);
@@ -106,7 +106,7 @@ public:
     ZENO_API void collect_modify_objs(const std::set<std::string>& newobjKeys, bool isView);
     ZENO_API void remove_modify_objs(const std::set<std::string>& removeobjKeys);
     ZENO_API void getModifyObjsInfo(std::set<std::string>& modifyInteractiveObjs);  //interactive objs
-    ZENO_API void syncObjNodeInfo(zany spObj, std::shared_ptr<INode> spNode);
+    ZENO_API void syncObjNodeInfo(zany spObj, NodeImpl* spNode);
 
 private:
     void clear_batch_updates();

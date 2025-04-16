@@ -13,7 +13,7 @@ if (!spNode) {\
 }
 
 
-Zpy_Node::Zpy_Node(std::shared_ptr<zeno::INode> spNode)
+Zpy_Node::Zpy_Node(std::shared_ptr<zeno::NodeImpl> spNode)
     : m_wpNode(spNode)
 {
 }

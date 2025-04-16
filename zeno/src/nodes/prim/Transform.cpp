@@ -1,5 +1,4 @@
 #include <zeno/zeno.h>
-#include <zeno/core/reflectdef.h>
 #include <zeno/types/UserData.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
@@ -10,8 +9,9 @@
 #include <glm/gtx/transform.hpp>
 #include <zeno/utils/eulerangle.h>
 #include <zeno/utils/string.h>
+#include <zeno/utils/interfaceutil.h>
+#include <zeno/types/ListObject_impl.h>
 #include <regex>
-#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno {
@@ -20,24 +20,7 @@ namespace zeno {
 
     //refer to PrimitiveTransform
 
-    struct ZDEFNODE() Transform : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input Geometry")},
-                {"translate", ParamPrimitive("Translation")},
-                {"scaling", ParamPrimitive("Scaling")},
-                {"rotation", ParamPrimitive("quatRotation")},
-                {"pre_mat", ParamPrimitive("Matrix")},
-                {"pivotType", ParamPrimitive("pivot", "bboxCenter", Combobox, std::vector<std::string>{"world", "bboxCenter", "custom"})},
-                {"pre_apply", ParamPrimitive("preTransform")},
-                {"pre_mat", ParamPrimitive("EulerRotationOrder", "YXZ", Combobox, std::vector<std::string>{"XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX"})},
-                {"pre_apply", ParamPrimitive("EulerAngleMeasure", "Degree", Combobox, std::vector<std::string>{"Degree", "Radians"})},
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
+    struct Transform : INode {
 
         static glm::vec3 mapplypos(glm::mat4 const& matrix, glm::vec3 const& vector) {
             auto vector4 = matrix * glm::vec4(vector, 1.0f);
@@ -52,7 +35,7 @@ namespace zeno {
         }
 
         static void transformObj(
-            std::shared_ptr<GeometryObject> geom
+            GeometryObject_Adapter* geom
             , glm::mat4 matrix
             , std::string pivotType
             , vec3f pivotPos
@@ -68,7 +51,7 @@ namespace zeno {
             if (pivotType == "bboxCenter") {
                 zeno::vec3f _min;
                 zeno::vec3f _max;
-                std::tie(_min, _max) = geomBoundingBox(geom.get());
+                std::tie(_min, _max) = geomBoundingBox(geom->m_impl);
                 _pivot = (_min + _max) / 2;
             }
             else if (pivotType == "custom") {
@@ -91,7 +74,7 @@ namespace zeno {
             if (geom->has_attr(ATTR_POINT, "pos"))
             {
                 //TODO: 前面可以判断是否符合写时复制，比如transform的tsr是否发生改变
-                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+                geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
                     auto p = zeno::vec_to_other<glm::vec3>(old_pos);
                     p = mapplypos(matrix, p);
                     auto newpos = zeno::other_to_vec<3>(p);
@@ -105,7 +88,7 @@ namespace zeno {
 
             if (geom->has_attr(ATTR_POINT, "nrm"))
             {
-                geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
+                geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
                     auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
                     n = mapplynrm(matrix, n);
                     auto newnrm = zeno::other_to_vec<3>(n);
@@ -114,34 +97,34 @@ namespace zeno {
                 //prim->verts.add_attr<zeno::vec3f>("_origin_nrm") = nrm;
             }
 
-            auto& user_data = geom->userData();
-            user_data.setLiterial("_translate", translate);
-            user_data.setLiterial("_rotate", rotation);
-            user_data.setLiterial("_scale", scaling);
-            user_data.set2("_pivot", _pivot);
-            user_data.set2("_localX", lX);
-            user_data.set2("_localY", lY);
-            user_data.del("_bboxMin");
-            user_data.del("_bboxMax");
+            auto user_data = dynamic_cast<UserData*>(geom->userData());
+            user_data->setLiterial("_translate", translate);
+            user_data->setLiterial("_rotate", rotation);
+            user_data->setLiterial("_scale", scaling);
+            user_data->set2("_pivot", _pivot);
+            user_data->set2("_localX", lX);
+            user_data->set2("_localY", lY);
+            user_data->del("_bboxMin");
+            user_data->del("_bboxMax");
         }
 
-        std::shared_ptr<zeno::IObject> apply(
-            std::shared_ptr<zeno::IObject> input_object,
-            zeno::vec3f translate = zeno::vec3f({ 0,0,0 }),
-            zeno::vec3f eulerXYZ = zeno::vec3f({ 0,0,0 }),
-            zeno::vec4f rotation = zeno::vec4f({ 0,0,0,1 }),
-            zeno::vec3f scaling = zeno::vec3f({ 1,1,1 }),
-            zeno::vec3f shear = zeno::vec3f({ 0,0,0 }),
-            std::string pivotType = "bboxCenter",
-            zeno::vec3f pivotPos = zeno::vec3f({ 0,0,0 }),
-            zeno::vec3f localX = zeno::vec3f({ 1,0,0 }),
-            zeno::vec3f localY = zeno::vec3f({ 0,1,0 }),
-            glm::mat4 pre_mat = glm::mat4(1.f),
-            glm::mat4 pre_apply = glm::mat4(1.f),
-            glm::mat4 local = glm::mat4(1.f),
-            std::string order = "YXZ",
-            std::string measure = "Degree"
-        ) {
+        void apply() override {
+            zany input_object = ZImpl(get_input("Input Geometry"));
+            zeno::vec3f translate = ZImpl(get_input2<vec3f>("Translation"));
+            zeno::vec3f eulerXYZ = ZImpl(get_input2<zeno::vec3f>("eulerXYZ"));
+            zeno::vec4f rotation = ZImpl(get_input2<zeno::vec4f>("quatRotation"));
+            zeno::vec3f scaling = ZImpl(get_input2<zeno::vec3f>("Scaling"));
+            zeno::vec3f shear = ZImpl(get_input2<zeno::vec3f>("Shear"));
+            std::string pivotType = ZImpl(get_input2<std::string>("pivot"));
+            zeno::vec3f pivotPos = ZImpl(get_input2<zeno::vec3f>("pivotPos"));
+            zeno::vec3f localX = ZImpl(get_input2<zeno::vec3f>("localX"));
+            zeno::vec3f localY = ZImpl(get_input2<zeno::vec3f>("localY"));
+            glm::mat4 pre_mat = ZImpl(get_input2<glm::mat4>("PreMatrix"));
+            glm::mat4 pre_apply = ZImpl(get_input2<glm::mat4>("preTransform"));
+            glm::mat4 local = ZImpl(get_input2<glm::mat4>("Local Matrix"));
+            std::string order = ZImpl(get_input2<std::string>("EulerRotationOrder"));
+            std::string measure = ZImpl(get_input2<std::string>("EulerAngleMeasure"));
+
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
@@ -174,15 +157,15 @@ namespace zeno {
 
             std::function<void(std::shared_ptr<IObject>)> transformListObj = [&](std::shared_ptr<IObject> obj) {
                 if (std::shared_ptr<ListObject> listobj = std::dynamic_pointer_cast<ListObject>(obj)) {
-                    for (int i = 0; i < listobj->size(); ++i) {
-                        transformListObj(listobj->get(i));
+                    for (int i = 0; i < listobj->m_impl->size(); ++i) {
+                        transformListObj(listobj->m_impl->get(i));
                     }
                 } else if (std::shared_ptr<DictObject> dictobj = std::dynamic_pointer_cast<DictObject>(obj)) {
                     for (auto& [key, obj] : dictobj->get()) {
                         transformListObj(obj);
                     }
-                } else if (std::shared_ptr<GeometryObject> geoObj = std::dynamic_pointer_cast<GeometryObject>(obj)) {
-                    transformObj(geoObj, matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
+                } else if (std::shared_ptr<GeometryObject_Adapter> geoObj = std::dynamic_pointer_cast<GeometryObject_Adapter>(obj)) {
+                    transformObj(geoObj.get(), matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
 
                     auto transform_ptr = glm::value_ptr(matrix);
 
@@ -192,17 +175,42 @@ namespace zeno {
                     memcpy(row2.data(), transform_ptr + 8, sizeof(float) * 4);
                     memcpy(row3.data(), transform_ptr + 12, sizeof(float) * 4);
 
-                    geoObj->userData().set2("_transform_row0", row0);
-                    geoObj->userData().set2("_transform_row1", row1);
-                    geoObj->userData().set2("_transform_row2", row2);
-                    geoObj->userData().set2("_transform_row3", row3);
+                    geoObj->userData()->set_vec4f("_transform_row0", toAbiVec4f(row0));
+                    geoObj->userData()->set_vec4f("_transform_row1", toAbiVec4f(row1));
+                    geoObj->userData()->set_vec4f("_transform_row2", toAbiVec4f(row2));
+                    geoObj->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
                 }
             };
 
             transformListObj(input_object);
-
-            return input_object;
+            ZImpl(set_output("Output", input_object));
         }
     };
+
+    ZENDEFNODE(Transform,
+    {
+        {
+            {gParamType_IObject, "Input Geometry"},
+            ParamPrimitive("Translation", gParamType_Vec3f),
+            ParamPrimitive("Scaling", gParamType_Vec3f),
+            ParamPrimitive("eulerXYZ", gParamType_Vec3f),
+            ParamPrimitive("Shear", gParamType_Vec3f),
+            ParamPrimitive("quatRotation", gParamType_Vec4f, zeno::vec4f(0,0,0,1)),
+            ParamPrimitive("PreMatrix", gParamType_Matrix4, glm::mat4(1.f)),
+            ParamPrimitive("pivot", gParamType_String, "bboxCenter", Combobox, std::vector<std::string>{"world", "bboxCenter", "custom"}),
+            ParamPrimitive("pivotPos", gParamType_Vec3f),
+            ParamPrimitive("Local Matrix", gParamType_Matrix4),
+            ParamPrimitive("localX", gParamType_Vec3f, zeno::vec3f(1,1,0)),
+            ParamPrimitive("localY", gParamType_Vec3f, zeno::vec3f(0,1,0)),
+            ParamPrimitive("preTransform", gParamType_Matrix4, glm::mat4(1.f)),
+            ParamPrimitive("EulerRotationOrder", gParamType_String, "YXZ", Combobox, std::vector<std::string>{"XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX"}),
+            ParamPrimitive("EulerAngleMeasure", gParamType_String, "Degree", Combobox, std::vector<std::string>{"Degree", "Radians"}),
+        },
+        {
+            {gParamType_IObject, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
 }

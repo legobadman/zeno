@@ -158,14 +158,14 @@ namespace zeno
     {
         virtual int determineType(EmissionPass *em) override
         {
-            const auto base = get_input("base");
+            const auto base = ZImpl(get_input("base"));
             const auto baseDim = em->determineType(base.get());
-            const auto blend = get_input("blend");
+            const auto blend = ZImpl(get_input("blend"));
             const auto blendDim = em->determineType(blend.get());
             if (baseDim != blendDim)
                 throw zeno::Exception("base and blend's dimension mismatch: " + std::to_string(baseDim) + ", " + std::to_string(blendDim));
 
-            const auto opacity = get_input("opacity");
+            const auto opacity = ZImpl(get_input("opacity"));
             const auto opacityDim = em->determineType(opacity.get());
             if (opacityDim != 1)
                 throw zeno::Exception("opacity's dimension mismatch: " + std::to_string(opacityDim));
@@ -175,7 +175,7 @@ namespace zeno
 
         virtual void emitCode(EmissionPass *em) override
         {
-            const auto mode = get_input2<std::string>("mode");
+            const auto mode = ZImpl(get_input2<std::string>("mode"));
             const auto mapIter = BLEND_CODE_MAP.find(mode);
             if (mapIter == std::end(BLEND_CODE_MAP))
             {
@@ -189,7 +189,7 @@ namespace zeno
             blendFunc.code = "(" + em->typeNameOf(1) + " base, " + em->typeNameOf(1) + " blend) {\n" + code + "}\n";
             const auto blendFuncName = em->addCommonFunc(std::move(blendFunc));
 
-            const auto base = get_input("base");
+            const auto base = ZImpl(get_input("base"));
             const auto baseDim = em->determineType(base.get());
 
             EmissionPass::CommonFunc opacityFunc;
@@ -244,9 +244,9 @@ namespace zeno
             const auto opacityFuncName = em->addCommonFunc(std::move(opacityFunc));
 
             const auto baseExpr = em->determineExpr(base.get());
-            const auto blend = get_input("blend");
+            const auto blend = ZImpl(get_input("blend"));
             const auto blendExpr = em->determineExpr(blend.get());
-            const auto opacity = get_input("opacity");
+            const auto opacity = ZImpl(get_input("opacity"));
             const auto opacityExpr = em->determineExpr(opacity.get());
             return em->emitCode(opacityFuncName + "(" + baseExpr + ", " + blendExpr + ", " + opacityExpr + ")");
         } // emitCode

@@ -7,7 +7,7 @@ namespace {
 
 struct UnpackNumericVec : INode {
     virtual void apply() override {
-        auto vec = get_input<NumericObject>("vec")->value;
+        auto vec = ZImpl(get_input<NumericObject>("vec"))->value;
         NumericValue x = 0, y = 0, z = 0, w = 0;
         std::visit([&x, &y, &z, &w] (auto const &vec) {
             using T = std::decay_t<decltype(vec)>;
@@ -20,10 +20,10 @@ struct UnpackNumericVec : INode {
                 if constexpr (is_vec_n<T> > 3) w = vec[3];
             }
         }, vec);
-        set_output("X", std::make_shared<NumericObject>(x));
-        set_output("Y", std::make_shared<NumericObject>(y));
-        set_output("Z", std::make_shared<NumericObject>(z));
-        set_output("W", std::make_shared<NumericObject>(w));
+        ZImpl(set_output("X", std::make_shared<NumericObject>(x)));
+        ZImpl(set_output("Y", std::make_shared<NumericObject>(y)));
+        ZImpl(set_output("Z", std::make_shared<NumericObject>(z)));
+        ZImpl(set_output("W", std::make_shared<NumericObject>(w)));
     }
 };
 
@@ -39,10 +39,10 @@ ZENDEFNODE(UnpackNumericVec, {
 struct NumericRandom : INode {
     virtual void apply() override {
         auto value = std::make_shared<NumericObject>();
-        auto dim = get_param<int>("dim");
-        auto symmetric = get_param<bool>("symmetric");
-        auto scale = has_input("scale") ?
-            get_input<NumericObject>("scale")->get<float>()
+        auto dim = ZImpl(get_param<int>("dim"));
+        auto symmetric = ZImpl(get_param<bool>("symmetric"));
+        auto scale = ZImpl(has_input("scale")) ?
+            ZImpl(get_input<NumericObject>("scale"))->get<float>()
             : 1.0f;
         float offs = 0.0f;
         if (symmetric) {
@@ -62,7 +62,7 @@ struct NumericRandom : INode {
             sprintf(buf, "invalid dim for NumericRandom: %d\n", dim);
             throw Exception(buf);
         }
-        set_output("value", std::move(value));
+        ZImpl(set_output("value", std::move(value)));
     }
 };
 
@@ -77,14 +77,14 @@ ZENDEFNODE(NumericRandom, {
 struct NumericRandomInt : INode {
     virtual void apply() override {
         auto value = std::make_shared<NumericObject>();
-        auto minVal = has_input("min") ?
-            get_input<NumericObject>("min")->get<int>()
+        auto minVal = ZImpl(has_input("min")) ?
+            ZImpl(get_input<NumericObject>("min"))->get<int>()
             : 0;
-        auto maxVal = has_input("max") ?
-            get_input<NumericObject>("max")->get<int>()
+        auto maxVal = ZImpl(has_input("max")) ?
+            ZImpl(get_input<NumericObject>("max"))->get<int>()
             : 65536;
         value->set(int(rand()) % (maxVal - minVal) + minVal);
-        set_output("value", std::move(value));
+        ZImpl(set_output("value", std::move(value)));
     }
 };
 
@@ -98,12 +98,12 @@ ZENDEFNODE(NumericRandomInt, {
 
 struct SetRandomSeed : INode {
     virtual void apply() override {
-        auto seed = get_input<NumericObject>("seed")->get<int>();
+        auto seed = ZImpl(get_input<NumericObject>("seed"))->get<int>();
         sfrand(seed);
-        if (has_input("routeIn")) {
-            set_output("routeOut", get_input("routeIn"));
+        if (ZImpl(has_input("routeIn"))) {
+            ZImpl(set_output("routeOut", ZImpl(get_input("routeIn"))));
         } else {
-            set_output("routeOut", std::make_shared<NumericObject>(seed));
+            ZImpl(set_output("routeOut", std::make_shared<NumericObject>(seed)));
         }
     }
 };
@@ -122,7 +122,7 @@ struct NumericCounter : INode {
     virtual void apply() override {
         auto count = std::make_shared<NumericObject>();
         count->value = counter++;
-        set_output("count", std::move(count));
+        ZImpl(set_output("count", std::move(count)));
     }
 };
 

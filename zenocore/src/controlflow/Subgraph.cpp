@@ -30,15 +30,10 @@ ZENDEFNODE(Subnet, {
 });
 
 struct SubInput : zeno::INode {
-    virtual void complete() override {
-        auto name = get_param<std::string>("name");
-        //graph->subInputNodes[name] = myname;
-    }
-
-    virtual void apply() override {
-        //printf("!!! %s\n", typeid(*get_input("_IN_port")).name());
-        //set_output("port", get_input("_IN_port")); 
-        //set_output("hasValue", get_input("_IN_hasValue"));
+    void apply() override {
+        //printf("!!! %s\n", typeid(*ZImpl(get_input("_IN_port"))).name());
+        //set_output("port", ZImpl(get_input("_IN_port"))); 
+        //set_output("hasValue", ZImpl(get_input("_IN_hasValue")));
     }
 
     CustomUI export_customui() const override {
@@ -47,10 +42,10 @@ struct SubInput : zeno::INode {
         ParamTab tab;
         tab.groups.emplace_back(std::move(group));
         ui.inputPrims.emplace_back(std::move(tab));
-        for (auto param : get_output_primitive_params()) {
+        for (auto param : ZImpl(get_output_primitive_params())) {
             ui.outputPrims.emplace_back(param);
         }
-        for (auto param : get_output_object_params()) {
+        for (auto param : ZImpl(get_output_object_params())) {
             ui.outputObjs.emplace_back(param);
         }
         ui.uistyle.background = "#5F5F5F";
@@ -66,27 +61,24 @@ ZENDEFNODE(SubInput, {
 });
 
 struct SubOutput : zeno::INode {
-    virtual void complete() override {
+    void apply() override {
     }
 
-    virtual void apply() override {
-    }
-
-    ZENO_API virtual zany get_default_output_object() override {
-        zany obj = get_input("port");
+    ZENO_API zany get_default_output_object() {
+        zany obj = ZImpl(get_input("port"));
         return obj;
     }
 
     CustomUI export_customui() const override {
         CustomUI ui;
         ParamGroup group;
-        for (auto param : get_input_primitive_params()) {
+        for (auto param : ZImpl(get_input_primitive_params())) {
             group.params.emplace_back(param);
         }
         ParamTab tab;
         tab.groups.emplace_back(std::move(group));
         ui.inputPrims.emplace_back(std::move(tab));
-        for (auto param : get_input_object_params()) {
+        for (auto param : ZImpl(get_input_object_params())) {
             ui.inputObjs.emplace_back(param);
         }
         ui.uistyle.background = "#5F5F5F";

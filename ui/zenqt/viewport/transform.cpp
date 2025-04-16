@@ -774,9 +774,9 @@ namespace zeno {
             });
         zeno::getSession().setDisableRunning(true);
 
-        std::shared_ptr<INode> transNode = m_objnodeinfo.spViewNode;
+        std::shared_ptr<NodeImpl> transNode = m_objnodeinfo.spViewNode;
         if (!transNode) {
-            std::shared_ptr<INode> spOriNode = m_objnodeinfo.spViewNode;
+            std::shared_ptr<NodeImpl> spOriNode = m_objnodeinfo.spViewNode;
             std::shared_ptr<Graph> spGraph = spOriNode->getThisGraph();
             ZASSERT_EXIT(spGraph);
             transNode = spGraph->createNode("PrimitiveTransform");

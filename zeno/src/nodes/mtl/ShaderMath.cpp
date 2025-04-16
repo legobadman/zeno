@@ -1,4 +1,5 @@
 #include <zeno/zeno.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/extra/ShaderNode.h>
 #include <zeno/types/ShaderObject.h>
 #include <zeno/utils/string.h>
@@ -23,10 +24,10 @@ static auto &toHlsl() {
 
 struct ShaderTernaryMath : ShaderNodeClone<ShaderTernaryMath> {
     virtual int determineType(EmissionPass *em) override {
-        auto op = get_input2<std::string>("op");
-        auto in1 = get_input("in1");
-        auto in2 = get_input("in2");
-        auto in3 = get_input("in3");
+        auto op = ZImpl(get_input2<std::string>("op"));
+        auto in1 = ZImpl(get_input("in1"));
+        auto in2 = ZImpl(get_input("in2"));
+        auto in3 = ZImpl(get_input("in3"));
         auto t1 = em->determineType(in1.get());
         auto t2 = em->determineType(in2.get());
         auto t3 = em->determineType(in3.get());
@@ -51,10 +52,10 @@ struct ShaderTernaryMath : ShaderNodeClone<ShaderTernaryMath> {
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto op = get_input2<std::string>("op");
-        auto in1 = em->determineExpr(get_input("in1").get(), this);
-        auto in2 = em->determineExpr(get_input("in2").get(), this);
-        auto in3 = em->determineExpr(get_input("in3").get(), this);
+        auto op = ZImpl(get_input2<std::string>("op"));
+        auto in1 = em->determineExpr(ZImpl(get_input("in1").get()), this);
+        auto in2 = em->determineExpr(ZImpl(get_input("in2").get()), this);
+        auto in3 = em->determineExpr(ZImpl(get_input("in3").get()), this);
 
         if (op == "add3") {
             return em->emitCode(in1 + " + " + in2 + " + " + in3);
@@ -85,9 +86,9 @@ ZENDEFNODE(ShaderTernaryMath, {
 
 struct ShaderBinaryMath : ShaderNodeClone<ShaderBinaryMath> {
     virtual int determineType(EmissionPass *em) override {
-        auto op = get_input2<std::string>("op");
-        auto in1 = get_input("in1");
-        auto in2 = get_input("in2");
+        auto op = ZImpl(get_input2<std::string>("op"));
+        auto in1 = ZImpl(get_input("in1"));
+        auto in2 = ZImpl(get_input("in2"));
         auto t1 = em->determineType(in1.get());
         auto t2 = em->determineType(in2.get());
 
@@ -129,9 +130,9 @@ struct ShaderBinaryMath : ShaderNodeClone<ShaderBinaryMath> {
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto op = get_input2<std::string>("op");
-        auto in1 = em->determineExpr(get_input("in1").get());
-        auto in2 = em->determineExpr(get_input("in2").get());
+        auto op = ZImpl(get_input2<std::string>("op"));
+        auto in1 = em->determineExpr(ZImpl(get_input("in1").get()));
+        auto in2 = em->determineExpr(ZImpl(get_input("in2").get()));
 
         if (op == "add") {
             return em->emitCode(in1 + " + " + in2);
@@ -163,8 +164,8 @@ ZENDEFNODE(ShaderBinaryMath, {
 
 struct ShaderUnaryMath : ShaderNodeClone<ShaderUnaryMath> {
     virtual int determineType(EmissionPass *em) override {
-        auto op = get_input2<std::string>("op");
-        auto in1 = get_input("in1");
+        auto op = ZImpl(get_input2<std::string>("op"));
+        auto in1 = ZImpl(get_input("in1"));
         auto t1 = em->determineType(in1.get());
         if(op=="length")
         {
@@ -174,8 +175,8 @@ struct ShaderUnaryMath : ShaderNodeClone<ShaderUnaryMath> {
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto op = get_input2<std::string>("op");
-        auto in1 = em->determineExpr(get_input("in1").get());
+        auto op = ZImpl(get_input2<std::string>("op"));
+        auto in1 = em->determineExpr(ZImpl(get_input("in1").get()));
 
         if (op == "copy") {
             return em->emitCode(in1);
@@ -201,14 +202,14 @@ ZENDEFNODE(ShaderUnaryMath, {
 
 struct ShaderHsvAdjust : ShaderNodeClone<ShaderHsvAdjust> {
     virtual int determineType(EmissionPass *em) override {
-        em->determineType(get_input("color").get());
-        em->determineType(get_input("amount").get());
+        em->determineType(ZImpl(get_input("color").get()));
+        em->determineType(ZImpl(get_input("amount").get()));
         return 3;
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto color = em->determineExpr(get_input("color").get());
-        auto amount = em->determineExpr(get_input("amount").get());
+        auto color = em->determineExpr(ZImpl(get_input("color").get()));
+        auto amount = em->determineExpr(ZImpl(get_input("amount").get()));
 
         return em->emitCode(zeno::format("{}({}, {})", em->funcName("hsvAdjust"), color, amount));
     }

@@ -129,11 +129,11 @@ namespace {
 
 struct PrimEdgeBound : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        primEdgeBound(prim.get(), get_input2<bool>("removeFaces"), false);
-        if (get_input2<bool>("killDeadVerts"))
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        primEdgeBound(prim.get(), ZImpl(get_input2<bool>("removeFaces")), false);
+        if (ZImpl(get_input2<bool>("killDeadVerts")))
             primKillDeadVerts(prim.get());
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -153,9 +153,9 @@ ZENDEFNODE(PrimEdgeBound, {
 
 struct PrimWireframe : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        primWireframe(prim.get(), get_input2<bool>("removeFaces"), false);
-        set_output("prim", std::move(prim));
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        primWireframe(prim.get(), ZImpl(get_input2<bool>("removeFaces")), false);
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -174,9 +174,9 @@ ZENDEFNODE(PrimWireframe, {
 
 struct PrimitiveWireframe : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        primWireframe(prim.get(), get_param<bool>("removeFaces"), false);
-        set_output("prim", std::move(prim));
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        primWireframe(prim.get(), ZImpl(get_param<bool>("removeFaces")), false);
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 

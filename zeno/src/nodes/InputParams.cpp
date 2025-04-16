@@ -34,9 +34,9 @@ struct ParamFormatInfo: IObject {
 struct ParamFormat : zeno::INode {
     virtual void apply() override {
         auto format = std::make_shared<zeno::ParamFormatInfo>();
-        format->name = get_input2<std::string>("name");
-        format->_type = get_input2<std::string>("type");
-        auto defaultValue = get_input2<std::string>("defaultValue");
+        format->name = ZImpl(get_input2<std::string>("name");
+        format->_type = ZImpl(get_input2<std::string>("type");
+        auto defaultValue = ZImpl(get_input2<std::string>("defaultValue");
         auto items = zeno::split_str(defaultValue, ',');
         if (format->_type == "int") {
             format->defaultValue = std::stoi(defaultValue);
@@ -90,7 +90,7 @@ struct ParamFormat : zeno::INode {
             format->defaultValue = defaultValue;
         }
 
-        set_output("format", std::move(format));
+        ZImpl(set_output("format", std::move(format));
     }
 };
 
@@ -107,9 +107,9 @@ ZENDEFNODE(ParamFormat, {
 
 struct ParamFileParser : zeno::INode {
     virtual void apply() override {
-        auto formatList = get_input<zeno::ListObject>("formatList");
+        auto formatList = ZImpl(get_input<zeno::ListObject>("formatList");
         auto params = std::make_shared<zeno::DictObject>();
-        auto path = get_input2<std::string>("configFilePath");
+        auto path = ZImpl(get_input2<std::string>("configFilePath");
         std::string configFilePath = zeno::getConfigVariable("configFilePath");
         if (!configFilePath.empty()) {
             path = configFilePath;
@@ -253,7 +253,7 @@ struct ParamFileParser : zeno::INode {
             }
             fclose(fp);
         }
-        set_output("params", std::move(params));
+        ZImpl(set_output("params", std::move(params));
     }
 };
 

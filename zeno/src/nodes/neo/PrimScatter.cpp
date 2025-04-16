@@ -210,15 +210,15 @@ namespace {
 
 struct PrimScatter : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto type = get_input2<std::string>("type");
-        auto denAttr = get_input2<std::string>("denAttr");
-        auto density = get_input2<float>("density");
-        auto minRadius = get_input2<float>("minRadius");
-        auto interpAttrs = get_input2<bool>("interpAttrs");
-        auto seed = get_input2<int>("seed");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto type = ZImpl(get_input2<std::string>("type"));
+        auto denAttr = ZImpl(get_input2<std::string>("denAttr"));
+        auto density = ZImpl(get_input2<float>("density"));
+        auto minRadius = ZImpl(get_input2<float>("minRadius"));
+        auto interpAttrs = ZImpl(get_input2<bool>("interpAttrs"));
+        auto seed = ZImpl(get_input2<int>("seed"));
         auto retprim = primScatter(prim.get(), type, denAttr, density, minRadius, interpAttrs, seed);
-        set_output("parsPrim", retprim);
+        ZImpl(set_output("parsPrim", retprim));
     }
 };
 

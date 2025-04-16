@@ -11,12 +11,12 @@ struct ImplShaderExtractVec : ShaderNodeClone<ImplShaderExtractVec> {
     int comp{};
 
     virtual int determineType(EmissionPass *em) override {
-        auto in1 = em->determineType(get_input("vec").get());
+        auto in1 = em->determineType(ZImpl(get_input("vec")).get());
         return 1;
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto in = em->determineExpr(get_input("vec").get());
+        auto in = em->determineExpr(ZImpl(get_input("vec")).get());
 
         em->emitCode(in + "." + "xyzw"[comp]);
     }
@@ -29,7 +29,7 @@ struct ShaderExtractVec : INode {
             auto node = std::make_shared<ImplShaderExtractVec>();
             node->comp = i;
             auto shader = std::make_shared<ShaderObject>(node.get());
-            set_output(std::string{} + "xyzw"[i], std::move(shader));
+            ZImpl(set_output(std::string{} + "xyzw"[i], std::move(shader)));
         }
     }
 };
@@ -54,12 +54,12 @@ struct ShaderReduceVec : ShaderNodeClone<ShaderReduceVec> {
     int tyin{};
 
     virtual int determineType(EmissionPass *em) override {
-        tyin = em->determineType(get_input("in").get());
+        tyin = em->determineType(ZImpl(get_input("in")).get());
         return 1;
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto in = em->determineExpr(get_input("in").get());
+        auto in = em->determineExpr(ZImpl(get_input("in")).get());
         if (tyin == 1) {
             return em->emitCode(in);
         } else {
@@ -68,7 +68,7 @@ struct ShaderReduceVec : ShaderNodeClone<ShaderReduceVec> {
                 exp += " + " + in + "." + "xyzw"[i];
             }
             exp = "float(" + exp + ")";
-            if (get_param<std::string>("op") == "average")
+            if (ZImpl(get_param<std::string>("op")) == "average")
                 exp += " / " + std::to_string(tyin) + ".";
             em->emitCode(exp);
         }

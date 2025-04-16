@@ -3,7 +3,7 @@
 #include <zeno/types/StringObject.h>
 #include <zeno/types/ShaderObject.h>
 #include <zeno/types/MaterialObject.h>
-#include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/TextureObject.h>
 #include <zeno/utils/string.h>
 #include <zeno/types/UserData.h>
@@ -33,13 +33,13 @@ struct ShaderVolume : INode {
 
         }, {
            
-            get_input<IObject>("depth", std::make_shared<NumericObject>((float)(999))),
+            ZImpl(get_input<IObject>("depth", std::make_shared<NumericObject>((float)(999)))),
             //get_input<IObject>("extinction", std::make_shared<NumericObject>(float(1))),
-            get_input<IObject>("albedo", std::make_shared<NumericObject>(vec3f(0.5))),
-            get_input<IObject>("anisotropy", std::make_shared<NumericObject>(float(0))),
+            ZImpl(get_input<IObject>("albedo", std::make_shared<NumericObject>(vec3f(0.5)))),
+            ZImpl(get_input<IObject>("anisotropy", std::make_shared<NumericObject>(float(0)))),
 
-            get_input<IObject>("density", std::make_shared<NumericObject>(float(0))),
-            get_input<IObject>("emission", std::make_shared<NumericObject>(vec3f(0))),
+            ZImpl(get_input<IObject>("density", std::make_shared<NumericObject>(float(0)))),
+            ZImpl(get_input<IObject>("emission", std::make_shared<NumericObject>(vec3f(0)))),
             
         });
 
@@ -48,8 +48,8 @@ struct ShaderVolume : INode {
         auto mtl = std::make_shared<MaterialObject>();
         mtl->frag = std::move(code);
 
-            if (has_input("tex2dList")) {
-                auto tex2dList = get_input<ListObject>("tex2dList")->get<zeno::Texture2DObject>();
+            if (ZImpl(has_input("tex2dList"))) {
+                auto tex2dList = ZImpl(get_input<ListObject>("tex2dList"))->m_impl->get<zeno::Texture2DObject>();
                 if (!tex2dList.empty() && !em.tex2Ds.empty()) {
                     throw zeno::makeError("Can not use both way!");
                 }
@@ -63,10 +63,10 @@ struct ShaderVolume : INode {
                 }
             }
 
-        int vol_depth = (int)get_input2<float>("depth");
-        float vol_extinction = get_input2<float>("extinction");
+        int vol_depth = (int)ZImpl(get_input2<float>("depth"));
+        float vol_extinction = ZImpl(get_input2<float>("extinction"));
 
-        auto EmissionScale = get_input2<std::string>("EmissionScale:");
+        auto EmissionScale = ZImpl(get_input2<std::string>("EmissionScale:"));
         em.commonCode += "#define VolumeEmissionScale VolumeEmissionScaleType::" + EmissionScale + "\n";
 
         vol_depth = clamp(vol_depth, 9, 9999);
@@ -82,11 +82,11 @@ struct ShaderVolume : INode {
             parameters = j.dump();
         }
         mtl->parameters = parameters;
-        mtl->mtlidkey = get_input2<std::string>("mtlid");
+        mtl->mtlidkey = ZImpl(get_input2<std::string>("mtlid"));
 
-        if (has_input("tex3dList"))
+        if (ZImpl(has_input("tex3dList")))
         {
-            auto tex3dList = get_input<ListObject>("tex3dList")->getRaw(); //get<zeno::StringObject>();
+            auto tex3dList = ZImpl(get_input<ListObject>("tex3dList"))->m_impl->getRaw(); //get<zeno::StringObject>();
 
             for (const auto& tex3d : tex3dList) {
 
@@ -98,19 +98,19 @@ struct ShaderVolume : INode {
                 }
 
                 auto path = ele->get();
-                auto ud = ele->userData();
+                auto ud = dynamic_cast<UserData*>(ele->userData());
 
                 const std::string _key_ = "channel";
                 std::string channel_string = "0";
 
-                if (ud.has(_key_)) {
+                if (ud->has(_key_)) {
 
-                    if (ud.isa<zeno::StringObject>(_key_)) {
+                    if (ud->isa<zeno::StringObject>(_key_)) {
                         //auto get = ud.get<zeno::StringObject>("channel");
-                        channel_string = ud.get2<std::string>(_key_);
+                        channel_string = ud->get2<std::string>(_key_);
 
-                    } else if (ud.isa<zeno::NumericObject>(_key_)) {
-                        auto channel_number = ud.get2<int>(_key_);
+                    } else if (ud->isa<zeno::NumericObject>(_key_)) {
+                        auto channel_number = ud->get2<int>(_key_);
                         channel_number = max(0, channel_number);
                         channel_string = std::to_string(channel_number);
                     } 
@@ -148,7 +148,7 @@ struct ShaderVolume : INode {
         }
 
         mtl->common = std::move(em.commonCode);
-        set_output("mtl", std::move(mtl));
+        ZImpl(set_output("mtl", std::move(mtl)));
     }
 };
 
@@ -181,11 +181,11 @@ struct ShaderVolumeHomogeneous : INode {
 
         auto mtl = std::make_shared<MaterialObject>();
 
-        auto extinction = get_input2<zeno::vec3f>("extinction");
+        auto extinction = ZImpl(get_input2<zeno::vec3f>("extinction"));
         extinction = clamp(extinction, 1e-5, 1e+5);
 
-        auto albedo     = get_input2<zeno::vec3f>("albedo");
-        auto anisotropy = get_input2<float>("anisotropy");
+        auto albedo     = ZImpl(get_input2<zeno::vec3f>("albedo"));
+        auto anisotropy = ZImpl(get_input2<float>("anisotropy"));
 
         std::stringstream ss {};
         ss << std::setprecision(9);
@@ -198,8 +198,8 @@ struct ShaderVolumeHomogeneous : INode {
 
         mtl->frag = ss.str();
 
-        auto equiangular  = get_input2<bool>("debug");
-        auto multiscatter = get_input2<bool>("multiscatter");
+        auto equiangular  = ZImpl(get_input2<bool>("debug"));
+        auto multiscatter = ZImpl(get_input2<bool>("multiscatter"));
 
         std::string parameters = "";
         {
@@ -212,12 +212,12 @@ struct ShaderVolumeHomogeneous : INode {
             parameters = j.dump();
         }
         mtl->parameters = parameters;
-        mtl->mtlidkey = get_input2<std::string>("mtlid");
+        mtl->mtlidkey = ZImpl(get_input2<std::string>("mtlid"));
 
         mtl->common += "using DataTypeNVDB0 = float; nanovdb::Fp32;             \n";
         mtl->common += "using GridTypeNVDB0 = nanovdb::NanoGrid<DataTypeNVDB0>; \n";
         mtl->common += "#define VolumeEmissionScale VolumeEmissionScaleType::Raw\n";
-        set_output("mtl", std::move(mtl));
+        ZImpl(set_output("mtl", std::move(mtl)));
     }
 };
 

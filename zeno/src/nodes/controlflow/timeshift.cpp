@@ -1,10 +1,35 @@
 #include <zeno/zeno.h>
-#include <zeno/core/reflectdef.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+//#include <zeno/core/reflectdef.h>
+#include <zeno/core/defNode.h>
+//#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno {
 
+    struct TimeShift2 : INode {
+
+        void apply() override {
+            auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+            ZImpl(set_output("prim", std::move(prim)));
+        }
+    };
+
+    ZENDEFNODE(TimeShift2, {
+        {/*inputs:*/
+            ParamObject("prim", gParamType_Geometry),
+            ParamPrimitive("offset", gParamType_Int),
+            ParamPrimitive("clamp", gParamType_String, "None", zeno::Combobox, std::vector<std::string>{"None", "Clamp to First", "Clamp to Last", "Clamp to Both"}),
+            ParamPrimitive("start frame", gParamType_Int, 0, Lineedit, Any(), "visible = parameter('clamp').value == 'Clamp to First' || parameter('clamp').value == 'Clamp to Both';"),
+            ParamPrimitive("end frame", gParamType_Int, 0, Lineedit, Any(), "visible = parameter('clamp').value == 'Clamp to Last' || parameter('clamp').value == 'Clamp to Both';")
+        },
+        {/*outputs:*/
+            {gParamType_Geometry, "prim"}
+        },
+        {},
+        {"create"},
+    });
+
+#if 0
     struct ZDEFNODE() TimeShift : INode {
 
         ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "clamp", Control = zeno::Combobox, ComboBoxItems = ("None", "Clamp to First", "Clamp to Last", "Clamp to Both"))
@@ -30,5 +55,6 @@ namespace zeno {
             return prim;
         }
     };
+#endif
 }
 

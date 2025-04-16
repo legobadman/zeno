@@ -7,7 +7,7 @@
 
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/DictObject.h>
-#include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/UserData.h>
 
 #include <zeno/core/Graph.h>
@@ -49,7 +49,7 @@ struct testPoly1 : INode {
             prim->tris.push_back(triangles[i]);
         }
 
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 ZENDEFNODE(testPoly1, {
@@ -68,8 +68,8 @@ ZENDEFNODE(testPoly1, {
 
 struct testPoly2 : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto list = get_input<ListObject>("list")->getLiterial<int>();
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto list = ZImpl(get_input<ListObject>("list"))->m_impl->getLiterial<int>();
 
         std::vector<vec3i> triangles;
         polygonDecompose(prim->verts, list, triangles);
@@ -78,7 +78,7 @@ struct testPoly2 : INode {
             prim->tris.push_back(triangles[i]);
         }
 
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 ZENDEFNODE(testPoly2, {
@@ -102,14 +102,14 @@ ZENDEFNODE(testPoly2, {
 
 struct PrimMarkTrisIdx : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto idxName = get_input<StringObject>("idxName")->get();
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto idxName = ZImpl(get_input<StringObject>("idxName"))->get();
         auto &tris_idx = prim->tris.add_attr<int>(idxName);
 
         for (int i = 0; i < int(prim->tris.size()); i++) {
             tris_idx[i] = i;
         }
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 ZENDEFNODE(PrimMarkTrisIdx, {
@@ -130,10 +130,10 @@ ZENDEFNODE(PrimMarkTrisIdx, {
 
 struct PrimGetTrisSize : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto n = std::make_shared<NumericObject>();
         n->set<int>(int(prim->tris.size()));
-        set_output("TrisSize", n);
+        ZImpl(set_output("TrisSize", n));
     }
 };
 ZENDEFNODE(PrimGetTrisSize, {
@@ -153,8 +153,8 @@ ZENDEFNODE(PrimGetTrisSize, {
 
 struct PrimPointTris : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto index = get_input<NumericObject>("pointID")->get<int>();
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto index = ZImpl(get_input<NumericObject>("pointID"))->get<int>();
         auto list = std::make_shared<ListObject>();
 
         for (int i = 0; i < int(prim->tris.size()); i++)
@@ -169,10 +169,10 @@ struct PrimPointTris : INode {
                 x[2] = ind[2];
                 x[3] = i;
                 num->set<vec4i>(x);
-                list->push_back(num);
+                list->m_impl->push_back(num);
             }
         }
-        set_output("list", std::move(list));
+        ZImpl(set_output("list", std::move(list)));
     }
 };
 ZENDEFNODE(PrimPointTris, {
@@ -193,11 +193,11 @@ ZENDEFNODE(PrimPointTris, {
 
 struct PrimTriPoints : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto index = get_input<NumericObject>("trisID")->get<int>();
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto index = ZImpl(get_input<NumericObject>("trisID"))->get<int>();
         auto points = std::make_shared<NumericObject>();
         points->set<vec3i>(prim->tris[index]);
-        set_output("points", std::move(points));
+        ZImpl(set_output("points", std::move(points)));
     }
 };
 ZENDEFNODE(PrimTriPoints, {
@@ -221,10 +221,10 @@ ZENDEFNODE(PrimTriPoints, {
 
 struct DictEraseItem : zeno::INode {
     virtual void apply() override {
-        auto dict = get_input<zeno::DictObject>("dict");
-        auto key = get_input<zeno::StringObject>("key")->get();
+        auto dict = ZImpl(get_input<zeno::DictObject>("dict"));
+        auto key = ZImpl(get_input<zeno::StringObject>("key"))->get();
         dict->lut.erase(key);
-        set_output("dict", std::move(dict));
+        ZImpl(set_output("dict", std::move(dict)));
     }
 };
 ZENDEFNODE(DictEraseItem, {
@@ -248,8 +248,8 @@ ZENDEFNODE(DictEraseItem, {
 
 struct str2num : INode {
     virtual void apply() override {
-        auto str = get_input2<std::string>("str");
-        auto type = get_input<zeno::StringObject>("type")->value;
+        auto str = ZImpl(get_input2<std::string>("str"));
+        auto type = ZImpl(get_input<zeno::StringObject>("type"))->value;
         auto obj = std::make_shared<zeno::NumericObject>();
         std::stringstream strStream(str);
 
@@ -277,7 +277,7 @@ struct str2num : INode {
             }
         }
 
-        set_output("num", std::move(obj));
+        ZImpl(set_output("num", std::move(obj)));
     }
 };
 ZENDEFNODE(str2num, {
@@ -317,12 +317,12 @@ struct number_printer<vec<N, T>> {
 
 struct VisPrimAttrValue_Modify : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto attrName = get_input2<std::string>("attrName");
-        auto scale = get_input2<float>("scale");
-        auto precision = get_input2<int>("precision");
-        auto includeSelf = get_input2<bool>("includeSelf");
-        auto dotDecoration = get_input2<bool>("dotDecoration");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto attrName = ZImpl(get_input2<std::string>("attrName"));
+        auto scale = ZImpl(get_input2<float>("scale"));
+        auto precision = ZImpl(get_input2<int>("precision"));
+        auto includeSelf = ZImpl(get_input2<bool>("includeSelf"));
+        auto dotDecoration = ZImpl(get_input2<bool>("dotDecoration"));
         bool textDecoration = !attrName.empty();
 
         std::vector<PrimitiveObject *> outprim2;
@@ -342,7 +342,7 @@ struct VisPrimAttrValue_Modify : INode {
                   auto str = ss.str();
 
                   auto numprim = std::static_pointer_cast<PrimitiveObject>(
-                      getThisGraph()
+                      ZImpl(getThisGraph())
                           ->callTempNode("LoadStringPrim",
                                          {
                                              {"triangulate", std::make_shared<NumericObject>((bool)0)},
@@ -368,7 +368,7 @@ struct VisPrimAttrValue_Modify : INode {
             outprim.resize(attarrsize * (1 + (int)textDecoration));
             outprim2.resize(attarrsize * (1 + (int)textDecoration));
             auto numprim = std::static_pointer_cast<PrimitiveObject>(
-                getThisGraph()
+                ZImpl(getThisGraph())
                     ->callTempNode("LoadSampleModel",
                                    {
                                        {"triangulate", std::make_shared<NumericObject>((bool)0)},
@@ -394,7 +394,7 @@ struct VisPrimAttrValue_Modify : INode {
 
         auto retprim = primMerge(outprim2);
 
-        set_output("outPrim", std::move(retprim));
+        ZImpl(set_output("outPrim", std::move(retprim)));
     }
 };
 ZENO_DEFNODE(VisPrimAttrValue_Modify)( {
@@ -442,15 +442,15 @@ void sample2D_M(std::vector<zeno::vec3f> &coord, std::vector<T> &field, std::vec
 }
 struct Grid2DSample_M : zeno::INode {
     virtual void apply() override {
-        auto nx = get_input<zeno::NumericObject>("nx")->get<int>();
-        auto ny = get_input<zeno::NumericObject>("ny")->get<int>();
-        auto bmin = get_input2<zeno::vec3f>("bmin");
-        auto grid = get_input<zeno::PrimitiveObject>("grid");
-        auto grid2 = get_input<zeno::PrimitiveObject>("grid2");
-        auto attrT = get_param<std::string>("attrT");
-        auto channel = get_input<zeno::StringObject>("channel")->get();
-        auto sampleby = get_input<zeno::StringObject>("sampleBy")->get();
-        auto h = get_input<zeno::NumericObject>("h")->get<float>();
+        auto nx = ZImpl(get_input<zeno::NumericObject>("nx"))->get<int>();
+        auto ny = ZImpl(get_input<zeno::NumericObject>("ny"))->get<int>();
+        auto bmin = ZImpl(get_input2<zeno::vec3f>("bmin"));
+        auto grid = ZImpl(get_input<zeno::PrimitiveObject>("grid"));
+        auto grid2 = ZImpl(get_input<zeno::PrimitiveObject>("grid2"));
+        auto attrT = ZImpl(get_param<std::string>("attrT"));
+        auto channel = ZImpl(get_input<zeno::StringObject>("channel"))->get();
+        auto sampleby = ZImpl(get_input<zeno::StringObject>("sampleBy"))->get();
+        auto h = ZImpl(get_input<zeno::NumericObject>("h"))->get<float>();
         if (grid->has_attr(channel) && grid->has_attr(sampleby)) {
             if (attrT == "float") {
                 sample2D_M<float>(grid->attr<zeno::vec3f>(sampleby), grid->attr<float>(channel),
@@ -461,7 +461,7 @@ struct Grid2DSample_M : zeno::INode {
             }
         }
 
-        set_output("prim", std::move(grid));
+        ZImpl(set_output("prim", std::move(grid)));
     }
 };
 ZENDEFNODE(Grid2DSample_M, {

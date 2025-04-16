@@ -133,11 +133,11 @@ ZENO_API void primCalcNormal(zeno::PrimitiveObject* prim, float flip, std::strin
 }
 struct PrimitiveCalcNormal : zeno::INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto nrmAttr = get_input<StringObject>("nrmAttr")->get();
-        auto flip = get_input<NumericObject>("flip")->get<bool>();
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto nrmAttr = ZImpl(get_input<StringObject>("nrmAttr"))->get();
+        auto flip = ZImpl(get_input<NumericObject>("flip"))->get<bool>();
         primCalcNormal(prim.get(), flip ? -1 : 1, nrmAttr);
-        set_output("prim", get_input("prim"));
+        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
     }
 };
 
@@ -154,8 +154,8 @@ ZENDEFNODE(PrimitiveCalcNormal, {
 
 struct PrimitiveOrderVertexByNormal : zeno::INode{
   virtual void apply() override {
-    auto prim = get_input<PrimitiveObject>("prim");
-    auto nrmAttr = get_input<StringObject>("nrmAttr")->get();
+    auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+    auto nrmAttr = ZImpl(get_input<StringObject>("nrmAttr"))->get();
     if(prim->tris.has_attr(nrmAttr))
     {
       auto &nrm = prim->tris.attr<zeno::vec3f>(nrmAttr);
@@ -188,7 +188,7 @@ struct PrimitiveOrderVertexByNormal : zeno::INode{
         }
       }
     }
-    set_output("prim", get_input("prim"));
+    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
   }
 };
 ZENDEFNODE(PrimitiveOrderVertexByNormal, {

@@ -1377,7 +1377,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             const auto& viewnodes = spGraph->get_viewnodes();
             //其实是否可以在外面提前准备好对象列表？
             for (auto viewnode : viewnodes) {
-                std::shared_ptr<zeno::INode> spNode = spGraph->getNode(viewnode);
+                std::shared_ptr<zeno::NodeImpl> spNode = spGraph->getNode(viewnode);
                 zeno::zany spObject = spNode->get_default_output_object();
                 if (spObject) {
                     graphicsMan->add_object(spObject);

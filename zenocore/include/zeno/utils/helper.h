@@ -3,17 +3,21 @@
 
 #include <rapidjson/document.h>
 #include <zeno/core/data.h>
+#include <zeno/core/coredata.h>
 #include <zeno/utils/string.h>
 #include <zeno/core/IObject.h>
-#include <zeno/types/StringObject.h>
-#include <zeno/types/NumericObject.h>
 #include <zeno/utils/log.h>
 #include <zeno/core/CoreParam.h>
 #include <zeno/core/reflectdef.h>
+#include <reflect/container/any>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno {
+
+    struct DictObject;
+    struct ListObject;
+    struct SubnetNode;
 
     ZENO_API ParamType convertToType(std::string const& type, const std::string_view& param_name = "");
     ZENO_API bool isAnyEqual(const zeno::reflect::Any& lhs, const zeno::reflect::Any& rhs);
@@ -59,19 +63,26 @@ namespace zeno {
 
     void getNameMappingFromReflectUI(
         zeno::reflect::TypeBase* typeBase,
-        std::shared_ptr<INode> node,
+        NodeImpl* node,
         std::map<std::string, std::string>& inputParams,
         std::vector<std::string>& outputParams);
     ZENO_API bool isDerivedFromSubnetNodeName(const std::string& clsname);    //判断clsname是否为继承自subnetNode的节点
 
-    //变量传播dirty相关
-    ZENO_API void propagateDirty(std::shared_ptr<INode> spCurrNode, std::string varName);
-    void getUpstreamNodes(std::shared_ptr<INode> spCurrNode, std::set<ObjPath>& upstreamDepNodes, std::set<ObjPath>& upstreams, std::string outParamName = "");
-    void mark_dirty_by_dependNodes(std::shared_ptr<INode> spCurrNode, bool bOn, std::set<ObjPath> nodesRange, std::string inParamName = "");
-    bool isSubnetInputOutputParam(std::shared_ptr<INode> spParentnode, std::string paramName);
+    ZENO_API zeno::SubnetNode* getSubnetNode(zeno::INodeImpl* pAdapter);
 
-    void update_list_root_key(std::shared_ptr<ListObject> listobj, const std::string& key);
-    void update_dict_root_key(std::shared_ptr<DictObject> dictobj, const std::string& key);
+    //变量传播dirty相关
+    ZENO_API void propagateDirty(NodeImpl* spCurrNode, std::string varName);
+    void getUpstreamNodes(NodeImpl* spCurrNode, std::set<ObjPath>& upstreamDepNodes, std::set<ObjPath>& upstreams, std::string outParamName = "");
+    void mark_dirty_by_dependNodes(NodeImpl* spCurrNode, bool bOn, std::set<ObjPath> nodesRange, std::string inParamName = "");
+    bool isSubnetInputOutputParam(NodeImpl* spParentnode, std::string paramName);
+
+    void update_list_root_key(ListObject* listobj, const std::string& key);
+    void update_dict_root_key(DictObject* dictobj, const std::string& key);
+
+    zany clone_by_key(IObject* pObject, const std::string& prefix);
+    std::vector<std::string> get_obj_paths(IObject* pObject);
+
+    AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval);
 }
 
 

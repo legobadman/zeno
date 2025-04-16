@@ -208,12 +208,12 @@ namespace zeno {
 
         struct PythonNode : zeno::INode {
             void apply() override {
-                bool onlyui_gen = get_param<bool>("onlyui");
+                bool onlyui_gen = ZImpl(get_param<bool>("onlyui"));
                 if (onlyui_gen)
                     return;
 
-                auto args = has_input("args") ? get_input<DictObject>("args") : std::make_shared<DictObject>();
-                auto path = has_input("path") ? get_input2<std::string>("path") : "";
+                auto args = ZImpl(has_input("args")) ? ZImpl(get_input<DictObject>("args")) : std::make_shared<DictObject>();
+                auto path = ZImpl(has_input("path")) ? ZImpl(get_input2<std::string>("path")) : "";
                 int ret;
                 PyObject* argsDict = PyDict_New();
                 scope_exit argsDel = [=] {
@@ -270,7 +270,7 @@ namespace zeno {
                     //(void)PyDict_SetItemString(zenoModDict, "_currgraph", currGraphLongZero);
                 //};
                 if (path.empty()) {
-                    auto code = get_input2<std::string>("script");
+                    auto code = ZImpl(get_input2<std::string>("script"));
                     mainMod = PyRun_StringFlags(code.c_str(), Py_file_input, globals, globals, NULL);
                     PyErr_Print();
                 }
@@ -314,7 +314,7 @@ namespace zeno {
                     if (retsRAIIDict)
                         PyDict_Clear(retsRAIIDict);
                 }
-                set_output("rets", std::move(rets));
+                ZImpl(set_output("rets", std::move(rets)));
             }
         };
 

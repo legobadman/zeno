@@ -8,7 +8,6 @@
 
 namespace zeno
 {
-
     GeometryTopology::GeometryTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
         m_bTriangle = bTriangle;
         m_points.resize(nPoints);

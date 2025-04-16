@@ -1,5 +1,4 @@
 #include <zeno/zeno.h>
-#include <zeno/core/reflectdef.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
 #include "glm/gtc/matrix_transform.hpp"
@@ -7,11 +6,10 @@
 #include <zeno/core/FunctionManager.h>
 #include <sstream>
 #include <zeno/formula/zfxexecute.h>
-#include <zeno/geo/geometryutil.h>
 #include <zeno/utils/format.h>
 #include <unordered_set>
 #include <zeno/para/parallel_reduce.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/utils/interfaceutil.h>
 
 
 #ifndef M_PI
@@ -21,29 +19,21 @@
 namespace zeno {
     using namespace zeno::reflect;
 
-    struct ZDEFNODE() CopyToPoints : INode {
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input Geometry")},
-                {"target_Obj", ParamObject("Target Geometry")},
-                {"alignTo", ParamPrimitive("Align To", "Align To Point Center", Combobox, std::vector<std::string>{"Align To Point Center", "Align To Min"})}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
+    struct CopyToPoints : INode {
+        void apply() override {
+            auto _input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Geometry"));
+            auto _target_Obj = ZImpl(get_input2<GeometryObject_Adapter>("Target Geometry"));
+            std::string alignTo = ZImpl(get_input2<std::string>("Align To"));
 
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            std::shared_ptr<zeno::GeometryObject> target_Obj,
-            const std::string& alignTo = "Align To Point Center"
-        ) {
-            if (!input_object) {
+            if (!_input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
-            else if (!target_Obj) {
+            else if (!_target_Obj) {
                 throw makeError<UnimplError>("empty target object.");
             }
+
+            auto input_object = _input_object->m_impl;
+            auto target_Obj = _target_Obj->m_impl;
             if (!input_object->has_point_attr("pos")) {
                 throw makeError<UnimplError>("invalid input object.");
             }
@@ -52,11 +42,10 @@ namespace zeno {
             }
 
             std::vector<zeno::vec3f> inputPos = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
-            std::vector <std::tuple< bool, std::vector<int >> > inputFacesPoints(input_object->nfaces(), std::tuple<bool, std::vector<int >>({false, std::vector<int>()}));
+            std::vector <std::tuple< bool, std::vector<int >> > inputFacesPoints(input_object->nfaces(), std::tuple<bool, std::vector<int >>({ false, std::vector<int>() }));
             for (int i = 0; i < input_object->nfaces(); ++i) {
                 inputFacesPoints[i] = std::tuple(input_object->isLineFace(i), input_object->face_points(i));
             }
-
 
             std::vector<zeno::vec3f> inputNrm;
             std::vector<zeno::vec2f> inputLines;
@@ -67,7 +56,7 @@ namespace zeno {
             }
 
             zeno::vec3f originCenter, _min, _max;
-            std::tie(_min, _max) = geomBoundingBox(input_object.get());
+            std::tie(_min, _max) = geomBoundingBox(input_object);
             if (alignTo == "Align To Point Center") {
                 originCenter = (_min + _max) / 2;
             }
@@ -87,7 +76,8 @@ namespace zeno {
                 newObjNrm.resize(newObjPointsCount);
             }
 
-            std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newObjPointsCount, newObjFacesCount, true);
+            auto spgeo = create_GeometryObject(input_object->is_base_triangle(), newObjPointsCount, newObjFacesCount, true);
+
             for (size_t i = 0; i < targetObjPointsCount; ++i) {
                 zeno::vec3f targetPos = target_Obj->get_elem<zeno::vec3f>(ATTR_POINT, "pos", 0, i);
                 zeno::vec3f dx = targetPos - originCenter;
@@ -113,9 +103,9 @@ namespace zeno {
                     for (int k = 0; k < facePoints.size(); ++k) {
                         facePoints[k] += pt_offset;
                     }
-                    spgeo->set_face(face_offset + j, facePoints, !std::get<0>(inputFacesPoints[j]));
+                    spgeo->set_face(face_offset + j, stdVec2zeVec(facePoints), !std::get<0>(inputFacesPoints[j]));
                 }
-                spgeo->inheritAttributes(input_object, -1, pt_offset, {"pos", "nrm"}, face_offset, {});
+                spgeo->inheritAttributes(_input_object.get(), -1, pt_offset, {"pos", "nrm"}, face_offset, {});
             }
 
             spgeo->create_attr(ATTR_POINT, "pos", newObjPos);
@@ -123,327 +113,331 @@ namespace zeno {
                 spgeo->create_attr(ATTR_POINT, "nrm", newObjNrm);
             }
 
-            return spgeo;
+            ZImpl(set_output("Output", spgeo));
         }
-
     };
 
-    struct ZDEFNODE() Sweep : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"snapDistance", ParamPrimitive("Snap Distance")},
-                {"surface_shape", ParamPrimitive("Surface Shape", "Square Tube", Combobox, std::vector<std::string>{"Second Input", "Square Tube"})},
-                {"surface_width", ParamPrimitive("Width", 0.2, Slider, std::vector<float>{0.0, 1.0, 0.001}, "", "visible = parameter('Surface Shape').value == 'Square Tube';")},
-                {"surface_column", ParamPrimitive("Columns", 2, Slider, std::vector<int>{1, 20, 1}, "", "visible = parameter('Surface Shape').value == 'Square Tube';")},
-                {"input_object", ParamObject("Input")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            std::string surface_shape = "Square Tube",
-            float surface_width = 0.2f,
-            int surface_column = 2
-        )
+    ZENDEFNODE(CopyToPoints, 
+    {
         {
-            return nullptr;
+            {gParamType_Geometry, "Input Geometry"},
+            {gParamType_Geometry, "Target Geometry"},
+            ParamPrimitive("Align To", gParamType_String, "Align To Point Center", Combobox, std::vector<std::string>{"Align To Point Center", "Align To Min"}),
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"deprecated"},
+    });
+
+
+    struct Sweep : INode {
+
 #if 0
-            const float w = surface_width;
-            if (surface_shape == "Square Tube") {
-                if (input_object->is_Line()) {
-                    //先针对单位长度的竖线，以及给定的width和column,建模出基本的tube模型
-                    std::vector<vec3f> basepts;
-                    for (int iy = 0; iy <= 0/*只须考虑底部的面*/; iy++) {
-                        for (int iz = 0; iz <= surface_column; iz++) {
-                            for (int ix = 0; ix <= surface_column; ix++) {
-                                if (0 < ix && ix < surface_column &&
-                                    0 < iz && iz < surface_column) {
-                                    continue;
-                                }
-                                float step = surface_width / surface_column;
-                                float start = -surface_width / 2;
-                                basepts.push_back(vec3f(start + ix * step, iy, start + iz * step));
+        const float w = surface_width;
+        if (surface_shape == "Square Tube") {
+            if (input_object->is_Line()) {
+                //先针对单位长度的竖线，以及给定的width和column,建模出基本的tube模型
+                std::vector<vec3f> basepts;
+                for (int iy = 0; iy <= 0/*只须考虑底部的面*/; iy++) {
+                    for (int iz = 0; iz <= surface_column; iz++) {
+                        for (int ix = 0; ix <= surface_column; ix++) {
+                            if (0 < ix && ix < surface_column &&
+                                0 < iz && iz < surface_column) {
+                                continue;
                             }
+                            float step = surface_width / surface_column;
+                            float start = -surface_width / 2;
+                            basepts.push_back(vec3f(start + ix * step, iy, start + iz * step));
                         }
                     }
+                }
 
-                    const int npts = basepts.size();
-                    std::vector<vec3f> pts = input_object->points_pos();
-                    std::vector<vec3f> lastendface(npts);
-                    vec3f originVec(0, 1, 0);
+                const int npts = basepts.size();
+                std::vector<vec3f> pts = input_object->points_pos();
+                std::vector<vec3f> lastendface(npts);
+                vec3f originVec(0, 1, 0);
 
-                    std::vector<vec3f> newpts;
-                    for (int currPt = 0; currPt < pts.size(); currPt++) {
-                        int nextPt = input_object->getLineNextPt(currPt);
-                        if (currPt != nextPt) {
-                            //能进到这里，就不是最后一个点
-                            vec3f p1 = pts[currPt];
-                            vec3f p2 = pts[nextPt];
+                std::vector<vec3f> newpts;
+                for (int currPt = 0; currPt < pts.size(); currPt++) {
+                    int nextPt = input_object->getLineNextPt(currPt);
+                    if (currPt != nextPt) {
+                        //能进到这里，就不是最后一个点
+                        vec3f p1 = pts[currPt];
+                        vec3f p2 = pts[nextPt];
 
-                            float vx = p2[0] - p1[0];
-                            float vy = p2[1] - p1[1];
-                            float vz = p2[2] - p1[2];
-                            float LB = zeno::sqrt(vx * vx + vy * vy + vz * vz);
+                        float vx = p2[0] - p1[0];
+                        float vy = p2[1] - p1[1];
+                        float vz = p2[2] - p1[2];
+                        float LB = zeno::sqrt(vx * vx + vy * vy + vz * vz);
 
-                            vec3f vpt(vx, vy, vz);
-                            vpt = zeno::normalize(vpt);
+                        vec3f vpt(vx, vy, vz);
+                        vpt = zeno::normalize(vpt);
 #if 1
+                        glm::vec3 vxz(vpt[0], 0, vpt[2]);
+
+                        //步骤一：绕x轴，将y轴旋转至z轴原来位置
+                        glm::mat4 M_toz(1.0);
+                        {
+                            M_toz = glm::rotate(M_toz, glm::pi<float>() / 2, glm::vec3(1, 0, 0));
+                        }
+
+                        //步骤二：旋转至xz平面的投影
+                        glm::mat4 M_toxz(1.0);
+                        {
+                            float theta = zeno::atan(vxz[0] / vxz[2]);
+                            glm::vec3 rotate_u = glm::vec3(0, 1, 0);
+                            M_toxz = glm::rotate(M_toxz, theta, rotate_u);   //绕y轴旋转theta度，将向量投影至x轴
+                        }
+
+                        //步骤三：往上提
+                        glm::mat4 M_up(1.0);
+                        if (vpt[1] != 0)
+                        {
+                            glm::vec3 vdir(vpt[0], vpt[1], vpt[2]);
+                            float tantheta = vpt[1] / zeno::sqrt(vpt[0] * vpt[0] + vpt[2] * vpt[2]);
+                            float theta = zeno::atan(tantheta);
+                            glm::vec3 rotate_u = glm::cross(glm::vec3(vpt[0], 0, vpt[2]), vdir);
+                            M_up = glm::rotate(M_up, theta, rotate_u);
+                        }
+
+                        //步骤四：平移
+                        glm::mat4 M_translate(1.0);
+                        M_translate = glm::translate(M_translate, glm::vec3(p1[0], p1[1], p1[2]));
+
+                        glm::mat4 transM = M_translate * M_up * M_toxz * M_toz;
+#endif
+
+#if 0
+                        //步骤一：先平移至原点
+                        glm::mat4 M_translate(1.0);
+                        M_translate = glm::translate(M_translate, -glm::vec3(p1[0], p1[1], p1[2]));
+
+                        //步骤二：投影至xz平面
+                        glm::mat4 M_toxz(1.0);
+                        {
+                            glm::vec3 vdir(vpt[0], vpt[1], vpt[2]);
+                            float tantheta = vdir[1] / zeno::sqrt(vdir[0] * vdir[0] + vdir[2] * vdir[2]);
+                            float theta = zeno::atan(tantheta);
+
+                            glm::vec3 rotate_u = glm::cross(vdir, glm::vec3(vpt[0], 0, vpt[2]));
+                            M_toxz = glm::rotate(M_toxz, theta, rotate_u);
+                        }
+
+                        //步骤三：投影至z轴
+                        glm::mat4 M_z(1.0);
+                        {
                             glm::vec3 vxz(vpt[0], 0, vpt[2]);
+                            float theta = zeno::atan(vxz[0] / vxz[2]);
+                            glm::vec3 rotate_u = glm::vec3(0, 1, 0);
+                            M_z = glm::rotate(M_z, theta, rotate_u);   //绕y轴逆向旋转theta度，将向量投影至x轴
+                        }
 
-                            //步骤一：绕x轴，将y轴旋转至z轴原来位置
-                            glm::mat4 M_toz(1.0);
-                            {
-                                M_toz = glm::rotate(M_toz, glm::pi<float>() / 2, glm::vec3(1, 0, 0));
-                            }
-
-                            //步骤二：旋转至xz平面的投影
-                            glm::mat4 M_toxz(1.0);
-                            {
-                                float theta = zeno::atan(vxz[0] / vxz[2]);
-                                glm::vec3 rotate_u = glm::vec3(0, 1, 0);
-                                M_toxz = glm::rotate(M_toxz, theta, rotate_u);   //绕y轴旋转theta度，将向量投影至x轴
-                            }
-
-                            //步骤三：往上提
-                            glm::mat4 M_up(1.0);
-                            if (vpt[1] != 0)
-                            {
-                                glm::vec3 vdir(vpt[0], vpt[1], vpt[2]);
-                                float tantheta = vpt[1] / zeno::sqrt(vpt[0] * vpt[0] + vpt[2] * vpt[2]);
-                                float theta = zeno::atan(tantheta);
-                                glm::vec3 rotate_u = glm::cross(glm::vec3(vpt[0], 0, vpt[2]), vdir);
-                                M_up = glm::rotate(M_up, theta, rotate_u);
-                            }
-
-                            //步骤四：平移
-                            glm::mat4 M_translate(1.0);
-                            M_translate = glm::translate(M_translate, glm::vec3(p1[0], p1[1], p1[2]));
-
-                            glm::mat4 transM = M_translate * M_up * M_toxz * M_toz;
-#endif
-
-#if 0
-                            //步骤一：先平移至原点
-                            glm::mat4 M_translate(1.0);
-                            M_translate = glm::translate(M_translate, -glm::vec3(p1[0], p1[1], p1[2]));
-
-                            //步骤二：投影至xz平面
-                            glm::mat4 M_toxz(1.0);
-                            {
-                                glm::vec3 vdir(vpt[0], vpt[1], vpt[2]);
-                                float tantheta = vdir[1] / zeno::sqrt(vdir[0] * vdir[0] + vdir[2] * vdir[2]);
-                                float theta = zeno::atan(tantheta);
-                                
-                                glm::vec3 rotate_u = glm::cross(vdir, glm::vec3(vpt[0], 0, vpt[2]));
-                                M_toxz = glm::rotate(M_toxz, theta, rotate_u);
-                            }
-
-                            //步骤三：投影至z轴
-                            glm::mat4 M_z(1.0);
-                            {
-                                glm::vec3 vxz(vpt[0], 0, vpt[2]);
-                                float theta = zeno::atan(vxz[0] / vxz[2]);
-                                glm::vec3 rotate_u = glm::vec3(0, 1, 0);
-                                M_z = glm::rotate(M_z, theta, rotate_u);   //绕y轴逆向旋转theta度，将向量投影至x轴
-                            }
-
-                            //步骤四：旋转至y轴
-                            glm::mat4 M_y(1.0);
-                            {
-                                M_y = glm::rotate(M_y, -glm::pi<float>()/2, glm::vec3(1, 0, 0));
-                            }
-                            glm::mat4 rev_transM = M_y * M_z * M_toxz * M_translate;
-                            glm::mat4 transM = glm::inverse(rev_transM);
+                        //步骤四：旋转至y轴
+                        glm::mat4 M_y(1.0);
+                        {
+                            M_y = glm::rotate(M_y, -glm::pi<float>() / 2, glm::vec3(1, 0, 0));
+                        }
+                        glm::mat4 rev_transM = M_y * M_z * M_toxz * M_translate;
+                        glm::mat4 transM = glm::inverse(rev_transM);
 #endif
 
 
 #if 0
-                            //计算两个向量的叉积，得到旋转轴
-                            vec3f rot = zeno::cross(originVec, vpt);
-                            auto len = zeno::length(rot);
-                            glm::mat4 Rx(1.0);
-                            if (len == 0) {
-                                //考虑originVec和vpt平行的情况
-                                //只要单位矩阵即可
-                            }
-                            else {
-                                rot = zeno::normalize(rot);
+                        //计算两个向量的叉积，得到旋转轴
+                        vec3f rot = zeno::cross(originVec, vpt);
+                        auto len = zeno::length(rot);
+                        glm::mat4 Rx(1.0);
+                        if (len == 0) {
+                            //考虑originVec和vpt平行的情况
+                            //只要单位矩阵即可
+                        }
+                        else {
+                            rot = zeno::normalize(rot);
 
-                                float cos_theta = zeno::dot(originVec, vpt);
-                                float sin_theta = zeno::sqrt(1 - cos_theta * cos_theta);
-                                float rx = rot[0], ry = rot[1], rz = rot[2];
+                            float cos_theta = zeno::dot(originVec, vpt);
+                            float sin_theta = zeno::sqrt(1 - cos_theta * cos_theta);
+                            float rx = rot[0], ry = rot[1], rz = rot[2];
 
-                                glm::mat3 K = glm::mat3(
-                                    0, rz, -ry,
-                                    -rz, 0, rx, 
-                                    ry, -rx, 0
-                                );
-                                glm::mat3 R_ = glm::mat3(1.0) + sin_theta * K + (1 - cos_theta) * K * K;
-                                Rx = glm::mat4(R_);
-                            }
+                            glm::mat3 K = glm::mat3(
+                                0, rz, -ry,
+                                -rz, 0, rx,
+                                ry, -rx, 0
+                            );
+                            glm::mat3 R_ = glm::mat3(1.0) + sin_theta * K + (1 - cos_theta) * K * K;
+                            Rx = glm::mat4(R_);
+                        }
 
-                            glm::mat4 transM(
-                                Rx[0][0], Rx[0][1], Rx[0][2], 0,
-                                Rx[1][0], Rx[1][1], Rx[1][2], 0,
-                                Rx[2][0], Rx[2][1], Rx[2][2], 0,
-                                p1[0], p1[1], p1[2], 1);
+                        glm::mat4 transM(
+                            Rx[0][0], Rx[0][1], Rx[0][2], 0,
+                            Rx[1][0], Rx[1][1], Rx[1][2], 0,
+                            Rx[2][0], Rx[2][1], Rx[2][2], 0,
+                            p1[0], p1[1], p1[2], 1);
 #endif
 
-                            std::vector<vec3f> istartface;
-                            {
-                                istartface.resize(npts);
-                                for (int i = 0; i < npts; i++) {
-                                    vec3f basept = basepts[i];
-                                    glm::vec4 v(basept[0], basept[1], basept[2], 1.0);
+                        std::vector<vec3f> istartface;
+                        {
+                            istartface.resize(npts);
+                            for (int i = 0; i < npts; i++) {
+                                vec3f basept = basepts[i];
+                                glm::vec4 v(basept[0], basept[1], basept[2], 1.0);
 
 #if 1
-                                    //M_translate* M_up* M_toxz* M_toz;
-                                    glm::vec4 _v1 = M_toz * v;
-                                    glm::vec4 _v2 = M_toxz * _v1;
-                                    glm::vec4 _v3 = M_up * _v2;
-                                    glm::vec4 _v4 = M_translate * _v3;
+                                //M_translate* M_up* M_toxz* M_toz;
+                                glm::vec4 _v1 = M_toz * v;
+                                glm::vec4 _v2 = M_toxz * _v1;
+                                glm::vec4 _v3 = M_up * _v2;
+                                glm::vec4 _v4 = M_translate * _v3;
 #endif
 
-                                    glm::vec4 newpt = transM* v;
-                                    istartface[i] = vec3f(newpt[0], newpt[1], newpt[2]);
+                                glm::vec4 newpt = transM * v;
+                                istartface[i] = vec3f(newpt[0], newpt[1], newpt[2]);
+                            }
+                        }
+                        if (currPt >= 0) {
+                            if (false) {
+                                //此时收集到istartface是当前点，需要考虑到上一线段的末尾点形成面与当前面的不一致情况
+                                int _npoints = newpts.size();
+                                assert(_npoints >= npts);
+                                for (int i = 0; i < npts; i++) {
+                                    //修正当前面
+                                    istartface[i] = (istartface[i] + lastendface[i]) / 2;
                                 }
                             }
-                            if (currPt >= 0) {
-                                if (false) {
-                                    //此时收集到istartface是当前点，需要考虑到上一线段的末尾点形成面与当前面的不一致情况
-                                    int _npoints = newpts.size();
-                                    assert(_npoints >= npts);
-                                    for (int i = 0; i < npts; i++) {
-                                        //修正当前面
-                                        istartface[i] = (istartface[i] + lastendface[i]) / 2;
-                                    }
-                                }
-                                //istartface = lastendface;
-                            }
+                            //istartface = lastendface;
+                        }
 
-                            //先收集这些确定的点
-                            if (currPt >= 0) {
-                                for (auto pt : istartface) {
-                                    newpts.push_back(pt);
-                                }
-                            }
-
-                            std::vector<vec3f> iendface(npts);
-                            for (int i = 0; i < npts; i++) {
-                                iendface[i] = istartface[i] + LB * vpt;
-                                lastendface[i] = iendface[i];
-                            }
-
-                            //提前收集endface
-                            for (auto pt : iendface) {
+                        //先收集这些确定的点
+                        if (currPt >= 0) {
+                            for (auto pt : istartface) {
                                 newpts.push_back(pt);
                             }
                         }
-                        else {
-                            //for (auto pt : lastendface) {
-                            //    newpts.push_back(pt);
-                            //}
+
+                        std::vector<vec3f> iendface(npts);
+                        for (int i = 0; i < npts; i++) {
+                            iendface[i] = istartface[i] + LB * vpt;
+                            lastendface[i] = iendface[i];
+                        }
+
+                        //提前收集endface
+                        for (auto pt : iendface) {
+                            newpts.push_back(pt);
                         }
                     }
-                    std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(false, newpts.size(), 0);
-                    spgeo->create_attr(ATTR_POINT, "pos", newpts);
-                    return spgeo;
-#if 0
-                    std::vector<vec3f> pts = input_object->points_pos();
-                    for (int i = 0; i < pts.size(); i++) {
-                        if (i > 0 && i < pts.size() - 1) {
-                            vec3f pt = pts[i];
-                            vec3f pt_1 = pts[i - 1];
-                            vec3f pt1 = pts[i + 1];
-                            vec3f v1 = zeno::normalize(pt1 - pt);
-                            vec3f v2 = zeno::normalize(pt_1 - pt);
-                            while (zeno::dot(v1, v2) == -1) {
-                                v1 += vec3f(0.0001, 0, 0);
-                                v2 += vec3f(0.0001, 0, 0);
-                            }
-
-                            vec3f hor_v = zeno::normalize(v1 + v2);
-                            vec3f ver_v = zeno::normalize(zeno::cross(v1, hor_v));
-
-                            //这个start_pt留到最后加
-                            vec3f start_pt = pt + w / 2.f * (hor_v + ver_v);
-                            //逆时针转一圈
-                            vec3f curr_start = start_pt;
-                            vec3f curr_pt;
-                            for (int i = 1; i <= surface_column; i++) {
-                                curr_pt = curr_start + w / surface_column * i * (-hor_v);
-                                int j;
-                                j = 0;
-                            }
-                            curr_start = curr_pt; //上一次遍历的终点是下一个线段的起点
-                            for (int i = 1; i <= surface_column; i++) {
-                                curr_pt = curr_start + w / surface_column * i * (-ver_v);
-                                int j;
-                                j = 0;
-                            }
-                            curr_start = curr_pt;
-                            for (int i = 1; i <= surface_column; i++) {
-                                curr_pt = curr_start + w / surface_column * i * hor_v;
-                                int j;
-                                j = 0;
-                            }
-                            curr_start = curr_pt;
-                            for (int i = 1; i <= surface_column; i++) {
-                                curr_pt = curr_start + w / surface_column * i * ver_v;
-                                int j;
-                                j = 0;
-                            }
-                        }
+                    else {
+                        //for (auto pt : lastendface) {
+                        //    newpts.push_back(pt);
+                        //}
                     }
-#endif
                 }
-            }
-            return input_object;
+                std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(false, newpts.size(), 0);
+                spgeo->create_attr(ATTR_POINT, "pos", newpts);
+                return spgeo;
+#if 0
+                std::vector<vec3f> pts = input_object->points_pos();
+                for (int i = 0; i < pts.size(); i++) {
+                    if (i > 0 && i < pts.size() - 1) {
+                        vec3f pt = pts[i];
+                        vec3f pt_1 = pts[i - 1];
+                        vec3f pt1 = pts[i + 1];
+                        vec3f v1 = zeno::normalize(pt1 - pt);
+                        vec3f v2 = zeno::normalize(pt_1 - pt);
+                        while (zeno::dot(v1, v2) == -1) {
+                            v1 += vec3f(0.0001, 0, 0);
+                            v2 += vec3f(0.0001, 0, 0);
+                        }
+
+                        vec3f hor_v = zeno::normalize(v1 + v2);
+                        vec3f ver_v = zeno::normalize(zeno::cross(v1, hor_v));
+
+                        //这个start_pt留到最后加
+                        vec3f start_pt = pt + w / 2.f * (hor_v + ver_v);
+                        //逆时针转一圈
+                        vec3f curr_start = start_pt;
+                        vec3f curr_pt;
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * (-hor_v);
+                            int j;
+                            j = 0;
+                        }
+                        curr_start = curr_pt; //上一次遍历的终点是下一个线段的起点
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * (-ver_v);
+                            int j;
+                            j = 0;
+                        }
+                        curr_start = curr_pt;
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * hor_v;
+                            int j;
+                            j = 0;
+                        }
+                        curr_start = curr_pt;
+                        for (int i = 1; i <= surface_column; i++) {
+                            curr_pt = curr_start + w / surface_column * i * ver_v;
+                            int j;
+                            j = 0;
+                        }
+                    }
+                }
 #endif
+            }
+        }
+        return input_object;
+#endif
+        void apply() override {
+            //TODO
         }
     };
 
-    struct ZDEFNODE() Merge : INode {
+    ZENDEFNODE(Sweep,
+    {
+        {
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Snap Distance", gParamType_Float, 0.2f),
+            ParamPrimitive("Surface Shape", gParamType_String, "Square Tube", Combobox, std::vector<std::string>{"Second Input", "Square Tube"}),
+            ParamPrimitive("Width", gParamType_Float, 0.2, Slider, std::vector<float>{0.0, 1.0, 0.001}, "visible = parameter('Surface Shape').value == 'Square Tube';"),
+            ParamPrimitive("Columns", gParamType_Int, 2, Slider, std::vector<int>{1, 20, 1}, "visible = parameter('Surface Shape').value == 'Square Tube';")
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"deprecated"},
+    });
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"list_object", ParamObject("Input Of Objects")},
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
 
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::ListObject> list_object
-        ) {
-            std::shared_ptr<zeno::GeometryObject> mergedObj = zeno::mergeObjects(list_object);
-            return mergedObj;
+    struct Merge : INode {
+        void apply() override
+        {
+            auto list_object = ZImpl(get_input2<zeno::ListObject>("Input Of Objects"));
+            auto mergedObj = zeno::mergeObjects(list_object);
+            ZImpl(set_output("Output", mergedObj));
         }
     };
 
-    struct ZDEFNODE() Divide : INode {
+    ZENDEFNODE(Merge,
+    {
+        {
+            ParamObject("Input Of Objects", gParamType_List)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"deprecated"},
+    });
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input")},
-                {"remove_shared_edge", ParamPrimitive("Remove Shared Edge")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
 
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            zeno::vec3f Size,
-            bool remove_shared_edge
-        ) {
-            auto bbox = geomBoundingBox(input_object.get());
+    struct Divide : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            zeno::vec3f Size = ZImpl(get_input2<zeno::vec3f>("Size"));
+            bool remove_shared_edge = ZImpl(get_input2<bool>("Remove Shared Edges"));
+
+            auto bbox = geomBoundingBox(input_object->m_impl);
             float xmin = bbox.first[0], ymin = bbox.first[1], zmin = bbox.first[2],
                 xmax = bbox.second[0], ymax = bbox.second[1], zmax = bbox.second[2];
             float dx = Size[0], dy = Size[1], dz = Size[2];
@@ -451,47 +445,55 @@ namespace zeno {
             int ny = (dy == 0) ? 0 : (ymax - ymin) / dy;
             int nz = (dz == 0) ? 0 : (zmax - zmin) / dz;
 
+            zany output_obj;
             for (int i = 0; i <= nx; i++) {
                 float xi = xmin + i * dx;
-                input_object = divideObject(input_object, Keep_Both, vec3f(xi, 0, 0), vec3f(1, 0, 0));
+                output_obj = divideObject(input_object, Keep_Both, vec3f(xi, 0, 0), vec3f(1, 0, 0));
             }
             for (int i = 0; i <= ny; i++) {
                 float yi = ymin + i * dy;
-                input_object = divideObject(input_object, Keep_Both, vec3f(0, yi, 0), vec3f(0, 1, 0));
+                output_obj = divideObject(input_object, Keep_Both, vec3f(0, yi, 0), vec3f(0, 1, 0));
             }
             for (int i = 0; i <= nz; i++) {
                 float zi = zmin + i * dz;
-                input_object = divideObject(input_object, Keep_Both, vec3f(0, 0, zi), vec3f(0, 0, 1));
+                output_obj = divideObject(input_object, Keep_Both, vec3f(0, 0, zi), vec3f(0, 0, 1));
             }
-            return input_object;
+            ZImpl(set_output("Output", output_obj));
         }
     };
-
-    struct ZDEFNODE() Resample : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input Object")}
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            float Length = 0.1)
+    ZENDEFNODE(Divide,
+    {
         {
-            if (Length == 0)
-                return input_object;
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Size", gParamType_Vec3f, zeno::vec3f(0,0,0)),
+            ParamPrimitive("Remove Shared Edges", gParamType_Bool, false)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"deprecated"},
+    });
 
-            const int nface = input_object->nfaces();
-            const auto& pos = input_object->points_pos();
+
+    struct Resample : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            float Length = ZImpl(get_input2<float>("Length"));
+
+            if (Length == 0) {
+                ZImpl(set_output("Output", input_object));
+                return;
+            }
+
+            const int nface = input_object->m_impl->nfaces();
+            const auto& pos = input_object->m_impl->points_pos();
 
             std::vector<vec3f> newpos;
             std::vector<std::vector<int>> newfaces;
             for (int iFace = 0; iFace < nface; iFace++) {
-                std::vector<int> face_indice = input_object->face_points(iFace);
+                std::vector<int> face_indice = input_object->m_impl->face_points(iFace);
                 std::vector<int> newface;
 
                 for (int i = 0; i < face_indice.size(); i++) {
@@ -524,62 +526,67 @@ namespace zeno {
                 newfaces.push_back(newface);
             }
 
-            auto spOutput = std::make_shared<GeometryObject>(input_object->is_base_triangle(), newpos.size(), newfaces.size());
+            auto spOutput = create_GeometryObject(input_object->is_base_triangle(), newpos.size(), newfaces.size());
             for (auto faceindice : newfaces) {
-                spOutput->add_face(faceindice);
+                spOutput->add_face(stdVec2zeVec(faceindice));
             }
             spOutput->create_point_attr("pos", newpos);
-            return spOutput;
+            ZImpl(set_output("Output", spOutput));
         }
     };
-
-    struct ZDEFNODE() Reverse : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input Object")}
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> input_object)
+    ZENDEFNODE(Resample,
+    {
         {
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamPrimitive("Length", gParamType_Float, 0.1f)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"deprecated"},
+    });
+
+
+
+    struct  Reverse : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
             const int nface = input_object->nfaces();
             const auto& pos = input_object->points_pos();
-            std::shared_ptr<zeno::GeometryObject> spOutput = std::make_shared<zeno::GeometryObject>(input_object->is_base_triangle(), pos.size(), nface);
+            auto spOutput = create_GeometryObject(input_object->is_base_triangle(), pos.size(), nface);
 
             for (int iFace = 0; iFace < nface; iFace++) {
-                std::vector<int> face_indice = input_object->face_points(iFace);
+                std::vector<int> face_indice = input_object->m_impl->face_points(iFace);
                 std::reverse(face_indice.begin() + 1, face_indice.end());
-                spOutput->add_face(face_indice); //TODO: line
+                spOutput->add_face(stdVec2zeVec(face_indice)); //TODO: line
             }
             spOutput->create_point_attr("pos", pos);    //暂时不考虑其他属性
-            return spOutput;
+            ZImpl(set_output("Output", spOutput));
         }
     };
-
-    struct ZDEFNODE() Clip : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input Object")},
-                {"Keep", ParamPrimitive("Keep", "All", Combobox, std::vector<std::string>{"All", "Part Below The Plane", "Part Above The Plane"})},
-                {"center_pos", ParamPrimitive("Center Position")},
-                {"direction", ParamPrimitive("Direction")}
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            const std::string& Keep = "All",
-            zeno::vec3f center_pos = zeno::vec3f(0, 0, 0),
-            zeno::vec3f direction = zeno::vec3f(0, 1, 0))
+    ZENDEFNODE(Reverse,
+    {
         {
+            ParamObject("Input Object", gParamType_Geometry)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"deprecated"},
+    });
+
+
+    struct Clip : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            std::string Keep = ZImpl(get_input2<std::string>("Keep"));
+            zeno::vec3f center_pos = ZImpl(get_input2<zeno::vec3f>("Center Position"));
+            zeno::vec3f direction = ZImpl(get_input2<zeno::vec3f>("Direction"));
+
             DivideKeep keep;
             if (Keep == "All") {
                 keep = Keep_Both;
@@ -593,25 +600,33 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Keep Error");
             }
-            return divideObject(input_object, keep, center_pos, direction);
+            auto spOutput = divideObject(input_object, keep, center_pos, direction);
+            ZImpl(set_output("Output", spOutput));
         }
     };
+    ZENDEFNODE(Clip,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamPrimitive("Keep", gParamType_String, "All", Combobox, std::vector<std::string>{"All", "Part Below The Plane", "Part Above The Plane"}),
+            ParamPrimitive("Center Position", gParamType_Vec3f, zeno::vec3f(0, 0, 0)),
+            ParamPrimitive("Direction", gParamType_Vec3f, zeno::vec3f(0, 1, 0))
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"deprecated"},
+    });
 
-    struct ZDEFNODE() RemoveUnusedPoints : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input Object")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
 
-        std::shared_ptr<GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> input_object) {
+    struct RemoveUnusedPoints : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input<GeometryObject_Adapter>("Input Object"));
             std::set<int> unused;
             for (int i = 0; i < input_object->npoints(); i++) {
-                if (input_object->point_faces(i).empty()) {
+                if (input_object->m_impl->point_faces(i).empty()) {
                     unused.insert(i);
                 }
             }
@@ -619,26 +634,32 @@ namespace zeno {
                 //TODO: impl remove_points
                 input_object->remove_point(*iter);
             }
-            return input_object;
+            ZImpl(set_output("Output", input_object));
         }
     };
-
-    struct ZDEFNODE() RemoveInlinePoints : INode {
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input Object")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> input_object)
+    ZENDEFNODE(RemoveUnusedPoints,
+    {
         {
-            const std::vector<vec3f> pos = input_object->points_pos();
+            ParamObject("Input Object", gParamType_Geometry)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
+
+
+    struct RemoveInlinePoints : INode {
+
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input<GeometryObject_Adapter>("Input Object"));
+
+            const std::vector<vec3f> pos = input_object->m_impl->points_pos();
             std::set<int> unusedPoints;
             for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
-                const std::vector<int>& pts = input_object->face_points(iFace);
+                const std::vector<int>& pts = input_object->m_impl->face_points(iFace);
                 for (int i = 1; i < pts.size() - 1; i++) {
                     //观察pts[i]是否只有一个面
                     const auto& _faces = input_object->point_faces(pts[i]);
@@ -660,34 +681,38 @@ namespace zeno {
                 //TODO: impl remove_points
                 input_object->remove_point(*iter);
             }
-            return input_object;
+
+            ZImpl(set_output("Output", input_object));
         }
     };
-
-    struct ZDEFNODE() Measure : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input Object")},
-                {"measure", ParamPrimitive("Measure", "Area", Combobox, std::vector<std::string>{"Area", "Length"})},
-                {"outputAttrName", ParamPrimitive("Output Attribute Name", "area")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object, 
-            const std::string& measure = "Area",
-            const std::string& outputAttrName = "area")
+    ZENDEFNODE(RemoveInlinePoints,
+    {
         {
-            const auto& pos = input_object->points_pos();
-            int nFace = input_object->nfaces();
+            ParamObject("Input Object", gParamType_Geometry)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
+
+
+
+    struct Measure : INode {
+
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            std::string measure = ZImpl(get_input2<std::string>("Measure"));
+            std::string outputAttrName = ZImpl(get_input2<std::string>("Output Attribute Name"));
+
+            const auto& pos = input_object->m_impl->points_pos();
+            int nFace = input_object->m_impl->nfaces();
             std::vector<float> measurements(nFace, 0.f);
 
             for (int iFace = 0; iFace < nFace; iFace++) {
-                const std::vector<int>& pts = input_object->face_points(iFace);
+                const std::vector<int>& pts = input_object->m_impl->face_points(iFace);
                 int n = pts.size();
                 std::vector<vec3f> face_ptpos(n);
                 for (int i = 0; i < n; i++) {
@@ -713,32 +738,33 @@ namespace zeno {
                     //TODO
                 }
             }
-            input_object->create_face_attr(outputAttrName, measurements);
-            return input_object;
+            input_object->create_face_attr(stdString2zs(outputAttrName), measurements);
+            ZImpl(set_output("Output", input_object));
         }
     };
-
-    struct ZDEFNODE() Mirror : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input Object")},
-                {"bKeepOriginal", ParamPrimitive("Keep Original")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            zeno::vec3f Position = zeno::vec3f(0, 0, 0),
-            zeno::vec3f Direction = zeno::vec3f(1, 0, 0),
-            float Distance = 1.f,
-            bool bKeepOriginal = true
-            )
+    ZENDEFNODE(Measure,
+    {
         {
-            const auto& pos = input_object->points_pos();
+            ParamObject("Input Object", gParamType_Geometry)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
+
+
+    struct Mirror : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            bool bKeepOriginal = ZImpl(get_input2<bool>("Keep Original"));
+            zeno::vec3f Position = ZImpl(get_input2<zeno::vec3f>("Position"));
+            zeno::vec3f Direction = ZImpl(get_input2<zeno::vec3f>("Direction"));
+            float Distance = ZImpl(get_input2<float>("Distance"));
+
+            const auto& pos = input_object->m_impl->points_pos();
             int npos = pos.size();
             int nface = input_object->nfaces();
 
@@ -755,13 +781,13 @@ namespace zeno {
 
             if (bKeepOriginal) {
                 for (int iFace = 0; iFace < nface; iFace++) {
-                    std::vector<int> pts = input_object->face_points(iFace);
+                    std::vector<int> pts = input_object->m_impl->face_points(iFace);
                     spOutput->add_face(pts);
                 }
             }
 
             for (int iFace = 0; iFace < nface; iFace++) {
-                std::vector<int> pts = input_object->face_points(iFace);
+                std::vector<int> pts = input_object->m_impl->face_points(iFace);
                 std::reverse(pts.begin(), pts.end());
                 std::vector<int> offset_pts;
                 for (int pt : pts) {
@@ -782,28 +808,28 @@ namespace zeno {
                 spOutput->add_face(offset_pts);
             }
             spOutput->create_point_attr("pos", new_pos);
-            return spOutput;
+
+            ZImpl(set_output("Output", input_object));
         }
     };
+    ZENDEFNODE(Mirror,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamPrimitive("Position", gParamType_Vec3f, zeno::vec3f(0, 0, 0)),
+            ParamPrimitive("Direction", gParamType_Vec3f, zeno::vec3f(1, 0, 0)),
+            ParamPrimitive("Distance", gParamType_Float, 1.f),
+            ParamPrimitive("Keep Original", gParamType_Bool, true)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() MatchSize : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input Object")},
-                {"match_object", ParamObject("Match Object")},
-                {"TargetPosition", ParamPrimitive("Target Position", zeno::vec3f(0,0,0), Vec3edit, Any(), "", "visible = parameter('Match Object').connected == false;")},
-                {"TargetSize", ParamPrimitive("Target Size", zeno::vec3f(1,1,1), Vec3edit, Any(), "", "visible = parameter('Match Object').connected == false;")},
-                {"bTranslate", ParamPrimitive("Translate")},
-                {"TranslateXTo", ParamPrimitive("Translate X To", "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"})},
-                {"TranslateYTo", ParamPrimitive("Translate Y To", "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"})},
-                {"TranslateZTo", ParamPrimitive("Translate Z To", "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"})},
-                {"bScaleToFit", ParamPrimitive("Scale To Fit")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
+    struct MatchSize : INode {
 
         static glm::vec3 mapplypos(glm::mat4 const& matrix, zeno::vec3f const& vector) {
             auto vec = zeno::vec_to_other<glm::vec3>(vector);
@@ -819,26 +845,28 @@ namespace zeno {
             return glm::normalize(vector3);
         }
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            std::shared_ptr<zeno::GeometryObject> match_object,
-            zeno::vec3f TargetPosition = zeno::vec3f(0,0,0),
-            zeno::vec3f TargetSize = zeno::vec3f(1,1,1),
-            bool bTranslate = true,
-            std::string TranslateXTo = "Center",
-            std::string TranslateYTo = "Center",
-            std::string TranslateZTo = "Center",
-            bool bScaleToFit = false
-        ) {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input<GeometryObject_Adapter>("Input Object"));
+            auto match_object = ZImpl(get_input<GeometryObject_Adapter>("Match Object"));
+            zeno::vec3f TargetPosition = ZImpl(get_input2<zeno::vec3f>("Target Position"));
+            zeno::vec3f TargetSize = ZImpl(get_input2<zeno::vec3f>("Target Size"));
+            bool bTranslate = ZImpl(get_input2<bool>("Translate"));
+            std::string TranslateXTo = ZImpl(get_input2<std::string>("Translate X To"));
+            std::string TranslateYTo = ZImpl(get_input2<std::string>("Translate Y To"));
+            std::string TranslateZTo = ZImpl(get_input2<std::string>("Translate Z To"));
+            bool bScaleToFit = ZImpl(get_input2<bool>("Scale To Fit"));
+
             if (!bTranslate && !bScaleToFit) {
-                return input_object;
+                ZImpl(set_output("Output", input_object));
+                return;
             }
 
-            const auto& currbbox = geomBoundingBox(input_object.get());
+            const auto& currbbox = geomBoundingBox(input_object->m_impl);
 
             zeno::vec3f boxmin, boxmax;
             if (match_object) {
-                const auto& bbox = geomBoundingBox(match_object.get());
+                const auto& bbox = geomBoundingBox(match_object->m_impl);
                 boxmin = bbox.first;
                 boxmax = bbox.second;
             }
@@ -888,7 +916,7 @@ namespace zeno {
 
             if (input_object->has_attr(ATTR_POINT, "pos"))
             {
-                input_object->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+                input_object->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
                     auto p = mapplypos(matrix, old_pos);
                     auto newpos = zeno::other_to_vec<3>(p);
                     return newpos;
@@ -897,89 +925,107 @@ namespace zeno {
 
             if (input_object->has_attr(ATTR_POINT, "nrm"))
             {
-                input_object->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
+                input_object->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
                     auto n = mapplynrm(matrix, old_nrm);
                     auto newnrm = zeno::other_to_vec<3>(n);
                     return newnrm;
                     });
             }
-
-            return input_object;
+            ZImpl(set_output("Output", input_object));
         }
     };
+    ZENDEFNODE(MatchSize,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamObject("Match Object", gParamType_Geometry),
+            ParamPrimitive("Target Position", gParamType_Vec3f, zeno::vec3f(0,0,0), Vec3edit, Any(), "visible = parameter('Match Object').connected == false;"),
+            ParamPrimitive("Target Size", gParamType_Vec3f, zeno::vec3f(1,1,1), Vec3edit, Any(), "visible = parameter('Match Object').connected == false;"),
+            ParamPrimitive("Translate", gParamType_Bool),
+            ParamPrimitive("Translate X To", gParamType_String, "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"}),
+            ParamPrimitive("Translate Y To", gParamType_String, "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"}),
+            ParamPrimitive("Translate Z To", gParamType_String, "Center", Combobox, std::vector<std::string>{"Min", "Center", "Max"}),
+            ParamPrimitive("Scale To Fit", gParamType_Bool)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() Peak : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
+    struct Peak : INode {
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            float Distance = 0.2f
-        ) {
-            const std::vector<vec3f>& nrms = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
-            input_object->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            float Distance = ZImpl(get_input2<float>("Distance"));
+
+            const std::vector<vec3f>& nrms = input_object->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+            input_object->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
                 const vec3f& nrm = nrms[idx];
                 if (idx == 3) {
                     int j;
                     j = 0;
                 }
                 return old_pos + nrm * Distance;
-                });
-            return input_object;
+            });
+
+            ZImpl(set_output("Output", input_object));
         }
     };
+    ZENDEFNODE(Peak,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry),
+            {gParamType_Float, "Distance", "0.2"}
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() Scatter : INode {
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")},
-                {"Count", ParamPrimitive("Points Count", 10, Slider, std::vector<int>{0, 1000, 1})},
-                {"Seed", ParamPrimitive("Random Seed", 0, Slider, std::vector<int>{0, 100, 1})},
-                {"sampleRegion", ParamPrimitive("Sample Regin", "Face", Combobox, std::vector<std::string>{"Face", "Volumn"})}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            const std::string& sampleRegion = "Face",
-            int Count = 10,
-            int Seed = 0
-        ) {
-            auto spOutput = scatter(input_object, sampleRegion, Count, Seed);
-            return spOutput;
+    struct Scatter : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            int Count = ZImpl(get_input2<int>("Points Count"));
+            int Seed = ZImpl(get_input2<int>("Random Seed"));
+            std::string sampleRegion = ZImpl(get_input2<std::string>("Sample Regin"));
+
+            auto spOutput = zeno::scatter(input_object, sampleRegion, Count, Seed);
+            ZImpl(set_output("Output", spOutput));
         }
     };
+    ZENDEFNODE(Scatter,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamPrimitive("Points Count", gParamType_Int, 10, Slider, std::vector<int>{0, 1000, 1}),
+            ParamPrimitive("Random Seed", gParamType_Int, 0, Slider, std::vector<int>{0, 100, 1}),
+            ParamPrimitive("Sample Regin",gParamType_String, "Face", Combobox, std::vector<std::string>{"Face", "Volumn"})
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() ConvertLine : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")},
-                {"bKeepOrder", ParamPrimitive("Keep Order")},
-                {"lengthAttr", ParamPrimitive("Length Attribute")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
+    struct ConvertLine : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            bool bKeepOrder = ZImpl(get_input2<bool>("Keep Order"));
+            std::string lengthAttr = ZImpl(get_input2<std::string>("Length Attribute"));
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            bool bKeepOrder = true,
-            std::string lengthAttr = ""
-        ) {
             int nPts = input_object->npoints();
-            const std::vector<std::vector<int>>& faces = input_object->face_indice();
+            const std::vector<std::vector<int>>& faces = input_object->m_impl->face_indice();
 
             std::unordered_set<uint64_t> hash;
             std::vector<std::vector<int>> lines;
@@ -997,37 +1043,42 @@ namespace zeno {
                 }
             }
 
-            std::shared_ptr<zeno::GeometryObject> line_object = std::make_shared<zeno::GeometryObject>(false, nPts, lines.size());
+            auto line_object = create_GeometryObject(false, nPts, lines.size());
             line_object->create_point_attr("pos", input_object->points_pos());
             for (auto line : lines) {
-                line_object->add_face(line, false);
+                line_object->m_impl->add_face(line, false);
             }
-            return line_object;
+
+            ZImpl(set_output("Output", line_object));
         }
     };
+    ZENDEFNODE(ConvertLine,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamPrimitive("Keep Order", gParamType_Bool),
+            ParamPrimitive("Length Attribute", gParamType_String)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() UniquePoints : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")},
-                {"bPostComputeNormals", ParamPrimitive("Post-Compute Normals")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
+    struct UniquePoints : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            bool bPostComputeNormals = ZImpl(get_input2<bool>("Post-Compute Normals"));
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            bool bPostComputeNormals = false
-        ) {
             std::vector<std::vector<vec3f>> newFaces;
-            const std::vector<zeno::vec3f>& pos = input_object->points_pos();
+            const std::vector<zeno::vec3f>& pos = input_object->m_impl->points_pos();
             std::vector<vec3f> point_normals;
 
             for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
-                std::vector<int> pts = input_object->face_points(iFace);
+                std::vector<int> pts = input_object->m_impl->face_points(iFace);
                 std::vector<vec3f> new_face(pts.size());
                 for (int i = 0; i < pts.size(); i++) {
                     new_face[i] = pos[pts[i]];
@@ -1046,49 +1097,47 @@ namespace zeno {
             auto spOutput = constructGeom(newFaces);
             if (bPostComputeNormals)
                 spOutput->create_point_attr("nrm", point_normals);
-            return spOutput;
+
+            ZImpl(set_output("Output", spOutput));
         }
     };
+    ZENDEFNODE(UniquePoints,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() Sort : INode {
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")},
-                {"pointSort", ParamPrimitive("Point Sort", "No Change", Combobox, std::vector<std::string>{"No Change", "By Vertex Order", "Random", "Along Vector", "Near To Point"})},
-                {"alongVector", ParamPrimitive("Vector", zeno::vec3f(0,1,0), Vec3edit, Any(), "", "visible = parameter('Point Sort').value == 'Along Vector';")},
-                {"nearPoint", ParamPrimitive("Point", zeno::vec3f(0,1,0), Vec3edit, Any(), "", "visible = parameter('Point Sort').value == 'Near To Point';")},
-                {"bReversePointSort", ParamPrimitive("Reverse Point Sort")},
-                {"faceSort", ParamPrimitive("Face Sort", "No Change", Combobox, std::vector<std::string>{"No Change", "Random", "By Attribute"})},
-                {"byAttrName", ParamPrimitive("Attribute Name", "", Lineedit, Any(), "", "visible = parameter('Face Sort').value == 'By Attribute';")},
-                {"bReverseFaceSort", ParamPrimitive("Reverse Face Sort")},
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            const std::string & pointSort = "No Change",
-            zeno::vec3f alongVector = zeno::vec3f(0, 1, 0),
-            zeno::vec3f nearPoint = zeno::vec3f(0, 0, 0),
-            bool bReversePointSort = false,
-            const std::string & faceSort = "No Change",
-            const std::string& byAttrName = "",
-            bool bReverseFaceSort = false
-        ) {
-            int npts = input_object->npoints();
-            int nfaces = input_object->nfaces();
-            const auto& pos = input_object->points_pos();
+    struct  Sort : INode {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            std::string pointSort = ZImpl(get_input2<std::string>("Point Sort"));
+            zeno::vec3f alongVector = ZImpl(get_input2<vec3f>("Vector"));
+            zeno::vec3f nearPoint = ZImpl(get_input2<vec3f>("Point"));
+            bool bReversePointSort = ZImpl(get_input2<bool>("Reverse Point Sort"));
+            std::string faceSort = ZImpl(get_input2<std::string>("Face Sort"));
+            std::string byAttrName = ZImpl(get_input2<std::string>("Attribute Name"));
+            bool bReverseFaceSort = ZImpl(get_input2<bool>("Reverse Face Sort"));
+
+            int npts = input_object->m_impl->npoints();
+            int nfaces = input_object->m_impl->nfaces();
+            const auto& pos = input_object->m_impl->points_pos();
 
             if (pointSort == "By Vertex Order") {
                 std::set<std::string> edges;
                 std::vector<vec3f> new_pos(pos.size());
                 int nSortPoints = 0;
                 std::map<int, int> old2new;
-                auto spOutput = std::make_shared<GeometryObject>(false, npts, nfaces, true);
+                auto spOutput = create_GeometryObject(false, npts, nfaces, true);
                 for (int iFace = 0; iFace < nfaces; iFace++) {
-                    std::vector<int> pts = input_object->face_points(iFace);
+                    std::vector<int> pts = input_object->m_impl->face_points(iFace);
                     std::vector<int> newface;
                     for (int vertex = 0; vertex < pts.size(); vertex++) {
                         int fromPt, toPt;
@@ -1120,32 +1169,38 @@ namespace zeno {
                         old2new.insert(std::make_pair(toPt, newTo));
                         newface.push_back(newFrom);
                     }
-                    spOutput->set_face(iFace, newface);
+                    spOutput->m_impl->set_face(iFace, newface);
                 }
                 for (int oldpt = 0; oldpt < pos.size(); oldpt++) {
                     int newpt = old2new[oldpt];
                     new_pos[newpt] = pos[oldpt];
                 }
                 spOutput->create_point_attr("pos", new_pos);
-                return spOutput;
+                ZImpl(set_output("Output", spOutput));
             }
-            return nullptr;
         }
     };
+    ZENDEFNODE(Sort,
+    {
+        {
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Point Sort", gParamType_String, "No Change", Combobox, std::vector<std::string>{"No Change", "By Vertex Order", "Random", "Along Vector", "Near To Point"}),
+            ParamPrimitive("Vector", gParamType_Vec3f, zeno::vec3f(0,1,0), Vec3edit, Any(), "visible = parameter('Point Sort').value == 'Along Vector';"),
+            ParamPrimitive("Point",  gParamType_Vec3f, zeno::vec3f(0,1,0), Vec3edit, Any(), "visible = parameter('Point Sort').value == 'Near To Point';"),
+            ParamPrimitive("Reverse Point Sort", gParamType_Bool),
+            ParamPrimitive("Face Sort", gParamType_String, "No Change", Combobox, std::vector<std::string>{"No Change", "Random", "By Attribute"}),
+            ParamPrimitive("Attribute Name", gParamType_String, "", Lineedit, Any(), "visible = parameter('Face Sort').value == 'By Attribute';"),
+            ParamPrimitive("Reverse Face Sort", gParamType_Bool),
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() PolyExpand : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")},
-                {"bOutputInside", ParamPrimitive("Output Inside")},
-                {"bOutputOutside", ParamPrimitive("Output Outside")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
-
+    struct PolyExpand : INode {
         void findOffsetPoints(
             vec3f p1,
             vec3f p2,
@@ -1187,16 +1242,17 @@ namespace zeno {
             return result;
         }
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            float Offset = 0.1,
-            bool bOutputInside = true,
-            bool bOutputOutside = true
-        ) {
-            const std::vector<vec3f>& pos = input_object->points_pos();
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input<GeometryObject_Adapter>("Input"));
+            float Offset = ZImpl(get_input2<float>("Offset"));
+            bool bOutputInside = ZImpl(get_input2<bool>("Output Inside"));
+            bool bOutputOutside = ZImpl(get_input2<bool>("Output Outside"));
+
+            const std::vector<vec3f>& pos = input_object->m_impl->points_pos();
             std::vector<std::vector<vec3f>> newFaces;
             for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
-                std::vector<int> pts = input_object->face_points(iFace);
+                std::vector<int> pts = input_object->m_impl->face_points(iFace);
                 std::vector<vec3f> inside_face(pts.size()), outside_face(pts.size());
                 for (int i = 0; i < pts.size(); i++) {
                     int p1 = pts[i];
@@ -1220,29 +1276,28 @@ namespace zeno {
                     newFaces.push_back(outside_face);
             }
             auto spOutput = constructGeom(newFaces);
-            auto spFinal = zeno::fuseGeometry(spOutput, 0.005);
-            return spFinal;
+            auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
+            ZImpl(set_output("Output", spFinal));
         }
     };
+    ZENDEFNODE(PolyExpand,
+    {
+        {
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Output Inside", gParamType_Bool, false),
+            ParamPrimitive("Output Outside", gParamType_Bool, false)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() Extrude : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")},
-                {"Distance", ParamPrimitive("Distance", 0.f)},//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
-                {"Inset", ParamPrimitive("Inset", 0.f)},//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
-                {"bOutputFrontAttr", ParamPrimitive("Output Front Attribute", false, Checkbox)},
-                {"front_attr", ParamPrimitive("Front Attribute", "extrudeFront", Lineedit, zeno::reflect::Any(), "", "enable = parameter('Output Front Attribute').value == 1;")},
-                {"bOutputBackAttr", ParamPrimitive("Output Back Attribute", false, Checkbox)},
-                {"back_attr", ParamPrimitive("Back Attribute", "extrudeBack", Lineedit, zeno::reflect::Any(), "", "enable = parameter('Output Back Attribute').value == 1;")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
+    struct Extrude : INode {
 
-        zeno::vec3f getSpreadDirector(std::shared_ptr<GeometryObject> input_obj, int idxPt)
+        zeno::vec3f getSpreadDirector(GeometryObject* input_obj, int idxPt)
         {
             /* 根据给定的输入obj，以及顶点，得到这个点的挤出延长线方向向量 */
             //找出这个点关联的所有面，然后得到各个面的法线，然后求和即可
@@ -1257,7 +1312,7 @@ namespace zeno {
         }
 
         std::pair<zeno::vec3f, zeno::vec3f> getExtrudeDest(
-            std::shared_ptr<GeometryObject> input_obj,
+            GeometryObject* input_obj,
             int lastPt,
             int currPt,
             int back_face,
@@ -1299,20 +1354,20 @@ namespace zeno {
             return { dest1, dest2 };
         }
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            float Distance = 0.f,
-            float Inset = 0.f,
-            bool bOutputFrontAttr = false,
-            const std::string& front_attr = "",
-            bool bOutputBackAttr = false,
-            const std::string& back_attr = ""
-        ) {
+        void apply() override {
+            auto input_object = ZImpl(get_input<GeometryObject_Adapter>("Input"));
+            float Distance = ZImpl(get_input2<float>("Distance"));
+            float Inset = ZImpl(get_input2<float>("Inset"));
+            bool bOutputFrontAttr = ZImpl(get_input2<bool>("Output Front Attribute"));
+            std::string front_attr = ZImpl(get_input2<std::string>("Front Attribute"));
+            bool bOutputBackAttr = ZImpl(get_input2<bool>("Output Back Attribute"));
+            std::string back_attr = ZImpl(get_input2<std::string>("Back Attribute"));
+
             if (Distance > 0) {
                 std::vector<std::vector<vec3f>> newFaces;
-                const std::vector<zeno::vec3f>& pos = input_object->points_pos();
-                for (int iFace = 0; iFace < input_object->nfaces(); iFace++) {
-                    std::vector<int> pts = input_object->face_points(iFace);
+                const std::vector<zeno::vec3f>& pos = input_object->m_impl->points_pos();
+                for (int iFace = 0; iFace < input_object->m_impl->nfaces(); iFace++) {
+                    std::vector<int> pts = input_object->m_impl->face_points(iFace);
                     std::vector<vec3f> dest_pts;
 
                     std::vector<vec3f> front_pts;
@@ -1327,7 +1382,7 @@ namespace zeno {
                             currPt = pts[i];
                         }
                         bool needFace = false;
-                        const auto& spread = getExtrudeDest(input_object, lastPt, currPt, iFace, Distance, needFace);
+                        const auto& spread = getExtrudeDest(input_object->m_impl, lastPt, currPt, iFace, Distance, needFace);
                         zeno::vec3f last_spread = spread.first;
                         zeno::vec3f curr_spread = spread.second;
 
@@ -1343,35 +1398,42 @@ namespace zeno {
                     newFaces.push_back(front_pts);  //todo: 需要传一个front的字段标记为front面。
                 }
                 auto spOutput = constructGeom(newFaces);
-                auto spFinal = zeno::fuseGeometry(spOutput, 0.005);
-                return spFinal;
+                auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
+                ZImpl(set_output("Output", spFinal));
             }
             else {
-                return input_object;
+                ZImpl(set_output("Output", input_object));
             }
         }
     };
+    ZENDEFNODE(Extrude,
+    {
+        {
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Distance", gParamType_Float, 0.f),//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
+            ParamPrimitive("Inset", gParamType_Float, 0.f),//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
+            ParamPrimitive("Output Front Attribute", gParamType_Bool, false, Checkbox),
+            ParamPrimitive("Front Attribute", gParamType_String, "extrudeFront", Lineedit, zeno::reflect::Any(), "enable = parameter('Output Front Attribute').value == 1;"),
+            ParamPrimitive("Output Back Attribute", gParamType_Bool, false, Checkbox),
+            ParamPrimitive("Back Attribute", gParamType_String, "extrudeBack", Lineedit, zeno::reflect::Any(), "enable = parameter('Output Back Attribute').value == 1;")
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() Blast : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"input_object", ParamObject("Input")},
-                {"zfx", ParamPrimitive("Zfx Expression")},
-                {"group", ParamPrimitive("Group", "Points", Combobox, std::vector<std::string>{"Points", "Faces"})},
-                {"deleteNonSelected", ParamPrimitive("Delete Non Selected")}
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
+    struct Blast : INode {
 
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            std::string zfx = "",
-            std::string group="Points",
-            bool deleteNonSelected = false
-        ) {
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            std::string zfx = ZImpl(get_input2<std::string>("Zfx Expression"));
+            std::string group = ZImpl(get_input2<std::string>("Group"));
+            bool deleteNonSelected = ZImpl(get_input2<bool>("Group"));
+
             zeno::ZfxContext ctx;
             std::string rem_what;
             std::string idnum;
@@ -1395,15 +1457,16 @@ namespace zeno {
             finalZfx += "    remove_" + rem_what + "(" + idnum + ");\n";
             finalZfx += "}";
 
-            std::shared_ptr<zeno::GeometryObject> spOutput(input_object);
-            
-            ctx.spNode = shared_from_this();
+            auto spOutput = input_object->clone();
+
+            ctx.spNode = m_pAdapter->m_pImpl;
             ctx.spObject = spOutput;
             ctx.code = finalZfx;
 
             zeno::ZfxExecute zfxexe(finalZfx, &ctx);
             zfxexe.execute();
-            return spOutput;
+
+            ZImpl(set_output("Output", spOutput));
         }
 
         zeno::CustomUI export_customui() const override {
@@ -1412,30 +1475,36 @@ namespace zeno {
             return ui;
         }
     };
+    ZENDEFNODE(Blast,
+    {
+        {
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Zfx Expression", gParamType_String),
+            ParamPrimitive("Group", gParamType_String, "Points", Combobox, std::vector<std::string>{"Points", "Faces"}),
+            ParamPrimitive("Delete Non Selected", gParamType_Bool)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
 
-    struct ZDEFNODE() AverageFuse : INode {
+
+
+    struct AverageFuse : INode {
         //houdini fuse节点的average模式
 
-        ReflectCustomUI m_uilayout = {
-            _Group{
-                {"snapDistance", ParamPrimitive("Snap Distance")},
-                {"input_object", ParamObject("Input Geometry")},
-            },
-            _Group{
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<GeometryObject> apply(
-            std::shared_ptr<zeno::GeometryObject> input_object,
-            float snapDistance = 0.01
-        ) {
-
+        void apply() override
+        {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Geometry"));
+            float snapDistance = ZImpl(get_input2<float>("Snap Distance"));
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
 #if 1
-            return fuseGeometry(input_object, snapDistance);
+            auto spOutput = fuseGeometry(input_object.get(), snapDistance);
+            ZImpl(set_output("Output", spOutput));
 #else
             int ptnumber = input_object->npoints();
             std::map < int, std::vector<int> > pointsToFuse;
@@ -1470,4 +1539,18 @@ namespace zeno {
 #endif
         }
     };
+
+    ZENDEFNODE(AverageFuse,
+    {
+        {
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamPrimitive("Snap Distance", gParamType_Float, 0.01f)
+        },
+        {
+            {gParamType_Geometry, "Output"},
+        },
+        {},
+        {"geom"},
+    });
+
 }

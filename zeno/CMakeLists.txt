@@ -77,6 +77,7 @@ if (ZENO_BUILD_SHARED)
 endif()
 
 target_include_directories(zeno PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/Zeno/zeno/include>)
 
 if (ZENO_INSTALL_TARGET AND ZENO_BUILD_SHARED)

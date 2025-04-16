@@ -15,11 +15,11 @@ namespace {
 
 struct PrimFillAttr : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto value = get_input<NumericObject>("value");
-        auto attr = get_input2<std::string>("attr");
-        auto type = get_input2<std::string>("type");
-        auto scope = get_input2<std::string>("scope");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto value = ZImpl(get_input<NumericObject>("value"));
+        auto attr = ZImpl(get_input2<std::string>("attr"));
+        auto type = ZImpl(get_input2<std::string>("type"));
+        auto scope = ZImpl(get_input2<std::string>("scope"));
         std::visit([&] (auto ty) {
             using T = decltype(ty);
             auto val = value->get<T>();
@@ -48,7 +48,7 @@ struct PrimFillAttr : INode {
         >>(array_index({
             "float", "vec3f", "int"
         }, type)));
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -70,9 +70,9 @@ ZENDEFNODE(PrimFillAttr, {
 
 struct PrimFillColor : PrimFillAttr {
     virtual void apply() override {
-        set_primitive_input("attr", "clr");
-        set_primitive_input("type", "vec3f");
-        set_primitive_input("scope", "vert");
+        ZImpl(set_primitive_input("attr", "clr"));
+        ZImpl(set_primitive_input("type", "vec3f"));
+        ZImpl(set_primitive_input("scope", "vert"));
         PrimFillAttr::apply();
     }
 };
@@ -92,12 +92,12 @@ ZENDEFNODE(PrimFillColor, {
 
 struct PrimFloatAttrToInt : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto attr = get_input2<std::string>("attr");
-        auto attrOut = get_input2<std::string>("attrOut");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto attr = ZImpl(get_input2<std::string>("attr"));
+        auto attrOut = ZImpl(get_input2<std::string>("attrOut"));
         if(prim->verts.has_attr(attr)){
         auto &inArr = prim->verts.attr<float>(attr);
-        auto factor = get_input2<float>("divisor");
+        auto factor = ZImpl(get_input2<float>("divisor"));
         if (attrOut == attr) {
             std::vector<int> outArr(inArr.size());
             parallel_for(inArr.size(), [&] (size_t i) {
@@ -114,7 +114,7 @@ struct PrimFloatAttrToInt : INode {
         }
         if(prim->tris.has_attr(attr)){
             auto &inArr = prim->tris.attr<float>(attr);
-            auto factor = get_input2<float>("divisor");
+            auto factor = ZImpl(get_input2<float>("divisor"));
             if (attrOut == attr) {
                 std::vector<int> outArr(inArr.size());
                 parallel_for(inArr.size(), [&] (size_t i) {
@@ -131,7 +131,7 @@ struct PrimFloatAttrToInt : INode {
         }
         if(prim->polys.has_attr(attr)){
             auto &inArr = prim->polys.attr<float>(attr);
-            auto factor = get_input2<float>("divisor");
+            auto factor = ZImpl(get_input2<float>("divisor"));
             if (attrOut == attr) {
                 std::vector<int> outArr(inArr.size());
                 parallel_for(inArr.size(), [&] (size_t i) {
@@ -146,7 +146,7 @@ struct PrimFloatAttrToInt : INode {
                 });
             }
         }
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -167,14 +167,14 @@ ZENDEFNODE(PrimFloatAttrToInt, {
 
 struct PrimIntAttrToFloat : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto attr = get_input2<std::string>("attr");
-        auto attrOut = get_input2<std::string>("attrOut");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto attr = ZImpl(get_input2<std::string>("attr"));
+        auto attrOut = ZImpl(get_input2<std::string>("attrOut"));
 
 
         if(prim->verts.has_attr(attr)){
         auto &inArr = prim->verts.attr<int>(attr);
-        auto factor = get_input2<float>("divisor");
+        auto factor = ZImpl(get_input2<float>("divisor"));
         if (factor) factor = 1.0f / factor;
         if (attrOut == attr) {
             std::vector<float> outArr(inArr.size());
@@ -192,7 +192,7 @@ struct PrimIntAttrToFloat : INode {
         }
         if(prim->tris.has_attr(attr)){
             auto &inArr = prim->tris.attr<int>(attr);
-            auto factor = get_input2<float>("divisor");
+            auto factor = ZImpl(get_input2<float>("divisor"));
             if (factor) factor = 1.0f / factor;
             if (attrOut == attr) {
                 std::vector<float> outArr(inArr.size());
@@ -210,7 +210,7 @@ struct PrimIntAttrToFloat : INode {
         }
         if(prim->polys.has_attr(attr)){
             auto &inArr = prim->polys.attr<int>(attr);
-            auto factor = get_input2<float>("divisor");
+            auto factor = ZImpl(get_input2<float>("divisor"));
             if (factor) factor = 1.0f / factor;
             if (attrOut == attr) {
                 std::vector<float> outArr(inArr.size());
@@ -226,7 +226,7 @@ struct PrimIntAttrToFloat : INode {
                 });
             }
         }
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -247,11 +247,11 @@ ZENDEFNODE(PrimIntAttrToFloat, {
 
 struct PrimAttrInterp : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto prim2 = get_input<PrimitiveObject>("prim2");
-        auto attr = get_input2<std::string>("attr");
-        auto factor = get_input2<float>("factor");
-        auto facAttr = get_input2<std::string>("facAttr");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim2 = ZImpl(get_input<PrimitiveObject>("prim2"));
+        auto attr = ZImpl(get_input2<std::string>("attr"));
+        auto factor = ZImpl(get_input2<float>("factor"));
+        auto facAttr = ZImpl(get_input2<std::string>("facAttr"));
         auto facAcc = functor_variant(facAttr.empty() ? 1 : 0,
                                       [&, &facAttr = facAttr] {
                                           auto &facArr = prim->verts.attr<float>(facAttr);
@@ -284,7 +284,7 @@ struct PrimAttrInterp : INode {
                 process(attr, arr);
             });
         }
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -344,18 +344,18 @@ static void prim_remap(std::vector<T> &arr, bool autocompute, float inMax, float
 
 struct PrimAttrRemap : INode {
     virtual void apply() override {// change attr name to create new attr?
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto attr = get_input2<std::string>("attr");
-        auto scope = get_input2<std::string>("scope");
-        auto autoCompute = get_input2<bool>("Auto Compute input range");
-        auto inMin = get_input2<float>("Input min");
-        auto inMax = get_input2<float>("Input max");
-        auto outputMin = get_input2<float>("Output min");
-        auto outputMax = get_input2<float>("Output max");
-        auto clampMin = get_input2<bool>("Clamp min");
-        auto clampMax = get_input2<bool>("Clamp max");
-        auto curve = get_input_prim<CurvesData>("Remap Ramp");
-        auto ramp = get_input2<bool>("Use Ramp");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto attr = ZImpl(get_input2<std::string>("attr"));
+        auto scope = ZImpl(get_input2<std::string>("scope"));
+        auto autoCompute = ZImpl(get_input2<bool>("Auto Compute input range"));
+        auto inMin = ZImpl(get_input2<float>("Input min"));
+        auto inMax = ZImpl(get_input2<float>("Input max"));
+        auto outputMin = ZImpl(get_input2<float>("Output min"));
+        auto outputMax = ZImpl(get_input2<float>("Output max"));
+        auto clampMin = ZImpl(get_input2<bool>("Clamp min"));
+        auto clampMax = ZImpl(get_input2<bool>("Clamp max"));
+        auto curve = ZImpl(get_input_prim<CurvesData>("Remap Ramp"));
+        auto ramp = ZImpl(get_input2<bool>("Use Ramp"));
         if (scope == "vert"){
             if (prim->verts.attr_is<float>(attr)){
                 auto &arr = prim->verts.attr<float>(attr);
@@ -422,7 +422,7 @@ struct PrimAttrRemap : INode {
             }
         }
 
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 

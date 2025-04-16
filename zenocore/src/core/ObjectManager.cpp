@@ -1,7 +1,10 @@
+#include <zeno/utils/helper.h>
 #include <zeno/core/ObjectManager.h>
 #include <zeno/core/Graph.h>
 #include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/core/Session.h>
+#include <zeno/utils/interfaceutil.h>
 
 
 namespace zeno {
@@ -22,11 +25,11 @@ namespace zeno {
     {
     }
 
-    ZENO_API void ObjectManager::collectingObject(std::shared_ptr<IObject> obj, std::shared_ptr<INode> attachNode, bool bView)
+    ZENO_API void ObjectManager::collectingObject(zany obj, NodeImpl* attachNode, bool bView)
     {
         std::lock_guard lck(m_mtx);
 
-        const std::string& objId = obj->key();
+        const std::string& objId = zsString2Std(obj->key());
         if (objId.empty())
             return;
 
@@ -74,13 +77,13 @@ namespace zeno {
         m_lastUnregisterObjs.erase(id); //有一种情况是apply时仅对obj进行modify，此时需要将apply之前加入的待删除obj的id移除，无需下次运行时清除该obj
     }
 
-    ZENO_API void ObjectManager::notifyTransfer(std::shared_ptr<IObject> obj)
+    ZENO_API void ObjectManager::notifyTransfer(zany obj)
     {
         //std::lock_guard lck(m_mtx);
         //CALLBACK_NOTIFY(notifyTransfer, obj)
     }
 
-    ZENO_API void ObjectManager::viewObject(std::shared_ptr<IObject> obj, bool bView)
+    ZENO_API void ObjectManager::viewObject(zany obj, bool bView)
     {
         //std::lock_guard lck(m_mtx);
     }
@@ -202,7 +205,7 @@ namespace zeno {
 
     ZENO_API void ObjectManager::remove_rendering_obj(zany spObj)
     {
-        std::string key = spObj->key();
+        std::string key = zsString2Std(spObj->key());
         if (key.empty())
             return;
         m_remove.insert(key);
@@ -234,7 +237,7 @@ namespace zeno {
         modifyInteractiveObjs = m_modify;
     }
 
-    ZENO_API void ObjectManager::syncObjNodeInfo(zany spObj, std::shared_ptr<INode> spNode)
+    ZENO_API void ObjectManager::syncObjNodeInfo(zany, NodeImpl* spNode)
     {
         std::lock_guard lck(m_mtx);
     }
@@ -273,15 +276,16 @@ namespace zeno {
     {
         std::function<void(std::shared_ptr<zeno::IObject>)> exportLightObjs = [&exportLightObjs, &info](std::shared_ptr<zeno::IObject>const& objToBeConvert) {
             if (std::shared_ptr<zeno::ListObject> lst = std::dynamic_pointer_cast<zeno::ListObject>(objToBeConvert)) {
-                for (int i = 0; i < lst->size(); i++)
-                    exportLightObjs(lst->get(i));
+                for (int i = 0; i < lst->m_impl->size(); i++)
+                    exportLightObjs(lst->m_impl->get(i));
                 return;
             }
             if (!objToBeConvert)
                 return;
             else {
-                if (objToBeConvert->userData().get2<int>("isL", 0))
-                    info.lightObjs.insert(std::make_pair(objToBeConvert->key(), objToBeConvert));
+                if (objToBeConvert->userData()->get_int("isL", 0)) {
+                    info.lightObjs.insert(std::make_pair(zsString2Std(objToBeConvert->key()), objToBeConvert));
+                }
             }
         };
         for (auto& key : m_viewObjs) {
@@ -301,7 +305,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API void ObjectManager::export_all_view_objs(std::map<std::string, std::shared_ptr<zeno::IObject>>& info)
+    ZENO_API void ObjectManager::export_all_view_objs(std::map<std::string, zany>& info)
     {
         std::lock_guard lck(m_mtx);
         for (auto& key : m_viewObjs) {

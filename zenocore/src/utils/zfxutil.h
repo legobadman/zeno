@@ -17,7 +17,7 @@ namespace zeno
         AttrVar getInitValueFromVariant(const std::vector<zfxvariant>& zfxvec);
         void setAttrValue(std::string attrname, const std::string& channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext);
         ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel = 0);
-        std::shared_ptr<INode> getNodeAndParamFromRefString(
+        NodeImpl* getNodeAndParamFromRefString(
             const std::string& ref, 
             ZfxContext* pContext, 
             std::string& paramName,

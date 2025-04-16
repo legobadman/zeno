@@ -178,8 +178,9 @@ if (ZENO_WITH_REFLECTOR)
 
 
     # BEGIN - 节点定义的自动扫描，在这里我们把带有ZDEFNODE标识的约定为节点的定义
+    # 为什么要在core里面定义这些东西呢？
     # 生成节点类的反射信息
-    if (1)
+    if (0)
         set(REFLECTION_NODES "dummy")
         #make_absolute_paths(REFLECTION_NODES ${reflectnodes})
         foreach(file_path ${scan_source})
@@ -193,12 +194,12 @@ if (ZENO_WITH_REFLECTOR)
         #送入Generator并生成
         zeno_declare_reflection_support(zenocore "${REFLECTION_NODES}" zeno_nodes)
     else()
-        set(reflectnodes
-            ../zeno/src/nodes/reflect/reflectnodes.cpp
-            ../zeno/src/nodes/reflect/reflectnodesexample.cpp
-        )
-        make_absolute_paths(REFLECTION_NODES ${reflectnodes})
-        zeno_declare_reflection_support(zenocore "${REFLECTION_NODES}" zeno_nodes)
+        #set(reflectnodes
+        #    ../zeno/src/nodes/reflect/reflectnodes.cpp
+        #    ../zeno/src/nodes/reflect/reflectnodesexample.cpp
+        #)
+        #make_absolute_paths(REFLECTION_NODES ${reflectnodes})
+        #zeno_declare_reflection_support(zenocore "${REFLECTION_NODES}" zeno_nodes)
     endif()
     # END - 节点定义的自动扫描，在这里我们把带有ZDEFNODE标识的约定为节点的定义
 endif()

@@ -1,25 +1,39 @@
 #include <zeno/zeno.h>
-#include <zeno/core/reflectdef.h>
-#include <zeno/types/GeometryObject.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/types/IGeometryObject.h>
 
 
 namespace zeno {
 
     using namespace zeno::reflect;
 
-    struct ZDEFNODE() CreateAttribute : INode {
+    ZDEFNODE(CreateAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("attr_name", gParamType_String, "attribute1"),
+            ParamPrimitive("Attribute Type",  gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"}),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"}),
+            ParamPrimitive("Integer Value", gParamType_Int, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Integer';"),
+            ParamPrimitive("Float Value", gParamType_Float, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Float';"),
+            ParamPrimitive("String Value", gParamType_String, 0, zeno::Lineedit, Any(),"visible = parameter('Attribute Type').value == 'String';"),
+            ParamPrimitive("Boolean Value", gParamType_Bool, 0, zeno::Checkbox, Any(),"visible = parameter('Attribute Type').value == 'Boolean';"),
+            ParamPrimitive("Vector2 Value", gParamType_Vec2f, vec2f(0,0), zeno::Vec2edit, Any(),"visible = parameter('Attribute Type').value == 'Vector2';"),
+            ParamPrimitive("Vector3 Value", gParamType_Vec3f, vec3f(0,0,0), zeno::Vec3edit, Any(),"visible = parameter('Attribute Type').value == 'Vector3';"),
+            ParamPrimitive("Vector4 Value", gParamType_Vec4f, vec4f(0,0,0,0), zeno::Vec4edit, Any(),"visible = parameter('Attribute Type').value == 'Vector4';")
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
+    struct CreateAttribute : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input", Socket_Clone)},
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        zany apply(zany input_object, std::string attr_name = "attribute1") {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            std::string attr_name = ZImpl(get_input2<std::string>("attr_name"));
+            std::string m_type = ZImpl(get_input2<std::string>("Attribute Type"));
+            std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
 
             if (attr_name == "") {
                 throw makeError<UnimplError>("the attribute name cannot be empty.");
@@ -27,25 +41,25 @@ namespace zeno {
 
             AttrVar attr_value;
             if (m_type == "Vector2") {
-                attr_value = m_vec2Value;
+                attr_value = ZImpl(get_input2<zeno::vec2f>("Vector2 Value"));
             }
             else if (m_type == "Vector3") {
-                attr_value = m_vec3Value;
+                attr_value = ZImpl(get_input2<vec3f>("Vector3 Value"));
             }
             else if (m_type == "Vector4") {
-                attr_value = m_vec4Value;
+                attr_value = ZImpl(get_input2<vec4f>("Vector4 Value"));
             }
             else if (m_type == "Integer") {
-                attr_value = m_intValue;
+                attr_value = ZImpl(get_input2<int>("Integer Value"));
             }
             else if (m_type == "Float") {
-                attr_value = m_floatValue;
+                attr_value = ZImpl(get_input2<float>("Float Value"));
             }
             else if (m_type == "String") {
-                attr_value = m_stringValue;
+                attr_value = ZImpl(get_input2<std::string>("String Value"));
             }
             else if (m_type == "Boolean") {
-                attr_value = m_boolValue;
+                attr_value = ZImpl(get_input2<bool>("Boolean Value"));
             }
 
             if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
@@ -65,50 +79,29 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Unsupport Object for creating attribute");
             }
-            return input_object;
+            ZImpl(set_output("Output", input_object));
         }
-
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Attribute Type", Control = zeno::Combobox, ComboBoxItems = ("Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"))
-        std::string m_type = "Vector3";
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Attribute Group", Control = zeno::Combobox, ComboBoxItems = ("Point", "Face", "Geometry"))
-        std::string m_attrgroup = "Point";
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Integer Value", Control = zeno::Lineedit, Constrain = "visible = parameter('Attribute Type').value == 'Integer';")
-        int m_intValue = 0;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Float Value", Control = zeno::Lineedit, Constrain = "visible = parameter('Attribute Type').value == 'Float';")
-        float m_floatValue = 0.f;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "String Value", Control = zeno::Lineedit, Constrain = "visible = parameter('Attribute Type').value == 'String';")
-        std::string m_stringValue;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Boolean Value", Control = zeno::Checkbox, Constrain = "visible = parameter('Attribute Type').value == 'Boolean';")
-        bool m_boolValue = false;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Vector2 Value", Control = zeno::Vec2edit, Constrain = "visible = parameter('Attribute Type').value == 'Vector2';")
-        zeno::vec2f m_vec2Value;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Vector3 Value", Control = zeno::Vec3edit, Constrain = "visible = parameter('Attribute Type').value == 'Vector3';")
-        zeno::vec3f m_vec3Value;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Vector4 Value", Control = zeno::Vec4edit, Constrain = "visible = parameter('Attribute Type').value == 'Vector4';")
-        zeno::vec4f m_vec4Value;
     };
 
-    struct ZDEFNODE() DeleteAttribute : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input", Socket_Clone)},
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        zany apply(zany input_object, std::string attr_name = "attribute1") {
+    ZDEFNODE(DeleteAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("attr_name", gParamType_String, "attribute1"),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
+    struct DeleteAttribute : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            std::string attr_name = ZImpl(get_input2<std::string>("attr_name"));
+            std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
             if (attr_name == "") {
                 throw makeError<UnimplError>("the attribute name cannot be empty.");
             }
@@ -130,26 +123,38 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Unsupport Object for creating attribute");
             }
-            return input_object;
+            ZImpl(set_output("Output", input_object));
         }
-
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Attribute Group", Control = zeno::Combobox, ComboBoxItems = ("Point", "Face", "Geometry"))
-        std::string m_attrgroup = "Point";
     };
 
-    struct ZDEFNODE() SetAttribute : INode {
 
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"input_object", ParamObject("Input", Socket_Clone)},
-            },
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        zany apply(zany input_object, std::string attr_name = "attribute1") {
+    ZDEFNODE(SetAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("attr_name", gParamType_String, "attribute1"),
+            ParamPrimitive("Attribute Type",  gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"}),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"}),
+            ParamPrimitive("Integer Value", gParamType_Int, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Integer';"),
+            ParamPrimitive("Float Value", gParamType_Float, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Float';"),
+            ParamPrimitive("String Value", gParamType_String, 0, zeno::Lineedit, Any(),"visible = parameter('Attribute Type').value == 'String';"),
+            ParamPrimitive("Boolean Value", gParamType_Bool, 0, zeno::Checkbox, Any(),"visible = parameter('Attribute Type').value == 'Boolean';"),
+            ParamPrimitive("Vector2 Value", gParamType_Vec2f, vec2f(0,0), zeno::Vec2edit, Any(),"visible = parameter('Attribute Type').value == 'Vector2';"),
+            ParamPrimitive("Vector3 Value", gParamType_Vec3f, vec3f(0,0,0), zeno::Vec3edit, Any(),"visible = parameter('Attribute Type').value == 'Vector3';"),
+            ParamPrimitive("Vector4 Value", gParamType_Vec4f, vec4f(0,0,0,0), zeno::Vec4edit, Any(),"visible = parameter('Attribute Type').value == 'Vector4';")
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
+    struct SetAttribute : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            std::string attr_name = ZImpl(get_input2<std::string>("attr_name"));
+            std::string m_type = ZImpl(get_input2<std::string>("Attribute Type"));
+            std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
 
             if (attr_name == "") {
                 throw makeError<UnimplError>("the attribute name cannot be empty.");
@@ -157,25 +162,25 @@ namespace zeno {
 
             AttrVar attr_value;
             if (m_type == "Vector2") {
-                attr_value = m_vec2Value;
+                attr_value = ZImpl(get_input2<zeno::vec2f>("Vector2 Value"));
             }
             else if (m_type == "Vector3") {
-                attr_value = m_vec3Value;
+                attr_value = ZImpl(get_input2<vec3f>("Vector3 Value"));
             }
             else if (m_type == "Vector4") {
-                attr_value = m_vec4Value;
+                attr_value = ZImpl(get_input2<vec4f>("Vector4 Value"));
             }
             else if (m_type == "Integer") {
-                attr_value = m_intValue;
+                attr_value = ZImpl(get_input2<int>("Integer Value"));
             }
             else if (m_type == "Float") {
-                attr_value = m_floatValue;
+                attr_value = ZImpl(get_input2<float>("Float Value"));
             }
             else if (m_type == "String") {
-                attr_value = m_stringValue;
+                attr_value = ZImpl(get_input2<std::string>("String Value"));
             }
             else if (m_type == "Boolean") {
-                attr_value = m_boolValue;
+                attr_value = ZImpl(get_input2<bool>("Boolean Value"));
             }
 
             if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
@@ -204,36 +209,8 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Unsupport Object for creating attribute");
             }
-            return input_object;
+            ZImpl(set_output("Output", input_object));
         }
-
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Attribute Type", Control = zeno::Combobox, ComboBoxItems = ("Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"))
-            std::string m_type = "Vector3";
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Attribute Group", Control = zeno::Combobox, ComboBoxItems = ("Point", "Face", "Geometry"))
-            std::string m_attrgroup = "Point";
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Integer Value", Control = zeno::Lineedit, Constrain = "visible = parameter('Attribute Type').value == 'Integer';")
-            int m_intValue = 0;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Float Value", Control = zeno::Lineedit, Constrain = "visible = parameter('Attribute Type').value == 'Float';")
-            float m_floatValue = 0.f;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "String Value", Control = zeno::Lineedit, Constrain = "visible = parameter('Attribute Type').value == 'String';")
-            std::string m_stringValue;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Boolean Value", Control = zeno::Checkbox, Constrain = "visible = parameter('Attribute Type').value == 'Boolean';")
-            bool m_boolValue = false;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Vector2 Value", Control = zeno::Vec2edit, Constrain = "visible = parameter('Attribute Type').value == 'Vector2';")
-            zeno::vec2f m_vec2Value;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Vector3 Value", Control = zeno::Vec3edit, Constrain = "visible = parameter('Attribute Type').value == 'Vector3';")
-            zeno::vec3f m_vec3Value;
-
-        ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "Vector4 Value", Control = zeno::Vec4edit, Constrain = "visible = parameter('Attribute Type').value == 'Vector4';")
-            zeno::vec4f m_vec4Value;
     };
 }
 

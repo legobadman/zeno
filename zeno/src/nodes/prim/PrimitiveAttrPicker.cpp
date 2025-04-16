@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/ListObject.h>
+#include <zeno/utils/interfaceutil.h>
+#include <zeno/types/ListObject_impl.h>
 #include <iostream>
 
 #include <sstream>
@@ -10,9 +11,9 @@ namespace zeno {
 struct PrimitiveAttrPicker : zeno::INode {
     virtual void apply() override {
         // parse selected elements string
-        auto selected = get_param<std::string>("selected");
+        auto selected = ZImpl(get_param<std::string>("selected"));
         std::vector<zany> selected_indices_numeric;
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto size_of_prim = prim->size();
         if (!selected.empty()) {
             std::vector<int> selected_indices;
@@ -34,9 +35,9 @@ struct PrimitiveAttrPicker : zeno::INode {
             get_split();
 
             // set new attr
-            auto new_attr = get_input<StringObject>("newAttr");
+            auto new_attr = ZImpl(get_input<StringObject>("newAttr"));
             if (!new_attr->get().empty()) {
-                auto new_value = get_input2<float>("attrVal");
+                auto new_value = ZImpl(get_input2<float>("attrVal"));
                 auto &attr = prim->add_attr<float>(new_attr->get());
                 for (const auto& idx : selected_indices) {
                     if(idx >= size_of_prim) {
@@ -47,10 +48,10 @@ struct PrimitiveAttrPicker : zeno::INode {
                 }
             }
         }
-        auto list = std::make_shared<ListObject>(selected_indices_numeric);
 
-        set_output("list", std::move(list));
-        set_output("outPrim", std::move(prim));
+        auto list = create_ListObject(stdVec2zeVec(selected_indices_numeric));
+        ZImpl(set_output("list", std::move(list)));
+        ZImpl(set_output("outPrim", std::move(prim)));
     }
 };
 

@@ -8,7 +8,7 @@
 #include "variantptr.h"
 #include "model/graphsmanager.h"
 #include "model/graphstreemodel.h"
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/utils/helper.h>
 #include "declmetatype.h"
 #include <zeno/extra/SubnetNode.h>
@@ -115,16 +115,16 @@ private:
 class ParamModelImpl : public QObject
 {
 public:
-    ParamModelImpl(std::shared_ptr<zeno::INode> spNode, QObject* parent)
+    ParamModelImpl(std::shared_ptr<zeno::NodeImpl> spNode, QObject* parent)
         : QObject(parent)
         , m_wpNode(spNode)
     {}
-    std::weak_ptr<zeno::INode> m_wpNode;
+    std::weak_ptr<zeno::NodeImpl> m_wpNode;
 };
 
 
 
-ParamsModel::ParamsModel(zeno::INode* spNode, QObject* parent)
+ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
     : QAbstractListModel(parent)
     , m_wpNode(spNode)
     , m_customParamsM(nullptr)
@@ -182,7 +182,7 @@ ParamsModel::ParamsModel(zeno::INode* spNode, QObject* parent)
             updateParamData(QString::fromStdString(name), bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE, bInput);
         });
 
-    spNode->register_update_visable_enable([this](zeno::INode* pNode, std::set<std::string> adjInputs, std::set<std::string> adjOutputs) {
+    spNode->register_update_visable_enable([this](zeno::NodeImpl* pNode, std::set<std::string> adjInputs, std::set<std::string> adjOutputs) {
         //扫一遍，更新一下缓存值
         for (ParamItem& item : m_items) {
             std::string name = item.name.toStdString();

@@ -201,16 +201,16 @@ namespace {
 
 struct PrimRandomize : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto base = get_input2<float>("base");
-        auto scale = get_input2<float>("scale");
-        auto seed = get_input2<int>("seed");
-        auto attr = get_input2<std::string>("attr");
-        auto dirAttr = get_input2<std::string>("dirAttr");
-        auto seedAttr = get_input2<std::string>("seedAttr");
-        auto randType = get_input2<std::string>("randType");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto base = ZImpl(get_input2<float>("base"));
+        auto scale = ZImpl(get_input2<float>("scale"));
+        auto seed = ZImpl(get_input2<int>("seed"));
+        auto attr = ZImpl(get_input2<std::string>("attr"));
+        auto dirAttr = ZImpl(get_input2<std::string>("dirAttr"));
+        auto seedAttr = ZImpl(get_input2<std::string>("seedAttr"));
+        auto randType = ZImpl(get_input2<std::string>("randType"));
         primRandomize(prim.get(), attr, dirAttr, seedAttr, randType, base, scale, seed);
-        set_output("prim", get_input("prim"));
+        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
     }
 };
 

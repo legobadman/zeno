@@ -173,14 +173,14 @@ namespace {
 
 struct PrimitiveTriangulate : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        if (get_param<bool>("from_poly")) {
-            primTriangulate(prim.get(), get_param<bool>("with_uv"), get_param<bool>("has_lines"), get_input2<bool>("with_attr"));
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        if (ZImpl(get_param<bool>("from_poly"))) {
+            primTriangulate(prim.get(), ZImpl(get_param<bool>("with_uv")), ZImpl(get_param<bool>("has_lines")), ZImpl(get_input2<bool>("with_attr")));
         }
-        if (get_param<bool>("from_quads")) {
+        if (ZImpl(get_param<bool>("from_quads"))) {
             primTriangulateQuads(prim.get());
         }
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -284,9 +284,9 @@ ZENO_API void primTriangulateIntoPolys(PrimitiveObject *prim) {
 
 struct PrimTriangulateIntoPolys : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         primTriangulateIntoPolys(prim.get());
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 

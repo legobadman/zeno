@@ -8,54 +8,9 @@
 
 namespace {
 
-struct GCTest : zeno::IObjectClone<GCTest, zeno::NumericObject> {
-    GCTest() {
-        printf("%d GCTest()\n", this->get<int>());
-    }
-
-    GCTest(GCTest const &) {
-        printf("%d GCTest(GCTest const &)\n", this->get<int>());
-    }
-
-    GCTest &operator=(GCTest const &) {
-        printf("%d GCTest &operator=(GCTest const &)\n", this->get<int>());
-        return *this;
-    }
-
-    GCTest(GCTest &&) {
-        printf("%d GCTest(GCTest &&)\n", this->get<int>());
-    }
-
-    GCTest &operator=(GCTest &&) {
-        printf("%d GCTest &operator=(GCTest &&)\n", this->get<int>());
-        return *this;
-    }
-
-    ~GCTest() {
-        printf("%d ~GCTest()\n", this->get<int>());
-    }
-};
-
-
-struct MakeGCTest : zeno::INode {
-    virtual void apply() override {
-        auto obj = std::make_shared<GCTest>();
-        obj->set<int>(get_param<int>("value"));
-        set_output("value", std::move(obj));
-    }
-};
-
-ZENDEFNODE(MakeGCTest, {
-    {},
-    {{gParamType_Int,"value"}},
-    {{gParamType_Int, "value", "42"}},
-    {"debug"},
-});
-
-
 struct PrintMessage : zeno::INode {
     virtual void apply() override {
-        auto message = get_param<std::string>("message");
+        auto message = ZImpl(get_param<std::string>("message"));
         printf("%s\n", message.c_str());
     }
 };
@@ -70,7 +25,7 @@ ZENDEFNODE(PrintMessage, {
 
 struct PrintMessageStdErr : zeno::INode {
     virtual void apply() override {
-        auto message = get_param<std::string>("message");
+        auto message = ZImpl(get_param<std::string>("message"));
         fprintf(stderr, "%s\n", message.c_str());
     }
 };
@@ -102,7 +57,7 @@ ZENDEFNODE(InfiniteLoop, {
 
 struct TriggerExitProcess : zeno::INode {
     virtual void apply() override {
-        int status = get_param<int>("status");
+        int status = ZImpl(get_param<int>("status"));
         exit(status);
     }
 };
@@ -161,7 +116,7 @@ ZENDEFNODE(TriggerAbortSignal, {
 
 struct SpdlogInfoMessage : zeno::INode {
     virtual void apply() override {
-        zeno::log_info("{}", get_param<std::string>("message"));
+        zeno::log_info("{}", ZImpl(get_param<std::string>("message")));
     }
 };
 
@@ -175,7 +130,7 @@ ZENDEFNODE(SpdlogInfoMessage, {
 
 struct SpdlogErrorMessage : zeno::INode {
     virtual void apply() override {
-        zeno::log_error("{}", get_param<std::string>("message"));
+        zeno::log_error("{}", ZImpl(get_param<std::string>("message")));
     }
 };
 
@@ -189,7 +144,7 @@ ZENDEFNODE(SpdlogErrorMessage, {
 
 struct TriggerException : zeno::INode {
     virtual void apply() override {
-        throw zeno::Exception(get_param<std::string>("message"));
+        throw zeno::Exception(ZImpl(get_param<std::string>("message")));
     }
 };
 
@@ -204,7 +159,7 @@ struct TriggerViewportFault : zeno::INode {
     virtual void apply() override {
         auto prim = std::make_shared<zeno::PrimitiveObject>();
         prim->tris.resize(1);
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -218,7 +173,7 @@ ZENDEFNODE(TriggerViewportFault, {
 
 struct MockRunning : zeno::INode {
     virtual void apply() override {
-        int secs = get_input<zeno::NumericObject>("wait seconds")->get<int>();
+        int secs = ZImpl(get_input<zeno::NumericObject>("wait seconds"))->get<int>();
         std::this_thread::sleep_for(std::chrono::seconds(secs));
     }
 };

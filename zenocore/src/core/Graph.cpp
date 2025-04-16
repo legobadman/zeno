@@ -1,5 +1,5 @@
 #include <zeno/core/Graph.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/core/Session.h>
@@ -49,7 +49,7 @@ Graph::~Graph() {
 zany Graph::getNodeInput(std::string const& sn, std::string const& ss) const {
     //todo: deprecated
     auto node = safe_at(m_nodes, sn, "node name").get();
-    return node->get_input(ss);
+    return node->m_pImpl->get_input(ss);
 }
 
 void Graph::clearNodes() {
@@ -72,13 +72,9 @@ void Graph::addNode(std::string const &cls, std::string const &id) {
 
 Graph *Graph::getSubnetGraph(std::string const & node_name) const {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
-    auto node = static_cast<SubnetNode *>(safe_at(m_nodes, uuid, "node name").get());
-    return node->subgraph.get();
-}
-
-void Graph::completeNode(std::string const &node_name) {
-    const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
-    safe_at(m_nodes, uuid, "node name")->doComplete();
+    INodeImpl* pNode = safe_at(m_nodes, uuid, "node name").get();
+    auto node = dynamic_cast<SubnetNode*>(pNode->m_pImpl->coreNode());
+    return node ? node->subgraph.get() : nullptr;
 }
 
 bool Graph::applyNode(std::string const &node_name) {
@@ -87,15 +83,16 @@ bool Graph::applyNode(std::string const &node_name) {
 
     CalcContext ctx;
 
-    if (optParentSubgNode.has_value() && 
-        optParentSubgNode.value())
+    if (optParentSubgNode)
     {
         ctx.isSubnetApply = true;
     }
 
-    GraphException::translated([&] {
-        node->doApply(&ctx);
-    }, node);
+    node->m_pImpl->doApply(&ctx);
+
+    //GraphException::translated([&] {
+    //    node->m_pImpl->doApply(&ctx);
+    //}, node);
 
     return true;
 }
@@ -112,7 +109,7 @@ void Graph::runGraph() {
 }
 
 void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
-    auto spNode = spParam->m_wpNode.lock();
+    auto spNode = spParam->m_wpNode;
     assert(spNode);
     const std::string& uuid = spNode->get_uuid();
     bool bHasFrameRel = spNode->has_frame_relative_params();
@@ -126,7 +123,7 @@ void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_v
 
 void Graph::parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any& new_value)
 {
-    auto spNode = spParam->m_wpNode.lock();
+    auto spNode = spParam->m_wpNode;
     assert(spNode);
     assert(spParam->defl.has_value());
     const std::string& uuid = spNode->get_uuid();
@@ -279,8 +276,8 @@ void Graph::init(const GraphData& graph) {
     //import nodes first.
     for (const auto& [name, node] : graph.nodes) {
         bool bAssets = node.asset.has_value();
-        std::shared_ptr<INode> spNode = createNode(node.cls, name, bAssets, node.uipos, true);
-        spNode->init(node);
+        INodeImpl* spNode = createNode(node.cls, name, bAssets, node.uipos, true);
+        spNode->m_pImpl->init(node);
         if (node.cls == "SubInput") {
             //TODO
         }
@@ -288,12 +285,11 @@ void Graph::init(const GraphData& graph) {
             //TODO
         }
         else if (node.cls == "Group") {
-            if (node.group.has_value())
-            {
-                spNode->update_param("title", node.group->title);
-                spNode->update_param("background", node.group->background);
-                spNode->update_param("size", node.group->sz);
-                spNode->update_param("items", join_str(node.group->items, ","));
+            if (node.group.has_value()) {
+                spNode->m_pImpl->update_param("title", node.group->title);
+                spNode->m_pImpl->update_param("background", node.group->background);
+                spNode->m_pImpl->update_param("size", node.group->sz);
+                spNode->m_pImpl->update_param("items", join_str(node.group->items, ","));
             }
         }
         //Compatible with older versions
@@ -319,12 +315,12 @@ void Graph::init(const GraphData& graph) {
                 std::string fmt = "\\n";
                 color = std::regex_replace(color, pattern, fmt);
                 std::string json = "{\"nres\": " + std::to_string(nres) + ", \"color\":\"" + color + "\"}";
-                spNode->update_param("heatmap", json);
+                spNode->m_pImpl->update_param("heatmap", json);
             }
         }
         else if (zeno::isDerivedFromSubnetNodeName(node.cls))
         {
-            if (std::shared_ptr<zeno::SubnetNode> sbn = std::dynamic_pointer_cast<zeno::SubnetNode>(spNode))
+            if (auto sbn = dynamic_cast<SubnetNode*>(spNode->m_pImpl->coreNode()))
                 sbn->setCustomUi(node.customUi);
         }
     }
@@ -332,8 +328,8 @@ void Graph::init(const GraphData& graph) {
     for (const auto& link : graph.links) {
         if (!isLinkValid(link))
             continue;
-        std::shared_ptr<INode> outNode = getNode(link.outNode);
-        std::shared_ptr<INode> inNode = getNode(link.inNode);
+        auto outNode = getNode(link.outNode);
+        auto inNode = getNode(link.inNode);
 
         bool bExist = false;
         bool bOutputPrim = outNode->isPrimitiveType(false, link.outParam, bExist);
@@ -356,18 +352,19 @@ void Graph::init(const GraphData& graph) {
 
 void Graph::initRef(const GraphData& graph) {
     for (const auto& [nodename, refparams] : graph.references) {
-        std::shared_ptr<INode> refNode = getNode(nodename);
+        auto refNode = getNode(nodename);
         const auto& uuidpath = refNode->get_uuid_path();
         for (auto paramname : refparams) {
             refNode->constructReference(paramname);
         }
     }
     for (const std::string& subnetnode : subnet_nodes) {
-        auto spSubnetNode = std::dynamic_pointer_cast<SubnetNode>(m_nodes[subnetnode]);
+        auto pNodeImpl = getNode(subnetnode);
+        auto spSubnetNode = dynamic_cast<SubnetNode*>(pNodeImpl->coreNode());
         assert(spSubnetNode);
         if (spSubnetNode) {
             NodesData nodes = graph.nodes;
-            const std::string& nodename = spSubnetNode->get_name();
+            const std::string& nodename = pNodeImpl->get_name();
             const NodeData& node = nodes[nodename];
             const std::optional<GraphData>& optSubg = node.subgraph;
             if (optSubg.has_value()) {
@@ -381,14 +378,20 @@ void Graph::initRef(const GraphData& graph) {
 void Graph::markDirtyWhenFrameChanged()
 {
     for (const std::string& uuid : frame_nodes) {
-        if (!m_nodes[uuid]->isInDopnetwork()) {
-            m_nodes[uuid]->mark_dirty(true, Dirty_ParamChanged);
+        auto pNode = m_nodes[uuid].get();
+        assert(pNode);
+        auto pNodeImpl = pNode->m_pImpl;
+        if (!pNodeImpl->isInDopnetwork()) {
+            pNodeImpl->mark_dirty(true, Dirty_ParamChanged);
         }
     }
     std::set<std::string> nodes = subnet_nodes;
     nodes.insert(asset_nodes.begin(), asset_nodes.end());
     for (const std::string& uuid : nodes) {
-        auto spSubnetNode = std::dynamic_pointer_cast<SubnetNode>(m_nodes[uuid]);
+        auto pNode = m_nodes[uuid].get();
+        assert(pNode);
+        auto pNodeImpl = pNode->m_pImpl;
+        auto spSubnetNode = dynamic_cast<SubnetNode*>(pNodeImpl->coreNode());
         spSubnetNode->subgraph->markDirtyWhenFrameChanged();
     }
 }
@@ -396,8 +399,8 @@ void Graph::markDirtyWhenFrameChanged()
 void Graph::markDirtyAll()
 {
     for (const auto& [uuid, node] : m_nodes) {
-        node->mark_dirty(true);
-        node->clear();  //clear all result prim and objs
+        node->m_pImpl->mark_dirty(true);
+        node->m_pImpl->clear();  //clear all result prim and objs
     }
 }
 
@@ -436,7 +439,7 @@ std::string Graph::generateNewName(const std::string& node_cls, const std::strin
     return "";
 }
 
-void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph, std::shared_ptr<INode> spNode, std::string paramName, bool bPrim, bool bInput, ParamType newtype)
+void Graph::updateWildCardParamTypeRecursive(Graph* spCurrGarph, NodeImpl* spNode, std::string paramName, bool bPrim, bool bInput, ParamType newtype)
 {
     if (!spCurrGarph || !spNode)
         return;
@@ -447,7 +450,7 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
             if (bInput) {}
                 //updateWildCardParamTypeRecursive(spCurrGarph, spCurrGarph->getNode(link.outNode), link.outParam, bPrim, !bInput, newtype);
             else {
-                if (auto& innode = spCurrGarph->getNode(link.inNode)) {
+                if (auto innode = spCurrGarph->getNode(link.inNode)) {
                     ParamType paramType;
                     SocketType socketType;
                     bool bWildcard = false;
@@ -459,12 +462,13 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
                 }
             }
         }
-        if (std::shared_ptr<Graph> graph = spNode->getGraph().lock()) {
-            if (graph->optParentSubgNode.has_value()) {
-                if (SubnetNode* parentSubgNode = graph->optParentSubgNode.value()) {
-                    parentSubgNode->update_param_type(spNode->get_name(), bPrim, !bInput, newtype);
-                    for (auto& link : parentSubgNode->getLinksByParam(!bInput, spNode->get_name())) {
-                        if (std::shared_ptr<Graph> parentGraph = parentSubgNode->getGraph().lock()) {
+        if (auto graph = spNode->getGraph()) {
+            if (graph->optParentSubgNode) {
+                NodeImpl* pNodeImpl = graph->optParentSubgNode->m_pImpl;
+                if (SubnetNode* parentSubgNode = dynamic_cast<SubnetNode*>(pNodeImpl->coreNode())) {
+                    pNodeImpl->update_param_type(spNode->get_name(), bPrim, !bInput, newtype);
+                    for (auto& link : pNodeImpl->getLinksByParam(!bInput, spNode->get_name())) {
+                        if (auto parentGraph = pNodeImpl->getGraph()) {
                             auto const& inNode = parentGraph->getNode(link.inNode);
                             auto const& outNode = parentGraph->getNode(link.outNode);
                             ParamType inNodeParamType;
@@ -494,13 +498,13 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
             }
         }
     }
-    else if (std::shared_ptr<SubnetNode> subnet = std::dynamic_pointer_cast<SubnetNode>(spNode)) {
+    else if (SubnetNode* subnet = dynamic_cast<SubnetNode*>(spNode->coreNode())) {
         spNode->update_param_type(paramName, bPrim, bInput, newtype);
-            for (auto& link : subnet->getLinksByParam(bInput, paramName)) {
+            for (auto& link : spNode->getLinksByParam(bInput, paramName)) {
                 if (bInput) {}
                 //updateWildCardParamTypeRecursive(spCurrGarph, spCurrGarph->getNode(link.outNode), link.outParam, bPrim, !bInput, newtype);
                 else {
-                    if (auto& innode = spCurrGarph->getNode(link.inNode)) {
+                    if (auto innode = spCurrGarph->getNode(link.inNode)) {
                         ParamType paramType;
                         SocketType socketType;
                         bool bWildcard = false;
@@ -543,10 +547,10 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
                                 subnet->subgraph->removeLinkWhenUpdateWildCardParam(link.outNode, link.inNode, link);
                             else {
                                 if (bInput)
-                                    updateWildCardParamTypeRecursive(subnet->subgraph, inNode, link.inParam, bPrim, bInput, newtype);
+                                    updateWildCardParamTypeRecursive(subnet->subgraph.get(), inNode, link.inParam, bPrim, bInput, newtype);
                                 else {
                                     if (bOutWildcard || (!bPrim && isSubnetInputOutputParam(outNode, link.outParam)))
-                                        updateWildCardParamTypeRecursive(subnet->subgraph, outNode, link.outParam, bPrim, bInput, newtype);
+                                        updateWildCardParamTypeRecursive(subnet->subgraph.get(), outNode, link.outParam, bPrim, bInput, newtype);
                                     else
                                         subnet->subgraph->removeLinkWhenUpdateWildCardParam(link.outNode, link.inNode, link);
                                 }
@@ -561,7 +565,7 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
         for (const auto& param : params) {
             spNode->update_param_type(param.first, bPrim, param.second, newtype);
             for (auto& link : spNode->getLinksByParam(param.second, param.first)) {
-                std::shared_ptr<INode> otherNodeLinkToThis = param.second ? spCurrGarph->getNode(link.outNode) : spCurrGarph->getNode(link.inNode);
+                NodeImpl* otherNodeLinkToThis = param.second ? spCurrGarph->getNode(link.outNode) : spCurrGarph->getNode(link.inNode);
                 if (otherNodeLinkToThis) {
                     if (param.second) {
                         ParamType paramType;
@@ -596,8 +600,8 @@ void Graph::updateWildCardParamTypeRecursive(std::shared_ptr<Graph> spCurrGarph,
 
 void Graph::removeLinkWhenUpdateWildCardParam(const std::string& outNodeName, const std::string& inNodeName, EdgeInfo& edge)
 {
-    std::shared_ptr<INode> outNode = getNode(outNodeName);
-    std::shared_ptr<INode> inNode = getNode(inNodeName);
+    NodeImpl* outNode = getNode(outNodeName);
+    NodeImpl* inNode = getNode(inNodeName);
     if (!outNode || !inNode)
         return;
     outNode->removeLink(false, edge);
@@ -606,12 +610,12 @@ void Graph::removeLinkWhenUpdateWildCardParam(const std::string& outNodeName, co
     CALLBACK_NOTIFY(removeLink, edge)
 }
 
-void Graph::resetWildCardParamsType(bool bParamWildcard, std::shared_ptr<INode>& node, const std::string& paramName, const bool& bPrimType, const bool& bInput)
+void Graph::resetWildCardParamsType(bool bParamWildcard, NodeImpl* node, const std::string& paramName, const bool& bPrimType, const bool& bInput)
 {
     if (!node)
         return;
-    std::function<bool(std::shared_ptr<Graph>, std::shared_ptr<INode>, std::string, bool, std::set<std::string>&)> linkedToSpecificType =
-        [&linkedToSpecificType, this](std::shared_ptr<Graph> currGraph, std::shared_ptr<INode> node, std::string paramName, bool bPrimType, std::set<std::string>& visited)->bool {
+    std::function<bool(Graph*, NodeImpl*, std::string, bool, std::set<std::string>&)> linkedToSpecificType =
+        [&linkedToSpecificType, this](Graph* currGraph, NodeImpl* node, std::string paramName, bool bPrimType, std::set<std::string>& visited)->bool {
         const auto& params = node->getWildCardParams(paramName, bPrimType);
         for (auto& param : params) {
             visited.insert(node->get_uuid() + param.first);
@@ -632,12 +636,14 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, std::shared_ptr<INode>&
                                 return true;
                     }
                 }
-                if (std::shared_ptr<Graph> graph = node->getGraph().lock()) {
-                    if (graph->optParentSubgNode.has_value()) {
-                        if (SubnetNode* parentSubgNode = graph->optParentSubgNode.value()) {
-                            visited.insert(parentSubgNode->get_uuid() + node->get_uuid());
-                            if (auto parentGraph = parentSubgNode->getGraph().lock()) {
-                                for (auto& link : parentSubgNode->getLinksByParam(!param.second, node->get_name())) {
+                if (auto graph = node->getGraph()) {
+                    if (graph->optParentSubgNode) {
+                        auto pNodeImpl = graph->optParentSubgNode->m_pImpl;
+                        SubnetNode* parentSubgNode = dynamic_cast<SubnetNode*>(pNodeImpl->coreNode());
+                        if (parentSubgNode) {
+                            visited.insert(pNodeImpl->get_uuid() + node->get_uuid());
+                            if (auto parentGraph = pNodeImpl->getGraph()) {
+                                for (auto& link : pNodeImpl->getLinksByParam(!param.second, node->get_name())) {
                                     const auto& node = parentGraph->getNode(param.second ? link.inNode : link.outNode);
                                     ParamType paramType;
                                     SocketType socketType;
@@ -658,7 +664,7 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, std::shared_ptr<INode>&
                 }
             }
             else if (zeno::isDerivedFromSubnetNodeName(node->get_nodecls())) {
-                if (std::shared_ptr<SubnetNode> subnet = std::dynamic_pointer_cast<SubnetNode>(node)) {
+                if (SubnetNode* subnet = dynamic_cast<SubnetNode*>(node->coreNode())) {
                     if (auto innerNode = subnet->subgraph->getNode(paramName)) {
                         std::vector<std::string> inparamNames;
                         if (param.second) {
@@ -684,7 +690,7 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, std::shared_ptr<INode>&
                                     return true;
                                 else {
                                     if (!visited.count(node->get_uuid() + (param.second ? link.inParam : link.outParam)))
-                                        if (linkedToSpecificType(subnet->subgraph, node, param.second ? link.inParam : link.outParam, bPrimType, visited))
+                                        if (linkedToSpecificType(subnet->subgraph.get(), node, param.second ? link.inParam : link.outParam, bPrimType, visited))
                                             return true;
                                 }
                             }
@@ -713,7 +719,7 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, std::shared_ptr<INode>&
         return false;
     };
     if (bParamWildcard || (!bPrimType && isSubnetInputOutputParam(node, paramName))) {
-        if (linkedToSpecificType(shared_from_this(), node, paramName, bPrimType, std::set<std::string>()))
+        if (linkedToSpecificType(this, node, paramName, bPrimType, std::set<std::string>()))
             return;
     }
 }
@@ -753,7 +759,7 @@ std::string Graph::updateNodeName(const std::string oldName, const std::string n
         return "";
     }
 
-    auto spNode = m_nodes[uuid];
+    NodeImpl* spNode = m_nodes[uuid].get()->m_pImpl;
     std::string oldPath = spNode->get_path();
     std::string name = newName;
     if (m_name2uuid.find(name) != m_name2uuid.end()) {
@@ -779,8 +785,6 @@ void Graph::clear()
 
     m_nodes.clear();
     nodesToExec.clear();
-    portalIns.clear();
-    portals.clear();
 
     subInputNodes.clear();
     subOutputNodes.clear();
@@ -793,11 +797,11 @@ void Graph::clear()
     suboutput_nodes.clear();
     m_viewnodes.clear();
 
-    optParentSubgNode = std::nullopt;
+    optParentSubgNode = nullptr;
     ctx.reset();
 }
 
-std::shared_ptr<INode> Graph::createNode(
+INodeImpl* Graph::createNode(
     const std::string& cls,
     const std::string& orgin_name,
     bool bAssets,
@@ -806,11 +810,10 @@ std::shared_ptr<INode> Graph::createNode(
     )
 {
     CORE_API_BATCH
-
     const std::string& name = generateNewName(cls, orgin_name, bAssets);
 
     std::string uuid;
-    std::shared_ptr<INode> node;
+    INodeImpl* pNode = nullptr;
     if (!bAssets) {
         auto& nodeClass = getSession().nodeClasses;
         std::string nodecls = cls;
@@ -819,15 +822,21 @@ std::shared_ptr<INode> Graph::createNode(
             nodecls = "DeprecatedNode";
         }
 
-        auto cl = safe_at(getSession().nodeClasses, nodecls, "node class name").get();
-        node = cl->new_instance(shared_from_this(), name);
-        node->nodeClass = cl;
-        uuid = node->get_uuid();
+        INodeClass* cl = safe_at(getSession().nodeClasses, nodecls, "node class name").get();
+        std::unique_ptr<INodeImpl> upNode = cl->new_instance(this, name);
+        pNode = upNode.get();
+        m_nodes.insert(std::make_pair(name, std::move(upNode)));
+        
+        pNode->m_pImpl->nodeClass = cl;
+        uuid = pNode->m_pImpl->get_uuid();
     }
     else {
         bool isCurrentGraphAsset = getSession().assets->isAssetGraph(this);
-        node = getSession().assets->newInstance(shared_from_this(), cls, name, isCurrentGraphAsset);
-        uuid = node->get_uuid();
+        std::unique_ptr<INodeImpl> upNode(getSession().assets->newInstance(this, cls, name, isCurrentGraphAsset));
+        pNode = upNode.get();
+        m_nodes.insert(std::make_pair(name, std::move(upNode)));
+
+        uuid = pNode->m_pImpl->get_uuid();
         asset_nodes.insert(uuid);
     }
 
@@ -841,8 +850,8 @@ std::shared_ptr<INode> Graph::createNode(
         subnet_nodes.insert(uuid);
         if (!isIOInit) {
             zeno::ParamsUpdateInfo updateInfo;
-            zeno::parseUpdateInfo(node->get_customui(), updateInfo);
-            node->update_editparams(updateInfo, true);
+            zeno::parseUpdateInfo(pNode->m_pImpl->get_customui(), updateInfo);
+            pNode->m_pImpl->update_editparams(updateInfo, true);
         }
     }
     if (cls == "SubInput") {
@@ -852,13 +861,12 @@ std::shared_ptr<INode> Graph::createNode(
         suboutput_nodes.insert(uuid);
     }
 
-    node->set_pos(pos);
-    node->mark_dirty(true);
+    pNode->m_pImpl->set_pos(pos);
+    pNode->m_pImpl->mark_dirty(true);
     m_name2uuid[name] = uuid;
-    m_nodes[uuid] = node;
 
-    CALLBACK_NOTIFY(createNode, name, node)
-    return node;
+    CALLBACK_NOTIFY(createNode, name, pNode->m_pImpl)
+    return pNode;
 }
 
 Graph* Graph::addSubnetNode(std::string const& id) {
@@ -891,18 +899,18 @@ std::set<std::string> Graph::getSubOutputs()
 bool Graph::hasNode(std::string const& uuid_node_path) {
     auto spNode = zeno::getSession().getNodeByUuidPath(uuid_node_path);
     if (!spNode) return false;
-    return spNode->getThisGraph().get() == this;
+    return spNode->getThisGraph() == this;
 }
 
-std::shared_ptr<INode> Graph::getNode(std::string const& name) {
+NodeImpl* Graph::getNode(std::string const& name) {
     if (m_name2uuid.find(name) == m_name2uuid.end()) {
         return nullptr;
     }
     const std::string& uuid = m_name2uuid[name];
-    return safe_at(m_nodes, uuid, "");
+    return safe_at(m_nodes, uuid, "")->m_pImpl;
 }
 
-std::shared_ptr<INode> Graph::getNodeByUuidPath(ObjPath path) {
+NodeImpl* Graph::getNodeByUuidPath(ObjPath path) {
     if (path.empty())
         return nullptr;
 
@@ -915,17 +923,16 @@ std::shared_ptr<INode> Graph::getNodeByUuidPath(ObjPath path) {
     if (idx != std::string::npos)
     {
         path = path.substr(idx + 1, path.size() - idx);
-        //subnet
-        if (std::shared_ptr<SubnetNode> subnetNode = std::dynamic_pointer_cast<SubnetNode>(it->second))
+        if (SubnetNode* subnetNode = dynamic_cast<SubnetNode*>(it->second->m_pImpl->coreNode()))
         {
-            auto spGraph = subnetNode->subgraph;
+            auto spGraph = subnetNode->subgraph.get();
             if (spGraph)
                 return spGraph->getNodeByUuidPath(path);
             else
                 return nullptr;
         }
     }
-    return it->second;
+    return it->second->m_pImpl;
 }
 
 std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
@@ -945,9 +952,9 @@ std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
             return _getGraphByPath(items);
         }
         else if (currname == "..") {
-            if (optParentSubgNode.has_value()) {
-                SubnetNode* parentNode = optParentSubgNode.value();
-                auto parentG = parentNode->getGraph().lock();
+            if (optParentSubgNode) {
+                SubnetNode* parentNode = getSubnetNode(optParentSubgNode);
+                auto parentG = optParentSubgNode->m_pImpl->getGraph();
                 return parentG->_getGraphByPath(items);
             }
         }
@@ -960,9 +967,9 @@ std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
         return nullptr;
     }
 
-    if (std::shared_ptr<SubnetNode> subnetNode = std::dynamic_pointer_cast<SubnetNode>(it->second))
+    if (auto subnetNode = getSubnetNode(it->second.get()))
     {
-        auto spGraph = subnetNode->subgraph;
+        auto spGraph = subnetNode->subgraph.get();
         if (spGraph)
             return spGraph->_getGraphByPath(items);
         else
@@ -981,7 +988,7 @@ std::shared_ptr<Graph> Graph::getGraphByPath(const std::string& pa)
     return _getGraphByPath(pathitems);
 }
 
-std::shared_ptr<zeno::INode> Graph::getNodeByPath(const std::string& pa)
+zeno::NodeImpl* Graph::getNodeByPath(const std::string& pa)
 {
     std::string path = pa;
     if (path.empty())
@@ -997,9 +1004,9 @@ std::shared_ptr<zeno::INode> Graph::getNodeByPath(const std::string& pa)
     return spGraph->getNode(nodename);
 }
 
-std::vector<std::shared_ptr<INode>> Graph::getNodesByClass(const std::string& cls)
+std::vector<NodeImpl*> Graph::getNodesByClass(const std::string& cls)
 {
-    std::vector<std::shared_ptr<INode>> nodes;
+    std::vector<NodeImpl*> nodes;
     auto iter = node_set.find(cls);
     if (iter != node_set.end()) {
         for (auto name : iter->second) {
@@ -1009,10 +1016,10 @@ std::vector<std::shared_ptr<INode>> Graph::getNodesByClass(const std::string& cl
     return nodes;
 }
 
-std::map<std::string, std::shared_ptr<INode>> Graph::getNodes() const {
-    std::map<std::string, std::shared_ptr<INode>> nodes;
+std::map<std::string, NodeImpl*> Graph::getNodes() const {
+    std::map<std::string, NodeImpl*> nodes;
     for (auto& [uuid, node] : m_nodes) {
-        nodes.insert(std::make_pair(node->get_name(), node));
+        nodes.insert(std::make_pair(node->m_pImpl->get_name(), node->m_pImpl));
     }
     return nodes;
 }
@@ -1033,8 +1040,8 @@ GraphData Graph::exportGraph() const {
     }
 
     for (auto& [uuid, node] : m_nodes) {
-        zeno::NodeData nodeinfo = node->exportInfo();
-        graph.nodes.insert(std::make_pair(node->get_name(), nodeinfo));
+        zeno::NodeData nodeinfo = node->m_pImpl->exportInfo();
+        graph.nodes.insert(std::make_pair(node->m_pImpl->get_name(), nodeinfo));
     }
     return graph;
 }
@@ -1043,7 +1050,7 @@ LinksData Graph::exportLinks() const
 {
     LinksData links;
     for (auto& [uuid, node] : m_nodes) {
-        zeno::NodeData nodeinfo = node->exportInfo();
+        zeno::NodeData nodeinfo = node->m_pImpl->exportInfo();
         const PrimitiveParams& params = customUiToParams(nodeinfo.customUi.inputPrims);
         for (ParamPrimitive param : params) {
             links.insert(links.end(), param.links.begin(), param.links.end());
@@ -1056,9 +1063,9 @@ LinksData Graph::exportLinks() const
 }
 
 std::string Graph::getName() const {
-    if (optParentSubgNode.has_value()) {
-        SubnetNode* pSubnetNode = optParentSubgNode.value();
-        return pSubnetNode->get_name();
+    if (optParentSubgNode) {
+        SubnetNode* pSubnetNode = getSubnetNode(optParentSubgNode);
+        return optParentSubgNode->m_pImpl->get_name();
     }
     return m_name;
 }
@@ -1070,7 +1077,7 @@ void Graph::setName(const std::string& na) {
 bool Graph::removeNode(std::string const& name) {
     auto it = m_name2uuid.find(name);
     std::string uuid = safe_at(m_name2uuid, name, "get uuid when calling removeNode");
-    auto spNode = safe_at(m_nodes, uuid, "");
+    auto spNode = safe_at(m_nodes, uuid, "").get()->m_pImpl;
 
     //remove links first
     std::vector<EdgeInfo> remLinks = spNode->getLinks();
@@ -1101,10 +1108,10 @@ bool Graph::removeNode(std::string const& name) {
 
 bool zeno::Graph::isLinkValid(const EdgeInfo& edge)
 {
-    std::shared_ptr<INode> outNode = getNode(edge.outNode);
+    NodeImpl* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
-    std::shared_ptr<INode> inNode = getNode(edge.inNode);
+    NodeImpl* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
 
@@ -1157,8 +1164,8 @@ bool Graph::addLink(const EdgeInfo& edge) {
     if (!isLinkValid(edge))
         return false;
 
-    std::shared_ptr<INode> outNode = getNode(edge.outNode);
-    std::shared_ptr<INode> inNode = getNode(edge.inNode);
+    NodeImpl* outNode = getNode(edge.outNode);
+    NodeImpl* inNode = getNode(edge.inNode);
 
     bool bExist = false;
     bool bOutputPrim = outNode->isPrimitiveType(false, edge.outParam, bExist);
@@ -1265,11 +1272,11 @@ bool Graph::removeLink(const EdgeInfo& edge) {
 
     CALLBACK_NOTIFY(removeLink, edge)
 
-    std::shared_ptr<INode> outNode = getNode(edge.outNode);
+    NodeImpl* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
 
-    std::shared_ptr<INode> inNode = getNode(edge.inNode);
+    NodeImpl* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
 
@@ -1322,7 +1329,7 @@ bool Graph::removeLinks(const std::string nodename, bool bInput, const std::stri
 {
     CORE_API_BATCH
 
-    std::shared_ptr<INode> spNode = getNode(nodename);
+    NodeImpl* spNode = getNode(nodename);
     std::vector<EdgeInfo> links = spNode->getLinksByParam(bInput, paramname);
     for (auto link : links)
         removeLink(link);
@@ -1335,10 +1342,10 @@ bool Graph::updateLink(const EdgeInfo& edge, bool bInput, const std::string oldk
 {
     CORE_API_BATCH
 
-    std::shared_ptr<INode> outNode = getNode(edge.outNode);
+    NodeImpl* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
-    std::shared_ptr<INode> inNode = getNode(edge.inNode);
+    NodeImpl* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
 
@@ -1357,10 +1364,10 @@ bool Graph::updateLink(const EdgeInfo& edge, bool bInput, const std::string oldk
 bool Graph::moveUpLinkKey(const EdgeInfo& edge, bool bInput, const std::string keyName)
 {
     CORE_API_BATCH
-    std::shared_ptr<INode> outNode = getNode(edge.outNode);
+    NodeImpl* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
-    std::shared_ptr<INode> inNode = getNode(edge.inNode);
+    NodeImpl* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
     return moveUpLinkKey(edge, bInput, keyName);

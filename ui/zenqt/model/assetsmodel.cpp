@@ -25,7 +25,7 @@ AssetsModel::AssetsModel(QObject* parent)
         //TODO
     });
 
-    for (zeno::Asset asset : assets->getAssets()) {
+    for (const zeno::Asset& asset : assets->getAssets()) {
         _addAsset(asset.m_info);
     }
 }
@@ -60,7 +60,7 @@ GraphModel* AssetsModel::getAssetGraph(const QString& graphName)
             if (!pModel) {
                 //delay load
                 std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
-                std::shared_ptr<zeno::Graph> spAsset = assets->getAssetGraph(assetName, true);
+                auto spAsset = assets->getAssetGraph(assetName, true);
                 if (spAsset) {
                     auto pNewAsstModel = new GraphModel(assetName, true, nullptr, this);
                     m_assets[i].pGraphM = pNewAsstModel;
@@ -213,7 +213,7 @@ void AssetsModel::removeAsset(const QString& assetName)
 void AssetsModel::saveAsset(const QString& name)
 {
     auto& assets = zeno::getSession().assets;
-    zeno::Asset asset = assets->getAsset(name.toStdString());
+    const zeno::Asset& asset = assets->getAsset(name.toStdString());
 
     zeno::ZenoAsset zasset;
     zasset.info = asset.m_info;
@@ -250,7 +250,7 @@ void AssetsModel::_addAsset(zeno::AssetInfo info)
     item.info = info;
 
     std::shared_ptr<zeno::AssetsMgr> asts = zeno::getSession().assets;
-    std::shared_ptr<zeno::Graph> spAsset = asts->getAsset(info.name).sharedGraph;
+    zeno::Graph* spAsset = asts->getAsset(info.name).sharedGraph.get();
     if (spAsset) {
         auto pNewAsstModel = new GraphModel(info.name, true, nullptr, this);
         item.pGraphM = pNewAsstModel;

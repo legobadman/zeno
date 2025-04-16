@@ -2,7 +2,7 @@
 #include <zeno/core/Graph.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/CoreParam.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/extra/SubnetNode.h>
 #include <zeno/utils/helper.h>
 #include <zeno/formula/formula.h>

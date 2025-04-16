@@ -3,7 +3,7 @@
 #include "zassert.h"
 #include "variantptr.h"
 #include <zeno/utils/api.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include "model/GraphsTreeModel.h"
 #include "model/graphsmanager.h"
 #include "parammodel.h"
@@ -72,7 +72,7 @@ public:
     std::string m_cbFrameCached;
     std::string m_cbFrameRemoved;
 
-    zeno::INode* m_wpNode = nullptr;
+    NodeImpl* m_wpNode = nullptr;
     ParamsModel* params = nullptr;
     bool bView = false;
     bool bByPass = false;
@@ -85,7 +85,7 @@ public:
 
     NodeItem(QObject* parent);
     ~NodeItem();
-    void init(GraphModel* pGraphM, zeno::INode* spNode);
+    void init(GraphModel* pGraphM, NodeImpl* spNode);
     QString getName() {
         return name;
     }
@@ -126,7 +126,7 @@ void NodeItem::unregister()
     m_cbSetView = "";
 }
 
-void NodeItem::init(GraphModel* pGraphM, zeno::INode* spNode)
+void NodeItem::init(GraphModel* pGraphM, NodeImpl* spNode)
 {
     this->m_wpNode = spNode;
 
@@ -239,7 +239,7 @@ GraphModel::GraphModel(std::string const& asset_or_graphpath, bool bAsset, Graph
     m_linkModel = new LinkModel(this);
     registerCoreNotify();
 
-    std::map<std::string, std::shared_ptr<zeno::INode>> nodes;
+    std::map<std::string, std::shared_ptr<zeno::NodeImpl>> nodes;
     nodes = spGraph->getNodes();
 
     for (auto& [name, node] : nodes) {
@@ -265,9 +265,8 @@ void GraphModel::registerCoreNotify()
     auto coreGraph = m_impl->m_wpCoreGraph;
     ZASSERT_EXIT(coreGraph);
 
-    m_cbCreateNode = coreGraph->register_createNode([&](const std::string& name, std::weak_ptr<zeno::INode> spNode) {
-        auto coreNode = spNode.lock();
-        _appendNode(coreNode.get());
+    m_cbCreateNode = coreGraph->register_createNode([&](const std::string& name, zeno::NodeImpl* spNode) {
+        _appendNode(spNode);
     });
 
     m_cbRemoveNode = coreGraph->register_removeNode([&](const std::string& name) {
@@ -1134,19 +1133,21 @@ zeno::NodeData GraphModel::createNode(const QString& nodeCls, const QString& cat
 
 void GraphModel::_appendNode(void* _spNode)
 {
-    zeno::INode* spNode = static_cast<zeno::INode*>(_spNode);
+    INodeImpl* spNode = static_cast<INodeImpl*>(_spNode);
     ZASSERT_EXIT(spNode);
+
+    NodeImpl* pNodeImpl = spNode->m_pImpl;
 
     int nRows = m_nodes.size();
 
     beginInsertRows(QModelIndex(), nRows, nRows);
 
     NodeItem* pItem = new NodeItem(this);
-    pItem->init(this, spNode);
+    pItem->init(this, pNodeImpl);
     pItem->params->setNodeIdx(createIndex(nRows, 0));
 
-    const QString& name = QString::fromStdString(spNode->get_name());
-    const QString& uuid = QString::fromStdString(spNode->get_uuid());
+    const QString& name = QString::fromStdString(pNodeImpl->get_name());
+    const QString& uuid = QString::fromStdString(pNodeImpl->get_uuid());
 
     if (pItem->optSubgraph.has_value())
         m_subgNodes.insert(name);
@@ -1661,7 +1662,7 @@ void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData
     unRegisterCoreNotify();
     for (auto [name, node] : nodes) {
         bool bAsset = node.asset.has_value();
-        std::shared_ptr<zeno::INode> spNode = m_impl->m_wpCoreGraph->createNode(node.cls, "", bAsset, { offset.x(), offset.y() });
+        std::shared_ptr<zeno::NodeImpl> spNode = m_impl->m_wpCoreGraph->createNode(node.cls, "", bAsset, { offset.x(), offset.y() });
         node.name = spNode->get_name();
         spNode->init(node);
         auto pos = spNode->get_pos();

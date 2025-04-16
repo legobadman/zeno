@@ -51,12 +51,12 @@ struct NumericInterpolation : zeno::INode {
     }
 
     virtual void apply() override {
-        auto src = has_input("src") ? get_input<zeno::NumericObject>("src")->value : 0.5f;
-        auto srcMin = has_input("srcMin") ? get_input<zeno::NumericObject>("srcMin")->value : 0;
-        auto srcMax = has_input("srcMax") ? get_input<zeno::NumericObject>("srcMax")->value : 1;
-        auto dstMin = has_input("dstMin") ? get_input<zeno::NumericObject>("dstMin")->value : 0;
-        auto dstMax = has_input("dstMax") ? get_input<zeno::NumericObject>("dstMax")->value : 1;
-        auto isClamped = get_param<bool>("isClamped");
+        auto src = ZImpl(has_input("src")) ? ZImpl(get_input<zeno::NumericObject>("src"))->value : 0.5f;
+        auto srcMin = ZImpl(has_input("srcMin")) ? ZImpl(get_input<zeno::NumericObject>("srcMin"))->value : 0;
+        auto srcMax = ZImpl(has_input("srcMax")) ? ZImpl(get_input<zeno::NumericObject>("srcMax"))->value : 1;
+        auto dstMin = ZImpl(has_input("dstMin")) ? ZImpl(get_input<zeno::NumericObject>("dstMin"))->value : 0;
+        auto dstMax = ZImpl(has_input("dstMax")) ? ZImpl(get_input<zeno::NumericObject>("dstMax"))->value : 1;
+        auto isClamped = ZImpl(get_param<bool>("isClamped"));
 
         zeno::NumericValue fac;
         std::visit([&fac, isClamped] (auto src, auto srcMin, auto srcMax) {
@@ -73,7 +73,7 @@ struct NumericInterpolation : zeno::INode {
 
         auto ret = std::make_shared<zeno::NumericObject>();
         ret->value = dst;
-        set_output("dst", std::move(ret));
+        ZImpl(set_output("dst", std::move(ret)));
     }
 };
 

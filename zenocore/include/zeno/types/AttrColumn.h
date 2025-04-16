@@ -3,11 +3,10 @@
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/data.h>
+#include <zeno/utils/Error.h>
 
 
 namespace zeno {
-
-    using namespace zeno::reflect;
 
     class AttributeImpl {
     public:

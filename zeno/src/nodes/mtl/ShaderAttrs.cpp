@@ -13,15 +13,15 @@ namespace zeno {
 
 struct ShaderInputAttr : ShaderNodeClone<ShaderInputAttr> {
     virtual int determineType(EmissionPass *em) override {
-        auto type = get_input2<std::string>("type");
+        auto type = ZImpl(get_input2<std::string>("type"));
         const char *tab[] = {"float", "vec2", "vec3", "vec4"};
         auto idx = std::find(std::begin(tab), std::end(tab), type) - std::begin(tab);
         return idx + 1;
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto attr = get_input2<std::string>("attr");
-        auto type = get_input2<std::string>("type");
+        auto attr = ZImpl(get_input2<std::string>("attr"));
+        auto type = ZImpl(get_input2<std::string>("type"));
 
         if (attr.back() == ')') {
             return em->emitCode(type + "(" + attr + ")");
@@ -46,10 +46,10 @@ ZENDEFNODE(ShaderInputAttr, {
 struct MakeShaderUniform : zeno::INode {
     virtual void apply() override {
         auto prim = std::make_shared<PrimitiveObject>();
-        auto size = get_input2<int>("size");
+        auto size = ZImpl(get_input2<int>("size"));
         prim->resize(size);
-        if (has_input("uniformDict")) {
-            auto uniformDict = get_input<zeno::DictObject>("uniformDict");
+        if (ZImpl(has_input("uniformDict"))) {
+            auto uniformDict = ZImpl(get_input<zeno::DictObject>("uniformDict"));
             for (const auto& [key, value] : uniformDict->lut) {
                 auto index = std::stoi(key);
                 if (auto num = dynamic_cast<const zeno::NumericObject*>(value.get())) {
@@ -64,8 +64,8 @@ struct MakeShaderUniform : zeno::INode {
                 }
             }
         }
-        prim->userData().set2("ShaderUniforms", 1);
-        set_output("prim", std::move(prim));
+        prim->userData()->set_int("ShaderUniforms", 1);
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 
@@ -84,15 +84,15 @@ ZENDEFNODE(MakeShaderUniform, {
 
 struct ShaderUniformAttr : ShaderNodeClone<ShaderUniformAttr> {
     virtual int determineType(EmissionPass *em) override {
-        auto type = get_input2<std::string>("type");
+        auto type = ZImpl(get_input2<std::string>("type"));
         const char *tab[] = {"float", "vec2", "vec3", "vec4"};
         auto idx = std::find(std::begin(tab), std::end(tab), type) - std::begin(tab);
         return idx + 1;
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto idx = get_input2<int>("idx");
-        auto type = get_input2<std::string>("type");
+        auto idx = ZImpl(get_input2<int>("idx"));
+        auto type = ZImpl(get_input2<std::string>("type"));
         return em->emitCode(type + "(vec4(uniforms[" + std::to_string(idx) + "]))");
     }
 };

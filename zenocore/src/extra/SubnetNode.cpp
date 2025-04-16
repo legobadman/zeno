@@ -1,4 +1,4 @@
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/INodeClass.h>
@@ -13,15 +13,17 @@
 #include <zeno/funcs/ObjectCodec.h>
 #include <zeno/utils/Timer.h>
 #include <zeno/types/MaterialObject.h>
+#include <zeno/types/ListObject_impl.h>
+#include <zeno/utils/interfaceutil.h>
 
 
 namespace zeno {
 
-ZENO_API SubnetNode::SubnetNode() : subgraph(std::make_shared<Graph>(""))
+SubnetNode::SubnetNode() : subgraph(std::make_shared<Graph>(""))
 {
-    subgraph->optParentSubgNode = this;
+    subgraph->optParentSubgNode = this->m_pAdapter;
 
-    auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
+    //auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
     //m_customUi = cl->m_customui;
     {   //添加一些default的输入输出
         zeno::ParamTab tab;
@@ -68,31 +70,31 @@ ZENO_API SubnetNode::SubnetNode() : subgraph(std::make_shared<Graph>(""))
     }
 }
 
-ZENO_API SubnetNode::~SubnetNode() = default;
+SubnetNode::~SubnetNode() = default;
 
-ZENO_API void SubnetNode::initParams(const NodeData& dat)
+void SubnetNode::initParams(const NodeData& dat)
 {
-    INode::initParams(dat);
+    m_pAdapter->m_pImpl->initParams(dat);
     if (dat.subgraph)
         subgraph->init(*dat.subgraph);
 }
 
-ZENO_API std::shared_ptr<Graph> SubnetNode::get_graph() const
+Graph* SubnetNode::get_graph() const
 {
-    return subgraph;
+    return subgraph.get();
 }
 
-ZENO_API bool SubnetNode::isAssetsNode() const {
+bool SubnetNode::isAssetsNode() const {
     return subgraph->isAssets();
 }
 
-ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
+params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
 {
-    params_change_info changes = INode::update_editparams(params);
+    params_change_info changes = m_pAdapter->m_pImpl->update_editparams(params);
     //update subnetnode.
     if (!subgraph->isAssets()) {
         for (auto name : changes.new_inputs) {
-            std::shared_ptr<INode> newNode = subgraph->createNode("SubInput", name);
+            NodeImpl* newNode = subgraph->createNode("SubInput", name)->m_pImpl;
 
             if (bSubnetInit) {
                 if (name == "data_input") {
@@ -106,7 +108,7 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
             //这里SubInput的类型其实是和Subnet节点创建预设的参数对应，参考AddNodeCommand
 
             bool exist;     //subnet通过自定义参数面板创建SubInput节点时，根据实际情况添加primitive/obj类型的port端口
-            bool isprim = isPrimitiveType(true, name, exist);
+            bool isprim = m_pAdapter->m_pImpl->isPrimitiveType(true, name, exist);
             if (isprim) {
                 zeno::ParamPrimitive primitive;
                 primitive.bInput = false;
@@ -145,20 +147,20 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
         }
 
         for (auto name : changes.new_outputs) {
-            std::shared_ptr<INode> newNode = subgraph->createNode("SubOutput", name);
+            INodeImpl* newNode = subgraph->createNode("SubOutput", name);
 
             if (bSubnetInit) {
                 if (name == "data_output") {
-                    newNode->set_pos({ 700, 500 });
+                    newNode->m_pImpl->set_pos({ 700, 500 });
                 }
                 else if (name == "Output") {
-                    newNode->set_pos({ 0, 500 });
+                    newNode->m_pImpl->set_pos({ 0, 500 });
                     //newNode->set_view(true);
                 }
             }
 
             bool exist;
-            bool isprim = isPrimitiveType(false, name, exist);
+            bool isprim = m_pAdapter->m_pImpl->isPrimitiveType(false, name, exist);
             if (isprim) {
                 zeno::ParamPrimitive primitive;
                 primitive.bInput = true;
@@ -166,7 +168,7 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 primitive.type = gParamType_Int;
                 primitive.socketType = Socket_Primitve;
                 primitive.defl = 0;
-                newNode->add_input_prim_param(primitive);
+                newNode->m_pImpl->add_input_prim_param(primitive);
             }
             else if (!isprim && exist) {
                 zeno::ParamObject paramObj;
@@ -174,12 +176,12 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                 paramObj.name = "port";
                 paramObj.type = gParamType_Geometry;
                 paramObj.socketType = Socket_Clone;
-                newNode->add_input_obj_param(paramObj);
+                newNode->m_pImpl->add_input_obj_param(paramObj);
             }
             params_change_info changes;
             changes.new_inputs.insert("port");
             changes.inputs.push_back("port");
-            newNode->update_layout(changes);
+            newNode->m_pImpl->update_layout(changes);
         }
         for (const auto& [old_name, new_name] : changes.rename_outputs) {
             subgraph->updateNodeName(old_name, new_name);
@@ -210,14 +212,14 @@ ZENO_API params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo
                                 bool bWildcard = false;
                                 linktonode->getParamTypeAndSocketType(link.inParam, true, true, paramType, socketType, bWildcard);
                                 if (bWildcard) {
-                                    subgraph->updateWildCardParamTypeRecursive(subgraph, linktonode, link.inParam, true, true, param.type);
+                                    subgraph->updateWildCardParamTypeRecursive(subgraph.get(), linktonode, link.inParam, true, true, param.type);
                                 } else if (!outParamTypeCanConvertInParamType(param.type, paramType, Role_OutputPrimitive, Role_InputPrimitive)) {
                                     subgraph->removeLink(link);
                                 }
                             }
                         }
-                        for (auto& link : getLinksByParam(true, param.name)) {
-                            if (auto spgraph = graph.lock()) {
+                        for (auto& link : m_pAdapter->m_pImpl->getLinksByParam(true, param.name)) {
+                            if (auto spgraph = m_pAdapter->m_pImpl->graph) {
                                 if (auto linktonode = spgraph->getNode(link.outNode)) {
                                     ParamType paramType;
                                     SocketType socketType;
@@ -246,16 +248,16 @@ void SubnetNode::mark_subnetdirty(bool bOn)
     }
 }
 
-ZENO_API void SubnetNode::apply() {
+void SubnetNode::apply() {
     for (auto const &subinput_node: subgraph->getSubInputs()) {
         auto subinput = subgraph->getNode(subinput_node);
-        auto iter = m_inputObjs.find(subinput_node);
-        if (iter != m_inputObjs.end()) {
+        auto iter = m_pAdapter->m_pImpl->m_inputObjs.find(subinput_node);
+        if (iter != m_pAdapter->m_pImpl->m_inputObjs.end()) {
             //object type.
             if (iter->second.spObject) {
                 //要拷贝一下才能赋值到SubInput的port参数
                 zany spObject = iter->second.spObject->clone();
-                spObject->update_key(subinput->get_uuid_path());
+                spObject->update_key(stdString2zs(subinput->get_uuid_path()));
                 bool ret = subinput->set_output("port", spObject);
                 assert(ret);
                 ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
@@ -264,8 +266,8 @@ ZENO_API void SubnetNode::apply() {
         }
         else {
             //primitive type
-            auto iter2 = m_inputPrims.find(subinput_node);
-            if (iter2 != m_inputPrims.end()) {
+            auto iter2 = m_pAdapter->m_pImpl->m_inputPrims.find(subinput_node);
+            if (iter2 != m_pAdapter->m_pImpl->m_inputPrims.end()) {
                 bool ret = subinput->set_primitive_output("port", iter2->second.result);
                 assert(ret);
                 ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
@@ -296,17 +298,18 @@ ZENO_API void SubnetNode::apply() {
             bSetOutput = true;
             zany spObject = result->clone();
             if (!bPrimoutput) {
-                spObject->update_key(get_uuid_path());
+                spObject->update_key(stdString2zs(m_pAdapter->m_pImpl->get_uuid_path()));
             }
-            bool ret = set_output(suboutput_node, spObject);
+            bool ret = m_pAdapter->m_pImpl->set_output(suboutput_node, spObject);
             assert(ret);
         }
     }
 }
 
-ZENO_API NodeData SubnetNode::exportInfo() const {
-    NodeData node = INode::exportInfo();
-    Asset asset = zeno::getSession().assets->getAsset(node.cls);
+NodeData SubnetNode::exportInfo() const {
+    //要注意，这里必须要手动cast为SubnetNode才能拿，因为NodeImpl已经和INode分离了
+    NodeData node = m_pAdapter->m_pImpl->exportInfo();
+    const Asset& asset = zeno::getSession().assets->getAsset(node.cls);
     if (!asset.m_info.name.empty()) {
         node.asset = asset.m_info;
         node.type = Node_AssetInstance;
@@ -319,12 +322,12 @@ ZENO_API NodeData SubnetNode::exportInfo() const {
     return node;
 }
 
-ZENO_API CustomUI SubnetNode::get_customui() const
+CustomUI SubnetNode::get_customui() const
 {
     return m_customUi;
 }
 
-ZENO_API CustomUI SubnetNode::export_customui() const {
+CustomUI SubnetNode::export_customui() const {
     CustomUI exportCustomui = m_customUi;
     if (subgraph) {
         for (auto& tab : exportCustomui.inputPrims) {
@@ -371,7 +374,7 @@ ZENO_API CustomUI SubnetNode::export_customui() const {
     return exportCustomui;
 }
 
-ZENO_API void SubnetNode::setCustomUi(const CustomUI& ui)
+void SubnetNode::setCustomUi(const CustomUI& ui)
 {
     m_customUi = ui;
 }
@@ -381,7 +384,7 @@ DopNetwork::DopNetwork() : m_bEnableCache(true), m_bAllowCacheToDisk(false), m_m
 {
 }
 
-ZENO_API void DopNetwork::apply()
+void DopNetwork::apply()
 {
     auto& sess = zeno::getSession();
     int startFrame = sess.globalState->getStartFrame();
@@ -396,10 +399,10 @@ ZENO_API void DopNetwork::apply()
             subgraph->markDirtyAll();
             zeno::SubnetNode::apply();
 
-            const ObjectParams& outputObjs = get_output_object_params();
+            const ObjectParams& outputObjs = m_pAdapter->m_pImpl->get_output_object_params();
             size_t currentFrameCacheSize = 0;
             for (auto const& objparam : outputObjs) {
-                currentFrameCacheSize += getObjSize(get_output_obj(objparam.name));
+                currentFrameCacheSize += getObjSize(m_pAdapter->m_pImpl->get_output_obj(objparam.name).get());
             }
             while (((m_totalCacheSizeByte + currentFrameCacheSize) / 1024 / 1024) > m_currCacheMemoryMB) {
                 if (!m_frameCaches.empty()) {
@@ -422,7 +425,7 @@ ZENO_API void DopNetwork::apply()
                 }
             }
             for (auto const& objparam : outputObjs) {
-                m_frameCaches[i].insert({ objparam.name, get_output_obj(objparam.name) });
+                m_frameCaches[i].insert({ objparam.name, m_pAdapter->m_pImpl->get_output_obj(objparam.name) });
             }
             m_frameCacheSizes[i] = currentFrameCacheSize;
             m_totalCacheSizeByte += currentFrameCacheSize;
@@ -432,7 +435,7 @@ ZENO_API void DopNetwork::apply()
             if (i == currentFarme) {
                 for (auto const& [name, obj] : m_frameCaches[i]) {
                     if (obj) {
-                        bool ret = set_output(name, obj);
+                        bool ret = m_pAdapter->m_pImpl->set_output(name, obj);
                         assert(ret);
                     }
                 }
@@ -441,22 +444,22 @@ ZENO_API void DopNetwork::apply()
     }
 }
 
-ZENO_API void DopNetwork::setEnableCache(bool enable)
+void DopNetwork::setEnableCache(bool enable)
 {
     m_bEnableCache = enable;
 }
 
-ZENO_API void DopNetwork::setAllowCacheToDisk(bool enable)
+void DopNetwork::setAllowCacheToDisk(bool enable)
 {
     m_bAllowCacheToDisk = enable;
 }
 
-ZENO_API void DopNetwork::setMaxCacheMemoryMB(int size)
+void DopNetwork::setMaxCacheMemoryMB(int size)
 {
     m_maxCacheMemoryMB = size;
 }
 
-ZENO_API void DopNetwork::setCurrCacheMemoryMB(int size)
+void DopNetwork::setCurrCacheMemoryMB(int size)
 {
     m_currCacheMemoryMB = size;
 }
@@ -478,11 +481,10 @@ size_t getAttrVectorSize(zeno::AttrVector<T0> const& arr) {
     return totalSize;
 };
 
-size_t DopNetwork::getObjSize(std::shared_ptr<IObject> obj)
+size_t DopNetwork::getObjSize(IObject* obj)
 {
     size_t totalSize = 0;
-    if (std::shared_ptr<PrimitiveObject> spPrimObj = std::dynamic_pointer_cast<PrimitiveObject>(obj)) {
-        PrimitiveObject* primobj = spPrimObj.get();
+    if (PrimitiveObject* primobj = dynamic_cast<PrimitiveObject*>(obj)) {
         totalSize += sizeof(*primobj);
         totalSize += getAttrVectorSize(primobj->verts);
         totalSize += getAttrVectorSize(primobj->points);
@@ -502,40 +504,23 @@ size_t DopNetwork::getObjSize(std::shared_ptr<IObject> obj)
             totalSize += instPtr->serializeSize();
         }
     }
-    else if (std::shared_ptr<NumericObject> spobj = std::dynamic_pointer_cast<NumericObject>(obj)) {
-        NumericObject* obj = spobj.get();
-        totalSize += sizeof(*obj);
-        std::visit([&totalSize](auto const& val) {
-            using T = std::decay_t<decltype(val)>;
-            totalSize += sizeof(val);
-        }, obj->value);
-    }
-    else if (std::shared_ptr<StringObject> spobj = std::dynamic_pointer_cast<StringObject>(obj)) {
-        StringObject* obj = spobj.get();
-        totalSize += sizeof(*obj);
-        totalSize += sizeof(obj->value.size());
-    }
-    else if (std::shared_ptr<CameraObject> spobj = std::dynamic_pointer_cast<CameraObject>(obj)) {
-        CameraObject* obj = spobj.get();
-        totalSize += sizeof(*obj);
+    else if (CameraObject* camera = dynamic_cast<CameraObject*>(obj)) {
+        totalSize += sizeof(*camera);
         totalSize += sizeof(CameraData);
     }
-    else if (std::shared_ptr<LightObject> spobj = std::dynamic_pointer_cast<LightObject>(obj)) {
-        LightObject* obj = spobj.get();
-        totalSize += sizeof(*obj);
+    else if (LightObject* light = dynamic_cast<LightObject*>(obj)) {
+        totalSize += sizeof(*light);
         totalSize += sizeof(LightData);
     }
-    else if (std::shared_ptr<MaterialObject> spobj = std::dynamic_pointer_cast<MaterialObject>(obj)) {
-        MaterialObject* obj = spobj.get();
-        totalSize += sizeof(*obj);
-        totalSize += obj->serializeSize();
+    else if (MaterialObject* matobj = dynamic_cast<MaterialObject*>(obj)) {
+        totalSize += sizeof(*matobj);
+        totalSize += matobj->serializeSize();
     }
-    else if (std::shared_ptr<ListObject> spobj = std::dynamic_pointer_cast<ListObject>(obj)) {
-        ListObject* obj = spobj.get();
-        totalSize += sizeof(*obj);
-        totalSize += obj->dirtyIndiceSize() * sizeof(int);
-        for (int i = 0; i > obj->size(); i++) {
-            totalSize += getObjSize(obj->get(i));
+    else if (ListObject* list = dynamic_cast<ListObject*>(obj)) {
+        totalSize += sizeof(*list);
+        totalSize += list->m_impl->dirtyIndiceSize() * sizeof(int);
+        for (int i = 0; i > list->m_impl->size(); i++) {
+            totalSize += getObjSize(list->m_impl->get(i).get());
         }
     }
     else {//dummy obj

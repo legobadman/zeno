@@ -543,7 +543,7 @@ void DockContent_Editor::initConnections()
         connect(pTestApi, &ZToolBarButton::clicked, this, [=]() {
             auto& sess = zeno::getSession();
             zeno::EdgeInfo edge;
-            std::shared_ptr<zeno::INode> spNode;
+            std::shared_ptr<zeno::NodeImpl> spNode;
 
             QFileDialog dlg;
 

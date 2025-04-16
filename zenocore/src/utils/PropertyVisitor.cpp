@@ -1,7 +1,7 @@
 
 #include "zeno/utils/PropertyVisitor.h"
 
-zeno::reflect::NodeParameterBase::NodeParameterBase(zeno::INode *Node) : Target(Node) {}
+zeno::reflect::NodeParameterBase::NodeParameterBase(zeno::NodeImpl *Node) : Target(Node) {}
 
 zeno::reflect::NodeParameterBase::~NodeParameterBase() = default;
 

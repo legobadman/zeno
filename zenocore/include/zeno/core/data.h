@@ -8,10 +8,12 @@
 #include <vector>
 #include <list>
 #include <unordered_map>
+#include <memory>
 #include <optional>
 #include <zeno/utils/api.h>
 #include <reflect/container/any>
 #include <zeno/types/CurveObject.h>
+#include <zeno/core/IObject.h>
 
 
 namespace zeno {
@@ -86,6 +88,13 @@ namespace zeno {
             , tooltip(tooltip)
         {
         }
+        CommonParam(std::string name, ParamType type, std::string constrain = "", std::string tooltip = "")
+            : name(name)
+            , type(type)
+            , constrain(constrain)
+            , tooltip(tooltip)
+        {
+        }
         CommonParam(std::string name, SocketType socketType, SocketProperty sockProp)
             : name(name)
             , socketType(socketType)
@@ -97,6 +106,8 @@ namespace zeno {
     struct ParamObject : CommonParam {
         ParamObject() {}
         ParamObject(std::string name) : CommonParam(name) {}
+        ParamObject(std::string name, ParamType type, std::string constrain = "", std::string tooltip = "")
+            : CommonParam(name, type, constrain, tooltip) {}
         ParamObject(std::string name, SocketType socketType)
             : CommonParam(name, socketType) {}
         ParamObject(std::string name, SocketType socketType, std::string wildGrp, std::string constrain)
@@ -117,6 +128,13 @@ namespace zeno {
             , control(control)
             , ctrlProps(ctrlProps)
         {}
+        ParamPrimitive(std::string name, ParamType type, zeno::reflect::Any defl = zeno::reflect::Any(), ParamControl control = NullControl, zeno::reflect::Any ctrlProps = zeno::reflect::Any(), std::string constrain = "")
+            : CommonParam(name, type, constrain)
+            , defl(defl)
+            , control(control)
+            , ctrlProps(ctrlProps)
+        {
+        }
     };
 
     using ObjectParams = std::vector<ParamObject>;

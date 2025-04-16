@@ -4,7 +4,7 @@
 #include <memory>
 #include <zeno/core/Graph.h>
 #include <zeno/core/IObject.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Session.h>
 #include <zeno/funcs/LiterialConverter.h>
 #include <zeno/utils/safe_dynamic_cast.h>

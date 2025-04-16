@@ -29,8 +29,8 @@ struct PrintNumeric : zeno::INode {
     };
 
     virtual void apply() override {
-        auto obj = get_input<zeno::NumericObject>("value");
-        auto hint = get_param<std::string>("hint");
+        auto obj = ZImpl(get_input<zeno::NumericObject>("value"));
+        auto hint = ZImpl(get_param<std::string>("hint"));
         std::cout << hint << ": ";
         std::visit([](auto const &val) {
             using T = std::decay_t<decltype(val)>;
@@ -38,7 +38,7 @@ struct PrintNumeric : zeno::INode {
             do_print _(val);
         }, obj->value);
         std::cout << std::endl;
-        set_output("value", std::move(obj));
+        ZImpl(set_output("value", std::move(obj)));
     }
 };
 

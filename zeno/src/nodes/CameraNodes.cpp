@@ -17,15 +17,15 @@ struct CameraNode: zeno::INode{
     virtual void apply() override {
         auto camera = std::make_shared<zeno::CameraObject>();
 
-        camera->pos = get_input2<zeno::vec3f>("pos");
-        camera->up = get_input2<zeno::vec3f>("up");
-        camera->view = get_input2<zeno::vec3f>("view");
-        camera->fov = get_input2<float>("fov");
-        camera->aperture = get_input2<float>("aperture");
-        camera->focalPlaneDistance = get_input2<float>("focalPlaneDistance");
-        camera->userData().set2("frame", get_input2<float>("frame"));
+        camera->pos = ZImpl(get_input2<zeno::vec3f>("pos"));
+        camera->up = ZImpl(get_input2<zeno::vec3f>("up"));
+        camera->view = ZImpl(get_input2<zeno::vec3f>("view"));
+        camera->fov = ZImpl(get_input2<float>("fov"));
+        camera->aperture = ZImpl(get_input2<float>("aperture"));
+        camera->focalPlaneDistance = ZImpl(get_input2<float>("focalPlaneDistance"));
+        camera->userData()->set_float("frame", ZImpl(get_input2<float>("frame")));
 
-        auto other_props = get_input2<std::string>("other");
+        auto other_props = ZImpl(get_input2<std::string>("other"));
         std::regex reg(",");
         std::sregex_token_iterator p(other_props.begin(), other_props.end(), reg, -1);
         std::sregex_token_iterator end;
@@ -38,7 +38,7 @@ struct CameraNode: zeno::INode{
             camera->pivot = {prop_vals[0], prop_vals[1], prop_vals[2]};
         }
 
-        set_output("camera", std::move(camera));
+        ZImpl(set_output("camera", std::move(camera)));
     }
 };
 
@@ -65,16 +65,16 @@ struct MakeCamera : INode {
     virtual void apply() override {
         auto camera = std::make_shared<CameraObject>();
 
-        camera->pos = get_input2<zeno::vec3f>("pos");
-        camera->up = get_input2<zeno::vec3f>("up");
-        camera->view = get_input2<zeno::vec3f>("view");
-        camera->ffar = get_input2<float>("far");
-        camera->fnear = get_input2<float>("near");
-        camera->fov = get_input2<float>("fov");
-        camera->aperture = get_input2<float>("aperture");
-        camera->focalPlaneDistance = get_input2<float>("focalPlaneDistance");
+        camera->pos = ZImpl(get_input2<zeno::vec3f>("pos"));
+        camera->up = ZImpl(get_input2<zeno::vec3f>("up"));
+        camera->view = ZImpl(get_input2<zeno::vec3f>("view"));
+        camera->ffar = ZImpl(get_input2<float>("far"));
+        camera->fnear = ZImpl(get_input2<float>("near"));
+        camera->fov = ZImpl(get_input2<float>("fov"));
+        camera->aperture = ZImpl(get_input2<float>("aperture"));
+        camera->focalPlaneDistance = ZImpl(get_input2<float>("focalPlaneDistance"));
 
-        set_output("camera", std::move(camera));
+        ZImpl(set_output("camera", std::move(camera)));
     }
 };
 
@@ -99,15 +99,15 @@ ZENO_DEFNODE(MakeCamera)({
 
 struct SetPhysicalCamera : INode {
     virtual void apply() override {
-        auto camera = get_input("camera");
-        auto &ud = camera->userData();
-        ud.set2("aperture", get_input2<float>("aperture"));
-        ud.set2("shutter_speed", get_input2<float>("shutter_speed"));
-        ud.set2("iso", get_input2<float>("iso"));
-        ud.set2("aces", get_input2<bool>("aces"));
-        ud.set2("exposure", get_input2<bool>("exposure"));
+        auto camera = ZImpl(get_input("camera"));
+        auto ud = camera->userData();
+        ud->set_float("aperture", ZImpl(get_input2<float>("aperture")));
+        ud->set_float("shutter_speed", ZImpl(get_input2<float>("shutter_speed")));
+        ud->set_float("iso", ZImpl(get_input2<float>("iso")));
+        ud->set_bool("aces", ZImpl(get_input2<bool>("aces")));
+        ud->set_bool("exposure", ZImpl(get_input2<bool>("exposure")));
 
-        set_output("camera", std::move(camera));
+        ZImpl(set_output("camera", std::move(camera)));
     }
 };
 
@@ -121,7 +121,7 @@ ZENO_DEFNODE(SetPhysicalCamera)({
         {gParamType_Bool, "exposure", "0"},
     },
     {
-            {"CameraObject", "camera"},
+        {"CameraObject", "camera"},
     },
     {
     },
@@ -132,10 +132,10 @@ struct TargetCamera : INode {
     virtual void apply() override {
         auto camera = std::make_shared<CameraObject>();
 
-        auto refUp = zeno::normalize(get_input2<zeno::vec3f>("refUp"));
-        auto pos = get_input2<zeno::vec3f>("pos");
-        auto target = get_input2<zeno::vec3f>("target");
-        auto AF = get_input2<bool>("AutoFocus");
+        auto refUp = zeno::normalize(ZImpl(get_input2<zeno::vec3f>("refUp")));
+        auto pos = ZImpl(get_input2<zeno::vec3f>("pos"));
+        auto target = ZImpl(get_input2<zeno::vec3f>("target");
+        auto AF = ZImpl(get_input2<bool>("AutoFocus")));
         vec3f view = zeno::normalize(target - pos);
         vec3f right = zeno::cross(view, refUp);
         vec3f up = zeno::cross(right, view);
@@ -143,17 +143,17 @@ struct TargetCamera : INode {
         camera->pos = pos;
         camera->up = up;
         camera->view = view;
-        camera->ffar = get_input2<float>("far");
-        camera->fnear = get_input2<float>("near");
-        camera->fov = get_input2<float>("fov");
-        camera->aperture = get_input2<float>("aperture");
+        camera->ffar = ZImpl(get_input2<float>("far"));
+        camera->fnear = ZImpl(get_input2<float>("near"));
+        camera->fov = ZImpl(get_input2<float>("fov"));
+        camera->aperture = ZImpl(get_input2<float>("aperture"));
         if(AF){
             camera->focalPlaneDistance = zeno::length(target-pos);
         }else{
-            camera->focalPlaneDistance = get_input2<float>("focalPlaneDistance");
+            camera->focalPlaneDistance = ZImpl(get_input2<float>("focalPlaneDistance"));
         }
 
-        set_output("camera", std::move(camera));
+        ZImpl(set_output("camera", std::move(camera)));
     }
 };
 
@@ -180,15 +180,15 @@ ZENO_DEFNODE(TargetCamera)({
 struct MakeLight : INode {
     virtual void apply() override {
         auto light = std::make_shared<LightObject>();
-        light->lightDir = normalize(get_input2<zeno::vec3f>("lightDir"));
-        light->intensity = get_input2<float>("intensity");
-        light->shadowTint = get_input2<zeno::vec3f>("shadowTint");
-        light->lightHight = get_input2<float>("lightHight");
-        light->shadowSoftness = get_input2<float>("shadowSoftness");
-        light->lightColor = get_input2<zeno::vec3f>("lightColor");
-        light->lightScale = get_input2<float>("lightScale");
-        light->isEnabled = get_input2<bool>("isEnabled");
-        set_output("light", std::move(light));
+        light->lightDir = normalize(ZImpl(get_input2<zeno::vec3f>("lightDir")));
+        light->intensity = ZImpl(get_input2<float>("intensity"));
+        light->shadowTint = ZImpl(get_input2<zeno::vec3f>("shadowTint"));
+        light->lightHight = ZImpl(get_input2<float>("lightHight"));
+        light->shadowSoftness = ZImpl(get_input2<float>("shadowSoftness"));
+        light->lightColor = ZImpl(get_input2<zeno::vec3f>("lightColor"));
+        light->lightScale = ZImpl(get_input2<float>("lightScale"));
+        light->isEnabled = ZImpl(get_input2<bool>("isEnabled"));
+        ZImpl(set_output("light", std::move(light)));
     }
 };
 
@@ -217,13 +217,13 @@ struct ScreenSpaceProjectedGrid : INode {
         return t;
     }
     virtual void apply() override {
-        auto cam = get_input2<CameraObject>("cam");
+        auto cam = ZImpl(get_input2<CameraObject>("cam"));
         auto prim = std::make_shared<PrimitiveObject>();
-        auto raw_width = get_input2<int>("width");
-        auto raw_height = get_input2<int>("height");
-        auto u_padding = get_input2<int>("u_padding");
-        auto v_padding = get_input2<int>("v_padding");
-        auto sea_level = get_input2<float>("sea_level");
+        auto raw_width = ZImpl(get_input2<int>("width"));
+        auto raw_height = ZImpl(get_input2<int>("height"));
+        auto u_padding = ZImpl(get_input2<int>("u_padding"));
+        auto v_padding = ZImpl(get_input2<int>("v_padding"));
+        auto sea_level = ZImpl(get_input2<float>("sea_level"));
         auto fov = glm::radians(cam->fov);
         auto pos = cam->pos;
         auto up = cam->up;
@@ -280,7 +280,7 @@ struct ScreenSpaceProjectedGrid : INode {
         for (auto i = 0; i < new_prim->verts.size(); i++) {
             new_prim->verts[i][1] = sea_level;
         }
-        set_output("prim", std::move(new_prim));
+        ZImpl(set_output("prim", std::move(new_prim)));
     }
 };
 
@@ -304,9 +304,9 @@ ZENO_DEFNODE(ScreenSpaceProjectedGrid)({
 
 struct CameraFrustum : INode {
     virtual void apply() override {
-        auto cam = get_input2<CameraObject>("cam");
-        auto width = get_input2<int>("width");
-        auto height = get_input2<int>("height");
+        auto cam = ZImpl(get_input2<CameraObject>("cam"));
+        auto width = ZImpl(get_input2<int>("width"));
+        auto height = ZImpl(get_input2<int>("height"));
         auto fov = glm::radians(cam->fov);
         auto pos = cam->pos;
         auto up = cam->up;
@@ -348,7 +348,7 @@ struct CameraFrustum : INode {
         prim->lines[2 + 8] = vec2i(2, 6);
         prim->lines[3 + 8] = vec2i(3, 7);
 
-        set_output("prim", std::move(prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 

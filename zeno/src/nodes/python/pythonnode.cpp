@@ -12,7 +12,7 @@ namespace zeno {
 struct PythonNode : zeno::INode {
 
     virtual void apply() override {
-        auto prim = get_input_prim_param("script");
+        auto prim = ZImpl(get_input_prim_param("script"));
         std::string script = zeno::reflect::any_cast<std::string>(prim.result);
         runPython(script);
     }

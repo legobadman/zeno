@@ -14,7 +14,7 @@
 
 namespace zeno {
 
-    class INode;
+    class NodeImpl;
     class ObjectParam;
     class PrimitiveParam;
     class CoreParam;
@@ -43,7 +43,7 @@ namespace zeno {
 
     struct CoreParam {
         std::string name;
-        std::weak_ptr<INode> m_wpNode;
+        NodeImpl* m_wpNode;
         std::string wildCardGroup;
         std::string constrain;
         std::list<std::shared_ptr<ReferLink>> reflinks;

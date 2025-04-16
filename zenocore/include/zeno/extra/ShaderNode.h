@@ -19,7 +19,6 @@ struct ShaderNode : INode {
     ZENO_API virtual std::shared_ptr<ShaderNode> clone() const = 0;
 
     ZENO_API ShaderNode();
-    ZENO_API ~ShaderNode() override;
 };
 
 template <class Derived>

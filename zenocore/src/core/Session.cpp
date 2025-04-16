@@ -9,7 +9,7 @@
 #include <zeno/extra/EventCallbacks.h>
 #include <zeno/types/UserData.h>
 #include <zeno/core/Graph.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/CoreParam.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/utils/logger.h>
@@ -25,17 +25,16 @@
 #include <zeno/core/FunctionManager.h>
 #include <regex>
 
+
 #include <reflect/core.hpp>
 #include <reflect/type.hpp>
 #include <reflect/metadata.hpp>
 #include <reflect/registry.hpp>
-#include <reflect/container/object_proxy>
 #include <reflect/container/any>
 #include <reflect/container/arraylist>
-#include <reflect/core.hpp>
 #include <zeno/core/reflectdef.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
-#include "zeno_nodes/reflect/reflection.generated.hpp"
+//#include "zeno_nodes/reflect/reflection.generated.hpp"
 
 //#include <Python.h>
 //#include <pybind11/pybind11.h>
@@ -204,7 +203,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
     return ui;
 }
 
-ZENO_API void Session::defNodeClass(std::shared_ptr<INode>(*ctor)(), std::string const &clsname, Descriptor const &desc) {
+ZENO_API void Session::defNodeClass(INode* (*ctor)(), std::string const &clsname, Descriptor const &desc) {
     if (clsname == "LightNode") {
         int j;
         j = 0;
@@ -228,7 +227,7 @@ ZENO_API void Session::defNodeClass(std::shared_ptr<INode>(*ctor)(), std::string
     nodeClasses.emplace(clsname, std::move(cls));
 }
 
-ZENO_API void Session::defNodeClass2(std::shared_ptr<INode>(*ctor)(), std::string const& nodecls, CustomUI const& customui) {
+ZENO_API void Session::defNodeClass2(INode* (*ctor)(), std::string const& nodecls, CustomUI const& customui) {
     if (nodeClasses.find(nodecls) != nodeClasses.end()) {
         log_error("node class redefined: `{}`\n", nodecls);
     }
@@ -238,7 +237,12 @@ ZENO_API void Session::defNodeClass2(std::shared_ptr<INode>(*ctor)(), std::strin
     nodeClasses.emplace(nodecls, std::move(cls));
 }
 
-ZENO_API void Session::defNodeReflectClass(std::function<std::shared_ptr<INode>()> ctor, zeno::reflect::TypeBase* pTypeBase)
+ZENO_API void Session::defNodeClass3(INode* (*ctor)(), const char* pName, Descriptor const& desc) {
+    //auto cls = std::make_unique<ImplNodeClass>(ctor, desc, pName);
+    //nodeClasses.emplace(pName, std::move(cls));
+}
+
+ZENO_API void Session::defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase)
 {
     assert(pTypeBase);
     const zeno::reflect::ReflectedTypeInfo& info = pTypeBase->get_info();
@@ -275,7 +279,7 @@ ZENO_API std::shared_ptr<Graph> Session::createGraph(const std::string& name) {
     return graph;
 }
 
-ZENO_API std::shared_ptr<INode> Session::getNodeByUuidPath(std::string const& uuid_path) {
+ZENO_API NodeImpl* Session::getNodeByUuidPath(std::string const& uuid_path) {
     return mainGraph->getNodeByUuidPath(uuid_path);
 }
 

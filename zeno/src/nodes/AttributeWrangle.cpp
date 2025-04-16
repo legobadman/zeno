@@ -1,36 +1,37 @@
-#include <zeno/core/INode.h>
-#include <zeno/core/IObject.h>
+#include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/core/reflectdef.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/core/FunctionManager.h>
-#include <zeno/types/GeometryObject.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 namespace zeno
 {
-    struct ZDEFNODE() AttributeWrangle : zeno::INode
+    ZDEFNODE(AttributeWrangle,
     {
-        ReflectCustomUI m_uilayout = {
-            //输入：
-            _Group {
-                {"spGeo", ParamObject("Input", Socket_Clone)},
-                {"runOver", ParamPrimitive("Run Over", "Points", Combobox, std::vector<std::string>{"Points", "Faces", "Geometry"})},
-                {"zfxCode", ParamPrimitive("Zfx Code", "", CodeEditor)},
-            },
-            //输出：
-            _Group {
-                {"", ParamObject("Output")},
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("Run Over", gParamType_String, "Points", Combobox, std::vector<std::string>{"Points", "Faces", "Geometry"}),
+            ParamPrimitive("Zfx Code", gParamType_String, "", CodeEditor)
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
+    struct AttributeWrangle : zeno::INode
+    {
+        void apply() override {
+            auto spGeo = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            std::string zfxCode = ZImpl(get_input2<std::string>("Zfx Code"));
+            std::string runOver = ZImpl(get_input2<std::string>("Run Over"));
+            if (!spGeo) {
+                throw makeError<UnimplError>("no geo");
             }
-        };
-
-        std::shared_ptr<zeno::GeometryObject> apply(std::shared_ptr<zeno::GeometryObject> spGeo, std::string zfxCode, const std::string& runOver = "Points") {
-            if (!spGeo)
-                return spGeo;
 
             ZfxContext ctx;
-            ctx.spNode = shared_from_this();
+            ctx.spNode = this->m_pAdapter->m_pImpl;
             ctx.spObject = spGeo;
             ctx.code = zfxCode;
 
@@ -40,7 +41,8 @@ namespace zeno
 
             ZfxExecute zfx(zfxCode, &ctx);
             zfx.execute();
-            return spGeo;
+
+            ZImpl(set_output("Output", spGeo));
         }
     };
 }

@@ -12,7 +12,7 @@ class CustomUIModel;
 
 namespace zeno
 {
-    class INode;
+    class NodeImpl;
 }
 
 struct ParamItem
@@ -43,7 +43,7 @@ class ParamsModel : public QAbstractListModel
     QML_ELEMENT
 
 public:
-    ParamsModel(zeno::INode* spNode, QObject* parent = nullptr);
+    ParamsModel(zeno::NodeImpl* spNode, QObject* parent = nullptr);
 
     Q_PROPERTY(bool showPrimSocks READ getShowPrimSocks WRITE setShowPrimSocks NOTIFY showPrimSocks_changed)
     Q_PROPERTY(int numOfOutputPrims READ getNumOfOutputPrims NOTIFY numOfOutputPrims_changed)
@@ -121,7 +121,7 @@ private:
     CustomUIModel* m_customUIMCloned;
     QStandardItemModel* m_customParamsM;
 
-    zeno::INode* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了
+    zeno::NodeImpl* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了
     std::string cbUpdateParam;
     mutable bool m_bReentry = false;
 };

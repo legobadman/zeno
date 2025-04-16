@@ -9,7 +9,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/types/PrimitiveObject.h>
 
@@ -29,7 +29,7 @@ public:
         float aperture,
         float focalPlaneDistance
     );
-    Zpy_Camera(std::weak_ptr<zeno::INode> wpNode);
+    Zpy_Camera(std::weak_ptr<zeno::NodeImpl> wpNode);
     py::list getPos() const;
     void setPos(py::list v);
     py::list getUp() const;
@@ -51,7 +51,7 @@ public:
 private:
     void run();
 
-    std::weak_ptr<zeno::INode> m_wpNode;
+    std::weak_ptr<zeno::NodeImpl> m_wpNode;
 };
 
 class Zpy_Light {
@@ -63,7 +63,7 @@ public:
         py::list color,
         float intensity
     );
-    Zpy_Light(std::weak_ptr<zeno::INode> wpNode);
+    Zpy_Light(std::weak_ptr<zeno::NodeImpl> wpNode);
     py::list getPos() const;
     void setPos(py::list v);
     py::list getScale() const;
@@ -79,7 +79,7 @@ public:
 private:
     void run();
 
-    std::weak_ptr<zeno::INode> m_wpNode;
+    std::weak_ptr<zeno::NodeImpl> m_wpNode;
 };
 
 #endif

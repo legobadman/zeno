@@ -982,7 +982,7 @@ void ZenoGraphsEditor::onAssetsCustomParamsClicked(const QString& assetsName)
 {
     auto& assetsMgr = zeno::getSession().assets;
     auto& name = assetsName.toStdString();
-    zeno::Asset asset = assetsMgr->getAsset(name);
+    const zeno::Asset& asset = assetsMgr->getAsset(name);
 
     //ensure the graph be loaded.
     assetsMgr->getAssetGraph(name, true);

@@ -1,7 +1,7 @@
-#include <zeno/core/INode.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/IObject.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/core/reflectdef.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/GeometryObject.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -10,10 +10,9 @@
 #include <glm/gtx/transform.hpp>
 
 #include <zeno/zeno.h>
-#include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/MatrixObject.h>
 #include <zeno/types/UserData.h>
-#include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 
 #include <zeno/utils/orthonormal.h>
 #include <zeno/utils/variantswitch.h>
@@ -26,7 +25,6 @@
 #include <ctime>
 #include <iostream>
 
-#include "zeno_types/reflect/reflection.generated.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -34,89 +32,19 @@
 
 namespace zeno
 {
-    using namespace zeno::reflect;
-
-    struct ZDEFNODE() WBTestPrimNode : zeno::INode
+    struct  WBGeoBend : zeno::INode
     {
-        std::shared_ptr<zeno::PrimitiveObject> apply(
-                std::shared_ptr<const zeno::PrimitiveObject> input_obj,
-                const std::string& name1 = "a16",
-                const std::string& name2 = "a24",
-                int a = 234,
-                float b = 456.234,
-
-                zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
-                zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
-                zeno::vec2f Size = zeno::vec2f({ 1,1 }),
-                int Rows = 2,
-                int Columns = 2,
-
-                std::string face_type = "Quadrilaterals",
-                std::string Direction = "ZX",
-                bool bCalcPointNormals = false
-        )
+        void apply() override
         {
-            std::shared_ptr<zeno::PrimitiveObject> result = std::const_pointer_cast<zeno::PrimitiveObject>(input_obj);
-            return result;
-        }
-    };
+            auto input_geo = ZImpl(get_input<GeometryObject_Adapter>("Input"));
+            int limitDeformation = ZImpl(get_input2<int>("Limit Deformation"));
+            int symmetricDeformation = ZImpl(get_input2<int>("Symmetric Deformation"));
+            float angle = ZImpl(get_input2<float>("Bend Angle (degree)"));
+            zeno::vec3f upVector = ZImpl(get_input2<vec3f>("Up Vector"));
+            zeno::vec3f capOrigin = ZImpl(get_input2<vec3f>("Capture Origin"));
+            zeno::vec3f dirVector = ZImpl(get_input2<vec3f>("Capture Direction"));
+            float capLen = ZImpl(get_input2<float>("Capture Length"));
 
-    struct ZDEFNODE() WBTestGeoNode : zeno::INode
-    {
-        std::shared_ptr<GeometryObject> apply(
-                std::shared_ptr<const GeometryObject> input_geo,
-                const std::string& name1 = "a16",
-                const std::string& name2 = "a24",
-                int a = 234,
-                float b = 456.234,
-
-                zeno::vec3f Center = zeno::vec3f({ 0,0,0 }),
-                zeno::vec3f Rotate = zeno::vec3f({ 0,0,0 }),
-                zeno::vec2f Size = zeno::vec2f({ 1,1 }),
-                int Rows = 2,
-                int Columns = 2,
-
-                std::string face_type = "Quadrilaterals",
-                std::string Direction = "ZX",
-                bool bCalcPointNormals = false
-        )
-        {
-            std::shared_ptr<GeometryObject> geo = std::const_pointer_cast<GeometryObject>(input_geo);
-            return geo;
-        }
-    };
-
-    struct ZDEFNODE() WBGeoBend : zeno::INode
-    {
-        ReflectCustomUI m_uilayout = {
-            //输入：
-            _Group {
-                {"input_geo", ParamObject("Input", Socket_Clone)},
-                {"limitDeformation", ParamPrimitive("Limit Deformation")},
-                {"symmetricDeformation", ParamPrimitive("Symmetric Deformation")},
-                {"angle", ParamPrimitive("Bend Angle (degree)")},
-                {"upVector", ParamPrimitive("Up Vector")},
-                {"capOrigin", ParamPrimitive("Capture Origin")},
-                {"dirVector", ParamPrimitive("Capture Direction")},
-                {"capLen", ParamPrimitive("Capture Length")},
-            },
-            //输出：
-            _Group {
-                {"", ParamObject("Output")},
-            }
-        };
-
-        std::shared_ptr<zeno::GeometryObject> apply(
-                std::shared_ptr<zeno::GeometryObject> input_geo,
-                int limitDeformation = 1,
-                int symmetricDeformation = 0,
-                float angle = 90,
-                zeno::vec3f upVector = zeno::vec3f({ 0,1,0 }),
-                zeno::vec3f capOrigin = zeno::vec3f({ 0,0,0 }),
-                zeno::vec3f dirVector = zeno::vec3f({ 0,0,1 }),
-                float capLen = 1.0
-        )
-        {
             glm::vec3 up = normalize(glm::vec3(upVector[0], upVector[1], upVector[2]));
             glm::vec3 dir = normalize(glm::vec3(dirVector[0], dirVector[1], dirVector[2]));
             glm::vec3 axis1 = normalize(cross(dir, up));
@@ -128,7 +56,7 @@ namespace zeno
             glm::mat3 rotMat = glm::make_mat3x3(rotMatEle);
             glm::mat3 inverse = glm::transpose(rotMat);
 
-            input_geo->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+            input_geo->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
 
                 glm::vec3 original = glm::vec3(old_pos[0], old_pos[1], old_pos[2]);
                 glm::vec3 deformedPos = original;
@@ -189,9 +117,28 @@ namespace zeno
                 return newpos;
             });
 
-            return input_geo;
+            ZImpl(set_output("Output", input_geo));
         }
     };
+
+    ZENDEFNODE(WBGeoBend,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            {gParamType_Int, "Limit Deformation", "1"},
+            {gParamType_Int, "Symmetric Deformation", "0"},
+            {gParamType_Float, "Bend Angle (degree)", "90"},
+            {gParamType_Vec3f, "Up Vector", "0,1,0"},
+            {gParamType_Vec3f, "Capture Origin", "0,0,0"},
+            {gParamType_Vec3f, "Capture Direction", "0,0,1"},
+            {gParamType_Float, "Capture Length", "1"}
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
 
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -308,62 +255,51 @@ namespace zeno
         return mix(y1, y2, w);
     }
 
-    struct ZDEFNODE() erode_noise_perlin_GEO : zeno::INode {
 
-        ReflectCustomUI m_uilayout = {
-                //输入：
-                _Group{
-                        {"input_2d_grid_geo",   ParamObject("Input", Socket_Clone)},
-                        {"noiseInputAttrName",  ParamPrimitive("Noise Input (Vec3f)")},
-                        {"noiseOutputAttrName", ParamPrimitive("Noise Output Name")},
-                        {"noiseOutputAttrType", ParamPrimitive("Noise Attribute Type", "float", zeno::Combobox, std::vector<std::string>{"float", "vec3f"})},
-                },
-                //输出：
-                _Group{
-                        {"", ParamObject("Output")},
-                }
-        };
+    struct erode_noise_perlin_GEO : zeno::INode {
 
-        std::shared_ptr<zeno::GeometryObject> apply(
-                std::shared_ptr<zeno::GeometryObject> input_2d_grid_geo,
-                const std::string& noiseInputAttrName = "pos",
-                const std::string& noiseOutputAttrName = "noise",
-                const std::string& noiseOutputAttrType = "float"
-        )
+        void apply() override
         {
-            if (!input_2d_grid_geo->has_attr(ATTR_POINT, noiseInputAttrName)) {
+            auto input_2d_grid_geo = ZImpl(get_input<GeometryObject_Adapter>("Input"));
+            const std::string& noiseInputAttrName = ZImpl(get_input2<std::string>("pos"));
+            const std::string& noiseOutputAttrName = ZImpl(get_input2<std::string>("noise"));
+            const std::string& noiseOutputAttrType = ZImpl(get_input2<std::string>("float"));
+
+            if (!input_2d_grid_geo->m_impl->has_attr(ATTR_POINT, noiseInputAttrName)) {
                 zeno::log_error("no such data named '{}'.", noiseInputAttrName);
             }else{
 
             }
 
-            if (!input_2d_grid_geo->has_attr(ATTR_POINT, noiseOutputAttrName)) {
-                if (noiseOutputAttrType == "vec3f") input_2d_grid_geo->GeometryObject::create_point_attr(noiseOutputAttrName, zeno::vec3f(0,0,0));
-                else if (noiseOutputAttrType == "float") input_2d_grid_geo->GeometryObject::create_point_attr(noiseOutputAttrName, 0.f);
+            if (!input_2d_grid_geo->m_impl->has_attr(ATTR_POINT, noiseOutputAttrName)) {
+                if (noiseOutputAttrType == "vec3f")
+                    input_2d_grid_geo->m_impl->create_point_attr(noiseOutputAttrName, zeno::vec3f(0,0,0));
+                else if (noiseOutputAttrType == "float")
+                    input_2d_grid_geo->m_impl->create_point_attr(noiseOutputAttrName, 0.f);
             }
 
-            std::vector<zeno::vec3f> input_data = input_2d_grid_geo->get_attrs<zeno::vec3f>(ATTR_POINT, noiseInputAttrName);
+            std::vector<zeno::vec3f> input_data = input_2d_grid_geo->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, noiseInputAttrName);
 
             if (0) {
                 if (noiseOutputAttrType == "float") {
                     std::vector<float> res2;
-                    for (int i = 0; i < input_2d_grid_geo->npoints(); i++) {
+                    for (int i = 0; i < input_2d_grid_geo->m_impl->npoints(); i++) {
                         //res2.push_back()
                     }
-                    input_2d_grid_geo->set_attr(ATTR_POINT, noiseOutputAttrName, res2);
+                    input_2d_grid_geo->m_impl->set_attr(ATTR_POINT, noiseOutputAttrName, res2);
                 }
                 std::vector<zeno::vec3f> res1;
-                input_2d_grid_geo->set_attr(ATTR_POINT, noiseOutputAttrName, res1);
+                input_2d_grid_geo->m_impl->set_attr(ATTR_POINT, noiseOutputAttrName, res1);
 
             }else{
                 if (noiseOutputAttrType == "float") {
-                    input_2d_grid_geo->foreach_attr_update<float>(ATTR_POINT, noiseOutputAttrName, 0, [&](int idx, float)->float {
+                    input_2d_grid_geo->m_impl->foreach_attr_update<float>(ATTR_POINT, noiseOutputAttrName, 0, [&](int idx, float)->float {
                         float result = noise_perlin(input_data[idx][0], input_data[idx][1], input_data[idx][2]);
                         return result;
                     });
                 }
                 else if (noiseOutputAttrType == "vec3f"){
-                    input_2d_grid_geo->foreach_attr_update<zeno::vec3f>(ATTR_POINT, noiseOutputAttrName, 0, [&](int idx, zeno::vec3f)->zeno::vec3f {
+                    input_2d_grid_geo->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, noiseOutputAttrName, 0, [&](int idx, zeno::vec3f)->zeno::vec3f {
                         float x = noise_perlin(input_data[idx][0], input_data[idx][1], input_data[idx][2]);
                         float y = noise_perlin(input_data[idx][1], input_data[idx][2], input_data[idx][0]);
                         float z = noise_perlin(input_data[idx][2], input_data[idx][0], input_data[idx][1]);
@@ -372,10 +308,23 @@ namespace zeno
                     });
                 }
             }
-
-            return input_2d_grid_geo;
+            ZImpl(set_output("Output", input_2d_grid_geo));
         }
     };
 
+    ZENDEFNODE(erode_noise_perlin_GEO,
+    {
+        {
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Noise Input (Vec3f)", gParamType_String),
+            ParamPrimitive("Noise Output Name"),
+            ParamPrimitive("Noise Attribute Type", gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"float", "vec3f"})
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
 
 }

@@ -2,6 +2,7 @@
 
 #include <zeno/core/IObject.h>
 #include <zeno/utils/PolymorphicMap.h>
+#include <zeno/utils/api.h>
 #include <memory>
 #include <string>
 #include <vector>

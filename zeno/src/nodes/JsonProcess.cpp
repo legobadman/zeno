@@ -24,11 +24,11 @@ struct JsonObject : IObjectClone<JsonObject> {
 struct ReadJson : zeno::INode {
     virtual void apply() override {
         auto json = std::make_shared<JsonObject>();
-        auto path = get_input2<std::string>("path");
+        auto path = ZImpl(get_input2<std::string>("path");
         std::string native_path = std::filesystem::u8path(path).string();
         auto content = zeno::file_get_content(native_path);
         json->json = Json::parse(content);
-        set_output("json", json);
+        ZImpl(set_output("json", json);
     }
 };
 ZENDEFNODE(ReadJson, {
@@ -46,8 +46,8 @@ ZENDEFNODE(ReadJson, {
 
 struct WriteJson : zeno::INode {
     virtual void apply() override {
-        auto _json = get_input2<JsonObject>("json");
-        auto path = get_input2<std::string>("path");
+        auto _json = ZImpl(get_input2<JsonObject>("json");
+        auto path = ZImpl(get_input2<std::string>("path");
         path = create_directories_when_write_file(path);
         file_put_content(path, _json->json.dump());
     }
@@ -100,7 +100,7 @@ static Json iobject_to_json(std::shared_ptr<IObject> iObject) {
         json = objectToLiterial<std::string>(iObject);
     }
     else if (auto list = std::dynamic_pointer_cast<ListObject>(iObject)) {
-        for (auto iObj: list->get()) {
+        for (auto iObj: list->m_impl->get()) {
             json.push_back(iobject_to_json(iObj));
         }
     }
@@ -117,9 +117,9 @@ static Json iobject_to_json(std::shared_ptr<IObject> iObject) {
 struct FormJson : zeno::INode {
   virtual void apply() override {
       auto _json = std::make_shared<JsonObject>();
-      auto iObject = get_input("iObject");
+      auto iObject = ZImpl(get_input("iObject");
       _json->json = iobject_to_json(iObject);
-      set_output2("json", _json);
+      ZImpl(set_output2("json", _json);
   }
 };
 ZENDEFNODE(FormJson, {
@@ -137,8 +137,8 @@ ZENDEFNODE(FormJson, {
 
 struct JsonToString : zeno::INode {
   virtual void apply() override {
-    auto json = get_input<JsonObject>("json");
-    set_output2("out", json->json.dump());
+    auto json = ZImpl(get_input<JsonObject>("json");
+    ZImpl(set_output2("out", json->json.dump());
   }
 };
 ZENDEFNODE(JsonToString, {
@@ -156,11 +156,11 @@ ZENDEFNODE(JsonToString, {
 struct JsonSetDataSimple : zeno::INode {
     virtual void apply() override {
         auto in_json = std::make_shared<JsonObject>();
-        if (has_input<JsonObject>("json")) {
-            in_json = get_input<JsonObject>("json");
+        if (ZImpl(has_input<JsonObject>("json")) {
+            in_json = ZImpl(get_input<JsonObject>("json");
         }
 
-        auto path = get_input2<std::string>("path");
+        auto path = ZImpl(get_input2<std::string>("path");
         auto names = split_str(path, '/');
         Json *tmp_json = &in_json->json;
         for (auto & name : names) {
@@ -171,10 +171,10 @@ struct JsonSetDataSimple : zeno::INode {
                 tmp_json = &tmp_json->operator[](name);
             }
         }
-        auto value = get_input("value");
+        auto value = ZImpl(get_input("value");
         *tmp_json = iobject_to_json(value);
 
-        set_output2("json", in_json);
+        ZImpl(set_output2("json", in_json);
     }
 };
 
@@ -197,10 +197,10 @@ ZENDEFNODE(JsonSetDataSimple, {
 struct JsonSetData : zeno::INode {
     virtual void apply() override {
         auto in_json = std::make_shared<JsonObject>();
-        if (has_input<JsonObject>("json")) {
-            in_json = get_input<JsonObject>("json");
+        if (ZImpl(has_input<JsonObject>("json")) {
+            in_json = ZImpl(get_input<JsonObject>("json");
         }
-        auto multi_path = get_input2<std::string>("paths");
+        auto multi_path = ZImpl(get_input2<std::string>("paths");
         std::istringstream iss(multi_path);
         std::vector<std::string> paths;
         std::string line;
@@ -210,7 +210,7 @@ struct JsonSetData : zeno::INode {
                 paths.push_back(line);
             }
         }
-        auto dict = get_input<DictObject>("dict");
+        auto dict = ZImpl(get_input<DictObject>("dict");
         for (auto &path: paths) {
             auto strings = zeno::split_str(path, ':');
             auto names = split_str(strings[1], '/');
@@ -228,7 +228,7 @@ struct JsonSetData : zeno::INode {
             *tmp_json = iobject_to_json(dict->lut[new_name]);
         }
 
-        set_output2("json", in_json);
+        ZImpl(set_output2("json", in_json);
     }
 };
 
@@ -250,9 +250,9 @@ ZENDEFNODE(JsonSetData, {
 struct ReadJsonFromString : zeno::INode {
     virtual void apply() override {
         auto json = std::make_shared<JsonObject>();
-        auto content = get_input2<std::string>("content");
+        auto content = ZImpl(get_input2<std::string>("content");
         json->json = Json::parse(content);
-        set_output("json", json);
+        ZImpl(set_output("json", json);
     }
 };
 ZENDEFNODE(ReadJsonFromString, {
@@ -269,8 +269,8 @@ ZENDEFNODE(ReadJsonFromString, {
 });
 struct JsonGetArraySize : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
-        set_output("size", std::make_shared<NumericObject>((int)json->json.size()));
+        auto json = ZImpl(get_input<JsonObject>("json");
+        ZImpl(set_output("size", std::make_shared<NumericObject>((int)json->json.size()));
     }
 };
 ZENDEFNODE(JsonGetArraySize, {
@@ -288,10 +288,10 @@ ZENDEFNODE(JsonGetArraySize, {
 struct JsonGetArrayItem : zeno::INode {
     virtual void apply() override {
         auto out_json = std::make_shared<JsonObject>();
-        auto json = get_input<JsonObject>("json");
-        auto index = get_input2<int>("index");
+        auto json = ZImpl(get_input<JsonObject>("json");
+        auto index = ZImpl(get_input2<int>("index");
         out_json->json = json->json[index];
-        set_output("json", out_json);
+        ZImpl(set_output("json", out_json);
     }
 };
 ZENDEFNODE(JsonGetArrayItem, {
@@ -310,40 +310,40 @@ ZENDEFNODE(JsonGetArrayItem, {
 
 struct JsonGetChild : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
-        auto name = get_input2<std::string>("name");
-        auto type = get_input2<std::string>("type");
+        auto json = ZImpl(get_input<JsonObject>("json");
+        auto name = ZImpl(get_input2<std::string>("name");
+        auto type = ZImpl(get_input2<std::string>("type");
         if (type == "json") {
             auto out_json = std::make_shared<JsonObject>();
             out_json->json = json->json[name];
-            set_output("out", out_json);
+            ZImpl(set_output("out", out_json);
         }
         else if (type == "int") {
-            set_output2("out", int(json->json[name]));
+            ZImpl(set_output2("out", int(json->json[name]));
         }
         else if (type == "float") {
-            set_output2("out", float(json->json[name]));
+            ZImpl(set_output2("out", float(json->json[name]));
         }
         else if (type == "string") {
-            set_output2("out", std::string(json->json[name]));
+            ZImpl(set_output2("out", std::string(json->json[name]));
         }
         else if (type == "vec2f") {
             float x = float(json->json[name][0]);
             float y = float(json->json[name][1]);
-            set_output2("out", vec2f(x, y));
+            ZImpl(set_output2("out", vec2f(x, y));
         }
         else if (type == "vec3f") {
             float x = float(json->json[name][0]);
             float y = float(json->json[name][1]);
             float z = float(json->json[name][2]);
-            set_output2("out", vec3f(x, y, z));
+            ZImpl(set_output2("out", vec3f(x, y, z));
         }
         else if (type == "vec4f") {
             float x = float(json->json[name][0]);
             float y = float(json->json[name][1]);
             float z = float(json->json[name][2]);
             float w = float(json->json[name][3]);
-            set_output2("out", vec4f(x, y, z, w));
+            ZImpl(set_output2("out", vec4f(x, y, z, w));
         }
     }
 };
@@ -363,8 +363,8 @@ ZENDEFNODE(JsonGetChild, {
 });
 struct JsonGetInt : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
-        set_output2("value", int(json->json));
+        auto json = ZImpl(get_input<JsonObject>("json");
+        ZImpl(set_output2("value", int(json->json));
     }
 };
 ZENDEFNODE(JsonGetInt, {
@@ -382,8 +382,8 @@ ZENDEFNODE(JsonGetInt, {
 
 struct JsonGetFloat : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
-        set_output2("value", float(json->json));
+        auto json = ZImpl(get_input<JsonObject>("json");
+        ZImpl(set_output2("value", float(json->json));
     }
 };
 ZENDEFNODE(JsonGetFloat, {
@@ -401,8 +401,8 @@ ZENDEFNODE(JsonGetFloat, {
 
 struct JsonGetString : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
-        set_output2("string", std::string(json->json));
+        auto json = ZImpl(get_input<JsonObject>("json");
+        ZImpl(set_output2("string", std::string(json->json));
     }
 };
 ZENDEFNODE(JsonGetString, {
@@ -420,12 +420,12 @@ ZENDEFNODE(JsonGetString, {
 
 struct JsonGetKeys : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
+        auto json = ZImpl(get_input<JsonObject>("json");
         auto list = std::make_shared<ListObject>();
         for (auto& [key, _] : json->json.items()) {
             list->arr.emplace_back(std::make_shared<zeno::StringObject>(key));
         }
-        set_output2("keys", list);
+        ZImpl(set_output2("keys", list);
     }
 };
 ZENDEFNODE(JsonGetKeys, {
@@ -442,8 +442,8 @@ ZENDEFNODE(JsonGetKeys, {
 });
 struct JsonGetTypeName : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
-        set_output2("string", std::string(json->json.type_name()));
+        auto json = ZImpl(get_input<JsonObject>("json");
+        ZImpl(set_output2("string", std::string(json->json.type_name()));
     }
 };
 ZENDEFNODE(JsonGetTypeName, {
@@ -461,8 +461,8 @@ ZENDEFNODE(JsonGetTypeName, {
 
 struct JsonData : zeno::INode {
     virtual void apply() override {
-        auto json = get_input<JsonObject>("json");
-        auto path = get_input2<std::string>("path");
+        auto json = ZImpl(get_input<JsonObject>("json");
+        auto path = ZImpl(get_input2<std::string>("path");
         auto strings = zeno::split_str(path, ':');
         auto type = strings[1];
         path = strings[0];
@@ -476,52 +476,52 @@ struct JsonData : zeno::INode {
         if (type == "json") {
             auto out_json = std::make_shared<JsonObject>();
             out_json->json = json->json;
-            set_output("out", out_json);
+            ZImpl(set_output("out", out_json);
         }
         else if (type == "int") {
-            set_output2("out", int(json->json));
+            ZImpl(set_output2("out", int(json->json));
         }
         else if (type == "float") {
-            set_output2("out", float(json->json));
+            ZImpl(set_output2("out", float(json->json));
         }
         else if (type == "string") {
-            set_output2("out", std::string(json->json));
+            ZImpl(set_output2("out", std::string(json->json));
         }
         else if (type == "vec2f") {
             float x = float(json->json["x"]);
             float y = float(json->json["y"]);
-            set_output2("out", vec2f(x, y));
+            ZImpl(set_output2("out", vec2f(x, y));
         }
         else if (type == "vec3f") {
             float x = float(json->json["x"]);
             float y = float(json->json["y"]);
             float z = float(json->json["z"]);
-            set_output2("out", vec3f(x, y, z));
+            ZImpl(set_output2("out", vec3f(x, y, z));
         }
         else if (type == "vec4f") {
             float x = float(json->json["x"]);
             float y = float(json->json["y"]);
             float z = float(json->json["z"]);
             float w = float(json->json["w"]);
-            set_output2("out", vec4f(x, y, z, w));
+            ZImpl(set_output2("out", vec4f(x, y, z, w));
         }
         else if (type == "vec2i") {
             auto x = int(json->json["x"]);
             auto y = int(json->json["y"]);
-            set_output2("out", vec2i(x, y));
+            ZImpl(set_output2("out", vec2i(x, y));
         }
         else if (type == "vec3i") {
             auto x = int(json->json["x"]);
             auto y = int(json->json["y"]);
             auto z = int(json->json["z"]);
-            set_output2("out", vec3i(x, y, z));
+            ZImpl(set_output2("out", vec3i(x, y, z));
         }
         else if (type == "vec4i") {
             auto x = int(json->json["x"]);
             auto y = int(json->json["y"]);
             auto z = int(json->json["z"]);
             auto w = int(json->json["w"]);
-            set_output2("out", vec4i(x, y, z, w));
+            ZImpl(set_output2("out", vec4i(x, y, z, w));
         }
     }
 };
@@ -541,8 +541,8 @@ ZENDEFNODE(JsonData, {
 
 struct JsonGetData : zeno::INode {
     virtual void apply() override {
-        auto in_json = get_input<JsonObject>("json");
-        auto multi_path = get_input2<std::string>("paths");
+        auto in_json = ZImpl(get_input<JsonObject>("json");
+        auto multi_path = ZImpl(get_input2<std::string>("paths");
         std::istringstream iss(multi_path);
         std::vector<std::string> paths;
         std::string line;
@@ -675,7 +675,7 @@ struct JsonGetData : zeno::INode {
                 }
             }
         }
-        set_output("outs", dict);
+        ZImpl(set_output("outs", dict);
     }
 };
 ZENDEFNODE(JsonGetData, {
@@ -697,10 +697,10 @@ ZENDEFNODE(JsonGetData, {
 #if 0
 struct CreateRenderInstance : zeno::INode {
     virtual void apply() override {
-        auto instID = get_input2<std::string>("instID");
-        auto Geom = get_input2<std::string>("Geom");
-        auto Matrix = get_input2<std::string>("Matrix");
-        auto Material = get_input2<std::string>("Material");
+        auto instID = ZImpl(get_input2<std::string>("instID");
+        auto Geom = ZImpl(get_input2<std::string>("Geom");
+        auto Matrix = ZImpl(get_input2<std::string>("Matrix");
+        auto Material = ZImpl(get_input2<std::string>("Material");
         if (instID.empty()) {
             auto info = zeno::format("instID {} can not be empty!", instID);
             throw zeno::makeError(info);
@@ -713,7 +713,7 @@ struct CreateRenderInstance : zeno::INode {
             {"Material", Material},
         };
         out_json->json["Root"] = instID;
-        set_output("json", out_json);
+        ZImpl(set_output("json", out_json);
     }
 };
 
@@ -735,11 +735,11 @@ ZENDEFNODE( CreateRenderInstance, {
 
 struct RenderGroup : zeno::INode {
     virtual void apply() override {
-        auto RenderGroupID = get_input2<std::string>("RenderGroupID");
-        auto is_static = get_input2<bool>("static");
-        auto Matrix_string = get_input2<std::string>("Matrixes");
+        auto RenderGroupID = ZImpl(get_input2<std::string>("RenderGroupID");
+        auto is_static = ZImpl(get_input2<bool>("static");
+        auto Matrix_string = ZImpl(get_input2<std::string>("Matrixes");
         std::vector<std::string> Matrixes = zeno::split_str(Matrix_string, {' ', '\n'});
-        auto items = get_input<ListObject>("items")->get<JsonObject>();
+        auto items = ZImpl(get_input<ListObject>("items")->get<JsonObject>();
 
         std::set<std::string> rinst;
         std::map<std::string, int> id_checker;
@@ -798,7 +798,7 @@ struct RenderGroup : zeno::INode {
             }
         }
 
-        set_output("json", out_json);
+        ZImpl(set_output("json", out_json);
     }
 };
 

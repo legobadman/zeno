@@ -1,6 +1,5 @@
 #include <rapidjson/document.h>
 #include <zeno/zeno.h>
-#include <zeno/core/reflectdef.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/funcs/ObjectCodec.h>
 #include <zeno/geo/geometryutil.h>
@@ -12,13 +11,12 @@
 #else
 
 #endif
-#include "zeno_types/reflect/reflection.generated.hpp"
 
 #undef GetObject    //winapi居然把rapidjson的GetObject方法给宏定义了
 
 
 namespace zeno {
-
+#if 0 //TODO
     using namespace zeno::reflect;
 
     #define DEBUG_NODE
@@ -350,4 +348,5 @@ private:
 #endif
 
     };
+#endif
 }

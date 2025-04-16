@@ -3,6 +3,7 @@
 #include <zeno/utils/api.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/data.h>
+#include <zeno/core/INode.h>
 #include <memory>
 #include <string>
 #include <map>
@@ -18,7 +19,7 @@ namespace zeno {
 
 struct Graph;
 struct Session;
-struct INode;
+struct NodeImpl;
 struct GlobalVariableManager;
 struct IObject;
 struct INodeClass;
@@ -56,7 +57,7 @@ struct Session {
 
     ZENO_API UserData &userData() const;
     ZENO_API std::shared_ptr<Graph> createGraph(const std::string& name);
-    ZENO_API std::shared_ptr<INode> getNodeByUuidPath(std::string const& uuid_path);
+    ZENO_API NodeImpl* getNodeByUuidPath(std::string const& uuid_path);
     ZENO_API void resetMainGraph();
     ZENO_API bool run(const std::string& currgraph = "");
     ZENO_API void interrupt();
@@ -67,9 +68,10 @@ struct Session {
     ZENO_API void set_Rerun();
     ZENO_API std::string dumpDescriptorsJSON() const;
     ZENO_API zeno::NodeCates dumpCoreCates();
-    ZENO_API void defNodeClass(std::shared_ptr<INode>(*ctor)(), std::string const &id, Descriptor const &desc = {});
-    ZENO_API void defNodeClass2(std::shared_ptr<INode>(*ctor)(), std::string const& nodecls, CustomUI const& customui);
-    ZENO_API void defNodeReflectClass(std::function<std::shared_ptr<INode>()> ctor, zeno::reflect::TypeBase* pTypeBase);
+    ZENO_API void defNodeClass(INode*(*ctor)(), std::string const &id, Descriptor const &desc = {});
+    ZENO_API void defNodeClass2(INode*(*ctor)(), std::string const& nodecls, CustomUI const& customui);
+    ZENO_API void defNodeClass3(INode*(*ctor)(), const char* pName, Descriptor const& desc = {});
+    ZENO_API void defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase);
     ZENO_API void setApiLevelEnable(bool bEnable);
     ZENO_API void beginApiCall();
     ZENO_API void endApiCall();

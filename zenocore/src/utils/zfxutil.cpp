@@ -685,7 +685,7 @@ namespace zeno
             }
         }
 
-        std::shared_ptr<INode> getNodeAndParamFromRefString(
+        NodeImpl* getNodeAndParamFromRefString(
             const std::string& ref, 
             ZfxContext* pContext,
             std::string& paramName,
@@ -695,7 +695,7 @@ namespace zeno
                 zeno::log_warn("ref empty");
             }
             std::string fullPath, graphAbsPath;
-            auto thisNode = pContext->spNode.lock();
+            auto thisNode = pContext->spNode;
             const std::string& thisnodePath = thisNode->get_path();
             graphAbsPath = thisnodePath.substr(0, thisnodePath.find_last_of('/'));
 
@@ -722,24 +722,24 @@ namespace zeno
                 zeno::log_warn("no param name when resolve ref path");
             }
 
-            std::shared_ptr<INode> spNode;
+            NodeImpl* pNodeImpl;
 
             {
                 //尝试按照 节点名称.参数的方式进行解析
                 std::string nodename = nodePrmPath.substr(0, idx);
                 paramPath = nodePrmPath.substr(idx + 1);
                 std::string nodeAbsPath = graph_correct_path + '/' + nodename;
-                spNode = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
-                if (!spNode) {
+                pNodeImpl = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
+                if (!pNodeImpl) {
                     //找不到节点，说明可能是当前节点
-                    spNode = pContext->spNode.lock();
+                    pNodeImpl = pContext->spNode;
                     paramPath = nodePrmPath;    //这个路径可能也是一个不合法的路径
                 }
             }
 
             auto paramPathItems = split_str(paramPath, '.');
             paramName = paramPathItems.empty() ? paramPath : paramPathItems[0];
-            return spNode;
+            return pNodeImpl;
         }
     }
 }

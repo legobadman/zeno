@@ -11,15 +11,15 @@ namespace zeno {
 #if 0
 struct PortalIn : zeno::INode {
     virtual void complete() override {
-        auto name = get_param<std::string>("name");
+        auto name = ZImpl(get_param<std::string>("name"));
         std::shared_ptr<Graph> spGraph = getThisGraph();
         assert(spGraph);
         spGraph->portalIns[name] = this->get_name();
     }
 
     virtual void apply() override {
-        auto name = get_param<std::string>("name");
-        auto obj = get_input("port");
+        auto name = ZImpl(get_param<std::string>("name"));
+        auto obj = ZImpl(get_input("port"));
         std::shared_ptr<Graph> spGraph = getThisGraph();
         assert(spGraph);
         spGraph->portals[name] = std::move(obj);
@@ -35,13 +35,13 @@ ZENDEFNODE(PortalIn, {
 
 struct PortalOut : zeno::INode {
     virtual void apply() override {
-        auto name = get_param<std::string>("name");
+        auto name = ZImpl(get_param<std::string>("name"));
         std::shared_ptr<Graph> spGraph = getThisGraph();
         assert(spGraph);
         auto depnode = zeno::safe_at(spGraph->portalIns, name, "PortalIn");
         spGraph->applyNode(depnode);
         auto obj = zeno::safe_at(spGraph->portals, name, "portal object");
-        set_output("port", std::move(obj));
+        ZImpl(set_output("port", std::move(obj)));
     }
 };
 
@@ -56,11 +56,11 @@ ZENDEFNODE(PortalOut, {
 
 struct Route : zeno::INode {
     virtual void apply() override {
-        if (has_input("input")) {
-            auto obj = get_input("input");
-            set_output("output", std::move(obj));
+        if (ZImpl(has_input("input"))) {
+            auto obj = ZImpl(get_input("input"));
+            ZImpl(set_output("output", std::move(obj)));
         } else {
-            set_output("output", std::make_shared<zeno::DummyObject>());
+            ZImpl(set_output("output", std::make_shared<zeno::DummyObject>()));
         }
     }
     CustomUI export_customui() const override {
@@ -86,12 +86,12 @@ ZENDEFNODE(Route, {
 
 struct Stamp : zeno::INode {
     virtual void apply() override {
-        if (has_input("input")) {
-            auto obj = get_input("input");
-            set_output("output", std::move(obj));
+        if (ZImpl(has_input("input"))) {
+            auto obj = ZImpl(get_input("input"));
+            ZImpl(set_output("output", std::move(obj)));
         }
         else {
-            set_output("output", std::make_shared<zeno::DummyObject>());
+            ZImpl(set_output("output", std::make_shared<zeno::DummyObject>()));
         }
     }
 };
@@ -107,14 +107,14 @@ ZENDEFNODE(Stamp, {
 
 struct Clone : zeno::INode {
     virtual void apply() override {
-        auto obj = get_input("object");
+        auto obj = ZImpl(get_input("object"));
         auto newobj = obj->clone();
         if (!newobj) {
             log_error("requested object doesn't support clone");
             return;
         }
-        set_output("newObject", std::move(newobj));
-        set_output("origin", obj);
+        ZImpl(set_output("newObject", std::move(newobj)));
+        ZImpl(set_output("origin", obj));
     }
 };
 
@@ -131,14 +131,10 @@ ZENDEFNODE(Clone, {
 
 struct Assign : zeno::INode {
     virtual void apply() override {
-        auto src = get_input("src");
-        auto dst = get_input("dst");
-        bool succ = dst->assign(src.get());
-        if (!succ) {
-            log_error("requested object doesn't support assign or type mismatch");
-            return;
-        }
-        set_output("dst", std::move(dst));
+        auto src = ZImpl(get_input("src"));
+        auto dst = ZImpl(get_input("dst"));
+        *dst = *src;
+        ZImpl(set_output("dst", std::move(dst)));
     }
 };
 
@@ -149,74 +145,13 @@ ZENDEFNODE(Assign, {
     {"lifecycle"},
 });
 
-
-struct MoveClone : zeno::INode {
-    virtual void apply() override {
-        auto obj = get_input("object");
-        auto newobj = obj->move_clone();
-        if (!newobj) {
-            log_error("requested object doesn't support move_clone");
-            return;
-        }
-        set_output("newObject", std::move(newobj));
-    }
-};
-
-ZENDEFNODE(MoveClone, {
-    {{gParamType_IObject, "object", "", zeno::Socket_ReadOnly}},
-    {{"object", "newObject"}},
-    {},
-    {"lifecycle"},
-});
-
-
-struct MoveDelete : zeno::INode {
-    virtual void apply() override {
-        auto obj = get_input("object");
-        auto newobj = obj->move_clone();
-        if (!newobj) {
-            log_error("requested object doesn't support move_clone");
-            return;
-        }
-        newobj = nullptr;
-    }
-};
-
-ZENDEFNODE(MoveDelete, {
-    {{gParamType_IObject, "object", "", zeno::Socket_ReadOnly}},
-    {},
-    {},
-    {"lifecycle"},
-});
-
-
-struct MoveAssign : zeno::INode {
-    virtual void apply() override {
-        auto src = get_input("src");
-        auto dst = get_input("dst");
-        bool succ = dst->move_assign(src.get());
-        if (!succ) {
-            log_error("requested object doesn't support move_assign or type mismatch");
-            return;
-        }
-        set_output("dst", std::move(dst));
-    }
-};
-
-ZENDEFNODE(MoveAssign, {
-    {{"object", "dst"}, {"object", "src"} },
-    {{"object", "dst"}},
-    {},
-    {"lifecycle"},
-});
-
-
 struct SetUserData : zeno::INode {
     virtual void apply() override {
-        auto object = get_input("object");
-        auto key = get_param<std::string>("key");
-        object->userData().set(key, get_input("data"));
-        set_output("object", std::move(object));
+        auto object = ZImpl(get_input("object"));
+        auto key = ZImpl(get_param<std::string>("key"));
+        UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
+        pUsrData->set(key, ZImpl(get_input("data")));
+        ZImpl(set_output("object", std::move(object)));
     }
 };
 
@@ -232,10 +167,11 @@ ZENDEFNODE(SetUserData, {
 
 struct SetUserData2 : zeno::INode {
     virtual void apply() override {
-        auto object = get_input("object");
-        auto key = get_input2<std::string>("key");
-        object->userData().set(key, get_input("data"));
-        set_output("object", std::move(object));
+        auto object = ZImpl(get_input("object"));
+        auto key = ZImpl(get_input2<std::string>("key"));
+        UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
+        pUsrData->set(key, ZImpl(get_input("data")));
+        ZImpl(set_output("object", std::move(object)));
     }
 };
 
@@ -248,12 +184,13 @@ ZENDEFNODE(SetUserData2, {
 
 struct GetUserData : zeno::INode {
     virtual void apply() override {
-        auto object = get_input("object");
-        auto key = get_param<std::string>("key");
-        auto hasValue = object->userData().has(key);
-        auto data = hasValue ? object->userData().get(key) : std::make_shared<DummyObject>();
-        set_output2("hasValue", hasValue);
-        set_output("data", std::move(data));
+        auto object = ZImpl(get_input("object"));
+        auto key = ZImpl(get_param<std::string>("key"));
+        UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
+        auto hasValue = pUsrData->has(key);
+        auto data = hasValue ? pUsrData->get(key) : std::make_shared<DummyObject>();
+        ZImpl(set_output2("hasValue", hasValue));
+        ZImpl(set_output("data", std::move(data)));
     }
 };
 
@@ -266,12 +203,13 @@ ZENDEFNODE(GetUserData, {
 
 struct GetUserData2 : zeno::INode {
   virtual void apply() override {
-    auto object = get_input("object");
-    auto key = get_input2<std::string>("key");
-    auto hasValue = object->userData().has(key);
-    auto data = hasValue ? object->userData().get(key) : std::make_shared<DummyObject>();
-    set_output2("hasValue", hasValue);
-    set_output("data", std::move(data));
+    auto object = ZImpl(get_input("object"));
+    auto key = ZImpl(get_input2<std::string>("key"));
+    UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
+    auto hasValue = pUsrData->has(key);
+    auto data = hasValue ? pUsrData->get(key) : std::make_shared<DummyObject>();
+    ZImpl(set_output2("hasValue", hasValue));
+    ZImpl(set_output("data", std::move(data)));
   }
 };
 
@@ -286,9 +224,10 @@ ZENDEFNODE(GetUserData2, {
 
 struct DelUserData : zeno::INode {
     virtual void apply() override {
-        auto object = get_input("object");
-        auto key = get_param<std::string>("key");
-        object->userData().del(key);
+        auto object = ZImpl(get_input("object"));
+        auto key = ZImpl(get_param<std::string>("key"));
+        UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
+        pUsrData->del(key);
     }
 };
 
@@ -301,10 +240,11 @@ ZENDEFNODE(DelUserData, {
 
 struct DelUserData2 : zeno::INode {
     virtual void apply() override {
-        auto object = get_input("object");
-        auto key = get_input2<std::string>("key");
-        object->userData().del(key);
-        set_output("object", std::move(object));
+        auto object = ZImpl(get_input("object"));
+        auto key = ZImpl(get_input2<std::string>("key"));
+        UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
+        pUsrData->del(key);
+        ZImpl(set_output("object", std::move(object)));
     }
 };
 
@@ -315,12 +255,13 @@ ZENDEFNODE(DelUserData2, {
     {"lifecycle"},
 });
 
+#if 0
 struct CopyAllUserData : zeno::INode {
     virtual void apply() override {
-        auto src = get_input("src");
-        auto dst = get_input("dst");
+        auto src = ZImpl(get_input("src"));
+        auto dst = ZImpl(get_input("dst"));
         dst->userData() = src->userData();
-        set_output("dst", std::move(dst));
+        ZImpl(set_output("dst", std::move(dst)));
     }
 };
 
@@ -333,6 +274,6 @@ ZENDEFNODE(CopyAllUserData, {
     {},
     {"lifecycle"},
 });
-
+#endif
 
 }

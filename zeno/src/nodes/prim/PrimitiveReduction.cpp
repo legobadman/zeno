@@ -42,9 +42,9 @@ static T prim_reduce(PrimitiveObject *prim, std::string channel, std::string typ
 
 struct PrimitiveReduction : zeno::INode {
     virtual void apply() override{
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto attrToReduce = get_param<std::string>(("attr"));
-        auto op = get_param<std::string>(("op"));
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto attrToReduce = ZImpl(get_param<std::string>("attr"));
+        auto op = ZImpl(get_param<std::string>("op"));
         zeno::NumericValue result;
         if (prim->attr_is<zeno::vec3f>(attrToReduce))
             result = prim_reduce<zeno::vec3f>(prim.get(), attrToReduce, op);
@@ -52,7 +52,7 @@ struct PrimitiveReduction : zeno::INode {
             result = prim_reduce<float>(prim.get(), attrToReduce, op);
         auto out = std::make_shared<zeno::NumericObject>();
         out->set(result);
-        set_output("result", std::move(out));
+        ZImpl(set_output("result", std::move(out)));
     }
 };
 ZENDEFNODE(PrimitiveReduction,
@@ -69,9 +69,9 @@ ZENDEFNODE(PrimitiveReduction,
 
 struct PrimReduction : zeno::INode {
     virtual void apply() override{
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto attrToReduce = get_input2<std::string>(("attrName"));
-        auto op = get_input2<std::string>(("op"));
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto attrToReduce = ZImpl(get_input2<std::string>(("attrName")));
+        auto op = ZImpl(get_input2<std::string>(("op")));
         zeno::NumericValue result;
         if (prim->attr_is<zeno::vec3f>(attrToReduce))
             result = prim_reduce<zeno::vec3f>(prim.get(), attrToReduce, op);
@@ -79,7 +79,7 @@ struct PrimReduction : zeno::INode {
             result = prim_reduce<float>(prim.get(), attrToReduce, op);
         auto out = std::make_shared<zeno::NumericObject>();
         out->set(result);
-        set_output("result", std::move(out));
+        ZImpl(set_output("result", std::move(out)));
     }
 };
 ZENDEFNODE(PrimReduction,{
@@ -97,7 +97,7 @@ ZENDEFNODE(PrimReduction,{
 
 struct PrimitiveBoundingBox : zeno::INode {
     virtual void apply() override{
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto &pos = prim->attr<zeno::vec3f>("pos");
 
         auto bmin = pos.size() ? pos[0] : vec3f(0);
@@ -108,14 +108,14 @@ struct PrimitiveBoundingBox : zeno::INode {
             bmax = zeno::max(pos[i], bmax);
         }
 
-        // auto exwidth = get_param<float>("exWidth");
-        auto exwidth = has_input("exWidth") ? get_input2<float>("exWidth") : 0.f;
+        // auto exwidth = ZImpl(get_param<float>("exWidth"));
+        auto exwidth = ZImpl(has_input("exWidth")) ? ZImpl(get_input2<float>("exWidth")) : 0.f;
         if (exwidth) {
             bmin -= exwidth;
             bmax += exwidth;
         }
-        set_output2("bmin", bmin);
-        set_output2("bmax", bmax);
+        ZImpl(set_output2("bmin", bmin));
+        ZImpl(set_output2("bmax", bmax));
     }
 };
 

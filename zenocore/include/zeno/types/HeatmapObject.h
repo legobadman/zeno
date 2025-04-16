@@ -10,6 +10,11 @@
 
 namespace zeno {
     struct HeatmapObject : IObjectClone<HeatmapObject> {
+
+        void Delete() override {
+            delete this;
+        }
+
         std::vector<zeno::vec3f> colors;
         zeno::vec3f interp(float x) const {
             if(x <= 0) return colors[0];
