@@ -1,12 +1,15 @@
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr.h"
 #include "ABCCommon.h"
 #include "ABCTree.h"
 #include "Alembic/Abc/IObject.h"
-#include "tinyexr.h"
-#include "zeno/funcs/PrimitiveUtils.h"
 #include "zeno/para/parallel_reduce.h"
 #include <filesystem>
 #include <zeno/logger.h>
 #include <zeno/zeno.h>
+#include <zeno/utils/interfaceutil.h>
+#include <zeno/geo/commonutil.h>
+
 
 namespace zeno {
 
@@ -165,8 +168,8 @@ struct AlembicToSoftBodyVAT: public INode {
     bool read_done = false;
 
     virtual void apply() override {
-        int frameStart = get_input2<int>("frameStart");
-        int frameEnd = get_input2<int>("frameEnd");
+        int frameStart = get_input2_int("frameStart");
+        int frameEnd = get_input2_int("frameEnd");
         if (frameEnd < frameStart) {
             std::swap(frameEnd, frameStart);
         }
@@ -175,9 +178,9 @@ struct AlembicToSoftBodyVAT: public INode {
             zeno::log_error("Invalid frame range: {} - {}", frameStart, frameEnd);
             return;
         }
-        bool use_xform = get_input2<bool>("useXForm");
-        std::string writePath = get_input2<std::string>("outputPath");
-        std::string path = get_input2<std::string>("path");
+        bool use_xform = get_input2_bool("useXForm");
+        std::string writePath = zsString2Std(get_input2_string("outputPath"));
+        std::string path = zsString2Std(get_input2_string("path"));
         size_t vatWidth;
         int32_t rowsPerFrame;
         size_t spaceToAlign;
@@ -212,8 +215,13 @@ struct AlembicToSoftBodyVAT: public INode {
                         prims->push_back(np);
                     });
                 }
-                auto mergedPrim = zeno::primMerge(prims->getRaw<PrimitiveObject>());
-                if (get_input2<bool>("flipFrontBack")) {
+
+                Vector<zeno::PrimitiveObject*> primlst;
+                for (zany spobj : prims->get()) {
+                    primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj.get()));
+                }
+                auto mergedPrim = zeno::PrimMerge(primlst);
+                if (get_input2_bool("flipFrontBack")) {
                     primFlipFaces(mergedPrim.get());
                 }
                 zeno::primTriangulate(mergedPrim.get());
@@ -366,8 +374,8 @@ struct AlembicToDynamicRemeshVAT : public INode {
     bool read_done = false;
 
     void apply() override {
-      int frameStart = get_input2<int>("frameStart");
-      int frameEnd = get_input2<int>("frameEnd");
+      int frameStart = get_input2_int("frameStart");
+      int frameEnd = get_input2_int("frameEnd");
       if (frameEnd < frameStart) {
         std::swap(frameEnd, frameStart);
       }
@@ -376,10 +384,10 @@ struct AlembicToDynamicRemeshVAT : public INode {
         zeno::log_error("Invalid frame range: {} - {}", frameStart, frameEnd);
         return;
       }
-      bool use_xform = get_input2<bool>("useXForm");
-      std::string writePath = get_input2<std::string>("outputPath");
-      std::string path = get_input2<std::string>("path");
-      bool shouldFlipFrontBack = get_input2<bool>("flipFrontBack");
+      bool use_xform = get_input2_bool("useXForm");
+      std::string writePath = zsString2Std(get_input2_string("outputPath"));
+      std::string path = zsString2Std(get_input2_string("path"));
+      bool shouldFlipFrontBack = get_input2_bool("flipFrontBack");
 
       std::vector<float> pos_f32;
       std::vector<float> nrm_f32;
@@ -412,7 +420,12 @@ struct AlembicToDynamicRemeshVAT : public INode {
             prims->push_back(np);
           });
         }
-        auto mergedPrim = zeno::primMerge(prims->getRaw<PrimitiveObject>());
+
+        Vector<zeno::PrimitiveObject*> primlst;
+        for (zany spobj : prims->get()) {
+            primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj.get()));
+        }
+        auto mergedPrim = zeno::PrimMerge(primlst);
         if (shouldFlipFrontBack) {
             primFlipFaces(mergedPrim.get());
         }

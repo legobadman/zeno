@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
+#include <zeno/geo/commonutil.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/string.h>
 #include <zeno/utils/fileio.h>

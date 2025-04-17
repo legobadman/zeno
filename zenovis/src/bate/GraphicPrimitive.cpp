@@ -5,6 +5,7 @@
 #include <zeno/types/GeometryObject.h>
 #include <zeno/types/InstancingObject.h>
 #include <zeno/types/PrimitiveTools.h>
+#include <zeno/geo/commonutil.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/logger.h>
 #include <zeno/utils/orthonormal.h>

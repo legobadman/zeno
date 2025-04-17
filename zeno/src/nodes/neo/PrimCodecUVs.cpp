@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
+#include <zeno/geo/commonutil.h>
 #include <zeno/para/parallel_for.h>
 #include <zeno/utils/log.h>
 #include <glm/glm.hpp>

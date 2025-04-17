@@ -2,6 +2,7 @@
 #include <zeno/types/StringObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
+#include <zeno/geo/commonutil.h>
 #include <zeno/utils/variantswitch.h>
 #include <zeno/utils/arrayindex.h>
 #include <zeno/utils/scope_exit.h>

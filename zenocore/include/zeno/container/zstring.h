@@ -45,6 +45,10 @@ namespace zeno
             return m_length;
         }
 
+        size_t size() const noexcept {
+            return m_length;
+        }
+
         bool empty() const noexcept {
             return m_length == 0;
         }

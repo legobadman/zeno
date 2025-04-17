@@ -38,6 +38,14 @@ namespace zeno
         return m_pImpl->get_input2<int>(zsString2Std(param));
     }
 
+    int INodeImpl::get_param_int(const zeno::String& param) {
+        return m_pImpl->get_param<int>(zsString2Std(param));
+    }
+
+    String INodeImpl::get_param_string(const zeno::String& param) {
+        return stdString2zs(m_pImpl->get_param<std::string>(zsString2Std(param)));
+    }
+
     float INodeImpl::get_input2_float(const zeno::String& param) {
         return m_pImpl->get_input2<float>(zsString2Std(param));
     }
@@ -77,6 +85,38 @@ namespace zeno
 
     bool INodeImpl::has_input(const zeno::String& param) {
         return m_pImpl->has_input(zsString2Std(param));
+    }
+
+    void INodeImpl::set_output_int(const zeno::String& param, int val) {
+        return m_pImpl->set_output2(zsString2Std(param), val);
+    }
+
+    void INodeImpl::set_output_float(const zeno::String& param, float val) {
+        return m_pImpl->set_output2(zsString2Std(param), val);
+    }
+
+    void INodeImpl::set_output_vec2f(const zeno::String& param, Vec2f val) {
+        return m_pImpl->set_output2(zsString2Std(param), toVec2f(val));
+    }
+
+    void INodeImpl::set_output_vec2i(const zeno::String& param, Vec2i val) {
+        return m_pImpl->set_output2(zsString2Std(param), toVec2i(val));
+    }
+
+    void INodeImpl::set_output_vec3f(const zeno::String& param, Vec3f val) {
+        return m_pImpl->set_output2(zsString2Std(param), toVec3f(val));
+    }
+
+    void INodeImpl::set_output_vec3i(const zeno::String& param, Vec3i val) {
+        return m_pImpl->set_output2(zsString2Std(param), toVec3i(val));
+    }
+
+    int INodeImpl::GetFrameId() const {
+        return m_pImpl->getGlobalState()->getFrameId();
+    }
+
+    GlobalState* INodeImpl::getGlobalState() {
+        return m_pImpl->getGlobalState();
     }
 
 }

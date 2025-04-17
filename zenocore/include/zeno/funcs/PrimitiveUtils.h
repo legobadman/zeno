@@ -9,20 +9,20 @@ namespace zeno {
 ZENO_API PrimitiveObject* primParsedFrom(const char *binData, std::size_t binSize);
 
 ZENO_API void primTriangulateQuads(PrimitiveObject *prim);
-ZENO_API void primTriangulate(PrimitiveObject *prim, bool with_uv = true, bool has_lines = true, bool with_attr = true);
+//ZENO_API void primTriangulate(PrimitiveObject *prim, bool with_uv = true, bool has_lines = true, bool with_attr = true);
 ZENO_API void primTriangulateIntoPolys(PrimitiveObject *prim);
-ZENO_API void primPolygonate(PrimitiveObject *prim, bool with_uv = true);
+//ZENO_API void primPolygonate(PrimitiveObject *prim, bool with_uv = true);
 
 ZENO_API void primSepTriangles(PrimitiveObject *prim, bool smoothNormal = true, bool keepTriFaces = true);
 //ZENO_API void primSmoothNormal(PrimitiveObject *prim, bool isFlipped = false);
 
-ZENO_API void primFlipFaces(PrimitiveObject *prim, bool only_face = false);
-ZENO_API void primCalcNormal(PrimitiveObject *prim, float flip = 1.0f, std::string nrmAttr = "nrm");
+//ZENO_API void primFlipFaces(PrimitiveObject *prim, bool only_face = false);
+//ZENO_API void primCalcNormal(PrimitiveObject *prim, float flip = 1.0f, std::string nrmAttr = "nrm");
 //ZENO_API void primCalcInsetDir(PrimitiveObject *prim, float flip = 1.0f, std::string nrmAttr = "nrm");
 
 ZENO_API void primWireframe(PrimitiveObject *prim, bool removeFaces = false, bool toEdges = false);
 ZENO_API void primEdgeBound(PrimitiveObject *prim, bool removeFaces = false, bool toEdges = false);
-ZENO_API void primKillDeadVerts(PrimitiveObject *prim);
+//ZENO_API void primKillDeadVerts(PrimitiveObject *prim);
 
 ZENO_API void primDecodeUVs(PrimitiveObject *prim);
 ZENO_API void primLoopUVsToVerts(PrimitiveObject *prim);
@@ -33,8 +33,8 @@ ZENO_API std::shared_ptr<PrimitiveObject> primDuplicate(PrimitiveObject *parsPri
 
 ZENO_API void primLineSort(PrimitiveObject *prim, bool reversed = false);
 ZENO_API void primLineDistance(PrimitiveObject *prim, std::string resAttr, int start = 0);
-ZENO_API void prim_set_abcpath(PrimitiveObject* prim, std::string path_name);
-ZENO_API void prim_set_faceset(PrimitiveObject* prim, std::string faceset_name);
+//ZENO_API void prim_set_abcpath(PrimitiveObject* prim, std::string path_name);
+//ZENO_API void prim_set_faceset(PrimitiveObject* prim, std::string faceset_name);
 
 ZENO_API void primFilterVerts(PrimitiveObject *prim, std::string tagAttr, int tagValue, bool isInversed = false, std::string revampAttrO = {}, std::string method = "verts", int* aux = nullptr, int aux_size = 0, bool use_aux = false);
 

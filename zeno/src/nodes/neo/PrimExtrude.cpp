@@ -2,6 +2,7 @@
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/PrimitiveUtils.h>
+#include <zeno/geo/commonutil.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/arrayindex.h>
 #include <zeno/utils/variantswitch.h>
@@ -65,7 +66,7 @@ struct PrimExtrude : INode {
         std::vector<vec3f> p2norms;
         if (extrude != 0 || inset != 0) {
             std::string tmpNormAttr = "%%extrude2";
-            primCalcNormal(prim2.get(), 1.0f, tmpNormAttr);
+            primCalcNormal(prim2.get(), 1.0f, zeno::String(tmpNormAttr.c_str()));
             p2norms = std::move(prim2->verts.attr<zeno::vec3f>(tmpNormAttr));
             prim2->verts.erase_attr(tmpNormAttr);
         }

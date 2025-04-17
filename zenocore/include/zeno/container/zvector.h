@@ -77,6 +77,11 @@ public:
     size_t size() const noexcept { return m_size; }
     size_t capacity() const noexcept { return m_capability; }
 
+    T* begin() { return static_cast<T*>(m_data); }
+    T* end() { return  static_cast<T*>(m_data) + m_size; }
+    const T* begin() const { return static_cast<T*>(m_data); }
+    const T* end() const { return static_cast<T*>(m_data) + m_size; }
+
     void push_back(const T& val) noexcept {
         if (m_size == m_capability) {
             reallocate(-1);

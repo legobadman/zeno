@@ -31,6 +31,11 @@ struct UserData : IUserData {
         set2(skey, zsString2Std(sval));
     }
 
+    bool has_string(const String& key) override {
+        std::string skey(key.c_str());
+        return has<std::string>(skey);
+    }
+
     int get_int(const String& key, int defl = 0) override {
         std::string skey(key.c_str());
         return get2<int>(skey, defl);
@@ -39,6 +44,11 @@ struct UserData : IUserData {
     void set_int(const String& key, int iVal) override {
         std::string skey(key.c_str());
         set2(skey, iVal);
+    }
+
+    bool has_int(const String& key) override {
+        std::string skey(key.c_str());
+        return has<int>(skey);
     }
 
     float get_float(const String& key, float defl = 0.f) override {
@@ -51,6 +61,11 @@ struct UserData : IUserData {
         set2(skey, fVal);
     }
 
+    bool has_float(const String& key) override {
+        std::string skey(key.c_str());
+        return has<float>(skey);
+    }
+
     bool get_bool(const String& key, bool defl = false) override {
         std::string skey(key.c_str());
         return get2<bool>(skey, defl);
@@ -61,9 +76,19 @@ struct UserData : IUserData {
         set2(skey, val);
     }
 
+    bool has_bool(const String& key) override {
+        std::string skey(key.c_str());
+        return has<bool>(skey);
+    }
+
     Vec2f get_vec2f(const String& key) override {
         std::string skey(key.c_str());
         return toAbiVec2f(get2<vec2f>(skey));
+    }
+
+    Vec2i get_vec2i(const String& key) override {
+        std::string skey(key.c_str());
+        return toAbiVec2i(get2<vec2i>(skey));
     }
 
     void set_vec2f(const String& key, const Vec2f& vec) override {
@@ -71,9 +96,39 @@ struct UserData : IUserData {
         set2(skey, toVec2f(vec));
     }
 
+    bool has_vec2f(const String& key) override {
+        std::string skey(key.c_str());
+        return has<vec2f>(skey);
+    }
+
+    void set_vec2i(const String& key, const Vec2i& vec) override {
+        std::string skey(key.c_str());
+        set2(skey, toVec2i(vec));
+    }
+
+    bool has_vec2i(const String& key) override {
+        std::string skey(key.c_str());
+        return has<vec2i>(skey);
+    }
+
     Vec3f get_vec3f(const String& key) override {
         std::string skey(key.c_str());
         return toAbiVec3f(get2<vec3f>(skey));
+    }
+
+    bool has_vec3f(const String& key) override {
+        std::string skey(key.c_str());
+        return has<vec3f>(skey);
+    }
+
+    Vec3i get_vec3i(const String& key) override {
+        std::string skey(key.c_str());
+        return toAbiVec3i(get2<vec3i>(skey));
+    }
+
+    bool has_vec3i(const String& key) override {
+        std::string skey(key.c_str());
+        return has<vec3i>(skey);
     }
 
     void set_vec3f(const String& key, const Vec3f& vec) override {
@@ -81,14 +136,47 @@ struct UserData : IUserData {
         set2(skey, toVec3f(vec));
     }
 
+    void set_vec3i(const String& key, const Vec3i& vec) override {
+        std::string skey(key.c_str());
+        set2(skey, toVec3i(vec));
+    }
+
+    bool has_vec4f(const String& key) override {
+        std::string skey(key.c_str());
+        return has<vec4f>(skey);
+    }
+
     Vec4f get_vec4f(const String& key) override {
         std::string skey(key.c_str());
         return toAbiVec4f(get2<vec4f>(skey));
     }
 
+    bool has_vec4i(const String& key) override {
+        std::string skey(key.c_str());
+        return has<vec4i>(skey);
+    }
+
+    Vec4i get_vec4i(const String& key) override {
+        std::string skey(key.c_str());
+        return toAbiVec4i(get2<vec4f>(skey));
+    }
+
     void set_vec4f(const String& key, const Vec4f& vec) override {
         std::string skey(key.c_str());
         set2(skey, toVec4f(vec));
+    }
+
+    void set_vec4i(const String& key, const Vec4i& vec) override {
+        std::string skey(key.c_str());
+        set2(skey, toVec4i(vec));
+    }
+
+    Vector<String> keys() const override {
+        Vector<String> vec;
+        for (const auto& [key, value] : m_data) {
+            vec.push_back(stdString2zs(key));
+        }
+        return vec;
     }
 
     void del(String const& name) override {

@@ -1,4 +1,5 @@
 #include <zeno/funcs/PrimitiveUtils.h>
+#include <zeno/geo/commonutil.h>
 #include <zeno/para/parallel_for.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -9,45 +10,7 @@
 #include <unordered_set>
 
 namespace zeno {
-ZENO_API void prim_set_abcpath(PrimitiveObject* prim, std::string path_name) {
-    UserData* pUserData = dynamic_cast<UserData*>(prim->userData());
-    int faceset_count = pUserData->get2<int>("abcpath_count",0);
-    for (auto j = 0; j < faceset_count; j++) {
-        pUserData->del(stdString2zs(zeno::format("abcpath_{}", j)));
-    }
-    pUserData->set2("abcpath_count", 1);
-    pUserData->set2("abcpath_0", path_name);
 
-    if (prim->tris.size() > 0) {
-        prim->tris.add_attr<int>("abcpath").assign(prim->tris.size(),0);
-    }
-    if (prim->quads.size() > 0) {
-        prim->quads.add_attr<int>("abcpath").assign(prim->quads.size(),0);
-    }
-    if (prim->polys.size() > 0) {
-        prim->polys.add_attr<int>("abcpath").assign(prim->polys.size(),0);
-    }
-}
-
-ZENO_API void prim_set_faceset(PrimitiveObject* prim, std::string faceset_name) {
-    UserData* pUserData = dynamic_cast<UserData*>(prim->userData());
-    int faceset_count = pUserData->get2<int>("faceset_count",0);
-    for (auto j = 0; j < faceset_count; j++) {
-        pUserData->del(stdString2zs(zeno::format("faceset_{}", j)));
-    }
-    pUserData->set2("faceset_count", 1);
-    pUserData->set2("faceset_0", faceset_name);
-
-    if (prim->tris.size() > 0) {
-        prim->tris.add_attr<int>("faceset").assign(prim->tris.size(),0);
-    }
-    if (prim->quads.size() > 0) {
-        prim->quads.add_attr<int>("faceset").assign(prim->quads.size(),0);
-    }
-    if (prim->polys.size() > 0) {
-        prim->polys.add_attr<int>("faceset").assign(prim->polys.size(),0);
-    }
-}
 static void set_special_attr_remap(PrimitiveObject *p, std::string attr_name, std::unordered_map<std::string, int> &facesetNameMap) {
     UserData* pUserData = dynamic_cast<UserData*>(p->userData());
     int faceset_count = pUserData->get2<int>(attr_name + "_count", 0);

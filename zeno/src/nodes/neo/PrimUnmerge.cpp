@@ -1,4 +1,5 @@
 #include <zeno/zeno.h>
+#include <zeno/geo/commonutil.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/ListObject_impl.h>

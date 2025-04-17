@@ -1,10 +1,12 @@
 // https://github.com/alembic/alembic/blob/master/lib/Alembic/AbcGeom/Tests/PolyMeshTest.cpp
 // WHY THE FKING ALEMBIC OFFICIAL GIVES NO DOC BUT ONLY "TESTS" FOR ME TO LEARN THEIR FKING LIB
 #include <zeno/zeno.h>
+#include <any>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/NumericObject.h>
-#include <zeno/types/UserData.h>
 #include <zeno/extra/GlobalState.h>
+#include <zeno/geo/commonutil.h>
+#include <zeno/utils/interfaceutil.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreAbstract/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
@@ -16,7 +18,6 @@
 #include "zeno/types/ListObject.h"
 #include "zeno/utils/log.h"
 #include "zeno/utils/fileio.h"
-#include "zeno/funcs/PrimitiveUtils.h"
 #include "zeno/extra/TempNode.h"
 #include <numeric>
 #include <filesystem>
@@ -47,22 +48,22 @@ struct WriteAlembic : INode {
     OArchive archive;
     OPolyMesh meshyObj;
     virtual void apply() override {
-        bool flipFrontBack = get_param<int>("flipFrontBack");
+        bool flipFrontBack = m_pAdapter->get_param_int("flipFrontBack");
         int frameid;
         if (has_input("frameid")) {
-            frameid = get_param<int>("frameid");
+            frameid = m_pAdapter->get_param_int("frameid");
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->getGlobalState()->getFrameId();
         }
-        int frame_start = get_param<int>("frame_start");
-        int frame_end = get_param<int>("frame_end");
+        int frame_start = m_pAdapter->get_param_int("frame_start");
+        int frame_end = m_pAdapter->get_param_int("frame_end");
         if (frameid == frame_start) {
-            std::string path = get_param<std::string>("path");
+            std::string path = zsString2Std(m_pAdapter->get_param_string("path"));
             archive = {Alembic::AbcCoreOgawa::WriteArchive(), path};
             archive.addTimeSampling(TimeSampling(1.0/24, frame_start / 24.0));
             meshyObj = OPolyMesh( OObject( archive, 1 ), "mesh" );
         }
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_PrimitiveObject("prim");
         if (frame_start <= frameid && frameid <= frame_end) {
             // Create a PolyMesh class.
             OPolyMeshSchema &mesh = meshyObj.getSchema();
@@ -382,21 +383,24 @@ void write_user_data(
         , int frameid
         , int real_frame_start
 ) {
-    auto &ud = prim->userData();
-    for (const auto& [key, value] : ud.m_data) {
-        std::string full_key = path + '/' + key;
-        if (key == "faceset_count" || zeno::starts_with(key, "faceset_")) {
+    //要直接拿userdata，打破二进制边界
+    auto ud = prim->userData();
+    Vector<String> keys = ud->keys();
+    for (const auto& key : keys) {
+        std::string skey = zsString2Std(key);
+        std::string full_key = path + '/' + skey;
+        if (key == "faceset_count" || zeno::starts_with(skey, "faceset_")) {
             continue;
         }
-        if (key == "abcpath_count" || zeno::starts_with(key, "abcpath_")) {
+        if (key == "abcpath_count" || zeno::starts_with(skey, "abcpath_")) {
             continue;
         }
-        if (key == "matNum" || zeno::starts_with(key, "Material_") || key == "mtlid") {
+        if (key == "matNum" || zeno::starts_with(skey, "Material_") || key == "mtlid") {
             continue;
         }
-        if (ud.has<int>(key)) {
+        if (ud->has_int(key)) {
             if (user_attrs.count(full_key) == 0) {
-                auto p = OInt32Property(user, key);
+                auto p = OInt32Property(user, skey);
                 p.setTimeSampling(1);
                 user_attrs[full_key] = p;
                 if (real_frame_start != frameid) {
@@ -405,11 +409,11 @@ void write_user_data(
                     }
                 }
             }
-            std::any_cast<OInt32Property>(user_attrs[full_key]).set(ud.get2<int>(key));
+            std::any_cast<OInt32Property>(user_attrs[full_key]).set(ud->get_int(key));
         }
-        else if (ud.has<float>(key)) {
+        else if (ud->has_float(key)) {
             if (user_attrs.count(full_key) == 0) {
-                auto p = OFloatProperty(user, key);
+                auto p = OFloatProperty(user, skey);
                 p.setTimeSampling(1);
                 user_attrs[full_key] = p;
                 if (real_frame_start != frameid) {
@@ -418,11 +422,11 @@ void write_user_data(
                     }
                 }
             }
-            std::any_cast<OFloatProperty>(user_attrs[full_key]).set(ud.get2<float>(key));
+            std::any_cast<OFloatProperty>(user_attrs[full_key]).set(ud->get_float(key));
         }
-        else if (ud.has<vec2i>(key)) {
+        else if (ud->has_vec2i(key)) {
             if (user_attrs.count(full_key) == 0) {
-                auto p = OV2iProperty(user, key);
+                auto p = OV2iProperty(user, skey);
                 p.setTimeSampling(1);
                 user_attrs[full_key] = p;
                 if (real_frame_start != frameid) {
@@ -431,12 +435,12 @@ void write_user_data(
                     }
                 }
             }
-            auto v = ud.get2<vec2i>(key);
-            std::any_cast<OV2iProperty>(user_attrs[full_key]).set(Imath::V2i(v[0], v[1]));
+            auto v = ud->get_vec2i(key);
+            std::any_cast<OV2iProperty>(user_attrs[full_key]).set(Imath::V2i(v.x, v.y));
         }
-        else if (ud.has<vec3i>(key)) {
+        else if (ud->has_vec3i(key)) {
             if (user_attrs.count(full_key) == 0) {
-                auto p = OV3iProperty(user, key);
+                auto p = OV3iProperty(user, skey);
                 p.setTimeSampling(1);
                 user_attrs[full_key] = p;
                 if (real_frame_start != frameid) {
@@ -445,12 +449,12 @@ void write_user_data(
                     }
                 }
             }
-            auto v = ud.get2<vec3i>(key);
-            std::any_cast<OV3iProperty>(user_attrs[full_key]).set(Imath::V3i(v[0], v[1], v[2]));
+            auto v = ud->get_vec3i(key);
+            std::any_cast<OV3iProperty>(user_attrs[full_key]).set(Imath::V3i(v.x, v.y, v.z));
         }
-        else if (ud.has<vec2f>(key)) {
+        else if (ud->has_vec2f(key)) {
             if (user_attrs.count(full_key) == 0) {
-                auto p = OV2fProperty(user, key);
+                auto p = OV2fProperty(user, skey);
                 p.setTimeSampling(1);
                 user_attrs[full_key] = p;
                 if (real_frame_start != frameid) {
@@ -459,12 +463,12 @@ void write_user_data(
                     }
                 }
             }
-            auto v = ud.get2<vec2f>(key);
-            std::any_cast<OV2fProperty>(user_attrs[full_key]).set(Imath::V2f(v[0], v[1]));
+            auto v = ud->get_vec2f(key);
+            std::any_cast<OV2fProperty>(user_attrs[full_key]).set(Imath::V2f(v.x, v.y));
         }
-        else if (ud.has<vec3f>(key)) {
+        else if (ud->has_vec3f(key)) {
             if (user_attrs.count(full_key) == 0) {
-                auto p = OV3fProperty(user, key);
+                auto p = OV3fProperty(user, skey);
                 p.setTimeSampling(1);
                 user_attrs[full_key] = p;
                 if (real_frame_start != frameid) {
@@ -473,12 +477,12 @@ void write_user_data(
                     }
                 }
             }
-            auto v = ud.get2<vec3f>(key);
-            std::any_cast<OV3fProperty>(user_attrs[full_key]).set(Imath::V3f(v[0], v[1], v[2]));
+            auto v = ud->get_vec3f(key);
+            std::any_cast<OV3fProperty>(user_attrs[full_key]).set(Imath::V3f(v.x, v.y, v.z));
         }
-        else if (ud.has<std::string>(key)) {
+        else if (ud->has_string(key)) {
             if (user_attrs.count(full_key) == 0) {
-                auto p = OStringProperty(user, key);
+                auto p = OStringProperty(user, skey);
                 p.setTimeSampling(1);
                 user_attrs[full_key] = p;
                 if (real_frame_start != frameid) {
@@ -487,7 +491,7 @@ void write_user_data(
                     }
                 }
             }
-            std::any_cast<OStringProperty>(user_attrs[full_key]).set(ud.get2<std::string>(key));
+            std::any_cast<OStringProperty>(user_attrs[full_key]).set(zsString2Std(ud->get_string(key)));
         }
     }
 }
@@ -498,13 +502,14 @@ static void write_faceset(
         , std::map<std::string, OFaceSet> &o_faceset
         , std::map<std::string, OFaceSetSchema> &o_faceset_schema
         ) {
-    auto &ud = prim->userData();
+    auto ud = prim->userData();
     std::vector<std::string> faceSetNames;
     std::vector<std::vector<int>> faceset_idxs;
-    if (ud.has<int>("faceset_count")) {
-        int faceset_count = ud.get2<int>("faceset_count");
+    if (ud->has("faceset_count")) {
+        int faceset_count = ud->get_int("faceset_count");
         for (auto i = 0; i < faceset_count; i++) {
-            faceSetNames.emplace_back(ud.get2<std::string>(zeno::format("faceset_{}", i)));
+            std::string na = zeno::format("faceset_{}", i);
+            faceSetNames.emplace_back(zsString2Std(ud->get_string(stdString2zs(na))));
         }
         faceset_idxs.resize(faceset_count);
         std::vector<int> faceset;
@@ -559,18 +564,18 @@ struct WriteAlembic2 : INode {
     int real_frame_start = -1;
 
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        bool flipFrontBack = get_input2<int>("flipFrontBack");
-        float fps = get_input2<float>("fps");
+        auto prim = m_pAdapter->get_input_PrimitiveObject("prim");
+        bool flipFrontBack = get_input2_int("flipFrontBack");
+        float fps = get_input2_float("fps");
         int frameid;
         if (has_input("frameid")) {
-            frameid = std::lround(get_input2<float>("frameid"));
+            frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->getGlobalState()->getFrameId();
         }
-        int frame_start = get_input2<int>("frame_start");
-        int frame_end = get_input2<int>("frame_end");
-        std::string path = get_input2<std::string>("path");
+        int frame_start = get_input2_int("frame_start");
+        int frame_end = get_input2_int("frame_end");
+        std::string path = zsString2Std(get_input2_string("path"));
         path = create_directories_when_write_file(path);
 
         if (usedPath != path) {
@@ -579,11 +584,11 @@ struct WriteAlembic2 : INode {
                 Alembic::AbcCoreOgawa::WriteArchive(),
                 path,
                 fps,
-                "Zeno : " + getGlobalState()->zeno_version,
+                "Zeno : " + m_pAdapter->getGlobalState()->zeno_version,
                 "None"
             );
             real_frame_start = -1;
-            if (get_input2<bool>("outputPoint")) {
+            if (get_input2_bool("outputPoint")) {
                 pointsObj = OPoints (OObject( archive, 1 ), "points");
             }
             else {
@@ -608,7 +613,7 @@ struct WriteAlembic2 : INode {
         if (flipFrontBack) {
             primFlipFaces(prim.get());
         }
-        if (!get_input2<bool>("outputPoint")) {
+        if (!get_input2_bool("outputPoint")) {
             prim_to_poly_if_only_vertex(prim.get());
             // Create a PolyMesh class.
             OPolyMeshSchema &mesh = meshyObj.getSchema();
@@ -674,7 +679,7 @@ struct WriteAlembic2 : INode {
                             uvsamp);
                     write_velocity(prim, mesh_samp);
                     write_normal(prim, mesh_samp);
-                    if (get_input2<bool>("outputToMaya") == false) {
+                    if (get_input2_bool("outputToMaya") == false) {
                         write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim, mesh, frameid, real_frame_start, prim_size_per_frame);
                     }
                     mesh.set( mesh_samp );
@@ -686,7 +691,7 @@ struct WriteAlembic2 : INode {
                             Int32ArraySample( vertex_count_per_face.data(), vertex_count_per_face.size() ));
                     write_velocity(prim, mesh_samp);
                     write_normal(prim, mesh_samp);
-                    if (get_input2<bool>("outputToMaya") == false) {
+                    if (get_input2_bool("outputToMaya") == false) {
                         write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim, mesh, frameid, real_frame_start, prim_size_per_frame);
                     }
                     mesh.set( mesh_samp );
@@ -711,7 +716,7 @@ struct WriteAlembic2 : INode {
             }
             samp.setIds(Alembic::Abc::UInt64ArraySample(ids.data(), ids.size()));
             write_velocity(prim, samp);
-            if (get_input2<bool>("outputToMaya") == false) {
+            if (get_input2_bool("outputToMaya") == false) {
                 write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim, points, frameid, real_frame_start, prim_size_per_frame);
             }
             points.set( samp );
@@ -751,50 +756,51 @@ struct WriteAlembicPrims : INode {
     int real_frame_start = -1;
 
     virtual void apply() override {
-        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        Vector<SharedPtr<PrimitiveObject>> prims;
 
         if (has_input("prim")) {
-            auto prim = get_input2<PrimitiveObject>("prim");
-            prims = primUnmergeFaces(prim.get(), "abcpath");
+            auto prim = get_input_PrimitiveObject("prim");
+            prims = PrimUnmergeFaces(prim.get(), "abcpath");
         }
         else {
-            prims = get_input<ListObject>("prims")->get<PrimitiveObject>();
+            auto _lstobj = m_pAdapter->get_input_ListObject("prims");
+            prims = get_prims_from_list(_lstobj);
         }
-        bool flipFrontBack = get_input2<int>("flipFrontBack");
-        float fps = get_input2<float>("fps");
+        bool flipFrontBack = get_input2_int("flipFrontBack");
+        float fps = get_input2_float("fps");
         int frameid;
         if (has_input("frameid")) {
-            frameid = std::lround(get_input2<float>("frameid"));
+            frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->getGlobalState()->getFrameId();
         }
-        int frame_start = get_input2<int>("frame_start");
-        int frame_end = get_input2<int>("frame_end");
-        std::string path = get_input2<std::string>("path");
+        int frame_start = get_input2_int("frame_start");
+        int frame_end = get_input2_int("frame_end");
+        std::string path = zsString2Std(get_input2_string("path"));
         path = create_directories_when_write_file(path);
 
         std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
 
         {
             // unmerged prim when abcpath_count of a prim in list more than 1
-            std::vector<std::shared_ptr<PrimitiveObject>> temp_prims;
+            zeno::Vector<SharedPtr<PrimitiveObject>> temp_prims;
             int counter = 0;
             for (auto prim: prims) {
                 counter += 1;
                 prim_to_poly_if_only_vertex(prim.get());
-                if (prim->userData().get2<int>("abcpath_count", 0) == 0) {
+                if (prim->userData()->get_int("abcpath_count", 0) == 0) {
                     prim_set_abcpath(prim.get(), "/ABC/unassigned");
                 }
-                if (prim->userData().get2<int>("abcpath_count") == 1) {
-                    if (prim->userData().get2<int>("faceset_count", 0) == 0) {
+                if (prim->userData()->get_int("abcpath_count") == 1) {
+                    if (prim->userData()->get_int("faceset_count", 0) == 0) {
                         prim_set_faceset(prim.get(), "defFS");
                     }
                     temp_prims.push_back(prim);
                 }
                 else {
-                    auto unmerged_prims = primUnmergeFaces(prim.get(), "abcpath");
+                    auto unmerged_prims = PrimUnmergeFaces(prim.get(), "abcpath");
                     for (const auto& unmerged_prim: unmerged_prims) {
-                        if (unmerged_prim->userData().get2<int>("faceset_count", 0) == 0) {
+                        if (unmerged_prim->userData()->get_int("faceset_count", 0) == 0) {
                             prim_set_faceset(unmerged_prim.get(), "defFS");
                         }
                         temp_prims.push_back(unmerged_prim);
@@ -808,7 +814,7 @@ struct WriteAlembicPrims : INode {
             std::map<std::string, std::vector<std::shared_ptr<PrimitiveObject>>> path_to_prims;
 
             for (auto prim: prims) {
-                auto path = prim->userData().get2<std::string>("abcpath_0");
+                auto path = zsString2Std(prim->userData()->get_string("abcpath_0"));
                 if (path_to_prims.count(path) == 0) {
                     paths.push_back(path);
                     path_to_prims[path] = {};
@@ -817,7 +823,7 @@ struct WriteAlembicPrims : INode {
             }
             for (auto path : paths) {
                 if (path_to_prims[path].size() > 1) {
-                    std::vector<zeno::PrimitiveObject *> primList;
+                    Vector<zeno::PrimitiveObject *> primList;
                     for (auto prim: path_to_prims[path]) {
                         primList.push_back(prim.get());
                     }
@@ -835,7 +841,7 @@ struct WriteAlembicPrims : INode {
                 Alembic::AbcCoreOgawa::WriteArchive(),
                 path,
                 fps,
-                "Zeno : " + getGlobalState()->zeno_version,
+                "Zeno : " + m_pAdapter->getGlobalState()->zeno_version,
                 "None"
             );
             meshyObjs.clear();
@@ -848,7 +854,7 @@ struct WriteAlembicPrims : INode {
             prim_size_per_frame.clear();
             real_frame_start = -1;
             for (auto prim: new_prims) {
-                auto path = prim->userData().get2<std::string>("abcpath_0");
+                auto path = zsString2Std(prim->userData()->get_string("abcpath_0"));
                 if (!starts_with(path, "/ABC/")) {
                     log_error("abcpath_0 must start with /ABC/");
                 }
@@ -881,12 +887,12 @@ struct WriteAlembicPrims : INode {
             if (flipFrontBack) {
                 primFlipFaces(prim.get());
             }
-            auto path = prim->userData().get2<std::string>("abcpath_0");
+            auto path = zsString2Std(prim->userData()->get_string("abcpath_0"));
 
             {
                 // Create a PolyMesh class.
                 OPolyMeshSchema &mesh = meshyObjs[path].getSchema();
-                auto &ud = prim->userData();
+                auto ud = prim->userData();
                 std::vector<std::string> faceSetNames;
                 std::vector<std::vector<int>> faceset_idxs;
                 write_faceset(prim, mesh, o_faceset[path], o_faceset_schema[path]);
@@ -951,7 +957,7 @@ struct WriteAlembicPrims : INode {
                                 uvsamp);
                         write_velocity(prim, mesh_samp);
                         write_normal(prim, mesh_samp);
-                        if (get_input2<bool>("outputToMaya") == false) {
+                        if (get_input2_bool("outputToMaya") == false) {
                             write_attrs(verts_attrs, loops_attrs, polys_attrs, path, prim, mesh, frameid, real_frame_start, prim_size_per_frame[path]);
                         }
                         mesh.set( mesh_samp );
@@ -963,7 +969,7 @@ struct WriteAlembicPrims : INode {
                                 Int32ArraySample( vertex_count_per_face.data(), vertex_count_per_face.size() ));
                         write_velocity(prim, mesh_samp);
                         write_normal(prim, mesh_samp);
-                        if (get_input2<bool>("outputToMaya") == false) {
+                        if (get_input2_bool("outputToMaya") == false) {
                             write_attrs(verts_attrs, loops_attrs, polys_attrs, path, prim, mesh, frameid, real_frame_start, prim_size_per_frame[path]);
                         }
                         mesh.set( mesh_samp );

@@ -4,6 +4,7 @@
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/fileio.h>
+#include <zeno/geo/commonutil.h>
 #include <string_view>
 #include <fstream>
 #include <iomanip>

@@ -1,12 +1,12 @@
 #include <zeno/zeno.h>
 #include <zeno/utils/logger.h>
+#include <zeno/geo/commonutil.h>
 #include <glm/glm.hpp>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/types/NumericObject.h>
-#include <zeno/types/PrimitiveUtils.h>
 #include <zeno/extra/GlobalState.h>
 #include "ABCCommon.h"
 #include "ABCTree.h"
@@ -26,7 +26,7 @@ int count_alembic_prims(std::shared_ptr<zeno::ABCTree> abctree) {
 
 struct CountAlembicPrims : INode {
     virtual void apply() override {
-        auto abctree = get_input<ABCTree>("abctree");
+        auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
         std::shared_ptr<PrimitiveObject> prim;
         int count = count_alembic_prims(abctree);
         set_output("count", std::make_shared<NumericObject>(count));
@@ -59,8 +59,8 @@ std::shared_ptr<PrimitiveObject> get_alembic_prim(std::shared_ptr<zeno::ABCTree>
 int get_alembic_prim_index(std::shared_ptr<zeno::ABCTree> abctree, std::string name) {
     int index = 0;
     abctree->visitPrims([&] (auto const &p) {
-        auto &ud = p->userData();
-        auto _abc_path = ud.template get2<std::string>("abcpath_0", "");
+        auto ud = p->userData();
+        auto _abc_path = zsString2Std(ud->get_string("abcpath_0", ""));
         if (_abc_path == name) {
             return false;
         }
@@ -146,22 +146,22 @@ get_xformed_prims(
 }
 struct GetAlembicPrim : INode {
     virtual void apply() override {
-        auto abctree = get_input<ABCTree>("abctree");
-        int index = get_input<NumericObject>("index")->get<int>();
-        int use_xform = get_input<NumericObject>("use_xform")->get<int>();
-        std::shared_ptr<PrimitiveObject> prim;
-        if (get_input2<bool>("use_name")) {
-            index = get_alembic_prim_index(abctree, get_input2<std::string>("name"));
+        auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
+        int index = get_input2_int("index");
+        int use_xform = get_input2_int("use_xform");
+        SharedPtr<PrimitiveObject> prim;
+        if (get_input2_bool("use_name")) {
+            index = get_alembic_prim_index(abctree, std::string(get_input2_string("name").c_str()));
         }
         if (use_xform) {
             prim = get_xformed_prim(abctree, index);
         } else {
             prim = get_alembic_prim(abctree, index);
         }
-        if (get_input2<bool>("flipFrontBack")) {
+        if (get_input2_bool("flipFrontBack")) {
             primFlipFaces(prim.get(), true);
         }
-        if (get_input2<bool>("triangulate")) {
+        if (get_input2_bool("triangulate")) {
             zeno::primTriangulate(prim.get());
         }
         set_output("prim", std::move(prim));
@@ -185,9 +185,9 @@ ZENDEFNODE(GetAlembicPrim, {
 
 struct AllAlembicPrim : INode {
     virtual void apply() override {
-        auto abctree = get_input<ABCTree>("abctree");
+        auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
         auto prims = std::make_shared<zeno::ListObject>();
-        int use_xform = get_input<NumericObject>("use_xform")->get<int>();
+        int use_xform = get_input2_int("use_xform");
         if (use_xform) {
             prims = get_xformed_prims(abctree);
         } else {
@@ -196,11 +196,17 @@ struct AllAlembicPrim : INode {
                 prims->push_back(np);
             });
         }
-        auto outprim = zeno::primMerge(prims->getRaw<PrimitiveObject>());
-        if (get_input2<bool>("flipFrontBack")) {
+
+        Vector<zeno::PrimitiveObject*> primlst;
+        for (zany spobj : prims->get()) {
+            primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj.get()));
+        }
+
+        SharedPtr<zeno::PrimitiveObject> outprim = zeno::PrimMerge(primlst);
+        if (get_input2_bool("flipFrontBack")) {
             primFlipFaces(outprim.get(), true);
         }
-        if (get_input2<int>("triangulate") == 1) {
+        if (get_input2_int("triangulate") == 1) {
             zeno::primTriangulate(outprim.get());
         }
         set_output("prim", std::move(outprim));
@@ -221,9 +227,9 @@ ZENDEFNODE(AllAlembicPrim, {
 
 struct AlembicPrimList : INode {
     virtual void apply() override {
-        auto abctree = get_input<ABCTree>("abctree");
+        auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
         auto prims = std::make_shared<zeno::ListObject>();
-        int use_xform = get_input2<int>("use_xform");
+        int use_xform = get_input2_int("use_xform");
         if (use_xform) {
             prims = get_xformed_prims(abctree);
         } else {
@@ -236,7 +242,7 @@ struct AlembicPrimList : INode {
 
         std::vector<zany> arr;
 
-        if (get_input2<bool>("splitByFaceset")) {
+        if (get_input2_bool("splitByFaceset")) {
             for (auto &prim: prims->get()) {
                 auto list = abc_split_by_name(std::dynamic_pointer_cast<PrimitiveObject>(prim), false);
                 auto listarr = list->get();
@@ -246,13 +252,13 @@ struct AlembicPrimList : INode {
         else {
             new_prims = std::dynamic_pointer_cast<zeno::ListObject>(prims->clone());
         }
-        auto pathInclude = zeno::split_str(get_input2<std::string>("pathInclude"), {' ', '\n'});
-        auto pathExclude = zeno::split_str(get_input2<std::string>("pathExclude"), {' ', '\n'});
-        auto facesetInclude = zeno::split_str(get_input2<std::string>("facesetInclude"), {' ', '\n'});
-        auto facesetExclude = zeno::split_str(get_input2<std::string>("facesetExclude"), {' ', '\n'});
+        auto pathInclude = zeno::split_str(zsString2Std(get_input2_string("pathInclude")), {' ', '\n'});
+        auto pathExclude = zeno::split_str(zsString2Std(get_input2_string("pathExclude")), {' ', '\n'});
+        auto facesetInclude = zeno::split_str(zsString2Std(get_input2_string("facesetInclude")), {' ', '\n'});
+        auto facesetExclude = zeno::split_str(zsString2Std(get_input2_string("facesetExclude")), {' ', '\n'});
         for (auto it = arr.begin(); it != arr.end();) {
             auto np = std::dynamic_pointer_cast<PrimitiveObject>(*it);
-            auto abc_path = np->userData().template get2<std::string>("abcpath_0");
+            auto abc_path = zsString2Std(np->userData()->get_string("abcpath_0"));
             bool contain = false;
             if (pathInclude.empty()) {
                 contain = true;
@@ -271,8 +277,8 @@ struct AlembicPrimList : INode {
                     }
                 }
             }
-            if (contain && np->userData().template has<std::string>("faceset_0")) {
-                auto faceset = np->userData().template get2<std::string>("faceset_0");
+            if (contain && np->userData()->has("faceset_0")) {
+                auto faceset = zsString2Std(np->userData()->get_string("faceset_0"));
                 contain = false;
                 if (facesetInclude.empty()) {
                     contain = true;
@@ -300,17 +306,17 @@ struct AlembicPrimList : INode {
         }
         for (auto &prim: arr) {
             auto _prim = std::dynamic_pointer_cast<PrimitiveObject>(prim);
-            if (get_input2<bool>("flipFrontBack")) {
+            if (get_input2_bool("flipFrontBack")) {
                 primFlipFaces(_prim.get(), true);
             }
-            if (get_input2<bool>("splitByFaceset") && get_input2<bool>("killDeadVerts")) {
+            if (get_input2_bool("splitByFaceset") && get_input2_bool("killDeadVerts")) {
                 primKillDeadVerts(_prim.get());
             }
-            if (get_input2<bool>("triangulate")) {
+            if (get_input2_bool("triangulate")) {
                 zeno::primTriangulate(_prim.get());
             }
         }
-        new_prims->set(arr);
+        new_prims->set(stdVec2zeVec(arr));
         set_output("prims", std::move(new_prims));
     }
 };
@@ -335,7 +341,7 @@ ZENDEFNODE(AlembicPrimList, {
 
 struct GetAlembicCamera : INode {
     virtual void apply() override {
-        auto abctree = get_input<ABCTree>("abctree");
+        auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
         std::queue<std::pair<Alembic::Abc::v12::M44d, std::shared_ptr<ABCTree>>> q;
         q.emplace(Alembic::Abc::v12::M44d(), abctree);
         Alembic::Abc::v12::M44d mat;
@@ -367,17 +373,19 @@ struct GetAlembicCamera : INode {
         auto _up = zeno::normalize(zeno::vec3f((float)up.x, (float)up.y, (float)up.z));
         auto _right = zeno::normalize(zeno::vec3f((float)right.x, (float)right.y, (float)right.z));
         auto view = zeno::cross(_up, _right);
-        set_output2("up", _up);
-        set_output2("right", _right);
-        set_output2("view", view);
 
-        set_output("focal_length", std::make_shared<NumericObject>(focal_length));
-        set_output("near", std::make_shared<NumericObject>((float)cam_info.value()._near));
-        set_output("far", std::make_shared<NumericObject>((float)cam_info.value()._far));
-        set_output("horizontalAperture", std::make_shared<NumericObject>((float)cam_info->horizontalAperture));
-        set_output("verticalAperture", std::make_shared<NumericObject>((float)cam_info->verticalAperture));
-        auto m_nx = get_input2<float>("nx");
-        auto m_ny = get_input2<float>("ny");
+        m_pAdapter->set_output_vec3f("up", toAbiVec3f(_up));//  set_output2("up", _up);
+        m_pAdapter->set_output_vec3f("right", toAbiVec3f(_right));
+        m_pAdapter->set_output_vec3f("view", toAbiVec3f(view));
+
+        m_pAdapter->set_output_float("focal_length", focal_length);
+        m_pAdapter->set_output_float("near", (float)cam_info.value()._near);
+        m_pAdapter->set_output_float("far", (float)cam_info.value()._far);
+        m_pAdapter->set_output_float("horizontalAperture", (float)cam_info->horizontalAperture);
+        m_pAdapter->set_output_float("verticalAperture", (float)cam_info->verticalAperture);
+
+        float m_nx = get_input2_float("nx");
+        float m_ny = get_input2_float("ny");
         float m_ha = (float)cam_info->horizontalAperture;
         float m_va = (float)cam_info->verticalAperture;
         float c_aspect = m_ha/m_va;
@@ -415,13 +423,13 @@ struct ImportAlembicPrim : INode {
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = get_input2<int>("frameid");
+            frameid = get_input2_int("frameid");
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->GetFrameId();
         }
         auto abctree = std::make_shared<ABCTree>();
         {
-            auto path = get_input2<std::string>("path");
+            auto path = zsString2Std(get_input2_string("path"));
             bool read_done = archive.valid() && (path == usedPath);
             if (!read_done) {
                 archive = readABC(path);
@@ -436,12 +444,12 @@ struct ImportAlembicPrim : INode {
                             archive.getMaxNumSamplesForTimeSamplingIndex(s));
             }
             auto obj = archive.getTop();
-            bool read_face_set = get_input2<bool>("read_face_set");
-            bool outOfRangeAsEmpty = get_input2<bool>("outOfRangeAsEmpty");
+            bool read_face_set = get_input2_bool("read_face_set");
+            bool outOfRangeAsEmpty = get_input2_bool("outOfRangeAsEmpty");
             traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred, false, outOfRangeAsEmpty);
         }
-        bool use_xform = get_input2<bool>("use_xform");
-        auto index = get_input2<int>("index");
+        bool use_xform = get_input2_bool("use_xform");
+        auto index = get_input2_int("index");
         std::shared_ptr<PrimitiveObject> outprim;
         if (index == -1) {
             auto prims = std::make_shared<zeno::ListObject>();
@@ -453,7 +461,12 @@ struct ImportAlembicPrim : INode {
                     prims->push_back(np);
                 });
             }
-            outprim = zeno::primMerge(prims->getRaw<PrimitiveObject>());
+
+            Vector<zeno::PrimitiveObject*> primlst;
+            for (zany spobj : prims->get()) {
+                primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj.get()));
+            }
+            outprim = zeno::PrimMerge(primlst);
         }
         else {
             if (use_xform) {
@@ -463,10 +476,10 @@ struct ImportAlembicPrim : INode {
             }
         }
         primFlipFaces(outprim.get(), true);
-        if (get_input2<bool>("triangulate")) {
+        if (get_input2_bool("triangulate")) {
             zeno::primTriangulate(outprim.get());
         }
-        outprim->userData().set2("_abc_prim_count", count_alembic_prims(abctree));
+        outprim->userData()->set_int("_abc_prim_count", count_alembic_prims(abctree));
         set_output("prim", std::move(outprim));
     }
 };
@@ -482,8 +495,8 @@ ZENDEFNODE(ImportAlembicPrim, {
         {gParamType_Bool, "outOfRangeAsEmpty", "0"},
     },
     {
-{gParamType_Primitive, "prim"},
-},
+        {gParamType_Primitive, "prim"},
+    },
     {},
     {"alembic"},
 });

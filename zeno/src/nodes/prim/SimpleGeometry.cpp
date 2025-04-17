@@ -12,6 +12,7 @@
 #include <zeno/utils/logger.h>
 #include <zeno/utils/vec.h>
 #include <zeno/geo/geometryutil.h>
+#include <zeno/geo/commonutil.h>
 #include <cmath>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <zeno/core/coredata.h>
-#include <zeno/core/INode.h>
-
+#include <zeno/utils/api.h>
+#include <zeno/core/IObject.h>
 
 namespace zeno
 {
@@ -10,6 +10,8 @@ namespace zeno
     struct ListObject;
     struct DictObject;
     struct PrimitiveObject;
+    struct INode;
+    struct GlobalState;
 
     #define IMPL(p) (p)->m_pImpl
 
@@ -37,6 +39,19 @@ namespace zeno
         zeno::Vec4i get_input2_vec4f(const zeno::String& param);
         bool get_input2_bool(const zeno::String& param);
         bool has_input(const zeno::String& param);
+
+        int get_param_int(const zeno::String& param);
+        String get_param_string(const zeno::String& param);
+
+        void set_output_int(const zeno::String& param, int val);
+        void set_output_float(const zeno::String& param, float val);
+        void set_output_vec2f(const zeno::String& param, Vec2f val);
+        void set_output_vec2i(const zeno::String& param, Vec2i val);
+        void set_output_vec3f(const zeno::String& param, Vec3f val);
+        void set_output_vec3i(const zeno::String& param, Vec3i val);
+
+        int GetFrameId() const;
+        GlobalState* getGlobalState();
 
         NodeImpl* m_pImpl;
     };

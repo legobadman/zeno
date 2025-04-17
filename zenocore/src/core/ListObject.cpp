@@ -21,6 +21,30 @@ namespace zeno
         return m_impl->get(index);
     }
 
+    zeno::Vector<zany> ListObject::get() {
+        std::vector<zany> v = m_impl->get();
+        zeno::Vector<zany> vec(v.size());
+        for (int i = 0; i < vec.size(); i++) {
+            vec[i] = v[i];
+        }
+        return vec;
+    }
+
+    void ListObject::push_back(zany&& obj) {
+        m_impl->push_back(obj);
+    }
+
+    void ListObject::push_back(const zany& obj) {
+        m_impl->push_back(obj);
+    }
+
+    void ListObject::set(const zeno::Vector<zany>& arr) {
+        m_impl->set(zeVec2stdVec(arr));
+    }
+
+    void ListObject::set(size_t index, zany obj) {
+        m_impl->set(index, obj);
+    }
 
     ListObject_impl::ListObject_impl(const ListObject_impl& listobj) {
         dirtyIndice = listobj.dirtyIndice;
