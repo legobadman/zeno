@@ -44,7 +44,7 @@ int PrimAttrTableModel::rowCount(const QModelIndex &parent) const {
             return (int)(m_prim->uvs.size());
         }
         else {
-            return (int)m_prim->userData().size();
+            return (int)m_prim->userData()->size();
         }
     }
     else {
@@ -123,7 +123,8 @@ QVariant PrimAttrTableModel::data(const QModelIndex& index, int role) const
             return uvsData(index);
         }
         else {
-            auto it = std::next(m_prim->userData().begin(), index.row());
+            zeno::UserData* pUserData = dynamic_cast<zeno::UserData*>(m_prim->userData());
+            auto it = std::next(pUserData->begin(), index.row());
             
             auto currentData = userData(it->second);
             if (currentData.isValid()) {
@@ -205,7 +206,8 @@ QVariant PrimAttrTableModel::headerData(int section, Qt::Orientation orientation
     else if (orientation == Qt::Vertical)
     {
         if (sel_attr == "UserData") {
-            auto it = std::next(m_prim->userData().begin(), section);
+            zeno::UserData* pUserData = dynamic_cast<zeno::UserData*>(m_prim->userData());
+            auto it = std::next(pUserData->begin(), section);
             return QString(it->first.c_str());
         }
         return section;

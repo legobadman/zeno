@@ -61,10 +61,10 @@ struct Scene : zeno::disable_copy {
     void convertListObjsRender(std::shared_ptr<zeno::IObject>const& objToBeConvert,     //展平对象并构建索引(如果是list中的元素)
         std::map<std::string, std::shared_ptr<zeno::IObject>>& allListItems,
         std::set<std::string>& allListItemsKeys, bool convertKeyOnly = false, std::string listNamePath = "", std::string listIdxPath = "");
-    void convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert,           //仅展平对象
-        std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>>& allListItems);
-    void convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert,           //仅展平对象
-        std::map<std::string, std::shared_ptr<zeno::IObject>>& allListItems);
+    void convertListObjs(zeno::zany objToBeConvert,           //仅展平对象
+        std::vector<std::pair<std::string, zeno::zany>>& allListItems);
+    void convertListObjs(zeno::zany objToBeConvert,           //仅展平对象
+        std::map<std::string, zeno::zany>& allListItems);
     void set_select_mode(PICK_MODE _select_mode);
     PICK_MODE get_select_mode();
 private:

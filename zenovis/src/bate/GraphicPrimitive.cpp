@@ -377,7 +377,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
     explicit ZhxxGraphicPrimitive(Scene *scene_, zeno::PrimitiveObject *prim)
         : scene(scene_)
     {
-        invisible = prim->userData().get2<bool>("invisible", 0);
+        invisible = prim->userData()->get_bool("invisible", 0);
         zeno::log_trace("rendering primitive size {}", prim->size());
 
         {
@@ -483,7 +483,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
             zeno::log_trace("computing normal");
             zeno::primCalcNormal(&*prim, 1);
         }
-        if (int subdlevs = prim->userData().get2<int>("delayedSubdivLevels", 0)) {
+        if (int subdlevs = prim->userData()->get_int("delayedSubdivLevels", 0)) {
             // todo: zhxx, should comp normal after subd or before?
             zeno::log_trace("computing subdiv {}", subdlevs);
             (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
@@ -495,7 +495,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
                 .set2<bool>("hasLoopUVs", true)
                 .set2<bool>("delayTillIpc", false)
                 .call();  // will inplace subdiv prim
-            prim->userData().del("delayedSubdivLevels");
+            prim->userData()->del("delayedSubdivLevels");
         }
         if (thePrmHasFaces) {
             zeno::log_trace("demoting faces");
@@ -630,8 +630,8 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
 
         draw_all_points = !points_count && !lines_count && !tris_count;
-        auto& ud = prim->userData();
-        if (ud.get2<int>("isImage", 0)) {
+        auto ud = prim->userData();
+        if (ud->get_int("isImage", 0)) {
             draw_all_points = false;
         }
         if (draw_all_points) {
@@ -1205,9 +1205,9 @@ void MakeGraphicVisitor::visit(zeno::PrimitiveObject *obj) {
      this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj);
 }
 
-void MakeGraphicVisitor::visit(zeno::GeometryObject *obj) {
+void MakeGraphicVisitor::visit(zeno::GeometryObject_Adapter *obj) {
     //考虑到primitive又要创建各种nrm uv，可以在这里让PrimitiveObject中转一下
-    this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj->toPrimitive().get());
+    this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj->m_impl->toPrimitive().get());
 }
 
 } // namespace zenovis

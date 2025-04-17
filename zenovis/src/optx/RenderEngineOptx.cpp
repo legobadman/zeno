@@ -1435,7 +1435,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         //增删对象无法沿用viewport逻辑，否则always模式移动数值滑块会有拖影
         graphicsMan->objOrder.clear();
         size_t idx = 0;
-        std::map<std::string, std::shared_ptr<zeno::IObject>> allViewObjs, allConvertedViewObjs, addObjs;
+        std::map<std::string, zeno::zany> allViewObjs, allConvertedViewObjs, addObjs;
         zeno::getSession().objsMan->export_all_view_objs(allViewObjs);
         for (auto& [key, obj] : allViewObjs) {
             scene->convertListObjs(obj, allConvertedViewObjs);              //展平所有view对象

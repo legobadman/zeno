@@ -227,7 +227,7 @@ struct DelUserData : zeno::INode {
         auto object = ZImpl(get_input("object"));
         auto key = ZImpl(get_param<std::string>("key"));
         UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
-        pUsrData->del(key);
+        pUsrData->del(stdString2zs(key));
     }
 };
 
@@ -243,7 +243,7 @@ struct DelUserData2 : zeno::INode {
         auto object = ZImpl(get_input("object"));
         auto key = ZImpl(get_input2<std::string>("key"));
         UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
-        pUsrData->del(key);
+        pUsrData->del(stdString2zs(key));
         ZImpl(set_output("object", std::move(object)));
     }
 };

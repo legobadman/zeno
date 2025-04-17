@@ -654,7 +654,7 @@ void NodeImpl::reflectForeach_apply(CalcContext* pContext)
 
 
 void NodeImpl::apply() {
-
+    m_pNode->apply();
 }
 
 void NodeImpl::reflectNode_apply()
@@ -3061,7 +3061,13 @@ zany NodeImpl::get_input(std::string const &id) const {
             }
             case zeno::types::gParamType_String:
             {
-                const std::string& str = zeno::reflect::any_cast<std::string>(val);
+                std::string str;
+                if (val.type() == zeno::reflect::type_info<const char*>()) {
+                    str = zeno::reflect::any_cast<const char*>(val);
+                }
+                else if (val.type() == zeno::reflect::type_info<std::string>()) {
+                    str = zeno::reflect::any_cast<std::string>(val);
+                }
                 return std::make_shared<StringObject>(str);
             }
             default:

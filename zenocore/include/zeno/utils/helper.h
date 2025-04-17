@@ -80,7 +80,7 @@ namespace zeno {
     void update_dict_root_key(DictObject* dictobj, const std::string& key);
 
     zany clone_by_key(IObject* pObject, const std::string& prefix);
-    std::vector<std::string> get_obj_paths(IObject* pObject);
+    ZENO_API std::vector<std::string> get_obj_paths(IObject* pObject);
 
     AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval);
 }

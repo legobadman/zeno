@@ -8,6 +8,7 @@ namespace zeno {
 
     struct ZENO_API IUserData {
         virtual bool has(const String& key) = 0;
+        virtual size_t size() const = 0;
 
         virtual String get_string(const String& key, String defl = "") = 0;
         virtual void set_string(const String& key, const String& sval) = 0;
@@ -27,8 +28,10 @@ namespace zeno {
         virtual Vec4f get_vec4f(const String& key) = 0;
         virtual void set_vec4f(const String& key, const Vec4f& vec) = 0;
 
-        virtual bool get_bool(const String& key) = 0;
+        virtual bool get_bool(const String& key, bool defl = false) = 0;
         virtual void set_bool(const String& key, bool val = false) = 0;
+
+        virtual void del(String const& name) = 0;
     };
 
     struct ZENO_API IObject {

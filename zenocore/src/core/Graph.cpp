@@ -814,6 +814,7 @@ INodeImpl* Graph::createNode(
 
     std::string uuid;
     INodeImpl* pNode = nullptr;
+    std::unique_ptr<INodeImpl> upNode;
     if (!bAssets) {
         auto& nodeClass = getSession().nodeClasses;
         std::string nodecls = cls;
@@ -823,19 +824,15 @@ INodeImpl* Graph::createNode(
         }
 
         INodeClass* cl = safe_at(getSession().nodeClasses, nodecls, "node class name").get();
-        std::unique_ptr<INodeImpl> upNode = cl->new_instance(this, name);
+        upNode = std::move(cl->new_instance(this, name));
         pNode = upNode.get();
-        m_nodes.insert(std::make_pair(name, std::move(upNode)));
-        
         pNode->m_pImpl->nodeClass = cl;
         uuid = pNode->m_pImpl->get_uuid();
     }
     else {
         bool isCurrentGraphAsset = getSession().assets->isAssetGraph(this);
-        std::unique_ptr<INodeImpl> upNode(getSession().assets->newInstance(this, cls, name, isCurrentGraphAsset));
+        upNode = std::move(getSession().assets->newInstance(this, cls, name, isCurrentGraphAsset));
         pNode = upNode.get();
-        m_nodes.insert(std::make_pair(name, std::move(upNode)));
-
         uuid = pNode->m_pImpl->get_uuid();
         asset_nodes.insert(uuid);
     }
@@ -864,6 +861,7 @@ INodeImpl* Graph::createNode(
     pNode->m_pImpl->set_pos(pos);
     pNode->m_pImpl->mark_dirty(true);
     m_name2uuid[name] = uuid;
+    m_nodes.insert(std::make_pair(uuid, std::move(upNode)));
 
     CALLBACK_NOTIFY(createNode, name, pNode->m_pImpl)
     return pNode;

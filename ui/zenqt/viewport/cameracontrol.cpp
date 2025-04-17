@@ -484,9 +484,9 @@ void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
         QString mtlid;
         for (auto const &[key, ptr]: primList) {
             if (picked_prim == key) {
-                auto &ud = ptr->userData();
-                mtlid = QString::fromStdString(ud.get2<std::string>("mtlid", ""));
-                std::cout<<"selected MatId: "<<ud.get2<std::string>("mtlid", "Default")<<"\n";
+                auto ud = ptr->userData();
+                mtlid = QString::fromStdString(zsString2Std(ud->get_string("mtlid", "")));
+                std::cout<<"selected MatId: "<< zsString2Std(ud->get_string("mtlid", "Default"))<<"\n";
             }
         }
 
@@ -685,8 +685,9 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
                         auto primList = scene->objectsMan->pairs();
                         for (auto const &[key, ptr]: primList) {
                             if (prim == key) {
-                                auto &ud = ptr->userData();
-                                std::cout<<"selected MatId: "<<ud.get2<std::string>("mtlid", "Default")<<"\n";
+                                auto ud = ptr->userData();
+                                auto mtlidstr = ud->get_string("mtlid", "Default");
+                                std::cout<<"selected MatId: "<<zsString2Std(mtlidstr)<<"\n";
                             }
                         }
                     }
@@ -722,8 +723,9 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
                         auto primList = scene->objectsMan->pairs();
                         for (auto const &[key, ptr]: primList) {
                             if (prim == key) {
-                                auto &ud = ptr->userData();
-                                std::cout<<"selected MatId: "<<ud.get2<std::string>("mtlid", "Default")<<"\n";
+                                auto ud = ptr->userData();
+                                auto mtlidstr = ud->get_string("mtlid", "Default");
+                                std::cout<<"selected MatId: "<< zsString2Std(mtlidstr) <<"\n";
                             }
                         }
                         auto obj_node_location = zeno::NodeSyncMgr::GetInstance().searchNodeOfPrim(prim);

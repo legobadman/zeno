@@ -94,6 +94,7 @@ void* Scene::getOptixImg(int& w, int& h)
 #endif
 }
 
+#if 0
 void Scene::convertListObjsRender(std::shared_ptr<zeno::IObject>const& objToBeConvert, std::map<std::string, std::shared_ptr<zeno::IObject>>& allListItems,
     std::set<std::string>& allListItemsKeys, bool convertKeyOnly, std::string listNamePath, std::string listIdxPath)
 {
@@ -122,8 +123,9 @@ void Scene::convertListObjsRender(std::shared_ptr<zeno::IObject>const& objToBeCo
         }
     }
 }
+#endif
 
-void Scene::convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert, std::map<std::string, std::shared_ptr<zeno::IObject>>& allListItems)
+void Scene::convertListObjs(zeno::zany objToBeConvert, std::map<std::string, zeno::zany>& allListItems)
 {
     if (std::shared_ptr<zeno::ListObject> lst = std::dynamic_pointer_cast<zeno::ListObject>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
@@ -133,11 +135,12 @@ void Scene::convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert,
     if (!objToBeConvert)
         return;
     else {
-        allListItems.insert(std::make_pair(objToBeConvert->key(), objToBeConvert));
+        std::string objkey = zsString2Std(objToBeConvert->key());
+        allListItems.insert(std::make_pair(objkey, objToBeConvert));
     }
 }
 
-void zenovis::Scene::convertListObjs(std::shared_ptr<zeno::IObject>const& objToBeConvert, std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>>& allListItems)
+void zenovis::Scene::convertListObjs(zeno::zany objToBeConvert, std::vector<std::pair<std::string, zeno::zany>>& allListItems)
 {
     if (std::shared_ptr<zeno::ListObject> lst = std::dynamic_pointer_cast<zeno::ListObject>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
@@ -147,7 +150,8 @@ void zenovis::Scene::convertListObjs(std::shared_ptr<zeno::IObject>const& objToB
     if (!objToBeConvert)
         return;
     else {
-        allListItems.emplace_back(objToBeConvert->key(), objToBeConvert);
+        std::string objkey = zsString2Std(objToBeConvert->key());
+        allListItems.emplace_back(objkey, objToBeConvert);
     }
 }
 

@@ -147,25 +147,26 @@ void OptixWorker::onModifyLightData(UI_VECTYPE posvec, UI_VECTYPE scalevec, UI_V
         prim_verts[2] = verts[2];
         prim_verts[3] = verts[3];
 
+        auto pUserData = dynamic_cast<zeno::UserData*>(prim_in->userData());
         if (skipParam[0])
-            pos = prim_in->userData().get2<zeno::vec3f>("pos");
+            pos = pUserData->get2<zeno::vec3f>("pos");
         if (skipParam[1])
-            scale = prim_in->userData().get2<zeno::vec3f>("scale");
+            scale = pUserData->get2<zeno::vec3f>("scale");
         if (skipParam[2])
-            rotate = prim_in->userData().get2<zeno::vec3f>("rotate");
+            rotate = pUserData->get2<zeno::vec3f>("rotate");
         if (skipParam[3])
-            color = prim_in->userData().get2<zeno::vec3f>("color");
+            color = pUserData->get2<zeno::vec3f>("color");
         if (skipParam[4])
-            intensity = prim_in->userData().get2<float>("intensity");
+            intensity = pUserData->get2<float>("intensity");
 
         prim_in->verts.attr<zeno::vec3f>("clr")[0] = color * intensity;
 
-        prim_in->userData().setLiterial<zeno::vec3f>("pos", std::move(pos));
-        prim_in->userData().setLiterial<zeno::vec3f>("scale", std::move(scale));
-        prim_in->userData().setLiterial<zeno::vec3f>("rotate", std::move(rotate));
-        if (prim_in->userData().has("intensity")) {
-            prim_in->userData().setLiterial<zeno::vec3f>("color", std::move(color));
-            prim_in->userData().setLiterial<float>("intensity", std::move(intensity));
+        pUserData->setLiterial<zeno::vec3f>("pos", std::move(pos));
+        pUserData->setLiterial<zeno::vec3f>("scale", std::move(scale));
+        pUserData->setLiterial<zeno::vec3f>("rotate", std::move(rotate));
+        if (pUserData->has("intensity")) {
+            pUserData->setLiterial<zeno::vec3f>("color", std::move(color));
+            pUserData->setLiterial<float>("intensity", std::move(intensity));
         }
 
         scene->objectsMan->needUpdateLight = true;

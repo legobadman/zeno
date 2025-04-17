@@ -13,7 +13,7 @@ ZENO_API void prim_set_abcpath(PrimitiveObject* prim, std::string path_name) {
     UserData* pUserData = dynamic_cast<UserData*>(prim->userData());
     int faceset_count = pUserData->get2<int>("abcpath_count",0);
     for (auto j = 0; j < faceset_count; j++) {
-        pUserData->del(zeno::format("abcpath_{}", j));
+        pUserData->del(stdString2zs(zeno::format("abcpath_{}", j)));
     }
     pUserData->set2("abcpath_count", 1);
     pUserData->set2("abcpath_0", path_name);
@@ -33,7 +33,7 @@ ZENO_API void prim_set_faceset(PrimitiveObject* prim, std::string faceset_name) 
     UserData* pUserData = dynamic_cast<UserData*>(prim->userData());
     int faceset_count = pUserData->get2<int>("faceset_count",0);
     for (auto j = 0; j < faceset_count; j++) {
-        pUserData->del(zeno::format("faceset_{}", j));
+        pUserData->del(stdString2zs(zeno::format("faceset_{}", j)));
     }
     pUserData->set2("faceset_count", 1);
     pUserData->set2("faceset_0", faceset_name);

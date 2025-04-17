@@ -279,7 +279,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
             remap_attr_on_faces(list[i].get(), "abcpath", mapping);
             auto old_abcpath_count = pUserData->get2<int>("abcpath_count", 0);
             for (int j = 0; j < old_abcpath_count; j++) {
-                pUserData->del(format("abcpath_{}", j));
+                pUserData->del(stdString2zs(format("abcpath_{}", j)));
             }
 
             for (int j = 0; j < abcpaths.size(); j++) {
@@ -299,7 +299,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
             remap_attr_on_faces(list[i].get(), "faceset", mapping);
             auto old_abcpath_count = pUserData->get2<int>("faceset_count", 0);
             for (int j = 0; j < old_abcpath_count; j++) {
-                pUserData->del(format("faceset_{}", j));
+                pUserData->del(stdString2zs(format("faceset_{}", j)));
             }
 
             for (int j = 0; j < abcpaths.size(); j++) {

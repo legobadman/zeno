@@ -13,21 +13,27 @@ namespace zeno
     public:
         String() noexcept : m_data(0), m_length(0) {}
 
-        String(const char* str) noexcept {
+        String(const char* str) noexcept 
+            : m_data(0), m_length(0) {
             m_length = _strlen(str);
             m_data = new char[m_length + 1];
             _strcpy(m_data, str);
         }
 
-        String(const String& rhs) noexcept {
+        String(const String& rhs) noexcept 
+            : m_data(0), m_length(0) {
             m_length = _strlen(rhs.m_data);
-            m_data = new char[m_length + 1];
-            _strcpy(m_data, rhs.m_data);
+            if (m_length > 0) {
+                m_data = new char[m_length + 1];
+                _strcpy(m_data, rhs.m_data);
+            }
         }
 
         String(String&& rhs) noexcept {
             m_data = rhs.m_data;
             m_length = rhs.m_length;
+            rhs.m_data = nullptr;
+            rhs.m_length = 0;
         }
 
         ~String() {
@@ -57,18 +63,24 @@ namespace zeno
 
         String& operator=(const char* str) noexcept {
             free(m_data);
+            m_data = nullptr;
             m_length = _strlen(str);
-            m_data = new char[m_length + 1];
-            _strcpy(m_data, str);
+            if (m_length > 0) {
+                m_data = new char[m_length + 1];
+                _strcpy(m_data, str);
+            }
             return *this;
         }
 
         String& operator=(const String& other) {
             if (this != &other) {
                 delete[] m_data;
+                m_data = nullptr;
                 m_length = strlen(other.m_data);
-                m_data = new char[m_length + 1];
-                _strcpy(m_data, other.m_data);
+                if (m_length > 0) {
+                    m_data = new char[m_length + 1];
+                    _strcpy(m_data, other.m_data);
+                }
             }
             return *this;
         }
@@ -93,6 +105,7 @@ namespace zeno
         }
 
         String operator+(const char* str) const noexcept {
+            if (!str) return *this;
             size_t newLen = m_length + strlen(str);
             char* newData = new char[newLen + 1];
             _strcpy(newData, m_data);
@@ -103,6 +116,8 @@ namespace zeno
         }
 
         String operator+(const String& rhs) const noexcept {
+            if (rhs.m_length == 0)
+                return *this;
             size_t newLen = strlen(m_data) + strlen(rhs.m_data);
             char* newData = new char[newLen + 1];
             _strcpy(newData, m_data);
@@ -150,6 +165,7 @@ namespace zeno
         }
 
         static size_t _strlen(const char* str) noexcept {
+            if (!str) return 0;
             size_t len = 0;
             while (*str++ != '\0') len++;
             return len;

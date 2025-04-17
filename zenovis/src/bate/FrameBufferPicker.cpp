@@ -8,7 +8,8 @@
 #include <zenovis/opengl/shader.h>
 #include <zenovis/opengl/texture.h>
 #include <zenovis/opengl/vao.h>
-
+#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <unordered_map>
 #include <fstream>
 #include <random>
@@ -284,8 +285,8 @@ struct FrameBufferPicker : IPicker {
 
         // construct prim set
         // use focus_prim if focus_prim_name is not empty else all prims
-        vector<std::pair<string, std::shared_ptr<zeno::IObject>>> prims, prims_shared;
-        std::map<std::string, std::shared_ptr<zeno::IObject>> tmp;
+        vector<std::pair<string, zeno::zany>> prims, prims_shared;
+        std::map<std::string, zeno::zany> tmp;
         zeno::getSession().objsMan->export_all_view_objs(tmp);
         for (auto& [key, obj]:tmp)
             scene->convertListObjs(obj, prims_shared);
@@ -502,9 +503,9 @@ struct FrameBufferPicker : IPicker {
                 id_table[id + 1] = it->first;
             }
 
-            auto geo = dynamic_cast<zeno::GeometryObject*>(it->second.get());
+            auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(it->second.get());
             if (geo) {
-                std::vector<vec3f>& pos = geo->points_pos();
+                std::vector<vec3f>& pos = geo->m_impl->points_pos();
                 vao->bind();
                 vbo->bind_data(pos.data(), pos.size() * sizeof(pos[0]));
                 vbo->attribute(0, sizeof(float) * 0, sizeof(float) * 3, GL_FLOAT, 3);
@@ -523,7 +524,7 @@ struct FrameBufferPicker : IPicker {
                     scene->camera->set_program_uniforms(obj_shader);
                     CHECK_GL(glUniform1ui(glGetUniformLocation(obj_shader->pro, "gObjectIndex"), id + 1));
                     // draw prim
-                    std::vector<vec3i> tris = geo->tri_indice();
+                    std::vector<vec3i> tris = geo->m_impl->tri_indice();
                     ebo->bind_data(tris.data(), tris.size() * sizeof(tris[0]));
                     CHECK_GL(glDrawElements(GL_TRIANGLES, tris.size() * 3, GL_UNSIGNED_INT, 0));
                     ebo->unbind();

@@ -8,7 +8,7 @@
 
 namespace zeno {
 
-struct SubnetNode : INode {
+struct ZENO_API SubnetNode : INode {
     std::shared_ptr<Graph> subgraph;    //assets subnetnode
 
     CustomUI m_customUi;
@@ -31,7 +31,7 @@ struct SubnetNode : INode {
     void mark_subnetdirty(bool bOn);
 };
 
-struct DopNetwork : zeno::SubnetNode {
+struct ZENO_API DopNetwork : zeno::SubnetNode {
 
     DopNetwork();
      void apply() override;

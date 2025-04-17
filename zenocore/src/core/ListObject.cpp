@@ -13,6 +13,15 @@ namespace zeno
         delete this;
     }
 
+    size_t ListObject::size() {
+        return m_impl->size();
+    }
+
+    zany ListObject::get(int index) {
+        return m_impl->get(index);
+    }
+
+
     ListObject_impl::ListObject_impl(const ListObject_impl& listobj) {
         dirtyIndice = listobj.dirtyIndice;
 

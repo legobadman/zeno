@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <zeno/types/UserData.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/utils/MapStablizer.h>
 #include <zeno/utils/PolymorphicMap.h>
 #include <zeno/utils/log.h>
@@ -24,8 +25,8 @@ struct GraphicsManager {
 
     bool load_realtime_object(const std::string &key, std::shared_ptr<zeno::IObject> const &obj) {
         int interactive;
-        if (obj->userData().has("interactive"))
-            interactive = obj->userData().getLiterial<int>("interactive");
+        if (obj->userData()->has("interactive"))
+            interactive = obj->userData()->get_int("interactive");
         else return false;
         if (interactive) {
             zeno::log_debug("load_realtime_object: loading realtime graphics [{}]", key);
@@ -42,7 +43,7 @@ struct GraphicsManager {
 
     bool add_object(zeno::zany obj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-            for (auto obj : spList->get()) {
+            for (auto obj : spList->m_impl->get()) {
                 bool ret = add_object(obj);
                 assert(ret);
             }
@@ -56,7 +57,7 @@ struct GraphicsManager {
             return true;
         }
 
-        const std::string& key = obj->key();
+        const std::string& key = zsString2Std(obj->key());
         if (!obj || key.empty())
             return false;
 
@@ -95,7 +96,7 @@ struct GraphicsManager {
 
     bool remove_object(zeno::zany spObj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(spObj)) {
-            for (auto obj : spList->get()) {
+            for (auto obj : spList->m_impl->get()) {
                 bool ret = remove_object(obj);
                 assert(ret);
             }
@@ -108,7 +109,7 @@ struct GraphicsManager {
             }
             return true;
         }
-        const std::string& key = spObj->key();
+        const std::string& key = zsString2Std(spObj->key());
         auto& graphics_ = graphics.m_curr.m_curr;
         auto iter = graphics_.find(key);
         if (iter == graphics_.end())
@@ -119,11 +120,11 @@ struct GraphicsManager {
     }
 
     bool process_listobj(std::shared_ptr<zeno::ListObject> spList) {
-        for (auto spObject : spList->get()) {
+        for (auto spObject : spList->m_impl->get()) {
             assert(spObject);
-            std::string const& key = spObject->key();
-            if (spList->m_new_added.find(key) != spList->m_new_added.end() ||
-                spList->m_modify.find(key) != spList->m_modify.end()) {
+            std::string const& key = zsString2Std(spObject->key());
+            if (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
+                spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end()) {
                 bool ret = false;
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                     ret = process_listobj(_spList);
@@ -137,7 +138,7 @@ struct GraphicsManager {
                 assert(ret);
             }
         }
-        for (auto& key : spList->m_new_removed) {
+        for (auto& key : spList->m_impl->m_new_removed) {
             auto& graphics_ = graphics.m_curr.m_curr;
             auto iter = graphics_.find(key);
             if (iter == graphics_.end())
@@ -150,7 +151,7 @@ struct GraphicsManager {
     bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
         for (auto& [key, spObject] : spDict->get()) {
             assert(spObject);
-            std::string const& key = spObject->key();
+            std::string const& key = zsString2Std(spObject->key());
             if (spDict->m_new_added.find(key) != spDict->m_new_added.end() ||
                 spDict->m_modify.find(key) != spDict->m_modify.end()) {
                 bool ret = false;
@@ -190,7 +191,7 @@ struct GraphicsManager {
             const auto& viewnodes = spGraph->get_viewnodes();
             //其实是否可以在外面提前准备好对象列表？
             for (auto viewnode : viewnodes) {
-                std::shared_ptr<zeno::NodeImpl> spNode = spGraph->getNode(viewnode);
+                auto spNode = spGraph->getNode(viewnode);
                 zeno::zany spObject = spNode->get_default_output_object();
                 if (spObject) {
                     add_object(spObject);
@@ -233,8 +234,9 @@ struct GraphicsManager {
                     if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                         {//可能有和listobj同名但不是list类型的对象存在，需先清除
                             auto& graphics_ = graphics.m_curr.m_curr;
-                            const auto& it = _spList->key().find('\\');
-                            const std::string& key = it == std::string::npos ? _spList->key() : _spList->key().substr(0, it);
+                            std::string listkey = zsString2Std(_spList->key());
+                            const auto& it = listkey.find('\\');
+                            const std::string& key = it == std::string::npos ? listkey : listkey.substr(0, it);
                             for (auto it = graphics_.begin(); it != graphics_.end(); ) {
                                 if (it->first == key)
                                     it = graphics_.erase(it);
@@ -248,8 +250,9 @@ struct GraphicsManager {
                     else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
                         {//可能有和dictobj同名但不是dict类型的对象存在，需先清除
                             auto& graphics_ = graphics.m_curr.m_curr;
-                            const auto& it = _spList->key().find('\\');
-                            const std::string& key = it == std::string::npos ? _spList->key() : _spList->key().substr(0, it);
+                            std::string dictkey = zsString2Std(_spDict->key());
+                            const auto& it = dictkey.find('\\');
+                            const std::string& key = it == std::string::npos ? dictkey : dictkey.substr(0, it);
                             for (auto it = graphics_.begin(); it != graphics_.end(); ) {
                                 if (it->first == key)
                                     it = graphics_.erase(it);
@@ -263,8 +266,9 @@ struct GraphicsManager {
                     else {
                         {//可能有和obj同名但是list类型或dict类型的对象存在，需先清除
                             auto& graphics_ = graphics.m_curr.m_curr;
+                            std::string objkey = zsString2Std(spObject->key());
                             for (auto it = graphics_.begin(); it != graphics_.end(); ) {
-                                if (it->first.find(spObject->key() + '\\') != std::string::npos) {
+                                if (it->first.find(objkey + '\\') != std::string::npos) {
                                     it = graphics_.erase(it);
                                 }
                                 else
@@ -287,7 +291,7 @@ struct GraphicsManager {
             zeno::zany spObject = spNode->get_default_output_object();
             assert(spObject);
 
-            std::string const& objkey = spObject->key();
+            std::string const& objkey = zsString2Std(spObject->key());
             if (info.reason == zeno::Update_Reconstruct) {
                 add_object(spObject);
             }

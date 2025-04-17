@@ -24,9 +24,11 @@ public:
         m_data = rhs.m_data;
         m_capability = rhs.m_capability;
         m_size = rhs.m_size;
+        _init_reset(rhs);
     }
 
-    Vector(size_t size, T&& val) noexcept {
+    Vector(size_t size, T&& val) noexcept
+       : m_size(0), m_data(0), m_capability(0) {
         reallocate(size);
         m_size = size;
         for (size_t i = 0; i < m_size; i++) {
@@ -34,7 +36,8 @@ public:
         }
     }
 
-    Vector(size_t size, const T& val = T()) noexcept {
+    Vector(size_t size, const T& val = T()) noexcept 
+        : m_size(0), m_data(0), m_capability(0) {
         reallocate(size);
         m_size = size;
         for (size_t i = 0; i < m_size; i++) {
@@ -110,6 +113,11 @@ public:
 private:
     inline T* locate(size_t idx) const noexcept {
         return static_cast<T*>(m_data) + idx;
+    }
+
+    void _init_reset(Vector& rhs) {
+        rhs.m_data = nullptr;
+        rhs.m_capability = rhs.m_size = 0;
     }
 
     void reallocate(size_t new_sz) noexcept {

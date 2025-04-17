@@ -51,9 +51,9 @@ struct UserData : IUserData {
         set2(skey, fVal);
     }
 
-    bool get_bool(const String& key) override {
+    bool get_bool(const String& key, bool defl = false) override {
         std::string skey(key.c_str());
-        return get2<bool>(skey);
+        return get2<bool>(skey, defl);
     }
 
     void set_bool(const String& key, bool val = false) override {
@@ -89,6 +89,14 @@ struct UserData : IUserData {
     void set_vec4f(const String& key, const Vec4f& vec) override {
         std::string skey(key.c_str());
         set2(skey, toVec4f(vec));
+    }
+
+    void del(String const& name) override {
+        m_data.erase(zsString2Std(name));
+    }
+
+    size_t size() const override {
+        return m_data.size();
     }
 
     bool has(std::string const &name) const {
@@ -170,20 +178,12 @@ struct UserData : IUserData {
         m_data[name] = objectFromLiterial(std::forward<T>(value));
     }
 
-    void del(std::string const &name) {
-        m_data.erase(name);
-    }
-
     auto begin() const {
         return m_data.begin();
     }
 
     auto end() const {
         return m_data.end();
-    }
-
-    size_t size() const {
-        return m_data.size();
     }
 
     auto begin() {

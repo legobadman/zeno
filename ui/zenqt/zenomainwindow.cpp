@@ -63,6 +63,7 @@
 #include <zeno/io/zdareader.h>
 #include <QFileSystemWatcher>
 #include "panel/pythonexecutor.h"
+#include <zeno/types/UserData.h>
 
 
 const QString g_latest_layout = "LatestLayout";

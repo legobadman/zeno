@@ -26,7 +26,7 @@ bool ObjectsManager::load_objects(std::map<std::string, std::shared_ptr<zeno::IO
     for (auto const &[key, obj] : objs) {
         if (ins.may_emplace(key)) {
             if (auto prim_in = dynamic_cast<zeno::PrimitiveObject *>(obj.get())) {
-                auto isRealTimeObject = prim_in->userData().get2<int>("isRealTimeObject", 0);
+                auto isRealTimeObject = prim_in->userData()->get_int("isRealTimeObject", 0);
                 if(isRealTimeObject){
                     //printf("loading light object %s\n", key.c_str());
                     lightObjects[key] = obj;
