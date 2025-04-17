@@ -1639,8 +1639,19 @@ namespace zeno {
 
     std::vector<std::string> get_obj_paths(IObject* pObject) {
         std::vector<std::string> _paths;
-        
-        return _paths;
+        if (ListObject* lstObj = dynamic_cast<ListObject*>(pObject)) {
+            for (zany spObj : lstObj->get()) {
+                std::vector<std::string> subpaths = get_obj_paths(spObj.get());
+                for (const std::string& subpath : subpaths) {
+                    _paths.push_back(subpath);
+                }
+            }
+            return _paths;
+        }
+        else {
+            _paths.push_back(zsString2Std(pObject->key()));
+            return _paths;
+        }
     }
 
     void update_dict_root_key(DictObject* dictobj, const std::string& key)
