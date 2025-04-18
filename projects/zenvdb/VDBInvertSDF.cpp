@@ -11,11 +11,12 @@ namespace {
 
 struct VDBChangeBackground : INode{
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
     if (auto p = std::dynamic_pointer_cast<VDBFloatGrid>(grid); p) {
-        openvdb::tools::changeBackground(p->m_grid->tree(), get_input2<float>("background"));
+        openvdb::tools::changeBackground(p->m_grid->tree(), get_input2_float("background"));
     } else if (auto p = std::dynamic_pointer_cast<VDBFloat3Grid>(grid); p) {
-        openvdb::tools::changeBackground(p->m_grid->tree(), vec_to_other<openvdb::Vec3f>(get_input2<zeno::vec3f>("background")));
+        vec3f bg = toVec3f(get_input2_vec3f("background"));
+        openvdb::tools::changeBackground(p->m_grid->tree(), vec_to_other<openvdb::Vec3f>(bg));
     }
 
     set_output("grid", get_input("grid"));
@@ -34,11 +35,11 @@ ZENO_DEFNODE(VDBChangeBackground)(
 
 struct VDBGetBackground : INode{
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
     if (auto p = std::dynamic_pointer_cast<VDBFloatGrid>(grid); p) {
-        set_output2("background", p->m_grid->background());
+        m_pAdapter->set_output_float("background", p->m_grid->background());
     } else if (auto p = std::dynamic_pointer_cast<VDBFloat3Grid>(grid); p) {
-        set_output2("background", other_to_vec<3>(p->m_grid->background()));
+        m_pAdapter->set_output_vec3f("background", toAbiVec3f(other_to_vec<3>(p->m_grid->background())));
     }
 
     set_output("grid", get_input("grid"));
@@ -56,7 +57,7 @@ ZENO_DEFNODE(VDBGetBackground)(
 
 struct VDBInvertSDF : INode{
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
 
     auto visitor = [&] (auto &grid) {
         auto wrangler = [&](auto &leaf, openvdb::Index leafpos) {
@@ -93,7 +94,7 @@ ZENO_DEFNODE(VDBInvertSDF)(
 
 struct VDBPruneFootprint : INode{
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
 
     auto visitor = [&] (auto &grid) {
         openvdb::tools::prune(grid->tree());

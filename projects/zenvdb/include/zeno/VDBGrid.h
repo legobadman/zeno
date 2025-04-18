@@ -55,12 +55,14 @@ struct VDBGrid : zeno::IObject {
   
   virtual const openvdb::math::Transform& getTransform() = 0;
   virtual void setTransform(openvdb::math::Transform::Ptr const &trans) = 0;
+#if 0
   virtual std::string method_node(std::string const &op) override {
       if (op == "view") {
           return "INTERN_PreViewVDB";
       }
       return {};
   }
+#endif
 
   // using GeneralVdbGrid = variant<typename SomeGrid::Ptr, >;
   // virtual GeneralVdbGrid getGrid() = 0;
@@ -72,15 +74,21 @@ struct VDBGrid : zeno::IObject {
   virtual std::string getType() const =0;
   virtual zeno::vec3f getVoxelSize() const=0;
   virtual void dilateTopo(int l) =0;
+  virtual void Delete() override {
+      delete this;
+  }
 
-  virtual ~VDBGrid() override = default;
+  //virtual ~VDBGrid() override = default;
 };
 
 template <typename GridT>
 struct VDBGridWrapper : zeno::IObjectClone<VDBGridWrapper<GridT>, VDBGrid> {
   typename GridT::Ptr m_grid;
 
-  virtual ~VDBGridWrapper() override = default;
+  //virtual ~VDBGridWrapper() override = default;
+  virtual void Delete() override {
+      delete this;
+  }
 
   VDBGridWrapper() { m_grid = GridT::create(); }
 
@@ -195,8 +203,10 @@ struct VDBGridWrapper<openvdb::Vec3fGrid> : zeno::IObjectClone<VDBGridWrapper<op
     return *m_packedGrid;
   }
   ///
-
-  virtual ~VDBGridWrapper() override = default;
+  void Delete() override {
+      delete this;
+  }
+  //virtual ~VDBGridWrapper() override = default;
 
   VDBGridWrapper() { m_grid = GridT::create(); }
 

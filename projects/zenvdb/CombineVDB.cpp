@@ -3,6 +3,7 @@
 #include <zeno/VDBGrid.h>
 #include <openvdb/tools/GridTransformer.h>
 #include <openvdb/tools/Composite.h>
+#include <zeno/utils/interfaceutil.h>
 
 //#include "../../Library/MnBase/Meta/Polymorphism.h"
 //openvdb::io::File(filename).write({grid});
@@ -11,8 +12,8 @@ namespace zeno {
 
 // struct SetVDBTransform : zeno::INode {
 //   virtual void apply() override {
-//     auto dx = get_param<float>(("dx"));
-//     auto grid = get_input("grid")->as<VDBGrid>();
+//     auto dx = m_pAdapter->get_param_float("dx");
+//     auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
 //     auto position = zeno::get_float3<openvdb::Vec3f>(get_param("position"));
 //     auto rotation = zeno::get_float3<openvdb::Vec3f>(get_param("rotation"));
 //     auto scale = zeno::get_float3<openvdb::Vec3f>(get_param("scale"));
@@ -59,22 +60,21 @@ void resampleVDB(typename GridT::Ptr source, typename GridT::Ptr target)
 struct  ResampleVDBGrid : zeno::INode {
   virtual void apply() override {
 
-    std::string targetType = get_input("resampleTo")->as<VDBGrid>()->getType();
-    std::string sourceType = get_input("resampleFrom")->as<VDBGrid>()->getType();
+    std::string targetType = safe_dynamic_cast<VDBGrid>(get_input("resampleTo"))->getType();
+    std::string sourceType = safe_dynamic_cast<VDBGrid>(get_input("resampleFrom"))->getType();
     if(targetType == sourceType)
     {
-      
-        if(sourceType==std::string("FloatGrid"))
+        if(sourceType== "FloatGrid")
         {
-          auto target = get_input("resampleTo")->as<VDBFloatGrid>();
-          auto source = get_input("resampleFrom")->as<VDBFloatGrid>();
-          resampleVDB<openvdb::FloatGrid>(source->m_grid, target->m_grid);
+            auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("resampleTo"));
+            auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("resampleFrom"));
+            resampleVDB<openvdb::FloatGrid>(source->m_grid, target->m_grid);
         }
-        else if (sourceType==std::string("Vec3fGrid"))
+        else if (sourceType== "Vec3fGrid")
         {
-          auto target = get_input("resampleTo")->as<VDBFloat3Grid>();
-          auto source = get_input("resampleFrom")->as<VDBFloat3Grid>();
-          resampleVDB<openvdb::Vec3fGrid>(source->m_grid, target->m_grid);
+            auto target = safe_dynamic_cast<VDBFloat3Grid>(get_input("resampleTo"));
+            auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("resampleFrom"));
+            resampleVDB<openvdb::Vec3fGrid>(source->m_grid, target->m_grid);
         }
         set_output("resampleTo", get_input("resampleTo"));
     } else {
@@ -97,18 +97,18 @@ static int defResampleVDBGrid = zeno::defNodeClass<ResampleVDBGrid>("ResampleVDB
 struct CombineVDB : zeno::INode{
   virtual void apply() override {
 
-    std::string targetType = get_input("FieldA")->as<VDBGrid>()->getType();
-    std::string sourceType = get_input("FieldB")->as<VDBGrid>()->getType();
+    std::string targetType = safe_dynamic_cast<VDBGrid>(get_input("FieldA"))->getType();
+    std::string sourceType = safe_dynamic_cast<VDBGrid>(get_input("FieldB"))->getType();
     std::shared_ptr<VDBFloatGrid> dataf;
     
-    if(targetType == sourceType && targetType==std::string("FloatGrid"))
+    if(targetType == sourceType && targetType== "FloatGrid")
     {
-        auto OpType = get_param<std::string>(("OpType"));
-        dataf = zeno::IObject::make<VDBFloatGrid>();
+        auto OpType = zsString2Std(m_pAdapter->get_param_string("OpType"));
+        dataf = std::make_shared<VDBFloatGrid>();
         
-        auto target = get_input("FieldA")->as<VDBFloatGrid>();
-        auto source = get_input("FieldB")->as<VDBFloatGrid>();
-        if (get_param<bool>("writeBack")) {
+        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
+        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
+        if (m_pAdapter->get_param_bool("writeBack")) {
             auto srcgrid = source->m_grid->deepCopy();
             if(OpType=="CSGUnion") {
               openvdb::tools::csgUnion(*(target->m_grid), *(srcgrid));
@@ -130,53 +130,53 @@ struct CombineVDB : zeno::INode{
             set_output("FieldOut", result);
         }
     }
-    auto OpType = get_param<std::string>(("OpType"));
-    if(OpType==std::string("Add"))
+    auto OpType = zsString2Std(m_pAdapter->get_param_string("OpType"));
+    if(OpType== "Add")
     {
-      if(targetType == sourceType && targetType==std::string("FloatGrid")){
-        auto target = get_input("FieldA")->as<VDBFloatGrid>();
-        auto source = get_input("FieldB")->as<VDBFloatGrid>();
+      if(targetType == sourceType && targetType== "FloatGrid"){
+        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
+        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compSum(*(target->m_grid), *(srcgrid));
         set_output("FieldOut", get_input("FieldA"));
       }
-      if(targetType == sourceType && targetType==std::string("Vec3fGrid")){
-        auto target = get_input("FieldA")->as<VDBFloat3Grid>();
-        auto source = get_input("FieldB")->as<VDBFloat3Grid>();
+      if(targetType == sourceType && targetType== "Vec3fGrid"){
+        auto target = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldA"));
+        auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compSum(*(target->m_grid), *(srcgrid));
         set_output("FieldOut", get_input("FieldA"));
       }
     }
-    if(OpType==std::string("Mul"))
+    if(OpType== "Mul")
     {
-      if(targetType == sourceType && targetType==std::string("FloatGrid")){
-        auto target = get_input("FieldA")->as<VDBFloatGrid>();
-        auto source = get_input("FieldB")->as<VDBFloatGrid>();
+      if(targetType == sourceType && targetType== "FloatGrid"){
+        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
+        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compMul(*(target->m_grid), *(srcgrid));
         set_output("FieldOut", get_input("FieldA"));
       }
-      if(targetType == sourceType && targetType==std::string("Vec3fGrid")){
-        auto target = get_input("FieldA")->as<VDBFloat3Grid>();
-        auto source = get_input("FieldB")->as<VDBFloat3Grid>();
+      if(targetType == sourceType && targetType== "Vec3fGrid"){
+        auto target = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldA"));
+        auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compMul(*(target->m_grid), *(srcgrid));
         set_output("FieldOut", get_input("FieldA"));
       }
     }
-    if(OpType==std::string("Replace"))
+    if(OpType== "Replace")
     {
-      if(targetType == sourceType && targetType==std::string("FloatGrid")){
-        auto target = get_input("FieldA")->as<VDBFloatGrid>();
-        auto source = get_input("FieldB")->as<VDBFloatGrid>();
+      if(targetType == sourceType && targetType== "FloatGrid"){
+        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
+        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compReplace(*(target->m_grid), *(srcgrid));
         set_output("FieldOut", get_input("FieldA"));
       }
-      if(targetType == sourceType && targetType==std::string("Vec3fGrid")){
-        auto target = get_input("FieldA")->as<VDBFloat3Grid>();
-        auto source = get_input("FieldB")->as<VDBFloat3Grid>();
+      if(targetType == sourceType && targetType== "Vec3fGrid"){
+        auto target = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldA"));
+        auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compReplace(*(target->m_grid), *(srcgrid));
         set_output("FieldOut", get_input("FieldA"));
@@ -204,12 +204,12 @@ static int defCombineVDB = zeno::defNodeClass<CombineVDB>("CombineVDB",
 struct VDBDeactivate : zeno::INode
 {
   virtual void apply() override {
-    auto gType = get_input("Field")->as<VDBGrid>()->getType();
-    auto mType = get_input("Mask")->as<VDBGrid>()->getType();
-    if(gType == mType && gType==std::string("FloatGrid"))
+    auto gType = safe_dynamic_cast<VDBGrid>(get_input("Field"))->getType();
+    auto mType = safe_dynamic_cast<VDBGrid>(get_input("Mask"))->getType();
+    if(gType == mType && gType== "FloatGrid")
     {
-      auto const &grid = get_input<VDBFloatGrid>("Field")->m_grid;
-      auto const &mask = get_input<VDBFloatGrid>("Mask")->m_grid;
+      auto const &grid = safe_dynamic_cast<VDBFloatGrid>(get_input("Field"))->m_grid;
+      auto const &mask = safe_dynamic_cast<VDBFloatGrid>(get_input("Mask"))->m_grid;
       auto modifier = [&](auto &leaf, openvdb::Index leafpos) {
         for (auto iter = leaf.beginValueOn(); iter != leaf.endValueOn(); ++iter) {
             auto coord = iter.getCoord();
@@ -228,10 +228,10 @@ struct VDBDeactivate : zeno::INode
       leafman.foreach(modifier);
       openvdb::tools::prune(grid->tree());
     }
-    if(gType == mType && gType==std::string("Vec3fGrid"))
+    if(gType == mType && gType== "Vec3fGrid")
     {
-      auto const &grid = get_input<VDBFloat3Grid>("Field")->m_grid;
-      auto const &mask = get_input<VDBFloat3Grid>("Mask")->m_grid;
+      auto const &grid = safe_dynamic_cast<VDBFloat3Grid>(get_input("Field"))->m_grid;
+      auto const &mask = safe_dynamic_cast<VDBFloat3Grid>(get_input("Mask"))->m_grid;
       auto modifier = [&](auto &leaf, openvdb::Index leafpos) {
         for (auto iter = leaf.beginValueOn(); iter != leaf.endValueOn(); ++iter) {
             auto coord = iter.getCoord();
@@ -268,8 +268,8 @@ static int defVDBDeactivate = zeno::defNodeClass<VDBDeactivate>("VDBDeactivate",
 #if 0 // TODO: datan help me
 struct CopyVDBTopology : zeno::INode {
   virtual void apply() override {
-    auto dst = get_input("copyTo")->as<VDBGrid>();
-    auto src = get_input("copyFrom")->as<VDBGrid>();
+    auto dst = safe_dynamic_cast<VDBGrid>(get_input("copyTo"));
+    auto src = safe_dynamic_cast<VDBGrid>(get_input("copyFrom"));
     dst->copyTopologyFrom(src);
     set_output("copyTo", std::move(dst));
   }

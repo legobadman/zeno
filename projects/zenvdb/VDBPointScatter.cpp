@@ -6,22 +6,24 @@
 #include <zeno/VDBGrid.h>
 #include <zeno/core/Graph.h>
 #include <random>
+#include <zeno/utils/interfaceutil.h>
+
 
 namespace zeno {
 namespace {
 
 struct VDBPointScatter : INode{
   virtual void apply() override {
-    auto grid = get_input<VDBFloatGrid>("grid");
-    openvdb::Index64 count = get_input2<int>("count");
-    float spread = get_input2<float>("spread");
-    int seed = get_input2<int>("seed");
-    auto isuniform = get_input2<std::string>("method") != "NonUniform";
-    auto issdf = get_input2<std::string>("gridtype") == "SDF";
-    auto istotal = get_input2<std::string>("counttype") == "Total";
+    auto grid = safe_dynamic_cast<VDBFloatGrid>(get_input("grid"));
+    openvdb::Index64 count = get_input2_int("count");
+    float spread = get_input2_float("spread");
+    int seed = get_input2_int("seed");
+    auto isuniform = zsString2Std(get_input2_string("method")) != "NonUniform";
+    auto issdf = zsString2Std(get_input2_string("gridtype")) == "SDF";
+    auto istotal = zsString2Std(get_input2_string("counttype")) == "Total";
     if (issdf) {
         grid = std::static_pointer_cast<VDBFloatGrid>(
-            getThisGraph()->callTempNode("SDFToFog", {{"SDF", grid},
+            m_pAdapter->m_pImpl->getThisGraph()->callTempNode("SDFToFog", {{"SDF", grid},
                 {"inplace", std::make_shared<NumericObject>((int)0)}}).at("oSDF"));
     }
     if (seed == -1) seed = std::random_device{}();

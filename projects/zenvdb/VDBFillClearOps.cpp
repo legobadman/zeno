@@ -27,16 +27,15 @@ struct fill_voxels_op {
 };
 struct VDBFillActiveVoxels : INode {
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
-    auto value = get_input<NumericObject>("fillValue")->value;
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
     if (auto p = std::dynamic_pointer_cast<VDBFloatGrid>(grid); p) {
         auto velman = openvdb::tree::LeafManager
             <std::decay_t<decltype(p->m_grid->tree())>>(p->m_grid->tree());
-        velman.foreach(fill_voxels_op(std::get<float>(value)));
+        velman.foreach(fill_voxels_op( get_input2_float("fillValue")));
     } else if (auto p = std::dynamic_pointer_cast<VDBFloat3Grid>(grid); p) {
         auto velman = openvdb::tree::LeafManager
             <std::decay_t<decltype(p->m_grid->tree())>>(p->m_grid->tree());
-        velman.foreach(fill_voxels_op(vec_to_other<openvdb::Vec3f>(std::get<zeno::vec3f>(value))));
+        velman.foreach(fill_voxels_op(vec_to_other<openvdb::Vec3f>(toVec3f(get_input2_vec3f("fillValue")))));
     }
 
     set_output("grid", get_input("grid"));
@@ -70,7 +69,7 @@ struct multiply_voxels_op {
 
 struct VDBMultiplyOperation : INode {
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
     auto value = get_input<NumericObject>("fillValue")->value;
     if (auto p = std::dynamic_pointer_cast<VDBFloatGrid>(grid); p) {
         auto velman = openvdb::tree::LeafManager
@@ -123,9 +122,9 @@ void touch_aabb_region(GridPtr const &grid, zeno::vec3f const &bmin, zeno::vec3f
 
 struct VDBTouchAABBRegion : INode {
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
-    auto bmin = get_input<NumericObject>("bmin")->get<zeno::vec3f>();
-    auto bmax = get_input<NumericObject>("bmax")->get<zeno::vec3f>();
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
+    auto bmin = toVec3f(get_input2_vec3f("bmin"));
+    auto bmax = toVec3f(get_input2_vec3f("bmax"));
     if (auto p = std::dynamic_pointer_cast<VDBFloatGrid>(grid); p) {
         touch_aabb_region(p->m_grid, bmin, bmax);
     } else if (auto p = std::dynamic_pointer_cast<VDBFloat3Grid>(grid); p) {
@@ -151,8 +150,8 @@ ZENO_DEFNODE(VDBTouchAABBRegion)(
 
 struct VDBTopoCopy : INode{
   virtual void apply() override {
-    auto grid = get_input<VDBGrid>("grid");
-    auto topo = get_input<VDBGrid>("topo");
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
+    auto topo = safe_dynamic_cast<VDBGrid>(get_input("topo"));
     if (auto p = std::dynamic_pointer_cast<VDBFloatGrid>(grid); p) {
         if(auto t = std::dynamic_pointer_cast<VDBFloatGrid>(topo); t)
         {

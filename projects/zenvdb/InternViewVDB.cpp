@@ -8,10 +8,10 @@ namespace {
 
 struct INTERN_PreViewVDB : INode {
     virtual void apply() override {
-        auto vdb = get_input<VDBGrid>("arg0");
+        auto vdb = safe_dynamic_cast<VDBGrid>(get_input("arg0"));
         std::shared_ptr<IObject> ret;
         if (dynamic_cast<VDBFloatGrid*>(vdb.get())) {
-            ret = this->getThisGraph()->callTempNode("SDFToPrimitive",
+            ret = this->m_pAdapter->m_pImpl->getThisGraph()->callTempNode("SDFToPrimitive",
                         {
                             {"SDF", vdb},
                             {"isoValue:", objectFromLiterial(0.0f)},
@@ -20,7 +20,7 @@ struct INTERN_PreViewVDB : INode {
                         }).at("prim");
         } else
         if (dynamic_cast<VDBPointsGrid*>(vdb.get())) {
-            ret = this->getThisGraph()->callTempNode("VDBPointsToPrimitive",
+            ret = this->m_pAdapter->m_pImpl->getThisGraph()->callTempNode("VDBPointsToPrimitive",
                         {
                             {"grid", vdb},
                         }).at("prim");
@@ -45,17 +45,17 @@ static int defINTERN_PreViewVDB = zeno::defNodeClass<INTERN_PreViewVDB>("INTERN_
 
 struct SDFScatterPoints : INode {
     virtual void apply() override {
-        auto sdf = get_input<VDBFloatGrid>("SDF");
-        auto dx = getThisGraph()->callTempNode("GetVDBVoxelSize", {
+        auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
+        auto dx = m_pAdapter->m_pImpl->getThisGraph()->callTempNode("GetVDBVoxelSize", {
             {"vdbGrid", sdf},
         }).at("dx");
-        auto data = getThisGraph()->callTempNode("MakeVDBGrid", {
+        auto data = m_pAdapter->m_pImpl->getThisGraph()->callTempNode("MakeVDBGrid", {
             {"name:", std::make_shared<StringObject>("")},
             {"structure:", std::make_shared<StringObject>("Centered")},
             {"type:", std::make_shared<StringObject>("points")},
             {"Dx", dx},
         }).at("data");
-        auto points = getThisGraph()->callTempNode("ParticleEmitter", {
+        auto points = m_pAdapter->m_pImpl->getThisGraph()->callTempNode("ParticleEmitter", {
             {"vx:", std::make_shared<NumericObject>(0)},
             {"vy:", std::make_shared<NumericObject>(0)},
             {"vz:", std::make_shared<NumericObject>(0)},

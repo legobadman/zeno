@@ -8,7 +8,7 @@
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/MatrixObject.h>
 #include <zeno/types/UserData.h>
-
+#include <zeno/geo/commonutil.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/eulerangle.h>
 
@@ -19,16 +19,16 @@ namespace zeno {
 struct CreateVolumeBox : zeno::INode {
     virtual void apply() override {
 
-        auto pos = get_input2<zeno::vec3f>("pos");
-        auto scale = get_input2<zeno::vec3f>("scale");
-        auto rotate = get_input2<zeno::vec3f>("rotate");
+        auto pos = get_input2_vec3f("pos");
+        auto scale = get_input2_vec3f("scale");
+        auto rotate = get_input2_vec3f("rotate");
 
-        auto bounds = get_input2<std::string>("Bounds:");
+        auto bounds = zsString2Std(get_input2_string("Bounds:"));
 
-        auto order = get_input2<std::string>("EulerRotationOrder:");
+        auto order = zsString2Std(get_input2_string("EulerRotationOrder:"));
         auto orderTyped = magic_enum::enum_cast<EulerAngle::RotationOrder>(order).value_or(EulerAngle::RotationOrder::YXZ);
 
-        auto measure = get_input2<std::string>("EulerAngleMeasure:");
+        auto measure = zsString2Std(get_input2_string("EulerAngleMeasure:"));
         auto measureTyped = magic_enum::enum_cast<EulerAngle::Measure>(measure).value_or(EulerAngle::Measure::Radians);
 
         glm::vec3 eularAngleXYZ = glm::vec3(rotate[0], rotate[1], rotate[2]);
@@ -36,9 +36,9 @@ struct CreateVolumeBox : zeno::INode {
 
         glm::mat4 transform(1.0f);
         
-        if (has_input2<VDBGrid>("vdbGrid")) {
+        if (has_input("vdbGrid")) {
 
-            auto grid = get_input2<VDBGrid>("vdbGrid");
+            auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
 		    auto box = grid->evalActiveVoxelBoundingBox();
 
 		    glm::vec3 bmax = glm::vec3(box.max().x(), box.max().y(), box.max().z()) + 1.0f;
@@ -96,7 +96,7 @@ struct CreateVolumeBox : zeno::INode {
         prim->quads->push_back(zeno::vec4i(3, 2, 6, 7));
 
         primWireframe(prim.get(), true);
-        prim->userData().set2("bounds", bounds);
+        prim->userData()->set_string("bounds", stdString2zs(bounds));
     
         auto transform_ptr = glm::value_ptr(transform);
             
@@ -106,12 +106,12 @@ struct CreateVolumeBox : zeno::INode {
             memcpy(row2.data(), transform_ptr+8, sizeof(float)*4);  
             memcpy(row3.data(), transform_ptr+12, sizeof(float)*4);
 
-            prim->userData().set2("_transform_row0", row0);
-            prim->userData().set2("_transform_row1", row1);
-            prim->userData().set2("_transform_row2", row2);
-            prim->userData().set2("_transform_row3", row3);
+            prim->userData()->set_vec4f("_transform_row0", toAbiVec4f(row0));
+            prim->userData()->set_vec4f("_transform_row1", toAbiVec4f(row1));
+            prim->userData()->set_vec4f("_transform_row2", toAbiVec4f(row2));
+            prim->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
 
-        prim->userData().set2("vbox", true);
+        prim->userData()->set_bool("vbox", true);
         set_output("prim", std::move(prim));
     }
 };

@@ -2,6 +2,8 @@
 #include <openvdb/tools/GridTransformer.h>
 #include <zeno/VDBGrid.h>
 #include <zeno/zeno.h>
+#include <zeno/utils/interfaceutil.h>
+
 
 namespace zeno {
 struct TransformVDB : INode {
@@ -21,10 +23,10 @@ struct TransformVDB : INode {
     }
 
     void apply() override {
-        auto vdb = get_input<VDBGrid>("VDBGrid");
-        auto tran = get_input2<zeno::vec3f>("translation");
-        auto euler = get_input2<zeno::vec3f>("eulerXYZ");
-        auto sca = get_input2<zeno::vec3f>("scaling");
+        auto vdb = safe_dynamic_cast<VDBGrid>(get_input("VDBGrid"));
+        auto tran = toVec3f(get_input2_vec3f("translation"));
+        auto euler = toVec3f(get_input2_vec3f("eulerXYZ"));
+        auto sca = toVec3f(get_input2_vec3f("scaling"));
 
         auto type = vdb->getType();
         if (type == "FloatGrid") {

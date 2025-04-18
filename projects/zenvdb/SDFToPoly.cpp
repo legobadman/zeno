@@ -1,7 +1,7 @@
 #include <cstddef>
 #include <zeno/zeno.h>
 #include <zeno/PrimitiveObject.h>
-#include <zeno/types/GeometryObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <openvdb/tools/Morphology.h>
 #include <openvdb/tools/VolumeToMesh.h>
 #include <zeno/VDBGrid.h>
@@ -13,11 +13,11 @@ namespace zeno {
 
 struct SDFToGeometry : zeno::INode {
     virtual void apply() override {
-        auto sdf = get_input("SDF")->as<VDBFloatGrid>();
+        auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
         
-        auto adaptivity = get_param<float>(("adaptivity"));
-        auto isoValue = get_param<float>(("isoValue"));
-        auto allowQuads = get_param<bool>("allowQuads");
+        auto adaptivity = m_pAdapter->get_param_float("adaptivity");
+        auto isoValue = m_pAdapter->get_param_float("isoValue");
+        auto allowQuads = m_pAdapter->get_param_bool("allowQuads");
 
         std::vector<openvdb::Vec3s> points(0);
         std::vector<openvdb::Vec3I> tris(0);
@@ -32,13 +32,17 @@ struct SDFToGeometry : zeno::INode {
         }
 
         if (!quads.empty()) {
-            auto mesh = std::make_shared<GeometryObject>(false, points.size(), quads.size(), true);
+            auto mesh = create_GeometryObject(false, points.size(), quads.size(), true);
 //#pragma omp parallel for
             for (int i = 0; i < quads.size(); i++)
             {
-                //TODO: È·Êµ»áÒç³ö£¬ºóĞøÒª¸ü¸ÄgemtopoÄÚ²¿µÄÊıÖµ
-                //Ä¿Ç°¡°¹Û²ì¡±µÃÖª£¬quadsµÄ×ø±ê»á×ßË³Ê±ÕëÂ·Ïß£¬ËùÒÔÕâÀïµ÷×ªÒ»ÏÂ
-                std::vector<int> indice = { (int)quads[i][3], (int)quads[i][2], (int)quads[i][1],  (int)quads[i][0],  };
+                //TODO: ç¡®å®ä¼šæº¢å‡ºï¼Œåç»­è¦æ›´æ”¹gemtopoå†…éƒ¨çš„æ•°å€¼
+                //ç›®å‰â€œè§‚å¯Ÿâ€å¾—çŸ¥ï¼Œquadsçš„åæ ‡ä¼šèµ°é¡ºæ—¶é’ˆè·¯çº¿ï¼Œæ‰€ä»¥è¿™é‡Œè°ƒè½¬ä¸€ä¸‹
+                Vector<int> indice;
+                indice.push_back((int)quads[i][3]);
+                indice.push_back((int)quads[i][2]);
+                indice.push_back((int)quads[i][1]);
+                indice.push_back((int)quads[i][0]);
                 mesh->set_face(i, indice);
             }
             mesh->create_point_attr("pos", pos);
@@ -66,11 +70,11 @@ static int defSDFToGeom = zeno::defNodeClass<SDFToGeometry>("SDFToGeometry",
 
 struct SDFToPoly : zeno::INode{
     virtual void apply() override {
-    auto sdf = get_input("SDF")->as<VDBFloatGrid>();
-    auto mesh = IObject::make<PrimitiveObject>();
-    auto adaptivity = get_param<float>(("adaptivity"));
-    auto isoValue = get_param<float>(("isoValue"));
-    auto allowQuads = get_param<bool>("allowQuads");
+    auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
+    auto mesh = std::make_shared<PrimitiveObject>();
+    auto adaptivity = m_pAdapter->get_param_float("adaptivity");
+    auto isoValue = m_pAdapter->get_param_float("isoValue");
+    auto allowQuads = m_pAdapter->get_param_bool("allowQuads");
     std::vector<openvdb::Vec3s> points(0);
     std::vector<openvdb::Vec3I> tris(0);
     std::vector<openvdb::Vec4I> quads(0);
@@ -131,7 +135,7 @@ static int defSDFToPoly = zeno::defNodeClass<SDFToPoly>("SDFToPoly",
 struct SDFToPrimitive : SDFToPoly {
     virtual void apply() override {
         SDFToPoly::apply();
-        set_output("prim", get_output_obj("Mesh"));
+        set_output("prim", m_pAdapter->get_output("Mesh"));
     }
 };
 
@@ -153,7 +157,7 @@ static int defSDFToPrimitive = zeno::defNodeClass<SDFToPrimitive>("SDFToPrimitiv
 struct ConvertTo_VDBFloatGrid_PrimitiveObject : SDFToPoly {
     virtual void apply() override {
         SDFToPoly::apply();
-        get_input<PrimitiveObject>("Mesh")->move_assign(std::move(smart_any_cast<std::shared_ptr<IObject>>(outputs.at("Mesh"))).get());
+        get_input_PrimitiveObject("Mesh")->move_assign(std::move(smart_any_cast<std::shared_ptr<IObject>>(outputs.at("Mesh"))).get());
     }
 };
 
@@ -171,7 +175,7 @@ struct ToVisualize_VDBFloatGrid : SDFToPoly {
         this->inputs["adaptivity:"] = std::make_shared<NumericObject>(0.0f);
         this->inputs["allowQuads:"] = std::make_shared<NumericObject>(false);
         SDFToPoly::apply();
-        auto path = get_param<std::string>("path");
+        auto path = m_pAdapter->get_param_string("path");
         auto prim = std::move(smart_any_cast<std::shared_ptr<IObject>>(outputs.at("Mesh")));
         if (auto node = graph->getOverloadNode("ToVisualize", {std::move(prim)}); node) {
             node->inputs["path:"] = std::make_shared<StringObject>(path);
@@ -190,11 +194,11 @@ ZENO_DEFOVERLOADNODE(ToVisualize, _VDBFloatGrid, typeid(VDBFloatGrid).name())({
 
 struct SDFToPrim : zeno::INode{
     virtual void apply() override {
-        auto sdf = get_input("SDF")->as<VDBFloatGrid>();
-        auto mesh = IObject::make<PrimitiveObject>();
-        auto adaptivity = get_input2<float>(("adaptivity"));
-        auto isoValue = get_input2<float>(("isoValue"));
-        auto allowQuads = get_input2<bool>("allowQuads");
+        auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
+        auto mesh = std::make_shared<PrimitiveObject>();
+        auto adaptivity = get_input2_float(("adaptivity"));
+        auto isoValue = get_input2_float(("isoValue"));
+        auto allowQuads = get_input2_bool("allowQuads");
         std::vector<openvdb::Vec3s> points(0);
         std::vector<openvdb::Vec3I> tris(0);
         std::vector<openvdb::Vec4I> quads(0);

@@ -7,6 +7,7 @@
 #include <zeno/utils/UserData.h>
 #include <zeno/zeno.h>
 #include <zeno/ZenoInc.h>
+#include <zeno/geo/commonutil.h>
 
 namespace zeno {
 
@@ -96,12 +97,12 @@ void sampleVDBAttribute2(
 }
 struct SampleVDBToPrimitive : INode {
   virtual void apply() override {
-    auto prim = get_input<PrimitiveObject>("prim");
-    auto grid = get_input<VDBGrid>("vdbGrid");
-    auto attr = get_input<StringObject>("primAttr")->get();
-    auto sampleby = get_input<StringObject>("sampleBy")->get();
+    auto prim = get_input_PrimitiveObject("prim");
+    auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
+    auto attr = zsString2Std(get_input2_string("primAttr"));
+    auto sampleby = zsString2Std(get_input2_string("sampleBy"));
     auto &pos = prim->attr<vec3f>(sampleby);
-    auto type = get_param<std::string>(("SampleType"));
+    auto type = zsString2Std(m_pAdapter->get_param_string("SampleType"));
 
 
     if (dynamic_cast<VDBFloatGrid *>(grid.get()))
@@ -173,12 +174,12 @@ static void primSampleVDB(
 
 struct PrimSample3D : zeno::INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto grid = get_input<VDBGrid>("vdbGrid");
-        auto dstChannel = get_input2<std::string>("dstChannel");
-        auto srcChannel = get_input2<std::string>("srcChannel");
-        auto remapMin = get_input2<float>("remapMin");
-        auto remapMax = get_input2<float>("remapMax");
+        auto prim = get_input_PrimitiveObject("prim");
+        auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
+        auto dstChannel = zsString2Std(get_input2_string("dstChannel"));
+        auto srcChannel = zsString2Std(get_input2_string("srcChannel"));
+        auto remapMin = get_input2_float("remapMin");
+        auto remapMax = get_input2_float("remapMax");
 
         primSampleVDB(prim, srcChannel, dstChannel, grid, remapMin, remapMax);
         set_output("outPrim", std::move(prim));
@@ -201,24 +202,25 @@ ZENDEFNODE(PrimSample3D, {
 });
 struct PrimSample : zeno::INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto srcChannel = get_input2<std::string>("srcChannel");
-        auto dstChannel = get_input2<std::string>("dstChannel");
-        auto remapMin = get_input2<float>("remapMin");
-        auto remapMax = get_input2<float>("remapMax");
-        auto wrap = get_input2<std::string>("wrap");
-        auto borderColor = get_input2<zeno::vec3f>("borderColor");
-        if (has_input<PrimitiveObject>("sampledObject") && get_input<PrimitiveObject>("sampledObject")->userData().has("isImage")) {
-            auto image = get_input<PrimitiveObject>("sampledObject");
-            primSampleTexture(prim, srcChannel, "vertex", dstChannel, image, wrap, borderColor, remapMin, remapMax);
+        auto prim = get_input_PrimitiveObject("prim");
+        auto srcChannel = get_input2_string("srcChannel");
+        auto dstChannel = get_input2_string("dstChannel");
+        auto remapMin = get_input2_float("remapMin");
+        auto remapMax = get_input2_float("remapMax");
+        auto wrap = get_input2_string("wrap");
+        auto borderColor = get_input2_vec3f("borderColor");
+        if (has_input("sampledObject") && 
+            get_input_PrimitiveObject("sampledObject")->userData()->has("isImage")) {
+            auto image = get_input_PrimitiveObject("sampledObject");
+            primSampleTexture(prim.get(), srcChannel, "vertex", dstChannel, image.get(), wrap, borderColor, remapMin, remapMax);
         }
-        else if (has_input<HeatmapObject>("sampledObject")) {
-            auto heatmap = get_input<HeatmapObject>("sampledObject");
-            primSampleHeatmap(prim, srcChannel, dstChannel, heatmap, remapMin, remapMax);
+        else if (has_input("sampledObject")) {
+            auto heatmap = safe_dynamic_cast<HeatmapObject>(get_input("sampledObject"));
+            primSampleHeatmap(prim.get(), srcChannel, dstChannel, heatmap.get(), remapMin, remapMax);
         }
-        else if (has_input<VDBGrid>("sampledObject")) {
-            auto grid = get_input<VDBGrid>("vdbGrid");
-            primSampleVDB(prim, srcChannel, dstChannel, grid, remapMin, remapMax);
+        else if (has_input("sampledObject")) {
+            auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
+            primSampleVDB(prim, zsString2Std(srcChannel), zsString2Std(dstChannel), grid, remapMin, remapMax);
         } else {
             throw zeno::Exception("unknown input type of sampledObject");
         }

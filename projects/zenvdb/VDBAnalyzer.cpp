@@ -6,14 +6,15 @@
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/GridOperators.h>
 #include <openvdb/tools/VolumeToSpheres.h>
+#include <zeno/utils/interfaceutil.h>
 
 namespace zeno {
 
 struct ScalarFieldAnalyzer : zeno::INode {
     virtual void apply() override {
-        auto inSDF = get_input("InVDB")->as<VDBFloatGrid>();
+        auto inSDF = safe_dynamic_cast<VDBFloatGrid>(get_input("InVDB"));
         auto grid = inSDF->m_grid;
-        auto OpType = get_param<std::string>(("Operator"));
+        auto OpType = zsString2Std(m_pAdapter->get_param_string("Operator"));
         if (OpType == "Gradient") {
             auto result = std::make_shared<VDBFloat3Grid>(openvdb::tools::gradient(*grid));
             set_output("OutVDB", std::move(result));
@@ -65,9 +66,9 @@ ZENO_DEFNODE(ScalarFieldAnalyzer)(
 
 struct VectorFieldAnalyzer : zeno::INode {
     virtual void apply() override {
-        auto inSDF = get_input("InVDB")->as<VDBFloat3Grid>();
+        auto inSDF = safe_dynamic_cast<VDBFloat3Grid>(get_input("InVDB"));
         auto grid = inSDF->m_grid;
-        auto OpType = get_param<std::string>(("Operator"));
+        auto OpType = zsString2Std(m_pAdapter->get_param_string("Operator"));
         if (OpType == "Divergence") {
             auto result = std::make_shared<VDBFloatGrid>(openvdb::tools::divergence(*grid));
             set_output("OutVDB", std::move(result));

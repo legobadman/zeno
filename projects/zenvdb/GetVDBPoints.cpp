@@ -12,7 +12,7 @@ namespace zeno {
 
 struct GetVDBPoints : zeno::INode {
   virtual void apply() override {
-    auto grid = get_input("grid")->as<VDBPointsGrid>()->m_grid;
+    auto grid = safe_dynamic_cast<VDBPointsGrid>(get_input("grid"))->m_grid;
 
     std::vector<openvdb::points::PointDataTree::LeafNodeType*> leafs;
     grid->tree().getNodes(leafs);
@@ -20,7 +20,7 @@ struct GetVDBPoints : zeno::INode {
 
     auto transform = grid->transformPtr();
 
-    auto ret = zeno::IObject::make<ParticlesObject>();
+    auto ret = std::make_shared<ParticlesObject>();
 
     for (auto const &leaf: leafs) {
       //attributes
@@ -65,7 +65,7 @@ static int defGetVDBPoints = zeno::defNodeClass<GetVDBPoints>("GetVDBPoints",
 #if 0
 struct GetVDBPointsLeafCount : zeno::INode {
   virtual void apply() override {
-    auto grid = get_input("grid")->as<VDBPointsGrid>()->m_grid;
+    auto grid = safe_dynamic_cast<VDBPointsGrid>(get_input("grid"))->m_grid;
     std::vector<openvdb::points::PointDataTree::LeafNodeType*> leafs;
     grid->tree().getNodes(leafs);
     auto ret = std::make_shared<zeno::NumericObject>();
@@ -77,14 +77,14 @@ struct GetVDBPointsLeafCount : zeno::INode {
 
 struct VDBPointsToPrimitive : zeno::INode {
   virtual void apply() override {
-    auto grid = get_input("grid")->as<VDBPointsGrid>()->m_grid;
+    auto grid = safe_dynamic_cast<VDBPointsGrid>(get_input("grid"))->m_grid;
 
     std::vector<openvdb::points::PointDataTree::LeafNodeType *> leafs;
     grid->tree().getNodes(leafs);
     zeno::log_info("VDBPointsToPrimitive: particle leaf nodes: {}\n", leafs.size());
     auto transform = grid->transformPtr();
 
-    auto ret = zeno::IObject::make<zeno::PrimitiveObject>();
+    auto ret = std::make_shared<zeno::PrimitiveObject>();
     size_t count = openvdb::points::pointCount(grid->tree());
     zeno::log_info("VDBPointsToPrimitive: particles: {}\n", count);
     ret->resize(count);
@@ -272,8 +272,8 @@ static int defVDBPointsToPrimitive = zeno::defNodeClass<VDBPointsToPrimitive>("V
 
 struct GetVDBPointsDroplets : zeno::INode {
   virtual void apply() override {
-    auto grid = get_input("grid")->as<VDBPointsGrid>()->m_grid;
-    auto sdf = get_input("sdf")->as<VDBFloatGrid>()->m_grid;
+    auto grid = safe_dynamic_cast<VDBPointsGrid>(get_input("grid"))->m_grid;
+    auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("sdf"))->m_grid;
     auto dx = sdf->voxelSize()[0];
     std::vector<openvdb::points::PointDataTree::LeafNodeType*> leafs;
     grid->tree().getNodes(leafs);
@@ -281,7 +281,7 @@ struct GetVDBPointsDroplets : zeno::INode {
 
     auto transform = grid->transformPtr();
 
-    auto ret = zeno::IObject::make<zeno::PrimitiveObject>();
+    auto ret = std::make_shared<zeno::PrimitiveObject>();
     auto &retpos = ret->add_attr<zeno::vec3f>("pos");
     auto &retvel = ret->add_attr<zeno::vec3f>("vel");
 
@@ -345,7 +345,7 @@ static int defGetVDBPointsDroplets = zeno::defNodeClass<GetVDBPointsDroplets>("G
 struct ConvertTo_VDBPointsGrid_PrimitiveObject : VDBPointsToPrimitive {
     virtual void apply() override {
         VDBPointsToPrimitive::apply();
-        //get_input<PrimitiveObject>("prim")->move_assign(std::move(smart_any_cast<std::shared_ptr<IObject>>(anyToZAny(get_output_obj("prim"), gParamType_Primitive))).get());
+        //get_input_PrimitiveObject("prim")->move_assign(std::move(smart_any_cast<std::shared_ptr<IObject>>(anyToZAny(get_output_obj("prim"), gParamType_Primitive))).get());
     }
 };
 
@@ -364,7 +364,7 @@ ZENO_DEFOVERLOADNODE(ConvertTo, _VDBPointsGrid_PrimitiveObject, typeid(VDBPoints
 struct ToVisualize_VDBPointsGrid : VDBPointsToPrimitive {
     virtual void apply() override {
         VDBPointsToPrimitive::apply();
-        auto path = get_param<std::string>("path");
+        auto path = zsString2Std(m_pAdapter->get_param_string("path"));
         auto prim = std::move(smart_any_cast<std::shared_ptr<IObject>>(outputs.at("prim")));
         if (auto node = graph->getOverloadNode("ToVisualize", {std::move(prim)}); node) {
             node->inputs["path:"] = std::make_shared<StringObject>(path);

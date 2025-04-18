@@ -15,13 +15,13 @@
 namespace zeno {
 struct ParticleAsVoxels : INode{
     virtual void apply() override{
-        auto type = get_input<VDBGrid>("vdbGrid")->getType();
+        auto type = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"))->getType();
         
         if(type=="FloatGrid"){
-            auto ingrid = get_input<VDBFloatGrid>("vdbGrid");
+            auto ingrid = safe_dynamic_cast<VDBFloatGrid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
-            auto inparticles = get_input<PrimitiveObject>("particles");
-            auto attrName = get_input<StringObject>("Attr")->value;
+            auto inparticles = get_input_PrimitiveObject("particles");
+            auto attrName = zsString2Std(get_input2_string("Attr"));
 
             inparticles->attr_visit(attrName, [&](auto &arr) {
             #pragma omp parallel for
@@ -38,10 +38,10 @@ struct ParticleAsVoxels : INode{
             set_output("oGrid", std::move(ingrid));
         }
         if(type=="Vec3fGrid") {
-            auto ingrid = get_input<VDBFloat3Grid>("vdbGrid");
+            auto ingrid = safe_dynamic_cast<VDBFloat3Grid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
-            auto inparticles = get_input<PrimitiveObject>("particles");
-            auto attrName = get_input<StringObject>("Attr")->value;
+            auto inparticles = get_input_PrimitiveObject("particles");
+            auto attrName = zsString2Std(get_input2_string("Attr"));
             inparticles->attr_visit(attrName, [&](auto &arr) {
             #pragma omp parallel for
                 for (int i = 0; i < arr.size(); i++) {
@@ -75,15 +75,15 @@ ZENDEFNODE(ParticleAsVoxels, {
                         });
 struct VDBVoxelAsParticles : INode {
   virtual void apply() override {
-    auto valToAttr = has_input("valToAttr") ? get_input2<std::string>("valToAttr") : std::string();
+    auto valToAttr = has_input("valToAttr") ? zsString2Std(get_input2_string("valToAttr")) : std::string();
     if (valToAttr.empty())
     {
-        auto type = get_input<VDBGrid>("vdbGrid")->getType();
+        auto type = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"))->getType();
         if(type == "FloatGrid"){
-            auto ingrid = get_input<VDBFloatGrid>("vdbGrid");
+            auto ingrid = safe_dynamic_cast<VDBFloatGrid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = get_param<bool>("hasInactive");
+            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
             // tbb::concurrent_vector<vec3f> pos;
             // wxl
 #if 1
@@ -151,11 +151,11 @@ struct VDBVoxelAsParticles : INode {
         }
         else if(type == "Vec3fGrid")
         {
-            auto ingrid = get_input<VDBFloat3Grid>("vdbGrid");
+            auto ingrid = safe_dynamic_cast<VDBFloat3Grid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = get_param<bool>("hasInactive");
-            auto asStaggers = get_param<bool>("asStaggers");
+            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
+            auto asStaggers = m_pAdapter->get_param_bool("asStaggers");
             // tbb::concurrent_vector<vec3f> pos;
             //tbb::concurrent_vector<float> sdf;
             // wxl
@@ -243,13 +243,13 @@ struct VDBVoxelAsParticles : INode {
     }
     else
     {
-        auto type = get_input<VDBGrid>("vdbGrid")->getType();
+        auto type = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"))->getType();
         zeno::log_info("VDBVoxelAsParticles got vdbGrid type: {}", type);
         if(type == "FloatGrid"){
-            auto ingrid = get_input<VDBFloatGrid>("vdbGrid");
+            auto ingrid = safe_dynamic_cast<VDBFloatGrid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = get_param<bool>("hasInactive");
+            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
             // tbb::concurrent_vector<vec3f> pos;
             // wxl
 #if 1
@@ -321,11 +321,11 @@ struct VDBVoxelAsParticles : INode {
         }
         else if(type == "Vec3fGrid")
         {
-            auto ingrid = get_input<VDBFloat3Grid>("vdbGrid");
+            auto ingrid = safe_dynamic_cast<VDBFloat3Grid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = get_param<bool>("hasInactive");
-            auto asStaggers = get_param<bool>("asStaggers");
+            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
+            auto asStaggers = m_pAdapter->get_param_bool("asStaggers");
             // tbb::concurrent_vector<vec3f> pos;
             //tbb::concurrent_vector<float> sdf;
             // wxl
@@ -456,7 +456,7 @@ struct VDBLeafAsParticles : INode {
         return prim;
     }
     virtual void apply() override {
-        auto ingrid = get_input<VDBGrid>("vdbGrid");
+        auto ingrid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
         auto vdbType = ingrid->getType();
 
         std::shared_ptr<zeno::PrimitiveObject> prim(nullptr);
