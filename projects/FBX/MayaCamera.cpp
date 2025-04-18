@@ -46,7 +46,7 @@ namespace {
 struct CihouMayaCameraFov : INode {
     virtual void apply() override {
         auto m_fit_gate = array_index_safe({"Horizontal", "Vertical"},
-                                           get_input2_string("fit_gate"),
+                                           zsString2Std(get_input2_string("fit_gate")),
                                            "fit_gate") + 1;
         auto m_focL = get_input2_float("focL");
         auto m_fw = get_input2_float("fw");
@@ -108,8 +108,13 @@ struct CameraEval: zeno::INode {
         } else {
             frameid = m_pAdapter->GetFrameId();
         }
-
-        auto nodelist = m_pAdapter->get_input_ListObject("nodelist")->get<zeno::CameraObject>();
+        
+        std::vector<zeno::SharedPtr<zeno::CameraObject>> nodelist;
+        for (auto spobj : m_pAdapter->get_input_ListObject("nodelist")->get()) {
+            if (auto cam = std::dynamic_pointer_cast<zeno::CameraObject>(spobj)) {
+                nodelist.push_back(cam);
+            }
+        }
 
         zeno::vec3f out_pos;
         zeno::vec3f out_up;
@@ -266,8 +271,8 @@ struct DirtyTBN : INode {
         if (has_input("prim")) {
             auto prim = get_input_PrimitiveObject("prim");
 
-            auto pos = prim->userData().get2<zeno::vec3f>("pos", {0,0,0});
-            auto scale = prim->userData().get2<zeno::vec3f>("scale", {1,1,1});
+            auto pos = toVec3f(prim->userData()->get_vec3f("pos", Vec3f()));
+            auto scale = toVec3f(prim->userData()->get_vec3f("scale", Vec3f(1,1,1)));
 
             auto v0 = pos - AxisT * scale[0] * 0.5f - AxisB * scale[2] * 0.5f;
             auto e1 = AxisT * scale[0];
@@ -345,7 +350,7 @@ struct LiveMeshNode : INode {
         auto outDict = get_input2_bool("outDict");
         auto prims_list = std::make_shared<zeno::ListObject>();
         auto prims_dict = std::make_shared<zeno::DictObject>();
-        auto vertSrc = get_input2_string("vertSrc");
+        auto vertSrc = zsString2Std(get_input2_string("vertSrc"));
 
         int frameid;
         if (has_input("frameid")) {
@@ -517,7 +522,7 @@ struct LiveCameraNode : INode{
 
     virtual void apply() override {
         auto camera = std::make_shared<zeno::CameraObject>();
-        auto camSrc = get_input2_string("camSrc");
+        auto camSrc = zsString2Std(get_input2_string("camSrc"));
 
         if(! camSrc.empty()){
             std::cout << "src came " << camSrc.size() << "\n";

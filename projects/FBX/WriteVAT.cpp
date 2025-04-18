@@ -10,7 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-
+#define TINYEXR_IMPLEMENTATION
 #include "tinyexr.h"
 #include "zeno/utils/fileio.h"
 

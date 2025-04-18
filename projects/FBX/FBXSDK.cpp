@@ -8,7 +8,7 @@
 #include <zeno/core/IObject.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
-
+#include <zeno/geo/commonutil.h>
 #include "zeno/utils/log.h"
 #include "zeno/utils/bit_operations.h"
 #include <zeno/types/UserData.h>
@@ -41,6 +41,14 @@ namespace FBX{
         path += node->GetName();
     }
 
+    template<class T>
+    static std::vector<T*> ListGetRaw(zeno::SharedPtr<zeno::ListObject> lstobj) {
+        std::vector<T*> vec;
+        for (auto spobj : lstobj->get()) {
+            vec.push_back(zeno::safe_dynamic_cast<T>(spobj).get());
+        }
+        return vec;
+    }
 
     std::string GetLastComponent(const std::string& str, char delimiter) {
         std::stringstream ss(str);
@@ -136,11 +144,11 @@ namespace FBX{
 struct FBXSDKVisibility : zeno::INode {
 
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
-        auto inheritVisibility = get_input2<bool>("inherit");
+        auto path = get_input2_string("path");
+        auto inheritVisibility = get_input2_bool("inherit");
         auto vis_dict = std::make_shared<zeno::DictObject>();
         auto inherit_dict = std::make_shared<zeno::DictObject>();
-        auto fps = get_param<std::string>("fps");
+        auto fps = zsString2Std(m_pAdapter->get_param_string("fps"));
         FbxTime::EMode eFrame = FbxTime::eFrames30;
         fps == "e30" ? eFrame = FbxTime::eFrames30 : eFrame = FbxTime::eFrames24;
         std::cout << "EFrame " << eFrame << " FPS " << fps << "\n";
@@ -318,7 +326,7 @@ struct ReadFBXFile: INode {
     std::string usedPath;
     virtual void apply() override {
         // Change the following filename to a suitable filename value.
-        auto lFilename = get_input2<std::string>("path");
+        auto lFilename = zsString2Std(get_input2_string("path"));
         if (lFilename == usedPath && _inner_fbx_object != nullptr) {
             set_output("fbx_object", _inner_fbx_object);
             return;
@@ -353,7 +361,7 @@ struct ReadFBXFile: INode {
 
         // The file is imported; so get rid of the importer.
         lImporter->Destroy();
-        fbx_object->userData().set2("version", vec3i(major, minor, revision));
+        fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
         usedPath = lFilename;
         _inner_fbx_object = fbx_object;
 
@@ -475,7 +483,7 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
     if (!pMesh) return nullptr;
     std::string nodeName = pNode->GetName();
     auto prim = std::make_shared<PrimitiveObject>();
-    prim->userData().set2("RootName", nodeName);
+    prim->userData()->set_string("RootName", stdString2zs(nodeName));
 
     FbxAMatrix bindMatrix = pNode->EvaluateGlobalTransform();
     auto s = bindMatrix.GetS();
@@ -508,7 +516,7 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
     loops.shrink_to_fit();
     prim->loops.values = loops;
 //    zeno::log_info("pMesh->GetDeformerCount(FbxDeformer::eSkin) {}", pMesh->GetDeformerCount(FbxDeformer::eSkin));
-    auto &ud = prim->userData();
+    auto ud = prim->userData();
     if (pMesh->GetDeformerCount(FbxDeformer::eSkin)) {
 
         FbxSkin* pSkin = (FbxSkin*)pMesh->GetDeformer(0, FbxDeformer::eSkin);
@@ -540,7 +548,7 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
             auto &bi = prim->verts.add_attr<int>(zeno::format("boneName_{}", i));
             std::fill(bi.begin(), bi.end(), -1);
             auto &bw = prim->verts.add_attr<float>(zeno::format("boneWeight_{}", i));
-            std::fill(bw.begin(), bw.end(), -1.0);
+            std::fill(bw.begin(), bw.end(), -1.0f);
         }
         for (auto i = 0; i < prim->verts.size(); i++) {
             for (auto j = 0; j < bone_weight[i].size(); j++) {
@@ -548,10 +556,10 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
                 prim->verts.attr<float>(format("boneWeight_{}", j))[i] = bone_weight[i][j].second;
             }
         }
-        ud.set2("maxnum_boneWeight", int(maxnum_boneWeight));
-        ud.set2("boneName_count", int(bone_names.size()));
+        ud->set_int("maxnum_boneWeight", int(maxnum_boneWeight));
+        ud->set_int("boneName_count", int(bone_names.size()));
         for (auto i = 0; i < bone_names.size(); i++) {
-            ud.set2(zeno::format("boneName_{}", i), bone_names[i]);
+            ud->set_string(stdString2zs(zeno::format("boneName_{}", i)), stdString2zs(bone_names[i]));
         }
     }
     if (pMesh->GetElementUVCount() > 0) {
@@ -608,11 +616,11 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
         mat_count = pNode->GetMaterialCount();
         for (auto i = 0; i < mat_count; i++) {
             FbxSurfaceMaterial* material = pNode->GetMaterial(i);
-            ud.set2(format("faceset_{}", i), material->GetName());
+            ud->set_string(stdString2zs(format("faceset_{}", i)), material->GetName());
         }
     }
-    ud.set2("faceset_count", mat_count);
-    prim_set_abcpath(prim.get(), format("/ABC/{}", nodeName));
+    ud->set_int("faceset_count", mat_count);
+    zeno::prim_set_abcpath(prim.get(), stdString2zs(format("/ABC/{}", nodeName)));
     return prim;
 }
 
@@ -663,7 +671,7 @@ static std::shared_ptr<PrimitiveObject> GetSkeleton(FbxNode* pNode) {
     }
     std::string nodeName = pNode->GetName();
     auto prim = std::make_shared<PrimitiveObject>();
-    prim->userData().set2("RootName", nodeName);
+    prim->userData()->set_string("RootName", stdString2zs(nodeName));
     prim->verts.resize(bone_names.size());
     prim->verts.values = poss;
     prim->verts.add_attr<vec3f>("transform_r0") = transform_r0;
@@ -688,9 +696,10 @@ static std::shared_ptr<PrimitiveObject> GetSkeleton(FbxNode* pNode) {
     }
     auto &boneNames = prim->verts.add_attr<int>("boneName");
     std::iota(boneNames.begin(), boneNames.end(), 0);
-    prim->userData().set2("boneName_count", int(bone_names.size()));
+    prim->userData()->set_int("boneName_count", int(bone_names.size()));
     for (auto i = 0; i < bone_names.size(); i++) {
-        prim->userData().set2(zeno::format("boneName_{}", i), bone_names[i]);
+        prim->userData()->set_string(stdString2zs(zeno::format("boneName_{}", i)), 
+            stdString2zs(bone_names[i]));
     }
     return prim;
 }
@@ -746,7 +755,7 @@ static void TraverseNodesToGetPrims(FbxNode* pNode, std::vector<std::shared_ptr<
 
 struct NewFBXImportSkin : INode {
     virtual void apply() override {
-        auto fbx_object = get_input2<FBXObject>("fbx_object");
+        auto fbx_object = safe_dynamic_cast<FBXObject>(get_input("fbx_object"));
         auto lScene = fbx_object->lScene;
 
         // Print the nodes of the scene and their attributes recursively.
@@ -757,33 +766,33 @@ struct NewFBXImportSkin : INode {
         std::vector<std::string> availableRootNames;
         if(lRootNode) {
             TraverseNodesToGetNames(lRootNode, availableRootNames);
-            auto rootName = get_input2<std::string>("rootName");
+            auto rootName = zsString2Std(get_input2_string("rootName"));
             if (rootName.empty()) {
                 std::vector<std::shared_ptr<PrimitiveObject>> prims;
                 TraverseNodesToGetPrims(lRootNode, prims);
 
                 std::map<std::string, int> nameMappingGlobal;
 
-                std::vector<zeno::PrimitiveObject *> prims_ptr;
+                zeno::Vector<zeno::PrimitiveObject *> prims_ptr;
                 int maxnum_boneWeight = 0;
                 for (auto prim: prims) {
-                    maxnum_boneWeight = zeno::max(maxnum_boneWeight, prim->userData().get2<int>("maxnum_boneWeight", 0));
+                    maxnum_boneWeight = zeno::max(maxnum_boneWeight, prim->userData()->get_int("maxnum_boneWeight", 0));
                 }
                 for (auto prim: prims) {
                     prims_ptr.push_back(prim.get());
                     std::vector<int> nameMapping;
-                    auto boneName_count = prim->userData().get2<int>("boneName_count", 0);
+                    auto boneName_count = prim->userData()->get_int("boneName_count", 0);
                     for (auto i = 0; i < boneName_count; i++) {
-                        auto boneName = prim->userData().get2<std::string>(zeno::format("boneName_{}", i));
+                        auto boneName = zsString2Std(prim->userData()->get_string(stdString2zs(zeno::format("boneName_{}", i))));
                         if (nameMappingGlobal.count(boneName) == 0) {
                             auto index = nameMappingGlobal.size();
                             nameMappingGlobal[boneName] = index;
             }
                         nameMapping.push_back(nameMappingGlobal[boneName]);
             }
-                    prim->userData().del("boneName_count");
+                    prim->userData()->del("boneName_count");
                     for (auto i = 0; i < boneName_count; i++) {
-                        prim->userData().del(zeno::format("boneName_{}", i));
+                        prim->userData()->del(stdString2zs(zeno::format("boneName_{}", i)));
         }
                     for (auto j = 0; j < maxnum_boneWeight; j++) {
                         if (!prim->verts.attr_is<int>(format("boneName_{}", j))) {
@@ -803,23 +812,24 @@ struct NewFBXImportSkin : INode {
                     }
                 }
                 prim = primMergeWithFacesetMatid(prims_ptr);
-                prim->userData().set2("boneName_count", int(nameMappingGlobal.size()));
-                prim->userData().set2("maxnum_boneWeight", maxnum_boneWeight);
+                prim->userData()->set_int("boneName_count", int(nameMappingGlobal.size()));
+                prim->userData()->set_int("maxnum_boneWeight", maxnum_boneWeight);
                 for (auto [key, value]: nameMappingGlobal) {
-                    prim->userData().set2(zeno::format("boneName_{}", value), key);
+                    prim->userData()->set_string(stdString2zs(zeno::format("boneName_{}", value)), 
+                        stdString2zs(key));
                 }
             }
             else {
                 TraverseNodesToGetPrim(lRootNode, rootName, prim);
             }
         }
-        if (get_input2<bool>("ConvertUnits")) {
+        if (get_input2_bool("ConvertUnits")) {
             for (auto & v: prim->verts) {
                 v = v * 0.01;
             }
         }
-        if (get_input2<bool>("CopyVectorsFromLoopsToVert")) {
-            auto vectors_str = get_input2<std::string>("vectors");
+        if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
+            auto vectors_str = zsString2Std(get_input2_string("vectors"));
             std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
             for (auto vector: vectors) {
                 vector = zeno::trim_string(vector);
@@ -833,10 +843,11 @@ struct NewFBXImportSkin : INode {
             }
         }
         {
-            auto &ud = prim->userData();
-            ud.set2("AvailableRootName_count", int(availableRootNames.size()));
+            auto ud = prim->userData();
+            ud->set_int("AvailableRootName_count", int(availableRootNames.size()));
             for (int i = 0; i < availableRootNames.size(); i++) {
-                ud.set2(format("AvailableRootName_{}", i), availableRootNames[i]);
+                ud->set_string(stdString2zs(format("AvailableRootName_{}", i))
+                    , stdString2zs(availableRootNames[i]));
             }
         }
         set_output("prim", prim);
@@ -939,9 +950,10 @@ static int GetSkeletonFromBindPose(FbxManager* lSdkManager, FbxScene* lScene, st
             prim->polys[j] = {j * 2, 2};
         }
 
-        prim->userData().set2("boneName_count", int(bone_names.size()));
+        prim->userData()->set_int("boneName_count", int(bone_names.size()));
         for (auto i = 0; i < bone_names.size(); i++) {
-            prim->userData().set2(zeno::format("boneName_{}", i), bone_names[i]);
+            prim->userData()->set_string(stdString2zs(zeno::format("boneName_{}", i))
+                , stdString2zs(bone_names[i]));
         }
         return pose_count;
     }
@@ -1039,16 +1051,17 @@ std::shared_ptr<PrimitiveObject> GetSkeletonFromMesh(FbxScene* lScene) {
         }
         auto &boneNames = prim->verts.add_attr<int>("boneName");
         std::iota(boneNames.begin(), boneNames.end(), 0);
-        prim->userData().set2("boneName_count", int(bone_names.size()));
+        prim->userData()->set_int("boneName_count", int(bone_names.size()));
         for (auto i = 0; i < bone_names.size(); i++) {
-            prim->userData().set2(zeno::format("boneName_{}", i), bone_names[i]);
+            prim->userData()->set_string(
+                stdString2zs(zeno::format("boneName_{}", i)), stdString2zs(bone_names[i]));
         }
     }
     return prim;
 }
 struct NewFBXImportSkeleton : INode {
     virtual void apply() override {
-        auto fbx_object = get_input2<FBXObject>("fbx_object");
+        auto fbx_object = safe_dynamic_cast<FBXObject>(get_input("fbx_object"));
         auto lSdkManager = fbx_object->lSdkManager;
         auto lScene = fbx_object->lScene;
 
@@ -1058,11 +1071,11 @@ struct NewFBXImportSkeleton : INode {
         auto prim = std::make_shared<PrimitiveObject>();
 
         auto pose_count = GetSkeletonFromBindPose(lSdkManager, lScene, prim);
-        if (pose_count == 0 || get_input2<bool>("ForceFromMesh")) {
+        if (pose_count == 0 || get_input2_bool("ForceFromMesh")) {
             prim = GetSkeletonFromMesh(lScene);
         }
 
-        if (get_input2<bool>("ConvertUnits")) {
+        if (get_input2_bool("ConvertUnits")) {
             for (auto & v: prim->verts) {
                 v = v * 0.01;
             }
@@ -1096,16 +1109,16 @@ struct NewFBXImportAnimation : INode {
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = std::lround(get_input2<float>("frameid"));
+            frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->GetFrameId();
         }
-        float fps = get_input2<float>("fps");
+        float fps = get_input2_float("fps");
         float t = float(frameid) / fps;
         FbxTime curTime;       // The time for each key in the animation curve(s)
         curTime.SetSecondDouble(t);   // Starting time
 
-        auto fbx_object = get_input2<FBXObject>("fbx_object");
+        auto fbx_object = safe_dynamic_cast<FBXObject>(get_input("fbx_object"));
         auto lSdkManager = fbx_object->lSdkManager;
         auto lScene = fbx_object->lScene;
 
@@ -1113,7 +1126,7 @@ struct NewFBXImportAnimation : INode {
         // Note that we are not printing the root node because it should
         // not contain any attributes.
         auto prim = std::make_shared<PrimitiveObject>();
-        auto &ud = prim->userData();
+        auto ud = prim->userData();
 
         FbxArray<FbxString*> animationStackNames;
         std::vector<std::string> clip_names;
@@ -1122,11 +1135,12 @@ struct NewFBXImportAnimation : INode {
             clip_names.emplace_back(animationStackNames[i]->Buffer());
         }
         for (auto i = 0; i < clip_names.size(); i++) {
-            ud.set2(format("avail_anim_clip_{}", i), clip_names[i]);
+            ud->set_string(stdString2zs(format("avail_anim_clip_{}", i))
+                , stdString2zs(clip_names[i]));
         }
-        ud.set2("avail_anim_clip_count", int(clip_names.size()));
+        ud->set_int("avail_anim_clip_count", int(clip_names.size()));
 
-        auto clip_name = get_input2<std::string>("clipName");
+        auto clip_name = zsString2Std(get_input2_string("clipName"));
         if (clip_name == "") {
             clip_name = lScene->ActiveAnimStackName.Get().Buffer();
         }
@@ -1140,7 +1154,7 @@ struct NewFBXImportAnimation : INode {
 
 
         FbxAnimStack* animStack = lScene->GetSrcObject<FbxAnimStack>(stack_index);
-        ud.set2("clipinfo.name", std::string(animStack->GetName()));
+        ud->set_string("clipinfo.name", zeno::String(animStack->GetName()));
 //        zeno::log_info("animStack: {}", animStack->GetName());
 
 
@@ -1166,9 +1180,9 @@ struct NewFBXImportAnimation : INode {
             src_fps = frameCount / lTimeLineTimeSpan.GetDuration().GetSecondDouble();
         }
 
-        ud.set2("clipinfo.source_range", vec2f(mStart.GetSecondDouble(), mStop.GetSecondDouble()));
-        ud.set2("clipinfo.source_fps", src_fps);
-        ud.set2("clipinfo.fps", fps);
+        ud->set_vec2f("clipinfo.source_range", Vec2f(mStart.GetSecondDouble(), mStop.GetSecondDouble()));
+        ud->set_float("clipinfo.source_fps", src_fps);
+        ud->set_float("clipinfo.fps", fps);
 
         {
             auto node_count = lScene->GetNodeCount();
@@ -1215,14 +1229,14 @@ struct NewFBXImportAnimation : INode {
                     prim->polys[j] = {j * 2, 2};
                 }
             }
-            ud.set2("boneName_count", int(bone_names.size()));
+            ud->set_int("boneName_count", int(bone_names.size()));
             for (auto i = 0; i < bone_names.size(); i++) {
-                ud.set2(zeno::format("boneName_{}", i), bone_names[i]);
+                ud->set_string(stdString2zs(zeno::format("boneName_{}", i)), stdString2zs(bone_names[i]));
                 zeno::log_debug("boneName: {}", bone_names[i]);
             }
         }
 
-        if (get_input2<bool>("ConvertUnits")) {
+        if (get_input2_bool("ConvertUnits")) {
             for (auto & v: prim->verts) {
                 v = v * 0.01;
             }
@@ -1258,15 +1272,15 @@ struct NewFBXImportCamera : INode {
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = std::lround(get_input2<float>("frameid"));
+            frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->GetFrameId();
         }
-        float fps = get_input2<float>("fps");
+        float fps = get_input2_float("fps");
         float t = float(frameid) / fps;
         FbxTime curTime;       // The time for each key in the animation curve(s)
         curTime.SetSecondDouble(t);   // Starting time
-        auto fbx_object = get_input2<FBXObject>("fbx_object");
+        auto fbx_object = safe_dynamic_cast<FBXObject>(get_input("fbx_object"));
         auto lSdkManager = fbx_object->lSdkManager;
         auto lScene = fbx_object->lScene;
 
@@ -1274,7 +1288,7 @@ struct NewFBXImportCamera : INode {
         // Note that we are not printing the root node because it should
         // not contain any attributes.
         auto prim = std::make_shared<PrimitiveObject>();
-        auto &ud = prim->userData();
+        auto ud = prim->userData();
 
         FbxArray<FbxString*> animationStackNames;
         std::vector<std::string> clip_names;
@@ -1283,11 +1297,11 @@ struct NewFBXImportCamera : INode {
             clip_names.emplace_back(animationStackNames[i]->Buffer());
         }
         for (auto i = 0; i < clip_names.size(); i++) {
-            ud.set2(format("avail_anim_clip_{}", i), clip_names[i]);
+            ud->set_string(stdString2zs(format("avail_anim_clip_{}", i)), stdString2zs(clip_names[i]));
         }
-        ud.set2("avail_anim_clip_count", int(clip_names.size()));
+        ud->set_int("avail_anim_clip_count", int(clip_names.size()));
 
-        auto clip_name = get_input2<std::string>("clipName");
+        auto clip_name = zsString2Std(get_input2_string("clipName"));
         if (clip_name == "") {
             clip_name = lScene->ActiveAnimStackName.Get().Buffer();
         }
@@ -1299,7 +1313,7 @@ struct NewFBXImportCamera : INode {
 
 
         FbxAnimStack* animStack = lScene->GetSrcObject<FbxAnimStack>(stack_index);
-        ud.set2("clipinfo.name", std::string(animStack->GetName()));
+        ud->set_string("clipinfo.name", zeno::String(animStack->GetName()));
 
 
         lScene->SetCurrentAnimationStack(animStack);
@@ -1324,9 +1338,9 @@ struct NewFBXImportCamera : INode {
             src_fps = frameCount / lTimeLineTimeSpan.GetDuration().GetSecondDouble();
         }
 
-        ud.set2("clipinfo.source_range", vec2f(mStart.GetSecondDouble(), mStop.GetSecondDouble()));
-        ud.set2("clipinfo.source_fps", src_fps);
-        ud.set2("clipinfo.fps", fps);
+        ud->set_vec2f("clipinfo.source_range", Vec2f(mStart.GetSecondDouble(), mStop.GetSecondDouble()));
+        ud->set_float("clipinfo.source_fps", src_fps);
+        ud->set_float("clipinfo.fps", fps);
 
         {
             auto node_count = lScene->GetNodeCount();
@@ -1336,37 +1350,37 @@ struct NewFBXImportCamera : INode {
                 FbxMatrix transformMatrix;
                 memcpy(&transformMatrix, &lGlobalPosition, sizeof(FbxMatrix));
                 auto t = transformMatrix.GetRow(3);
-                auto pos = vec3f(t[0], t[1], t[2]);
+                auto pos = Vec3f(t[0], t[1], t[2]);
 
                 auto r0 = transformMatrix.GetRow(0);
                 auto r1 = transformMatrix.GetRow(1);
                 auto r2 = transformMatrix.GetRow(2);
-                auto view = vec3f(r0[0], r0[1], r0[2]);
-                auto up = vec3f(r1[0], r1[1], r1[2]);
-                auto right = vec3f(r2[0], r2[1], r2[2]);
+                auto view = Vec3f(r0[0], r0[1], r0[2]);
+                auto up = Vec3f(r1[0], r1[1], r1[2]);
+                auto right = Vec3f(r2[0], r2[1], r2[2]);
                 FbxCamera* pCamera = pNode->GetCamera();
                 if (pCamera) {
-                    set_output2("pos", pos);
-                    set_output2("right", right);
-                    set_output2("up", up);
-                    set_output2("view", view);
+                    m_pAdapter->set_output_vec3f("pos", pos);
+                    m_pAdapter->set_output_vec3f("right", right);
+                    m_pAdapter->set_output_vec3f("up", up);
+                    m_pAdapter->set_output_vec3f("view", view);
 
                     float focal_length = pCamera->FocalLength.Get();
-                    set_output2("focal_length", focal_length);
+                    m_pAdapter->set_output_float("focal_length", focal_length);
                     float m_ha = pCamera->GetApertureWidth() * 25.4; // inch -> mm
                     float m_va = pCamera->GetApertureHeight() * 25.4; // inch -> mm
-                    set_output2("horizontalAperture", m_ha);
-                    set_output2("verticalAperture", m_va);
-                    auto m_nx = get_input2<float>("nx");
-                    auto m_ny = get_input2<float>("ny");
+                    m_pAdapter->set_output_float("horizontalAperture", m_ha);
+                    m_pAdapter->set_output_float("verticalAperture", m_va);
+                    auto m_nx = get_input2_float("nx");
+                    auto m_ny = get_input2_float("ny");
                     float c_aspect = m_ha/m_va;
                     float u_aspect = m_nx/m_ny;
                     float fov_y = glm::degrees(2.0f * std::atan(m_va/(u_aspect/c_aspect) / (2.0f * focal_length)));
-                    set_output2("fov_y", fov_y);
+                    m_pAdapter->set_output_float("fov_y", fov_y);
                     float _near = pCamera->NearPlane.Get();
                     float _far = pCamera->FarPlane.Get();
-                    set_output2("near", _near);
-                    set_output2("far", _far);
+                    m_pAdapter->set_output_float("near", _near);
+                    m_pAdapter->set_output_float("far", _far);
                 }
             }
         }
@@ -1409,10 +1423,10 @@ struct RigPoseItemObject : PrimitiveObject {
 struct NewFBXRigPoseItem : INode {
     virtual void apply() override {
         auto item = std::make_shared<RigPoseItemObject>();
-        item->boneName  = get_input2<std::string>("boneName");
-        item->translate = get_input2<vec3f>("translate");
-        item->rotate    = get_input2<vec3f>("rotate");
-        set_output2("poseItem", std::move(item));
+        item->boneName  = zsString2Std(get_input2_string("boneName"));
+        item->translate = toVec3f(get_input2_vec3f("translate"));
+        item->rotate    = toVec3f(get_input2_vec3f("rotate"));
+        set_output("poseItem", std::move(item));
         }
 };
 
@@ -1464,31 +1478,32 @@ static vec3f transform_nrm(glm::mat4 &transform, vec3f pos) {
 }
 
 static std::map<std::string, int> getBoneNameMapping(PrimitiveObject *prim) {
-    auto boneName_count = prim->userData().get2<int>("boneName_count");
+    auto boneName_count = prim->userData()->get_int("boneName_count");
     std::map<std::string, int> boneNames;
     for (auto i = 0; i < boneName_count; i++) {
-        auto boneName = prim->userData().get2<std::string>(format("boneName_{}", i));
+        auto boneName = zsString2Std(prim->userData()->get_string(stdString2zs(format("boneName_{}", i))));
         boneNames[boneName] = i;
     }
     return boneNames;
 }
 static std::vector<std::string> getBoneNames(PrimitiveObject *prim) {
-    auto boneName_count = prim->userData().get2<int>("boneName_count");
+    auto boneName_count = prim->userData()->get_int("boneName_count");
     std::vector<std::string> boneNames;
     boneNames.reserve(boneName_count);
     for (auto i = 0; i < boneName_count; i++) {
-        auto boneName = prim->userData().get2<std::string>(format("boneName_{}", i));
+        auto boneName = zsString2Std(prim->userData()->get_string(stdString2zs(format("boneName_{}", i))));
         boneNames.emplace_back(boneName);
     }
     return boneNames;
 }
 struct BoneSetAttr : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("skeleton");
+#if 0
+        auto prim = get_input_PrimitiveObject("skeleton");
         auto value = get_input<NumericObject>("value");
-        auto attr = get_input2<std::string>("attr");
-        auto type = get_input2<std::string>("type");
-        auto boneName = get_input2<std::string>("boneName");
+        auto attr = get_input2_string("attr");
+        auto type = get_input2_string("type");
+        auto boneName = get_input2_string("boneName");
         auto boneNameMapping = getBoneNameMapping(prim.get());
         auto index = boneNameMapping[boneName];
 
@@ -1506,13 +1521,14 @@ struct BoneSetAttr : INode {
                 array_index({"float", "vec2f", "vec3f", "vec4f", "int", "vec2i", "vec3i", "vec4i"}, type)));
 
         set_output("prim", std::move(prim));
+#endif
     }
 };
 ZENDEFNODE(BoneSetAttr,
 { /* inputs: */ {
     {gParamType_Primitive, "skeleton"},
     {gParamType_String, "boneName", ""},
-    {gParamType_Int, "value", "0"},
+    {gParamType_Int, "value", "0"}, //这里是Variant，但目前暂时不支持wildcard
     {gParamType_String, "attr", ""},
     {"enum float vec2f vec3f vec4f int vec2i vec3i vec4i", "type", "int"},
 }, /* outputs: */ {
@@ -1523,10 +1539,10 @@ ZENDEFNODE(BoneSetAttr,
 }});
 struct BoneGetAttr : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("skeleton");
-        auto attr = get_input2<std::string>("attr");
-        auto type = get_input2<std::string>("type");
-        auto boneName = get_input2<std::string>("boneName");
+        auto prim = get_input_PrimitiveObject("skeleton");
+        auto attr = zsString2Std(get_input2_string("attr"));
+        auto type = zsString2Std(get_input2_string("type"));
+        auto boneName = zsString2Std(get_input2_string("boneName"));
         auto boneNameMapping = getBoneNameMapping(prim.get());
         auto index = boneNameMapping[boneName];
 
@@ -1584,7 +1600,7 @@ static std::vector<int> TopologicalSorting(std::map<int, int> bone_connects, zen
     if (false) { // debug
         for (auto i = 0; i < ordering.size(); i++) {
             auto bi = ordering[i];
-            auto bone_name = skeleton->userData().get2<std::string>(format("boneName_{}", bi));
+            auto bone_name = zsString2Std(skeleton->userData()->get_string(stdString2zs(format("boneName_{}", bi))));
             zeno::log_info("{}: {}: {}", i, bi, bone_name);
         }
     }
@@ -1592,8 +1608,8 @@ static std::vector<int> TopologicalSorting(std::map<int, int> bone_connects, zen
 }
 struct NewFBXRigPose : INode {
     virtual void apply() override {
-        auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(get_input<PrimitiveObject>("skeleton")->clone());
-        auto nodelist = get_input<zeno::ListObject>("Transformations")->getRaw<RigPoseItemObject>();
+        auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(get_input_PrimitiveObject("skeleton")->clone());
+        auto nodelist = FBX::ListGetRaw<RigPoseItemObject>(m_pAdapter->get_input_ListObject("Transformations"));
         std::map<int, RigPoseItemObject*> Transformations;
         {
             auto boneNameMapping = getBoneNameMapping(skeleton.get());
@@ -1607,7 +1623,7 @@ struct NewFBXRigPose : INode {
             }
         }
 
-        auto WorldSpace = get_input2<bool>("WorldSpace");
+        auto WorldSpace = get_input2_bool("WorldSpace");
         std::map<int, int> bone_connects;
         for (auto i = 0; i < skeleton->polys.size(); i++) {
             bone_connects[skeleton->loops[i * 2 + 1]] = skeleton->loops[i * 2];
@@ -1642,7 +1658,7 @@ struct NewFBXRigPose : INode {
             transform_r2[bi] = transform_nrm(transform, transform_r2[bi]);
         }
 
-        set_output2("skeleton", std::move(skeleton));
+        set_output("skeleton", std::move(skeleton));
     }
 };
 
@@ -1673,14 +1689,14 @@ struct NewFBXBoneDeform : INode {
         return mapping;
     }
     virtual void apply() override {
-        auto usingDualQuaternion = get_input2<std::string>("SkinningMethod") == "DualQuaternion";
-        auto geometryToDeform = get_input2<PrimitiveObject>("GeometryToDeform");
+        auto usingDualQuaternion = get_input2_string("SkinningMethod") == "DualQuaternion";
+        auto geometryToDeform = get_input_PrimitiveObject("GeometryToDeform");
         auto geometryToDeformBoneNames = getBoneNames(geometryToDeform.get());
-        auto restPointTransformsPrim = get_input2<PrimitiveObject>("RestPointTransforms");
+        auto restPointTransformsPrim = get_input_PrimitiveObject("RestPointTransforms");
         auto restPointTransformsBoneNames = getBoneNames(restPointTransformsPrim.get());
         auto restPointTransformsBoneMapping = getBoneMapping(geometryToDeformBoneNames, restPointTransformsBoneNames);
         auto restPointTransformsInv = getInvertedBoneMatrix(restPointTransformsPrim.get());
-        auto deformPointTransformsPrim = get_input2<PrimitiveObject>("DeformPointTransforms");
+        auto deformPointTransformsPrim = get_input_PrimitiveObject("DeformPointTransforms");
         auto deformPointTransformsBoneNames = getBoneNames(deformPointTransformsPrim.get());
         auto deformPointTransformsBoneMapping = getBoneMapping(geometryToDeformBoneNames, deformPointTransformsBoneNames);
         auto deformPointTransforms = getBoneMatrix(deformPointTransformsPrim.get());
@@ -1703,7 +1719,7 @@ struct NewFBXBoneDeform : INode {
 
         auto prim = std::dynamic_pointer_cast<PrimitiveObject>(geometryToDeform->clone());
 
-        int maxnum_boneWeight = prim->userData().get2<int>("maxnum_boneWeight");
+        int maxnum_boneWeight = prim->userData()->get_int("maxnum_boneWeight");
         std::vector<std::vector<int>*> bi;
         std::vector<std::vector<float>*> bw;
         for (auto i = 0; i < maxnum_boneWeight; i++) {
@@ -1741,7 +1757,7 @@ struct NewFBXBoneDeform : INode {
         }
             }
         }
-        auto vectors_str = get_input2<std::string>("vectors");
+        auto vectors_str = zsString2Std(get_input2_string("vectors"));
         std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
         for (auto vector: vectors) {
             vector = zeno::trim_string(vector);
@@ -1849,20 +1865,20 @@ struct NewFBXExtractKeyframe : INode {
         return res;
     }
     virtual void apply() override {
-        auto restPointTransformsPrim = get_input2<PrimitiveObject>("RestPointTransforms");
+        auto restPointTransformsPrim = get_input_PrimitiveObject("RestPointTransforms");
         auto restBoneNameMapping = getBoneNameMapping(restPointTransformsPrim.get());
         auto restPointTransforms = getBoneMatrix(restPointTransformsPrim.get());
         auto restPointTransformsInv = getInvertedBoneMatrix(restPointTransformsPrim.get());
-        auto deformPointTransformsPrim = get_input2<PrimitiveObject>("DeformPointTransforms");
+        auto deformPointTransformsPrim = get_input_PrimitiveObject("DeformPointTransforms");
         auto deformBoneNameMapping = getBoneNameMapping(deformPointTransformsPrim.get());
         auto deformPointTransforms = getBoneMatrix(deformPointTransformsPrim.get());
         auto deformPointTransformsInv = getInvertedBoneMatrix(deformPointTransformsPrim.get());
         std::vector<std::string> keyframe_boneName;
         std::vector<glm::mat4> keyframe_bone_matrix;
         auto parent_names = get_parent_name(deformPointTransformsPrim.get());
-        auto boneName_count = deformPointTransformsPrim->userData().get2<int>("boneName_count");
+        auto boneName_count = deformPointTransformsPrim->userData()->get_int("boneName_count");
         for (auto i = 0; i < boneName_count; i++) {
-            auto boneName = deformPointTransformsPrim->userData().get2<std::string>(format("boneName_{}", i));
+            auto boneName = zsString2Std(deformPointTransformsPrim->userData()->get_string(stdString2zs(format("boneName_{}", i))));
             if (restBoneNameMapping.count(boneName) == 0) {
                 continue;
             }
@@ -1882,9 +1898,9 @@ struct NewFBXExtractKeyframe : INode {
         }
 
         auto keyframe = std::make_shared<zeno::PrimitiveObject>();
-        keyframe->userData().set2("boneName_count", int(keyframe_boneName.size()));
+        keyframe->userData()->set_int("boneName_count", int(keyframe_boneName.size()));
         for (auto i = 0; i < keyframe_boneName.size(); i++) {
-            keyframe->userData().set2(format("boneName_{}", i), keyframe_boneName[i]);
+            keyframe->userData()->set_string(stdString2zs(format("boneName_{}", i)), stdString2zs(keyframe_boneName[i]));
         }
         keyframe->verts.resize(keyframe_boneName.size());
         auto &verts = keyframe->verts;
@@ -1900,7 +1916,7 @@ struct NewFBXExtractKeyframe : INode {
         }
         auto &boneNames = keyframe->verts.add_attr<int>("boneName");
         std::iota(boneNames.begin(), boneNames.end(), 0);
-        set_output2("keyframe", keyframe);
+        set_output("keyframe", keyframe);
     }
 };
 
@@ -1919,7 +1935,7 @@ ZENDEFNODE(NewFBXExtractKeyframe, {
 
 struct NewFBXGenerateAnimation : INode {
     virtual void apply() override {
-        auto keyframe = get_input2<PrimitiveObject>("keyframe");
+        auto keyframe = get_input_PrimitiveObject("keyframe");
         std::map<std::string, glm::mat4> Transformations;
         {
             auto keyframe_matrix = getBoneMatrix(keyframe.get());
@@ -1929,7 +1945,7 @@ struct NewFBXGenerateAnimation : INode {
             }
         }
 
-        auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(get_input<PrimitiveObject>("skeleton")->clone());
+        auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(get_input_PrimitiveObject("skeleton")->clone());
         std::map<int, int> bone_connects;
         for (auto i = 0; i < skeleton->polys.size(); i++) {
             bone_connects[skeleton->loops[i * 2 + 1]] = skeleton->loops[i * 2];
@@ -1959,7 +1975,7 @@ struct NewFBXGenerateAnimation : INode {
             transform_r2[bi] = transform_nrm(transform, transform_r2[bi]);
         }
 
-        set_output2("DeformPointTransforms", skeleton);
+        set_output("DeformPointTransforms", skeleton);
     }
 };
 
@@ -1978,9 +1994,9 @@ ZENDEFNODE(NewFBXGenerateAnimation, {
 
 struct NormalView : INode {
     virtual void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
+        auto prim = get_input_PrimitiveObject("prim");
         auto &nrms = prim->verts.attr<vec3f>("nrm");
-        auto scale = get_input2<float>("scale");
+        auto scale = get_input2_float("scale");
         auto normals = std::make_shared<zeno::PrimitiveObject>();
         normals->verts.resize(prim->verts.size() * 2);
         for (auto i = 0; i < prim->verts.size(); i++) {
@@ -2009,10 +2025,10 @@ ZENDEFNODE(NormalView, {
 
 struct BoneTransformView : INode {
     virtual void apply() override {
-        auto bones = get_input2<PrimitiveObject>("bones");
+        auto bones = get_input_PrimitiveObject("bones");
         auto view = std::make_shared<zeno::PrimitiveObject>();
-        auto scale = get_input2<float>("scale");
-        auto index = get_input2<int>("index");
+        auto scale = get_input2_float("scale");
+        auto index = get_input2_int("index");
         view->verts.resize(bones->verts.size() * 6);
         auto &transform_r0 = bones->verts.attr<vec3f>("transform_r0");
         auto &transform_r1 = bones->verts.attr<vec3f>("transform_r1");
@@ -2057,8 +2073,8 @@ ZENDEFNODE(BoneTransformView, {
 
 struct PrimAttrFlat : INode {
     virtual void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
-        auto params = get_input2<std::string>("params");
+        auto prim = get_input_PrimitiveObject("prim");
+        auto params = zsString2Std(get_input2_string("params"));
         std::vector<std::string> params_ = zeno::split_str(params, ',');
         std::vector<float> values;
         for (auto i = 0; i < prim->size(); i++) {
@@ -2106,14 +2122,14 @@ struct IKChainsItemObject : PrimitiveObject {
 struct IKChainsItem : INode {
     virtual void apply() override {
         auto item = std::make_shared<IKChainsItemObject>();
-        item->RootName  = get_input2<std::string>("RootName");
-        item->MidName  = get_input2<std::string>("MidName");
-        item->TipName  = get_input2<std::string>("TipName");
-        item->MatchByName  = get_input2<bool>("MatchByName");
-        item->TwistName  = get_input2<std::string>("TwistName");
-        item->OrientTip  = get_input2<bool>("OrientTip");
+        item->RootName  = zsString2Std(get_input2_string("RootName"));
+        item->MidName  = zsString2Std(get_input2_string("MidName"));
+        item->TipName  = zsString2Std(get_input2_string("TipName"));
+        item->MatchByName  = get_input2_bool("MatchByName");
+        item->TwistName  = zsString2Std(get_input2_string("TwistName"));
+        item->OrientTip  = get_input2_bool("OrientTip");
 
-        set_output2("poseItem", std::move(item));
+        set_output("poseItem", std::move(item));
     }
 };
 
@@ -2180,9 +2196,9 @@ std::pair<vec3f, vec3f> twoBoneIK(
 
 struct IKChains : INode {
     virtual void apply() override {
-        auto skeleton = get_input2<PrimitiveObject>("Skeleton");
-        auto ikDrivers = get_input2<PrimitiveObject>("IK Drivers");
-        auto items = get_input<zeno::ListObject>("items")->getRaw<IKChainsItemObject>();
+        auto skeleton = get_input_PrimitiveObject("Skeleton");
+        auto ikDrivers = get_input_PrimitiveObject("IK Drivers");
+        auto items = FBX::ListGetRaw<IKChainsItemObject>(m_pAdapter->get_input_ListObject("items"));
         auto skeletonBoneNameMapping = getBoneNameMapping(skeleton.get());
         auto ikDriversBoneNameMapping = getBoneNameMapping(ikDrivers.get());
         std::map<int, int> bone_connects;
@@ -2624,11 +2640,11 @@ struct IkChainsItemObject : PrimitiveObject {
 struct IkChainsItem : INode {
     virtual void apply() override {
         auto item = std::make_shared<IkChainsItemObject>();
-        item->depth = get_input2<int>("depth");
-        item->endEffectorName = get_input2<std::string>("endEffectorName");
-        item->targetPos = get_input2<vec3f>("targetPos");
+        item->depth = get_input2_int("depth");
+        item->endEffectorName = zsString2Std(get_input2_string("endEffectorName"));
+        item->targetPos = toVec3f(get_input2_vec3f("targetPos"));
 
-        set_output2("IkChain", std::move(item));
+        set_output("IkChain", std::move(item));
     }
 };
 
@@ -2656,17 +2672,17 @@ struct JointLimitObject : PrimitiveObject {
 struct JointLimitItem : INode {
     virtual void apply() override {
         auto item = std::make_shared<JointLimitObject>();
-        item->boneName = get_input2<std::string>("boneName");
+        item->boneName = zsString2Std(get_input2_string("boneName"));
         item->enableLimit = {
-            get_input2<int>("enableXLimit"),
-            get_input2<int>("enableYLimit"),
-            get_input2<int>("enableZLimit"),
+            get_input2_int("enableXLimit"),
+            get_input2_int("enableYLimit"),
+            get_input2_int("enableZLimit"),
         };
-        item->xLimit = get_input2<vec2f>("xLimit");
-        item->yLimit = get_input2<vec2f>("yLimit");
-        item->zLimit = get_input2<vec2f>("zLimit");
+        item->xLimit = toVec2f(m_pAdapter->get_input2_vec2f("xLimit"));
+        item->yLimit = toVec2f(m_pAdapter->get_input2_vec2f("yLimit"));
+        item->zLimit = toVec2f(m_pAdapter->get_input2_vec2f("zLimit"));
 
-        set_output2("JointLimit", std::move(item));
+        set_output("JointLimit", std::move(item));
     }
 };
 
@@ -2689,15 +2705,15 @@ ZENDEFNODE(JointLimitItem, {
 
 struct IkSolver : INode {
     void apply() override {
-        auto skeleton = get_input2<PrimitiveObject>("Skeleton");
+        auto skeleton = get_input_PrimitiveObject("Skeleton");
         auto boneNameMapping = getBoneNameMapping(skeleton.get());
-        int iter_max = get_input2<int>("iterCount");
+        int iter_max = get_input2_int("iterCount");
         auto &enableXYZLimit = skeleton->add_attr<vec3i>("enableXYZLimit");
         auto &xLimit = skeleton->add_attr<vec2f>("xLimit");
         auto &yLimit = skeleton->add_attr<vec2f>("yLimit");
         auto &zLimit = skeleton->add_attr<vec2f>("zLimit");
         if (has_input("jointLimits")) {
-            auto items = get_input<zeno::ListObject>("jointLimits")->getRaw<JointLimitObject>();
+            auto items = FBX::ListGetRaw<JointLimitObject>(m_pAdapter->get_input_ListObject("jointLimits"));
             for (auto &item: items) {
                 if (boneNameMapping.count(item->boneName)) {
                     auto index = boneNameMapping[item->boneName];
@@ -2725,7 +2741,7 @@ struct IkSolver : INode {
         std::vector<int> endEffectorIDs;
         std::vector<int> depths;
         {
-            auto items = get_input<zeno::ListObject>("IkChains")->getRaw<IkChainsItemObject>();
+            auto items = FBX::ListGetRaw<IkChainsItemObject>(m_pAdapter->get_input_ListObject("IkChains"));
             for (auto &item: items) {
                 if (boneNameMapping.count(item->endEffectorName) == 0) {
                     log_warn("Not find ik endEffector: {}", item->endEffectorName);
@@ -2763,7 +2779,7 @@ struct IkSolver : INode {
                 total_theta[i][2] += theta[i * 3 + 2];
             }
         }
-        set_output2("Skeleton", out_skeleton);
+        set_output("Skeleton", out_skeleton);
     }
 };
 ZENDEFNODE(IkSolver, {
@@ -2782,15 +2798,15 @@ ZENDEFNODE(IkSolver, {
 
 struct IkJointConstraints : INode {
     void apply() override {
-        auto skeleton = get_input2<PrimitiveObject>("Skeleton");
+        auto skeleton = get_input_PrimitiveObject("Skeleton");
         auto boneNameMapping = getBoneNameMapping(skeleton.get());
-        auto rest_skeleton = get_input2<PrimitiveObject>("RestSkeleton");
+        auto rest_skeleton = get_input_PrimitiveObject("RestSkeleton");
         std::vector<vec3i> enableXYZLimit(skeleton->verts.size());
         std::vector<vec2f> xLimit(skeleton->verts.size());
         std::vector<vec2f> yLimit(skeleton->verts.size());
         std::vector<vec2f> zLimit(skeleton->verts.size());
         if (has_input("jointLimits")) {
-            auto items = get_input<zeno::ListObject>("jointLimits")->getRaw<JointLimitObject>();
+            auto items = FBX::ListGetRaw<JointLimitObject>(m_pAdapter->get_input_ListObject("jointLimits"));
             for (auto &item: items) {
                 if (boneNameMapping.count(item->boneName)) {
                     auto index = boneNameMapping[item->boneName];
@@ -2822,7 +2838,7 @@ struct IkJointConstraints : INode {
 
         }
         std::shared_ptr<PrimitiveObject> out_skeleton = FK(total_theta, skeleton);
-        set_output2("Skeleton", out_skeleton);
+        set_output("Skeleton", out_skeleton);
     }
 };
 ZENDEFNODE(IkJointConstraints, {
@@ -2840,14 +2856,14 @@ ZENDEFNODE(IkJointConstraints, {
 
 struct PrimBindOneBone : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
-        prim->userData().set2("boneName_count", 1);
-        prim->userData().set2("boneName_0", get_input2<std::string>("boneName"));
+        auto prim = get_input_PrimitiveObject("prim");
+        prim->userData()->set_int("boneName_count", 1);
+        prim->userData()->set_string("boneName_0", get_input2_string("boneName"));
         auto &boneName_0 = prim->add_attr<int>("boneName_0");
         std::fill(boneName_0.begin(), boneName_0.end(), 0);
         auto &boneWeight_0 = prim->add_attr<float>("boneWeight_0");
         std::fill(boneWeight_0.begin(), boneWeight_0.end(), 1.0f);
-        set_output2("prim", prim);
+        set_output("prim", prim);
     }
 };
 ZENDEFNODE(PrimBindOneBone, {
@@ -2864,11 +2880,11 @@ ZENDEFNODE(PrimBindOneBone, {
 
 struct PrimDeformByOneBone : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
-        auto skeleton = get_input2<PrimitiveObject>("skeleton");
-        auto boneName = get_input2<std::string>("boneName");
-        auto useCustomPivot = get_input2<bool>("useCustomPivot");
-        auto pivot = get_input2<vec3f>("pivot");
+        auto prim = get_input_PrimitiveObject("prim");
+        auto skeleton = get_input_PrimitiveObject("skeleton");
+        auto boneName = zsString2Std(get_input2_string("boneName"));
+        auto useCustomPivot = get_input2_bool("useCustomPivot");
+        auto pivot = toVec3f(get_input2_vec3f("pivot"));
         if (useCustomPivot == false) {
             auto outs = zeno::TempNodeSimpleCaller("PrimReduction")
                     .set2("prim", prim)
@@ -2877,7 +2893,7 @@ struct PrimDeformByOneBone : INode {
                     .call();
             pivot = outs.get2<zeno::vec3f>("result");
         }
-        auto eularAngleXYZ = bit_cast<glm::vec3>(get_input2<vec3f>("rotation"));
+        auto eularAngleXYZ = bit_cast<glm::vec3>(toVec3f(get_input2_vec3f("rotation")));
         glm::mat4 matRotate = EulerAngle::rotate(EulerAngle::RotationOrder::YXZ, EulerAngle::Measure::Degree, eularAngleXYZ);
         glm::mat4 matTrans = glm::translate(-bit_cast<glm::vec3>(pivot));
         auto nameMapping = getBoneNameMapping(skeleton.get());
@@ -2885,7 +2901,7 @@ struct PrimDeformByOneBone : INode {
         glm::mat4 transform(1);
         if (nameMapping.count(boneName)) {
             auto mat = boneMatrix[nameMapping[boneName]];
-            if (get_input2<bool>("inheritRotation")) {
+            if (get_input2_bool("inheritRotation")) {
                 mat[0] = glm::normalize(mat[0]);
                 mat[1] = glm::normalize(mat[1]);
                 mat[2] = glm::normalize(mat[2]);
@@ -2909,7 +2925,7 @@ struct PrimDeformByOneBone : INode {
                 }
             }
         }
-        set_output2("prim", prim);
+        set_output("prim", prim);
     }
 };
 ZENDEFNODE(PrimDeformByOneBone, {
