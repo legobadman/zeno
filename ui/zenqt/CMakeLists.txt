@@ -31,35 +31,35 @@ ENDFOREACH(item)
 qt5_add_big_resources(source ${bigresource})  # cihou msvc: fatal error C1060: compiler is out of heap space
 qt5_add_resources(source ${resource})
 
-add_executable(zenqt ${source} ${qmlsource})
+add_executable(zeno ${source} ${qmlsource})
 # Add a dependency to ensure that the resource file is deleted before being regenerated
 
-# add_dependencies(zenqt clean_resource_file)
+# add_dependencies(zeno clean_resource_file)
 
-set_property(TARGET zenqt PROPERTY AUTOUIC ON)
-set_property(TARGET zenqt PROPERTY AUTOMOC ON)
-set_property(TARGET zenqt PROPERTY AUTORCC ON)
-set_property(TARGET zenqt PROPERTY WIN32_EXECUTABLE OFF)
+set_property(TARGET zeno PROPERTY AUTOUIC ON)
+set_property(TARGET zeno PROPERTY AUTOMOC ON)
+set_property(TARGET zeno PROPERTY AUTORCC ON)
+set_property(TARGET zeno PROPERTY WIN32_EXECUTABLE OFF)
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:QT_QML_DEBUG>)
 
 
 if (ZENO_DEBUG_MSVC)
-    zeno_dbg_msvc(zenqt)
+    zeno_dbg_msvc(zeno)
 endif()
 
-target_link_libraries(zenqt PRIVATE Threads::Threads)
-target_link_libraries(zenqt PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor Qt${QT_VERSION_MAJOR}::QuickControls2)
+target_link_libraries(zeno PRIVATE Threads::Threads)
+target_link_libraries(zeno PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor Qt${QT_VERSION_MAJOR}::QuickControls2)
 
 if (WIN32)
-    target_link_libraries(zenqt PRIVATE Dbghelp Version)
-    target_link_libraries(zenqt PRIVATE ws2_32.lib winmm.lib wldap32.lib Advapi32.lib Crypt32.lib)
+    target_link_libraries(zeno PRIVATE Dbghelp Version)
+    target_link_libraries(zeno PRIVATE ws2_32.lib winmm.lib wldap32.lib Advapi32.lib Crypt32.lib)
 endif()
 
-target_link_libraries(zenqt PRIVATE zenocore zenovis)
-target_link_libraries(zenqt PUBLIC ScintillaEditBase)
+target_link_libraries(zeno PRIVATE zenobase zenovis)
+target_link_libraries(zeno PUBLIC ScintillaEditBase)
 
-target_include_directories(zenqt PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2 ScintillaEditBase ScintillaEdit)
-target_include_directories(zenqt PRIVATE 
+target_include_directories(zeno PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2 ScintillaEditBase ScintillaEdit)
+target_include_directories(zeno PRIVATE 
     .
     ./include
     ../3rdparty/include
@@ -73,4 +73,4 @@ target_include_directories(zenqt PRIVATE
     ../3rdparty/QuickScintilla/scintilla/src
 )
 
-add_custom_command(TARGET zenqt PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/hdr ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/hdr)
+add_custom_command(TARGET zeno PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/hdr ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/hdr)
