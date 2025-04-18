@@ -220,7 +220,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
 }
 
 ZENO_API void Session::defNodeClass(INode* (*ctor)(), std::string const &clsname, Descriptor const &desc) {
-    if (clsname == "Cube") {
+    if (clsname == "GeometryToSDF") {
         int j;
         j = 0;
     }

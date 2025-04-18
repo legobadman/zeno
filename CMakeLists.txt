@@ -224,7 +224,7 @@ target_compile_options(zenobase
 add_subdirectory(ui/zenqt)
 add_subdirectory(ui/3rdparty)
 if (WIN32)
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT zenqt)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT zeno)
 endif ()
 
 if (ZENO_BUILD_EDITOR OR ZENO_BUILD_DESIGNER)

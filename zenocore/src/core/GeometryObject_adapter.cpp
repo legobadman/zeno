@@ -9,7 +9,7 @@ namespace zeno
 {
     zany GeometryObject_Adapter::clone() const {
         auto newGeom = std::make_shared<GeometryObject_Adapter>();
-        newGeom->m_impl = new GeometryObject;
+        newGeom->m_impl = new GeometryObject(*m_impl);
         return newGeom;
     }
 

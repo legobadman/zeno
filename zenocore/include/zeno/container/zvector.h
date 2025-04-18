@@ -130,6 +130,8 @@ private:
         if (new_sz == -1) {
             //没有指定分配多少，就分配原来的两倍
             new_sz = m_capability * 2;
+            if (new_sz == 0)
+                new_sz = 1;
         }
         else if (new_sz <= m_capability) {
             return;
@@ -153,9 +155,5 @@ private:
 };
 
 }
-
-
-
-
 
 #endif
