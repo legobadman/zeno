@@ -332,8 +332,8 @@ struct GraphicsManager {
         : key(std::move(key_))
         {
             std::shared_ptr<zeno::PrimitiveObject> prim_in_lslislSp;
-            if (auto geo = dynamic_cast<zeno::GeometryObject*>(obj)) {
-                prim_in_lslislSp = geo->toPrimitive();
+            if (auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(obj)) {
+                prim_in_lslislSp = geo->m_impl->toPrimitive();
             }
             else if (auto const* prim_in0 = dynamic_cast<zeno::PrimitiveObject*>(obj)){
                 // vvv deepcopy to cihou following inplace ops vvv
