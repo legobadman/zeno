@@ -111,9 +111,9 @@ struct UserData : IUserData {
         return has<vec2i>(skey);
     }
 
-    Vec3f get_vec3f(const String& key) override {
+    Vec3f get_vec3f(const String& key, Vec3f defl) override {
         std::string skey(key.c_str());
-        return toAbiVec3f(get2<vec3f>(skey));
+        return toAbiVec3f(get2<vec3f>(skey, toVec3f(defl)));
     }
 
     bool has_vec3f(const String& key) override {

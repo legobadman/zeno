@@ -12,15 +12,22 @@
 namespace zeno
 {
     struct Vec2i {
-        int x, y;
+        int x = 0, y = 0;
+        Vec2i() = default;
+        Vec2i(int _x, int _y) : x(_x), y(_y) {}
     };
 
     struct Vec2f {
-        float x, y;
+        float x = 0.f, y = 0.f;
+        Vec2f() = default;
+        Vec2f(float _x, float _y) : x(_x), y(_y) {}
     };
 
     struct Vec3i {
-        int x, y, z;
+        int x = 0, y = 0, z = 0;
+
+        Vec3i() = default;
+        Vec3i(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
 
         int& operator[](size_t index) {
             assert(index < 3 && index >= 0 && "Vec3i index out of range");
@@ -42,7 +49,10 @@ namespace zeno
     };
 
     struct Vec3f {
-        float x, y, z;
+        float x = 0.f, y = 0.f, z = 0.f;
+
+        Vec3f() = default;
+        Vec3f(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 
         float& operator[](size_t index) {
             assert(index < 3 && index >= 0 && "Vec3i index out of range");

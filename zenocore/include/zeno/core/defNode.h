@@ -33,7 +33,7 @@ namespace zeno {
 // deprecated:
 template <class T>
 [[deprecated("use ZENO_DEFNODE(T)(...)")]]
-inline int defNodeClass(std::string const &id, Descriptor const &desc = {}) {
+inline int defNodeClass(std::string const &id, zeno::Descriptor const &desc = {}) {
     getSession().defNodeClass([] () -> zeno::INode* { return new T; }, id, desc);
     return 1;
 }

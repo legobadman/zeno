@@ -31,7 +31,7 @@ namespace zeno {
         virtual void set_vec2i(const String& key, const Vec2i& vec) = 0;
         virtual bool has_vec2i(const String& key) = 0;
 
-        virtual Vec3f get_vec3f(const String& key) = 0;
+        virtual Vec3f get_vec3f(const String& key, Vec3f defl = Vec3f()) = 0;
         virtual void set_vec3f(const String& key, const Vec3f& vec) = 0;
         virtual bool has_vec3f(const String& key) = 0;
 
