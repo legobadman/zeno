@@ -20,7 +20,7 @@ struct ExtractFBXData : zeno::INode {
 
     virtual void apply() override {
 
-        auto fbxData = get_input<FBXData>("data");
+        auto fbxData = zeno::safe_dynamic_cast<FBXData>(get_input("data"));
 
         set_output("vertices", std::move(fbxData->iVertices.clone()));
         set_output("indices", std::move(fbxData->iIndices.clone()));
@@ -50,8 +50,8 @@ ZENDEFNODE(ExtractFBXData,
 struct ExtractMatName : zeno::INode {
 
     virtual void apply() override {
-        auto mat = get_input<IMaterial>("material");
-        auto key = get_input<zeno::StringObject>("key")->get();
+        auto mat = zeno::safe_dynamic_cast<IMaterial>(get_input("material"));
+        auto key = zsString2Std(get_input2_string("key"));
         auto name = std::make_shared<zeno::StringObject>();
 
         if(mat->value.find(key) == mat->value.end()){
@@ -88,7 +88,7 @@ ZENDEFNODE(ExtractMatName,
 struct ExtractMatTexList : zeno::INode {
 
     virtual void apply() override {
-        auto mat = get_input<SMaterial>("material");
+        auto mat = zeno::safe_dynamic_cast<SMaterial>(get_input("material"));
 
         //zeno::log_info(">>>>> Get Key {}", key);
         //zeno::log_info(">>>>> Get Mat Name {}", mat->value.at(key).matName);
@@ -100,7 +100,7 @@ struct ExtractMatTexList : zeno::INode {
         for(auto&p: tl){
             auto s = std::make_shared<zeno::StringObject>();
             s->value = p;
-            lo->emplace_back(s);
+            lo->push_back(s);
         }
 
         //for(auto&l: lo->arr){
@@ -133,8 +133,8 @@ ZENDEFNODE(ExtractMatTexList,
 struct ExtractMatDict : zeno::INode {
 
     virtual void apply() override {
-        auto mat = get_input<IMaterial>("material");
-        auto mats = std::make_shared<zeno::DictObject>();
+        auto mat = zeno::safe_dynamic_cast<IMaterial>(get_input("material"));
+        auto mats = zeno::create_DictObject();
         for(auto& m:mat->value){
             auto name = m.second.matName;
             if(mats->lut.find(name) == mats->lut.end()){
@@ -164,8 +164,8 @@ ZENDEFNODE(ExtractMatDict,
 struct ExtractMatData : zeno::INode {
 
     virtual void apply() override {
-        auto data = get_input<MatData>("data");
-        auto datas = std::make_shared<zeno::ListObject>();
+        auto data = zeno::safe_dynamic_cast<MatData>(get_input("data"));
+        auto datas = zeno::create_ListObject();
         auto matName = std::make_shared<zeno::StringObject>();
 
 //        TIMER_START(MakeDatas)
@@ -194,7 +194,7 @@ struct ExtractMatData : zeno::INode {
         for(auto& path: texList){
             auto strObj = std::make_shared<zeno::StringObject>();
             strObj->value = path;
-            texLists->emplace_back(strObj);
+            texLists->push_back(strObj);
         }
         for(auto&[matPropName, index]: texMap){
             auto numeric_obj = std::make_shared<zeno::NumericObject>();
@@ -247,8 +247,8 @@ ZENDEFNODE(ExtractMatData,
 struct ExtractCameraData : zeno::INode {
 
     virtual void apply() override {
-        auto icam = get_input<ICamera>("camobject");
-        auto key = get_input<zeno::StringObject>("key")->get();
+        auto icam = zeno::safe_dynamic_cast<ICamera>(get_input("camobject"));
+        auto key = zsString2Std(get_input2_string("key"));
         if(icam->value.find(key) == icam->value.end()){
             throw zeno::makeError("Camera Not Found");
         }
@@ -324,20 +324,20 @@ ZENDEFNODE(ExtractCameraData,
 struct ExchangeFBXData : zeno::INode {
 
     virtual void apply() override {
-        auto animinfo = get_input<AnimInfo>("animinfo");
-        auto nodetree = get_input<NodeTree>("nodetree");
-        auto bonetree = get_input<BoneTree>("bonetree");
+        auto animinfo = zeno::safe_dynamic_cast<AnimInfo>(get_input("animinfo"));
+        auto nodetree = zeno::safe_dynamic_cast<NodeTree>(get_input("nodetree"));
+        auto bonetree = zeno::safe_dynamic_cast<BoneTree>(get_input("bonetree"));
 
-        auto paramDType = get_param<std::string>("dType");
+        auto paramDType = m_pAdapter->get_param_string("dType");
         std::string dType;
         if(paramDType == "DATA"){
-            auto data = get_input<FBXData>("d");
+            auto data = zeno::safe_dynamic_cast<FBXData>(get_input("d"));
             data->nodeTree = nodetree;
             data->boneTree = bonetree;
             data->animInfo = animinfo;
             set_output("d", std::move(data));
         }else if(paramDType == "DATAS"){
-            auto datas = get_input<zeno::DictObject>("d");
+            auto datas = m_pAdapter->get_input_DictObject("d");
             for (auto &[k, v]: datas->lut) {
                 auto vc = zeno::safe_dynamic_cast<FBXData>(v.get());
                 vc->animInfo = animinfo;
@@ -346,7 +346,7 @@ struct ExchangeFBXData : zeno::INode {
             }
             set_output("d", std::move(datas));
         }else if(paramDType == "MATS"){
-            auto mats = get_input<zeno::DictObject>("d");
+            auto mats = m_pAdapter->get_input_DictObject("d");
             for (auto &[k, v]: mats->lut) {
                 auto vc = zeno::safe_dynamic_cast<MatData>(v.get());
                 for(auto &[_k, _v]: vc->iFbxData.value){

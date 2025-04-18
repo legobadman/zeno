@@ -318,17 +318,17 @@ struct WriteCustomVAT : INode {
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = get_param<int>("frameid");
+            frameid = m_pAdapter->get_param_int("frameid");
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->GetFrameId();
         }
-        int frameStart = get_param<int>("frameStart");
-        int frameEnd = get_param<int>("frameEnd");
+        int frameStart = m_pAdapter->get_param_int("frameStart");
+        int frameEnd = m_pAdapter->get_param_int("frameEnd");
         int frameCount = frameEnd - frameStart + 1;
         if (frameid == frameStart) {
             prims.resize(frameCount);
         }
-        auto raw_prim = get_input<PrimitiveObject>("prim");
+        auto raw_prim = get_input_PrimitiveObject("prim");
         auto prim = std::dynamic_pointer_cast<PrimitiveObject>(raw_prim->clone());
         if (frameStart <= frameid && frameid <= frameEnd) {
             prims[frameid - frameStart] = prim;
@@ -360,7 +360,7 @@ struct WriteCustomVAT : INode {
                     v[i][j * 3 + 2] = prim->verts[tri[2]];
                 }
             }
-            std::string path = get_param<std::string>("path");
+            std::string path = zsString2Std(m_pAdapter->get_param_string("path"));
 
             write_vat(v, path);
 
@@ -385,7 +385,7 @@ struct WriteCustomVAT : INode {
                 {
                     auto & f = v.front();
                     prim->verts.resize(f.size());
-                    if (get_input2<bool>("UnrealEngine")) {
+                    if (get_input2_bool("UnrealEngine")) {
                         for (auto i = 0; i < prim->verts.size(); i++) {
                             int index_tri = i / 3;
                             int index_vert = i % 3;
@@ -467,15 +467,15 @@ struct ReadCustomVAT : INode {
     vector<vector<vec3f>> v;
     virtual void apply() override {
         if (v.empty()) {
-            std::string path = get_param<std::string>("path");
+            std::string path = zsString2Std(m_pAdapter->get_param_string("path"));
             v = read_vat(path);
         }
 
         int frameid;
         if (has_input("frameid")) {
-            frameid = get_param<int>("frameid");
+            frameid = m_pAdapter->get_param_int("frameid");
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->GetFrameId();
         }
         auto prim = std::make_shared<zeno::PrimitiveObject>();
         if (frameid < v.size()) {
@@ -510,17 +510,17 @@ ZENDEFNODE(ReadCustomVAT, {
 
 struct ReadVATFile : INode {
     virtual void apply() override {
-        auto path = get_input2<std::string>("path");
-        auto vat = read_vat_texture(path);
+        auto path = get_input2_string("path");
+        auto vat = read_vat_texture(zsString2Std(path));
         auto img = std::make_shared<PrimitiveObject>();
         img->verts.resize(vat.height * 8192);
         for (int64_t i = 0; i < vat.height * 8192; i++) {
             img->verts[i] = vat.data[i];
         }
 
-        img->userData().set2("isImage", 1);
-        img->userData().set2("w", 8192);
-        img->userData().set2("h", vat.height);
+        img->userData()->set_int("isImage", 1);
+        img->userData()->set_int("w", 8192);
+        img->userData()->set_int("h", vat.height);
         set_output("image", img);
     }
 };

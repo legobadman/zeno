@@ -1138,8 +1138,8 @@ void readFBXFile(
 struct ReadFBXPrim : zeno::INode {
 
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
-        auto hintPath = get_input<zeno::StringObject>("hintPath")->get();
+        auto path = zsString2Std(get_input2_string("path"));
+        auto hintPath = zsString2Std(get_input2_string("hintPath"));
         std::shared_ptr<zeno::DictObject> datas = std::make_shared<zeno::DictObject>();
         auto nodeTree = std::make_shared<NodeTree>();
         auto animInfo = std::make_shared<AnimInfo>();
@@ -1158,16 +1158,16 @@ struct ReadFBXPrim : zeno::INode {
         SFBXReadOption readOption;
         std::shared_ptr<zeno::DictObject> visibility;
 
-        auto udim = get_param<std::string>("udim");
-        auto primitive = get_param<bool>("primitive");
-        auto generate = get_input2<bool>("generate");
-        auto offsetInSeconds = get_input2<float>("offset");
-        auto triangulate = get_param<bool>("triangulate");
-        auto printTree = get_param<bool>("printTree");
-        auto indepData = get_param<bool>("indepData");
+        auto udim = m_pAdapter->get_param_string("udim");
+        auto primitive = m_pAdapter->get_param_bool("primitive");
+        auto generate = get_input2_bool("generate");
+        auto offsetInSeconds = get_input2_float("offset");
+        auto triangulate = m_pAdapter->get_param_bool("triangulate");
+        auto printTree = m_pAdapter->get_param_bool("printTree");
+        auto indepData = m_pAdapter->get_param_bool("indepData");
 
         if(has_input("visibility")){
-            visibility = get_input2<zeno::DictObject>("visibility");
+            visibility = m_pAdapter->get_input_DictObject("visibility");
         }else {
             visibility = std::make_shared<zeno::DictObject>();
         }
@@ -1195,7 +1195,7 @@ struct ReadFBXPrim : zeno::INode {
             for (auto &[k, v]: mats->lut) {
                 auto vc = zeno::safe_dynamic_cast<SMaterial>(v);
                 std::cout << "setting user data: " << count  << " name " << k << "\n";
-                prim->userData().set2(std::to_string(count), k);
+                prim->userData()->set_string(zeno::stdString2zs(std::to_string(count)), zeno::stdString2zs(k));
 
                 std::vector<std::string> texList{};
                 std::map<std::string, int> texMap{};
@@ -1204,13 +1204,13 @@ struct ReadFBXPrim : zeno::INode {
 
                 vc->getSimplestTexList(texList, texMap, texUv, matValue);
                 for(int i=0;i<texList.size();i++){
-                    prim->userData().set2(std::to_string(count) + "_tex_" + std::to_string(i), texList[i]);
+                    prim->userData()->set_string(zeno::stdString2zs(std::to_string(count) + "_tex_" + std::to_string(i)), zeno::stdString2zs(texList[i]));
                 }
 
                 count++;
             }
-            prim->userData().setLiterial("matNum", count);
-            prim->userData().setLiterial("fbxName", fbxFileName);
+            prim->userData()->set_int("matNum", count);
+            prim->userData()->set_string("fbxName", zeno::stdString2zs(fbxFileName));
         }
 
         data->iVisibility = *visibility;
@@ -1261,7 +1261,7 @@ ZENDEFNODE(ReadFBXPrim,
 
 struct ReadLightFromFile : zeno::INode {
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
+        auto path = zsString2Std(get_input2_string("path"));
         zeno::log_info("Light: File path {}", path);
 
        auto posList = std::make_shared<zeno::ListObject>();
@@ -1350,7 +1350,7 @@ ZENDEFNODE(ReadLightFromFile,
 
 struct ReadSTL : zeno::INode {
     virtual void apply() override {
-        auto filepath = get_input2<std::string>("path");
+        auto filepath = zsString2Std(get_input2_string("path"));
 
         Assimp::Importer importer;
 

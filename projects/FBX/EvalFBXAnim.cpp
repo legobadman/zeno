@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/utils/logger.h>
+#include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -338,7 +339,7 @@ struct EvalAnim{
             prim->verts.add_attr<float>("jointWeight_" + std::to_string(i));
         }
         int elemSize = m_FbxData.jointIndices_elementSize;
-        prim->userData().set2("jointIndicesElementSize", elemSize);
+        prim->userData()->set_int("jointIndicesElementSize", elemSize);
         float gscale = m_evalOption.globalScale;
 
         // Trans
@@ -479,18 +480,18 @@ struct EvalFBXAnim : zeno::INode {
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = get_input<zeno::NumericObject>("frameid")->get<int>();
+            frameid = get_input2_int("frameid");
         } else {
-            frameid = getGlobalState()->getFrameId();
+            frameid = m_pAdapter->GetFrameId();
         }
 
         SFBXEvalOption evalOption;
-        auto fbxData = get_input<FBXData>("data");
-        auto unit = get_param<std::string>("unit");
-        auto interAnimData = get_param<std::string>("interAnimData");
-        auto writeData = get_param<bool>("writeData");
-        auto printAnimData = get_param<bool>("printAnimData");
-        auto evalBlendShape = get_param<bool>("evalBlendShape");
+        auto fbxData = zeno::safe_dynamic_cast<FBXData>(get_input("data"));
+        auto unit = m_pAdapter->get_param_string("unit");
+        auto interAnimData = m_pAdapter->get_param_string("interAnimData");
+        auto writeData = m_pAdapter->get_param_bool("writeData");
+        auto printAnimData = m_pAdapter->get_param_bool("printAnimData");
+        auto evalBlendShape = m_pAdapter->get_param_bool("evalBlendShape");
 
         unit == "FROM_MAYA" ? evalOption.globalScale = 0.01f : evalOption.globalScale = 1.0f;
         interAnimData == "TRUE" ? evalOption.interAnimData = true : evalOption.interAnimData = false;
@@ -501,9 +502,9 @@ struct EvalFBXAnim : zeno::INode {
         if(evalBlendShape)
             evalOption.evalBlendShape = true;
 
-        auto nodeTree = evalOption.interAnimData ? fbxData->nodeTree : get_input<NodeTree>("nodetree");
-        auto boneTree = evalOption.interAnimData ? fbxData->boneTree : get_input<BoneTree>("bonetree");
-        auto animInfo = evalOption.interAnimData ? fbxData->animInfo : get_input<AnimInfo>("animinfo");
+        auto nodeTree = evalOption.interAnimData ? fbxData->nodeTree : zeno::safe_dynamic_cast<NodeTree>(get_input("nodetree"));
+        auto boneTree = evalOption.interAnimData ? fbxData->boneTree : zeno::safe_dynamic_cast<BoneTree>(get_input("bonetree"));
+        auto animInfo = evalOption.interAnimData ? fbxData->animInfo : zeno::safe_dynamic_cast<AnimInfo>(get_input("animinfo"));
 
         if(nodeTree == nullptr || boneTree == nullptr || animInfo == nullptr){
             zeno::log_error("FBX: Empty NodeTree, BoneTree or AnimInfo");
@@ -612,7 +613,7 @@ struct EvalFBXAnim : zeno::INode {
                     dnrmAttr.emplace_back(dnrm.x, dnrm.y, dnrm.z);
                 }
 
-                bsPrimsOrigin->emplace_back(bsprim);
+                bsPrimsOrigin->push_back(bsprim);
             }
         }
 //        TIMER_END(BlendShapeCreate)
@@ -685,7 +686,7 @@ struct EvalFBXAnim : zeno::INode {
                         }
                     }
 
-                    bsPrims->emplace_back(bsprim);
+                    bsPrims->push_back(bsprim);
                 }
             }else{
                 std::cout << "BlendShape NotFound MorphKey " << meshName << "\n";
