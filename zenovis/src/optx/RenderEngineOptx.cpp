@@ -8,6 +8,8 @@
 #include "../../xinxinoptix/xinxinoptixapi.h"
 #include "../../xinxinoptix/SDK/sutil/sutil.h"
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/geo/commonutil.h>
+#include <zeno/utils/interfaceutil.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/UserData.h>
 #include <zenovis/DrawOptions.h>
@@ -343,11 +345,11 @@ struct GraphicsManager {
                 // ^^^ Don't wuhui, I mean: Literial Synthetic Lazy internal static Local Shared Pointer
                 auto prim_in = prim_in_lslislSp.get();
 
-                if (prim_in->userData().has("curve") && prim_in->verts->size() && prim_in->verts.has_attr("width")) {
+                if (prim_in->userData()->has("curve") && prim_in->verts->size() && prim_in->verts.has_attr("width")) {
 
-                    auto& ud = prim_in->userData();
-                    auto mtlid = ud.get2<std::string>("mtlid", "Default");
-                    auto curveTypeIndex = ud.get2<uint>("curve", 0u);
+                    auto ud = dynamic_cast<zeno::UserData*>(prim_in->userData());
+                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
+                    auto curveTypeIndex = ud->get2<uint>("curve", 0u);
                     auto curveTypeEnum = magic_enum::enum_cast<zeno::CurveType>(curveTypeIndex).value_or(zeno::CurveType::LINEAR);
 
                     auto& widthArray = prim_in->verts.attr("width");
@@ -383,23 +385,23 @@ struct GraphicsManager {
                     return;
                 }
 
-                auto is_cyhair = prim_in_lslislSp->userData().has("cyhair");
+                auto is_cyhair = prim_in_lslislSp->userData()->has("cyhair");
                 if (is_cyhair) {
-                    auto& ud = prim_in_lslislSp->userData();
-                    auto mtlid = ud.get2<std::string>("mtlid", "Default");
+                    auto ud = dynamic_cast<zeno::UserData*>(prim_in_lslislSp->userData());
+                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
 
-                    auto type_index = ud.get2<uint>("curve", 0u);
-                    auto path_string = ud.get2<std::string>("path", "");
+                    auto type_index = ud->get2<uint>("curve", 0u);
+                    auto path_string = ud->get2<std::string>("path", "");
 
                     glm::mat4 transform(1.0f);
                     auto transform_ptr = glm::value_ptr(transform);
 
-                    if (ud.has("_transform_row0") && ud.has("_transform_row1") && ud.has("_transform_row2") && ud.has("_transform_row3")) {
+                    if (ud->has("_transform_row0") && ud->has("_transform_row1") && ud->has("_transform_row2") && ud->has("_transform_row3")) {
 
-                        auto row0 = ud.get2<zeno::vec4f>("_transform_row0");
-                        auto row1 = ud.get2<zeno::vec4f>("_transform_row1");
-                        auto row2 = ud.get2<zeno::vec4f>("_transform_row2");
-                        auto row3 = ud.get2<zeno::vec4f>("_transform_row3");
+                        auto row0 = ud->get2<zeno::vec4f>("_transform_row0");
+                        auto row1 = ud->get2<zeno::vec4f>("_transform_row1");
+                        auto row2 = ud->get2<zeno::vec4f>("_transform_row2");
+                        auto row3 = ud->get2<zeno::vec4f>("_transform_row3");
 
                         memcpy(transform_ptr, row0.data(), sizeof(float)*4);
                         memcpy(transform_ptr+4, row1.data(), sizeof(float)*4);
@@ -407,7 +409,7 @@ struct GraphicsManager {
                         memcpy(transform_ptr+12, row3.data(), sizeof(float)*4); 
                     }
 
-                    auto yup = ud.get2<bool>("yup", true);
+                    auto yup = ud->get2<bool>("yup", true);
                     auto trans = yup? glm::mat4 { 
                                                     0, 0, 1, 0,
                                                     1, 0, 0, 0,
@@ -420,33 +422,33 @@ struct GraphicsManager {
                     return;
                 }
 
-                auto is_sphere = prim_in_lslislSp->userData().has("sphere_center");
+                auto is_sphere = prim_in_lslislSp->userData()->has("sphere_center");
                 if (is_sphere) {
 
-                    auto& ud = prim_in_lslislSp->userData();
+                    auto ud = dynamic_cast<zeno::UserData*>(prim_in_lslislSp->userData());
                     printf("Before loading sphere %s for ray tracing... \n", key.c_str());
                     
-                    auto mtlid = ud.get2<std::string>("mtlid", "Default");
-                    auto instID = ud.get2<std::string>("instID", "Default");
+                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
+                    auto instID = ud->get2<std::string>("instID", "Default");
 
                     bool instanced = (instID != "Default" && instID != "");
 
-                    auto sphere_scale = ud.get2<zeno::vec3f>("sphere_scale");
+                    auto sphere_scale = ud->get2<zeno::vec3f>("sphere_scale");
                     auto uniform_scaling = sphere_scale[0] == sphere_scale[1] && sphere_scale[2] == sphere_scale[0];
 
                     if (instanced) { 
-                        auto sphere_center = ud.get2<zeno::vec3f>("sphere_center");
-                        auto sphere_radius = ud.get2<float>("sphere_radius");
+                        auto sphere_center = ud->get2<zeno::vec3f>("sphere_center");
+                        auto sphere_radius = ud->get2<float>("sphere_radius");
                              sphere_radius *= fmaxf(fmaxf(sphere_scale[0], sphere_scale[1]), sphere_scale[2]);
 
                         xinxinoptix::preload_sphere_instanced(key, mtlid, instID, sphere_radius, sphere_center);
                     } else {
 
                         //zeno::vec4f row0, row1, row2, row3;
-                        auto row0 = ud.get2<zeno::vec4f>("_transform_row0");
-                        auto row1 = ud.get2<zeno::vec4f>("_transform_row1");
-                        auto row2 = ud.get2<zeno::vec4f>("_transform_row2");
-                        auto row3 = ud.get2<zeno::vec4f>("_transform_row3");
+                        auto row0 = ud->get2<zeno::vec4f>("_transform_row0");
+                        auto row1 = ud->get2<zeno::vec4f>("_transform_row1");
+                        auto row2 = ud->get2<zeno::vec4f>("_transform_row2");
+                        auto row3 = ud->get2<zeno::vec4f>("_transform_row3");
 
                         glm::mat4 sphere_transform;
                         auto transform_ptr = glm::value_ptr(sphere_transform);
@@ -463,15 +465,15 @@ struct GraphicsManager {
                     return;
                 }
 
-                auto is_vbox = prim_in_lslislSp->userData().has("vbox");
+                auto is_vbox = prim_in_lslislSp->userData()->has("vbox");
                 if (is_vbox) {
-                    auto& ud = prim_in_lslislSp->userData();
-                    auto mtlid = ud.get2<std::string>("mtlid", "Default");
+                    auto ud = dynamic_cast<zeno::UserData*>(prim_in_lslislSp->userData());
+                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
 
-                    auto row0 = ud.get2<zeno::vec4f>("_transform_row0");
-                    auto row1 = ud.get2<zeno::vec4f>("_transform_row1");
-                    auto row2 = ud.get2<zeno::vec4f>("_transform_row2");
-                    auto row3 = ud.get2<zeno::vec4f>("_transform_row3");
+                    auto row0 = ud->get2<zeno::vec4f>("_transform_row0");
+                    auto row1 = ud->get2<zeno::vec4f>("_transform_row1");
+                    auto row2 = ud->get2<zeno::vec4f>("_transform_row2");
+                    auto row3 = ud->get2<zeno::vec4f>("_transform_row3");
 
                     glm::mat4 vbox_transform;
                     auto transform_ptr = glm::value_ptr(vbox_transform);
@@ -481,7 +483,7 @@ struct GraphicsManager {
                     memcpy(transform_ptr+8, row2.data(), sizeof(float)*4);  
                     memcpy(transform_ptr+12, row3.data(), sizeof(float)*4);
 
-                    auto bounds = ud.get2<std::string>("bounds");
+                    auto bounds = ud->get2<std::string>("bounds");
                     
                     uint8_t boundsID = [&]() {
                         if ("Box" == bounds)
@@ -496,10 +498,10 @@ struct GraphicsManager {
                     return;
                 }
 
-                auto isRealTimeObject = prim_in->userData().get2<int>("isRealTimeObject", 0);
-                auto isUniformCarrier = prim_in->userData().has("ShaderUniforms");
+                auto isRealTimeObject = prim_in->userData()->get_int("isRealTimeObject", 0);
+                auto isUniformCarrier = prim_in->userData()->has("ShaderUniforms");
 
-                auto isInst = prim_in->userData().get2<int>("isInst", 0);
+                auto isInst = prim_in->userData()->get_int("isInst", 0);
                 
                 if (isInst == 1)
                 {
@@ -529,8 +531,8 @@ struct GraphicsManager {
                         prim_in->attr<zeno::vec3f>("tang").assign(prim_in->attr<zeno::vec3f>("tang").size(), zeno::vec3f(1, 0, 0));
                     }
                     
-                    auto instID = prim_in->userData().get2<std::string>("instID", "Default");
-                    auto onbType = prim_in->userData().get2<std::string>("onbType", "XYZ");
+                    auto instID = prim_in->userData()->get_string("instID", "Default");
+                    auto onbType = prim_in->userData()->get_string("onbType", "XYZ");
                     
                     std::size_t numInsts = prim_in->verts.size();
                     const float *pos = (const float *)prim_in->attr<zeno::vec3f>("pos").data();
@@ -538,12 +540,12 @@ struct GraphicsManager {
                     const float *uv = (const float *)prim_in->attr<zeno::vec3f>("uv").data();
                     const float *clr = (const float *)prim_in->attr<zeno::vec3f>("clr").data();
                     const float *tang = (const float *)prim_in->attr<zeno::vec3f>("tang").data();
-                    xinxinoptix::load_inst(key, instID, onbType, numInsts, pos, nrm, uv, clr, tang);
+                    xinxinoptix::load_inst(key, zsString2Std(instID), zsString2Std(onbType), numInsts, pos, nrm, uv, clr, tang);
                 }
                 else if (isRealTimeObject == 0 && isUniformCarrier == 0)
                 {
                     //first init matidx attr
-                    int matNum = prim_in->userData().get2<int>("matNum",0);
+                    int matNum = prim_in->userData()->get_int("matNum",0);
                     if(matNum==0)
                     {
                         //assign -1 to "matid" attr
@@ -564,7 +566,7 @@ struct GraphicsManager {
 
 
         det = DetPrimitive{};
-        if (int subdlevs = prim_in->userData().get2<int>("delayedSubdivLevels", 0)) {
+        if (int subdlevs = prim_in->userData()->get_int("delayedSubdivLevels", 0)) {
             // todo: zhxx, should comp normal after subd or before????
             zeno::log_trace("computing subdiv {}", subdlevs);
             (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
@@ -576,7 +578,7 @@ struct GraphicsManager {
                 .set2<bool>("hasLoopUVs", true)
                 .set2<bool>("delayTillIpc", false)
                 .call();  // will inplace subdiv prim
-            prim_in->userData().del("delayedSubdivLevels");
+            prim_in->userData()->del("delayedSubdivLevels");
         }
                     if (prim_in->quads.size() || prim_in->polys.size()) {
                         zeno::log_trace("demoting faces");
@@ -655,18 +657,20 @@ struct GraphicsManager {
                     auto nvs = oPrim->verts.size();
                     auto nts = oPrim->tris.size();
 
+                    auto primin_usrdat = dynamic_cast<zeno::UserData*>(prim_in->userData());
+
                     std::vector<std::string> matNameList(0);
                     if(matNum>0)
                     {
                         for(int i=0;i<matNum;i++)
                         {
                             auto matIdx = "Material_" + std::to_string(i);
-                            auto matName = prim_in->userData().get2<std::string>(matIdx, "Default");
+                            auto matName = primin_usrdat->get2<std::string>(matIdx, "Default");
                             matNameList.emplace_back(matName);
                         }
                     }
-                    auto mtlid = prim_in->userData().get2<std::string>("mtlid", "Default");
-                    auto instID = prim_in->userData().get2<std::string>("instID", "Default");
+                    auto mtlid = primin_usrdat->get2<std::string>("mtlid", "Default");
+                    auto instID = primin_usrdat->get2<std::string>("instID", "Default");
                     auto& matids = prim_in->tris.attr<int>("matid");
                     
                     xinxinoptix::load_object(key, mtlid, instID, vs, nvs, ts, nts, vtab, matids.data(), matNameList);
@@ -677,22 +681,22 @@ struct GraphicsManager {
                 //TODO
                 size_t nPoints = geo->npoints();
                 zeno::UserData& ud = geo->userData();
-                if (ud.has("curve") && geo->npoints() > 0 && geo->has_attr(zeno::ATTR_POINT, "width")) {
+                if (ud->has("curve") && geo->npoints() > 0 && geo->has_attr(zeno::ATTR_POINT, "width")) {
 
                 }
-                if (ud.has("cyhair")) {
+                if (ud->has("cyhair")) {
 
                 }
-                if (ud.has("sphere_center")) {
+                if (ud->has("sphere_center")) {
 
                 }
-                if (ud.has("vbox")) {
+                if (ud->has("vbox")) {
 
                 }
 
-                auto isRealTimeObject = ud.get2<int>("isRealTimeObject", 0);
-                auto isUniformCarrier = ud.has("ShaderUniforms");
-                auto isInst = ud.get2<int>("isInst", 0);
+                auto isRealTimeObject = ud->get_int("isRealTimeObject", 0);
+                auto isUniformCarrier = ud->has("ShaderUniforms");
+                auto isInst = ud->get_int("isInst", 0);
 
                 if (isInst == 1)
                 {
@@ -712,8 +716,8 @@ struct GraphicsManager {
 
                     }
 
-                    auto instID = ud.get2<std::string>("instID", "Default");
-                    auto onbType = ud.get2<std::string>("onbType", "XYZ");
+                    auto instID = ud->get_string("instID", "Default");
+                    auto onbType = ud->get_string("onbType", "XYZ");
 
                     std::size_t numInsts = geo->npoints();
                     //if not exist?
@@ -726,7 +730,7 @@ struct GraphicsManager {
                 }
                 else if (isRealTimeObject == 0 && isUniformCarrier == 0)
                 {
-                    int matNum = ud.get2<int>("matNum", 0);
+                    int matNum = ud->get_int("matNum", 0);
                     if (matNum == 0)
                     {
                         //assign -1 to "matid" attr
@@ -735,7 +739,7 @@ struct GraphicsManager {
                         }
                     }
                     det = DetPrimitive{};
-                    if (int subdlevs = ud.get2<int>("delayedSubdivLevels", 0)) {
+                    if (int subdlevs = ud->get_int("delayedSubdivLevels", 0)) {
                         //TODO? compute subdiv?
                         /*
                                     (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
@@ -747,7 +751,7 @@ struct GraphicsManager {
                             .set2<bool>("hasLoopUVs", true)
                             .set2<bool>("delayTillIpc", false)
                             .call();  // will inplace subdiv prim
-                        prim_in->userData().del("delayedSubdivLevels");
+                        prim_in->userData()->del("delayedSubdivLevels");
                         */
                     }
 
@@ -765,8 +769,8 @@ struct GraphicsManager {
                         return;
                     }
 
-                    auto mtlid = ud.get2<std::string>("mtlid", "Default");
-                    auto instID = ud.get2<std::string>("instID", "Default");
+                    auto mtlid = ud->get_string("mtlid", "Default");
+                    auto instID = ud->get_string("instID", "Default");
 
                     bool has_uv = !tri_info.uv0.empty() && !tri_info.uv1.empty() && !tri_info.uv2.empty() && !tri_info.uv.empty();
                     if (has_uv == false)
@@ -830,7 +834,7 @@ struct GraphicsManager {
         shaderUniforms.resize(0);
         for (auto const &[key, obj] : objs) {
             if (auto prim_in = dynamic_cast<zeno::PrimitiveObject*>(obj.get())){
-                if ( prim_in->userData().get2<int>("ShaderUniforms", 0)==1 )
+                if ( prim_in->userData()->get_int("ShaderUniforms", 0)==1 )
                 {
                     shaderUniforms.resize(prim_in->verts.size());
                     for(int i=0;i<prim_in->verts.size();i++)
@@ -848,31 +852,32 @@ struct GraphicsManager {
     bool load_lights(std::string key, zeno::IObject *obj){
         bool sky_found = false;
         if (auto prim_in = dynamic_cast<zeno::PrimitiveObject *>(obj)) {
-            auto isRealTimeObject = prim_in->userData().get2<int>("isRealTimeObject", 0);
+            auto primin_usrdat = dynamic_cast<zeno::UserData*>(prim_in->userData());
+            auto isRealTimeObject = primin_usrdat->get_int("isRealTimeObject", 0);
             if (isRealTimeObject == 0) {
                 return false;
             }
-            if (prim_in->userData().get2<int>("isL", 0) == 1) {
+            if (primin_usrdat->get_int("isL", 0) == 1) {
                 //zeno::log_info("processing light key {}", key.c_str());
-                auto type = prim_in->userData().get2<int>("type", 0);
-                auto shape = prim_in->userData().get2<int>("shape", 0);
-                auto maxDistance = prim_in->userData().get2<float>("maxDistance", std::numeric_limits<float>().max());
-                auto falloffExponent = prim_in->userData().get2<float>("falloffExponent", 2.0f);
+                auto type = primin_usrdat->get2<int>("type", 0);
+                auto shape = primin_usrdat->get2<int>("shape", 0);
+                auto maxDistance = primin_usrdat->get_float("maxDistance", std::numeric_limits<float>().max());
+                auto falloffExponent = primin_usrdat->get_float("falloffExponent", 2.0f);
 
-                auto color = prim_in->userData().get2<zeno::vec3f>("color");
-                auto spread = prim_in->userData().get2<zeno::vec2f>("spread", {1.0f, 0.0f});
-                auto intensity = prim_in->userData().get2<float>("intensity", 1.0f);
-                auto fluxFixed = prim_in->userData().get2<float>("fluxFixed", -1.0f);
-                auto vIntensity = prim_in->userData().get2<float>("visibleIntensity", -1.0f);
+                auto color = primin_usrdat->get2<zeno::vec3f>("color");
+                auto spread = primin_usrdat->get2<zeno::vec2f>("spread", {1.0f, 0.0f});
+                auto intensity = primin_usrdat->get_float("intensity", 1.0f);
+                auto fluxFixed = primin_usrdat->get_float("fluxFixed", -1.0f);
+                auto vIntensity = primin_usrdat->get_float("visibleIntensity", -1.0f);
 
-                auto ivD = prim_in->userData().getLiterial<int>("ivD", 0);
+                auto ivD = primin_usrdat->get_int("ivD", 0);
 
-                auto mask = prim_in->userData().get2<int>("mask", 255);
-                auto visible = prim_in->userData().get2<int>("visible", 0);
-                auto doubleside = prim_in->userData().get2<int>("doubleside", 0);
-                auto lightProfilePath = prim_in->userData().get2<std::string>("lightProfile", ""); 
-                auto lightTexturePath = prim_in->userData().get2<std::string>("lightTexture", ""); 
-                auto lightGamma = prim_in->userData().get2<float>("lightGamma", 1.0f); 
+                auto mask = primin_usrdat->get_int("mask", 255);
+                auto visible = primin_usrdat->get_int("visible", 0);
+                auto doubleside = primin_usrdat->get_int("doubleside", 0);
+                auto lightProfilePath = primin_usrdat->get2<std::string>("lightProfile", "");
+                auto lightTexturePath = primin_usrdat->get2<std::string>("lightTexture", "");
+                auto lightGamma = primin_usrdat->get_float("lightGamma", 1.0f);
 
                 if (lightProfilePath != "") {
                     OptixUtil::addTexture(lightProfilePath);
@@ -988,25 +993,25 @@ struct GraphicsManager {
                     xinxinoptix::load_light(key, ld, v3.data(), e1.data(), e2.data());
                 }
             }
-            else if (prim_in->userData().get2<int>("ProceduralSky", 0) == 1) {
+            else if (primin_usrdat->get_int("ProceduralSky", 0) == 1) {
                 sky_found = true;
-                zeno::vec2f sunLightDir = prim_in->userData().get2<zeno::vec2f>("sunLightDir");
-                float sunLightSoftness = prim_in->userData().get2<float>("sunLightSoftness");
-                float sunLightIntensity = prim_in->userData().get2<float>("sunLightIntensity");
-                float colorTemperatureMix = prim_in->userData().get2<float>("colorTemperatureMix");
-                float colorTemperature = prim_in->userData().get2<float>("colorTemperature");
-                zeno::vec2f windDir = prim_in->userData().get2<zeno::vec2f>("windDir");
-                float timeStart = prim_in->userData().get2<float>("timeStart");
-                float timeSpeed = prim_in->userData().get2<float>("timeSpeed");
+                zeno::vec2f sunLightDir = primin_usrdat->get2<zeno::vec2f>("sunLightDir");
+                float sunLightSoftness = primin_usrdat->get_float("sunLightSoftness");
+                float sunLightIntensity = primin_usrdat->get_float("sunLightIntensity");
+                float colorTemperatureMix = primin_usrdat->get_float("colorTemperatureMix");
+                float colorTemperature = primin_usrdat->get_float("colorTemperature");
+                zeno::vec2f windDir = primin_usrdat->get2<zeno::vec2f>("windDir");
+                float timeStart = primin_usrdat->get_float("timeStart");
+                float timeSpeed = primin_usrdat->get_float("timeSpeed");
                 xinxinoptix::update_procedural_sky(sunLightDir, sunLightSoftness, windDir, timeStart, timeSpeed,
                                                    sunLightIntensity, colorTemperatureMix, colorTemperature);
             }
-            else if (prim_in->userData().has<std::string>("HDRSky")) {
-                auto path = prim_in->userData().get2<std::string>("HDRSky");
-                float evnTexRotation = prim_in->userData().get2<float>("evnTexRotation");
-                zeno::vec3f evnTex3DRotation = prim_in->userData().get2<zeno::vec3f>("evnTex3DRotation");
-                float evnTexStrength = prim_in->userData().get2<float>("evnTexStrength");
-                bool enableHdr = prim_in->userData().get2<bool>("enable");
+            else if (primin_usrdat->has_string("HDRSky")) {
+                auto path = primin_usrdat->get2<std::string>("HDRSky");
+                float evnTexRotation = primin_usrdat->get_float("evnTexRotation");
+                zeno::vec3f evnTex3DRotation = primin_usrdat->get2<zeno::vec3f>("evnTex3DRotation");
+                float evnTexStrength = primin_usrdat->get_float("evnTexStrength");
+                bool enableHdr = primin_usrdat->get_bool("enable");
                 if (!path.empty()) {
                     if (OptixUtil::sky_tex.has_value() && OptixUtil::sky_tex.value() != path
                         && OptixUtil::sky_tex.value() != OptixUtil::default_sky_tex ) {
@@ -1027,7 +1032,7 @@ struct GraphicsManager {
                     //OptixUtil::portal_delayed.reset();
             }
         }
-            else if (prim_in->userData().has<int>("SkyComposer")) {
+            else if (primin_usrdat->has<int>("SkyComposer")) {
 
                 auto& attr_dir = prim_in->verts;
 
@@ -1051,13 +1056,13 @@ struct GraphicsManager {
                 }
                 xinxinoptix::updateDistantLights(dlights);
 
-                if(prim_in->userData().has<std::string>("portals")) {
+                if(prim_in->userData()->has_string("portals")) {
 
-                    auto portals_string = prim_in->userData().get2<std::string>("portals");
-                    auto portals_json = nlohmann::json::parse(portals_string);
+                    auto portals_string = prim_in->userData()->get_string("portals");
+                    auto portals_json = nlohmann::json::parse(zsString2Std(portals_string));
 
-                    auto ps_string = prim_in->userData().get2<std::string>("psizes");
-                    auto ps_json = nlohmann::json::parse(ps_string);
+                    auto ps_string = prim_in->userData()->get_string("psizes");
+                    auto ps_json = nlohmann::json::parse(zsString2Std(ps_string));
 
                     std::vector<Portal> portals {};
 
@@ -1113,7 +1118,7 @@ struct GraphicsManager {
                 changelight = false;
         }
 
-        auto &ud = zeno::getSession().userData();
+        auto& ud = zeno::getSession().userData();
         bool show_background = ud.get2<bool>("optix_show_background", false);
         xinxinoptix::show_background(show_background);
 
@@ -1130,7 +1135,7 @@ struct GraphicsManager {
         }
 //        zeno::log_info("sky_found : {}", sky_found);
         if (sky_found == false) {
-            auto &ud = zeno::getSession().userData();
+            auto& ud = zeno::getSession().userData();
 //            zeno::log_info("ud.has sunLightDir: {}", ud.has("sunLightDir"));
             if (ud.has("sunLightDir")) {
                 zeno::vec2f sunLightDir = ud.get2<zeno::vec2f>("sunLightDir");
@@ -1162,14 +1167,14 @@ struct GraphicsManager {
                 if (auto cam = dynamic_cast<zeno::CameraObject *>(obj))
                 {
                     scene->camera->setCamera(cam->get());     // pyb fix
-                    auto &ud = cam->userData();
-                    if (ud.has("aces")) {
+                    auto ud = cam->userData();
+                    if (ud->has("aces")) {
                         scene->camera->setPhysicalCamera(
-                            ud.get2<float>("aperture"),
-                            ud.get2<float>("shutter_speed"),
-                            ud.get2<float>("iso"),
-                            ud.get2<bool>("aces"),
-                            ud.get2<bool>("exposure")
+                            ud->get_float("aperture"),
+                            ud->get_float("shutter_speed"),
+                            ud->get_float("iso"),
+                            ud->get_bool("aces"),
+                            ud->get_bool("exposure")
                         );
                     }
                 }
@@ -1185,7 +1190,7 @@ struct GraphicsManager {
     }
 
     void add_object(std::shared_ptr<zeno::IObject> obj) {
-        std::string objKey = obj->key();
+        std::string objKey = zsString2Std(obj->key());
         if (objKey.empty())
             return;
         if (!scene->drawOptions->updateMatlOnly) {
@@ -1237,23 +1242,23 @@ struct GraphicsManager {
                 if (!scene->drawOptions->updateMatlOnly) {
                     if (auto cam = dynamic_cast<zeno::CameraObject *>(obj)) {
                         scene->camera->setCamera(cam->get()); // pyb fix
-                        auto &ud = cam->userData();
-                        if (ud.has("aces")) {
+                        auto ud = cam->userData();
+                        if (ud->has("aces")) {
                             scene->camera->setPhysicalCamera(
-                                ud.get2<float>("aperture"),
-                                ud.get2<float>("shutter_speed"),
-                                ud.get2<float>("iso"),
-                                ud.get2<bool>("aces"),
-                                ud.get2<bool>("exposure")
+                                ud->get_float("aperture"),
+                                ud->get_float("shutter_speed"),
+                                ud->get_float("iso"),
+                                ud->get_bool("aces"),
+                                ud->get_bool("exposure")
                             );
                         }
                     }
                 }
 
                 if (0) {
-                    auto& ud = obj->userData();
-                    if (ud.has("stamp_mode")) {
-                        std::string stamp_mode = ud.get2<std::string>("stamp_mode");
+                    auto ud = obj->userData();
+                    if (ud->has("stamp_mode")) {
+                        auto stamp_mode = ud->get_string("stamp_mode");
                         if (!stamp_mode.empty()) {
                         }
                     }
@@ -1307,7 +1312,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 type == 0 ? lightCameraCount++ : type == 1 ? materialCount++ : normalCount++;
             }
             for (auto [key, spObj] : addObjs) {
-                if (spObj->userData().get2<int>("isL", 0) || std::dynamic_pointer_cast<zeno::CameraObject>(spObj)) {
+                if (spObj->userData()->get_int("isL", 0) || std::dynamic_pointer_cast<zeno::CameraObject>(spObj)) {
                     objsType[key] = 0;
                     lightCameraCount++;
                 }
@@ -1377,7 +1382,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             const auto& viewnodes = spGraph->get_viewnodes();
             //其实是否可以在外面提前准备好对象列表？
             for (auto viewnode : viewnodes) {
-                std::shared_ptr<zeno::NodeImpl> spNode = spGraph->getNode(viewnode);
+                auto spNode = spGraph->getNode(viewnode);
                 zeno::zany spObject = spNode->get_default_output_object();
                 if (spObject) {
                     graphicsMan->add_object(spObject);

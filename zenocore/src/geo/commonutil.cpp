@@ -2,8 +2,19 @@
 #include <zeno/para/parallel_for.h>
 #include <zeno/utils/interfaceutil.h>
 #include <zeno/utils/variantswitch.h>
+#include <zeno/utils/fileio.h>
 #include <zeno/para/parallel_scan.h>
 #include <zeno/types/UserData.h>
+#include <stdexcept>
+#include <filesystem>
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_STATIC
+#include <tinygltf/stb_image.h>
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr.h"
+#include "zeno/utils/string.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <tinygltf/stb_image_write.h>
 
 
 namespace zeno
@@ -167,6 +178,44 @@ namespace zeno
             prim->polys.clear_with_attr();
             prim->uvs.clear_with_attr();
         });
+    }
+
+    void primTriangulateQuads(PrimitiveObject* prim) {
+        if (prim->quads.size() == 0) {
+            return;
+        }
+        auto base = prim->tris.size();
+        prim->tris.resize(base + prim->quads.size() * 2);
+        bool hasmat = prim->quads.has_attr("matid");
+        if (hasmat == false)
+        {
+            prim->quads.add_attr<int>("matid");
+            prim->quads.attr<int>("matid").assign(prim->quads.size(), -1);
+        }
+
+        if (prim->tris.has_attr("matid")) {
+            prim->tris.attr<int>("matid").resize(base + prim->quads.size() * 2);
+        }
+        else {
+            prim->tris.add_attr<int>("matid");
+        }
+
+
+        for (size_t i = 0; i < prim->quads.size(); i++) {
+            auto quad = prim->quads[i];
+            prim->tris[base + i * 2 + 0] = vec3f(quad[0], quad[1], quad[2]);
+            prim->tris[base + i * 2 + 1] = vec3f(quad[0], quad[2], quad[3]);
+            if (hasmat) {
+                prim->tris.attr<int>("matid")[base + i * 2 + 0] = prim->quads.attr<int>("matid")[i];
+                prim->tris.attr<int>("matid")[base + i * 2 + 1] = prim->quads.attr<int>("matid")[i];
+            }
+            else
+            {
+                prim->tris.attr<int>("matid")[base + i * 2 + 0] = -1;
+                prim->tris.attr<int>("matid")[base + i * 2 + 1] = -1;
+            }
+        }
+        prim->quads.clear();
     }
 
     zeno::Vector<SharedPtr<zeno::PrimitiveObject>> get_prims_from_list(SharedPtr<zeno::ListObject> spList) {
@@ -730,6 +779,95 @@ namespace zeno
         }
     }
 
+    void primWireframe(PrimitiveObject* prim, bool removeFaces, bool toEdges) {
+        struct segment_less {
+            bool operator()(vec2i const& a, vec2i const& b) const {
+                return std::make_pair(std::min(a[0], a[1]), std::max(a[0], a[1]))
+                    < std::make_pair(std::min(b[0], b[1]), std::max(b[0], b[1]));
+            }
+        };
+        std::set<vec2i, segment_less> segments;
+        auto append = [&](int i, int j) {
+            segments.emplace(i, j);
+        };
+        for (auto const& ind : prim->lines) {
+            append(ind[0], ind[1]);
+        }
+        for (auto const& ind : prim->tris) {
+            append(ind[0], ind[1]);
+            append(ind[1], ind[2]);
+            append(ind[2], ind[0]);
+        }
+        for (auto const& ind : prim->quads) {
+            append(ind[0], ind[1]);
+            append(ind[1], ind[2]);
+            append(ind[2], ind[3]);
+            append(ind[3], ind[0]);
+        }
+        for (auto const& [start, len] : prim->polys) {
+            if (len < 2)
+                continue;
+            for (int i = start + 1; i < start + len; i++) {
+                append(prim->loops[i - 1], prim->loops[i]);
+            }
+            append(prim->loops[start + len - 1], prim->loops[start]);
+        }
+        //if (isAccumulate) {
+            //for (auto const &ind: prim->lines) {
+                //segments.erase(vec2i(ind[0], ind[1]));
+            //}
+            //prim->lines.values.insert(prim->lines.values.end(), segments.begin(), segments.end());
+            //prim->lines.update();
+        //} else {
+        if (toEdges) {
+            prim->edges.attrs.clear();
+            prim->edges.values.assign(segments.begin(), segments.end());
+            prim->edges.update();
+        }
+        else {
+            prim->lines.attrs.clear();
+            prim->lines.values.assign(segments.begin(), segments.end());
+            prim->lines.update();
+        }
+        //}
+        if (removeFaces) {
+            prim->tris.clear();
+            prim->quads.clear();
+            prim->loops.clear();
+            prim->polys.clear();
+        }
+    }
+
+    void primSampleTexture(
+        PrimitiveObject* prim,
+        const zeno::String& srcChannel,
+        const zeno::String& srcSource,
+        const zeno::String& dstChannel,
+        PrimitiveObject* img,
+        const zeno::String& wrap,
+        zeno::Vec3f borderColor,
+        float remapMin,
+        float remapMax
+    ) {
+
+    }
+
+    void primSampleHeatmap(
+        PrimitiveObject* prim,
+        const zeno::String& srcChannel,
+        const zeno::String& dstChannel,
+        HeatmapObject* heatmap,
+        float remapMin,
+        float remapMax
+    ) {
+        auto& clr = prim->add_attr<zeno::vec3f>(zsString2Std(dstChannel));
+        auto& src = prim->attr<float>(zsString2Std(srcChannel));
+#pragma omp parallel for //ideally this could be done in opengl
+        for (int i = 0; i < src.size(); i++) {
+            auto x = (src[i] - remapMin) / (remapMax - remapMin);
+            clr[i] = heatmap->interp(x);
+        }
+    }
 
     void primPolygonate(PrimitiveObject* prim, bool with_uv) {
         prim->loops.reserve(prim->loops.size() + prim->tris.size() * 3 +
@@ -1387,4 +1525,134 @@ namespace zeno
 
         return outprim;
     }
+
+    zeno::SharedPtr<PrimitiveObject> readExrFile(zeno::String const& path) {
+        int nx, ny, nc = 4;
+        float* rgba;
+        const char* err;
+        std::string native_path = std::filesystem::u8path(zsString2Std(path)).string();
+        int ret = LoadEXR(&rgba, &nx, &ny, native_path.c_str(), &err);
+        if (ret != 0) {
+            zeno::log_error("load exr: {}", err);
+            throw std::runtime_error(zeno::format("load exr: {}", err));
+        }
+        nx = std::max(nx, 1);
+        ny = std::max(ny, 1);
+        for (auto i = 0; i < ny / 2; i++) {
+            for (auto x = 0; x < nx * 4; x++) {
+                auto index1 = i * (nx * 4) + x;
+                auto index2 = (ny - 1 - i) * (nx * 4) + x;
+                std::swap(rgba[index1], rgba[index2]);
+            }
+        }
+
+        auto img = std::make_shared<PrimitiveObject>();
+        img->verts.resize(nx * ny);
+
+        auto& alpha = img->verts.add_attr<float>("alpha");
+        for (int i = 0; i < nx * ny; i++) {
+            img->verts[i] = { rgba[i * 4 + 0], rgba[i * 4 + 1], rgba[i * 4 + 2] };
+            alpha[i] = rgba[i * 4 + 3];
+        }
+        //
+        img->userData()->set_int("isImage", 1);
+        img->userData()->set_int("w", nx);
+        img->userData()->set_int("h", ny);
+        return img;
+    }
+
+    zeno::SharedPtr<PrimitiveObject> readImageFile(zeno::String const& path) {
+        int w, h, n;
+        stbi_set_flip_vertically_on_load(true);
+        std::string native_path = std::filesystem::u8path(zsString2Std(path)).string();
+        float* data = stbi_loadf(native_path.c_str(), &w, &h, &n, 0);
+        if (!data) {
+            throw zeno::Exception("cannot open image file at path: " + native_path);
+        }
+        scope_exit delData = [=] { stbi_image_free(data); };
+        auto img = std::make_shared<PrimitiveObject>();
+        img->verts.resize(w * h);
+        if (n == 3) {
+            std::memcpy(img->verts.data(), data, w * h * n * sizeof(float));
+        }
+        else if (n == 4) {
+            auto& alpha = img->verts.add_attr<float>("alpha");
+            for (int i = 0; i < w * h; i++) {
+                img->verts[i] = { data[i * 4 + 0], data[i * 4 + 1], data[i * 4 + 2] };
+                alpha[i] = data[i * 4 + 3];
+            }
+        }
+        else if (n == 2) {
+            for (int i = 0; i < w * h; i++) {
+                img->verts[i] = { data[i * 2 + 0], data[i * 2 + 1], 0 };
+            }
+        }
+        else if (n == 1) {
+            for (int i = 0; i < w * h; i++) {
+                img->verts[i] = vec3f(data[i]);
+            }
+        }
+        else {
+            throw zeno::Exception("too much number of channels");
+        }
+        img->userData()->set_int("isImage", 1);
+        img->userData()->set_int("w", w);
+        img->userData()->set_int("h", h);
+        return img;
+    }
+
+    zeno::SharedPtr<PrimitiveObject> readPFMFile(zeno::String const& path) {
+        int nx = 0;
+        int ny = 0;
+        std::ifstream file(zsString2Std(path), std::ios::binary);
+        std::string format;
+        file >> format;
+        file >> nx >> ny;
+        float scale = 0;
+        file >> scale;
+        file.ignore(1);
+
+        auto img = std::make_shared<PrimitiveObject>();
+        int size = nx * ny;
+        img->resize(size);
+        file.read(reinterpret_cast<char*>(img->verts.data()), sizeof(vec3f) * nx * ny);
+
+        img->userData()->set_int("isImage", 1);
+        img->userData()->set_int("w", nx);
+        img->userData()->set_int("h", ny);
+        return img;
+    }
+
+    void write_pfm(std::string& path, int w, int h, vec3f* rgb) {
+        std::string header = zeno::format("PF\n{} {}\n-1.0\n", w, h);
+        std::vector<char> data(header.size() + w * h * sizeof(vec3f));
+        memcpy(data.data(), header.data(), header.size());
+        memcpy(data.data() + header.size(), rgb, w * h * sizeof(vec3f));
+        file_put_binary(data, path);
+    }
+
+    void write_pfm(zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
+        auto ud = image->userData();
+        int w = ud->get_int("w");
+        int h = ud->get_int("h");
+        write_pfm(zsString2Std(path), w, h, image->verts->data());
+    }
+
+    void write_jpg(zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
+        int w = image->userData()->get_int("w");
+        int h = image->userData()->get_int("h");
+        std::vector<uint8_t> colors;
+        for (auto i = 0; i < w * h; i++) {
+            auto rgb = zeno::pow(image->verts[i], 1.0f / 2.2f);
+            int r = zeno::clamp(int(rgb[0] * 255.99), 0, 255);
+            int g = zeno::clamp(int(rgb[1] * 255.99), 0, 255);
+            int b = zeno::clamp(int(rgb[2] * 255.99), 0, 255);
+            colors.push_back(r);
+            colors.push_back(g);
+            colors.push_back(b);
+        }
+        stbi_flip_vertically_on_write(1);
+        stbi_write_jpg(path.c_str(), w, h, 3, colors.data(), 100);
+    }
+
 }

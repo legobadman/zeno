@@ -7,6 +7,8 @@
 #include <zenovis/DrawOptions.h>
 #include <zeno/utils/format.h>
 #include <zeno/utils/log.h>
+#include <zeno/geo/commonutil.h>
+#include <zeno/utils/interfaceutil.h>
 #include <util/log.h>
 #include <zeno/core/Session.h>
 #include <zeno/extra/GlobalState.h>
@@ -126,8 +128,8 @@ void RecordVideoMgr::endRecToExportVideo()
             auto pfm_dn_path = jpg_path + ".dn.pfm";
             // jpg to pfm
             {
-                auto image = zeno::readImageFile(jpg_path);
-                write_pfm(pfm_path, image);
+                auto image = zeno::readImageFile(zeno::stdString2zs(jpg_path));
+                write_pfm(zeno::stdString2zs(pfm_path), image);
             }
 
             const auto albedo_pfm_path = jpg_path + ".albedo.pfm";
@@ -161,8 +163,8 @@ void RecordVideoMgr::endRecToExportVideo()
                 qDebug() << ret;
                 // pfm to jpg
                 if (ret == 0) {
-                    auto image = zeno::readPFMFile(pfm_dn_path);
-                    write_jpg(jpg_path, image);
+                    auto image = zeno::readPFMFile(zeno::stdString2zs(pfm_dn_path));
+                    write_jpg(zeno::stdString2zs(jpg_path), image);
                     QFile fileOrigin(QString::fromStdString(pfm_path));
                     if (fileOrigin.exists()) {
                         fileOrigin.remove();

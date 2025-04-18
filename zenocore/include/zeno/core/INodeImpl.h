@@ -41,7 +41,10 @@ namespace zeno
         bool has_input(const zeno::String& param);
 
         int get_param_int(const zeno::String& param);
+        float get_param_float(const zeno::String& param);
         String get_param_string(const zeno::String& param);
+        bool get_param_bool(const zeno::String& param);
+        zany get_output(const zeno::String& param);
 
         void set_output_int(const zeno::String& param, int val);
         void set_output_float(const zeno::String& param, float val);

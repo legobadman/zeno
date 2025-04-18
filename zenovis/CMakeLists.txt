@@ -4,7 +4,7 @@ file(GLOB_RECURSE stbi_source CONFIGURE_DEPENDS stbi/include/*.h stbi/src/*.cpp 
 
 add_library(zenovis OBJECT ${source} ${glad_source} ${stbi_source})
 target_link_libraries(zenovis PRIVATE ${CMAKE_DL_LIBS})
-target_link_libraries(zenovis PUBLIC zeno)
+target_link_libraries(zenovis PUBLIC zenocore)
 target_include_directories(zenovis PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/glad/include>
@@ -29,6 +29,10 @@ if (ZENO_ENABLE_OPTIX)
     add_subdirectory(xinxinoptix)  # this in-place modify zenovis
     target_compile_definitions(zenovis PRIVATE -DZENO_ENABLE_OPTIX)
     target_include_directories(zenovis PRIVATE xinxinoptix)
+
+    #find_package(OpenVDB REQUIRED)
+    #target_include_directories(zenovis PRIVATE zenvdb)#"C:\zeno3\projects\zenvdb\openvdb\nanovdb")
+    target_link_libraries(zenovis PRIVATE openvdb)
 endif()
 
 # the check of cuda display device fails on some user env, and the 

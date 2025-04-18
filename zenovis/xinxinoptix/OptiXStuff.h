@@ -986,9 +986,9 @@ inline void addTexture(std::string path, bool blockCompression=false, TaskType* 
             tex_lut[tex_key] = std::make_shared<cuTexture>();
             return;
         }
-        nx = std::max(img->userData().get2<int>("w"), 1);
-        ny = std::max(img->userData().get2<int>("h"), 1);
-        nc = std::max(img->userData().get2<int>("channels"), 1);
+        nx = std::max(img->userData()->get_int("w"), 1);
+        ny = std::max(img->userData()->get_int("h"), 1);
+        nc = std::max(img->userData()->get_int("channels"), 1);
 
         auto ucdata = std::make_shared<std::vector<unsigned char>>(img->verts.size() * nc);
 

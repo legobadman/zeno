@@ -8,7 +8,7 @@ namespace zeno {
 
 ZENO_API PrimitiveObject* primParsedFrom(const char *binData, std::size_t binSize);
 
-ZENO_API void primTriangulateQuads(PrimitiveObject *prim);
+//ZENO_API void primTriangulateQuads(PrimitiveObject *prim);
 //ZENO_API void primTriangulate(PrimitiveObject *prim, bool with_uv = true, bool has_lines = true, bool with_attr = true);
 ZENO_API void primTriangulateIntoPolys(PrimitiveObject *prim);
 //ZENO_API void primPolygonate(PrimitiveObject *prim, bool with_uv = true);
@@ -20,7 +20,7 @@ ZENO_API void primSepTriangles(PrimitiveObject *prim, bool smoothNormal = true, 
 //ZENO_API void primCalcNormal(PrimitiveObject *prim, float flip = 1.0f, std::string nrmAttr = "nrm");
 //ZENO_API void primCalcInsetDir(PrimitiveObject *prim, float flip = 1.0f, std::string nrmAttr = "nrm");
 
-ZENO_API void primWireframe(PrimitiveObject *prim, bool removeFaces = false, bool toEdges = false);
+//ZENO_API void primWireframe(PrimitiveObject *prim, bool removeFaces = false, bool toEdges = false);
 ZENO_API void primEdgeBound(PrimitiveObject *prim, bool removeFaces = false, bool toEdges = false);
 //ZENO_API void primKillDeadVerts(PrimitiveObject *prim);
 

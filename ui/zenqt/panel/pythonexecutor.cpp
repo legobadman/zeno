@@ -1,4 +1,4 @@
-#include "pythonexecutor.h"
+﻿#include "pythonexecutor.h"
 #include "layout/docktabcontent.h"
 #include <zeno/include/zenoutil.h>
 #include <zenoapplication.h>
@@ -67,7 +67,9 @@ void PythonExecutePane::run() {
             return;
 
         const std::string& script = text.toStdString();
+#ifdef ZENO_WITH_PYTHON
         bSucceed = zeno::runPython(script);
+#endif
     }
     if (!bSucceed) {
         QMessageBox::critical(this, "Run Failed", "The python script run failed, please read the log from log panel.");
@@ -94,7 +96,7 @@ PythonAIDialog::PythonAIDialog(QWidget* parent)
 
     QLabel* label = new QLabel("Tell me what you want:", this);
     QTextEdit* lineEdit = new QTextEdit(this);
-    lineEdit->setText(QString::fromUtf8("使用我提供的工具api，先给出创建一个长10，宽20，高30的cube的代码。然后对这个节点打上view，最后移除这个节点。"));
+    lineEdit->setText(QStringLiteral("使用我提供的工具api，先给出创建一个长10，宽20，高30的cube的代码。然后对这个节点打上view，最后移除这个节点。"));
     QPushButton* sendButton = new QPushButton("send", this);
     QPushButton* cancelButton = new QPushButton("cancel", this);
 

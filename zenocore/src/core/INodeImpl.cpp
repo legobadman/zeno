@@ -42,8 +42,20 @@ namespace zeno
         return m_pImpl->get_param<int>(zsString2Std(param));
     }
 
+    float INodeImpl::get_param_float(const zeno::String& param) {
+        return m_pImpl->get_param<float>(zsString2Std(param));
+    }
+
     String INodeImpl::get_param_string(const zeno::String& param) {
         return stdString2zs(m_pImpl->get_param<std::string>(zsString2Std(param)));
+    }
+
+    bool INodeImpl::get_param_bool(const zeno::String& param) {
+        return m_pImpl->get_param<bool>(zsString2Std(param));
+    }
+
+    zany INodeImpl::get_output(const zeno::String& param) {
+        return m_pImpl->get_output_obj(zsString2Std(param));
     }
 
     float INodeImpl::get_input2_float(const zeno::String& param) {

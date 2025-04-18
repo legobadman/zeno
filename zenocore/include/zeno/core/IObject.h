@@ -66,8 +66,8 @@ namespace zeno {
         IUserData* m_usrData;   //TODO: abi unique_ptr
     };
 
-    template <class Derived>
-    struct IObjectClone : IObject {
+    template <class Derived, class CustomBase = IObject>
+    struct IObjectClone : CustomBase {
         IObjectClone() {
         }
 

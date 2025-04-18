@@ -9,42 +9,6 @@
 
 namespace zeno {
 
-ZENO_API void primTriangulateQuads(PrimitiveObject *prim) {
-    if (prim->quads.size() == 0) {
-        return;
-    }
-    auto base = prim->tris.size();
-    prim->tris.resize(base + prim->quads.size() * 2);
-    bool hasmat = prim->quads.has_attr("matid");
-    if(hasmat == false)
-    {
-        prim->quads.add_attr<int>("matid");
-        prim->quads.attr<int>("matid").assign(prim->quads.size(), -1);
-    }
-
-    if (prim->tris.has_attr("matid")) {
-        prim->tris.attr<int>("matid").resize(base + prim->quads.size() * 2);
-    } else {
-        prim->tris.add_attr<int>("matid");
-    }
-
-
-    for (size_t i = 0; i < prim->quads.size(); i++) {
-        auto quad = prim->quads[i];
-        prim->tris[base+i*2+0] = vec3f(quad[0], quad[1], quad[2]);
-        prim->tris[base+i*2+1] = vec3f(quad[0], quad[2], quad[3]);
-        if(hasmat) {
-            prim->tris.attr<int>("matid")[base + i * 2 + 0] = prim->quads.attr<int>("matid")[i];
-            prim->tris.attr<int>("matid")[base + i * 2 + 1] = prim->quads.attr<int>("matid")[i];
-        } else
-        {
-            prim->tris.attr<int>("matid")[base + i * 2 + 0] = -1;
-            prim->tris.attr<int>("matid")[base + i * 2 + 1] = -1;
-        }
-    }
-    prim->quads.clear();
-}
-
 ZENO_API void primTriangulate(PrimitiveObject *prim, bool with_uv, bool has_lines, bool with_attr) {
     if (prim->polys.size() == 0) {
         return;
