@@ -22,6 +22,7 @@ namespace zeno {
     ZENO_API ParamType convertToType(std::string const& type, const std::string_view& param_name = "");
     ZENO_API bool isAnyEqual(const zeno::reflect::Any& lhs, const zeno::reflect::Any& rhs);
     ZENO_API std::string paramTypeToString(ParamType type);
+    ZENO_API std::string any_cast_to_string(const Any& value);
     ZENO_API zvariant str2var(std::string const& defl, ParamType const& type);
     ZENO_API zeno::reflect::Any str2any(std::string const& defl, ParamType const& type);
     ZENO_API bool convertToEditVar(zeno::reflect::Any& var, const ParamType type);

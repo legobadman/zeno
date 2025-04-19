@@ -402,7 +402,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     props = items;
 
     Callback_EditFinished funcZoomEdited = [=](zeno::reflect::Any newValue) {
-        const QString& percent = QString::fromStdString(zeno::reflect::any_cast<std::string>(newValue));
+        const QString& percent = QString::fromStdString(zeno::any_cast_to_string(newValue));
         QRegExp rx("(\\d+)\\%");
         rx.indexIn(percent);
         auto caps = rx.capturedTexts();
@@ -885,7 +885,7 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
 
     QFontMetrics fontMetrics(font);
     Callback_EditFinished funcRender = [=](zeno::reflect::Any newValue) {
-        const QString& newText = QString::fromStdString(zeno::reflect::any_cast<std::string>(newValue));
+        const QString& newText = QString::fromStdString(zeno::any_cast_to_string(newValue));
         int nx = -1, ny = -1;
         ZASSERT_EXIT(m_pDisplay);
         bool bLock = false;

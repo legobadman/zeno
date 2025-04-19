@@ -105,7 +105,7 @@ py::object Zpy_Node::param_value(const std::string& name) {
         return py::cast(any_cast<float>(param.defl));
     }
     else if (anyType == zeno::types::gParamType_String) {
-        return py::cast(any_cast<std::string>(param.defl));
+        return py::cast(zeno::any_cast_to_string(param.defl));
     }
     else if (anyType == zeno::types::gParamType_Vec2f) {
         zeno::vec2f vec = any_cast<zeno::vec2f>(param.defl);

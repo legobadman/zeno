@@ -197,6 +197,21 @@ namespace zeno {
         }
     }
 
+    std::string any_cast_to_string(const Any& value)
+    {
+        std::string str;
+        if (value.type() == zeno::reflect::type_info<const char*>()) {
+            str = zeno::reflect::any_cast<const char*>(value);
+        }
+        else if (value.type() == zeno::reflect::type_info<std::string>()) {
+            str = zeno::reflect::any_cast<std::string>(value);
+        }
+        else {
+            throw UnimplError("any cast error, the value is not a string");
+        }
+        return str;
+    }
+
     ZENO_API std::string paramTypeToString(ParamType type)
     {
         //TODO: 自定义类型的处理方式？
@@ -256,7 +271,7 @@ namespace zeno {
 
         if (type == gParamType_Int) {
             if (anyType == gParamType_String) {
-                val = PrimVar(any_cast<std::string>(val));
+                val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
             val = PrimVar(any_cast<int>(val));
@@ -264,7 +279,7 @@ namespace zeno {
         }
         else if (type == gParamType_Float) {
             if (anyType == gParamType_String) {
-                val = PrimVar(any_cast<std::string>(val));
+                val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
             val = PrimVar(any_cast<float>(val));
@@ -465,7 +480,7 @@ namespace zeno {
             return any_cast<float>(var);
         }
         else if (get_type<std::string>() == var.type()) {
-            return any_cast<std::string>(var);
+            return zeno::any_cast_to_string(var);
         }
         else if (get_type<zeno::vec2i>() == var.type()) {
             return any_cast<zeno::vec2i>(var);
@@ -556,6 +571,18 @@ namespace zeno {
         else if (type == gParamType_Vec4f)
         {
             return vec4f();
+        }
+        else if (type == gParamType_Matrix4)
+        {
+            return glm::mat4(1.0);
+        }
+        else if (type == gParamType_Matrix3)
+        {
+            return glm::mat3(1.0);
+        }
+        else if (type == gParamType_GLMVec3)
+        {
+            return glm::vec3(0);
         }
         else if (type == gParamType_Curve)
         {
@@ -1411,7 +1438,7 @@ namespace zeno {
             return zeno::reflect::any_cast<float>(anyval);
         }
         else if (code == gParamType_String) {
-            return zeno::reflect::any_cast<std::string>(anyval);
+            return zeno::any_cast_to_string(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::String>().get_decayed_hash()) {
             return zsString2Std(zeno::reflect::any_cast<zeno::String>(anyval));

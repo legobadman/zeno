@@ -82,7 +82,15 @@ static CustomUI descToCustomui(const Descriptor& desc) {
     ParamGroup default;
     for (const SocketDescriptor& param_desc : desc.inputs) {
         if (param_desc._desc.type == Desc_Prim) {
-            default.params.push_back(param_desc._desc.primparam);
+            //有可能没赋初值，要检查一下
+            if (!param_desc._desc.primparam.defl.has_value()) {
+                ParamPrimitive newparam = param_desc._desc.primparam;
+                newparam.defl = initAnyDeflValue(newparam.type);
+                default.params.push_back(newparam);
+            }
+            else {
+                default.params.push_back(param_desc._desc.primparam);
+            }
         }
         else if (param_desc._desc.type == Desc_Obj) {
             ui.inputObjs.push_back(param_desc._desc.objparam);

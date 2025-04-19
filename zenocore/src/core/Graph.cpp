@@ -129,7 +129,7 @@ void Graph::parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any
     const std::string& uuid = spNode->get_uuid();
     if (gParamType_String == spParam->type)
     {
-        std::string defl = zeno::reflect::any_cast<std::string>(spParam->defl);
+        std::string defl = zeno::any_cast_to_string(spParam->defl);
         std::regex pattern("\\$F");
         if (std::regex_search(defl, pattern, std::regex_constants::match_default)) {
             frame_nodes.insert(uuid);

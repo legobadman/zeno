@@ -138,7 +138,7 @@ namespace zeno {
             return any_cast<float>(var);
         }
         else if (get_type<std::string>() == var.type()) {
-            return any_cast<std::string>(var);
+            return zeno::any_cast_to_string(var);
         }
         else if (get_type<zeno::vec2i>() == var.type()) {
             auto vec = any_cast<zeno::vec2i>(var);

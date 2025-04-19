@@ -1232,12 +1232,12 @@ void ZenoPropPanel::onCustomParamDataChanged(const QModelIndex& topLeft, const Q
                 }
                 else if (QComboBox* pCombobox = qobject_cast<QComboBox*>(ctrl.pControl))
                 {
-                    const std::string& text = any_cast<std::string>(value);
+                    const std::string& text = zeno::any_cast_to_string(value);
                     pCombobox->setCurrentText(QString::fromStdString(text));
                 }
                 else if (QTextEdit* pTextEidt = qobject_cast<QTextEdit*>(ctrl.pControl))
                 {
-                    const std::string& text = any_cast<std::string>(value);
+                    const std::string& text = zeno::any_cast_to_string(value);
                     pTextEidt->setText(QString::fromStdString(text));
                 }
                 else if (ZVecEditor* pVecEdit = qobject_cast<ZVecEditor*>(ctrl.pControl))

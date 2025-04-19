@@ -432,7 +432,7 @@ QVariant UiHelper::anyToQvar(zeno::reflect::Any var)
         return zeno::reflect::any_cast<float>(var);
     }
     else if (zeno::reflect::get_type<std::string>() == var.type()) {
-        return QString::fromStdString(zeno::reflect::any_cast<std::string>(var));
+        return QString::fromStdString(zeno::any_cast_to_string(var));
     }
     else if (zeno::reflect::get_type<zeno::vec2i>() == var.type()) {
         zeno::vec2i vec2i = zeno::reflect::any_cast<zeno::vec2i>(var);
@@ -1215,7 +1215,7 @@ QString UiHelper::anyToString(const zeno::reflect::Any& any)
         }, var);
     }
     else if (zeno::reflect::get_type<std::string>() == any.type()) {
-        return QString::fromStdString(zeno::reflect::any_cast<std::string>(any));
+        return QString::fromStdString(zeno::any_cast_to_string(any));
     }
     else if (zeno::reflect::get_type<zeno::vec2i>() == any.type()) {
         zeno::vec2i vec2i = zeno::reflect::any_cast<zeno::vec2i>(any);
@@ -1381,7 +1381,7 @@ QString UiHelper::variantToString(const QVariant& var)
                 value = QString::number(zeno::reflect::any_cast<float>(anyVal));
             }
             else if (zeno::reflect::get_type<std::string>() == anyVal.type()) {
-                value = QString::fromStdString(zeno::reflect::any_cast<std::string>(anyVal));
+                value = QString::fromStdString(zeno::any_cast_to_string(anyVal));
             }
             else if (zeno::reflect::get_type<bool>() == anyVal.type()) {
                 bool bVal = zeno::reflect::any_cast<float>(anyVal);

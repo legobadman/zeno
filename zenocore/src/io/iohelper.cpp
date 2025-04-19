@@ -660,7 +660,7 @@ namespace zenoio
                     defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::reflect::any_cast<float>(defl));
                 }
                 else if (deftype == gParamType_String) {
-                    defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::reflect::any_cast<std::string>(defl));
+                    defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::any_cast_to_string(defl));
                 }
             }
         }
@@ -1073,7 +1073,7 @@ namespace zenoio
             case gParamType_String:
             {
                 assert(anyType == gParamType_String);
-                writer.String(any_cast<std::string>(any).c_str());
+                writer.String(zeno::any_cast_to_string(any).c_str());
                 break;
             }
             case gParamType_Curve:

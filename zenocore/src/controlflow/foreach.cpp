@@ -57,7 +57,7 @@ namespace zeno
 
             if (m_fetch_mehod == "Initial Object") {
                 //看foreachend是迭代object还是container,如果是container，就得取element元素
-                std::string itemethod = zeno::reflect::any_cast<std::string>(foreach_end->get_defl_value("Iterate Method"));
+                std::string itemethod = zeno::any_cast_to_string(foreach_end->get_defl_value("Iterate Method"));
                 if (itemethod == "By Count") {
                     ZImpl(set_output("Output Object", init_object));
                     return;
@@ -131,7 +131,7 @@ namespace zeno
 
         ForEachBegin* get_foreach_begin() {
             //这里不能用m_foreach_begin_path，因为可能还没从基类数据同步过来，后者需要apply操作前才会同步
-            std::string foreach_begin_path = zeno::reflect::any_cast<std::string>(m_pAdapter->m_pImpl->get_defl_value("ForEachBegin Path"));
+            std::string foreach_begin_path = zeno::any_cast_to_string(m_pAdapter->m_pImpl->get_defl_value("ForEachBegin Path"));
             auto graph = this->m_pAdapter->m_pImpl->getGraph();
             auto foreach_begin = dynamic_cast<ForEachBegin*>(graph->getNode(foreach_begin_path));
             if (!foreach_begin) {

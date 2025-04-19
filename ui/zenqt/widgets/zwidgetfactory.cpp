@@ -46,7 +46,7 @@ namespace zenoui
             case zeno::Lineedit:
             {
                 if (paramType == gParamType_String) {
-                    QString text = QString::fromStdString(any_cast<std::string>(value));
+                    QString text = QString::fromStdString(zeno::any_cast_to_string(value));
                     ZLineEdit* pLineEdit = new ZLineEdit(text);
                     pLineEdit->setFixedHeight(ZenoStyle::dpiScaled(zenoui::g_ctrlHeight));
                     pLineEdit->setProperty("cssClass", "zeno2_2_lineedit");
@@ -64,7 +64,7 @@ namespace zenoui
                     } else if (value.type().hash_code() == gParamType_Float) {
                         var = zeno::reflect::make_any<zeno::PrimVar>(any_cast<float>(value));
                     } else if (value.type().hash_code() == gParamType_String) {
-                        var = zeno::reflect::make_any<zeno::PrimVar>(any_cast<std::string>(value));
+                        var = zeno::reflect::make_any<zeno::PrimVar>(zeno::any_cast_to_string(value));
                     } else if (value.type().hash_code() == gParamType_PrimVariant) {
                         var = any_cast<zeno::PrimVar>(value);
                     } else {
@@ -111,7 +111,7 @@ namespace zenoui
                 if (value.type().hash_code() != gParamType_String) {
                     ZASSERT_EXIT(false, nullptr);
                 }
-                QString text = QString::fromStdString(any_cast<std::string>(value));
+                QString text = QString::fromStdString(zeno::any_cast_to_string(value));
                 ZPathEdit *pathLineEdit = new ZPathEdit(text, ctrl);
                 pathLineEdit->setFixedHeight(ZenoStyle::dpiScaled(zenoui::g_ctrlHeight));
                 pathLineEdit->setProperty("control", ctrl);
@@ -127,7 +127,7 @@ namespace zenoui
                 if (value.type().hash_code() != gParamType_String) {
                     ZASSERT_EXIT(false, nullptr);
                 }
-                QString text = QString::fromStdString(any_cast<std::string>(value));
+                QString text = QString::fromStdString(zeno::any_cast_to_string(value));
 
                 ZTextEdit* pTextEdit = new ZTextEdit;
                 pTextEdit->setNodeIdx(nodeIdx);
@@ -246,7 +246,7 @@ namespace zenoui
             case zeno::Combobox:
             {
                 ZASSERT_EXIT(paramType == gParamType_String, nullptr);
-                QString text = QString::fromStdString(any_cast<std::string>(value));
+                QString text = QString::fromStdString(zeno::any_cast_to_string(value));
 
                 QStringList items;
                 if (controlProps.has_value())
@@ -470,7 +470,7 @@ namespace zenoui
             case zeno::CodeEditor:
             {
                 ZASSERT_EXIT(paramType == gParamType_String, nullptr);
-                QString text = QString::fromStdString(any_cast<std::string>(value));
+                QString text = QString::fromStdString(zeno::any_cast_to_string(value));
 
                 ZCodeEditor* pCodeEditor = new ZCodeEditor(text);
                 pCodeEditor->setNodeIndex(nodeIdx);

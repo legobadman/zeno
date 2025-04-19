@@ -684,7 +684,7 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
         const zeno::ParamType paramType = param.value.type().hash_code();
         switch (paramType)
         {
-        case gParamType_String:     return QString::fromStdString(any_cast<std::string>(param.value));
+        case gParamType_String:     return QString::fromStdString(zeno::any_cast_to_string(param.value));
         case gParamType_Float:      return any_cast<float>(param.value);
         case gParamType_Int:        return any_cast<int>(param.value);
         case gParamType_Vec2f: {

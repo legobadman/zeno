@@ -36,6 +36,7 @@
 #include <reflect/metadata.hpp>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/MeshObject.h>
+#include <zeno/types/MatrixObject.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 #include <zeno/core/reflectdef.h>
 #include <zeno/formula/zfxexecute.h>
@@ -398,7 +399,7 @@ bool NodeImpl::has_frame_relative_params() const {
                     return false;
                 }, editVar);
             } else if (param.defl.type().hash_code() == gParamType_String) {
-                std::string defl = zeno::reflect::any_cast<std::string>(param.defl);
+                std::string defl = zeno::any_cast_to_string(param.defl);
                 if (defl.find("$F") != std::string::npos) {
                     return true;
                 }
@@ -633,7 +634,7 @@ void NodeImpl::preApplyTimeshift(CalcContext* pContext)
 
 void NodeImpl::reflectForeach_apply(CalcContext* pContext)
 {
-    std::string foreach_begin_path = zeno::reflect::any_cast<std::string>(get_defl_value("ForEachBegin Path"));
+    std::string foreach_begin_path = zeno::any_cast_to_string(get_defl_value("ForEachBegin Path"));
     if (Graph* spGraph = graph) {
         auto foreach_begin = spGraph->getNode(foreach_begin_path);
 
@@ -1125,7 +1126,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
 
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
-        const std::string& param_text = zeno::reflect::any_cast<std::string>(param_defl);
+        const std::string& param_text = zeno::any_cast_to_string(param_defl);
         if (param_text.find("ref") != std::string::npos) {
             refSegments.push_back(param_text);
         }
@@ -3059,15 +3060,21 @@ zany NodeImpl::get_input(std::string const &id) const {
                 }
                 return spNum;
             }
+            case zeno::types::gParamType_Matrix3:
+            {
+                std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+                matrixObj->m = zeno::reflect::any_cast<glm::mat3>(val);
+                return matrixObj;
+            }
+            case zeno::types::gParamType_Matrix4:
+            {
+                std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+                matrixObj->m = zeno::reflect::any_cast<glm::mat4>(val);
+                return matrixObj;
+            }
             case zeno::types::gParamType_String:
             {
-                std::string str;
-                if (val.type() == zeno::reflect::type_info<const char*>()) {
-                    str = zeno::reflect::any_cast<const char*>(val);
-                }
-                else if (val.type() == zeno::reflect::type_info<std::string>()) {
-                    str = zeno::reflect::any_cast<std::string>(val);
-                }
+                std::string str = zeno::any_cast_to_string(val);
                 return std::make_shared<StringObject>(str);
             }
             default:
