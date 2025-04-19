@@ -192,7 +192,7 @@ namespace zeno {
         {
             {gParamType_IObject, "Input Geometry"},
             ParamPrimitive("Translation", gParamType_Vec3f),
-            ParamPrimitive("Scaling", gParamType_Vec3f),
+            ParamPrimitive("Scaling", gParamType_Vec3f, zeno::vec3f(1,1,1)),
             ParamPrimitive("eulerXYZ", gParamType_Vec3f),
             ParamPrimitive("Shear", gParamType_Vec3f),
             ParamPrimitive("quatRotation", gParamType_Vec4f, zeno::vec4f(0,0,0,1)),

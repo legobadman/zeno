@@ -3,6 +3,7 @@
 #include <zeno/utils/Error.h>
 #include <zeno/core/IObject.h>
 #include <zeno/types/NumericObject.h>
+#include <zeno/types/MatrixObject.h>
 #include <zeno/types/StringObject.h>
 
 namespace zeno {
@@ -47,7 +48,12 @@ inline auto objectToLiterial(std::shared_ptr<IObject> const &ptr, std::string co
         return safe_dynamic_cast<StringObject>(ptr.get(), msg)->get();
     } else if constexpr (std::is_same_v<NumericValue, T>) {
         return safe_dynamic_cast<NumericObject>(ptr.get(), msg)->get();
-    } else {
+    } else if constexpr (std::is_same_v<glm::mat3, T>) {
+        return std::get<glm::mat3>(safe_dynamic_cast<MatrixObject>(ptr.get(), msg)->m);
+    } else if constexpr (std::is_same_v<glm::mat4, T>) {
+        return std::get<glm::mat4>(safe_dynamic_cast<MatrixObject>(ptr.get(), msg)->m);
+    }
+    else {
         return std::visit([&] (auto const &val) -> T {
             using T1 = std::decay_t<decltype(val)>;
             if constexpr (std::is_constructible_v<T, T1>) {
