@@ -1553,4 +1553,25 @@ namespace zeno {
         {"geom"},
     });
 
+    struct LakeHouseSettings : zeno::INode
+    {
+        void apply() override
+        {
+
+        }
+    };
+    ZENDEFNODE(LakeHouseSettings,
+    {
+        {
+            ParamPrimitive("Global Seed", gParamType_Int, 2983, Slider, std::vector<int>{1, 4000, 1}),
+            {gParamType_Float, "Roof Window Prob", "0.6"},
+            {gParamType_Float, "Chimney Prob", "0.1"},
+            {gParamType_Float, "Tower Prob", "0.6"}
+        },
+        {
+        },
+        {},
+        {"geom"},
+    });
+
 }

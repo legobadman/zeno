@@ -359,7 +359,7 @@ void Graph::initRef(const GraphData& graph) {
         }
     }
     for (const std::string& subnetnode : subnet_nodes) {
-        auto pNodeImpl = getNode(subnetnode);
+        auto pNodeImpl = m_nodes[subnetnode]->m_pImpl;
         auto spSubnetNode = dynamic_cast<SubnetNode*>(pNodeImpl->coreNode());
         assert(spSubnetNode);
         if (spSubnetNode) {

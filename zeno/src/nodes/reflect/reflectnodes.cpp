@@ -54,23 +54,6 @@ namespace zeno
         }
     };
 
-    struct ZDEFNODE() LakeHouseSettings : zeno::INode
-    {
-        ReflectCustomUI m_uilayout = {
-             _Group{
-                {"global_seed", ParamPrimitive("Global Seed", 2983, Slider, std::vector<int>{1, 4000, 1})},
-                {"roof_window_prob", ParamPrimitive("Roof Window Prob")},
-                {"chimney_prob", ParamPrimitive("Chimney Prob")},
-                {"tower_prob", ParamPrimitive("Tower Prob")},
-             },
-        };
-
-        void apply(int global_seed = 1, float roof_window_prob = 0.6f, float chimney_prob = 0.1f, float tower_prob = 0.6f)
-        {
-
-        }
-    };
-
     struct ZDEFNODE() ReadOnlyNode : zeno::INode
     {
         ReflectCustomUI m_uilayout = {
