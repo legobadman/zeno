@@ -14,6 +14,10 @@ namespace zeno
         pNode->m_pAdapter = this;
     }
 
+    CustomUI INodeImpl::export_customui() const {
+        return m_pImpl->export_customui();
+    }
+
     zany INodeImpl::get_input_object(const zeno::String& param) {
         return m_pImpl->get_input(zsString2Std(param));
     }

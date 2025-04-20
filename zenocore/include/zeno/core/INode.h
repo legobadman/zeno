@@ -8,7 +8,7 @@ namespace zeno
 {
     struct INode {
         virtual void apply() = 0;
-        virtual CustomUI export_customui() const { return CustomUI(); }
+        virtual CustomUI export_customui() const { return m_pAdapter->export_customui(); }
 
         zany get_input(const zeno::String& param)            { return m_pAdapter->get_input_object(param); }
         zeno::SharedPtr<PrimitiveObject> get_input_PrimitiveObject(const zeno::String& param) { return m_pAdapter->get_input_PrimitiveObject(param); }

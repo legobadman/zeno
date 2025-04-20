@@ -171,7 +171,7 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
     auto pair = spNode->get_pos();
     this->pos = QPointF(pair.first, pair.second);
     this->uuidPath = spNode->get_uuid_path();
-    this->uistyle = spNode->export_customui().uistyle;
+    this->uistyle = spNode->coreNode()->export_customui().uistyle;
 
     setProperty("uuid-path", QString::fromStdString(uuidPath));
     if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode))

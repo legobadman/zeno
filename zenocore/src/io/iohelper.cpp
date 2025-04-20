@@ -1072,7 +1072,7 @@ namespace zenoio
             }
             case gParamType_String:
             {
-                assert(anyType == gParamType_String);
+                //assert(anyType == gParamType_String); //也有可能是const char*
                 writer.String(zeno::any_cast_to_string(any).c_str());
                 break;
             }

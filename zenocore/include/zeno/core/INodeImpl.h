@@ -3,6 +3,7 @@
 #include <zeno/core/coredata.h>
 #include <zeno/utils/api.h>
 #include <zeno/core/IObject.h>
+#include <zeno/core/data.h>
 
 namespace zeno
 {
@@ -20,6 +21,7 @@ namespace zeno
         INodeImpl(INode* pNode);
 
         zany get_input_object(const zeno::String& param);
+        CustomUI export_customui() const;
 
         zeno::SharedPtr<PrimitiveObject> get_input_PrimitiveObject(const zeno::String& param);
         zeno::SharedPtr<ListObject> get_input_ListObject(const zeno::String& param);
