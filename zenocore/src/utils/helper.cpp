@@ -1219,9 +1219,9 @@ namespace zeno {
         return false;
     }
 
-    ZENO_API zeno::SubnetNode* getSubnetNode(zeno::INodeImpl* pAdapter) {
-        if (!pAdapter || !pAdapter->m_pImpl) return nullptr;
-        return dynamic_cast<zeno::SubnetNode*>(pAdapter->m_pImpl->coreNode());
+    ZENO_API zeno::SubnetNode* getSubnetNode(zeno::NodeImpl* pAdapter) {
+        if (!pAdapter) return nullptr;
+        return dynamic_cast<zeno::SubnetNode*>(pAdapter->coreNode());
     }
 
     void propagateDirty(NodeImpl* spCurrNode, std::string varName)
@@ -1303,12 +1303,12 @@ namespace zeno {
         }
         auto spGraph = spCurrNode->getGraph();
         assert(spGraph);
-        if (spGraph->optParentSubgNode && spCurrNode->get_nodecls() == "SubInput")
+        if (spGraph->getParentSubnetNode() && spCurrNode->get_nodecls() == "SubInput")
         {
-            upstreams.insert(spGraph->optParentSubgNode->m_pImpl->get_uuid_path());
-            auto parentSubgNode = spGraph->optParentSubgNode;
+            auto parentSubgNode = spGraph->getParentSubnetNode();
+            upstreams.insert(parentSubgNode->get_uuid_path());
             auto parentSubgNodeGetUpstreamFunc = [ &upstreams, &upstreamDepNodes, &parentSubgNode](std::string outNode, std::string outParam) {
-                if (auto graph = parentSubgNode->m_pImpl->getThisGraph()) {
+                if (auto graph = parentSubgNode->getThisGraph()) {
                     auto node = graph->getNode(outNode);
                     assert(node);
                     getUpstreamNodes(node, upstreams, upstreamDepNodes, outParam);
@@ -1316,14 +1316,14 @@ namespace zeno {
                 }
             };
             bool find = false;
-            const auto& parentSubgNodePrimsInput = parentSubgNode->m_pImpl->get_input_prim_param(spCurrNode->get_name(), &find);
+            const auto& parentSubgNodePrimsInput = parentSubgNode->get_input_prim_param(spCurrNode->get_name(), &find);
             if (find) {
                 for (auto link : parentSubgNodePrimsInput.links) {
                     parentSubgNodeGetUpstreamFunc(link.outNode, link.outParam);
                 }
             }
             bool find2 = false;
-            const auto& parentSubgNodeObjsInput = parentSubgNode->m_pImpl->get_input_obj_param(spCurrNode->get_name(), &find2);
+            const auto& parentSubgNodeObjsInput = parentSubgNode->get_input_obj_param(spCurrNode->get_name(), &find2);
             if (find2) {
                 for (auto link : parentSubgNodeObjsInput.links) {
                     parentSubgNodeGetUpstreamFunc(link.outNode, link.outParam);
@@ -1388,31 +1388,31 @@ namespace zeno {
 
         auto spGraph = spCurrNode->getGraph();
         assert(spGraph);
-        if (spGraph->optParentSubgNode && spCurrNode->get_nodecls() == "SubOutput")
+        if (spGraph->getParentSubnetNode() && spCurrNode->get_nodecls() == "SubOutput")
         {
-            auto parentSubgNode = spGraph->optParentSubgNode;
+            auto parentSubgNode = spGraph->getParentSubnetNode();
             auto parentSubgNodeMarkDirty = [&nodesRange, &parentSubgNode](std::string innode, std::string inParam) {
-                if (auto graph = parentSubgNode->m_pImpl->getThisGraph()) {
+                if (auto graph = parentSubgNode->getThisGraph()) {
                     auto inNode = graph->getNode(innode);
                     assert(inNode);
                     mark_dirty_by_dependNodes(inNode, true, nodesRange, inParam);
                 }
             };
             bool find = false;
-            const auto& parentSubgNodeOutputPrim = parentSubgNode->m_pImpl->get_output_prim_param(spCurrNode->get_name(), &find);
+            const auto& parentSubgNodeOutputPrim = parentSubgNode->get_output_prim_param(spCurrNode->get_name(), &find);
             if (find) {
                 for (auto link : parentSubgNodeOutputPrim.links) {
                     parentSubgNodeMarkDirty(link.inNode, link.inParam);
                 }
             }
             bool find2 = false;
-            const auto& parentSubgNodeOutputObjs = parentSubgNode->m_pImpl->get_output_obj_param(spCurrNode->get_name(), &find2);
+            const auto& parentSubgNodeOutputObjs = parentSubgNode->get_output_obj_param(spCurrNode->get_name(), &find2);
             if (find2) {
                 for (auto link : parentSubgNodeOutputObjs.links) {
                     parentSubgNodeMarkDirty(link.inNode, link.inParam);
                 }
             }
-            spGraph->optParentSubgNode->m_pImpl->mark_dirty(true, Dirty_All, true, false);
+            parentSubgNode->mark_dirty(true, Dirty_All, true, false);
         }
     }
 

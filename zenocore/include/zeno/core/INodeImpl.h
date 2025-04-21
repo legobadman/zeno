@@ -19,6 +19,7 @@ namespace zeno
     struct ZENO_API INodeImpl
     {
         INodeImpl(INode* pNode);
+        ~INodeImpl();
 
         zany get_input_object(const zeno::String& param);
         CustomUI export_customui() const;

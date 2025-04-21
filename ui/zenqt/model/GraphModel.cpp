@@ -174,7 +174,7 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
     this->uistyle = spNode->coreNode()->export_customui().uistyle;
 
     setProperty("uuid-path", QString::fromStdString(uuidPath));
-    if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode))
+    if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode->coreNode()))
     {
         GraphModel* parentM = qobject_cast<GraphModel*>(this->parent());
         std::string const& subnetpath = spNode->get_path();
@@ -527,7 +527,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         case QtRole::ROLE_NODETYPE:
         {
             auto spNode = item->m_wpNode;
-            auto spSubnetNode = dynamic_cast<zeno::SubnetNode*>(spNode);
+            auto spSubnetNode = dynamic_cast<zeno::SubnetNode*>(spNode->coreNode());
             if (spSubnetNode) {
                 bool bAssets = spSubnetNode->subgraph->isAssets();
                 if (bAssets) {
@@ -1207,7 +1207,7 @@ zeno::NodeData GraphModel::_createNodeImpl(const QString& cate, zeno::NodeData& 
             ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end(), zeno::NodeData());
             auto paramsM = m_nodes[uuid]->params;
 
-            if (auto subnetNode = dynamic_cast<zeno::SubnetNode*>(spNode->m_pImpl)) {
+            if (auto subnetNode = dynamic_cast<zeno::SubnetNode*>(spNode->m_pImpl->coreNode())) {
                 //create input/output in subnet
                 if (cate == "assets")
                 {
@@ -1584,7 +1584,7 @@ void GraphModel::syncToAssetsInstance(const QString& assetsName)
                 pSubgM->removeNode(nodeName);
             }
             auto spNode = m_nodes[uuid]->m_wpNode;
-            auto spSubnetNode = dynamic_cast<zeno::SubnetNode*>(spNode);
+            auto spSubnetNode = dynamic_cast<zeno::SubnetNode*>(spNode->coreNode());
             if (spSubnetNode) {
                 auto& assetsMgr = zeno::getSession().assets;
                 assetsMgr->updateAssetInstance(assetsName.toStdString(), spSubnetNode);

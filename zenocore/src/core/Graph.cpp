@@ -83,7 +83,7 @@ bool Graph::applyNode(std::string const &node_name) {
 
     CalcContext ctx;
 
-    if (optParentSubgNode)
+    if (m_parSubnetNode)
     {
         ctx.isSubnetApply = true;
     }
@@ -463,8 +463,7 @@ void Graph::updateWildCardParamTypeRecursive(Graph* spCurrGarph, NodeImpl* spNod
             }
         }
         if (auto graph = spNode->getGraph()) {
-            if (graph->optParentSubgNode) {
-                NodeImpl* pNodeImpl = graph->optParentSubgNode->m_pImpl;
+            if (NodeImpl* pNodeImpl = getParentSubnetNode()) {
                 if (SubnetNode* parentSubgNode = dynamic_cast<SubnetNode*>(pNodeImpl->coreNode())) {
                     pNodeImpl->update_param_type(spNode->get_name(), bPrim, !bInput, newtype);
                     for (auto& link : pNodeImpl->getLinksByParam(!bInput, spNode->get_name())) {
@@ -637,9 +636,8 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, NodeImpl* node, const s
                     }
                 }
                 if (auto graph = node->getGraph()) {
-                    if (graph->optParentSubgNode) {
-                        auto pNodeImpl = graph->optParentSubgNode->m_pImpl;
-                        SubnetNode* parentSubgNode = dynamic_cast<SubnetNode*>(pNodeImpl->coreNode());
+                    if (NodeImpl* pNodeImpl = getParentSubnetNode()) {
+                        SubnetNode* parentSubgNode = getSubnetNode(getParentSubnetNode());
                         if (parentSubgNode) {
                             visited.insert(pNodeImpl->get_uuid() + node->get_uuid());
                             if (auto parentGraph = pNodeImpl->getGraph()) {
@@ -797,8 +795,7 @@ void Graph::clear()
     suboutput_nodes.clear();
     m_viewnodes.clear();
 
-    optParentSubgNode = nullptr;
-    ctx.reset();
+    m_parSubnetNode = nullptr;
 }
 
 INodeImpl* Graph::createNode(
@@ -950,9 +947,9 @@ std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
             return _getGraphByPath(items);
         }
         else if (currname == "..") {
-            if (optParentSubgNode) {
-                SubnetNode* parentNode = getSubnetNode(optParentSubgNode);
-                auto parentG = optParentSubgNode->m_pImpl->getGraph();
+            if (NodeImpl* pSubnetImpl = getParentSubnetNode()) {
+                SubnetNode* parentNode = getSubnetNode(pSubnetImpl);
+                auto parentG = pSubnetImpl->getGraph();
                 return parentG->_getGraphByPath(items);
             }
         }
@@ -965,7 +962,7 @@ std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
         return nullptr;
     }
 
-    if (auto subnetNode = getSubnetNode(it->second.get()))
+    if (auto subnetNode = getSubnetNode(it->second->m_pImpl))
     {
         auto spGraph = subnetNode->subgraph.get();
         if (spGraph)
@@ -1000,6 +997,14 @@ zeno::NodeImpl* Graph::getNodeByPath(const std::string& pa)
     pathitems.pop_back();
     auto spGraph = _getGraphByPath(pathitems);
     return spGraph->getNode(nodename);
+}
+
+NodeImpl* Graph::getParentSubnetNode() const {
+    return m_parSubnetNode;
+}
+
+void Graph::initParentSubnetNode(NodeImpl* pSubnetNode) {
+    m_parSubnetNode = pSubnetNode;
 }
 
 std::vector<NodeImpl*> Graph::getNodesByClass(const std::string& cls)
@@ -1061,9 +1066,8 @@ LinksData Graph::exportLinks() const
 }
 
 std::string Graph::getName() const {
-    if (optParentSubgNode) {
-        SubnetNode* pSubnetNode = getSubnetNode(optParentSubgNode);
-        return optParentSubgNode->m_pImpl->get_name();
+    if (m_parSubnetNode) {
+        return m_parSubnetNode->get_name();
     }
     return m_name;
 }

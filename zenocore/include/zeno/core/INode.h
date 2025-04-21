@@ -26,7 +26,7 @@ namespace zeno
         virtual void reset_forloop_settings() {}
         virtual zany get_iterate_object() { return 0; }
 
-        INodeImpl* m_pAdapter;
+        INodeImpl* m_pAdapter = nullptr;
     };
 
 #if 0

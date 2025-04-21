@@ -8,6 +8,7 @@
 
 namespace zeno {
 
+#if 0
 struct ContextManagedNode : NodeImpl {
     std::unique_ptr<Context> m_ctx = nullptr;
     bool bNewContext = false;
@@ -42,5 +43,6 @@ struct ContextManagedNode : NodeImpl {
         return old_ctx;
     }
 };
+#endif
 
 }

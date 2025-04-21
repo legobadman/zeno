@@ -9,9 +9,13 @@
 
 namespace zeno
 {
-    INodeImpl::INodeImpl(INode* pNode) {
+    INodeImpl::INodeImpl(INode* pNode) : m_pImpl(nullptr) {
         m_pImpl = new NodeImpl(pNode);
         pNode->m_pAdapter = this;
+    }
+
+    INodeImpl::~INodeImpl() {
+        delete m_pImpl;
     }
 
     CustomUI INodeImpl::export_customui() const {

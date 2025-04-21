@@ -55,12 +55,12 @@ namespace zeno {
 
     class ForEachEnd;
 
-NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode) {}
+NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {}
 
 void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
     //TODO: 考虑asset的情况
     m_nodecls = nodecls;
-    this->graph = pGraph;
+    this->m_pGraph = pGraph;
 
     m_uuid = generateUUID(nodecls);
     ObjPath path;
@@ -71,12 +71,12 @@ void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
             break;
         }
         else {
-            if (!pGraph->optParentSubgNode)
+            if (!pGraph->getParentSubnetNode())
                 break;
-            auto pSubnetNode = pGraph->optParentSubgNode->m_pImpl;
+            auto pSubnetNode = pGraph->getParentSubnetNode();
             assert(pSubnetNode);
             path = (pSubnetNode->m_uuid) + "/" + path;
-            pGraph = pSubnetNode->graph;
+            pGraph = pSubnetNode->m_pGraph;
         }
     }
     m_uuidPath = path;
@@ -88,7 +88,7 @@ NodeImpl::~NodeImpl() {
 }
 
 Graph* NodeImpl::getThisGraph() const {
-    return graph;
+    return m_pGraph;
 }
 
 Session *NodeImpl::getThisSession() const {
@@ -141,7 +141,7 @@ CustomUI NodeImpl::get_customui() const {
 }
 
 Graph* NodeImpl::getGraph() const {
-    return graph;
+    return m_pGraph;
 }
 
 INode* NodeImpl::coreNode() const {
@@ -152,7 +152,7 @@ ObjPath NodeImpl::get_graph_path() const {
     ObjPath path;
     path = "";
 
-    Graph* pGraph = graph;
+    Graph* pGraph = m_pGraph;
 
     while (pGraph) {
         const std::string name = pGraph->getName();
@@ -161,12 +161,12 @@ ObjPath NodeImpl::get_graph_path() const {
             break;
         }
         else {
-            if (!pGraph->optParentSubgNode)
+            if (!pGraph->getParentSubnetNode())
                 break;
-            auto pSubnetNode = pGraph->optParentSubgNode->m_pImpl;
+            auto pSubnetNode = pGraph->getParentSubnetNode();
             assert(pSubnetNode);
             path = pSubnetNode->m_name + "/" + path;
-            pGraph = pSubnetNode->graph;
+            pGraph = pSubnetNode->m_pGraph;
         }
     }
     return path;
@@ -283,7 +283,7 @@ ObjPath NodeImpl::get_path() const {
     ObjPath path;
     path = m_name;
 
-    Graph* pGraph = graph;
+    Graph* pGraph = m_pGraph;
 
     while (pGraph) {
         const std::string name = pGraph->getName();
@@ -293,11 +293,11 @@ ObjPath NodeImpl::get_path() const {
         }
         else {
             path = name + "/" + path;
-            if (!pGraph->optParentSubgNode)
+            if (!pGraph->getParentSubnetNode())
                 break;
-            auto pSubnetNode = pGraph->optParentSubgNode->m_pImpl;
+            auto pSubnetNode = pGraph->getParentSubnetNode();
             assert(pSubnetNode);
-            pGraph = pSubnetNode->graph;
+            pGraph = pSubnetNode->m_pGraph;
         }
     }
     return path;
@@ -330,7 +330,7 @@ void NodeImpl::set_view(bool bOn)
         m_bView = bOn;
         CALLBACK_NOTIFY(set_view, m_bView)
 
-        Graph* spGraph = graph;
+        Graph* spGraph = m_pGraph;
         assert(spGraph);
         spGraph->viewNodeUpdated(m_name, bOn);
     }
@@ -449,17 +449,17 @@ bool NodeImpl::has_frame_relative_params() const {
 
 bool NodeImpl::isInDopnetwork()
 {
-    Graph* parentGraph = graph;
+    Graph* parentGraph = m_pGraph;
     while (parentGraph)
     {
-        if (parentGraph->optParentSubgNode)
+        if (auto pSubnetImpl = parentGraph->getParentSubnetNode())
         {
-            if (SubnetNode* subnet = getSubnetNode(parentGraph->optParentSubgNode)) {
+            if (SubnetNode* subnet = getSubnetNode(pSubnetImpl)) {
                 if (DopNetwork* dop = dynamic_cast<DopNetwork*>(subnet)) {
                     return true;
                 }
                 else {
-                    parentGraph = parentGraph->optParentSubgNode->m_pImpl->getGraph();
+                    parentGraph = pSubnetImpl->getGraph();
                 }
             }
             else {
@@ -539,11 +539,11 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
     }
     }
 
-    Graph* spGraph = graph;
+    Graph* spGraph = m_pGraph;
     assert(spGraph);
-    if (spGraph->optParentSubgNode)
+    if (auto pSubnetImpl = spGraph->getParentSubnetNode())
     {
-        spGraph->optParentSubgNode->m_pImpl->mark_dirty(true, Dirty_All, false);
+        pSubnetImpl->mark_dirty(true, Dirty_All, false);
     }
 }
 
@@ -635,7 +635,7 @@ void NodeImpl::preApplyTimeshift(CalcContext* pContext)
 void NodeImpl::reflectForeach_apply(CalcContext* pContext)
 {
     std::string foreach_begin_path = zeno::any_cast_to_string(get_defl_value("ForEachBegin Path"));
-    if (Graph* spGraph = graph) {
+    if (Graph* spGraph = m_pGraph) {
         auto foreach_begin = spGraph->getNode(foreach_begin_path);
 
         auto foreach_end = coreNode();
@@ -1673,7 +1673,7 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                         assert(reflink->source_inparam);
                         auto spSrcNode = reflink->source_inparam->m_wpNode;
                         assert(spSrcNode);
-                        Graph* spSrcGraph = spSrcNode->graph;
+                        Graph* spSrcGraph = spSrcNode->m_pGraph;
                         assert(spSrcGraph);
                         //NOTE in 2025/3/25: 还是apply引用源，至于本节点参数循环引用的问题，走另外的路线
                         if (spSrcNode == this) {
@@ -2380,7 +2380,7 @@ bool NodeImpl::update_param_impl(const std::string& param, zeno::reflect::Any ne
         old_value = spParam.defl;
         spParam.defl = new_value;
 
-        Graph* spGraph = graph;
+        Graph* spGraph = m_pGraph;
         assert(spGraph);
 
         spGraph->onNodeParamUpdated(&spParam, old_value, new_value);
@@ -2847,7 +2847,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
         }
     }
 
-    Graph* spGraph = graph;
+    Graph* spGraph = m_pGraph;
 
     //the left names are the names of params which will be removed.
     for (auto rem_name : inputs_old) {
@@ -2918,7 +2918,7 @@ void NodeImpl::init(const NodeData& dat)
     m_pos = dat.uipos;
     m_bView = dat.bView;
     if (m_bView) {
-        Graph* spGraph = graph;
+        Graph* spGraph = m_pGraph;
         assert(spGraph);
         spGraph->viewNodeUpdated(m_name, m_bView);
     }
@@ -2969,7 +2969,7 @@ void NodeImpl::initParams(const NodeData& dat)
                 sparam.bSocketVisible = param.bSocketVisible;
 
                 //graph记录$F相关节点
-                if (Graph* spGraph = graph)
+                if (Graph* spGraph = m_pGraph)
                     spGraph->parseNodeParamDependency(&sparam, sparam.defl);
             }
         }
@@ -3100,7 +3100,7 @@ std::pair<float, float> NodeImpl::get_pos() const {
 }
 
 bool NodeImpl::in_asset_file() const {
-    Graph* spGraph = graph;
+    Graph* spGraph = m_pGraph;
     assert(spGraph);
     return getSession().assets->isAssetGraph(spGraph);
 }
@@ -3203,7 +3203,7 @@ std::vector<zany> NodeImpl::get_output_objs() {
 
 TempNodeCaller NodeImpl::temp_node(std::string const &id) {
     //TODO: deprecated
-    Graph* spGraph = graph;
+    Graph* spGraph = m_pGraph;
     assert(spGraph);
     return TempNodeCaller(spGraph, id);
 }

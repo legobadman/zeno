@@ -40,12 +40,6 @@ struct Context {
 struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     Session* session = nullptr;
 
-    int beginFrameNumber = 0, endFrameNumber = 0;  // only use by runnermain.cpp
-
-    std::unique_ptr<Context> ctx;
-
-    INodeImpl* optParentSubgNode = nullptr;
-
     Graph(const std::string& name, bool bAssets = false);
     ~Graph();
 
@@ -86,6 +80,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     NodeImpl* getNode(std::string const& name);
     NodeImpl* getNodeByUuidPath(ObjPath path);
     NodeImpl* getNodeByPath(const std::string& path);
+    NodeImpl* getParentSubnetNode() const;
+    void initParentSubnetNode(NodeImpl* pSubnetNode);
     std::vector<NodeImpl*> getNodesByClass(const std::string& cls);
     std::shared_ptr<Graph> getGraphByPath(const std::string& path);
     std::map<std::string, NodeImpl*> getNodes() const;
@@ -152,6 +148,7 @@ private:
     bool isLinkValid(const EdgeInfo& edge);
     bool applyNode(std::string const& id);
 
+    NodeImpl* m_parSubnetNode = nullptr;
     std::map<std::string, std::unique_ptr<INodeImpl>> m_nodes;  //based on uuid.
     std::set<std::string> nodesToExec;
     std::map<std::string, std::string> subInputNodes;

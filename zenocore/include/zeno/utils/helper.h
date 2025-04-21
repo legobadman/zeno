@@ -69,7 +69,7 @@ namespace zeno {
         std::vector<std::string>& outputParams);
     ZENO_API bool isDerivedFromSubnetNodeName(const std::string& clsname);    //判断clsname是否为继承自subnetNode的节点
 
-    ZENO_API zeno::SubnetNode* getSubnetNode(zeno::INodeImpl* pAdapter);
+    ZENO_API zeno::SubnetNode* getSubnetNode(zeno::NodeImpl* pAdapter);
 
     //变量传播dirty相关
     ZENO_API void propagateDirty(NodeImpl* spCurrNode, std::string varName);

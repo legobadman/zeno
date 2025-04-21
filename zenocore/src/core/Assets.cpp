@@ -357,7 +357,7 @@ ZENO_API void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo i
 std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGraph, SubnetNode* subNode)
 {
     std::shared_ptr<Graph> newGraph = std::make_shared<Graph>(assetGraph->getName(), true);
-    newGraph->optParentSubgNode = subNode->m_pAdapter;
+    newGraph->initParentSubnetNode(subNode->m_pAdapter->m_pImpl);
     for (const auto& [uuid, spNode] : assetGraph->getNodes())
     {
         zeno::NodeData nodeDat;

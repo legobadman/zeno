@@ -355,7 +355,7 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
         customui.inputPrims[0].name == "Tab1" &&
         customui.inputPrims[0].groups.size() == 1 &&
         customui.inputPrims[0].groups[0].name == "Group1" &&
-        !dynamic_cast<zeno::SubnetNode*>(m_wpNode)) {
+        !dynamic_cast<zeno::SubnetNode*>(m_wpNode->coreNode())) {
         return;
     }
     else {
@@ -1073,7 +1073,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
     //reconstruct params.
     initParamItems();
     //TODO: 尽量废弃dynamic_cast这种写法
-    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode)) {
+    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode->coreNode())) {
         updateCustomUiModelIncremental(changes, sbn->get_customui());
     }
     else {
@@ -1213,7 +1213,7 @@ void ParamsModel::updateParamData(const QString& name, const QVariant& val, int 
 void ParamsModel::resetCustomUi(const zeno::CustomUI& customui)
 {
     auto spNode = m_wpNode/*.lock()*/;
-    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode))
+    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode->coreNode()))
         sbn->setCustomUi(customui);
 }
 

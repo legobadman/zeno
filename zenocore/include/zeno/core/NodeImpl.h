@@ -284,11 +284,6 @@ namespace zeno
         TempNodeCaller temp_node(std::string const& id);
 
     private:
-        int a;
-        int b;
-        char c;
-        double d;
-
         std::string m_name;
         std::string m_nodecls;
         std::string m_uuid;
@@ -301,7 +296,7 @@ namespace zeno
 
         std::string m_uuidPath;
         NodeRunStatus m_status = Node_DirtyReadyToRun;
-        Graph* graph;
+        Graph* m_pGraph;
         std::unique_ptr<INode> m_pNode;
         bool m_bView = false;
         bool m_mute = false;

@@ -21,7 +21,7 @@ namespace zeno {
 
 SubnetNode::SubnetNode() : subgraph(std::make_shared<Graph>(""))
 {
-    subgraph->optParentSubgNode = this->m_pAdapter;
+    subgraph->initParentSubnetNode(this->m_pAdapter->m_pImpl);
 
     //auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
     //m_customUi = cl->m_customui;
@@ -219,7 +219,7 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
                             }
                         }
                         for (auto& link : m_pAdapter->m_pImpl->getLinksByParam(true, param.name)) {
-                            if (auto spgraph = m_pAdapter->m_pImpl->graph) {
+                            if (auto spgraph = m_pAdapter->m_pImpl->m_pGraph) {
                                 if (auto linktonode = spgraph->getNode(link.outNode)) {
                                     ParamType paramType;
                                     SocketType socketType;
