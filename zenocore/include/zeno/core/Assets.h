@@ -41,7 +41,7 @@ struct AssetsMgr : std::enable_shared_from_this<AssetsMgr> {
     ZENO_API std::shared_ptr<Graph> getAssetGraph(const std::string& name, bool bLoadIfNotExist);
     ZENO_API std::vector<Asset> getAssets() const;
     ZENO_API void updateAssets(const std::string name, ParamsUpdateInfo info, const zeno::CustomUI& customui);
-    ZENO_API std::unique_ptr<INodeImpl> newInstance(Graph* pGraph, const std::string& assetsName, const std::string& nodeName, bool createInAsset);
+    ZENO_API std::unique_ptr<NodeImpl> newInstance(Graph* pGraph, const std::string& assetsName, const std::string& nodeName, bool createInAsset);
     ZENO_API void updateAssetInstance(const std::string& assetsName, SubnetNode* spNode);
 
 
@@ -50,7 +50,7 @@ struct AssetsMgr : std::enable_shared_from_this<AssetsMgr> {
 
 private:
     void initAssetsInfo();
-    std::shared_ptr<Graph> forkAssetGraph(std::shared_ptr<Graph> assetGraph, SubnetNode* subNode);
+    std::shared_ptr<Graph> forkAssetGraph(std::shared_ptr<Graph> assetGraph, NodeImpl* subNode);
 
     void initAssetSubInputOutput(Asset& asset);
     bool m_bInitAssetInfo = false;

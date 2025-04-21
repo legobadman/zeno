@@ -328,7 +328,7 @@ struct ExchangeFBXData : zeno::INode {
         auto nodetree = zeno::safe_dynamic_cast<NodeTree>(get_input("nodetree"));
         auto bonetree = zeno::safe_dynamic_cast<BoneTree>(get_input("bonetree"));
 
-        auto paramDType = m_pAdapter->get_param_string("dType");
+        auto paramDType = get_param_string("dType");
         std::string dType;
         if(paramDType == "DATA"){
             auto data = zeno::safe_dynamic_cast<FBXData>(get_input("d"));
@@ -337,7 +337,7 @@ struct ExchangeFBXData : zeno::INode {
             data->animInfo = animinfo;
             set_output("d", std::move(data));
         }else if(paramDType == "DATAS"){
-            auto datas = m_pAdapter->get_input_DictObject("d");
+            auto datas = get_input_DictObject("d");
             for (auto &[k, v]: datas->lut) {
                 auto vc = zeno::safe_dynamic_cast<FBXData>(v.get());
                 vc->animInfo = animinfo;
@@ -346,7 +346,7 @@ struct ExchangeFBXData : zeno::INode {
             }
             set_output("d", std::move(datas));
         }else if(paramDType == "MATS"){
-            auto mats = m_pAdapter->get_input_DictObject("d");
+            auto mats = get_input_DictObject("d");
             for (auto &[k, v]: mats->lut) {
                 auto vc = zeno::safe_dynamic_cast<MatData>(v.get());
                 for(auto &[_k, _v]: vc->iFbxData.value){

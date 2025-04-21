@@ -8,38 +8,40 @@
 
 namespace zeno {
 
-struct ZENO_API SubnetNode : INode {
-    std::shared_ptr<Graph> subgraph;    //assets subnetnode
+struct ZENO_API SubnetNode : NodeImpl {
 
-    CustomUI m_customUi;
-
-    SubnetNode();
+    SubnetNode(INode* pNode);
     ~SubnetNode();
 
     void apply() override;
 
     void initParams(const NodeData& dat);
-    params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
-    Graph* get_graph() const;
+    params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false) override;
+    Graph* get_subgraph() const;
+    void init_graph(std::shared_ptr<Graph> subg);
     bool isAssetsNode() const;
     
-    NodeData exportInfo() const;
-    CustomUI get_customui() const;
-    CustomUI export_customui() const;
+    NodeData exportInfo() const override;
+    CustomUI get_customui() const override;
+    CustomUI export_customui() const override;
 
     void setCustomUi(const CustomUI& ui);
     void mark_subnetdirty(bool bOn);
+
+protected:
+    CustomUI m_customUi;
+    std::shared_ptr<Graph> m_subgraph;    //assets subnetnode
 };
 
 struct ZENO_API DopNetwork : zeno::SubnetNode {
 
     DopNetwork();
-     void apply() override;
+    void apply() override;
 
-     void setEnableCache(bool enable);
-     void setAllowCacheToDisk(bool enable);
-     void setMaxCacheMemoryMB(int size);
-     void setCurrCacheMemoryMB(int size);
+    void setEnableCache(bool enable);
+    void setAllowCacheToDisk(bool enable);
+    void setMaxCacheMemoryMB(int size);
+    void setCurrCacheMemoryMB(int size);
     static size_t getObjSize(IObject* obj);
     void resetFrameState();
 

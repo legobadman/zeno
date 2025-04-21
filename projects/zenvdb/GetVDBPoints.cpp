@@ -364,7 +364,7 @@ ZENO_DEFOVERLOADNODE(ConvertTo, _VDBPointsGrid_PrimitiveObject, typeid(VDBPoints
 struct ToVisualize_VDBPointsGrid : VDBPointsToPrimitive {
     virtual void apply() override {
         VDBPointsToPrimitive::apply();
-        auto path = zsString2Std(m_pAdapter->get_param_string("path"));
+        auto path = zsString2Std(get_param_string("path"));
         auto prim = std::move(smart_any_cast<std::shared_ptr<IObject>>(outputs.at("prim")));
         if (auto node = graph->getOverloadNode("ToVisualize", {std::move(prim)}); node) {
             node->inputs["path:"] = std::make_shared<StringObject>(path);

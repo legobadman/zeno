@@ -4,7 +4,6 @@
 #include <zeno/core/IObject.h>
 #include <zeno/core/data.h>
 #include <zeno/core/NodeImpl.h>
-#include <zeno/core/INodeimpl.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <functional>
 #include <variant>
@@ -52,7 +51,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     void init(const GraphData& graph);
     void initRef(const GraphData& graph);
 
-    INodeImpl* createNode(
+    NodeImpl* createNode(
         const std::string& cls,
         const std::string& orgin_name = "",
         bool bAssets = false,
@@ -149,7 +148,7 @@ private:
     bool applyNode(std::string const& id);
 
     NodeImpl* m_parSubnetNode = nullptr;
-    std::map<std::string, std::unique_ptr<INodeImpl>> m_nodes;  //based on uuid.
+    std::map<std::string, std::unique_ptr<NodeImpl>> m_nodes;  //based on uuid.
     std::set<std::string> nodesToExec;
     std::map<std::string, std::string> subInputNodes;
     std::map<std::string, std::string> subOutputNodes;

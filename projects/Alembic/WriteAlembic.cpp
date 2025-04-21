@@ -48,17 +48,17 @@ struct WriteAlembic : INode {
     OArchive archive;
     OPolyMesh meshyObj;
     virtual void apply() override {
-        bool flipFrontBack = m_pAdapter->get_param_int("flipFrontBack");
+        bool flipFrontBack = get_param_int("flipFrontBack");
         int frameid;
         if (has_input("frameid")) {
-            frameid = m_pAdapter->get_param_int("frameid");
+            frameid = get_param_int("frameid");
         } else {
-            frameid = m_pAdapter->getGlobalState()->getFrameId();
+            frameid = getGlobalState()->getFrameId();
         }
-        int frame_start = m_pAdapter->get_param_int("frame_start");
-        int frame_end = m_pAdapter->get_param_int("frame_end");
+        int frame_start = get_param_int("frame_start");
+        int frame_end = get_param_int("frame_end");
         if (frameid == frame_start) {
-            std::string path = zsString2Std(m_pAdapter->get_param_string("path"));
+            std::string path = zsString2Std(get_param_string("path"));
             archive = {Alembic::AbcCoreOgawa::WriteArchive(), path};
             archive.addTimeSampling(TimeSampling(1.0/24, frame_start / 24.0));
             meshyObj = OPolyMesh( OObject( archive, 1 ), "mesh" );
@@ -564,14 +564,14 @@ struct WriteAlembic2 : INode {
     int real_frame_start = -1;
 
     virtual void apply() override {
-        auto prim = m_pAdapter->get_input_PrimitiveObject("prim");
+        auto prim = get_input_PrimitiveObject("prim");
         bool flipFrontBack = get_input2_int("flipFrontBack");
         float fps = get_input2_float("fps");
         int frameid;
         if (has_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = m_pAdapter->getGlobalState()->getFrameId();
+            frameid = getGlobalState()->getFrameId();
         }
         int frame_start = get_input2_int("frame_start");
         int frame_end = get_input2_int("frame_end");
@@ -584,7 +584,7 @@ struct WriteAlembic2 : INode {
                 Alembic::AbcCoreOgawa::WriteArchive(),
                 path,
                 fps,
-                "Zeno : " + m_pAdapter->getGlobalState()->zeno_version,
+                "Zeno : " + getGlobalState()->zeno_version,
                 "None"
             );
             real_frame_start = -1;
@@ -763,7 +763,7 @@ struct WriteAlembicPrims : INode {
             prims = PrimUnmergeFaces(prim.get(), "abcpath");
         }
         else {
-            auto _lstobj = m_pAdapter->get_input_ListObject("prims");
+            auto _lstobj = get_input_ListObject("prims");
             prims = get_prims_from_list(_lstobj);
         }
         bool flipFrontBack = get_input2_int("flipFrontBack");
@@ -772,7 +772,7 @@ struct WriteAlembicPrims : INode {
         if (has_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = m_pAdapter->getGlobalState()->getFrameId();
+            frameid = getGlobalState()->getFrameId();
         }
         int frame_start = get_input2_int("frame_start");
         int frame_end = get_input2_int("frame_end");
@@ -841,7 +841,7 @@ struct WriteAlembicPrims : INode {
                 Alembic::AbcCoreOgawa::WriteArchive(),
                 path,
                 fps,
-                "Zeno : " + m_pAdapter->getGlobalState()->zeno_version,
+                "Zeno : " + getGlobalState()->zeno_version,
                 "None"
             );
             meshyObjs.clear();

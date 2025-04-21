@@ -43,7 +43,7 @@ namespace zeno {
     };
     ENUM_FLAGS(NodeStatus)
 
-        enum NodeType
+    enum NodeType
     {
         Node_Normal,
         SubInput,

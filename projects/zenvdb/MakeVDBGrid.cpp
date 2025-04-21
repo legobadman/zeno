@@ -8,15 +8,15 @@ namespace zeno {
 
 struct MakeVDBGrid : zeno::INode {
   virtual void apply() override {
-    //auto dx = m_pAdapter->get_param_float("dx");
+    //auto dx = get_param_float("dx");
     float dx=0.08f;
     if(has_input("Dx"))
     {
         dx = get_input2_float("Dx");
     }
-    auto type = zsString2Std(m_pAdapter->get_param_string("type"));
-    auto structure = zsString2Std(m_pAdapter->get_param_string("structure"));
-    auto name = zsString2Std(m_pAdapter->get_param_string("name"));
+    auto type = zsString2Std(get_param_string("type"));
+    auto structure = zsString2Std(get_param_string("structure"));
+    auto name = zsString2Std(get_param_string("name"));
     std::shared_ptr<VDBGrid> data;
     if (type == "float") {
       auto tmp = !has_input("background") ? std::make_shared<VDBFloatGrid>()
@@ -81,7 +81,7 @@ static int defMakeVDBGrid = zeno::defNodeClass<MakeVDBGrid>(
 struct SetVDBGridName : zeno::INode {
     virtual void apply() override {
         auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
-        auto name = zsString2Std(m_pAdapter->get_param_string("name"));
+        auto name = zsString2Std(get_param_string("name"));
         grid->setName(name);
         set_output("grid", std::move(grid));
     }

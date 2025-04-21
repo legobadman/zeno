@@ -37,9 +37,9 @@ struct VDBGetBackground : INode{
   virtual void apply() override {
     auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
     if (auto p = std::dynamic_pointer_cast<VDBFloatGrid>(grid); p) {
-        m_pAdapter->set_output_float("background", p->m_grid->background());
+        set_output_float("background", p->m_grid->background());
     } else if (auto p = std::dynamic_pointer_cast<VDBFloat3Grid>(grid); p) {
-        m_pAdapter->set_output_vec3f("background", toAbiVec3f(other_to_vec<3>(p->m_grid->background())));
+        set_output_vec3f("background", toAbiVec3f(other_to_vec<3>(p->m_grid->background())));
     }
 
     set_output("grid", get_input("grid"));

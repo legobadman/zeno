@@ -148,7 +148,7 @@ struct FBXSDKVisibility : zeno::INode {
         auto inheritVisibility = get_input2_bool("inherit");
         auto vis_dict = std::make_shared<zeno::DictObject>();
         auto inherit_dict = std::make_shared<zeno::DictObject>();
-        auto fps = zsString2Std(m_pAdapter->get_param_string("fps"));
+        auto fps = zsString2Std(get_param_string("fps"));
         FbxTime::EMode eFrame = FbxTime::eFrames30;
         fps == "e30" ? eFrame = FbxTime::eFrames30 : eFrame = FbxTime::eFrames24;
         std::cout << "EFrame " << eFrame << " FPS " << fps << "\n";
@@ -1111,7 +1111,7 @@ struct NewFBXImportAnimation : INode {
         if (has_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
         float fps = get_input2_float("fps");
         float t = float(frameid) / fps;
@@ -1274,7 +1274,7 @@ struct NewFBXImportCamera : INode {
         if (has_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
         float fps = get_input2_float("fps");
         float t = float(frameid) / fps;
@@ -1360,27 +1360,27 @@ struct NewFBXImportCamera : INode {
                 auto right = Vec3f(r2[0], r2[1], r2[2]);
                 FbxCamera* pCamera = pNode->GetCamera();
                 if (pCamera) {
-                    m_pAdapter->set_output_vec3f("pos", pos);
-                    m_pAdapter->set_output_vec3f("right", right);
-                    m_pAdapter->set_output_vec3f("up", up);
-                    m_pAdapter->set_output_vec3f("view", view);
+                    set_output_vec3f("pos", pos);
+                    set_output_vec3f("right", right);
+                    set_output_vec3f("up", up);
+                    set_output_vec3f("view", view);
 
                     float focal_length = pCamera->FocalLength.Get();
-                    m_pAdapter->set_output_float("focal_length", focal_length);
+                    set_output_float("focal_length", focal_length);
                     float m_ha = pCamera->GetApertureWidth() * 25.4; // inch -> mm
                     float m_va = pCamera->GetApertureHeight() * 25.4; // inch -> mm
-                    m_pAdapter->set_output_float("horizontalAperture", m_ha);
-                    m_pAdapter->set_output_float("verticalAperture", m_va);
+                    set_output_float("horizontalAperture", m_ha);
+                    set_output_float("verticalAperture", m_va);
                     auto m_nx = get_input2_float("nx");
                     auto m_ny = get_input2_float("ny");
                     float c_aspect = m_ha/m_va;
                     float u_aspect = m_nx/m_ny;
                     float fov_y = glm::degrees(2.0f * std::atan(m_va/(u_aspect/c_aspect) / (2.0f * focal_length)));
-                    m_pAdapter->set_output_float("fov_y", fov_y);
+                    set_output_float("fov_y", fov_y);
                     float _near = pCamera->NearPlane.Get();
                     float _far = pCamera->FarPlane.Get();
-                    m_pAdapter->set_output_float("near", _near);
-                    m_pAdapter->set_output_float("far", _far);
+                    set_output_float("near", _near);
+                    set_output_float("far", _far);
                 }
             }
         }
@@ -1609,7 +1609,7 @@ static std::vector<int> TopologicalSorting(std::map<int, int> bone_connects, zen
 struct NewFBXRigPose : INode {
     virtual void apply() override {
         auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(get_input_PrimitiveObject("skeleton")->clone());
-        auto nodelist = FBX::ListGetRaw<RigPoseItemObject>(m_pAdapter->get_input_ListObject("Transformations"));
+        auto nodelist = FBX::ListGetRaw<RigPoseItemObject>(get_input_ListObject("Transformations"));
         std::map<int, RigPoseItemObject*> Transformations;
         {
             auto boneNameMapping = getBoneNameMapping(skeleton.get());
@@ -2198,7 +2198,7 @@ struct IKChains : INode {
     virtual void apply() override {
         auto skeleton = get_input_PrimitiveObject("Skeleton");
         auto ikDrivers = get_input_PrimitiveObject("IK Drivers");
-        auto items = FBX::ListGetRaw<IKChainsItemObject>(m_pAdapter->get_input_ListObject("items"));
+        auto items = FBX::ListGetRaw<IKChainsItemObject>(get_input_ListObject("items"));
         auto skeletonBoneNameMapping = getBoneNameMapping(skeleton.get());
         auto ikDriversBoneNameMapping = getBoneNameMapping(ikDrivers.get());
         std::map<int, int> bone_connects;
@@ -2678,9 +2678,9 @@ struct JointLimitItem : INode {
             get_input2_int("enableYLimit"),
             get_input2_int("enableZLimit"),
         };
-        item->xLimit = toVec2f(m_pAdapter->get_input2_vec2f("xLimit"));
-        item->yLimit = toVec2f(m_pAdapter->get_input2_vec2f("yLimit"));
-        item->zLimit = toVec2f(m_pAdapter->get_input2_vec2f("zLimit"));
+        item->xLimit = toVec2f(get_input2_vec2f("xLimit"));
+        item->yLimit = toVec2f(get_input2_vec2f("yLimit"));
+        item->zLimit = toVec2f(get_input2_vec2f("zLimit"));
 
         set_output("JointLimit", std::move(item));
     }
@@ -2713,7 +2713,7 @@ struct IkSolver : INode {
         auto &yLimit = skeleton->add_attr<vec2f>("yLimit");
         auto &zLimit = skeleton->add_attr<vec2f>("zLimit");
         if (has_input("jointLimits")) {
-            auto items = FBX::ListGetRaw<JointLimitObject>(m_pAdapter->get_input_ListObject("jointLimits"));
+            auto items = FBX::ListGetRaw<JointLimitObject>(get_input_ListObject("jointLimits"));
             for (auto &item: items) {
                 if (boneNameMapping.count(item->boneName)) {
                     auto index = boneNameMapping[item->boneName];
@@ -2741,7 +2741,7 @@ struct IkSolver : INode {
         std::vector<int> endEffectorIDs;
         std::vector<int> depths;
         {
-            auto items = FBX::ListGetRaw<IkChainsItemObject>(m_pAdapter->get_input_ListObject("IkChains"));
+            auto items = FBX::ListGetRaw<IkChainsItemObject>(get_input_ListObject("IkChains"));
             for (auto &item: items) {
                 if (boneNameMapping.count(item->endEffectorName) == 0) {
                     log_warn("Not find ik endEffector: {}", item->endEffectorName);
@@ -2806,7 +2806,7 @@ struct IkJointConstraints : INode {
         std::vector<vec2f> yLimit(skeleton->verts.size());
         std::vector<vec2f> zLimit(skeleton->verts.size());
         if (has_input("jointLimits")) {
-            auto items = FBX::ListGetRaw<JointLimitObject>(m_pAdapter->get_input_ListObject("jointLimits"));
+            auto items = FBX::ListGetRaw<JointLimitObject>(get_input_ListObject("jointLimits"));
             for (auto &item: items) {
                 if (boneNameMapping.count(item->boneName)) {
                     auto index = boneNameMapping[item->boneName];

@@ -779,7 +779,7 @@ namespace zeno {
             auto spOriNode = m_objnodeinfo.spViewNode;
             auto spGraph = spOriNode->getThisGraph();
             ZASSERT_EXIT(spGraph);
-            transNode = spGraph->createNode("PrimitiveTransform")->m_pImpl;
+            transNode = spGraph->createNode("PrimitiveTransform");
             ZASSERT_EXIT(transNode);
 
             spObj->update_key(stdString2zs(transNode->get_uuid()));

@@ -124,15 +124,15 @@ struct VDBExplosiveTurbulentNoise : INode {
     strength *= dx;
 
     FBMTurbulent turbulent;
-    turbulent.UVScale=m_pAdapter->get_param_float("UVScale");
-    turbulent.Speed=m_pAdapter->get_param_float("Speed");
-    turbulent.FBM_WarpPrimary=m_pAdapter->get_param_float("FBM_WarpPrimary");
-    turbulent.FBM_WarpSecond=m_pAdapter->get_param_float("FBM_WarpSecond");
-    turbulent.FBM_WarpPersist=m_pAdapter->get_param_float("FBM_WarpPersist");
-    turbulent.FBM_EvalPersist=m_pAdapter->get_param_float("FBM_EvalPersist");
-    turbulent.FBM_Persistence=m_pAdapter->get_param_float("FBM_Persistence");
-    turbulent.FBM_Lacunarity=m_pAdapter->get_param_float("FBM_Lacunarity");
-    turbulent.FBM_Octaves=m_pAdapter->get_param_int("FBM_Octaves");
+    turbulent.UVScale=get_param_float("UVScale");
+    turbulent.Speed=get_param_float("Speed");
+    turbulent.FBM_WarpPrimary=get_param_float("FBM_WarpPrimary");
+    turbulent.FBM_WarpSecond=get_param_float("FBM_WarpSecond");
+    turbulent.FBM_WarpPersist=get_param_float("FBM_WarpPersist");
+    turbulent.FBM_EvalPersist=get_param_float("FBM_EvalPersist");
+    turbulent.FBM_Persistence=get_param_float("FBM_Persistence");
+    turbulent.FBM_Lacunarity=get_param_float("FBM_Lacunarity");
+    turbulent.FBM_Octaves=get_param_int("FBM_Octaves");
 
     auto wrangler = [&](auto &leaf, openvdb::Index leafpos) {
         for (auto iter = leaf.beginValueOn(); iter != leaf.endValueOn(); ++iter) {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <zeno/core/coredata.h>
-#include <zeno/core/INodeImpl.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/vec.h>
 
@@ -47,18 +46,12 @@ namespace zeno
     inline zeno::Vec4i toAbiVec4i(const zeno::vec4i& rhs) { return zeno::Vec4i{ rhs[0], rhs[1], rhs[2], rhs[3] }; }
 
 
-    #define get_input2_int_(name)       m_pAdapter->get_input2_int(name)
-    #define get_input2_float_(name)     m_pAdapter->get_input2_float(name)
-    #define get_input2_string_(name)    zeno::zsString2Std(m_pAdapter->get_input2_string(name))
-    #define get_input2_bool_(name)      m_pAdapter->get_input2_bool(name)
-    #define get_input2_vec2i_(name)     zeno::toVec2i(m_pAdapter->get_input2_vec2i(name))
-    #define get_input2_vec2f_(name)     zeno::toVec2f(m_pAdapter->get_input2_vec2f(name))
-    #define get_input2_vec3i_(name)     zeno::toVec3i(m_pAdapter->get_input2_vec3i(name))
-    #define get_input2_vec3f_(name)     zeno::toVec3f(m_pAdapter->get_input2_vec3f(name))
-    #define get_input2_vec4i_(name)     zeno::toVec4i(m_pAdapter->get_input2_vec4i(name))
-    #define get_input2_vec4f_(name)     zeno::toVec4f(m_pAdapter->get_input2_vec4f(name))
-    #define get_input_PrimitiveObject_(name)    m_pAdapter->get_input_PrimitiveObject(name)
-    #define has_input_(name)            m_pAdapter->has_input(name)
+    #define get_input2_string_(name)    zeno::zsString2Std(get_input2_string(name))
+    #define get_input2_vec2i_(name)     zeno::toVec2i(get_input2_vec2i(name))
+    #define get_input2_vec2f_(name)     zeno::toVec2f(get_input2_vec2f(name))
+    #define get_input2_vec3i_(name)     zeno::toVec3i(get_input2_vec3i(name))
+    #define get_input2_vec3f_(name)     zeno::toVec3f(get_input2_vec3f(name))
+    #define get_input2_vec4i_(name)     zeno::toVec4i(get_input2_vec4i(name))
+    #define get_input2_vec4f_(name)     zeno::toVec4f(get_input2_vec4f(name))
 
-    #define set_output_(name, spobj)   m_pAdapter->set_output_object(name, spobj)
 }

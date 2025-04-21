@@ -83,7 +83,7 @@ struct VDBVoxelAsParticles : INode {
             auto ingrid = safe_dynamic_cast<VDBFloatGrid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
+            auto hasInactive = get_param_bool("hasInactive");
             // tbb::concurrent_vector<vec3f> pos;
             // wxl
 #if 1
@@ -154,8 +154,8 @@ struct VDBVoxelAsParticles : INode {
             auto ingrid = safe_dynamic_cast<VDBFloat3Grid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
-            auto asStaggers = m_pAdapter->get_param_bool("asStaggers");
+            auto hasInactive = get_param_bool("hasInactive");
+            auto asStaggers = get_param_bool("asStaggers");
             // tbb::concurrent_vector<vec3f> pos;
             //tbb::concurrent_vector<float> sdf;
             // wxl
@@ -249,7 +249,7 @@ struct VDBVoxelAsParticles : INode {
             auto ingrid = safe_dynamic_cast<VDBFloatGrid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
+            auto hasInactive = get_param_bool("hasInactive");
             // tbb::concurrent_vector<vec3f> pos;
             // wxl
 #if 1
@@ -324,8 +324,8 @@ struct VDBVoxelAsParticles : INode {
             auto ingrid = safe_dynamic_cast<VDBFloat3Grid>(get_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
 
-            auto hasInactive = m_pAdapter->get_param_bool("hasInactive");
-            auto asStaggers = m_pAdapter->get_param_bool("asStaggers");
+            auto hasInactive = get_param_bool("hasInactive");
+            auto asStaggers = get_param_bool("asStaggers");
             // tbb::concurrent_vector<vec3f> pos;
             //tbb::concurrent_vector<float> sdf;
             // wxl

@@ -482,16 +482,16 @@ struct EvalFBXAnim : zeno::INode {
         if (has_input("frameid")) {
             frameid = get_input2_int("frameid");
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
 
         SFBXEvalOption evalOption;
         auto fbxData = zeno::safe_dynamic_cast<FBXData>(get_input("data"));
-        auto unit = m_pAdapter->get_param_string("unit");
-        auto interAnimData = m_pAdapter->get_param_string("interAnimData");
-        auto writeData = m_pAdapter->get_param_bool("writeData");
-        auto printAnimData = m_pAdapter->get_param_bool("printAnimData");
-        auto evalBlendShape = m_pAdapter->get_param_bool("evalBlendShape");
+        auto unit = get_param_string("unit");
+        auto interAnimData = get_param_string("interAnimData");
+        auto writeData = get_param_bool("writeData");
+        auto printAnimData = get_param_bool("printAnimData");
+        auto evalBlendShape = get_param_bool("evalBlendShape");
 
         unit == "FROM_MAYA" ? evalOption.globalScale = 0.01f : evalOption.globalScale = 1.0f;
         interAnimData == "TRUE" ? evalOption.interAnimData = true : evalOption.interAnimData = false;

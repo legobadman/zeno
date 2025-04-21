@@ -15,9 +15,9 @@ struct SDFToGeometry : zeno::INode {
     virtual void apply() override {
         auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
         
-        auto adaptivity = m_pAdapter->get_param_float("adaptivity");
-        auto isoValue = m_pAdapter->get_param_float("isoValue");
-        auto allowQuads = m_pAdapter->get_param_bool("allowQuads");
+        auto adaptivity = get_param_float("adaptivity");
+        auto isoValue = get_param_float("isoValue");
+        auto allowQuads = get_param_bool("allowQuads");
 
         std::vector<openvdb::Vec3s> points(0);
         std::vector<openvdb::Vec3I> tris(0);
@@ -72,9 +72,9 @@ struct SDFToPoly : zeno::INode{
     virtual void apply() override {
     auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
     auto mesh = std::make_shared<PrimitiveObject>();
-    auto adaptivity = m_pAdapter->get_param_float("adaptivity");
-    auto isoValue = m_pAdapter->get_param_float("isoValue");
-    auto allowQuads = m_pAdapter->get_param_bool("allowQuads");
+    auto adaptivity = get_param_float("adaptivity");
+    auto isoValue = get_param_float("isoValue");
+    auto allowQuads = get_param_bool("allowQuads");
     std::vector<openvdb::Vec3s> points(0);
     std::vector<openvdb::Vec3I> tris(0);
     std::vector<openvdb::Vec4I> quads(0);
@@ -135,7 +135,7 @@ static int defSDFToPoly = zeno::defNodeClass<SDFToPoly>("SDFToPoly",
 struct SDFToPrimitive : SDFToPoly {
     virtual void apply() override {
         SDFToPoly::apply();
-        set_output("prim", m_pAdapter->get_output("Mesh"));
+        set_output("prim", get_output("Mesh"));
     }
 };
 
@@ -175,7 +175,7 @@ struct ToVisualize_VDBFloatGrid : SDFToPoly {
         this->inputs["adaptivity:"] = std::make_shared<NumericObject>(0.0f);
         this->inputs["allowQuads:"] = std::make_shared<NumericObject>(false);
         SDFToPoly::apply();
-        auto path = m_pAdapter->get_param_string("path");
+        auto path = get_param_string("path");
         auto prim = std::move(smart_any_cast<std::shared_ptr<IObject>>(outputs.at("Mesh")));
         if (auto node = graph->getOverloadNode("ToVisualize", {std::move(prim)}); node) {
             node->inputs["path:"] = std::make_shared<StringObject>(path);

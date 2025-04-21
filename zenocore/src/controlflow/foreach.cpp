@@ -1,5 +1,4 @@
 #include <zeno/core/NodeImpl.h>
-#include <zeno/core/INodeImpl.h>
 #include <zeno/zeno.h>
 #include <zeno/core/Graph.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -35,7 +34,7 @@ namespace zeno
     struct ForEachBegin : INode
     {
         NodeImpl* get_foreachend() {
-            auto graph = m_pAdapter->m_pImpl->getGraph();
+            auto graph = m_pAdapter->getGraph();
             std::string m_foreach_end_path = ZImpl(get_input2<std::string>("ForEachEnd Path"));
             auto foreach_end = graph->getNode(m_foreach_end_path);
             if (!foreach_end) {
@@ -51,7 +50,7 @@ namespace zeno
             int m_current_iteration = ZImpl(get_input2<int>("Current Iteration"));
 
             if (!init_object) {
-                throw makeError<UnimplError>(m_pAdapter->m_pImpl->get_name() + " get empty input object.");
+                throw makeError<UnimplError>(m_pAdapter->get_name() + " get empty input object.");
             }
             auto foreach_end = get_foreachend();
 
@@ -111,7 +110,7 @@ namespace zeno
         }
 
         int get_current_iteration() {
-            int current_iteration = zeno::reflect::any_cast<int>(m_pAdapter->m_pImpl->get_defl_value("Current Iteration"));
+            int current_iteration = zeno::reflect::any_cast<int>(m_pAdapter->get_defl_value("Current Iteration"));
             return current_iteration;
         }
 
@@ -119,7 +118,7 @@ namespace zeno
             //m_current_iteration = new_iteration;
             //不能引发事务重新执行，执行权必须由外部Graph发起
             zeno::reflect::Any oldvalue;
-            m_pAdapter->m_pImpl->update_param_impl("Current Iteration", new_iteration, oldvalue);
+            m_pAdapter->update_param_impl("Current Iteration", new_iteration, oldvalue);
         }
     };
 
@@ -131,8 +130,8 @@ namespace zeno
 
         ForEachBegin* get_foreach_begin() {
             //这里不能用m_foreach_begin_path，因为可能还没从基类数据同步过来，后者需要apply操作前才会同步
-            std::string foreach_begin_path = zeno::any_cast_to_string(m_pAdapter->m_pImpl->get_defl_value("ForEachBegin Path"));
-            auto graph = this->m_pAdapter->m_pImpl->getGraph();
+            std::string foreach_begin_path = zeno::any_cast_to_string(m_pAdapter->get_defl_value("ForEachBegin Path"));
+            auto graph = this->m_pAdapter->getGraph();
             auto foreach_begin = dynamic_cast<ForEachBegin*>(graph->getNode(foreach_begin_path));
             if (!foreach_begin) {
                 throw makeError<KeyError>("foreach_begin_path", "the path of foreach_begin_path is not exist");
@@ -178,7 +177,7 @@ namespace zeno
                 return true;
             }
             else if (iter_method == "By Container") {
-                auto foreachbegin_impl = foreach_begin->m_pAdapter->m_pImpl;
+                auto foreachbegin_impl = foreach_begin->m_pAdapter;
                 zany initobj = foreachbegin_impl->get_input("Initial Object");
                 if (!initobj && foreachbegin_impl->is_dirty()) {
                     //可能上游还没算，先把上游的依赖解了

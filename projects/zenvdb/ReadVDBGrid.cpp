@@ -51,14 +51,14 @@ struct CacheVDBGrid : zeno::INode {
     int m_framecounter = 0;
 
     virtual void preApply(CalcContext* pContext) override {
-        if (m_pAdapter->get_param_bool("mute")) {
+        if (get_param_bool("mute")) {
             requireInput("inGrid", pContext);
             set_output("outGrid", get_input("inGrid"));
             return;
         }
-        auto dir = zsString2Std(m_pAdapter->get_param_string("dir"));
-        auto prefix = zsString2Std(m_pAdapter->get_param_string("prefix"));
-        bool ignore = m_pAdapter->get_param_bool("ignore");
+        auto dir = zsString2Std(get_param_string("dir"));
+        auto prefix = zsString2Std(get_param_string("prefix"));
+        bool ignore = get_param_bool("ignore");
         if (!std::filesystem::is_directory(dir)) {
             std::filesystem::create_directory(dir);
         }
@@ -135,8 +135,8 @@ static std::shared_ptr<VDBGrid> readvdb(std::string path, std::string type)
 
 struct ReadVDBGrid : zeno::INode {
   virtual void apply() override {
-    auto path = zsString2Std(m_pAdapter->get_param_string("path"));
-    auto type = zsString2Std(m_pAdapter->get_param_string("type"));
+    auto path = zsString2Std(get_param_string("path"));
+    auto type = zsString2Std(get_param_string("type"));
     auto data = readvdb(path, type);
     set_output("data", data);
   }
@@ -159,7 +159,7 @@ static int defReadVDBGrid = zeno::defNodeClass<ReadVDBGrid>(
 struct ImportVDBGrid : zeno::INode {
   virtual void apply() override {
     auto path = zsString2Std(get_input2_string("path"));
-    // auto type = zsString2Std(m_pAdapter->get_param_string("type"));
+    // auto type = zsString2Std(get_param_string("type"));
     auto data = readvdb(path, "");
     set_output("data", std::move(data));
   }

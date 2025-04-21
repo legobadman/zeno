@@ -374,15 +374,15 @@ struct GetAlembicCamera : INode {
         auto _right = zeno::normalize(zeno::vec3f((float)right.x, (float)right.y, (float)right.z));
         auto view = zeno::cross(_up, _right);
 
-        m_pAdapter->set_output_vec3f("up", toAbiVec3f(_up));//  set_output2("up", _up);
-        m_pAdapter->set_output_vec3f("right", toAbiVec3f(_right));
-        m_pAdapter->set_output_vec3f("view", toAbiVec3f(view));
+        set_output_vec3f("up", toAbiVec3f(_up));//  set_output2("up", _up);
+        set_output_vec3f("right", toAbiVec3f(_right));
+        set_output_vec3f("view", toAbiVec3f(view));
 
-        m_pAdapter->set_output_float("focal_length", focal_length);
-        m_pAdapter->set_output_float("near", (float)cam_info.value()._near);
-        m_pAdapter->set_output_float("far", (float)cam_info.value()._far);
-        m_pAdapter->set_output_float("horizontalAperture", (float)cam_info->horizontalAperture);
-        m_pAdapter->set_output_float("verticalAperture", (float)cam_info->verticalAperture);
+        set_output_float("focal_length", focal_length);
+        set_output_float("near", (float)cam_info.value()._near);
+        set_output_float("far", (float)cam_info.value()._far);
+        set_output_float("horizontalAperture", (float)cam_info->horizontalAperture);
+        set_output_float("verticalAperture", (float)cam_info->verticalAperture);
 
         float m_nx = get_input2_float("nx");
         float m_ny = get_input2_float("ny");
@@ -425,7 +425,7 @@ struct ImportAlembicPrim : INode {
         if (has_input("frameid")) {
             frameid = get_input2_int("frameid");
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
         auto abctree = std::make_shared<ABCTree>();
         {

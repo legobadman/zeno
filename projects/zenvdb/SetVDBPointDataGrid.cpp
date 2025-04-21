@@ -73,7 +73,7 @@ static openvdb::points::PointDataGrid::Ptr particleArrayToGrid
 
 struct PrimToVDBPointDataGrid : zeno::INode {
   virtual void apply() override {
-    //auto dx = m_pAdapter->get_param_float("dx");
+    //auto dx = get_param_float("dx");
     //if(has_input("Dx"))
     //{
       //dx = get_input2_float("Dx");
@@ -126,7 +126,7 @@ static int defPrimToVDBPointDataGrid = zeno::defNodeClass<PrimToVDBPointDataGrid
 
 struct SetVDBPointDataGrid : zeno::INode {
   virtual void apply() override {
-    auto dx = m_pAdapter->get_param_float("dx");
+    auto dx = get_param_float("dx");
     if(has_input("Dx"))
     {
       dx = get_input2_float("Dx");

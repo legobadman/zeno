@@ -10,15 +10,18 @@
 namespace zeno {
 namespace {
 
-struct Subnet : zeno::SubnetNode {
+struct Subnet : INode {
     virtual void apply() override {
-        zeno::SubnetNode::apply();
+        /*zeno::SubnetNode::apply();*/
     }
     CustomUI export_customui() const override {
-        CustomUI ui = zeno::SubnetNode::export_customui();
+        CustomUI ui = INode::export_customui();
         ui.uistyle.background = "#1D5F51";
         ui.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
         return ui;
+    }
+    NodeType Subnet::type() const {
+        return Node_SubgraphNode;
     }
 };
 

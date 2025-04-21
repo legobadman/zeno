@@ -12,7 +12,7 @@ namespace zeno {
 
 // struct SetVDBTransform : zeno::INode {
 //   virtual void apply() override {
-//     auto dx = m_pAdapter->get_param_float("dx");
+//     auto dx = get_param_float("dx");
 //     auto grid = safe_dynamic_cast<VDBGrid>(get_input("grid"));
 //     auto position = zeno::get_float3<openvdb::Vec3f>(get_param("position"));
 //     auto rotation = zeno::get_float3<openvdb::Vec3f>(get_param("rotation"));
@@ -103,12 +103,12 @@ struct CombineVDB : zeno::INode{
     
     if(targetType == sourceType && targetType== "FloatGrid")
     {
-        auto OpType = zsString2Std(m_pAdapter->get_param_string("OpType"));
+        auto OpType = zsString2Std(get_param_string("OpType"));
         dataf = std::make_shared<VDBFloatGrid>();
         
         auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
         auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
-        if (m_pAdapter->get_param_bool("writeBack")) {
+        if (get_param_bool("writeBack")) {
             auto srcgrid = source->m_grid->deepCopy();
             if(OpType=="CSGUnion") {
               openvdb::tools::csgUnion(*(target->m_grid), *(srcgrid));
@@ -130,7 +130,7 @@ struct CombineVDB : zeno::INode{
             set_output("FieldOut", result);
         }
     }
-    auto OpType = zsString2Std(m_pAdapter->get_param_string("OpType"));
+    auto OpType = zsString2Std(get_param_string("OpType"));
     if(OpType== "Add")
     {
       if(targetType == sourceType && targetType== "FloatGrid"){

@@ -1221,7 +1221,7 @@ namespace zeno {
 
     ZENO_API zeno::SubnetNode* getSubnetNode(zeno::NodeImpl* pAdapter) {
         if (!pAdapter) return nullptr;
-        return dynamic_cast<zeno::SubnetNode*>(pAdapter->coreNode());
+        return dynamic_cast<zeno::SubnetNode*>(pAdapter);
     }
 
     void propagateDirty(NodeImpl* spCurrNode, std::string varName)
@@ -1251,11 +1251,11 @@ namespace zeno {
         if (upstreams.find(spCurrNode->get_uuid_path()) != upstreams.end()) {
             return;
         }
-        if (SubnetNode* pSubnetNode = dynamic_cast<SubnetNode*>(spCurrNode->coreNode()))
+        if (SubnetNode* pSubnetNode = dynamic_cast<SubnetNode*>(spCurrNode))
         {
-            auto pImpl = pSubnetNode->m_pAdapter->m_pImpl;
+            auto pImpl = pSubnetNode;
             auto suboutoutGetUpstreamFunc = [&pSubnetNode, &upstreamDepNodes, &upstreams](std::string paramName) {
-                if (auto suboutput = pSubnetNode->subgraph->getNode(paramName)) {
+                if (auto suboutput = pSubnetNode->get_subgraph()->getNode(paramName)) {
                     getUpstreamNodes(suboutput, upstreamDepNodes, upstreams);
                     upstreams.insert(suboutput->get_uuid_path());
                 }
@@ -1368,17 +1368,17 @@ namespace zeno {
             }
         }
 
-        if (auto pSubnetNode = dynamic_cast<SubnetNode*>(spCurrNode->coreNode()))
+        if (auto pSubnetNode = dynamic_cast<SubnetNode*>(spCurrNode))
         {
             auto subinputMarkDirty = [&pSubnetNode, &nodesRange](bool dirty, std::string paramName) {
-                if (auto subinput = pSubnetNode->subgraph->getNode(paramName))
+                if (auto subinput = pSubnetNode->get_subgraph()->getNode(paramName))
                     mark_dirty_by_dependNodes(subinput, dirty, nodesRange);
             };
             if (inParamName != "") {
                 subinputMarkDirty(bOn, inParamName);
             }
             else {
-                auto pImpl = pSubnetNode->m_pAdapter->m_pImpl;
+                auto pImpl = pSubnetNode;
                 for (auto& param : pImpl->get_input_primitive_params())
                     subinputMarkDirty(bOn, param.name);
                 for (auto& param : pImpl->get_input_object_params())
@@ -1418,8 +1418,8 @@ namespace zeno {
 
     bool isSubnetInputOutputParam(NodeImpl* spParentnode, std::string paramName)
     {
-        if (SubnetNode* spSubnetnode = dynamic_cast<SubnetNode*>(spParentnode->coreNode())) {
-            if (auto node = spSubnetnode->subgraph->getNode(paramName)) {
+        if (SubnetNode* spSubnetnode = dynamic_cast<SubnetNode*>(spParentnode)) {
+            if (auto node = spSubnetnode->get_subgraph()->getNode(paramName)) {
                 if (node->get_nodecls() == "SubInput" || node->get_nodecls() == "SubOutput") {
                     return true;
                 }

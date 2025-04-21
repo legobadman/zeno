@@ -26,27 +26,27 @@ namespace zeno {
         std::set<std::string> anyOutputs;
     };
 
-    static void initCoreParams(INodeImpl* spNode, CustomUI customui)
+    static void initCoreParams(NodeImpl* spNode, CustomUI customui)
     {
         //init all params, and set defl value
         for (const ParamObject& param : customui.inputObjs)
         {
-            spNode->m_pImpl->add_input_obj_param(param);
+            spNode->add_input_obj_param(param);
         }
         for (const ParamPrimitive& param : customUiToParams(customui.inputPrims))
         {
-            spNode->m_pImpl->add_input_prim_param(param);
+            spNode->add_input_prim_param(param);
         }
         for (const ParamPrimitive& param : customui.outputPrims)
         {
-            spNode->m_pImpl->add_output_prim_param(param);
+            spNode->add_output_prim_param(param);
         }
         for (const ParamObject& param : customui.outputObjs)
         {
-            spNode->m_pImpl->add_output_obj_param(param);
+            spNode->add_output_obj_param(param);
         }
         //根据customui上的约束信息调整所有控件的可见可用情况
-        spNode->m_pImpl->checkParamsConstrain();
+        spNode->checkParamsConstrain();
     }
 
     static ParamControl parseControlProps(const zeno::reflect::IRawMetadata* metadata, ParamType type, zeno::reflect::Any& controlProps) {
@@ -806,10 +806,10 @@ namespace zeno {
         m_customui.category = "reflect";
     }
 
-    std::unique_ptr<INodeImpl> ReflectNodeClass::new_instance(Graph* pGraph, std::string const& name) {
-        std::unique_ptr<INodeImpl> spNode = std::make_unique<INodeImpl>(ctor());
-        spNode->m_pImpl->initUuid(pGraph, classname);
-        spNode->m_pImpl->set_name(name);
+    std::unique_ptr<NodeImpl> ReflectNodeClass::new_instance(Graph* pGraph, std::string const& name) {
+        std::unique_ptr<NodeImpl> spNode = std::make_unique<NodeImpl>(ctor());
+        spNode->initUuid(pGraph, classname);
+        spNode->set_name(name);
         initCoreParams(spNode.get(), m_customui);
         return spNode;
     }

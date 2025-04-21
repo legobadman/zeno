@@ -13,7 +13,7 @@ namespace zeno {
 
 struct WriteVDBGrid : zeno::INode {
   virtual void apply() override {
-    auto path = zsString2Std(m_pAdapter->get_param_string("path"));
+    auto path = zsString2Std(get_param_string("path"));
     path = create_directories_when_write_file(path);
     auto data = safe_dynamic_cast<VDBGrid>(get_input("data"));
     data->output(path);

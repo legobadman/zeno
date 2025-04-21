@@ -55,7 +55,9 @@ namespace zeno {
 
     class ForEachEnd;
 
-NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {}
+NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
+    m_pNode->m_pAdapter = this;
+}
 
 void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
     //TODO: 考虑asset的情况
@@ -2301,7 +2303,6 @@ std::string NodeImpl::get_viewobject_output_param() const {
 
 NodeData NodeImpl::exportInfo() const
 {
-    //TODO: subnet的怎么拿
     NodeData node;
     node.cls = m_nodecls;
     node.name = m_name;
@@ -3183,6 +3184,9 @@ bool NodeImpl::set_output(std::string const& param, zany obj) {
 }
 
 zany NodeImpl::get_default_output_object() {
+    if (m_nodecls == "SubOutput") {
+        return get_input("port");
+    }
     if (m_outputObjs.empty())
         return nullptr;
     return m_outputObjs.begin()->second.spObject;

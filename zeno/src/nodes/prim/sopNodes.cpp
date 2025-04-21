@@ -1459,7 +1459,7 @@ namespace zeno {
 
             auto spOutput = input_object->clone();
 
-            ctx.spNode = m_pAdapter->m_pImpl;
+            ctx.spNode = m_pAdapter;
             ctx.spObject = spOutput;
             ctx.code = finalZfx;
 

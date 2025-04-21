@@ -11,7 +11,7 @@
 
 namespace zeno {
 namespace {
-
+#if 0
 struct VDBPointScatter : INode{
   virtual void apply() override {
     auto grid = safe_dynamic_cast<VDBFloatGrid>(get_input("grid"));
@@ -23,7 +23,7 @@ struct VDBPointScatter : INode{
     auto istotal = zsString2Std(get_input2_string("counttype")) == "Total";
     if (issdf) {
         grid = std::static_pointer_cast<VDBFloatGrid>(
-            m_pAdapter->m_pImpl->getThisGraph()->callTempNode("SDFToFog", {{"SDF", grid},
+            getThisGraph()->callTempNode("SDFToFog", {{"SDF", grid},
                 {"inplace", std::make_shared<NumericObject>((int)0)}}).at("oSDF"));
     }
     if (seed == -1) seed = std::random_device{}();
@@ -60,6 +60,7 @@ ZENO_DEFNODE(VDBPointScatter)(
      }, /* category: */ {
      "openvdb",
      }});
+#endif
 
 }
 }

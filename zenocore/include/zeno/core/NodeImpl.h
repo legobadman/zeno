@@ -3,7 +3,6 @@
 #include <zeno/utils/api.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/INode.h>
-#include <zeno/core/INodeImpl.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/funcs/LiterialConverter.h>
 #include <variant>
@@ -71,11 +70,11 @@ namespace zeno
 
         void set_view(bool bOn);
         CALLBACK_REGIST(set_view, void, bool)
-            bool is_view() const;
+        bool is_view() const;
 
         void set_mute(bool bOn);
         CALLBACK_REGIST(set_mute, void, bool)
-            bool is_mute() const;
+        bool is_mute() const;
 
         bool is_dirty() const { return m_dirty; }
         NodeRunStatus get_run_status() const { return m_status; }
@@ -137,10 +136,10 @@ namespace zeno
         void update_param_color(const std::string& name, std::string& clr);
         CALLBACK_REGIST(update_param_color, void, const std::string&, std::string&)
 
-            void update_layout(params_change_info& changes);
+        void update_layout(params_change_info& changes);
         CALLBACK_REGIST(update_layout, void, params_change_info& changes)
 
-            virtual params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
+        virtual params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
 
         //由param这个参数值的变化触发节点params重置
         virtual void trigger_update_params(const std::string& param, bool changed, params_change_info changes);

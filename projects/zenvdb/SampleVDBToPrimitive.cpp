@@ -102,7 +102,7 @@ struct SampleVDBToPrimitive : INode {
     auto attr = zsString2Std(get_input2_string("primAttr"));
     auto sampleby = zsString2Std(get_input2_string("sampleBy"));
     auto &pos = prim->attr<vec3f>(sampleby);
-    auto type = zsString2Std(m_pAdapter->get_param_string("SampleType"));
+    auto type = zsString2Std(get_param_string("SampleType"));
 
 
     if (dynamic_cast<VDBFloatGrid *>(grid.get()))

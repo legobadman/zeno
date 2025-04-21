@@ -1158,16 +1158,16 @@ struct ReadFBXPrim : zeno::INode {
         SFBXReadOption readOption;
         std::shared_ptr<zeno::DictObject> visibility;
 
-        auto udim = m_pAdapter->get_param_string("udim");
-        auto primitive = m_pAdapter->get_param_bool("primitive");
+        auto udim = get_param_string("udim");
+        auto primitive = get_param_bool("primitive");
         auto generate = get_input2_bool("generate");
         auto offsetInSeconds = get_input2_float("offset");
-        auto triangulate = m_pAdapter->get_param_bool("triangulate");
-        auto printTree = m_pAdapter->get_param_bool("printTree");
-        auto indepData = m_pAdapter->get_param_bool("indepData");
+        auto triangulate = get_param_bool("triangulate");
+        auto printTree = get_param_bool("printTree");
+        auto indepData = get_param_bool("indepData");
 
         if(has_input("visibility")){
-            visibility = m_pAdapter->get_input_DictObject("visibility");
+            visibility = get_input_DictObject("visibility");
         }else {
             visibility = std::make_shared<zeno::DictObject>();
         }

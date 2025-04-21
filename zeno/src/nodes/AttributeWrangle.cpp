@@ -31,7 +31,7 @@ namespace zeno
             }
 
             ZfxContext ctx;
-            ctx.spNode = this->m_pAdapter->m_pImpl;
+            ctx.spNode = this->m_pAdapter;
             ctx.spObject = spGeo;
             ctx.code = zfxCode;
 

@@ -66,7 +66,7 @@ struct CihouMayaCameraFov : INode {
         }else if(m_fit_gate == 2){
             c_fov = 2.0f * std::atan(m_fw/c_aspect / (2.0f * m_focL) ) * (180.0f / M_PI);
         }
-        m_pAdapter->set_output_float("fov", c_fov);
+        set_output_float("fov", c_fov);
     }
 };
 
@@ -106,11 +106,11 @@ struct CameraEval: zeno::INode {
         if (has_input("frameid")) {
             frameid = get_input2_int("frameid");
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
         
         std::vector<zeno::SharedPtr<zeno::CameraObject>> nodelist;
-        for (auto spobj : m_pAdapter->get_input_ListObject("nodelist")->get()) {
+        for (auto spobj : get_input_ListObject("nodelist")->get()) {
             if (auto cam = std::dynamic_pointer_cast<zeno::CameraObject>(spobj)) {
                 nodelist.push_back(cam);
             }
@@ -356,7 +356,7 @@ struct LiveMeshNode : INode {
         if (has_input("frameid")) {
             frameid = get_input2_int("frameid");
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
 
         if(! vertSrc.empty()){

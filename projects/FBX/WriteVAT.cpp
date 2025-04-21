@@ -318,12 +318,12 @@ struct WriteCustomVAT : INode {
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = m_pAdapter->get_param_int("frameid");
+            frameid = get_param_int("frameid");
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
-        int frameStart = m_pAdapter->get_param_int("frameStart");
-        int frameEnd = m_pAdapter->get_param_int("frameEnd");
+        int frameStart = get_param_int("frameStart");
+        int frameEnd = get_param_int("frameEnd");
         int frameCount = frameEnd - frameStart + 1;
         if (frameid == frameStart) {
             prims.resize(frameCount);
@@ -360,7 +360,7 @@ struct WriteCustomVAT : INode {
                     v[i][j * 3 + 2] = prim->verts[tri[2]];
                 }
             }
-            std::string path = zsString2Std(m_pAdapter->get_param_string("path"));
+            std::string path = zsString2Std(get_param_string("path"));
 
             write_vat(v, path);
 
@@ -467,15 +467,15 @@ struct ReadCustomVAT : INode {
     vector<vector<vec3f>> v;
     virtual void apply() override {
         if (v.empty()) {
-            std::string path = zsString2Std(m_pAdapter->get_param_string("path"));
+            std::string path = zsString2Std(get_param_string("path"));
             v = read_vat(path);
         }
 
         int frameid;
         if (has_input("frameid")) {
-            frameid = m_pAdapter->get_param_int("frameid");
+            frameid = get_param_int("frameid");
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
         auto prim = std::make_shared<zeno::PrimitiveObject>();
         if (frameid < v.size()) {

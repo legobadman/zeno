@@ -1170,7 +1170,7 @@ struct ReadAlembic : INode {
         if (has_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = m_pAdapter->GetFrameId();
+            frameid = GetFrameId();
         }
         auto abctree = std::make_shared<ABCTree>();
         {
@@ -1352,8 +1352,8 @@ ZENDEFNODE(AlembicSplitByName, {
 
 struct CopyPosAndNrmByIndex: INode {
     void apply() override {
-        auto prim = m_pAdapter->get_input_PrimitiveObject("prim");
-        auto lstobj = m_pAdapter->get_input_ListObject("list");
+        auto prim = get_input_PrimitiveObject("prim");
+        auto lstobj = get_input_ListObject("list");
         auto prims = get_prims_from_list(lstobj);
         for (auto p : prims) {
             size_t size = p->size();
@@ -1388,7 +1388,7 @@ ZENDEFNODE(CopyPosAndNrmByIndex, {
 
 struct PrimsFilterInUserdata: INode {
     void apply() override {
-        auto prims =  get_prims_from_list(m_pAdapter->get_input_ListObject("list"));
+        auto prims =  get_prims_from_list(get_input_ListObject("list"));
         auto filter_str = zsString2Std(get_input2_string("filters"));
         std::vector<std::string> filters = zeno::split_str(filter_str, {' ', '\n'});
         std::vector<std::string> filters_;

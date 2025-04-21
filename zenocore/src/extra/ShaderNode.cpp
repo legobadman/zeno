@@ -2,7 +2,7 @@
 #include <zeno/extra/ShaderNode.h>
 #include <zeno/types/ShaderObject.h>
 #include <zeno/types/NumericObject.h>
-#include <zeno/core/INodeImpl.h>
+#include <zeno/core/NodeImpl.h>
 #include <sstream>
 #include <cassert>
 
@@ -18,7 +18,7 @@ ZENO_API ShaderNode::ShaderNode() = default;
 
 ZENO_API void ShaderNode::apply() {
     auto tree = std::make_shared<ShaderObject>(this);
-    m_pAdapter->m_pImpl->set_output("out", std::move(tree));
+    m_pAdapter->set_output("out", std::move(tree));
 }
 
 ZENO_API std::string EmissionPass::finalizeCode() {

@@ -19,7 +19,7 @@ namespace zeno {
 
 struct MeshToSDF : zeno::INode{
     virtual void apply() override {
-    auto h = m_pAdapter->get_param_float("voxel_size");
+    auto h = get_param_float("voxel_size");
     if(has_input("Dx"))
     {
         h = get_input2_float("Dx");
@@ -43,7 +43,7 @@ struct MeshToSDF : zeno::INode{
         triangles[i] = openvdb::Vec3I(i*3, i*3+1, i*3+2);
     }
     auto vdbtransform = openvdb::math::Transform::createLinearTransform(h);
-    if (zsString2Std(m_pAdapter->get_param_string("type")) == "vertex")
+    if (zsString2Std(get_param_string("type")) == "vertex")
     {
         vdbtransform->postTranslate(openvdb::Vec3d{ -0.5,-0.5,-0.5 }*double(h));
     }
@@ -96,7 +96,7 @@ struct GeometryToSDF : zeno::INode {
         }
 
         auto vdbtransform = openvdb::math::Transform::createLinearTransform(h);
-        if (zsString2Std(m_pAdapter->get_param_string("type")) == "vertex")
+        if (zsString2Std(get_param_string("type")) == "vertex")
         {
             vdbtransform->postTranslate(openvdb::Vec3d{ -0.5,-0.5,-0.5 }*double(h));
         }
@@ -125,7 +125,7 @@ static int defGeomToSDF = zeno::defNodeClass<GeometryToSDF>("GeometryToSDF",
 
 struct PrimitiveToSDF : zeno::INode{
     virtual void apply() override {
-    //auto h = m_pAdapter->get_param_float("voxel_size");
+    //auto h = get_param_float("voxel_size");
     //if(has_input("Dx"))
     //{
       //h = get_input2_float("Dx");
@@ -160,7 +160,7 @@ struct PrimitiveToSDF : zeno::INode{
         quads[i] = openvdb::Vec4I(mesh->quads[i][0], mesh->quads[i][1], mesh->quads[i][2], mesh->quads[i][3]);
     }
     auto vdbtransform = openvdb::math::Transform::createLinearTransform(h);
-    if (m_pAdapter->get_param_string("type") == "vertex")
+    if (get_param_string("type") == "vertex")
     {
         vdbtransform->postTranslate(openvdb::Vec3d{ -0.5,-0.5,-0.5 }*double(h));
     }
