@@ -25,49 +25,51 @@ SubnetNode::SubnetNode(INode* pNode)
 {
     //auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
     //m_customUi = cl->m_customui;
-    {   //添加一些default的输入输出
-        zeno::ParamTab tab;
-        zeno::ParamGroup default;
+    //添加一些default的输入输出
+    zeno::ParamTab tab;
+    zeno::ParamGroup default;
 
-        zeno::ParamUpdateInfo info;
+    zeno::ParamUpdateInfo info;
 
-        zeno::ParamPrimitive param;
-        param.bInput = true;
-        param.name = "data_input";
-        param.defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::PrimVar(0));;
-        param.type = zeno::types::gParamType_Int;
-        param.socketType = zeno::Socket_Primitve;
-        param.control = zeno::Lineedit;
-        param.bSocketVisible = false;
-        info.param = param;
-        default.params.push_back(param);
+    zeno::ParamPrimitive param;
+    param.bInput = true;
+    param.name = "data_input";
+    param.defl = zeno::reflect::make_any<zeno::PrimVar>(zeno::PrimVar(0));;
+    param.type = zeno::types::gParamType_Int;
+    param.socketType = zeno::Socket_Primitve;
+    param.control = zeno::Lineedit;
+    param.bSocketVisible = false;
+    info.param = param;
+    default.params.push_back(param);
 
-        zeno::ParamPrimitive outputparam;
-        outputparam.bInput = false;
-        outputparam.name = "data_output";
-        outputparam.defl = 2;
-        outputparam.type = gParamType_Int;
-        outputparam.socketType = zeno::Socket_Primitve;
-        outputparam.bSocketVisible = false;
-        info.param = outputparam;
+    zeno::ParamPrimitive outputparam;
+    outputparam.bInput = false;
+    outputparam.name = "data_output";
+    outputparam.defl = 2;
+    outputparam.type = gParamType_Int;
+    outputparam.socketType = zeno::Socket_Primitve;
+    outputparam.bSocketVisible = false;
+    info.param = outputparam;
 
-        zeno::ParamObject objInput;
-        objInput.bInput = true;
-        objInput.name = "Input";
-        objInput.type = gParamType_Geometry;
+    zeno::ParamObject objInput;
+    objInput.bInput = true;
+    objInput.name = "Input";
+    objInput.type = gParamType_Geometry;
 
-        zeno::ParamObject objOutput;
-        objOutput.bInput = false;
-        objOutput.name = "Output";
-        objOutput.type = gParamType_Geometry;
-        objOutput.socketType = zeno::Socket_Output;
+    zeno::ParamObject objOutput;
+    objOutput.bInput = false;
+    objOutput.name = "Output";
+    objOutput.type = gParamType_Geometry;
+    objOutput.socketType = zeno::Socket_Output;
 
-        tab.groups.emplace_back(std::move(default));
-        m_customUi.inputPrims.emplace_back(std::move(tab));
-        m_customUi.inputObjs.push_back(objInput);
-        m_customUi.outputPrims.push_back(outputparam);
-        m_customUi.outputObjs.push_back(objOutput);
-    }
+    tab.groups.emplace_back(std::move(default));
+    m_customUi.inputPrims.emplace_back(std::move(tab));
+    m_customUi.inputObjs.push_back(objInput);
+    m_customUi.outputPrims.push_back(outputparam);
+    m_customUi.outputObjs.push_back(objOutput);
+
+    m_customUi.uistyle.background = "#1D5F51";
+    m_customUi.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
 }
 
 SubnetNode::~SubnetNode() = default;
@@ -381,6 +383,9 @@ CustomUI SubnetNode::export_customui() const {
 void SubnetNode::setCustomUi(const CustomUI& ui)
 {
     m_customUi = ui;
+    //保证颜色图标
+    m_customUi.uistyle.background = "#1D5F51";
+    m_customUi.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
 }
 
 

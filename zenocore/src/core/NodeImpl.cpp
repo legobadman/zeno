@@ -613,6 +613,16 @@ void NodeImpl::preApply(CalcContext* pContext) {
     }
 }
 
+void NodeImpl::preApply_Primitives(CalcContext* pContext) {
+    if (!m_dirty)
+        return;
+    for (const auto& [name, param] : m_inputPrims) {
+        bool ret = requireInput(name, pContext);
+        if (!ret)
+            zeno::log_warn("the param {} may not be initialized", name);
+    }
+}
+
 void NodeImpl::preApplyTimeshift(CalcContext* pContext)
 {
     int oldFrame = getSession().globalState->getFrameId();
@@ -663,13 +673,13 @@ void NodeImpl::reflectForeach_apply(CalcContext* pContext)
 
         auto foreach_end = coreNode();
         assert(foreach_end);
-        for (foreach_end->reset_forloop_settings(); is_continue_to_run(); increment())
+        for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(); foreach_end->increment())
         {
             foreach_begin->mark_dirty(true);
             pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
 
             preApply(pContext);
-            reflectNode_apply();
+            apply();
         }
         auto output = get_output_obj("Output Object");
         if (output)
@@ -689,6 +699,8 @@ void NodeImpl::apply() {
 
 void NodeImpl::reflectNode_apply()
 {
+    assert(false);
+#if 0
     if (m_pTypebase) {
         for (zeno::reflect::IMemberFunction* func : m_pTypebase->get_member_functions()) {
             const auto& funcname = func->get_name();
@@ -857,6 +869,7 @@ void NodeImpl::reflectNode_apply()
             }
         }
     }
+#endif
 }
 
 void NodeImpl::commit_to_render(UpdateReason reason) {
@@ -1811,6 +1824,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
     if (m_nodecls == "TimeShift") {
         preApplyTimeshift(pContext);
     } else if (m_nodecls == "ForEachEnd") {
+        preApply_Primitives(pContext);
     } else {
         preApply(pContext);
     }
@@ -1829,16 +1843,10 @@ void NodeImpl::doApply(CalcContext* pContext) {
         }
         else {
             reportStatus(true, Node_Running);
-            if (!m_pTypebase) {
+            if (m_nodecls == "ForEachEnd") {
+                reflectForeach_apply(pContext);
+            } else {
                 apply();
-            }
-            else {
-                if (m_nodecls == "ForEachEnd") {
-                    reflectForeach_apply(pContext);
-                }
-                else {
-                    reflectNode_apply();
-                }
             }
         }
     }

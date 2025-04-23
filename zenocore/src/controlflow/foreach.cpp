@@ -15,28 +15,14 @@
 
 namespace zeno
 {
-    ZDEFNODE(ForEachBegin,
-    {
-        {
-            {gParamType_Geometry, "Initial Object"},
-            // InnerSocket = 1 当前迭代值外部不可修改，但可被其他参数引用，因此还是作为正式参数，当然有另一种可能，就是支持引用output参数，但当前并没有这个打算
-            ParamPrimitive("Current Iteration", gParamType_Int, 0),
-            ParamPrimitive("Fetch Method", gParamType_String, "From Last Feedback", zeno::Combobox, std::vector<std::string>{"Initial Object", "From Last Feedback", "Element of Object"}),
-            ParamPrimitive("ForEachEnd Path", gParamType_String),
-        },
-        {
-            {gParamType_Geometry, "Output Object"}
-        },
-        {},
-        {"geom"}
-    });
+    struct ForEachEnd;
 
     struct ForEachBegin : INode
     {
-        NodeImpl* get_foreachend() {
+        INode* get_foreachend() {
             auto graph = m_pAdapter->getGraph();
             std::string m_foreach_end_path = ZImpl(get_input2<std::string>("ForEachEnd Path"));
-            auto foreach_end = graph->getNode(m_foreach_end_path);
+            auto foreach_end = graph->getNode(m_foreach_end_path)->coreNode();
             if (!foreach_end) {
                 throw makeError<KeyError>("foreach_end_path", "the path of foreach_end_path is not exist");
             }
@@ -56,7 +42,7 @@ namespace zeno
 
             if (m_fetch_mehod == "Initial Object") {
                 //看foreachend是迭代object还是container,如果是container，就得取element元素
-                std::string itemethod = zeno::any_cast_to_string(foreach_end->get_defl_value("Iterate Method"));
+                auto itemethod = foreach_end->get_input2_string("Iterate Method");
                 if (itemethod == "By Count") {
                     ZImpl(set_output("Output Object", init_object));
                     return;
@@ -84,7 +70,7 @@ namespace zeno
                 }
             }
             else if (m_fetch_mehod == "From Last Feedback") {
-                int startValue = zeno::reflect::any_cast<int>(foreach_end->get_defl_value("Start Value"));
+                int startValue = foreach_end->get_input2_int("Start Value");
                 if (startValue == m_current_iteration) {
                     ZImpl(set_output("Output Object", init_object));
                     return;
@@ -122,6 +108,23 @@ namespace zeno
         }
     };
 
+    ZENDEFNODE(ForEachBegin,
+    {
+        {
+            {gParamType_Geometry, "Initial Object"},
+            // InnerSocket = 1 当前迭代值外部不可修改，但可被其他参数引用，因此还是作为正式参数，当然有另一种可能，就是支持引用output参数，但当前并没有这个打算
+            ParamPrimitive("Current Iteration", gParamType_Int, 0),
+            ParamPrimitive("Fetch Method", gParamType_String, "From Last Feedback", zeno::Combobox, std::vector<std::string>{"Initial Object", "From Last Feedback", "Element of Object"}),
+            ParamPrimitive("ForEachEnd Path", gParamType_String),
+        },
+        {
+            {gParamType_Geometry, "Output Object"}
+        },
+        {},
+        {"geom"}
+    });
+
+
     struct ForEachEnd : INode
     {
         ForEachEnd() {
@@ -132,21 +135,21 @@ namespace zeno
             //这里不能用m_foreach_begin_path，因为可能还没从基类数据同步过来，后者需要apply操作前才会同步
             std::string foreach_begin_path = zeno::any_cast_to_string(m_pAdapter->get_defl_value("ForEachBegin Path"));
             auto graph = this->m_pAdapter->getGraph();
-            auto foreach_begin = dynamic_cast<ForEachBegin*>(graph->getNode(foreach_begin_path));
+            auto foreach_begin = dynamic_cast<ForEachBegin*>(graph->getNode(foreach_begin_path)->coreNode());
             if (!foreach_begin) {
                 throw makeError<KeyError>("foreach_begin_path", "the path of foreach_begin_path is not exist");
             }
             return foreach_begin;
         }
 
-        void reset_forloop_settings() {
+        void reset_forloop_settings() override {
             m_collect_objs->m_impl->clear();
             auto foreach_begin = get_foreach_begin();
             int start_value = zeno::reflect::any_cast<int>(ZImpl(get_defl_value("Start Value")));
             foreach_begin->update_iteration(start_value);
         }
 
-        bool is_continue_to_run() {
+        bool is_continue_to_run() override {
             std::string iter_method = ZImpl(get_input2<std::string>("Iterate Method"));
 
             ForEachBegin* foreach_begin = get_foreach_begin();
@@ -205,7 +208,7 @@ namespace zeno
             }
         }
 
-        void increment() {
+        void increment() override {
             std::string m_iterate_method = ZImpl(get_input2<std::string>("Iterate Method"));
             if (m_iterate_method == "By Count" || m_iterate_method == "By Container") {
                 auto foreach_begin = get_foreach_begin();
@@ -227,7 +230,7 @@ namespace zeno
             zany iterate_object = ZImpl(get_input("Iterate Object"));
             std::string m_iterate_method = ZImpl(get_input2<std::string>("Iterate Method"));
             std::string m_collect_method = ZImpl(get_input2<std::string>("Collect Method"));
-            std::string m_foreach_begin_path = ZImpl(get_input2<std::string>("Iterate Object"));
+            std::string m_foreach_begin_path = ZImpl(get_input2<std::string>("ForEachBegin Path"));
             int m_iterations = ZImpl(get_input2<int>("Iterations"));
             int m_increment = ZImpl(get_input2<int>("Increment"));
             int m_start_value = ZImpl(get_input2<int>("Start Value"));
@@ -334,7 +337,8 @@ namespace zeno
             ParamPrimitive("ForEachBegin Path", gParamType_String),
             ParamPrimitive("Iterations", gParamType_Int, 10, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
             ParamPrimitive("Increment", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
-            ParamPrimitive("Start Value", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';")
+            ParamPrimitive("Start Value", gParamType_Int, 0, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
+            ParamPrimitive("Stop Condition", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';")
         },
         {
             {gParamType_Geometry, "Output Object"}
