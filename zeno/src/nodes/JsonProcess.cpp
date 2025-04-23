@@ -420,8 +420,8 @@ ZENDEFNODE(JsonGetString, {
 
 struct JsonGetKeys : zeno::INode {
     virtual void apply() override {
-        auto json = ZImpl(get_input<JsonObject>("json");
-        auto list = std::make_shared<ListObject>();
+        auto json = ZImpl(get_input<JsonObject>("json"));
+        auto list = create_ListObject();
         for (auto& [key, _] : json->json.items()) {
             list->arr.emplace_back(std::make_shared<zeno::StringObject>(key));
         }

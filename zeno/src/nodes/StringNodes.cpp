@@ -589,7 +589,7 @@ std::string& trim(std::string &s)
 struct StringToList : zeno::INode {
     virtual void apply() override {
         auto stringlist = ZImpl(get_input2<std::string>("string"));
-        auto list = std::make_shared<ListObject>();
+        auto list = create_ListObject();
         auto separator = ZImpl(get_input2<std::string>("Separator"));
         auto trimoption = ZImpl(get_input2<bool>("Trim"));
         auto keepempty = ZImpl(get_input2<bool>("KeepEmpty"));

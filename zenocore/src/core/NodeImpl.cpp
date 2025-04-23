@@ -1399,7 +1399,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
                 spList = std::dynamic_pointer_cast<ListObject>(outList->clone_by_key(m_uuid));
 #if 0
-                spList = std::make_shared<ListObject>();
+                spList = create_ListObject();
                 std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
                 for (int i = 0; i < outList->size(); i++) {
                     //后续要考虑key的问题
@@ -1413,7 +1413,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
 #endif
     if (!bDirectLink)
     {
-        spList = std::make_shared<ListObject>();
+        spList = create_ListObject();
 
         std::map<std::string, zany> existObjs;
         if (in_param->spObject) {
@@ -3142,8 +3142,9 @@ zany NodeImpl::get_input(std::string const &id) const {
         if (iter2 != m_inputObjs.end()) {
             return iter2->second.spObject;
         }
-        return nullptr;
+        throw makeError<KeyError>(id, "get_input");
     }
+    return nullptr;
 }
 
 void NodeImpl::set_pos(std::pair<float, float> pos) {

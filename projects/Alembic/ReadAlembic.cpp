@@ -1239,7 +1239,7 @@ ZENDEFNODE(ReadAlembic, {
 });
 
 std::shared_ptr<ListObject> abc_split_by_name(std::shared_ptr<PrimitiveObject> prim, bool add_when_none) {
-    auto list = std::make_shared<ListObject>();
+    auto list = create_ListObject();
     if (prim->verts.size() == 0) {
         return list;
     }
@@ -1472,7 +1472,7 @@ struct PrimsFilterInUserdataPython: INode {
         zeno::scope_exit init_defer([=]{ Py_Finalize(); });
         PyRun_SimpleString("import sys; sys.stderr = sys.stdout");
 
-        auto out_list = std::make_shared<ListObject>();
+        auto out_list = create_ListObject();
         for (auto p: prims) {
             PyObject* userGlobals = PyDict_New();
             zeno::scope_exit userGlobals_defer([=]{ Py_DECREF(userGlobals); });

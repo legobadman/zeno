@@ -135,7 +135,11 @@ namespace zeno
             //这里不能用m_foreach_begin_path，因为可能还没从基类数据同步过来，后者需要apply操作前才会同步
             std::string foreach_begin_path = zeno::any_cast_to_string(m_pAdapter->get_defl_value("ForEachBegin Path"));
             auto graph = this->m_pAdapter->getGraph();
-            auto foreach_begin = dynamic_cast<ForEachBegin*>(graph->getNode(foreach_begin_path)->coreNode());
+            auto foreach_begin_node = graph->getNode(foreach_begin_path);
+            if (!foreach_begin_node) {
+                throw makeError<UnimplError>("unknown foreach begin");
+            }
+            auto foreach_begin = dynamic_cast<ForEachBegin*>(foreach_begin_node->coreNode());
             if (!foreach_begin) {
                 throw makeError<KeyError>("foreach_begin_path", "the path of foreach_begin_path is not exist");
             }

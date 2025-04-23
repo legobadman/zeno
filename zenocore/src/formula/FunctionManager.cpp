@@ -76,7 +76,7 @@ namespace zeno {
         switch (runover)
         {
         case ATTR_POINT: {
-            if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
+            if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(spObject)) {
                 return spGeo->npoints();
             }
             else if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
@@ -87,7 +87,7 @@ namespace zeno {
             }
         }
         case ATTR_FACE:
-            if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
+            if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(spObject)) {
                 return spGeo->nfaces();
             }
             else if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
@@ -841,16 +841,16 @@ namespace zeno {
         assert(!attr_name.empty());
         GeoAttrGroup grp = pContext->runover;
         auto& zfxvec = zfxvar.value;
-        if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject)) {
+        if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject)) {
             AttrVar wtf = zeno::zfx::convertToAttrVar(zfxvec);
             std::string attrname;
             if (attr_name[0] == '@')
                 attrname = attr_name.substr(1);
-            if (!spGeo->has_attr(grp, attrname)) {
-                spGeo->create_attr(grp, attrname, wtf);
+            if (!spGeo->m_impl->has_attr(grp, attrname)) {
+                spGeo->m_impl->create_attr(grp, attrname, wtf);
             }
             else {
-                spGeo->set_attr(grp, attrname, wtf);
+                spGeo->m_impl->set_attr(grp, attrname, wtf);
             }
         }
         else {
@@ -924,7 +924,7 @@ namespace zeno {
                 }
             }
         }
-        else if (auto spGeo = std::dynamic_pointer_cast<GeometryObject>(spObject)) {
+        else if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(spObject)) {
             if (attr_name == "pos")
             {
                 const auto& P = spGeo->points_pos();
@@ -1123,25 +1123,25 @@ namespace zeno {
                     }
 
                     AttrVar initValue = getInitValueFromVariant(res.value); //拿初值就行
-                    std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+                    auto spGeom = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
                     if (pContext->runover == ATTR_POINT) {
-                        if (!spGeom->has_point_attr(attrname)) {
-                            spGeom->create_point_attr(attrname, initValue);
+                        if (!spGeom->m_impl->has_point_attr(attrname)) {
+                            spGeom->m_impl->create_point_attr(attrname, initValue);
                         }
                     }
                     else if (pContext->runover == ATTR_VERTEX) {
-                        if (!spGeom->has_vertex_attr(attrname)) {
-                            spGeom->create_vertex_attr(attrname, initValue);
+                        if (!spGeom->m_impl->has_vertex_attr(attrname)) {
+                            spGeom->m_impl->create_vertex_attr(attrname, initValue);
                         }
                     }
                     else if (pContext->runover == ATTR_FACE) {
-                        if (!spGeom->has_face_attr(attrname)) {
-                            spGeom->create_face_attr(attrname, initValue);
+                        if (!spGeom->m_impl->has_face_attr(attrname)) {
+                            spGeom->m_impl->create_face_attr(attrname, initValue);
                         }
                     }
                     else if (pContext->runover == ATTR_GEO) {
-                        if (!spGeom->has_geometry_attr(attrname)) {
-                            spGeom->create_geometry_attr(attrname, initValue);
+                        if (!spGeom->m_impl->has_geometry_attr(attrname)) {
+                            spGeom->m_impl->create_geometry_attr(attrname, initValue);
                         }
                     }
                     setAttrValue(attrname, channel, res, root->opVal, filter, pContext);

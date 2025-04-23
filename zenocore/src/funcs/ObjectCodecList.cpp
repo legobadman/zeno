@@ -11,7 +11,7 @@ namespace _implObjectCodec {
 
 std::shared_ptr<ListObject> decodeListObject(const char *it);
 std::shared_ptr<ListObject> decodeListObject(const char *it) {
-    auto obj = std::make_shared<ListObject>();
+    auto obj = create_ListObject();
 
     size_t size = *(int *)it;
     it += sizeof(size);

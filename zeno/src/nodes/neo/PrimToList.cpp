@@ -136,7 +136,7 @@ struct PrimToList : INode {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto type = ZImpl(get_input2<std::string>("type"));
         auto attr = ZImpl(get_input2<std::string>("attr"));
-        auto lst = std::make_shared<ListObject>();
+        auto lst = create_ListObject();
 
         if (attr.empty()) {
             if (type == "verts") {

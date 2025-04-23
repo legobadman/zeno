@@ -43,15 +43,15 @@ namespace zeno {
             if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
                 throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
             }
-            else if (std::shared_ptr<GeometryObject> spGeo = std::dynamic_pointer_cast<GeometryObject>(input_object)) {
+            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
                 if (m_attrgroup == "Point") {
-                    spGeo->create_attr(ATTR_POINT, attr_name, attr_value);
+                    spGeo->m_impl->create_attr(ATTR_POINT, attr_name, attr_value);
                 }
                 else if (m_attrgroup == "Face") {
-                    spGeo->create_attr(ATTR_FACE, attr_name, attr_value);
+                    spGeo->m_impl->create_attr(ATTR_FACE, attr_name, attr_value);
                 }
                 else if (m_attrgroup == "Geometry") {
-                    spGeo->create_attr(ATTR_GEO, attr_name, attr_value);
+                    spGeo->m_impl->create_attr(ATTR_GEO, attr_name, attr_value);
                 }
             }
             else {
@@ -95,15 +95,15 @@ namespace zeno {
             if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
                 throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
             }
-            else if (std::shared_ptr<GeometryObject> spGeo = std::dynamic_pointer_cast<GeometryObject>(input_object)) {
+            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
                 if (m_attrgroup == "Point") {
-                    spGeo->delete_attr(ATTR_POINT, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_POINT, attr_name);
                 }
                 else if (m_attrgroup == "Face") {
-                    spGeo->delete_attr(ATTR_FACE, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_FACE, attr_name);
                 }
                 else if (m_attrgroup == "Geometry") {
-                    spGeo->delete_attr(ATTR_GEO, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_GEO, attr_name);
                 }
             }
             else {
@@ -164,24 +164,24 @@ namespace zeno {
             if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
                 throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
             }
-            else if (std::shared_ptr<GeometryObject> spGeo = std::dynamic_pointer_cast<GeometryObject>(input_object)) {
+            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
                 if (m_attrgroup == "Point") {
-                    if (!spGeo->has_point_attr(attr_name)) {
+                    if (!spGeo->m_impl->has_point_attr(attr_name)) {
                         throw makeError<UnimplError>("Input object does not have point attribute: " + attr_name);
                     }
-                    spGeo->set_point_attr(attr_name, attr_value);
+                    spGeo->m_impl->set_point_attr(attr_name, attr_value);
                 }
                 else if (m_attrgroup == "Face") {
-                    if (!spGeo->has_face_attr(attr_name)) {
+                    if (!spGeo->m_impl->has_face_attr(attr_name)) {
                         throw makeError<UnimplError>("Input object does not have face attribute: " + attr_name);
                     }
-                    spGeo->set_face_attr(attr_name, attr_value);
+                    spGeo->m_impl->set_face_attr(attr_name, attr_value);
                 }
                 else if (m_attrgroup == "Geometry") {
-                    if (!spGeo->has_geometry_attr(attr_name)) {
+                    if (!spGeo->m_impl->has_geometry_attr(attr_name)) {
                         throw makeError<UnimplError>("Input object does not have geometry attribute: " + attr_name);
                     }
-                    spGeo->set_geometry_attr(attr_name ,attr_value);
+                    spGeo->m_impl->set_geometry_attr(attr_name ,attr_value);
                 }
             }
             else {

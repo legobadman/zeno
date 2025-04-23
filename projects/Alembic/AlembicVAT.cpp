@@ -201,7 +201,7 @@ struct AlembicToSoftBodyVAT: public INode {
             auto obj = archive.getTop();
             std::vector<float> pos_f32;
             std::vector<float> nrm_f32;
-            std::shared_ptr<ListObject> frameList = std::make_shared<ListObject>();
+            std::shared_ptr<ListObject> frameList = create_ListObject();
             for (int32_t idx = frameStart; idx < frameEnd; ++idx) {
                 const int32_t frameIndex = frameEnd - idx - 1;
                 auto abctree = std::make_shared<ABCTree>();
@@ -405,7 +405,7 @@ struct AlembicToDynamicRemeshVAT : public INode {
         }
 
       auto obj = archive.getTop();
-      std::shared_ptr<ListObject> frameList = std::make_shared<ListObject>();
+      std::shared_ptr<ListObject> frameList = create_ListObject();
       size_t maxTriNum = 0;
       for (int32_t idx = frameStart; idx < frameEnd; ++idx) {
         const int32_t frameIndex = frameEnd - idx - 1;

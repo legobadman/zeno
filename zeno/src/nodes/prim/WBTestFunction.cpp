@@ -155,7 +155,7 @@ struct PrimPointTris : INode {
     void apply() override {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto index = ZImpl(get_input<NumericObject>("pointID"))->get<int>();
-        auto list = std::make_shared<ListObject>();
+        auto list = create_ListObject();
 
         for (int i = 0; i < int(prim->tris.size()); i++)
         {

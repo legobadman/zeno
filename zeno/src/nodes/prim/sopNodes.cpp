@@ -745,7 +745,9 @@ namespace zeno {
     ZENDEFNODE(Measure,
     {
         {
-            ParamObject("Input Object", gParamType_Geometry)
+            ParamObject("Input Object", gParamType_Geometry),
+            ParamPrimitive("Measure", gParamType_String, "Area", Combobox, std::vector<std::string>{"Area", "Length"}),
+            ParamPrimitive("Output Attribute Name", gParamType_String, "area")
         },
         {
             {gParamType_Geometry, "Output"},
@@ -992,7 +994,7 @@ namespace zeno {
     struct Scatter : INode {
         void apply() override
         {
-            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
             int Count = ZImpl(get_input2<int>("Points Count"));
             int Seed = ZImpl(get_input2<int>("Random Seed"));
             std::string sampleRegion = ZImpl(get_input2<std::string>("Sample Regin"));
@@ -1004,7 +1006,7 @@ namespace zeno {
     ZENDEFNODE(Scatter,
     {
         {
-            ParamObject("Input Object", gParamType_Geometry),
+            ParamObject("Input", gParamType_Geometry),
             ParamPrimitive("Points Count", gParamType_Int, 10, Slider, std::vector<int>{0, 1000, 1}),
             ParamPrimitive("Random Seed", gParamType_Int, 0, Slider, std::vector<int>{0, 100, 1}),
             ParamPrimitive("Sample Regin",gParamType_String, "Face", Combobox, std::vector<std::string>{"Face", "Volumn"})
@@ -1070,7 +1072,7 @@ namespace zeno {
     struct UniquePoints : INode {
         void apply() override
         {
-            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
             bool bPostComputeNormals = ZImpl(get_input2<bool>("Post-Compute Normals"));
 
             std::vector<std::vector<vec3f>> newFaces;
@@ -1104,7 +1106,8 @@ namespace zeno {
     ZENDEFNODE(UniquePoints,
     {
         {
-            ParamObject("Input Object", gParamType_Geometry)
+            ParamObject("Input", gParamType_Geometry),
+            ParamPrimitive("Post-Compute Normals", gParamType_Bool)
         },
         {
             {gParamType_Geometry, "Output"},
@@ -1432,7 +1435,7 @@ namespace zeno {
             auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
             std::string zfx = ZImpl(get_input2<std::string>("Zfx Expression"));
             std::string group = ZImpl(get_input2<std::string>("Group"));
-            bool deleteNonSelected = ZImpl(get_input2<bool>("Group"));
+            bool deleteNonSelected = ZImpl(get_input2<bool>("Delete Non Selected"));
 
             zeno::ZfxContext ctx;
             std::string rem_what;
@@ -1543,7 +1546,7 @@ namespace zeno {
     ZENDEFNODE(AverageFuse,
     {
         {
-            ParamObject("Input Object", gParamType_Geometry),
+            ParamObject("Input Geometry", gParamType_Geometry),
             ParamPrimitive("Snap Distance", gParamType_Float, 0.01f)
         },
         {

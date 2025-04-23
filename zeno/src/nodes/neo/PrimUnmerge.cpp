@@ -331,7 +331,7 @@ struct PrimUnmerge : INode {
             primList = primUnmergeFaces(prim.get(), tagAttr);
         }
 
-        auto listPrim = std::make_shared<ListObject>();
+        auto listPrim = create_ListObject();
         for (auto &primPtr: primList) {
             listPrim->m_impl->push_back(std::move(primPtr));
         }

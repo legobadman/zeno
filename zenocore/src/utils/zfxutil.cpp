@@ -2,6 +2,7 @@
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
 #include <zeno/utils/string.h>
+#include <zeno/types/IGeometryObject.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -322,7 +323,7 @@ namespace zeno
             if (attrname[0] == '@')
                 attr_name = attrname.substr(1);
 
-            std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pContext->spObject);
 
             //观察是否内置属性，目前内置属性统统在外部处理，不耦合到GeometryObject的api上
             if (attr_name == "ptnum") {
@@ -365,29 +366,29 @@ namespace zeno
                 attr_name = "pos";
             }
 
-            GeoAttrType type = spGeom->get_attr_type(pContext->runover, attr_name);
+            GeoAttrType type = spGeom->m_impl->get_attr_type(pContext->runover, attr_name);
             if (type == ATTR_TYPE_UNKNOWN) {//attrname可能是其他类型,尝试设置为其他类型
-                if (spGeom->has_point_attr(attr_name)) {
+                if (spGeom->m_impl->has_point_attr(attr_name)) {
                     pContext->runover = ATTR_POINT;
-                    type = spGeom->get_attr_type(ATTR_POINT, attr_name);
+                    type = spGeom->m_impl->get_attr_type(ATTR_POINT, attr_name);
                 }
-                else if (spGeom->has_face_attr(attr_name)) {
+                else if (spGeom->m_impl->has_face_attr(attr_name)) {
                     pContext->runover = ATTR_FACE;
-                    type = spGeom->get_attr_type(ATTR_FACE, attr_name);
+                    type = spGeom->m_impl->get_attr_type(ATTR_FACE, attr_name);
                 }
-                else if (spGeom->has_vertex_attr(attr_name)) {
+                else if (spGeom->m_impl->has_vertex_attr(attr_name)) {
                     pContext->runover = ATTR_VERTEX;
-                    type = spGeom->get_attr_type(ATTR_VERTEX, attr_name);
+                    type = spGeom->m_impl->get_attr_type(ATTR_VERTEX, attr_name);
                 }
-                else if (spGeom->has_geometry_attr(attr_name)) {
+                else if (spGeom->m_impl->has_geometry_attr(attr_name)) {
                     pContext->runover = ATTR_GEO;
-                    type = spGeom->get_attr_type(ATTR_GEO, attr_name);
+                    type = spGeom->m_impl->get_attr_type(ATTR_GEO, attr_name);
                 }
             }
 
             switch (type) {
             case ATTR_INT: {
-                std::vector<int> vec(spGeom->get_attrs<int>(pContext->runover, attr_name));
+                std::vector<int> vec(spGeom->m_impl->get_attrs<int>(pContext->runover, attr_name));
                 ZfxVariable res;
                 res.value.resize(vec.size());
                 res.bAttr = true;
@@ -397,7 +398,7 @@ namespace zeno
                 return res;
             }
             case ATTR_FLOAT: {
-                std::vector<float> vec(spGeom->get_attrs<float>(pContext->runover, attr_name));
+                std::vector<float> vec(spGeom->m_impl->get_attrs<float>(pContext->runover, attr_name));
                 ZfxVariable res;
                 res.value.resize(vec.size());
                 res.bAttr = true;
@@ -407,7 +408,7 @@ namespace zeno
                 return res;
             }
             case ATTR_STRING: {
-                std::vector<std::string> vec(spGeom->get_attrs<std::string>(pContext->runover, attr_name));
+                std::vector<std::string> vec(spGeom->m_impl->get_attrs<std::string>(pContext->runover, attr_name));
                 ZfxVariable res;
                 res.value.resize(vec.size());
                 res.bAttr = true;
@@ -417,7 +418,7 @@ namespace zeno
                 return res;
             }
             case ATTR_VEC2: {
-                std::vector<glm::vec2> vec(spGeom->get_attrs<glm::vec2>(pContext->runover, attr_name));
+                std::vector<glm::vec2> vec(spGeom->m_impl->get_attrs<glm::vec2>(pContext->runover, attr_name));
                 ZfxVariable res;
                 res.value.resize(vec.size());
                 res.bAttr = true;
@@ -428,7 +429,7 @@ namespace zeno
             }
             case ATTR_VEC3: {
                 if (channel == 'x') {
-                    std::vector<float> vec(spGeom->get_attrs<float, 'x'>(pContext->runover, attr_name));
+                    std::vector<float> vec(spGeom->m_impl->get_attrs<float, 'x'>(pContext->runover, attr_name));
                     ZfxVariable res;
                     res.value.resize(vec.size());
                     res.bAttr = true;
@@ -438,7 +439,7 @@ namespace zeno
                     return res;
                 }
                 else if (channel == 'y') {
-                    std::vector<float> vec(spGeom->get_attrs<float, 'y'>(pContext->runover, attr_name));
+                    std::vector<float> vec(spGeom->m_impl->get_attrs<float, 'y'>(pContext->runover, attr_name));
                     ZfxVariable res;
                     res.value.resize(vec.size());
                     res.bAttr = true;
@@ -448,7 +449,7 @@ namespace zeno
                     return res;
                 }
                 else if (channel == 'z') {
-                    std::vector<float> vec(spGeom->get_attrs<float, 'z'>(pContext->runover, attr_name));
+                    std::vector<float> vec(spGeom->m_impl->get_attrs<float, 'z'>(pContext->runover, attr_name));
                     ZfxVariable res;
                     res.value.resize(vec.size());
                     res.bAttr = true;
@@ -459,7 +460,7 @@ namespace zeno
                 }
                 else {
                     assert(channel == 0);
-                    std::vector<glm::vec3> vec(spGeom->get_attrs<glm::vec3>(pContext->runover, attr_name));
+                    std::vector<glm::vec3> vec(spGeom->m_impl->get_attrs<glm::vec3>(pContext->runover, attr_name));
                     ZfxVariable res;
                     res.value.resize(vec.size());
                     res.bAttr = true;
@@ -470,7 +471,7 @@ namespace zeno
                 }
             }
             case ATTR_VEC4: {
-                std::vector<glm::vec4> vec(spGeom->get_attrs<glm::vec4>(pContext->runover, attr_name));
+                std::vector<glm::vec4> vec(spGeom->m_impl->get_attrs<glm::vec4>(pContext->runover, attr_name));
                 ZfxVariable res;
                 res.value.resize(vec.size());
                 res.bAttr = true;
@@ -500,7 +501,7 @@ namespace zeno
 
         template<class ElemType>
         static void set_attr_by_zfx(
-                std::shared_ptr<GeometryObject> spGeom,
+                std::shared_ptr<GeometryObject_Adapter> spGeom,
                 std::string attrname,
                 std::string channel,
                 const ZfxVariable& var,
@@ -509,7 +510,7 @@ namespace zeno
                 ZfxContext* pContext)
         {
             GeoAttrGroup group = pContext->runover;
-            int N = spGeom->get_group_count(group);
+            int N = spGeom->m_impl->get_group_count(group);
             int nVariable = var.value.size();
             if (N != nVariable && nVariable != 1) {
                 throw makeError<UnimplError>("size dismatch when assign value to attributes");
@@ -520,10 +521,10 @@ namespace zeno
                 vec[i] = get_zfxvar<ElemType>(var.value[std::min(i, nVariable - 1)]);
             }
 
-            bool bAttrExist = spGeom->has_attr(group, attrname);
+            bool bAttrExist = spGeom->m_impl->has_attr(group, attrname);
             if (bAttrExist) {
                 if constexpr (std::is_same_v<ElemType, std::string>) {
-                    int N = spGeom->get_group_count(pContext->runover), nVariable = var.value.size();
+                    int N = spGeom->m_impl->get_group_count(pContext->runover), nVariable = var.value.size();
                     if (N != nVariable && nVariable != 1) {
                         throw makeError<UnimplError>("size dismatch when assign value to attributes");
                     }
@@ -531,7 +532,7 @@ namespace zeno
                     for (int i = 0; i < N; i++) {
                         vec[i] = get_zfxvar<std::string>(var.value[std::min(i, nVariable - 1)]);
                     }
-                    spGeom->foreach_attr_update<std::string>(pContext->runover, attrname, 0, [&](int idx, std::string old_val)->std::string {
+                    spGeom->m_impl->foreach_attr_update<std::string>(pContext->runover, attrname, 0, [&](int idx, std::string old_val)->std::string {
                         return filter[idx] ? vec[idx] : old_val;
                         });
                 }
@@ -544,14 +545,14 @@ namespace zeno
                     if (opVal == AddAssign) {
                         if (chn != 0) {
                             if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
                                     //单值？
                                     return filter[idx] ? (old_val + vec[idx][chnidx]) : old_val;
                                     });
                             }
                         }
                         else {
-                            spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
                                 //单值？
                                 return filter[idx] ? (old_val + vec[idx]) : old_val;
                                 });
@@ -561,13 +562,13 @@ namespace zeno
                     else if (opVal == SubAssign) {
                         if (chn != 0) {
                             if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
                                     return filter[idx] ? (old_val - vec[idx][chnidx]) : old_val;
                                     });
                             }
                         }
                         else {
-                            spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
                                 return filter[idx] ? (old_val - vec[idx]) : old_val;
                                 });
                         }
@@ -575,13 +576,13 @@ namespace zeno
                     else if (opVal == MulAssign) {
                         if (chn != 0) {
                             if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
                                     return filter[idx] ? (old_val * vec[idx][chnidx]) : old_val;
                                     });
                             }
                         }
                         else {
-                            spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
                                 return filter[idx] ? (old_val * vec[idx]) : old_val;
                                 });
                         }
@@ -589,13 +590,13 @@ namespace zeno
                     else if (opVal == DivAssign) {
                         if (chn != 0) {
                             if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
                                     return filter[idx] ? (old_val / vec[idx][chnidx]) : old_val;
                                     });
                             }
                         }
                         else {
-                            spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
                                 return filter[idx] ? (old_val / vec[idx]) : old_val;
                                 });
                         }
@@ -603,13 +604,13 @@ namespace zeno
                     else {
                         if (chn != 0) {
                             if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
                                     return filter[idx] ? vec[idx][chnidx] : old_val;
                                     });
                             }
                         }
                         else {
-                            spGeom->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
                                 return filter[idx] ? vec[idx] : old_val;
                                 });
                         }
@@ -618,7 +619,7 @@ namespace zeno
             }
             else {
                 //创建反正都需要整个创建，暂时不用filter，（或者filter掉的部分元素为0)
-                spGeom->create_attr(group, attrname, vec);
+                spGeom->m_impl->create_attr(group, attrname, vec);
             }
         }
 
@@ -630,7 +631,7 @@ namespace zeno
                 attrname = "pos";
             }
 
-            std::shared_ptr<GeometryObject> spGeom = std::dynamic_pointer_cast<GeometryObject>(pContext->spObject);
+            auto spGeom = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
 
             GeoAttrGroup group = pContext->runover;
 
@@ -639,19 +640,19 @@ namespace zeno
                 throw makeError<UnimplError>("Unknown channel name");
             }
 
-            GeoAttrType type = spGeom->get_attr_type(group, attrname);
+            GeoAttrType type = spGeom->m_impl->get_attr_type(group, attrname);
             if (type == ATTR_TYPE_UNKNOWN) {//attrname可能是其他类型,尝试设置为其他类型
-                if (spGeom->has_point_attr(attrname)) {
-                    type = spGeom->get_attr_type(ATTR_POINT, attrname);
+                if (spGeom->m_impl->has_point_attr(attrname)) {
+                    type = spGeom->m_impl->get_attr_type(ATTR_POINT, attrname);
                 }
-                else if (spGeom->has_face_attr(attrname)) {
-                    type = spGeom->get_attr_type(ATTR_FACE, attrname);
+                else if (spGeom->m_impl->has_face_attr(attrname)) {
+                    type = spGeom->m_impl->get_attr_type(ATTR_FACE, attrname);
                 }
-                else if (spGeom->has_vertex_attr(attrname)) {
-                    type = spGeom->get_attr_type(ATTR_VERTEX, attrname);
+                else if (spGeom->m_impl->has_vertex_attr(attrname)) {
+                    type = spGeom->m_impl->get_attr_type(ATTR_VERTEX, attrname);
                 }
-                else if (spGeom->has_geometry_attr(attrname)) {
-                    type = spGeom->get_attr_type(ATTR_GEO, attrname);
+                else if (spGeom->m_impl->has_geometry_attr(attrname)) {
+                    type = spGeom->m_impl->get_attr_type(ATTR_GEO, attrname);
                 }
             }
             switch (type) {
