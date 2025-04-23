@@ -16,15 +16,17 @@ namespace zeno
         }
     };
 
-    ZDEFNODE(Duplicate,
+    ZENDEFNODE(Duplicate,
     {
         {
             {gParamType_IObject, "Original Object"},
-            {gParamType_Bool, "Keep Modify Original"},
+            {gParamType_Bool, "Keep Modify Original"}
         },
         {
             {gParamType_IObject, "Duplicated Object"},
-            ParamObject("Original Object", gParamType_IObject, Socket_Output, "visible = param('Keep Modify Original').value == 1;")
-        }
+            ParamObject("Original Object", gParamType_IObject, "visible = param('Keep Modify Original').value == 1;")
+        },
+        {},
+        {"geom"}
     });
 }

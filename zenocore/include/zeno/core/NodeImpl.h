@@ -139,6 +139,10 @@ namespace zeno
         void update_layout(params_change_info& changes);
         CALLBACK_REGIST(update_layout, void, params_change_info& changes)
 
+        bool is_loaded() const;
+        void update_load_info(bool bDisable);
+        CALLBACK_REGIST(update_load_info, void, bool)
+
         virtual params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
 
         //由param这个参数值的变化触发节点params重置
@@ -215,6 +219,7 @@ namespace zeno
         void preApply(CalcContext* pContext);
         void commit_to_render(UpdateReason reason);
         void bypass();
+        CustomUI _deflCustomUI() const;
 
         //for timeshift node
         void preApplyTimeshift(CalcContext* pContext);

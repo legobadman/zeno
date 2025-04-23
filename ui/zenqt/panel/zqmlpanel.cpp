@@ -13,8 +13,8 @@ ZQmlPanel::ZQmlPanel(QWidget* parent)
     setResizeMode(QQuickWidget::SizeRootObjectToView);
     rootContext()->setContextProperty("nodesModel", pGraphM);
 
-#if 0
-    QQmlComponent component(this->engine(), QUrl(QStringLiteral("qrc:/ZenoGraphView.qml")));
+#if 1
+    QQmlComponent component(this->engine(), QUrl(QStringLiteral("qrc:/ZGraphsView.qml")));
     if (component.status() != QQmlComponent::Ready) {
         qWarning() << "Error loading QML:";
         for (const QQmlError& error : component.errors()) {

@@ -319,6 +319,7 @@ DockContent_Editor::DockContent_Editor(QWidget* parent)
     , m_btnKill(nullptr)
     , pShowThumb(nullptr)
     , pRearrangeGraph(nullptr)
+    , pluginView(nullptr)
 {
 }
 
@@ -326,6 +327,8 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
 {
     pListView = new ZToolBarButton(true, ":/icons/subnet-listview.svg", ":/icons/subnet-listview-on.svg");
     pTreeView = new ZToolBarButton(true, ":/icons/nodeEditor_nodeTree_unselected.svg", ":/icons/nodeEditor_nodeTree_selected.svg");
+    pluginView = new ZToolBarButton(true, ":/icons/nodeEditor_nodeTree_unselected.svg", ":/icons/nodeEditor_nodeTree_selected.svg");
+
     pSubnetMgr = new ZToolBarButton(false, ":/icons/nodeEditor_subnetManager_unselected.svg", ":/icons/nodeEditor_subnetManager_selected.svg");
     pFold = new ZToolBarButton(false, ":/icons/nodeEditor_nodeFold_unselected.svg", ":/icons/nodeEditor_nodeFold_selected.svg");
     pUnfold = new ZToolBarButton(false, ":/icons/nodeEditor_nodeUnfold_unselected.svg", ":/icons/nodeEditor_nodeUnfold_selected.svg");
@@ -344,6 +347,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
 
     pListView->setToolTip(tr("Subnet List"));
     pTreeView->setToolTip(tr("Node List"));
+    pluginView->setToolTip(tr("Plugin List"));
     pSubnetMgr->setToolTip(tr("Subnet Manager"));
     pFold->setToolTip(tr("Fold"));
     pUnfold->setToolTip(tr("Unfold"));
@@ -381,6 +385,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     QFontMetrics fontMetrics(fnt);
 
     pListView->setChecked(false);
+    pluginView->setChecked(false);
     pShowGrid->setChecked(ZenoSettingsManager::GetInstance().getValue(zsShowGrid).toBool());
 
     //必须要等初始化界面后才能让用户点击显示
@@ -426,6 +431,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
 
     pToolLayout->addWidget(pListView);
     pToolLayout->addWidget(pTreeView);
+    pToolLayout->addWidget(pluginView);
 
     pToolLayout->addStretch(1);
 
@@ -471,13 +477,22 @@ void DockContent_Editor::initConnections()
         m_pEditor->onSubnetListPanel(isShow, ZenoGraphsEditor::Side_Subnet); 
         pTreeView->setChecked(false);
         pSearchBtn->setChecked(false);
+        pluginView->setChecked(false);
     });
     connect(pTreeView, &ZToolBarButton::toggled, this,[=](bool isShow) 
     { 
         m_pEditor->onSubnetListPanel(isShow, ZenoGraphsEditor::Side_Tree); 
         pSearchBtn->setChecked(false);
         pListView->setChecked(false);
+        pluginView->setChecked(false);
     });
+    connect(pluginView, &ZToolBarButton::toggled, this, [=](bool isShow) {
+        m_pEditor->onSubnetListPanel(isShow, ZenoGraphsEditor::Side_Plugin);
+        pSearchBtn->setChecked(false);
+        pListView->setChecked(false);
+        pTreeView->setChecked(false);
+    });
+
     connect(pSearchBtn, &ZToolBarButton::toggled, this, [=](bool isShow) 
     { 
         if (m_pEditor->welComPageShowed())
@@ -485,6 +500,7 @@ void DockContent_Editor::initConnections()
         m_pEditor->onSubnetListPanel(isShow, ZenoGraphsEditor::Side_Search); 
         pTreeView->setChecked(false);
         pListView->setChecked(false);
+        pluginView->setChecked(false);
     });
     connect(pFold, &ZToolBarButton::clicked, this, [=]() {
         if (m_pEditor->welComPageShowed())

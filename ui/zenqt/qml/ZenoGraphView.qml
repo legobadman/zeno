@@ -320,6 +320,19 @@ Qan.GraphView {
         }
     }
 
+    Dialog {
+        id: failedDialog
+        title: "create failed"
+        modal: true
+        standardButtons: Dialog.Ok
+        onAccepted: {}
+
+        contentItem: Text {
+            text: "the module of this node has been uninstalled."
+            wrapMode: Text.WordWrap
+        }
+    }
+
     Menu {
         id: newnode_menu
 
@@ -395,7 +408,11 @@ Qan.GraphView {
                             onTriggered: {
                                 var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
                                 // console.log("mousepos: " + mousepos)
-                                nodecatesmodel.execute(graphModel, modelData, mousepos)
+                                var bsucceed = nodecatesmodel.execute(graphModel, modelData, mousepos)
+                                if (!bsucceed) {
+                                    console.log("!bsucceed")
+                                    failedDialog.open()
+                                }
                             }
                             Component.onCompleted: {
                             }
@@ -443,7 +460,11 @@ Qan.GraphView {
                     //console.log("searchresult_item onTriggered")
                     var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
                     // console.log("mousepos: " + mousepos)
-                    nodecatesmodel.execute(graphModel, name, mousepos)
+                    var bsucceed = nodecatesmodel.execute(graphModel, name, mousepos)
+                    if (!bsucceed) {
+                        console.log("!bsucceed")
+                        failedDialog.open()
+                    }
                 }
             }
         }

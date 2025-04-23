@@ -815,14 +815,18 @@ NodeImpl* Graph::createNode(
         std::string nodecls = cls;
         auto it = nodeClass.find(nodecls);
         if (it == nodeClass.end()) {
-            nodecls = "DeprecatedNode";
+            upNode = std::make_unique<NodeImpl>(nullptr);   //空壳
+            pNode = upNode.get();
+            pNode->initUuid(this, nodecls);
+            uuid = pNode->get_uuid();
         }
-
-        INodeClass* cl = safe_at(getSession().nodeClasses, nodecls, "node class name").get();
-        upNode = std::move(cl->new_instance(this, name));
-        pNode = upNode.get();
-        pNode->nodeClass = cl;
-        uuid = pNode->get_uuid();
+        else {
+            INodeClass* cl = it->second.get();
+            upNode = std::move(cl->new_instance(this, name));
+            pNode = upNode.get();
+            pNode->nodeClass = cl;
+            uuid = pNode->get_uuid();
+        }
     }
     else {
         bool isCurrentGraphAsset = getSession().assets->isAssetGraph(this);
@@ -1265,6 +1269,26 @@ bool Graph::addLink(const EdgeInfo& edge) {
 
     CALLBACK_NOTIFY(addLink, adjustEdge);
     return true;
+}
+
+void Graph::update_load_info(const std::string& nodecls, bool bDisable) {
+    auto iter = node_set.find(nodecls);
+    if (iter != node_set.end()) {
+        for (auto name : iter->second) {
+            auto iter2 = m_name2uuid.find(name);
+            assert(iter2 != m_name2uuid.end());
+            auto iter3 = m_nodes.find(iter2->second);
+            assert(iter3 != m_nodes.end());
+            iter3->second->update_load_info(bDisable);
+        }
+    }
+    //要递归遍历所有子图
+    for (const std::string& subnetnode : subnet_nodes) {
+        auto pNodeImpl = m_nodes[subnetnode].get();
+        auto spSubnetNode = dynamic_cast<SubnetNode*>(pNodeImpl);
+        assert(spSubnetNode);
+        spSubnetNode->get_subgraph()->update_load_info(nodecls, bDisable);
+    }
 }
 
 bool Graph::removeLink(const EdgeInfo& edge) {

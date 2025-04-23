@@ -295,8 +295,8 @@ bool sceneMenuEvent(
         GraphModel* pGraphM = pScene->getGraphModel();
         ZASSERT_EXIT(pGraphM, false);
 
-        zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
-        auto m_menu = new ZenoNewnodeMenu(pGraphM, cates, scenePos);
+        //zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
+        auto m_menu = new ZenoNewnodeMenu(pGraphM, /*cates, */scenePos);
         m_menu->setEditorFocus();
         m_menu->exec(QCursor::pos());
         m_menu->deleteLater();

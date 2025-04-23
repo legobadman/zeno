@@ -6,29 +6,7 @@ namespace zeno {
 
     using namespace zeno::reflect;
 
-    ZDEFNODE(CreateAttribute,
-    {
-        {
-            {gParamType_Geometry, "Input"},
-            ParamPrimitive("attr_name", gParamType_String, "attribute1"),
-            ParamPrimitive("Attribute Type",  gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"}),
-            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"}),
-            ParamPrimitive("Integer Value", gParamType_Int, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Integer';"),
-            ParamPrimitive("Float Value", gParamType_Float, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Float';"),
-            ParamPrimitive("String Value", gParamType_String, 0, zeno::Lineedit, Any(),"visible = parameter('Attribute Type').value == 'String';"),
-            ParamPrimitive("Boolean Value", gParamType_Bool, 0, zeno::Checkbox, Any(),"visible = parameter('Attribute Type').value == 'Boolean';"),
-            ParamPrimitive("Vector2 Value", gParamType_Vec2f, vec2f(0,0), zeno::Vec2edit, Any(),"visible = parameter('Attribute Type').value == 'Vector2';"),
-            ParamPrimitive("Vector3 Value", gParamType_Vec3f, vec3f(0,0,0), zeno::Vec3edit, Any(),"visible = parameter('Attribute Type').value == 'Vector3';"),
-            ParamPrimitive("Vector4 Value", gParamType_Vec4f, vec4f(0,0,0,0), zeno::Vec4edit, Any(),"visible = parameter('Attribute Type').value == 'Vector4';")
-        },
-        {
-            {gParamType_Geometry, "Output"}
-        },
-        {},
-        {"geom"}
-    });
     struct CreateAttribute : INode {
-
         void apply() override {
             auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
             std::string attr_name = ZImpl(get_input2<std::string>("attr_name"));
@@ -82,14 +60,20 @@ namespace zeno {
             ZImpl(set_output("Output", input_object));
         }
     };
-
-
-    ZDEFNODE(DeleteAttribute,
+    ZENDEFNODE(CreateAttribute,
     {
         {
             {gParamType_Geometry, "Input"},
             ParamPrimitive("attr_name", gParamType_String, "attribute1"),
-            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+            ParamPrimitive("Attribute Type",  gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"}),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"}),
+            ParamPrimitive("Integer Value", gParamType_Int, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Integer';"),
+            ParamPrimitive("Float Value", gParamType_Float, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Float';"),
+            ParamPrimitive("String Value", gParamType_String, 0, zeno::Lineedit, Any(),"visible = parameter('Attribute Type').value == 'String';"),
+            ParamPrimitive("Boolean Value", gParamType_Bool, 0, zeno::Checkbox, Any(),"visible = parameter('Attribute Type').value == 'Boolean';"),
+            ParamPrimitive("Vector2 Value", gParamType_Vec2f, vec2f(0,0), zeno::Vec2edit, Any(),"visible = parameter('Attribute Type').value == 'Vector2';"),
+            ParamPrimitive("Vector3 Value", gParamType_Vec3f, vec3f(0,0,0), zeno::Vec3edit, Any(),"visible = parameter('Attribute Type').value == 'Vector3';"),
+            ParamPrimitive("Vector4 Value", gParamType_Vec4f, vec4f(0,0,0,0), zeno::Vec4edit, Any(),"visible = parameter('Attribute Type').value == 'Vector4';")
         },
         {
             {gParamType_Geometry, "Output"}
@@ -97,6 +81,8 @@ namespace zeno {
         {},
         {"geom"}
     });
+
+
     struct DeleteAttribute : INode {
         void apply() override {
             auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
@@ -126,22 +112,12 @@ namespace zeno {
             ZImpl(set_output("Output", input_object));
         }
     };
-
-
-    ZDEFNODE(SetAttribute,
+    ZENDEFNODE(DeleteAttribute,
     {
         {
             {gParamType_Geometry, "Input"},
             ParamPrimitive("attr_name", gParamType_String, "attribute1"),
-            ParamPrimitive("Attribute Type",  gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"}),
-            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"}),
-            ParamPrimitive("Integer Value", gParamType_Int, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Integer';"),
-            ParamPrimitive("Float Value", gParamType_Float, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Float';"),
-            ParamPrimitive("String Value", gParamType_String, 0, zeno::Lineedit, Any(),"visible = parameter('Attribute Type').value == 'String';"),
-            ParamPrimitive("Boolean Value", gParamType_Bool, 0, zeno::Checkbox, Any(),"visible = parameter('Attribute Type').value == 'Boolean';"),
-            ParamPrimitive("Vector2 Value", gParamType_Vec2f, vec2f(0,0), zeno::Vec2edit, Any(),"visible = parameter('Attribute Type').value == 'Vector2';"),
-            ParamPrimitive("Vector3 Value", gParamType_Vec3f, vec3f(0,0,0), zeno::Vec3edit, Any(),"visible = parameter('Attribute Type').value == 'Vector3';"),
-            ParamPrimitive("Vector4 Value", gParamType_Vec4f, vec4f(0,0,0,0), zeno::Vec4edit, Any(),"visible = parameter('Attribute Type').value == 'Vector4';")
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
         },
         {
             {gParamType_Geometry, "Output"}
@@ -149,6 +125,8 @@ namespace zeno {
         {},
         {"geom"}
     });
+
+
     struct SetAttribute : INode {
         void apply() override {
             auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
@@ -212,5 +190,26 @@ namespace zeno {
             ZImpl(set_output("Output", input_object));
         }
     };
+    ZENDEFNODE(SetAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("attr_name", gParamType_String, "attribute1"),
+            ParamPrimitive("Attribute Type",  gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"Vector2", "Vector3", "Vector4", "Integer", "Float", "String", "Boolean"}),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"}),
+            ParamPrimitive("Integer Value", gParamType_Int, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Integer';"),
+            ParamPrimitive("Float Value", gParamType_Float, 0, zeno::Lineedit, Any(), "visible = parameter('Attribute Type').value == 'Float';"),
+            ParamPrimitive("String Value", gParamType_String, 0, zeno::Lineedit, Any(),"visible = parameter('Attribute Type').value == 'String';"),
+            ParamPrimitive("Boolean Value", gParamType_Bool, 0, zeno::Checkbox, Any(),"visible = parameter('Attribute Type').value == 'Boolean';"),
+            ParamPrimitive("Vector2 Value", gParamType_Vec2f, vec2f(0,0), zeno::Vec2edit, Any(),"visible = parameter('Attribute Type').value == 'Vector2';"),
+            ParamPrimitive("Vector3 Value", gParamType_Vec3f, vec3f(0,0,0), zeno::Vec3edit, Any(),"visible = parameter('Attribute Type').value == 'Vector3';"),
+            ParamPrimitive("Vector4 Value", gParamType_Vec4f, vec4f(0,0,0,0), zeno::Vec4edit, Any(),"visible = parameter('Attribute Type').value == 'Vector4';")
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
 }
 

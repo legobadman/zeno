@@ -7,19 +7,6 @@
 
 namespace zeno
 {
-    ZDEFNODE(AttributeWrangle,
-    {
-        {
-            {gParamType_Geometry, "Input"},
-            ParamPrimitive("Run Over", gParamType_String, "Points", Combobox, std::vector<std::string>{"Points", "Faces", "Geometry"}),
-            ParamPrimitive("Zfx Code", gParamType_String, "", CodeEditor)
-        },
-        {
-            {gParamType_Geometry, "Output"}
-        },
-        {},
-        {"geom"}
-    });
     struct AttributeWrangle : zeno::INode
     {
         void apply() override {
@@ -45,4 +32,18 @@ namespace zeno
             ZImpl(set_output("Output", spGeo));
         }
     };
+
+    ZENDEFNODE(AttributeWrangle,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("Run Over", gParamType_String, "Points", Combobox, std::vector<std::string>{"Points", "Faces", "Geometry"}),
+            ParamPrimitive("Zfx Code", gParamType_String, "", CodeEditor)
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
 }

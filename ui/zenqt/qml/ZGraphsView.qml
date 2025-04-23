@@ -66,6 +66,8 @@ Item {
                         zeditortoolbar.view_reentry = true
 
                         tree_list.checked = false
+                        load_plugin.checked = false
+
                         stack_main_or_asset.visible = checked
                         stack_main_or_asset.currentIndex = 0
 
@@ -108,12 +110,14 @@ Item {
                         zeditortoolbar.view_reentry = true
 
                         assets_list.checked = false
+                        load_plugin.checked = false
+
                         stack_main_or_asset.visible = checked
                         stack_main_or_asset.currentIndex = 1
                         
                         zeditortoolbar.view_reentry = false
                     }
-                }    
+                }
 
                 contentItem: Image {
                     id: icon_image2
@@ -140,12 +144,23 @@ Item {
 
             ToolButton {
                 id: load_plugin
-                checkable: false
-                
-                icon.source: "qrc:/icons/broom_clear_clean_tool.svg"
+                icon.source: hovered || checked  ? "qrc:/icons/plugin_selected.svg" : "qrc:/icons/plugin_unselected.svg"
+                checkable: true
+                checked: false
+                property bool reentry: false
 
-                onClicked: {
-                    graphsmanager.addPlugin()
+                onCheckedChanged: {
+                    if (!zeditortoolbar.view_reentry) {
+                        zeditortoolbar.view_reentry = true
+
+                        assets_list.checked = false
+                        tree_list.checked = false
+
+                        stack_main_or_asset.visible = checked
+                        stack_main_or_asset.currentIndex = 2
+                        
+                        zeditortoolbar.view_reentry = false
+                    }
                 }
 
                 contentItem: Image {
@@ -443,6 +458,145 @@ Item {
                     }
                     onCurrentItemChanged: {
                         //console.log("current item is " + currentItem)
+                    }
+                }
+            }
+
+            Item {
+                id: plugins_list
+
+                // implicitWidth: 200
+                // Layout.maximumWidth: 400
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: "#181818"
+                }
+
+                Menu {
+                    id: pluginitem_menu
+                    MenuItem {
+                        text: "Remove Plugin"
+                        onTriggered: {
+                            pluginsModel.removePlugin(listView_plugins.currentIndex);
+                        }
+                    }
+                    MenuItem {
+                        text: "Open Container Folder"
+                        onTriggered: {
+
+                        }
+                    }
+                }                
+
+                Component {
+                    id: pluginItemDelegate
+                    Item {
+                        id: _item
+                        width: parent.width
+                        height: 30
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+                            onClicked: {
+                                _item.ListView.view.currentIndex = index
+                                if (mouse.button == Qt.RightButton) {
+                                    pluginitem_menu.popup(Qt.point(mouse.x + parent.x + 32, mouse.y + parent.y));
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.leftMargin: 10
+                            spacing: 8
+
+                            Text {
+                                id: lbl_plugin
+                                text: name
+                                // 是否是当前条目
+                                color: _item.ListView.isCurrentItem ? "white" : "#C3D2DF"
+                                font.pixelSize: 14
+                                Layout.preferredWidth: 120
+                            }
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        Text {
+                            text: "Loaded Plugins:"
+                            font.pixelSize: 16
+                            color: "grey"
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        ToolButton {
+                            // id: plugins_more
+                            checkable: false
+                            width: 16
+                            height: 16
+                            
+                            icon.source: hovered ? "qrc:/icons/add-on.svg" : "qrc:/icons/add.svg"
+
+                            onClicked: {
+                                graphsmanager.addPlugin()
+                            }
+                
+                            contentItem: Image {
+                                x: 2
+                                y: 2
+                                id: icon_more_plugins
+                                source: parent.icon.source
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                                smooth: true
+                                antialiasing: true
+                            }
+
+                            background: Rectangle {
+                                width: 20
+                                height: 20
+                                anchors.fill: parent
+                                color: "transparent"  // 不改变背景，只保证 hover 区域
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1
+                        Layout.fillWidth: true
+                        color: "grey"
+                    }
+
+                    ListView {
+                        id: listView_plugins
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+
+                        // 使用先前设置的delegate
+                        delegate: pluginItemDelegate
+                            
+                        // 3.ListModel专门定义列表数据的，它内部维护一个 ListElement 的列表。
+                        model: pluginsModel
+
+                        // 背景高亮
+                        focus: true
+                        highlight: Rectangle{
+                            color: "#3D3D3D"
+                        }
                     }
                 }
             }

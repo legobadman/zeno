@@ -7,6 +7,7 @@
 #include "model/graphsmanager.h"
 #include "model/graphstreemodel.h"
 #include "model/assetsmodel.h"
+#include "model/pluginsmodel.h"
 #include "uicommon.h"
 #include "variantptr.h"
 #include "widgets/zenocheckbutton.h"
@@ -45,6 +46,7 @@ ZenoGraphsEditor::ZenoGraphsEditor(ZenoMainWindow* pMainWin)
     auto graphsMgm = zenoApp->graphsManager();
     if (graphsMgm) {
         resetAssetsModel();
+        initPluginModel();
     }
 }
 
@@ -61,6 +63,7 @@ void ZenoGraphsEditor::initUI()
     QMargins margins(_margin, _margin, _margin, _margin);
     QSize szIcons = ZenoStyle::dpiScaledSize(QSize(20, 20));
     m_ui->moreBtn->setIcons(szIcons, ":/icons/more.svg", ":/icons/more_on.svg");
+    m_ui->createBtn->setIcons(szIcons, ":/icons/more.svg", ":/icons/more_on.svg");
 
     m_ui->splitter->setStretchFactor(1, 5);
 
@@ -106,6 +109,10 @@ void ZenoGraphsEditor::initModel()
     pItem->setData(Side_Search);
     m_sideBarModel->appendRow(pItem);
 
+    pItem = new QStandardItem;
+    pItem->setData(Side_Plugin);
+    m_sideBarModel->appendRow(pItem);
+
     m_selection = new QItemSelectionModel(m_sideBarModel);
 }
 
@@ -119,6 +126,7 @@ void ZenoGraphsEditor::initSignals()
     connect(m_selection, &QItemSelectionModel::currentChanged, this, &ZenoGraphsEditor::onCurrentChanged);
 
     connect(m_ui->moreBtn, SIGNAL(clicked()), this, SLOT(onAssetOptionClicked()));
+    connect(m_ui->createBtn, SIGNAL(clicked()), this, SLOT(onPluginOptionClicked()));
     connect(m_ui->btnSearchOpt, SIGNAL(clicked()), this, SLOT(onSearchOptionClicked()));
     connect(m_ui->graphsViewTab, &QTabWidget::tabCloseRequested, this, [=](int index) {
         m_ui->graphsViewTab->removeTab(index);
@@ -178,6 +186,42 @@ void ZenoGraphsEditor::resetMainModel()
     activateTab({ "main" });
     m_ui->mainTree->expandAll();
     m_ui->mainStacked->setCurrentIndex(1);
+}
+
+void ZenoGraphsEditor::initPluginModel()
+{
+    auto mgr = zenoApp->graphsManager();
+    PluginsModel* pluginM = mgr->pluginModel();
+    m_ui->pluginsList->setModel(pluginM);
+
+    m_ui->pluginsList->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(m_ui->pluginsList, &QListView::customContextMenuRequested, m_ui->pluginsList, [=](const QPoint& pos) {
+        QModelIndex index = m_ui->pluginsList->indexAt(pos);
+        if (index.isValid()) {
+            m_ui->pluginsList->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
+
+            QMenu menu;
+            menu.addAction(tr("Remove Plugin"), [&]() { 
+                pluginM->removeRows(index.row(), 1);
+            });
+            menu.addAction(tr("Open Container Folder"), [&]() {
+                QString path = index.data(QtRole::ROLE_PLUGIN_PATH).toString();
+                QString filePath = path;
+                QString cmd;
+#ifdef _WIN32
+                filePath = filePath.replace("/", "\\");
+                cmd = QString("explorer.exe /select,%1").arg(filePath);
+#else
+                filePath = filePath.replace("\\", "/");
+                cmd = QString("open -R %1").arg(filePath);
+#endif
+                QProcess process;
+                process.startDetached(cmd);
+            });
+            menu.exec(m_ui->pluginsList->viewport()->mapToGlobal(pos));
+        }
+        });
 }
 
 void ZenoGraphsEditor::resetAssetsModel()
@@ -361,6 +405,21 @@ void ZenoGraphsEditor::onPageListClicked()
     pMenu->deleteLater();
 }
 
+void ZenoGraphsEditor::onPluginOptionClicked()
+{
+    QMenu* pOptionsMenu = new QMenu;
+
+    QAction* pAddPlugin = new QAction(tr("Add Plugins"));
+    pOptionsMenu->addAction(pAddPlugin);
+    connect(pAddPlugin, &QAction::triggered, this, [=]() {
+        auto graphsMgm = zenoApp->graphsManager();
+        graphsMgm->addPlugin();
+    });
+
+    pOptionsMenu->exec(QCursor::pos());
+    pOptionsMenu->deleteLater();
+}
+
 void ZenoGraphsEditor::onAssetOptionClicked()
 {
     QMenu* pOptionsMenu = new QMenu;
@@ -463,6 +522,11 @@ void ZenoGraphsEditor::onCurrentChanged(const QModelIndex& current, const QModel
             {
                 //m_ui->searchBtn->setChecked(true);
                 m_ui->stackedWidget->setCurrentWidget(m_ui->searchPage);
+                break;
+            }
+            case Side_Plugin:
+            {
+                m_ui->stackedWidget->setCurrentWidget(m_ui->pluginsPage);
                 break;
             }
         }

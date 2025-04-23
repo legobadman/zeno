@@ -251,7 +251,22 @@ namespace zeno {
     };
     using NodeDescs = std::map<std::string, NodeDesc>;
 
-    using NodeCates = std::map<std::string, std::vector<std::string>>;
+    enum LoadStatus
+    {
+        ZModule_Loaded,
+        ZModule_UnLoaded
+    };
+
+    struct NodeInfo
+    {
+        std::string name;           //node class name
+        std::string module_path;    //比如zenvdb.dll, 或者aaa.zda
+        std::string cate;
+        LoadStatus status = ZModule_Loaded;
+    };
+
+    //using NodeCates = std::map<std::string, std::vector<NodeInfo>>;
+    using NodeRegistry = std::vector<NodeInfo>;
 
     struct TimelineInfo {
         int beginFrame = 0;

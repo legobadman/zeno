@@ -50,4 +50,8 @@ namespace zeno {
         return spNode;
     }
 
+    std::unique_ptr<INode> ImplNodeClass::new_coreinst() {
+        std::unique_ptr<INode> upNode(ctor());
+        return upNode;
+    }
 }

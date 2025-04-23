@@ -67,11 +67,14 @@ struct Session {
     ZENO_API bool is_auto_run() const;
     ZENO_API void set_Rerun();
     ZENO_API std::string dumpDescriptorsJSON() const;
-    ZENO_API zeno::NodeCates dumpCoreCates();
+    ZENO_API zeno::NodeRegistry dumpCoreCates();
     ZENO_API void defNodeClass(INode*(*ctor)(), std::string const &id, Descriptor const &desc = {});
     ZENO_API void defNodeClass2(INode*(*ctor)(), std::string const& nodecls, CustomUI const& customui);
     ZENO_API void defNodeClass3(INode*(*ctor)(), const char* pName, Descriptor const& desc = {});
-    ZENO_API void defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase);
+    //ZENO_API void defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase);
+    ZENO_API void beginLoadModule(const std::string& module_name);
+    ZENO_API void uninstallModule(const std::string& module_name);
+    ZENO_API void endLoadModule();
     ZENO_API void setApiLevelEnable(bool bEnable);
     ZENO_API void beginApiCall();
     ZENO_API void endApiCall();
@@ -92,13 +95,17 @@ struct Session {
     void reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status);
 
 private:
-    zeno::NodeCates m_cates;
     int m_apiLevel = 0;
     bool m_bApiLevelEnable = true;
     bool m_bAutoRun = false;
     bool m_bInterrupted = false;
     bool m_bDisableRunning = false;
     bool m_bReentrance = false;
+    std::string m_current_loading_module;
+
+    zeno::NodeRegistry m_cates;
+    //std::map<std::string, std::vector<NodeInfo>> m_cates;
+    //std::map<std::string, std::vector<std::string>> m_module_nodes;
 
     std::function<void()> m_callbackRunTrigger;
     F_NodeStatus m_funcNodeStatus;

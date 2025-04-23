@@ -4,18 +4,32 @@
 #include "zassert.h"
 #include "nodeeditor/gv/fuzzy_search.h"
 #include "model/GraphModel.h"
+#include "model/pluginsmodel.h"
 
 //#define DISABLE_CATE
 
 NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
-    zeno::NodeCates cates = zenoApp->graphsManager()->getCates();
+    reload();
+
+    PluginsModel* pluginsM = zenoApp->graphsManager()->pluginModel();
+    connect(pluginsM, &PluginsModel::rowsInserted, this, &NodeCateModel::reload);
+    connect(pluginsM, &PluginsModel::rowsRemoved, this, &NodeCateModel::reload);
+}
+
+void NodeCateModel::reload() {
+    m_items.clear();
+    m_cache_cates.clear();
+    m_nodeToCate.clear();
+    m_condidates.clear();
+
+    const NodeCates& cates = zenoApp->graphsManager()->getCates();
 #ifdef DISABLE_CATE
     m_cache_cates.resize(1);
 #else
     m_cache_cates.resize(cates.size());
 #endif
     int i = 0;
-    for (auto& [cate, nodes] : cates) {
+    for (QString cate : cates.keys()) {
 #ifdef DISABLE_CATE
         if (cate != "reflect" && cate != "prim" && cate != "subgraph" && cate != "layout")
             continue;
@@ -24,16 +38,18 @@ NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
 #ifdef DISABLE_CATE
         if (cate == "reflect")
 #endif
+            QVector<zeno::NodeInfo> nodes = cates[cate];
         {
-            m_cache_cates[i].name = QString::fromStdString(cate);
-            std::transform(nodes.begin(), nodes.end(), std::back_inserter(m_cache_cates[i].nodes), [](const std::string& v) { return QString::fromStdString(v); });
+            m_cache_cates[i].name = cate;
+            std::transform(nodes.begin(), nodes.end(), std::back_inserter(m_cache_cates[i].nodes),
+                [](const zeno::NodeInfo& v) { return QString::fromStdString(v.name); });
             i++;
         }
         for (const auto& node : nodes) {
-            QString nodecls = QString::fromStdString(node);
+            QString nodecls = QString::fromStdString(node.name);
             if (nodecls == "SubInput" || nodecls == "SubOutput")
                 continue;
-            m_nodeToCate[nodecls] = QString::fromStdString(cate);
+            m_nodeToCate[nodecls] = cate;
             m_condidates.push_back(nodecls);
         }
     }
@@ -104,12 +120,22 @@ bool NodeCateModel::iscatepage() const {
     return m_search.isEmpty();
 }
 
-void NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoint& pt) {
+bool NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoint& pt) {
     if (m_nodeToCate.find(name) == m_nodeToCate.end()) {
         zeno::log_error("cannot find {}", name.toStdString());
-        return;
+        return false;
     }
     const QString& cate = m_nodeToCate[name];
+
+    NodeCates m_cates = zenoApp->graphsManager()->getCates();
+    const QVector<zeno::NodeInfo>& nodes = m_cates[cate];
+    for (zeno::NodeInfo node_info : nodes) {
+        if (node_info.name == name.toStdString() &&
+            node_info.status == zeno::ZModule_UnLoaded) {
+            return false;
+        }
+    }
+
     if (cate != "control") {
         pGraphM->createNode(name, cate, pt);
     }
@@ -136,6 +162,7 @@ void NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoi
 
         }
     }
+    return true;
 }
 
 void NodeCateModel::search(const QString& name) {

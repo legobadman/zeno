@@ -14,6 +14,7 @@ class ZenoSubGraphScene;
 class GraphModel;
 class NodeCateModel;
 class GraphsManager;
+class PluginsModel;
 
 class GraphsManager : public QObject
 {
@@ -21,10 +22,9 @@ class GraphsManager : public QObject
     QML_ELEMENT
 public:
     GraphsManager(QObject* parent = nullptr);
-    GraphsManager(const GraphsManager& rhs);
+    GraphsManager(const GraphsManager& rhs) = delete;
     ~GraphsManager();
 
-    Q_INVOKABLE QVariantList getNodeCates() const;
     Q_INVOKABLE void saveProject(const QString& name);
     Q_INVOKABLE void undo(const QString& name);
     Q_INVOKABLE void redo(const QString& name);
@@ -40,6 +40,7 @@ public:
     void createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult);
     inline GraphsTreeModel* currentModel() const { return m_model; }
     AssetsModel* assetsModel() const;
+    PluginsModel* pluginModel() const;
     QStandardItemModel* logModel() const;
     GraphModel* getGraph(const QStringList& objPath) const;
     GraphsTreeModel* openZsgFile(const QString &fn, zenoio::ERR_CODE& code);
@@ -66,7 +67,7 @@ public:
     USERDATA_SETTING userdataInfo() const;
     RECORD_SETTING recordSettings() const;
     zeno::ZSG_VERSION ioVersion() const;
-    zeno::NodeCates getCates() const;
+    NodeCates getCates() const;
     void setIOVersion(zeno::ZSG_VERSION ver);
     void clearMarkOnGv();
     void initRootObjects();
@@ -91,6 +92,7 @@ private:
     GraphModel* m_main;
     QStandardItemModel* m_logModel;     //connection with scene.
     AssetsModel* m_assets;
+    PluginsModel* m_plugins;
 
     QString m_filePath;
     QString m_graphPath;

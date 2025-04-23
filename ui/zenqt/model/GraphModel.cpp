@@ -79,6 +79,7 @@ public:
     bool bView = false;
     bool bByPass = false;
     bool bCollasped = false;
+    bool bLoaded = true;   //如果节点所处的插件模块被卸载了，此项为false
     NodeState runState;
     zeno::NodeUIStyle uistyle;
 
@@ -159,6 +160,12 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
         emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_BYPASS });
     });
 
+    spNode->register_update_load_info([=](bool bDisable) {
+        this->bLoaded = !bDisable;
+        QModelIndex idx = pGraphM->indexFromName(this->name);
+        emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_IS_LOADED });
+    });
+
     this->params = new ParamsModel(spNode, this);
     this->name = QString::fromStdString(spNode->get_name());
     this->cls = QString::fromStdString(spNode->get_nodecls());
@@ -171,7 +178,8 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
     auto pair = spNode->get_pos();
     this->pos = QPointF(pair.first, pair.second);
     this->uuidPath = spNode->get_uuid_path();
-    this->uistyle = spNode->coreNode()->export_customui().uistyle;
+    this->uistyle = spNode->export_customui().uistyle;
+    this->bLoaded = spNode->is_loaded();
 
     setProperty("uuid-path", QString::fromStdString(uuidPath));
     if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode))
@@ -485,6 +493,11 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             auto spNode = item->m_wpNode;
             ZASSERT_EXIT(spNode, QVariant());
             return QVariant::fromValue(spNode->exportInfo());
+        }
+        case QtRole::ROLE_NODE_IS_LOADED:
+        {
+            auto spNode = item->m_wpNode;
+            return item->bLoaded;
         }
         case QtRole::ROLE_NODE_STATUS:
         {

@@ -814,4 +814,8 @@ namespace zeno {
         return spNode;
     }
 
+    std::unique_ptr<INode> ReflectNodeClass::new_coreinst() {
+        return nullptr;
+    }
+
 }

@@ -243,11 +243,13 @@ ZENO_API void Session::defNodeClass(INode* (*ctor)(), std::string const &clsname
     if (!clsname.empty() && clsname.front() == '^')
         return;
 
-    std::string cate = cls->m_customui.category;
-    if (m_cates.find(cate) == m_cates.end())
-        m_cates.insert(std::make_pair(cate, std::vector<std::string>()));
-    m_cates[cate].push_back(clsname);
+    NodeInfo info;
+    info.module_path = m_current_loading_module;
+    info.name = clsname;
+    info.status = ZModule_Loaded;
+    info.cate = cls->m_customui.category;
 
+    m_cates.push_back(std::move(info));
     nodeClasses.emplace(clsname, std::move(cls));
 }
 
@@ -266,6 +268,7 @@ ZENO_API void Session::defNodeClass3(INode* (*ctor)(), const char* pName, Descri
     //nodeClasses.emplace(pName, std::move(cls));
 }
 
+#if 0
 ZENO_API void Session::defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase)
 {
     assert(pTypeBase);
@@ -289,6 +292,35 @@ ZENO_API void Session::defNodeReflectClass(std::function<INode*()> ctor, zeno::r
 
     nodeClasses.emplace(nodecls, std::move(cls));
 }
+#endif
+
+void Session::beginLoadModule(const std::string& module_name) {
+    m_current_loading_module = module_name;
+}
+
+void Session::uninstallModule(const std::string& module_path) {
+    for (NodeInfo& info : m_cates) {
+        if (info.module_path == module_path) {
+            info.status = ZModule_UnLoaded;
+            const std::string uninstall_nodecls = info.name;
+            nodeClasses.erase(uninstall_nodecls);
+            //所有节点要disable掉，只留一个空壳
+            mainGraph->update_load_info(uninstall_nodecls, true);
+        }
+    }
+}
+
+void Session::endLoadModule() {
+    //有可能加载模块前有旧节点，这时候要enable已有的节点
+    for (NodeInfo& info : m_cates) {
+        if (info.module_path == m_current_loading_module) {
+            info.status = ZModule_Loaded;
+            mainGraph->update_load_info(info.name, false);
+        }
+    }
+    m_current_loading_module = "";
+}
+
 
 ZENO_API INodeClass::INodeClass(CustomUI const &customui, std::string const& classname)
     : m_customui(customui)
@@ -499,7 +531,7 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
     //zeno::getSession().globalVariableManager->overrideVariable(zeno::GVariable("$F", zeno::reflect::make_any<float>(ioresult.timeline.currFrame)));
 }
 
-ZENO_API zeno::NodeCates Session::dumpCoreCates() {
+ZENO_API zeno::NodeRegistry Session::dumpCoreCates() {
     return m_cates;
 }
 

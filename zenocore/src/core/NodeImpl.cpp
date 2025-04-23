@@ -56,7 +56,8 @@ namespace zeno {
     class ForEachEnd;
 
 NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
-    m_pNode->m_pAdapter = this;
+    if (m_pNode)
+        m_pNode->m_pAdapter = this;
 }
 
 void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
@@ -174,8 +175,10 @@ ObjPath NodeImpl::get_graph_path() const {
     return path;
 }
 
-CustomUI NodeImpl::export_customui() const
-{
+CustomUI NodeImpl::_deflCustomUI() const {
+    if (!nodeClass)
+        return CustomUI();
+
     std::set<std::string> intputPrims, outputPrims, inputObjs, outputObjs;
     zeno::CustomUI origin = nodeClass->m_customui;
     zeno::CustomUI exportui = origin;
@@ -212,8 +215,25 @@ CustomUI NodeImpl::export_customui() const
         output_param = iterPrim->second.exportParam();
     }
     return exportui;
+}
 
+CustomUI NodeImpl::export_customui() const
+{
+    CustomUI deflUI = _deflCustomUI();
+    INode* pNode = coreNode();
+    if (pNode) {
+        CustomUI nodeui = pNode->export_customui();
+        if (nodeui.inputObjs.empty() && nodeui.inputPrims.empty() &&
+            nodeui.outputPrims.empty() && nodeui.outputObjs.empty()) {
+            return deflUI;
+        }
+        else {
+            return nodeui;
+        }
+    }
+    return deflUI;
 
+#if 0
     exportui.nickname = origin.nickname;
     exportui.uistyle = origin.uistyle;
     exportui.doc = origin.doc;
@@ -279,6 +299,7 @@ CustomUI NodeImpl::export_customui() const
             exportui.outputObjs.push_back(param.exportParam());
     }
     return exportui;
+#endif
 }
 
 ObjPath NodeImpl::get_path() const {
@@ -641,6 +662,7 @@ void NodeImpl::reflectForeach_apply(CalcContext* pContext)
         auto foreach_begin = spGraph->getNode(foreach_begin_path);
 
         auto foreach_end = coreNode();
+        assert(foreach_end);
         for (foreach_end->reset_forloop_settings(); is_continue_to_run(); increment())
         {
             foreach_begin->mark_dirty(true);
@@ -657,7 +679,12 @@ void NodeImpl::reflectForeach_apply(CalcContext* pContext)
 
 
 void NodeImpl::apply() {
-    m_pNode->apply();
+    if (m_pNode) {
+        m_pNode->apply();
+    }
+    else {
+        throw makeError<UnimplError>("the node has been uninstalled");
+    }
 }
 
 void NodeImpl::reflectNode_apply()
@@ -2669,6 +2696,26 @@ void NodeImpl::update_param_color(const std::string& name, std::string& clr)
 void NodeImpl::update_layout(params_change_info& changes)
 {
     CALLBACK_NOTIFY(update_layout, changes);
+}
+
+bool NodeImpl::is_loaded() const {
+    return m_pNode != nullptr;
+}
+
+void NodeImpl::update_load_info(bool bDisable) {
+    if (bDisable) {
+        m_pNode.reset();
+    }
+    else {
+        //重新加载，需要拿到INode的定义
+        auto iter = zeno::getSession().nodeClasses.find(m_nodecls);
+        if (iter == zeno::getSession().nodeClasses.end()) {
+            throw makeError<UnimplError>("cannot load the nodeclass definition");
+        }
+        const std::unique_ptr<INodeClass>& defcls = iter->second;
+        m_pNode = defcls->new_coreinst();
+    }
+    CALLBACK_NOTIFY(update_load_info, bDisable);
 }
 
 params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)

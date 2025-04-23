@@ -6,7 +6,7 @@
 namespace zeno
 {
     CustomUI INode::export_customui() const {
-        return m_pAdapter->export_customui();
+        return CustomUI();
     }
 
     NodeType INode::type() const {

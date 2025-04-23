@@ -23,7 +23,8 @@ class ZenoGraphsEditor : public QWidget
     {
         Side_Subnet,
         Side_Tree,
-        Side_Search
+        Side_Search,
+        Side_Plugin,
     };
 
 public:
@@ -42,6 +43,7 @@ public:
 public slots:
     void resetMainModel();
     void resetAssetsModel();
+    void initPluginModel();
     void sideButtonToggled(bool bToggled);
     void onSideBtnToggleChanged(const QItemSelection& selected, const QItemSelection& deselected);
     void onCurrentChanged(const QModelIndex& current, const QModelIndex& previous);
@@ -50,6 +52,7 @@ public slots:
     void onSearchItemClicked(const QModelIndex& index);
     void onAssetOptionClicked();
     void onSearchOptionClicked();
+    void onPluginOptionClicked();
     void onPageActivated(const QPersistentModelIndex& subgIdx, const QPersistentModelIndex& nodeIdx);
     void onPageActivated(const QModelIndex& subgNodeIdx);
     void onLogInserted(const QModelIndex& parent, int first, int last);

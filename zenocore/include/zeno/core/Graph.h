@@ -71,6 +71,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     bool removeLinks(const std::string nodename, bool bInput, const std::string paramname);
     CALLBACK_REGIST(removeLinks, bool, std::string, bool, std::string)
 
+    void update_load_info(const std::string& nodecls, bool bDisable);
+
     bool updateLink(const EdgeInfo& edge, bool bInput, const std::string oldkey, const std::string newkey);
     bool moveUpLinkKey(const EdgeInfo& edge, bool bInput, const std::string keyName);
 
@@ -153,9 +155,9 @@ private:
     std::map<std::string, std::string> subInputNodes;
     std::map<std::string, std::string> subOutputNodes;
     std::map<std::string, std::string> m_name2uuid;
-    std::map<std::string, std::set<std::string>> node_set;
+    std::map<std::string, std::set<std::string>> node_set;  //cls to name
     std::set<std::string> frame_nodes;      //record all nodes depended on frame num.
-    std::set<std::string> subnet_nodes;
+    std::set<std::string> subnet_nodes;     //base uuid
     std::set<std::string> asset_nodes;
     std::set<std::string> subinput_nodes;
     std::set<std::string> suboutput_nodes;

@@ -45,6 +45,8 @@ Qan.NodeItem {
 
     property alias isview : right_status_group.isview
     property alias isbypass: right_status_group.isbypass
+    property bool isloaded : true
+    property var node_enable_bg_color: "#0277D1"
     property var nodestatus: 0
 
     property string defattr: "abc"
@@ -125,6 +127,18 @@ Qan.NodeItem {
         }
         if (role == Model.ROLE_NODE_RUN_STATE) {
             nodeItem.nodestatus = data
+        }
+        if (role == Model.ROLE_NODE_IS_LOADED) {
+            //console.log("onDataChanged: Model.ROLE_NODE_IS_LOADED")
+            nodeItem.isloaded = data
+            if (nodeItem.isloaded) {
+                //console.log("nodeItem.isloaded")
+                roundrectheader.bgcolor = rectheader.color = nodeItem.node_enable_bg_color
+            }
+            else {
+                //console.log("nodeItem.isloaded")
+                roundrectheader.bgcolor = rectheader.color = "#5F5F5F"
+            }
         }
     }
 
@@ -257,7 +271,7 @@ Qan.NodeItem {
                         ZRoundRect {
                             id: roundrectheader
                             anchors.fill: parent
-                            bgcolor: "#0277D1"
+                            bgcolor: nodeItem.node_enable_bg_color //"#0277D1"
                             radius: nodeItem.backRadius
                             visible: nodebody.visible
                         }
@@ -265,7 +279,7 @@ Qan.NodeItem {
                         Rectangle {
                             id: rectheader
                             anchors.fill: parent
-                            color: "#0277D1"
+                            color: nodeItem.node_enable_bg_color  //"#0277D1"
                             radius: nodeItem.backRadius
                             visible: !nodebody.visible
                         }
@@ -492,6 +506,7 @@ Qan.NodeItem {
         nodeItem.y = pos.y
         nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
         nodeItem.clsname = graphM.data(idx, Model.ROLE_CLASS_NAME)
+        nodeItem.isloaded = graphM.data(idx, Model.ROLE_NODE_IS_LOADED)
 
         var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
         if (uistyle["icon"] != "") {
@@ -507,7 +522,11 @@ Qan.NodeItem {
         }
         //console.log("ui.icon = " + uistyle["icon"])
         if (uistyle["background"] != "") {
-            roundrectheader.bgcolor = rectheader.color = uistyle["background"];
+            nodeItem.node_enable_bg_color = uistyle["background"]
+            //roundrectheader.bgcolor = rectheader.color = uistyle["background"];
+        }
+        if (!nodeItem.isloaded) {
+            nodeItem.node_enable_bg_color = "#5F5F5F"
         }
     }
 }

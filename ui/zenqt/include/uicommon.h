@@ -221,6 +221,7 @@ public:
         ROLE_NODE_ISVIEW,
         ROLE_NODE_BYPASS,
         ROLE_NODE_DIRTY,
+        ROLE_NODE_IS_LOADED,
         ROLE_NODE_RUN_STATE,
         ROLE_NODEDATA,
         ROLE_OUTPUT_OBJS,
@@ -244,7 +245,10 @@ public:
         ROLE_DOPNETWORK_ENABLECACHE,
         ROLE_DOPNETWORK_CACHETODISK,
         ROLE_DOPNETWORK_MAXMEM,
-        ROLE_DOPNETWORK_MEM
+        ROLE_DOPNETWORK_MEM,
+
+        ROLE_PLUGIN_PATH,
+        ROLE_PLUGIN_LOADED,
     };
     Q_ENUM(MODEL_ROLE)
 };
@@ -381,6 +385,7 @@ typedef QKeyList<QString, zeno::ParamPrimitive> PARAMS_INFO;
 
 typedef QList<QPersistentModelIndex> PARAM_LINKS;
 
+using NodeCates = QMap<QString, QVector<zeno::NodeInfo>>;
 
 class GraphModel;
 struct SEARCH_RESULT

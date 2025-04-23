@@ -110,6 +110,7 @@ private:
     ZenoGraphsEditor* m_pEditor;
     ZToolBarButton *pListView;
     ZToolBarButton *pTreeView;
+    ZToolBarButton* pluginView;
     ZToolBarButton *pSubnetMgr;
     ZToolBarButton *pFold;
     ZToolBarButton *pUnfold;

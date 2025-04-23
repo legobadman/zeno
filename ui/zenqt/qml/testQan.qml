@@ -44,9 +44,7 @@ Zen.GraphsTotalView {
     visible: true
     width: 1280; height: 720
     //anchors.fill: parent
-    graphsMgr: Zen.GraphsManager {
-        id: graphs
-    }
+    graphsMgr: graphsmanager
 
     Material.theme: Material.Dark
 

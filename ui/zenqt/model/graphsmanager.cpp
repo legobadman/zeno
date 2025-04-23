@@ -14,6 +14,7 @@
 #include "zassert.h"
 #include "variantptr.h"
 #include "model/parammodel.h"
+#include "model/pluginsmodel.h"
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include "settings/zsettings.h"
@@ -63,11 +64,7 @@ GraphsManager::GraphsManager(QObject* parent)
     //m_main = new GraphModel("/main", false, m_model, this);
     //m_model->init(m_main);
     m_assets = new AssetsModel(this);
-
-}
-
-GraphsManager::GraphsManager(const GraphsManager& rhs) {
-    assert(false);
+    m_plugins = new PluginsModel(this);
 }
 
 GraphsManager::~GraphsManager()
@@ -83,6 +80,8 @@ void GraphsManager::initRootObjects() {
         engine->rootContext()->setContextProperty("treeModel", m_model);
     if (m_assets)
         engine->rootContext()->setContextProperty("assetsModel", m_assets);
+    if (m_plugins)
+        engine->rootContext()->setContextProperty("pluginsModel", m_plugins);
 }
 
 void GraphsManager::registerCoreNotify() {
@@ -92,6 +91,11 @@ void GraphsManager::registerCoreNotify() {
 AssetsModel* GraphsManager::assetsModel() const
 {
     return m_assets;
+}
+
+PluginsModel* GraphsManager::pluginModel() const
+{
+    return m_plugins;
 }
 
 QStandardItemModel* GraphsManager::logModel() const
@@ -420,23 +424,6 @@ RECORD_SETTING GraphsManager::recordSettings() const
     return RECORD_SETTING();
 }
 
-QVariantList GraphsManager::getNodeCates() const
-{
-    zeno::NodeCates cates = getCates();
-    QVariantList _cates;
-    for (auto& [cate, lst] : cates) {
-        QStringList nodes;
-        std::transform(lst.begin(), lst.end(), std::back_inserter(nodes), [](const std::string& v) { return QString::fromStdString(v); });
-
-        QString _cate = QString::fromStdString(cate);
-        QVariantList item;
-        item.append(_cate);
-        item.append(nodes);
-        _cates.push_back(item);
-    }
-    return _cates;
-}
-
 void GraphsManager::saveProject(const QString& name)
 {
     if (name == "main") {
@@ -493,11 +480,7 @@ void GraphsManager::addPlugin()
     ZenoMainWindow* mainWin = zenoApp->getMainWindow();
     QString filePath = QFileDialog::getOpenFileName(mainWin, "File to Open", "", "Zeno Module (*.dll)");
     if (!filePath.isEmpty()) {
-        HMODULE hDll = LoadLibrary(filePath.toUtf8().data());
-        if (hDll) {
-            int j;
-            j = 0;
-        }
+        m_plugins->addPlugin(filePath);
     }
 }
 
@@ -518,30 +501,39 @@ QStringList GraphsManager::recentFiles() const
     return paths;
 }
 
-zeno::NodeCates GraphsManager::getCates() const
+NodeCates GraphsManager::getCates() const
 {
-    zeno::NodeCates cates = zeno::getSession().dumpCoreCates();
-    std::vector<std::string> assetsNames;
+    zeno::NodeRegistry nodeRegs = zeno::getSession().dumpCoreCates();
+    QVector<zeno::NodeInfo> assetsNames;
+    NodeCates cates;
 
     for (int r = 0; r < m_assets->rowCount(); r++)
     {
         QModelIndex idx = m_assets->index(r);
         const QString& asset = idx.data(QtRole::ROLE_CLASS_NAME).toString();
-        assetsNames.push_back(asset.toStdString());
+        zeno::NodeInfo info;
+        info.name = asset.toStdString();
+        info.status = zeno::ZModule_Loaded;
+        info.module_path = "";  //先默认算到主模块
+        assetsNames.push_back(std::move(info));
     }
 
-    cates.insert(std::make_pair("assets", assetsNames));
+    cates["assets"] = assetsNames;
+
+    for (const zeno::NodeInfo& nodereg : nodeRegs) {
+        QString category = QString::fromStdString(nodereg.cate);
+        if (!category.isEmpty()) {
+            cates[category].append(nodereg);
+        }
+    }
 
     //1. foreach-count
-    std::vector<std::string> control_cases = { "Foreach-Count", "Foreach-Geometry-attr", "Foreach-StopCond" };
-    auto iter = cates.find("control");
-    if (iter == cates.end()) {
-        cates.emplace(std::make_pair("control", control_cases));
-    }
-    else {
-        iter->second = std::move(control_cases);
-    }
-
+    QVector<zeno::NodeInfo> control_cases = {
+        {"Foreach-Count", "", "control", zeno::ZModule_Loaded},
+        {"Foreach-Geometry-attr", "", "control", zeno::ZModule_Loaded},
+        {"Foreach-StopCond", "", "control", zeno::ZModule_Loaded}
+    };
+    cates["control"] = control_cases;
     return cates;
 }
 

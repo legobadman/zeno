@@ -132,7 +132,7 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
     , m_customUIMCloned(nullptr)
 {
     initParamItems();
-    initCustomUI(spNode->coreNode()->export_customui());
+    initCustomUI(spNode->export_customui());
 
     cbUpdateParam = spNode->register_update_param(
         [this](const std::string& name, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
@@ -228,7 +228,7 @@ void ParamsModel::initParamItems()
     auto spNode = m_wpNode/*.lock()*/;
     ZASSERT_EXIT(spNode);
     //primitive inputs
-    const zeno::CustomUI& customui = spNode->coreNode()->export_customui();
+    const zeno::CustomUI& customui = spNode->export_customui();
     if (!customui.inputPrims.empty() && !customui.inputPrims[0].groups.empty()) {
         for (auto& tab : customui.inputPrims) {
             for (auto& group: tab.groups) {
@@ -300,7 +300,7 @@ void ParamsModel::initParamItems()
 }
 
 zeno::CustomUI ParamsModel::customUI() const {
-    return m_wpNode->coreNode()->export_customui();
+    return m_wpNode->export_customui();
 }
 
 void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
@@ -1077,7 +1077,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         updateCustomUiModelIncremental(changes, sbn->get_customui());
     }
     else {
-        updateCustomUiModelIncremental(changes, spNode->coreNode()->export_customui());
+        updateCustomUiModelIncremental(changes, spNode->export_customui());
     }
 
     //reconstruct links.
