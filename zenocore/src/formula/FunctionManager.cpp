@@ -140,6 +140,9 @@ namespace zeno {
         else if (get_type<std::string>() == var.type()) {
             return zeno::any_cast_to_string(var);
         }
+        else if (get_type<const char*>() == var.type()) {
+            return zeno::any_cast_to_string(var);
+        }
         else if (get_type<zeno::vec2i>() == var.type()) {
             auto vec = any_cast<zeno::vec2i>(var);
             return glm::vec2{ vec[0], vec[1] };
@@ -183,6 +186,7 @@ namespace zeno {
                 }, primvar);
         }
         else {
+            assert(false);
             return zfxvariant();
         }
     }

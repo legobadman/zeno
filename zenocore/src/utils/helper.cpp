@@ -274,6 +274,9 @@ namespace zeno {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
+            if (anyType == gParamType_Float) {
+                val = (int)any_cast<float>(val);
+            }
             val = PrimVar(any_cast<int>(val));
             return true;
         }
@@ -281,6 +284,9 @@ namespace zeno {
             if (anyType == gParamType_String) {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
+            }
+            if (anyType == gParamType_Int) {
+                val = (float)any_cast<int>(val);
             }
             val = PrimVar(any_cast<float>(val));
             return true;

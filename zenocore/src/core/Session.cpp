@@ -89,7 +89,13 @@ static CustomUI descToCustomui(const Descriptor& desc) {
                 default.params.push_back(newparam);
             }
             else {
-                default.params.push_back(param_desc._desc.primparam);
+                //字符串的defl都是以const char*作为内部储存的类型，这里转一下string，以免上层逻辑处理疏漏
+                ParamPrimitive newparam = param_desc._desc.primparam;
+                if (newparam.defl.type() == zeno::reflect::type_info<const char*>()) {
+                    std::string str = zeno::reflect::any_cast<const char*>(newparam.defl);
+                    newparam.defl = str;
+                }
+                default.params.push_back(newparam);
             }
         }
         else if (param_desc._desc.type == Desc_Obj) {
