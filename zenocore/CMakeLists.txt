@@ -169,7 +169,6 @@ if (ZENO_WITH_REFLECTOR)
         #手动添加
         set(reflecttypes
             ../zeno/src/nodes/reflect/zenoreflecttypes.cpp
-            include/zeno/types/HeatmapObject.h
         )
         make_absolute_paths(REFLECTION_TYPES ${reflecttypes})
         zeno_declare_reflection_support(zenocore "${REFLECTION_TYPES}" zeno_types)

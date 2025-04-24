@@ -66,14 +66,14 @@ REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::CurvesData, Curve)
 REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::BCurveObject, BCurve)
 REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::HeatmapData, Heatmap)
 
-REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::ReflectCustomUI, ReflectCustomUI)
+//REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::ReflectCustomUI, ReflectCustomUI)
 REFLECT_REGISTER_RTTI_TYPE_MANUAL(zeno::ParamControl)
 REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::vecvar, VecEdit)
 REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::PrimVar, PrimVariant)
 
 //只能定义基类指针
-REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<IObject>)
-REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<const IObject>)
+//REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<IObject>)
+//REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<const IObject>)
 //不能对子类指针实施反射，因为Any在转换的过程中无法转为基类指针，同时也得为所有子模块所有类型构造反射，不方便
 //REFLECT_REGISTER_OBJECT(zeno::PrimitiveObject, Primitive)
 //REFLECT_REGISTER_OBJECT(zeno::CameraObject, Camera)
