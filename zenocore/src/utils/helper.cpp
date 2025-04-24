@@ -240,6 +240,24 @@ namespace zeno {
         }
     }
 
+    bool ListHasPrimObj(zeno::ListObject* list) {
+        for (zany elem : list->get()) {
+            if (std::dynamic_pointer_cast<PrimitiveObject>(elem)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool DictHasPrimObj(zeno::DictObject* dict) {
+        for (auto& [key, elem] : dict->get()) {
+            if (std::dynamic_pointer_cast<PrimitiveObject>(elem)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     ZENO_API bool convertToOriginalVar(zeno::reflect::Any& editvar, const ParamType type) {
         if (!editvar.has_value()) return false;
 
@@ -1181,6 +1199,7 @@ namespace zeno {
         std::vector<std::string>& outputParams
     )
     {
+#if 0
         if (!typeBase || !node) {
             return;
         }
@@ -1215,6 +1234,7 @@ namespace zeno {
                 break;
             }
         }
+#endif
     }
 
     ZENO_API bool isDerivedFromSubnetNodeName(const std::string& clsname)

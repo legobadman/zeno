@@ -1447,8 +1447,15 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 }
                 else {
                     auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
-                    newObj = outResult->clone();
-                    newObj->update_key(newkey);
+                    if (dynamic_cast<zeno::PrimitiveObject*>(outResult.get())) {
+                        newObj = outResult;
+                        out_param->spObject.reset();
+                        outNode->mark_dirty(true);
+                    }
+                    else {
+                        newObj = outResult->clone();
+                        newObj->update_key(newkey);
+                    }
                 }
                 spList->m_impl->push_back(newObj);
 
@@ -1613,11 +1620,36 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     return result;
 }
 
-bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, zany outputObj, ParamType outobj_type) {
+bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param) {
 
     //在此版本里，只有克隆，每个对象只有一个节点关联，虽然激进，但可以充分测试属性数据共享在面对
     //内存暴涨时的冲击，能优化到什么程度
-    in_param->spObject = outputObj->clone();
+
+    bool bCloned = true;
+    //如果outputobj是 PrimitiveObject，则不走拷贝，而是move，如果List和Dict含有哪怕只有一个PrimitiveObj，也不走拷贝
+    if (auto prim = std::dynamic_pointer_cast<PrimitiveObject>(out_param->spObject)) {
+        bCloned = false;
+    }
+    else if (auto lst = std::dynamic_pointer_cast<ListObject>(out_param->spObject)) {
+        if (ListHasPrimObj(lst.get())) {
+            bCloned = false;
+        }
+    }
+    else if (auto dict = std::dynamic_pointer_cast<DictObject>(out_param->spObject)) {
+        if (DictHasPrimObj(dict.get())) {
+            bCloned = false;
+        }
+    }
+
+    if (bCloned) {
+        in_param->spObject = out_param->spObject->clone();
+    }
+    else {
+        in_param->spObject = out_param->spObject;
+        out_param->spObject.reset();
+        outNode->mark_dirty(true);
+    }
+
     if (auto splist = std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
         update_list_root_key(splist.get(), m_uuidPath);
     } else if (auto spdict = std::dynamic_pointer_cast<DictObject>(in_param->spObject)) {
@@ -1662,14 +1694,12 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                 {
                     std::shared_ptr<DictObject> outDict = processDict(in_param, pContext);
                     in_param->spObject = outDict;
-                    //receiveOutputObj(in_param, nullptr, outDict, gParamType_Dict);
                     break;
                 }
                 case gParamType_List:
                 {
                     std::shared_ptr<ListObject> outList = processList(in_param, pContext);
                     in_param->spObject = outList;
-                    //receiveOutputObj(in_param, nullptr, outList, gParamType_List);
                     break;
                 }
                 case gParamType_Curve:
@@ -1690,7 +1720,7 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
 
                         if (out_param->spObject)
                         {
-                            receiveOutputObj(in_param, outNode, out_param->spObject, out_param->type);
+                            receiveOutputObj(in_param, outNode, out_param);
                         }
                     }
                 }
