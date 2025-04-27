@@ -39,5 +39,6 @@ registerObjectTypeHash(GeometryObject, Geometry)
 #define gParamType_FOR              235
 #define gParamType_Instance         236
 #define gParamType_AnyNumeric       237
+#define gParamType_NumericObj       238
 
 #endif
