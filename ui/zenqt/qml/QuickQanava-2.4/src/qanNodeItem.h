@@ -348,6 +348,7 @@ private slots:
 signals:
     //! Emitted whenever the node is clicked (even at the start of a dragging operation).
     void    nodeClicked(qan::NodeItem* node, QPointF p);
+    void    nodeClickRelease(qan::NodeItem* node, QPointF p);
     //! Emitted whenever the node is double clicked.
     void    nodeDoubleClicked(qan::NodeItem* node, QPointF p);
     //! Emitted whenever the node is right clicked.

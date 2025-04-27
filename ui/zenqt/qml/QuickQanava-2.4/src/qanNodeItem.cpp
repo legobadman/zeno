@@ -366,6 +366,7 @@ void    NodeItem::mouseReleaseEvent(QMouseEvent* event)
 {
     const auto draggableCtrl = static_cast<DraggableCtrl*>(_draggableCtrl.get());
     draggableCtrl->handleMouseReleaseEvent(event);
+    emit nodeClickRelease(this, event->localPos());
 }
 //-----------------------------------------------------------------------------
 

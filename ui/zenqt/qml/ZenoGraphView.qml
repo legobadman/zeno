@@ -237,7 +237,7 @@ Qan.GraphView {
         }
     }
 
-    onNodeClicked: function(node){
+    onNodeClickReleased: function(node){
         proppanel.node = node
         var contentW = proppanel.calc_content_width()
         var contentH = proppanel.calc_content_height()
@@ -671,6 +671,7 @@ Qan.GraphView {
                     selected_edges.push(edge)
                 }
             }
+            console.log("selected_edges = " + selected_edges)
             for (var i = 0; i < selected_edges.length; i++) {
                 var selected_edge = selected_edges[i]
                 var inobj = selected_edge.toParam
@@ -679,6 +680,8 @@ Qan.GraphView {
                 var out_node_name = graphView.graph.getNode(outobj[0]).label
                 var in_param = inobj[1]
                 var out_param = outobj[1]
+                console.log("in_param = " + in_param)
+                console.log("out_param = " + out_param)
                 graphView.graph.model.removeLink(out_node_name, out_param, in_node_name, in_param)
             }
 

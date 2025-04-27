@@ -216,4 +216,56 @@ ZENDEFNODE(PackNumericVec, {
     {"numeric"},
 });
 
+
+
+struct TestVariantInt : zeno::INode {
+    void apply() override {
+        int val = m_pAdapter->get_input2<int>("intval");
+    }
+};
+
+ZENDEFNODE(TestVariantInt, {
+    {
+        {gParamType_Int, "intval"}
+    },
+    {
+    },
+    {},
+    {"numeric"}
+});
+
+
+struct TestZVariant : zeno::INode {
+    virtual void apply() override {
+        zeno::reflect::Any val = m_pAdapter->get_param_result("num");
+        if (false) {
+            int iVal = m_pAdapter->get_input2<int>("num");
+            m_pAdapter->set_output2("out", iVal);
+        }
+        if (false) {
+            float fVal = m_pAdapter->get_input2<float>("num");
+            set_output_float("out", fVal);
+        }
+        if (false) {
+            std::string sVal = m_pAdapter->get_input2<std::string>("num");
+            m_pAdapter->set_output2("out", sVal);
+        }
+        //m_pAdapter->set_output2("out", 3);
+        m_pAdapter->set_output2("out", 4.f);
+        //m_pAdapter->set_primitive_output("out", val);
+    }
+};
+
+ZENDEFNODE(TestZVariant, {
+    {
+        {gParamType_AnyNumeric, "num"}
+    },
+    {
+        {gParamType_AnyNumeric, "out"}
+    },
+    {},
+    {"numeric"}
+});
+
+
 }

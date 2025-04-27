@@ -91,6 +91,7 @@ namespace zeno
         ParamPrimitive get_output_prim_param(std::string const& name, bool* pExist = nullptr) const;
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
+        zeno::reflect::Any get_param_result(std::string const& name);
 
         std::string get_viewobject_output_param() const;
         virtual NodeData exportInfo() const;

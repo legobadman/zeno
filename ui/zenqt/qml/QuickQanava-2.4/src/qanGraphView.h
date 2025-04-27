@@ -110,6 +110,7 @@ signals:
     void            rightClicked(QPointF pos);
 
     void            nodeClicked(qan::Node* node, QPointF pos);
+    void            nodeClickReleased(qan::Node* node, QPointF pos);
     void            nodeRightClicked(qan::Node* node, QPointF pos);
     void            nodeDoubleClicked(qan::Node* node, QPointF pos);
 

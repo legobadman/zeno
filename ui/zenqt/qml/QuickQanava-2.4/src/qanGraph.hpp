@@ -73,6 +73,13 @@ qan::Node*  Graph::insertNode(const QModelIndex& idx, QQmlComponent* nodeCompone
             connect(nodeItem, &qan::NodeItem::nodeClicked,
                     this,     notifyNodeClicked);
 
+            auto notifyNodeClickReleased = [this](qan::NodeItem* nodeItem, QPointF p) {
+                if (nodeItem != nullptr && nodeItem->getNode() != nullptr)
+                    emit this->nodeClickReleased(nodeItem->getNode(), p);
+            };
+            connect(nodeItem, &qan::NodeItem::nodeClickRelease,
+                this, notifyNodeClickReleased);
+
             auto notifyNodeRightClicked = [this] (qan::NodeItem* nodeItem, QPointF p) {
                 if (nodeItem != nullptr && nodeItem->getNode() != nullptr)
                     emit this->nodeRightClicked(nodeItem->getNode(), p);

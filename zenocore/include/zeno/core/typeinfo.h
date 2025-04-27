@@ -38,5 +38,6 @@ registerObjectTypeHash(GeometryObject, Geometry)
 #define gParamType_VDBGrid          234
 #define gParamType_FOR              235
 #define gParamType_Instance         236
+#define gParamType_AnyNumeric       237
 
 #endif

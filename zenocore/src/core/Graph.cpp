@@ -123,7 +123,9 @@ void Graph::parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any
 {
     auto spNode = spParam->m_wpNode;
     assert(spNode);
-    assert(spParam->defl.has_value());
+    if (!spParam->defl.has_value()) {
+        return;
+    }
     const std::string& uuid = spNode->get_uuid();
     if (gParamType_String == spParam->type)
     {

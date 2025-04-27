@@ -420,6 +420,9 @@ signals:
     /*! \brief Emitted whenever a node registered in this graph is clicked.
      */
     void            nodeClicked(qan::Node* node, QPointF pos);
+
+    void            nodeClickReleased(qan::Node* node, QPointF pos);
+
     /*! \brief Emitted whenever a node registered in this graph is right clicked.
      */
     void            nodeRightClicked(qan::Node* node, QPointF pos);

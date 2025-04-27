@@ -317,7 +317,7 @@ namespace zeno
         {
             ParamObject("Input", gParamType_Geometry),
             ParamPrimitive("Noise Input (Vec3f)", gParamType_String),
-            ParamPrimitive("Noise Output Name"),
+            ParamPrimitive("Noise Output Name", gParamType_String),
             ParamPrimitive("Noise Attribute Type", gParamType_String, "float", zeno::Combobox, std::vector<std::string>{"float", "vec3f"})
         },
         {

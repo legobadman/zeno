@@ -2082,6 +2082,17 @@ zeno::reflect::Any NodeImpl::get_defl_value(std::string const& name) {
     }
 }
 
+zeno::reflect::Any NodeImpl::get_param_result(std::string const& name) {
+    ParamPrimitive param;
+    auto iter = m_inputPrims.find(name);
+    if (iter != m_inputPrims.end()) {
+        return iter->second.result;
+    }
+    else {
+        return zeno::reflect::Any();
+    }
+}
+
 bool NodeImpl::add_input_prim_param(ParamPrimitive param) {
     if (m_inputPrims.find(param.name) != m_inputPrims.end()) {
         return false;
@@ -2299,61 +2310,57 @@ bool NodeImpl::moveUpLinkKey(bool bInput, const std::string& param_name, const s
 }
 
 bool NodeImpl::removeLink(bool bInput, const EdgeInfo& edge) {
+    //现有规则不允许输入对象和输入数值参数同名，所以不需要bObjLink，而且bObjLink好像只是用于给ui区分而已
     if (bInput) {
-        if (edge.bObjLink) {
-            auto iter = m_inputObjs.find(edge.inParam);
-            if (iter == m_inputObjs.end())
-                return false;
+        auto iter = m_inputObjs.find(edge.inParam);
+        if (iter != m_inputObjs.end()) {
             for (auto spLink : iter->second.links) {
                 if (auto outNode = spLink->fromparam->m_wpNode) {
                     if (outNode->get_name() == edge.outNode && spLink->fromparam->name == edge.outParam && spLink->fromkey == edge.outKey) {
                         iter->second.links.remove(spLink);
-                    return true;
+                        return true;
+                    }
                 }
             }
         }
-        }
-        else {
-            auto iter = m_inputPrims.find(edge.inParam);
-            if (iter == m_inputPrims.end())
-                return false;
-            for (auto spLink : iter->second.links) {
+        auto iter2 = m_inputPrims.find(edge.inParam);
+        if (iter2 != m_inputPrims.end()) {
+            for (auto spLink : iter2->second.links) {
                 if (auto outNode = spLink->fromparam->m_wpNode) {
                     if (outNode->get_name() == edge.outNode && spLink->fromparam->name == edge.outParam) {
-                        iter->second.links.remove(spLink);
-                    return true;
+                        iter2->second.links.remove(spLink);
+                        return true;
+                    }
                 }
             }
         }
     }
-    }
     else {
-        if (edge.bObjLink) {
-            auto iter = m_outputObjs.find(edge.outParam);
-            if (iter == m_outputObjs.end())
-                return false;
+        auto iter = m_outputObjs.find(edge.outParam);
+        if (iter != m_outputObjs.end())
+        {
             for (auto spLink : iter->second.links) {
                 if (auto inNode = spLink->toparam->m_wpNode) {
                     if (inNode->get_name() == edge.inNode && spLink->toparam->name == edge.inParam && spLink->tokey == edge.inKey) {
                         iter->second.links.remove(spLink);
-                    return true;
+                        return true;
+                    }
                 }
             }
         }
-        }
-        else {
-            auto iter = m_outputPrims.find(edge.outParam);
-            if (iter == m_outputPrims.end())
-                return false;
-            for (auto spLink : iter->second.links) {
+
+        auto iter2 = m_outputPrims.find(edge.outParam);
+        if (iter2 != m_outputPrims.end())
+        {
+            for (auto spLink : iter2->second.links) {
                 if (auto inNode = spLink->toparam->m_wpNode) {
                     if (inNode->get_name() == edge.inNode && spLink->toparam->name == edge.inParam) {
-                        iter->second.links.remove(spLink);
-                    return true;
+                        iter2->second.links.remove(spLink);
+                        return true;
+                    }
                 }
             }
         }
-    }
     }
     return false;
 }
@@ -3098,7 +3105,8 @@ zany NodeImpl::get_input(std::string const &id) const {
         if (!val.has_value()) {
             return nullptr;
         }
-        switch (iter->second.type) {
+        const ParamType paramType = iter->second.type;
+        switch (paramType) {
             case zeno::types::gParamType_Int:
             case zeno::types::gParamType_Float:
             case zeno::types::gParamType_Bool:
@@ -3108,6 +3116,7 @@ zany NodeImpl::get_input(std::string const &id) const {
             case zeno::types::gParamType_Vec3i:
             case zeno::types::gParamType_Vec4f:
             case zeno::types::gParamType_Vec4i:
+            case gParamType_AnyNumeric:
             {
                 //依然有很多节点用了NumericObject，为了兼容，需要套一层NumericObject出去。
                 std::shared_ptr<NumericObject> spNum = std::make_shared<NumericObject>();
@@ -3138,6 +3147,13 @@ zany NodeImpl::get_input(std::string const &id) const {
                 }
                 else if (anyType == zeno::reflect::type_info<vec4f>()) {
                     spNum->set<vec4f>(zeno::reflect::any_cast<vec4f>(val));
+                }
+                else if (paramType == gParamType_AnyNumeric && 
+                    (anyType == zeno::reflect::type_info<const char*>() ||
+                     anyType == zeno::reflect::type_info<zeno::String>() ||
+                     anyType == zeno::reflect::type_info<std::string>())) {
+                    std::string str = zeno::any_cast_to_string(val);
+                    return std::make_shared<StringObject>(str);
                 }
                 else
                 {

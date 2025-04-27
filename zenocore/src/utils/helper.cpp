@@ -206,6 +206,9 @@ namespace zeno {
         else if (value.type() == zeno::reflect::type_info<std::string>()) {
             str = zeno::reflect::any_cast<std::string>(value);
         }
+        else if (value.type() == zeno::reflect::type_info<zeno::String>()) {
+            str = zsString2Std(zeno::reflect::any_cast<zeno::String>(value));
+        }
         else {
             throw UnimplError("any cast error, the value is not a string");
         }
@@ -234,6 +237,7 @@ namespace zeno {
         case gParamType_List:    return "list";
         case gParamType_Curve:   return "curve";
         case gParamType_Heatmap: return "color";
+        case gParamType_AnyNumeric: return "numeric";
         case gParamType_Matrix4: return "Matrix4";
         default:
             return "";
@@ -615,6 +619,17 @@ namespace zeno {
         else if (type == gParamType_IObject)
         {
             return nullptr;
+        }
+        else if (type == gParamType_AnyNumeric)
+        {
+            return Any();
+        }
+        else if (type == gParamType_Heatmap)
+        {
+            return HeatmapData();
+        }
+        else {
+            assert(false);
         }
         return Any();
     }
@@ -1115,6 +1130,9 @@ namespace zeno {
             return true;
         }
         else if (inType == gParamType_Dict || inType == gParamType_List) {
+            return true;
+        }
+        else if (inType == gParamType_AnyNumeric || outType == gParamType_AnyNumeric) {
             return true;
         }
         else if (gParamType_IObject == inType && outGroup == Role_OutputObject) {    //outType的Obj类型可以转IObject
@@ -1750,9 +1768,19 @@ namespace zeno {
 
     bool isPrimitiveType(const ParamType type) {
         //这个是给旧式定义节点使用的，新的反射定义方式不再使用，其初始化过程也不会走到这里判断。
-        return type == gParamType_String || type == gParamType_Int || type == gParamType_Float || type == gParamType_Vec2i ||
-            type == gParamType_Vec3i || type == gParamType_Vec4i || type == gParamType_Vec2f || type == gParamType_Vec3f ||
-            type == gParamType_Vec4f || type == gParamType_Bool || type == gParamType_Heatmap || type == gParamType_Curve;
+        return type == gParamType_String ||
+            type == gParamType_Int ||
+            type == gParamType_Float ||
+            type == gParamType_Vec2i ||
+            type == gParamType_Vec3i ||
+            type == gParamType_Vec4i ||
+            type == gParamType_Vec2f ||
+            type == gParamType_Vec3f ||
+            type == gParamType_Vec4f ||
+            type == gParamType_AnyNumeric ||
+            type == gParamType_Bool ||
+            type == gParamType_Heatmap ||
+            type == gParamType_Curve;
         //TODO: heatmap type.
     }
 

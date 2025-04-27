@@ -1049,6 +1049,14 @@ bool GraphModel::removeLink(
     edge.outKey = outKey.toStdString();
     edge.outParam = outParam.toStdString();
     edge.outNode = outNode.toStdString();
+
+    ZASSERT_EXIT(m_name2uuid.find(inNode) != m_name2uuid.end(), false);
+    QString inNode_uuid = m_name2uuid[inNode];
+    ZASSERT_EXIT(m_nodes.find(inNode_uuid) != m_nodes.end(), false);
+    NodeItem* item = m_nodes[inNode_uuid];
+    QModelIndex idxParam = item->params->index(item->params->indexFromName(inParam, true));
+    edge.bObjLink = idxParam.data(QtRole::ROLE_PARAM_GROUP) == zeno::Role_InputObject;
+
     removeLink(edge);
     return true;
 }

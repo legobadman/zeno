@@ -67,6 +67,8 @@ void    GraphView::setGraph(qan::Graph* graph)
         _graph->setContainerItem(getContainerItem());
         connect(_graph, &qan::Graph::nodeClicked,
                 this,   &qan::GraphView::nodeClicked);
+        connect(_graph, &qan::Graph::nodeClickReleased,
+                this,   &qan::GraphView::nodeClickReleased);
 
         connect(_graph, &qan::Graph::connectorChanged,
                 this,   &qan::GraphView::connectorChanged);

@@ -40,6 +40,8 @@ namespace zenoui
         const Any& controlProps
     )
     {
+        if (!value.has_value())
+            return nullptr;
         size_t actualType = value.type().hash_code();
         switch (ctrl)
         {

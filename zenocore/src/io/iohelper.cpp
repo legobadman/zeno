@@ -1076,6 +1076,65 @@ namespace zenoio
                 writer.String(zeno::any_cast_to_string(any).c_str());
                 break;
             }
+            case gParamType_AnyNumeric:
+            {
+                if (anyType == gParamType_Int) { writer.Int(any_cast<int>(any)); }
+                else if (anyType == gParamType_Float) { writer.Double(any_cast<float>(any)); }
+                else if (anyType == gParamType_String) { writer.String(zeno::any_cast_to_string(any).c_str()); }
+                else if (anyType == gParamType_Vec2f) {
+                    writer.StartArray();
+                    zeno::vec2f vec = any_cast<zeno::vec2f>(any);
+                    writer.Double(vec[0]);
+                    writer.Double(vec[1]);
+                    writer.EndArray();
+                }
+                else if (anyType == gParamType_Vec2i) {
+                    writer.StartArray();
+                    zeno::vec2i vec = any_cast<zeno::vec2i>(any);
+                    writer.Int(vec[0]);
+                    writer.Int(vec[1]);
+                    writer.EndArray();
+                }
+                else if (anyType == gParamType_Vec3f) {
+                    writer.StartArray();
+                    zeno::vec3f vec = any_cast<zeno::vec3f>(any);
+                    writer.Double(vec[0]);
+                    writer.Double(vec[1]);
+                    writer.Double(vec[2]);
+                    writer.EndArray();
+                }
+                else if (anyType == gParamType_Vec3i) {
+                    writer.StartArray();
+                    zeno::vec3i vec = any_cast<zeno::vec3i>(any);
+                    writer.Int(vec[0]);
+                    writer.Int(vec[1]);
+                    writer.Int(vec[2]);
+                    writer.EndArray();
+                }
+                else if (anyType == gParamType_Vec4f) {
+                    writer.StartArray();
+                    zeno::vec4f vec = any_cast<zeno::vec4f>(any);
+                    writer.Double(vec[0]);
+                    writer.Double(vec[1]);
+                    writer.Double(vec[2]);
+                    writer.Double(vec[3]);
+                    writer.EndArray();
+                }
+                else if (anyType == gParamType_Vec4i) {
+                    writer.StartArray();
+                    zeno::vec4i vec = any_cast<zeno::vec4i>(any);
+                    writer.Int(vec[0]);
+                    writer.Int(vec[1]);
+                    writer.Int(vec[2]);
+                    writer.Int(vec[3]);
+                    writer.EndArray();
+                }
+                else {
+                    assert(false);
+                    writer.Null();
+                }
+                break;
+            }
             case gParamType_Curve:
             {
                 if (auto pCurves = zeno::reflect::any_cast<zeno::CurvesData>(&any)) {
