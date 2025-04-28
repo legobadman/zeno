@@ -33,13 +33,13 @@ struct ShaderVolume : INode {
 
         }, {
            
-            ZImpl(get_input<IObject>("depth", std::make_shared<NumericObject>((float)(999)))),
+            ZImpl(get_input_shader("depth", (float)999)),
             //get_input<IObject>("extinction", std::make_shared<NumericObject>(float(1))),
-            ZImpl(get_input<IObject>("albedo", std::make_shared<NumericObject>(vec3f(0.5)))),
-            ZImpl(get_input<IObject>("anisotropy", std::make_shared<NumericObject>(float(0)))),
+            ZImpl(get_input_shader("albedo", vec3f(0.5))),
+            ZImpl(get_input_shader("anisotropy", float(0))),
 
-            ZImpl(get_input<IObject>("density", std::make_shared<NumericObject>(float(0)))),
-            ZImpl(get_input<IObject>("emission", std::make_shared<NumericObject>(vec3f(0)))),
+            ZImpl(get_input_shader("density", float(0))),
+            ZImpl(get_input_shader("emission", vec3f(0))),
             
         });
 
@@ -167,7 +167,7 @@ ZENDEFNODE(ShaderVolume, {
         {gParamType_Float, "density", "0"},
         {gParamType_Vec3f, "emission", "0.0,0.0,0.0"}
     },
-    { {"MaterialObject", "mtl"} },
+    { {gParamType_Material, "mtl"} },
     {
         {"enum RatioTracking", "Transmittance", "RatioTracking"},
         {"enum Raw Density Absorption", "EmissionScale", "Raw"},
@@ -231,7 +231,7 @@ ZENDEFNODE(ShaderVolumeHomogeneous, {
         {gParamType_Bool, "multiscatter", "false"},
         {gParamType_String, "mtlid", "VolMat1"},
     },
-    { {"MaterialObject", "mtl"} },
+    { {gParamType_Material, "mtl"} },
     {},
     {"shader"}
 });

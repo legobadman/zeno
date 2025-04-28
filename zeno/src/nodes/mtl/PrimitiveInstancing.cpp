@@ -103,7 +103,7 @@ namespace zeno
                 {gParamType_List, "framePrims"},
             },
             {
-                {"instancing", "inst"},
+                {gParamType_Instance, "inst"},
             },
             {},
             {

@@ -34,10 +34,10 @@ registerObjectTypeHash(MeshObject, Mesh)
 registerObjectTypeHash(ParticlesObject, Particles)
 registerObjectTypeHash(MaterialObject, Material)
 registerObjectTypeHash(GeometryObject, Geometry)
+registerObjectTypeHash(InstancingObject, Instance)
 
 #define gParamType_VDBGrid          234
 #define gParamType_FOR              235
-#define gParamType_Instance         236
 #define gParamType_AnyNumeric       237
 #define gParamType_NumericObj       238
 

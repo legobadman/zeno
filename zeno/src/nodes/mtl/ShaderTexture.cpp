@@ -19,9 +19,9 @@ struct ShaderTexture2D : ShaderNodeClone<ShaderTexture2D>
 {
     virtual int determineType(EmissionPass *em) override {
         auto texId = ZImpl(get_input2<int>("texId"));
-        auto uvtiling = em->determineType(ZImpl(get_input("uvtiling")).get());
+        auto uvtiling = em->determineType(ZImpl(get_input_shader("uvtiling")));
         if (ZImpl(has_input("coord"))) {
-            auto coord = em->determineType(ZImpl(get_input("coord")).get());
+            auto coord = em->determineType(ZImpl(get_input_shader("coord")));
             if (coord < 2)
                 throw zeno::Exception("ShaderTexture2D expect coord to be at least vec2");
         }
@@ -42,10 +42,10 @@ struct ShaderTexture2D : ShaderNodeClone<ShaderTexture2D>
     virtual void emitCode(EmissionPass *em) override {
         auto texId = ZImpl(get_input2<int>("texId"));
         auto type = ZImpl(get_input2<std::string>("type"));
-        auto uvtiling = em->determineExpr(ZImpl(get_input("uvtiling")).get());
+        auto uvtiling = em->determineExpr(ZImpl(get_input_shader("uvtiling")));
         std::string coord = "att_uv";
         if (ZImpl(has_input("coord"))) {
-            coord = em->determineExpr(ZImpl(get_input("coord")).get());
+            coord = em->determineExpr(ZImpl(get_input_shader("coord")));
         }
         em->emitCode(zeno::format("{}(texture2D(zenotex[{}], vec2({}) * {}))", type, texId, coord, uvtiling));
     }
@@ -77,7 +77,7 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
 
     virtual int determineType(EmissionPass *em) override {
         auto texId = ZImpl(get_input2<int>("texId"));
-        auto coord = em->determineType(ZImpl(get_input("coord")).get());
+        auto coord = em->determineType(ZImpl(get_input_shader("coord")));
         if (coord != 3)
             throw zeno::Exception("ShaderTexture3D expect coord to be vec3");
 
@@ -99,14 +99,14 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
     virtual void emitCode(EmissionPass *em) override {
         auto texId = ZImpl(get_input2<int>("texId"));
         auto type = ZImpl(get_input2<std::string>("type"));
-        auto coord = em->determineExpr(ZImpl(get_input("coord")).get());
+        auto coord = em->determineExpr(ZImpl(get_input_shader("coord")));
 
         auto cihou = ZImpl(get_input2<bool>("cihou"));
         
         auto space = ZImpl(get_input2<std::string>("space"));
         auto world_space = (space == "World")? "true":"false";
 
-        auto dim = em->determineType(ZImpl(get_input("coord")).get());
+        auto dim = em->determineType(ZImpl(get_input_shader("coord")));
         auto method = ZImpl(get_input2<std::string>("method"));
 
 	    auto casted = magic_enum::enum_cast<SamplingMethod>(method).value_or(SamplingMethod::Trilinear);
@@ -133,7 +133,7 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
         {"enum float vec2 vec3 vec4", "type", "vec3"},
     },
     {
-        {"shader", "out"},
+        {gParamType_Shader, "out"},
     },
     {},
     {
@@ -152,7 +152,7 @@ ZENDEFNODE(ShaderTexture3D, {
         {"enum " + ShaderTexture3D::methodListString(), "method", ShaderTexture3D::methodDefaultString()} 
     },
     {
-        {"shader", "out"},
+        {gParamType_Shader, "out"},
     },
     {},
     {
@@ -166,9 +166,9 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
         texWrapping[] = "REPEAT MIRRORED_REPEAT CLAMP_TO_EDGE CLAMP_TO_BORDER",
         texFiltering[] = "NEAREST LINEAR NEAREST_MIPMAP_NEAREST LINEAR_MIPMAP_NEAREST NEAREST_MIPMAP_LINEAR LINEAR_MIPMAP_LINEAR";
     virtual int determineType(EmissionPass *em) override {
-        auto uvtiling = em->determineType(ZImpl(get_input("uvtiling")).get());
+        auto uvtiling = em->determineType(ZImpl(get_input_shader("uvtiling")));
         if (ZImpl(has_input("coord"))) {
-            auto coord = em->determineType(ZImpl(get_input("coord")).get());
+            auto coord = em->determineType(ZImpl(get_input_shader("coord")));
             if (coord < 2)
                 throw zeno::Exception("ShaderTexture2D expect coord to be at least vec2");
         }
@@ -324,10 +324,10 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
             suffix = ".w";
             type = "";
         }
-        auto uvtiling = em->determineExpr(ZImpl(get_input("uvtiling")).get());
+        auto uvtiling = em->determineExpr(ZImpl(get_input_shader("uvtiling")));
         std::string coord = "att_uv";
         if (ZImpl(has_input("coord"))) {
-            coord = em->determineExpr(ZImpl(get_input("coord")).get());
+            coord = em->determineExpr(ZImpl(get_input_shader("coord")));
         }
         auto postprocess = ZImpl(get_input2<std::string>("post_process"));
         if(postprocess == "raw"){
@@ -353,10 +353,10 @@ ZENDEFNODE(SmartTexture2D, {
         {gParamType_Vec4f, "value", "0,0,0,0"},
         {"enum float vec2 vec3 vec4 R G B A", "type", "vec3"},
         {"enum raw srgb normal_map", "post_process", "raw"},
-        {"bool", "blockCompression", "false"}
+        {gParamType_Bool, "blockCompression", "false"}
     },
     {
-        {gParamType_IObject, "out"},
+        {gParamType_Shader, "out"},
     },
     {},
     {

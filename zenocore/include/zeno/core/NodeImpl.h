@@ -92,6 +92,7 @@ namespace zeno
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
+        ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
 
         std::string get_viewobject_output_param() const;
         virtual NodeData exportInfo() const;
@@ -204,7 +205,6 @@ namespace zeno
 
         virtual void initParams(const NodeData& dat);
         
-
     private:
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
         std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);

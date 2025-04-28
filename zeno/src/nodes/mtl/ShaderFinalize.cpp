@@ -69,54 +69,54 @@ struct ShaderFinalize : INode {
             {1, "mat_isHair"}
 
         }, {
-            ZImpl(get_input<IObject>("base", std::make_shared<NumericObject>(float(1.0f)))),
-            ZImpl(get_input<IObject>("basecolor", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("roughness", std::make_shared<NumericObject>(float(0.4f)))),
-            ZImpl(get_input<IObject>("metallic", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("metalColor", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("specular", std::make_shared<NumericObject>(float(1.0f)))),
-            ZImpl(get_input<IObject>("specularTint", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("anisotropic", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("anisoRotation", std::make_shared<NumericObject>(float(0.0f)))),
+            ZImpl(get_input_shader("base", float(1.0f))),
+            ZImpl(get_input_shader("basecolor", vec3f(1.0f))),
+            ZImpl(get_input_shader("roughness", float(0.4f))),
+            ZImpl(get_input_shader("metallic", float(0.0f))),
+            ZImpl(get_input_shader("metalColor", vec3f(1.0f))),
+            ZImpl(get_input_shader("specular", float(1.0f))),
+            ZImpl(get_input_shader("specularTint", float(0.0f))),
+            ZImpl(get_input_shader("anisotropic", float(0.0f))),
+            ZImpl(get_input_shader("anisoRotation", float(0.0f))),
 
-            ZImpl(get_input<IObject>("subsurface", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("sssParam", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("sssColor", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("scatterDistance", std::make_shared<NumericObject>(float(10000)))),
-            ZImpl(get_input<IObject>("scatterStep", std::make_shared<NumericObject>(float(0)))),
+            ZImpl(get_input_shader("subsurface", float(0.0f))),
+            ZImpl(get_input_shader("sssParam", vec3f(1.0f))),
+            ZImpl(get_input_shader("sssColor", vec3f(1.0f))),
+            ZImpl(get_input_shader("scatterDistance", float(10000))),
+            ZImpl(get_input_shader("scatterStep", float(0))),
 
-            ZImpl(get_input<IObject>("sheen", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("sheenTint", std::make_shared<NumericObject>(float(0.5f)))),
+            ZImpl(get_input_shader("sheen", float(0.0f))),
+            ZImpl(get_input_shader("sheenTint", float(0.5f))),
 
-            ZImpl(get_input<IObject>("clearcoat", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("clearcoatColor", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("clearcoatRoughness", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("clearcoatIOR", std::make_shared<NumericObject>(float(1.5f)))),
+            ZImpl(get_input_shader("clearcoat", float(0.0f))),
+            ZImpl(get_input_shader("clearcoatColor", vec3f(1.0f))),
+            ZImpl(get_input_shader("clearcoatRoughness", float(0.0f))),
+            ZImpl(get_input_shader("clearcoatIOR", float(1.5f))),
 
-            ZImpl(get_input<IObject>("specTrans", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("transColor", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("transTint", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("transTintDepth", std::make_shared<NumericObject>(float(10000.0f)))),
-            ZImpl(get_input<IObject>("transDistance", std::make_shared<NumericObject>(float(1.0f)))),
-            ZImpl(get_input<IObject>("transScatterColor", std::make_shared<NumericObject>(vec3f(1.0f)))),
-            ZImpl(get_input<IObject>("ior", std::make_shared<NumericObject>(float(1.5f)))),
+            ZImpl(get_input_shader("specTrans", float(0.0f))),
+            ZImpl(get_input_shader("transColor", vec3f(1.0f))),
+            ZImpl(get_input_shader("transTint", vec3f(1.0f))),
+            ZImpl(get_input_shader("transTintDepth", float(10000.0f))),
+            ZImpl(get_input_shader("transDistance", float(1.0f))),
+            ZImpl(get_input_shader("transScatterColor", vec3f(1.0f))),
+            ZImpl(get_input_shader("ior", float(1.5f))),
 
-            ZImpl(get_input<IObject>("diffraction", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("diffractColor", std::make_shared<NumericObject>(vec3f(0.0f)))),
+            ZImpl(get_input_shader("diffraction", float(0.0f))),
+            ZImpl(get_input_shader("diffractColor", vec3f(0.0f))),
 
-            ZImpl(get_input<IObject>("flatness", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("shadowReceiver", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("thin", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("doubleSide", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("normal", std::make_shared<NumericObject>(vec3f(0, 0, 1)))),
-            ZImpl(get_input<IObject>("displacement", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("smoothness", std::make_shared<NumericObject>(float(1.0f)))),
-            ZImpl(get_input<IObject>("emissionIntensity", std::make_shared<NumericObject>(float(1)))),
-            ZImpl(get_input<IObject>("emission", std::make_shared<NumericObject>(vec3f(0)))),
-            ZImpl(get_input<IObject>("reflectance", std::make_shared<NumericObject>(vec3f(1)))),
-            ZImpl(get_input<IObject>("opacity", std::make_shared<NumericObject>(float(0.0)))),
-            ZImpl(get_input<IObject>("thickness", std::make_shared<NumericObject>(float(0.0f)))),
-            ZImpl(get_input<IObject>("isHair", std::make_shared<NumericObject>(float(0.0f))))
+            ZImpl(get_input_shader("flatness", float(0.0f))),
+            ZImpl(get_input_shader("shadowReceiver", float(0.0f))),
+            ZImpl(get_input_shader("thin", float(0.0f))),
+            ZImpl(get_input_shader("doubleSide", float(0.0f))),
+            ZImpl(get_input_shader("normal", vec3f(0, 0, 1))),
+            ZImpl(get_input_shader("displacement", float(0.0f))),
+            ZImpl(get_input_shader("smoothness", float(1.0f))),
+            ZImpl(get_input_shader("emissionIntensity", float(1))),
+            ZImpl(get_input_shader("emission", vec3f(0))),
+            ZImpl(get_input_shader("reflectance", vec3f(1))),
+            ZImpl(get_input_shader("opacity", float(0.0))),
+            ZImpl(get_input_shader("thickness", float(0.0f))),
+            ZImpl(get_input_shader("isHair", float(0.0f)))
         });
         auto commonCode = em.getCommonCode();
 
@@ -161,6 +161,7 @@ struct ShaderFinalize : INode {
     }
 };
 
+//以下数据类型有可能会接收到其他Shader节点，这时候传过来的是ShaderData，不能走类型判别。
 ZENDEFNODE(ShaderFinalize, {
     {
         {gParamType_Float, "base", "1"},

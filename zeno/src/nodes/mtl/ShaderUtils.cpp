@@ -11,11 +11,11 @@ namespace zeno {
 
 struct ShaderLinearFit : ShaderNodeClone<ShaderLinearFit> {
     virtual int determineType(EmissionPass *em) override {
-        auto in = em->determineType(ZImpl(get_input("in")).get());
-        auto inMin = em->determineType(ZImpl(get_input("inMin")).get());
-        auto inMax = em->determineType(ZImpl(get_input("inMax")).get());
-        auto outMin = em->determineType(ZImpl(get_input("outMin")).get());
-        auto outMax = em->determineType(ZImpl(get_input("outMax")).get());
+        auto in = em->determineType(ZImpl(get_input_shader("in")));
+        auto inMin = em->determineType(ZImpl(get_input_shader("inMin")));
+        auto inMax = em->determineType(ZImpl(get_input_shader("inMax")));
+        auto outMin = em->determineType(ZImpl(get_input_shader("outMin")));
+        auto outMax = em->determineType(ZImpl(get_input_shader("outMax")));
 
         if (inMin == 1 && inMax == 1 && outMin == 1 && outMax == 1) {
             return in;
@@ -31,11 +31,11 @@ struct ShaderLinearFit : ShaderNodeClone<ShaderLinearFit> {
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto in = em->determineExpr(ZImpl(get_input("in")).get());
-        auto inMin = em->determineExpr(ZImpl(get_input("inMin")).get());
-        auto inMax = em->determineExpr(ZImpl(get_input("inMax")).get());
-        auto outMin = em->determineExpr(ZImpl(get_input("outMin")).get());
-        auto outMax = em->determineExpr(ZImpl(get_input("outMax")).get());
+        auto in = em->determineExpr(ZImpl(get_input_shader("in")));
+        auto inMin = em->determineExpr(ZImpl(get_input_shader("inMin")));
+        auto inMax = em->determineExpr(ZImpl(get_input_shader("inMax")));
+        auto outMin = em->determineExpr(ZImpl(get_input_shader("outMin")));
+        auto outMax = em->determineExpr(ZImpl(get_input_shader("outMax")));
 
         auto exp = "(" + in + " - " + inMin + ") / (" + inMax + " - " + inMin + ")";
         if (ZImpl(get_param<bool>("clamped")))
@@ -66,7 +66,7 @@ struct ShaderVecConvert : ShaderNodeClone<ShaderVecConvert> {
 
     virtual int determineType(EmissionPass *em) override {
         auto _type = ZImpl(get_param<std::string>("type"));
-        em->determineType(ZImpl(get_input("in")).get());
+        em->determineType(ZImpl(get_input_shader("in")));
         if (_type == "vec2") {
             ty = 2;
         }
@@ -80,7 +80,7 @@ struct ShaderVecConvert : ShaderNodeClone<ShaderVecConvert> {
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        std::string exp = em->determineExpr(ZImpl(get_input("in")).get());
+        std::string exp = em->determineExpr(ZImpl(get_input_shader("in")));
         em->emitCode(em->funcName("convertTo" + std::to_string(ty)) + "(" + exp + ")");
     }
 };
@@ -101,7 +101,7 @@ struct ShaderVecExtract : ShaderNodeClone<ShaderVecExtract> {
 
     virtual int determineType(EmissionPass *em) override {
         auto _type = ZImpl(get_param<std::string>("type"));
-        em->determineType(ZImpl(get_input("in")).get());
+        em->determineType(ZImpl(get_input_shader("in")));
         if (_type == "xyz" || _type == "xyz(srgb)") {
             ty = 3;
         }
@@ -112,7 +112,7 @@ struct ShaderVecExtract : ShaderNodeClone<ShaderVecExtract> {
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        std::string exp = em->determineExpr(ZImpl(get_input("in")).get());
+        std::string exp = em->determineExpr(ZImpl(get_input_shader("in")));
         auto _type = ZImpl(get_param<std::string>("type"));
         if (_type == "xyz") {
             em->emitCode(em->funcName("convertTo3(" + exp + ")"));
@@ -142,16 +142,16 @@ ZENDEFNODE(ShaderVecExtract, {
 
 struct ShaderNormalMap : ShaderNodeClone<ShaderNormalMap> {
     virtual int determineType(EmissionPass *em) override {
-        auto in1 = ZImpl(get_input("normalTexel"));
-        auto in2 = ZImpl(get_input("scale"));
-        em->determineType(in1.get());
-        em->determineType(in2.get());
+        auto in1 = ZImpl(get_input_shader("normalTexel"));
+        auto in2 = ZImpl(get_input_shader("scale"));
+        em->determineType(in1);
+        em->determineType(in2);
         return 3;
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        auto in1 = em->determineExpr(ZImpl(get_input("normalTexel")).get());
-        auto in2 = em->determineExpr(ZImpl(get_input("scale")).get());
+        auto in1 = em->determineExpr(ZImpl(get_input_shader("normalTexel")));
+        auto in2 = em->determineExpr(ZImpl(get_input_shader("scale")));
 
         return em->emitCode(em->funcName("normalmap") + "(" + in1 + ", " + in2 + ")");
     }

@@ -55,7 +55,7 @@ struct EmissionPass {
         std::string code;
     };
 
-    std::map<NumericObject *, int> constmap;
+    std::map<ParamPath, int> constmap;
     std::vector<ConstInfo> constants;
     std::map<ShaderNode *, int> varmap;  /* varmap[node] = 40, then the variable of node is "tmp40" */
     std::vector<VarInfo> variables;  /* variables[40].type = 3, then the variable type will be "vec3 tmp40;" */
@@ -69,7 +69,7 @@ struct EmissionPass {
     ZENO_API std::string funcName(std::string const &fun) const;
 
     ZENO_API std::string finalizeCode(std::vector<std::pair<int, std::string>> const &keys,
-                                      std::vector<std::shared_ptr<IObject>> const &vals);
+                                      std::vector<ShaderData> const &vals);
     ZENO_API std::string finalizeCode();
 
     ZENO_API std::string addCommonFunc(CommonFunc func);
@@ -79,13 +79,13 @@ struct EmissionPass {
     ZENO_API static void translateToHlsl(std::string &code);
     ZENO_API void translateCommonCode();
 
-    ZENO_API std::string determineExpr(IObject *object) const;
-    ZENO_API std::string determineExpr(IObject *object, ShaderNode *node) const;
+    ZENO_API std::string determineExpr(const ShaderData& data) const;
+    ZENO_API std::string determineExpr(const ShaderData& data, ShaderNode *node) const;
     ZENO_API std::string collectDefs() const;
     ZENO_API std::string collectCode() const;
 
     ZENO_API int currentType(ShaderNode *node) const;
-    ZENO_API int determineType(IObject *object);
+    ZENO_API int determineType(const ShaderData& data);
     ZENO_API void emitCode(std::string const &line);
 };
 

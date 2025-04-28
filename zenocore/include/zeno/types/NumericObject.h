@@ -4,13 +4,9 @@
 #include <zeno/core/IObject.h>
 #include <zeno/utils/Exception.h>
 #include <variant>
-#include <zeno/core/coredata.h>
+#include <zeno/core/data.h>
 
 namespace zeno {
-
-using NumericValue = std::variant<
-  int, zeno::vec2i, zeno::vec3i, zeno::vec4i,
-  float, zeno::vec2f, zeno::vec3f, zeno::vec4f>;
 
 struct NumericObject : IObjectClone<NumericObject> {
     NumericValue value;

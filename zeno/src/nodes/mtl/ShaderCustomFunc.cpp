@@ -1,3 +1,4 @@
+#if 0
 #include <zeno/zeno.h>
 #include <zeno/extra/ShaderNode.h>
 #include <zeno/types/ShaderObject.h>
@@ -137,3 +138,4 @@ ZENDEFNODE(ShaderInvokeFunc, {
 
 
 }
+#endif

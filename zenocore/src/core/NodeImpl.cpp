@@ -1500,14 +1500,19 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
 
 zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
 {
+    //没有连线的情况，这时候直接取defl作为result。
     if (!in_param) {
-        return nullptr;
+        return Any();
     }
 
     int frame = getGlobalState()->getFrameId();
 
     const ParamType type = in_param->type;
     const auto& defl = in_param->defl;
+    if (type == gParamType_Heatmap && !defl.has_value()) {
+        //先跳过heatmap
+        return Any();
+    }
     assert(defl.has_value());
     zeno::reflect::Any result = defl;
     ParamType editType = defl.type().hash_code();
@@ -1615,6 +1620,40 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     case gParamType_Dict:
     {
         break;
+    }
+    case gParamType_Shader:
+    {
+        throw makeError<UnimplError>("no defl value supported on the param with type `gParamType_Shader`, please connect the link by outside");
+#if 0
+        if (editType == gParamType_PrimVariant) {
+            zeno::PrimVar var = any_cast<zeno::PrimVar>(defl);
+            result = std::visit([=](auto&& arg)->Any {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                    return arg;
+                }
+                else if constexpr (std::is_same_v<T, std::string>) {
+                    float res = resolve(arg, type);
+                    return (type == gParamType_Int) ? zeno::reflect::make_any<int>(res) :
+                        zeno::reflect::make_any<float>(res);
+                }
+                else if constexpr (std::is_same_v<T, CurveData>) {
+                    int frame = getGlobalState()->getFrameId();
+                    return arg.eval(frame);
+                }
+                else {
+                    throw makeError<UnimplError>();
+                }
+            }, var);
+        }
+        else if (editType == gParamType_Int) {
+            result = defl;
+        }
+        else if (editType == gParamType_Float) {
+            result = defl;
+        }
+        break;
+#endif
     }
     }
     return result;
@@ -1770,6 +1809,8 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                         outNode->doApply(pContext);
                     }, outNode);
                     //数值基本类型，直接复制。
+                    //注意：这里并不会检查类型，因为有一些特殊情况，比如Shader节点的连接，是允许将Shader类型连到数值输入里的（ShaderFinalize)
+                    //这样，检查的工作就交给了节点本身（INode)。
                     in_param->result = spLink->fromparam->result;
                 }
             }
@@ -3084,6 +3125,40 @@ void NodeImpl::initParams(const NodeData& dat)
     }
 }
 
+ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::Any defl) {
+    //这个函数其实就是特供ShaderFinalize
+    auto iter = m_inputPrims.find(param);
+    if (iter == m_inputPrims.end()) {
+        throw makeError<UnimplError>("not valid param");
+    }
+    ShaderData shader;
+
+    if (!iter->second.result.has_value()) {
+        bool bSucceed = false;
+        shader.data = AnyToNumeric(defl, bSucceed);
+        if (!bSucceed) {
+            throw makeError<UnimplError>("cannot get NumericValue on defl value");
+        }
+        return shader;
+    }
+
+    const Any& result = iter->second.result;
+    if (result.type().hash_code() == gParamType_Shader) {
+        shader = any_cast<ShaderData>(result);
+    }
+    else {
+        bool bSucceed = false;
+        shader.data = AnyToNumeric(result, bSucceed);
+        if (!bSucceed) {
+            throw makeError<UnimplError>("cannot get NumericValue");
+        }
+    }
+
+    ParamPath uuidpath = this->get_uuid_path() + "/" + param;
+    shader.curr_param = uuidpath;
+    return shader;
+}
+
 bool NodeImpl::has_input(std::string const &id) const {
     //这个has_input在旧的语义里，代表的是input obj，如果有一些边没有连上，那么有一些参数值仅有默认值，未必会设这个input的，
     //还有一种情况，就是对象值是否有输入引入
@@ -3178,6 +3253,10 @@ zany NodeImpl::get_input(std::string const &id) const {
             {
                 std::string str = zeno::any_cast_to_string(val);
                 return std::make_shared<StringObject>(str);
+            }
+            case zeno::types::gParamType_Shader:
+            {
+                throw makeError<UnimplError>("ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
             }
             default:
                 return nullptr;

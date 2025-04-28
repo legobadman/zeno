@@ -343,6 +343,11 @@ namespace zeno {
             val = vecvar{ vec4[0], vec4[1], vec4[2], vec4[3] };
             return true;
         }
+        else if (type == gParamType_Shader) {
+            if (anyType == gParamType_Float) {
+                val = PrimVar(any_cast<float>(val));
+            }
+        }
         //else if (type == gParamType_AnyList) {
         //    auto& vec = any_cast<std::vector<zeno::reflect::Any>>(val);
         //    if (vec.size() == 2) {
@@ -379,6 +384,9 @@ namespace zeno {
         }
         case gParamType_Float: {
             return std::stof(defl);
+        }
+        case gParamType_Shader: {
+            return std::stof(defl); //参考ShaderBinaryMath的in1 in2参数
         }
         case gParamType_Vec2i:
         case gParamType_Vec3i:
@@ -495,6 +503,36 @@ namespace zeno {
         }
         default:
             return defl;
+        }
+    }
+
+    NumericValue AnyToNumeric(const zeno::reflect::Any& any, bool& bSucceed) {
+        if (!any.has_value()) {
+            bSucceed = false;
+            return 0;
+        }
+        bSucceed = true;
+        ParamType anyType = any.type().hash_code();
+        switch (anyType)
+        {
+        case gParamType_Int:    return any_cast<int>(any);
+        case gParamType_Float:  return any_cast<float>(any);
+        case gParamType_Vec2i:  return any_cast<vec2i>(any);
+        case gParamType_Vec2f:  return any_cast<vec2f>(any);
+        case gParamType_Vec3i:  return any_cast<vec3i>(any);
+        case gParamType_Vec3f:  return any_cast<vec3f>(any);
+        case gParamType_Vec4i:  return any_cast<vec4i>(any);
+        case gParamType_Vec4f:  return any_cast<vec4f>(any);
+        case gParamType_PrimVariant:
+        case gParamType_VecEdit:
+        {
+            //不考虑编辑类型，因为这是由节点内部处理的数据，我们只要取result就行
+        }
+        default:
+        {
+            bSucceed = false;
+            return 0;
+        }
         }
     }
 
@@ -627,6 +665,10 @@ namespace zeno {
         else if (type == gParamType_Heatmap)
         {
             return HeatmapData();
+        }
+        else if (type == gParamType_Shader)
+        {
+            return ShaderData();
         }
         else {
             assert(false);
@@ -1127,6 +1169,11 @@ namespace zeno {
             return true;
         }
         else if (isSameDimensionNumericVecType(outType, inType)) { //同维度数值vec互连
+            return true;
+        }
+        else if (outType == gParamType_Shader &&
+            (inType == gParamType_Shader || isNumericType(inType) || isNumericVecType(inType)))
+        {
             return true;
         }
         else if (inType == gParamType_Dict || inType == gParamType_List) {
@@ -1780,7 +1827,8 @@ namespace zeno {
             type == gParamType_AnyNumeric ||
             type == gParamType_Bool ||
             type == gParamType_Heatmap ||
-            type == gParamType_Curve;
+            type == gParamType_Curve ||
+            type == gParamType_Shader;
         //TODO: heatmap type.
     }
 

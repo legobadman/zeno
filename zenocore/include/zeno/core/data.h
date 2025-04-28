@@ -406,6 +406,19 @@ namespace zeno {
     //可以是公式，曲线，数值，字符串中的一种，适用于所有数值类型和向量类型
     using PrimVar = std::variant<int, float, std::string, CurveData>;
     using vecvar = std::vector<zeno::PrimVar>;
+    using ParamPath = std::string;  //uuidpath
+
+    using NumericValue = std::variant<
+        int, zeno::vec2i, zeno::vec3i, zeno::vec4i,
+        float, zeno::vec2f, zeno::vec3f, zeno::vec4f>;
+
+    using ShaderNodePath = std::string;
+
+    struct ShaderData
+    {
+        ParamPath curr_param;
+        std::variant<NumericValue, ShaderNodePath> data;
+    };
 }
 
 #endif
