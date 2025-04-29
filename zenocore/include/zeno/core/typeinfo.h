@@ -38,7 +38,12 @@ registerObjectTypeHash(InstancingObject, Instance)
 
 #define gParamType_VDBGrid          234
 #define gParamType_FOR              235
-#define gParamType_AnyNumeric       237
-#define gParamType_NumericObj       238
+#define gParamType_AnyNumeric       236
+#define gParamType_NumericObj       237
+#define gParamType_JsonObject       238
+#define gParamType_FBXObject        239
+#define gParamType_Scene            240
+#define gParamType_Heatmap          241
+#define gParamType_ABCTree          242
 
 #endif

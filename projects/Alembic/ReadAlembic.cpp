@@ -1021,8 +1021,12 @@ void traverseABC(
     const TimeAndSamplesMap & iTimeMap,
     ObjectVisibility parent_visible,
     bool skipInvisibleObject,
-    bool outOfRangeAsEmpty
+    bool outOfRangeAsEmpty,
+    int use_instance
 ) {
+    if (use_instance) {
+        tree.instanceSourcePath = obj.instanceSourcePath();
+    }
     {
         auto const &md = obj.getMetaData();
         if (!read_done) {
@@ -1030,6 +1034,10 @@ void traverseABC(
         }
         tree.name = obj.getName();
         String _path = stdString2zs(zeno::format("{}/{}", path, tree.name));
+        if (tree.instanceSourcePath.size()) {
+            return;
+        }
+        path = zeno::format("{}/{}", path, tree.name);
         auto visible_prop = obj.getProperties().getPropertyHeader("visible");
         if (visible_prop) {
             size_t totalSamples = 0;
@@ -1117,6 +1125,9 @@ void traverseABC(
         }
     }
     }
+    if (tree.prim) {
+        return;
+    }
 
     size_t nch = obj.getNumChildren();
     if (!read_done) {
@@ -1132,7 +1143,7 @@ void traverseABC(
         Alembic::AbcGeom::IObject child(obj, name);
 
         auto childTree = std::make_shared<ABCTree>();
-        traverseABC(child, *childTree, frameid, read_done, read_face_set, path, iTimeMap, tree.visible, skipInvisibleObject, outOfRangeAsEmpty);
+        traverseABC(child, *childTree, frameid, read_done, read_face_set, path, iTimeMap, tree.visible, skipInvisibleObject, outOfRangeAsEmpty, use_instance);
         tree.children.push_back(std::move(childTree));
     }
 }
@@ -1166,6 +1177,7 @@ struct ReadAlembic : INode {
     std::string usedPath;
     bool read_done = false;
     virtual void apply() override {
+        int use_instance = get_input2_int("use_instance");
         int frameid;
         if (has_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
@@ -1173,6 +1185,7 @@ struct ReadAlembic : INode {
             frameid = GetFrameId();
         }
         auto abctree = std::make_shared<ABCTree>();
+        bool read_face_set = get_input2_bool("read_face_set");
         {
             auto path = zsString2Std(get_input2_string("path"));
             if (usedPath != path) {
@@ -1186,7 +1199,6 @@ struct ReadAlembic : INode {
             // fmt::print("GetArchiveStartAndEndTime: {}\n", start);
             // fmt::print("archive.getNumTimeSamplings: {}\n", archive.getNumTimeSamplings());
             auto obj = archive.getTop();
-            bool read_face_set = get_input2_bool("read_face_set");
             bool outOfRangeAsEmpty = get_input2_bool("outOfRangeAsEmpty");
             bool skipInvisibleObject = get_input2_bool("skipInvisibleObject");
             Alembic::Util::uint32_t numSamplings = archive.getNumTimeSamplings();
@@ -1197,7 +1209,7 @@ struct ReadAlembic : INode {
             }
 
             traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred,
-                        skipInvisibleObject, outOfRangeAsEmpty);
+                        skipInvisibleObject, outOfRangeAsEmpty, use_instance);
             read_done = true;
             usedPath = path;
         }
@@ -1218,6 +1230,11 @@ struct ReadAlembic : INode {
             }
             set_output("namelist", namelist);
         }
+        if (get_input2_bool("CopyFacesetToMatid") && read_face_set) {
+            abctree->visitPrims([](auto &prim){
+                prim_copy_faceset_to_matid(prim.get());
+            });
+        }
         set_output("abctree", std::move(abctree));
     }
 };
@@ -1228,7 +1245,9 @@ ZENDEFNODE(ReadAlembic, {
         {gParamType_Bool, "read_face_set", "1"},
         {gParamType_Bool, "outOfRangeAsEmpty", "0"},
         {gParamType_Bool, "skipInvisibleObject", "1"},
-        {gParamType_Float, "frameid"}
+        {"bool", "CopyFacesetToMatid", "1"},
+        {"bool", "use_instance", "1"},
+        {gParamType_Float, "frameid"},
     },
     {
         {gParamType_Unknown, "abctree"},
@@ -1388,11 +1407,11 @@ ZENDEFNODE(CopyPosAndNrmByIndex, {
 
 struct PrimsFilterInUserdata: INode {
     void apply() override {
-        auto prims =  get_prims_from_list(get_input_ListObject("list"));
+        auto prims = get_input_ListObject("list");
         auto filter_str = zsString2Std(get_input2_string("filters"));
         std::vector<std::string> filters = zeno::split_str(filter_str, {' ', '\n'});
         std::vector<std::string> filters_;
-        auto out_list = create_ListObject();
+        auto out_list = std::make_shared<ListObject>();
 
         for (auto &s: filters) {
             if (s.length() > 0) {
@@ -1403,11 +1422,11 @@ struct PrimsFilterInUserdata: INode {
         auto name = get_input2_string("name");
         auto contain = get_input2_bool("contain");
         auto fuzzy = get_input2_bool("fuzzy");
-        for (auto p: prims) {
+        for (auto p: prims->get()) {
             auto ud = p->userData();
             bool this_contain = false;
-            if (ud->has(name)) {
-                std::string sname = zsString2Std(ud->get_string(name));
+            if (ud->has_string(name)) {
+                string sname = zsString2Std(ud->get_string(name));
                 if (fuzzy) {
                     for (auto & filter: filters_) {
                         if (sname.find(filter) != std::string::npos) {
@@ -1419,10 +1438,10 @@ struct PrimsFilterInUserdata: INode {
                     this_contain = std::count(filters_.begin(), filters_.end(), sname) > 0;
                 }
             }
-            else if (ud->has(name)) {
+            else if (ud->has_int(name)) {
                 this_contain = std::count(filters_.begin(), filters_.end(), std::to_string(ud->get_int(name))) > 0;
             }
-            else if (ud->has(name)) {
+            else if (ud->has_float(name)) {
                 this_contain = std::count(filters_.begin(), filters_.end(), std::to_string(ud->get_float(name))) > 0;
             }
             bool insert = (contain && this_contain) || (!contain && !this_contain);
@@ -1564,6 +1583,26 @@ ZENDEFNODE(SetABCPath, {
     {
         {gParamType_Primitive, "prim"},
         {gParamType_String, "abcpathName", "/ABC/your_path"},
+    },
+    {
+        {gParamType_Primitive, "out"},
+    },
+    {},
+    {"alembic"},
+});
+
+struct PrimCopyFacesetToMatid: INode {
+    void apply() override {
+        auto prim = get_input_PrimitiveObject("prim");
+        prim_copy_faceset_to_matid(prim.get());
+
+        set_output("out", prim);
+    }
+};
+
+ZENDEFNODE(PrimCopyFacesetToMatid, {
+    {
+        {gParamType_Primitive, "prim"},
     },
     {
         {gParamType_Primitive, "out"},

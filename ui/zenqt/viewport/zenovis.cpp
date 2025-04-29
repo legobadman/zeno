@@ -132,6 +132,13 @@ void Zenovis::cleanupView()
 void Zenovis::startPlay(bool bPlaying)
 {
     m_playing = bPlaying;
+    if (m_playing) {
+        int currentid = getCurrentFrameId();
+        if (currentid != zeno::getSession().globalComm->frameRange().second)
+        {
+            setCurrentFrameId(currentid + 1);
+}
+    }
 }
 
 bool Zenovis::isPlaying() const

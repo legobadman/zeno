@@ -5,7 +5,7 @@
 #include "zeno/types/StringObject.h"
 #include "zeno/types/IGeometryObject.h"
 #include <zeno/types/UserData.h>
-
+#include <tinygltf/json.hpp>
 namespace zeno
 {
   /*struct MakeMaterial
@@ -140,19 +140,30 @@ struct ExtractMaterialShader : zeno::INode
   {
     virtual void apply() override
     {
+        auto mtlid = ZImpl(get_input2<std::string>("mtlid"));
+
+        if(ZImpl(has_input2<zeno::ListObject>("object"))) {
+            auto list = ZImpl(get_input2<zeno::ListObject>("object"));
+            for (auto p: list->get()) {
+                auto np = std::dynamic_pointer_cast<PrimitiveObject>(p);
+                np->userData()->set_string("mtlid", stdString2zs(mtlid));
+            }
+            set_output("object", std::move(list));
+            return;
+        }
+
       auto obj = ZImpl(get_input<zeno::PrimitiveObject>("object"));
-      auto mtlid = ZImpl(get_input2<std::string>("mtlid"));
+      
       auto mtlid2 = ZImpl(get_input2<std::string>("mtlid"));
-      UserData* pUsrData = dynamic_cast<UserData*>(obj->userData());
-      int matNum = pUsrData->get_int("matNum",0);
+      int matNum = obj->userData()->get_int("matNum",0);
       for(int i=0; i<matNum; i++)
       {
           auto key = "Material_" + to_string(i);
-          pUsrData->erase(key);
+          obj->userData()->del(stdString2zs(key));
       }
-      pUsrData->set2("matNum", 1);
-      pUsrData->setLiterial("Material_0", std::move(mtlid2));
-      pUsrData->setLiterial("mtlid", std::move(mtlid));
+      obj->userData()->set_int("matNum", 1);
+      obj->userData()->set_string("Material_0", stdString2zs(mtlid2));
+      obj->userData()->set_string("mtlid", stdString2zs(mtlid));
       if(obj->tris.size()>0)
       {
           obj->tris.add_attr<int>("matid");
@@ -279,5 +290,71 @@ struct ExtractMaterialShader : zeno::INode
                 "shader",
             },
         });
+
+    struct PrimAttrAsShaderBuffer : zeno::INode {
+
+        static std::string aKey() {
+            return "attrNames";
+        }
+        static std::string bKey() { 
+            return "bindNames";
+        }
+
+        virtual void apply() override {
+
+            auto prim = get_input_PrimitiveObject("in");
+
+            auto a_value = ZImpl(get_input2<std::string>(aKey(), ""));
+            auto b_value = ZImpl(get_input2<std::string>(bKey(), ""));
+
+            auto task = [](const std::string& raw){
+                
+                std::string segment;
+                std::stringstream test(raw);
+                std::vector<std::string> result;
+
+                while(std::getline(test, segment, ','))
+                {
+                    result.push_back(segment);
+                }
+                return result;
+            };
+
+            std::vector<std::string> a_list = task(a_value);
+            std::vector<std::string> b_list = task(b_value);
+
+            if (a_list.size() != b_list.size()) {
+                throw std::runtime_error("buffer count doesn't match attr count");
+            }
+
+            nlohmann::json json;
+
+            for (size_t i=0; i<a_list.size(); ++i) {
+                auto a = a_list[i];
+                auto b = b_list[i];
+                json[a] = b;
+            }
+
+            UserData* pUserData = dynamic_cast<UserData*>(prim->userData());
+            pUserData->set2("ShaderAttributes", json.dump());
+            set_output("out", std::move(prim));
+        }
+    };
+
+    ZENDEFNODE( PrimAttrAsShaderBuffer,
+    {
+        {
+            {gParamType_Primitive, "in"},
+            {gParamType_String, PrimAttrAsShaderBuffer::aKey(), ""},
+            {gParamType_String, PrimAttrAsShaderBuffer::bKey(), ""}
+        },
+        {
+            {gParamType_Primitive, "out"},
+        },
+        {},
+        {
+            "shader",
+        },
+    });
 
 } // namespace zeno

@@ -133,6 +133,23 @@ struct RenderEngineZhxx : RenderEngine, zeno::disable_copy {
     void cleanupWhenExit() override {
 
     }
+
+    void assetLoad() override {
+
+    }
+
+    void run() override {
+
+    }
+
+    void beginFrameLoading(int frameid) override {
+
+    }
+
+    void endFrameLoading(int frameid) override {
+
+    }
+
 };
 
 static auto definer = RenderManager::registerRenderEngine<RenderEngineZhxx>("zhxx");

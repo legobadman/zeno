@@ -8,6 +8,10 @@
 
 namespace zeno
 {
+    ListObject::ListObject() : m_impl(nullptr) {
+        m_impl = new ListObject_impl;
+    }
+
     void ListObject::Delete() {
         m_impl->remove_children();
         delete this;
@@ -147,7 +151,7 @@ namespace zeno
 
     ZENO_API zeno::SharedPtr<ListObject> create_ListObject() {
         zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
-        pList->m_impl = new ListObject_impl;
+        //pList->m_impl = new ListObject_impl;
         return pList;
     }
 

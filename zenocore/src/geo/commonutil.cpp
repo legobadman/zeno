@@ -370,6 +370,31 @@ namespace zeno
         }
     }
 
+    void prim_copy_faceset_to_matid(PrimitiveObject* prim) {
+        auto ud = prim->userData();
+        auto faceset_count = ud->get_int("faceset_count", 0);
+        ud->set_int("matNum", faceset_count);
+        for (auto i = 0; i < faceset_count; i++) {
+            auto value = ud->get_string(stdString2zs(format("faceset_{}", i)));
+            ud->set_string(stdString2zs(format("Material_{}", i)), value);
+        }
+
+        if (prim->tris.attr_is<int>("faceset")) {
+            prim->tris.attr_visit<AttrAcceptAll>("faceset", [&](auto const& attarr) {
+                using T = std::decay_t<decltype(attarr[0])>;
+                auto& targetAttr = prim->tris.template add_attr<T>("matid");
+                std::copy(attarr.begin(), attarr.end(), targetAttr.begin());
+                });
+        }
+        if (prim->polys.attr_is<int>("faceset")) {
+            prim->polys.attr_visit<AttrAcceptAll>("faceset", [&](auto const& attarr) {
+                using T = std::decay_t<decltype(attarr[0])>;
+                auto& targetAttr = prim->polys.template add_attr<T>("matid");
+                std::copy(attarr.begin(), attarr.end(), targetAttr.begin());
+                });
+        }
+    }
+
     SharedPtr<zeno::PrimitiveObject> primMergeWithFacesetMatid(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face)
     {
         std::vector<std::string> matNameList(0);

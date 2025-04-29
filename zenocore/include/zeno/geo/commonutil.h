@@ -37,6 +37,7 @@ namespace zeno
         float remapMax
     );
     ZENO_API SharedPtr<zeno::PrimitiveObject> primMergeWithFacesetMatid(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr = "", bool tag_on_vert = true, bool tag_on_face = false);
+    ZENO_API void prim_copy_faceset_to_matid(PrimitiveObject* prim);
     ZENO_API void primWireframe(PrimitiveObject* prim, bool removeFaces = false, bool toEdges = false);
     ZENO_API zeno::SharedPtr<PrimitiveObject> readImageFile(zeno::String const& path);
     ZENO_API zeno::SharedPtr<PrimitiveObject> readExrFile(zeno::String const& path);

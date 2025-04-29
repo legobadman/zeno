@@ -56,6 +56,7 @@ struct ShaderFinalize : INode {
 
             {1, "mat_flatness"},
             {1, "mat_shadowReceiver"},
+            {1, "mat_shadowTerminatorOffset"},
             {1, "mat_thin"},
             {1, "mat_doubleSide"},
             {3, "mat_normal"},
@@ -106,6 +107,7 @@ struct ShaderFinalize : INode {
 
             ZImpl(get_input_shader("flatness", float(0.0f))),
             ZImpl(get_input_shader("shadowReceiver", float(0.0f))),
+            ZImpl(get_input_shader("shadowTerminatorOffset", float(0.0f))),
             ZImpl(get_input_shader("thin", float(0.0f))),
             ZImpl(get_input_shader("doubleSide", float(0.0f))),
             ZImpl(get_input_shader("normal", vec3f(0, 0, 1))),
@@ -157,7 +159,7 @@ struct ShaderFinalize : INode {
         }
 
         mtl->common = std::move(commonCode);
-        ZImpl(set_output("mtl", std::move(mtl)));
+        set_output("mtl", std::move(mtl));
     }
 };
 
@@ -202,6 +204,7 @@ ZENDEFNODE(ShaderFinalize, {
 
         {gParamType_Float, "flatness", "0.0"},
         {gParamType_Float, "shadowReceiver", "0.0"},
+        {gParamType_Float, "shadowTerminatorOffset", "0.0"},
         {gParamType_Float, "thin", "0.0"},
         {gParamType_Float, "doubleSide", "0.0"},
         {gParamType_Vec3f, "normal", "0,0,1"},
@@ -217,7 +220,7 @@ ZENDEFNODE(ShaderFinalize, {
         {gParamType_String, "commonCode"},
         {gParamType_String, "extensionsCode"},
         {gParamType_String, "mtlid", "Mat1"},
-        {gParamType_List, "tex2dList", ""},//TODO: bate's asset manager
+        {gParamType_List, "tex2dList"},//TODO: bate's asset manager
         {gParamType_Vec3i, "mask_value", "0,0,0"},
     },
     {

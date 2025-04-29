@@ -237,11 +237,11 @@ void DisplayWidget::setSimpleRenderOption()
         m_glView->setSimpleRenderOption();
 }
 
-void DisplayWidget::setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly) {
-    if (m_optixView)
-    {
-        m_optixView->setRenderSeparately(updateLightCameraOnly, updateMatlOnly);
-    }
+void DisplayWidget::setRenderSeparately(/*runType runtype*/) {
+    //if (m_optixView)
+    //{
+    //    m_optixView->setRenderSeparately(runtype);
+    //}
 }
 
 bool DisplayWidget::isCameraMoving() const
@@ -414,7 +414,7 @@ void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
 
 void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
     if (bSucceed) {
-        //å…ˆä»objManageræ‹¿å‡º
+        //ÏÈ´ÓobjManagerÄÃ³ö
         auto& sess = zeno::getSession();
         std::vector<zeno::render_update_info> infos;
         sess.objsMan->export_render_infos(infos);
@@ -425,13 +425,13 @@ void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
 
         reload.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
         if (reload.current_ui_graph.empty()) {
-            //ä»¥åå¯èƒ½æœ‰äº›æƒ…å†µæ˜¯åœ¨éuiä¸‹è·‘çš„ï¼Œæ­¤æ—¶æ˜¯æ²¡æœ‰â€œå½“å‰å›¾å±‚çº§è·¯å¾„â€è¿™ä¸€è¯´æ³•ï¼Œ
-            //è¿™ç§æƒ…å†µå°±é»˜è®¤ä»ä¸»å›¾è·‘
+            //ÒÔºó¿ÉÄÜÓĞĞ©Çé¿öÊÇÔÚ·ÇuiÏÂÅÜµÄ£¬´ËÊ±ÊÇÃ»ÓĞ¡°µ±Ç°Í¼²ã¼¶Â·¾¶¡±ÕâÒ»Ëµ·¨£¬
+            //ÕâÖÖÇé¿ö¾ÍÄ¬ÈÏ´ÓÖ÷Í¼ÅÜ
             reload.current_ui_graph = "/main";
         }
 
-        //è¿™é‡Œè¦å¯¹ä¸åœ¨current_ui_graphçš„èŠ‚ç‚¹è¿›è¡Œè¿‡æ»¤
-        //TODO: åº”è¯¥åœ¨graphmodelä¸Šåš
+        //ÕâÀïÒª¶Ô²»ÔÚcurrent_ui_graphµÄ½Úµã½øĞĞ¹ıÂË
+        //TODO: Ó¦¸ÃÔÚgraphmodelÉÏ×ö
         std::shared_ptr<zeno::Graph> curr_graph = sess.mainGraph->getGraphByPath(reload.current_ui_graph);
         for (auto iter = infos.begin(); iter != infos.end(); ) {
             if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
@@ -646,7 +646,7 @@ void DisplayWidget::onSliderValueChanged(int frame)
 
     for (auto displayWid : mainWin->viewports())
         if (!displayWid->isGLViewport())
-            displayWid->setRenderSeparately(false, false);
+            displayWid->setRenderSeparately(/*false, false*/);
     if (mainWin->isAlways())
     {
         auto pGraphsMgr = zenoApp->graphsManager();
@@ -722,7 +722,7 @@ void DisplayWidget::afterRun()
         ZASSERT_EXIT(session);
         auto scene = session->get_scene();
         ZASSERT_EXIT(scene);
-        scene->objectsMan->lightObjects.clear();
+        //scene->objectsMan->lightObjects.clear();
     }
 }
 
@@ -818,6 +818,13 @@ void DisplayWidget::onSetBackground(bool bShowBackground)
 {
     if (!m_bGLView) {
         m_optixView->showBackground(bShowBackground);
+    }
+}
+
+void DisplayWidget::setSampleNumber(int sample_number)
+{
+    if (!m_bGLView) {
+        m_optixView->setSampleNumber(sample_number);
     }
 }
 

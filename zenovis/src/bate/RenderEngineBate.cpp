@@ -56,7 +56,22 @@ struct RenderEngineBate : RenderEngine {
     }
 
     void load_object(zeno::render_update_info info) override {
-        
+    }
+
+    void assetLoad() override {
+
+    }
+
+    void run() override {
+
+    }
+
+    void beginFrameLoading(int frameid) override {
+
+    }
+
+    void endFrameLoading(int frameid) override {
+
     }
 
     //deprecated

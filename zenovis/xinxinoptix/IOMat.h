@@ -2,6 +2,10 @@
 
 #include "zxxglslvec.h"
 
+#ifndef uint
+#define uint unsigned int
+#endif
+
 struct MatOutput {
     vec3 basecolor;
     float roughness;
@@ -46,6 +50,7 @@ struct MatOutput {
     float smoothness;
     float displacement;
     float shadowReceiver;
+    float shadowTerminatorOffset;
     float isHair;
     vec3  mask_value;
 
@@ -59,6 +64,23 @@ struct MatInput {
     vec3 uv;
     vec3 clr;
     vec3 tang;
+
+    float2 _barys;
+    inline float3 barys() const {
+        return { 1.0f-_barys.x-_barys.y, _barys.x, _barys.y };
+    }
+    vec3 e1,e2;
+    inline float area() const {
+        //assert(false && "Empty function area()\n");
+        return 0.5*length(cross(e1,e2))+0.000001;
+    }
+    vec3 els;
+    inline float3 eLength() const {
+        //assert(false && "Empty function area()\n");
+        return make_float3(els.x, els.y, els.z);
+    }
+
+    uint instIdx;
     vec3 instPos;
     vec3 instNrm;
     vec3 instUv;
@@ -68,6 +90,7 @@ struct MatInput {
     float LoV;
     
     float rayLength;
+    bool isBackFace;
     bool isShadowRay;
     
     vec3 reflectance;

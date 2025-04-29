@@ -12,6 +12,7 @@
 
 #include <sampleConfig.h>
 
+#include <stdio.h>
 #include <sutil/CUDAOutputBuffer.h>
 #include <sutil/Camera.h>
 #include <sutil/Exception.h>
@@ -25,7 +26,6 @@
 #include "optixVolume.h"
 #include "optix_types.h"
 #include "raiicuda.h"
-#include "zeno/types/TextureObject.h"
 #include "zeno/utils/log.h"
 #include "zeno/utils/string.h"
 #include <filesystem>
@@ -43,11 +43,12 @@
 #include <glm/matrix.hpp>
 
 #include <array>
+#include <vector>
+#include <string>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <filesystem>
 
@@ -60,7 +61,6 @@
 #include "ChiefDesignerEXR.h"
 #include <stb_image.h>
 #include <cudaMemMarco.hpp>
-#include <vector>
 
 static void context_log_cb( unsigned int level, const char* tag, const char* message, void* /*cbdata */ )
 {
@@ -105,7 +105,6 @@ inline void resetAll() {
 
     raygen_module.reset();
 
-    auto count = garbageTasks.size();
     for (auto& task : garbageTasks) {
         task();
     }
@@ -120,7 +119,9 @@ inline void resetAll() {
     context.reset();
 }
 
-inline bool isPipelineCreated = false;
+typedef std::tuple<uint, uint> PipelineMark;
+
+inline PipelineMark pipelineMark = {};
 ////end material independent stuffs
 
 inline static auto DefaultCompileOptions() {
@@ -130,7 +131,7 @@ inline static auto DefaultCompileOptions() {
     module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_NONE;
 #else 
     module_compile_options.optLevel   = OPTIX_COMPILE_OPTIMIZATION_LEVEL_0;
-    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_MODERATE;
+    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 #endif
     return module_compile_options;
 }
@@ -141,7 +142,7 @@ inline void createContext()
     CUDA_CHECK( cudaFree( 0 ) );
 
     CUcontext          cu_ctx = 0;  // zero means take the current context
-    OPTIX_CHECK( optixInit() );
+    OPTIX_CHECK_LOG( optixInit() );
     OptixDeviceContextOptions options = {};
     options.logCallbackFunction       = &context_log_cb;
 #if defined( NDEBUG )
@@ -150,14 +151,15 @@ inline void createContext()
     options.logCallbackLevel          = 4;
 #endif
     options.validationMode            = OPTIX_DEVICE_CONTEXT_VALIDATION_MODE_ALL;
-    OPTIX_CHECK( optixDeviceContextCreate( cu_ctx, &options, &context ) );
+    OPTIX_CHECK_LOG( optixDeviceContextCreate( cu_ctx, &options, &context ) );
 }
 
 inline uint CachedPrimitiveTypeFlags = UINT_MAX;
 
 inline bool configPipeline(OptixPrimitiveTypeFlags usesPrimitiveTypeFlags) {
 
-    if (CachedPrimitiveTypeFlags != UINT_MAX && (usesPrimitiveTypeFlags&CachedPrimitiveTypeFlags == usesPrimitiveTypeFlags)) { return false; }
+    auto enough = (usesPrimitiveTypeFlags&CachedPrimitiveTypeFlags) == usesPrimitiveTypeFlags;
+    if (CachedPrimitiveTypeFlags != UINT_MAX && enough) { return false; }
     CachedPrimitiveTypeFlags = usesPrimitiveTypeFlags;
 
     pipeline_compile_options = {};
@@ -167,7 +169,7 @@ inline bool configPipeline(OptixPrimitiveTypeFlags usesPrimitiveTypeFlags) {
     pipeline_compile_options.numAttributeValues    = 2;
     pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
-    pipeline_compile_options.exceptionFlags = OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW | OPTIX_EXCEPTION_FLAG_TRACE_DEPTH | OPTIX_EXCEPTION_FLAG_DEBUG;
+    pipeline_compile_options.exceptionFlags = OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW | OPTIX_EXCEPTION_FLAG_TRACE_DEPTH | OPTIX_EXCEPTION_FLAG_USER;
     //pipeline_compile_options.usesPrimitiveTypeFlags = OPTIX_PRIMITIVE_TYPE_FLAGS_TRIANGLE | OPTIX_PRIMITIVE_TYPE_FLAGS_CUSTOM | usesPrimitiveTypeFlags;
     pipeline_compile_options.usesPrimitiveTypeFlags = usesPrimitiveTypeFlags;
 
@@ -239,27 +241,27 @@ inline void executeOptixTask(OptixTask theTask, tbb::task_group& _c_group) {
     }  
 }
 
-static std::vector<char> readData(std::string const& filename)
-{
-  std::ifstream inputData(filename, std::ios::binary);
+static std::vector<char> readData(std::string const& filename) {
 
-  if (inputData.fail())
-  {
-    std::cerr << "ERROR: readData() Failed to open file " << filename << '\n';
-    return std::vector<char>();
-  }
+    std::ifstream inputData(filename, std::ios::binary);
 
-  // Copy the input buffer to a char vector.
-  std::vector<char> data(std::istreambuf_iterator<char>(inputData), {});
+    if (inputData.fail())
+    {
+        std::cerr << "ERROR: readData() Failed to open file " << filename << '\n';
+        return std::vector<char>();
+    }
 
-  if (inputData.fail())
-  {
-    std::cerr << "ERROR: readData() Failed to read file " << filename << '\n';
-    return std::vector<char>();
-  }
+    // Copy the input buffer to a char vector.
+    std::vector<char> data(std::istreambuf_iterator<char>(inputData), {});
 
-  return data;
-}
+    if (inputData.fail())
+    {
+        std::cerr << "ERROR: readData() Failed to read file " << filename << '\n';
+        return std::vector<char>();
+    }
+
+    return data;
+} // readData
 
 inline bool createModule(OptixModule &module, OptixDeviceContext &context, const char *source, const char *name, const std::vector<std::string>& macros={}, tbb::task_group* _c_group = nullptr)
 {
@@ -271,31 +273,29 @@ inline bool createModule(OptixModule &module, OptixDeviceContext &context, const
 
     size_t      inputSize = 0;
     //TODO: the file path problem
-    bool is_success=false;
+    bool success=false;
 
     std::vector<const char*> compilerOptions {
-        "-std=c++17", "-default-device" 
+        "-std=c++17", "-default-device"
         //,"-extra-device-vectorization"
   #if !defined( NDEBUG )      
         ,"-lineinfo" //"-G"//"--dopt=on",
   #endif
-        // "--gpu-architecture=compute_60",
         ,"--relocatable-device-code=true"
         // "--extensible-whole-program"
-        ,"--split-compile=0"
+        , "--optix-ir"
     };
 
     std::string flat_macros = ""; 
 
     for (auto &ele : macros) {
         compilerOptions.push_back(ele.c_str());
-        flat_macros += ele;
+        flat_macros += ele + "\n";
     }
 
-    const char* input = sutil::getCodePTX( source, flat_macros.c_str(), name, inputSize, is_success, nullptr, compilerOptions);
+    const auto input = sutil::cuCompiled(source, flat_macros.c_str(), name, inputSize, success, nullptr, compilerOptions);
 
-    if(is_success==false)
-    {
+    if(!success) {
         return false;
     }
 
@@ -383,8 +383,8 @@ inline void createRTProgramGroups(OptixDeviceContext &context, OptixModule &_mod
     OptixProgramGroupOptions  program_group_options = {};
     char   log[2048];
     size_t sizeof_log = sizeof( log );
-    std::cout<<kind<<std::endl;
-    std::cout<<entry<<std::endl;
+//    std::cout<<kind<<std::endl;
+//    std::cout<<entry<<std::endl;
 
     OptixProgramGroupDesc desc        = {};
     desc.kind                         = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
@@ -638,109 +638,6 @@ inline void logInfoVRAM(std::string info) {
         used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
 }
 
-inline std::map<std::string, uint> matIDtoShaderIndex;
-
-inline std::map<std::string, std::shared_ptr<VolumeWrapper>> g_vdb_cached_map;
-inline std::map<std::string, std::pair<uint, uint>> g_vdb_indice_visible;
-
-inline std::map<uint, std::vector<std::string>> g_vdb_list_for_each_shader;
-
-inline std::vector<std::tuple<std::string, uint8_t, glm::mat4>> volumeTrans;
-inline std::vector<std::tuple<std::string, std::shared_ptr<VolumeWrapper>>> volumeBoxs;
-
-inline bool preloadVolumeBox(std::string& key, std::string& matid, uint8_t bounds, glm::mat4& transform) {
-
-    volumeTrans.push_back( {matid, bounds, transform} );
-    return true;
-}
-
-inline bool processVolumeBox() {
-
-    volumeBoxs.clear();
-    for (auto& [key, bounds, val] : volumeTrans) {
-        auto volume_ptr = std::make_shared<VolumeWrapper>();
-        volume_ptr->bounds = bounds;
-        volume_ptr->transform = val;
-        buildVolumeAccel(volume_ptr->accel, *volume_ptr, context);
-        volumeBoxs.emplace_back( std::tuple{ key, volume_ptr } );
-    }
-    volumeTrans.clear();
-    return true;
-}
-
-inline bool preloadVDB(const zeno::TextureObjectVDB& texVDB, 
-                       uint index_of_shader, uint index_inside_shader,
-                       const glm::mat4& transform, 
-                       std::string& combined_key)
-{
-    auto path = texVDB.path;
-    auto channel = texVDB.channel;
-
-    std::filesystem::path filePath = path;
-
-    if ( !std::filesystem::exists(filePath) ) {
-        std::cout << filePath.string() << " doesn't exist" << std::endl;
-        return false;
-    }
-
-    auto fileTime = std::filesystem::last_write_time(filePath);
-    // std::filesystem::file_time_type::duration ft = fileTime.time_since_epoch();
-    // if (filePath.extension() != ".vdb")
-    // {
-    //     std::cout << filePath.filename() << " doesn't exist";
-    //     return false;
-    // }
-
-        auto isNumber = [] (const std::string& s)
-        {
-            for (char const &ch : s) {
-                if (std::isdigit(ch) == 0)
-                    return false;
-            }
-            return true;
-        };
-
-    if ( isNumber(channel) ) {
-        auto channel_index = (uint)std::stoi(channel);
-        channel = fetchGridName(path, channel_index);
-    } else {
-        checkGridName(path, channel);
-    }
-
-    const auto vdb_key = path + "{" + channel + "}";
-    combined_key = vdb_key;
-
-    zeno::log_debug("loading VDB :{}", path);
-
-    if (g_vdb_cached_map.count(vdb_key)) {
-
-        auto& cached = g_vdb_cached_map[vdb_key];
-
-        if (transform == cached->transform && fileTime == cached->file_time && texVDB.eleType == cached->type) {
-
-            g_vdb_indice_visible[vdb_key] = std::make_pair(index_of_shader, index_inside_shader);
-            return true;
-        } else {
-            cleanupVolume(*g_vdb_cached_map[vdb_key]);
-        }
-    }
-
-    auto volume_ptr = std::make_shared<VolumeWrapper>();
-    volume_ptr->file_time = fileTime;
-    volume_ptr->transform = transform;
-    volume_ptr->selected = {channel};
-    volume_ptr->type = texVDB.eleType;
-    
-    auto succ = loadVolume(*volume_ptr, path); 
-    
-    if (!succ) {return false;}
-
-    g_vdb_cached_map[vdb_key] = volume_ptr;
-    g_vdb_indice_visible[vdb_key] = std::make_pair(index_of_shader, index_inside_shader);
-
-    return true;
-}
-
 inline std::vector<float> loadIES(const std::string& path, float& coneAngle)
 {
     std::filesystem::path filePath = path;
@@ -881,22 +778,20 @@ inline void addTexture(std::string path, bool blockCompression=false, TaskType* 
 {
     std::string native_path = std::filesystem::u8path(path).string();
 
-    TexKey tex_key {path, blockCompression}; 
-
-    if (tex_lut.count(tex_key)) {
-        return; // do nothing
-    }
+    TexKey tex_key {path, blockCompression};
 
     zeno::log_debug("loading texture :{}", path);
 
-    bool should_reload = false;
     if (std::filesystem::exists(native_path)) {
         std::filesystem::file_time_type ftime = std::filesystem::last_write_time(native_path);
 
         if(g_tex_last_write_time[path] != ftime) {
-            should_reload = true;
+            g_tex_last_write_time[path] = ftime;
         }
-        g_tex_last_write_time[path] = ftime;
+        else {
+            return;
+        }
+
     } else {
         zeno::log_info("file {} doesn't exist", path);
         return;
@@ -905,7 +800,7 @@ inline void addTexture(std::string path, bool blockCompression=false, TaskType* 
     auto input = readData(native_path);
     std::string md5Hash = calculateMD5(input);
 
-    if ( md5_path_mapping.count(md5Hash) && !should_reload) {
+    if ( md5_path_mapping.count(md5Hash)) {
 
         auto& alt_path = md5_path_mapping[md5Hash];
         auto alt_key = TexKey { alt_path, blockCompression };
@@ -913,7 +808,7 @@ inline void addTexture(std::string path, bool blockCompression=false, TaskType* 
         if (tex_lut.count(alt_key)) {
 
             tex_lut[tex_key] = tex_lut[alt_key];
-            zeno::log_info("path {} reuse {} tex", path, alt_path);
+            //zeno::log_info("path {} reuse {} tex", path, alt_path);
             return;
         }
     }
@@ -974,6 +869,7 @@ inline void addTexture(std::string path, bool blockCompression=false, TaskType* 
         CUDA_CHECK( cudaMemcpy( reinterpret_cast<void*>( (CUdeviceptr)iesBuffer ), iesd.data(), data_length, cudaMemcpyHostToDevice ) );
         
         g_ies[path] = {std::move(iesBuffer), coneAngle };
+        return;
     }
     else if (zeno::getSession().nodeClasses.count("ReadPNG16") > 0 && zeno::ends_with(path, ".png", false)) {
         auto outs = zeno::TempNodeSimpleCaller("ReadPNG16")
@@ -1151,7 +1047,7 @@ struct OptixShaderCore {
          
         if(createModule(module.reset(), context, _source, tmp_name.c_str(), macro_list, _c_group))
         {
-            std::cout<<"module created"<<std::endl;
+            // std::cout<<"module created"<<std::endl;
 
             m_radiance_hit_group.reset();
             m_occlusion_hit_group.reset();
@@ -1173,6 +1069,7 @@ struct OptixShaderCore {
 
 struct OptixShaderWrapper
 {
+    bool dirty = true;
     std::shared_ptr<OptixShaderCore> core{};
     
     std::string                 callable {};
@@ -1181,7 +1078,10 @@ struct OptixShaderWrapper
    
     std::map<int, TexKey>                m_texs {};
     bool                                has_vdb {};
+    std::vector<std::string>               vbds {};
+
     std::string                       parameters{};
+    std::map<std::string, std::string>   macros {};
 
     OptixShaderWrapper() = default;
     ~OptixShaderWrapper() = default;
@@ -1198,13 +1098,17 @@ struct OptixShaderWrapper
         std::string tmp_name = "Callable.cu";
         tmp_name = "$" + std::to_string(idx) + tmp_name;
 
-        std::vector<std::string> macros {};
+        std::vector<std::string> _macros_ {};
 
-        if (fallback) {
-            macros.push_back("--define-macro=_FALLBACK_"); 
+        if (!fallback) {
+            _macros_.push_back("--define-macro=__FORWARD__");
         }
 
-        auto callable_done = createModule(callable_module.reset(), context, callable.c_str(), tmp_name.c_str(), macros); 
+        for (auto& [k, v] : this->macros) {
+            _macros_.push_back("--define-macro=" + k + "=" + v);
+        }
+
+        auto callable_done = createModule(callable_module.reset(), context, callable.c_str(), tmp_name.c_str(), _macros_); 
         if (callable_done) {
 
             // Callable programs
@@ -1243,7 +1147,6 @@ struct OptixShaderWrapper
             {
                 return tex_lut[m_texs[i]]->texture;
             }
-            return 0;
         }
         return 0;
     }
@@ -1251,8 +1154,13 @@ struct OptixShaderWrapper
 
 inline std::vector<OptixShaderWrapper> rtMaterialShaders;//just have an arry of shaders
 
-inline void createPipeline()
+inline void createPipeline(uint tree_depth, bool shaderDirty)
 {
+    auto shader_count = rtMaterialShaders.size();
+    auto newMark = PipelineMark {tree_depth, shader_count};
+    if (!shaderDirty && newMark == pipelineMark)
+        return;
+
     OptixPipelineLinkOptions pipeline_link_options = {};
     pipeline_link_options.maxTraceDepth            = 2;
 
@@ -1273,10 +1181,10 @@ inline void createPipeline()
     char   log[2048];
     size_t sizeof_log = sizeof( log );
 
-    if (isPipelineCreated)
+    if (std::get<0>(pipelineMark)!=0)
     {
-        OPTIX_CHECK(optixPipelineDestroy(pipeline));
-        isPipelineCreated = false;
+        OPTIX_CHECK_LOG(optixPipelineDestroy(pipeline));
+        pipelineMark = newMark;
     }
     OPTIX_CHECK_LOG( optixPipelineCreate(
                 context,
@@ -1288,7 +1196,7 @@ inline void createPipeline()
                 &sizeof_log,
                 &pipeline
                 ) );
-    isPipelineCreated = true;
+    pipelineMark = newMark;
 
     OptixStackSizes stack_sizes = {};
     OPTIX_CHECK( optixUtilAccumulateStackSizes( raygen_prog_group,    &stack_sizes, pipeline ) );
@@ -1316,7 +1224,7 @@ inline void createPipeline()
                 &continuation_stack_size
                 ) );
 
-    const uint32_t max_traversal_depth = 3;
+    const uint32_t max_traversal_depth = tree_depth;
     OPTIX_CHECK( optixPipelineSetStackSize(
                 pipeline,
                 direct_callable_stack_size_from_traversal,

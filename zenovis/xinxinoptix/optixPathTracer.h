@@ -160,18 +160,16 @@ struct Params
     ushort1*     accum_buffer_B;
     uchar4*      frame_buffer;
     ushort3*     frame_buffer_M;
-    ushort3*     frame_buffer_P;
+    float3*      frame_buffer_P;
 
     float3*      debug_buffer;
     float3*      albedo_buffer;
     float3*      normal_buffer;
 
+    void* global_buffers;
+    
     unsigned int width;
     unsigned int height;
-    unsigned int tile_i;
-    unsigned int tile_j;
-    unsigned int tile_w;
-    unsigned int tile_h;
     unsigned int samples_per_launch;
 
     CameraInfo cam;
@@ -193,9 +191,6 @@ struct Params
 
     uint32_t firstSoloSphereOffset;
     void* sphereInstAuxLutBuffer;
-
-    void* meshAux;
-    void* instToMesh;
 
     uint32_t hairInstOffset;
     void* hairAux;
@@ -222,9 +217,6 @@ struct Params
 
     float* skycdf;
     int* sky_start;
-    int2 windowCrop_min;
-    int2 windowCrop_max;
-    int2 windowSpace;
 
     uint32_t skynx;
     uint32_t skyny;
@@ -261,6 +253,9 @@ struct Params
     float physical_camera_iso;
     bool  physical_camera_aces;
     bool  physical_camera_exposure;
+    bool  physical_camera_panorama_camera;
+    bool  physical_camera_panorama_vr180;
+    float physical_camera_pupillary_distance;
 };
 
 

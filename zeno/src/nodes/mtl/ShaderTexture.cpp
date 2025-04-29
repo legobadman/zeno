@@ -26,7 +26,7 @@ struct ShaderTexture2D : ShaderNodeClone<ShaderTexture2D>
                 throw zeno::Exception("ShaderTexture2D expect coord to be at least vec2");
         }
 
-        auto type = ZImpl(get_input2<std::string>("type"));
+        auto type = zsString2Std(get_input2_string("type"));
         if (type == "float")
             return 1;
         else if (type == "vec2")
@@ -81,11 +81,11 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
         if (coord != 3)
             throw zeno::Exception("ShaderTexture3D expect coord to be vec3");
 
-        auto type = ZImpl(get_input2<std::string>("type"));
+        auto type = zsString2Std(get_input2_string("type"));
 
         static const std::map<std::string, int> type_map {
             //{"half", 0},
-            //{gParamType_Float, 1},
+            //{"float", 1},
             {"vec2", 2},
         };
 
@@ -101,9 +101,9 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
         auto type = ZImpl(get_input2<std::string>("type"));
         auto coord = em->determineExpr(ZImpl(get_input_shader("coord")));
 
-        auto cihou = ZImpl(get_input2<bool>("cihou"));
+        auto cihou = get_input2_bool("cihou");
         
-        auto space = ZImpl(get_input2<std::string>("space"));
+        auto space = zsString2Std(get_input2_string("space"));
         auto world_space = (space == "World")? "true":"false";
 
         auto dim = em->determineType(ZImpl(get_input_shader("coord")));
@@ -128,7 +128,7 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
     ZENDEFNODE(ShaderTexture2D, {
     {
         {gParamType_Int, "texId", "0"},
-        {gParamType_Vec2f, "coord"},
+        {gParamType_IObject, "coord"},
         {gParamType_Vec2f, "uvtiling", "1,1"},
         {"enum float vec2 vec3 vec4", "type", "vec3"},
     },
@@ -143,9 +143,9 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
 
 ZENDEFNODE(ShaderTexture3D, {
     {
-        {gParamType_Int, "texId", "0"},
-        {gParamType_Vec3f, "coord", "0,0,0"},
-        {gParamType_Bool, "cihou", "0"},
+        {"int", "texId", "0"},
+        {"vec3f", "coord", "0,0,0"},
+        {"bool", "cihou", "0"},
         {"enum World Local", "space", "World"},
         {"enum vec2", "type", "vec2"},
         
@@ -173,7 +173,7 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
                 throw zeno::Exception("ShaderTexture2D expect coord to be at least vec2");
         }
 
-        auto type = ZImpl(get_input2<std::string>("type"));
+        auto type = zsString2Std(get_input2_string("type"));
         if (type == "float" || type == "R" || type == "G" || type == "B" || type == "A")
             return 1;
         else if (type == "vec2")
@@ -189,10 +189,30 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
     virtual void emitCode(EmissionPass *em) override {
         auto texId = em->tex2Ds.size();
         auto tex = std::make_shared<zeno::Texture2DObject>();
-        auto texture_path = ZImpl(get_input2<std::string>("path"));
+        auto texture_path = zsString2Std(get_input2_string("path"));
+        if (has_input("heatmap")) {
+            if (texture_path.empty()) {
+                std::srand(std::time(0));
+                texture_path = std::filesystem::temp_directory_path().string() + '/' + "heatmap-" + std::to_string(std::rand()) + ".png";
+            }
+            auto heatmap = ZImpl(get_input<zeno::HeatmapObject>("heatmap"));
+            std::vector<uint8_t> col;
+            int width = heatmap->colors.size();
+            int height = width;
+            col.reserve(width * height * 3);
+            for (auto i = 0; i < height; i++) {
+                for (auto & color : heatmap->colors) {
+                    col.push_back(zeno::clamp(int(color[0] * 255.99), 0, 255));
+                    col.push_back(zeno::clamp(int(color[1] * 255.99), 0, 255));
+                    col.push_back(zeno::clamp(int(color[2] * 255.99), 0, 255));
+                }
+            }
+            stbi_flip_vertically_on_write(false);
+            stbi_write_png(texture_path.c_str(), width, height, 3, col.data(), 0);
+        }
         if(!std::filesystem::exists(std::filesystem::u8path(texture_path))){
-            zeno::log_warn("texture file not found!");
-            auto type = ZImpl(get_input2<std::string>("type"));
+            //zeno::log_warn("texture file not found!");
+            auto type = zsString2Std(get_input2_string("type"));
             vec4f number= vec4f(0,0,0,0);
             if(ZImpl(has_input2<float>("value")))
             {
@@ -242,27 +262,7 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
         }
 
         tex->path = texture_path;
-        if (ZImpl(has_input("heatmap"))) {
-            if (tex->path.empty()) {
-                std::srand(std::time(0));
-                tex->path = std::filesystem::temp_directory_path().string() + '/' + "heatmap-" + std::to_string(std::rand()) + ".png";
-            }
-            auto heatmap = ZImpl(get_input<zeno::HeatmapObject>("heatmap"));
-            std::vector<uint8_t> col;
-            int width = heatmap->colors.size();
-            int height = width;
-            col.reserve(width * height * 3);
-            for (auto i = 0; i < height; i++) {
-                for (auto & color : heatmap->colors) {
-                    col.push_back(zeno::clamp(int(color[0] * 255.99), 0, 255));
-                    col.push_back(zeno::clamp(int(color[1] * 255.99), 0, 255));
-                    col.push_back(zeno::clamp(int(color[2] * 255.99), 0, 255));
-                }
-            }
-            stbi_flip_vertically_on_write(false);
-            stbi_write_png(tex->path.c_str(), width, height, 3, col.data(), 0);
-        }
-        tex->blockCompression = ZImpl(get_input2<bool>("blockCompression"));
+        tex->blockCompression = get_input2_bool("blockCompression");
 
     #define SET_TEX_WRAP(TEX, WRAP)                                    \
         if (WRAP == "REPEAT")                                          \
@@ -299,14 +299,14 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
         else                                                                      \
             throw zeno::Exception(#FILTER + FILTER);
 
-        auto minFilter = ZImpl(get_input<zeno::StringObject>("minFilter"))->get();
+        auto minFilter = ZImpl(get_input<zeno::StringObject>("minFilter")->get());
         SET_TEX_FILTER(tex, minFilter)
-        auto magFilter = ZImpl(get_input<zeno::StringObject>("magFilter"))->get();
+        auto magFilter = ZImpl(get_input<zeno::StringObject>("magFilter")->get());
         SET_TEX_FILTER(tex, magFilter)
 
     #undef SET_TEX_FILTER
         em->tex2Ds.push_back(tex);
-        auto type = ZImpl(get_input2<std::string>("type"));
+        auto type = zsString2Std(get_input2_string("type"));
         std::string suffix;
         if (type == "R") {
             suffix = ".x";
@@ -329,20 +329,22 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
         if (ZImpl(has_input("coord"))) {
             coord = em->determineExpr(ZImpl(get_input_shader("coord")));
         }
-        auto postprocess = ZImpl(get_input2<std::string>("post_process"));
+        auto postprocess = zsString2Std(get_input2_string("post_process"));
         if(postprocess == "raw"){
             em->emitCode(zeno::format("{}(texture2D(zenotex[{}], vec2({}) * {})){}", type, texId, coord, uvtiling, suffix));
         }else if (postprocess == "srgb"){
             em->emitCode(zeno::format("pow({}(texture2D(zenotex[{}], vec2({}) * {})),2.2f){}", type, texId, coord, uvtiling, suffix));
         }else if (postprocess == "normal_map"){
             em->emitCode(zeno::format("({}(texture2D(zenotex[{}], vec2({}) * {})) * 2.0f - 1.0f){}", type, texId, coord, uvtiling, suffix));
+        }else if (postprocess == "1-x"){
+            em->emitCode(zeno::format("{}(1.0) - {}(texture2D(zenotex[{}], vec2({}) * {})){}", type, type, texId, coord, uvtiling, suffix));
         }
     }
 };
 
 ZENDEFNODE(SmartTexture2D, {
     {
-        {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
+        {gParamType_String, "path", "", Socket_Primitve, ReadPathEdit},
         {gParamType_Heatmap, "heatmap"},
         {(std::string) "enum " + SmartTexture2D::texWrapping, "wrapS", "REPEAT"},
         {(std::string) "enum " + SmartTexture2D::texWrapping, "wrapT", "REPEAT"},
@@ -352,7 +354,7 @@ ZENDEFNODE(SmartTexture2D, {
         {gParamType_Vec2f, "uvtiling", "1,1"},
         {gParamType_Vec4f, "value", "0,0,0,0"},
         {"enum float vec2 vec3 vec4 R G B A", "type", "vec3"},
-        {"enum raw srgb normal_map", "post_process", "raw"},
+        {"enum raw srgb normal_map 1-x", "post_process", "raw"},
         {gParamType_Bool, "blockCompression", "false"}
     },
     {

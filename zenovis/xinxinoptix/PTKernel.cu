@@ -136,13 +136,10 @@ float half_to_float(ushort1 in)
 extern "C" __global__ void __raygen__rg()
 {
 
-    const int    w   = params.windowSpace.x;
-    const int    h   = params.windowSpace.y;
-    //const float3 eye = params.eye;
-    const uint3  idxx = optixGetLaunchIndex();
-    uint3 idx;
-    idx.x = idxx.x + params.tile_i * params.tile_w;
-    idx.y = idxx.y + params.tile_j * params.tile_h;
+    const int    w   = params.width;
+    const int    h   = params.height;
+
+    uint3 idx = optixGetLaunchIndex();
     if(idx.x>w || idx.y>h)
         return;
 
@@ -178,15 +175,14 @@ extern "C" __global__ void __raygen__rg()
     float3 tmp_normal{};
     unsigned int sobolseed = subframe_index;
     float3 mask_value = make_float3( 0.0f );
-    float3 click_pos = make_float3( 0.0f );
 
     do{
         // The center of each pixel is at fraction (0.5,0.5)
         float2 subpixel_jitter = sobolRnd(sobolseed);
 
         float2 d = 2.0f * make_float2(
-            ( static_cast<float>( idx.x + params.windowCrop_min.x ) + subpixel_jitter.x ) / static_cast<float>( w ),
-            ( static_cast<float>( idx.y + params.windowCrop_min.y ) + subpixel_jitter.y ) / static_cast<float>( h )
+            ( static_cast<float>( idx.x ) + subpixel_jitter.x ) / static_cast<float>( w ),
+            ( static_cast<float>( idx.y ) + subpixel_jitter.y ) / static_cast<float>( h )
             ) - 1.0f;
 
         float2 r01 = sobolRnd(eventseed);
@@ -241,6 +237,31 @@ extern "C" __global__ void __raygen__rg()
         float3 ray_origin    = eye_shake;
         float3 ray_direction = terminal_point - eye_shake; 
         ray_direction = normalize(ray_direction);
+        if (params.physical_camera_panorama_camera) {
+            ray_origin    = make_float3(0.0f, 0.0f, 0.0f);
+            float phi = (float(idx.x) + subpixel_jitter.x) / float(w) * 2.0f * M_PIf;
+            mat3 camera_transform = mat3(
+                    cam.right.x, cam.up.x, -cam.front.x,
+                    cam.right.y, cam.up.y, -cam.front.y,
+                    cam.right.z, cam.up.z, -cam.front.z
+            );
+            if (params.physical_camera_panorama_vr180) {
+                int idxx = idx.x >= w/2? idx.x - w/2 : idx.x;
+                phi = ((float(idxx) + subpixel_jitter.x) / float(w / 2) + 0.5f) * M_PIf;
+                if (idx.x < w / 2) {
+                    ray_origin = camera_transform * make_float3(-params.physical_camera_pupillary_distance / 2.0f, 0.0f, 0.0f);
+                }
+                else {
+                    ray_origin = camera_transform * make_float3(params.physical_camera_pupillary_distance / 2.0f, 0.0f, 0.0f);
+                }
+            }
+            float theta = (float(idx.y) + subpixel_jitter.y) / float(h) * M_PIf;
+            float y = -cosf(theta);
+            float z = sinf(theta) * cosf(phi);
+            float x = sinf(theta) * sinf(-phi);
+
+            ray_direction = camera_transform * make_float3(x, y, z);
+        }
 
         RadiancePRD prd;
         prd.pixel_area   = cam.height/(float)(h)/(cam.focal_length);
@@ -263,7 +284,6 @@ extern "C" __global__ void __raygen__rg()
         prd.direction = ray_direction;
         prd.samplePdf = 1.0f;
         prd.mask_value = make_float3( 0.0f );
-        prd.click_pos = make_float3( 0.0f );
 
         prd.depth = 0;
         prd.diffDepth = 0;
@@ -289,8 +309,27 @@ extern "C" __global__ void __raygen__rg()
         unsigned char background_trace = 0;
         prd.alphaHit = false;
 
+        if (subframe_index == 0) {
+            RadiancePRD testPRD {};
+            testPRD.done = false;
+            testPRD.seed = seed;
+            testPRD.depth == 0;
+            testPRD._tmin_ = 0;
+            testPRD.maxDistance = FLT_MAX;
+            testPRD.test_distance = true;
+
+            uint8_t test_mask = EverythingMask ^ VolumeMatMask;
+            do {
+                traceRadiance(params.handle, ray_origin, ray_direction, testPRD._tmin_, testPRD.maxDistance, &testPRD, test_mask);
+            } while(testPRD.test_distance && !testPRD.done);
+            float3 click_pos = make_float3( 0.0f );
+            if (testPRD.maxDistance < FLT_MAX) {
+                click_pos = ray_origin + ray_direction * testPRD.maxDistance;
+            }
+            params.frame_buffer_P[ image_index ] = click_pos;
+        }
+
         traceRadiance(params.handle, ray_origin, ray_direction, _tmin_, prd.maxDistance, &prd, _mask_);
-        click_pos = prd.click_pos;
         float3 m = prd.mask_value;
         mask_value = mask_value + m;
 
@@ -392,10 +431,10 @@ extern "C" __global__ void __raygen__rg()
     float midGray       = 0.18f;
     auto samples_per_launch = static_cast<float>( params.samples_per_launch );
 
-    vec3         accum_color    = PhysicalCamera(vec3(result), aperture, shutter_speed, iso, midGray, exposure, aces) / samples_per_launch;
-    vec3         accum_color_d  = PhysicalCamera(vec3(aov[1]), aperture, shutter_speed, iso, midGray, exposure, aces) / samples_per_launch;
-    vec3         accum_color_s  = PhysicalCamera(vec3(aov[2]), aperture, shutter_speed, iso, midGray, exposure, aces) / samples_per_launch;
-    vec3         accum_color_t  = PhysicalCamera(vec3(aov[3]), aperture, shutter_speed, iso, midGray, exposure, aces) / samples_per_launch;
+    vec3         accum_color    = PhysicalCamera(vec3(result), aperture, shutter_speed, iso, midGray, exposure, false) / samples_per_launch;
+    vec3         accum_color_d  = PhysicalCamera(vec3(aov[1]), aperture, shutter_speed, iso, midGray, exposure, false) / samples_per_launch;
+    vec3         accum_color_s  = PhysicalCamera(vec3(aov[2]), aperture, shutter_speed, iso, midGray, exposure, false) / samples_per_launch;
+    vec3         accum_color_t  = PhysicalCamera(vec3(aov[3]), aperture, shutter_speed, iso, midGray, exposure, false) / samples_per_launch;
     float3         accum_color_b  = result_b / samples_per_launch;
     float3         accum_mask     = mask_value / samples_per_launch;
     
@@ -436,12 +475,12 @@ extern "C" __global__ void __raygen__rg()
     params.accum_buffer_B[ image_index ] = float_to_half(accum_color_b.x);
 
     params.frame_buffer_M[ image_index ] = float3_to_half3(accum_mask);
-    params.frame_buffer_P[ image_index ] = float3_to_half3(click_pos);
 
     auto uv = float2{idx.x+0.5f, idx.y+0.5f};
     auto dither = InterleavedGradientNoise(uv);
 
     dither = (dither-0.5f);
+    accum_color  = PhysicalCamera(accum_color, aperture, shutter_speed, iso, midGray, false, aces);
     params.frame_buffer[ image_index ] = makeSRGB( accum_color, 2.2f, dither);
 
     if (params.denoise) {
@@ -539,10 +578,6 @@ extern "C" __global__ void __miss__radiance()
 
 extern "C" __global__ void __miss__occlusion()
 {
-    setPayloadOcclusion( false );
+    //setPayloadOcclusion( false );
 }
 
-extern "C" __global__ void __closesthit__occlusion()
-{
-    setPayloadOcclusion( true );
-}

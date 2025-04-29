@@ -17,6 +17,10 @@ struct RenderEngine {
     virtual void draw(bool record) = 0;
     virtual void update() = 0;
     virtual void cleanupScene() = 0;
+    virtual void assetLoad() = 0;
+    virtual void run() = 0;
+    virtual void beginFrameLoading(int frameid) = 0;
+    virtual void endFrameLoading(int frameid) = 0;
     virtual void cleanupAssets() = 0;
     virtual void cleanupWhenExit() = 0;
     virtual void reload(const zeno::render_reload_info& info) {}

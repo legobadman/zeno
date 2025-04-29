@@ -75,7 +75,7 @@ struct PrimReduction : zeno::INode {
         zeno::NumericValue result;
         if (prim->attr_is<zeno::vec3f>(attrToReduce))
             result = prim_reduce<zeno::vec3f>(prim.get(), attrToReduce, op);
-        else 
+        else
             result = prim_reduce<float>(prim.get(), attrToReduce, op);
         auto out = std::make_shared<zeno::NumericObject>();
         out->set(result);
