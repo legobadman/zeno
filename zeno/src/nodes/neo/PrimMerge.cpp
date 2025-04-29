@@ -13,7 +13,7 @@ namespace zeno {
 
 static void set_special_attr_remap(PrimitiveObject *p, std::string attr_name, std::unordered_map<std::string, int> &facesetNameMap) {
     UserData* pUserData = dynamic_cast<UserData*>(p->userData());
-    int faceset_count = pUserData->get2<int>(attr_name + "_count", 0);
+    int faceset_count = pUserData->get_int(stdString2zs(attr_name + "_count"), 0);
     {
         std::unordered_map<int, int> cur_faceset_index_map;
         for (auto i = 0; i < faceset_count; i++) {
@@ -669,3 +669,4 @@ ZENDEFNODE(PrimMerge, {
 
 } // namespace
 } // namespace zeno
+

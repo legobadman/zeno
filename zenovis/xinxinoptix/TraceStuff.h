@@ -8,6 +8,7 @@
 #include <Sampling.h>
 #include <cuda/random.h>
 #include <cuda/climits.h>
+
 #define _FLT_MAX_ __FLT_MAX__
 #define _FLT_MIN_ __FLT_MIN__
 #define _FLT_EPL_ __FLT_EPSILON__
@@ -66,6 +67,7 @@ struct ShadowPRD {
 
 struct RadiancePRD
 {
+    unsigned int offset = 0;
     bool test_distance;
     float maxDistance;
     // TODO: move some state directly into payload registers?
@@ -105,7 +107,6 @@ struct RadiancePRD
     bool         fromDiff;
     bool         alphaHit;
     vec3         mask_value;
-    vec3         click_pos;
     unsigned char max_depth;
 
     uint16_t lightmask = EverythingMask;
@@ -140,34 +141,6 @@ struct RadiancePRD
 
     float _tmin_ = 0;
     float3 geometryNormal;
-
-    void offsetRay() {
-        offsetRay(this->origin, this->direction);
-    }
-
-    void offsetRay(float3& P, const float3& new_dir) {
-        bool forward = dot(geometryNormal, new_dir) > 0;
-        auto dir = forward? geometryNormal:-geometryNormal;
-        auto offset = rtgems::offset_ray(P, dir);
-        P = offset;
-//        float l = length( offset - P );
-//        float l2 = this->alphaHit? max(l, 1e-4) : max(l, 1e-5);
-//        P = P + l2 * dir;
-    }
-
-    void offsetUpdateRay(float3& P, float3 new_dir) {
-//      double x = (double)(P.x);
-//      double y = (double)(P.y);
-//      double z = (double)(P.z);
-//        auto beforeOffset = make_float3(x, y, z);
-        //this->origin = P;
-        //this->direction = new_dir;
-        offsetRay(P, new_dir);
-//        double x2 = (double)(beforeOffset.x);
-//        double y2 = (double)(beforeOffset.y);
-//        double z2 = (double)(beforeOffset.z);
-//        this->origin = make_float3(x2, y2, z2);
-    }
 
     uint8_t _mask_ = EverythingMask;
 

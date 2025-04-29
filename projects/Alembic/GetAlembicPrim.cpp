@@ -15,6 +15,9 @@
 #include <utility>
 
 namespace zeno {
+struct JsonObject : IObjectClone<JsonObject> {
+    Json json;
+};
 
 int count_alembic_prims(std::shared_ptr<zeno::ABCTree> abctree) {
     int count = 0;
@@ -34,7 +37,7 @@ struct CountAlembicPrims : INode {
 };
 
 ZENDEFNODE(CountAlembicPrims, {
-    {{"ABCTree", "abctree"}},
+    {{gParamType_ABCTree, "abctree"}},
     {{gParamType_Int, "count"}},
     {},
     {"alembic"},
@@ -171,7 +174,7 @@ struct GetAlembicPrim : INode {
 ZENDEFNODE(GetAlembicPrim, {
     {
         {gParamType_Bool, "flipFrontBack", "1"},
-        {"ABCTree", "abctree"},
+        {gParamType_ABCTree, "abctree"},
         {gParamType_Int, "index", "0"},
         {gParamType_Bool, "use_xform", "0"},
         {gParamType_Bool, "triangulate", "0"},
@@ -216,7 +219,7 @@ struct AllAlembicPrim : INode {
 ZENDEFNODE(AllAlembicPrim, {
     {
         {gParamType_Bool, "flipFrontBack", "1"},
-        {"ABCTree", "abctree"},
+        {gParamType_ABCTree, "abctree"},
         {gParamType_Bool, "use_xform", "0"},
         {gParamType_Bool, "triangulate", "0"},
     },
@@ -315,6 +318,9 @@ struct AlembicPrimList : INode {
             if (get_input2_bool("triangulate")) {
                 zeno::primTriangulate(_prim.get());
             }
+            auto abcpath_0 = zsString2Std(_prim->userData()->get_string("abcpath_0"));
+            abcpath_0 += "/mesh";
+            _prim->userData()->set_string("abcpath_0", stdString2zs(abcpath_0));
         }
         new_prims->set(stdVec2zeVec(arr));
         set_output("prims", std::move(new_prims));
@@ -337,6 +343,26 @@ ZENDEFNODE(AlembicPrimList, {
     {{gParamType_List, "prims"}},
     {},
     {"alembic"},
+});
+
+struct AlembicSceneInfo : INode {
+    virtual void apply() override {
+        auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
+        auto json_obj = std::make_shared<JsonObject>();
+        json_obj->json = abctree->get_scene_info();
+        set_output("json", json_obj);
+    }
+};
+
+ZENDEFNODE(AlembicSceneInfo, {
+    {
+        {gParamType_ABCTree, "abctree"},
+    },
+    {
+        {gParamType_JsonObject, "json"},
+    },
+    {},
+    {"Alembic"},
 });
 
 struct GetAlembicCamera : INode {
@@ -446,7 +472,7 @@ struct ImportAlembicPrim : INode {
             auto obj = archive.getTop();
             bool read_face_set = get_input2_bool("read_face_set");
             bool outOfRangeAsEmpty = get_input2_bool("outOfRangeAsEmpty");
-            traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred, false, outOfRangeAsEmpty);
+            traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred, false, outOfRangeAsEmpty, 0);
         }
         bool use_xform = get_input2_bool("use_xform");
         auto index = get_input2_int("index");
@@ -502,3 +528,4 @@ ZENDEFNODE(ImportAlembicPrim, {
 });
 
 } // namespace zeno
+

@@ -7,15 +7,19 @@ target_sources(zenovis PRIVATE
   OptiXStuff.h
   Host.h
 
-  volume/optixVolume.cpp
-  volume/optixVolume.h
+  optixVolume.cpp
+  optixVolume.h
   optixSphere.cpp
   optixSphere.h
+  optixTriMesh.h
+  optixCommon.h
   Portal.h
   Shape.h
   XAS.h
-
   BCX.h
+
+  Scene.cpp
+  Scene.h
 
   LightTree.cpp
   LightTree.h
@@ -26,6 +30,7 @@ target_sources(zenovis PRIVATE
   TypeCaster.cpp
   TypeCaster.h
   
+  ShaderBuffer.h
   GeometryAux.h
   
   SDK/sutil/Aabb.h              SDK/sutil/Quaternion.h

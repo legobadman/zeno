@@ -9,7 +9,7 @@
 
 //COMMON_CODE
 
-extern "C" __device__ MatOutput __direct_callable__evalmat(cudaTextureObject_t zenotex[], float4* uniforms, const MatInput& attrs) {
+extern "C" __device__ MatOutput __direct_callable__evalmat(cudaTextureObject_t zenotex[], const float4* uniforms, const void** buffers, const MatInput& attrs) {
 
     /* MODMA */
     auto att_pos = attrs.pos;
@@ -17,6 +17,8 @@ extern "C" __device__ MatOutput __direct_callable__evalmat(cudaTextureObject_t z
     auto att_uv = attrs.uv;
     auto att_nrm = attrs.nrm;
     auto att_tang = attrs.tang;
+
+    auto att_instIdx = attrs.instIdx;
     auto att_instPos = attrs.instPos;
     auto att_instNrm = attrs.instNrm;
     auto att_instUv = attrs.instUv;
@@ -24,7 +26,8 @@ extern "C" __device__ MatOutput __direct_callable__evalmat(cudaTextureObject_t z
     auto att_instTang = attrs.instTang;
     auto att_rayLength = attrs.rayLength;
 
-    auto att_isShadowRay = attrs.isShadowRay ? 1.0f:0.0f;
+    auto att_isBackFace = attrs.isBackFace;
+    auto att_isShadowRay = attrs.isShadowRay;
 
     vec3 b = normalize(cross(attrs.T, attrs.N));
     vec3 t = normalize(cross(attrs.N, b));
@@ -46,67 +49,10 @@ extern "C" __device__ MatOutput __direct_callable__evalmat(cudaTextureObject_t z
     auto att_camUp    = vec3(params.cam.up);
     auto att_camRight = vec3(params.cam.right);
 
-#ifndef _FALLBACK_
-
-    /** generated code here beg **/
+#ifdef __FORWARD__
     //GENERATED_BEGIN_MARK
-    /* MODME */
-    float mat_base = 1.0f;
-    vec3 mat_basecolor = vec3(1.0f, 1.0f, 1.0f);
-    float mat_roughness = 0.5f;
-    float mat_metallic = 0.0f;
-    vec3 mat_metalColor = vec3(1.0f,1.0f,1.0f);
-    float mat_specular = 0.0f;
-    float mat_specularTint = 0.0f;
-    float mat_anisotropic = 0.0f;
-    float mat_anisoRotation = 0.0f;
-
-    float mat_subsurface = 0.0f;
-    vec3  mat_sssParam = vec3(0.0f,0.0f,0.0f);
-    vec3  mat_sssColor = vec3(0.0f,0.0f,0.0f);
-    float mat_scatterDistance = 0.0f;
-    float mat_scatterStep = 0.0f;
-    
-    float mat_sheen = 0.0f;
-    float mat_sheenTint = 0.0f;
-
-    float mat_clearcoat = 0.0f;
-    vec3 mat_clearcoatColor = vec3(1.0f,1.0f,1.0f);
-    float mat_clearcoatRoughness = 0.0f;
-    float mat_clearcoatIOR = 1.5f;
-    float mat_opacity = 0.0f;
-
-    float mat_specTrans = 0.0f;
-    vec3 mat_transColor = vec3(1.0f,1.0f,1.0f);
-    vec3 mat_transTint = vec3(1.0f,1.0f,1.0f);
-    float mat_transTintDepth = 0.0f;
-    float mat_transDistance = 0.0f;
-    vec3 mat_transScatterColor = vec3(1.0f,1.0f,1.0f);
-    float mat_ior = 1.0f;
-
-    float mat_diffraction = 0.0f;
-    vec3  mat_diffractColor = vec3(0.0f);
-
-    float mat_flatness = 0.0f;
-    float mat_thin = 0.0f;
-    float mat_doubleSide= 0.0f;
-    float mat_smoothness = 0.0f;
-    vec3  mat_normal = vec3(0.0f, 0.0f, 1.0f);
-    float mat_emissionIntensity = float(0);
-    vec3 mat_emission = vec3(1.0f, 1.0f, 1.0f);
-    float mat_displacement = 0.0f;
-    float mat_shadowReceiver = 0.0f;
-    float mat_NoL = 1.0f;
-    float mat_LoV = 1.0f;
-    float mat_isHair = 0.0f;
-    vec3 mat_reflectance = att_reflectance;
-    
-    bool sssFxiedRadius = false;
-    vec3 mask_value = vec3(0, 0, 0);
 
     //GENERATED_END_MARK
-    /** generated code here end **/
-
 #else
 
     float mat_base = 1.0f;
@@ -154,6 +100,7 @@ extern "C" __device__ MatOutput __direct_callable__evalmat(cudaTextureObject_t z
     vec3 mat_emission = vec3(1.0f, 1.0f, 1.0f);
     float mat_displacement = 0.0f;
     float mat_shadowReceiver = 0.0f;
+    float mat_shadowTerminatorOffset = 0.0f;
     float mat_NoL = 1.0f;
     float mat_LoV = 1.0f;
     float mat_isHair = 0.0f;
@@ -208,6 +155,7 @@ extern "C" __device__ MatOutput __direct_callable__evalmat(cudaTextureObject_t z
     mats.thin = mat_thin;
     mats.doubleSide = mat_doubleSide;
     mats.shadowReceiver = mat_shadowReceiver;
+    mats.shadowTerminatorOffset = mat_shadowTerminatorOffset;
 
     mats.smoothness = mat_smoothness;
     mats.sssFxiedRadius = sssFxiedRadius;
