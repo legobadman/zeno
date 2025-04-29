@@ -2,7 +2,7 @@
 #define __RECORD_VIDEO_MGR_H__
 
 #include <QtWidgets>
-#include "common.h"
+#include "uicommon.h"
 
 struct VideoRecInfo
 {

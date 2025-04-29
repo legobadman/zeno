@@ -697,7 +697,7 @@ QVariant UiHelper::initDefaultValue(const zeno::ParamType& type)
         auto& anyVal = zeno::reflect::make_any<zeno::CurvesData>(curves);
         return QVariant::fromValue(anyVal);
     }
-    else if (type == zeno::types::gParamType_Heatmap)
+    else if (type == gParamType_Heatmap)
     {
         return JsonHelper::dumpHeatmap(1024, "");
     }
@@ -1035,7 +1035,7 @@ QString UiHelper::getTypeDesc(zeno::ParamType type)
     case zeno::types::gParamType_Vec4f:     return "vec4f";
     case gParamType_List:      return "list";
     case gParamType_Dict:      return "dict";
-    case zeno::types::gParamType_Heatmap:       return "color";
+    case gParamType_Heatmap:       return "color";
     case gParamType_IObject: return "object";
     case gParamType_Primitive:      return "prim";
     case Param_Null:

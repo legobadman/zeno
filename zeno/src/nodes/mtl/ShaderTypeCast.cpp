@@ -15,19 +15,19 @@ static std::string dataTypeDefaultString() {
 struct ShaderTypeCast : ShaderNodeClone<ShaderTypeCast> {
     virtual int determineType(EmissionPass *em) override {
 
-        auto obj = get_input("in").get();
+        auto obj = ZImpl(get_input_shader("in"));
         em->determineType(obj);
 
-        auto type = get_input2<std::string>("type:");
+        auto type = zsString2Std(get_input2_string("type:"));
         return TypeHint.at(type);
     }
 
     virtual void emitCode(EmissionPass *em) override {
 
-        auto op = get_input2<std::string>("op:");
-        auto type = get_input2<std::string>("type:");
+        auto op = zsString2Std(get_input2_string("op:"));
+        auto type = zsString2Std(get_input2_string("type:"));
         
-        auto obj = get_input("in").get();
+        auto obj = ZImpl(get_input_shader("in"));
         auto in = em->determineExpr(obj);
         
         if (op == "bit_cast") {
@@ -40,10 +40,10 @@ struct ShaderTypeCast : ShaderNodeClone<ShaderTypeCast> {
 
 ZENDEFNODE(ShaderTypeCast, {
     {
-        {"in"}
+        {gParamType_Int, "in"}
     },
     {
-        {"shader", "out"},
+        {gParamType_Shader, "out"},
     },
     {
         {"enum bit_cast data_cast ", "op", "bit_cast"},
@@ -54,18 +54,18 @@ ZENDEFNODE(ShaderTypeCast, {
 
 struct ShaderPrint : ShaderNodeClone<ShaderPrint> {
     virtual int determineType(EmissionPass *em) override {
-        auto in = get_input("in").get();
+        auto in = ZImpl(get_input_shader("in"));
         auto in_type = em->determineType(in);
         return in_type;
     }
 
     virtual void emitCode(EmissionPass *em) override {
         
-        auto in = get_input("in").get();
+        auto in = ZImpl(get_input_shader("in"));
         auto in_type = em->determineType(in);
         auto in_expr = em->determineExpr(in);
 
-        auto str = get_input2<std::string>("str");
+        auto str = zsString2Std(get_input2_string("str"));
 
         static const std::map<std::string, std::string> typeTable {
             {"float", "%f"}, {"bool", "%d"},
@@ -89,11 +89,11 @@ struct ShaderPrint : ShaderNodeClone<ShaderPrint> {
 
 ZENDEFNODE(ShaderPrint, {
     {
-        {"in"},
-        {"string", "str", ""}
+        {gParamType_IObject, "in"},
+        {gParamType_String, "str", ""}
     },
     {
-        {"shader", "out"},
+        {gParamType_Shader, "out"},
     },
     {},
     {"shader"},

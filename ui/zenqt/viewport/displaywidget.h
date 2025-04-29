@@ -49,7 +49,7 @@ public:
     void setSafeFrames(bool bLock, int nx, int ny);
     void setCameraRes(const QVector2D& res);
     void setSimpleRenderOption();
-    void setRenderSeparately(runType runtype);
+    void setRenderSeparately(/*runType runtype*/);
     bool isCameraMoving() const;
     bool isPlaying() const;
     bool isGLViewport() const;

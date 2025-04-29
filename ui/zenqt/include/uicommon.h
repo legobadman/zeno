@@ -72,6 +72,15 @@ struct RECORD_SETTING
     RECORD_SETTING() : fps(24), bitrate(200000), numMSAA(0), numOptix(1), width(1280), height(720), bExportVideo(false), needDenoise(false), bAutoRemoveCache(true), bAov(false), bExr(false) {}
 };
 
+enum REC_RETURN_CODE
+{
+    REC_NOERROR = 0,
+    REC_NO_RECORD_OPTION = 1,
+    REC_OPTIX_INTERNAL_FATAL = -1,
+    REC_FFMPEG_FATAL = -3,
+    REC_NOFFMPEG = -2,
+};
+
 struct LAYOUT_SETTING {
     std::shared_ptr<LayerOutNode> layerOutNode;
     QSize size;

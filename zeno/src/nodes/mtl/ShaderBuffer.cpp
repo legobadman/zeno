@@ -14,7 +14,7 @@ struct ImplShaderBuffer : ShaderNodeClone<ImplShaderBuffer> {
 
     virtual void emitCode(EmissionPass *em) override {
 
-        auto name = get_input2<std::string>("name");
+        auto name = ZImpl(get_input2<std::string>("name"));
 
         if ( out > 0 ) {
             return em->emitCode(name + "_bfsize");
@@ -32,7 +32,10 @@ struct ShaderBuffer : INode {
         for(int i=0; i<list.size(); ++i) {
 
             auto node = std::make_shared<ImplShaderBuffer>();
-            node->inputs["name"] = get_input("name");
+
+            std::string na = zsString2Std(get_input2_string("name"));
+            node->m_pAdapter->set_primitive_input("name", na);
+
             node->out = i;
             auto shader = std::make_shared<ShaderObject>(node.get());
             set_output(list[i], std::move(shader));
@@ -42,11 +45,11 @@ struct ShaderBuffer : INode {
 
 ZENDEFNODE(ShaderBuffer, {
                 {
-                    {"string", "name", ""},
+                    {gParamType_String, "name", ""},
                 },
                 {
-                    {"shader", "out"},
-                    {"int",   "size"},
+                    {gParamType_Shader, "out"},
+                    {gParamType_Int,   "size"},
                 },
                 {},
                 {"shader"},
@@ -56,19 +59,19 @@ struct ShaderBufferRead : ShaderNodeClone<ShaderBufferRead> {
     
     virtual int determineType(EmissionPass *em) override {
 
-        em->determineType(get_input("buffer").get());
+        em->determineType(ZImpl(get_input_shader("buffer")));
 
-        auto type = get_input2<std::string>("type");
+        auto type = ZImpl(get_input2<std::string>("type"));
         return TypeHint.at(type);
     }
 
     virtual void emitCode(EmissionPass *em) override {
 
-        auto buffer = get_input("buffer").get();
+        auto buffer = ZImpl(get_input_shader("buffer"));
 
         auto in = em->determineExpr(buffer);
-        auto type = get_input2<std::string>("type");
-        auto offset = get_input2<int>("offset");
+        auto type = ZImpl(get_input2<std::string>("type"));
+        auto offset = ZImpl(get_input2<int>("offset"));
 
         em->emitCode("buffer_read<" + type + ">("+ in + "," + std::to_string(offset) + ")" );
     }
@@ -76,12 +79,12 @@ struct ShaderBufferRead : ShaderNodeClone<ShaderBufferRead> {
 
 ZENDEFNODE(ShaderBufferRead, {
                 {
-                    {"buffer"},
-                    {"int", "offset", "0"},
+                    {gParamType_Shader, "buffer"},
+                    {gParamType_Int, "offset", "0"},
                     {"enum " + ShaderDataTypeNamesString, "type", "float"},
                 },
                 {
-                    {"out"},
+                    {gParamType_Shader, "out"},
                 },
                 {},
                 {"shader"},

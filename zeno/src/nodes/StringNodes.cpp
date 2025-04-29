@@ -673,32 +673,34 @@ ZENDEFNODE(NumbertoString, {
 
 struct NumberToTime : zeno::INode {
   virtual void apply() override {
-    auto num = int(std::round(get_input2<float>("number")));
+    auto num = int(std::round(get_input2_float("number")));
     auto obj = std::make_unique<zeno::StringObject>();
     int h = num / 60 / 60;
     int m = num % (60 * 60) / 60;
     int s = num % 60;
-    if (get_input2<std::string>("format") == "string") {
+    if (get_input2_string("format") == "string") {
       auto str = zeno::format("{:02}:{:02}:{:02}", h, m, s);
-      set_output2("time", str);
+      set_output_string("time", stdString2zs(str));
     }
-    else if (get_input2<std::string>("format") == "vec3f") {
+    else if (get_input2_string("format") == "vec3f") {
       auto value = vec3f(h, m, s);
-      set_output2("time", value);
+      set_output_vec3f("time", toAbiVec3f(value));
     }
-    else if (get_input2<std::string>("format") == "vec3i") {
+    else if (get_input2_string("format") == "vec3i") {
       auto value = vec3i(h, m, s);
-      set_output2("time", value);
+      set_output_vec3i("time", toAbiVec3i(value));
     }
   }
 };
 
 ZENDEFNODE(NumberToTime, {
    {
-       {"number"},
+       {gParamType_Float, "number"},
        {"enum vec3i vec3f string", "format", "string"},
    },
-   {"time"},
+   {
+       {gParamType_AnyNumeric, "time"}
+   },
    {},
    {"string"},
 });
