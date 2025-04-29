@@ -31,8 +31,8 @@ namespace zeno
         zeno::Vec2f get_input2_vec2f(const zeno::String& param);
         zeno::Vec3i get_input2_vec3i(const zeno::String& param);
         zeno::Vec3f get_input2_vec3f(const zeno::String& param);
-        zeno::Vec4f get_input2_vec4i(const zeno::String& param);
-        zeno::Vec4i get_input2_vec4f(const zeno::String& param);
+        zeno::Vec4i get_input2_vec4i(const zeno::String& param);
+        zeno::Vec4f get_input2_vec4f(const zeno::String& param);
 
         int get_param_int(const zeno::String& param);
         float get_param_float(const zeno::String& param);
@@ -42,6 +42,7 @@ namespace zeno
         bool set_output(const zeno::String& param, zany pObject);
         void set_output_int(const zeno::String& param, int val);
         void set_output_float(const zeno::String& param, float val);
+        void set_output_string(const zeno::String& param, zeno::String val);
         void set_output_vec2f(const zeno::String& param, Vec2f val);
         void set_output_vec2i(const zeno::String& param, Vec2i val);
         void set_output_vec3f(const zeno::String& param, Vec3f val);

@@ -20,7 +20,7 @@ struct UserData : IUserData {
         return m_data.find(skey) != m_data.end();
     }
 
-    String get_string(const String& key, String defl = "") override {
+    String get_string(const String& key, String defl = "") const override {
         std::string skey(key.c_str());
         std::string sval = get2<std::string>(skey, zsString2Std(defl));
         return stdString2zs(sval);
@@ -31,12 +31,12 @@ struct UserData : IUserData {
         set2(skey, zsString2Std(sval));
     }
 
-    bool has_string(const String& key) override {
+    bool has_string(const String& key) const override {
         std::string skey(key.c_str());
         return has<std::string>(skey);
     }
 
-    int get_int(const String& key, int defl = 0) override {
+    int get_int(const String& key, int defl = 0) const override {
         std::string skey(key.c_str());
         return get2<int>(skey, defl);
     }
@@ -46,12 +46,12 @@ struct UserData : IUserData {
         set2(skey, iVal);
     }
 
-    bool has_int(const String& key) override {
+    bool has_int(const String& key) const override {
         std::string skey(key.c_str());
         return has<int>(skey);
     }
 
-    float get_float(const String& key, float defl = 0.f) override {
+    float get_float(const String& key, float defl = 0.f) const override {
         std::string skey(key.c_str());
         return get2<float>(skey, defl);
     }
@@ -61,12 +61,12 @@ struct UserData : IUserData {
         set2(skey, fVal);
     }
 
-    bool has_float(const String& key) override {
+    bool has_float(const String& key) const override {
         std::string skey(key.c_str());
         return has<float>(skey);
     }
 
-    bool get_bool(const String& key, bool defl = false) override {
+    bool get_bool(const String& key, bool defl = false) const override {
         std::string skey(key.c_str());
         return get2<bool>(skey, defl);
     }
@@ -76,17 +76,17 @@ struct UserData : IUserData {
         set2(skey, val);
     }
 
-    bool has_bool(const String& key) override {
+    bool has_bool(const String& key) const override {
         std::string skey(key.c_str());
         return has<bool>(skey);
     }
 
-    Vec2f get_vec2f(const String& key) override {
+    Vec2f get_vec2f(const String& key, Vec2f defl) const override {
         std::string skey(key.c_str());
-        return toAbiVec2f(get2<vec2f>(skey));
+        return toAbiVec2f(get2<vec2f>(skey, toVec2f(defl)));
     }
 
-    Vec2i get_vec2i(const String& key) override {
+    Vec2i get_vec2i(const String& key) const override {
         std::string skey(key.c_str());
         return toAbiVec2i(get2<vec2i>(skey));
     }
@@ -96,7 +96,7 @@ struct UserData : IUserData {
         set2(skey, toVec2f(vec));
     }
 
-    bool has_vec2f(const String& key) override {
+    bool has_vec2f(const String& key) const override {
         std::string skey(key.c_str());
         return has<vec2f>(skey);
     }
@@ -106,27 +106,27 @@ struct UserData : IUserData {
         set2(skey, toVec2i(vec));
     }
 
-    bool has_vec2i(const String& key) override {
+    bool has_vec2i(const String& key) const override {
         std::string skey(key.c_str());
         return has<vec2i>(skey);
     }
 
-    Vec3f get_vec3f(const String& key, Vec3f defl) override {
+    Vec3f get_vec3f(const String& key, Vec3f defl) const override {
         std::string skey(key.c_str());
         return toAbiVec3f(get2<vec3f>(skey, toVec3f(defl)));
     }
 
-    bool has_vec3f(const String& key) override {
+    bool has_vec3f(const String& key) const override {
         std::string skey(key.c_str());
         return has<vec3f>(skey);
     }
 
-    Vec3i get_vec3i(const String& key) override {
+    Vec3i get_vec3i(const String& key) const override {
         std::string skey(key.c_str());
         return toAbiVec3i(get2<vec3i>(skey));
     }
 
-    bool has_vec3i(const String& key) override {
+    bool has_vec3i(const String& key) const override {
         std::string skey(key.c_str());
         return has<vec3i>(skey);
     }
@@ -141,22 +141,22 @@ struct UserData : IUserData {
         set2(skey, toVec3i(vec));
     }
 
-    bool has_vec4f(const String& key) override {
+    bool has_vec4f(const String& key) const override {
         std::string skey(key.c_str());
         return has<vec4f>(skey);
     }
 
-    Vec4f get_vec4f(const String& key) override {
+    Vec4f get_vec4f(const String& key) const override {
         std::string skey(key.c_str());
         return toAbiVec4f(get2<vec4f>(skey));
     }
 
-    bool has_vec4i(const String& key) override {
+    bool has_vec4i(const String& key) const override {
         std::string skey(key.c_str());
         return has<vec4i>(skey);
     }
 
-    Vec4i get_vec4i(const String& key) override {
+    Vec4i get_vec4i(const String& key) const override {
         std::string skey(key.c_str());
         return toAbiVec4i(get2<vec4f>(skey));
     }

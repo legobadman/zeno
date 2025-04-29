@@ -37,7 +37,7 @@ static CONTROL_ITEM_INFO controlList[] = {
     {"Integer Vector 4",    zeno::Vec4edit,     zeno::types::gParamType_Vec4i,  ":/icons/parameter_control_integerVector4.svg"},
     {"Integer Vector 3",    zeno::Vec3edit,     zeno::types::gParamType_Vec3i,  ":/icons/parameter_control_integerVector3.svg"},
     {"Integer Vector 2",    zeno::Vec2edit,     zeno::types::gParamType_Vec2i,  ":/icons/parameter_control_integerVector2.svg"},
-    {"Color",               zeno::Heatmap,      zeno::types::gParamType_Heatmap,":/icons/parameter_control_color.svg"},
+    {"Color",               zeno::Heatmap,      gParamType_Heatmap,             ":/icons/parameter_control_color.svg"},
     {"Color Vec3f",         zeno::ColorVec,     zeno::types::gParamType_Vec3f,  ":/icons/parameter_control_color.svg"},
     {"Curve",               zeno::CurveEditor,  zeno::types::gParamType_Curve,  ":/icons/parameter_control_curve.svg"},
     {"SpinBox",             zeno::SpinBox,      zeno::types::gParamType_Int,    ":/icons/parameter_control_spinbox.svg"},
