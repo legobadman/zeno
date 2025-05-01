@@ -5,6 +5,7 @@
 #include "nodeeditor/gv/fuzzy_search.h"
 #include "model/GraphModel.h"
 #include "model/pluginsmodel.h"
+#include "settings/zsettings.h"
 
 //#define DISABLE_CATE
 
@@ -22,29 +23,18 @@ void NodeCateModel::reload() {
     m_nodeToCate.clear();
     m_condidates.clear();
 
+
+
+    //先收集所有节点
     const NodeCates& cates = zenoApp->graphsManager()->getCates();
-#ifdef DISABLE_CATE
-    m_cache_cates.resize(1);
-#else
     m_cache_cates.resize(cates.size());
-#endif
     int i = 0;
     for (QString cate : cates.keys()) {
-#ifdef DISABLE_CATE
-        if (cate != "reflect" && cate != "prim" && cate != "subgraph" && cate != "layout")
-            continue;
-#endif
-
-#ifdef DISABLE_CATE
-        if (cate == "reflect")
-#endif
-            QVector<zeno::NodeInfo> nodes = cates[cate];
-        {
-            m_cache_cates[i].name = cate;
-            std::transform(nodes.begin(), nodes.end(), std::back_inserter(m_cache_cates[i].nodes),
-                [](const zeno::NodeInfo& v) { return QString::fromStdString(v.name); });
-            i++;
-        }
+        QVector<zeno::NodeInfo> nodes = cates[cate];
+        m_cache_cates[i].name = cate;
+        std::transform(nodes.begin(), nodes.end(), std::back_inserter(m_cache_cates[i].nodes),
+            [](const zeno::NodeInfo& v) { return QString::fromStdString(v.name); });
+        i++;
         for (const auto& node : nodes) {
             QString nodecls = QString::fromStdString(node.name);
             if (nodecls == "SubInput" || nodecls == "SubOutput")
@@ -54,8 +44,27 @@ void NodeCateModel::reload() {
         }
     }
 
-    m_items = m_cache_cates;
+    m_items = getHistoryNodes();
+    //m_items = m_cache_cates;
     //TODO: sync with graphsmanager when assets insert/remove.
+}
+
+QVector<NodeCateModel::MenuOrItem> NodeCateModel::getHistoryNodes() {
+    QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
+    settings.beginGroup("Search History");
+    QString nodestr = settings.value("nodes").toString();
+    QStringList history_nodes = nodestr.split(" ", Qt::SkipEmptyParts);
+
+    QVector<MenuOrItem> items;
+    for (QString node : history_nodes) {
+        MenuOrItem item;
+        if (m_nodeToCate.find(node) != m_nodeToCate.end()) {
+            item.category = m_nodeToCate[node];
+        }
+        item.name = node;
+        items.push_back(item);
+    }
+    return items;
 }
 
 void NodeCateModel::initNewNodeCase() {
@@ -136,6 +145,13 @@ bool NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoi
         }
     }
 
+    QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
+    settings.beginGroup("Search History");
+    QString nodestr = settings.value("nodes").toString();
+    QStringList histroy_nodes = nodestr.split(" ", Qt::SkipEmptyParts);
+    histroy_nodes.append(name);
+    settings.setValue("nodes", histroy_nodes.join(" "));
+
     if (cate != "control") {
         pGraphM->createNode(name, cate, pt);
     }
@@ -170,9 +186,9 @@ void NodeCateModel::search(const QString& name) {
 
     clear();
     if (name.isEmpty()) {
-        //搜索项是空的，于是把分类菜单加回来
+        //搜索项是空的，于是把历史访问节点菜单加回来
         beginInsertRows(QModelIndex(), 0, m_cache_cates.size() - 1);
-        m_items = m_cache_cates;
+        m_items = getHistoryNodes();
         endInsertRows();
         return;
     }
