@@ -339,14 +339,21 @@ Qan.GraphView {
         property var catemenuitems: []
         property bool canhighlight: true
 
-        height: childrenRect.height;
+        height: {
+            console.log("childrenRect.height = " + childrenRect.height);
+            return 300//childrenRect.height
+        }
 
         focus: true  // 确保 Menu 可以接收焦点
 
-        TextInput  {
+        TextField {
             id: searchItem
             height: 24
             focus: true // 初始设置为焦点
+            placeholderText: "请输入节点名称进行搜索"
+            color: black
+            selectionColor: "lightblue"  // 选中文本背景色
+            selectedTextColor: "white"   // 被选中文本的前景色
 
             MouseArea {
                 anchors.fill: parent
@@ -483,34 +490,17 @@ Qan.GraphView {
         Instantiator {
             model: nodecatesmodel       //global model
 
-            delegate: {
-                if (searchItem.text == "") {
-                    return comp_catemenu;
-                }
-                else {
-                    return comp_searchitem;
-                }
-            }
+            delegate: comp_searchitem
 
             // The trick is on those two lines
             onObjectAdded: {
-                if (object.ismenu) {
-                    newnode_menu.addMenu(object)
-                }
-                else {
-                    newnode_menu.addItem(object)
-                    if (object.islastitem) {
-                        newnode_menu.highlight_firstresult()
-                    }
+                newnode_menu.addItem(object)
+                if (object.islastitem) {
+                    newnode_menu.highlight_firstresult()
                 }
             }
             onObjectRemoved: {
-                if (object.ismenu) {
-                    newnode_menu.removeMenu(object)
-                }
-                else {
-                    newnode_menu.removeItem(object)
-                }
+                newnode_menu.removeItem(object)
             }
         }
 
