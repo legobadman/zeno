@@ -113,6 +113,7 @@ public slots:
 
 private:
     void initNewNodeCase();
+    QVector<MenuOrItem> getHistoryNodes();
 
     QVector<MenuOrItem> m_items;
     QVector<MenuOrItem> m_cache_cates;   //TODO: 如果ASSET发送增删，要同步到这里
