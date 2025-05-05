@@ -102,8 +102,8 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
+    Q_INVOKABLE void init();
     Q_INVOKABLE void search(const QString& name);
-    Q_INVOKABLE bool iscatepage() const;
     Q_INVOKABLE bool execute(GraphModel* pGraphM, const QString& name, const QPoint& pt);
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     void clear();

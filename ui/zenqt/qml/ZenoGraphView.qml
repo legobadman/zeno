@@ -339,99 +339,61 @@ Qan.GraphView {
         property var catemenuitems: []
         property bool canhighlight: true
 
-        height: {
-            console.log("childrenRect.height = " + childrenRect.height);
-            return 300//childrenRect.height
-        }
+        implicitHeight: 300
 
         focus: true  // 确保 Menu 可以接收焦点
 
-        TextField {
-            id: searchItem
-            height: 24
-            focus: true // 初始设置为焦点
-            placeholderText: "请输入节点名称进行搜索"
-            color: black
-            selectionColor: "lightblue"  // 选中文本背景色
-            selectedTextColor: "white"   // 被选中文本的前景色
+        Column {
+            Rectangle {
+                width: newnode_menu.implicitWidth
+                height: 32
+                color: "#f0f0f0"
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    searchItem.forceActiveFocus(); // 鼠标点击时强制聚焦
-                }
-            }
+                TextInput {
+                    id: searchItem
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    focus: true // 初始设置为焦点
+                    property bool clearing_text: false  //搜索完毕以后清空文本框内容
 
-            onTextChanged: {
-                nodecatesmodel.search(text)
-                newnode_menu.canhighlight = false
-                newmenuTimer.start()
-            }
-
-            Keys.onReturnPressed: {
-                if (newnode_menu.count > 1) {
-                    newnode_menu.itemAt(1).triggered()
-                }
-            }
-
-            Keys.onPressed: {
-                if (event.key === Qt.Key_Up) {
-                    
-                } else if (event.key === Qt.Key_Down) {
-                    var firstItem = newnode_menu.itemAt(1)
-                    firstItem.focus = true
-                    firstItem.forceActiveFocus()
-                }
-            }
-        }
-
-        Component {
-            id: comp_catemenu
-            Menu {
-                id: catemenu
-                property var _nodelist: nodelist
-                property bool ismenu: true
-
-                title: name
-
-                onAboutToShow: {
-                    if (loader1.sourceComponent == null) {
-                        loader1.sourceComponent = menuItemComponent1
-                    }
-                }
-
-                // Loader 组件用于动态加载 MenuItem
-                Loader {
-                    id: loader1
-                }
-
-                // 预定义的组件，动态加载时使用
-                Component {
-                    id: menuItemComponent1
-                    Instantiator {
-                        model: catemenu._nodelist
-                        delegate: MenuItem {
-                            text: modelData
-                            onTriggered: {
-                                var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
-                                // console.log("mousepos: " + mousepos)
-                                var bsucceed = nodecatesmodel.execute(graphModel, modelData, mousepos)
-                                if (!bsucceed) {
-                                    console.log("!bsucceed")
-                                    failedDialog.open()
-                                }
-                            }
-                            Component.onCompleted: {
-                            }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            searchItem.forceActiveFocus(); // 鼠标点击时强制聚焦
                         }
-                        onObjectAdded: catemenu.addItem(object)
+                    }
+
+                    onTextChanged: {
+                        if (!clearing_text) {
+                            nodecatesmodel.search(text)
+                            newnode_menu.canhighlight = false
+                            newmenuTimer.start()
+                        }
+                    }
+
+                    Keys.onReturnPressed: {
+                        if (newnode_menu.count > 1) {
+                            newnode_menu.itemAt(1).triggered()
+                        }
+                    }
+
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Up) {
+                            
+                        } else if (event.key === Qt.Key_Down) {
+                            var firstItem = newnode_menu.itemAt(1)
+                            firstItem.focus = true
+                            firstItem.forceActiveFocus()
+                        }
                     }
                 }
+            }
 
-                Component.onCompleted: {
-                    // 创建一个 EventFilter 实例
-                    menuKeyFilter.listenTo(catemenu)
-                }
+            Text {
+                text: "Recent Search:"
+                color: "gray"
+                font.pointSize: 12
+                visible: searchItem.text == "" && !searchItem.clearing_text
             }
         }
 
@@ -494,6 +456,7 @@ Qan.GraphView {
 
             // The trick is on those two lines
             onObjectAdded: {
+                //即便我在模型端使用了beginResetModel()，QML的Instantiator还是会一个个添加
                 newnode_menu.addItem(object)
                 if (object.islastitem) {
                     newnode_menu.highlight_firstresult()
@@ -505,11 +468,14 @@ Qan.GraphView {
         }
 
         onAboutToShow: {
-            searchItem.text = "";
+            nodecatesmodel.init()   //会初始化整个模型，包括所有cate项，方便起见（避免后续子图加载和插件加载反复通知）
+            searchItem.forceActiveFocus();
         }
 
         onAboutToHide: {
-            
+            searchItem.clearing_text = true
+            searchItem.text = "";
+            searchItem.clearing_text = false
         }
 
         onCurrentIndexChanged: {
@@ -528,7 +494,6 @@ Qan.GraphView {
             if (!canhighlight) {
                 highlight_firstresult()
             }
-
         }
 
         Component.onCompleted: {
