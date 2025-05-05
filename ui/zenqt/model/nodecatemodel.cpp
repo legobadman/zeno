@@ -8,6 +8,8 @@
 #include "settings/zsettings.h"
 
 //#define DISABLE_CATE
+static const int maxnum_of_recent_searches = 7;
+
 
 NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
     reload();
@@ -17,13 +19,16 @@ NodeCateModel::NodeCateModel(QObject* parent) : _base(parent) {
     connect(pluginsM, &PluginsModel::rowsRemoved, this, &NodeCateModel::reload);
 }
 
+void NodeCateModel::init() {
+    reload();
+}
+
 void NodeCateModel::reload() {
+    beginResetModel();
     m_items.clear();
     m_cache_cates.clear();
     m_nodeToCate.clear();
     m_condidates.clear();
-
-
 
     //先收集所有节点
     const NodeCates& cates = zenoApp->graphsManager()->getCates();
@@ -47,6 +52,7 @@ void NodeCateModel::reload() {
     m_items = getHistoryNodes();
     //m_items = m_cache_cates;
     //TODO: sync with graphsmanager when assets insert/remove.
+    endResetModel();
 }
 
 QVector<NodeCateModel::MenuOrItem> NodeCateModel::getHistoryNodes() {
@@ -125,10 +131,6 @@ void NodeCateModel::clear() {
     endResetModel();
 }
 
-bool NodeCateModel::iscatepage() const {
-    return m_search.isEmpty();
-}
-
 bool NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoint& pt) {
     if (m_nodeToCate.find(name) == m_nodeToCate.end()) {
         zeno::log_error("cannot find {}", name.toStdString());
@@ -149,7 +151,15 @@ bool NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoi
     settings.beginGroup("Search History");
     QString nodestr = settings.value("nodes").toString();
     QStringList histroy_nodes = nodestr.split(" ", Qt::SkipEmptyParts);
-    histroy_nodes.append(name);
+    //如果history_nodes已经有name，那就移除
+    if (int idx = histroy_nodes.indexOf(name); idx != -1) {
+        histroy_nodes.removeAt(idx);
+    }
+    histroy_nodes.push_front(name);
+    if (histroy_nodes.size() > maxnum_of_recent_searches) {
+        histroy_nodes.removeLast();
+    }
+
     settings.setValue("nodes", histroy_nodes.join(" "));
 
     if (cate != "control") {
@@ -184,12 +194,11 @@ bool NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoi
 void NodeCateModel::search(const QString& name) {
     zeno::scope_exit sp([&]() { m_search = name; });
 
-    clear();
     if (name.isEmpty()) {
         //搜索项是空的，于是把历史访问节点菜单加回来
-        beginInsertRows(QModelIndex(), 0, m_cache_cates.size() - 1);
+        beginResetModel();
         m_items = getHistoryNodes();
-        endInsertRows();
+        endResetModel();
         return;
     }
     else {
@@ -198,7 +207,8 @@ void NodeCateModel::search(const QString& name) {
             return;
         }
         const int N = searchResult.size();
-        beginInsertRows(QModelIndex(), 0, N - 1);
+        beginResetModel();
+        m_items.clear();
         int deprecatedIndex = N;
         for (int i = 0; i < N; i++) {
             auto& [name, matchIndices] = searchResult[i];
@@ -215,6 +225,6 @@ void NodeCateModel::search(const QString& name) {
             }
             m_items.push_back(newitem);
         }
-        endInsertRows();
+        endResetModel();
     }
 }
