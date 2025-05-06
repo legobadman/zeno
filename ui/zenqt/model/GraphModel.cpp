@@ -1671,10 +1671,16 @@ bool GraphModel::isLocked() const
     return m_bLocked;
 }
 
-void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData& links, const QPointF& pos)
+QString GraphModel::name2uuid(const QString& name) {
+    ZASSERT_EXIT(m_name2uuid.find(name) != m_name2uuid.end(), "");
+    return m_name2uuid[name];
+}
+
+QStringList GraphModel::pasteNodes(const zeno::NodesData& nodes, const zeno::LinksData& links, const QPointF& pos)
 {
+    QStringList newnode_names;
     if (nodes.empty())
-        return;
+        return newnode_names;
 
     std::map<std::string, std::string> old2new;
     QPointF offset = pos - QPointF(nodes.begin()->second.uipos.first, nodes.begin()->second.uipos.second);
@@ -1688,6 +1694,7 @@ void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData
         spNode->set_pos({ pos.first + offset.x(), pos.second + offset.y()});
         old2new[name] = node.name;
         _appendNode(spNode);
+        newnode_names.append(QString::fromStdString(node.name));
     }
     registerCoreNotify();
     //import edges
@@ -1698,6 +1705,7 @@ void GraphModel::importNodes(const zeno::NodesData& nodes, const zeno::LinksData
         link.outNode = old2new[link.outNode];
         addLink(link);
     }
+    return newnode_names;
 }
 
 GraphModel* GraphModel::getTopLevelGraph(const QStringList& currentPath)

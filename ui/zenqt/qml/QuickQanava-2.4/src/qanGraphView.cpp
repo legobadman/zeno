@@ -109,6 +109,15 @@ void    GraphView::setGraph(qan::Graph* graph)
     }
 }
 
+void    GraphView::selectNodes(const QStringList& node_names) {
+    QVector<qan::Node*> nodes = _graph->getNodes(node_names);
+    for (auto node : nodes) {
+        qan::NodeItem* item = node->getItem();
+        _graph->setNodeSelected(node, true);
+        _selectedItems.insert(item);
+    }
+}
+
 void    GraphView::navigableClicked(QPointF pos)
 {
     Q_UNUSED(pos)

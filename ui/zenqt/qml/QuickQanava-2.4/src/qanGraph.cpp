@@ -303,6 +303,17 @@ void    Graph::setContainerItem(QQuickItem* containerItem)
     }
 }
 
+QVector<qan::Node*> Graph::getNodes(const QStringList& node_names)
+{
+    QVector<qan::Node*> nodes;
+    for (auto name : node_names) {
+        auto uuid = m_model->name2uuid(name);
+        ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end(), nodes);
+        nodes.append(m_nodes[uuid]);
+    }
+    return nodes;
+}
+
 void Graph::setModel(GraphModel* pGraphM)
 {
     if (!pGraphM)
@@ -1554,6 +1565,15 @@ bool    Graph::hasMultipleSelection() const
     return (_selectedNodes.size() +
             _selectedGroups.size()) > 1 ||
             _selectedEdges.size() > 1;
+}
+
+QModelIndexList Graph::getSelectionNodes() const
+{
+    QModelIndexList indice;
+    for (const auto& selectedNode : _selectedNodes) {
+        indice.append(selectedNode->getIndex());
+    }
+    return indice;
 }
 
 std::vector<QQuickItem*>    Graph::getSelectedItems() const

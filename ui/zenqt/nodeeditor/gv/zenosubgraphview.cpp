@@ -209,13 +209,13 @@ _ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent)
     QAction *ctrlc = new QAction("Copy", this);
     ctrlc->setShortcut(QKeySequence::Copy);
     ctrlc->setShortcutContext(Qt::WidgetShortcut);
-    //connect(ctrlc, SIGNAL(triggered()), this, SLOT(copy()));
+    connect(ctrlc, SIGNAL(triggered()), this, SLOT(copy()));
     addAction(ctrlc);
 
     QAction *ctrlv = new QAction("Paste", this);
     ctrlv->setShortcut(QKeySequence::Paste);
     ctrlv->setShortcutContext(Qt::WidgetShortcut);
-    //connect(ctrlv, SIGNAL(triggered()), this, SLOT(paste()));
+    connect(ctrlv, SIGNAL(triggered()), this, SLOT(paste()));
     addAction(ctrlv);
 
     QAction *ctrlf = new QAction("Find", this);
