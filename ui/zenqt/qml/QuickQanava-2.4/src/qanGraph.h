@@ -147,6 +147,7 @@ public:
     void                        setContainerItem(QQuickItem* containerItem);
     GraphModel*                 getModel() const noexcept { return m_model; }
     void                        setModel(GraphModel* pModel);
+    QVector<qan::Node*>         getNodes(const QStringList& node_names);
 signals:
     void                        containerItemChanged();
 private:
@@ -785,6 +786,8 @@ public:
 
     //! Return true if multiple nodes, groups or edges are selected.
     Q_INVOKABLE bool    hasMultipleSelection() const;
+
+    Q_INVOKABLE QModelIndexList getSelectionNodes() const;
 
 public:
     using SelectedNodes = qcm::Container<std::vector, QPointer<qan::Node>>;

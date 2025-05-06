@@ -571,44 +571,28 @@ void ZenoSubGraphScene::copy()
 
     //first record all nodes.
     QModelIndexList selNodes = selectNodesIndice();
-    zeno::NodesData datas = UiHelper::dumpNodes(selNodes);
-   
-    zenoio::ZenWriter writer;
-    QString strJson = QString::fromStdString(writer.dumpToClipboard(datas));
-    QMimeData* pMimeData = new QMimeData;
-    pMimeData->setText(strJson);
-    QApplication::clipboard()->setMimeData(pMimeData);
+    zenoApp->graphsManager()->copy(selNodes);
 }
 
 void ZenoSubGraphScene::paste(QPointF pos)
 {
-    const QMimeData* pMimeData = QApplication::clipboard()->mimeData();
+    if (!m_model)
+        return;
 
-    if (pMimeData->hasText() && m_model)
+    const QStringList& path = m_model->path();
+    QStringList newnode_names = zenoApp->graphsManager()->paste(pos, path);
+
+    //mark selection for pasted nodes
+    clearSelection();
+    for (const auto& name : newnode_names)
     {
-        zenoio::ZenReader reader;
-        const QString& strJson = pMimeData->text();
-        std::pair<zeno::NodesData, zeno::LinksData> datas;
-        zeno::ReferencesData refs;
-        reader.importNodes(strJson.toStdString(), datas.first, datas.second, refs);
-        //UiHelper::renameNetLabels(pGraphsModel, m_subgIdx, nodes);
-
-        //todo: ret value for api.
-        m_model->importNodes(datas.first, datas.second, pos);
-
-        //mark selection for all nodes.
-        clearSelection();
-        for (const auto&[ident, node] : datas.first)
+        if (m_nodes.find(name) != m_nodes.end())
         {
-            QString name = QString::fromStdString(ident);
-            if (m_nodes.find(name) != m_nodes.end())
-            {
-                m_nodes[name]->setSelected(true);
-                collectNodeSelChanged(name, true);
-            }
+            m_nodes[name]->setSelected(true);
+            collectNodeSelChanged(name, true);
         }
-        afterSelectionChanged();
     }
+    afterSelectionChanged();
 }
 
 void ZenoSubGraphScene::reload(const QModelIndex& subGpIdx)
