@@ -61,6 +61,8 @@ public:
     virtual ~GraphView() override = default;
     GraphView(const GraphView&) = delete;
 
+    Q_INVOKABLE void selectNodes(const QStringList& node_names);
+
 public:
     //! Graph that should be displayed in this graph view.
     Q_PROPERTY(qan::Graph*  graph READ getGraph WRITE setGraph NOTIFY graphChanged FINAL)

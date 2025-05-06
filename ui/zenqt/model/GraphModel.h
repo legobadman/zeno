@@ -95,7 +95,8 @@ public:
     GraphsTreeModel* treeModel() const;
     void setLocked(bool bLocked);
     bool isLocked() const;
-    void importNodes(const zeno::NodesData& nodes, const zeno::LinksData& links, const QPointF& pos);
+    QStringList pasteNodes(const zeno::NodesData& nodes, const zeno::LinksData& links, const QPointF& pos);
+    QString name2uuid(const QString& name);
 
     GraphModel* getTopLevelGraph(const QStringList& currentPath);
     //undo, redo

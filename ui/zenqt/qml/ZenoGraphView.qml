@@ -618,6 +618,19 @@ Qan.GraphView {
         else if ((event.key === Qt.Key_Y) && (event.modifiers & Qt.ControlModifier)) {
             graphsmanager.redo(graphView.graphModel.name())
         }
+        else if ((event.key === Qt.Key_C) && (event.modifiers & Qt.ControlModifier)) {
+            var selNodes = graph.getSelectionNodes()
+            graphsmanager.copy(selNodes)
+        }
+        else if ((event.key === Qt.Key_V) && (event.modifiers & Qt.ControlModifier)) {
+            var global_pos = MouseUtils.getGlobalMousePosition()
+            var mousepos = graphView.containerItem.mapFromGlobal(global_pos)
+            var mouse_in_view = graphView.mapFromGlobal(global_pos)
+            var graphM_path = graphView.graph.model.path()
+
+            var newnode_names = graphsmanager.paste(mouse_in_view, graphM_path)
+            graphView.selectNodes(newnode_names)
+        }
         else if (event.key == Qt.Key_Delete) {
             var selected_edges = []
             for (var i = 0; i < edges.children.length; i++) {

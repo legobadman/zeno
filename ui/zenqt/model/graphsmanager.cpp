@@ -484,6 +484,37 @@ void GraphsManager::addPlugin()
     }
 }
 
+void GraphsManager::copy(const QModelIndexList& selNodes)
+{
+    if (selNodes.empty())
+        return;
+    zeno::NodesData datas = UiHelper::dumpNodes(selNodes);
+    zenoio::ZenWriter writer;
+    QString strJson = QString::fromStdString(writer.dumpToClipboard(datas));
+    QMimeData* pMimeData = new QMimeData;
+    pMimeData->setText(strJson);
+    QApplication::clipboard()->setMimeData(pMimeData);
+}
+
+QStringList GraphsManager::paste(const QPointF& pos, const QStringList& path_of_graphM)
+{
+    const QMimeData* pMimeData = QApplication::clipboard()->mimeData();
+
+    GraphModel* pTargetModel = getGraph(path_of_graphM);
+    QStringList newnodes_name;
+
+    if (pMimeData->hasText() && pTargetModel)
+    {
+        zenoio::ZenReader reader;
+        const QString& strJson = pMimeData->text();
+        std::pair<zeno::NodesData, zeno::LinksData> datas;
+        zeno::ReferencesData refs;
+        reader.importNodes(strJson.toStdString(), datas.first, datas.second, refs);
+        newnodes_name = pTargetModel->pasteNodes(datas.first, datas.second, pos);
+    }
+    return newnodes_name;
+}
+
 QStringList GraphsManager::recentFiles() const
 {
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
