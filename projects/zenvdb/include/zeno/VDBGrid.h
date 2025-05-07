@@ -76,7 +76,7 @@ struct VDBGrid : zeno::IObject {
   virtual zeno::vec3f getVoxelSize() const=0;
   virtual void dilateTopo(int l) =0;
   virtual void Delete() override {
-      delete this;
+      //delete this;
   }
 
   //virtual ~VDBGrid() override = default;
@@ -88,7 +88,7 @@ struct VDBGridWrapper : zeno::IObjectClone<VDBGridWrapper<GridT>, VDBGrid> {
 
   //virtual ~VDBGridWrapper() override = default;
   virtual void Delete() override {
-      delete this;
+      //delete this;
   }
 
   VDBGridWrapper() { m_grid = GridT::create(); }
@@ -208,7 +208,7 @@ struct VDBGridWrapper<openvdb::Vec3fGrid> : zeno::IObjectClone<VDBGridWrapper<op
   }
   ///
   void Delete() override {
-      delete this;
+      //delete this;
   }
   //virtual ~VDBGridWrapper() override = default;
 

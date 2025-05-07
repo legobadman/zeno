@@ -134,7 +134,7 @@ struct PrimitiveObject : IObjectClone<PrimitiveObject> {
 
 
     void Delete() override {
-        delete this;
+        //delete this;
     }
 
     AttrVector<vec3f> verts;

@@ -112,14 +112,6 @@ struct ParticlesWrangle : zeno::INode {
         }
         // END心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动引用portal做参数
 #endif
-
-            //auto spNum = objectFromLiterial(3.0f);
-            std::shared_ptr<NumericObject> spNum = std::make_shared<NumericObject>(3.0f);
-            //IObject* spNum = new NumericObject(3.0f);
-            spNum->Delete();
-            int j;
-            j = 0;
-
         // BEGIN伺候心欣伺候懒得extract出变量了
         std::vector<std::string> keys;
         for (auto const &[key, val]: params->lut) {
