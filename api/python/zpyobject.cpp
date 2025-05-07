@@ -1,11 +1,12 @@
 #include "zpyobject.h"
 #include "apiutil.h"
 #include <zeno/core/Graph.h>
+#include <zeno/utils/interfaceutil.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
 #define THROW_WHEN_CORE_DESTROYED(wpObj) \
-auto spNode = wpObj.lock();\
+auto spNode = wpObj;\
 if (!spNode) {\
     throw std::runtime_error("the node has been destroyed in core data");\
 }
@@ -21,7 +22,7 @@ Zpy_Camera::Zpy_Camera(
 )
 {
     //先默认在mainGraph里创建，避免还要指定一个graph这种麻烦（而且Camera这种大概率只要在main创建）
-    std::shared_ptr<zeno::NodeImpl> spNode = zeno::getSession().mainGraph->createNode("MakeCamera");
+    auto spNode = zeno::getSession().mainGraph->createNode("MakeCamera");
     if (!spNode) {
         throw std::runtime_error("cannot create camera because of internal error");
     }
@@ -49,7 +50,7 @@ Zpy_Camera::Zpy_Camera(
     zeno::getSession().mainGraph->applyNodes({ nodename });
 }
 
-Zpy_Camera::Zpy_Camera(std::weak_ptr<zeno::NodeImpl> wpNode)
+Zpy_Camera::Zpy_Camera(zeno::NodeImpl* wpNode)
     : m_wpNode(wpNode)
 {
 }
@@ -180,7 +181,7 @@ Zpy_Light::Zpy_Light(
 )
 {
     //先默认在mainGraph里创建，避免还要指定一个graph这种麻烦（而且Camera这种大概率只要在main创建）
-    std::shared_ptr<zeno::NodeImpl> spNode = zeno::getSession().mainGraph->createNode("LightNode");
+    auto spNode = zeno::getSession().mainGraph->createNode("LightNode");
     if (!spNode) {
         throw std::runtime_error("cannot create light because of internal error");
     }
@@ -210,7 +211,7 @@ Zpy_Light::Zpy_Light(
     zeno::getSession().mainGraph->applyNodes({ nodename });
 }
 
-Zpy_Light::Zpy_Light(std::weak_ptr<zeno::NodeImpl> wpNode)
+Zpy_Light::Zpy_Light(zeno::NodeImpl* wpNode)
     : m_wpNode(wpNode)
 {
 }
@@ -218,8 +219,8 @@ Zpy_Light::Zpy_Light(std::weak_ptr<zeno::NodeImpl> wpNode)
 py::list Zpy_Light::getPos() const {
     auto light = getLight();
     if (!light) throw std::runtime_error("the light object cannot be created.");
-    auto& ud = light->userData();
-    zeno::vec3f v = ud.get2<zeno::vec3f>("pos");
+    auto ud = light->userData();
+    zeno::vec3f v = zeno::toVec3f(ud->get_vec3f("pos"));
     return zpyapi::vec2pylist(v);
 }
 
@@ -232,8 +233,8 @@ void Zpy_Light::setPos(py::list v) {
 py::list Zpy_Light::getScale() const {
     auto light = getLight();
     if (!light) throw std::runtime_error("the light object cannot be created.");
-    auto& ud = light->userData();
-    zeno::vec3f v = ud.get2<zeno::vec3f>("scale");
+    auto ud = light->userData();
+    zeno::vec3f v = zeno::toVec3f(ud->get_vec3f("scale"));
     return zpyapi::vec2pylist(v);
 }
 
@@ -246,8 +247,8 @@ void Zpy_Light::setScale(py::list v) {
 py::list Zpy_Light::getRotate() const {
     auto light = getLight();
     if (!light) throw std::runtime_error("the light object cannot be created.");
-    auto& ud = light->userData();
-    zeno::vec3f v = ud.get2<zeno::vec3f>("rotate");
+    auto ud = light->userData();
+    zeno::vec3f v = zeno::toVec3f(ud->get_vec3f("rotate"));
     return zpyapi::vec2pylist(v);
 }
 
@@ -260,8 +261,8 @@ void Zpy_Light::setRotate(py::list v) {
 py::list Zpy_Light::getColor() const {
     auto light = getLight();
     if (!light) throw std::runtime_error("the light object cannot be created.");
-    auto& ud = light->userData();
-    zeno::vec3f v = ud.get2<zeno::vec3f>("color");
+    auto ud = light->userData();
+    zeno::vec3f v = zeno::toVec3f(ud->get_vec3f("color"));
     return zpyapi::vec2pylist(v);
 }
 
@@ -274,8 +275,8 @@ void Zpy_Light::setColor(py::list v) {
 float Zpy_Light::getIntensity() const {
     auto light = getLight();
     if (!light) throw std::runtime_error("the light object cannot be created.");
-    auto& ud = light->userData();
-    return ud.get2<float>("intensity");
+    auto ud = light->userData();
+    return ud->get_float("intensity");
 }
 
 void Zpy_Light::setIntensity(float intensity) {

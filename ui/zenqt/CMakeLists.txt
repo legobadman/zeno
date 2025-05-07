@@ -74,3 +74,7 @@ target_include_directories(zeno PRIVATE
 )
 
 add_custom_command(TARGET zeno PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/hdr ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/hdr)
+
+if (ZENO_WITH_PYTHON)
+    target_compile_definitions(zeno PRIVATE -DZENO_WITH_PYTHON)
+endif()

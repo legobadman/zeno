@@ -1,19 +1,20 @@
 #include "zpynode.h"
 #include <zeno/core/Graph.h>
 #include "apiutil.h"
+#include <zeno/utils/helper.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
 using namespace zeno::reflect;
 
 #define THROW_WHEN_CORE_DESTROYED \
-auto spNode = m_wpNode.lock();\
+auto spNode = m_wpNode;\
 if (!spNode) {\
     throw std::runtime_error("the node has been destroyed in core data");\
 }
 
 
-Zpy_Node::Zpy_Node(std::shared_ptr<zeno::NodeImpl> spNode)
+Zpy_Node::Zpy_Node(zeno::NodeImpl* spNode)
     : m_wpNode(spNode)
 {
 }
@@ -22,7 +23,7 @@ void Zpy_Node::set_name(const std::string& name)
 {
     THROW_WHEN_CORE_DESTROYED
     auto oldname = spNode->get_name();
-    if (auto spGraph = spNode->getGraph().lock()) {
+    if (auto spGraph = spNode->getGraph()) {
         spGraph->updateNodeName(oldname, name);
     }
 }
