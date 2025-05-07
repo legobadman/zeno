@@ -11,7 +11,7 @@ struct StringObject : IObjectClone<StringObject> {
     StringObject() = default;
     StringObject(std::string const &value) : value(value) {}
 
-    void Delete() override { delete this; }
+    void Delete() override { }
 
     std::string const& get() const {
         return value;

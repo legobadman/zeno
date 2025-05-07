@@ -55,7 +55,7 @@ struct LightData {
 struct LightObject : IObjectClone<LightObject>, LightData {
 
     void Delete() override {
-        delete this;
+        //delete this;
     }
 
     LightData const &get() const {

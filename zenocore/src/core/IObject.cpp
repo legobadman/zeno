@@ -8,6 +8,11 @@ namespace zeno {
         m_usrData = new UserData;
     }
 
+    IObject::~IObject() {
+        delete m_usrData;
+        m_usrData = nullptr;
+    }
+
     String IObject::key() const {
         return m_key;
     }
@@ -21,7 +26,6 @@ namespace zeno {
     }
 
     void IObject::Delete() {
-        delete m_usrData;
     }
 
 #if 0
