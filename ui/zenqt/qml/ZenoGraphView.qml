@@ -623,12 +623,10 @@ Qan.GraphView {
             graphsmanager.copy(selNodes)
         }
         else if ((event.key === Qt.Key_V) && (event.modifiers & Qt.ControlModifier)) {
-            var global_pos = MouseUtils.getGlobalMousePosition()
-            var mousepos = graphView.containerItem.mapFromGlobal(global_pos)
-            var mouse_in_view = graphView.mapFromGlobal(global_pos)
             var graphM_path = graphView.graph.model.path()
-
-            var newnode_names = graphsmanager.paste(mouse_in_view, graphM_path)
+            var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+            
+            var newnode_names = graphsmanager.paste(mousepos, graphM_path)
             graphView.selectNodes(newnode_names)
         }
         else if (event.key == Qt.Key_Delete) {
