@@ -1219,18 +1219,20 @@ static void pycheck(int result) {
         throw zeno::makeError("python err");
     }
 }
+
+#if 0
 struct PyJson: INode {
     const std::string pre_process = "import sys, json\nsys.stderr = sys.stdout\nin_json = json.loads(input_json)\nout_json={}\n";
     const std::string post_process = "\noutput_json = json.dumps(out_json)";
     void apply() override {
         std::string input_json;
-        if (has_input2<std::string>("in_json")) {
-            input_json = get_input2<std::string>("in_json");
+        if (has_input("in_json")) {
+            input_json = ZImpl(get_input2<std::string>("in_json"));
         }
         else {
-            input_json = get_input<JsonObject>("in_json")->json.dump();
+            input_json = ZImpl(get_input<JsonObject>("in_json"))->json.dump();
         }
-        auto py_code = get_input2<std::string>("py_code");
+        auto py_code = ZImpl(get_input2<std::string>("py_code"));
         Py_Initialize();
         zeno::scope_exit init_defer([=]{ Py_Finalize(); });
         PyObject* userGlobals = PyDict_New();
@@ -1240,13 +1242,13 @@ struct PyJson: INode {
         pycheck(PyRun_String(python_code.c_str(), Py_file_input, userGlobals, nullptr));
         PyObject *result_value = pycheck(PyDict_GetItemString(userGlobals, "output_json"));
         std::string out = PyUnicode_AsUTF8(result_value);
-        if (get_input2<bool>("output json as string")) {
-            set_output2("out_json", out);
+        if (ZImpl(get_input2<bool>("output json as string"))) {
+            ZImpl(set_output2("out_json", out));
         }
         else {
             auto json_obj = std::make_shared<JsonObject>();
             json_obj->json = Json::parse(out);
-            set_output2("out_json", json_obj);
+            ZImpl(set_output2("out_json", json_obj));
         }
     }
 };
@@ -1294,6 +1296,7 @@ ZENDEFNODE(PyText, {
     {},
     {"json"},
 });
+#endif
 #endif
 
 }
