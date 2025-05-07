@@ -29,7 +29,7 @@ public:
         float aperture,
         float focalPlaneDistance
     );
-    Zpy_Camera(std::weak_ptr<zeno::NodeImpl> wpNode);
+    Zpy_Camera(zeno::NodeImpl* wpNode);
     py::list getPos() const;
     void setPos(py::list v);
     py::list getUp() const;
@@ -51,7 +51,7 @@ public:
 private:
     void run();
 
-    std::weak_ptr<zeno::NodeImpl> m_wpNode;
+    zeno::NodeImpl* m_wpNode;
 };
 
 class Zpy_Light {
@@ -63,7 +63,7 @@ public:
         py::list color,
         float intensity
     );
-    Zpy_Light(std::weak_ptr<zeno::NodeImpl> wpNode);
+    Zpy_Light(zeno::NodeImpl* wpNode);
     py::list getPos() const;
     void setPos(py::list v);
     py::list getScale() const;
@@ -79,7 +79,7 @@ public:
 private:
     void run();
 
-    std::weak_ptr<zeno::NodeImpl> m_wpNode;
+    zeno::NodeImpl* m_wpNode;
 };
 
 #endif

@@ -17,7 +17,8 @@ Zpy_Graph::Zpy_Graph(std::shared_ptr<zeno::Graph> graph)
 Zpy_Node Zpy_Graph::createNode(const std::string& nodecls, const std::string& originalname, bool bAssets)
 {
     THROW_WHEN_CORE_DESTROYED
-    std::shared_ptr<zeno::NodeImpl> spNode = spGraph->createNode(nodecls, originalname, bAssets);
+    auto spNode = spGraph->createNode(nodecls, originalname, bAssets);
+    //TODO: register api notify into core
     return Zpy_Node(spNode);
 }
 
@@ -29,7 +30,7 @@ std::string Zpy_Graph::getName() const
 
 Zpy_Node Zpy_Graph::getNode(const std::string& name) {
     THROW_WHEN_CORE_DESTROYED
-    std::shared_ptr<zeno::NodeImpl> spNode = spGraph->getNode(name);
+    auto spNode = spGraph->getNode(name);
     return Zpy_Node(spNode);
 }
 

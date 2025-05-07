@@ -16,7 +16,7 @@ namespace py = pybind11;
 
 class Zpy_Node {
 public:
-    Zpy_Node(std::shared_ptr<zeno::NodeImpl> spNode);
+    Zpy_Node(zeno::NodeImpl* spNode);
 
     void set_name(const std::string& name);
     std::string get_name() const;
@@ -31,7 +31,7 @@ public:
     py::tuple get_pos() const;
 
 private:
-    std::weak_ptr<zeno::NodeImpl> m_wpNode;
+    zeno::NodeImpl* m_wpNode;
 };
 
 #endif
