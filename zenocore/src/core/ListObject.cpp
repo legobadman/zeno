@@ -9,6 +9,9 @@
 namespace zeno
 {
     void ListObject::Delete() {
+    }
+
+    ListObject::~ListObject() {
         m_impl->remove_children();
         delete this;
     }

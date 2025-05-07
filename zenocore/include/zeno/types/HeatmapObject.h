@@ -12,7 +12,7 @@ namespace zeno {
     struct HeatmapObject : IObjectClone<HeatmapObject> {
 
         void Delete() override {
-            delete this;
+            //delete this;
         }
 
         std::vector<zeno::vec3f> colors;

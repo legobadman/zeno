@@ -9,6 +9,7 @@ struct ListObject_impl;
 
 struct ZENO_API ListObject : IObjectClone<ListObject> {
 
+    ~ListObject();
     void Delete() override;
     size_t size();
     zany get(int index);

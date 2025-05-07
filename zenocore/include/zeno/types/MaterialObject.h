@@ -12,7 +12,7 @@ namespace zeno
     struct MaterialObject : IObjectClone<MaterialObject>
     {
         void Delete() override {
-            delete this;
+            //delete this;
         }
 
         std::string vert;

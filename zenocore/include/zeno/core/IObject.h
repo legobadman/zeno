@@ -56,11 +56,12 @@ namespace zeno {
 
     struct ZENO_API IObject {
         IObject();
+        virtual ~IObject();     // don't consider abi problem right now.
         virtual zeno::SharedPtr<IObject> clone() const = 0; //TODO£ºabi compatible for shared_ptr
         virtual String key() const;
         virtual void update_key(const String& key);
         IUserData* userData();
-        virtual void Delete();
+        virtual void Delete();  //TODO: for abi compatiblity when dtor cann't be mark virutal.
 
         String m_key;
         IUserData* m_usrData;   //TODO: abi unique_ptr
@@ -80,7 +81,8 @@ namespace zeno {
         }
 
         void Delete() override {
-            delete this;//safe?
+            //CustomBase::Delete();
+            //delete this;
         }
     };
 

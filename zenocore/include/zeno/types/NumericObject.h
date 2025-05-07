@@ -8,13 +8,14 @@
 
 namespace zeno {
 
-struct NumericObject : IObjectClone<NumericObject> {
+struct ZENO_API NumericObject : IObjectClone<NumericObject> {
     NumericValue value;
 
     NumericObject() = default;
-    NumericObject(NumericValue const &value) : value(value) {}
+    NumericObject(NumericValue const &value);
+    ~NumericObject();
 
-    void Delete() { delete this; }
+    void Delete() override;
 
     NumericValue &get() {
         return value;

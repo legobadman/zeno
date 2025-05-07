@@ -38,7 +38,7 @@ struct CameraData {
 struct CameraObject : IObjectClone<CameraObject>, CameraData {
 
     void Delete() override {
-        delete this;
+        //delete this;
     }
 
     void set(CameraData const &src) {

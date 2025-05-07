@@ -25,16 +25,16 @@ namespace zeno
     }
 
     void DictObject::clear_children() {
-        for (auto const& [key, pObj] : lut) {
+        //由于目前object的内存管理方式还是基于shared_ptr，故不能直接手动Delete.
+        /*
+        for (auto& [key, pObj] : lut) {
             pObj->Delete();
         }
+        */
         lut.clear();
     }
 
     void DictObject::Delete() {
-        //这里手动delete所有children
-        clear_children();
-        delete this;
     }
 
 
