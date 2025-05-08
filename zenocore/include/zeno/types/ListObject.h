@@ -8,7 +8,7 @@ namespace zeno {
 struct ListObject_impl;
 
 struct ZENO_API ListObject : IObjectClone<ListObject> {
-
+    ListObject();
     ~ListObject();
     void Delete() override;
     size_t size();
