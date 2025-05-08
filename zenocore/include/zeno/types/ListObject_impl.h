@@ -65,10 +65,10 @@ namespace zeno {
             return get2<T>();
         }
 
-        std::set<std::string> m_modify, m_new_added, m_new_removed; //Ò»´Î¼ÆËãÖĞ·¢Éú±ä»¯µÄÔªËØ¼ÇÂ¼¡£
+        std::set<std::string> m_modify, m_new_added, m_new_removed; //ä¸€æ¬¡è®¡ç®—ä¸­å‘ç”Ÿå˜åŒ–çš„å…ƒç´ è®°å½•ã€‚
         std::vector<zany> m_objects;
-        std::set<int> dirtyIndice;                        //¸ÃlistÏÂdirtyµÄobjµÄindex
-        //std::map<std::string, int> nodeNameArrItemMap;    //objËùÔÚµÄ½ÚµãÃûµ½objÔÚm_objectsÖĞË÷ÒıµÄmap
+        std::set<int> dirtyIndice;                        //è¯¥listä¸‹dirtyçš„objçš„index
+        //std::map<std::string, int> nodeNameArrItemMap;    //objæ‰€åœ¨çš„èŠ‚ç‚¹ååˆ°objåœ¨m_objectsä¸­ç´¢å¼•çš„map
         //std::map<uint16_t, int> m_ptr2Index;
     };
 }

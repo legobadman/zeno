@@ -131,7 +131,7 @@ namespace zeno
             return result;
         }
 
-        // ÓÑÔªº¯ÊıÖØÔØ£ºconst char* + String
+        // å‹å…ƒå‡½æ•°é‡è½½ï¼šconst char* + String
         friend String operator+(const char* lhs, const String& rhs) {
             size_t newLen = _strlen(lhs) + _strlen(rhs.m_data);
             char* newData = new char[newLen + 1];
