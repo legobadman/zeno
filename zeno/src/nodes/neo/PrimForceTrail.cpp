@@ -56,7 +56,7 @@ struct PrimForceTrail : INode {
         }, [&] {
             auto curve = ZImpl(get_input_prim<CurvesData>("attractUDFCurve"));
             return [=] (float x) -> float {
-                return curve->eval(x);
+                return curve.eval(x);
             };
         });
         auto driftCoordCurve = functor_variant(ZImpl(has_input("driftCoordCurve")) ? 1 : 0, [&] {
@@ -66,7 +66,7 @@ struct PrimForceTrail : INode {
         }, [&] {
             auto curve = ZImpl(get_input_prim<CurvesData>("driftCoordCurve"));
             return [=] (float x) -> float {
-                return curve->eval(x);
+                return curve.eval(x);
             };
         });
 

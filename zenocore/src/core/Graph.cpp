@@ -22,6 +22,7 @@
 #include <zeno/utils/helper.h>
 #include <iostream>
 #include <regex>
+#include <cctype>
 #include <zeno/core/GlobalVariable.h>
 #include <zeno/core/typeinfo.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
@@ -429,8 +430,9 @@ std::string Graph::generateNewName(const std::string& node_cls, const std::strin
     }
 
     int i = 1;
+    bool end_with_digit = std::isdigit(tempName.back());
     while (true) {
-        std::string new_name = tempName + std::to_string(i++);
+        std::string new_name = tempName + (end_with_digit ? "_" : "") + std::to_string(i++);
         if (nodes.find(new_name) == nodes.end()) {
             nodes.insert(new_name);
             return new_name;

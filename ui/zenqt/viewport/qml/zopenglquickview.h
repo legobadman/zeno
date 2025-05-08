@@ -25,7 +25,7 @@ public:
     void cleanUpView() {}
     void testCleanUp() {}
     void cleanUpScene();
-    Zenovis* getZenoVis() { return nullptr; }
+    Zenovis* getZenoVis();
     zenovis::Session* getSession() const { return m_renderer->getSession(); }
     void resizeGL(int nx, int ny);
     void updateGL() { update(); }

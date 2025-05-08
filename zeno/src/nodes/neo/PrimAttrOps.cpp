@@ -359,11 +359,11 @@ struct PrimAttrRemap : INode {
         if (scope == "vert"){
             if (prim->verts.attr_is<float>(attr)){
                 auto &arr = prim->verts.attr<float>(attr);
-                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else if (prim->verts.attr_is<int>(attr)){
                 auto &arr = prim->verts.attr<int>(attr);
-                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else{
                 throw std::runtime_error("PrimAttrRemap: loops attr type not supported");
@@ -372,11 +372,11 @@ struct PrimAttrRemap : INode {
         else if (scope == "tri"){
             if (prim->tris.attr_is<float>(attr)){
                 auto &arr = prim->tris.attr<float>(attr);
-                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else if (prim->tris.attr_is<int>(attr)){
                 auto &arr = prim->tris.attr<int>(attr);
-                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else{
                 throw std::runtime_error("PrimAttrRemap: loops attr type not supported");
@@ -385,11 +385,11 @@ struct PrimAttrRemap : INode {
         else if (scope == "loop"){
             if (prim->loops.attr_is<float>(attr)){
                 auto &arr = prim->loops.attr<float>(attr);
-                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else if (prim->loops.attr_is<int>(attr)){
                 auto &arr = prim->loops.attr<int>(attr);
-                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else{
                 throw std::runtime_error("PrimAttrRemap: loops attr type not supported");
@@ -398,11 +398,11 @@ struct PrimAttrRemap : INode {
         else if (scope == "poly"){
             if (prim->polys.attr_is<float>(attr)){
                 auto &arr = prim->polys.attr<float>(attr);
-                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else if (prim->polys.attr_is<int>(attr)){
                 auto &arr = prim->polys.attr<int>(attr);
-                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else{
                 throw std::runtime_error("PrimAttrRemap: loops attr type not supported");
@@ -411,11 +411,11 @@ struct PrimAttrRemap : INode {
         else if (scope == "line"){
             if (prim->lines.attr_is<float>(attr)){
                 auto &arr = prim->lines.attr<float>(attr);
-                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<float>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else if (prim->lines.attr_is<int>(attr)){
                 auto &arr = prim->lines.attr<int>(attr);
-                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, curve);
+                prim_remap<int>(arr, autoCompute, inMax, inMin, outputMax, outputMin, clampMax, clampMin, ramp, &curve);
                 }
             else{
                 throw std::runtime_error("PrimAttrRemap: loops attr type not supported");

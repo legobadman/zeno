@@ -37,7 +37,7 @@ public:
     // All assume that the GL context is current.
     void initialize(QOpenGLContext* context, CoordinateMirroring cm = DoNotMirrorCoordinates);
     void render();
-
+    Zenovis* getZenovis() const;
     void fakeMousePressEvent(ViewMouseInfo event_info);
     void fakeMouseReleaseEvent(ViewMouseInfo event_info);
     void fakeMouseMoveEvent(ViewMouseInfo event_info);

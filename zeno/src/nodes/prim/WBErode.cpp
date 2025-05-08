@@ -2466,7 +2466,7 @@ struct HF_maskByFeature : INode {
                     float slope = 180 * acos(n[2]) / M_PI;
                     slope = fit(slope, minSlope, maxSlope, 0, 1);
 //                    slope = chramp(slope);
-                    slope = curve_slope->eval(slope);
+                    slope = curve_slope.eval(slope);
                     mask[idx] *= slope;
                 }
 
@@ -2477,7 +2477,7 @@ struct HF_maskByFeature : INode {
                     direction -= 180;
                     direction = fit(direction, -angleSpread, angleSpread, 0, 1);
 //                    direction = chramp(direction);
-                    direction = curve_dir->eval(direction);
+                    direction = curve_dir.eval(direction);
                     mask[idx] *= direction;
                 }
 
@@ -2485,7 +2485,7 @@ struct HF_maskByFeature : INode {
                 {
                     float h = fit(height[idx], minHeight, maxHeight, 0, 1);
 //                    mask[idx] *= chramp(h);
-                    mask[idx] *= curve_height->eval(h);
+                    mask[idx] *= curve_height.eval(h);
                 }
 
                 if(invertMask)
@@ -2624,7 +2624,7 @@ struct HF_remap : INode {
             else
             {
                 var[i] = fit(var[i], inMin, inMax, 0, 1);
-                var[i] = curve->eval(var[i]);
+                var[i] = curve.eval(var[i]);
                 var[i] = fit(var[i], 0, 1, outMin, outMax);
             }
             if (remapLayer == "height"){
