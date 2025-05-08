@@ -130,7 +130,16 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
     , m_customParamsM(nullptr)
     , m_customUIM(nullptr)
     , m_customUIMCloned(nullptr)
+    , m_inObjProxy(new ParamFilterModel(zeno::Role_InputObject))
+    , m_inPrimProxy(new ParamFilterModel(zeno::Role_InputPrimitive))
+    , m_outPrimProxy(new ParamFilterModel(zeno::Role_OutputPrimitive))
+    , m_outObjProxy(new ParamFilterModel(zeno::Role_OutputObject))
 {
+    m_inObjProxy->setSourceModel(this);
+    m_inPrimProxy->setSourceModel(this);
+    m_outPrimProxy->setSourceModel(this);
+    m_outObjProxy->setSourceModel(this);
+
     initParamItems();
     initCustomUI(spNode->export_customui());
 
@@ -980,13 +989,29 @@ CustomUIModel* ParamsModel::customUIModel()
     return m_customUIM;
 }
 
-Q_INVOKABLE CustomUIModel* ParamsModel::customUIModelCloned()
+CustomUIModel* ParamsModel::customUIModelCloned()
 {
     m_customUIMCloned = new CustomUIModel(this, this, true);
     return m_customUIMCloned;
 }
 
-Q_INVOKABLE void ParamsModel::applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel)
+ParamFilterModel* ParamsModel::inputObjects() {
+    return m_inObjProxy;
+}
+
+ParamFilterModel* ParamsModel::inputPrims() {
+    return m_inPrimProxy;
+}
+
+ParamFilterModel* ParamsModel::outputPrims() {
+    return m_outPrimProxy;
+}
+
+ParamFilterModel* ParamsModel::outputObjects() {
+    return m_outObjProxy;
+}
+
+void ParamsModel::applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel)
 {
     zeno::CustomUI customui;
     zeno::ParamsUpdateInfo editUpdateInfo;
@@ -1000,7 +1025,7 @@ Q_INVOKABLE void ParamsModel::applyParamsByEditparamDlg(CustomUIModel* edittedCu
     m_customUIMCloned = nullptr;
 }
 
-Q_INVOKABLE void ParamsModel::cancleEditCustomUIModelCloned()
+void ParamsModel::cancleEditCustomUIModelCloned()
 {
     delete m_customUIMCloned;
     m_customUIMCloned = nullptr;
@@ -1292,4 +1317,24 @@ bool ParamsModel::getShowPrimSocks() const {
         }
     }
     return false;
+}
+
+ParamFilterModel::ParamFilterModel(zeno::NodeDataGroup group) : m_group(group) {
+
+}
+
+int ParamFilterModel::indexFromName(const QString& target_name) const {
+    for (int i = 0; i < rowCount(); i++) {
+        QModelIndex idx = index(i, 0);
+        QString name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+        if (target_name == name) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+bool ParamFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
+    QModelIndex srcIdx = sourceModel()->index(sourceRow, 0, sourceParent);
+    return srcIdx.data(QtRole::ROLE_PARAM_GROUP) == m_group;
 }

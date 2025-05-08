@@ -30,6 +30,7 @@ void initQml()
     qRegisterMetaType<LinkModel*>("LinkModel*");
     qRegisterMetaType<GraphModel*>("GraphModel*");
     qRegisterMetaType<ParamsModel*>("ParamsModel*");
+    qRegisterMetaType<ParamFilterModel*>("ParamFilterModel*");
     qRegisterMetaType<CustomUIModel*>("CustomUIModel*");
     qRegisterMetaType<ParamTabModel*>("ParamTabModel*");
     qRegisterMetaType<ParamGroupModel*>("ParamGroupModel*");

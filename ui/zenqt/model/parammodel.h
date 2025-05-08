@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QStandardItemModel>
+#include <QSortFilterProxyModel>
 #include <QQuickItem>
 #include "uicommon.h"
 
@@ -37,6 +38,21 @@ struct ParamItem
     bool bWildcard = false;
 };
 
+class ParamFilterModel : public QSortFilterProxyModel {
+    Q_OBJECT
+    QML_ELEMENT
+
+public:
+    ParamFilterModel(zeno::NodeDataGroup group);
+    Q_INVOKABLE int indexFromName(const QString& name) const;
+
+protected:
+    bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
+
+private:
+    zeno::NodeDataGroup m_group;
+};
+
 class ParamsModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -54,6 +70,10 @@ public:
     Q_INVOKABLE QStandardItemModel* customParamModel();
     Q_INVOKABLE CustomUIModel* customUIModel();
     Q_INVOKABLE CustomUIModel* customUIModelCloned();
+    Q_INVOKABLE ParamFilterModel* inputObjects();
+    Q_INVOKABLE ParamFilterModel* inputPrims();
+    Q_INVOKABLE ParamFilterModel* outputPrims();
+    Q_INVOKABLE ParamFilterModel* outputObjects();
     Q_INVOKABLE void applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel);
     Q_INVOKABLE void cancleEditCustomUIModelCloned();
 
@@ -120,6 +140,11 @@ private:
     CustomUIModel* m_customUIM;
     CustomUIModel* m_customUIMCloned;
     QStandardItemModel* m_customParamsM;
+
+    ParamFilterModel* m_inObjProxy;
+    ParamFilterModel* m_inPrimProxy;
+    ParamFilterModel* m_outObjProxy;
+    ParamFilterModel* m_outPrimProxy;
 
     zeno::NodeImpl* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了
     std::string cbUpdateParam;
