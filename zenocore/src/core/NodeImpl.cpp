@@ -225,6 +225,9 @@ CustomUI NodeImpl::export_customui() const
         CustomUI nodeui = pNode->export_customui();
         if (nodeui.inputObjs.empty() && nodeui.inputPrims.empty() &&
             nodeui.outputPrims.empty() && nodeui.outputObjs.empty()) {
+            if (nodeui.uistyle.background != "" || nodeui.uistyle.iconResPath != "") {
+                deflUI.uistyle = nodeui.uistyle;
+            }
             return deflUI;
         }
         else {
@@ -2124,14 +2127,8 @@ zeno::reflect::Any NodeImpl::get_defl_value(std::string const& name) {
 }
 
 zeno::reflect::Any NodeImpl::get_param_result(std::string const& name) {
-    ParamPrimitive param;
-    auto iter = m_inputPrims.find(name);
-    if (iter != m_inputPrims.end()) {
-        return iter->second.result;
-    }
-    else {
-        return zeno::reflect::Any();
-    }
+    const PrimitiveParam& param = safe_at(m_inputPrims, name, "prim param");
+    return param.result;
 }
 
 bool NodeImpl::add_input_prim_param(ParamPrimitive param) {

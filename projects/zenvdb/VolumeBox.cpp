@@ -23,12 +23,14 @@ struct CreateVolumeBox : zeno::INode {
         auto scale = get_input2_vec3f("scale");
         auto rotate = get_input2_vec3f("rotate");
 
-        auto bounds = zsString2Std(get_input2_string("Bounds:"));
+        const auto greedy = get_input2_bool("greedy");
+        auto bounds = get_input2_string("Bounds");
 
-        auto order = zsString2Std(get_input2_string("EulerRotationOrder:"));
+
+        auto order = zsString2Std(get_input2_string("EulerRotationOrder"));
         auto orderTyped = magic_enum::enum_cast<EulerAngle::RotationOrder>(order).value_or(EulerAngle::RotationOrder::YXZ);
 
-        auto measure = zsString2Std(get_input2_string("EulerAngleMeasure:"));
+        auto measure = zsString2Std(get_input2_string("EulerAngleMeasure"));
         auto measureTyped = magic_enum::enum_cast<EulerAngle::Measure>(measure).value_or(EulerAngle::Measure::Radians);
 
         glm::vec3 eularAngleXYZ = glm::vec3(rotate[0], rotate[1], rotate[2]);
@@ -96,7 +98,7 @@ struct CreateVolumeBox : zeno::INode {
         prim->quads->push_back(zeno::vec4i(3, 2, 6, 7));
 
         primWireframe(prim.get(), true);
-        prim->userData()->set_string("bounds", stdString2zs(bounds));
+        prim->userData()->set_string("bounds", bounds);
     
         auto transform_ptr = glm::value_ptr(transform);
             

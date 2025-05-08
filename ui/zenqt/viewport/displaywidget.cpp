@@ -1300,7 +1300,8 @@ void DisplayWidget::onNodeSelected(GraphModel* subgraph, const QModelIndexList &
     }
     if (node_id == "MakePrimitive") {
         auto picker = m_glView->picker();
-        ZASSERT_EXIT(picker);
+        if (!picker)
+            return;
         if (select) {
             picker->switch_draw_mode();
             zeno::NodeLocation node_location(nodes[0], subgraph);

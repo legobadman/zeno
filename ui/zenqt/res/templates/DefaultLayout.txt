@@ -55,5 +55,16 @@
             "Node Editor(QML)",
             "View"
         ]
-    }   
+    },
+    "Legacy Object Data and Editor": {
+        "state": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><QtAdvancedDockingSystem Version=\"1\" UserVersion=\"0\" Containers=\"1\"><Container Floating=\"0\"><Splitter Orientation=\"-\" Count=\"1\"><Splitter Orientation=\"|\" Count=\"2\"><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"View\"><Widget Name=\"View\" Closed=\"0\"/></Area><Area Tabs=\"3\" Current=\"Logger\"><Widget Name=\"Logger\" Closed=\"0\"/><Widget Name=\"Object Data\" Closed=\"0\"/><Widget Name=\"Geometry Data\" Closed=\"1\"/></Area><Sizes>494 414 </Sizes></Splitter><Area Tabs=\"2\" Current=\"Node Editor(QML)\"><Widget Name=\"Node Editor(QML)\" Closed=\"0\"/><Widget Name=\"Node Editor\" Closed=\"0\"/></Area><Sizes>832 903 </Sizes></Splitter><Sizes>913 </Sizes></Splitter></Container></QtAdvancedDockingSystem>\n",
+        "widgets": [
+            "Geometry Data",
+            "Logger",
+            "Node Editor",
+            "Node Editor(QML)",
+            "Object Data",
+            "View"
+        ]
+    }
 }

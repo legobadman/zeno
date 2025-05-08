@@ -34,44 +34,43 @@ namespace zeno
     }
 
     int INode::get_input2_int(const zeno::String& param) {
-        return m_pAdapter->get_input2<int>(zsString2Std(param));
+        return any_cast<int>(m_pAdapter->get_param_result(zsString2Std(param)));
     }
 
     float INode::get_input2_float(const zeno::String& param) {
-        return m_pAdapter->get_input2<float>(zsString2Std(param));
+        return any_cast<float>(m_pAdapter->get_param_result(zsString2Std(param)));
     }
 
     String INode::get_input2_string(const zeno::String& param) {
-        std::string val = m_pAdapter->get_input2<std::string>(zsString2Std(param));
-        return stdString2zs(val);
+        return stdString2zs(any_cast<std::string>(m_pAdapter->get_param_result(zsString2Std(param))));
     }
 
     zeno::Vec2i INode::get_input2_vec2i(const zeno::String& param) {
-        return toAbiVec2i(m_pAdapter->get_input2<zeno::vec2i>(zsString2Std(param)));
+        return toAbiVec2i(any_cast<vec2i>(m_pAdapter->get_param_result(zsString2Std(param))));
     }
 
     zeno::Vec2f INode::get_input2_vec2f(const zeno::String& param) {
-        return toAbiVec2f(m_pAdapter->get_input2<zeno::vec2f>(zsString2Std(param)));
+        return toAbiVec2f(any_cast<vec2f>(m_pAdapter->get_param_result(zsString2Std(param))));
     }
 
     zeno::Vec3i INode::get_input2_vec3i(const zeno::String& param) {
-        return toAbiVec3i(m_pAdapter->get_input2<zeno::vec3i>(zsString2Std(param)));
+        return toAbiVec3i(any_cast<vec3i>(m_pAdapter->get_param_result(zsString2Std(param))));
     }
 
     zeno::Vec3f INode::get_input2_vec3f(const zeno::String& param) {
-        return toAbiVec3f(m_pAdapter->get_input2<zeno::vec3f>(zsString2Std(param)));
+        return toAbiVec3f(any_cast<vec3f>(m_pAdapter->get_param_result(zsString2Std(param))));
     }
 
-    zeno::Vec4f INode::get_input2_vec4i(const zeno::String& param) {
-        return toAbiVec4f(m_pAdapter->get_input2<zeno::vec4f>(zsString2Std(param)));
+    zeno::Vec4i INode::get_input2_vec4i(const zeno::String& param) {
+        return toAbiVec4i(any_cast<vec4i>(m_pAdapter->get_param_result(zsString2Std(param))));
     }
 
-    zeno::Vec4i INode::get_input2_vec4f(const zeno::String& param) {
-        return toAbiVec4i(m_pAdapter->get_input2<zeno::vec4i>(zsString2Std(param)));
+    zeno::Vec4f INode::get_input2_vec4f(const zeno::String& param) {
+        return toAbiVec4f(any_cast<vec4f>(m_pAdapter->get_param_result(zsString2Std(param))));
     }
 
     bool INode::get_input2_bool(const zeno::String& param) {
-        return m_pAdapter->get_input2<bool>(zsString2Std(param));
+        return any_cast<bool>(m_pAdapter->get_param_result(zsString2Std(param)));
     }
 
     bool INode::has_input(const zeno::String& param) {
@@ -83,21 +82,20 @@ namespace zeno
     }
 
     int INode::get_param_int(const zeno::String& param) {
-        return m_pAdapter->get_param<int>(zsString2Std(param));
+        return get_input2_int(param);
     }
 
     float INode::get_param_float(const zeno::String& param) {
-        return m_pAdapter->get_param<float>(zsString2Std(param));
+        return get_input2_float(param);
     }
 
     String INode::get_param_string(const zeno::String& param) {
-        return stdString2zs(m_pAdapter->get_param<std::string>(zsString2Std(param)));
+        return get_input2_string(param);
     }
 
     bool INode::get_param_bool(const zeno::String& param) {
-        return m_pAdapter->get_param<bool>(zsString2Std(param));
+        return get_input2_bool(param);
     }
-
 
     bool INode::is_continue_to_run() { return false; }
     void INode::increment() {}

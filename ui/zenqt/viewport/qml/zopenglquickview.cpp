@@ -160,6 +160,13 @@ void ZOpenGLQuickView::cleanUpScene() {
     update();
 }
 
+Zenovis* ZOpenGLQuickView::getZenoVis() {
+    if (m_renderer)
+        return m_renderer->getZenovis();
+    else
+        return nullptr;
+}
+
 void ZOpenGLQuickView::resizeGL(int nx, int ny) {
     emit sig_Resize(nx, ny);
 }

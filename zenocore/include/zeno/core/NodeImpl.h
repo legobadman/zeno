@@ -15,6 +15,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/core/data.h>
 #include <zeno/utils/uuid.h>
+#include <zeno/utils/safe_at.h>
 #include <zeno/core/CoreParam.h>
 #include <functional>
 #include <reflect/registry.hpp>
@@ -104,11 +105,9 @@ namespace zeno
         bool set_primitive_input(std::string const& id, const zeno::reflect::Any& val);
 
         template <class T>
-        const T* get_input_prim(std::string const& name) const {
-            auto iter = m_inputPrims.find(name);
-            if (iter == m_inputPrims.end())
-                return nullptr;
-            return zeno::reflect::any_cast<T>(&iter->second.defl);
+        const T get_input_prim(std::string const& name) const {
+            auto& prim = safe_at(m_inputPrims, name, "input primtive");
+            return zeno::reflect::any_cast<T>(prim.defl);
         }
 
         bool update_param(const std::string& name, zeno::reflect::Any new_value);
