@@ -527,7 +527,8 @@ QStringList GraphsManager::recentFiles() const
     {
         const QString& key = lst[i];
         const QString& path = settings.value(key).toString();
-        paths.append(path);
+        if (path.endsWith(".zen"))
+            paths.append(path);
     }
     return paths;
 }
