@@ -13,15 +13,18 @@ PluginsModel::PluginsModel(QObject* parent)
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
     settings.beginGroup("Zeno Plugins");
     QStringList lst = settings.childKeys();
-    QStringList paths;
     for (int i = 0; i < lst.size(); i++)
     {
         const QString& key = lst[i];
-        const QString& path = settings.value(key).toString();
-        paths.append(path);
+        QString path = settings.value(key).toString();
+        QFileInfo fninfo(path);
+        QString appDir = zenoApp->applicationDirPath();
+        QString dllName = fninfo.fileName();
+        path = appDir + '/' + dllName;
+
         _pluginItem _item;
         _item.path = path;
-        _item.bLoaded = QFileInfo(path).exists();
+        _item.bLoaded = fninfo.exists();
         if (_item.bLoaded) {
             zeno::getSession().beginLoadModule(path.toStdString());
             zeno::scope_exit sp([&]() { zeno::getSession().endLoadModule(); });
