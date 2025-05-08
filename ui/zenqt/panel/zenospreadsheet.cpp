@@ -131,7 +131,7 @@ void ZenoSpreadsheet::onNodeSelected(const QModelIndex& idx) {
         return;
     }
 
-    if (auto obj = dynamic_cast<zeno::PrimitiveObject*>(pObject.get())) {
+    if (auto obj = std::dynamic_pointer_cast<zeno::PrimitiveObject>(pObject)) {
         size_t sizeUserData = obj->userData()->size();
         size_t num_attrs = obj->num_attrs();
         size_t num_vert = obj->verts.size();

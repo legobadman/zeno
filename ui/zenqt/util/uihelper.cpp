@@ -2652,11 +2652,11 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Editor") || title == "Editor" || title == QObject::tr("Node Editor") || title == "Node Editor") {
         type = PANEL_EDITOR;
     }
-    else if (title == QObject::tr("Data") || title == "Data" || title == QObject::tr("Spreadsheet") || title == "Spreadsheet") {
-        type = PANEL_NODE_DATA;
-    }
     else if (title == QObject::tr("Geometry Data") || title == "Geometry Data") {
         type = PANEL_GEOM_DATA;
+    }
+    else if (title == QObject::tr("Object Data") || title == "Object Data") {
+        type = PANEL_NODE_DATA;
     }
     else if (title == QObject::tr("Logger") || title == "Logger" || title == QObject::tr("Log") || title == "Log") {
         type = PANEL_LOG;

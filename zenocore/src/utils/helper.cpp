@@ -279,8 +279,10 @@ namespace zeno {
         }
         else if (anyType == gParamType_VecEdit) {
             //TODO
+            vecvar editvec = any_cast<vecvar>(editvar);
+
         }
-        return editvar;
+        return true;
     }
 
     ZENO_API bool convertToEditVar(Any& val, const ParamType type) {

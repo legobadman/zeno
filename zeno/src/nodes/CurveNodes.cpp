@@ -15,11 +15,11 @@ struct MakeCurve : zeno::INode {
     virtual void apply() override {
         bool bExist = false;
         const auto& param = ZImpl(get_input_prim_param("curve", &bExist));
-        auto pCurve = ZImpl(get_input_prim<CurvesData>("curve"));
-        if (!pCurve) {
+        if (!bExist) {
             throw;
         }
-        ZImpl(set_primitive_output("curve", *pCurve));
+        auto pCurve = ZImpl(get_input_prim<CurvesData>("curve"));
+        ZImpl(set_primitive_output("curve", pCurve));
     }
 };
 
@@ -39,13 +39,9 @@ ZENO_DEFNODE(MakeCurve)({
 struct EvalCurve : zeno::INode {
     virtual void apply() override {
         auto curve = ZImpl(get_input_prim<CurvesData>("curve"));
-        if (!curve) {
-            throw;
-        }
-
         auto input = ZImpl(get_input2<NumericValue>("value"));
         auto output = std::visit([&] (auto const &src) -> NumericValue {
-            return curve->eval(src);
+            return curve.eval(src);
         }, input);
         ZImpl(set_output2("value", output));
     }
@@ -67,7 +63,7 @@ struct EvalCurveOnPrimAttr : zeno::INode {
     virtual void apply() override {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto curve = ZImpl(get_input_prim<CurvesData>("curve"));
-        if (!curve || !prim) {
+        if (!prim) {
             throw;
         }
 
@@ -76,14 +72,14 @@ struct EvalCurveOnPrimAttr : zeno::INode {
         prim->attr_visit(attrName, [&](auto &arr) {
             if (dstName.empty() || dstName == attrName) {
                 parallel_for_each(arr.begin(), arr.end(), [&] (auto &val) {
-                    val = curve->eval(val);
+                    val = curve.eval(val);
                 });
             }
             else {
                 using T = std::decay_t<decltype(arr[0])>;
                 auto& dstAttr = prim->add_attr<T>(dstName);
                 parallel_for(arr.size(), [&] (auto i) {
-                    dstAttr[i] = curve->eval(arr[i]);
+                    dstAttr[i] = curve.eval(arr[i]);
                 });
             }
         });

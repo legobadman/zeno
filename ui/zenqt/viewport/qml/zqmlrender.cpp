@@ -82,6 +82,10 @@ void ZQmlRender::render()
     m_zenovis->paintGL();
 }
 
+Zenovis* ZQmlRender::getZenovis() const {
+    return m_zenovis;
+}
+
 void ZQmlRender::fakeMousePressEvent(ViewMouseInfo event_info) {
     m_camera->fakeMousePressEvent(event_info);
 }
