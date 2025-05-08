@@ -8,12 +8,14 @@
 
 namespace zeno
 {
+    ListObject::ListObject() : m_impl(new ListObject_impl) {
+    }
+
     void ListObject::Delete() {
     }
 
     ListObject::~ListObject() {
         m_impl->remove_children();
-        delete this;
     }
 
     size_t ListObject::size() {
