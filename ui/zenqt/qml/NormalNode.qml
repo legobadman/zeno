@@ -77,22 +77,25 @@ Qan.NodeItem {
 
     function getSocketObject(paramName, group) {
         if (group == ParamGroup.InputObject) {
-            var idx = nodeItem.node.params.indexFromName(paramName, true);
+            var idx = nodeItem.node.params.inputObjects().indexFromName(paramName);
             var instZObjSock = inputobjparams.itemAt(idx)
             return instZObjSock;
         }
         else if (group == ParamGroup.InputPrimitive) {
-            var idx = nodeItem.node.params.indexFromName(paramName, true);
+            var idx = nodeItem.node.params.inputPrims().indexFromName(paramName);
             var instZObjSock = inputprimparams.itemAt(idx)
             return instZObjSock.sockid;
         }
         else if (group == ParamGroup.OutputPrimitive) {
-            var idx = nodeItem.node.params.indexFromName(paramName, false);
+            var idx = nodeItem.node.params.outputPrims().indexFromName(paramName);
             var instZObjSock = outputprimparams.itemAt(idx)
+            if (instZObjSock == null) {
+                console.log("paramName:" + paramName)
+            }
             return instZObjSock.sockid;
         }
         else if (group == ParamGroup.OutputObject) {
-            var idx = nodeItem.node.params.indexFromName(paramName, false);
+            var idx = nodeItem.node.params.outputObjects().indexFromName(paramName);
             var instZObjSock = outputobjparams.itemAt(idx)
             return instZObjSock
         }
@@ -203,7 +206,7 @@ Qan.NodeItem {
 
             Repeater{
                 id: inputobjparams
-                model: nodeItem.node.params
+                model: nodeItem.node.params.inputObjects()
 
                 delegate: 
                     ZObjSocket {
@@ -217,7 +220,7 @@ Qan.NodeItem {
                         socket_group: group
                         bg_color: socket_color
 
-                        visible: group == ParamGroup.InputObject
+                        visible: true
 
                         onSocketClicked: function() {
                             var centerpos = Qt.point(input_obj_socket.width / 2, input_obj_socket.height / 2)
@@ -245,16 +248,17 @@ Qan.NodeItem {
                 implicitWidth: main_layout.implicitWidth
                 implicitHeight: main_layout.implicitHeight
 
-                Loader {
-                    id: delegateLoader
-                    anchors.fill: parent
-                    source: "qrc:/QuickQanava/RectSolidShadowBackground.qml"
+                // 阴影，因性能开销暂时不用
+                // Loader {
+                //     id: delegateLoader
+                //     anchors.fill: parent
+                //     source: "qrc:/QuickQanava/RectSolidShadowBackground.qml"
 
-                    onItemChanged: {
-                        if (item)
-                            item.style = nodeItem.style
-                    }
-                }
+                //     onItemChanged: {
+                //         if (item)
+                //             item.style = nodeItem.style
+                //     }
+                // }
 
                 ColumnLayout {
                     id: main_layout
@@ -359,7 +363,7 @@ Qan.NodeItem {
 
                             Repeater{
                                 id: inputprimparams
-                                model: nodeItem.node.params
+                                model: nodeItem.node.params.inputPrims()
 
                                 delegate:
                                     Text {
@@ -369,7 +373,7 @@ Qan.NodeItem {
                                         readonly property int hmargin: 10
                                         property alias sockid: input_prim_socket
 
-                                        visible: group == ParamGroup.InputPrimitive && socket_visible
+                                        visible: socket_visible
 
                                         color: "white"
                                         text: name
@@ -399,7 +403,7 @@ Qan.NodeItem {
 
                             Repeater {
                                 id: outputprimparams
-                                model: nodeItem.node.params
+                                model: nodeItem.node.params.outputPrims()
 
                                 delegate:
                                     Text {
@@ -409,7 +413,7 @@ Qan.NodeItem {
                                         readonly property int hmargin: 10
                                         property alias sockid: output_prim_socket
 
-                                        visible: group == ParamGroup.OutputPrimitive && socket_visible
+                                        visible: socket_visible
 
                                         color: "white"
                                         text: name
@@ -435,7 +439,7 @@ Qan.NodeItem {
                                             }
                                         }
                                     }
-                            }
+                            }                          
 
                             Item {
                                 id: just_bottom_margin
@@ -469,7 +473,7 @@ Qan.NodeItem {
 
             Repeater{
                 id: outputobjparams
-                model: nodeItem.node.params
+                model: nodeItem.node.params.outputObjects()
 
                 delegate: ZObjSocket {
                     id: output_obj_socket
@@ -481,7 +485,7 @@ Qan.NodeItem {
                     socket_name: name
                     socket_group: group
                     bg_color: socket_color
-                    visible: group == ParamGroup.OutputObject  //对应代码NodeDataGroup枚举值
+                    visible: true
                     onSocketClicked: function() {
                         var centerpos = Qt.point(output_obj_socket.width / 2, output_obj_socket.height / 2)
                         var globalPosition = output_obj_socket.mapToGlobal(centerpos)
