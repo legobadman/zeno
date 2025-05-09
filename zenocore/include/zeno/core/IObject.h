@@ -7,6 +7,8 @@
 namespace zeno {
 
     struct ZENO_API IUserData {
+        virtual IUserData* clone() = 0;
+
         virtual bool has(const String& key) = 0;
         virtual size_t size() const = 0;
         virtual Vector<String> keys() const = 0;
@@ -77,6 +79,7 @@ namespace zeno {
 
         virtual zeno::SharedPtr<IObject> clone() const override {
             auto spClonedObj = std::make_shared<Derived>(static_cast<Derived const&>(*this));
+            spClonedObj->m_usrData = m_usrData->clone();
             return spClonedObj;
         }
 

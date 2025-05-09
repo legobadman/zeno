@@ -15,6 +15,11 @@ namespace zeno {
 struct UserData : IUserData {
     std::map<std::string, zany> m_data;
 
+    IUserData* clone() override {
+        UserData* newUsrData = new UserData(*this);
+        return newUsrData;
+    }
+
     bool has(const String& key) override {
         std::string skey(key.c_str());
         return m_data.find(skey) != m_data.end();
