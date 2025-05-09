@@ -300,6 +300,10 @@ void SubnetNode::apply() {
         //suboutput的结果是放在Input的port上面（因为Suboutput放一个输出参数感觉怪怪的）
         bool bPrimoutput = suboutput->get_input_object_params().empty();
         zany result = suboutput->get_input("port");
+        if (auto numobj = std::dynamic_pointer_cast<NumericObject>(result)) {
+            int j;
+            j = 0;
+        }
         if (result) {
             bSetOutput = true;
             zany spObject = result->clone();
