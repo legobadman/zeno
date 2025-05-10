@@ -5,12 +5,21 @@
 namespace zeno {
 
     IObject::IObject() {
-        m_usrData = new UserData;
+        m_usrData = std::make_unique<UserData>();
     }
 
     IObject::~IObject() {
-        delete m_usrData;
-        m_usrData = nullptr;
+    }
+
+    IObject::IObject(const IObject& rhs) {
+        m_key = rhs.m_key;
+        m_usrData = rhs.m_usrData->clone();
+    }
+
+    IObject& IObject::operator=(const IObject& rhs) {
+        m_key = rhs.m_key;
+        m_usrData = rhs.m_usrData->clone();
+        return *this;
     }
 
     String IObject::key() const {
@@ -22,7 +31,7 @@ namespace zeno {
     }
 
     IUserData* IObject::userData() {
-        return m_usrData;
+        return m_usrData.get();
     }
 
     void IObject::Delete() {

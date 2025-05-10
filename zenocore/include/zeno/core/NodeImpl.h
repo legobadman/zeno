@@ -42,8 +42,6 @@ namespace zeno
     public:
         INodeClass* nodeClass = nullptr;
 
-        zany muted_output;
-
         NodeImpl(INode* pNode);
         virtual ~NodeImpl();
 
