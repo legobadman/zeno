@@ -15,9 +15,8 @@ namespace zeno {
 struct UserData : IUserData {
     std::map<std::string, zany> m_data;
 
-    IUserData* clone() override {
-        UserData* newUsrData = new UserData(*this);
-        return newUsrData;
+    std::unique_ptr<IUserData> clone() override {
+        return std::make_unique<UserData>(*this);
     }
 
     bool has(const String& key) override {

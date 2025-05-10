@@ -168,7 +168,7 @@ if (ZENO_WITH_REFLECTOR)
     else()
         #手动添加
         set(reflecttypes
-            ../zeno/src/nodes/reflect/zenoreflecttypes.cpp
+            ./src/core/zenoreflecttypes.cpp
         )
         make_absolute_paths(REFLECTION_TYPES ${reflecttypes})
         zeno_declare_reflection_support(zenocore "${REFLECTION_TYPES}" zeno_types)

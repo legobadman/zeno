@@ -80,7 +80,7 @@ namespace zeno
             if (this != &other) {
                 delete[] m_data;
                 m_data = nullptr;
-                m_length = strlen(other.m_data);
+                m_length = _strlen(other.m_data);
                 if (m_length > 0) {
                     m_data = new char[m_length + 1];
                     _strcpy(m_data, other.m_data);
@@ -110,7 +110,7 @@ namespace zeno
 
         String operator+(const char* str) const noexcept {
             if (!str) return *this;
-            size_t newLen = m_length + strlen(str);
+            size_t newLen = m_length + _strlen(str);
             char* newData = new char[newLen + 1];
             _strcpy(newData, m_data);
             _strcat(newData, str);
@@ -122,7 +122,7 @@ namespace zeno
         String operator+(const String& rhs) const noexcept {
             if (rhs.m_length == 0)
                 return *this;
-            size_t newLen = strlen(m_data) + strlen(rhs.m_data);
+            size_t newLen = _strlen(m_data) + _strlen(rhs.m_data);
             char* newData = new char[newLen + 1];
             _strcpy(newData, m_data);
             _strcat(newData, rhs.m_data);

@@ -7,7 +7,7 @@
 namespace zeno {
 
     struct ZENO_API IUserData {
-        virtual IUserData* clone() = 0;
+        virtual std::unique_ptr<IUserData> clone() = 0;
 
         virtual bool has(const String& key) = 0;
         virtual size_t size() const = 0;
@@ -58,6 +58,8 @@ namespace zeno {
 
     struct ZENO_API IObject {
         IObject();
+        IObject(const IObject& rhs);
+        IObject& operator=(const IObject& rhs);
         virtual ~IObject();     // don't consider abi problem right now.
         virtual zeno::SharedPtr<IObject> clone() const = 0; //TODO£ºabi compatible for shared_ptr
         virtual String key() const;
@@ -66,20 +68,15 @@ namespace zeno {
         virtual void Delete();  //TODO: for abi compatiblity when dtor cann't be mark virutal.
 
         String m_key;
-        IUserData* m_usrData;   //TODO: abi unique_ptr
+        std::unique_ptr<IUserData> m_usrData;   //TODO: abi unique_ptr
     };
 
     template <class Derived, class CustomBase = IObject>
     struct IObjectClone : CustomBase {
-        IObjectClone() {
-        }
-
-        IObjectClone(const IObjectClone& rhs) : IObject(rhs) {
-        }
 
         virtual zeno::SharedPtr<IObject> clone() const override {
             auto spClonedObj = std::make_shared<Derived>(static_cast<Derived const&>(*this));
-            spClonedObj->m_usrData = m_usrData->clone();
+            spClonedObj->m_usrData = std::move(m_usrData->clone());
             return spClonedObj;
         }
 
