@@ -43,9 +43,8 @@ option(ZENO_OPTIX_PROC "Optix with a new proc" OFF)
 option(ZENO_WIN32_RC "Build ZENO with win32 resource file" OFF)
 option(ZENO_NODESVIEW_OPTIM "Optimize Node Graphics View manually" ON)
 option(ZENO_WITH_PYTHON "Build ZENO with python" OFF)
-option(ZENO_WITH_REFLECTOR "Support Reflector" ON)
+option(ZENO_WITH_REFLECTOR "Support Reflector" OFF)
 option(ZENO_WITH_QT3D "Support Qt 3D Scene" OFF)
-option(REFLECTION_USE_PREBUILT_BINARY "Use Prebuild RefactGenerator on Windows" ON)
 
 if (NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
     # Otherwise we can't link .so libs with .a libs
@@ -193,9 +192,9 @@ function (zeno_add_asset_dir dir)
 endfunction()
 ## --- end cihou asset dir
 
-if (ZENO_WITH_REFLECTOR)
-    add_subdirectory(reflect)
-endif()
+#if (ZENO_WITH_REFLECTOR)
+#    add_subdirectory(reflect)
+#endif()
 add_subdirectory(zenocore)
 add_subdirectory(zeno)
 add_subdirectory(api/python)

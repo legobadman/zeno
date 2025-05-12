@@ -31,13 +31,13 @@
 #include <zeno/extra/GraphException.h>
 #include <zeno/formula/formula.h>
 #include <zeno/core/FunctionManager.h>
-#include <reflect/type.hpp>
-#include <reflect/container/arraylist>
-#include <reflect/metadata.hpp>
+#include <zeno/reflect/type.hpp>
+#include <zeno/reflect/container/arraylist>
+#include <zeno/reflect/metadata.hpp>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/MeshObject.h>
 #include <zeno/types/MatrixObject.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 #include <zeno/core/reflectdef.h>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/extra/CalcContext.h>

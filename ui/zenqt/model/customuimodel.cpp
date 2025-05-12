@@ -2,7 +2,7 @@
 #include <zeno/utils/helper.h>
 #include "style/colormanager.h"
 #include "util/uihelper.h"
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 #include "declmetatype.h"
 
 static CUSTOMUI_CTRL_ITEM_INFO customui_controlList[] = {

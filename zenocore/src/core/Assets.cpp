@@ -12,11 +12,11 @@
 
 namespace zeno {
 
-ZENO_API AssetsMgr::AssetsMgr() {
+AssetsMgr::AssetsMgr() {
     initAssetsInfo();
 }
 
-ZENO_API AssetsMgr::~AssetsMgr() {
+AssetsMgr::~AssetsMgr() {
 
 }
 
@@ -63,7 +63,7 @@ static std::wstring s2ws(std::string const& s) {
     return ws;
 }
 
-ZENO_API std::shared_ptr<Graph> AssetsMgr::getAssetGraph(const std::string& name, bool bLoadIfNotExist) {
+std::shared_ptr<Graph> AssetsMgr::getAssetGraph(const std::string& name, bool bLoadIfNotExist) {
     if (m_assets.find(name) != m_assets.end()) {
         if (!m_assets[name].sharedGraph) {
             zenoio::ZdaReader reader;
@@ -85,7 +85,7 @@ ZENO_API std::shared_ptr<Graph> AssetsMgr::getAssetGraph(const std::string& name
     return nullptr;
 }
 
-ZENO_API void AssetsMgr::createAsset(const zeno::ZenoAsset asset, bool isFirstCreate) {
+void AssetsMgr::createAsset(const zeno::ZenoAsset asset, bool isFirstCreate) {
     Asset newAsst;
 
     newAsst.m_info = asset.info;
@@ -115,24 +115,24 @@ ZENO_API void AssetsMgr::createAsset(const zeno::ZenoAsset asset, bool isFirstCr
     CALLBACK_NOTIFY(createAsset, asset.info)
 }
 
-ZENO_API void AssetsMgr::removeAsset(const std::string& name) {
+void AssetsMgr::removeAsset(const std::string& name) {
     m_assets.erase(name);
     CALLBACK_NOTIFY(removeAsset, name)
 }
 
-ZENO_API void AssetsMgr::renameAsset(const std::string& old_name, const std::string& new_name) {
+void AssetsMgr::renameAsset(const std::string& old_name, const std::string& new_name) {
     //TODO
     CALLBACK_NOTIFY(renameAsset, old_name, new_name)
 }
 
-ZENO_API Asset AssetsMgr::getAsset(const std::string& name) const {
+Asset AssetsMgr::getAsset(const std::string& name) const {
     if (m_assets.find(name) != m_assets.end()) {
         return m_assets.at(name);
     }
     return Asset();
 }
 
-ZENO_API std::vector<Asset> AssetsMgr::getAssets() const {
+std::vector<Asset> AssetsMgr::getAssets() const {
     std::vector<Asset> assets;
     for (auto& [name, asset] : m_assets) {
         assets.push_back(asset);
@@ -140,7 +140,7 @@ ZENO_API std::vector<Asset> AssetsMgr::getAssets() const {
     return assets;
 }
 
-ZENO_API void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo info, const zeno::CustomUI& customui)
+void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo info, const zeno::CustomUI& customui)
 {
     if (m_assets.find(name) == m_assets.end()) {
         return;
@@ -423,7 +423,7 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     objOutput1Node->add_input_obj_param(paramObj);
 }
 
-ZENO_API bool AssetsMgr::isAssetGraph(Graph* spGraph) const
+bool AssetsMgr::isAssetGraph(Graph* spGraph) const
 {
     for (auto& [name, asset] : m_assets) {
         if (asset.sharedGraph.get() == spGraph)
@@ -432,7 +432,7 @@ ZENO_API bool AssetsMgr::isAssetGraph(Graph* spGraph) const
     return false;
 }
 
-ZENO_API bool AssetsMgr::generateAssetName(std::string& name)
+bool AssetsMgr::generateAssetName(std::string& name)
 {
     std::string new_name = name;
     if (m_assets.find(new_name) == m_assets.end()) {
@@ -447,7 +447,7 @@ ZENO_API bool AssetsMgr::generateAssetName(std::string& name)
     return true;
 }
 
-ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(Graph* pGraph, const std::string& assetName, const std::string& nodeName, bool createInAsset) {
+std::unique_ptr<NodeImpl> AssetsMgr::newInstance(Graph* pGraph, const std::string& assetName, const std::string& nodeName, bool createInAsset) {
     if (m_assets.find(assetName) == m_assets.end()) {
         return nullptr;
     }
@@ -490,7 +490,7 @@ ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(Graph* pGraph, const s
     return pNode;
 }
 
-ZENO_API void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, SubnetNode* spNode)
+void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, SubnetNode* spNode)
 {
     if(m_assets.find(assetName) == m_assets.end()) {
         return;

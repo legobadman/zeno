@@ -150,13 +150,13 @@ namespace zeno
     }
 
 
-    ZENO_API zeno::SharedPtr<ListObject> create_ListObject() {
+    zeno::SharedPtr<ListObject> create_ListObject() {
         zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
         pList->m_impl = new ListObject_impl;
         return pList;
     }
 
-    ZENO_API zeno::SharedPtr<ListObject> create_ListObject(zeno::Vector<zany> arrin) {
+    zeno::SharedPtr<ListObject> create_ListObject(zeno::Vector<zany> arrin) {
         zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
         pList->m_impl = new ListObject_impl(zeVec2stdVec(arrin));
         return pList;

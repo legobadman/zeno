@@ -8,13 +8,14 @@
 #include <zeno/core/reflectdef.h>
 #include <regex>
 #include <zeno/core/typeinfo.h>
-#include <reflect/type.hpp>
+#include <zeno/reflect/type.hpp>
 #include <zeno/core/Graph.h>
 #include <zeno/extra/SubnetNode.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/utils/interfaceutil.h>
-#include "reflect/reflection.generated.hpp"
+//#include "reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 using namespace zeno::types;

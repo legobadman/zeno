@@ -3,8 +3,8 @@
 #if !defined(ZENO_REFLECT_PROCESSING)
 
 #include "common.h"
-#include <reflect/registry.hpp>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflect/registry.hpp>
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 using namespace zeno::types;
 

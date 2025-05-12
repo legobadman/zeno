@@ -5,12 +5,12 @@
 #include <zeno/core/data.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
-#include <reflect/core.hpp>
-#include <reflect/type.hpp>
-#include <reflect/metadata.hpp>
-#include <reflect/registry.hpp>
-#include <reflect/container/any>
-#include <reflect/container/arraylist>
+#include <zeno/reflect/core.hpp>
+#include <zeno/reflect/type.hpp>
+#include <zeno/reflect/metadata.hpp>
+#include <zeno/reflect/registry.hpp>
+#include <zeno/reflect/container/any>
+#include <zeno/reflect/container/arraylist>
 #include <zeno/core/reflectdef.h>
 
 

@@ -1,0 +1,798 @@
+#pragma once
+
+#include <zeno/reflect/polyfill.hpp>
+#include <zeno/reflect/typeinfo.hpp>
+#include <zeno/reflect/utils/assert>
+#include <type_traits>
+#include <utility>
+
+namespace zeno
+{
+namespace reflect
+{
+    class Any;
+
+    enum class AnyConversionMethod {
+        Impossible,
+        TakeAddress,
+        Deref,
+        Move,
+        Forward,
+        AsIs,
+    };
+
+namespace any
+{
+    class IContainer {
+    public:
+        virtual ~IContainer() {}
+        virtual const RTTITypeInfo& type() const = 0;
+        virtual bool is_type(const RTTITypeInfo& other_type) const = 0;
+        virtual IContainer* clone() const = 0;
+        virtual IContainer* deep_clone() const = 0;
+        virtual IContainer* deep_move_clone() const = 0;
+        virtual AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const = 0;
+        virtual void* get_data_ptr_unsafe() const = 0;
+        virtual bool is_equal(IContainer* other_container) { return false; }
+        virtual bool is_enable_from_this() = 0;
+    };
+
+
+    template <typename T>
+    class ValueContainer;
+
+    /**
+     * Allow wrapping self into a temporary Any.
+     * @warning With this method, object's will not been delete when the wrapper Any is out-of-scoped !
+     * Any(new ChildOfTEnableAnyFromThis) might leading to memory leak if does nothing with the allocated object.
+     */
+    template <typename T>
+    class TEnableAnyFromThis : public IContainer {
+    public:
+        using ValueType = T;
+
+        virtual const RTTITypeInfo& type() const override {
+            return type_info<ValueType>();
+        }
+
+        virtual bool is_type(const RTTITypeInfo& other_type) const override {
+            return other_type == this->type();
+        }
+
+        virtual AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const override {
+            auto self_type = type();
+            if (
+                other_type == self_type
+            ) {
+                return AnyConversionMethod::AsIs;
+            }
+            else if (
+                other_type.get_decayed_hash() == 0 
+                && self_type.get_decayed_hash() && other_type.hash_code() == self_type.get_decayed_hash()
+            ) {
+                if (self_type.has_flags(TypeFlag::TF_IsPointer)) {
+                    return AnyConversionMethod::Deref;
+                }
+                return AnyConversionMethod::AsIs;
+            }
+            else if (
+                self_type.get_decayed_hash() == 0 && other_type.get_decayed_hash() && other_type.get_decayed_hash() == self_type.hash_code()
+            ) {
+                if (other_type.has_flags(TypeFlag::TF_IsPointer)) {
+                    return AnyConversionMethod::TakeAddress;
+                } else if (other_type.has_flags(TypeFlag::TF_IsLValueRef)) {
+                    return AnyConversionMethod::AsIs;
+                } else if (other_type.has_flags(TypeFlag::TF_IsRValueRef)) {
+                    return AnyConversionMethod::Move;
+                }
+                return AnyConversionMethod::AsIs;
+            }
+
+            return AnyConversionMethod::Impossible;
+        }
+
+        virtual IContainer* clone() const override {
+            if REFLECT_CONSTEXPR (VTIsCopyConstructible<T>) {
+                return new T(*static_cast<const T*>(this));
+            } else {
+                ZENO_CHECK(VTIsCopyConstructible<T>);
+            }
+        }
+
+        virtual IContainer* deep_clone() const override {
+            return nullptr;
+        }
+
+        virtual IContainer* deep_move_clone() const override {
+            return nullptr;
+        }
+
+        virtual void* get_data_ptr_unsafe() const override {
+            return const_cast<void*>(reinterpret_cast<const void*>(this));
+        }
+
+        virtual bool is_equal(IContainer* other_container) override {
+            return false;
+        }
+
+        bool is_enable_from_this() override {
+            return true;
+        }
+
+        Any to_any();
+    };
+}
+
+    template <typename T, typename... Args>
+    Any make_any(Args&&... args);
+
+    template <typename T>
+    T any_cast(Any& operand);
+
+    template <typename T>
+    T any_cast(const class Any& operand);
+
+    template<typename T>
+    T* any_cast(Any* operand) noexcept;
+
+    template<typename T>
+    const T* any_cast(const Any* operand) noexcept;
+
+    class Any {
+    public:
+        REFLECT_STATIC_CONSTEXPR ~Any() {
+            reset();
+        }
+
+        REFLECT_STATIC_CONSTEXPR Any() = default;
+
+        REFLECT_STATIC_CONSTEXPR Any(const Any& other) {
+            if (other.has_value()) {
+                m_value_container = other.m_value_container->clone();
+            }
+        }
+
+        REFLECT_STATIC_CONSTEXPR Any(Any&& other) noexcept : m_value_container(other.m_value_container) {
+            other.m_value_container = nullptr;
+        }
+
+        template <typename T>
+        Any(T&& value) {
+            using DecayType = std::decay_t<T>;
+            if REFLECT_FORCE_CONSTEPXR (VTIsSame<DecayType, Any>) {
+                emplace(std::forward<T>(value));
+            } else {
+                emplace<DecayType>(std::forward<T>(value));
+            }
+        }
+
+        template <typename T, typename... Args>
+        Any(TInPlaceType<T>, Args&&... args) {
+            emplace<std::decay_t<T>>(std::forward<Args>(args)...);
+        }
+
+        template <typename T, typename... Args>
+        Any(TInPlaceType<T*>, Args&&... args) {
+            emplace<std::decay_t<T>*>(std::forward<Args>(args)...);
+        }
+
+        template <typename T>
+        Any(any::TEnableAnyFromThis<T>* that) : m_value_container(that) {}
+
+        Any& operator=(const Any& other) {
+            Any(other).swap(*this);
+            return *this;
+        }
+
+        Any& operator=(Any&& other) {
+            Any(std::move(other)).swap(*this);
+            return *this;
+        }
+
+        template <typename ValueType>
+        Any& operator=(ValueType&& rhs) {
+            Any(std::forward<ValueType>(rhs)).swap(*this);
+            return *this;
+        }
+
+        void deep_clone(const Any& other) {
+            if (other.has_value()) {
+                m_value_container = other.m_value_container->deep_clone();
+            }
+        }
+
+        void deep_move_clone(const Any& other) {
+            if (other.has_value()) {
+                m_value_container = other.m_value_container->deep_move_clone();
+            }
+        }
+
+        operator bool() const {
+            return has_value();
+        }
+
+        bool operator==(const Any& other) const {
+            if (!m_value_container && !other.m_value_container)
+                return true;
+            if (!other.m_value_container || !m_value_container || type() != other.m_value_container->type()) {
+                return false;
+            }
+            return m_value_container->is_equal(other.m_value_container);
+        }
+
+        bool operator!=(const Any& other) const {
+            return !operator==(other);
+        }
+
+        template <typename T, typename... Args>
+        void emplace(Args&&... args) {
+            using DecayType = std::decay_t<T>;
+            reset();
+            if REFLECT_FORCE_CONSTEPXR (VTIsPointer<T>) {
+                m_value_container = new any::ValueContainer<std::remove_cv_t<T>>(std::forward<Args>(args)...);
+            } else if REFLECT_FORCE_CONSTEPXR (VTIsSame<Any, T>) {
+                m_value_container = new any::ValueContainer<DecayType>(std::forward<Args>(args)...);
+            } else {
+                m_value_container = new any::ValueContainer<DecayType>(TInPlaceType<DecayType>(), std::forward<Args>(args)...);
+            }
+        }
+
+        void emplace(Any&& any) {
+            reset();
+            if (&any != this) {
+                m_value_container = any.m_value_container;
+                any.m_value_container = nullptr;
+                any.reset();
+            }
+        }
+
+        void emplace(const Any& any) {
+            reset();
+            if (&any != this && any.m_value_container) {
+                m_value_container = any.m_value_container->clone();
+            }
+        }
+
+        void swap(Any& other) noexcept {
+            any::IContainer* other_container = other.m_value_container;
+            other.m_value_container = m_value_container;
+            m_value_container = other_container;
+        }
+
+        bool has_value() const {
+            return nullptr != m_value_container;
+        }
+
+        REFLECT_STATIC_CONSTEXPR void reset() {
+            if (m_value_container && !m_value_container->is_enable_from_this()) {
+                delete m_value_container;
+            }
+            m_value_container = nullptr;
+        }
+
+        const RTTITypeInfo& type() const {
+            ZENO_CHECK_MSG(has_value(), "RTTI type is not available for <nullany>");
+            return m_value_container->type();
+        }
+
+        REFLECT_STATIC_CONSTEXPR static Any make_null() {
+            return Any();
+        }
+
+        AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const {
+            return m_value_container->is_convertible_to(other_type);
+        }
+
+    private:
+        Any(any::IContainer* container) : m_value_container(container) {};
+
+        any::IContainer* m_value_container = nullptr;
+
+        // ==== Friend Functions ====
+        template <typename T, typename... Args>
+        friend Any make_any(Args&&... args);
+
+        friend Any make_any_by_container(any::IContainer* pContainer);
+
+        template <typename T>
+        friend T any_cast(Any& operand);
+
+        template <typename T>
+        friend T any_cast(const Any& operand);
+
+        template<typename T>
+        friend T* any_cast(Any* operand) noexcept;
+
+        template<typename T>
+        friend const T* any_cast(const Any* operand) noexcept;
+
+        template<typename T>
+        friend T* any_cast_unsafe(Any* operand) noexcept;
+
+        template<typename T>
+        friend const T* any_cast_unsafe(const Any* operand) noexcept;
+        // ==== Friend Functions ====
+    };
+
+    /**
+     * @brief Create any in-place of type T with args.
+     * @tparam T Type to been created.
+     * @tparam Args Arguments to be forwarded to constructor.
+     */
+    template <typename T, typename... Args>
+    Any make_any(Args&&... args) {
+        // Old impl depends on compiler RVO
+        // return Any(std::move(DecayType(std::forward<Args>(args)...)));
+        
+        // Forward parameters directly into Any constructors
+        return Any(TInPlaceType<T>(), std::forward<Args>(args)...);
+    }
+
+    template <typename T>
+    Any make_any(any::TEnableAnyFromThis<T>* that) {
+        return Any(that);
+    }
+
+    inline Any make_any_by_container(any::IContainer* pContainer) {
+        Any a;
+        a.m_value_container = pContainer;
+        return a;
+    }
+
+    /**
+     * @brief Cast any to type T. 
+     * @tparam T Type to be casted.
+     * @param operand Any to be casted.
+     * 
+     * @note If T is a value type, it will be copied from operand to returned value.
+     */
+    template <typename T>
+    T any_cast(Any& operand) {
+        using NonRef = typename std::remove_reference<typename std::remove_cv<T>::type>::type;
+
+        AnyConversionMethod convert = operand.m_value_container->is_convertible_to(type_info<T>());
+
+        ZENO_CHECK_MSG(operand.has_value(), "Can't cast using <nullany>");
+        ZENO_CHECK_MSG(AnyConversionMethod::Impossible != convert, "Type cast to no matched");
+
+        any::ValueContainer<NonRef>* container = static_cast<any::ValueContainer<NonRef>*>(operand.m_value_container);
+        NonRef* value = &container->m_value;
+
+        if (operand.m_value_container->is_enable_from_this()) {
+            value = reinterpret_cast<NonRef*>(container);
+        }
+
+        if REFLECT_FORCE_CONSTEPXR (std::is_rvalue_reference_v<T>) {
+            return std::move(*value);
+        } else if REFLECT_FORCE_CONSTEPXR (std::is_lvalue_reference_v<T>) {
+            return *value;
+        } else if (std::is_pointer_v<T> && convert == AnyConversionMethod::TakeAddress) {
+            return static_cast<T>(*value);
+        } else {
+            static_assert(!std::is_reference_v<T>, "Unsupoorted reference type");
+            return *value;
+        }
+    }
+
+    /**
+     * @brief Cast any to type T. 
+     * @tparam T Type to be casted.
+     * @param operand Any to be casted.
+     * 
+     * @note If T is a value type, it will be copied from operand to returned value.
+     */
+    template <typename T>
+    T any_cast(const Any& operand) {
+        using NonRef = typename std::remove_reference<typename std::remove_cv<T>::type>::type;
+
+        AnyConversionMethod convert = operand.m_value_container->is_convertible_to(type_info<T>());
+
+        ZENO_CHECK_MSG(operand.has_value(), "Can't cast using <nullany>");
+        ZENO_CHECK_MSG(AnyConversionMethod::Impossible != convert, "Type cast to no matched");
+
+        any::ValueContainer<NonRef>* container = static_cast<any::ValueContainer<NonRef>*>(operand.m_value_container);
+        NonRef* value = &container->m_value;
+
+        if (operand.m_value_container->is_enable_from_this()) {
+            value = reinterpret_cast<NonRef*>(container);
+        }
+
+        if REFLECT_FORCE_CONSTEPXR (std::is_rvalue_reference_v<T>) {
+            return std::move(*value);
+        } else if REFLECT_FORCE_CONSTEPXR (std::is_lvalue_reference_v<T>) {
+            return *value;
+        } else if (std::is_pointer_v<T> && convert == AnyConversionMethod::TakeAddress) {
+            return static_cast<T>(*value);
+        } else {
+            static_assert(!std::is_reference_v<T>, "Unsupoorted reference type");
+            return *value;
+        }
+    }
+
+    template<typename T>
+    T* any_cast(Any* operand) noexcept {
+        using NonRef = typename std::remove_reference<typename std::remove_cv<T>::type>::type;
+
+        if (operand && operand->has_value()) {
+            if (AnyConversionMethod convert = operand->m_value_container->is_convertible_to(type_info<NonRef>()); AnyConversionMethod::Impossible != convert) {
+                if (operand->m_value_container->is_enable_from_this()) {
+                    return reinterpret_cast<NonRef*>(operand->m_value_container);
+                } else {
+                    return &static_cast<any::ValueContainer<NonRef>*>(operand->m_value_container)->m_value;
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+    template<typename T>
+    const T* any_cast(const Any* operand) noexcept {
+        using NonRef = typename std::remove_reference<typename std::remove_cv<T>::type>::type;
+
+        if (operand && operand->has_value()) {
+            if (AnyConversionMethod convert = operand->m_value_container->is_convertible_to(type_info<NonRef>()); AnyConversionMethod::Impossible != convert) {
+                if (operand->m_value_container->is_enable_from_this()) {
+                    return reinterpret_cast<NonRef*>(operand->m_value_container);
+                } else {
+                    return &static_cast<any::ValueContainer<NonRef>*>(operand->m_value_container)->m_value;
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
+    template <typename T>
+    T* any_cast_unsafe(Any* operand) noexcept {
+        return &static_cast<const any::ValueContainer<T>*>(operand->m_value_container)->m_value;
+    }
+
+    template <typename T>
+    const T* any_cast_unsafe(const Any* operand) noexcept {
+        return &static_cast<const any::ValueContainer<T>*>(operand->m_value_container)->m_value;
+    }
+
+namespace any
+{
+
+    template <typename T>
+    class ValueContainer : public IContainer {
+    public:
+        using ValueType = T;
+
+        ValueType m_value;
+
+        template <typename U = T>
+        ValueContainer(const U& value, TTEnableIf<VTIsCopyConstructible<U>, U>* = nullptr): m_value(value) {}
+
+        template <typename U = T>
+        ValueContainer(U&& value): m_value(std::move(value)) {}
+
+        template <typename U, typename... Args>
+        ValueContainer(TInPlaceType<U>, Args&&... args) : m_value(std::forward<Args>(args)...) {}
+
+        virtual const RTTITypeInfo& type() const override {
+            return type_info<std::decay_t<ValueType>>();
+        }
+
+        virtual bool is_type(const RTTITypeInfo& other_type) const override {
+#if REFLECT_LIBRARY_ANY_FASTPATH
+            return other_type.equal_fast(other_type);
+#else
+            return other_type == this->type();
+#endif
+        }
+
+        virtual AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const override {
+            auto self_type = type();
+            if (
+                other_type == self_type
+            ) {
+                return AnyConversionMethod::AsIs;
+            }
+            else if (
+                other_type.get_decayed_hash() == 0 
+                && self_type.get_decayed_hash() && other_type.hash_code() == self_type.get_decayed_hash()
+            ) {
+                if (self_type.has_flags(TypeFlag::TF_IsPointer)) {
+                    return AnyConversionMethod::Deref;
+                }
+                return AnyConversionMethod::AsIs;
+            }
+            else if (
+                self_type.get_decayed_hash() == 0 && other_type.get_decayed_hash() && other_type.get_decayed_hash() == self_type.hash_code()
+            ) {
+                if (other_type.has_flags(TypeFlag::TF_IsPointer)) {
+                    return AnyConversionMethod::TakeAddress;
+                } else if (other_type.has_flags(TypeFlag::TF_IsLValueRef)) {
+                    return AnyConversionMethod::AsIs;
+                } else if (other_type.has_flags(TypeFlag::TF_IsRValueRef)) {
+                    return AnyConversionMethod::Move;
+                }
+                return AnyConversionMethod::AsIs;
+            }
+            else if (
+                self_type.has_flags(TypeFlag::TF_IsObject) && other_type.has_flags(TypeFlag::TF_IsIObject)
+            ) {
+                return AnyConversionMethod::AsIs;
+            }
+
+            return AnyConversionMethod::Impossible;
+        }
+
+        virtual IContainer* clone() const override {
+            if REFLECT_CONSTEXPR (VTIsCopyConstructible<T>) {
+                return new ValueContainer<ValueType>(m_value);
+            } else {
+                ZENO_CHECK(VTIsCopyConstructible<T>);
+            }
+        }
+
+        virtual IContainer* deep_clone() const override {
+            return nullptr;
+        }
+
+        virtual IContainer* deep_move_clone() const override {
+            return nullptr;
+        }
+
+        virtual void* get_data_ptr_unsafe() const override {
+            return const_cast<void*>(reinterpret_cast<const void*>(&m_value));
+        }
+
+        template <typename F, typename = void>
+        struct eq_ : std::false_type {};
+        template <typename F>
+        struct eq_<F, std::enable_if_t<std::is_same_v<bool, decltype(std::declval<F>() == std::declval<F>())>, void>> : std::true_type {};
+        virtual bool is_equal(IContainer* other_container) override {
+            if constexpr (eq_<T>::value) {
+                ValueContainer<T>* other_valuecon = static_cast<ValueContainer<T>*>(other_container);
+                return m_value == other_valuecon->m_value;
+            }
+            else
+                return false;
+        }
+
+        bool is_enable_from_this() override {
+            return false;
+        }
+    };
+
+    template <>
+    class ValueContainer<void> : public IContainer {
+    public:
+        using ValueType = void;
+
+        virtual const RTTITypeInfo& type() const override {
+            return type_info<ValueType>();
+        }
+
+        virtual bool is_type(const RTTITypeInfo& other_type) const override {
+#if REFLECT_LIBRARY_ANY_FASTPATH
+            return other_type.equal_fast(other_type);
+#else
+            return other_type == this->type();
+#endif
+        }
+
+        virtual AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const override {
+            return AnyConversionMethod::Impossible;
+        }
+
+        virtual IContainer* clone() const override {
+            return new ValueContainer<void>();
+        }
+
+        virtual IContainer* deep_clone() const override {
+            return nullptr;
+        }
+
+        virtual IContainer* deep_move_clone() const override {
+            return nullptr;
+        }
+
+        virtual void* get_data_ptr_unsafe() const override {
+            return nullptr;
+        }
+
+        virtual bool is_equal(IContainer* other_container) override {
+            return false;
+        }
+
+        bool is_enable_from_this() override {
+            return false;
+        }
+    };
+
+    template <typename T>
+    class ValueContainer<T*> : public IContainer {
+    public:
+        using ValueType = T*;
+
+        ValueType m_value;
+
+        ValueContainer(ValueType value = nullptr) : m_value(value) {}
+
+        virtual const RTTITypeInfo& type() const override {
+            return type_info<ValueType>();
+        }
+
+        virtual bool is_type(const RTTITypeInfo& other_type) const override {
+#if REFLECT_LIBRARY_ANY_FASTPATH
+            return other_type.equal_fast(this->type());
+#else
+            return other_type == this->type();
+#endif
+        }
+
+        virtual AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const override {
+            auto self_type = type();
+            if (
+                other_type == self_type
+            ) {
+                return AnyConversionMethod::AsIs;
+            }
+            else if (
+                other_type.get_decayed_hash() == 0 
+                && self_type.get_decayed_hash() && other_type.hash_code() == self_type.get_decayed_hash()
+            ) {
+                if (self_type.has_flags(TypeFlag::TF_IsPointer)) {
+                    return AnyConversionMethod::Deref;
+                }
+                return AnyConversionMethod::AsIs;
+            }
+            else if (
+                self_type.get_decayed_hash() == 0 && other_type.get_decayed_hash() && other_type.get_decayed_hash() == self_type.hash_code()
+            ) {
+                if (other_type.has_flags(TypeFlag::TF_IsPointer)) {
+                    return AnyConversionMethod::TakeAddress;
+                } else if (other_type.has_flags(TypeFlag::TF_IsLValueRef)) {
+                    return AnyConversionMethod::AsIs;
+                } else if (other_type.has_flags(TypeFlag::TF_IsRValueRef)) {
+                    return AnyConversionMethod::Move;
+                }
+                return AnyConversionMethod::AsIs;
+            }
+
+            return AnyConversionMethod::Impossible;
+        }
+
+        virtual IContainer* clone() const override {
+            if REFLECT_CONSTEXPR (VTIsCopyConstructible<T*>) {
+                return new ValueContainer<ValueType>(m_value);
+            } else {
+                ZENO_CHECK(VTIsCopyConstructible<T*>);
+            }
+        }
+
+        virtual IContainer* deep_clone() const override {
+            return nullptr;
+        }
+
+        virtual IContainer* deep_move_clone() const override {
+            return nullptr;
+        }
+
+        virtual void* get_data_ptr_unsafe() const override {
+            return const_cast<void*>(reinterpret_cast<const void*>(m_value));
+        }
+
+        virtual bool is_equal(IContainer* other_container) override {
+            return false;
+        }
+
+        bool is_enable_from_this() override {
+            return false;
+        }
+    };
+
+    template <>
+    class ValueContainer<void*> : public IContainer {
+    public:
+        using ValueType = void*;
+
+        ValueType m_value;
+
+        ValueContainer(ValueType value = nullptr) : m_value(value) {}
+
+        virtual const RTTITypeInfo& type() const override {
+            return type_info<ValueType>();
+        }
+
+        virtual bool is_type(const RTTITypeInfo& other_type) const override {
+#if REFLECT_LIBRARY_ANY_FASTPATH
+            return other_type.equal_fast(this->type());
+#else
+            return other_type == this->type();
+#endif
+        }
+
+        virtual AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const override {
+            return AnyConversionMethod::AsIs;
+        }
+
+        virtual IContainer* clone() const override {
+            return new ValueContainer<void*>(m_value);
+        }
+
+        virtual IContainer* deep_clone() const override {
+            return nullptr;
+        }
+
+        virtual IContainer* deep_move_clone() const override {
+            return nullptr;
+        }
+
+        virtual void* get_data_ptr_unsafe() const override {
+            return m_value;
+        }
+
+        virtual bool is_equal(IContainer* other_container) override {
+            return false;
+        }
+         
+        bool is_enable_from_this() override {
+            return false;
+        }
+    };
+
+    template <>
+    class ValueContainer<Any> : public IContainer {
+    public:
+        using ValueType = Any;
+
+        ValueType m_value;
+
+        ValueContainer() : m_value(Any::make_null()) {}
+
+        ValueContainer(const ValueType& value) : m_value(value) {}
+
+        ValueContainer(ValueType&& value) noexcept : m_value(std::move(value)) {}
+
+        virtual const RTTITypeInfo& type() const override {
+            return type_info<ValueType>();
+        }
+
+        virtual bool is_type(const RTTITypeInfo& other_type) const override {
+            return other_type == this->type();
+        }
+
+        virtual AnyConversionMethod is_convertible_to(const RTTITypeInfo& other_type) const override {
+            return AnyConversionMethod::Impossible;
+        }
+
+        virtual IContainer* clone() const override {
+            // 使用复制构造函数来处理Any的克隆，避免递归
+            return new ValueContainer<Any>(m_value);
+        }
+
+        virtual IContainer* deep_clone() const override {
+            return nullptr;
+        }
+
+        virtual IContainer* deep_move_clone() const override {
+            return nullptr;
+        }
+
+        virtual void* get_data_ptr_unsafe() const override {
+            return const_cast<void*>(reinterpret_cast<const void*>(&m_value));
+        }
+
+        virtual bool is_equal(IContainer* other_container) override {
+            return false;
+        }
+         
+        bool is_enable_from_this() override {
+            return false;
+        }
+    };
+
+    template <typename T>
+    Any TEnableAnyFromThis<T>::to_any() {
+        return make_any<T>(this);
+    }
+
+};
+}
+}

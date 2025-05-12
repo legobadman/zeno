@@ -2,11 +2,11 @@
 #include <zeno/extra/GlobalComm.h>
 #include <zeno/utils/logger.h>
 #include <zeno/core/GlobalVariable.h>
-#include <reflect/core.hpp>
-#include <reflect/type.hpp>
-#include <reflect/container/any>
-#include <reflect/container/any>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflect/core.hpp>
+#include <zeno/reflect/type.hpp>
+#include <zeno/reflect/container/any>
+#include <zeno/reflect/container/any>
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 namespace zeno {

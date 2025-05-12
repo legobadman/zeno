@@ -7,7 +7,7 @@
 #include <filesystem>
 #include <zeno/io/iotags.h>
 #include <regex>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 using namespace zeno::reflect;

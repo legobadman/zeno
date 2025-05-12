@@ -8,7 +8,7 @@
 #include <zeno/core/CoreParam.h>
 #include <zeno/core/Assets.h>
 #include <zeno/utils/helper.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 #include <zeno/zeno.h>
 #include <zeno/funcs/ObjectCodec.h>
 #include <zeno/utils/Timer.h>

@@ -17,7 +17,7 @@
 #include "model/graphsmanager.h"
 #include "model/assetsmodel.h"
 #include <zeno/utils/helper.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 #include <regex>
 #include "declmetatype.h"
 #include <unordered_map>

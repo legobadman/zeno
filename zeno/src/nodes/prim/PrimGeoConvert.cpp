@@ -1,7 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/core/reflectdef.h>
 #include <zeno/types/GeometryObject.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 namespace zeno {

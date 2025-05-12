@@ -3,7 +3,7 @@
 #include <zeno/core/Graph.h>
 #include <zeno/utils/string.h>
 #include <zeno/types/IGeometryObject.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 namespace zeno

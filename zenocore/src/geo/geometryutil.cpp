@@ -14,7 +14,7 @@
 #include <deque>
 #include <zeno/utils/interfaceutil.h>
 #include "nanoflann.hpp"
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 namespace zeno

@@ -2,9 +2,9 @@
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
 #include <zeno/extra/SubnetNode.h>
-#include <reflect/metadata.hpp>
-#include <reflect/registry.hpp>
-#include <reflect/container/arraylist>
+#include <zeno/reflect/metadata.hpp>
+#include <zeno/reflect/registry.hpp>
+#include <zeno/reflect/container/arraylist>
 #include <zeno/utils/helper.h>
 
 
@@ -73,12 +73,12 @@ namespace zeno {
         return zeno::reflect::Any();
     }
 
-    ZENO_API bool GlobalVariableManager::updateVariable(const GVariable& newvar)
+    bool GlobalVariableManager::updateVariable(const GVariable& newvar)
     {
         return globalVariableStack.updateVariable(newvar);
     }
 
-    ZENO_API bool GlobalVariableManager::overrideVariable(const GVariable& var)
+    bool GlobalVariableManager::overrideVariable(const GVariable& var)
     {
         return globalVariableStack.overrideVariable(var);
     }
@@ -88,12 +88,12 @@ namespace zeno {
         globalVariableStack.cancelOverride(varname, cancelVar);
     }
 
-    ZENO_API zeno::reflect::Any GlobalVariableManager::getVariable(std::string varname)
+    zeno::reflect::Any GlobalVariableManager::getVariable(std::string varname)
     {
         return globalVariableStack.getVariable(varname);
     }
 
-    ZENO_API GlobalVariableOverride::GlobalVariableOverride(NodeImpl* pNode, std::string gvarName, zeno::reflect::Any var)
+    GlobalVariableOverride::GlobalVariableOverride(NodeImpl* pNode, std::string gvarName, zeno::reflect::Any var)
         : currNode(pNode)
     {
         gvar = GVariable(gvarName, var);
@@ -103,7 +103,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API GlobalVariableOverride::~GlobalVariableOverride()
+    GlobalVariableOverride::~GlobalVariableOverride()
     {
         if (overrideSuccess) {
             GVariable oldvar;
@@ -111,7 +111,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API bool GlobalVariableOverride::updateGlobalVariable(GVariable globalVariable)
+    bool GlobalVariableOverride::updateGlobalVariable(GVariable globalVariable)
     {
         if (zeno::getSession().globalVariableManager->updateVariable(globalVariable)) {
             propagateDirty(currNode, gvar.name);

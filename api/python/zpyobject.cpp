@@ -2,7 +2,8 @@
 #include "apiutil.h"
 #include <zeno/core/Graph.h>
 #include <zeno/utils/interfaceutil.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
+//#include "zeno_types/reflect/reflection.generated.hpp"
 
 
 #define THROW_WHEN_CORE_DESTROYED(wpObj) \

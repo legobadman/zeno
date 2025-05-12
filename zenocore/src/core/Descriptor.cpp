@@ -1,5 +1,5 @@
 #include <zeno/core/Descriptor.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 namespace zeno {
 
@@ -53,8 +53,8 @@ ParamDescriptor::ParamDescriptor(std::string const& comboitemsDesc, std::string 
 {
 }
 
-ZENO_API Descriptor::Descriptor() = default;
-ZENO_API Descriptor::Descriptor(
+Descriptor::Descriptor() = default;
+Descriptor::Descriptor(
   std::vector<SocketDescriptor> const &inputs,
   std::vector<SocketDescriptor> const &outputs,
   std::vector<ParamDescriptor> const &params,

@@ -9,8 +9,8 @@
 #include <zeno/utils/log.h>
 #include <zeno/core/CoreParam.h>
 #include <zeno/core/reflectdef.h>
-#include <reflect/container/any>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflect/container/any>
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 namespace zeno {

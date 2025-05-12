@@ -17,15 +17,15 @@ namespace zeno {
     {
     }
 
-    ZENO_API void ObjectManager::commit()
+    void ObjectManager::commit()
     {
     }
 
-    ZENO_API void ObjectManager::revert()
+    void ObjectManager::revert()
     {
     }
 
-    ZENO_API void ObjectManager::collectingObject(zany obj, NodeImpl* attachNode, bool bView)
+    void ObjectManager::collectingObject(zany obj, NodeImpl* attachNode, bool bView)
     {
         std::lock_guard lck(m_mtx);
 
@@ -65,30 +65,30 @@ namespace zeno {
         }
     }
 
-    ZENO_API void ObjectManager::removeObject(const std::string& id)
+    void ObjectManager::removeObject(const std::string& id)
     {
         std::lock_guard lck(m_mtx);
         m_lastUnregisterObjs.insert(id); //先标记，下一次run的时候在去m_objects中移除
     }
 
-    ZENO_API void ObjectManager::revertRemoveObject(const std::string& id)
+    void ObjectManager::revertRemoveObject(const std::string& id)
     {
         std::lock_guard lck(m_mtx);
         m_lastUnregisterObjs.erase(id); //有一种情况是apply时仅对obj进行modify，此时需要将apply之前加入的待删除obj的id移除，无需下次运行时清除该obj
     }
 
-    ZENO_API void ObjectManager::notifyTransfer(zany obj)
+    void ObjectManager::notifyTransfer(zany obj)
     {
         //std::lock_guard lck(m_mtx);
         //CALLBACK_NOTIFY(notifyTransfer, obj)
     }
 
-    ZENO_API void ObjectManager::viewObject(zany obj, bool bView)
+    void ObjectManager::viewObject(zany obj, bool bView)
     {
         //std::lock_guard lck(m_mtx);
     }
 
-    ZENO_API int ObjectManager::registerObjId(const std::string& objprefix)
+    int ObjectManager::registerObjId(const std::string& objprefix)
     {
         if (m_objRegister.find(objprefix) == m_objRegister.end()) {
             m_objRegister.insert(std::make_pair(objprefix, 0));
@@ -101,7 +101,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API std::set<ObjPath> ObjectManager::getAttachNodes(const std::string& id)
+    std::set<ObjPath> ObjectManager::getAttachNodes(const std::string& id)
     {
         std::lock_guard lck(m_mtx);
         auto it = m_objects.find(id);
@@ -112,7 +112,7 @@ namespace zeno {
         return std::set<ObjPath>();
     }
 
-    ZENO_API void ObjectManager::beforeRun()
+    void ObjectManager::beforeRun()
     {
         std::lock_guard lck(m_mtx);     //可能此时渲染端在load_objects
 
@@ -125,7 +125,7 @@ namespace zeno {
         m_remove.clear();
     }
 
-    ZENO_API void ObjectManager::afterRun()
+    void ObjectManager::afterRun()
     {
         std::lock_guard lck(m_mtx);
         //m_lastViewObjs剩下来的都是上一次view，而这一次没有view的。
@@ -137,7 +137,7 @@ namespace zeno {
         m_removing_objs.clear();
     }
 
-    ZENO_API void ObjectManager::clearLastUnregisterObjs()
+    void ObjectManager::clearLastUnregisterObjs()
     {
         for (auto& key : m_lastUnregisterObjs)
             if (m_objects.find(key) != m_objects.end())
@@ -145,7 +145,7 @@ namespace zeno {
         m_lastUnregisterObjs.clear();
     }
 
-    ZENO_API void ObjectManager::clear()
+    void ObjectManager::clear()
     {
         m_objects.clear();
         m_viewObjs.clear();
@@ -157,7 +157,7 @@ namespace zeno {
         m_frameData.clear();
     }
 
-    ZENO_API void ObjectManager::collect_render_update(zeno::render_update_info info)
+    void ObjectManager::collect_render_update(zeno::render_update_info info)
     {
         for (int i = 0; i < m_render_updates.size(); i++) {
             auto update = m_render_updates[i];
@@ -177,7 +177,7 @@ namespace zeno {
         m_render_updates.clear();
     }
 
-    ZENO_API void ObjectManager::clear_last_run()
+    void ObjectManager::clear_last_run()
     {
         std::lock_guard lck(m_mtx);
         m_newAdded.clear();
@@ -185,12 +185,12 @@ namespace zeno {
         m_remove.clear();
     }
 
-    ZENO_API void ObjectManager::collect_removing_objs(const std::string& objkey)
+    void ObjectManager::collect_removing_objs(const std::string& objkey)
     {
         m_removing_objs.insert(objkey);
     }
 
-    ZENO_API void ObjectManager::remove_attach_node_by_removing_objs()
+    void ObjectManager::remove_attach_node_by_removing_objs()
     {
         for (auto obj_key : m_removing_objs) {
             auto nodes = getAttachNodes(obj_key);
@@ -203,7 +203,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API void ObjectManager::remove_rendering_obj(zany spObj)
+    void ObjectManager::remove_rendering_obj(zany spObj)
     {
         std::string key = zsString2Std(spObj->key());
         if (key.empty())
@@ -211,44 +211,44 @@ namespace zeno {
         m_remove.insert(key);
     }
 
-    ZENO_API void ObjectManager::collect_modify_objs(const std::set<std::string>& newobjKeys, bool isView)
+    void ObjectManager::collect_modify_objs(const std::set<std::string>& newobjKeys, bool isView)
     {
         std::lock_guard lck(m_mtx);
         if (isView)
             m_modify.insert(newobjKeys.begin(), newobjKeys.end());;
     }
 
-    ZENO_API void ObjectManager::remove_modify_objs(const std::set<std::string>& removeobjKeys)
+    void ObjectManager::remove_modify_objs(const std::set<std::string>& removeobjKeys)
     {
         std::lock_guard lck(m_mtx);
         m_modify.clear();
     }
 
-    ZENO_API void ObjectManager::collect_modify_objs(const std::string& newobjKey, bool isView)
+    void ObjectManager::collect_modify_objs(const std::string& newobjKey, bool isView)
     {
         std::lock_guard lck(m_mtx);
         if (isView)
             m_modify.insert(newobjKey);;
     }
 
-    ZENO_API void ObjectManager::getModifyObjsInfo(std::set<std::string>& modifyInteractiveObjs)
+    void ObjectManager::getModifyObjsInfo(std::set<std::string>& modifyInteractiveObjs)
     {
         std::lock_guard lck(m_mtx);
         modifyInteractiveObjs = m_modify;
     }
 
-    ZENO_API void ObjectManager::syncObjNodeInfo(zany, NodeImpl* spNode)
+    void ObjectManager::syncObjNodeInfo(zany, NodeImpl* spNode)
     {
         std::lock_guard lck(m_mtx);
     }
 
-    ZENO_API void ObjectManager::export_render_infos(std::vector<zeno::render_update_info>& infos)
+    void ObjectManager::export_render_infos(std::vector<zeno::render_update_info>& infos)
     {
         std::lock_guard lck(m_mtx);
         infos = m_render_updates;
     }
 
-    ZENO_API void ObjectManager::export_loading_objs(RenderObjsInfo& info)
+    void ObjectManager::export_loading_objs(RenderObjsInfo& info)
     {
         //这个函数应该没用了，因为view已经设计成即时移除了，每次只会发送打了view的对象
         std::lock_guard lck(m_mtx);
@@ -272,7 +272,7 @@ namespace zeno {
         export_light_objs(info);
     }
 
-    ZENO_API void ObjectManager::export_light_objs(RenderObjsInfo& info)
+    void ObjectManager::export_light_objs(RenderObjsInfo& info)
     {
         std::function<void(std::shared_ptr<zeno::IObject>)> exportLightObjs = [&exportLightObjs, &info](std::shared_ptr<zeno::IObject>const& objToBeConvert) {
             if (std::shared_ptr<zeno::ListObject> lst = std::dynamic_pointer_cast<zeno::ListObject>(objToBeConvert)) {
@@ -295,7 +295,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API void ObjectManager::export_all_view_objs(RenderObjsInfo& info)
+    void ObjectManager::export_all_view_objs(RenderObjsInfo& info)
     {
         std::lock_guard lck(m_mtx);
         for (auto& key : m_viewObjs) {
@@ -305,7 +305,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API void ObjectManager::export_all_view_objs(std::map<std::string, zany>& info)
+    void ObjectManager::export_all_view_objs(std::map<std::string, zany>& info)
     {
         std::lock_guard lck(m_mtx);
         for (auto& key : m_viewObjs) {
@@ -315,7 +315,7 @@ namespace zeno {
         }
     }
 
-    ZENO_API std::shared_ptr<zeno::IObject> ObjectManager::getObj(const std::string& name)
+    std::shared_ptr<zeno::IObject> ObjectManager::getObj(const std::string& name)
     {
         std::lock_guard lck(m_mtx);
         if (m_objects.find(name) != m_objects.end())
@@ -323,7 +323,7 @@ namespace zeno {
         return nullptr;
     }
 
-    ZENO_API ObjectNodeInfo ObjectManager::getObjectAndViewNode(const std::string& name)
+    ObjectNodeInfo ObjectManager::getObjectAndViewNode(const std::string& name)
     {
         ObjectNodeInfo info;
 

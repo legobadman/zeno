@@ -25,7 +25,7 @@
 #include <cctype>
 #include <zeno/core/GlobalVariable.h>
 #include <zeno/core/typeinfo.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 //#include <Python.h>
 //#include <pybind11/pybind11.h>
 

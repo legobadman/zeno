@@ -12,7 +12,7 @@
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/utils/vectorutil.h>
-#include <reflect/type.hpp>
+#include <zeno/reflect/type.hpp>
 #include "../utils/zfxutil.h"
 #include "functionimpl.h"
 #include "funcDesc.h"

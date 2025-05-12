@@ -2,7 +2,7 @@
 #include <zeno/core/Graph.h>
 #include "apiutil.h"
 #include <zeno/utils/helper.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 
 
 using namespace zeno::reflect;

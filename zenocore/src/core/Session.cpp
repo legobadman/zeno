@@ -26,14 +26,14 @@
 #include <regex>
 
 
-#include <reflect/core.hpp>
-#include <reflect/type.hpp>
-#include <reflect/metadata.hpp>
-#include <reflect/registry.hpp>
-#include <reflect/container/any>
-#include <reflect/container/arraylist>
+#include <zeno/reflect/core.hpp>
+#include <zeno/reflect/type.hpp>
+#include <zeno/reflect/metadata.hpp>
+#include <zeno/reflect/registry.hpp>
+#include <zeno/reflect/container/any>
+#include <zeno/reflect/container/arraylist>
 #include <zeno/core/reflectdef.h>
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 //#include "zeno_nodes/reflect/reflection.generated.hpp"
 
 //#include <Python.h>

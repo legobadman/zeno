@@ -4,11 +4,11 @@
 #include <zeno/types/ObjectDef.h>
 #include <zeno/core/reflectdef.h>
 #include <glm/glm.hpp>
-#include "reflect/metadata.hpp"
-#include "reflect/registry.hpp"
-#include "reflect/container/object_proxy"
-#include "reflect/container/any"
-#include "reflect/container/arraylist"
+#include <zeno/reflect/metadata.hpp>
+#include <zeno/reflect/registry.hpp>
+#include <zeno/reflect/container/object_proxy>
+#include <zeno/reflect/container/any>
+#include <zeno/reflect/container/arraylist>
 #include <vector>
 #include <memory>
 

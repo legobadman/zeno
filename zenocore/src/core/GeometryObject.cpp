@@ -6,7 +6,7 @@
 #include <zeno/utils/format.h>
 #include "geotopology.h"
 #include "../utils/zfxutil.h"
-#include "zeno_types/reflect/reflection.generated.hpp"
+#include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>
 #include <zeno/utils/variantswitch.h>

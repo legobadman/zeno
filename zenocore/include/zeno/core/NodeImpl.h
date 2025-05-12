@@ -18,7 +18,7 @@
 #include <zeno/utils/safe_at.h>
 #include <zeno/core/CoreParam.h>
 #include <functional>
-#include <reflect/registry.hpp>
+#include <zeno/reflect/registry.hpp>
 
 
 namespace zeno
