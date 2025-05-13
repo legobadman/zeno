@@ -351,10 +351,17 @@ struct GraphicsManager {
                 return std::tuple{stamp_base, stamp_change};
             };
 
-            if (auto const *prim_in0 = dynamic_cast<zeno::PrimitiveObject *>(obj))
-            {
+            std::shared_ptr<zeno::PrimitiveObject> prim_in_lslislSp;
+            if (auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(obj)) {
+                prim_in_lslislSp = geo->m_impl->toPrimitive();
+            }
+            else if (auto const* prim_in0 = dynamic_cast<zeno::PrimitiveObject*>(obj)) {
                 // vvv deepcopy to cihou following inplace ops vvv
-                auto prim_in_lslislSp = std::make_shared<zeno::PrimitiveObject>(*prim_in0);
+                prim_in_lslislSp = std::make_shared<zeno::PrimitiveObject>(*prim_in0);
+            }
+
+            if (prim_in_lslislSp)
+            {
                 // ^^^ Don't wuhui, I mean: Literial Synthetic Lazy internal static Local Shared Pointer
                 auto prim_in = prim_in_lslislSp.get();
 
@@ -766,12 +773,12 @@ struct GraphicsManager {
     explicit GraphicsManager(Scene *scene) : scene(scene) {
     }
 
-    bool load_shader_uniforms(std::vector<std::pair<std::string, zeno::IObject *>> const &objs)
+    bool load_shader_uniforms(std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>> const &objs)
     {
         std::vector<float4> shaderUniforms;
         shaderUniforms.resize(0);
         for (auto const &[key, obj] : objs) {
-            if (auto prim_in = dynamic_cast<zeno::PrimitiveObject *>(obj)){
+            if (auto prim_in = dynamic_cast<zeno::PrimitiveObject *>(obj.get())){
                 if ( prim_in->userData()->get_int("ShaderUniforms", 0)==1 )
                 {
 
@@ -1132,6 +1139,41 @@ struct GraphicsManager {
         // return ins.has_changed();
         return changed;
     }
+
+    void add_object(std::shared_ptr<zeno::IObject> obj) {
+        std::string objKey = zsString2Std(obj->key());
+        if (objKey.empty())
+            return;
+        if (!scene->drawOptions->updateMatlOnly) {
+            if (auto cam = std::dynamic_pointer_cast<zeno::CameraObject>(obj)) {
+                scene->camera->setCamera(cam->get()); // pyb fix
+            }
+        }
+
+        auto& objs = graphics.m_curr;
+        auto it = objs.find(objKey);
+        if (it == objs.end()) {
+            auto ig = std::make_unique<ZxxGraphic>(objKey, obj.get());
+            graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));
+        }
+        else {
+            objs.erase(objKey);
+            auto ig = std::make_unique<ZxxGraphic>(objKey, obj.get());
+            graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));  //先erase再添加，通过it->second = std::move(ig)方式添加会失效
+            //if (!ig)
+            //    return;
+            //ig->key = objKey;
+            //it->second = std::move(ig);
+        }
+    }
+
+    void remove_object(const std::string key) {
+        auto& wtf = graphics.m_curr;
+        if (wtf.find(key) == wtf.end())
+            return;
+        wtf.erase(key);
+    }
+
     bool load_objects(std::vector<std::pair<std::string, zeno::IObject *>> const &objs) {
         auto ins = graphics.insertPass();
         objOrder.clear();
@@ -1223,6 +1265,39 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         };
     }
 
+    std::map<std::string, int> objsType;
+    void setUpdateLightCameraMaterialOnly(std::map<std::string, std::shared_ptr<zeno::IObject>>& addObjs, std::vector<std::string>& removeList) {
+        if (!addObjs.empty() || !removeList.empty()) {
+            int lightCameraCount = 0, materialCount = 0, normalCount = 0;
+            for (auto& key : removeList) {
+                int type = objsType[key];
+                type == 0 ? lightCameraCount++ : type == 1 ? materialCount++ : normalCount++;
+            }
+            for (auto [key, spObj] : addObjs) {
+                if (spObj->userData()->get_int("isL", 0) || std::dynamic_pointer_cast<zeno::CameraObject>(spObj)) {
+                    objsType[key] = 0;
+                    lightCameraCount++;
+                }
+                else if (std::dynamic_pointer_cast<zeno::MaterialObject>(spObj)) {
+                    objsType[key] = 1;
+                    materialCount++;
+                }
+                else {
+                    objsType[key] = 2;
+                    normalCount++;
+                }
+            }
+            for (auto& key : removeList) {
+                objsType.erase(key);
+            }
+            lightNeedUpdate = lightCameraCount > 0 || normalCount > 0;
+            scene->drawOptions->needRefresh = lightCameraCount > 0 || normalCount > 0;
+            matNeedUpdate = materialCount > 0 || normalCount > 0;
+            meshNeedUpdate = normalCount > 0;
+            scene->drawOptions->updateMatlOnly = !lightNeedUpdate && !meshNeedUpdate;
+    }
+}
+
     explicit RenderEngineOptx(Scene *scene_) : scene(scene_) {
         zeno::log_info("OptiX Render Engine started...");
 #ifdef OPTIX_BASE_GL
@@ -1237,6 +1312,116 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
         char *argv[] = {nullptr};
         xinxinoptix::optixinit(std::size(argv), argv);
+    }
+
+    void reload(const zeno::render_reload_info& info) override {
+        auto& sess = zeno::getSession();
+        if (zeno::Reload_SwitchGraph == info.policy) {
+            //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
+            graphicsMan->graphics.clear();
+
+            std::shared_ptr<zeno::Graph> spGraph = sess.getGraphByPath(info.current_ui_graph);
+            if (!spGraph) {
+                return;
+            }
+            //TODO: 要考虑asset的情况
+            const auto& viewnodes = spGraph->get_viewnodes();
+            //其实是否可以在外面提前准备好对象列表？
+            for (auto viewnode : viewnodes) {
+                auto spNode = spGraph->getNode(viewnode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    graphicsMan->add_object(spObject);
+                }
+                else {
+
+                }
+            }
+            matNeedUpdate = meshNeedUpdate = true;
+        }
+        else if (zeno::Reload_ToggleView == info.policy) {
+            assert(info.objs.size() == 1);
+            const auto& update = info.objs[0];
+            auto& wtf = graphicsMan->graphics.m_curr;
+            if (update.reason == zeno::Update_View) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    auto it = wtf.find(update.uuidpath_node_objkey);
+                    if (it == wtf.end()) {
+                        graphicsMan->add_object(spObject);
+                        matNeedUpdate = meshNeedUpdate = true;
+                    }
+                }
+            }
+            else if (update.reason == zeno::Update_Remove) {
+                //节点被移除后，对象已经不存在了，这里拿key直接删就行
+                auto it = wtf.find(update.uuidpath_node_objkey);
+                if (it != wtf.end()) {
+                    graphicsMan->remove_object(update.uuidpath_node_objkey);
+                    matNeedUpdate = meshNeedUpdate = true;
+                }
+            }
+        }
+        else if (zeno::Reload_Calculation == info.policy) {
+            for (const zeno::render_update_info& update : info.objs) {
+                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
+                assert(spNode);
+                zeno::zany spObject = spNode->get_default_output_object();
+                if (spObject) {
+                    //可能是对象没有通过子图的Suboutput连出来
+                    graphicsMan->add_object(spObject);
+                    matNeedUpdate = meshNeedUpdate = true;
+                }
+            }
+        }
+    }
+
+    void load_objects(const zeno::RenderObjsInfo& objs) override {
+
+        //light update condition
+        graphicsMan->load_light_objects(objs.lightObjs);
+
+        //增删对象无法沿用viewport逻辑，否则always模式移动数值滑块会有拖影
+        graphicsMan->objOrder.clear();
+        size_t idx = 0;
+        std::map<std::string, zeno::zany> allViewObjs, allConvertedViewObjs, addObjs;
+        zeno::getSession().objsMan->export_all_view_objs(allViewObjs);
+        for (auto& [key, obj] : allViewObjs) {
+            scene->convertListObjs(obj, allConvertedViewObjs);              //展平所有view对象
+        }
+        for (auto& [key, obj] : objs.newObjs) {
+            scene->convertListObjs(obj, addObjs);                           //展平所有新增对象
+        }
+        for (auto& [key, obj] : objs.modifyObjs) {
+            scene->convertListObjs(obj, addObjs);                           //展平所有修改对象
+        }
+        for (auto [key, spObj] : addObjs) {
+            graphicsMan->add_object(spObj);                                 //加入graphics
+            graphicsMan->objOrder[key] = idx++;
+        }
+        std::vector<std::string> removeList;                                //根据实际不使用的对象删除
+        for (auto& [key, spObj] : graphicsMan->graphics.m_curr)
+            if (allConvertedViewObjs.find(key) == allConvertedViewObjs.end())
+                removeList.push_back(key);
+        for (auto& key : removeList)
+            graphicsMan->remove_object(key);
+
+        //设置仅更新灯光相机材质
+        setUpdateLightCameraMaterialOnly(addObjs, removeList);
+
+        if (!objs.allObjects.empty()) {
+            std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>> vecObjs;
+            for (auto [key, spObj] : objs.allObjects) {
+                vecObjs.push_back(std::make_pair(key, spObj));
+            }
+            graphicsMan->load_shader_uniforms(vecObjs);
+        }
+    }
+
+    void optxShowBackground(bool showbg) override {
+        xinxinoptix::show_background(showbg);
     }
 
     void update() override {
@@ -1267,7 +1452,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 matNeedUpdate = meshNeedUpdate = false;
             }
         }
-        graphicsMan->load_shader_uniforms(scene->objectsMan->pairs());
+        graphicsMan->load_shader_uniforms(scene->objectsMan->pairsShared());
     }
 
 #define MY_CAM_ID(cam) cam.m_nx, cam.m_ny, cam.m_rotation, cam.m_pos, cam.m_fov, cam.focalPlaneDistance, cam.m_aperture

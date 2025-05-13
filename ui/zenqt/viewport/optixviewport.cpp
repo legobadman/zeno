@@ -12,6 +12,7 @@
 #include <zeno/funcs/ParseObjectFromUi.h>
 #include "viewport/displaywidget.h"
 #include <zenovis/ObjectsManager.h>
+#include <zenovis/RenderEngine.h>
 #include "zassert.h"
 #include "nodeeditor/gv/zenographseditor.h"
 #include "style/dpiscale.h"
@@ -59,10 +60,23 @@ OptixWorker::OptixWorker(const QString& graph_path, Zenovis *pzenoVis)
 
     //启动光追时加载obj
     //TODO: 是否需要在worker线程load?
+    ZASSERT_EXIT(m_zenoVis);
+    auto session = m_zenoVis->getSession();
+    ZASSERT_EXIT(session);
+    auto scene = session->get_scene();
+    ZASSERT_EXIT(scene);
+    ZASSERT_EXIT(scene->renderMan);
+    if (zenovis::RenderEngine* pEngine = scene->renderMan->getEngine()) {
+        pEngine->optxShowBackground(true);
+    }
+
     zeno::render_reload_info info;
+    GraphsManager* graphsMgr = zenoApp->graphsManager();
+    info.current_ui_graph = graphsMgr->currentGraphPath().toStdString();
     info.policy = zeno::Reload_SwitchGraph;
-    info.current_ui_graph = graph_path.toStdString();
-    m_zenoVis->reload(info);
+    if (graphsMgr->getGraph({ "main" }) && info.current_ui_graph != "") {
+        m_zenoVis->reload(info);
+    }
 }
 
 OptixWorker::~OptixWorker()
@@ -405,17 +419,20 @@ void OptixWorker::on_reload_objects(const zeno::render_reload_info& info)
 
 void OptixWorker::onSetBackground(bool bShowBg)
 {
-    auto& ud = zeno::getSession().userData();
-    ud.set2("optix_show_background", bShowBg);
-
+    //auto& ud = zeno::getSession().userData();
+    //ud.set2("optix_show_background", bShowBg);
     ZASSERT_EXIT(m_zenoVis);
     auto session = m_zenoVis->getSession();
     ZASSERT_EXIT(session);
     auto scene = session->get_scene();
     ZASSERT_EXIT(scene);
+    ZASSERT_EXIT(scene->renderMan);
+    if (zenovis::RenderEngine* pEngine = scene->renderMan->getEngine()) {
+        pEngine->optxShowBackground(bShowBg);
+    }
     //scene->objectsMan->needUpdateLight = true;
     //scene->drawOptions->simpleRender = true;
-    updateFrame();
+    //updateFrame();
 }
 
 void OptixWorker::onSetSampleNumber(int sample_number) {
