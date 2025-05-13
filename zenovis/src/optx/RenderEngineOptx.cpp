@@ -1265,39 +1265,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         };
     }
 
-    std::map<std::string, int> objsType;
-    void setUpdateLightCameraMaterialOnly(std::map<std::string, std::shared_ptr<zeno::IObject>>& addObjs, std::vector<std::string>& removeList) {
-        if (!addObjs.empty() || !removeList.empty()) {
-            int lightCameraCount = 0, materialCount = 0, normalCount = 0;
-            for (auto& key : removeList) {
-                int type = objsType[key];
-                type == 0 ? lightCameraCount++ : type == 1 ? materialCount++ : normalCount++;
-            }
-            for (auto [key, spObj] : addObjs) {
-                if (spObj->userData()->get_int("isL", 0) || std::dynamic_pointer_cast<zeno::CameraObject>(spObj)) {
-                    objsType[key] = 0;
-                    lightCameraCount++;
-                }
-                else if (std::dynamic_pointer_cast<zeno::MaterialObject>(spObj)) {
-                    objsType[key] = 1;
-                    materialCount++;
-                }
-                else {
-                    objsType[key] = 2;
-                    normalCount++;
-                }
-            }
-            for (auto& key : removeList) {
-                objsType.erase(key);
-            }
-            lightNeedUpdate = lightCameraCount > 0 || normalCount > 0;
-            scene->drawOptions->needRefresh = lightCameraCount > 0 || normalCount > 0;
-            matNeedUpdate = materialCount > 0 || normalCount > 0;
-            meshNeedUpdate = normalCount > 0;
-            scene->drawOptions->updateMatlOnly = !lightNeedUpdate && !meshNeedUpdate;
-    }
-}
-
     explicit RenderEngineOptx(Scene *scene_) : scene(scene_) {
         zeno::log_info("OptiX Render Engine started...");
 #ifdef OPTIX_BASE_GL
@@ -1375,48 +1342,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                     matNeedUpdate = meshNeedUpdate = true;
                 }
             }
-        }
-    }
-
-    void load_objects(const zeno::RenderObjsInfo& objs) override {
-
-        //light update condition
-        graphicsMan->load_light_objects(objs.lightObjs);
-
-        //增删对象无法沿用viewport逻辑，否则always模式移动数值滑块会有拖影
-        graphicsMan->objOrder.clear();
-        size_t idx = 0;
-        std::map<std::string, zeno::zany> allViewObjs, allConvertedViewObjs, addObjs;
-        zeno::getSession().objsMan->export_all_view_objs(allViewObjs);
-        for (auto& [key, obj] : allViewObjs) {
-            scene->convertListObjs(obj, allConvertedViewObjs);              //展平所有view对象
-        }
-        for (auto& [key, obj] : objs.newObjs) {
-            scene->convertListObjs(obj, addObjs);                           //展平所有新增对象
-        }
-        for (auto& [key, obj] : objs.modifyObjs) {
-            scene->convertListObjs(obj, addObjs);                           //展平所有修改对象
-        }
-        for (auto [key, spObj] : addObjs) {
-            graphicsMan->add_object(spObj);                                 //加入graphics
-            graphicsMan->objOrder[key] = idx++;
-        }
-        std::vector<std::string> removeList;                                //根据实际不使用的对象删除
-        for (auto& [key, spObj] : graphicsMan->graphics.m_curr)
-            if (allConvertedViewObjs.find(key) == allConvertedViewObjs.end())
-                removeList.push_back(key);
-        for (auto& key : removeList)
-            graphicsMan->remove_object(key);
-
-        //设置仅更新灯光相机材质
-        setUpdateLightCameraMaterialOnly(addObjs, removeList);
-
-        if (!objs.allObjects.empty()) {
-            std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>> vecObjs;
-            for (auto [key, spObj] : objs.allObjects) {
-                vecObjs.push_back(std::make_pair(key, spObj));
-            }
-            graphicsMan->load_shader_uniforms(vecObjs);
         }
     }
 
