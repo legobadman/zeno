@@ -1,5 +1,3 @@
-#include "C:/zeno-lego/zenocore/src/core/zenoreflecttypes.cpp"
-
 #include <string>
 #include <vector>
 #include <map>
