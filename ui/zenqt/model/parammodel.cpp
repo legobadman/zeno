@@ -2,12 +2,12 @@
 #include "zassert.h"
 #include "util/uihelper.h"
 #include <zeno/core/data.h>
-#include "model/LinkModel.h"
-#include "model/GraphModel.h"
-#include "model/customuimodel.h"
+#include "LinkModel.h"
+#include "GraphModel.h"
+#include "customuimodel.h"
 #include "variantptr.h"
-#include "model/graphsmanager.h"
-#include "model/graphstreemodel.h"
+#include "graphsmanager.h"
+#include "GraphsTreeModel.h"
 #include <zeno/core/NodeImpl.h>
 #include <zeno/utils/helper.h>
 #include "declmetatype.h"
@@ -173,7 +173,7 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
 
     spNode->register_update_param_type(
         [this](const std::string& name, zeno::ParamType type, bool bInput) {
-        updateParamData(QString::fromStdString(name), type, QtRole::ROLE_PARAM_TYPE, bInput);
+        updateParamData(QString::fromStdString(name), (quint64)type, QtRole::ROLE_PARAM_TYPE, bInput);
         });
 
     spNode->register_update_param_control(
@@ -336,7 +336,7 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
             for (int k = 0; k < groupItem->rowCount(); k++)
             {
                 auto paramItem = groupItem->child(k);
-                auto& paramName = paramItem->data(QtRole::ROLE_PARAM_NAME).toString();
+                const auto& paramName = paramItem->data(QtRole::ROLE_PARAM_NAME).toString();
                 int row = indexFromName(paramName, true);
                 if (row != -1)
                 {
@@ -352,7 +352,7 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
     for (int i = 0; i < pOutputsRoot->rowCount(); i++)
     {
         auto paramItem = pOutputsRoot->child(i);
-        auto& paramName = paramItem->data(QtRole::ROLE_PARAM_NAME).toString();
+        const auto& paramName = paramItem->data(QtRole::ROLE_PARAM_NAME).toString();
         int row = indexFromName(paramName, false);
         paramItem->setData(m_items[row].bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE);
         paramItem->setData(m_items[row].bVisible, QtRole::ROLE_PARAM_VISIBLE);
@@ -444,7 +444,7 @@ void ParamsModel::updateCustomUiModelIncremental(const zeno::params_change_info&
                 int row = indexFromName(paramItem->data(QtRole::ROLE_PARAM_NAME).toString(), true);
                 if (row != -1)
                 {
-                    paramItem->setData(m_items[row].type, QtRole::ROLE_PARAM_TYPE);
+                    paramItem->setData((quint64)m_items[row].type, QtRole::ROLE_PARAM_TYPE);
                     paramItem->setData(m_items[row].control, QtRole::ROLE_PARAM_CONTROL);
                     paramItem->setData(QVariant::fromValue(m_items[row].value), QtRole::ROLE_PARAM_VALUE);
                     paramItem->setData(m_items[row].bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE);
@@ -593,7 +593,7 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     switch (role)
     {
     case QtRole::ROLE_PARAM_NAME:       return param.name;
-    case QtRole::ROLE_PARAM_TYPE:       return param.type;
+    case QtRole::ROLE_PARAM_TYPE:       return (quint64)param.type;
     case QtRole::ROLE_PARAM_VALUE:      return QVariant::fromValue(param.value);
     case QtRole::ROLE_PARAM_PERSISTENT_INDEX: return QPersistentModelIndex(index);
     case QtRole::ROLE_PARAM_CONTROL:    return param.control;
@@ -697,27 +697,27 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
         case gParamType_Float:      return any_cast<float>(param.value);
         case gParamType_Int:        return any_cast<int>(param.value);
         case gParamType_Vec2f: {
-            auto& vec = any_cast<zeno::vec2f>(param.value);
+            const auto& vec = any_cast<zeno::vec2f>(param.value);
             return QVariantList{ vec[0], vec[1] };
         }
         case gParamType_Vec3f: {
-            auto& vec = any_cast<zeno::vec3f>(param.value);
+            const auto& vec = any_cast<zeno::vec3f>(param.value);
             return QVariantList{ vec[0], vec[1], vec[2]};
         }
         case gParamType_Vec4f: {
-            auto& vec = any_cast<zeno::vec4f>(param.value);
+            const auto& vec = any_cast<zeno::vec4f>(param.value);
             return QVariantList{ vec[0], vec[1], vec[2], vec[3] };
         }
         case gParamType_Vec2i: {
-            auto& vec = any_cast<zeno::vec2i>(param.value);
+            const auto& vec = any_cast<zeno::vec2i>(param.value);
             return QVariantList{ vec[0], vec[1] };
         }
         case gParamType_Vec3i: {
-            auto& vec = any_cast<zeno::vec3i>(param.value);
+            const auto& vec = any_cast<zeno::vec3i>(param.value);
             return QVariantList{ vec[0], vec[1], vec[2] };
         }
         case gParamType_Vec4i: {
-            auto& vec = any_cast<zeno::vec4i>(param.value);
+            const auto& vec = any_cast<zeno::vec4i>(param.value);
             return QVariantList{ vec[0], vec[1], vec[2], vec[3] };
         }
         case gParamType_Bool:   return any_cast<bool>(param.value);

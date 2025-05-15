@@ -27,7 +27,7 @@ SubnetNode::SubnetNode(INode* pNode)
     //m_customUi = cl->m_customui;
     //添加一些default的输入输出
     zeno::ParamTab tab;
-    zeno::ParamGroup default;
+    zeno::ParamGroup default_group;
 
     zeno::ParamUpdateInfo info;
 
@@ -40,7 +40,7 @@ SubnetNode::SubnetNode(INode* pNode)
     param.control = zeno::Lineedit;
     param.bSocketVisible = false;
     info.param = param;
-    default.params.push_back(param);
+    default_group.params.push_back(param);
 
     zeno::ParamPrimitive outputparam;
     outputparam.bInput = false;
@@ -62,7 +62,7 @@ SubnetNode::SubnetNode(INode* pNode)
     objOutput.type = gParamType_Geometry;
     objOutput.socketType = zeno::Socket_Output;
 
-    tab.groups.emplace_back(std::move(default));
+    tab.groups.emplace_back(std::move(default_group));
     m_customUi.inputPrims.emplace_back(std::move(tab));
     m_customUi.inputObjs.push_back(objInput);
     m_customUi.outputPrims.push_back(outputparam);
@@ -300,6 +300,10 @@ void SubnetNode::apply() {
         //suboutput的结果是放在Input的port上面（因为Suboutput放一个输出参数感觉怪怪的）
         bool bPrimoutput = suboutput->get_input_object_params().empty();
         zany result = suboutput->get_input("port");
+        if (auto numobj = std::dynamic_pointer_cast<NumericObject>(result)) {
+            int j;
+            j = 0;
+        }
         if (result) {
             bSetOutput = true;
             zany spObject = result->clone();

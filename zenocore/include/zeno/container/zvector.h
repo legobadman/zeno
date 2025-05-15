@@ -3,6 +3,8 @@
 #ifndef __ZVECTOR_H__
 #define __ZVECTOR_H__
 
+#include <utility>
+
 namespace zeno
 {
 
@@ -59,7 +61,7 @@ public:
             reallocate(sz);
         }
         if (sz > m_size) {
-            //´Óm_sizeµ½sz£¬ÒÀ´Î¹¹ÔìT
+            //ä»m_sizeåˆ°szï¼Œä¾æ¬¡æ„é€ T
             for (size_t i = 0; i < sz - m_size; i++) {
                 new (locate(i)) T();
             }
@@ -126,9 +128,9 @@ private:
     }
 
     void reallocate(size_t new_sz) noexcept {
-        //µ±new_sz³¬¹ıcapablityÊ±£¬ÖØĞÂ·ÖÅäÒ»¶ÎĞÂµÄÄÚ´æ¿é
+        //å½“new_szè¶…è¿‡capablityæ—¶ï¼Œé‡æ–°åˆ†é…ä¸€æ®µæ–°çš„å†…å­˜å—
         if (new_sz == -1) {
-            //Ã»ÓĞÖ¸¶¨·ÖÅä¶àÉÙ£¬¾Í·ÖÅäÔ­À´µÄÁ½±¶
+            //æ²¡æœ‰æŒ‡å®šåˆ†é…å¤šå°‘ï¼Œå°±åˆ†é…åŸæ¥çš„ä¸¤å€
             new_sz = m_capability * 2;
             if (new_sz == 0)
                 new_sz = 1;

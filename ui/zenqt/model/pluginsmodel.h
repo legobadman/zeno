@@ -15,7 +15,11 @@ class PluginsModel : public QAbstractListModel
     struct _pluginItem
     {
         QString path;   //插件dll的路径
+#ifdef _WIN32
         HMODULE hDll;
+#else
+        
+#endif
         bool bLoaded;   //false为加载不正常，比如路径不存在
     };
 public:

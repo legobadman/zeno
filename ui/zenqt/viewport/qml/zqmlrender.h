@@ -42,7 +42,7 @@ public:
     void fakeMouseReleaseEvent(ViewMouseInfo event_info);
     void fakeMouseMoveEvent(ViewMouseInfo event_info);
     void fakeWheelEvent(ViewMouseInfo event_info);
-    zenovis::Session* ZQmlRender::getSession() const;
+    zenovis::Session* getSession() const;
 
 signals:
     void requestUpdate();

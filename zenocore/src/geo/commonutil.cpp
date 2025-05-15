@@ -28,6 +28,20 @@ namespace zeno
         std::swap(arr, newarr);
     }
 
+    template <typename DstT, typename SrcT> constexpr auto reinterpret_bits(SrcT &&val) {
+        using Src = std::remove_cv_t<std::remove_reference_t<SrcT>>;
+        using Dst = std::remove_cv_t<std::remove_reference_t<DstT>>;
+        static_assert(sizeof(Src) == sizeof(Dst),
+                      "Source Type and Destination Type must be of the same size");
+        static_assert(std::is_trivially_copyable_v<Src> && std::is_trivially_copyable_v<Dst>,
+                      "Both types should be trivially copyable.");
+        static_assert(std::alignment_of_v<Src> % std::alignment_of_v<Dst> == 0,
+                      "The original type should at least have an alignment as strict.");
+        Dst dst{};
+        std::memcpy(&dst, const_cast<const Src *>(&val), sizeof(Dst));
+        return dst;
+    }
+
     static void set_special_attr_remap(PrimitiveObject* p, std::string attr_name, std::unordered_map<std::string, int>& facesetNameMap) {
         UserData* pUserData = dynamic_cast<UserData*>(p->userData());
         int faceset_count = pUserData->get2<int>(attr_name + "_count", 0);
@@ -1648,7 +1662,7 @@ namespace zeno
         return img;
     }
 
-    void write_pfm(std::string& path, int w, int h, vec3f* rgb) {
+    void write_pfm(const std::string& path, int w, int h, vec3f* rgb) {
         std::string header = zeno::format("PF\n{} {}\n-1.0\n", w, h);
         std::vector<char> data(header.size() + w * h * sizeof(vec3f));
         memcpy(data.data(), header.data(), header.size());
@@ -1656,14 +1670,14 @@ namespace zeno
         file_put_binary(data, path);
     }
 
-    void write_pfm(zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
+    void write_pfm(const zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
         auto ud = image->userData();
         int w = ud->get_int("w");
         int h = ud->get_int("h");
         write_pfm(zsString2Std(path), w, h, image->verts->data());
     }
 
-    void write_jpg(zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
+    void write_jpg(const zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
         int w = image->userData()->get_int("w");
         int h = image->userData()->get_int("h");
         std::vector<uint8_t> colors;

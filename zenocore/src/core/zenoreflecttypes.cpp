@@ -1,5 +1,3 @@
-#pragma once
-
 #include <zeno/core/common.h>
 #include <zeno/types/ObjectDef.h>
 #include <zeno/core/reflectdef.h>

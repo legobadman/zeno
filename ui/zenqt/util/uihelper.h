@@ -7,6 +7,7 @@
 #include <zeno/core/data.h>
 #include <QTabWidget>
 #include <QStandardItemModel>
+#include <QTextLayout>
 
 
 class BlockSignalScope
@@ -91,7 +92,7 @@ public:
                                   QModelIndexList& outputs,
                                   bool bEnsureSRCDST_lastKey = true);
     static QVector<qreal> scaleFactors();
-    static QString UiHelper::getNaiveParamPath(const QModelIndex& param, int dim = -1);
+    static QString getNaiveParamPath(const QModelIndex& param, int dim = -1);
     static zeno::CurvesData getCurvesFromQVar(const QVariant& qvar, bool* bValid = nullptr);
     static QVariant getQVarFromCurves(const zeno::CurvesData& curves);
 

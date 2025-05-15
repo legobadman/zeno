@@ -1,4 +1,4 @@
-#include "graphstreemodel.h"
+#include "GraphsTreeModel.h"
 #include "uicommon.h"
 #include "variantptr.h"
 #include <zeno/core/common.h>

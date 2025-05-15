@@ -107,7 +107,7 @@ QVariant VertexModel::data(const QModelIndex& index, int role) const {
     if (role == Qt::DisplayRole) {
         if (col == 0 || col == 1) {
             //Point Number
-            auto& [face, vertidx, point] = spObject->vertex_info(row);
+            const auto& [face, vertidx, point] = spObject->vertex_info(row);
             if (col == 0)
                 return QString("%1:%2").arg(face).arg(vertidx);
             else

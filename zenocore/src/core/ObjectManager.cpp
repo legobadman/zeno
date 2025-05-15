@@ -289,7 +289,7 @@ namespace zeno {
             }
         };
         for (auto& key : m_viewObjs) {
-            auto& it = m_objects.find(key);
+            auto it = m_objects.find(key);
             if (it != m_objects.end())
                 exportLightObjs(it->second.obj);
         }
@@ -299,7 +299,7 @@ namespace zeno {
     {
         std::lock_guard lck(m_mtx);
         for (auto& key : m_viewObjs) {
-            auto& it = m_objects.find(key);
+            auto it = m_objects.find(key);
             if (it != m_objects.end())
                 info.allObjects.emplace(std::move(std::pair(key, it->second.obj)));
         }
@@ -309,7 +309,7 @@ namespace zeno {
     {
         std::lock_guard lck(m_mtx);
         for (auto& key : m_viewObjs) {
-            auto& it = m_objects.find(key);
+            auto it = m_objects.find(key);
             if (it != m_objects.end())
                 info.emplace(std::make_pair(key, it->second.obj));
         }

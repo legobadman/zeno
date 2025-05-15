@@ -11,9 +11,11 @@
 #include <zeno/types/MaterialObject.h>
 #include <zeno/types/CameraObject.h>
 #ifdef __linux__
-    #include<unistd.h>
+    #include <unistd.h>
     #include <sys/statfs.h>
 #endif
+#include <chrono>
+#include <thread>
 #define MIN_DISKSPACE_MB 1024
 
 namespace zeno {
@@ -120,17 +122,17 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, GlobalComm::ViewObjec
     //wait in two case: 1. available space minus current frame size less than 1024MB, 2. available space less or equal than 1024MB
     while ( ((freeSpace >> 20) - MIN_DISKSPACE_MB) < (currentFrameSize >> 20)  || (freeSpace >> 20) <= MIN_DISKSPACE_MB)
     {
-        #ifdef __linux__
-            zeno::log_critical("Disk space almost full on {}, wait for zencache remove", std::filesystem::u8path(cachedir).string());
-            sleep(2);
-            statfs(std::filesystem::u8path(cachedir).c_str(), &diskInfo);
-            freeSpace = diskInfo.f_bsize * diskInfo.f_bavail;
+        // #ifdef __linux__
+        //     zeno::log_critical("Disk space almost full on {}, wait for zencache remove", std::filesystem::u8path(cachedir).string());
+        //     ::sleep(2);
+        //     statfs(std::filesystem::u8path(cachedir).c_str(), &diskInfo);
+        //     freeSpace = diskInfo.f_bsize * diskInfo.f_bavail;
 
-        #else
+        // #else
             zeno::log_critical("Disk space almost full on {}, wait for zencache remove", std::filesystem::u8path(cachedir).root_path().string());
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             freeSpace = std::filesystem::space(std::filesystem::u8path(cachedir)).free;
-        #endif
+        // #endif
     }
     for (int i = 0; i < 3; i++)
     {

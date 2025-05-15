@@ -103,6 +103,8 @@ namespace zeno {
             //only one element
             return 1;
         }
+        default:
+            return 0;
         }
     }
 
@@ -958,9 +960,7 @@ namespace zeno {
                 //}
             }
         }
-        else {
-            return ZfxVariable();
-        }
+        return ZfxVariable();
     }
 
     void FunctionManager::setAttrValue(const std::string& attrname, const std::string& channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -1413,15 +1413,16 @@ namespace zeno {
                                 }
                                 else if (visit_attr == "x") {
                                     //TODO
+                                    return 0.f;
                                 }
                                 else if (visit_attr == "y") {
-
+                                    return 0.f;
                                 }
                                 else if (visit_attr == "z") {
-
+                                    return 0.f;
                                 }
                                 else if (visit_attr == "w") {
-
+                                    return 0.f;
                                 }
                                 else {
                                     //unknown attr
@@ -1458,7 +1459,7 @@ namespace zeno {
                                 ZfxVariable ret;
                                 ret.value.resize(nVarSize);
                                 for (int i = 0; i < nVarSize; i++) {
-                                    auto& v = get_zfxvar<glm::vec3>(args[0].value[i]);
+                                    auto v = get_zfxvar<glm::vec3>(args[0].value[i]);
                                     ret.value[i] = v[1];
                                 }
                                 return ret;

@@ -565,10 +565,9 @@ void DockContent_Editor::initConnections()
 
             QString filePath = QFileDialog::getOpenFileName(this, "File to Open", "", "Zeno Module (*.dll)");
 
+#if 0
             HMODULE hDll = LoadLibrary(filePath.toUtf8().data());
 
-
-#if 0
             if (0) {
                 spNode = sess.mainGraph->getNode("NumericInt1");
                 if (spNode)

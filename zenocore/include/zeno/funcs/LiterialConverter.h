@@ -5,6 +5,7 @@
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/MatrixObject.h>
 #include <zeno/types/StringObject.h>
+#include <zeno/utils/safe_dynamic_cast.h>
 
 namespace zeno {
 

@@ -259,7 +259,7 @@ namespace zeno {
         assert(adjustParamVal.has_value());
         ParamType type = adjustParamVal.type().hash_code();
         if (type == zeno::types::gParamType_PrimVariant) {
-            PrimVar& var = zeno::reflect::any_cast<PrimVar>(adjustParamVal);
+            PrimVar var = zeno::reflect::any_cast<PrimVar>(adjustParamVal);
             std::visit([&](auto& arg) {
                 using T = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<T, std::string>) {
