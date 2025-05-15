@@ -369,7 +369,7 @@ namespace zenoio
         //link:
         if (bInput && sockObj.HasMember("links") && sockObj["links"].IsArray())
         {
-            auto& arr = sockObj["links"].GetArray();
+            auto arr = sockObj["links"].GetArray();
             for (int i = 0; i < arr.Size(); i++) {
                 auto& linkObj = arr[i];
                 const std::string& outnode = linkObj["out-node"].GetString();
@@ -485,7 +485,7 @@ namespace zenoio
                 //link:
                 if (paramValue.HasMember("links") && paramValue["links"].IsArray())
                 {
-                    auto& arr = paramValue["links"].GetArray();
+                    auto arr = paramValue["links"].GetArray();
                     for (int i = 0; i < arr.Size(); i++) {
                         auto& linkObj = arr[i];
                         const std::string& outnode = linkObj["out-node"].GetString();
@@ -557,7 +557,8 @@ namespace zenoio
 
     zeno::CustomUI ZenReader::_parseCustomUI(const rapidjson::Value& customuiObj)
     {
-        return _parseCustomUI(std::string(), customuiObj, zeno::LinksData());
+        zeno::LinksData lnks;
+        return _parseCustomUI(std::string(), customuiObj, lnks);
     }
 
 }

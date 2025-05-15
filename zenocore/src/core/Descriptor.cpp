@@ -12,7 +12,6 @@ namespace zeno {
         : type(type)
         , name(name)
         , defl(defl)
-        , doc(doc)
         , control(ctrl) {}
 
 SocketDescriptor::SocketDescriptor(std::string const& comboitemsDesc, std::string const& name, std::string const& defl)

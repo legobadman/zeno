@@ -543,7 +543,7 @@ namespace zeno
             return -1;
         }
 
-        auto& vertices = point_vertices(pointid);
+        auto vertices = point_vertices(pointid);
         auto iter = std::find(vertices.cbegin(), vertices.cend(), linear_vertex_id);
         assert(iter != vertices.end());
         size_t idx = static_cast<size_t>(std::distance(vertices.cbegin(), iter));
@@ -561,7 +561,7 @@ namespace zeno
             return -1;
         }
 
-        auto& vertices = point_vertices(pointid);
+        auto vertices = point_vertices(pointid);
         auto iter = std::find(vertices.cbegin(), vertices.cend(), linear_vertex_id);
         assert(iter != vertices.end());
         size_t idx = static_cast<size_t>(std::distance(vertices.cbegin(), iter));
@@ -810,7 +810,7 @@ namespace zeno
             HEdge* nnextEdge = nextEdge->next;
             assert(nnextEdge);
 
-            auto& [prevPoint, prevEdge, pprevEdge] = getPrev(outEdge);
+            auto [prevPoint, prevEdge, pprevEdge] = getPrev(outEdge);
             assert(prevEdge && pprevEdge);
             if (nextEdge && nnextEdge == prevEdge) {
                 //triangle，整个面和所有隶属这个面的半边都要移除
@@ -988,7 +988,7 @@ namespace zeno
                 }
             }
         } else {
-            auto& [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
+            auto [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
 
             if (vertEdge->next == pprevedge) {
                 size_t removeFaceid = vertEdge->face;
@@ -1141,7 +1141,7 @@ namespace zeno
             auto pFace = m_faces[face_id];
             assert(pFace);
             auto firstH = pFace->h;
-            auto& [prevPoint, prevEdge, pprevEdge] = getPrev(firstH);
+            auto [prevPoint, prevEdge, pprevEdge] = getPrev(firstH);
             auto newedge = std::make_shared<HEdge>();
             newedge->point = prevEdge->point;
             newedge->next = firstH;

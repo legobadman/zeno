@@ -3,6 +3,7 @@
 #include <zeno/utils/vec.h>
 #include <zeno/core/IObject.h>
 #include <zeno/utils/Exception.h>
+#include <zeno/utils/Error.h>
 #include <variant>
 #include <zeno/core/data.h>
 

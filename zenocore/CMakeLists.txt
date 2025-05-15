@@ -33,6 +33,10 @@ if (ZENO_ENABLE_OPENMP)
     endif()
 endif()
 
+if(UNIX AND NOT APPLE)
+    target_link_libraries(zenocore PRIVATE uuid)
+endif()
+
 if (ZENO_BENCHMARKING)
     target_compile_definitions(zenocore PUBLIC -DZENO_BENCHMARKING)
 endif()

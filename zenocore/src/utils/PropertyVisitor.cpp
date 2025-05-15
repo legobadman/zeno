@@ -1,6 +1,8 @@
 
 #include "zeno/utils/PropertyVisitor.h"
 
+#if 0
+
 zeno::reflect::NodeParameterBase::NodeParameterBase(zeno::NodeImpl *Node) : Target(Node) {}
 
 zeno::reflect::NodeParameterBase::~NodeParameterBase() = default;
@@ -33,3 +35,5 @@ void zeno::reflect::NodeParameterBase::RunBindingHooks() const {
         Hook();
     }
 }
+
+#endif

@@ -1,5 +1,5 @@
 #include "assetsmodel.h"
-#include "graphmodel.h"
+#include "GraphModel.h"
 #include <zeno/core/Session.h>
 #include <zeno/core/Assets.h>
 #include <zeno/io/zdawriter.h>

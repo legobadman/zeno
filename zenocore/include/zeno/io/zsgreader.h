@@ -11,6 +11,7 @@ namespace zenoio
     {
     public:
         ZsgReader();
+        virtual ~ZsgReader() = default;
         ZENO_API ZSG_PARSE_RESULT openFile(const std::wstring& fn);
 
     protected:

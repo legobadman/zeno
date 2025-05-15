@@ -33,7 +33,7 @@ static CUSTOMUI_CTRL_ITEM_INFO customui_controlList[] = {
     {"SpinBoxSlider",       zeno::SpinBoxSlider,zeno::types::gParamType_Int,    "qrc:/icons/parameter_control_slider.svg"},
 };
 
-void appendClonedItem(QVector<ParamItem>& parasm, ParamsModel* m_paramsModel, QModelIndex& idx) {
+void appendClonedItem(QVector<ParamItem>& parasm, ParamsModel* m_paramsModel, const QModelIndex& idx) {
     ParamItem item;
     item.bInput = m_paramsModel->data(idx, QtRole::ROLE_ISINPUT).toBool();
     item.control = (zeno::ParamControl)m_paramsModel->data(idx, QtRole::ROLE_PARAM_CONTROL).toInt();
@@ -66,7 +66,7 @@ QVariant cloneItemGetData(const QVector<ParamItem>& clonedItems, const QModelInd
         return clonedItems[index.row()].name;
     }
     else if (role == QtRole::ROLE_PARAM_TYPE) {
-        return clonedItems[index.row()].type;
+        return (quint64)clonedItems[index.row()].type;
     }
     else if (role == QtRole::ROLE_PARAM_CONTROL) {
         return clonedItems[index.row()].control;
@@ -219,7 +219,7 @@ void CustomUIModel::initCustomuiConnections(QStandardItemModel* customuiStandard
             group->insertRow(first, newItem->data(QtRole::ROLE_PARAM_NAME).toString());
         }
         else if (elemtype == VPARAM_PARAM) {
-            QModelIndex& tabindx = parent.parent();
+            const QModelIndex& tabindx = parent.parent();
             if (ParamGroupModel* groupmodel = tabmodel->index(tabindx.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>()) {
                 ParamPlainModel* paramsmodel = groupmodel->index(parent.row()).data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
                 //paramsmodel->insertRow(first, newItem->data(QtRole::ROLE_PARAM_NAME).toString());
@@ -239,7 +239,7 @@ void CustomUIModel::initCustomuiConnections(QStandardItemModel* customuiStandard
             group->removeRow(first);
         }
         else if (elemtype == VPARAM_PARAM) {
-            QModelIndex& tabindx = parent.parent();
+            const QModelIndex& tabindx = parent.parent();
             if (ParamGroupModel* groupmodel = tabmodel->index(tabindx.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>()) {
                 ParamPlainModel* paramsmodel = groupmodel->index(parent.row()).data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
                 paramsmodel->removeRow(first);
@@ -259,7 +259,7 @@ void CustomUIModel::initCustomuiConnections(QStandardItemModel* customuiStandard
                 ParamGroupModel* group = tabmodel->index(topLeft.parent().row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>();
                 group->setData(topLeft, topLeft.data(QtRole::ROLE_PARAM_NAME), QtRole::ROLE_PARAM_NAME);
             } else if (elemtype == VPARAM_PARAM) {
-                QModelIndex& tabindx = topLeft.parent().parent();
+                const QModelIndex& tabindx = topLeft.parent().parent();
                 if (ParamGroupModel* groupmodel = tabmodel->index(tabindx.row()).data(QmlCUIRole::GroupModel).value<ParamGroupModel*>()) {
                     ParamPlainModel* paramsmodel = groupmodel->index(topLeft.parent().row()).data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
                     paramsmodel->setData(topLeft, topLeft.data(QtRole::ROLE_PARAM_NAME), QtRole::ROLE_PARAM_NAME);
@@ -1110,7 +1110,7 @@ QVariant ControlItemListModel::data(const QModelIndex& index, int role) const
     } else if (role == QtRole::ROLE_PARAM_CONTROL) {
         return customui_controlList[index.row()].ctrl;
     } else if (role == QtRole::ROLE_PARAM_TYPE) {
-        return customui_controlList[index.row()].type;
+        return (quint64)customui_controlList[index.row()].type;
     } else if (role == Qt::DecorationRole) {
         return customui_controlList[index.row()].icon;
     }

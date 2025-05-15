@@ -15,6 +15,7 @@ namespace zeno
         virtual void apply() = 0;
         virtual CustomUI export_customui() const;
         virtual NodeType type() const;
+        virtual ~INode() = default;     //暂时不考虑abi问题
 
         zany get_input(const zeno::String& param);
         zany get_output(const zeno::String& param);

@@ -505,7 +505,7 @@ struct FrameBufferPicker : IPicker {
 
             auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(it->second.get());
             if (geo) {
-                std::vector<vec3f>& pos = geo->m_impl->points_pos();
+                const std::vector<vec3f>& pos = geo->m_impl->points_pos();
                 vao->bind();
                 vbo->bind_data(pos.data(), pos.size() * sizeof(pos[0]));
                 vbo->attribute(0, sizeof(float) * 0, sizeof(float) * 3, GL_FLOAT, 3);

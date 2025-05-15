@@ -7,28 +7,7 @@
 #include <zeno/utils/log.h>
 
 namespace zeno{
-class KdNode;
-
-class KdTree {
-protected:
-	int n_pts;
-	int bkt_size;
-	std::vector<vec3f> pts;
-	std::vector<int> pidx;
-	KdNode* root;
-    void split(const std::pair<vec3f, vec3f> &bnds, int lid, int rid, int &cut_dim, float &cut_val, int &n_lo);
-    KdNode* construct_tree(int lid, int rid, std::pair<vec3f, vec3f>& bnd_box);
-
-public:
-	KdTree(const std::vector<vec3f>& pa, int n, int bs = 10);
-	~KdTree() {
-        if (root != NULL) delete root;
-    }
-	std::set<int> fix_radius_search(const vec3f& point, float radius);
-
-    friend class KdSplit;
-    friend class KdLeaf;
-};
+class KdTree;
 
 class KdNode {
 protected:
@@ -38,6 +17,27 @@ public:
 	virtual void fix_radius_search(float box_dist, float radius, const vec3f& point, std::set<int>& closest) = 0;
 
 	friend class KdTree;
+};
+
+class KdTree {
+public:
+	KdTree(const std::vector<vec3f>& pa, int n, int bs = 10);
+	~KdTree() {
+        if (root != NULL) delete root;
+    }
+	std::set<int> fix_radius_search(const vec3f& point, float radius);
+
+    friend class KdSplit;
+    friend class KdLeaf;
+
+protected:
+	int n_pts;
+	int bkt_size;
+	std::vector<vec3f> pts;
+	std::vector<int> pidx;
+	KdNode* root;
+    void split(const std::pair<vec3f, vec3f> &bnds, int lid, int rid, int &cut_dim, float &cut_val, int &n_lo);
+    KdNode* construct_tree(int lid, int rid, std::pair<vec3f, vec3f>& bnd_box);
 };
 
 class KdSplit : public KdNode {
@@ -62,7 +62,7 @@ public:
         if (child[1])
             delete child[1];
     }
-	void fix_radius_search(float box_dist, float radius, const vec3f& point, std::set<int>& closest);
+	void fix_radius_search(float box_dist, float radius, const vec3f& point, std::set<int>& closest) override;
 };		
 
 
@@ -73,7 +73,7 @@ protected:
 public:
 	KdLeaf(int l, int r) : lid(l), rid(r) {}
 	~KdLeaf() {}
-	void fix_radius_search(float box_dist, float radius, const vec3f& point, std::set<int>& closest);
+	void fix_radius_search(float box_dist, float radius, const vec3f& point, std::set<int>& closest) override;
 };
 
 } // namespace zeno

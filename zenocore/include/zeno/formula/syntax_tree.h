@@ -151,6 +151,14 @@ struct ZfxVariable
     ZfxVariable(zfxvariant&& var) {
         value.emplace_back(var);
     }
+    ZfxVariable(const zfxvariant& var) {
+        value.push_back(var);
+    }
+
+    template <typename T, typename = std::enable_if_t<std::is_constructible_v<zfxvariant, T>>>
+    ZfxVariable(T&& val) {
+        value.emplace_back(std::forward<T>(val));
+    }
 };
 
 using VariableTable = std::map<std::string, ZfxVariable>;

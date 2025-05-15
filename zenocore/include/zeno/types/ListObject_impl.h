@@ -3,6 +3,7 @@
 #include <zeno/core/coredata.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/utils/safe_dynamic_cast.h>
+#include <zeno/funcs/LiterialConverter.h>
 #include <set>
 #include <vector>
 #include <string>

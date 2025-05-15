@@ -151,9 +151,9 @@ struct GraphicsManager {
     bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
         for (auto& [key, spObject] : spDict->get()) {
             assert(spObject);
-            std::string const& key = zsString2Std(spObject->key());
-            if (spDict->m_new_added.find(key) != spDict->m_new_added.end() ||
-                spDict->m_modify.find(key) != spDict->m_modify.end()) {
+            std::string const& skey = zsString2Std(spObject->key());
+            if (spDict->m_new_added.find(skey) != spDict->m_new_added.end() ||
+                spDict->m_modify.find(skey) != spDict->m_modify.end()) {
                 bool ret = false;
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                     ret = process_listobj(_spList);

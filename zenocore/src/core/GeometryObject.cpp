@@ -57,10 +57,10 @@ namespace zeno
 
     std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
         std::shared_ptr<PrimitiveObject> spPrim = std::make_shared<PrimitiveObject>();
-        std::vector<vec3f>& vec_pos = points_pos();
+        std::vector<vec3f> vec_pos = points_pos();
         int nPoints = m_spTopology->npoints();
         assert(nPoints == vec_pos.size());
-        spPrim->resize(nPoints);
+        spPrim->verts.resize(nPoints);
         for (int i = 0; i < nPoints; i++) {
             spPrim->verts[i] = vec_pos[i];
         }
@@ -192,7 +192,7 @@ namespace zeno
     }
 
     bool GeometryObject::remove_point(int ptnum) {
-        std::vector<vec3f>& vec_pos = points_pos();
+        std::vector<vec3f> vec_pos = points_pos();
         assert(m_spTopology->npoints() == vec_pos.size());
 
         if (m_vert_attrs.size() > 0) {
@@ -201,8 +201,8 @@ namespace zeno
         }
 
         copyTopologyAccordtoUseCount();
-        std::vector<int>& linearVertexIdx = m_spTopology->point_vertices(ptnum);
-        std::vector<int>& facesIdx = m_spTopology->point_faces(ptnum);
+        std::vector<int> linearVertexIdx = m_spTopology->point_vertices(ptnum);
+        std::vector<int> facesIdx = m_spTopology->point_faces(ptnum);
 
         bool ret = m_spTopology->remove_point(ptnum);
         if (ret) {
@@ -816,7 +816,7 @@ namespace zeno
         std::vector<int> removedPtnums;
         std::vector<int> removedVertices;
         for (auto& faceid: faces) {
-            std::vector<int>& vertices = m_spTopology->face_vertices(faceid);
+            std::vector<int> vertices = m_spTopology->face_vertices(faceid);
             std::copy(vertices.begin(), vertices.end(), std::back_inserter(removedVertices));
         }
 
@@ -835,7 +835,7 @@ namespace zeno
                 }
             }
             for (auto& [name, attrib_vec] : m_face_attrs) {
-                for (auto& it = faces.rbegin(); it != faces.rend(); ++it) {
+                for (auto it = faces.rbegin(); it != faces.rend(); ++it) {
                     removeAttribElem(attrib_vec, *it);
                 }
             }
@@ -869,6 +869,8 @@ namespace zeno
         case ATTR_FACE: return m_face_attrs.size();
         case ATTR_POINT: return m_point_attrs.size();
         case ATTR_VERTEX: return m_vert_attrs.size();
+        default:
+            return 0;
         }
     }
 }

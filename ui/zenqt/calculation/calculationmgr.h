@@ -37,7 +37,7 @@ class CalculationMgr : public QObject
 public:
     CalculationMgr(QObject* parent);
     Q_PROPERTY(RunStatus::Value runStatus READ getRunStatus WRITE setRunStatus NOTIFY runStatus_changed)
-    RunStatus::Value CalculationMgr::getRunStatus() const;
+    RunStatus::Value getRunStatus() const;
 
     Q_PROPERTY(bool autoRun READ getAutoRun WRITE setAutoRun NOTIFY autorun_changed)
     bool getAutoRun() const;

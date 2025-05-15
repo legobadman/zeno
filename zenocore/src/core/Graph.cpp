@@ -719,7 +719,8 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, NodeImpl* node, const s
         return false;
     };
     if (bParamWildcard || (!bPrimType && isSubnetInputOutputParam(node, paramName))) {
-        if (linkedToSpecificType(this, node, paramName, bPrimType, std::set<std::string>()))
+        std::set<std::string> visited;
+        if (linkedToSpecificType(this, node, paramName, bPrimType, visited))
             return;
     }
 }
@@ -819,7 +820,7 @@ NodeImpl* Graph::createNode(
         std::string nodecls = cls;
         auto it = nodeClass.find(nodecls);
         if (it == nodeClass.end()) {
-            upNode = std::make_unique<NodeImpl>(nullptr);   //¿Õ¿Ç
+            upNode = std::make_unique<NodeImpl>(nullptr);   //ç©ºå£³
             pNode = upNode.get();
             pNode->initUuid(this, nodecls);
             uuid = pNode->get_uuid();
@@ -1093,7 +1094,7 @@ bool Graph::removeNode(std::string const& name) {
         removeLink(edge);
     }
 
-    //ÔÙÍ¨ÖªÇ°¶ËÉ¾½Úµã
+    //å†é€šçŸ¥å‰ç«¯åˆ èŠ‚ç‚¹
     CALLBACK_NOTIFY(removeNode, name)
 
     spNode->mark_dirty_objs();
@@ -1286,7 +1287,7 @@ void Graph::update_load_info(const std::string& nodecls, bool bDisable) {
             iter3->second->update_load_info(bDisable);
         }
     }
-    //Òªµİ¹é±éÀúËùÓĞ×ÓÍ¼
+    //è¦é€’å½’éå†æ‰€æœ‰å­å›¾
     for (const std::string& subnetnode : subnet_nodes) {
         auto pNodeImpl = m_nodes[subnetnode].get();
         auto spSubnetNode = dynamic_cast<SubnetNode*>(pNodeImpl);

@@ -791,7 +791,7 @@ QList<SEARCH_RESULT> GraphModel::search(const QString& content, SearchType searc
             NodeItem* pItem = m_nodes[m_name2uuid[subnode]];
             if (!pItem->optSubgraph.has_value())
                 continue;
-            QList<SEARCH_RESULT>& subnodeRes = pItem->optSubgraph.value()->search(content, searchType, searchOpts);
+            const QList<SEARCH_RESULT>& subnodeRes = pItem->optSubgraph.value()->search(content, searchType, searchOpts);
             for (auto& res: subnodeRes)
                 results.push_back(res);
         }
@@ -1485,7 +1485,7 @@ void GraphModel::setMute(const QModelIndex& idx, bool bOn)
 QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)
 {
     auto spCoreGraph = m_impl->m_wpCoreGraph;
-    ZASSERT_EXIT(spCoreGraph, false);
+    ZASSERT_EXIT(spCoreGraph, "");
 
     std::string oldName = idx.data(QtRole::ROLE_NODE_NAME).toString().toStdString();
     newName = QString::fromStdString(spCoreGraph->updateNodeName(oldName, newName.toStdString()));
@@ -1497,7 +1497,7 @@ void GraphModel::updateSocketValue(const QModelIndex& nodeidx, const QString soc
     m_impl->m_wpCoreGraph->hasNode("");
     if (ParamsModel* paramModel = params(nodeidx))
     {
-        QModelIndex& socketIdx = paramModel->paramIdx(socketName, true);
+        const QModelIndex& socketIdx = paramModel->paramIdx(socketName, true);
         paramModel->setData(socketIdx, newValue, QtRole::ROLE_PARAM_VALUE);
     }
 }

@@ -318,7 +318,7 @@ namespace zenoio {
                     {
                         std::string socketName = output.name.GetString();
                         zeno::NodeData node;
-                        _parseSocket("", false, nodeCls, socketName, false, output.value, node, lnks);
+                        _parseSocket("", false, nodeCls, socketName, nodeCls, output.value, node, lnks);
                     }
                 }
             }

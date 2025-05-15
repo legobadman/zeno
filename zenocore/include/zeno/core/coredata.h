@@ -7,6 +7,7 @@
 #include <zeno/container/zvector.h>
 #include <zeno/container/zsharedptr.h>
 #include <reflect/container/any>
+#include <zeno/utils/Error.h>
 #include <cassert>
 
 namespace zeno
@@ -35,6 +36,8 @@ namespace zeno
             case 0: return x;
             case 1: return y;
             case 2: return z;
+            default:
+                throw makeError<UnimplError>("index out of range");
             }
         }
 
@@ -44,6 +47,8 @@ namespace zeno
             case 0: return x;
             case 1: return y;
             case 2: return z;
+            default:
+                throw makeError<UnimplError>("index out of range");
             }
         }
     };
@@ -60,6 +65,8 @@ namespace zeno
             case 0: return x;
             case 1: return y;
             case 2: return z;
+            default:
+                throw makeError<UnimplError>("index out of range");
             }
         }
 
@@ -69,6 +76,8 @@ namespace zeno
             case 0: return x;
             case 1: return y;
             case 2: return z;
+            default:
+                throw makeError<UnimplError>("index out of range");
             }
         }
     };

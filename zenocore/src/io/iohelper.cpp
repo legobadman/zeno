@@ -1433,7 +1433,7 @@ namespace zenoio
         {
             if (controlObj["items"].IsArray())
             {
-                auto& arr = controlObj["items"].GetArray();
+                auto arr = controlObj["items"].GetArray();
                 std::vector<std::string> items;
                 for (int i = 0; i < arr.Size(); i++)
                 {

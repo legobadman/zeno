@@ -28,9 +28,12 @@ PluginsModel::PluginsModel(QObject* parent)
         if (_item.bLoaded) {
             zeno::getSession().beginLoadModule(path.toStdString());
             zeno::scope_exit sp([&]() { zeno::getSession().endLoadModule(); });
-
+#ifdef _WIN32
             _item.hDll = LoadLibrary(path.toUtf8().data());
             ZASSERT_EXIT(_item.hDll != INVALID_HANDLE_VALUE);
+#else
+
+#endif
         }
         m_items.append(_item);
     }
@@ -39,7 +42,11 @@ PluginsModel::PluginsModel(QObject* parent)
 PluginsModel::~PluginsModel()
 {
     for (auto _item : m_items) {
+        #ifdef _WIN32
         FreeLibrary(_item.hDll);
+        #else
+
+        #endif
     }
     m_items.clear();
 }
@@ -92,6 +99,7 @@ static QString getFileName(const QString& path) {
 }
 
 bool PluginsModel::removeRows(int row, int count, const QModelIndex& parent) {
+#ifdef _WIN32
     beginRemoveRows(parent, row, row);
     bool ret = FreeLibrary(m_items[row].hDll);
 
@@ -116,6 +124,9 @@ bool PluginsModel::removeRows(int row, int count, const QModelIndex& parent) {
     m_items.removeAt(row);
     endRemoveRows();
     return true;
+#else
+    return false;
+#endif
 }
 
 QHash<int, QByteArray> PluginsModel::roleNames() const {
@@ -127,6 +138,7 @@ QHash<int, QByteArray> PluginsModel::roleNames() const {
 }
 
 void PluginsModel::addPlugin(const QString& filePath) {
+#ifdef _WIN32
     if (!filePath.isEmpty()) {
         HMODULE hDll = 0;
         {
@@ -157,4 +169,7 @@ void PluginsModel::addPlugin(const QString& filePath) {
             //TODO: 提示框
         }
     }
+#else
+    //todo: linux case
+#endif
 }

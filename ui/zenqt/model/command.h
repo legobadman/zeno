@@ -9,7 +9,7 @@
 class AddNodeCommand : public QUndoCommand
 {
 public:
-    AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QStringList& graphPath);
+    AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, const QStringList& graphPath);
     ~AddNodeCommand();
     void redo() override;
     void undo() override;
@@ -26,7 +26,7 @@ private:
 class RemoveNodeCommand : public QUndoCommand
 {
 public:
-    RemoveNodeCommand(zeno::NodeData& nodeData, QStringList& graphPath);
+    RemoveNodeCommand(zeno::NodeData& nodeData, const QStringList& graphPath);
     ~RemoveNodeCommand();
     void redo() override;
     void undo() override;
@@ -41,7 +41,7 @@ private:
 class LinkCommand : public QUndoCommand
 {
 public:
-    LinkCommand(bool bAddLink, const zeno::EdgeInfo& link, QStringList& graphPath);
+    LinkCommand(bool bAddLink, const zeno::EdgeInfo& link, const QStringList& graphPath);
     void redo() override;
     void undo() override;
 
@@ -58,7 +58,7 @@ private:
 class ModelDataCommand : public QUndoCommand
 {
 public:
-    ModelDataCommand(const QModelIndex& index, const QVariant& oldData, const QVariant& newData, int role, QStringList& graphPath);
+    ModelDataCommand(const QModelIndex& index, const QVariant& oldData, const QVariant& newData, int role, const QStringList& graphPath);
     void redo() override;
     void undo() override;
 
@@ -76,7 +76,7 @@ private:
 class NodeStatusCommand : public QUndoCommand
 {
 public:
-    NodeStatusCommand(bool isSetView, const QString& name, bool bOn, QStringList& graphPath);
+    NodeStatusCommand(bool isSetView, const QString& name, bool bOn, const QStringList& graphPath);
     void redo() override;
     void undo() override;
 

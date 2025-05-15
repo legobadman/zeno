@@ -695,12 +695,12 @@ namespace zeno {
             auto bboxCenter = (bmin + bmax) / 2;
             user_data->set2("_pivot", bboxCenter);
             if (object->has_attr(ATTR_POINT, "pos") && !object->has_attr(ATTR_POINT, "_origin_pos")) {
-                auto& pos = object->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+                const auto& pos = object->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
                 object->create_attr(ATTR_POINT, "_origin_pos", pos);
             }
             if (object->has_attr(ATTR_POINT, "nrm") && !object->has_attr(ATTR_POINT, "_origin_nrm")) {
                 
-                auto& nrm = object->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+                const auto& nrm = object->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
                 object->create_attr(ATTR_POINT, "_origin_nrm", nrm);
             }
         }
@@ -739,8 +739,8 @@ namespace zeno {
 
             if (spObj->has_attr(ATTR_POINT, "_origin_pos")) {
                 // transform pos
-                auto& pos = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
-                auto& opos = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_pos");
+                const auto& pos = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+                const auto& opos = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_pos");
                 spObj->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
                     auto p = zeno::vec_to_other<glm::vec3>(old_pos);
                     auto t = transform_matrix * glm::vec4(p, 1.0f);
@@ -751,8 +751,8 @@ namespace zeno {
             }
             if (spObj->has_attr(ATTR_POINT, "_origin_nrm")) {
                 // transform nrm
-                auto& nrm = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
-                auto& onrm = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_nrm");
+                const auto& nrm = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+                const auto& onrm = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_nrm");
                 spObj->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
                     auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
                     glm::mat3 norm_matrix(transform_matrix);

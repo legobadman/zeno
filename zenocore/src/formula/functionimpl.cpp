@@ -90,7 +90,7 @@ namespace zeno
             );
         }
 
-        AttrVar zfxVarToAttrVar(const ZfxVariable& var) {
+        static AttrVar zfxVarToAttrVar(const ZfxVariable& var) {
             int N = var.value.size();
             if (N == 1) {
                 return std::visit([&](auto&& arg)->AttrVar {
@@ -151,42 +151,42 @@ namespace zeno
             GeoAttrType type = spGeo->get_attr_type(grp, name);
             std::vector<zfxvariant> zfxvariantVector;
             if (type == ATTR_INT) {
-                std::vector<int>& intVector = spGeo->get_attrs<int>(grp, name);
+                std::vector<int> intVector = spGeo->get_attrs<int>(grp, name);
                 zfxvariantVector.resize(intVector.size());
                 for (size_t i = 0; i < intVector.size(); ++i) {
                     zfxvariantVector[i] = intVector[i];
                 }
             }
             else if (type == ATTR_FLOAT) {
-                std::vector<float>& intVector = spGeo->get_attrs<float>(grp, name);
+                std::vector<float> intVector = spGeo->get_attrs<float>(grp, name);
                 zfxvariantVector.resize(intVector.size());
                 for (size_t i = 0; i < intVector.size(); ++i) {
                     zfxvariantVector[i] = intVector[i];
                 }
             }
             else if (type == ATTR_STRING) {
-                std::vector<std::string>& intVector = spGeo->get_attrs<std::string>(grp, name);
+                std::vector<std::string> intVector = spGeo->get_attrs<std::string>(grp, name);
                 zfxvariantVector.resize(intVector.size());
                 for (size_t i = 0; i < intVector.size(); ++i) {
                     zfxvariantVector[i] = intVector[i];
                 }
             }
             else if (type == ATTR_VEC2) {
-                std::vector<zeno::vec2f>& intVector = spGeo->get_attrs < zeno::vec2f > (grp, name);
+                std::vector<zeno::vec2f> intVector = spGeo->get_attrs < zeno::vec2f > (grp, name);
                 zfxvariantVector.resize(intVector.size());
                 for (size_t i = 0; i < intVector.size(); ++i) {
                     zfxvariantVector[i] = glm::vec2(intVector[i][0], intVector[i][1]); ;
                 }
             }
             else if (type == ATTR_VEC3) {
-                std::vector<zeno::vec3f>& intVector = spGeo->get_attrs < zeno::vec3f >(grp, name);
+                std::vector<zeno::vec3f> intVector = spGeo->get_attrs < zeno::vec3f >(grp, name);
                 zfxvariantVector.resize(intVector.size());
                 for (size_t i = 0; i < intVector.size(); ++i) {
                     zfxvariantVector[i] = glm::vec3(intVector[i][0], intVector[i][1], intVector[i][2]); ;
                 }
             }
             else if (type == ATTR_VEC4) {
-                std::vector<zeno::vec4f>& intVector = spGeo->get_attrs < zeno::vec4f >(grp, name);
+                std::vector<zeno::vec4f> intVector = spGeo->get_attrs < zeno::vec4f >(grp, name);
                 zfxvariantVector.resize(intVector.size());
                 for (size_t i = 0; i < intVector.size(); ++i) {
                     zfxvariantVector[i] = glm::vec4(intVector[i][0], intVector[i][1], intVector[i][2], intVector[i][3]); ;
@@ -198,7 +198,7 @@ namespace zeno
             return zfxvariantVector;
         }
 
-        ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
+        static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
             std::string parampath, _;
             auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
             auto items = split_str(parampath, '.');
@@ -328,7 +328,7 @@ namespace zeno
             return varres;
         };
 
-        std::shared_ptr<IObject> getObjFromRef(const std::string& ref, ZfxContext* pContext) {
+        static std::shared_ptr<IObject> getObjFromRef(const std::string& ref, ZfxContext* pContext) {
             std::string parampath, _;
             auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
             auto items = split_str(parampath, '.');
@@ -336,7 +336,7 @@ namespace zeno
             return spNode->get_output_obj(paramname);
         }
 
-        ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("only support non-attr value when using ref");
 
@@ -346,7 +346,7 @@ namespace zeno
             return getParamValueFromRef(ref, pContext);
         }
 
-        ZfxVariable parameter(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable parameter(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1) {
                 throw makeError<UnimplError>("error number of args on param(...)");
             }
@@ -369,7 +369,7 @@ namespace zeno
             throw makeError<UnimplError>("the param does not exist when calling param(...)");
         }
 
-        ZfxVariable log(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable log(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.empty()) {
                 throw makeError<UnimplError>("empty args on log");
             }
@@ -421,7 +421,7 @@ namespace zeno
             return ZfxVariable();
         }
 
-        ZfxVariable vec3(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable vec3(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3)
                 throw makeError<UnimplError>("the number of elements isn't 3");
             const ZfxVariable& xvar = args[0], & yvar = args[1], & zvar = args[2];
@@ -448,7 +448,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable sin(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable sin(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>();
             const auto& arg = args[0];
@@ -471,7 +471,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable cos(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable cos(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>();
             const auto& arg = args[0];
@@ -486,7 +486,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable sinh(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable sinh(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>();
             const auto& arg = args[0];
@@ -501,7 +501,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable cosh(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable cosh(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>();
             const auto& arg = args[0];
@@ -516,7 +516,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable fit01(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable fit01(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3) throw makeError<UnimplError>();
 
             //只考虑单值的情况: fit01(.3,5,20)=9.5
@@ -538,7 +538,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable fit(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable fit(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 5) throw makeError<UnimplError>();
 
             //只考虑单值的情况: fit(.3, 0, 1, 10, 20) == 13
@@ -560,7 +560,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable rand(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable rand(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 1) throw makeError<UnimplError>();
             int N = 1;
             ZfxVariable res;
@@ -593,7 +593,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable pow(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable pow(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>();
             const auto& arg = args[0];
@@ -612,7 +612,7 @@ namespace zeno
             return res;
         }
 
-        ZfxVariable add_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable add_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() == 1) {
                 const auto& arg = args[0];
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject)) {
@@ -658,7 +658,7 @@ namespace zeno
             }
         }
 
-        ZfxVariable add_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable add_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2) {
                 throw makeError<UnimplError>();
             }
@@ -675,7 +675,7 @@ namespace zeno
             }
         }
 
-        ZfxVariable remove_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable remove_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of remove_vertex is not matched.");
 
@@ -737,7 +737,7 @@ namespace zeno
             return ZfxVariable(bSucceed);
         }
 
-        bool _remove_points(std::deque<int> remPoints, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static bool _remove_points(std::deque<int> remPoints, ZfxElemFilter& filter, ZfxContext* pContext) {
             bool bSucceed = false;
             while (!remPoints.empty())
             {
@@ -777,7 +777,7 @@ namespace zeno
             return bSucceed;
         }
 
-        ZfxVariable remove_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable remove_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of remove_point is not matched.");
 
@@ -843,7 +843,7 @@ namespace zeno
             return ZfxVariable(bSucceed);
         }
 
-        ZfxVariable add_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable add_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of add_face is not matched.");
 
@@ -853,7 +853,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable remove_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable remove_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 2 || args.empty())
                 throw makeError<UnimplError>("the number of arguments of remove_face is not matched.");
 
@@ -914,7 +914,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable create_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable create_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3)
                 throw makeError<UnimplError>("the number of arguments of create_attr is not matched.");
 
@@ -935,7 +935,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable create_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable create_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of create_face_attr is not matched.");
 
@@ -947,7 +947,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable create_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable create_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of create_point_attr is not matched.");
 
@@ -959,7 +959,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable create_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable create_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of create_vertex_attr is not matched.");
 
@@ -971,7 +971,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable create_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable create_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of create_geometry_attr is not matched.");
 
@@ -983,7 +983,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable set_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable set_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3)
                 throw makeError<UnimplError>("the number of arguments of set_attr is not matched.");
 
@@ -1004,7 +1004,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable set_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable set_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of set_vertex_attr is not matched.");
 
@@ -1016,7 +1016,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable set_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable set_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of set_point_attr is not matched.");
 
@@ -1028,7 +1028,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable set_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable set_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of set_face_attr is not matched.");
 
@@ -1040,7 +1040,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable set_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable set_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of set_geometry_attr is not matched.");
 
@@ -1052,7 +1052,7 @@ namespace zeno
             return varRet;
         }
 
-        ZfxVariable has_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable has_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of has_attr is not matched.");
 
@@ -1071,7 +1071,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable has_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable has_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of has_vertex_attr is not matched.");
 
@@ -1082,7 +1082,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable has_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable has_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of has_point_attr is not matched.");
 
@@ -1093,7 +1093,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable has_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable has_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of has_vertex_attr is not matched.");
 
@@ -1104,7 +1104,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable has_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable has_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of has_geometry_attr is not matched.");
 
@@ -1115,7 +1115,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable delete_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable delete_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of delete_attr is not matched.");
 
@@ -1133,7 +1133,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable delete_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable delete_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of delete_vertex_attr is not matched.");
 
@@ -1143,7 +1143,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable delete_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable delete_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of delete_point_attr is not matched.");
 
@@ -1153,7 +1153,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable delete_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable delete_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of delete_face_attr is not matched.");
 
@@ -1163,7 +1163,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable delete_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable delete_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of delete_geometry_attr is not matched.");
 
@@ -1173,7 +1173,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable npoints(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable npoints(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 1) {
                 throw makeError<UnimplError>("the number of arguments of npoints is not matched.");
             } else if (args.size() == 1) {
@@ -1195,7 +1195,7 @@ namespace zeno
             }
         }
 
-        ZfxVariable nfaces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable nfaces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 0)
                 throw makeError<UnimplError>("the number of arguments of nfaces is not matched.");
 
@@ -1204,7 +1204,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable nvertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable nvertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 0)
                 throw makeError<UnimplError>("the number of arguments of nvertices is not matched.");
 
@@ -1214,7 +1214,7 @@ namespace zeno
         }
 
         /* 点相关 */
-        ZfxVariable point_faces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable point_faces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of point_faces is not matched.");
 
@@ -1224,7 +1224,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable point_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable point_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of point_vertex is not matched.");
 
@@ -1234,7 +1234,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable point_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable point_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of point_vertices is not matched.");
 
@@ -1245,7 +1245,7 @@ namespace zeno
         }
 
         /* 面相关 */
-        ZfxVariable face_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable face_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of face_point is not matched.");
 
@@ -1256,7 +1256,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable face_points(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable face_points(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of face_points is not matched.");
 
@@ -1272,7 +1272,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable face_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable face_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of face_vertex is not matched.");
 
@@ -1283,7 +1283,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable face_vertex_count(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable face_vertex_count(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of face_vertex_count is not matched.");
 
@@ -1293,7 +1293,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable face_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable face_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of face_vertices is not matched.");
 
@@ -1304,7 +1304,7 @@ namespace zeno
         }
 
         /* Vertex相关 */
-        ZfxVariable vertex_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable vertex_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of vertex_index is not matched.");
 
@@ -1315,7 +1315,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable vertex_next(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable vertex_next(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of vertex_next is not matched.");
 
@@ -1325,7 +1325,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable vertex_prev(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable vertex_prev(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of vertex_prev is not matched.");
 
@@ -1335,7 +1335,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable vertex_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable vertex_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of vertex_point is not matched.");
 
@@ -1345,7 +1345,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable vertex_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable vertex_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of vertex_face is not matched.");
 
@@ -1355,7 +1355,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable vertex_face_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable vertex_face_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of vertex_face_index is not matched.");
 
@@ -1365,7 +1365,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable get_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable get_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of get_attr is not matched.");
 
@@ -1385,7 +1385,7 @@ namespace zeno
             return var;
         }
 
-        ZfxVariable get_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable get_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of get_vertex_attr is not matched.");
 
@@ -1397,7 +1397,7 @@ namespace zeno
             return var;
         }
 
-        ZfxVariable get_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable get_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 2)
                 throw makeError<UnimplError>("the number of arguments of get_point_attr is not matched.");
 
@@ -1425,7 +1425,7 @@ namespace zeno
             return ret;
         }
 
-        ZfxVariable get_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable get_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of get_face_attr is not matched.");
 
@@ -1443,7 +1443,7 @@ namespace zeno
             return var;
         }
 
-        ZfxVariable get_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable get_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("the number of arguments of get_geometry_attr is not matched.");
 
@@ -1454,7 +1454,7 @@ namespace zeno
             return var;
         }
 
-        ZfxVariable bbox(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable bbox(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeError<UnimplError>("the number of arguments of get_geometry_attr is not matched.");
 
