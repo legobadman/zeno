@@ -77,7 +77,7 @@ namespace zeno {
 
         virtual zeno::SharedPtr<IObject> clone() const override {
             auto spClonedObj = std::make_shared<Derived>(static_cast<Derived const&>(*this));
-            spClonedObj->m_usrData = std::move(m_usrData->clone());
+            spClonedObj->m_usrData = std::move(this->m_usrData->clone());
             return spClonedObj;
         }
 

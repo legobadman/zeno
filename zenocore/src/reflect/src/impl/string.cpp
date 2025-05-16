@@ -1,7 +1,7 @@
 #include <zeno/reflect/container/string>
 #include <zeno/reflect/polyfill.hpp>
 #include <cstring>
-#include <execution>
+//#include <execution>
 #include <string_view>
 #include <algorithm>
 
@@ -142,7 +142,7 @@ namespace reflect
                 std::memcpy(other.m_ss_buffer, temp, SSO_BUFFER_SIZE + 1);
                 swap(m_is_heap, other.m_is_heap);
             } else {
-                std::swap_ranges(REFLECT_EXECUTION_CAN_VECTORIZATION, m_ss_buffer, m_ss_buffer + SSO_BUFFER_SIZE + 1, other.m_ss_buffer);
+                //std::swap_ranges(REFLECT_EXECUTION_CAN_VECTORIZATION, m_ss_buffer, m_ss_buffer + SSO_BUFFER_SIZE + 1, other.m_ss_buffer);
             }
             swap(m_capacity, other.m_capacity);
             swap(m_length, other.m_length);
