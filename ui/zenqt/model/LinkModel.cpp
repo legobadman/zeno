@@ -1,4 +1,4 @@
-#include "linkmodel.h"
+#include "LinkModel.h"
 #include "uicommon.h"
 #include "declmetatype.h"
 

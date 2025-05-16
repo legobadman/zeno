@@ -2,7 +2,7 @@
 #include "util/uihelper.h"
 #include "uicommon.h"
 #include "model/graphsmanager.h"
-#include "model/graphstreemodel.h"
+#include "model/GraphsTreeModel.h"
 #include "zassert.h"
 #include <zeno/core/Session.h>
 #include <zeno/core/typeinfo.h>
@@ -223,7 +223,7 @@ void NodeSyncMgr::updateNodeParamString(NodeLocation node_location,
 }
 
 std::string NodeSyncMgr::getPrimSockName(const NodeLocation& node_location) {
-    auto& nodename = node_location.node.data(QtRole::ROLE_NODE_NAME).toString().toStdString();
+    const auto& nodename = node_location.node.data(QtRole::ROLE_NODE_NAME).toString().toStdString();
     if (m_prim_sock_map.find(nodename) != m_prim_sock_map.end())
         return m_prim_sock_map[nodename];
     else {

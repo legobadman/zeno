@@ -32,7 +32,7 @@ public:
     std::shared_ptr<ZfxASTNode> makeEmptyNode();
     ZENO_API std::shared_ptr<ZfxASTNode> getASTResult() const;
     void setASTResult(std::shared_ptr<ZfxASTNode> pNode);
-    ZENO_API void ZfxExecute::printSyntaxTree();
+    ZENO_API void printSyntaxTree();
 
     // Used to get last Scanner location. Used in error messages.
     unsigned int location() const;

@@ -15,7 +15,7 @@ struct ZENO_API SubnetNode : NodeImpl {
 
     void apply() override;
 
-    void initParams(const NodeData& dat);
+    void initParams(const NodeData& dat) override;
     params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false) override;
     Graph* get_subgraph() const;
     void init_graph(std::shared_ptr<Graph> subg);

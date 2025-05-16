@@ -6,7 +6,7 @@
 #include "model/curvemodel.h"
 #include "variantptr.h"
 #include "jsonhelper.h"
-#include "model/graphmodel.h"
+#include "model/GraphModel.h"
 #include "util/curveutil.h"
 #include "model/parammodel.h"
 #include <QUuid>
@@ -694,7 +694,7 @@ QVariant UiHelper::initDefaultValue(const zeno::ParamType& type)
     else if (type == zeno::types::gParamType_Curve)
     {
         zeno::CurvesData curves = curve_util::deflCurves();
-        auto& anyVal = zeno::reflect::make_any<zeno::CurvesData>(curves);
+        const auto& anyVal = zeno::reflect::make_any<zeno::CurvesData>(curves);
         return QVariant::fromValue(anyVal);
     }
     else if (type == gParamType_Heatmap)
@@ -2152,7 +2152,7 @@ QStandardItemModel* UiHelper::genParamsModel(const std::vector<zeno::ParamPrimit
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
         paramItem->setData(QVariant::fromValue(info.defl), QtRole::ROLE_PARAM_VALUE);
         paramItem->setData(info.control, QtRole::ROLE_PARAM_CONTROL);
-        paramItem->setData(info.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData((quint64)info.type, QtRole::ROLE_PARAM_TYPE);
         paramItem->setData(true, QtRole::ROLE_ISINPUT);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
         paramItem->setEditable(true);
@@ -2167,7 +2167,7 @@ QStandardItemModel* UiHelper::genParamsModel(const std::vector<zeno::ParamPrimit
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
         paramItem->setData(QVariant::fromValue(info.defl), QtRole::ROLE_PARAM_VALUE);
         paramItem->setData(info.control, QtRole::ROLE_PARAM_CONTROL);
-        paramItem->setData(info.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData((quint64)info.type, QtRole::ROLE_PARAM_TYPE);
         paramItem->setData(false, QtRole::ROLE_ISINPUT);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
         paramItem->setEditable(true);
@@ -2223,7 +2223,7 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
                 paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
                 paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
-                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
                 paramItem->setData(true, QtRole::ROLE_ISINPUT);
                 paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
                 paramItem->setData(param.bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE);
@@ -2248,7 +2248,7 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
         paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
         paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
-        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
         paramItem->setData(false, QtRole::ROLE_ISINPUT);
         paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
         if (param.ctrlProps.has_value())
@@ -2268,7 +2268,7 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
         paramItem->setData(paramName, Qt::DisplayRole);
         paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
         paramItem->setData(true, QtRole::ROLE_ISINPUT);
         paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
@@ -2286,7 +2286,7 @@ void UiHelper::newCustomModel(QStandardItemModel* customParamsM, const zeno::Cus
         paramItem->setData(paramName, Qt::DisplayRole);
         paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
         paramItem->setData(false, QtRole::ROLE_ISINPUT);
         paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
         paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
@@ -2326,7 +2326,7 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
         paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
         paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
         paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
-        paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+        paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
         paramItem->setData(true, QtRole::ROLE_ISINPUT);
         paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
         paramItem->setData(param.bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE);
@@ -2434,7 +2434,7 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
                 paramItem->setData(paramName, Qt::DisplayRole);
                 paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
                 paramItem->setData(true, QtRole::ROLE_ISINPUT);
                 paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
                 paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
@@ -2468,7 +2468,7 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
                 paramItem->setData(QVariant::fromValue(param.defl), QtRole::ROLE_PARAM_VALUE);
                 paramItem->setData(param.control, QtRole::ROLE_PARAM_CONTROL);
-                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
                 paramItem->setData(false, QtRole::ROLE_ISINPUT);
                 paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
                 if (param.ctrlProps.has_value())
@@ -2502,7 +2502,7 @@ void UiHelper::udpateCustomModelIncremental(QStandardItemModel* customParamsM, c
                 paramItem->setData(paramName, Qt::DisplayRole);
                 paramItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
                 paramItem->setData(paramName, ROLE_MAP_TO_PARAMNAME);
-                paramItem->setData(param.type, QtRole::ROLE_PARAM_TYPE);
+                paramItem->setData((quint64)param.type, QtRole::ROLE_PARAM_TYPE);
                 paramItem->setData(false, QtRole::ROLE_ISINPUT);
                 paramItem->setData(param.socketType, QtRole::ROLE_SOCKET_TYPE);
                 paramItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);

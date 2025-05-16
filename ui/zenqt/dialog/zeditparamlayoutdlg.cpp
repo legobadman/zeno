@@ -376,8 +376,8 @@ void ZEditParamLayoutDlg::initUI()
     m_ui->objOutputsView->setAlternatingRowColors(true);
     m_ui->listConctrl->setFocusPolicy(Qt::NoFocus);
 
-    m_ui->cbObjectType->addItem(tr("Geometry"), gParamType_Geometry);
-    m_ui->cbObjectType->addItem(tr("Object"), gParamType_IObject);
+    m_ui->cbObjectType->addItem(tr("Geometry"), (quint64)gParamType_Geometry);
+    m_ui->cbObjectType->addItem(tr("Object"), (quint64)gParamType_IObject);
     m_ui->cbObjectType->hide();
 
     //m_ui->paramsView->setFocusPolicy(Qt::NoFocus);
@@ -642,7 +642,7 @@ void ZEditParamLayoutDlg::onOutputsListCurrentChanged(const QModelIndex& current
         }
 
         for (int i = 0; i < m_ui->cbObjectType->count(); i++) {
-            if (m_ui->cbObjectType->itemData(i) == paramType) {
+            if (m_ui->cbObjectType->itemData(i).value<zeno::ParamType>() == paramType) {
                 m_ui->cbObjectType->setCurrentIndex(i);
                 break;
             }
@@ -726,7 +726,7 @@ void ZEditParamLayoutDlg::onBtnAddInputs()
         auto pNewItem = new QStandardItem(newParamName);
         pNewItem->setData(newParamName, QtRole::ROLE_PARAM_NAME);
         pNewItem->setData(ctrl.ctrl, QtRole::ROLE_PARAM_CONTROL);
-        pNewItem->setData(ctrl.type, QtRole::ROLE_PARAM_TYPE);
+        pNewItem->setData((quint64)ctrl.type, QtRole::ROLE_PARAM_TYPE);
         pNewItem->setData(zeno::Socket_Primitve, QtRole::ROLE_SOCKET_TYPE);
         pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
         zeno::reflect::Any defAnyVal = zeno::initAnyDeflValue(ctrl.type);
@@ -815,7 +815,7 @@ void ZEditParamLayoutDlg::switchStackProperties(int ctrl, QStandardItem* pItem)
         if (pros.has_value()) {
                 QStringList items;
 
-                auto& vec = zeno::reflect::any_cast<std::vector<std::string>>(pros);
+                const auto& vec = zeno::reflect::any_cast<std::vector<std::string>>(pros);
                 for (auto item : vec)
                     items.push_back(QString::fromStdString(item));
 
@@ -996,7 +996,7 @@ void ZEditParamLayoutDlg::onControlItemChanged(int idx)
     auto pItem = m_paramsLayoutM_inputs->itemFromIndex(layerIdx);
     pItem->setData(ctrl, QtRole::ROLE_PARAM_CONTROL);
     zeno::ParamType type = getTypeByControlName(controlName);
-    pItem->setData(type, QtRole::ROLE_PARAM_TYPE);
+    pItem->setData((quint64)type, QtRole::ROLE_PARAM_TYPE);
 
     QLayoutItem* pLayoutItem = m_ui->gridLayout->itemAtPosition(rowValueControl, 1);
     if (pLayoutItem)

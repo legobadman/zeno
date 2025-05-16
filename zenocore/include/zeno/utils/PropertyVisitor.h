@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef ZENO_PROPERTYVISITOR_H
 #define ZENO_PROPERTYVISITOR_H
 
@@ -538,3 +540,5 @@ namespace zeno {
 #define ZENO_BINDING_PRIMITIVE_ATTRIBUTE(PrimitiveName, FieldName, ChannelName, Type, ...) zeno::reflect::PrimitiveAttributeBindingField<ThisType, decltype(FieldName), Type> Internal##FieldName##Attr##In##PrimitiveName##_Do_not_use{*this, PrimitiveName, FieldName, ChannelName, __VA_ARGS__};
 
 #endif//ZENO_PROPERTYVISITOR_H
+
+#endif

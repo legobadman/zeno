@@ -134,8 +134,8 @@ namespace zeno {
         case gParamType_PrimVariant:
             return any_cast<PrimVar>(lhs) == any_cast<PrimVar>(rhs);
         case gParamType_VecEdit: {
-            auto& vec1 = any_cast<vecvar>(lhs);
-            auto& vec2 = any_cast<vecvar>(rhs);
+            auto vec1 = any_cast<vecvar>(lhs);
+            auto vec2 = any_cast<vecvar>(rhs);
             if (vec1 != vec2) return false;
             for (int i = 0; i < vec1.size(); i++) {
                 if (vec1[i] != vec2[i])
@@ -144,53 +144,53 @@ namespace zeno {
             return true;
         }
         case gParamType_Vec2f: {
-            auto& vec1 = any_cast<zeno::vec2f>(lhs);
-            auto& vec2 = any_cast<zeno::vec2f>(rhs);
+            auto vec1 = any_cast<zeno::vec2f>(lhs);
+            auto vec2 = any_cast<zeno::vec2f>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1];
         }
         case gParamType_Vec2i: {
-            auto& vec1 = any_cast<zeno::vec2i>(lhs);
-            auto& vec2 = any_cast<zeno::vec2i>(rhs);
+            auto vec1 = any_cast<zeno::vec2i>(lhs);
+            auto vec2 = any_cast<zeno::vec2i>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1];
         }
         case gParamType_Vec2s: {
-            auto& vec1 = any_cast<zeno::vec2s>(lhs);
-            auto& vec2 = any_cast<zeno::vec2s>(rhs);
+            auto vec1 = any_cast<zeno::vec2s>(lhs);
+            auto vec2 = any_cast<zeno::vec2s>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1];
         }
         case gParamType_Vec3f: {
-            auto& vec1 = any_cast<zeno::vec3f>(lhs);
-            auto& vec2 = any_cast<zeno::vec3f>(rhs);
+            auto vec1 = any_cast<zeno::vec3f>(lhs);
+            auto vec2 = any_cast<zeno::vec3f>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1] && vec1[2] == vec2[2];
         }
         case gParamType_Vec3i: {
-            auto& vec1 = any_cast<zeno::vec3i>(lhs);
-            auto& vec2 = any_cast<zeno::vec3i>(rhs);
+            auto vec1 = any_cast<zeno::vec3i>(lhs);
+            auto vec2 = any_cast<zeno::vec3i>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1] && vec1[2] == vec2[2];
         }
         case gParamType_Vec3s: {
-            auto& vec1 = any_cast<zeno::vec3s>(lhs);
-            auto& vec2 = any_cast<zeno::vec3s>(rhs);
+            auto vec1 = any_cast<zeno::vec3s>(lhs);
+            auto vec2 = any_cast<zeno::vec3s>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1] && vec1[2] == vec2[2];
         }
         case gParamType_Vec4f: {
-            auto& vec1 = any_cast<zeno::vec4f>(lhs);
-            auto& vec2 = any_cast<zeno::vec4f>(rhs);
+            auto vec1 = any_cast<zeno::vec4f>(lhs);
+            auto vec2 = any_cast<zeno::vec4f>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1] && vec1[2] == vec2[2] && vec1[3] == vec2[3];
         }
         case gParamType_Vec4i: {
-            auto& vec1 = any_cast<zeno::vec4i>(lhs);
-            auto& vec2 = any_cast<zeno::vec4i>(rhs);
+            auto vec1 = any_cast<zeno::vec4i>(lhs);
+            auto vec2 = any_cast<zeno::vec4i>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1] && vec1[2] == vec2[2] && vec1[3] == vec2[3];
         }
         case gParamType_Vec4s: {
-            auto& vec1 = any_cast<zeno::vec4s>(lhs);
-            auto& vec2 = any_cast<zeno::vec4s>(rhs);
+            auto vec1 = any_cast<zeno::vec4s>(lhs);
+            auto vec2 = any_cast<zeno::vec4s>(rhs);
             return vec1[0] == vec2[0] && vec1[1] == vec2[1] && vec1[2] == vec2[2] && vec1[3] == vec2[3];
         }
         case gParamType_Curve: {
-            auto& curve1 = any_cast<zeno::CurvesData>(lhs);
-            auto& curve2 = any_cast<zeno::CurvesData>(rhs);
+            auto curve1 = any_cast<zeno::CurvesData>(lhs);
+            auto curve2 = any_cast<zeno::CurvesData>(rhs);
             return curve1 == curve2;
         }
         default:
@@ -317,32 +317,32 @@ namespace zeno {
             return true;
         }
         else if (type == gParamType_Vec2f) {
-            auto& vec2 = any_cast<vec2f>(val);
+            auto vec2 = any_cast<vec2f>(val);
             val = vecvar{ vec2[0], vec2[1] };
             return true;
         }
         else if (type == gParamType_Vec2i) {
-            auto& vec2 = any_cast<vec2i>(val);
+            auto vec2 = any_cast<vec2i>(val);
             val = vecvar{ vec2[0], vec2[1] };
             return true;
         }
         else if (type == gParamType_Vec3i) {
-            auto& vec3 = any_cast<vec3i>(val);
+            auto vec3 = any_cast<vec3i>(val);
             val = vecvar{ vec3[0], vec3[1], vec3[2] };
             return true;
         }
         else if (type == gParamType_Vec3f) {
-            auto& vec3 = any_cast<vec3f>(val);
+            auto vec3 = any_cast<vec3f>(val);
             val = vecvar{ vec3[0], vec3[1], vec3[2] };
             return true;
         }
         else if (type == gParamType_Vec4i) {
-            auto& vec4 = any_cast<vec4i>(val);
+            auto vec4 = any_cast<vec4i>(val);
             val = vecvar{ vec4[0], vec4[1], vec4[2], vec4[3] };
             return true;
         }
         else if (type == gParamType_Vec4f) {
-            auto& vec4 = any_cast<vec4f>(val);
+            auto vec4 = any_cast<vec4f>(val);
             val = vecvar{ vec4[0], vec4[1], vec4[2], vec4[3] };
             return true;
         }
@@ -352,7 +352,7 @@ namespace zeno {
             }
         }
         //else if (type == gParamType_AnyList) {
-        //    auto& vec = any_cast<std::vector<zeno::reflect::Any>>(val);
+        //    auto vec = any_cast<std::vector<zeno::reflect::Any>>(val);
         //    if (vec.size() == 2) {
 
         //    }
@@ -679,7 +679,7 @@ namespace zeno {
         return Any();
     }
 
-    zvariant zeno::initDeflValue(ParamType const& type)
+    zvariant initDeflValue(ParamType type)
     {
         if (type == gParamType_String) {
             return "";
@@ -788,7 +788,7 @@ namespace zeno {
         return path;
     }
 
-    ObjPath zeno::strToObjPath(const std::string& str)
+    ObjPath strToObjPath(const std::string& str)
     {
         return str;
     }
@@ -873,7 +873,7 @@ namespace zeno {
         }
     }
 
-    std::set<std::string> zeno::getReferPaths(const zvariant& val)
+    std::set<std::string> getReferPaths(const zvariant& val)
     {
         return std::visit([](const auto& arg)->std::set<std::string> {
             using T = std::decay_t<decltype(arg)>;
@@ -1589,7 +1589,7 @@ namespace zeno {
             return zeno::reflect::any_cast<std::vector<std::string>>(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::Vector<zeno::String>>().get_decayed_hash()) {
-            auto& zvec = any_cast<zeno::Vector<zeno::String>>(anyval);
+            auto zvec = any_cast<zeno::Vector<zeno::String>>(anyval);
             std::vector<std::string> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = zsString2Std(zvec[i]);
@@ -1600,7 +1600,7 @@ namespace zeno {
             return zeno::reflect::any_cast<std::vector<zeno::vec3i>>(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3i>>().get_decayed_hash()) {
-            auto& zvec = any_cast<zeno::Vector<zeno::Vec3i>>(anyval);
+            auto zvec = any_cast<zeno::Vector<zeno::Vec3i>>(anyval);
             std::vector<zeno::vec3i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec3i(zvec[i]);
@@ -1611,7 +1611,7 @@ namespace zeno {
             return zeno::reflect::any_cast<std::vector<zeno::vec3f>>(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3f>>().get_decayed_hash()) {
-            auto& zvec = any_cast<zeno::Vector<zeno::Vec3f>>(anyval);
+            auto zvec = any_cast<zeno::Vector<zeno::Vec3f>>(anyval);
             std::vector<zeno::vec3f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec3f(zvec[i]);
@@ -1622,7 +1622,7 @@ namespace zeno {
             return zeno::reflect::any_cast<std::vector<zeno::vec2i>>(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2i>>().get_decayed_hash()) {
-            auto& zvec = any_cast<zeno::Vector<zeno::Vec2i>>(anyval);
+            auto zvec = any_cast<zeno::Vector<zeno::Vec2i>>(anyval);
             std::vector<zeno::vec2i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec2i(zvec[i]);
@@ -1633,7 +1633,7 @@ namespace zeno {
             return zeno::reflect::any_cast<std::vector<zeno::vec2f>>(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2f>>().get_decayed_hash()) {
-            auto& zvec = any_cast<zeno::Vector<zeno::Vec2f>>(anyval);
+            auto zvec = any_cast<zeno::Vector<zeno::Vec2f>>(anyval);
             std::vector<zeno::vec2f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec2f(zvec[i]);
@@ -1644,7 +1644,7 @@ namespace zeno {
             return zeno::reflect::any_cast<std::vector<zeno::vec4f>>(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4f>>().get_decayed_hash()) {
-            auto& zvec = any_cast<zeno::Vector<zeno::Vec4f>>(anyval);
+            auto zvec = any_cast<zeno::Vector<zeno::Vec4f>>(anyval);
             std::vector<zeno::vec4f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec4f(zvec[i]);
@@ -1655,7 +1655,7 @@ namespace zeno {
             return zeno::reflect::any_cast<std::vector<zeno::vec4i>>(anyval);
         }
         else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4i>>().get_decayed_hash()) {
-            auto& zvec = any_cast<zeno::Vector<zeno::Vec4i>>(anyval);
+            auto zvec = any_cast<zeno::Vector<zeno::Vec4i>>(anyval);
             std::vector<zeno::vec4i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec4i(zvec[i]);

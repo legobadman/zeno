@@ -11,7 +11,7 @@ struct ObjTimeShift : INode {
         auto obj = ZImpl(get_input<IObject>("obj"));
         auto offset = ZImpl(get_input2<int>("offset"));
         zany prevObj;
-        auto &objseq = ZImpl(has_input("customList")) ?
+        auto objseq = ZImpl(has_input("customList")) ?
             ZImpl(get_input<ListObject>("customList"))->m_impl->get() : m_objseq;
         if (offset < 0) {
             objseq.resize(1);

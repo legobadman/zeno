@@ -227,7 +227,7 @@ void ZenoNewnodeMenu::updateSearchView(const QString& filter)
 
     int deprecatedIndex = searchResult.size();
     for (int i = 0; i < deprecatedIndex;) {
-        auto& [name, matchIndices] = searchResult[i];
+        const auto& [name, matchIndices] = searchResult[i];
         const auto& category = m_nodeToCate[name];
         if (category == "deprecated") {
             deprecatedIndex--;

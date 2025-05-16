@@ -29,7 +29,7 @@ namespace zeno {
     ZENO_API bool convertToOriginalVar(zeno::reflect::Any& editvar, const ParamType type);
     ZENO_API bool ListHasPrimObj(zeno::ListObject* list);
     ZENO_API bool DictHasPrimObj(zeno::DictObject* dict);
-    ZENO_API zvariant initDeflValue(ParamType const& type);
+    ZENO_API zvariant initDeflValue(ParamType type);
     ZENO_API zeno::reflect::Any initAnyDeflValue(ParamType const& type);
     ZENO_API zvariant AnyToZVariant(zeno::reflect::Any const& var);
     ZENO_API NumericValue AnyToNumeric(const zeno::reflect::Any& any, bool& bSucceed);

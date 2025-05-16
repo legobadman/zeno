@@ -83,7 +83,7 @@ namespace zeno
         return _vec;
     }
 
-    //´´½¨ÊôÐÔ
+    //åˆ›å»ºå±žæ€§
     int GeometryObject_Adapter::create_attr(GeoAttrGroup grp, const zeno::String& attr_name, const Any& defl) {
         return m_impl->create_attr(grp, zsString2Std(attr_name), abiAnyToAttrVar(defl));
     }
@@ -294,7 +294,7 @@ namespace zeno
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(GeometryObject_Adapter* pGeom) {
+    zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(zeno::SharedPtr<GeometryObject_Adapter> pGeom) {
         auto newGeom = std::make_shared<GeometryObject_Adapter>();
         newGeom->m_impl = new GeometryObject(*pGeom->m_impl);
         return newGeom;

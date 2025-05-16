@@ -1,6 +1,6 @@
 #include "graphsmanager.h"
-#include "model/graphstreemodel.h"
-#include "model/assetsmodel.h"
+#include "GraphsTreeModel.h"
+#include "assetsmodel.h"
 #include "uicommon.h"
 #include <zeno/io/zsg2reader.h>
 #include <zeno/utils/log.h>
@@ -13,8 +13,8 @@
 #include "nodeeditor/gv/zenosubgraphscene.h"
 #include "zassert.h"
 #include "variantptr.h"
-#include "model/parammodel.h"
-#include "model/pluginsmodel.h"
+#include "parammodel.h"
+#include "pluginsmodel.h"
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include "settings/zsettings.h"
@@ -546,7 +546,7 @@ NodeCates GraphsManager::getCates() const
         zeno::NodeInfo info;
         info.name = asset.toStdString();
         info.status = zeno::ZModule_Loaded;
-        info.module_path = "";  //先默认算到主模块
+        info.module_path = "";  //鍏堥粯璁ょ畻鍒颁富妯″潡
         assetsNames.push_back(std::move(info));
     }
 

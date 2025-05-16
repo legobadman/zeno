@@ -847,7 +847,7 @@ void ZenoSubGraphView::onRowsAboutToBeRemoved(const QModelIndex& parent, int fir
             auto graphsMgr = zenoApp->graphsManager();
             auto path = pSubnetModel->currentPath();
             auto subScenes = graphsMgr->gvSubScenes(path);
-            for (auto& it = subScenes.begin(); it != subScenes.end(); it++) //删除 /path 的scene时,移除子scene, /path/xxx/...
+            for (auto it = subScenes.begin(); it != subScenes.end(); it++) //删除 /path 的scene时,移除子scene, /path/xxx/...
             {
                 if (ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(it.value()))
                 {

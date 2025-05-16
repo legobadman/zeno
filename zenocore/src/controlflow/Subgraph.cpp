@@ -14,7 +14,7 @@ struct Subnet : INode {
     virtual void apply() override {
         /*zeno::SubnetNode::apply();*/
     }
-    NodeType Subnet::type() const {
+    NodeType type() const override {
         return Node_SubgraphNode;
     }
 };

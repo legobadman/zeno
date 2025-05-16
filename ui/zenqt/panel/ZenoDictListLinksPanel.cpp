@@ -1,4 +1,4 @@
-#include "ZenoDictListLInksPanel.h"
+#include "ZenoDictListLinksPanel.h"
 #include <zeno/core/data.h>
 #include <set>
 #include "declmetatype.h"

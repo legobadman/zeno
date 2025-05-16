@@ -5,7 +5,7 @@
 #include <QStandardItemModel>
 #include <QString>
 #include <QQuickItem>
-#include "graphmodel.h"
+#include "GraphModel.h"
 
 
 //为什么不base StandardModel，是因为StandardItem有点冗余，干脆自己实现一个简易的图treemodel.

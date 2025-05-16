@@ -8,7 +8,7 @@
 #include "zenoapplication.h"
 
 
-AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, QStringList& graphPath)
+AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, const QStringList& graphPath)
     : QUndoCommand()
     , m_model(zenoApp->graphsManager()->getGraph(graphPath))
     , m_graphPath(graphPath)
@@ -48,7 +48,7 @@ zeno::NodeData AddNodeCommand::getNodeData()
     return m_nodeData;
 }
 
-RemoveNodeCommand::RemoveNodeCommand(zeno::NodeData& nodeData, QStringList& graphPath)
+RemoveNodeCommand::RemoveNodeCommand(zeno::NodeData& nodeData, const QStringList& graphPath)
     : QUndoCommand()
     , m_model(zenoApp->graphsManager()->getGraph(graphPath))
     , m_nodeData(nodeData)
@@ -103,7 +103,7 @@ void RemoveNodeCommand::undo()
         m_nodeData = m_model->_createNodeImpl(m_cate, m_nodeData, false);
 }
 
-LinkCommand::LinkCommand(bool bAddLink, const zeno::EdgeInfo& link, QStringList& graphPath)
+LinkCommand::LinkCommand(bool bAddLink, const zeno::EdgeInfo& link, const QStringList& graphPath)
     : QUndoCommand()
     , m_bAdd(bAddLink)
     , m_link(link)
@@ -166,7 +166,7 @@ void LinkCommand::undo()
     }
 }
 
-ModelDataCommand::ModelDataCommand(const QModelIndex& index, const QVariant& oldData, const QVariant& newData, int role, QStringList& graphPath)
+ModelDataCommand::ModelDataCommand(const QModelIndex& index, const QVariant& oldData, const QVariant& newData, int role, const QStringList& graphPath)
     : m_oldData(oldData)
     , m_newData(newData)
     , m_role(role)
@@ -227,7 +227,7 @@ void ModelDataCommand::undo()
     }
 }
 
-NodeStatusCommand::NodeStatusCommand(bool isSetView, const QString& name, bool bOn, QStringList& graphPath)
+NodeStatusCommand::NodeStatusCommand(bool isSetView, const QString& name, bool bOn, const QStringList& graphPath)
     : m_On(bOn)
     , m_graphPath(graphPath)
     , m_model(nullptr)

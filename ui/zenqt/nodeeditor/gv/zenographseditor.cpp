@@ -5,7 +5,7 @@
 #include "nodeeditor/gv/zenosubgraphscene.h"
 #include "zenowelcomepage.h"
 #include "model/graphsmanager.h"
-#include "model/graphstreemodel.h"
+#include "model/GraphsTreeModel.h"
 #include "model/assetsmodel.h"
 #include "model/pluginsmodel.h"
 #include "uicommon.h"
@@ -396,7 +396,7 @@ void ZenoGraphsEditor::onPageListClicked()
             pMenu->close();
         });
         connect(ptextButton, &ZToolButton::clicked, this, [=]() {
-            activateTab({ text }, false);
+            activateTab({ text }, "");
             pMenu->close();
         });
 
@@ -1045,7 +1045,7 @@ void ZenoGraphsEditor::onCommandDispatched(QAction* pAction, bool bTriggered)
 void ZenoGraphsEditor::onAssetsCustomParamsClicked(const QString& assetsName)
 {
     auto& assetsMgr = zeno::getSession().assets;
-    auto& name = assetsName.toStdString();
+    const auto& name = assetsName.toStdString();
     const zeno::Asset& asset = assetsMgr->getAsset(name);
 
     //ensure the graph be loaded.

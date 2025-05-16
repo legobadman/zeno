@@ -935,7 +935,7 @@ void NodeImpl::on_node_about_to_remove() {
                 assert(defl.has_value());
                 ParamType type = defl.type().hash_code();
                 if (type == gParamType_PrimVariant) {
-                    PrimVar& var = any_cast<PrimVar>(defl);
+                    PrimVar var = any_cast<PrimVar>(defl);
                     std::visit([&](auto& arg) {
                         using T = std::decay_t<decltype(arg)>;
                         if constexpr (std::is_same_v<T, std::string>) {
@@ -1043,7 +1043,7 @@ void NodeImpl::onNodeNameUpdated(const std::string& oldname, const std::string& 
                 assert(adjustParamVal.has_value());
                 ParamType type = adjustParamVal.type().hash_code();
                 if (type == zeno::types::gParamType_PrimVariant) {
-                    PrimVar& var = zeno::reflect::any_cast<PrimVar>(adjustParamVal);
+                    PrimVar var = zeno::reflect::any_cast<PrimVar>(adjustParamVal);
                     std::visit([&](auto& arg) {
                         using T = std::decay_t<decltype(arg)>;
                         if constexpr (std::is_same_v<T, std::string>) {
@@ -1954,6 +1954,7 @@ CommonParam NodeImpl::get_input_param(std::string const& name, bool* bExist) {
         return objparam;
     if (bExist)
         *bExist = false;
+    return CommonParam();
 }
 
 CommonParam NodeImpl::get_output_param(std::string const& name, bool* bExist) {
@@ -1965,6 +1966,7 @@ CommonParam NodeImpl::get_output_param(std::string const& name, bool* bExist) {
         return objparam;
     if (bExist)
         *bExist = false;
+    return CommonParam();
 }
 
 ObjectParams NodeImpl::get_input_object_params() const
@@ -2540,7 +2542,7 @@ bool zeno::NodeImpl::update_param_type(const std::string& param, bool bPrim, boo
         if (bPrim)
         {
             auto& prims = bInput ? m_inputPrims : m_outputPrims;
-            auto& prim = prims.find(param);
+            auto prim = prims.find(param);
             if (prim != prims.end())
             {
                 auto& spParam = prim->second;
@@ -2562,7 +2564,7 @@ bool zeno::NodeImpl::update_param_type(const std::string& param, bool bPrim, boo
         else 
         {
             auto& objects = bInput ? m_inputObjs : m_outputObjs;
-            auto& object = objects.find(param);
+            auto object = objects.find(param);
             if (object != objects.end())
             {
                 auto& spParam = object->second;
@@ -3289,6 +3291,7 @@ bool NodeImpl::set_primitive_input(std::string const& id, const zeno::reflect::A
     if (iter == m_inputPrims.end())
         return false;
     iter->second.result = val;
+    return true;
 }
 
 bool NodeImpl::set_primitive_output(std::string const& id, const zeno::reflect::Any& val) {
@@ -3297,6 +3300,7 @@ bool NodeImpl::set_primitive_output(std::string const& id, const zeno::reflect::
     if (iter == m_outputPrims.end())
         return false;
     iter->second.result = val;
+    return true;
 }
 
 bool NodeImpl::set_output(std::string const& param, zany obj) {
@@ -3398,7 +3402,7 @@ float NodeImpl::resolve(const std::string& expression, const ParamType type)
     if (ret == 0)
     {
         auto& funcMgr = zeno::getSession().funcManager;
-        auto& astRoot = fmla.getASTResult();
+        auto astRoot = fmla.getASTResult();
         ZfxContext ctx;
         ctx.code = code;
         ctx.spNode = this;
@@ -3419,6 +3423,7 @@ float NodeImpl::resolve(const std::string& expression, const ParamType type)
     else {
         //TODO: kframe issues
     }
+    return 0.f;
 }
 
 void NodeImpl::initTypeBase(zeno::reflect::TypeBase* pTypeBase)

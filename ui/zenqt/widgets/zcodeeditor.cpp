@@ -156,7 +156,7 @@ void ZCodeEditor::slt_showFuncDesc()
         //fmla.printSyntaxTree();
         if (ret == 0 || fmla.getASTResult())
         {
-            auto& getPos = [&]() -> QPoint {
+            auto getPos = [&]() -> QPoint {
                 auto cursRect = cursorRect();
                 auto globalpos = this->mapTo(zenoApp->getMainWindow(), { cursRect.x() + cursRect.width() + qCeil(ZenoStyle::dpiScaled(30)), cursRect.y() + cursRect.height() });
                 if (zenoApp->getMainWindow()->width() < globalpos.x() + m_descLabel->width()) {

@@ -79,14 +79,14 @@ static CustomUI descToCustomui(const Descriptor& desc) {
     if (!desc.categories.empty())
         ui.category = desc.categories[0];   //很多cate都只有一个
 
-    ParamGroup default;
+    ParamGroup default_group;
     for (const SocketDescriptor& param_desc : desc.inputs) {
         if (param_desc._desc.type == Desc_Prim) {
             //有可能没赋初值，要检查一下
             if (!param_desc._desc.primparam.defl.has_value()) {
                 ParamPrimitive newparam = param_desc._desc.primparam;
                 newparam.defl = initAnyDeflValue(newparam.type);
-                default.params.push_back(newparam);
+                default_group.params.push_back(newparam);
             }
             else {
                 //字符串的defl都是以const char*作为内部储存的类型，这里转一下string，以免上层逻辑处理疏漏
@@ -95,7 +95,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
                     std::string str = zeno::reflect::any_cast<const char*>(newparam.defl);
                     newparam.defl = str;
                 }
-                default.params.push_back(newparam);
+                default_group.params.push_back(newparam);
             }
         }
         else if (param_desc._desc.type == Desc_Obj) {
@@ -130,7 +130,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
                 param.sockProp = Socket_Normal;
                 param.wildCardGroup = param_desc.wildCard;
                 param.bSocketVisible = false;
-                default.params.push_back(param);
+                default_group.params.push_back(param);
             }
             else
             {
@@ -183,7 +183,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
         }
         param.tooltip = param_desc.doc;
         param.bSocketVisible = false;
-        default.params.push_back(param);
+        default_group.params.push_back(param);
     }
     for (const SocketDescriptor& param_desc : desc.outputs) {
         if (param_desc._desc.type == Desc_Prim) {
@@ -228,7 +228,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
         }
     }
     ParamTab tab;
-    tab.groups.emplace_back(std::move(default));
+    tab.groups.emplace_back(std::move(default_group));
     ui.inputPrims.emplace_back(std::move(tab));
     return ui;
 }
