@@ -16,85 +16,12 @@
 
 
 namespace zeno {
-#if 0 //TODO
+
     using namespace zeno::reflect;
 
     #define DEBUG_NODE
 
-    struct ZDEFNODE() FlipSolver : INode {
-
-        ReflectCustomUI m_uilayout = {
-            _Group {
-                {"init_fluid", ParamObject("Initialize Fluid")},
-                {"static_collider", ParamObject("Static Collider")},
-                {"emission_source", ParamObject("Emission Source")},
-
-                {"accuracy", ParamPrimitive("Accuracy")},
-                {"max_substep", ParamPrimitive("Max Substep")},
-                {"timestep", ParamPrimitive("Timestep")},
-                {"gravity", ParamPrimitive("Gravity")},
-                {"emission", ParamPrimitive("Emission Velocity")},
-                {"is_emission", ParamPrimitive("Is Emission")},
-                {"dynamic_collide_strength", ParamPrimitive("Dynamic Collide Strength")},
-                {"density", ParamPrimitive("Density")},
-                {"surface_tension", ParamPrimitive("Surface Tension")},
-                {"viscosity", ParamPrimitive("Viscosity")},
-                {"wall_viscosity", ParamPrimitive("Wall Viscosity")},
-                {"wall_viscosityRange", ParamPrimitive("Wall Viscosity Range")},
-                {"curve_endframe", ParamPrimitive("Curve Endframe")},
-                {"curve_range", ParamPrimitive("Curve Range")},
-                {"preview_size", ParamPrimitive("Preview Size")},
-                {"preview_minVelocity", ParamPrimitive("Preview Minimum Velocity")},
-                {"preview_maxVelocity", ParamPrimitive("Preview Maximum Velocity")},
-
-                {"cache_path", ParamPrimitive("Cache Path")}
-            },
-            //输出：
-            _Group {
-                {"", ParamObject("Output")},
-            },
-            //数值参数布局：
-            CustomUIParams {
-                ParamTab {
-                    "Solver",
-                    {
-                        ParamGroup {
-                            "Group1",
-                            {
-                                ParamPrimitive("Accuracy"),
-                                ParamPrimitive("Max Substep"),
-                                ParamPrimitive("Timestep"),
-                                ParamPrimitive("Gravity"),
-                                ParamPrimitive("Emission Velocity"),
-                                ParamPrimitive("Is Emission"),
-                                ParamPrimitive("Dynamic Collide Strength"),
-                                ParamPrimitive("Density"),
-                                ParamPrimitive("Surface Tension"),
-                                ParamPrimitive("Viscosity"),
-                                ParamPrimitive("Wall Viscosity"),
-                                ParamPrimitive("Wall Viscosity Range"),
-                                ParamPrimitive("Curve Endframe"),
-                                ParamPrimitive("Curve Range"),
-                                ParamPrimitive("Preview Size"),
-                                ParamPrimitive("Preview Minimum Velocity"),
-                                ParamPrimitive("Preview Maximum Velocity")
-                            }
-                        }
-                    }
-                },
-                ParamTab {
-                    "Cache",
-                    {
-                        ParamGroup {
-                            "Group1",
-                            {
-                                ParamPrimitive("Cache Path")
-                            }
-                        }
-                    }
-                },
-            }
-        };
+    struct FlipSolver : INode {
 
         FlipSolver() {
 #if defined(_WIN32)
@@ -137,36 +64,36 @@ namespace zeno {
             return nullptr;
         }
 
-        void mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
-            INode::mark_dirty(bOn, reason, bWholeSubnet, bRecursively);
+        void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
+            INode::dirty_changed(bOn, reason, bWholeSubnet, bRecursively);
             if (reason != Dirty_FrameChanged) {
                 //清空所有cache.
             }
         }
 
-        std::shared_ptr<zeno::IObject> apply(
-            std::shared_ptr<zeno::IObject> init_fluid,
-            std::shared_ptr<zeno::IObject> static_collider,
-            std::shared_ptr<zeno::IObject> emission_source,
-            float accuracy = 0.08f,
-            float timestep = 0.04f,
-            float max_substep = 1.f,
-            zeno::vec3f gravity = zeno::vec3f({ 0.f, -9.8f, 0.f }),
-            zeno::vec3f emission = zeno::vec3f({ 0.f, -9.8f, 0.f }),
-            bool is_emission = true,
-            float dynamic_collide_strength = 1.f,
-            float density = 1000,
-            float surface_tension = 0,
-            float viscosity = 0,
-            float wall_viscosity = 0,
-            float wall_viscosityRange = 0,
-            int curve_endframe = 100,
-            float curve_range = 1.1f,
-            float preview_size = 0,
-            float preview_minVelocity = 0,
-            float preview_maxVelocity = 2.f,
-            std::string cache_path = ""
-        ) {
+        void apply() override {
+            zany init_fluid = get_input("Initialize Fluid");
+            zany static_collider = get_input("Static Collider");
+            zany emission_source = get_input("Emission Source");
+            float accuracy = get_input2_float("Accuracy");
+            float timestep = get_input2_float("Timestep");
+            float max_substep = get_input2_float("Max Substep");
+            zeno::vec3f gravity = toVec3f(get_input2_vec3f("Gravity"));
+            zeno::vec3f emission = toVec3f(get_input2_vec3f("Emission Velocity"));
+            bool is_emission = get_input2_bool("Is Emission");
+            float dynamic_collide_strength = get_input2_float("Dynamic Collide Strength");
+            float density = get_input2_float("Density");
+            float surface_tension = get_input2_float("Surface Tension");
+            float viscosity = get_input2_float("Viscosity");
+            float wall_viscosity = get_input2_float("Wall Viscosity");
+            float wall_viscosityRange = get_input2_float("Wall Viscosity Range");
+            int curve_endframe = get_input2_int("Curve Endframe");
+            float curve_range = get_input2_float("Curve Range");
+            float preview_size = get_input2_float("Preview Size");
+            float preview_minVelocity = get_input2_float("Preview Minimum Velocity");
+            float preview_maxVelocity = get_input2_float("Preview Maximum Velocity");
+            std::string cache_path = zsString2Std(get_input2_string("Cache Path"));
+
             if (!init_fluid || !static_collider) {
                 throw makeError<UnimplError>("need init fluid and static collider");
             }
@@ -195,7 +122,8 @@ namespace zeno {
                         !CreatePipe(&m_hPipe_solver_read, &m_hPipe_main_write, &sa, 0)) {
                         //throw
                         zeno::log_error("CreatePipe failed");
-                        return nullptr;
+                        set_output("Output", nullptr);
+                        return;
                     }
 
                     //配置子进程 I/O 句柄
@@ -229,7 +157,8 @@ namespace zeno {
                     );
                     if (m_shm_initFluid == NULL) {
                         zeno::log_error("CreateFileMapping for init fluid failed, error: {}", GetLastError());
-                        return nullptr;
+                        set_output("Output", nullptr);
+                        return;
                     }
 
                     const size_t shm_staticcoll_size = buf_static_collider.size();
@@ -243,7 +172,8 @@ namespace zeno {
                     );
                     if (m_shm_staticCollider == NULL) {
                         zeno::log_error("CreateFileMapping for static collider failed, error: {}", GetLastError());
-                        return nullptr;
+                        set_output("Output", nullptr);
+                        return;
                     }
 
                     LPVOID pInitBuf = MapViewOfFile(m_shm_initFluid, FILE_MAP_ALL_ACCESS, 0, 0, shm_initfluid_size);
@@ -263,11 +193,12 @@ namespace zeno {
                     memcpy(pStaticCollBuf, buf_static_collider.data(), shm_staticcoll_size);
 
 #ifdef DEBUG_NODE
-                    auto cmdargs = zeno::format("C:/zeno-master/Debug/bin/zensolver.exe --pipe-write {} --pipe-read {} --init-fluid \"{}\" --size-init-fluid \"{}\" --static-collider \"{}\" --size-static-collider \"{}\"",
+                    auto cmdargs = zeno::format("C:/zensolver/Debug/bin/zensolver.exe --pipe-write {} --pipe-read {} --init-fluid \"{}\" --size-init-fluid \"{}\" --static-collider \"{}\" --size-static-collider \"{}\"",
                         (unsigned long long)m_hPipe_sovler_write, (unsigned long long)m_hPipe_solver_read, shm_initname, shm_initfluid_size, shm_staiccoll_name, shm_staticcoll_size);
-                    if (!CreateProcess((LPSTR)"C:/zeno-master/Debug/bin/zensolver.exe", (LPSTR)cmdargs.c_str(), NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &m_pi)) {
+                    if (!CreateProcess((LPSTR)"C:/zensolver/Debug/bin/zensolver.exe", (LPSTR)cmdargs.c_str(), NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &m_pi)) {
                         zeno::log_error("CreateProcess failed");
-                        return nullptr;
+                        set_output("Output", nullptr);
+                        return;
                     }
 
                     //从解算进程读取发来的通知
@@ -288,7 +219,7 @@ namespace zeno {
                     //可以等到子进程回传消息时，再标脏位，从而重新apply
                     //A: 如果用户主动杀进程，而这个句柄还在，会发生什么？
 
-                    return nullptr;
+                    return;
                 }
 #else
                 //TODO: Linux下IPC
@@ -297,9 +228,10 @@ namespace zeno {
             }
             else {
                 //也有一种可能，就是有cache，但解算器只是跑了一部分帧，剩下的需要用户主动触发时间轴更新，然后重新跑
-                return spRes;
+                set_output("Output", spRes);
+                return;
             }
-            return nullptr;
+            set_output("Output", nullptr);
         }
 
         void ReadPipeThread(HANDLE hReadPipe) {
@@ -348,5 +280,35 @@ private:
 #endif
 
     };
-#endif
+
+    ZENDEFNODE(FlipSolver, {
+        {/*inputs:*/
+            {gParamType_IObject, "Initialize Fluid"},
+            {gParamType_IObject, "Static Collider"},
+            {gParamType_IObject, "Emission Source"},
+            {gParamType_Float, "Accuracy", "0.8"},
+            {gParamType_Float, "Max Substep", "1.0"},
+            {gParamType_Float, "Timestep", "0.04"},
+            {gParamType_Vec3f, "Gravity", "0.0 -9.8 0.0"},
+            {gParamType_Vec3f, "Emission Velocity", "0.0 -9.8 0.0"},
+            {gParamType_Bool, "Is Emission", "1"},
+            {gParamType_Float, "Dynamic Collide Strength", "1"},
+            {gParamType_Float, "Density", "1000"},
+            {gParamType_Float, "Surface Tension", "0"},
+            {gParamType_Float, "Viscosity", "0"},
+            {gParamType_Float, "Wall Viscosity", "0"},
+            {gParamType_Float, "Wall Viscosity Range", "0"},
+            {gParamType_Int, "Curve Endframe", "0"},
+            {gParamType_Float, "Curve Range", "1.1"},
+            {gParamType_Float, "Preview Size", "0"},
+            {gParamType_Float, "Preview Minimum Velocity", "0"},
+            {gParamType_Float, "Preview Maximum Velocity", "0"},
+            ParamPrimitive("Cache Path", gParamType_String, "", ReadPathEdit),
+        },
+        {
+            {gParamType_IObject, "Output"}
+        },
+        {},
+        {"create"},
+    });
 }

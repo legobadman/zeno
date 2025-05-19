@@ -562,7 +562,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
             pSubnetNode->mark_subnetdirty(bOn);
         if (DopNetwork* pDop = dynamic_cast<DopNetwork*>(pSubnetNode)) {
             pDop->resetFrameState();
-    }
+        }
     }
 
     Graph* spGraph = m_pGraph;
@@ -571,6 +571,8 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
     {
         pSubnetImpl->mark_dirty(true, Dirty_All, false);
     }
+
+    m_pNode->dirty_changed(bOn, reason, bWholeSubnet, bRecursively);
 }
 
 void NodeImpl::mark_dirty_objs()
