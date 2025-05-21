@@ -20,6 +20,10 @@ endif()
 add_subdirectory(freeglut)
 target_link_libraries(zenovis PRIVATE freeglut)
 
+if(MSVC)
+    target_compile_options(zenovis PRIVATE /MP)
+endif()
+
 if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zenovis)
 endif()

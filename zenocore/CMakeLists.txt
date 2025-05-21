@@ -12,6 +12,10 @@ if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zenocore)
 endif()
 
+if(MSVC)
+    target_compile_options(zenocore PRIVATE /MP)
+endif()
+
 if (ZENO_ENABLE_OPENMP)
     find_package(OpenMP)
     if (TARGET OpenMP::OpenMP_CXX)
