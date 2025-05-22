@@ -170,7 +170,27 @@ namespace zeno {
         std::string category;
         std::string nickname;
         std::string doc;
-        std::string reflectReturnName;      //the name of return value on reflected function.
+
+        CustomUI() = default;
+        CustomUI(
+            const ObjectParams& inObjs,
+            const CustomUIParams& inPrims,
+            const PrimitiveParams& outPrims,
+            const ObjectParams& outObjs,
+            const NodeUIStyle& uisty,
+            const std::string& _category,
+            const std::string& _nickname,
+            const std::string& _doc
+            )
+            : inputObjs(inObjs)
+            , inputPrims(inPrims)
+            , outputPrims(outPrims)
+            , outputObjs(outObjs)
+            , uistyle(uisty)
+            , category(_category)
+            , nickname(_nickname)
+            , doc(_doc)
+        {}
     };
 
     struct ParamUpdateInfo {

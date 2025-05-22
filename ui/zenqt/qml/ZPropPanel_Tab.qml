@@ -18,7 +18,9 @@ Item {
 
         Repeater {
             id: repeater
-            model: root.model
+            model: {
+                return root.model
+            }
 
             //显示一个group name
             delegate: ColumnLayout {
@@ -28,7 +30,7 @@ Item {
                     Layout.fillWidth: true
                     text: groupname
                     onClicked: propGroup.shown = !propGroup.shown
-                    visible: root.childCount > 1   //只有一个group可能是默认的情况，不予以显示
+                    visible: root.model.rowCount() > 1   //只有一个group可能是默认的情况，不予以显示
                 }
 
                 //把整个group 显示出来
