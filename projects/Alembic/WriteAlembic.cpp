@@ -383,7 +383,7 @@ void write_user_data(
         , int frameid
         , int real_frame_start
 ) {
-    //要直接拿userdata，打破二进制边界
+    //瑕佺洿鎺ユ嬁userdata锛屾墦鐮翠簩杩涘埗杈圭晫
     auto ud = prim->userData();
     Vector<String> keys = ud->keys();
     for (const auto& key : keys) {

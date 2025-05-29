@@ -676,7 +676,7 @@ void NodeImpl::reflectForeach_apply(CalcContext* pContext)
 
         auto foreach_end = coreNode();
         assert(foreach_end);
-        for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(); foreach_end->increment())
+        for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(pContext); foreach_end->increment())
         {
             foreach_begin->mark_dirty(true);
             pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
@@ -1369,51 +1369,82 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
 std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
     std::shared_ptr<ListObject> spList;
     bool bDirectLink = false;
-#if 0
     if (in_param->links.size() == 1)
     {
+        spList = create_ListObject();
+
+        std::map<std::string, zany> existObjs;
+        if (in_param->spObject) {
+            auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
+            for (auto spobj : spOldList->m_impl->get()) {
+                existObjs.insert({ zsString2Std(spobj->key()), spobj });
+            }
+        }
+
         std::shared_ptr<ObjectLink> spLink = in_param->links.front();
         auto out_param = spLink->fromparam;
-        std::shared_ptr<INode> outNode = out_param->m_wpNode;
+        NodeImpl* outNode = out_param->m_wpNode;
+        bool is_this_item_dirty = outNode->is_dirty();
+        if (is_this_item_dirty) {
+            GraphException::translated([&] {
+                outNode->doApply(pContext);
+                }, outNode);
+        }
+        if (m_name == "MakeList2")
+        {
+            int a = 0;
+        }
+        auto outResult = outNode->get_output_obj(out_param->name);
+        assert(outResult);
 
-        if (out_param->type == in_param->type && spLink->tokey.empty()) {   //根据Graph::addLink规则，类型相同且无key视为直连
+        if ((out_param->type == in_param->type && spLink->tokey.empty()) || dynamic_cast<zeno::ListObject*>(outResult.get())) {   //根据Graph::addLink规则，类型相同且无key视为直连
             bDirectLink = true;
 
-            if (outNode->is_dirty()) {
-                GraphException::translated([&] {
-                    outNode->doApply(pContext);
-                    }, outNode.get());
-            }
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-            assert(out_param->type == gParamType_List);
+            //assert(out_param->type == gParamType_List);
 
-#if 0
-            if (in_param->socketType == Socket_Owning) {
-                spList = std::dynamic_pointer_cast<ListObject>(outResult->move_clone());
-            }
-            else if (in_param->socketType == Socket_ReadOnly) {
-                spList = std::dynamic_pointer_cast<ListObject>(outResult);
-            }
-            else if (in_param->socketType == Socket_Clone)
-#endif
-            {
-                //里面的元素也要clone
-                std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
-                spList = std::dynamic_pointer_cast<ListObject>(outList->clone_by_key(m_uuid));
-#if 0
-                spList = create_ListObject();
-                std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
-                for (int i = 0; i < outList->size(); i++) {
-                    //后续要考虑key的问题
-                    spList->push_back(outList->get(i)->clone());
+            if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult.get())) {
+                spList = std::dynamic_pointer_cast<zeno::ListObject>(clone_by_key(_spList, m_uuid));
+                update_list_root_key(spList.get(), m_uuid);
+            } else {
+                zany newObj;
+                if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult.get())) {
+                    newObj = clone_by_key(_spDict, m_uuid);
                 }
+                else {
+                    auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
+                    if (dynamic_cast<zeno::PrimitiveObject*>(outResult.get())) {
+                        newObj = outResult;
+#if OWING_UPSTREAM_NODE		//in_param和out_param暂时引用同一个object
+                        out_param->spObject.reset();
+                        outNode->mark_dirty(true);
 #endif
+                    }
+                    else {
+                        newObj = outResult->clone();
+                        newObj->update_key(newkey);
+                    }
+                }
+                spList->m_impl->push_back(newObj);
+
+                std::string const& new_key = zsString2Std(newObj->key());
+                if (is_this_item_dirty) {
+                    if (existObjs.find(new_key) != existObjs.end()) {
+                        spList->m_impl->m_modify.insert(new_key);
+                        existObjs.erase(new_key);
+                    }
+                    else {
+                        spList->m_impl->m_new_added.insert(new_key);
+                    }
+                }
+                else {
+                    spList->m_impl->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
+                }
+                existObjs.erase(new_key);
             }
-            spList->update_key(m_uuid);
+
+            spList->update_key(stdString2zs(m_uuid));
         }
     }
-#endif
     if (!bDirectLink)
     {
         spList = create_ListObject();
@@ -1452,8 +1483,10 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                     auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
                     if (dynamic_cast<zeno::PrimitiveObject*>(outResult.get())) {
                         newObj = outResult;
+#if OWING_UPSTREAM_NODE		//in_param和out_param暂时引用同一个object
                         out_param->spObject.reset();
                         outNode->mark_dirty(true);
+#endif
                     }
                     else {
                         newObj = outResult->clone();
@@ -1688,8 +1721,10 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
     }
     else {
         in_param->spObject = out_param->spObject;
+#if OWING_UPSTREAM_NODE		//in_param和out_param暂时引用同一个object
         out_param->spObject.reset();
         outNode->mark_dirty(true);
+#endif
     }
 
     if (auto splist = std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
@@ -3168,7 +3203,12 @@ bool NodeImpl::has_input(std::string const &id) const {
         return !iter->second.links.empty();
     }
     else {
-        return m_inputPrims.find(id) != m_inputPrims.end();
+        auto iter = m_inputPrims.find(id);
+        if (iter != m_inputPrims.end()) {
+            return !iter->second.links.empty();
+            //return m_inputPrims.find(id) != m_inputPrims.end();
+        }
+        return false;
     }
 }
 
@@ -3256,6 +3296,12 @@ zany NodeImpl::get_input(std::string const &id) const {
             case zeno::types::gParamType_Shader:
             {
                 throw makeError<UnimplError>("ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
+            }
+            case gParamType_Heatmap:
+            {
+                std::shared_ptr<zeno::HeatmapObject> heatmapObj = std::make_shared<zeno::HeatmapObject>();
+                heatmapObj->colors = zeno::reflect::any_cast<zeno::HeatmapData>(val).colors;
+                return heatmapObj;
             }
             default:
                 return nullptr;

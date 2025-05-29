@@ -41,58 +41,58 @@ namespace zeno
         zeno::Vector<zeno::String> get_attr_names(GeoAttrGroup grp);
         //void geomTriangulate(zeno::TriangulateInfo& info);
 
-        //´´½¨ÊôĞÔ
+        //åˆ›å»ºå±æ€§
         int create_attr(GeoAttrGroup grp, const zeno::String& attr_name, const Any& defl);
         int create_face_attr(const zeno::String& attr_name, const Any& defl);
         int create_point_attr(const zeno::String& attr_name, const Any& defl);
         int create_vertex_attr(const zeno::String& attr_name, const Any& defl);
         int create_geometry_attr(const zeno::String& attr_name, const Any& defl);
 
-        //ÉèÖÃÊôĞÔ
+        //è®¾ç½®å±æ€§
         int set_attr(GeoAttrGroup grp, const zeno::String& name, const Any& val);
         int set_vertex_attr(const zeno::String& attr_name, const Any& defl);
         int set_point_attr(const zeno::String& attr_name, const Any& defl);
         int set_face_attr(const zeno::String& attr_name, const Any& defl);
         int set_geometry_attr(const zeno::String& attr_name, const Any& defl);
 
-        /* ¼ì²éÊôĞÔÊÇ·ñ´æÔÚ */
+        /* æ£€æŸ¥å±æ€§æ˜¯å¦å­˜åœ¨ */
         bool has_attr(GeoAttrGroup grp, const zeno::String& name);
         bool has_vertex_attr(const zeno::String& name) const;
         bool has_point_attr(const zeno::String& name) const;
         bool has_face_attr(const zeno::String& name) const;
         bool has_geometry_attr(const zeno::String& name) const;
 
-        //É¾³ıÊôĞÔ
+        //åˆ é™¤å±æ€§
         int delete_attr(GeoAttrGroup grp, const zeno::String& attr_name);
         int delete_vertex_attr(const zeno::String& attr_name);
         int delete_point_attr(const zeno::String& attr_name);
         int delete_face_attr(const zeno::String& attr_name);
         int delete_geometry_attr(const zeno::String& attr_name);
 
-        /* Ìí¼ÓÔªËØ */
+        /* æ·»åŠ å…ƒç´  */
         int add_vertex(int face_id, int point_id);
         int add_point(Vec3f pos);
         int add_face(const zeno::Vector<int>& points, bool bClose = true);
         void set_face(int idx, const zeno::Vector<int>& points, bool bClose = true);
 
-        /* ÒÆ³ıÔªËØÏà¹Ø */
+        /* ç§»é™¤å…ƒç´ ç›¸å…³ */
         bool remove_faces(const std::set<int>& faces, bool includePoints);
         bool remove_point(int ptnum);
         bool remove_vertex(int face_id, int vert_id);
 
-        /* ·µ»ØÔªËØ¸öÊı */
+        /* è¿”å›å…ƒç´ ä¸ªæ•° */
         int npoints() const;
         int nfaces() const;
         int nvertices() const;
         int nvertices(int face_id) const;
         int nattributes(GeoAttrGroup grp) const;
 
-        /* µãÏà¹Ø */
+        /* ç‚¹ç›¸å…³ */
         zeno::Vector<int> point_faces(int point_id);
         int point_vertex(int point_id);
         zeno::Vector<int> point_vertices(int point_id);
 
-        /* ÃæÏà¹Ø */
+        /* é¢ç›¸å…³ */
         int face_point(int face_id, int vert_id) const;
         zeno::Vector<int> face_points(int face_id);
         int face_vertex(int face_id, int vert_id);
@@ -100,7 +100,7 @@ namespace zeno
         zeno::Vector<int> face_vertices(int face_id);
         zeno::Vec3f face_normal(int face_id);
 
-        /* VertexÏà¹Ø */
+        /* Vertexç›¸å…³ */
         int vertex_index(int face_id, int vertex_id);
         int vertex_next(int linear_vertex_id);
         int vertex_prev(int linear_vertex_id);
@@ -112,7 +112,7 @@ namespace zeno
         GeometryObject* m_impl;     //TODO: unique_ptr with abi compatible
     };
 
-    //Ã»ÓĞ·Åµ½ÍâÃæ£¬ÊÇÒòÎªÓÃ»§ÒªÖ±½Óincludeµ±Ç°ÎÄ¼ş£¬¸É´àÖ±½ÓÔÚÕâÀï¹¹Ôì
+    //æ²¡æœ‰æ”¾åˆ°å¤–é¢ï¼Œæ˜¯å› ä¸ºç”¨æˆ·è¦ç›´æ¥includeå½“å‰æ–‡ä»¶ï¼Œå¹²è„†ç›´æ¥åœ¨è¿™é‡Œæ„é€ 
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject();
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim);

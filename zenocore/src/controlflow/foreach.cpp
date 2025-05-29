@@ -105,20 +105,22 @@ namespace zeno
             //不能引发事务重新执行，执行权必须由外部Graph发起
             zeno::reflect::Any oldvalue;
             m_pAdapter->update_param_impl("Current Iteration", new_iteration, oldvalue);
+            ZImpl(set_primitive_output("Index", new_iteration));
         }
     };
 
     ZENDEFNODE(ForEachBegin,
     {
         {
-            {gParamType_Geometry, "Initial Object"},
+            {gParamType_IObject, "Initial Object"},
             // InnerSocket = 1 当前迭代值外部不可修改，但可被其他参数引用，因此还是作为正式参数，当然有另一种可能，就是支持引用output参数，但当前并没有这个打算
             ParamPrimitive("Current Iteration", gParamType_Int, 0),
             ParamPrimitive("Fetch Method", gParamType_String, "From Last Feedback", zeno::Combobox, std::vector<std::string>{"Initial Object", "From Last Feedback", "Element of Object"}),
             ParamPrimitive("ForEachEnd Path", gParamType_String),
         },
         {
-            {gParamType_Geometry, "Output Object"}
+            {gParamType_IObject, "Output Object"},
+            ParamPrimitive("Index", gParamType_Int, 0),
         },
         {},
         {"geom"}
@@ -153,7 +155,7 @@ namespace zeno
             foreach_begin->update_iteration(start_value);
         }
 
-        bool is_continue_to_run() override {
+        bool is_continue_to_run(CalcContext* pContext) override {
             std::string iter_method = ZImpl(get_input2<std::string>("Iterate Method"));
 
             ForEachBegin* foreach_begin = get_foreach_begin();
@@ -189,7 +191,7 @@ namespace zeno
                 if (!initobj && foreachbegin_impl->is_dirty()) {
                     //可能上游还没算，先把上游的依赖解了
                     //foreach_begin->preApply(nullptr);
-                    foreachbegin_impl->doApply(nullptr);
+                    foreachbegin_impl->doApply(pContext);
                     initobj = foreachbegin_impl->get_input("Initial Object");
                 }
                 if (auto spList = std::dynamic_pointer_cast<ListObject>(initobj)) {
@@ -283,8 +285,14 @@ namespace zeno
                     }
 
                     //先兼容Houdini，直接以merge的方式返回，如果日后有需求，再提供选项返回list
-                    auto mergedObj = zeno::mergeObjects(m_collect_objs);
-                    ZImpl(set_output("Output Object", mergedObj));
+                    if (m_collect_objs->size() != 0) {
+                        if (auto geo = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(m_collect_objs->m_impl->get(0))) {
+                            auto mergedObj = zeno::mergeObjects(m_collect_objs);
+                            ZImpl(set_output("Output Object", mergedObj));
+                            return;
+                        }
+                    }
+                    ZImpl(set_output("Output Object", m_collect_objs));
                     return;
                 }
                 else {
@@ -345,7 +353,7 @@ namespace zeno
             ParamPrimitive("Stop Condition", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';")
         },
         {
-            {gParamType_Geometry, "Output Object"}
+            {gParamType_IObject, "Output Object"}
         },
         {},
         {"geom"}

@@ -382,7 +382,7 @@ ZENDEFNODE(ReadFBXFile, {
         {gParamType_String, "path", "", Socket_Primitve, ReadPathEdit},
     },
     {
-        {gParamType_Unknown, "fbx_object"},
+        {gParamType_FBXObject, "fbx_object"},
     },
     {},
     {"FBXSDK"},
@@ -2132,7 +2132,7 @@ ZENDEFNODE(BoneSetAttr,
 { /* inputs: */ {
     {gParamType_Primitive, "skeleton"},
     {gParamType_String, "boneName", ""},
-    {gParamType_Int, "value", "0"}, //这里是Variant，但目前暂时不支持wildcard
+    {gParamType_Int, "value", "0"}, //杩欓噷鏄疺ariant锛屼絾鐩墠鏆傛椂涓嶆敮鎸亀ildcard
     {gParamType_String, "attr", ""},
     {"enum float vec2f vec3f vec4f int vec2i vec3i vec4i", "type", "int"},
 }, /* outputs: */ {

@@ -163,7 +163,7 @@ struct ShaderFinalize : INode {
     }
 };
 
-//ÒÔÏÂÊı¾İÀàĞÍÓĞ¿ÉÄÜ»á½ÓÊÕµ½ÆäËûShader½Úµã£¬ÕâÊ±ºò´«¹ıÀ´µÄÊÇShaderData£¬²»ÄÜ×ßÀàĞÍÅĞ±ğ¡£
+//ä»¥ä¸‹æ•°æ®ç±»å‹æœ‰å¯èƒ½ä¼šæ¥æ”¶åˆ°å…¶ä»–ShaderèŠ‚ç‚¹ï¼Œè¿™æ—¶å€™ä¼ è¿‡æ¥çš„æ˜¯ShaderDataï¼Œä¸èƒ½èµ°ç±»å‹åˆ¤åˆ«ã€‚
 ZENDEFNODE(ShaderFinalize, {
     {
         {gParamType_Float, "base", "1"},

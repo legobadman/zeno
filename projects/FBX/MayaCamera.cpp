@@ -31,6 +31,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include <fstream>
+#include "zeno_types/reflect/reflection.generated.hpp"
 
 #define SET_CAMERA_DATA                         \
     out_pos = (n->pos);                       \
@@ -104,7 +105,14 @@ struct CameraEval: zeno::INode {
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = get_input2_int("frameid");
+            auto frameidany = m_pAdapter->get_param_result(zsString2Std("frameid"));
+            if (frameidany.type().hash_code() == zeno::types::gParamType_Float) {
+                frameid = any_cast<float>(frameidany);
+            } else if (frameidany.type().hash_code() == zeno::types::gParamType_Int) {
+                frameid = any_cast<int>(frameidany);
+            } else {
+                frameid = 0;
+            }
         } else {
             frameid = GetFrameId();
         }

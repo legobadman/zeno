@@ -735,8 +735,8 @@ struct StringReplace : zeno::INode {
 ZENDEFNODE(StringReplace, {
     {
         {gParamType_String, "string", "", Socket_Primitve, Multiline},
-        {gParamType_String, "old", ""},
-        {gParamType_String, "new", ""},
+        {gParamType_String, "old", "", Socket_Primitve, Lineedit},
+        {gParamType_String, "new", "", Socket_Primitve, Lineedit},
     },
     {{gParamType_String, "string"},
     },

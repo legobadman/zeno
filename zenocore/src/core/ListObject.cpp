@@ -94,7 +94,7 @@ namespace zeno
 
     void ListObject_impl::append(zany&& spObj) {
         m_objects.push_back(spObj);
-        //spObj->set_parent(this);  //目前暂时不需要parent体系
+        //spObj->set_parent(this);  //目前锟斤拷时锟斤拷锟斤拷要parent锟斤拷系
         //m_ptr2Index.insert(std::make_pair((uint16_t)spObj.get(), m_objects.size()));
     }
 

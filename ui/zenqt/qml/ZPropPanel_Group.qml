@@ -323,6 +323,9 @@ Item {
                 selectByMouse: true // 启用鼠标选择文本功能
                 text: mvalue
                 color: "white"
+                onEditingFinished: {
+                    root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
+                }
             }
 
             Button {
@@ -332,9 +335,8 @@ Item {
                         title: "select file"
                     })
                     dialog.onAccepted.connect(function() {
-                        var filePath = dialog.fileUrl.toString()
+                        var filePath = dialog.fileUrl.toString().replace("file:///", "")
                         console.log("fileUrl = " + filePath)
-                        //TODO: 这种fileUrl是file:// 需要转为普通的路径，否则不好处理
                         root.model.setData(mindex, filePath, Model.ROLE_PARAM_QML_VALUE)
                     })
                     dialog.open()

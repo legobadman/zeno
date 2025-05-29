@@ -10,6 +10,7 @@ namespace zeno
     struct DictObject;
     struct PrimitiveObject;
     struct GlobalState;
+    struct CalcContext;
 
     struct ZENO_API INode {
         virtual void apply() = 0;
@@ -53,7 +54,7 @@ namespace zeno
         GlobalState* getGlobalState();
 
         //foreach issues.
-        virtual bool is_continue_to_run();
+        virtual bool is_continue_to_run(CalcContext* pContext);
         virtual void increment();
         virtual void reset_forloop_settings();
         virtual zany get_iterate_object();

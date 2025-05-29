@@ -187,10 +187,10 @@ static CustomUI descToCustomui(const Descriptor& desc) {
     }
     for (const SocketDescriptor& param_desc : desc.outputs) {
         if (param_desc._desc.type == Desc_Prim) {
-            ui.outputObjs.push_back(param_desc._desc.objparam);
+            ui.outputPrims.push_back(param_desc._desc.primparam);
         }
         else if (param_desc._desc.type == Desc_Obj) {
-            ui.outputPrims.push_back(param_desc._desc.primparam);
+            ui.outputObjs.push_back(param_desc._desc.objparam);
         }
         else {
             ParamType type = param_desc.type;

@@ -97,7 +97,7 @@ namespace zeno
         return get_input2_bool(param);
     }
 
-    bool INode::is_continue_to_run() { return false; }
+    bool INode::is_continue_to_run(CalcContext* pContext) { return false; }
     void INode::increment() {}
     void INode::reset_forloop_settings() {}
     zany INode::get_iterate_object() { return 0; }

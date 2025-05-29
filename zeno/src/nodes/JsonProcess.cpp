@@ -395,7 +395,6 @@ ZENDEFNODE(JsonGetArrayItem, {
     },
 });
 
-#if 0 
 struct JsonGetChild : zeno::INode {
     virtual void apply() override {
         auto json = ZImpl(get_input<JsonObject>("json"));
@@ -409,50 +408,56 @@ struct JsonGetChild : zeno::INode {
             ZImpl(set_output2("out", output));
         }
         else if (type == "int") {
-            int output = {};
+            auto output = std::make_shared<NumericObject>();
             if (json->json.contains(name)) {
-                output = int(json->json[name]);
+                output->set<int>(int(json->json[name]));
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "float") {
-            float output = {};
+            auto output = std::make_shared<NumericObject>();
             if (json->json.contains(name)) {
-                output = float(json->json[name]);
+                output->set<float>(float(json->json[name]));
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "string") {
-            std::string output = {};
+            auto output = std::make_shared<StringObject>();
             if (json->json.contains(name)) {
-                output = std::string(json->json[name]);
+                output->set(std::string(json->json[name]));
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "vec2f") {
-            vec2f output = {};
+            auto output = std::make_shared<NumericObject>();
             if (json->json.contains(name)) {
-                output[0] = float(json->json[name][0]);
-                output[1] = float(json->json[name][1]);
+                vec2f vec;
+                vec[0] = float(json->json[name][0]);
+                vec[1] = float(json->json[name][1]);
+                output->set<vec2f>(vec);
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "vec3f") {
-            vec3f output = {};
+            auto output = std::make_shared<NumericObject>();
             if (json->json.contains(name)) {
-                output[0] = float(json->json[name][0]);
-                output[1] = float(json->json[name][1]);
-                output[2] = float(json->json[name][2]);
+                vec3f vec;
+                vec[0] = float(json->json[name][0]);
+                vec[1] = float(json->json[name][1]);
+                vec[2] = float(json->json[name][2]);
+                output->set<vec3f>(vec);
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "vec4f") {
-            vec4f output = {};
+            auto output = std::make_shared<NumericObject>();
             if (json->json.contains(name)) {
-                output[0] = float(json->json[name][0]);
-                output[1] = float(json->json[name][1]);
-                output[2] = float(json->json[name][2]);
-                output[3] = float(json->json[name][3]);
+                vec4f vec;
+                vec[0] = float(json->json[name][0]);
+                vec[1] = float(json->json[name][1]);
+                vec[2] = float(json->json[name][2]);
+                vec[3] = float(json->json[name][3]);
+                output->set<vec4f>(vec);
             }
             ZImpl(set_output2("out", output));
         }
@@ -462,17 +467,17 @@ ZENDEFNODE(JsonGetChild, {
     {
         {gParamType_JsonObject, "json"},
         {gParamType_String, "name"},
-        {"enum json int float string vec2f vec3f vec4f", "type", "json"},
+        ParamPrimitive("type", gParamType_String, "int", zeno::Combobox, std::vector<std::string>{"json", "int", "float", "string", "vec2f", "vec3f", "vec4f"}),
+        //{"enum json int float string vec2f vec3f vec4f", "type", "json"},
     },
     {
-        "out",//目前还没有variant数据类型的处理
+        {gParamType_IObject, "out"},
     },
     {},
     {
         "deprecated"
     },
 });
-#endif
 
 struct JsonHasKey : zeno::INode {
     virtual void apply() override {

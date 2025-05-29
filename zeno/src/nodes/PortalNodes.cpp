@@ -255,6 +255,131 @@ ZENDEFNODE(DelUserData2, {
     {"lifecycle"},
 });
 
+struct ObjectToPrimInt : zeno::INode {
+    virtual void apply() override {
+        auto object = ZImpl(get_input("object"));
+        if (auto numericObj = std::dynamic_pointer_cast<NumericObject>(object)) {
+            int val = 0;
+            std::visit([&val](auto&& var) {
+                using T = std::decay_t<decltype(var)>;
+                if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                    val = var;
+                }
+            }, numericObj->get());
+            ZImpl(set_primitive_output("value", val));
+        }
+        else {
+            ZImpl(set_primitive_output("value", -1));
+        }
+    }
+};
+
+ZENDEFNODE(ObjectToPrimInt, {
+    {{gParamType_IObject, "object", "", zeno::Socket_ReadOnly}},
+    {{gParamType_Int, "value", "0"}},
+    {},
+    {"objToNumeric"},
+    });
+
+struct ObjectToPrimString : zeno::INode {
+    virtual void apply() override {
+        auto object = ZImpl(get_input("object"));
+        if (auto stringObj = std::dynamic_pointer_cast<StringObject>(object)) {
+            ZImpl(set_primitive_output("value", stringObj->get()));
+        }
+        else {
+            ZImpl(set_primitive_output("value", ""));
+        }
+    }
+};
+
+ZENDEFNODE(ObjectToPrimString, {
+    {{gParamType_IObject, "object", "", zeno::Socket_ReadOnly}},
+    {{gParamType_String, "value", ""}},
+    {},
+    {"objToString"},
+    });
+
+struct ObjectToBasetype : zeno::INode {
+    virtual void apply() override {
+        auto object = ZImpl(get_input("Object"));
+        auto type = zsString2Std(get_input2_string("Output type"));
+        if (auto numericObj = std::dynamic_pointer_cast<NumericObject>(object)) {
+            std::visit([&type](auto&& val) {
+                using T = std::decay_t<decltype(val)>;
+                std::string valtype;
+                if (std::is_same_v<T, int>) {
+                    valtype = "int";
+                } else if (std::is_same_v<T, float>) {
+                    valtype = "float";
+                } else if (std::is_same_v<T, vec2i>) {
+                    valtype = "vec2i";
+                } else if (std::is_same_v<T, vec3i>) {
+                    valtype = "vec3i";
+                } else if (std::is_same_v<T, vec4i>) {
+                    valtype = "vec4i";
+                } else if (std::is_same_v<T, vec2f>) {
+                    valtype = "vec2f";
+                } else if (std::is_same_v<T, vec3f>) {
+                    valtype = "vec3f";
+                } else if (std::is_same_v<T, vec4f>) {
+                    valtype = "vec4f";
+                }
+                if (type != valtype) {
+                    valtype = "none";
+                    throw makeError<UnimplError>("ObjectToBasetype expect " + type + " got " + valtype);
+                }
+            }, numericObj->get());
+            if (type == "int") {
+                ZImpl(set_primitive_output("int", std::get<int>(numericObj->get())));
+            } else if (type == "float") {
+                ZImpl(set_primitive_output("float", std::get<float>(numericObj->get())));
+            } else if (type == "vec2i") {
+                ZImpl(set_primitive_output("vec2i", std::get<vec2i>(numericObj->get())));
+            } else if (type == "vec3i") {
+                ZImpl(set_primitive_output("vec3i", std::get<vec3i>(numericObj->get())));
+            } else if (type == "vec4i") {
+                ZImpl(set_primitive_output("vec4i", std::get<vec4i>(numericObj->get())));
+            } else if (type == "vec2f") {
+                ZImpl(set_primitive_output("vec2f", std::get<vec2f>(numericObj->get())));
+            } else if (type == "vec3f") {
+                ZImpl(set_primitive_output("vec3f", std::get<vec3f>(numericObj->get())));
+            } else if (type == "vec4f") {
+                ZImpl(set_primitive_output("vec4f", std::get<vec4f>(numericObj->get())));
+            }
+        } else if (auto stringObj = std::dynamic_pointer_cast<StringObject>(object)) {
+            if (type == "string") {
+                ZImpl(set_primitive_output("string", stringObj->get()));
+            } else {
+                throw makeError<UnimplError>("ObjectToBasetype expect " + type + " got stringObject");
+            }
+        } else {
+            throw makeError<UnimplError>("ObjectToBasetype expect not numericObject or stringObject");
+        }
+    }
+};
+
+ZENDEFNODE(ObjectToBasetype, {
+    {
+        {gParamType_IObject, "object", "", zeno::Socket_ReadOnly},
+        {"enum int float string vec2i vec3i vec4i vec2f vec3f vec4f", "Output type", "int"},
+        //ParamPrimitive("Output type", gParamType_String, "int", zeno::Combobox, std::vector<std::string>{"int", "float", "string", "vec2i", "vec3i", "vec4i", "vec2f", "vec3f", "vec4f"}),
+    },
+    {
+        {gParamType_Int, "int", "0"}, 
+        {gParamType_Float, "float", "0"},
+        {gParamType_String, "string", ""},
+        {gParamType_Vec2f, "vec2i", "0,0"},
+        {gParamType_Vec3f, "vec3i", "0,0,0"},
+        {gParamType_Vec4f, "vec4i", "0,0,0,0"},
+        {gParamType_Vec2f, "vec2f", "0,0"},
+        {gParamType_Vec3f, "vec3f", "0,0,0"},
+        {gParamType_Vec4f, "vec4f", "0,0,0,0"},
+    },
+    {},
+    {"ObjectToBasetype"},
+    });
+
 #if 0
 struct CopyAllUserData : zeno::INode {
     virtual void apply() override {

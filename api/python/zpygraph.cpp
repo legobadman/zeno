@@ -73,7 +73,7 @@ py::object Zpy_Graph::getCamera() const {
     }
 
     Zpy_Camera apiCamera(vecNodes[0]);
-    //ÒªÆÀ¹À¸Ã½ÚµãÊÇ·ñÓĞobj£¬·ñÔòÖ»ÓĞ½Úµã¶øÎŞobjÎ¥·´ÁËÕâ¸öobjÉè¼ÆµÄ³õÖÔ
+    //è¦è¯„ä¼°è¯¥èŠ‚ç‚¹æ˜¯å¦æœ‰objï¼Œå¦åˆ™åªæœ‰èŠ‚ç‚¹è€Œæ— objè¿åäº†è¿™ä¸ªobjè®¾è®¡çš„åˆè¡·
     if (apiCamera.getCamera()) {
         return py::cast(apiCamera);
     }

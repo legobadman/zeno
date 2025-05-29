@@ -330,7 +330,7 @@ struct AlembicPrimList : INode {
 ZENDEFNODE(AlembicPrimList, {
     {
         {gParamType_Bool, "flipFrontBack", "1"},
-        {gParamType_Unknown, "abctree"},
+        {gParamType_ABCTree, "abctree"},
         {gParamType_Bool, "use_xform", "0"},
         {gParamType_Bool, "triangulate", "0"},
         {gParamType_Bool, "splitByFaceset", "0"},
