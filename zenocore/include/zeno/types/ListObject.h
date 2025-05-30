@@ -8,6 +8,9 @@ namespace zeno {
 struct ListObject_impl;
 
 struct ZENO_API ListObject : IObjectClone<ListObject> {
+
+    typedef IObjectClone<ListObject> base;
+
     ListObject();
     ~ListObject();
     void Delete() override;
@@ -18,6 +21,7 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     void push_back(const zany& obj);
     void set(const zeno::Vector<zany>& arr);
     void set(size_t index, zany obj);
+    void update_key(const String& key) override;
 
     ListObject_impl* m_impl;
 };

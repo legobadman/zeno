@@ -123,8 +123,10 @@ struct GraphicsManager {
         for (auto spObject : spList->m_impl->get()) {
             assert(spObject);
             std::string const& key = zsString2Std(spObject->key());
-            if (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
-                spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end()) {
+            //直接加全部，不考虑部分增删，因为有不少情况（比如abc，是直接加到list，没法走m_new_added这些的）
+            /*if (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
+                spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end())*/
+            {
                 bool ret = false;
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                     ret = process_listobj(_spList);

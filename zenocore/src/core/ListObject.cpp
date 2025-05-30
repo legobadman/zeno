@@ -14,6 +14,19 @@ namespace zeno
     void ListObject::Delete() {
     }
 
+    void ListObject::update_key(const String& key) {
+        if (key.empty()) return;
+
+        base::update_key(key);
+        for (int i = 0; i < m_impl->m_objects.size(); i++) {
+            zany obj = m_impl->m_objects[i];
+            if (obj->key().empty()) {
+                std::string newkey = zsString2Std(m_key) + "/" + std::to_string(i);
+                obj->update_key(stdString2zs(newkey));
+            }
+        }
+    }
+
     ListObject::~ListObject() {
         m_impl->remove_children();
     }
