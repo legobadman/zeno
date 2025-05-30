@@ -386,6 +386,9 @@ std::set<std::string> GraphModel::getViewNodePath() const {
 void GraphModel::addLink(const QString& fromNodeStr, const QString& fromParamStr,
     const QString& toNodeStr, const QString& toParamStr)
 {
+    if (fromNodeStr == toNodeStr)
+        return;
+
     zeno::EdgeInfo link;
     link.inNode = toNodeStr.toStdString();
     link.inParam = toParamStr.toStdString();

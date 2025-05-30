@@ -3193,6 +3193,26 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
     return shader;
 }
 
+ParamType NodeImpl::get_anyparam_type(bool bInput, const std::string& name) {
+    if (bInput) {
+        if (m_inputObjs.find(name) != m_inputObjs.end()) {
+            return m_inputObjs[name].type;
+        }
+        else if (m_inputPrims.find(name) != m_inputPrims.end()) {
+            return m_inputPrims[name].type;
+        }
+    }
+    else {
+        if (m_outputObjs.find(name) != m_outputObjs.end()) {
+            return m_outputObjs[name].type;
+        }
+        else if (m_outputPrims.find(name) != m_outputPrims.end()) {
+            return m_outputPrims[name].type;
+        }
+    }
+    return Param_Null;
+}
+
 bool NodeImpl::has_input(std::string const &id) const {
     //这个has_input在旧的语义里，代表的是input obj，如果有一些边没有连上，那么有一些参数值仅有默认值，未必会设这个input的，
     //还有一种情况，就是对象值是否有输入引入

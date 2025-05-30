@@ -92,6 +92,7 @@ namespace zeno
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
+        ParamType get_anyparam_type(bool bInput, const std::string& name);
 
         std::string get_viewobject_output_param() const;
         virtual NodeData exportInfo() const;
