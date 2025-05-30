@@ -14,6 +14,10 @@ endif()
 
 target_link_libraries(zenobase PUBLIC zenocore)
 
+if (MSVC)
+    target_compile_options(zenobase PRIVATE /MP)
+endif()
+
 if (ZENO_ENABLE_OPENMP)
     find_package(OpenMP)
     if (TARGET OpenMP::OpenMP_CXX)

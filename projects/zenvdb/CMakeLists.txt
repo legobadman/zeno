@@ -15,6 +15,10 @@ if (MSVC)
     )
 endif()
 
+if (MSVC)
+    target_compile_options(zenvdb PRIVATE /MP)
+endif()
+
 target_include_directories(zenvdb PRIVATE ../oldzenbase/include)
 
 target_include_directories(zenvdb PUBLIC

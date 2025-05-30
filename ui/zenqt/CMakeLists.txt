@@ -47,6 +47,10 @@ if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zeno)
 endif()
 
+if (MSVC)
+    target_compile_options(zeno PRIVATE /MP)
+endif()
+
 target_link_libraries(zeno PRIVATE Threads::Threads)
 target_link_libraries(zeno PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor Qt${QT_VERSION_MAJOR}::QuickControls2)
 
