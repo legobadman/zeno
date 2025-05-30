@@ -1022,7 +1022,7 @@ void traverseABC(
     ObjectVisibility parent_visible,
     bool skipInvisibleObject,
     bool outOfRangeAsEmpty,
-    int use_instance
+    bool use_instance
 ) {
     if (use_instance) {
         tree.instanceSourcePath = obj.instanceSourcePath();
@@ -1177,7 +1177,7 @@ struct ReadAlembic : INode {
     std::string usedPath;
     bool read_done = false;
     virtual void apply() override {
-        int use_instance = get_input2_int("use_instance");
+        bool use_instance = get_input2_bool("use_instance");
         int frameid;
         if (has_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));

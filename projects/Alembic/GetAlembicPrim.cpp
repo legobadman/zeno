@@ -3,6 +3,7 @@
 #include <zeno/geo/commonutil.h>
 #include <glm/glm.hpp>
 #include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/UserData.h>
@@ -232,7 +233,7 @@ struct AlembicPrimList : INode {
     virtual void apply() override {
         auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
         auto prims = std::make_shared<zeno::ListObject>();
-        int use_xform = get_input2_int("use_xform");
+        bool use_xform = get_input2_bool("use_xform");
         if (use_xform) {
             prims = get_xformed_prims(abctree);
         } else {
@@ -242,8 +243,7 @@ struct AlembicPrimList : INode {
             });
         }
         auto new_prims = std::make_shared<zeno::ListObject>();
-
-        std::vector<zany> arr;
+        std::vector<zany>& arr = new_prims->m_impl->m_objects;  //不应该在插件内部暴露细节，不过暂时没有实现Vector::iterator，只能先拿出来
 
         if (get_input2_bool("splitByFaceset")) {
             for (auto &prim: prims->get()) {
@@ -254,6 +254,7 @@ struct AlembicPrimList : INode {
         }
         else {
             new_prims = std::dynamic_pointer_cast<zeno::ListObject>(prims->clone());
+            arr = new_prims->m_impl->m_objects;
         }
         auto pathInclude = zeno::split_str(zsString2Std(get_input2_string("pathInclude")), {' ', '\n'});
         auto pathExclude = zeno::split_str(zsString2Std(get_input2_string("pathExclude")), {' ', '\n'});
