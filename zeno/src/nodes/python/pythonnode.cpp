@@ -15,14 +15,18 @@ struct PythonNode : zeno::INode {
         auto prim = ZImpl(get_input_prim_param("script"));
         std::string script = zeno::reflect::any_cast<std::string>(prim.result);
         runPython(script);
+        set_output("object", get_input("object"));
     }
 };
 
 ZENDEFNODE(PythonNode, {
     {
+        {gParamType_IObject, "object"},
         {gParamType_String, "script", "", Socket_Primitve, CodeEditor}
     },
-    {},
+    {
+        {gParamType_IObject, "object"}
+    },
     {},
     {"command"},
 });

@@ -66,6 +66,11 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
         .def("getValue", &MyClass::getValue)
         .def("getName", &MyClass::testzeno);
 
+    py::class_<Zpy_Object>(m, "ZObject")
+        .def("setUserData", &Zpy_Object::set_user_data)
+        .def("getUserData", &Zpy_Object::get_user_data)
+        .def("toList", &Zpy_Object::toList);
+
     py::class_<Zpy_Light>(m, "Light")
         .def(py::init<py::list, py::list, py::list, py::list, float>(),
             py::arg("pos") = py::list(py::make_tuple(0, 0, 0)),
@@ -155,6 +160,7 @@ PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
         .def("getName", &Zpy_Graph::getName)
         .def_property_readonly("name", &Zpy_Graph::getName)
         .def("getNode", &Zpy_Graph::getNode)
+        .def("getInputObject", &Zpy_Graph::getInputObject)
         .def("removeNode", &Zpy_Graph::removeNode)
         .def("addEdge", &Zpy_Graph::addEdge)
         .def("removeEdge", &Zpy_Graph::removeEdge)

@@ -31,7 +31,7 @@ sys.stderr = catchOutErr\n\
         if (PyRun_SimpleString(script.c_str()) < 0) {
             bFailed = true;
         }
-        if (bFailed) {
+        if (1) { //output log and error
             PyObject* catcher = PyObject_GetAttrString(pModule, "catchOutErr"); //get our catchOutErr created above
             PyObject* output = PyObject_GetAttrString(catcher, "value"); //get the stdout and stderr from our catchOutErr object
             if (output != Py_None)

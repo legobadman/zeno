@@ -39,6 +39,16 @@ void Zpy_Graph::removeNode(const std::string& name) {
     spGraph->removeNode(name);
 }
 
+Zpy_Object Zpy_Graph::getInputObject(const std::string& node_name, const std::string& param) {
+    THROW_WHEN_CORE_DESTROYED
+    zeno::NodeImpl* pNodeImpl = spGraph->getNodeByPath(node_name);
+    if (!pNodeImpl)
+        throw std::runtime_error("no such node called `" + node_name + "`");
+    bool bExist = false;
+    zeno::zany spObject = pNodeImpl->get_input_obj(param);
+    return Zpy_Object(spObject);
+}
+
 void Zpy_Graph::addEdge(const std::string& out_node, const std::string& out_param,
     const std::string& in_node, const std::string& in_param)
 {
