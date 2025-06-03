@@ -9,6 +9,7 @@
 #include "util/uihelper.h"
 #include "widgets/zcomboboxitemdelegate.h"
 #include <iostream>
+#include <zeno/core/Session.h>
 #include "zassert.h"
 
 
@@ -27,6 +28,9 @@ ZTimeline::ZTimeline(QWidget* parent)
     setFocusPolicy(Qt::ClickFocus);
 
     int deflFrom = 0, deflTo = 100;
+
+    m_ui->btnStopSolver->setEnabled(false);
+    m_ui->lbl_solver->setEnabled(false);
 
     m_ui->editFrom->setProperty("cssClass", "FCurve-lineedit");
     m_ui->editTo->setProperty("cssClass", "FCurve-lineedit");
@@ -57,6 +61,7 @@ void ZTimeline::initSignals()
     connect(m_ui->editFrom, SIGNAL(editingFinished()), this, SLOT(onFrameEditted()));
     connect(m_ui->editTo, SIGNAL(editingFinished()), this, SLOT(onFrameEditted()));
     connect(m_ui->timeliner, SIGNAL(sliderValueChange(int)), this, SIGNAL(sliderValueChanged(int)));
+    connect(m_ui->btnStopSolver, SIGNAL(clicked()), this, SLOT(stopSolver()));
 
 //merge from master.
 #if 0
@@ -360,6 +365,33 @@ void ZTimeline::updateDopnetworkFrameRemoved(int frame)
 void ZTimeline::updateCachedFrame()
 {
     m_ui->timeliner->update();
+}
+
+void ZTimeline::stopSolver()
+{
+    zeno::getSession().terminate_solve();
+}
+
+void ZTimeline::onSolverUpdate(zeno::SOLVER_MSG msg, int startFrame, int EndFrame)
+{
+    if (msg == zeno::SOVLER_START) {
+        m_ui->btnStopSolver->setEnabled(true);
+        std::string path = zeno::getSession().get_solver();
+        m_ui->lbl_solver->setText(QString::fromStdString(path));
+    }
+    else if (msg == zeno::SOLVER_UPDATE_FRAME) {
+        updateDopnetworkFrameCached(startFrame);
+    }
+    else if (msg == zeno::SOLVER_STOPPED) {
+        m_ui->btnStopSolver->setEnabled(false);
+    }
+    else if (msg == zeno::SOLVER_CLEANUP) {
+        int frameFrom = m_ui->editFrom->text().toInt();
+        int frameTo = m_ui->editTo->text().toInt();
+        for (int frame = frameFrom; frame <= frameTo; frame++) {
+            updateDopnetworkFrameRemoved(frame);
+        }
+    }
 }
 
 void ZTimeline::paintEvent(QPaintEvent* event)

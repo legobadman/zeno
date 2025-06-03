@@ -250,7 +250,7 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
 void SubnetNode::mark_subnetdirty(bool bOn)
 {
     if (bOn) {
-        m_subgraph->markDirtyAll();
+        m_subgraph->markDirtyAndCleanup();
     }
 }
 
@@ -416,7 +416,7 @@ void DopNetwork::apply()
     for (int i = startFrame; i <= currentFarme; i++) {
         if (m_frameCaches.find(i) == m_frameCaches.end()) {
             sess.globalState->updateFrameId(i);
-            m_subgraph->markDirtyAll();
+            m_subgraph->markDirtyAndCleanup();
             zeno::SubnetNode::apply();
 
             const ObjectParams& outputObjs = get_output_object_params();

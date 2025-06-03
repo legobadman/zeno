@@ -320,6 +320,13 @@ void ZenoMainWindow::onMenuActionTriggered(bool bTriggered)
     }
 }
 
+void ZenoMainWindow::onSolverCallback(zeno::SOLVER_MSG msg, int startFrame, int endFrame)
+{
+    if (m_pTimeline) {
+        m_pTimeline->onSolverUpdate(msg, startFrame, endFrame);
+    }
+}
+
 void ZenoMainWindow::dispatchCommand(QAction* pAction, bool bTriggered)
 {
     if (!pAction)

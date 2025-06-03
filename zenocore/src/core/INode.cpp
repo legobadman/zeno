@@ -13,10 +13,6 @@ namespace zeno
         return Node_Normal;
     }
 
-    void INode::dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
-
-    }
-
     zany INode::get_input(const zeno::String& param) { 
         return m_pAdapter->get_input(zsString2Std(param));
     }

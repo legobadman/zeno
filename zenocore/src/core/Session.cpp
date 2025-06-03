@@ -10,6 +10,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/NodeImpl.h>
+#include <zeno/core/SolverImpl.h>
 #include <zeno/core/CoreParam.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/utils/logger.h>
@@ -24,8 +25,8 @@
 #include <zeno/core/GlobalVariable.h>
 #include <zeno/core/FunctionManager.h>
 #include <regex>
-
-
+#include <Windows.h>
+#include <zeno/extra/CalcContext.h>
 #include <reflect/core.hpp>
 #include <reflect/type.hpp>
 #include <reflect/metadata.hpp>
@@ -63,7 +64,9 @@ ZENO_API Session::Session()
     , objsMan(std::make_unique<ObjectManager>())
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
+    , m_mainThreadId(0)
 {
+    m_mainThreadId = GetCurrentThreadId();
 }
 
 ZENO_API Session::~Session() = default;
@@ -266,6 +269,14 @@ ZENO_API void Session::defNodeClass2(INode* (*ctor)(), std::string const& nodecl
     CustomUI ui = customui;
     initControlsByType(ui);
     auto cls = std::make_unique<ImplNodeClass>(ctor, ui, nodecls);
+
+    NodeInfo info;
+    info.module_path = m_current_loading_module;
+    info.name = nodecls;
+    info.status = ZModule_Loaded;
+    info.cate = cls->m_customui.category;
+
+    m_cates.push_back(std::move(info));
     nodeClasses.emplace(nodecls, std::move(cls));
 }
 
@@ -458,6 +469,29 @@ ZENO_API bool Session::is_interrupted() const {
     return m_bInterrupted;
 }
 
+ZENO_API unsigned long Session::mainThreadId() const {
+    return m_mainThreadId;
+}
+
+ZENO_API void Session::setMainThreadId(unsigned long threadId) {
+    m_mainThreadId = threadId;
+}
+
+ZENO_API void Session::set_solver(const std::string& solver) {
+    m_solver = solver;
+}
+
+ZENO_API std::string Session::get_solver() {
+    return m_solver;
+}
+
+void Session::terminate_solve() {
+    SolverImpl* pSolverNode = static_cast<SolverImpl*>(getNodeByUuidPath(m_solver));
+    if (pSolverNode) {
+        pSolverNode->terminate_solve();
+    }
+}
+
 ZENO_API bool Session::run(const std::string& currgraph) {
     if (m_bDisableRunning)
         return false;
@@ -500,9 +534,9 @@ ZENO_API bool Session::is_auto_run() const {
     return m_bAutoRun;
 }
 
-ZENO_API void Session::set_Rerun()
+ZENO_API void Session::markDirtyAndCleanResult()
 {
-    mainGraph->markDirtyAll();
+    mainGraph->markDirtyAndCleanup();
 }
 
 ZENO_API void Session::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {

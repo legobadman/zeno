@@ -412,46 +412,58 @@ void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
     updateFrame();
 }
 
+void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {
+    zeno::render_reload_info reload;
+    reload.current_ui_graph;
+    reload.policy = zeno::Reload_Calculation;
+
+    reload.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
+    if (reload.current_ui_graph.empty()) {
+        //以后可能有些情况是在非ui下跑的，此时是没有“当前图层级路径”这一说法，
+        //这种情况就默认从主图跑
+        reload.current_ui_graph = "/main";
+    }
+
+    //这里要对不在current_ui_graph的节点进行过滤
+    //TODO: 应该在graphmodel上做
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(reload.current_ui_graph);
+    for (auto iter = infos.begin(); iter != infos.end(); ) {
+        if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
+            iter = infos.erase(iter);
+        }
+        else {
+            iter++;
+        }
+    }
+    reload.objs = infos;
+    if (!reload.objs.empty()) {
+        if (m_bGLView) {
+            m_glView->reload_objects(reload);
+            emit render_objects_loaded();
+        }
+        else {
+            m_optixView->reload_objects(reload);
+        }
+        updateFrame();
+    }
+}
+
+void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
+    std::vector<zeno::render_update_info> infos;
+    zeno::render_update_info info;
+    info.reason = zeno::Update_Reconstruct;
+    info.uuidpath_node_objkey = nodeuuidpath.toStdString();
+    infos.emplace_back(std::move(info));
+    submit(infos);
+}
+
 void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
     if (bSucceed) {
         //先从objManager拿出
         auto& sess = zeno::getSession();
         std::vector<zeno::render_update_info> infos;
         sess.objsMan->export_render_infos(infos);
-
-        zeno::render_reload_info reload;
-        reload.current_ui_graph;
-        reload.policy = zeno::Reload_Calculation;
-
-        reload.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
-        if (reload.current_ui_graph.empty()) {
-            //以后可能有些情况是在非ui下跑的，此时是没有“当前图层级路径”这一说法，
-            //这种情况就默认从主图跑
-            reload.current_ui_graph = "/main";
-        }
-
-        //这里要对不在current_ui_graph的节点进行过滤
-        //TODO: 应该在graphmodel上做
-        std::shared_ptr<zeno::Graph> curr_graph = sess.mainGraph->getGraphByPath(reload.current_ui_graph);
-        for (auto iter = infos.begin(); iter != infos.end(); ) {
-            if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
-                iter = infos.erase(iter);
-            }
-            else {
-                iter++;
-            }
-        }
-        reload.objs = infos;
-        if (!reload.objs.empty()) {
-            if (m_bGLView) {
-                m_glView->reload_objects(reload);
-                emit render_objects_loaded();
-            }
-            else {
-                m_optixView->reload_objects(reload);
-            }
-            updateFrame();
-        }
+        submit(infos);
     }
 }
 

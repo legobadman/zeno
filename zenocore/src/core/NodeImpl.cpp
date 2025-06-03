@@ -572,7 +572,11 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
         pSubnetImpl->mark_dirty(true, Dirty_All, false);
     }
 
-    m_pNode->dirty_changed(bOn, reason, bWholeSubnet, bRecursively);
+    dirty_changed(bOn, reason, bWholeSubnet, bRecursively);
+}
+
+void NodeImpl::dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
+
 }
 
 void NodeImpl::mark_dirty_objs()
@@ -886,32 +890,14 @@ void NodeImpl::commit_to_render(UpdateReason reason) {
     sess.objsMan->collect_render_update(info);
 }
 
-void NodeImpl::registerObjToManager()
+void NodeImpl::update_out_objs_key()
 {
     for (auto const& [name, param] : m_outputObjs)
     {
-        if (param.spObject)
+        if (param.spObject && param.spObject->key().empty())
         {
-            //if (std::dynamic_pointer_cast<NumericObject>(param.spObject) ||
-            //    std::dynamic_pointer_cast<StringObject>(param.spObject)) {
-            //    return;
-            //}
-
-            if (param.spObject->key().empty())
-            {
-                //目前节点处所看到的object，都隶属于此节点本身。
-                param.spObject->update_key(stdString2zs(m_uuid));
-            }
-
-#if 0
-            const std::string& key = param.spObject->key();
-            assert(!key.empty());
-            param.spObject->nodeId = m_uuidPath;
-
-            auto& objsMan = getSession().objsMan;
-            std::shared_ptr<INode> spNode = this;
-            objsMan->collectingObject(param.spObject, spNode, m_bView);
-#endif
+            //目前节点处所看到的object，都隶属于此节点本身。
+            param.spObject->update_key(stdString2zs(m_uuid));
         }
     }
 }
@@ -1723,6 +1709,12 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
 
 bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
     // 目前假设输入对象和输入数值，不能重名（不难实现，老节点直接改）。
+
+    if (ds == "Cache Path") {
+        int j;
+        j = 0;
+    }
+
     auto iter = m_inputObjs.find(ds);
     if (iter != m_inputObjs.end()) {
         ObjectParam* in_param = &(iter->second);
@@ -1830,7 +1822,7 @@ void NodeImpl::doOnlyApply() {
     apply();
 }
 
-void NodeImpl::clear() {
+void NodeImpl::clearCalcResults() {
     for (auto& [key, param] : m_inputObjs) {
         param.spObject.reset();
     }
@@ -1928,20 +1920,8 @@ void NodeImpl::doApply(CalcContext* pContext) {
     }
     log_debug("==> leave {}", m_name);
 
-    //DopNetwork
-    if (DopNetwork* dop = dynamic_cast<DopNetwork*>(this)) {
-        reportStatus(true, Node_Running);
-        registerObjToManager();
-        reportStatus(true, Node_DirtyReadyToRun);
-    } else {
-        //if (m_nodecls == "ForEachEnd") {
-        //    reportStatus(true, Node_Running);
-        //    registerObjToManager();
-        //} else {
-            registerObjToManager();
-            reportStatus(false, Node_RunSucceed);
-        //}
-    }
+    update_out_objs_key();
+    reportStatus(false, Node_RunSucceed);
     if (m_bView) {
         commit_to_render(Update_Reconstruct);
     }

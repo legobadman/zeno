@@ -524,7 +524,7 @@
                     "Cache Path": {
                         "links": null,
                         "type": "string",
-                        "default-value": "",
+                        "default-value": "C:/tmp",
                         "control": {
                             "name": "read path"
                         },
@@ -540,8 +540,8 @@
                     }
                 },
                 "uipos": [
-                    193.0,
-                    551.0
+                    148.0,
+                    537.0
                 ],
                 "status": [
                     "View"

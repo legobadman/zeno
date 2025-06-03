@@ -111,12 +111,15 @@ void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_v
     auto spNode = spParam->m_wpNode;
     assert(spNode);
     const std::string& uuid = spNode->get_uuid();
+    const std::string& cls = spNode->get_nodecls();
     bool bHasFrameRel = spNode->has_frame_relative_params();
     if (bHasFrameRel) {
         frame_nodes.insert(uuid);
     }
     else {
-        frame_nodes.erase(uuid);
+        static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver" };
+        if (frame_node_cls.find(cls) == frame_node_cls.end())
+            frame_nodes.erase(uuid);
     }
 }
 
@@ -266,6 +269,58 @@ void Graph::setNodeParam(std::string const &id, std::string const &par,
     }, val);
 }
 
+static void initSpecialNode(zeno::NodeImpl* pNodeImpl, const NodeData& node) {
+    if (node.cls == "FlipSolver") {
+        //节点在初始化的时候是脏的，但还需要手动触发solver的dirty_changed，让它删cache
+        pNodeImpl->dirty_changed(true, Dirty_All, false, false);
+    }
+    if (node.cls == "SubInput") {
+        //TODO
+    }
+    else if (node.cls == "SubOutput") {
+        //TODO
+    }
+    else if (node.cls == "Group") {
+        if (node.group.has_value()) {
+            pNodeImpl->update_param("title", node.group->title);
+            pNodeImpl->update_param("background", node.group->background);
+            pNodeImpl->update_param("size", node.group->sz);
+            pNodeImpl->update_param("items", join_str(node.group->items, ","));
+        }
+    }
+    //Compatible with older versions
+    else if (node.cls == "MakeHeatmap")
+    {
+        std::string color;
+        int nres = 0;
+        const PrimitiveParams& primparams = customUiToParams(node.customUi.inputPrims);
+        for (const auto& input : primparams)
+        {
+            if (input.name == "_RAMPS")
+            {
+                color = zeno_get<std::string>(input.defl);
+            }
+            else if (input.name == "nres")
+            {
+                nres = zeno_get<int>(input.defl);
+            }
+        }
+        if (!color.empty() && nres > 0)
+        {
+            std::regex pattern("\n");
+            std::string fmt = "\\n";
+            color = std::regex_replace(color, pattern, fmt);
+            std::string json = "{\"nres\": " + std::to_string(nres) + ", \"color\":\"" + color + "\"}";
+            pNodeImpl->update_param("heatmap", json);
+        }
+    }
+    else if (zeno::isDerivedFromSubnetNodeName(node.cls))
+    {
+        if (auto sbn = dynamic_cast<SubnetNode*>(pNodeImpl))
+            sbn->setCustomUi(node.customUi);
+    }
+}
+
 void Graph::init(const GraphData& graph) {
     auto& sess = getSession();
     sess.setApiLevelEnable(false);
@@ -279,51 +334,7 @@ void Graph::init(const GraphData& graph) {
         bool bAssets = node.asset.has_value();
         auto spNode = createNode(node.cls, name, bAssets, node.uipos, true);
         spNode->init(node);
-        if (node.cls == "SubInput") {
-            //TODO
-        }
-        else if (node.cls == "SubOutput") {
-            //TODO
-        }
-        else if (node.cls == "Group") {
-            if (node.group.has_value()) {
-                spNode->update_param("title", node.group->title);
-                spNode->update_param("background", node.group->background);
-                spNode->update_param("size", node.group->sz);
-                spNode->update_param("items", join_str(node.group->items, ","));
-            }
-        }
-        //Compatible with older versions
-        else if (node.cls == "MakeHeatmap")
-        {
-            std::string color;
-            int nres = 0;
-            const PrimitiveParams& primparams = customUiToParams(node.customUi.inputPrims);
-            for (const auto& input : primparams)
-            {
-                if (input.name == "_RAMPS")
-                {
-                    color = zeno_get<std::string>(input.defl);
-                }
-                else if (input.name == "nres")
-                {
-                    nres = zeno_get<int>(input.defl);
-                }
-            }
-            if (!color.empty() && nres > 0)
-            {
-                std::regex pattern("\n");
-                std::string fmt = "\\n";
-                color = std::regex_replace(color, pattern, fmt);
-                std::string json = "{\"nres\": " + std::to_string(nres) + ", \"color\":\"" + color + "\"}";
-                spNode->update_param("heatmap", json);
-            }
-        }
-        else if (zeno::isDerivedFromSubnetNodeName(node.cls))
-        {
-            if (auto sbn = dynamic_cast<SubnetNode*>(spNode))
-                sbn->setCustomUi(node.customUi);
-        }
+        initSpecialNode(spNode, node);
     }
     //import edges
     for (const auto& link : graph.links) {
@@ -382,9 +393,7 @@ void Graph::markDirtyWhenFrameChanged()
         auto pNode = m_nodes[uuid].get();
         assert(pNode);
         auto pNodeImpl = pNode;
-        if (!pNodeImpl->isInDopnetwork()) {
-            pNodeImpl->mark_dirty(true, Dirty_ParamChanged);
-        }
+        pNode->mark_dirty(true, Dirty_FrameChanged);
     }
     std::set<std::string> nodes = subnet_nodes;
     nodes.insert(asset_nodes.begin(), asset_nodes.end());
@@ -397,11 +406,11 @@ void Graph::markDirtyWhenFrameChanged()
     }
 }
 
-void Graph::markDirtyAll()
+void Graph::markDirtyAndCleanup()
 {
     for (const auto& [uuid, node] : m_nodes) {
         node->mark_dirty(true);
-        node->clear();  //clear all result prim and objs
+        node->clearCalcResults();  //clear all result prim and objs
     }
 }
 
@@ -841,10 +850,8 @@ NodeImpl* Graph::createNode(
         asset_nodes.insert(uuid);
     }
 
-    if (cls == "GetFrameNum") {
-        frame_nodes.insert(uuid);
-    }
-    if (cls == "CameraNode") {
+    static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver" };
+    if (frame_node_cls.count(cls) > 0) {
         frame_nodes.insert(uuid);
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {

@@ -1024,6 +1024,9 @@ namespace zenoio
                         if constexpr (std::is_same_v<T, int>) {
                             writer.Int(arg);
                         }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            writer.Int(arg);
+                        }
                         else if constexpr (std::is_same_v<T, std::string>) {
                             writer.String(arg.c_str());
                         }

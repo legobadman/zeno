@@ -53,6 +53,7 @@ public:
 
 signals:
     void calcFinished(bool, zeno::ObjPath, QString);
+    void renderRequest(QString);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
     void commitRenderInfo(zeno::render_update_info);
     void runStatus_changed();

@@ -86,6 +86,7 @@ public slots:
     void onNodeSelected(GraphModel* subgraph, const QModelIndexList& nodes, bool select);
     void onMouseHoverMoved();
     void onDockViewAction(bool triggered);
+    void onRenderRequest(QString nodeuuidpath);
     void onCalcFinished(bool bSucceed, zeno::ObjPath, QString);
     void onRenderInfoCommitted(zeno::render_update_info info);
     void onJustLoadObjects();
@@ -118,6 +119,7 @@ private:
     bool isOptxRendering() const;
     void initRecordMgr();
     void sendTaskToServer(const VideoRecInfo& info);
+    void submit(std::vector<zeno::render_update_info> infos);
 
 #ifdef BASE_QML_VIEWPORT
     ZOpenGLQuickView* m_glView;
