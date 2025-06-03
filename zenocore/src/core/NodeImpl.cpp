@@ -1355,53 +1355,33 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
 }
 
 std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
+    assert(gParamType_List == in_param->type);
     std::shared_ptr<ListObject> spList;
     bool bDirectLink = false;
-#if 0
     if (in_param->links.size() == 1)
     {
         std::shared_ptr<ObjectLink> spLink = in_param->links.front();
         auto out_param = spLink->fromparam;
-        std::shared_ptr<INode> outNode = out_param->m_wpNode;
+        NodeImpl* outNode = out_param->m_wpNode;
 
+        //如何排除List嵌套List的情况？link->key?
         if (out_param->type == in_param->type && spLink->tokey.empty()) {   //根据Graph::addLink规则，类型相同且无key视为直连
             bDirectLink = true;
 
             if (outNode->is_dirty()) {
                 GraphException::translated([&] {
                     outNode->doApply(pContext);
-                    }, outNode.get());
+                    }, outNode);
             }
             auto outResult = outNode->get_output_obj(out_param->name);
             assert(outResult);
             assert(out_param->type == gParamType_List);
 
-#if 0
-            if (in_param->socketType == Socket_Owning) {
-                spList = std::dynamic_pointer_cast<ListObject>(outResult->move_clone());
-            }
-            else if (in_param->socketType == Socket_ReadOnly) {
-                spList = std::dynamic_pointer_cast<ListObject>(outResult);
-            }
-            else if (in_param->socketType == Socket_Clone)
-#endif
-            {
-                //里面的元素也要clone
-                std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
-                spList = std::dynamic_pointer_cast<ListObject>(outList->clone_by_key(m_uuid));
-#if 0
-                spList = create_ListObject();
-                std::shared_ptr<ListObject> outList = std::dynamic_pointer_cast<ListObject>(outResult);
-                for (int i = 0; i < outList->size(); i++) {
-                    //后续要考虑key的问题
-                    spList->push_back(outList->get(i)->clone());
-                }
-#endif
-            }
-            spList->update_key(m_uuid);
+            //里面的元素也要clone
+            auto outList = std::dynamic_pointer_cast<ListObject>(outResult);
+            spList = std::dynamic_pointer_cast<ListObject>(clone_by_key(outList.get(), m_uuid));
         }
     }
-#endif
     if (!bDirectLink)
     {
         spList = create_ListObject();
@@ -1462,7 +1442,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                         spList->m_impl->m_new_added.insert(new_key);
                     }
                 } else {
-                    spList->m_impl->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
+                    //spList->m_impl->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
                 }
                 existObjs.erase(new_key);
             }
