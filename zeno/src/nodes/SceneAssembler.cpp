@@ -652,7 +652,7 @@ ZENDEFNODE( FormSceneTree, {
         {gParamType_String, "changeHint", ""}
     },
     {
-        {gParamType_Scene, "scene"},
+        {gParamType_List, "scene"},
     },
     {},
     {
