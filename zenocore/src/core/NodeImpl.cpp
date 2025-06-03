@@ -2101,6 +2101,16 @@ ParamPrimitive NodeImpl::get_input_prim_param(std::string const& name, bool* pEx
     return param;
 }
 
+zany NodeImpl::get_input_obj(std::string const& name) const {
+    ParamObject param;
+    auto iter = m_inputObjs.find(name);
+    if (iter != m_inputObjs.end()) {
+        auto& paramObj = iter->second;
+        return paramObj.spObject;
+    }
+    return nullptr;
+}
+
 ParamObject NodeImpl::get_input_obj_param(std::string const& name, bool* pExist) const {
     ParamObject param;
     auto iter = m_inputObjs.find(name);

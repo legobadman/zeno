@@ -208,7 +208,9 @@
                     415.0,
                     -409.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false
             },
             "CameraNode1": {
@@ -968,76 +970,6 @@
                 "status": [],
                 "collasped": false
             },
-            "ForEachBegin2": {
-                "name": "ForEachBegin2",
-                "class": "ForEachBegin",
-                "object_inputs": {
-                    "Initial Object": {
-                        "links": [
-                            {
-                                "out-node": "PrimsFilterInUserdata1",
-                                "out-socket": "out",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    }
-                },
-                "primitive_inputs": {
-                    "Current Iteration": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": 0,
-                        "control": {
-                            "name": ""
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "Fetch Method": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "Initial Object",
-                        "control": {
-                            "name": "Enum"
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "ForEachEnd Path": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "ForEachEnd2",
-                        "control": {
-                            "name": ""
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {
-                    "Index": {
-                        "type": "int",
-                        "socket-type": "clone",
-                        "visible": false
-                    }
-                },
-                "object_outputs": {
-                    "Output Object": {
-                        "type": "iobject",
-                        "socket-type": "output"
-                    }
-                },
-                "uipos": [
-                    -2082.0,
-                    3864.0
-                ],
-                "status": [],
-                "collasped": false
-            },
             "ForEachEnd1": {
                 "name": "ForEachEnd1",
                 "class": "ForEachEnd",
@@ -1158,110 +1090,6 @@
                 "status": [],
                 "collasped": false
             },
-            "ForEachEnd4": {
-                "name": "ForEachEnd4",
-                "class": "ForEachEnd",
-                "object_inputs": {
-                    "Iterate Object": {
-                        "links": [
-                            {
-                                "out-node": "fixMatName",
-                                "out-socket": "output1",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    }
-                },
-                "primitive_inputs": {
-                    "Iterate Method": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "By Count",
-                        "control": {
-                            "name": "Enum"
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "Collect Method": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "Feedback to Begin",
-                        "control": {
-                            "name": "Enum"
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "ForEachBegin Path": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "",
-                        "control": {
-                            "name": ""
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "Iterations": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": 10,
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "Increment": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": 1,
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "Start Value": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": 0,
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "Stop Condition": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": 1,
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "socket-type": "clone",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {},
-                "object_outputs": {
-                    "Output Object": {
-                        "type": "iobject",
-                        "socket-type": "output"
-                    }
-                },
-                "uipos": [
-                    -2079.0,
-                    4215.0
-                ],
-                "status": [],
-                "collasped": false
-            },
             "FormSceneTree1": {
                 "name": "FormSceneTree1",
                 "class": "FormSceneTree",
@@ -1346,10 +1174,10 @@
                     "prim_list": {
                         "links": [
                             {
-                                "out-node": "ForEachEnd4",
-                                "out-socket": "Output Object",
+                                "out-node": "PyFixMatNames",
+                                "out-socket": "object",
                                 "out-key": "",
-                                "in-key": "obj1",
+                                "in-key": "obj0",
                                 "target-socket": ""
                             }
                         ],
@@ -1410,8 +1238,8 @@
                     }
                 },
                 "uipos": [
-                    -2200.0,
-                    4483.0
+                    -2218.0,
+                    4712.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2888,6 +2716,50 @@
                 "status": [],
                 "collasped": false
             },
+            "PyFixMatNames": {
+                "name": "PyFixMatNames",
+                "class": "PythonNode",
+                "object_inputs": {
+                    "object": {
+                        "links": [
+                            {
+                                "out-node": "PrimsFilterInUserdata1",
+                                "out-socket": "out",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "script": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "import zen\r\ngra = zen.mainGraph()\r\nobj = gra.getInputObject(\"PyFixMatNames\", \"object\")\r\nlst = obj.toList()\r\nfor matObj in lst:\r\n    matNum = matObj.getUserData(\"matNum\")\r\n    for i in range(matNum):\r\n        key = \"Material_%d\" % i\r\n        matName = matObj.getUserData(key)\r\n        matName = matName.replace(' ','_')\r\n        matObj.setUserData(key, matName)",
+                        "control": {
+                            "name": "CodeEditor"
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "object": {
+                        "type": "iobject",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    -2083.0,
+                    4071.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "ReadAlembic1": {
                 "name": "ReadAlembic1",
                 "class": "ReadAlembic",
@@ -3149,10 +3021,12 @@
                     }
                 },
                 "uipos": [
-                    -927.0,
-                    3238.0
+                    -1654.0,
+                    5093.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false
             },
             "SceneRootRename1": {
@@ -5832,824 +5706,6 @@
                 ],
                 "status": [],
                 "collasped": false
-            },
-            "fixMatName": {
-                "name": "fixMatName",
-                "class": "Subnet",
-                "object_inputs": {
-                    "input1": {
-                        "links": [
-                            {
-                                "out-node": "ForEachBegin2",
-                                "out-socket": "Output Object",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    }
-                },
-                "primitive_inputs": {
-                    "data_input": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": 0,
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "socket-type": "primitive",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {
-                    "data_output": {
-                        "type": "int",
-                        "socket-type": "clone",
-                        "visible": false
-                    }
-                },
-                "object_outputs": {
-                    "output1": {
-                        "type": "iobject",
-                        "socket-type": "output"
-                    }
-                },
-                "uipos": [
-                    -2055.0,
-                    4043.0
-                ],
-                "status": [],
-                "collasped": false,
-                "subnet-customUi": {
-                    "nickname": "",
-                    "iconResPath": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>",
-                    "category": "",
-                    "doc": "",
-                    "tabs": {
-                        "Tab1": {
-                            "Group1": {
-                                "data_input": {
-                                    "links": null,
-                                    "type": "int",
-                                    "default-value": 0,
-                                    "control": {
-                                        "name": "Integer"
-                                    },
-                                    "socket-type": "primitive",
-                                    "visible": false
-                                }
-                            }
-                        }
-                    }
-                },
-                "subnet": {
-                    "type": 0,
-                    "nodes": {
-                        "ForEachBegin1": {
-                            "name": "ForEachBegin1",
-                            "class": "ForEachBegin",
-                            "object_inputs": {
-                                "Initial Object": {
-                                    "links": [
-                                        {
-                                            "out-node": "input1",
-                                            "out-socket": "port",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {
-                                "Current Iteration": {
-                                    "links": null,
-                                    "type": "int",
-                                    "default-value": 0,
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Fetch Method": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "From Last Feedback",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "ForEachEnd Path": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "ForEachEnd1",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "Index": {
-                                    "type": "int",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {
-                                "Output Object": {
-                                    "type": "iobject",
-                                    "socket-type": "output"
-                                }
-                            },
-                            "uipos": [
-                                921.0,
-                                266.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "ForEachEnd1": {
-                            "name": "ForEachEnd1",
-                            "class": "ForEachEnd",
-                            "object_inputs": {
-                                "Iterate Object": {
-                                    "links": [
-                                        {
-                                            "out-node": "SetUserData2_1",
-                                            "out-socket": "object",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {
-                                "Iterate Method": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "By Count",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Collect Method": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "Feedback to Begin",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "ForEachBegin Path": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "ForEachBegin1",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Iterations": {
-                                    "links": [
-                                        {
-                                            "out-node": "ObjectToBasetype1",
-                                            "out-socket": "int",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "int",
-                                    "default-value": 10,
-                                    "control": {
-                                        "name": "Integer"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "Increment": {
-                                    "links": null,
-                                    "type": "int",
-                                    "default-value": 1,
-                                    "control": {
-                                        "name": "Integer"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Start Value": {
-                                    "links": null,
-                                    "type": "int",
-                                    "default-value": 0,
-                                    "control": {
-                                        "name": "Integer"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Stop Condition": {
-                                    "links": [
-                                        {
-                                            "out-node": "ObjectToBasetype1",
-                                            "out-socket": "int",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "int",
-                                    "default-value": 1,
-                                    "control": {
-                                        "name": "Integer"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "primitive_outputs": {},
-                            "object_outputs": {
-                                "Output Object": {
-                                    "type": "iobject",
-                                    "socket-type": "output"
-                                }
-                            },
-                            "uipos": [
-                                940.0,
-                                1064.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "GetUserData2_1": {
-                            "name": "GetUserData2_1",
-                            "class": "GetUserData2",
-                            "object_inputs": {
-                                "object": {
-                                    "links": [
-                                        {
-                                            "out-node": "input1",
-                                            "out-socket": "port",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {
-                                "key": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "matNum",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "hasValue": {
-                                    "type": "bool",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "object_outputs": {
-                                "data": {
-                                    "type": "iobject",
-                                    "socket-type": "output"
-                                }
-                            },
-                            "uipos": [
-                                -32.0,
-                                195.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "GetUserData2_2": {
-                            "name": "GetUserData2_2",
-                            "class": "GetUserData2",
-                            "object_inputs": {
-                                "object": {
-                                    "links": [
-                                        {
-                                            "out-node": "ForEachBegin1",
-                                            "out-socket": "Output Object",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {
-                                "key": {
-                                    "links": [
-                                        {
-                                            "out-node": "StringFormatNumStr1",
-                                            "out-socket": "str",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "primitive_outputs": {
-                                "hasValue": {
-                                    "type": "bool",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "object_outputs": {
-                                "data": {
-                                    "type": "iobject",
-                                    "socket-type": "output"
-                                }
-                            },
-                            "uipos": [
-                                523.0,
-                                474.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "ObjectToBasetype1": {
-                            "name": "ObjectToBasetype1",
-                            "class": "ObjectToBasetype",
-                            "object_inputs": {
-                                "object": {
-                                    "links": [
-                                        {
-                                            "out-node": "GetUserData2_1",
-                                            "out-socket": "data",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {
-                                "Output type": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "int",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "socket-type": "primitive",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "float": {
-                                    "type": "float",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "int": {
-                                    "type": "int",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "string": {
-                                    "type": "string",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec2f": {
-                                    "type": "vec2f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec2i": {
-                                    "type": "vec2f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec3f": {
-                                    "type": "vec3f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec3i": {
-                                    "type": "vec3f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec4f": {
-                                    "type": "vec4f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec4i": {
-                                    "type": "vec4f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                -22.0,
-                                1152.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "ObjectToBasetype2": {
-                            "name": "ObjectToBasetype2",
-                            "class": "ObjectToBasetype",
-                            "object_inputs": {
-                                "object": {
-                                    "links": [
-                                        {
-                                            "out-node": "GetUserData2_2",
-                                            "out-socket": "data",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {
-                                "Output type": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "int",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "socket-type": "primitive",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "float": {
-                                    "type": "float",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "int": {
-                                    "type": "int",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "string": {
-                                    "type": "string",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "vec2f": {
-                                    "type": "vec2f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec2i": {
-                                    "type": "vec2f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec3f": {
-                                    "type": "vec3f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec3i": {
-                                    "type": "vec3f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec4f": {
-                                    "type": "vec4f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "vec4i": {
-                                    "type": "vec4f",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                187.0,
-                                667.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "SetUserData2_1": {
-                            "name": "SetUserData2_1",
-                            "class": "SetUserData2",
-                            "object_inputs": {
-                                "object": {
-                                    "links": [
-                                        {
-                                            "out-node": "ForEachBegin1",
-                                            "out-socket": "Output Object",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {
-                                "key": {
-                                    "links": [
-                                        {
-                                            "out-node": "StringFormatNumStr1",
-                                            "out-socket": "str",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "data": {
-                                    "links": [
-                                        {
-                                            "out-node": "StringReplace1",
-                                            "out-socket": "string",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "primitive_outputs": {},
-                            "object_outputs": {
-                                "object": {
-                                    "type": "iobject",
-                                    "socket-type": "output"
-                                }
-                            },
-                            "uipos": [
-                                916.0,
-                                699.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "StringFormatNumStr1": {
-                            "name": "StringFormatNumStr1",
-                            "class": "StringFormatNumStr",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "str": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "{}",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "num_str": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "socket-type": "primitive",
-                                    "visible": true
-                                }
-                            },
-                            "primitive_outputs": {
-                                "str": {
-                                    "type": "string",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                210.0,
-                                461.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "StringReplace1": {
-                            "name": "StringReplace1",
-                            "class": "StringReplace",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "string": {
-                                    "links": [
-                                        {
-                                            "out-node": "ObjectToBasetype2",
-                                            "out-socket": "string",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "Multiline String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "old": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "new": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "string": {
-                                    "type": "string",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                530.0,
-                                677.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "data_input": {
-                            "name": "data_input",
-                            "class": "SubInput",
-                            "object_inputs": {},
-                            "primitive_inputs": {},
-                            "primitive_outputs": {
-                                "hasValue": {
-                                    "type": "bool",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "port": {
-                                    "type": "int",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                1625.0,
-                                273.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "data_output": {
-                            "name": "data_output",
-                            "class": "SubOutput",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "port": {
-                                    "links": null,
-                                    "type": "int",
-                                    "default-value": 0,
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "socket-type": "primitive",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {},
-                            "object_outputs": {},
-                            "uipos": [
-                                1653.0,
-                                886.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "input1": {
-                            "name": "input1",
-                            "class": "SubInput",
-                            "object_inputs": {},
-                            "primitive_inputs": {},
-                            "primitive_outputs": {
-                                "hasValue": {
-                                    "type": "bool",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "object_outputs": {
-                                "port": {
-                                    "type": "iobject",
-                                    "socket-type": "output"
-                                }
-                            },
-                            "uipos": [
-                                0.0,
-                                0.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "output1": {
-                            "name": "output1",
-                            "class": "SubOutput",
-                            "object_inputs": {
-                                "port": {
-                                    "links": [
-                                        {
-                                            "out-node": "ForEachEnd1",
-                                            "out-socket": "Output Object",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
-                                    "type": "iobject",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {},
-                            "primitive_outputs": {},
-                            "object_outputs": {},
-                            "uipos": [
-                                961.0,
-                                1354.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        }
-                    }
-                }
             }
         }
     },

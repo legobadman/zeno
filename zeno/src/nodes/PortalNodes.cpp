@@ -176,8 +176,14 @@ struct SetUserData2 : zeno::INode {
 };
 
 ZENDEFNODE(SetUserData2, {
-    {{gParamType_IObject, "object"}, {gParamType_String, "key", ""}, {gParamType_String,"data",""}},
-    {{gParamType_IObject, "object"}},
+    {
+        {gParamType_IObject, "object"},
+        {gParamType_String, "key", ""},
+        {gParamType_AnyNumeric, "data", "0"}
+    },
+    {
+        {gParamType_IObject, "object"}
+    },
     {},
     {"lifecycle"},
 });

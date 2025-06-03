@@ -366,7 +366,7 @@ struct GraphicsManager {
                 auto prim_in = prim_in_lslislSp.get();
 
                 const auto [stamp_base, stamp_change] = stamp_work(prim_in_lslislSp->userData());
-                if (stamp_change == "unchanged") { return; }
+                //if (stamp_change == "unchanged") { return; }
 
                 if ( prim_in->userData()->has("ShaderAttributes") ) {
                     auto attritbutes  = zsString2Std(prim_in->userData()->get_string("ShaderAttributes"));
@@ -661,9 +661,9 @@ struct GraphicsManager {
                     return;
                 }
 
-                if (reType == "Mesh") 
+                int frame = zeno::getSession().globalState->getFrameId();
+                if (reType == "Mesh"/* && frame == 75*/)  //注释这部分是为了仅“起始帧”加载mesh
                 {
-
                     if (prim_in->quads.size() || prim_in->polys.size()) {
                         zeno::log_trace("demoting faces");
                         zeno::primTriangulateQuads(prim_in);
@@ -756,7 +756,7 @@ struct GraphicsManager {
             else if (auto mtl = dynamic_cast<zeno::MaterialObject *>(obj))
             {
                 const auto [stamp_base, stamp_change] = stamp_work(mtl->userData());
-                const auto dirty = stamp_change != "unchanged";
+                const auto dirty = true;// stamp_change != "unchanged";
                 det = DetMaterial{mtl->tex2Ds, mtl->tex3Ds, mtl->common, mtl->frag, mtl->extensions, mtl->mtlidkey, mtl->parameters,
                         stamp_base,  dirty};
             }
@@ -1281,6 +1281,18 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         xinxinoptix::optixinit(std::size(argv), argv);
     }
 
+    void process_listobj(std::shared_ptr<zeno::ListObject> spList) {
+        for (auto spObject : spList->m_impl->get()) {
+            if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                process_listobj(_spList);
+            }
+            else {
+                graphicsMan->add_object(spObject);
+                matNeedUpdate = meshNeedUpdate = true;
+            }
+        }
+    }
+
     void reload(const zeno::render_reload_info& info) override {
         auto& sess = zeno::getSession();
         if (zeno::Reload_SwitchGraph == info.policy) {
@@ -1337,9 +1349,14 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 assert(spNode);
                 zeno::zany spObject = spNode->get_default_output_object();
                 if (spObject) {
-                    //可能是对象没有通过子图的Suboutput连出来
-                    graphicsMan->add_object(spObject);
-                    matNeedUpdate = meshNeedUpdate = true;
+                    if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                        process_listobj(_spList);
+                    }
+                    else {
+                        //可能是对象没有通过子图的Suboutput连出来
+                        graphicsMan->add_object(spObject);
+                        matNeedUpdate = meshNeedUpdate = true;
+                    }
                 }
             }
         }

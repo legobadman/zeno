@@ -841,10 +841,8 @@ NodeImpl* Graph::createNode(
         asset_nodes.insert(uuid);
     }
 
-    if (cls == "GetFrameNum") {
-        frame_nodes.insert(uuid);
-    }
-    if (cls == "CameraNode") {
+    static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver", "NewFBXSceneInfo"};
+    if (frame_node_cls.count(cls) > 0) {
         frame_nodes.insert(uuid);
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {

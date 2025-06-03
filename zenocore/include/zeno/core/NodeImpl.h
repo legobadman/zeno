@@ -91,6 +91,7 @@ namespace zeno
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
+        zany get_input_obj(std::string const& name) const;
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
         ParamType get_anyparam_type(bool bInput, const std::string& name);
 

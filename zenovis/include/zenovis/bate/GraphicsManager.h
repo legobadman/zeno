@@ -137,7 +137,7 @@ struct GraphicsManager {
                 else {
                     ret = add_object(spObject);
                 }
-                assert(ret);
+                //assert(ret);
             }
         }
         for (auto& key : spList->m_impl->m_new_removed) {

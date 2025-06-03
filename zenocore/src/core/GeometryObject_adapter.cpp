@@ -10,6 +10,7 @@ namespace zeno
     zany GeometryObject_Adapter::clone() const {
         auto newGeom = std::make_shared<GeometryObject_Adapter>();
         newGeom->m_impl = new GeometryObject(*m_impl);
+        newGeom->m_usrData = this->m_usrData->clone();  //TODO:调整写法
         return newGeom;
     }
 

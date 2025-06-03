@@ -234,6 +234,9 @@ namespace zeno
 
         void apply() override {
             zany iterate_object = ZImpl(get_input("Iterate Object"));
+            if (!iterate_object) {
+                throw makeError<UnimplError>("No Iterate Object given to `ForEachEnd`");
+            }
             std::string m_iterate_method = ZImpl(get_input2<std::string>("Iterate Method"));
             std::string m_collect_method = ZImpl(get_input2<std::string>("Collect Method"));
             std::string m_foreach_begin_path = ZImpl(get_input2<std::string>("ForEachBegin Path"));
