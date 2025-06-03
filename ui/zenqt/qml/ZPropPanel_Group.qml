@@ -89,8 +89,13 @@ Item {
 
             text: {
                 //保留小数点7位，并自动舍弃无用的零
+                if (mvalue != null) {
                 //console.log("text about to change: mvalue = " + mvalue)
                 return formatWithSignificantDigits(mvalue, 7)
+            }
+                else{
+                    return "";
+                }
             }
 
             onEditingFinished: {
@@ -323,6 +328,7 @@ Item {
                 selectByMouse: true // 启用鼠标选择文本功能
                 text: mvalue
                 color: "white"
+
                 onEditingFinished: {
                     root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
                 }

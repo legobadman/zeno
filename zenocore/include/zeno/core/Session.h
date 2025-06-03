@@ -62,10 +62,15 @@ struct Session {
     ZENO_API bool run(const std::string& currgraph = "");
     ZENO_API void interrupt();
     ZENO_API bool is_interrupted() const;
+    ZENO_API unsigned long mainThreadId() const;
+    ZENO_API void setMainThreadId(unsigned long threadId);
+    ZENO_API void set_solver(const std::string& solver);
+    ZENO_API std::string get_solver();
+    ZENO_API void terminate_solve();
     //ZENO_API 
     ZENO_API void set_auto_run(bool bOn);
     ZENO_API bool is_auto_run() const;
-    ZENO_API void set_Rerun();
+    ZENO_API void markDirtyAndCleanResult();
     ZENO_API std::string dumpDescriptorsJSON() const;
     ZENO_API zeno::NodeRegistry dumpCoreCates();
     ZENO_API void defNodeClass(INode*(*ctor)(), std::string const &id, Descriptor const &desc = {});
@@ -102,6 +107,8 @@ private:
     bool m_bDisableRunning = false;
     bool m_bReentrance = false;
     std::string m_current_loading_module;
+    std::string m_solver;
+    unsigned long m_mainThreadId;
 
     zeno::NodeRegistry m_cates;
     //std::map<std::string, std::vector<NodeInfo>> m_cates;

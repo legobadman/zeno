@@ -7,6 +7,7 @@
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include <zeno/core/common.h>
+#include <zeno/extra/CalcContext.h>
 #include "model/graphsmanager.h"
 #include "model/GraphsTreeModel.h"
 #include "widgets/ztimeline.h"
@@ -59,7 +60,7 @@ void CalcWorker::run() {
 
 CalculationMgr::CalculationMgr(QObject* parent)
     : QObject(parent)
-    , m_bMultiThread(false)
+    , m_bMultiThread(true)
     , m_worker(nullptr)
     , m_playTimer(new QTimer(this))
     , m_runstatus(RunStatus::NoRun)
@@ -174,6 +175,19 @@ void CalculationMgr::onFrameSwitched(int frame) {
 
     auto& sess = zeno::getSession();
     sess.switchToFrame(frame);
+
+    //如果有流体解算，直接取cache.
+    if (!sess.is_auto_run() && !sess.get_solver().empty()) {
+        auto solvernode_path = sess.get_solver();
+        zeno::NodeImpl* pSolverNode = sess.getNodeByUuidPath(solvernode_path);
+        assert(pSolverNode);
+        //zeno::CalcContext ctx;
+        //如果frame没有解算结果，可能触发新的solver解算，要避免这一点。
+        //pSolverNode->doApply(&ctx);
+        //渲染更新：
+        emit renderRequest(QString::fromStdString(solvernode_path));
+        //emit calcFinished(true, solvernode_path, "");
+    }
 }
 
 void CalculationMgr::kill()
@@ -184,7 +198,7 @@ void CalculationMgr::kill()
 
 void CalculationMgr::clear()
 {
-    zeno::getSession().set_Rerun();
+    zeno::getSession().markDirtyAndCleanResult();
     for (auto view : zenoApp->getMainWindow()->viewports())
         view->cleanUpScene();
 }
@@ -222,6 +236,7 @@ void CalculationMgr::registerRenderWid(DisplayWidget* pDisp)
 {
     m_registerRenders.insert(pDisp);
     connect(this, &CalculationMgr::calcFinished, pDisp, &DisplayWidget::onCalcFinished);
+    connect(this, &CalculationMgr::renderRequest, pDisp, &DisplayWidget::onRenderRequest);
     connect(this, &CalculationMgr::commitRenderInfo, pDisp,
         &DisplayWidget::onRenderInfoCommitted);
     connect(pDisp, &DisplayWidget::render_objects_loaded, this, &CalculationMgr::on_render_objects_loaded);

@@ -3,6 +3,7 @@
 #include "model/graphsmanager.h"
 #include "zenomainwindow.h"
 #include <zeno/utils/log.h>
+#include <zeno/core/Session.h>
 #include "util/log.h"
 #include "startup/zstartup.h"
 #include <style/zenostyle.h>
@@ -18,6 +19,27 @@
 
 static MouseUtils mouseUtils;
 
+class WinEventFilter : public QAbstractNativeEventFilter
+{
+public:
+    bool nativeEventFilter(const QByteArray& eventType, void* message, long* result) override {
+        if (eventType == "windows_generic_MSG" || eventType == "windows_dispatcher_MSG") {
+            MSG* msg = static_cast<MSG*>(message);
+            if (msg->message >= zeno::SOVLER_START && msg->message <= zeno::SOLVER_END) {
+                int lp = static_cast<int>(msg->lParam);
+                int wp = static_cast<int>(msg->wParam);
+                zenoApp->getMainWindow()->onSolverCallback((zeno::SOLVER_MSG)msg->message, std::min(lp, wp), std::max(lp, wp));
+                return true;
+            }
+        }
+        return false;
+    }
+
+};
+static WinEventFilter win32Filter;
+
+
+
 
 ZenoApplication::ZenoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
@@ -32,6 +54,8 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
     initFonts();
     initStyleSheets();
     verifyVersion();
+
+    installNativeEventFilter(&win32Filter);
 
     QStringList locations;
     locations = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);

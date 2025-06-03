@@ -11,6 +11,7 @@
 #include <reflect/type.hpp>
 #include <zeno/core/Graph.h>
 #include <zeno/extra/SubnetNode.h>
+#include <zeno/extra/GlobalComm.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/utils/interfaceutil.h>
@@ -287,6 +288,16 @@ namespace zeno {
         return true;
     }
 
+    std::vector<zany> fromZenCache(const std::string& cachedir, int frameid) {
+        std::vector<zany> objs;
+        GlobalComm::ViewObjects _objs;
+        GlobalComm::fromDisk(cachedir, frameid, _objs);
+        for (auto iter : _objs) {
+            objs.push_back(iter.second);
+        }
+        return objs;
+    }
+
     ZENO_API bool convertToEditVar(Any& val, const ParamType type) {
         if (!val.has_value()) return false;
 
@@ -300,10 +311,15 @@ namespace zeno {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
-            if (anyType == gParamType_Float) {
+            else if (anyType == gParamType_Float) {
                 val = (int)any_cast<float>(val);
             }
-            val = PrimVar(any_cast<int>(val));
+            else if (anyType == gParamType_Double) {
+                val = (int)any_cast<double>(val);
+            }
+            else {
+                val = PrimVar(any_cast<int>(val));
+            }
             return true;
         }
         else if (type == gParamType_Float) {
@@ -311,10 +327,15 @@ namespace zeno {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
-            if (anyType == gParamType_Int) {
+            else if (anyType == gParamType_Int) {
                 val = (float)any_cast<int>(val);
             }
-            val = PrimVar(any_cast<float>(val));
+            else if (anyType == gParamType_Double) {
+                val = (float)any_cast<double>(val);
+            }
+            else {
+                val = PrimVar(any_cast<float>(val));
+            }
             return true;
         }
         else if (type == gParamType_Vec2f) {

@@ -131,7 +131,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     std::set<std::string> getSubOutputs();
     void viewNodeUpdated(const std::string node, bool bView);
     void markDirtyWhenFrameChanged();
-    void markDirtyAll();
+    void markDirtyAndCleanup();
     void onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value);
     void parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any& new_value);
 

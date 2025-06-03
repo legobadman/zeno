@@ -15,7 +15,7 @@ if (MSVC)
     )
 endif()
 
-if (MSVC)
+if(MSVC)
     target_compile_options(zenvdb PRIVATE /MP)
 endif()
 

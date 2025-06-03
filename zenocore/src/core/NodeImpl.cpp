@@ -571,6 +571,12 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
     {
         pSubnetImpl->mark_dirty(true, Dirty_All, false);
     }
+
+    dirty_changed(bOn, reason, bWholeSubnet, bRecursively);
+}
+
+void NodeImpl::dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
+
 }
 
 void NodeImpl::mark_dirty_objs()
@@ -884,35 +890,17 @@ void NodeImpl::commit_to_render(UpdateReason reason) {
     sess.objsMan->collect_render_update(info);
 }
 
-void NodeImpl::registerObjToManager()
+void NodeImpl::update_out_objs_key()
 {
     for (auto const& [name, param] : m_outputObjs)
     {
-        if (param.spObject)
+        if (param.spObject && param.spObject->key().empty())
         {
-            //if (std::dynamic_pointer_cast<NumericObject>(param.spObject) ||
-            //    std::dynamic_pointer_cast<StringObject>(param.spObject)) {
-            //    return;
-            //}
-
-            if (param.spObject->key().empty())
-            {
                 //目前节点处所看到的object，都隶属于此节点本身。
                 param.spObject->update_key(stdString2zs(m_uuid));
             }
-
-#if 0
-            const std::string& key = param.spObject->key();
-            assert(!key.empty());
-            param.spObject->nodeId = m_uuidPath;
-
-            auto& objsMan = getSession().objsMan;
-            std::shared_ptr<INode> spNode = this;
-            objsMan->collectingObject(param.spObject, spNode, m_bView);
-#endif
         }
     }
-}
 
 void NodeImpl::on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded) {
     checkParamsConstrain();
@@ -1367,82 +1355,31 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
 }
 
 std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
+    assert(gParamType_List == in_param->type);
     std::shared_ptr<ListObject> spList;
     bool bDirectLink = false;
     if (in_param->links.size() == 1)
     {
-        spList = create_ListObject();
-
-        std::map<std::string, zany> existObjs;
-        if (in_param->spObject) {
-            auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
-            for (auto spobj : spOldList->m_impl->get()) {
-                existObjs.insert({ zsString2Std(spobj->key()), spobj });
-            }
-        }
-
         std::shared_ptr<ObjectLink> spLink = in_param->links.front();
         auto out_param = spLink->fromparam;
         NodeImpl* outNode = out_param->m_wpNode;
-        bool is_this_item_dirty = outNode->is_dirty();
-        if (is_this_item_dirty) {
-            GraphException::translated([&] {
-                outNode->doApply(pContext);
-                }, outNode);
-        }
-        if (m_name == "MakeList2")
-        {
-            int a = 0;
-        }
-        auto outResult = outNode->get_output_obj(out_param->name);
-        assert(outResult);
 
-        if ((out_param->type == in_param->type && spLink->tokey.empty()) || dynamic_cast<zeno::ListObject*>(outResult.get())) {   //根据Graph::addLink规则，类型相同且无key视为直连
+        //如何排除List嵌套List的情况？link->key?
+        if (out_param->type == in_param->type && spLink->tokey.empty()) {   //根据Graph::addLink规则，类型相同且无key视为直连
             bDirectLink = true;
 
-            //assert(out_param->type == gParamType_List);
-
-            if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult.get())) {
-                spList = std::dynamic_pointer_cast<zeno::ListObject>(clone_by_key(_spList, m_uuid));
-                update_list_root_key(spList.get(), m_uuid);
-            } else {
-                zany newObj;
-                if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult.get())) {
-                    newObj = clone_by_key(_spDict, m_uuid);
-                }
-                else {
-                    auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
-                    if (dynamic_cast<zeno::PrimitiveObject*>(outResult.get())) {
-                        newObj = outResult;
-#if OWING_UPSTREAM_NODE		//in_param和out_param暂时引用同一个object
-                        out_param->spObject.reset();
-                        outNode->mark_dirty(true);
-#endif
-                    }
-                    else {
-                        newObj = outResult->clone();
-                        newObj->update_key(newkey);
-                    }
-                }
-                spList->m_impl->push_back(newObj);
-
-                std::string const& new_key = zsString2Std(newObj->key());
-                if (is_this_item_dirty) {
-                    if (existObjs.find(new_key) != existObjs.end()) {
-                        spList->m_impl->m_modify.insert(new_key);
-                        existObjs.erase(new_key);
-                    }
-                    else {
-                        spList->m_impl->m_new_added.insert(new_key);
-                    }
-                }
-                else {
-                    spList->m_impl->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
-                }
-                existObjs.erase(new_key);
+            if (outNode->is_dirty()) {
+                GraphException::translated([&] {
+                    outNode->doApply(pContext);
+                    }, outNode);
             }
+            auto outResult = outNode->get_output_obj(out_param->name);
+            assert(outResult);
+            assert(out_param->type == gParamType_List);
 
-            spList->update_key(stdString2zs(m_uuid));
+            //里面的元素也要clone
+            auto outList = std::dynamic_pointer_cast<ListObject>(outResult);
+            spList = std::dynamic_pointer_cast<ListObject>(clone_by_key(outList.get(), m_uuid));
         }
     }
     if (!bDirectLink)
@@ -1507,7 +1444,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                         spList->m_impl->m_new_added.insert(new_key);
                     }
                 } else {
-                    spList->m_impl->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
+                    //spList->m_impl->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
                 }
                 existObjs.erase(new_key);
             }
@@ -1756,6 +1693,12 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
 
 bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
     // 目前假设输入对象和输入数值，不能重名（不难实现，老节点直接改）。
+
+    if (ds == "Cache Path") {
+        int j;
+        j = 0;
+    }
+
     auto iter = m_inputObjs.find(ds);
     if (iter != m_inputObjs.end()) {
         ObjectParam* in_param = &(iter->second);
@@ -1863,7 +1806,7 @@ void NodeImpl::doOnlyApply() {
     apply();
 }
 
-void NodeImpl::clear() {
+void NodeImpl::clearCalcResults() {
     for (auto& [key, param] : m_inputObjs) {
         param.spObject.reset();
     }
@@ -1961,20 +1904,8 @@ void NodeImpl::doApply(CalcContext* pContext) {
     }
     log_debug("==> leave {}", m_name);
 
-    //DopNetwork
-    if (DopNetwork* dop = dynamic_cast<DopNetwork*>(this)) {
-        reportStatus(true, Node_Running);
-        registerObjToManager();
-        reportStatus(true, Node_DirtyReadyToRun);
-    } else {
-        //if (m_nodecls == "ForEachEnd") {
-        //    reportStatus(true, Node_Running);
-        //    registerObjToManager();
-        //} else {
-            registerObjToManager();
+    update_out_objs_key();
             reportStatus(false, Node_RunSucceed);
-        //}
-    }
     if (m_bView) {
         commit_to_render(Update_Reconstruct);
     }

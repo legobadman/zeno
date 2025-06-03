@@ -99,7 +99,6 @@ struct APP_SETTINGS
     RECORD_SETTING recordInfo;
     LAYOUT_SETTING layoutInfo;
     USERDATA_SETTING userdataInfo;
-    //todo: other settings.
 };
 
 struct RoundRectInfo

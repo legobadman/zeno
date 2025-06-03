@@ -36,6 +36,10 @@ add_executable(zeno ${source} ${qmlsource})
 
 # add_dependencies(zeno clean_resource_file)
 
+if(MSVC)
+    target_compile_options(zeno PRIVATE /MP)
+endif()
+
 set_property(TARGET zeno PROPERTY AUTOUIC ON)
 set_property(TARGET zeno PROPERTY AUTOMOC ON)
 set_property(TARGET zeno PROPERTY AUTORCC ON)

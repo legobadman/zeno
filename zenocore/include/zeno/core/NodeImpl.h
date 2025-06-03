@@ -48,8 +48,9 @@ namespace zeno
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         void doOnlyApply();
-        virtual void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
-        void clear();
+        void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
+        virtual void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
+        virtual void clearCalcResults();
 
         //BEGIN new api
         void init(const NodeData& dat);
@@ -171,7 +172,7 @@ namespace zeno
 
         void onInterrupted();
         void mark_previous_ref_dirty();
-        void registerObjToManager();
+        void update_out_objs_key();
 
         //END new api
         bool add_input_prim_param(ParamPrimitive param);

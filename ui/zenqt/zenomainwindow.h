@@ -49,7 +49,7 @@ public:
     DisplayWidget* getOptixWidget() const;
     ZenoGraphsEditor* getAnyEditor() const;
     void dispatchCommand(QAction* pAction, bool bTriggered);
-
+    void onSolverCallback(zeno::SOLVER_MSG msg, int startFrame, int endFrame);
     void sortRecentFile(QStringList &lst);
     bool isOnlyOptixWindow() const;
     bool isRecordByCommandLine() const;
