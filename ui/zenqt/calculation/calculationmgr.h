@@ -18,7 +18,7 @@ public:
     void setCurrentGraphPath(const QString& current_graph_path);
 
 signals:
-    void calcFinished(bool, zeno::ObjPath, QString);
+    void calcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
     void commitRenderInfo(zeno::render_update_info);
 
@@ -52,7 +52,7 @@ public:
     bool isMultiThreadRunning() const;
 
 signals:
-    void calcFinished(bool, zeno::ObjPath, QString);
+    void calcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info);
     void renderRequest(QString);
     void nodeStatusChanged(zeno::ObjPath, NodeState);
     void commitRenderInfo(zeno::render_update_info);
@@ -64,7 +64,7 @@ public slots:
     void onFrameSwitched(int frame);
 
 private slots:
-    void onCalcFinished(bool, zeno::ObjPath, QString);
+    void onCalcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info info);
     void onNodeStatusReported(zeno::ObjPath, NodeState);
     void on_render_objects_loaded();
     void onPlayReady();

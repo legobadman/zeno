@@ -70,6 +70,8 @@ void ZOpenGLQuickView::initializeUnderlay() {
 
     connect(m_renderer.get(), &ZQmlRender::requestUpdate, this,
         &ZOpenGLQuickView::onUpdateRequest, Qt::QueuedConnection);
+    connect(m_renderer.get(), &ZQmlRender::sig_reload_finished, this,
+        &ZOpenGLQuickView::sig_render_reload_finished);
 }
 
 void ZOpenGLQuickView::onUpdateRequest()

@@ -87,7 +87,7 @@ public slots:
     void onMouseHoverMoved();
     void onDockViewAction(bool triggered);
     void onRenderRequest(QString nodeuuidpath);
-    void onCalcFinished(bool bSucceed, zeno::ObjPath, QString);
+    void onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info);
     void onRenderInfoCommitted(zeno::render_update_info info);
     void onJustLoadObjects();
     void onSetCamera(zenovis::ZOptixCameraSettingInfo value);
@@ -99,7 +99,7 @@ signals:
     void frameUpdated(int new_frame);
     void frameRunFinished(int frame);
     void optixProcStartRecord();
-    void render_objects_loaded();
+    void render_reload_finished();
 
 public:
     enum DockViewActionType {
@@ -121,6 +121,7 @@ private:
     void initRecordMgr();
     void sendTaskToServer(const VideoRecInfo& info);
     void submit(std::vector<zeno::render_update_info> infos);
+    void submit(zeno::render_reload_info render_summary);
 
 #ifdef BASE_QML_VIEWPORT
     ZOpenGLQuickView* m_glView;

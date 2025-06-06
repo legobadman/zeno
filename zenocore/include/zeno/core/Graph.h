@@ -105,8 +105,9 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     std::set<std::string> searchByClass(const std::string& name) const;
 
     void clearNodes();
-    void runGraph();
-    void applyNodes(std::set<std::string> const &ids);
+    void clearContainerUpdateInfo();
+    void runGraph(render_reload_info& infos);
+    void applyNodes(std::set<std::string> const &ids, render_reload_info& infos);
     void addNode(std::string const &cls, std::string const &id);
     Graph *addSubnetNode(std::string const &id);
     Graph *getSubnetGraph(std::string const &id) const;
@@ -147,7 +148,7 @@ private:
     void resetWildCardParamsType(bool bWildcard, NodeImpl* node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
     std::shared_ptr<Graph> _getGraphByPath(std::vector<std::string> items);
     bool isLinkValid(const EdgeInfo& edge);
-    bool applyNode(std::string const& id);
+    void applyNode(std::string const& id, render_update_info& info);
 
     NodeImpl* m_parSubnetNode = nullptr;
     std::map<std::string, std::unique_ptr<NodeImpl>> m_nodes;  //based on uuid.

@@ -290,7 +290,10 @@ void SubnetNode::apply() {
     for (auto const &suboutput_node: m_subgraph->getSubOutputs()) {
         nodesToExec.insert(suboutput_node);
     }
-    m_subgraph->applyNodes(nodesToExec);
+
+    //子图的list/dict更新如何处理？
+    zeno::render_reload_info _;
+    m_subgraph->applyNodes(nodesToExec, _);
 
     //TODO: 多输出其实是一个问题，不知道view哪一个，所以目前先规定子图只能有一个输出
     auto suboutputs = m_subgraph->getSubOutputs();

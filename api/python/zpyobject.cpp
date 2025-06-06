@@ -157,7 +157,8 @@ Zpy_Camera::Zpy_Camera(
     spNode->set_view(true);
 
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 Zpy_Camera::Zpy_Camera(zeno::NodeImpl* wpNode)
@@ -168,7 +169,8 @@ Zpy_Camera::Zpy_Camera(zeno::NodeImpl* wpNode)
 void Zpy_Camera::run() {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 std::shared_ptr<zeno::CameraObject> Zpy_Camera::getCamera() const {
@@ -318,7 +320,8 @@ Zpy_Light::Zpy_Light(
     spNode->set_view(true);
 
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 Zpy_Light::Zpy_Light(zeno::NodeImpl* wpNode)
@@ -398,7 +401,8 @@ void Zpy_Light::setIntensity(float intensity) {
 void Zpy_Light::run() {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 std::shared_ptr<zeno::PrimitiveObject> Zpy_Light::getLight() const {

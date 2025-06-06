@@ -4,6 +4,7 @@
 #include <variant>
 #include <string>
 #include <vector>
+#include <set>
 #include <list>
 #include <functional>
 #include <zeno/utils/vec.h>
@@ -193,6 +194,7 @@ namespace zeno {
     };
 
     enum UpdateReason {
+        Update_Unknown,
         Update_View,            //只是view，计算已经完成了(dirty==false)
         Update_Reconstruct,     //经过了重新计算需要更新
         Update_OnlyUserData,    //只是更新了与拓扑无关的数据，无须在渲染端重新构造。
@@ -267,11 +269,35 @@ namespace zeno {
         Reload_Calculation,     //由于标脏计算引发的load
     };
 
+    //记录List或者Dict及其元素在计算过程中的更新信息，不考虑容器嵌套容器的情况
+    struct container_elem_update_info {
+        std::set<std::string> new_added;
+        std::set<std::string> modified;
+        std::set<std::string> removed;
+
+        std::string container_key;  //提交渲染的List或者Dict的objkey
+
+        bool empty() const {
+            return new_added.empty() && modified.empty() && removed.empty();
+        }
+        void clear() {
+            new_added.clear();
+            modified.clear();
+            removed.clear();
+            container_key.clear();
+        }
+    };
+
+    //一条计算链路的更新信息：
     struct render_update_info {
-        UpdateReason reason;
+        UpdateReason reason = Update_Unknown;
         std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
         std::vector<std::string> remove_objs;
+
+        //如果uuidpath_node_objkey是List或Dict，这里将记录元素的增删改信息，否则为空。
+        container_elem_update_info cond_update_info;
     };
+
     typedef std::function<void(render_update_info)> F_CommitRender;
 
     struct render_reload_info {
@@ -279,6 +305,7 @@ namespace zeno {
         std::string current_ui_graph;   //当前用户在编辑器端的ui图层，以普通路径表达
         std::vector<render_update_info> objs;
     };
+
 }
 
 

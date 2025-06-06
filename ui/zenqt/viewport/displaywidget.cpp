@@ -61,6 +61,7 @@ DisplayWidget::DisplayWidget(bool bGLView, QWidget *parent)
         m_glView = new ZOpenGLQuickView;
         QWidget* wid = QWidget::createWindowContainer(m_glView);
         pLayout->addWidget(wid);
+        connect(m_glView, &ZOpenGLQuickView::sig_render_reload_finished, this, &DisplayWidget::render_reload_finished);
 #endif
     }
     else
@@ -72,6 +73,7 @@ DisplayWidget::DisplayWidget(bool bGLView, QWidget *parent)
 #endif
         pLayout->addWidget(m_optixView);
         connect(this, SIGNAL(frameRunFinished(int)), m_optixView, SLOT(onFrameRunFinished(int)));
+        connect(m_optixView, SIGNAL(sig_reload_finished()), this, SIGNAL(render_reload_finished()));
     }
 
     setLayout(pLayout);
@@ -412,6 +414,40 @@ void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
     updateFrame();
 }
 
+void DisplayWidget::submit(zeno::render_reload_info render_summary) {
+
+    render_summary.current_ui_graph;
+    render_summary.policy = zeno::Reload_Calculation;
+
+    render_summary.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
+    if (render_summary.current_ui_graph.empty()) {
+        //以后可能有些情况是在非ui下跑的，此时是没有“当前图层级路径”这一说法，
+        //这种情况就默认从主图跑
+        render_summary.current_ui_graph = "/main";
+    }
+
+    //这里要对不在current_ui_graph的节点进行过滤
+    //TODO: 应该在graphmodel上做
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(render_summary.current_ui_graph);
+    for (auto iter = render_summary.objs.begin(); iter != render_summary.objs.end(); ) {
+        if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
+            iter = render_summary.objs.erase(iter);
+        }
+        else {
+            iter++;
+        }
+    }
+    if (!render_summary.objs.empty()) {
+        if (m_bGLView) {
+            m_glView->reload_objects(render_summary);
+        }
+        else {
+            m_optixView->reload_objects(render_summary);
+        }
+        updateFrame();
+    }
+}
+
 void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {
     zeno::render_reload_info reload;
     reload.current_ui_graph;
@@ -439,7 +475,6 @@ void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {
     if (!reload.objs.empty()) {
         if (m_bGLView) {
             m_glView->reload_objects(reload);
-            emit render_objects_loaded();
         }
         else {
             m_optixView->reload_objects(reload);
@@ -457,13 +492,14 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     submit(infos);
 }
 
-void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
+void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info info) {
     if (bSucceed) {
         //先从objManager拿出
-        auto& sess = zeno::getSession();
-        std::vector<zeno::render_update_info> infos;
-        sess.objsMan->export_render_infos(infos);
-        submit(infos);
+        submit(info);
+        //auto& sess = zeno::getSession();
+        //std::vector<zeno::render_update_info> infos;
+        //sess.objsMan->export_render_infos(infos);
+        //submit(infos);
     }
 }
 

@@ -496,14 +496,14 @@ namespace zeno {
     ZENDEFNODE(Grid, {
         {/*inputs:*/
             ParamPrimitive("Center", gParamType_Vec3f, zeno::vec3f({0,0,0})),
-            ParamPrimitive("Size", gParamType_Vec3f, zeno::vec3f({1,1,1})),
+            ParamPrimitive("Size", gParamType_Vec2f, zeno::vec2f({1,1})),
             ParamPrimitive("Rotate", gParamType_Vec3f, zeno::vec3f({0,0,0})),
             ParamPrimitive("Rows", gParamType_Int, 2, Slider, std::vector<int>{1,100,1}),
             ParamPrimitive("Columns", gParamType_Int, 2, Slider, std::vector<int>{1,100,1}),
             ParamPrimitive("Direction", gParamType_String, "ZX", Combobox, std::vector<std::string>{"XY", "YZ", "ZX"}),
             ParamPrimitive("Uniform Scale", gParamType_Float, 1.f, Lineedit),
             ParamPrimitive("Face Type", gParamType_String, "Quadrilaterals", zeno::Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"}),
-            ParamPrimitive("Point Normals", gParamType_Bool, false, Checkbox)
+            ParamPrimitive("Point Normal", gParamType_Bool, false, Checkbox)
         },
         {/*outputs:*/
             {gParamType_Geometry, "Output"}
