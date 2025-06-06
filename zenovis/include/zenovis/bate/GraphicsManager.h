@@ -119,18 +119,24 @@ struct GraphicsManager {
         return true;
     }
 
-    bool process_listobj(std::shared_ptr<zeno::ListObject> spList) {
+    bool process_listobj(std::shared_ptr<zeno::ListObject> spList, zeno::container_elem_update_info info) {
+        if (info.container_key != zsString2Std(spList->key())) {
+            return false;
+        }
         for (auto spObject : spList->m_impl->get()) {
             assert(spObject);
             std::string const& key = zsString2Std(spObject->key());
-            if (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
-                spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end()) {
+            if (info.new_added.find(key) != info.new_added.end() ||
+                info.modified.find(key) != info.modified.end()) {
                 bool ret = false;
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
-                    ret = process_listobj(_spList);
+                    //不支持嵌套，过于麻烦，等场景丰富了再跟进
+                    //ret = process_listobj(_spList, info);
+                    ret = false;
                 }
                 else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                    ret = process_dictobj(_spDict);
+                    //ret = process_dictobj(_spDict, info);
+                    ret = false;
                 }
                 else {
                     ret = add_object(spObject);
@@ -138,7 +144,7 @@ struct GraphicsManager {
                 assert(ret);
             }
         }
-        for (auto& key : spList->m_impl->m_new_removed) {
+        for (auto& key : info.removed) {
             auto& graphics_ = graphics.m_curr.m_curr;
             auto iter = graphics_.find(key);
             if (iter == graphics_.end())
@@ -148,7 +154,7 @@ struct GraphicsManager {
         return true;
     }
 
-    bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
+    bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict, zeno::container_elem_update_info info) {
         for (auto& [key, spObject] : spDict->get()) {
             assert(spObject);
             std::string const& skey = zsString2Std(spObject->key());
@@ -156,10 +162,10 @@ struct GraphicsManager {
                 spDict->m_modify.find(skey) != spDict->m_modify.end()) {
                 bool ret = false;
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
-                    ret = process_listobj(_spList);
+                    ret = process_listobj(_spList, info);
                 }
                 else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                    ret = process_dictobj(_spDict);
+                    ret = process_dictobj(_spDict, info);
                 }
                 else {
                     ret = add_object(spObject);
@@ -232,6 +238,7 @@ struct GraphicsManager {
                 if (spObject) {
                     //可能是对象没有通过子图的Suboutput连出来
                     if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+
                         {//可能有和listobj同名但不是list类型的对象存在，需先清除
                             auto& graphics_ = graphics.m_curr.m_curr;
                             std::string listkey = zsString2Std(_spList->key());
@@ -245,7 +252,7 @@ struct GraphicsManager {
                             }
                         }
 
-                        process_listobj(_spList);
+                        process_listobj(_spList, update.cond_update_info);
                     }
                     else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
                         {//可能有和dictobj同名但不是dict类型的对象存在，需先清除
@@ -261,7 +268,7 @@ struct GraphicsManager {
                             }
                         }
 
-                        process_dictobj(_spDict);
+                        process_dictobj(_spDict, update.cond_update_info);
                     }
                     else {
                         {//可能有和obj同名但是list类型或dict类型的对象存在，需先清除

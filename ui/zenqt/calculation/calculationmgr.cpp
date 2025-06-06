@@ -33,13 +33,11 @@ void CalcWorker::setCurrentGraphPath(const QString& current_graph_path) {
 void CalcWorker::run() {
     auto& sess = zeno::getSession();
 
-    //sess.registerCommitRender([&](zeno::render_update_info info) {
-    //    emit commitRenderInfo(info);
-    //});
+    zeno::render_reload_info render_infos;
 
     zeno::GraphException::catched([&] {
         const std::string& currpath = m_current_graph_path.toStdString();
-        sess.run(/*currpath*/); //如果局部运行子图，可能要考虑subinput的外部前置计算是否要计算
+        sess.run("", render_infos); //如果局部运行子图，可能要考虑subinput的外部前置计算是否要计算
         }, *sess.globalError);
     sess.globalState->set_working(false);
 
@@ -50,10 +48,10 @@ void CalcWorker::run() {
         state.runstatus = zeno::Node_RunError;
         zeno::ObjPath path = sess.globalError->getNode();
         emit nodeStatusChanged(path, state);
-        emit calcFinished(false, path, errMsg); //会发送到：DisplayWidget::onCalcFinished
+        emit calcFinished(false, path, errMsg, render_infos); //会发送到：DisplayWidget::onCalcFinished
     }
     else {
-        emit calcFinished(true, {}, "");
+        emit calcFinished(true, {}, "", render_infos);
     }
 }
 
@@ -94,7 +92,7 @@ void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState stat
     }
 }
 
-void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg)
+void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg, zeno::render_reload_info info)
 {
     //确保此时计算线程不再跑逻辑，这里暂时是代码上约束，也就是CalcWorker::run()走完就发信号。
     if (m_bMultiThread)
@@ -103,7 +101,7 @@ void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
         m_thread.wait();
     }
     setRunStatus(RunStatus::NoRun);
-    emit calcFinished(bSucceed, nodeUuidPath, msg);  //会发送到：DisplayWidget::onCalcFinished
+    emit calcFinished(bSucceed, nodeUuidPath, msg, info);  //会发送到：DisplayWidget::onCalcFinished
 }
 
 void CalculationMgr::run()
@@ -239,7 +237,7 @@ void CalculationMgr::registerRenderWid(DisplayWidget* pDisp)
     connect(this, &CalculationMgr::renderRequest, pDisp, &DisplayWidget::onRenderRequest);
     connect(this, &CalculationMgr::commitRenderInfo, pDisp,
         &DisplayWidget::onRenderInfoCommitted);
-    connect(pDisp, &DisplayWidget::render_objects_loaded, this, &CalculationMgr::on_render_objects_loaded);
+    connect(pDisp, &DisplayWidget::render_reload_finished, this, &CalculationMgr::on_render_objects_loaded);
 }
 
 void CalculationMgr::unRegisterRenderWid(DisplayWidget* pDisp) {
@@ -257,6 +255,8 @@ void CalculationMgr::on_render_objects_loaded()
     m_loadedRender.insert(pWid);
     if (m_loadedRender.size() == m_registerRenders.size())
     {
+        int j;
+        j = 0;
         //todo: notify calc to continue, if still have something to calculate.
     }
 }

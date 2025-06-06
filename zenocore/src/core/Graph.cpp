@@ -57,6 +57,12 @@ void Graph::clearNodes() {
     m_nodes.clear();
 }
 
+void Graph::clearContainerUpdateInfo() {
+    for (const auto& [uuid, node] : m_nodes) {
+        node->clear_container_info();
+    }
+}
+
 void Graph::addNode(std::string const &cls, std::string const &id) {
     //todo: deprecated.
 #if 0
@@ -78,14 +84,12 @@ Graph *Graph::getSubnetGraph(std::string const & node_name) const {
     return node ? node->get_subgraph() : nullptr;
 }
 
-bool Graph::applyNode(std::string const &node_name) {
+void Graph::applyNode(std::string const &node_name, render_update_info& info) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
 
     CalcContext ctx;
-
-    if (m_parSubnetNode)
-    {
+    if (m_parSubnetNode) {
         ctx.isSubnetApply = true;
     }
 
@@ -93,18 +97,25 @@ bool Graph::applyNode(std::string const &node_name) {
         node->doApply(&ctx);
     }, node);
 
-    return true;
-}
-
-void Graph::applyNodes(std::set<std::string> const &nodes) {
-    for (auto const& node_name: nodes) {
-        applyNode(node_name);
+    if (node->is_view()) {
+        info.reason = Update_Reconstruct;
+        info.cond_update_info = node->get_default_output_container_info();
+        info.uuidpath_node_objkey = node->get_uuid_path();
     }
 }
 
-void Graph::runGraph() {
+void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& infos) {
+    for (auto const& node_name: nodes) {
+        render_update_info info;
+        applyNode(node_name, info);
+        infos.objs.push_back(info);
+    }
+    infos.policy = Reload_Calculation;
+}
+
+void Graph::runGraph(render_reload_info& infos) {
     log_debug("{} nodes to exec", m_viewnodes.size());
-    applyNodes(m_viewnodes);
+    return applyNodes(m_viewnodes, infos);
 }
 
 void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {

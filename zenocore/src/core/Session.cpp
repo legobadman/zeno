@@ -384,7 +384,9 @@ ZENO_API void Session::endApiCall()
                 m_callbackRunTrigger();
             }
             else {
-                run();
+                //这里后续是给非ui框架使用，比如命令行，而ui会走RunTrigger.
+                zeno::render_reload_info infos;
+                run("", infos);
             }
         }
     }
@@ -492,7 +494,7 @@ void Session::terminate_solve() {
     }
 }
 
-ZENO_API bool Session::run(const std::string& currgraph) {
+ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& infos) {
     if (m_bDisableRunning)
         return false;
 
@@ -517,12 +519,13 @@ ZENO_API bool Session::run(const std::string& currgraph) {
     //对之前删除节点时记录的obj，对应的所有其他关联节点，都标脏
     objsMan->remove_attach_node_by_removing_objs();
 
-    if (!currgraph.empty()) {
-        getGraphByPath(currgraph);
-    }
-    else {
-        mainGraph->runGraph();
-    }
+    //if (!currgraph.empty()) {
+    //    getGraphByPath(currgraph);
+    //}
+    mainGraph->runGraph(infos);
+    //马上清除不必要的缓存信息
+    mainGraph->clearContainerUpdateInfo();
+
     return true;
 }
 

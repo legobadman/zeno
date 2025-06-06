@@ -41,6 +41,7 @@ void ZQmlRender::reload_objects(zeno::render_reload_info info)
 {
     m_zenovis->reload(info);
     emit requestUpdate();
+    emit sig_reload_finished();
 }
 
 void ZQmlRender::onMouseEvent(ViewMouseInfo event_info)

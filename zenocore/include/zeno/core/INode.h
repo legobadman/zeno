@@ -28,6 +28,11 @@ namespace zeno
         bool get_input2_bool(const zeno::String& param);
         bool has_input(const zeno::String& param);
 
+        container_elem_update_info get_input_container_info(const zeno::String& param);
+        container_elem_update_info get_output_container_info(const zeno::String& param);
+        void set_input_container_info(const zeno::String& param, const container_elem_update_info& info);
+        void set_output_container_info(const zeno::String& param, const container_elem_update_info& info);
+
         zeno::Vec2i get_input2_vec2i(const zeno::String& param);
         zeno::Vec2f get_input2_vec2f(const zeno::String& param);
         zeno::Vec3i get_input2_vec3i(const zeno::String& param);
@@ -51,12 +56,6 @@ namespace zeno
 
         int GetFrameId() const;
         GlobalState* getGlobalState();
-
-        //foreach issues.
-        virtual bool is_continue_to_run();
-        virtual void increment();
-        virtual void reset_forloop_settings();
-        virtual zany get_iterate_object();
 
         NodeImpl* m_pAdapter = nullptr;
     };

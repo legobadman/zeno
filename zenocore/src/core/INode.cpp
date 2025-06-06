@@ -77,6 +77,23 @@ namespace zeno
         return m_pAdapter->has_input(zsString2Std(param));
     }
 
+
+    container_elem_update_info INode::get_input_container_info(const zeno::String& param) {
+        return m_pAdapter->get_input_container_info(zsString2Std(param));
+    }
+
+    container_elem_update_info INode::get_output_container_info(const zeno::String& param) {
+        return m_pAdapter->get_output_container_info(zsString2Std(param));
+    }
+
+    void INode::set_input_container_info(const zeno::String& param, const container_elem_update_info& info) {
+        m_pAdapter->set_input_container_info(zsString2Std(param), info);
+    }
+
+    void INode::set_output_container_info(const zeno::String& param, const container_elem_update_info& info) {
+        m_pAdapter->set_output_container_info(zsString2Std(param), info);
+    }
+
     bool INode::set_output(const zeno::String& param, zany pObject) {
         return m_pAdapter->set_output(zsString2Std(param), pObject);
     }
@@ -96,11 +113,6 @@ namespace zeno
     bool INode::get_param_bool(const zeno::String& param) {
         return get_input2_bool(param);
     }
-
-    bool INode::is_continue_to_run() { return false; }
-    void INode::increment() {}
-    void INode::reset_forloop_settings() {}
-    zany INode::get_iterate_object() { return 0; }
 
     void INode::set_output_int(const zeno::String& param, int val) {
         return m_pAdapter->set_output2(zsString2Std(param), val);

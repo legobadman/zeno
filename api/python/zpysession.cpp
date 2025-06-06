@@ -46,7 +46,8 @@ public:
         return Zpy_Graph(sess.mainGraph);
     }
     void run() {
-        sess.run();
+        zeno::render_reload_info _;
+        sess.run("", _);
     }
 private:
     zeno::Session& sess;

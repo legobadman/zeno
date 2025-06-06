@@ -24,6 +24,7 @@ signals:
     void sig_recordFinished();
     void sig_frameRecordFinished(int frame);
     void sig_recordCanceled();
+    void sig_reloadFinished();
 
 public slots:
     void stop();
@@ -121,6 +122,7 @@ signals:
     void sig_setBackground(bool bShowBg);
     void sig_setdata_on_optix_thread(float, float, float, bool, bool);
     void sig_reload_objects(const zeno::render_reload_info&);
+    void sig_reload_finished();
 
 public slots:
     void onFrameRunFinished(int frame);

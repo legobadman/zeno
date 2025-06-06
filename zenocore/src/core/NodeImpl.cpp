@@ -11,6 +11,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/extra/DirtyChecker.h>
 #include <zeno/extra/TempNode.h>
+#include <zeno/extra/foreach.h>
 #include <zeno/utils/Error.h>
 #include <zeno/utils/string.h>
 #include <zeno/funcs/ParseObjectFromUi.h>
@@ -674,13 +675,13 @@ void NodeImpl::preApplyTimeshift(CalcContext* pContext)
     preApply(pContext);
 }
 
-void NodeImpl::reflectForeach_apply(CalcContext* pContext)
+void NodeImpl::foreachend_apply(CalcContext* pContext)
 {
+    //当前节点是ForeachEnd
     std::string foreach_begin_path = zeno::any_cast_to_string(get_defl_value("ForEachBegin Path"));
     if (Graph* spGraph = m_pGraph) {
         auto foreach_begin = spGraph->getNode(foreach_begin_path);
-
-        auto foreach_end = coreNode();
+        auto foreach_end = static_cast<ForEachEnd*>(coreNode());
         assert(foreach_end);
         for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(); foreach_end->increment())
         {
@@ -688,7 +689,7 @@ void NodeImpl::reflectForeach_apply(CalcContext* pContext)
             pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
 
             preApply(pContext);
-            apply();
+            foreach_end->apply_foreach(pContext);
         }
         auto output = get_output_obj("Output Object");
         if (output)
@@ -1354,17 +1355,55 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
     return spDict;
 }
 
+container_elem_update_info NodeImpl::get_input_container_info(const std::string& param) {
+    const ObjectParam& objparam = safe_at(m_inputObjs, param, "input obj param");
+    return objparam.listdict_update;
+}
+
+container_elem_update_info NodeImpl::get_output_container_info(const std::string& param) {
+    const ObjectParam& objparam = safe_at(m_outputObjs, param, "output obj param");
+    return objparam.listdict_update;
+}
+
+void NodeImpl::set_input_container_info(const std::string& param, const container_elem_update_info& info) {
+    ObjectParam& objparam = safe_at(m_inputObjs, param, "input obj param");
+    objparam.listdict_update = info;
+}
+
+void NodeImpl::set_output_container_info(const std::string& param, const container_elem_update_info& info) {
+    ObjectParam& objparam = safe_at(m_outputObjs, param, "output obj param");
+    objparam.listdict_update = info;
+}
+
+void NodeImpl::clear_container_info() {
+    for (auto& [_, param] : m_inputObjs) {
+        param.listdict_update.clear();
+    }
+    for (auto& [_, param] : m_outputObjs) {
+        param.listdict_update.clear();
+    }
+}
+
 std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
     assert(gParamType_List == in_param->type);
     std::shared_ptr<ListObject> spList;
     bool bDirectLink = false;
+
+    std::map<std::string, zany> existInputObjs;
+    if (in_param->spObject) {
+        auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
+        for (auto spobj : spOldList->m_impl->get()) {
+            existInputObjs.insert({ zsString2Std(spobj->key()), spobj });
+        }
+    }
+
     if (in_param->links.size() == 1)
     {
         std::shared_ptr<ObjectLink> spLink = in_param->links.front();
         auto out_param = spLink->fromparam;
         NodeImpl* outNode = out_param->m_wpNode;
+        bool is_upstream_dirty = outNode->is_dirty();
 
-        //如何排除List嵌套List的情况？link->key?
         if (out_param->type == in_param->type && spLink->tokey.empty()) {   //根据Graph::addLink规则，类型相同且无key视为直连
             bDirectLink = true;
 
@@ -1379,33 +1418,62 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
 
             //里面的元素也要clone
             auto outList = std::dynamic_pointer_cast<ListObject>(outResult);
-            spList = std::dynamic_pointer_cast<ListObject>(clone_by_key(outList.get(), m_uuid));
+            container_elem_update_info out_updateinfo = out_param->listdict_update;
+
+            spList = create_ListObject();
+            container_elem_update_info input_container_updateinfo;
+
+            for (zany outobj : outList->get()) {
+                auto outkey = zsString2Std(outobj->key());
+                zany inobj = clone_by_key(outobj.get(), m_uuid);
+                //如果outobj在input里没有，就添加
+                auto in_clone_key = zsString2Std(inobj->key());
+                spList->push_back(inobj);   //对象要重新拷一次，无论后续要不要加，反正会吞掉之前的obj.
+                if (existInputObjs.find(in_clone_key) == existInputObjs.end()) {
+                    input_container_updateinfo.new_added.insert(in_clone_key);
+                }
+                else {
+                    //当前输入参数也缓存了一个同样key值的clone对象，但这个对象可能被上游改了
+                    if (out_updateinfo.modified.find(outkey) != out_updateinfo.modified.end()) {
+                        input_container_updateinfo.modified.insert(in_clone_key);
+                    }
+                }
+            }
+
+            //也要观察一下移除的情况
+            for (auto out_removed_key : out_updateinfo.removed) {
+                auto inobj_clone_removed_key = m_uuid + "\\" + out_removed_key;
+                if (existInputObjs.find(inobj_clone_removed_key) != existInputObjs.end()) {
+                    input_container_updateinfo.removed.insert(inobj_clone_removed_key);
+                }
+            }
+
+            spList->update_key(stdString2zs(m_uuid));
+            in_param->listdict_update = input_container_updateinfo;
         }
     }
     if (!bDirectLink)
     {
+        //目前不允许List嵌套list的情况
         spList = create_ListObject();
-
-        std::map<std::string, zany> existObjs;
-        if (in_param->spObject) {
-            auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
-            for (auto spobj : spOldList->m_impl->get()) {
-                existObjs.insert({zsString2Std(spobj->key()), spobj});
-            }
-        }
-
         int indx = 0;
+        container_elem_update_info input_container_updateinfo;
+
         for (const auto& spLink : in_param->links)
         {
             //list的情况下，keyName是不是没意义，顺序怎么维持？
             auto out_param = spLink->fromparam;
             NodeImpl* outNode = out_param->m_wpNode;
-            bool is_this_item_dirty = outNode->is_dirty();
-            if (is_this_item_dirty) {  //list中的元素是dirty的，重新计算并加入list
+            bool is_upstream_dirty = outNode->is_dirty();
+
+            if (is_upstream_dirty) {  //list中的元素是dirty的，重新计算并加入list
                 GraphException::translated([&] {
                     outNode->doApply(pContext);
                 }, outNode);
             }
+
+            //拿这个没有意义，因为links下的不可能是list
+            container_elem_update_info upstream_info = out_param->listdict_update;
             auto outResult = outNode->get_output_obj(out_param->name);
             assert(outResult);
             {
@@ -1418,37 +1486,29 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 }
                 else {
                     auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
-                    if (dynamic_cast<zeno::PrimitiveObject*>(outResult.get())) {
-                        newObj = outResult;
-                        out_param->spObject.reset();
-                        outNode->mark_dirty(true);
-                    }
-                    else {
-                        newObj = outResult->clone();
-                        newObj->update_key(newkey);
-                    }
+                    newObj = outResult->clone();
+                    newObj->update_key(newkey);
                 }
                 spList->m_impl->push_back(newObj);
 
                 //需要区分是新的还是旧的，这里先粗暴认为全是新的
                 std::string const& new_key = zsString2Std(newObj->key());
-                if (is_this_item_dirty) {
+                if (is_upstream_dirty) {
                     //需要区分是新的还是旧的，这里先粗暴认为全是新的
-                    if (existObjs.find(new_key) != existObjs.end()) {
-                        spList->m_impl->m_modify.insert(new_key);
-                        existObjs.erase(new_key);
+                    if (existInputObjs.find(new_key) != existInputObjs.end()) {
+                        input_container_updateinfo.modified.insert(new_key);
+                        existInputObjs.erase(new_key);
                     }
                     else {
-                        spList->m_impl->m_new_added.insert(new_key);
+                        input_container_updateinfo.new_added.insert(new_key);
                     }
                 } else {
-                    //spList->m_impl->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
                 }
-                existObjs.erase(new_key);
+                existInputObjs.erase(new_key);
             }
         }
         //剩下没出现的都认为是移除掉了
-        std::function<void(zany)> flattenList = [&flattenList, &spList](zany obj) {
+        std::function<void(zany)> flattenList = [&](zany obj) {
             if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
                 for (int i = 0; i < _spList->m_impl->size(); ++i) {
                     flattenList(_spList->m_impl->get(i));
@@ -1458,15 +1518,43 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                     flattenList(obj);
                 }
             } else {
-                spList->m_impl->m_new_removed.insert(zsString2Std(obj->key()));
+                input_container_updateinfo.removed.insert(zsString2Std(obj->key()));
             }
         };
-        for (auto& [key, removeobj] : existObjs) {
+        for (auto& [key, removeobj] : existInputObjs) {
             flattenList(removeobj);//提前节需要移除的对象的key全部展平，在GraphicsManager.h中一次性移除，才能正确显示
         }
+
         spList->update_key(stdString2zs(m_uuid));
+        in_param->listdict_update = input_container_updateinfo;
     }
     return spList;
+}
+
+void NodeImpl::init_output_container_updateinfo() {
+    //如果节点输出了list，但没有设定好update_info，这里就全部加到add里，以便于下游节点能取到
+    for (auto& [name, outparam] : m_outputObjs) {
+        if (!outparam.spObject)
+            continue;
+        outparam.listdict_update.container_key = zsString2Std(outparam.spObject->key());
+        if (!outparam.listdict_update.empty())
+            continue;
+        if (gParamType_List == outparam.type) {
+            //有一些节点输出的list就是输入的list，虽然对象一样，但是可能节点算法会修改其中一些对象
+            //比如往一些对象里加userdata，这时候input的updateinfo就得更新了，
+            //意味着用户要手动在节点算法里调用set_output_container_info，否则无法识别哪些是新修改
+            //只能全部加进去，不然会漏掉。
+            auto listobj = std::static_pointer_cast<ListObject>(outparam.spObject);
+            
+            for (zany spobj : listobj->get()) {
+                auto key = zsString2Std(spobj->key());
+                outparam.listdict_update.new_added.insert(key);
+            }
+        }
+        else if (gParamType_Dict == outparam.type) {
+            //TODO
+        }
+    }
 }
 
 zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
@@ -1860,7 +1948,9 @@ void NodeImpl::doApply(CalcContext* pContext) {
         throw makeError<UnimplError>("cycle reference occurs!");
     }
     pContext->visited_nodes.insert(uuid_path);
-    scope_exit spUuidRecord([=] {pContext->visited_nodes.erase(uuid_path); });
+    scope_exit spUuidRecord([=] {
+        pContext->visited_nodes.erase(uuid_path);
+    });
 
 #if 0
     if (m_name == "locate" && pContext->curr_iter == 1) {
@@ -1892,7 +1982,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
         else {
             reportStatus(true, Node_Running);
             if (m_nodecls == "ForEachEnd") {
-                reflectForeach_apply(pContext);
+                foreachend_apply(pContext);
             } else {
                 apply();
             }
@@ -1901,9 +1991,10 @@ void NodeImpl::doApply(CalcContext* pContext) {
     log_debug("==> leave {}", m_name);
 
     update_out_objs_key();
+    init_output_container_updateinfo();
     reportStatus(false, Node_RunSucceed);
     if (m_bView) {
-        commit_to_render(Update_Reconstruct);
+        //commit_to_render(Update_Reconstruct);
     }
 }
 
@@ -3334,6 +3425,12 @@ zany NodeImpl::get_default_output_object() {
     if (m_outputObjs.empty())
         return nullptr;
     return m_outputObjs.begin()->second.spObject;
+}
+
+container_elem_update_info NodeImpl::get_default_output_container_info() {
+    if (m_outputObjs.empty())
+        return container_elem_update_info();
+    return m_outputObjs.begin()->second.listdict_update;
 }
 
 zany NodeImpl::get_output_obj(std::string const& param) {
