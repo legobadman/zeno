@@ -14,6 +14,7 @@
 #include "zeno/utils/bit_operations.h"
 #include <zeno/types/UserData.h>
 #include "zeno/types/PrimitiveObject.h"
+#include <zeno/types/IGeometryObject.h>
 #include "zeno/utils/scope_exit.h"
 #include "zeno/funcs/PrimitiveUtils.h"
 #include "zeno/utils/string.h"
@@ -1899,6 +1900,121 @@ static int get_visibility_from_json(Json json, const std::string &fbx_path) {
     }
     return visibility;
 }
+
+
+struct NewFBXGeometryList : INode {
+    vec3f transform_pos(glm::mat4& transform, vec3f pos) {
+        auto p = transform * glm::vec4(pos[0], pos[1], pos[2], 1);
+        return { p.x, p.y, p.z };
+    }
+    vec3f transform_nrm(glm::mat4& transform, vec3f pos) {
+        auto p = glm::transpose(glm::inverse(transform)) * glm::vec4(pos[0], pos[1], pos[2], 0);
+        return { p.x, p.y, p.z };
+    }
+    virtual void apply() override {
+        auto fbx_object = std::dynamic_pointer_cast<FBXObject>(get_input("fbx_object"));
+        auto lScene = fbx_object->lScene;
+
+        // Print the nodes of the scene and their attributes recursively.
+        // Note that we are not printing the root node because it should
+        // not contain any attributes.
+        FbxNode* lRootNode = lScene->GetRootNode();
+        bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
+        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        if (lRootNode) {
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+        }
+
+        auto vectors_str = zsString2Std(get_input2_string("vectors"));
+        std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
+        if (has_input("scene_info")) {
+            auto json = std::dynamic_pointer_cast<JsonObject>(get_input("scene_info"));
+            std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
+            for (auto prim : prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                if (get_input2_bool("SkipInvisibleMesh")) {
+                    if (get_visibility_from_json(json->json, fbx_path)) {
+                        new_prims.push_back(prim);
+                    }
+                }
+                else {
+                    new_prims.push_back(prim);
+                }
+            }
+            prims = new_prims;
+            for (auto prim : prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                glm::mat4 xform = get_xfrom_from_json(json->json, fbx_path);
+                for (auto& v : prim->verts) {
+                    v = transform_pos(xform, v);
+                }
+                for (auto& vector : vectors) {
+                    if (prim->verts.attr_is<vec3f>(vector)) {
+                        auto& attr = prim->verts.attr<vec3f>(vector);
+                        for (auto& v : attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                    else if (prim->loops.attr_is<vec3f>(vector)) {
+                        auto& attr = prim->loops.attr<vec3f>(vector);
+                        for (auto& v : attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (auto prim : prims) {
+            if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
+                for (auto vector : vectors) {
+                    vector = zeno::trim_string(vector);
+                    if (vector.size() && prim->loops.attr_is<vec3f>(vector)) {
+                        auto& nrm = prim->loops.attr<vec3f>(vector);
+                        auto& vnrm = prim->verts.add_attr<vec3f>(vector);
+                        for (auto i = 0; i < prim->loops.size(); i++) {
+                            vnrm[prim->loops[i]] += nrm[i];
+                        }
+                        for (auto i = 0; i < prim->verts.size(); i++) {
+                            vnrm[i] = normalizeSafe(vnrm[i]);
+                        }
+                    }
+                }
+            }
+            if (get_input2_bool("CopyFacesetToMatid")) {
+                prim_copy_faceset_to_matid(prim.get());
+            }
+        }
+        auto geo_list = std::make_shared<zeno::ListObject>();
+        for (auto prim : prims) {
+            zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject();
+            spGeom->bindPrimitive(prim);
+            geo_list->push_back(spGeom);
+        }
+        set_output("Geometry List", geo_list);
+    }
+};
+ZENDEFNODE(NewFBXGeometryList, {
+    {
+        {gParamType_FBXObject, "fbx_object"},
+        {gParamType_JsonObject, "scene_info"},
+        {gParamType_String, "vectors", "nrm,tang"},
+        {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
+        {gParamType_Bool, "CopyFacesetToMatid", "1"},
+        {gParamType_Bool, "OutputTexEvenMissing", "0"},
+        {gParamType_Bool, "SkipInvisibleMesh", "0"},
+    },
+    {
+        {gParamType_List, "Geometry List"},
+    },
+    {},
+    {"FBXSDK"},
+});
+
+
+
 struct NewFBXPrimList : INode {
     vec3f transform_pos(glm::mat4 &transform, vec3f pos) {
         auto p = transform * glm::vec4(pos[0], pos[1], pos[2], 1);

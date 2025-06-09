@@ -1208,7 +1208,7 @@ void MakeGraphicVisitor::visit(zeno::PrimitiveObject *obj) {
 
 void MakeGraphicVisitor::visit(zeno::GeometryObject_Adapter *obj) {
     //考虑到primitive又要创建各种nrm uv，可以在这里让PrimitiveObject中转一下
-    this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj->m_impl->toPrimitive().get());
+    this->out_result = std::make_unique<ZhxxGraphicPrimitive>(this->in_scene, obj->toPrimitiveObject().get());
 }
 
 } // namespace zenovis

@@ -13,6 +13,10 @@ namespace zeno
         return Node_Normal;
     }
 
+    zeno::String INode::uuid() const {
+        return stdString2zs(m_pAdapter->get_uuid());
+    }
+
     zany INode::get_input(const zeno::String& param) { 
         return m_pAdapter->get_input(zsString2Std(param));
     }

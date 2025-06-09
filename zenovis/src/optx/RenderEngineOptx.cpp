@@ -353,7 +353,7 @@ struct GraphicsManager {
 
             std::shared_ptr<zeno::PrimitiveObject> prim_in_lslislSp;
             if (auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(obj)) {
-                prim_in_lslislSp = geo->m_impl->toPrimitive();
+                prim_in_lslislSp = geo->toPrimitiveObject();
             }
             else if (auto const* prim_in0 = dynamic_cast<zeno::PrimitiveObject*>(obj)) {
                 // vvv deepcopy to cihou following inplace ops vvv
@@ -371,7 +371,7 @@ struct GraphicsManager {
                 if ( prim_in->userData()->has("ShaderAttributes") ) {
                     auto attritbutes  = zsString2Std(prim_in->userData()->get_string("ShaderAttributes"));
 
-                    using VarType = zeno::AttrVector<zeno::vec3f>::AttrVectorVariant;
+                    using VarType = zeno::AttrVectorVariant;
 
                     auto json = nlohmann::json::parse(attritbutes);
 
@@ -1281,15 +1281,30 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         xinxinoptix::optixinit(std::size(argv), argv);
     }
 
-    void process_listobj(std::shared_ptr<zeno::ListObject> spList) {
+    void process_listobj(std::shared_ptr<zeno::ListObject> spList, zeno::container_elem_update_info info) {
         for (auto spObject : spList->m_impl->get()) {
-            if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
-                process_listobj(_spList);
+            std::string const& key = zsString2Std(spObject->key());
+            if (info.new_added.find(key) != info.new_added.end() ||
+                info.modified.find(key) != info.modified.end()) {
+
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    //暂不支持嵌套
+                    //process_listobj(_spList);
+                }
+                else
+                {
+                    graphicsMan->add_object(spObject);
+                    matNeedUpdate = meshNeedUpdate = true;
+                }
             }
-            else {
-                graphicsMan->add_object(spObject);
-                matNeedUpdate = meshNeedUpdate = true;
-            }
+        }
+
+        for (auto& key : info.removed) {
+            auto& graphics_ = graphicsMan->graphics.m_curr;
+            auto iter = graphics_.find(key);
+            if (iter == graphics_.end())
+                continue;
+            graphics_.erase(key);
         }
     }
 
@@ -1350,7 +1365,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 zeno::zany spObject = spNode->get_default_output_object();
                 if (spObject) {
                     if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
-                        process_listobj(_spList);
+                        process_listobj(_spList, update.cond_update_info);
                     }
                     else {
                         //可能是对象没有通过子图的Suboutput连出来

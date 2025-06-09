@@ -45,7 +45,7 @@ struct GraphicsManager {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
             for (auto obj : spList->m_impl->get()) {
                 bool ret = add_object(obj);
-                assert(ret);
+                //assert(ret);  //有一些是JsonObject，不应该进来
             }
             return true;
         }

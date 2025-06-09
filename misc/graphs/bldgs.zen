@@ -1,0 +1,138 @@
+{
+    "main": {
+        "type": 2,
+        "nodes": {
+            "NewFBXGeometryList1": {
+                "name": "NewFBXGeometryList1",
+                "class": "NewFBXGeometryList",
+                "object_inputs": {
+                    "fbx_object": {
+                        "links": [
+                            {
+                                "out-node": "ReadFBXFile1",
+                                "out-socket": "fbx_object",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "",
+                        "socket-type": "clone"
+                    },
+                    "scene_info": {
+                        "links": null,
+                        "type": "",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "vectors": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "nrm,tang",
+                        "control": {
+                            "name": "String"
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "CopyVectorsFromLoopsToVert": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "CopyFacesetToMatid": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "OutputTexEvenMissing": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "SkipInvisibleMesh": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Geometry List": {
+                        "type": "list",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    93.0,
+                    411.0
+                ],
+                "status": [
+                    "View"
+                ],
+                "collasped": false
+            },
+            "ReadFBXFile1": {
+                "name": "ReadFBXFile1",
+                "class": "ReadFBXFile",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "path": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "C:/test_scene_tree/擎天柱.fbx",
+                        "control": {
+                            "name": "read path"
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "fbx_object": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    121.0,
+                    230.0
+                ],
+                "status": [],
+                "collasped": false
+            }
+        }
+    },
+    "views": {
+        "timeline": {
+            "start-frame": 0,
+            "end-frame": 100,
+            "curr-frame": 0,
+            "always": true,
+            "timeline-fps": 24
+        }
+    },
+    "version": "v3"
+}

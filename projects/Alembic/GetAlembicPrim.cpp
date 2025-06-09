@@ -5,6 +5,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/types/NumericObject.h>
@@ -324,7 +325,15 @@ struct AlembicPrimList : INode {
             _prim->userData()->set_string("abcpath_0", stdString2zs(abcpath_0));
         }
         new_prims->set(stdVec2zeVec(arr));
-        set_output("prims", std::move(new_prims));
+
+        std::shared_ptr<ListObject> new_geoms = create_ListObject();
+        for (auto obj : new_prims->get()) {
+            auto prim = std::static_pointer_cast<PrimitiveObject>(obj);
+            auto newgeo = create_GeometryObject();
+            newgeo->bindPrimitive(prim);
+            new_geoms->push_back(newgeo);
+        }
+        set_output("geoms", std::move(new_geoms));
     }
 };
 
@@ -341,7 +350,7 @@ ZENDEFNODE(AlembicPrimList, {
         {gParamType_String, "facesetInclude", ""},
         {gParamType_String, "facesetExclude", ""},
     },
-    {{gParamType_List, "prims"}},
+    {{gParamType_List, "geoms"}},
     {},
     {"alembic"},
 });

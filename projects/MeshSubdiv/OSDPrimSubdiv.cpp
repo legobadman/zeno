@@ -235,7 +235,7 @@ static void osdPrimSubdiv(PrimitiveObject *prim, int levels, std::string edgeCre
         desc.fvarChannels = channels.data();
     }
 
-    std::map<std::string, AttrVector<vec2i>::AttrVectorVariant> oldpolyattrs;
+    std::map<std::string, AttrVectorVariant> oldpolyattrs;
     if (copyFaceAttrs) { // make zhxx very happy
         size_t offsetred = 0, curOffsetred;
         size_t shift = 2 * (levels - 1);

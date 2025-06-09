@@ -5,6 +5,7 @@
 #include <zeno/types/DummyObject.h>
 #include <zeno/core/Graph.h>
 #include "zeno/types/PrimitiveObject.h"
+#include <zeno/types/IGeometryObject.h>
 #include "zeno/types/ListObject_impl.h"
 #include "zeno/types/UserData.h"
 #include "zeno/utils/fileio.h"
@@ -126,6 +127,7 @@ struct SceneObject : IObjectClone<SceneObject> {
     IndexMap<std::string, SceneTreeNode> scene_tree;
     std::unordered_map<std::string, glm::mat4> node_to_matrix;
     std::unordered_map<std::string, std::shared_ptr<PrimitiveObject>> prim_list;
+    std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> geom_list;
     std::string root_name;
 
     std::string get_new_root_name(const std::string &root_name, const std::string &new_root_name, const std::string &path) {
@@ -162,6 +164,14 @@ struct SceneObject : IObjectClone<SceneObject> {
             auto new_prim = std::static_pointer_cast<PrimitiveObject>(p->clone());
             new_prim->userData()->set_string("ObjectName", stdString2zs(new_key));
             new_scene_obj->prim_list[new_key] = new_prim;
+        }
+        for (auto &[k, p]: geom_list) {
+            auto new_key = get_new_root_name(root_name, new_root_name, k);
+            auto new_geom = std::static_pointer_cast<GeometryObject_Adapter>(p->clone());
+            new_geom->userData()->set_string("ObjectName", stdString2zs(new_key));
+            new_scene_obj->geom_list[new_key] = new_geom;
+            if (!p->key().empty())
+                new_geom->update_key(p->key());
         }
         new_scene_obj->root_name = new_root_name;
         std::string xform_name = new_root_name + "_m";
@@ -244,16 +254,21 @@ struct SceneObject : IObjectClone<SceneObject> {
             }
         }
     }
-    std::shared_ptr<zeno::ListObject> to_layer_structure(bool use_static = true) {
-        auto scene = std::make_shared<zeno::ListObject>();
+    std::shared_ptr<zeno::ListObject> to_layer_structure(container_elem_update_info& summary_info, bool use_static = true) {
+        auto scene_list = std::make_shared<zeno::ListObject>();
         auto dict = std::make_shared<PrimitiveObject>();
-        scene->push_back(dict);
+        scene_list->push_back(dict);
         {
-            for (auto &[abc_path, p]: prim_list) {
-                scene->push_back(p);
+            for (auto &[abc_path, p]: geom_list) {
+                scene_list->push_back(p);
+                //是否需要加到summary_info已经由外面的list参数决定
             }
-            int prim_count = prim_list.size();
+            int prim_count = geom_list.size();
             dict->userData()->set_int("prim_count", prim_count);
+
+            std::string objkey = summary_info.container_key + "\\" + std::to_string(scene_list->size());
+            dict->update_key(stdString2zs(objkey));
+            summary_info.new_added.insert(objkey);
         }
         {
             int matrix_count = 0;
@@ -294,7 +309,12 @@ struct SceneObject : IObjectClone<SceneObject> {
                     object_name = path + "_m";
                 }
                 prim->userData()->set_string("ObjectName", stdString2zs(object_name));
-                scene->push_back(prim);
+
+                std::string primkey = summary_info.container_key + "\\" + std::to_string(scene_list->size());
+                prim->update_key(stdString2zs(primkey));
+                scene_list->push_back(prim);
+                //这些矩阵都是执行到这里新生成的，所以直接加到new_added.
+                summary_info.new_added.insert(primkey);
                 matrix_count += 1;
             }
             dict->userData()->set_int("matrix_count", matrix_count);
@@ -305,7 +325,7 @@ struct SceneObject : IObjectClone<SceneObject> {
             ud->set_string("ResourceType", "SceneDescriptor");
             Json json;
             Json BasicRenderInstances = Json();
-            for (const auto &[path, prim]: prim_list) {
+            for (const auto &[path, prim]: geom_list) {
                 BasicRenderInstances[path]["Geom"] = path;
                 BasicRenderInstances[path]["Material"] = "Default";
             }
@@ -330,26 +350,36 @@ struct SceneObject : IObjectClone<SceneObject> {
                 json["DynamicRenderGroups"] = RenderGroups;
             }
             ud->set_string("Scene", stdString2zs(std::string(json.dump())));
-            scene->push_back(scene_descriptor);
+            std::string objkey = summary_info.container_key + "\\" + std::to_string(scene_list->size());
+            summary_info.new_added.insert(objkey);
+            scene_descriptor->update_key(stdString2zs(objkey));
+            scene_list->push_back(scene_descriptor);
         }
         {
             auto st = std::make_shared<JsonObject>();
             st->json = to_json();
-            scene->push_back(st);
+            std::string objkey = summary_info.container_key + "\\" + std::to_string(scene_list->size());
+            summary_info.new_added.insert(objkey);
+            st->update_key(stdString2zs(objkey));
+            scene_list->push_back(st);
         }
-        return scene;
+        return scene_list;
     }
 
-    std::shared_ptr<zeno::ListObject> to_flatten_structure(bool use_static) {
+    std::shared_ptr<zeno::ListObject> to_flatten_structure(container_elem_update_info& summary_info, bool use_static) {
 //        zeno::log_info("to_flatten_structure root_name: {}", root_name);
-        auto scene = std::make_shared<zeno::ListObject>();
+        auto scene_list = std::make_shared<zeno::ListObject>();
         auto dict = std::make_shared<PrimitiveObject>();
-        scene->push_back(dict);
+        scene_list->push_back(dict);
         {
-            for (auto &[abc_path, p]: prim_list) {
-                scene->push_back(p);
+            for (auto &[abc_path, p]: geom_list) {
+                scene_list->push_back(p);
             }
-            dict->userData()->set_int("prim_count", int(prim_list.size()));
+            dict->userData()->set_int("prim_count", int(geom_list.size()));
+
+            std::string objkey = summary_info.container_key + "\\" + std::to_string(scene_list->size());
+            dict->update_key(stdString2zs(objkey));
+            summary_info.new_added.insert(objkey);
         }
         {
             std::unordered_map<std::string, std::vector<glm::mat4>> tmp_matrix_xforms;
@@ -405,7 +435,12 @@ struct SceneObject : IObjectClone<SceneObject> {
                 }
                 std::string object_name = mesh_name + "_m";
                 matrix->userData()->set_string("ObjectName", stdString2zs(object_name));
-                scene->push_back(matrix);
+
+                std::string primkey = summary_info.container_key + "\\matrix" + std::to_string(scene_list->size());
+                matrix->update_key(stdString2zs(primkey));
+                scene_list->push_back(matrix);
+                //这些矩阵都是执行到这里新生成的，所以直接加到new_added.
+                summary_info.new_added.insert(primkey);
             }
             dict->userData()->set_int("matrix_count", int(tmp_matrix_xforms.size()));
         }
@@ -415,7 +450,7 @@ struct SceneObject : IObjectClone<SceneObject> {
             ud->set_string("ResourceType", "SceneDescriptor");
             Json json;
             json["BasicRenderInstances"] = Json();
-            for (const auto &[path, prim]: prim_list) {
+            for (const auto &[path, prim]: geom_list) {
                 json["BasicRenderInstances"][path]["Geom"] = path;
                 json["BasicRenderInstances"][path]["Material"] = "Default";
                 if (use_static) {
@@ -426,14 +461,22 @@ struct SceneObject : IObjectClone<SceneObject> {
                 }
             }
             ud->set_string("Scene", stdString2zs(std::string(json.dump())));
-            scene->push_back(scene_descriptor);
+
+            std::string objkey = summary_info.container_key + "\\json" + std::to_string(scene_list->size());
+            summary_info.new_added.insert(objkey);
+            scene_descriptor->update_key(stdString2zs(objkey));
+            scene_list->push_back(scene_descriptor);
         }
         {
             auto st = std::make_shared<JsonObject>();
             st->json = to_json();
-            scene->push_back(st);
+
+            std::string objkey = summary_info.container_key + "\\" + std::to_string(scene_list->size());
+            summary_info.new_added.insert(objkey);
+            st->update_key(stdString2zs(objkey));
+            scene_list->push_back(st);
         }
-        return scene;
+        return scene_list;
     }
 };
 
@@ -443,9 +486,9 @@ static std::shared_ptr<SceneObject> get_scene_tree_from_list(std::shared_ptr<Lis
     scene_tree->from_json(json_obj->json);
     auto prim_list_size = list_obj->m_impl->m_objects.front()->userData()->get_int("prim_count");
     for (auto i = 1; i <= prim_list_size; i++) {
-        auto prim = std::static_pointer_cast<PrimitiveObject>(list_obj->m_impl->m_objects[i]);
+        auto prim = std::static_pointer_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]);
         auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
-        scene_tree->prim_list[object_name] = prim;
+        scene_tree->geom_list[object_name] = prim;
     }
     return scene_tree;
 }
@@ -608,14 +651,17 @@ struct FormSceneTree : zeno::INode {
         auto sceneTree = std::make_shared<SceneObject>();
         auto scene_json = ZImpl(get_input2<JsonObject>("scene_info"));
         sceneTree->root_name = "/ABC";
-        auto prim_list = ZImpl(get_input2<ListObject>("prim_list"));
+        auto prim_geom_list = ZImpl(get_input2<ListObject>("prim_list"));
+        auto list_updateinfo = get_input_container_info("prim_list");
+
 //        zeno::log_info("prim_list: {}", prim_list->arr.size());
-        for (auto p: prim_list->get()) {
+        for (auto p: prim_geom_list->get()) {
             auto abc_path = zsString2Std(p->userData()->get_string("abcpath_0"));
             {
                 auto session = &zeno::getSession();
                 int currframe = session->globalState->getFrameId();
                 int beginframe = session->globalComm->beginFrameNumber;
+                /* zeno3不需要stamp机制
                 std::string mode = ZImpl(get_input2<std::string>("stampMode"));
                 if (mode == "UnChanged") {
                     p->userData()->set_string("stamp-change", "UnChanged");
@@ -628,18 +674,30 @@ struct FormSceneTree : zeno::INode {
                 } else if (mode == "ShapeChange") {
                     p->userData()->set_string("stamp-change", "TotalChange");//shapechange暂时全部按Totalchange处理
                 }
+                */
                 if (!p->userData()->has_string("ResourceType")) {
                     auto sResourceType = ZImpl(get_input2<std::string>("ResourceType"));
                     p->userData()->set_string("ResourceType", stdString2zs(sResourceType));
                 }
             }
-            auto prim = std::static_pointer_cast<PrimitiveObject>(p);
-            prim->userData()->set_string("ObjectName", stdString2zs(abc_path));
-            sceneTree->prim_list[abc_path] = prim;
+            /*
+            if (auto prim = std::dynamic_pointer_cast<PrimitiveObject>(p)) {
+                prim->userData()->set_string("ObjectName", stdString2zs(abc_path));
+                sceneTree->prim_list[abc_path] = prim;
+            }
+            else */if (auto geom = std::dynamic_pointer_cast<GeometryObject_Adapter>(p)) {
+                geom->userData()->set_string("ObjectName", stdString2zs(abc_path));
+                //total_updateinfo.modified.insert(zsString2Std(p->key()));
+                sceneTree->geom_list[abc_path] = geom;
+            }
         }
         get_local_matrix_map(scene_json->json, "", sceneTree);
-        auto scene = sceneTree->to_layer_structure();
-        set_output("scene", scene);
+        container_elem_update_info total_updateinfo;
+        total_updateinfo.merge(list_updateinfo);
+        total_updateinfo.container_key = zsString2Std(this->uuid());
+        auto scene_list = sceneTree->to_layer_structure(total_updateinfo);
+        set_output_container_info("scene", total_updateinfo);
+        set_output("scene", scene_list);
     }
 };
 
@@ -781,7 +839,8 @@ struct MergeScene : zeno::INode {
             auto inner_parent = append_path1 + (insert_path == ""? "" : "/") + insert_path;
             main_scene->scene_tree.at(inner_parent).children.push_back( namespace2==""?append_path2+second_scene->root_name:append_path2);
         }
-        auto scene = main_scene->to_layer_structure();
+        container_elem_update_info _;
+        auto scene = main_scene->to_layer_structure(_);
         set_output("scene", scene);
     }
 };
@@ -811,7 +870,8 @@ struct FlattenSceneTree : zeno::INode {
         auto scene_tree = get_scene_tree_from_list(get_input_ListObject("scene"));
         auto use_static = get_input2_bool("use_static");
 
-        auto scene = scene_tree->to_flatten_structure(use_static);
+        container_elem_update_info _;
+        auto scene = scene_tree->to_flatten_structure(_, use_static);
         set_output("scene", scene);
     }
 };
@@ -875,6 +935,7 @@ static void scene_add_prefix2(
 struct SceneRootRename : zeno::INode {
     void apply() override {
         auto scene_tree = get_scene_tree_from_list(get_input_ListObject("scene"));
+        auto input_updateinfo = get_input_container_info("scene");
 //        zeno::log_info("SceneRootRename input root_name {}", scene_tree->root_name);
         auto new_root_name = zsString2Std(get_input2_string("new_root_name"));
         if (zeno::ends_with(new_root_name, "/")) {
@@ -892,8 +953,10 @@ struct SceneRootRename : zeno::INode {
         }
         auto new_scene_tree = scene_tree->root_rename(new_root_name, root_xform);
 //        zeno::log_info("SceneRootRename output root_name {}", new_scene_tree->root_name);
-
-        auto scene = new_scene_tree->to_layer_structure();
+        container_elem_update_info total_updateinfo;
+        total_updateinfo.merge(input_updateinfo);
+        auto scene = new_scene_tree->to_layer_structure(total_updateinfo);
+        set_output_container_info("scene", total_updateinfo);
         set_output("scene", scene);
     }
 };
@@ -918,11 +981,17 @@ struct RenderScene : zeno::INode {
     void apply() override {
         auto scene = std::make_shared<ListObject>();
         Json scene_descriptor_json;
+        container_elem_update_info output_updateinfo;
+        output_updateinfo.container_key = zsString2Std(this->uuid());
+
         if (has_input("static_scene")) {
             if (!m_static_scene) {
                 auto static_scene_tree = get_scene_tree_from_list(get_input_ListObject("static_scene"));
+                auto static_updateinfo = get_input_container_info("static_scene");
+                output_updateinfo.merge(static_updateinfo);
+
                 auto new_static_scene_tree = static_scene_tree->root_rename("SRG", std::nullopt);
-                auto static_scene = get_input2_bool("flatten_static_scene")? new_static_scene_tree->to_flatten_structure(true) : new_static_scene_tree->to_layer_structure(true);
+                auto static_scene = get_input2_bool("flatten_static_scene")? new_static_scene_tree->to_flatten_structure(output_updateinfo, true) : new_static_scene_tree->to_layer_structure(output_updateinfo, true);
                 for (auto i = 1; i < static_scene->m_impl->m_objects.size() - 2; i++) {
                     scene->push_back(static_scene->m_impl->m_objects[i]);
                 }
@@ -935,8 +1004,11 @@ struct RenderScene : zeno::INode {
         }
         if (has_input("dynamic_scene")) {
             auto dynamic_scene_tree = get_scene_tree_from_list(get_input_ListObject("dynamic_scene"));
+            auto dynamic_updateinfo = get_input_container_info("dynamic_scene");
+            output_updateinfo.merge(dynamic_updateinfo);
+
             auto new_dynamic_scene_tree = dynamic_scene_tree->root_rename("DRG", std::nullopt);
-            auto dynamic_scene = get_input2_bool("flatten_dynamic_scene") ? new_dynamic_scene_tree->to_flatten_structure(false) : new_dynamic_scene_tree->to_layer_structure(false);
+            auto dynamic_scene = get_input2_bool("flatten_dynamic_scene") ? new_dynamic_scene_tree->to_flatten_structure(output_updateinfo, false) : new_dynamic_scene_tree->to_layer_structure(output_updateinfo, false);
             for (auto i = 1; i < dynamic_scene->m_impl->m_objects.size() - 2; i++) {
                 scene->push_back(dynamic_scene->m_impl->m_objects[i]);
             }
@@ -950,8 +1022,15 @@ struct RenderScene : zeno::INode {
             auto ud = scene_descriptor->userData();
             ud->set_string("ResourceType", "SceneDescriptor");
             ud->set_string("Scene", stdString2zs(std::string(scene_descriptor_json.dump())));
+
+            std::string objkey = output_updateinfo.container_key + "\\SceneDescriptor";
+            scene_descriptor->update_key(stdString2zs(objkey));
+            output_updateinfo.new_added.insert(objkey);
+
             scene->push_back(scene_descriptor);
         }
+
+        set_output_container_info("scene", output_updateinfo);
         set_output("scene", scene);
     }
 };

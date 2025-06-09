@@ -4,6 +4,12 @@
 #include <zeno/utils/log.h>
 #include <zeno/types/UserData.h>
 #include <zeno/types/GenericObject.h>
+#ifdef ZENO_WITH_PYTHON
+#include <Python.h>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+#endif
+
 #include "zstartup.h"
 #include <QApplication>
 #include <QSettings>
@@ -60,6 +66,17 @@ void initQml()
     zenoApp->initQuickQanavas();
 }
 
+PyMODINIT_FUNC PyInit_zen(void);
+
+void initPyzenModule() {
+    zeno::getSession().initPyzen([]() {
+        if (PyImport_AppendInittab("zen", PyInit_zen) == -1) {
+            fprintf(stderr, "Error: could not extend in-built modules table\n");
+            exit(1);
+        }
+    });
+}
+
 void startUp(bool bEnableCrashReport)
 {
 #ifdef Q_OS_WIN
@@ -81,6 +98,8 @@ void startUp(bool bEnableCrashReport)
 
     QDir docDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     docDir.mkpath("Zeno/assets");
+
+    initPyzenModule();
 }
 
 std::string getZenoVersion() {

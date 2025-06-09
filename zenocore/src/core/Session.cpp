@@ -33,6 +33,10 @@
 #include <reflect/registry.hpp>
 #include <reflect/container/any>
 #include <reflect/container/arraylist>
+#include <Python.h>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 #include <zeno/core/reflectdef.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 //#include "zeno_nodes/reflect/reflection.generated.hpp"
@@ -53,6 +57,131 @@ namespace zeno {
     };
     static std::map<size_t, _ObjUIInfo> s_objsUIInfo;
 
+    PyMODINIT_FUNC PyInit_zen(void);
+
+    void initPythonEnv(const char* progName)
+    {
+        wchar_t* program = Py_DecodeLocale(progName, NULL);
+        if (program == NULL) {
+            fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
+            exit(1);
+        }
+
+        //if (PyImport_AppendInittab("zen", PyInit_zen) == -1) {
+        //    fprintf(stderr, "Error: could not extend in-built modules table\n");
+        //    exit(1);
+        //}
+
+        Py_SetProgramName(program);
+
+        Py_Initialize();
+
+        //std::string tempCode;
+        //tempCode = "import zen";
+        //if (PyRun_SimpleString(tempCode.c_str()) < 0) {
+        //    zeno::log_warn("Failed to initialize Python module");
+        //    return;
+        //}
+
+        PyMem_RawFree(program);
+    }
+
+    DWORD funcForPythonEnv(LPVOID lpThreadParameter);
+
+    struct PythonEnvWrapper
+    {
+        HANDLE m_thdPython;
+        HANDLE m_hEventForPy;
+        HANDLE m_hEventPyReady;
+        DWORD m_threadID;
+        std::string script;
+        std::function<void()> m_pyzenFunc;
+        bool m_bInitPyZen = false;
+
+        PythonEnvWrapper() {
+            initPyThread();
+        }
+
+        void initPyzenFunc(std::function<void()> pyzenFunc) {
+            m_pyzenFunc = pyzenFunc;
+            SetEvent(m_hEventForPy);
+        }
+
+        void asyncRunPython(const std::string& code) {
+            script = code;
+            SetEvent(m_hEventForPy);
+        }
+
+        void initPyThread() {
+            m_hEventForPy = CreateEvent(NULL, TRUE, FALSE, NULL);
+            m_hEventPyReady = CreateEvent(NULL, TRUE, FALSE, NULL);
+            m_thdPython = CreateThread(NULL, 0, funcForPythonEnv, this, 0, &m_threadID);
+        }
+    };
+
+    DWORD funcForPythonEnv(LPVOID lpThreadParameter) {
+        PythonEnvWrapper* wrapper = static_cast<PythonEnvWrapper*>(lpThreadParameter);
+        while (true) {
+            WaitForSingleObject(wrapper->m_hEventForPy, INFINITE);
+            if (!wrapper->m_bInitPyZen) {
+                wrapper->m_pyzenFunc();
+                char filename[MAX_PATH];
+                DWORD size = GetModuleFileNameA(NULL, filename, MAX_PATH);
+                initPythonEnv(filename);
+                wrapper->m_bInitPyZen = true;
+            }
+            else {
+                //runPython(wrapper->script);
+                std::string stdOutErr =
+                    "import sys\n\
+\
+class CatchOutErr:\n\
+    def __init__(self):\n\
+        self.value = ''\n\
+    def write(self, txt):\n\
+        self.value += txt\n\
+    def flush(self):\n\
+        pass\n\
+catchOutErr = CatchOutErr()\n\
+sys.stdout = catchOutErr\n\
+sys.stderr = catchOutErr\n\
+"; //this is python code to redirect stdouts/stderr
+
+                //Py_Initialize();
+
+                PyObject* pModule = PyImport_AddModule("__main__"); //create main module
+                int ret = PyRun_SimpleString(stdOutErr.c_str()); //invoke code to redirect
+
+                bool bFailed = false;
+                if (PyRun_SimpleString(wrapper->script.c_str()) < 0) {
+                    bFailed = true;
+                }
+                if (1) { //output log and error
+                    PyObject* catcher = PyObject_GetAttrString(pModule, "catchOutErr"); //get our catchOutErr created above
+                    PyObject* output = PyObject_GetAttrString(catcher, "value"); //get the stdout and stderr from our catchOutErr object
+                    if (output != Py_None)
+                    {
+                        std::string str = _PyUnicode_AsString(output);
+                        for (const auto& line : split_str(str, '\n'))
+                        {
+                            if (!line.empty())
+                            {
+                                zeno::log_info(line);
+                            }
+                        }
+                    }
+                }
+                //return !bFailed; //how to run?
+                int j;
+                j = 0;
+                SetEvent(wrapper->m_hEventPyReady);
+            }
+            ResetEvent(wrapper->m_hEventForPy);
+        }
+        return 0;
+    }
+
+
 ZENO_API Session::Session()
     : globalState(std::make_unique<GlobalState>())
     , globalComm(std::make_unique<GlobalComm>())
@@ -62,6 +191,7 @@ ZENO_API Session::Session()
     , mainGraph(std::make_shared<Graph>("main"))
     , assets(std::make_shared<AssetsMgr>())
     , objsMan(std::make_unique<ObjectManager>())
+    , m_pyWrapper(std::make_unique<PythonEnvWrapper>())
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
     , m_mainThreadId(0)
@@ -572,6 +702,22 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
     switchToFrame(ioresult.timeline.currFrame);
     //init $F globalVariable
     //zeno::getSession().globalVariableManager->overrideVariable(zeno::GVariable("$F", zeno::reflect::make_any<float>(ioresult.timeline.currFrame)));
+}
+
+void Session::initPyzen(std::function<void()> pyzenFunc) {
+    if (m_pyWrapper)
+        m_pyWrapper->initPyzenFunc(pyzenFunc);
+}
+
+void Session::asyncRunPython(const std::string& code) {
+    if (m_pyWrapper)
+        m_pyWrapper->asyncRunPython(code);
+}
+
+void* Session::hEventOfPyFinish() {
+    if (m_pyWrapper)
+        return m_pyWrapper->m_hEventPyReady;
+    return nullptr;
 }
 
 ZENO_API zeno::NodeRegistry Session::dumpCoreCates() {

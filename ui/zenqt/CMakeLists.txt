@@ -64,6 +64,14 @@ if (WIN32)
 endif()
 
 target_link_libraries(zeno PRIVATE zenobase zenovis)
+
+if (ZENO_WITH_PYTHON)
+    find_package(Python3 COMPONENTS Development REQUIRED)
+    target_link_libraries(zeno PRIVATE ${Python3_LIBRARIES} zenpybind)
+    target_include_directories(zeno PRIVATE ${Python3_INCLUDE_DIRS})
+    target_compile_definitions(zeno PRIVATE -DZENO_WITH_PYTHON)
+endif()
+
 target_link_libraries(zeno PUBLIC ScintillaEditBase)
 
 target_include_directories(zeno PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2 ScintillaEditBase ScintillaEdit)

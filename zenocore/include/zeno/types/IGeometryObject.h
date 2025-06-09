@@ -33,6 +33,7 @@ namespace zeno
         Vector<Vec3f> points_pos();
         Vector<Vec3i> tri_indice() const;
         Vector<int> edge_list() const;
+        void set_pos(int i, Vec3f pos);
 
         bool is_base_triangle() const;
         bool is_Line() const;
@@ -56,7 +57,7 @@ namespace zeno
         int set_geometry_attr(const zeno::String& attr_name, const Any& defl);
 
         /* 检查属性是否存在 */
-        bool has_attr(GeoAttrGroup grp, const zeno::String& name);
+        bool has_attr(GeoAttrGroup grp, const zeno::String& name, GeoAttrType type = ATTR_TYPE_UNKNOWN);
         bool has_vertex_attr(const zeno::String& name) const;
         bool has_point_attr(const zeno::String& name) const;
         bool has_face_attr(const zeno::String& name) const;
@@ -108,6 +109,11 @@ namespace zeno
         int vertex_face(int linear_vertex_id);
         int vertex_face_index(int linear_vertex_id);
         std::tuple<int, int, int> vertex_info(int linear_vertex_id);
+
+        zeno::SharedPtr<PrimitiveObject> toPrimitiveObject() const;
+
+        void bindPrimitive(std::shared_ptr<PrimitiveObject> prim);
+        std::shared_ptr<PrimitiveObject> forkPrimitive();
 
         GeometryObject* m_impl;     //TODO: unique_ptr with abi compatible
     };

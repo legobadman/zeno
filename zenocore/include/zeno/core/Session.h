@@ -31,6 +31,7 @@ struct UserData;
 struct CalcManager;
 struct ObjectManager;
 struct AssetsMgr;
+struct PythonEnvWrapper;
 class FunctionManager;
 
 struct Session {
@@ -97,6 +98,9 @@ struct Session {
     ZENO_API void registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip);
     ZENO_API bool getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip);
     ZENO_API void initEnv(const zenoio::ZSG_PARSE_RESULT ioresult);
+    ZENO_API void initPyzen(std::function<void()> pyzenFunc);
+    ZENO_API void asyncRunPython(const std::string& code);
+    ZENO_API void* hEventOfPyFinish();
     void reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status);
 
 private:
@@ -109,6 +113,8 @@ private:
     std::string m_current_loading_module;
     std::string m_solver;
     unsigned long m_mainThreadId;
+
+    std::unique_ptr<PythonEnvWrapper> m_pyWrapper;
 
     zeno::NodeRegistry m_cates;
     //std::map<std::string, std::vector<NodeInfo>> m_cates;

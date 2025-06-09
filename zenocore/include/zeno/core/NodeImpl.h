@@ -276,7 +276,7 @@ namespace zeno
     private:
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
         std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
-        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
+        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty);
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
         void reportStatus(bool bDirty, NodeRunStatus status);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);

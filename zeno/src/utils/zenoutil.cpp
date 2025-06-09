@@ -5,6 +5,10 @@
 #include <zeno/utils/log.h>
 #include <zeno/utils/string.h>
 
+static bool init_env = false;
+
+PyMODINIT_FUNC PyInit_zen(void);
+
 namespace zeno {
     ZENO_API bool runPython(const std::string& script) {
 #ifdef ZENO_WITH_PYTHON
@@ -23,7 +27,16 @@ sys.stdout = catchOutErr\n\
 sys.stderr = catchOutErr\n\
 "; //this is python code to redirect stdouts/stderr
 
+        //if (!init_env) {
+        //    if (PyImport_AppendInittab("zen", PyInit_zen) == -1) {
+        //        fprintf(stderr, "Error: could not extend in-built modules table\n");
+        //        exit(1);
+        //    }
+        //    init_env = true;
+        //}
+
         Py_Initialize();
+
         PyObject* pModule = PyImport_AddModule("__main__"); //create main module
         int ret = PyRun_SimpleString(stdOutErr.c_str()); //invoke code to redirect
 

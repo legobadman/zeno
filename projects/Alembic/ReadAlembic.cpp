@@ -1408,6 +1408,7 @@ ZENDEFNODE(CopyPosAndNrmByIndex, {
 struct PrimsFilterInUserdata: INode {
     void apply() override {
         auto prims = get_input_ListObject("list");
+        auto input_updateinfo = get_input_container_info("list");
         auto filter_str = zsString2Std(get_input2_string("filters"));
         std::vector<std::string> filters = zeno::split_str(filter_str, {' ', '\n'});
         std::vector<std::string> filters_;
@@ -1449,6 +1450,8 @@ struct PrimsFilterInUserdata: INode {
                 out_list->push_back(p);
             }
         }
+        //由于上述只涉及到筛选，所以info全给也没什么问题
+        set_output_container_info("out", input_updateinfo);
         set_output("out", out_list);
     }
 };

@@ -79,9 +79,10 @@ namespace zeno
     }
 
     void ListObject_impl::remove_children() {
-        for (auto pObject : m_objects) {
-            pObject->Delete();
-        }
+        m_objects.clear();
+        //for (auto pObject : m_objects) {
+        //    pObject->Delete();
+        //}
     }
 
     std::vector<std::string> ListObject_impl::paths() const {
