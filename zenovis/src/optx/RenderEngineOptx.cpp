@@ -342,15 +342,6 @@ struct GraphicsManager {
         explicit ZxxGraphic(std::string key_, zeno::IObject *obj)
         : key(std::move(key_))
         {
-            const auto stamp_work = [](const zeno::IUserData* ud) {
-
-                auto stamp_base = ud->get_int("stamp-base", 0);
-                auto stamp_change = zsString2Std(ud->get_string("stamp-change", "TotalChange"));
-                std::transform(stamp_change.begin(), stamp_change.end(), stamp_change.begin(), ::tolower);
-
-                return std::tuple{stamp_base, stamp_change};
-            };
-
             std::shared_ptr<zeno::PrimitiveObject> prim_in_lslislSp;
             if (auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(obj)) {
                 prim_in_lslislSp = geo->toPrimitiveObject();
@@ -364,9 +355,6 @@ struct GraphicsManager {
             {
                 // ^^^ Don't wuhui, I mean: Literial Synthetic Lazy internal static Local Shared Pointer
                 auto prim_in = prim_in_lslislSp.get();
-
-                const auto [stamp_base, stamp_change] = stamp_work(prim_in_lslislSp->userData());
-                //if (stamp_change == "unchanged") { return; }
 
                 if ( prim_in->userData()->has("ShaderAttributes") ) {
                     auto attritbutes  = zsString2Std(prim_in->userData()->get_string("ShaderAttributes"));
@@ -755,8 +743,8 @@ struct GraphicsManager {
             }
             else if (auto mtl = dynamic_cast<zeno::MaterialObject *>(obj))
             {
-                const auto [stamp_base, stamp_change] = stamp_work(mtl->userData());
-                const auto dirty = true;// stamp_change != "unchanged";
+                const auto dirty = true;
+                int stamp_base = 0; //deprecated
                 det = DetMaterial{mtl->tex2Ds, mtl->tex3Ds, mtl->common, mtl->frag, mtl->extensions, mtl->mtlidkey, mtl->parameters,
                         stamp_base,  dirty};
             }
@@ -1282,6 +1270,23 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
     }
 
     void process_listobj(std::shared_ptr<zeno::ListObject> spList, zeno::container_elem_update_info info) {
+#if 0
+        std::map<std::string, std::vector<zeno::MaterialObject*>> mats;
+        for (auto spObject : spList->m_impl->get()) {
+            std::shared_ptr<zeno::MaterialObject> spMaterial = std::dynamic_pointer_cast<zeno::MaterialObject>(spObject);
+            if (spMaterial)
+            {
+                auto iter = mats.find(spMaterial->mtlidkey);
+                if (iter == mats.end()) {
+                    mats.insert(std::make_pair(spMaterial->mtlidkey, std::vector<zeno::MaterialObject*>()));
+                    iter = mats.find(spMaterial->mtlidkey);
+                }
+                std::vector<zeno::MaterialObject*>& vec = iter->second;
+                vec.push_back(spMaterial.get());
+            }
+        }
+#endif
+
         for (auto spObject : spList->m_impl->get()) {
             std::string const& key = zsString2Std(spObject->key());
             if (info.new_added.find(key) != info.new_added.end() ||

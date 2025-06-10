@@ -208,9 +208,7 @@
                     415.0,
                     -409.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "CameraNode1": {
@@ -1619,7 +1617,9 @@
                     3177.0,
                     3172.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false
             },
             "MakePrimitive1": {
@@ -3024,9 +3024,7 @@
                     -1654.0,
                     5093.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "SceneRootRename1": {
@@ -5197,7 +5195,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_D.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_D.png",
                         "control": {
                             "name": "String"
                         },
@@ -5246,7 +5244,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_N.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_N.png",
                         "control": {
                             "name": "String"
                         },
@@ -5295,7 +5293,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_M.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_M.png",
                         "control": {
                             "name": "String"
                         },
@@ -5344,7 +5342,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_R.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_R.png",
                         "control": {
                             "name": "String"
                         },
@@ -5393,7 +5391,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_CC.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_CC.png",
                         "control": {
                             "name": "String"
                         },
@@ -5442,7 +5440,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_O.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_O.png",
                         "control": {
                             "name": "String"
                         },
@@ -5491,7 +5489,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_E.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_E.png",
                         "control": {
                             "name": "String"
                         },
@@ -5540,7 +5538,7 @@
                     "str": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\zencache\\擎天柱变形动画.fbm/{}_T.png",
+                        "default-value": "C:/擎天柱变形动画FBX/擎天柱变形动画.fbm/{}_T.png",
                         "control": {
                             "name": "String"
                         },
