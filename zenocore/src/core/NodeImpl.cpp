@@ -510,8 +510,9 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
         reportStatus(m_dirty, m_status);
     });
 
-    if (m_dirty == bOn)
-        return;
+    //有部分下游节点因为某些原因没有标脏，而上游节点已经脏了的情况下不会继续传播，所以不检查缓存
+    //if (m_dirty == bOn)
+    //    return;
 
     m_dirty = bOn;
 

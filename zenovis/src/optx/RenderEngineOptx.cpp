@@ -662,7 +662,7 @@ struct GraphicsManager {
                 }
 
                 int frame = zeno::getSession().globalState->getFrameId();
-                if (reType == "Mesh"/* && frame == 75*/)  //注释这部分是为了仅“起始帧”加载mesh
+                if (reType == "Mesh")
                 {
                     if (prim_in->quads.size() || prim_in->polys.size()) {
                         zeno::log_trace("demoting faces");
