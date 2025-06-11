@@ -19,3 +19,8 @@ CMakeLists.txt.user
 compile_commands.json
 /debug.bat
 /projects/FBX/FBXSDK
+/*.zen
+/*.zsg
+/*.patch
+/*.bat
+/*.zip
