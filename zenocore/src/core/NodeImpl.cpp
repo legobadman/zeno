@@ -510,8 +510,9 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
         reportStatus(m_dirty, m_status);
     });
 
-    if (m_dirty == bOn)
-        return;
+    //有部分下游节点因为某些原因没有标脏，而上游节点已经脏了的情况下不会继续传播，所以不检查缓存
+    //if (m_dirty == bOn)
+    //    return;
 
     m_dirty = bOn;
 
@@ -563,7 +564,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
             pSubnetNode->mark_subnetdirty(bOn);
         if (DopNetwork* pDop = dynamic_cast<DopNetwork*>(pSubnetNode)) {
             pDop->resetFrameState();
-        }
+    }
     }
 
     Graph* spGraph = m_pGraph;
@@ -683,7 +684,7 @@ void NodeImpl::foreachend_apply(CalcContext* pContext)
         auto foreach_begin = spGraph->getNode(foreach_begin_path);
         auto foreach_end = static_cast<ForEachEnd*>(coreNode());
         assert(foreach_end);
-        for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(); foreach_end->increment())
+        for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(pContext); foreach_end->increment())
         {
             foreach_begin->mark_dirty(true);
             pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
@@ -897,11 +898,11 @@ void NodeImpl::update_out_objs_key()
     {
         if (param.spObject && param.spObject->key().empty())
         {
-            //目前节点处所看到的object，都隶属于此节点本身。
-            param.spObject->update_key(stdString2zs(m_uuid));
+                //目前节点处所看到的object，都隶属于此节点本身。
+                param.spObject->update_key(stdString2zs(m_uuid));
+            }
         }
     }
-}
 
 void NodeImpl::on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded) {
     checkParamsConstrain();
@@ -1384,18 +1385,16 @@ void NodeImpl::clear_container_info() {
     }
 }
 
-std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
+std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty) {
     assert(gParamType_List == in_param->type);
     std::shared_ptr<ListObject> spList;
     bool bDirectLink = false;
 
-    std::map<std::string, zany> existInputObjs;
-    if (in_param->spObject) {
-        auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
-        for (auto spobj : spOldList->m_impl->get()) {
-            existInputObjs.insert({ zsString2Std(spobj->key()), spobj });
-        }
+    if (m_nodecls == "FormSceneTree") {
+        int j;
+        j = 0;
     }
+    bDirty = true;
 
     if (in_param->links.size() == 1)
     {
@@ -1404,52 +1403,70 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         NodeImpl* outNode = out_param->m_wpNode;
         bool is_upstream_dirty = outNode->is_dirty();
 
-        if (out_param->type == in_param->type && spLink->tokey.empty()) {   //根据Graph::addLink规则，类型相同且无key视为直连
-            bDirectLink = true;
-
-            if (outNode->is_dirty()) {
+        if (out_param->type == in_param->type || out_param->type == gParamType_IObject) {   //现在不允许List嵌套List，如果只有一个，直接认定为直连
+            if (is_upstream_dirty) {
                 GraphException::translated([&] {
                     outNode->doApply(pContext);
                     }, outNode);
             }
             auto outResult = outNode->get_output_obj(out_param->name);
             assert(outResult);
-            assert(out_param->type == gParamType_List);
+
+            if (!is_upstream_dirty)
+            {
+                auto input_cache_list = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
+                if (input_cache_list) {
+                    bDirty = false;
+                    return input_cache_list;
+                }
+            }
 
             //里面的元素也要clone
             auto outList = std::dynamic_pointer_cast<ListObject>(outResult);
-            container_elem_update_info out_updateinfo = out_param->listdict_update;
+            if (outList)
+            {
+                bDirectLink = true;
 
-            spList = create_ListObject();
-            container_elem_update_info input_container_updateinfo;
+                container_elem_update_info out_updateinfo = out_param->listdict_update;
+                spList = create_ListObject();
+                container_elem_update_info input_container_updateinfo;
 
-            for (zany outobj : outList->get()) {
-                auto outkey = zsString2Std(outobj->key());
-                zany inobj = clone_by_key(outobj.get(), m_uuid);
-                //如果outobj在input里没有，就添加
-                auto in_clone_key = zsString2Std(inobj->key());
-                spList->push_back(inobj);   //对象要重新拷一次，无论后续要不要加，反正会吞掉之前的obj.
-                if (existInputObjs.find(in_clone_key) == existInputObjs.end()) {
-                    input_container_updateinfo.new_added.insert(in_clone_key);
-                }
-                else {
-                    //当前输入参数也缓存了一个同样key值的clone对象，但这个对象可能被上游改了
-                    if (out_updateinfo.modified.find(outkey) != out_updateinfo.modified.end()) {
-                        input_container_updateinfo.modified.insert(in_clone_key);
+                std::map<std::string, zany> existInputObjs;
+                if (in_param->spObject) {
+                    auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
+                    for (auto spobj : spOldList->m_impl->get()) {
+                        existInputObjs.insert({ zsString2Std(spobj->key()), spobj });
                     }
                 }
-            }
 
-            //也要观察一下移除的情况
-            for (auto out_removed_key : out_updateinfo.removed) {
-                auto inobj_clone_removed_key = m_uuid + "\\" + out_removed_key;
-                if (existInputObjs.find(inobj_clone_removed_key) != existInputObjs.end()) {
-                    input_container_updateinfo.removed.insert(inobj_clone_removed_key);
+                for (zany outobj : outList->get()) {
+                    auto outkey = zsString2Std(outobj->key());
+                    zany inobj = clone_by_key(outobj.get(), m_uuid);
+                    //如果outobj在input里没有，就添加
+                    auto in_clone_key = zsString2Std(inobj->key());
+                    spList->push_back(inobj);   //对象要重新拷一次，无论后续要不要加，反正会吞掉之前的obj.
+                    if (existInputObjs.find(in_clone_key) == existInputObjs.end()) {
+                        input_container_updateinfo.new_added.insert(in_clone_key);
+                    }
+                    else {
+                        //当前输入参数也缓存了一个同样key值的clone对象，但这个对象可能被上游改了
+                        if (out_updateinfo.modified.find(outkey) != out_updateinfo.modified.end()) {
+                            input_container_updateinfo.modified.insert(in_clone_key);
+                        }
+                    }
                 }
-            }
 
-            spList->update_key(stdString2zs(m_uuid));
-            in_param->listdict_update = input_container_updateinfo;
+                //也要观察一下移除的情况
+                for (auto out_removed_key : out_updateinfo.removed) {
+                    auto inobj_clone_removed_key = m_uuid + "\\" + out_removed_key;
+                    if (existInputObjs.find(inobj_clone_removed_key) != existInputObjs.end()) {
+                        input_container_updateinfo.removed.insert(inobj_clone_removed_key);
+                    }
+                }
+
+                spList->update_key(stdString2zs(m_uuid));
+                in_param->listdict_update = input_container_updateinfo;
+            }
         }
     }
     if (!bDirectLink)
@@ -1458,6 +1475,14 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         spList = create_ListObject();
         int indx = 0;
         container_elem_update_info input_container_updateinfo;
+
+        std::map<std::string, zany> existInputObjs;
+        if (in_param->spObject) {
+            auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
+            for (auto spobj : spOldList->m_impl->get()) {
+                existInputObjs.insert({ zsString2Std(spobj->key()), spobj });
+            }
+        }
 
         for (const auto& spLink : in_param->links)
         {
@@ -1486,9 +1511,9 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 }
                 else {
                     auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
-                    newObj = outResult->clone();
-                    newObj->update_key(newkey);
-                }
+                        newObj = outResult->clone();
+                        newObj->update_key(newkey);
+                    }
                 spList->m_impl->push_back(newObj);
 
                 //需要区分是新的还是旧的，这里先粗暴认为全是新的
@@ -1744,8 +1769,10 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
     }
     else {
         in_param->spObject = out_param->spObject;
+#if OWING_UPSTREAM_NODE		//in_param和out_param暂时引用同一个object
         out_param->spObject.reset();
         outNode->mark_dirty(true);
+#endif
     }
 
     if (auto splist = std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
@@ -1802,8 +1829,10 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                 }
                 case gParamType_List:
                 {
-                    std::shared_ptr<ListObject> outList = processList(in_param, pContext);
-                    in_param->spObject = outList;
+                    bool bDirty = false;
+                    std::shared_ptr<ListObject> outList = processList(in_param, pContext, bDirty);
+                    if (bDirty)
+                        in_param->spObject = outList;
                     break;
                 }
                 case gParamType_Curve:
@@ -1952,8 +1981,8 @@ void NodeImpl::doApply(CalcContext* pContext) {
         pContext->visited_nodes.erase(uuid_path);
     });
 
-#if 0
-    if (m_name == "locate" && pContext->curr_iter == 1) {
+#if 1
+    if (m_nodecls == "RenderScene"){//}&& pContext->curr_iter == 1) {
         int j;
         j = 0;
     }
@@ -1992,7 +2021,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
 
     update_out_objs_key();
     init_output_container_updateinfo();
-    reportStatus(false, Node_RunSucceed);
+            reportStatus(false, Node_RunSucceed);
     if (m_bView) {
         //commit_to_render(Update_Reconstruct);
     }
@@ -2117,6 +2146,16 @@ ParamPrimitive NodeImpl::get_input_prim_param(std::string const& name, bool* pEx
             *pExist = false;
     }
     return param;
+}
+
+zany NodeImpl::get_input_obj(std::string const& name) const {
+    ParamObject param;
+    auto iter = m_inputObjs.find(name);
+    if (iter != m_inputObjs.end()) {
+        auto& paramObj = iter->second;
+        return paramObj.spObject;
+    }
+    return nullptr;
 }
 
 ParamObject NodeImpl::get_input_obj_param(std::string const& name, bool* pExist) const {
@@ -3211,6 +3250,26 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
     return shader;
 }
 
+ParamType NodeImpl::get_anyparam_type(bool bInput, const std::string& name) {
+    if (bInput) {
+        if (m_inputObjs.find(name) != m_inputObjs.end()) {
+            return m_inputObjs[name].type;
+        }
+        else if (m_inputPrims.find(name) != m_inputPrims.end()) {
+            return m_inputPrims[name].type;
+        }
+    }
+    else {
+        if (m_outputObjs.find(name) != m_outputObjs.end()) {
+            return m_outputObjs[name].type;
+        }
+        else if (m_outputPrims.find(name) != m_outputPrims.end()) {
+            return m_outputPrims[name].type;
+        }
+    }
+    return Param_Null;
+}
+
 bool NodeImpl::has_input(std::string const &id) const {
     //这个has_input在旧的语义里，代表的是input obj，如果有一些边没有连上，那么有一些参数值仅有默认值，未必会设这个input的，
     //还有一种情况，就是对象值是否有输入引入
@@ -3221,7 +3280,12 @@ bool NodeImpl::has_input(std::string const &id) const {
         return !iter->second.links.empty();
     }
     else {
-        return m_inputPrims.find(id) != m_inputPrims.end();
+        auto iter = m_inputPrims.find(id);
+        if (iter != m_inputPrims.end()) {
+            return !iter->second.links.empty();
+            //return m_inputPrims.find(id) != m_inputPrims.end();
+        }
+        return false;
     }
 }
 
@@ -3309,6 +3373,12 @@ zany NodeImpl::get_input(std::string const &id) const {
             case zeno::types::gParamType_Shader:
             {
                 throw makeError<UnimplError>("ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
+            }
+            case gParamType_Heatmap:
+            {
+                std::shared_ptr<zeno::HeatmapObject> heatmapObj = std::make_shared<zeno::HeatmapObject>();
+                heatmapObj->colors = zeno::reflect::any_cast<zeno::HeatmapData>(val).colors;
+                return heatmapObj;
             }
             default:
                 return nullptr;

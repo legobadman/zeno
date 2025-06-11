@@ -103,7 +103,7 @@ void CameraControl::fakeMousePressEvent(ViewMouseInfo info)
     ZASSERT_EXIT(m_zenovis);
     auto scene = m_zenovis->getSession()->get_scene();
     const qreal x = info.pos.x(), y = info.pos.y();
-    if (info.buttons == Qt::MiddleButton) {
+    if (info.buttons == Qt::MiddleButton || info.buttons == Qt::RightButton) {
         middle_button_pressed = true;
         if (zeno::getSession().userData().get2<bool>("viewport-depth-aware-navigation", true)) {
             m_hit_posWS = scene->renderMan->getEngine()->getClickedPos(x, y);
@@ -129,7 +129,7 @@ void CameraControl::fakeMousePressEvent(ViewMouseInfo info)
             bTransform = true;
         }
     }
-    if (!bTransform && (info.buttons & button)) {
+    if (!bTransform && ((info.buttons & button) || (info.buttons & Qt::RightButton))) {
         m_lastMidButtonPos = info.pos;
     } else if (info.buttons & Qt::LeftButton) {
         m_boundRectStartPos = info.pos.toPoint();
@@ -282,16 +282,16 @@ void CameraControl::fakeMouseMoveEvent(ViewMouseInfo info)
         }
         m_lastMidButtonPos = QPointF(x, y);
     }
-    else if (!bTransform && (info.buttons & (rotateButton | moveButton))) {
+    else if (!bTransform && ((info.buttons & (rotateButton | moveButton)) || (info.buttons & Qt::MouseButton::RightButton))) {
         float ratio = 1.0;// QApplication::desktop()->devicePixelRatio();
         float dx = x - m_lastMidButtonPos.x(), dy = y - m_lastMidButtonPos.y();
         dx *= ratio / m_res[0];
         dy *= ratio / m_res[1];
         //bool shift_pressed = info.modifiers & Qt::ShiftModifier;
         Qt::KeyboardModifiers modifiers = info.modifiers;
-        if ((moveKey == modifiers) && (info.buttons & moveButton)) {
+        if ((moveKey == modifiers) && ((info.buttons & moveButton) || (info.buttons & Qt::MouseButton::RightButton))) {
             // translate
-            if (m_hit_posWS.has_value()) {
+            if (zeno::getSession().userData().get2<bool>("viewport-depth-aware-navigation", true) && m_hit_posWS.has_value()) {
                 auto ray = screenPosToRayWS(x / res().x(), y / res().y());
                 auto new_pos = intersectRayPlane(m_hit_posWS.value(), ray * (-1.0f), getPos(), getViewDir());
                 if (new_pos.has_value()) {
@@ -527,6 +527,9 @@ void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
 }
 
 void CameraControl::focus(QVector3D center, float radius) {
+    if (radius == 0) {
+         radius = 1;
+     }
     setPivot({float(center.x()), float(center.y()), float(center.z())});
     if (getFOV() >= 1e-6)
         radius /= (getFOV() / 45.0f);

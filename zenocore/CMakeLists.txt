@@ -78,6 +78,8 @@ if (ZENO_WITH_PYTHON)
     #target_link_libraries(zenocore PUBLIC ${Python3_LIBRARIES})
     #target_include_directories(zenocore PUBLIC ${Python3_INCLUDE_DIRS})
     target_compile_definitions(zenocore PRIVATE -DZENO_WITH_PYTHON)
+    target_link_libraries(zenocore PRIVATE ${Python3_LIBRARIES})
+    target_include_directories(zenocore PRIVATE ${Python3_INCLUDE_DIRS})
     #target_link_options(zenocore PRIVATE /NODEFAULTLIB:python311.lib)
 
     #add_subdirectory(pybind11)

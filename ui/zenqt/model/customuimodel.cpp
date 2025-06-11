@@ -1,36 +1,41 @@
 #include "customuimodel.h"
 #include <zeno/utils/helper.h>
+#include <zeno/core/typeinfo.h>
 #include "style/colormanager.h"
 #include "util/uihelper.h"
 #include "zeno_types/reflect/reflection.generated.hpp"
 #include "declmetatype.h"
 
+
+using namespace zeno::types;
+
+
 static CUSTOMUI_CTRL_ITEM_INFO customui_controlList[] = {
     {"Tab",                 zeno::NullControl,  Param_Null,   "qrc:/icons/parameter_control_tab.svg"},
     {"Group",               zeno::NullControl,  Param_Null,   "qrc:/icons/parameter_control_group.svg"},
     {"object",              zeno::NullControl,  Param_Null,   ""},
-    {"Integer",             zeno::Lineedit,     zeno::types::gParamType_Int,    "qrc:/icons/parameter_control_integer.svg"},
-    {"Float",               zeno::Lineedit,     zeno::types::gParamType_Float,  "qrc:/icons/parameter_control_float.svg"},
-    {"String",              zeno::Lineedit,     zeno::types::gParamType_String, "qrc:/icons/parameter_control_string.svg"},
-    {"Boolean",             zeno::Checkbox,     zeno::types::gParamType_Bool,   "qrc:/icons/parameter_control_boolean.svg"},
-    {"Multiline String",    zeno::Multiline,    zeno::types::gParamType_String, "qrc:/icons/parameter_control_string.svg"},
-    {"read path",           zeno::ReadPathEdit, zeno::types::gParamType_String, "qrc:/icons/parameter_control_fold.svg"},
-    {"write path",          zeno::WritePathEdit,zeno::types::gParamType_String, "qrc:/icons/parameter_control_fold.svg"},
-    {"directory",       zeno::DirectoryPathEdit,zeno::types::gParamType_String, "qrc:/icons/parameter_control_fold.svg"},
-    {"Enum",                zeno::Combobox,     zeno::types::gParamType_String, "qrc:/icons/parameter_control_enum.svg"},
-    {"Float Vector 4",      zeno::Vec4edit,     zeno::types::gParamType_Vec4f,  "qrc:/icons/parameter_control_floatVector4.svg"},
-    {"Float Vector 3",      zeno::Vec3edit,     zeno::types::gParamType_Vec3f,  "qrc:/icons/parameter_control_floatVector3.svg"},
-    {"Float Vector 2",      zeno::Vec2edit,     zeno::types::gParamType_Vec2f,  "qrc:/icons/parameter_control_floatVector2.svg"},
-    {"Integer Vector 4",    zeno::Vec4edit,     zeno::types::gParamType_Vec4i,  "qrc:/icons/parameter_control_integerVector4.svg"},
-    {"Integer Vector 3",    zeno::Vec3edit,     zeno::types::gParamType_Vec3i,  "qrc:/icons/parameter_control_integerVector3.svg"},
-    {"Integer Vector 2",    zeno::Vec2edit,     zeno::types::gParamType_Vec2i,  "qrc:/icons/parameter_control_integerVector2.svg"},
-    {"Color",               zeno::Heatmap,      zeno::types::gParamType_Heatmap,"qrc:/icons/parameter_control_color.svg"},
-    {"Color Vec3f",         zeno::ColorVec,     zeno::types::gParamType_Vec3f,  "qrc:/icons/parameter_control_color.svg"},
-    {"Curve",               zeno::CurveEditor,  zeno::types::gParamType_Curve,  "qrc:/icons/parameter_control_curve.svg"},
-    {"SpinBox",             zeno::SpinBox,      zeno::types::gParamType_Int,    "qrc:/icons/parameter_control_spinbox.svg"},
-    {"DoubleSpinBox",       zeno::DoubleSpinBox,zeno::types::gParamType_Float,  "qrc:/icons/parameter_control_spinbox.svg"},
-    {"Slider",              zeno::Slider,       zeno::types::gParamType_Int,    "qrc:/icons/parameter_control_slider.svg"},
-    {"SpinBoxSlider",       zeno::SpinBoxSlider,zeno::types::gParamType_Int,    "qrc:/icons/parameter_control_slider.svg"},
+    {"Integer",             zeno::Lineedit,     gParamType_Int,    "qrc:/icons/parameter_control_integer.svg"},
+    {"Float",               zeno::Lineedit,     gParamType_Float,  "qrc:/icons/parameter_control_float.svg"},
+    {"String",              zeno::Lineedit,     gParamType_String, "qrc:/icons/parameter_control_string.svg"},
+    {"Boolean",             zeno::Checkbox,     gParamType_Bool,   "qrc:/icons/parameter_control_boolean.svg"},
+    {"Multiline String",    zeno::Multiline,    gParamType_String, "qrc:/icons/parameter_control_string.svg"},
+    {"read path",           zeno::ReadPathEdit, gParamType_String, "qrc:/icons/parameter_control_fold.svg"},
+    {"write path",          zeno::WritePathEdit,gParamType_String, "qrc:/icons/parameter_control_fold.svg"},
+    {"directory",       zeno::DirectoryPathEdit,gParamType_String, "qrc:/icons/parameter_control_fold.svg"},
+    {"Enum",                zeno::Combobox,     gParamType_String, "qrc:/icons/parameter_control_enum.svg"},
+    {"Float Vector 4",      zeno::Vec4edit,     gParamType_Vec4f,  "qrc:/icons/parameter_control_floatVector4.svg"},
+    {"Float Vector 3",      zeno::Vec3edit,     gParamType_Vec3f,  "qrc:/icons/parameter_control_floatVector3.svg"},
+    {"Float Vector 2",      zeno::Vec2edit,     gParamType_Vec2f,  "qrc:/icons/parameter_control_floatVector2.svg"},
+    {"Integer Vector 4",    zeno::Vec4edit,     gParamType_Vec4i,  "qrc:/icons/parameter_control_integerVector4.svg"},
+    {"Integer Vector 3",    zeno::Vec3edit,     gParamType_Vec3i,  "qrc:/icons/parameter_control_integerVector3.svg"},
+    {"Integer Vector 2",    zeno::Vec2edit,     gParamType_Vec2i,  "qrc:/icons/parameter_control_integerVector2.svg"},
+    {"Color",               zeno::Heatmap,      gParamType_Heatmap,"qrc:/icons/parameter_control_color.svg"},
+    {"Color Vec3f",         zeno::ColorVec,     gParamType_Vec3f,  "qrc:/icons/parameter_control_color.svg"},
+    {"Curve",               zeno::CurveEditor,  gParamType_Curve,  "qrc:/icons/parameter_control_curve.svg"},
+    {"SpinBox",             zeno::SpinBox,      gParamType_Int,    "qrc:/icons/parameter_control_spinbox.svg"},
+    {"DoubleSpinBox",       zeno::DoubleSpinBox,gParamType_Float,  "qrc:/icons/parameter_control_spinbox.svg"},
+    {"Slider",              zeno::Slider,       gParamType_Int,    "qrc:/icons/parameter_control_slider.svg"},
+    {"SpinBoxSlider",       zeno::SpinBoxSlider,gParamType_Int,    "qrc:/icons/parameter_control_slider.svg"},
 };
 
 void appendClonedItem(QVector<ParamItem>& parasm, ParamsModel* m_paramsModel, const QModelIndex& idx) {
@@ -86,13 +91,13 @@ QVariant cloneItemGetData(const QVector<ParamItem>& clonedItems, const QModelInd
     else if (role == QtRole::ROLE_PARAM_CONTROL_PROPS) {
         QVariantMap map;
         if (clonedItems[index.row()].optCtrlprops.has_value()) {
-            if (clonedItems[index.row()].optCtrlprops.type().hash_code() == zeno::types::gParamType_StringList) {
+            if (clonedItems[index.row()].optCtrlprops.type().hash_code() == gParamType_StringList) {
                 const auto& items = zeno::reflect::any_cast<std::vector<std::string>>(clonedItems[index.row()].optCtrlprops);
                 QStringList qitems;
                 for (const auto& item : items) { qitems.append(QString::fromStdString(item)); }
                 map["combobox_items"] = qitems;
             }
-            if (clonedItems[index.row()].optCtrlprops.type().hash_code() == zeno::types::gParamType_IntList) {
+            if (clonedItems[index.row()].optCtrlprops.type().hash_code() == gParamType_IntList) {
                 const auto& items = zeno::reflect::any_cast<std::vector<int>>(clonedItems[index.row()].optCtrlprops);
                 QVariantList qitems;
                 for (int item : items) { qitems.append(item); }
@@ -663,7 +668,7 @@ void ParamPlainModel::exportCustomuiAndEdittedUpdateInfo(std::vector<zeno::Param
             param.control = paramitem.control;
             param.type = paramitem.type;
             //lineEdit组件的值类型设为gParamType_PrimVariant（和ParamsModel::setData类型为QtRole::ROLE_PARAM_QML_VALUE的数据时的判断保持一致）
-            //param.type = paramitem.control == zeno::Lineedit ? zeno::types::gParamType_PrimVariant : paramitem.type;
+            //param.type = paramitem.control == zeno::Lineedit ? gParamType_PrimVariant : paramitem.type;
             param.socketType = paramitem.connectProp;
             param.ctrlProps = paramitem.optCtrlprops;
             params.push_back(param);
@@ -894,6 +899,8 @@ QHash<int, QByteArray> objParamInputModel::roleNames() const
     return roles;
 }
 
+
+
 Q_INVOKABLE bool objParamInputModel::insertRow(int row, QString name)
 {
     if (m_bIscloned) {
@@ -905,7 +912,7 @@ Q_INVOKABLE bool objParamInputModel::insertRow(int row, QString name)
         ParamItem item;
         item.bInput = true;
         item.control = zeno::NullControl;
-        //item.optCtrlprops = spParam.ctrlProps;
+        item.type = gParamType_IObject;     //主动添加的就给IObject（默认就是geo)，后续再支持特定类型的添加
         item.name = name;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Output;
@@ -1037,6 +1044,7 @@ Q_INVOKABLE bool objParamOutputModel::insertRow(int row, QString name)
         item.bInput = false;
         item.control = zeno::NullControl;
         //item.optCtrlprops = spParam.ctrlProps;
+        item.type = gParamType_IObject;
         item.name = name;
         item.value = zeno::initAnyDeflValue(item.type);
         item.connectProp = zeno::Socket_Output;

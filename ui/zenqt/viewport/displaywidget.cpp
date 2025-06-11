@@ -239,11 +239,11 @@ void DisplayWidget::setSimpleRenderOption()
         m_glView->setSimpleRenderOption();
 }
 
-void DisplayWidget::setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly) {
-    if (m_optixView)
-    {
-        m_optixView->setRenderSeparately(updateLightCameraOnly, updateMatlOnly);
-    }
+void DisplayWidget::setRenderSeparately(/*runType runtype*/) {
+    //if (m_optixView)
+    //{
+    //    m_optixView->setRenderSeparately(runtype);
+    //}
 }
 
 bool DisplayWidget::isCameraMoving() const
@@ -694,7 +694,7 @@ void DisplayWidget::onSliderValueChanged(int frame)
 
     for (auto displayWid : mainWin->viewports())
         if (!displayWid->isGLViewport())
-            displayWid->setRenderSeparately(false, false);
+            displayWid->setRenderSeparately(/*false, false*/);
     if (mainWin->isAlways())
     {
         auto pGraphsMgr = zenoApp->graphsManager();
@@ -770,7 +770,7 @@ void DisplayWidget::afterRun()
         ZASSERT_EXIT(session);
         auto scene = session->get_scene();
         ZASSERT_EXIT(scene);
-        scene->objectsMan->lightObjects.clear();
+        //scene->objectsMan->lightObjects.clear();
     }
 }
 
@@ -866,6 +866,13 @@ void DisplayWidget::onSetBackground(bool bShowBackground)
 {
     if (!m_bGLView) {
         m_optixView->showBackground(bShowBackground);
+    }
+}
+
+void DisplayWidget::setSampleNumber(int sample_number)
+{
+    if (!m_bGLView) {
+        m_optixView->setSampleNumber(sample_number);
     }
 }
 

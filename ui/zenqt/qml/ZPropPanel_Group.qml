@@ -90,9 +90,9 @@ Item {
             text: {
                 //保留小数点7位，并自动舍弃无用的零
                 if (mvalue != null) {
-                    //console.log("text about to change: mvalue = " + mvalue)
-                    return formatWithSignificantDigits(mvalue, 7)
-                }
+                //console.log("text about to change: mvalue = " + mvalue)
+                return formatWithSignificantDigits(mvalue, 7)
+            }
                 else{
                     return "";
                 }
@@ -341,9 +341,8 @@ Item {
                         title: "select file"
                     })
                     dialog.onAccepted.connect(function() {
-                        var filePath = dialog.fileUrl.toString()
+                        var filePath = dialog.fileUrl.toString().replace("file:///", "")
                         console.log("fileUrl = " + filePath)
-                        //TODO: 这种fileUrl是file:// 需要转为普通的路径，否则不好处理
                         root.model.setData(mindex, filePath, Model.ROLE_PARAM_QML_VALUE)
                     })
                     dialog.open()

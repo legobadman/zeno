@@ -40,6 +40,7 @@ namespace zeno {
         else if (type == "vec3f") { return gParamType_Vec3f; }
         else if (type == "vec4f") { return gParamType_Vec4f; }
         else if (type == "Matrix4") { return gParamType_Matrix4; }
+        else if (type == "iobject") { return gParamType_IObject; }
         else if (type == "prim" || type == "PrimitiveObject" || type == "primitive") { return gParamType_Primitive; }
         else if (type == "geometry") { return gParamType_Geometry; }
         else if (type == "list" || type == "ListObject") { return gParamType_List; }
@@ -232,6 +233,7 @@ namespace zeno {
         case gParamType_Vec2f:   return "vec2f";
         case gParamType_Vec3f:   return "vec3f";
         case gParamType_Vec4f:   return "vec4f";
+        case gParamType_IObject: return "iobject";
         case gParamType_Primitive:    return "prim";
         case gParamType_Geometry:return "geometry";
         case gParamType_Dict:    return "dict";

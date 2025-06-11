@@ -126,11 +126,18 @@
     <addaction name="actionEnglish_Chinese"/>
     <addaction name="actionPreferences"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionCombine_video"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuWindow"/>
    <addaction name="menuOption"/>
+   <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
@@ -522,6 +529,11 @@ border-top: 1px solid black;</string>
     <string>Preferences</string>
    </property>
   </action>
+  <action name="actionCombine_video">
+   <property name="text">
+    <string>Compose video</string>
+   </property>
+  </action>
   <action name="actionNode_Editor_QML">
    <property name="text">
     <string>Node Editor(QML)</string>
@@ -536,3 +548,4 @@ border-top: 1px solid black;</string>
  <resources/>
  <connections/>
 </ui>
+

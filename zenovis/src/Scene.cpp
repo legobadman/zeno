@@ -315,3 +315,4 @@ std::vector<char> Scene::record_frame_offline(int hdrSize, int rgbComps) {
 }
 
 } // namespace zenovis
+

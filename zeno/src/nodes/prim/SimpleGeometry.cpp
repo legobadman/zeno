@@ -1482,6 +1482,29 @@ ZENDEFNODE(RemoveFolder, {
     {"create"},
 });
 
+struct CopyFile : zeno::INode {
+    void apply() override {
+        namespace fs = std::filesystem;
+        auto sourcePath = fs::u8path(ZImpl(get_input2<std::string>("sourcePath")));
+        auto targetPath = fs::u8path(ZImpl(get_input2<std::string>("targetPath")));
+        auto folderPath = targetPath.parent_path();
+        if (fs::exists(folderPath) == false) {
+            fs::create_directories(folderPath);
+        }
+        fs::copy(sourcePath, targetPath, fs::copy_options::overwrite_existing);
+    }
+};
+
+ZENDEFNODE(CopyFile, {
+    {
+        {"readpath", "sourcePath"},
+        {"writepath", "targetPath"},
+    },
+    {},
+    {},
+    {"create"},
+});
+
 struct HEdgeGeoSelfTest : zeno::INode {
     void apply() override {
         std::shared_ptr<PrimitiveObject> prim;
@@ -1572,3 +1595,4 @@ ZENDEFNODE(FFMPEGImagesToVideo, {
 
 }
 }
+

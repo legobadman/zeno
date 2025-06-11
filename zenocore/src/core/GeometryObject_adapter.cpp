@@ -10,6 +10,7 @@ namespace zeno
     zany GeometryObject_Adapter::clone() const {
         auto newGeom = std::make_shared<GeometryObject_Adapter>();
         newGeom->m_impl = new GeometryObject(*m_impl);
+        newGeom->m_usrData = this->m_usrData->clone();  //TODO:调整写法
         return newGeom;
     }
 
@@ -56,6 +57,10 @@ namespace zeno
 
     Vector<int> GeometryObject_Adapter::edge_list() const {
         return stdVec2zeVec(m_impl->edge_list());
+    }
+
+    void GeometryObject_Adapter::set_pos(int i, Vec3f pos) {
+        m_impl->set_attr_elem(ATTR_POINT, "pos", i, zeno::vec3f(pos.x, pos.y, pos.z));
     }
 
     bool GeometryObject_Adapter::is_base_triangle() const {
@@ -124,7 +129,7 @@ namespace zeno
         return m_impl->set_geometry_attr(zsString2Std(attr_name), abiAnyToAttrVar(defl));
     }
 
-    bool GeometryObject_Adapter::has_attr(GeoAttrGroup grp, const zeno::String& name) {
+    bool GeometryObject_Adapter::has_attr(GeoAttrGroup grp, const zeno::String& name, GeoAttrType type) {
         return m_impl->has_attr(grp, zsString2Std(name));
     }
 
@@ -276,6 +281,25 @@ namespace zeno
         return m_impl->vertex_info(linear_vertex_id);
     }
 
+    zeno::SharedPtr<PrimitiveObject> GeometryObject_Adapter::toPrimitiveObject() const {
+        zeno::SharedPtr<PrimitiveObject> spPrim = m_impl->toPrimitive();
+        spPrim->m_usrData = m_usrData->clone();
+        return spPrim;
+    }
+
+    void GeometryObject_Adapter::bindPrimitive(std::shared_ptr<PrimitiveObject> prim) {
+        m_impl->bindPrimitive(prim);
+        //userdata要拷贝
+        m_usrData = prim->userData()->clone();
+    }
+
+    std::shared_ptr<PrimitiveObject> GeometryObject_Adapter::forkPrimitive() {
+        std::shared_ptr<PrimitiveObject> spPrim = m_impl->forkPrimitive();
+        //在这套代理机制下，userData由Geom管理，以应对同一拓扑属性但不同userData的情况
+        spPrim->m_usrData = this->userData()->clone();
+        return spPrim;
+    }
+
     zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject() {
         auto pGeom = std::make_shared<GeometryObject_Adapter>();
         pGeom->m_impl = new GeometryObject;
@@ -291,12 +315,14 @@ namespace zeno
     zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim) {
         auto pGeom = std::make_shared<GeometryObject_Adapter>();
         pGeom->m_impl = new GeometryObject(prim);
+        pGeom->m_usrData = prim->m_usrData->clone();
         return pGeom;
     }
 
     zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(zeno::SharedPtr<GeometryObject_Adapter> pGeom) {
         auto newGeom = std::make_shared<GeometryObject_Adapter>();
         newGeom->m_impl = new GeometryObject(*pGeom->m_impl);
+        newGeom->m_usrData = pGeom->m_usrData->clone();
         return newGeom;
     }
 

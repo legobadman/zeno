@@ -3,7 +3,9 @@
 #include <zeno/geo/commonutil.h>
 #include <glm/glm.hpp>
 #include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/types/NumericObject.h>
@@ -15,6 +17,9 @@
 #include <utility>
 
 namespace zeno {
+struct JsonObject : IObjectClone<JsonObject> {
+    Json json;
+};
 
 int count_alembic_prims(std::shared_ptr<zeno::ABCTree> abctree) {
     int count = 0;
@@ -34,7 +39,7 @@ struct CountAlembicPrims : INode {
 };
 
 ZENDEFNODE(CountAlembicPrims, {
-    {{"ABCTree", "abctree"}},
+    {{gParamType_ABCTree, "abctree"}},
     {{gParamType_Int, "count"}},
     {},
     {"alembic"},
@@ -171,7 +176,7 @@ struct GetAlembicPrim : INode {
 ZENDEFNODE(GetAlembicPrim, {
     {
         {gParamType_Bool, "flipFrontBack", "1"},
-        {"ABCTree", "abctree"},
+        {gParamType_ABCTree, "abctree"},
         {gParamType_Int, "index", "0"},
         {gParamType_Bool, "use_xform", "0"},
         {gParamType_Bool, "triangulate", "0"},
@@ -216,7 +221,7 @@ struct AllAlembicPrim : INode {
 ZENDEFNODE(AllAlembicPrim, {
     {
         {gParamType_Bool, "flipFrontBack", "1"},
-        {"ABCTree", "abctree"},
+        {gParamType_ABCTree, "abctree"},
         {gParamType_Bool, "use_xform", "0"},
         {gParamType_Bool, "triangulate", "0"},
     },
@@ -229,7 +234,7 @@ struct AlembicPrimList : INode {
     virtual void apply() override {
         auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
         auto prims = std::make_shared<zeno::ListObject>();
-        int use_xform = get_input2_int("use_xform");
+        bool use_xform = get_input2_bool("use_xform");
         if (use_xform) {
             prims = get_xformed_prims(abctree);
         } else {
@@ -239,8 +244,7 @@ struct AlembicPrimList : INode {
             });
         }
         auto new_prims = std::make_shared<zeno::ListObject>();
-
-        std::vector<zany> arr;
+        std::vector<zany>& arr = new_prims->m_impl->m_objects;  //不应该在插件内部暴露细节，不过暂时没有实现Vector::iterator，只能先拿出来
 
         if (get_input2_bool("splitByFaceset")) {
             for (auto &prim: prims->get()) {
@@ -251,6 +255,7 @@ struct AlembicPrimList : INode {
         }
         else {
             new_prims = std::dynamic_pointer_cast<zeno::ListObject>(prims->clone());
+            arr = new_prims->m_impl->m_objects;
         }
         auto pathInclude = zeno::split_str(zsString2Std(get_input2_string("pathInclude")), {' ', '\n'});
         auto pathExclude = zeno::split_str(zsString2Std(get_input2_string("pathExclude")), {' ', '\n'});
@@ -315,16 +320,27 @@ struct AlembicPrimList : INode {
             if (get_input2_bool("triangulate")) {
                 zeno::primTriangulate(_prim.get());
             }
+            auto abcpath_0 = zsString2Std(_prim->userData()->get_string("abcpath_0"));
+            abcpath_0 += "/mesh";
+            _prim->userData()->set_string("abcpath_0", stdString2zs(abcpath_0));
         }
         new_prims->set(stdVec2zeVec(arr));
-        set_output("prims", std::move(new_prims));
+
+        std::shared_ptr<ListObject> new_geoms = create_ListObject();
+        for (auto obj : new_prims->get()) {
+            auto prim = std::static_pointer_cast<PrimitiveObject>(obj);
+            auto newgeo = create_GeometryObject();
+            newgeo->bindPrimitive(prim);
+            new_geoms->push_back(newgeo);
+        }
+        set_output("geoms", std::move(new_geoms));
     }
 };
 
 ZENDEFNODE(AlembicPrimList, {
     {
         {gParamType_Bool, "flipFrontBack", "1"},
-        {gParamType_Unknown, "abctree"},
+        {gParamType_ABCTree, "abctree"},
         {gParamType_Bool, "use_xform", "0"},
         {gParamType_Bool, "triangulate", "0"},
         {gParamType_Bool, "splitByFaceset", "0"},
@@ -334,9 +350,29 @@ ZENDEFNODE(AlembicPrimList, {
         {gParamType_String, "facesetInclude", ""},
         {gParamType_String, "facesetExclude", ""},
     },
-    {{gParamType_List, "prims"}},
+    {{gParamType_List, "geoms"}},
     {},
     {"alembic"},
+});
+
+struct AlembicSceneInfo : INode {
+    virtual void apply() override {
+        auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
+        auto json_obj = std::make_shared<JsonObject>();
+        json_obj->json = abctree->get_scene_info();
+        set_output("json", json_obj);
+    }
+};
+
+ZENDEFNODE(AlembicSceneInfo, {
+    {
+        {gParamType_ABCTree, "abctree"},
+    },
+    {
+        {gParamType_JsonObject, "json"},
+    },
+    {},
+    {"Alembic"},
 });
 
 struct GetAlembicCamera : INode {
@@ -446,7 +482,7 @@ struct ImportAlembicPrim : INode {
             auto obj = archive.getTop();
             bool read_face_set = get_input2_bool("read_face_set");
             bool outOfRangeAsEmpty = get_input2_bool("outOfRangeAsEmpty");
-            traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred, false, outOfRangeAsEmpty);
+            traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred, false, outOfRangeAsEmpty, 0);
         }
         bool use_xform = get_input2_bool("use_xform");
         auto index = get_input2_int("index");
@@ -502,3 +538,4 @@ ZENDEFNODE(ImportAlembicPrim, {
 });
 
 } // namespace zeno
+

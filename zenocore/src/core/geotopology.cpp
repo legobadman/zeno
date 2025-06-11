@@ -211,12 +211,14 @@ namespace zeno
                 }
                 else if (i == 0) {
                     firstHedge = hedge.get();
+                    /*
                     int nF = m_faces.size();
                     if (m_faces.empty())
                         pFace->start_linearIdx = 0;
                     else {
                         pFace->start_linearIdx = m_faces[nF - 1]->start_linearIdx + nvertices(nF - 1);
                     }
+                    */
                 }
 
                 //check whether the pair edge exist
@@ -236,6 +238,8 @@ namespace zeno
 
             m_faces[face] = std::move(pFace);
         }
+
+        //update_linear_vertex();
     }
 
     HEdge* GeometryTopology::checkHEdge(size_t fromPoint, size_t toPoint) {

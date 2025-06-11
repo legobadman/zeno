@@ -130,7 +130,7 @@ void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_v
     else {
         static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver" };
         if (frame_node_cls.find(cls) == frame_node_cls.end())
-            frame_nodes.erase(uuid);
+        frame_nodes.erase(uuid);
     }
 }
 
@@ -285,52 +285,52 @@ static void initSpecialNode(zeno::NodeImpl* pNodeImpl, const NodeData& node) {
         //节点在初始化的时候是脏的，但还需要手动触发solver的dirty_changed，让它删cache
         pNodeImpl->dirty_changed(true, Dirty_All, false, false);
     }
-    if (node.cls == "SubInput") {
-        //TODO
-    }
-    else if (node.cls == "SubOutput") {
-        //TODO
-    }
-    else if (node.cls == "Group") {
-        if (node.group.has_value()) {
+        if (node.cls == "SubInput") {
+            //TODO
+        }
+        else if (node.cls == "SubOutput") {
+            //TODO
+        }
+        else if (node.cls == "Group") {
+            if (node.group.has_value()) {
             pNodeImpl->update_param("title", node.group->title);
             pNodeImpl->update_param("background", node.group->background);
             pNodeImpl->update_param("size", node.group->sz);
             pNodeImpl->update_param("items", join_str(node.group->items, ","));
-        }
-    }
-    //Compatible with older versions
-    else if (node.cls == "MakeHeatmap")
-    {
-        std::string color;
-        int nres = 0;
-        const PrimitiveParams& primparams = customUiToParams(node.customUi.inputPrims);
-        for (const auto& input : primparams)
-        {
-            if (input.name == "_RAMPS")
-            {
-                color = zeno_get<std::string>(input.defl);
-            }
-            else if (input.name == "nres")
-            {
-                nres = zeno_get<int>(input.defl);
             }
         }
-        if (!color.empty() && nres > 0)
+        //Compatible with older versions
+        else if (node.cls == "MakeHeatmap")
         {
-            std::regex pattern("\n");
-            std::string fmt = "\\n";
-            color = std::regex_replace(color, pattern, fmt);
-            std::string json = "{\"nres\": " + std::to_string(nres) + ", \"color\":\"" + color + "\"}";
+            std::string color;
+            int nres = 0;
+            const PrimitiveParams& primparams = customUiToParams(node.customUi.inputPrims);
+            for (const auto& input : primparams)
+            {
+                if (input.name == "_RAMPS")
+                {
+                    color = zeno_get<std::string>(input.defl);
+                }
+                else if (input.name == "nres")
+                {
+                    nres = zeno_get<int>(input.defl);
+                }
+            }
+            if (!color.empty() && nres > 0)
+            {
+                std::regex pattern("\n");
+                std::string fmt = "\\n";
+                color = std::regex_replace(color, pattern, fmt);
+                std::string json = "{\"nres\": " + std::to_string(nres) + ", \"color\":\"" + color + "\"}";
             pNodeImpl->update_param("heatmap", json);
+            }
+        }
+        else if (zeno::isDerivedFromSubnetNodeName(node.cls))
+        {
+        if (auto sbn = dynamic_cast<SubnetNode*>(pNodeImpl))
+                sbn->setCustomUi(node.customUi);
         }
     }
-    else if (zeno::isDerivedFromSubnetNodeName(node.cls))
-    {
-        if (auto sbn = dynamic_cast<SubnetNode*>(pNodeImpl))
-            sbn->setCustomUi(node.customUi);
-    }
-}
 
 void Graph::init(const GraphData& graph) {
     auto& sess = getSession();
@@ -405,7 +405,7 @@ void Graph::markDirtyWhenFrameChanged()
         assert(pNode);
         auto pNodeImpl = pNode;
         pNode->mark_dirty(true, Dirty_FrameChanged);
-    }
+        }
     std::set<std::string> nodes = subnet_nodes;
     nodes.insert(asset_nodes.begin(), asset_nodes.end());
     for (const std::string& uuid : nodes) {
@@ -861,7 +861,7 @@ NodeImpl* Graph::createNode(
         asset_nodes.insert(uuid);
     }
 
-    static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver" };
+    static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver", "NewFBXSceneInfo"};
     if (frame_node_cls.count(cls) > 0) {
         frame_nodes.insert(uuid);
     }

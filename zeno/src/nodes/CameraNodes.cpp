@@ -106,6 +106,9 @@ struct SetPhysicalCamera : INode {
         ud->set_float("iso", ZImpl(get_input2<float>("iso")));
         ud->set_bool("aces", ZImpl(get_input2<bool>("aces")));
         ud->set_bool("exposure", ZImpl(get_input2<bool>("exposure")));
+        ud->set_bool("panorama_camera", get_input2_bool("panorama_camera"));
+        ud->set_bool("panorama_vr180", get_input2_bool("panorama_vr180"));
+        ud->set_float("pupillary_distance", get_input2_float("pupillary_distance"));
 
         ZImpl(set_output("camera", std::move(camera)));
     }
@@ -119,6 +122,10 @@ ZENO_DEFNODE(SetPhysicalCamera)({
         {gParamType_Float, "iso", "150"},
         {gParamType_Bool, "aces", "0"},
         {gParamType_Bool, "exposure", "0"},
+        {"bool", "exposure", "0"},
+        {"bool", "panorama_camera", "0"},
+        {"bool", "panorama_vr180", "0"},
+        {"float", "pupillary_distance", "0.06"},
     },
     {
         {"CameraObject", "camera"},
@@ -367,3 +374,4 @@ ZENO_DEFNODE(CameraFrustum)({
  });
 
 };
+

@@ -7,7 +7,7 @@
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
 #include <zeno/utils/api.h>
-
+#include <zeno/types/AttrVector.h>
 
 namespace zeno
 {
@@ -35,6 +35,9 @@ namespace zeno
             int face_offset,
             std::set<std::string> face_nocopy);
         ~GeometryObject();
+
+        void bindPrimitive(std::shared_ptr<PrimitiveObject> prim);
+        std::shared_ptr<PrimitiveObject> forkPrimitive();
 
         std::vector<vec3f> points_pos();
         std::vector<vec3i> tri_indice() const;
@@ -90,7 +93,7 @@ namespace zeno
         }
 
         /* 检查属性是否存在 */
-        bool has_attr(GeoAttrGroup grp, std::string const& name);
+        bool has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type = ATTR_TYPE_UNKNOWN);
         bool has_vertex_attr(std::string const& name) const;
         bool has_point_attr(std::string const& name) const;
         bool has_face_attr(std::string const& name) const;
@@ -197,8 +200,14 @@ namespace zeno
         size_t get_attr_size(GeoAttrGroup grp) const;
         void copyTopologyAccordtoUseCount();
         void removeAttribElem(AttributeVector& attrib_vec, int idx);
+        void create_attr_from_AttrVector(GeoAttrGroup grp, const std::string& attr_name, const AttrVectorVariant& vec);
 
         std::shared_ptr<GeometryTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
+
+        //有许多老的资源和模型，深度依赖于Prim，要做转换很麻烦且没必要，于是可以尝试用Geom和引用计数管理起来
+        //另外，m_host和m_spTopology是互斥的
+        std::shared_ptr<PrimitiveObject> m_host;
+
         std::map<std::string, AttributeVector> m_point_attrs;
         std::map<std::string, AttributeVector> m_face_attrs;
         std::map<std::string, AttributeVector> m_geo_attrs;

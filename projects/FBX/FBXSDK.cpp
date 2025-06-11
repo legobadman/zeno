@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stack>
 #include <numeric>
+#include <filesystem>
 
 #include <zeno/zeno.h>
 #include <zeno/core/IObject.h>
@@ -13,6 +14,7 @@
 #include "zeno/utils/bit_operations.h"
 #include <zeno/types/UserData.h>
 #include "zeno/types/PrimitiveObject.h"
+#include <zeno/types/IGeometryObject.h>
 #include "zeno/utils/scope_exit.h"
 #include "zeno/funcs/PrimitiveUtils.h"
 #include "zeno/utils/string.h"
@@ -28,6 +30,9 @@
 #include "DualQuaternion.h"
 #include "zeno/extra/TempNode.h"
 #include "magic_enum.hpp"
+#include <tinygltf/json.hpp>
+using Json = nlohmann::json;
+namespace fs = std::filesystem;
 
 #ifdef ZENO_FBXSDK
 #include <fbxsdk.h>
@@ -316,7 +321,10 @@ ZENDEFNODE(FBXSDKVisibility,
            });
 
 namespace zeno {
-struct FBXObject : IObjectClone<FBXObject> {
+struct JsonObject : IObjectClone<JsonObject> {
+    Json json;
+};
+struct FBXObject : PrimitiveObject {
     FbxManager* lSdkManager = nullptr;
     FbxScene* lScene = nullptr;
 };
@@ -364,6 +372,7 @@ struct ReadFBXFile: INode {
         fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
         usedPath = lFilename;
         _inner_fbx_object = fbx_object;
+        fbx_object->userData()->set_string("file_path", stdString2zs(usedPath));
 
         set_output("fbx_object", std::move(fbx_object));
     }
@@ -374,7 +383,7 @@ ZENDEFNODE(ReadFBXFile, {
         {gParamType_String, "path", "", Socket_Primitve, ReadPathEdit},
     },
     {
-        {gParamType_Unknown, "fbx_object"},
+        {gParamType_FBXObject, "fbx_object"},
     },
     {},
     {"FBXSDK"},
@@ -449,7 +458,7 @@ void PrintAttribute(FbxNodeAttribute* pAttribute) {
 template<typename T>
 void getAttr(T* arr, std::string name, std::shared_ptr<PrimitiveObject> prim) {
     if (arr->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint) {
-        zeno::log_info("{}, eByControlPoint", name);
+//        zeno::log_info("{}, eByControlPoint", name);
         auto &attr = prim->verts.add_attr<vec3f>(name);
         for (auto i = 0; i < prim->verts.size(); i++) {
             int pIndex = i;
@@ -463,7 +472,6 @@ void getAttr(T* arr, std::string name, std::shared_ptr<PrimitiveObject> prim) {
         }
     }
     else if (arr->GetMappingMode() == FbxLayerElement::EMappingMode::eByPolygonVertex) {
-        zeno::log_info("{}, eByPolygonVertex", name);
         auto &attr = prim->loops.add_attr<vec3f>(name);
         for (auto i = 0; i < prim->loops.size(); i++) {
             int pIndex = i;
@@ -478,12 +486,23 @@ void getAttr(T* arr, std::string name, std::shared_ptr<PrimitiveObject> prim) {
     }
 }
 
-static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
+static std::shared_ptr<PrimitiveObject> GetMesh(
+        FbxNode* pNode
+        , bool output_tex_even_missing
+        , std::string fbx_path
+        , bool apply_transform
+    ) {
     FbxMesh* pMesh = pNode->GetMesh();
     if (!pMesh) return nullptr;
+    auto mesh_name = pMesh->GetName();
     std::string nodeName = pNode->GetName();
+    if (nodeName == "RootNode") {
+        nodeName = "ABC";
+    }
     auto prim = std::make_shared<PrimitiveObject>();
     prim->userData()->set_string("RootName", stdString2zs(nodeName));
+    prim->userData()->set_string("_abc_name", stdString2zs(nodeName));
+    prim->userData()->set_string("fbx_path", stdString2zs(fbx_path));
 
     FbxAMatrix bindMatrix = pNode->EvaluateGlobalTransform();
     auto s = bindMatrix.GetS();
@@ -496,9 +515,15 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
     prim->verts.resize(numVertices);
 
     for (int i = 0; i < numVertices; ++i) {
+        if (apply_transform) {
         auto pos = bindMatrix.MultT( FbxVector4(vertices[i][0], vertices[i][1], vertices[i][2], 1.0));
         prim->verts[i] = vec3f(pos[0], pos[1], pos[2]);
     }
+        else {
+            prim->verts[i] = vec3f(vertices[i][0], vertices[i][1], vertices[i][2]);
+        }
+    }
+
     int numPolygons = pMesh->GetPolygonCount();
     prim->polys.resize(numPolygons);
     std::vector<int> loops;
@@ -579,7 +604,6 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
             }
         }
         else if (arr->GetMappingMode() == FbxLayerElement::EMappingMode::eByPolygonVertex) {
-            zeno::log_info("{}, eByPolygonVertex", name);
             if (arr->GetReferenceMode() == FbxLayerElement::EReferenceMode::eDirect) {
                 auto &uvs = prim->loops.add_attr<int>("uvs");
                 std::iota(uvs.begin(), uvs.end(), 0);
@@ -620,7 +644,213 @@ static std::shared_ptr<PrimitiveObject> GetMesh(FbxNode* pNode) {
         }
     }
     ud->set_int("faceset_count", mat_count);
-    zeno::prim_set_abcpath(prim.get(), stdString2zs(format("/ABC/{}", nodeName)));
+    prim_set_abcpath(prim.get(), stdString2zs(fbx_path + '/' + mesh_name));
+    if (mat_count > 0) {
+        for (auto i = 0; i < mat_count; i++) {
+            FbxSurfaceMaterial* material = pNode->GetMaterial(i);
+            std::string mat_name = material->GetName();
+            ud->set_string(stdString2zs(format("faceset_{}", i)), stdString2zs(mat_name));
+            Json json;
+            
+            {
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sEmissive);
+                    if (output_tex_even_missing) {
+                        json["emissive_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        FbxDouble3 value = property.Get<FbxDouble3>();
+                        json["emissive_value"] = {value[0], value[1], value[2]};
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["emissive_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sAmbient);
+                    if (output_tex_even_missing) {
+                        json["ambient_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        FbxDouble3 value = property.Get<FbxDouble3>();
+                        json["ambient_value"] = {value[0], value[1], value[2]};
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["ambient_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
+                    if (output_tex_even_missing) {
+                        json["diffuse_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        FbxDouble3 value = property.Get<FbxDouble3>();
+                        json["diffuse_value"] = {value[0], value[1], value[2]};
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["diffuse_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sSpecular);
+                    if (output_tex_even_missing) {
+                        json["specular_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        FbxDouble3 value = property.Get<FbxDouble3>();
+                        json["specular_value"] = {value[0], value[1], value[2]};
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["specular_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sShininess);
+                    if (output_tex_even_missing) {
+                        json["shininess_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        double value = property.Get<double>();
+                        json["shininess_value"] = value;
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["shininess_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sBump);
+                    if (output_tex_even_missing) {
+                        json["bump_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["bump_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sNormalMap);
+                    if (output_tex_even_missing) {
+                        json["normal_map_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["normal_map_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sTransparentColor);
+                    if (output_tex_even_missing) {
+                        json["transparent_color_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        FbxDouble3 value = property.Get<FbxDouble3>();
+                        json["transparent_color_value"] = {value[0], value[1], value[2]};
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["transparent_color_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sTransparencyFactor);
+                    if (output_tex_even_missing) {
+                        json["opacity_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        double value = property.Get<double>();
+                        json["opacity_value"] = value;
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["opacity_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sReflection);
+                    if (output_tex_even_missing) {
+                        json["reflection_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["reflection_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sDisplacementColor);
+                    if (output_tex_even_missing) {
+                        json["displacement_color_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["displacement_color_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+                {
+                    FbxProperty property = material->FindProperty(FbxSurfaceMaterial::sVectorDisplacementColor);
+                    if (output_tex_even_missing) {
+                        json["vector_displacement_color_tex"] = "";
+                    }
+                    if (property.IsValid()) {
+                        int textureCount = property.GetSrcObjectCount<FbxTexture>();
+                        for (int i = 0; i < textureCount; ++i) {
+                            FbxFileTexture* texture = FbxCast<FbxFileTexture>(property.GetSrcObject<FbxTexture>(i));
+                            if (texture) {
+                                json["vector_displacement_color_tex"] = texture->GetFileName();
+                            }
+                        }
+                    }
+                }
+            }
+            ud->set_string(stdString2zs(mat_name), stdString2zs(json.dump()));
+        }
+    }
     return prim;
 }
 
@@ -670,6 +900,9 @@ static std::shared_ptr<PrimitiveObject> GetSkeleton(FbxNode* pNode) {
         }
     }
     std::string nodeName = pNode->GetName();
+    if (nodeName == "RootNode") {
+        nodeName = "ABC";
+    }
     auto prim = std::make_shared<PrimitiveObject>();
     prim->userData()->set_string("RootName", stdString2zs(nodeName));
     prim->verts.resize(bone_names.size());
@@ -717,15 +950,72 @@ static void TraverseNodesToGetNames(FbxNode* pNode, std::vector<std::string> &na
         TraverseNodesToGetNames(pNode->GetChild(i), names);
     }
 }
-
-static void TraverseNodesToGetPrim(FbxNode* pNode, std::string target_name, std::shared_ptr<PrimitiveObject> &prim) {
+static void TraverseNodesToGetJson(FbxNode* pNode, Json &json, FbxTime curTime) {
     if (!pNode) return;
+    std::string nodeName = pNode->GetName();
+    if (nodeName == "RootNode") {
+        nodeName = "ABC";
+    }
+    auto pMesh = pNode->GetMesh();
+    if (pMesh) {
+        auto mesh_name = pMesh->GetName();
+        json["mesh"] = mesh_name;
+    }
+    json["visibility"] = int(pNode->GetVisibility());
+    json["node_name"] = nodeName;
+    {
+        FbxAMatrix bindMatrix = pNode->EvaluateLocalTransform(curTime);
+        auto r0 = bindMatrix.GetRow(0);
+        auto r1 = bindMatrix.GetRow(1);
+        auto r2 = bindMatrix.GetRow(2);
+        auto t = bindMatrix.GetRow(3);
+        if (
+            std::isnan(r0[0]) || std::isnan(r0[1]) || std::isnan(r0[2])
+            || std::isnan(r1[0]) || std::isnan(r1[1]) || std::isnan(r1[2])
+            || std::isnan(r2[0]) || std::isnan(r2[1]) || std::isnan(r2[2])
+            || std::isnan(t[0]) || std::isnan(t[1]) || std::isnan(t[2])
+        ) {
+            json["r0"] = {0.0, 0.0, 0.0};
+            json["r1"] = {0.0, 0.0, 0.0};
+            json["r2"] = {0.0, 0.0, 0.0};
+            json["t"]  = {0.0, 0.0, 0.0};
+        } else {
+            json["r0"] = {r0[0], r0[1], r0[2]};
+            json["r1"] = {r1[0], r1[1], r1[2]};
+            json["r2"] = {r2[0], r2[1], r2[2]};
+            json["t"]  = {t[0], t[1], t[2]};
+        }
+    }
+    json["children_name"] = Json::array();
+    for (int i = 0; i < pNode->GetChildCount(); i++) {
+        Json child;
+        TraverseNodesToGetJson(pNode->GetChild(i), child, curTime);
+        std::string childName = child["node_name"];
+        json[childName] = child;
+        json["children_name"].push_back(childName);
+    }
+}
+
+static void TraverseNodesToGetPrim(
+    FbxNode* pNode
+    , std::string target_name
+    , std::shared_ptr<PrimitiveObject> &prim
+    , bool output_tex_even_missing
+    , std::string fbx_path
+    , bool apply_transform
+) {
+    if (!pNode) return;
+    std::string nodeName = pNode->GetName();
+    if (nodeName == "RootNode") {
+        nodeName = "ABC";
+    }
+    fbx_path = fbx_path + '/' + nodeName;
 
     FbxMesh* mesh = pNode->GetMesh();
     if (mesh) {
         auto name = pNode->GetName();
         if (target_name == name) {
-            auto sub_prim = GetMesh(pNode);
+            auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform);
             if (sub_prim) {
                 prim = sub_prim;
         }
@@ -734,22 +1024,32 @@ static void TraverseNodesToGetPrim(FbxNode* pNode, std::string target_name, std:
     }
 
     for (int i = 0; i < pNode->GetChildCount(); i++) {
-        TraverseNodesToGetPrim(pNode->GetChild(i), target_name, prim);
+        TraverseNodesToGetPrim(pNode->GetChild(i), target_name, prim, output_tex_even_missing, fbx_path, apply_transform);
     }
 }
-static void TraverseNodesToGetPrims(FbxNode* pNode, std::vector<std::shared_ptr<PrimitiveObject>> &prims) {
+static void TraverseNodesToGetPrims(
+    FbxNode* pNode, std::vector<std::shared_ptr<PrimitiveObject>> &prims
+    , bool output_tex_even_missing
+    , std::string fbx_path
+    , bool apply_transform
+) {
     if (!pNode) return;
+    std::string nodeName = pNode->GetName();
+    if (nodeName == "RootNode") {
+        nodeName = "ABC";
+    }
+    fbx_path = fbx_path + '/' + nodeName;
 
     FbxMesh* mesh = pNode->GetMesh();
     if (mesh) {
-        auto sub_prim = GetMesh(pNode);
+        auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform);
         if (sub_prim) {
             prims.push_back(sub_prim);
         }
     }
 
     for (int i = 0; i < pNode->GetChildCount(); i++) {
-        TraverseNodesToGetPrims(pNode->GetChild(i), prims);
+        TraverseNodesToGetPrims(pNode->GetChild(i), prims, output_tex_even_missing, fbx_path, apply_transform);
     }
 }
 
@@ -764,12 +1064,13 @@ struct NewFBXImportSkin : INode {
         auto prim = std::make_shared<PrimitiveObject>();
         FbxNode* lRootNode = lScene->GetRootNode();
         std::vector<std::string> availableRootNames;
+        bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
         if(lRootNode) {
             TraverseNodesToGetNames(lRootNode, availableRootNames);
             auto rootName = zsString2Std(get_input2_string("rootName"));
             if (rootName.empty()) {
                 std::vector<std::shared_ptr<PrimitiveObject>> prims;
-                TraverseNodesToGetPrims(lRootNode, prims);
+                TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", true);
 
                 std::map<std::string, int> nameMappingGlobal;
 
@@ -820,7 +1121,7 @@ struct NewFBXImportSkin : INode {
                 }
             }
             else {
-                TraverseNodesToGetPrim(lRootNode, rootName, prim);
+                TraverseNodesToGetPrim(lRootNode, rootName, prim, output_tex_even_missing, "", true);
             }
         }
         if (get_input2_bool("ConvertUnits")) {
@@ -849,6 +1150,11 @@ struct NewFBXImportSkin : INode {
                 ud->set_string(stdString2zs(format("AvailableRootName_{}", i))
                     , stdString2zs(availableRootNames[i]));
             }
+            auto file_path = fbx_object->userData()->get_string("file_path");
+            ud->set_string("file_path", file_path);
+        }
+        if (get_input2_bool("CopyFacesetToMatid")) {
+            prim_copy_faceset_to_matid(prim.get());
         }
         set_output("prim", prim);
     }
@@ -859,8 +1165,111 @@ ZENDEFNODE(NewFBXImportSkin, {
         {gParamType_Unknown, "fbx_object"},
         {gParamType_String, "rootName", ""},
         {gParamType_Bool, "ConvertUnits", "0"},
-        {gParamType_String, "vectors", "nrm,"},
+        {gParamType_String, "vectors", "nrm,tang"},
         {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
+        {gParamType_Bool, "CopyFacesetToMatid", "1"},
+        {gParamType_Bool, "OutputTexEvenMissing", "0"},
+    },
+    {
+        {gParamType_Primitive, "prim"},
+    },
+    {},
+    {"FBXSDK"},
+});
+
+struct NewFBXResolveTexPath : INode {
+    void StringSplitReverse(std::string str, const char split, std::vector<std::string> & ostrs)
+    {
+        std::istringstream iss(str);
+        std::string token;
+        std::vector<std::string> res(0);
+        while(getline(iss, token, split))
+        {
+            res.push_back(token);
+        }
+        ostrs.resize(0);
+        for(int i=res.size()-1; i>=0;i--)
+        {
+            ostrs.push_back(res[i]);
+        }
+    }
+    void formPath(std::vector<std::string> &tokens)
+    {
+        for(int i=1; i<tokens.size();i++)
+        {
+            tokens[i] = tokens[i] + '/' + tokens[i-1];
+        }
+    }
+    bool findFile(std::string HintPath, std::string origPath, std::string & oPath)
+    {
+        {
+            auto orig_path = fs::u8path(origPath);
+            std::error_code ec;
+            if (std::filesystem::exists(orig_path, ec)) {
+                oPath = origPath;
+            }
+        }
+        std::vector<std::string> paths;
+        StringSplitReverse(origPath, '/', paths);
+        formPath(paths);
+        for(int i=0; i<paths.size(); i++)
+        {
+            auto filename = HintPath + '/' + paths[i];
+            auto cur_path = fs::u8path(filename);
+            std::error_code ec;
+            if(std::filesystem::exists(cur_path, ec))
+            {
+                oPath = filename;
+                return true;
+            }
+        }
+        return false;
+    }
+    void apply() override {
+        auto prim = get_input_PrimitiveObject("prim");
+
+        std::string hint_directory = zsString2Std(get_input2_string("HintDirectory"));
+
+        auto ud = prim->userData();
+        auto file_path = zsString2Std(prim->userData()->get_string("file_path"));
+        fs::path path = fs::u8path(file_path);
+        auto file_path_directory = path.parent_path().u8string();
+        if (hint_directory.empty()) {
+            hint_directory = file_path_directory;
+        }
+        auto faceset_count = ud->get_int("faceset_count", 0);
+        for (auto i = 0; i < faceset_count; i++) {
+            auto mat_name = ud->get_string(stdString2zs(format("faceset_{}", i)));
+            auto content = ud->get_string(mat_name);
+            Json mat_json = Json::parse(zsString2Std(content));
+            std::vector<std::string> keys;
+            for (auto &[key, _]: mat_json.items()) {
+                if (zeno::ends_with(key, "_tex")) {
+                    keys.push_back(key);
+                }
+            }
+            for (auto &key: keys) {
+                std::string tex_path_str = mat_json[key];
+                if (key == "diffuse_tex") {
+
+                }
+                tex_path_str = zeno::replace_all(tex_path_str, "\\", "/");
+
+                std::string oPath;
+                findFile(hint_directory, tex_path_str, oPath);
+                mat_json[key] = oPath;
+            }
+            ud->set_string(mat_name, stdString2zs(mat_json.dump()));
+        }
+
+        set_output("prim", prim);
+    }
+};
+
+ZENDEFNODE(NewFBXResolveTexPath, {
+    {
+        {gParamType_Primitive, "prim"},
+        {gParamType_String, "HintDirectory"},
     },
     {
         {gParamType_Primitive, "prim"},
@@ -1412,13 +1821,320 @@ ZENDEFNODE(NewFBXImportCamera, {
     {},
     {"FBXSDK"},
 });
+
+
+
+struct NewFBXSceneInfo : INode {
+    virtual void apply() override {
+        int frameid;
+        if (has_input("frameid")) {
+            frameid = std::lround(get_input2_int("frameid"));
+        } else {
+            frameid = GetFrameId();
+        }
+        float fps = get_input2_float("fps");
+        float t = float(frameid) / fps;
+        FbxTime curTime;       // The time for each key in the animation curve(s)
+        curTime.SetSecondDouble(t);   // Starting time
+        auto fbx_object = std::dynamic_pointer_cast<FBXObject>(get_input("fbx_object"));
+        auto lScene = fbx_object->lScene;
+        FbxNode* lRootNode = lScene->GetRootNode();
+        auto json_obj = std::make_shared<JsonObject>();
+        if (lRootNode != nullptr){
+            TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
+        }
+        set_output("json", json_obj);
+    }
+};
+
+ZENDEFNODE(NewFBXSceneInfo, {
+    {
+        {gParamType_FBXObject, "fbx_object"},
+        {gParamType_Int, "frameid"},
+        {gParamType_Float, "fps", "25"},
+    },
+    {
+        {gParamType_JsonObject, "json"},
+    },
+    {},
+    {"FBXSDK"},
+});
+
+
+static glm::mat4 get_xfrom_from_json(Json json, const std::string &fbx_path) {
+    auto names = split_str(fbx_path, '/');
+    if (!names.empty()) {
+        if (names.begin()->empty()) {
+            names.erase(names.begin());
+        }
+    }
+    glm::mat4 total = glm::mat4(1);
+    for (auto &name: names) {
+        json = json[name];
+
+        Json r0 = json["r0"];
+        Json r1 = json["r1"];
+        Json r2 = json["r2"];
+        Json  t = json["t"];
+        glm::mat4 local = glm::mat4(1);
+        local[0] = {float(r0[0]), float(r0[1]), float(r0[2]), 0};
+        local[1] = {float(r1[0]), float(r1[1]), float(r1[2]), 0};
+        local[2] = {float(r2[0]), float(r2[1]), float(r2[2]), 0};
+        local[3] = {float( t[0]), float( t[1]), float( t[2]), 1};
+        total = total * local;
+    }
+    return total;
+}
+static int get_visibility_from_json(Json json, const std::string &fbx_path) {
+    auto names = split_str(fbx_path, '/');
+    if (!names.empty()) {
+        if (names.begin()->empty()) {
+            names.erase(names.begin());
+        }
+    }
+    int visibility = 1;
+    glm::mat4 total = glm::mat4(1);
+    for (auto &name: names) {
+        json = json[name];
+        visibility = json["visibility"];
+    }
+    return visibility;
+}
+
+
+struct NewFBXGeometryList : INode {
+    vec3f transform_pos(glm::mat4& transform, vec3f pos) {
+        auto p = transform * glm::vec4(pos[0], pos[1], pos[2], 1);
+        return { p.x, p.y, p.z };
+    }
+    vec3f transform_nrm(glm::mat4& transform, vec3f pos) {
+        auto p = glm::transpose(glm::inverse(transform)) * glm::vec4(pos[0], pos[1], pos[2], 0);
+        return { p.x, p.y, p.z };
+    }
+    virtual void apply() override {
+        auto fbx_object = std::dynamic_pointer_cast<FBXObject>(get_input("fbx_object"));
+        auto lScene = fbx_object->lScene;
+
+        // Print the nodes of the scene and their attributes recursively.
+        // Note that we are not printing the root node because it should
+        // not contain any attributes.
+        FbxNode* lRootNode = lScene->GetRootNode();
+        bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
+        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        if (lRootNode) {
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+        }
+
+        auto vectors_str = zsString2Std(get_input2_string("vectors"));
+        std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
+        if (has_input("scene_info")) {
+            auto json = std::dynamic_pointer_cast<JsonObject>(get_input("scene_info"));
+            std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
+            for (auto prim : prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                if (get_input2_bool("SkipInvisibleMesh")) {
+                    if (get_visibility_from_json(json->json, fbx_path)) {
+                        new_prims.push_back(prim);
+                    }
+                }
+                else {
+                    new_prims.push_back(prim);
+                }
+            }
+            prims = new_prims;
+            for (auto prim : prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                glm::mat4 xform = get_xfrom_from_json(json->json, fbx_path);
+                for (auto& v : prim->verts) {
+                    v = transform_pos(xform, v);
+                }
+                for (auto& vector : vectors) {
+                    if (prim->verts.attr_is<vec3f>(vector)) {
+                        auto& attr = prim->verts.attr<vec3f>(vector);
+                        for (auto& v : attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                    else if (prim->loops.attr_is<vec3f>(vector)) {
+                        auto& attr = prim->loops.attr<vec3f>(vector);
+                        for (auto& v : attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (auto prim : prims) {
+            if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
+                for (auto vector : vectors) {
+                    vector = zeno::trim_string(vector);
+                    if (vector.size() && prim->loops.attr_is<vec3f>(vector)) {
+                        auto& nrm = prim->loops.attr<vec3f>(vector);
+                        auto& vnrm = prim->verts.add_attr<vec3f>(vector);
+                        for (auto i = 0; i < prim->loops.size(); i++) {
+                            vnrm[prim->loops[i]] += nrm[i];
+                        }
+                        for (auto i = 0; i < prim->verts.size(); i++) {
+                            vnrm[i] = normalizeSafe(vnrm[i]);
+                        }
+                    }
+                }
+            }
+            if (get_input2_bool("CopyFacesetToMatid")) {
+                prim_copy_faceset_to_matid(prim.get());
+            }
+        }
+        auto geo_list = std::make_shared<zeno::ListObject>();
+        for (auto prim : prims) {
+            zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject();
+            spGeom->bindPrimitive(prim);
+            geo_list->push_back(spGeom);
+        }
+        set_output("Geometry List", geo_list);
+    }
+};
+ZENDEFNODE(NewFBXGeometryList, {
+    {
+        {gParamType_FBXObject, "fbx_object"},
+        {gParamType_JsonObject, "scene_info"},
+        {gParamType_String, "vectors", "nrm,tang"},
+        {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
+        {gParamType_Bool, "CopyFacesetToMatid", "1"},
+        {gParamType_Bool, "OutputTexEvenMissing", "0"},
+        {gParamType_Bool, "SkipInvisibleMesh", "0"},
+    },
+    {
+        {gParamType_List, "Geometry List"},
+    },
+    {},
+    {"FBXSDK"},
+});
+
+
+
+struct NewFBXPrimList : INode {
+    vec3f transform_pos(glm::mat4 &transform, vec3f pos) {
+        auto p = transform * glm::vec4(pos[0], pos[1], pos[2], 1);
+        return {p.x, p.y, p.z};
+    }
+    vec3f transform_nrm(glm::mat4 &transform, vec3f pos) {
+        auto p = glm::transpose(glm::inverse(transform)) * glm::vec4(pos[0], pos[1], pos[2], 0);
+        return {p.x, p.y, p.z};
+    }
+    virtual void apply() override {
+        auto fbx_object = std::dynamic_pointer_cast<FBXObject>(get_input("fbx_object"));
+        auto lScene = fbx_object->lScene;
+
+        // Print the nodes of the scene and their attributes recursively.
+        // Note that we are not printing the root node because it should
+        // not contain any attributes.
+        FbxNode* lRootNode = lScene->GetRootNode();
+        bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
+        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        if(lRootNode) {
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+        }
+
+
+        auto vectors_str = zsString2Std(get_input2_string("vectors"));
+        std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
+        if (has_input("scene_info")) {
+            auto json = std::dynamic_pointer_cast<JsonObject>(get_input("scene_info"));
+            std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
+            for (auto prim: prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                if (get_input2_bool("SkipInvisibleMesh")) {
+                    if (get_visibility_from_json(json->json, fbx_path)) {
+                        new_prims.push_back(prim);
+                    }
+                }
+                else {
+                    new_prims.push_back(prim);
+                }
+            }
+            prims = new_prims;
+            for (auto prim: prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                glm::mat4 xform = get_xfrom_from_json(json->json, fbx_path);
+                for (auto & v: prim->verts) {
+                    v = transform_pos(xform, v);
+                }
+                for (auto &vector: vectors) {
+                    if (prim->verts.attr_is<vec3f>(vector)) {
+                        auto &attr = prim->verts.attr<vec3f>(vector);
+                        for (auto &v: attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                    else if (prim->loops.attr_is<vec3f>(vector)) {
+                        auto &attr = prim->loops.attr<vec3f>(vector);
+                        for (auto &v: attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (auto prim: prims) {
+            if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
+                for (auto vector: vectors) {
+                    vector = zeno::trim_string(vector);
+                    if (vector.size() && prim->loops.attr_is<vec3f>(vector)) {
+                        auto &nrm = prim->loops.attr<vec3f>(vector);
+                        auto &vnrm = prim->verts.add_attr<vec3f>(vector);
+                        for (auto i = 0; i < prim->loops.size(); i++) {
+                            vnrm[prim->loops[i]] += nrm[i];
+                        }
+                        for (auto i = 0; i < prim->verts.size(); i++) {
+                            vnrm[i] = normalizeSafe(vnrm[i]);
+                        }
+                    }
+                }
+            }
+            if (get_input2_bool("CopyFacesetToMatid")) {
+                prim_copy_faceset_to_matid(prim.get());
+            }
+        }
+        auto prim_list = std::make_shared<zeno::ListObject>();
+        for (auto prim: prims) {
+            prim_list->push_back(prim);
+        }
+        set_output("prims", prim_list);
+    }
+};
+
+ZENDEFNODE(NewFBXPrimList, {
+    {
+        {gParamType_FBXObject, "fbx_object"},
+        {gParamType_JsonObject, "scene_info"},
+        {gParamType_String, "vectors", "nrm,tang"},
+        {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
+        {gParamType_Bool, "CopyFacesetToMatid", "1"},
+        {gParamType_Bool, "OutputTexEvenMissing", "0"},
+        {gParamType_Bool, "SkipInvisibleMesh", "0"},
+    },
+    {
+        {gParamType_List, "prims"},
+    },
+    {},
+    {"FBXSDK"},
+});
+
 }
 #endif
 namespace zeno {
 struct RigPoseItemObject : PrimitiveObject {
     std::string boneName;
+    bool use_quat = false;
     vec3f translate = {0, 0, 0};
     vec3f rotate = {0, 0, 0};
+    vec4f quat = {1,0,0,0};
 };
 struct NewFBXRigPoseItem : INode {
     virtual void apply() override {
@@ -1426,15 +2142,19 @@ struct NewFBXRigPoseItem : INode {
         item->boneName  = zsString2Std(get_input2_string("boneName"));
         item->translate = toVec3f(get_input2_vec3f("translate"));
         item->rotate    = toVec3f(get_input2_vec3f("rotate"));
+        item->use_quat  = get_input2_bool("UseQuaternion");
+        item->quat = toVec4f(get_input2_vec4f("quaternion"));
         set_output("poseItem", std::move(item));
-        }
+    }
 };
 
 ZENDEFNODE(NewFBXRigPoseItem, {
     {
         {gParamType_String, "boneName", ""},
+        {gParamType_Bool, "UseQuaternion", "0"},
         {gParamType_Vec3f, "translate", "0, 0, 0"},
         {gParamType_Vec3f, "rotate", "0, 0, 0"},
+        {gParamType_Vec4f, "quaternion", "1,0,0,0"},
     },
     {
         {gParamType_Unknown, "poseItem"},
@@ -1528,7 +2248,7 @@ ZENDEFNODE(BoneSetAttr,
 { /* inputs: */ {
     {gParamType_Primitive, "skeleton"},
     {gParamType_String, "boneName", ""},
-    {gParamType_Int, "value", "0"}, //这里是Variant，但目前暂时不支持wildcard
+    {gParamType_Int, "value", "0"}, //杩欓噷鏄疺ariant锛屼絾鐩墠鏆傛椂涓嶆敮鎸亀ildcard
     {gParamType_String, "attr", ""},
     {"enum float vec2f vec3f vec4f int vec2i vec3i vec4i", "type", "int"},
 }, /* outputs: */ {
@@ -1645,7 +2365,13 @@ struct NewFBXRigPose : INode {
                 glm::mat4 matRotx  = glm::rotate(glm::radians(trans->rotate[0]), glm::vec3(1,0,0) );
                 glm::mat4 matRoty  = glm::rotate(glm::radians(trans->rotate[1]), glm::vec3(0,1,0) );
                 glm::mat4 matRotz  = glm::rotate(glm::radians(trans->rotate[2]), glm::vec3(0,0,1) );
-                transform = matTrans*matRoty*matRotx*matRotz;
+                glm::mat4 matRot = matRoty*matRotx*matRotz;
+                if(trans->use_quat==true)
+                {
+                  glm::quat rot(trans->quat[3], trans->quat[0], trans->quat[1], trans->quat[2]);
+                  matRot = glm::toMat4(rot);
+                }
+                transform = matTrans*matRot;
                 transform = transforms[bi] * transform * transformsInv[bi];
             }
             if (bone_connects.count(bi) && WorldSpace == false) {
@@ -2944,7 +3670,5 @@ ZENDEFNODE(PrimDeformByOneBone, {
     {},
     {"FBXSDK"},
 });
-
-
 
 }

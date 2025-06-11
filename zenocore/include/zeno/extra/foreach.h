@@ -30,7 +30,7 @@ namespace zeno
         ForEachEnd();
         ForEachBegin* get_foreach_begin();
         void reset_forloop_settings();
-        bool is_continue_to_run();
+        bool is_continue_to_run(CalcContext* pContext);
         void increment();
         zany get_iterate_object();
         void apply() override;

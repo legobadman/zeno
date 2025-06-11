@@ -51,6 +51,10 @@ if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zeno)
 endif()
 
+if (MSVC)
+    target_compile_options(zeno PRIVATE /MP)
+endif()
+
 target_link_libraries(zeno PRIVATE Threads::Threads)
 target_link_libraries(zeno PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor Qt${QT_VERSION_MAJOR}::QuickControls2)
 
@@ -60,6 +64,14 @@ if (WIN32)
 endif()
 
 target_link_libraries(zeno PRIVATE zenobase zenovis)
+
+if (ZENO_WITH_PYTHON)
+    find_package(Python3 COMPONENTS Development REQUIRED)
+    target_link_libraries(zeno PRIVATE ${Python3_LIBRARIES} zenpybind)
+    target_include_directories(zeno PRIVATE ${Python3_INCLUDE_DIRS})
+    target_compile_definitions(zeno PRIVATE -DZENO_WITH_PYTHON)
+endif()
+
 target_link_libraries(zeno PUBLIC ScintillaEditBase)
 
 target_include_directories(zeno PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2 ScintillaEditBase ScintillaEdit)

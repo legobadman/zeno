@@ -286,6 +286,12 @@ namespace zeno {
             removed.clear();
             container_key.clear();
         }
+
+        void merge(const container_elem_update_info& rhs) {
+            new_added.insert(rhs.new_added.begin(), rhs.new_added.end());
+            modified.insert(rhs.modified.begin(), rhs.modified.end());
+            removed.insert(rhs.removed.begin(), rhs.removed.end());
+        }
     };
 
     //一条计算链路的更新信息：

@@ -609,7 +609,7 @@ void DockContent_Editor::initConnections()
     std::function<void()> resetAlways = [=]() {
         pAlways->setChecked(false);
         pMainWin->setAlways(false);
-        pMainWin->setAlwaysLightCameraMaterial(false, false);
+        //pMainWin->setAlwaysLightCameraMaterial(false, false);
     };
     connect(zenoApp->graphsManager(), &GraphsManager::fileOpened, this, resetAlways);
     connect(zenoApp->graphsManager(), &GraphsManager::modelInited, this, resetAlways);
@@ -1320,3 +1320,4 @@ void DockContent_Log::onLogLevelChanged(int idx)
     zeno::set_log_level(level);
     //TODO: update env var.
 }
+

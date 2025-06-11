@@ -24,39 +24,25 @@
 #include "Curves.h"
 #endif
 
-static __inline__ __device__ bool isBadVector(const vec3& vector) {
+__inline__ __device__ bool isBadVector(const vec3& vector) {
 
-    for (size_t i=0; i<3; ++i) {
-        if(!isfinite(vector[i])) {
-            return true;
-        }
-    }
-    return dot(vector, vector) <= 0.0f;
+    bool bad = !isfinite(vector[0]) || !isfinite(vector[1]) || !isfinite(vector[2]);
+    return bad? true : length(vector) == 0.0f;
 }
 
-static __inline__ __device__ bool isBadVector(const float3& vector) {
+__inline__ __device__ bool isBadVector(const float3& vector) {
     return isBadVector(reinterpret_cast<const vec3&>(vector));
 }
 
-__inline__ __device__ void cihouSphereInstanceAux(MatInput& attrs) {
+__inline__ __device__ void cihouSphereInstanceAux(MatInput& attrs, const OptixTraversableHandle& gas) {
 
-    if (params.sphereInstAuxLutBuffer != 0 && optixGetInstanceId() < params.firstSoloSphereOffset) {
+    auto gas_ptr = (void**)optixGetGASPointerFromHandle(gas);
 
-        auto lut = reinterpret_cast<unsigned long long*>(params.sphereInstAuxLutBuffer);
-        assert(lut != nullptr);
-
-        auto tmp = lut[optixGetInstanceId()];
-        auto auxBuffer = reinterpret_cast<float3*>(tmp);
-        assert(auxBuffer != nullptr);
-
-        attrs.clr = {};
-        attrs.tang = {};
-        attrs.instPos = {}; //rt_data->instPos[inst_idx2];
-        attrs.instNrm = {}; //rt_data->instNrm[inst_idx2];
-        attrs.instUv = {}; //rt_data->instUv[inst_idx2];
-        attrs.instClr = auxBuffer[optixGetPrimitiveIndex()];
-        attrs.instTang = {}; //rt_data->instTang[inst_idx2];
-    }
+    float3* color_ptr  = reinterpret_cast<float3*>( *(gas_ptr-1) );
+    if (color_ptr == nullptr) return;
+        
+    attrs.instIdx = optixGetPrimitiveIndex();
+    attrs.instClr = (color_ptr != nullptr)? color_ptr[attrs.instIdx] : float3{}; 
 }
 
 extern "C" __global__ void __anyhit__shadow_cutout()
@@ -113,24 +99,20 @@ extern "C" __global__ void __anyhit__shadow_cutout()
     attrs.nrm = N;
     attrs.uv = sphereUV(_normal_object_, false);
 
-    cihouSphereInstanceAux(attrs);
+    attrs.instPos = _center_object_;
+    cihouSphereInstanceAux(attrs, gas);
 
 #else
 
     size_t inst_idx = optixGetInstanceId();
+
+    auto gas_ptr = (void**)optixGetGASPointerFromHandle(gas);
     
-    auto instToMesh = reinterpret_cast<uint*>(params.instToMesh);
-    auto meshID = instToMesh[inst_idx];
-
-    auto aux_ptr = reinterpret_cast<void**>(params.meshAux);
-    aux_ptr = aux_ptr + (meshID*5);
-
-    auto idx_ptr = reinterpret_cast<uint3*>(aux_ptr[0]);
-
-    auto uv_ptr  = reinterpret_cast<ushort2*>(aux_ptr[1]);
-    auto clr_ptr = reinterpret_cast<ushort3*>(aux_ptr[2]);
-    auto nrm_ptr = reinterpret_cast<ushort3*>(aux_ptr[3]);
-    auto tan_ptr = reinterpret_cast<ushort3*>(aux_ptr[4]);
+    uint3*  idx_ptr  = reinterpret_cast<uint3*>(  *(gas_ptr-1) );
+    float2* uv_ptr   = reinterpret_cast<float2*>( *(gas_ptr-2) );
+    ushort3* clr_ptr = reinterpret_cast<ushort3*>(*(gas_ptr-3) );
+    ushort3* nrm_ptr = reinterpret_cast<ushort3*>(*(gas_ptr-4) );
+    ushort3* tan_ptr = reinterpret_cast<ushort3*>(*(gas_ptr-5) );
 
     auto vertex_idx = idx_ptr[primIdx];
 
@@ -166,9 +148,9 @@ extern "C" __global__ void __anyhit__shadow_cutout()
     attrs.pos = P;
     attrs.nrm = N;
 
-    auto uv0  = decodeHalf( uv_ptr[ vertex_idx.x ] );
-    auto uv1  = decodeHalf( uv_ptr[ vertex_idx.y ] );
-    auto uv2  = decodeHalf( uv_ptr[ vertex_idx.z ] );
+    const auto& uv0  = uv_ptr[ vertex_idx.x ];
+    const auto& uv1  = uv_ptr[ vertex_idx.y ];
+    const auto& uv2  = uv_ptr[ vertex_idx.z ];
     auto clr0 = decodeHalf( clr_ptr[ vertex_idx.x ] );
     auto clr1 = decodeHalf( clr_ptr[ vertex_idx.y ] );
     auto clr2 = decodeHalf( clr_ptr[ vertex_idx.z ] );
@@ -183,18 +165,15 @@ extern "C" __global__ void __anyhit__shadow_cutout()
     attrs.tang = optixTransformVectorFromObjectToWorldSpace(attrs.tang);
     attrs.rayLength = optixGetRayTmax();
 
-    attrs.instPos  = decodeHalf( rt_data->instPos[inst_idx] );
-    attrs.instNrm  = decodeHalf( rt_data->instNrm[inst_idx] );
-    attrs.instUv   = decodeHalf( rt_data->instUv[inst_idx]  );
-    attrs.instClr  = decodeHalf( rt_data->instClr[inst_idx] );
-    attrs.instTang = decodeHalf( rt_data->instTang[inst_idx]);
+    attrs.instIdx = inst_idx;
 
+    attrs._barys = barys;
 #endif
 
     attrs.pos = attrs.pos + vec3(params.cam.eye);
     attrs.isShadowRay = true;
-    //MatOutput mats = evalMaterial(rt_data->textures, rt_data->uniforms, attrs);
-    MatOutput mats = optixDirectCall<MatOutput, cudaTextureObject_t[], float4*, const MatInput&>( rt_data->dc_index, rt_data->textures, rt_data->uniforms, attrs );
+
+    MatOutput mats = optixDirectCall<MatOutput, cudaTextureObject_t[], const float4*, const void**,  const MatInput&>( rt_data->dc_index, rt_data->textures, rt_data->uniforms, (const void**)params.global_buffers, attrs );
 
     if(length(attrs.tang)>0)
     {
@@ -328,6 +307,19 @@ vec3 projectedBarycentricCoord(vec3 p, vec3 q, vec3 u, vec3 v)
     return o;
 }
 
+static __inline__ __device__
+vec3 bezierOffset(vec3 P, vec3 A, vec3 B, vec3 C, vec3 nA, vec3 nB, vec3 nC, vec3 uvw)
+{
+    vec3 tmpu = P - A, tmpv = P - B, tmpw = P - C;
+    float dotu = min(0.0, dot(tmpu, nA));
+    float dotv = min(0.0, dot(tmpv, nB));
+    float dotw = min(0.0, dot(tmpw, nC));
+    tmpu = tmpu - dotu*nA;
+    tmpv = tmpv - dotv*nB;
+    tmpw = tmpw - dotw*nC;
+    return P + uvw.x*tmpu + uvw.y*tmpv + uvw.z*tmpw;
+}
+
 extern "C" __global__ void __closesthit__radiance()
 {
     RadiancePRD* prd = getPRD();
@@ -341,8 +333,11 @@ extern "C" __global__ void __closesthit__radiance()
     float3 P = ray_orig + optixGetRayTmax() * ray_dir;
 
     HitGroupData* rt_data = (HitGroupData*)optixGetSbtDataPointer();
-    MatInput attrs{};
-    float estimation = 0;
+    
+    MatInput attrs {};
+    attrs.isBackFace = optixIsBackFaceHit();
+    
+    vec3 bezierOff {};
 
 #if (_P_TYPE_==2)
 
@@ -420,7 +415,8 @@ extern "C" __global__ void __closesthit__radiance()
     attrs.nrm = N;
     attrs.uv = sphereUV(objNorm, false);
 
-    cihouSphereInstanceAux(attrs);
+    attrs.instPos = sphere_center;
+    cihouSphereInstanceAux(attrs, gas);
 
 #else
 
@@ -439,6 +435,11 @@ extern "C" __global__ void __closesthit__radiance()
     float3 wldPos, wldNorm; float wldOffset;
     SelfIntersectionAvoidance::transformSafeSpawnOffset( wldPos, wldNorm, wldOffset, objPos, objNorm, objOffset );
 
+     auto _v0 = optixTransformPointFromObjectToWorldSpace(v0);
+     auto _v1 = optixTransformPointFromObjectToWorldSpace(v1);
+     auto _v2 = optixTransformPointFromObjectToWorldSpace(v2);
+
+
     /* MODMA */
     P = wldPos;
     attrs.pos = P;
@@ -456,26 +457,19 @@ extern "C" __global__ void __closesthit__radiance()
     attrs.nrm = N;
 
     size_t inst_idx = optixGetInstanceId();
-    
-    // { d_uv.handle, d_clr.handle, d_nrm.handle, d_tan.handle };
-    auto instToMesh = reinterpret_cast<uint*>(params.instToMesh);
-    auto meshID = instToMesh[inst_idx];
+    auto gas_ptr = (void**)optixGetGASPointerFromHandle(gas);
 
-    auto aux_ptr = reinterpret_cast<void**>(params.meshAux);
-    aux_ptr = aux_ptr + (meshID*5);
-
-    auto idx_ptr = reinterpret_cast<uint3*>(aux_ptr[0]);
-
-    auto uv_ptr  = reinterpret_cast<ushort2*>(aux_ptr[1]);
-    auto clr_ptr = reinterpret_cast<ushort3*>(aux_ptr[2]);
-    auto nrm_ptr = reinterpret_cast<ushort3*>(aux_ptr[3]);
-    auto tan_ptr = reinterpret_cast<ushort3*>(aux_ptr[4]);
+    uint3*  idx_ptr  = reinterpret_cast<uint3*>(  *(gas_ptr-1) );
+    float2* uv_ptr   = reinterpret_cast<float2*>( *(gas_ptr-2) );
+    ushort3* clr_ptr = reinterpret_cast<ushort3*>(*(gas_ptr-3) );
+    ushort3* nrm_ptr = reinterpret_cast<ushort3*>(*(gas_ptr-4) );
+    ushort3* tan_ptr = reinterpret_cast<ushort3*>(*(gas_ptr-5) );
 
     auto vertex_idx = idx_ptr[primIdx];
     
-    auto uv0  = decodeHalf( uv_ptr[ vertex_idx.x ] );
-    auto uv1  = decodeHalf( uv_ptr[ vertex_idx.y ] );
-    auto uv2  = decodeHalf( uv_ptr[ vertex_idx.z ] );
+    const auto& uv0  = uv_ptr[ vertex_idx.x ];
+    const auto& uv1  = uv_ptr[ vertex_idx.y ];
+    const auto& uv2  = uv_ptr[ vertex_idx.z ];
 
     auto clr0 = decodeHalf( clr_ptr[ vertex_idx.x ] );
     auto clr1 = decodeHalf( clr_ptr[ vertex_idx.y ] );
@@ -483,22 +477,15 @@ extern "C" __global__ void __closesthit__radiance()
     auto tan0 = decodeHalf( tan_ptr[ vertex_idx.x ] );
     auto tan1 = decodeHalf( tan_ptr[ vertex_idx.y ] );
     auto tan2 = decodeHalf( tan_ptr[ vertex_idx.z ] );
-
-    float tri_area = length(cross(_vertices_[1]-_vertices_[0], _vertices_[2]-_vertices_[1]));
     
     auto _uv_ = interp(barys, uv0, uv1, uv2);
     attrs.uv = vec3{ _uv_.x, _uv_.y, 0 };
     attrs.clr = interp(barys, clr0, clr1, clr2);
     attrs.tang = normalize(interp(barys, tan0, tan1, tan2));
     attrs.tang = optixTransformNormalFromObjectToWorldSpace(attrs.tang);
-
-    attrs.instPos  = decodeHalf( rt_data->instPos[inst_idx] );
-    attrs.instNrm  = decodeHalf( rt_data->instNrm[inst_idx] );
-    attrs.instUv   = decodeHalf( rt_data->instUv[inst_idx]  );
-    attrs.instClr  = decodeHalf( rt_data->instClr[inst_idx] );
-    attrs.instTang = decodeHalf( rt_data->instTang[inst_idx]);
-
     attrs.rayLength = optixGetRayTmax();
+
+    attrs.instIdx = inst_idx;
 
     float3 n0 = normalize( decodeHalf(nrm_ptr[ vertex_idx.x ]) );
     float3 n1 = normalize( decodeHalf(nrm_ptr[ vertex_idx.y ]) );
@@ -507,6 +494,11 @@ extern "C" __global__ void __closesthit__radiance()
     auto N_smooth = normalize(interp(barys, n0, n1, n2));
     attrs.N = optixTransformNormalFromObjectToWorldSpace(N_smooth);
 
+    attrs._barys = barys;
+    attrs.e1 = vec3(_v1 - _v0);
+    attrs.e2 = vec3(_v2 - _v0);
+    float a = 0.5 * length(cross(attrs.e1, attrs.e2));
+    attrs.els = vec3(a/(length(_v2 - _v1)+0.000001), a/(length(_v2 - _v0)+0.000001), a/(length(_v0 - _v1)+0.000001));
 #endif
 
     attrs.pos = attrs.pos + vec3(params.cam.eye);
@@ -521,10 +513,9 @@ extern "C" __global__ void __closesthit__radiance()
     }
     attrs.V = -(ray_dir);
     attrs.isShadowRay = false;
-    //MatOutput mats = evalMaterial(rt_data->textures, rt_data->uniforms, attrs);
-    MatOutput mats = optixDirectCall<MatOutput, cudaTextureObject_t[], float4*, const MatInput&>( rt_data->dc_index, rt_data->textures, rt_data->uniforms, attrs );
+    
+    MatOutput mats = optixDirectCall<MatOutput, cudaTextureObject_t[], const float4*, const void**,  const MatInput&>( rt_data->dc_index, rt_data->textures, rt_data->uniforms, (const void**)params.global_buffers, attrs );
     prd->mask_value = mats.mask_value;
-    prd->click_pos = P;
 
     if (prd->test_distance) {
     
@@ -556,9 +547,34 @@ extern "C" __global__ void __closesthit__radiance()
     n0 = dot(n0, N_Local)>(1-mats.smoothness)?n0:N_Local;
     n1 = dot(n1, N_Local)>(1-mats.smoothness)?n1:N_Local;
     n2 = dot(n2, N_Local)>(1-mats.smoothness)?n2:N_Local;
+   
+    if (mats.smoothness > 0 && mats.shadowTerminatorOffset > 0) {
+
+        auto barys3 = vec3(1-barys.x-barys.y, barys.x, barys.y);
+
+        bezierOff = bezierOffset(objPos, v0, v1, v2, n0, n1, n2, barys3) - (*(vec3*)&objPos);
+        const auto local_len = length(bezierOff);
+
+        if (local_len >0) {
+
+            auto tmp = optixTransformNormalFromObjectToWorldSpace(bezierOff);
+            
+            auto len = local_len/length(tmp); len = len * len;
+            bezierOff = mats.shadowTerminatorOffset * len * tmp;
+            // auto _v0 = optixTransformPointFromObjectToWorldSpace(v0);
+            // auto _v1 = optixTransformPointFromObjectToWorldSpace(v1);
+            // auto _v2 = optixTransformPointFromObjectToWorldSpace(v2);
+            // auto _n0 = optixTransformNormalFromObjectToWorldSpace(n0);
+            // auto _n1 = optixTransformNormalFromObjectToWorldSpace(n1);
+            // auto _n2 = optixTransformNormalFromObjectToWorldSpace(n2);
+            // _n0 = normalize(_n0); _n1 = normalize(_n1); _n2 = normalize(_n2);
+            // auto _bezierOff = bezierOffset(wldPos, _v0, _v1, _v2, _n0, _n1, _n2, barys3) - (*(vec3*)&wldPos);
+        }
+    }
 
     N_smooth = normalize(interp(barys, n0, n1, n2));
     N = optixTransformNormalFromObjectToWorldSpace(N_smooth);
+    N = normalize(N);
 
     if(mats.doubleSide>0.5f||mats.thin>0.5f){
         N = faceforward( N, -ray_dir, N );
@@ -575,10 +591,6 @@ extern "C" __global__ void __closesthit__radiance()
         attrs.tang = cross(attrs.nrm, b);
         N = mats.nrm.x * attrs.tang + mats.nrm.y * b + mats.nrm.z * attrs.nrm;
     }
-//    if(dot(vec3(ray_dir), vec3(N)) * dot(vec3(ray_dir), vec3(prd->geometryNormal))<0)
-//    {
-//      N = prd->geometryNormal;
-//    }
 
     if (prd->trace_denoise_albedo) {
 
@@ -705,7 +717,7 @@ extern "C" __global__ void __closesthit__radiance()
     flag = DisneyBSDF::scatterEvent;
 
     //sssColor = mix(basecolor, sssColor, subsurface);
-
+    if(prd->depth>1 && mats.roughness>0.4) mats.specular = 0.0f;
     while(DisneyBSDF::SampleDisney2(
                 prd->seed,
                 prd->eventseed,
@@ -746,6 +758,8 @@ extern "C" __global__ void __closesthit__radiance()
     if(isDiff || prd->diffDepth>0){
         prd->diffDepth++;
     }
+    if(prd->depth>=3 && prd->hit_type==DIFFUSE_HIT)
+        prd->done = true;
 
 
     prd->passed = false;
@@ -892,21 +906,6 @@ extern "C" __global__ void __closesthit__radiance()
     }
 
     prd->medium = next_ray_is_going_inside?DisneyBSDF::PhaseFunctions::isotropic : prd->curMatIdx==0?DisneyBSDF::PhaseFunctions::vacuum : DisneyBSDF::PhaseFunctions::isotropic;
- 
-
-//    if(mats.thin>0.5f){
-//        vec3 H = normalize(vec3(normalize(wi)) + vec3(-normalize(ray_dir)));
-//        attrs.N = N;
-//        attrs.T = cross(B,N);
-//        attrs.L = vec3(normalize(wi));
-//        attrs.V = vec3(-normalize(ray_dir));
-//        attrs.H = normalize(H);
-//        attrs.reflectance = reflectance;
-//        attrs.fresnel = DisneyBSDF::DisneyFresnel(mats.basecolor, mats.metallic, mats.ior, mats.specularTint, dot(attrs.H, attrs.V), dot(attrs.H, attrs.L), false);
-//        MatOutput mat2 = evalReflectance(zenotex, rt_data->uniforms, attrs);
-//        reflectance = mat2.reflectance;
-//    }
-
 
     prd->countEmitted = false;
     prd->attenuation *= reflectance;
@@ -931,27 +930,15 @@ extern "C" __global__ void __closesthit__radiance()
         prd->radiance_d = rd;
         prd->radiance_s = rs;
         prd->radiance_t = rt;
-//        MatOutput mat2;
-//        if(mats.thin>0.5f){
-//            vec3 H = normalize(vec3(normalize(L)) + V);
-//            attrs.N = N;
-//            attrs.T = cross(B,N);
-//            attrs.L = vec3(normalize(L));
-//            attrs.V = V;
-//            attrs.H = normalize(H);
-//            attrs.reflectance = lbrdf;
-//            attrs.fresnel = DisneyBSDF::DisneyFresnel( mats.basecolor, mats.metallic, mats.ior, mats.specularTint, dot(attrs.H, attrs.V), dot(attrs.H, attrs.L), false);
-//            mat2 = evalReflectance(zenotex, rt_data->uniforms, attrs);
-//        }
 
         return lbrdf;
 
     };
-
+    vec3 auxRadiance = {};
     auto taskAux = [&](const vec3& radiance) {
-        prd->radiance_d *= radiance;
-        prd->radiance_s *= radiance;
-        prd->radiance_t *= radiance;
+        auxRadiance = auxRadiance + radiance;
+        auxRadiance = auxRadiance + radiance;
+        auxRadiance = auxRadiance + radiance;
     };
 
     ShadowPRD shadowPRD {};
@@ -968,18 +955,13 @@ extern "C" __global__ void __closesthit__radiance()
     }
 
     shadowPRD.origin = dot(wi, vec3(prd->geometryNormal)) > 0 ? frontPos : backPos;
-    //auto shadingP = rtgems::offset_ray(shadowPRD.origin + params.cam.eye,  prd->geometryNormal); // world space
+    shadowPRD.origin = shadowPRD.origin + float3(bezierOff);
     
-    //shadowPRD.origin = frontPos;
-    //if(mats.subsurface>0 && (mats.thin>0.5 || mats.doubleSide>0.5) && istransmission){
-        //shadowPRD.origin = backPos; //rtgems::offset_ray(P,  -prd->geometryNormal);
-    //}
-    
-    auto shadingP = rtgems::offset_ray(P + params.cam.eye, dot(wi, vec3(prd->geometryNormal)) > 0 ? prd->geometryNormal:-prd->geometryNormal); // world space
-    //if(mats.subsurface>0 && (mats.thin>0.5 || mats.doubleSide>0.5) && istransmission){
-        //shadingP = rtgems::offset_ray(P + params.cam.eye,  -prd->geometryNormal);
-    //}
-
+    auto shadingP = rtgems::offset_ray(P + float3(bezierOff) + params.cam.eye, prd->geometryNormal); // world space
+    if(mats.subsurface>0 && (mats.thin>0.5 || mats.doubleSide>0.5) && istransmission){
+        shadingP = rtgems::offset_ray(P + params.cam.eye,  -prd->geometryNormal);
+        //shadingP = rtgems::offset_ray(P + params.cam.eye, dot(wi, vec3(prd->geometryNormal)) > 0 ? prd->geometryNormal:-prd->geometryNormal);
+    }
     prd->radiance = {};
     prd->direction = normalize(wi);
     prd->origin = dot(prd->direction, wldNorm) > 0 ? frontPos : backPos;
@@ -993,7 +975,22 @@ extern "C" __global__ void __closesthit__radiance()
 
     prd->lightmask = DefaultMatMask;
     shadowPRD.ShadowNormal = dot(wi, vec3(prd->geometryNormal)) > 0 ? prd->geometryNormal:-prd->geometryNormal;
-    DirectLighting<true>(prd, shadowPRD, shadingP, ray_dir, evalBxDF, &taskAux, dummy_prt);
+    if(prd->hit_type==DIFFUSE_HIT && prd->depth <=1 ) {
+        DirectLighting<true>(prd, shadowPRD, shadingP, ray_dir, evalBxDF, &taskAux, dummy_prt);
+        DirectLighting<true>(prd, shadowPRD, shadingP, ray_dir, evalBxDF, &taskAux, dummy_prt);
+        DirectLighting<true>(prd, shadowPRD, shadingP, ray_dir, evalBxDF, &taskAux, dummy_prt);
+        DirectLighting<true>(prd, shadowPRD, shadingP, ray_dir, evalBxDF, &taskAux, dummy_prt);
+        prd->radiance *= 0.25f;
+        prd->radiance_d *= auxRadiance * 0.25;
+        prd->radiance_s *= auxRadiance * 0.25;
+        prd->radiance_t *= auxRadiance * 0.25;
+    }
+    else {
+        DirectLighting<true>(prd, shadowPRD, shadingP, ray_dir, evalBxDF, &taskAux, dummy_prt);
+        prd->radiance_d *= auxRadiance;
+        prd->radiance_s *= auxRadiance;
+        prd->radiance_t *= auxRadiance;
+    }
     if(mats.shadowReceiver > 0.5f)
     {
       auto radiance = length(prd->radiance);
@@ -1018,9 +1015,4 @@ extern "C" __global__ void __closesthit__radiance()
     {
       prd->done = true;
     }
-}
-
-extern "C" __global__ void __closesthit__occlusion()
-{
-    setPayloadOcclusion( true );
 }

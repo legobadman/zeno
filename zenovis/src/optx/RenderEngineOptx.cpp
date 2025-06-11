@@ -1,15 +1,19 @@
-#include "zeno/utils/vec.h"
-#include <limits>
-#include <memory>
+#include <tuple>
+#include <unordered_map>
+#include <vcruntime_string.h>
+#include <vector_types.h>
 #ifdef ZENO_ENABLE_OPTIX
+
+#include "Scene.h"
 #include "optixPathTracer.h"
 #include "vec_math.h"
 #include "xinxinoptixapi.h"
+#include "zeno/utils/vec.h"
+#include <limits>
+#include <memory>
 #include "../../xinxinoptix/xinxinoptixapi.h"
 #include "../../xinxinoptix/SDK/sutil/sutil.h"
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/geo/commonutil.h>
-#include <zeno/utils/interfaceutil.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/UserData.h>
 #include <zenovis/DrawOptions.h>
@@ -21,8 +25,7 @@
 #include <zeno/utils/UserData.h>
 #include <zeno/extra/TempNode.h>
 #include <zeno/utils/fileio.h>
-#include <zeno/utils/helper.h>
-#include <zeno/geo/geometryutil.h>
+#include <zeno/geo/commonutil.h>
 #include <zenovis/Scene.h>
 #include <zenovis/Camera.h>
 #include <zenovis/RenderEngine.h>
@@ -36,6 +39,7 @@
 #include "../../xinxinoptix/OptiXStuff.h"
 #include <zeno/types/PrimitiveTools.h>
 #include <zeno/types/StringObject.h>
+#include <zeno/types/AttrVector.h>
 #include <tinygltf/json.hpp>
 
 #include <map>
@@ -45,6 +49,9 @@
 
 #include <hair/Hair.h>
 #include <hair/optixHair.h>
+
+#include "ShaderBuffer.h"
+#include <zeno/extra/ShaderNode.h>
 
 namespace zenovis::optx {
 
@@ -204,9 +211,13 @@ struct GraphicsManager {
             std::string extensions;
             std::string mtlidkey;
             std::string parameters;
+
+            int stamp_base = 0;
+            bool dirty = true;
         };
 
         struct DetPrimitive {
+            std::shared_ptr<zeno::PrimitiveObject> primSp;
         };
 
     struct ZxxGraphic : zeno::disable_copy {
@@ -333,9 +344,9 @@ struct GraphicsManager {
         {
             std::shared_ptr<zeno::PrimitiveObject> prim_in_lslislSp;
             if (auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(obj)) {
-                prim_in_lslislSp = geo->m_impl->toPrimitive();
+                prim_in_lslislSp = geo->toPrimitiveObject();
             }
-            else if (auto const* prim_in0 = dynamic_cast<zeno::PrimitiveObject*>(obj)){
+            else if (auto const* prim_in0 = dynamic_cast<zeno::PrimitiveObject*>(obj)) {
                 // vvv deepcopy to cihou following inplace ops vvv
                 prim_in_lslislSp = std::make_shared<zeno::PrimitiveObject>(*prim_in0);
             }
@@ -345,11 +356,53 @@ struct GraphicsManager {
                 // ^^^ Don't wuhui, I mean: Literial Synthetic Lazy internal static Local Shared Pointer
                 auto prim_in = prim_in_lslislSp.get();
 
+                if ( prim_in->userData()->has("ShaderAttributes") ) {
+                    auto attritbutes  = zsString2Std(prim_in->userData()->get_string("ShaderAttributes"));
+
+                    using VarType = zeno::AttrVectorVariant;
+
+                    auto json = nlohmann::json::parse(attritbutes);
+
+                    for (auto& [attrName, bufferName] : json.items()) {
+                        //for (auto& kname : keys) {
+                        auto& val = prim_in->verts.attrs[attrName];
+                        
+                        std::visit([&, &bufferName=bufferName](auto&& arg) {
+                            using T = std::decay_t<decltype(arg)>;
+
+                            constexpr auto vsize = std::variant_size_v<VarType>;
+
+                            zeno::static_for<0, vsize>([&, &bufferName=bufferName] (auto i) {
+                                using ThisType = std::variant_alternative_t<i, VarType>;
+                                using EleType = typename ThisType::value_type;
+
+                                if constexpr (std::is_same_v<T, ThisType>) {
+
+                                    auto& obj = reinterpret_cast<ThisType&>(val);
+
+                                    if (obj.size() > 0) {
+
+                                        size_t byte_size = obj.size() * sizeof(EleType);
+                                        auto tmp_ptr = std::make_shared<xinxinoptix::raii<CUdeviceptr>>();
+                                        tmp_ptr->resize(byte_size);
+                                        cudaMemcpy((void*)tmp_ptr->handle, obj.data(), byte_size, cudaMemcpyHostToDevice);
+
+                                        load_buffer_group(bufferName, tmp_ptr);
+                                    }
+                                    return true;
+                                }
+                                return false;
+                            });
+
+                        }, val);
+                    }
+                }
+
                 if (prim_in->userData()->has("curve") && prim_in->verts->size() && prim_in->verts.has_attr("width")) {
 
-                    auto ud = dynamic_cast<zeno::UserData*>(prim_in->userData());
-                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
-                    auto curveTypeIndex = ud->get2<uint>("curve", 0u);
+                    auto ud = prim_in->userData();
+                    auto mtlid = zsString2Std(ud->get_string("mtlid", "Default"));
+                    auto curveTypeIndex = ud->get_int("curve", 0);
                     auto curveTypeEnum = magic_enum::enum_cast<zeno::CurveType>(curveTypeIndex).value_or(zeno::CurveType::LINEAR);
 
                     auto& widthArray = prim_in->verts.attr("width");
@@ -381,27 +434,28 @@ struct GraphicsManager {
                         }
                     }
 
-                    loadCurveGroup(points, widths, normals, strands, curveTypeEnum, mtlid);
+                    auto abcpath = zsString2Std(ud->get_string("abcpath_0", "Default"));
+                    loadCurveGroup(points, widths, normals, strands, curveTypeEnum, mtlid, abcpath);
                     return;
                 }
 
                 auto is_cyhair = prim_in_lslislSp->userData()->has("cyhair");
                 if (is_cyhair) {
-                    auto ud = dynamic_cast<zeno::UserData*>(prim_in_lslislSp->userData());
-                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
+                    auto ud = prim_in_lslislSp->userData();
+                    auto mtlid = zsString2Std(ud->get_string("mtlid", "Default"));
 
-                    auto type_index = ud->get2<uint>("curve", 0u);
-                    auto path_string = ud->get2<std::string>("path", "");
+                    auto type_index = ud->get_int("curve", 0);
+                    auto path_string = zsString2Std(ud->get_string("path", ""));
 
                     glm::mat4 transform(1.0f);
                     auto transform_ptr = glm::value_ptr(transform);
 
                     if (ud->has("_transform_row0") && ud->has("_transform_row1") && ud->has("_transform_row2") && ud->has("_transform_row3")) {
 
-                        auto row0 = ud->get2<zeno::vec4f>("_transform_row0");
-                        auto row1 = ud->get2<zeno::vec4f>("_transform_row1");
-                        auto row2 = ud->get2<zeno::vec4f>("_transform_row2");
-                        auto row3 = ud->get2<zeno::vec4f>("_transform_row3");
+                        auto row0 = toVec4f(ud->get_vec4f("_transform_row0"));
+                        auto row1 = toVec4f(ud->get_vec4f("_transform_row1"));
+                        auto row2 = toVec4f(ud->get_vec4f("_transform_row2"));
+                        auto row3 = toVec4f(ud->get_vec4f("_transform_row3"));
 
                         memcpy(transform_ptr, row0.data(), sizeof(float)*4);
                         memcpy(transform_ptr+4, row1.data(), sizeof(float)*4);
@@ -409,7 +463,7 @@ struct GraphicsManager {
                         memcpy(transform_ptr+12, row3.data(), sizeof(float)*4); 
                     }
 
-                    auto yup = ud->get2<bool>("yup", true);
+                    auto yup = ud->get_bool("yup", true);
                     auto trans = yup? glm::mat4 { 
                                                     0, 0, 1, 0,
                                                     1, 0, 0, 0,
@@ -425,30 +479,31 @@ struct GraphicsManager {
                 auto is_sphere = prim_in_lslislSp->userData()->has("sphere_center");
                 if (is_sphere) {
 
-                    auto ud = dynamic_cast<zeno::UserData*>(prim_in_lslislSp->userData());
+                    auto ud = prim_in_lslislSp->userData();
                     printf("Before loading sphere %s for ray tracing... \n", key.c_str());
                     
-                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
-                    auto instID = ud->get2<std::string>("instID", "Default");
+                    auto mtlid = zsString2Std(ud->get_string("mtlid", "Default"));
+                    auto instID = zsString2Std(ud->get_string("instID", "Default"));
 
                     bool instanced = (instID != "Default" && instID != "");
 
-                    auto sphere_scale = ud->get2<zeno::vec3f>("sphere_scale");
+                    auto sphere_scale = ud->get_vec3f("sphere_scale");
                     auto uniform_scaling = sphere_scale[0] == sphere_scale[1] && sphere_scale[2] == sphere_scale[0];
 
                     if (instanced) { 
-                        auto sphere_center = ud->get2<zeno::vec3f>("sphere_center");
-                        auto sphere_radius = ud->get2<float>("sphere_radius");
+                        auto sphere_center = ud->get_vec3f("sphere_center");
+                        auto sphere_radius = ud->get_float("sphere_radius");
                              sphere_radius *= fmaxf(fmaxf(sphere_scale[0], sphere_scale[1]), sphere_scale[2]);
 
-                        xinxinoptix::preload_sphere_instanced(key, mtlid, instID, sphere_radius, sphere_center);
                     } else {
 
+                        const auto objectName = zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(key)));
+
                         //zeno::vec4f row0, row1, row2, row3;
-                        auto row0 = ud->get2<zeno::vec4f>("_transform_row0");
-                        auto row1 = ud->get2<zeno::vec4f>("_transform_row1");
-                        auto row2 = ud->get2<zeno::vec4f>("_transform_row2");
-                        auto row3 = ud->get2<zeno::vec4f>("_transform_row3");
+                        auto row0 = toVec4f(ud->get_vec4f("_transform_row0"));
+                        auto row1 = toVec4f(ud->get_vec4f("_transform_row1"));
+                        auto row2 = toVec4f(ud->get_vec4f("_transform_row2"));
+                        auto row3 = toVec4f(ud->get_vec4f("_transform_row3"));
 
                         glm::mat4 sphere_transform;
                         auto transform_ptr = glm::value_ptr(sphere_transform);
@@ -458,7 +513,7 @@ struct GraphicsManager {
                         memcpy(transform_ptr+8, row2.data(), sizeof(float)*4);  
                         memcpy(transform_ptr+12, row3.data(), sizeof(float)*4);
 
-                        xinxinoptix::preload_sphere_transformed(key, mtlid, instID, sphere_transform);
+                        defaultScene.preload_sphere_transformed(objectName, mtlid, instID, sphere_transform);
                     }
 
                     printf("After loading sphere %s for ray tracing... \n", key.c_str());
@@ -467,13 +522,13 @@ struct GraphicsManager {
 
                 auto is_vbox = prim_in_lslislSp->userData()->has("vbox");
                 if (is_vbox) {
-                    auto ud = dynamic_cast<zeno::UserData*>(prim_in_lslislSp->userData());
-                    auto mtlid = ud->get2<std::string>("mtlid", "Default");
+                    auto ud = prim_in_lslislSp->userData();
+                    auto mtlid = zsString2Std(ud->get_string("mtlid", "Default"));
 
-                    auto row0 = ud->get2<zeno::vec4f>("_transform_row0");
-                    auto row1 = ud->get2<zeno::vec4f>("_transform_row1");
-                    auto row2 = ud->get2<zeno::vec4f>("_transform_row2");
-                    auto row3 = ud->get2<zeno::vec4f>("_transform_row3");
+                    auto row0 = toVec4f(ud->get_vec4f("_transform_row0"));
+                    auto row1 = toVec4f(ud->get_vec4f("_transform_row1"));
+                    auto row2 = toVec4f(ud->get_vec4f("_transform_row2"));
+                    auto row3 = toVec4f(ud->get_vec4f("_transform_row3"));
 
                     glm::mat4 vbox_transform;
                     auto transform_ptr = glm::value_ptr(vbox_transform);
@@ -483,7 +538,7 @@ struct GraphicsManager {
                     memcpy(transform_ptr+8, row2.data(), sizeof(float)*4);  
                     memcpy(transform_ptr+12, row3.data(), sizeof(float)*4);
 
-                    auto bounds = ud->get2<std::string>("bounds");
+                    auto bounds = zsString2Std(ud->get_string("bounds"));
                     
                     uint8_t boundsID = [&]() {
                         if ("Box" == bounds)
@@ -494,55 +549,15 @@ struct GraphicsManager {
                             return 2;
                     } ();
 
-                    OptixUtil::preloadVolumeBox(key, mtlid, boundsID, vbox_transform);
+                    const auto reName = zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(key)));
+                    defaultScene.preloadVolumeBox(reName, mtlid, boundsID, vbox_transform);
                     return;
                 }
 
                 auto isRealTimeObject = prim_in->userData()->get_int("isRealTimeObject", 0);
                 auto isUniformCarrier = prim_in->userData()->has("ShaderUniforms");
-
-                auto isInst = prim_in->userData()->get_int("isInst", 0);
                 
-                if (isInst == 1)
-                {
-                    if (!prim_in->has_attr("pos"))
-                    {
-                        prim_in->add_attr<zeno::vec3f>("pos");
-                        prim_in->attr<zeno::vec3f>("pos").assign(prim_in->attr<zeno::vec3f>("pos").size(), zeno::vec3f(0, 0, 0));
-                    }
-                    if (!prim_in->has_attr("nrm"))
-                    {
-                        prim_in->add_attr<zeno::vec3f>("nrm");
-                        prim_in->attr<zeno::vec3f>("nrm").assign(prim_in->attr<zeno::vec3f>("nrm").size(), zeno::vec3f(0, 1, 0));
-                    }
-                    if (!prim_in->has_attr("uv"))
-                    {
-                        prim_in->add_attr<zeno::vec3f>("uv");
-                        prim_in->attr<zeno::vec3f>("uv").assign(prim_in->attr<zeno::vec3f>("uv").size(), zeno::vec3f(0, 0, 0));
-                    }
-                    if (!prim_in->has_attr("clr"))
-                    {
-                        prim_in->add_attr<zeno::vec3f>("clr");
-                        prim_in->attr<zeno::vec3f>("clr").assign(prim_in->attr<zeno::vec3f>("clr").size(), zeno::vec3f(1, 1, 1));
-                    }
-                    if (!prim_in->has_attr("tang"))
-                    {
-                        prim_in->add_attr<zeno::vec3f>("tang");
-                        prim_in->attr<zeno::vec3f>("tang").assign(prim_in->attr<zeno::vec3f>("tang").size(), zeno::vec3f(1, 0, 0));
-                    }
-                    
-                    auto instID = prim_in->userData()->get_string("instID", "Default");
-                    auto onbType = prim_in->userData()->get_string("onbType", "XYZ");
-                    
-                    std::size_t numInsts = prim_in->verts.size();
-                    const float *pos = (const float *)prim_in->attr<zeno::vec3f>("pos").data();
-                    const float *nrm = (const float *)prim_in->attr<zeno::vec3f>("nrm").data();
-                    const float *uv = (const float *)prim_in->attr<zeno::vec3f>("uv").data();
-                    const float *clr = (const float *)prim_in->attr<zeno::vec3f>("clr").data();
-                    const float *tang = (const float *)prim_in->attr<zeno::vec3f>("tang").data();
-                    xinxinoptix::load_inst(key, zsString2Std(instID), zsString2Std(onbType), numInsts, pos, nrm, uv, clr, tang);
-                }
-                else if (isRealTimeObject == 0 && isUniformCarrier == 0)
+                if (isRealTimeObject == 0 && isUniformCarrier == 0)
                 {
                     //first init matidx attr
                     int matNum = prim_in->userData()->get_int("matNum",0);
@@ -565,7 +580,7 @@ struct GraphicsManager {
 
 
 
-        det = DetPrimitive{};
+        det = DetPrimitive{prim_in_lslislSp};
         if (int subdlevs = prim_in->userData()->get_int("delayedSubdivLevels", 0)) {
             // todo: zhxx, should comp normal after subd or before????
             zeno::log_trace("computing subdiv {}", subdlevs);
@@ -580,20 +595,69 @@ struct GraphicsManager {
                 .call();  // will inplace subdiv prim
             prim_in->userData()->del("delayedSubdivLevels");
         }
+
+            if (prim_in->userData()->has("ResourceType")) {
+                    
+                const auto reType = prim_in->userData()->get_string("ResourceType", "Mesh");
+                const auto reName = zeno::zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(key)));
+                
+                if (reType == "SceneDescriptor") 
+                {
+                    const auto sceneConfig = zeno::zsString2Std(prim_in->userData()->get_string("Scene", ""));
+                    defaultScene.preload_scene(sceneConfig);
+                    return;
+                }
+            
+                if (reType == "Matrixes") {
+                    auto count = prim_in->verts->size();
+                    auto& _r0 = prim_in->verts.attr<zeno::vec3f>("r0");
+                    auto& _r1 = prim_in->verts.attr<zeno::vec3f>("r1");
+                    auto& _r2 = prim_in->verts.attr<zeno::vec3f>("r2");
+
+                    std::vector<m3r4c> matrix_list(count);
+
+                    for (size_t i=0; i<count; ++i) {
+                        auto pos = prim_in->verts[i];
+                        auto r0 = _r0[i];
+                        auto r1 = _r1[i];
+                        auto r2 = _r2[i];
+
+                        auto& matrix3r4c = matrix_list[i];
+                        matrix3r4c[0]  = r0[0];
+                        matrix3r4c[1]  = r1[0];
+                        matrix3r4c[2]  = r2[0];
+                        matrix3r4c[3]  = pos[0];
+                        matrix3r4c[4]  = r0[1];
+                        matrix3r4c[5]  = r1[1];
+                        matrix3r4c[6]  = r2[1];
+                        matrix3r4c[7]  = pos[1];
+                        matrix3r4c[8]  = r0[2];
+                        matrix3r4c[9]  = r1[2];
+                        matrix3r4c[10] = r2[2];
+                        matrix3r4c[11] = pos[2];
+                    }
+                    defaultScene.load_matrix_list(reName, matrix_list);
+                    return;
+                }
+
+                if (reType == "Particles") {
+                    auto& center = prim_in->verts;
+                    auto& color = prim_in->verts.attr<zeno::vec3f>("clr");
+                    auto& radius = prim_in->verts.attr<float>("radius");
+
+                    defaultScene.preload_sphere_group(reName, center, radius, color);
+                    return;
+                }
+
+                int frame = zeno::getSession().globalState->getFrameId();
+                if (reType == "Mesh")
+                {
                     if (prim_in->quads.size() || prim_in->polys.size()) {
                         zeno::log_trace("demoting faces");
                         zeno::primTriangulateQuads(prim_in);
                         zeno::primTriangulate(prim_in);
                     }
                     if(prim_in->tris.size()==0) return;
-
-//                    /// WXL
-//                    (void)zeno::TempNodeSimpleCaller("PrimitiveReorder")
-//                        .set("prim", std::shared_ptr<zeno::PrimitiveObject>(prim_in, [](void *) {}))
-//                        .set2<bool>("order_vertices", true)
-//                        .set2<bool>("order_tris", true)
-//                        .call();  // will inplace reorder prim
-//                    /// WXL
 
                     bool has_uv =   prim_in->tris.has_attr("uv0")&&prim_in->tris.has_attr("uv1")&&prim_in->tris.has_attr("uv2");
                     if(has_uv == false)
@@ -608,6 +672,7 @@ struct GraphicsManager {
                         auto &uv0 = prim_in->tris.add_attr<zeno::vec3f>("uv0");
                         auto &uv1 = prim_in->tris.add_attr<zeno::vec3f>("uv1");
                         auto &uv2 = prim_in->tris.add_attr<zeno::vec3f>("uv2");
+
                         for(size_t i=0; i<prim_in->tris.size();i++)
                         {
                             uv0[i]=uv[prim_in->tris[i][0]];
@@ -657,168 +722,36 @@ struct GraphicsManager {
                     auto nvs = oPrim->verts.size();
                     auto nts = oPrim->tris.size();
 
-                    auto primin_usrdat = dynamic_cast<zeno::UserData*>(prim_in->userData());
-
                     std::vector<std::string> matNameList(0);
                     if(matNum>0)
                     {
                         for(int i=0;i<matNum;i++)
                         {
                             auto matIdx = "Material_" + std::to_string(i);
-                            auto matName = primin_usrdat->get2<std::string>(matIdx, "Default");
+                            auto matName = zsString2Std(prim_in->userData()->get_string(zeno::stdString2zs(matIdx), "Default"));
                             matNameList.emplace_back(matName);
                         }
                     }
-                    auto mtlid = primin_usrdat->get2<std::string>("mtlid", "Default");
-                    auto instID = primin_usrdat->get2<std::string>("instID", "Default");
+                    auto mtlid = zsString2Std(prim_in->userData()->get_string("Material_0", "Default"));
                     auto& matids = prim_in->tris.attr<int>("matid");
-                    
-                    xinxinoptix::load_object(key, mtlid, instID, vs, nvs, ts, nts, vtab, matids.data(), matNameList);
+
+                    defaultScene.preload_mesh(reName, mtlid, vs, nvs, ts, nts, vtab, matids.data(), matNameList);
+                } // Mesh
+            } // ResourceType
+
                 }
             }
-#if 0
-            else if (auto geo = dynamic_cast<zeno::GeometryObject*>(obj)){
-                //TODO
-                size_t nPoints = geo->npoints();
-                zeno::UserData& ud = geo->userData();
-                if (ud->has("curve") && geo->npoints() > 0 && geo->has_attr(zeno::ATTR_POINT, "width")) {
-
-                }
-                if (ud->has("cyhair")) {
-
-                }
-                if (ud->has("sphere_center")) {
-
-                }
-                if (ud->has("vbox")) {
-
-                }
-
-                auto isRealTimeObject = ud->get_int("isRealTimeObject", 0);
-                auto isUniformCarrier = ud->has("ShaderUniforms");
-                auto isInst = ud->get_int("isInst", 0);
-
-                if (isInst == 1)
-                {
-                    if (!geo->has_attr(zeno::ATTR_POINT, "pos")) {
-
-                    }
-                    if (!geo->has_attr(zeno::ATTR_POINT, "nrm")) {
-
-                    }
-                    if (!geo->has_attr(zeno::ATTR_POINT, "uv")) {
-
-                    }
-                    if (!geo->has_attr(zeno::ATTR_POINT, "clr")) {
-
-                    }
-                    if (!geo->has_attr(zeno::ATTR_POINT, "tang")) {
-
-                    }
-
-                    auto instID = ud->get_string("instID", "Default");
-                    auto onbType = ud->get_string("onbType", "XYZ");
-
-                    std::size_t numInsts = geo->npoints();
-                    //if not exist?
-                    //const float* pos = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "pos").data();
-                    //const float* nrm = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "nrm").data();
-                    //const float* uv = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "uv").data();
-                    //const float* clr = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "clr").data();
-                    //const float* tang = (const float*)zeno::get_attr_vector(geo, zeno::ATTR_POINT, "tang").data();
-                    //xinxinoptix::load_inst(key, instID, onbType, numInsts, pos, nrm, uv, clr, tang);
-                }
-                else if (isRealTimeObject == 0 && isUniformCarrier == 0)
-                {
-                    int matNum = ud->get_int("matNum", 0);
-                    if (matNum == 0)
-                    {
-                        //assign -1 to "matid" attr
-                        if (geo->nfaces() > 0) {
-                            geo->create_attr(zeno::ATTR_FACE, "matid", -1);
-                        }
-                    }
-                    det = DetPrimitive{};
-                    if (int subdlevs = ud->get_int("delayedSubdivLevels", 0)) {
-                        //TODO? compute subdiv?
-                        /*
-                                    (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
-                            .set("prim", prim_in_lslislSp)
-                            .set2<int>("levels", subdlevs)
-                            .set2<std::string>("edgeCreaseAttr", "")
-                            .set2<bool>("triangulate", true)
-                            .set2<bool>("asQuadFaces", true)
-                            .set2<bool>("hasLoopUVs", true)
-                            .set2<bool>("delayTillIpc", false)
-                            .call();  // will inplace subdiv prim
-                        prim_in->userData()->del("delayedSubdivLevels");
-                        */
-                    }
-
-                    if (geo->is_base_triangle()) {
-                        //TODO:
-                        return;
-                    }
-
-                    zeno::TriangulateInfo tri_info;
-                    zeno::log_trace("demoting faces");
-                    geo->geomTriangulate(tri_info);
-
-                    size_t nTriangles = tri_info.tris.size();
-                    if (nTriangles == 0) {
-                        return;
-                    }
-
-                    auto mtlid = ud->get_string("mtlid", "Default");
-                    auto instID = ud->get_string("instID", "Default");
-
-                    bool has_uv = !tri_info.uv0.empty() && !tri_info.uv1.empty() && !tri_info.uv2.empty() && !tri_info.uv.empty();
-                    if (has_uv == false)
-                    {
-                        tri_info.uv0.resize(nTriangles);
-                        tri_info.uv1.resize(nTriangles);
-                        tri_info.uv2.resize(nTriangles);
-                        tri_info.uv.resize(nTriangles);
-                    }
-                    std::vector<zeno::vec3f> uv(nPoints);
-
-#ifdef ATTR_VEC_STORE_ISOLATE
-                    std::vector<zeno::vec3f> pos(geo->points_pos());
-#else
-                    std::vector<zeno::vec3f>& pos = geo->modify_get_attr(ATTR_POINT, "pos");
-#endif
-
-                    std::vector<zeno::vec3f> normals;
-                    if (!geo->has_attr(zeno::ATTR_POINT, "nrm")) {
-                        normals = calc_point_normals(geo, tri_info.tris);
-                    }
-                    else {
-                        normals = geo->get_attr<zeno::vec3f>(zeno::ATTR_POINT, "nrm");
-                    }
-
-                    //TODO
-                    std::vector<zeno::vec3f> tang = calc_triangles_tangent(geo, has_uv, tri_info.tris, pos, tri_info.uv, tri_info.uv0, tri_info.uv1, tri_info.uv2);
-                    std::vector<zeno::vec3f> atang = compute_vertex_tangent(tri_info.tris, tang, pos);
-
-                    std::vector<zeno::vec3i> idxBuffer;
-
-                    //geo->create_attr_value(zeno::ATTR_POINT, "pos2", zeno::vec2f(0, 4.5));
-                    //geo->set_attr_value(zeno::ATTR_POINT, "pos2", zeno::vec2f(1.f, 5.f));
-                    //std::vector<std::vector<float>*> arr = geo->get_vec_attr_value<float>(zeno::ATTR_POINT, "pos2");
-
-                    //xinxinoptix::load_object(key, mtlid, instID, vs, nvs, ts, nts, vtab, matids.data(), matNameList);
-                }
-            }
-#endif
             else if (auto mtl = dynamic_cast<zeno::MaterialObject *>(obj))
             {
-                det = DetMaterial{mtl->tex2Ds, mtl->tex3Ds, mtl->common, mtl->frag, mtl->extensions, mtl->mtlidkey, mtl->parameters};
+                const auto dirty = true;
+                int stamp_base = 0; //deprecated
+                det = DetMaterial{mtl->tex2Ds, mtl->tex3Ds, mtl->common, mtl->frag, mtl->extensions, mtl->mtlidkey, mtl->parameters,
+                        stamp_base,  dirty};
             }
         }
 
         ~ZxxGraphic() {
-            xinxinoptix::unload_object(key);
-            xinxinoptix::unload_inst(key);
+            defaultScene.unload_object(key);
         }
     };
 
@@ -833,9 +766,10 @@ struct GraphicsManager {
         std::vector<float4> shaderUniforms;
         shaderUniforms.resize(0);
         for (auto const &[key, obj] : objs) {
-            if (auto prim_in = dynamic_cast<zeno::PrimitiveObject*>(obj.get())){
+            if (auto prim_in = dynamic_cast<zeno::PrimitiveObject *>(obj.get())){
                 if ( prim_in->userData()->get_int("ShaderUniforms", 0)==1 )
                 {
+
                     shaderUniforms.resize(prim_in->verts.size());
                     for(int i=0;i<prim_in->verts.size();i++)
                     {
@@ -852,32 +786,31 @@ struct GraphicsManager {
     bool load_lights(std::string key, zeno::IObject *obj){
         bool sky_found = false;
         if (auto prim_in = dynamic_cast<zeno::PrimitiveObject *>(obj)) {
-            auto primin_usrdat = dynamic_cast<zeno::UserData*>(prim_in->userData());
-            auto isRealTimeObject = primin_usrdat->get_int("isRealTimeObject", 0);
+            auto isRealTimeObject = prim_in->userData()->get_int("isRealTimeObject", 0);
             if (isRealTimeObject == 0) {
                 return false;
             }
-            if (primin_usrdat->get_int("isL", 0) == 1) {
+            if (prim_in->userData()->get_int("isL", 0) == 1) {
                 //zeno::log_info("processing light key {}", key.c_str());
-                auto type = primin_usrdat->get2<int>("type", 0);
-                auto shape = primin_usrdat->get2<int>("shape", 0);
-                auto maxDistance = primin_usrdat->get_float("maxDistance", std::numeric_limits<float>().max());
-                auto falloffExponent = primin_usrdat->get_float("falloffExponent", 2.0f);
+                auto type = prim_in->userData()->get_int("type", 0);
+                auto shape = prim_in->userData()->get_int("shape", 0);
+                auto maxDistance = prim_in->userData()->get_float("maxDistance", std::numeric_limits<float>().max());
+                auto falloffExponent = prim_in->userData()->get_float("falloffExponent", 2.0f);
 
-                auto color = primin_usrdat->get2<zeno::vec3f>("color");
-                auto spread = primin_usrdat->get2<zeno::vec2f>("spread", {1.0f, 0.0f});
-                auto intensity = primin_usrdat->get_float("intensity", 1.0f);
-                auto fluxFixed = primin_usrdat->get_float("fluxFixed", -1.0f);
-                auto vIntensity = primin_usrdat->get_float("visibleIntensity", -1.0f);
+                auto color = toVec3f(prim_in->userData()->get_vec3f("color"));
+                auto spread = toVec2f(prim_in->userData()->get_vec2f("spread", zeno::Vec2f(1.0f, 0.0f)));
+                auto intensity = prim_in->userData()->get_float("intensity", 1.0f);
+                auto fluxFixed = prim_in->userData()->get_float("fluxFixed", -1.0f);
+                auto vIntensity = prim_in->userData()->get_float("visibleIntensity", -1.0f);
 
-                auto ivD = primin_usrdat->get_int("ivD", 0);
+                auto ivD = prim_in->userData()->get_int("ivD", 0);
 
-                auto mask = primin_usrdat->get_int("mask", 255);
-                auto visible = primin_usrdat->get_int("visible", 0);
-                auto doubleside = primin_usrdat->get_int("doubleside", 0);
-                auto lightProfilePath = primin_usrdat->get2<std::string>("lightProfile", "");
-                auto lightTexturePath = primin_usrdat->get2<std::string>("lightTexture", "");
-                auto lightGamma = primin_usrdat->get_float("lightGamma", 1.0f);
+                auto mask = prim_in->userData()->get_int("mask", 255);
+                auto visible = prim_in->userData()->get_int("visible", 0);
+                auto doubleside = prim_in->userData()->get_int("doubleside", 0);
+                auto lightProfilePath = zsString2Std(prim_in->userData()->get_string("lightProfile", ""));
+                auto lightTexturePath = zsString2Std(prim_in->userData()->get_string("lightTexture", ""));
+                auto lightGamma = prim_in->userData()->get_float("lightGamma", 1.0f); 
 
                 if (lightProfilePath != "") {
                     OptixUtil::addTexture(lightProfilePath);
@@ -993,25 +926,25 @@ struct GraphicsManager {
                     xinxinoptix::load_light(key, ld, v3.data(), e1.data(), e2.data());
                 }
             }
-            else if (primin_usrdat->get_int("ProceduralSky", 0) == 1) {
+            else if (prim_in->userData()->get_int("ProceduralSky", 0) == 1) {
                 sky_found = true;
-                zeno::vec2f sunLightDir = primin_usrdat->get2<zeno::vec2f>("sunLightDir");
-                float sunLightSoftness = primin_usrdat->get_float("sunLightSoftness");
-                float sunLightIntensity = primin_usrdat->get_float("sunLightIntensity");
-                float colorTemperatureMix = primin_usrdat->get_float("colorTemperatureMix");
-                float colorTemperature = primin_usrdat->get_float("colorTemperature");
-                zeno::vec2f windDir = primin_usrdat->get2<zeno::vec2f>("windDir");
-                float timeStart = primin_usrdat->get_float("timeStart");
-                float timeSpeed = primin_usrdat->get_float("timeSpeed");
+                zeno::vec2f sunLightDir = toVec2f(prim_in->userData()->get_vec2f("sunLightDir"));
+                float sunLightSoftness = prim_in->userData()->get_float("sunLightSoftness");
+                float sunLightIntensity = prim_in->userData()->get_float("sunLightIntensity");
+                float colorTemperatureMix = prim_in->userData()->get_float("colorTemperatureMix");
+                float colorTemperature = prim_in->userData()->get_float("colorTemperature");
+                zeno::vec2f windDir = toVec2f(prim_in->userData()->get_vec2f("windDir"));
+                float timeStart = prim_in->userData()->get_float("timeStart");
+                float timeSpeed = prim_in->userData()->get_float("timeSpeed");
                 xinxinoptix::update_procedural_sky(sunLightDir, sunLightSoftness, windDir, timeStart, timeSpeed,
                                                    sunLightIntensity, colorTemperatureMix, colorTemperature);
             }
-            else if (primin_usrdat->has_string("HDRSky")) {
-                auto path = primin_usrdat->get2<std::string>("HDRSky");
-                float evnTexRotation = primin_usrdat->get_float("evnTexRotation");
-                zeno::vec3f evnTex3DRotation = primin_usrdat->get2<zeno::vec3f>("evnTex3DRotation");
-                float evnTexStrength = primin_usrdat->get_float("evnTexStrength");
-                bool enableHdr = primin_usrdat->get_bool("enable");
+            else if (prim_in->userData()->has_string("HDRSky")) {
+                auto path = zsString2Std(prim_in->userData()->get_string("HDRSky"));
+                float evnTexRotation = prim_in->userData()->get_float("evnTexRotation");
+                zeno::vec3f evnTex3DRotation = toVec3f(prim_in->userData()->get_vec3f("evnTex3DRotation"));
+                float evnTexStrength = prim_in->userData()->get_float("evnTexStrength");
+                bool enableHdr = prim_in->userData()->get_bool("enable");
                 if (!path.empty()) {
                     if (OptixUtil::sky_tex.has_value() && OptixUtil::sky_tex.value() != path
                         && OptixUtil::sky_tex.value() != OptixUtil::default_sky_tex ) {
@@ -1030,9 +963,9 @@ struct GraphicsManager {
                 if (OptixUtil::portal_delayed.has_value()) {
                     OptixUtil::portal_delayed.value()();
                     //OptixUtil::portal_delayed.reset();
+                }
             }
-        }
-            else if (primin_usrdat->has<int>("SkyComposer")) {
+            else if (prim_in->userData()->has_int("SkyComposer")) {
 
                 auto& attr_dir = prim_in->verts;
 
@@ -1058,11 +991,11 @@ struct GraphicsManager {
 
                 if(prim_in->userData()->has_string("portals")) {
 
-                    auto portals_string = prim_in->userData()->get_string("portals");
-                    auto portals_json = nlohmann::json::parse(zsString2Std(portals_string));
+                    auto portals_string = zsString2Std(prim_in->userData()->get_string("portals"));
+                    auto portals_json = nlohmann::json::parse(portals_string);
 
-                    auto ps_string = prim_in->userData()->get_string("psizes");
-                    auto ps_json = nlohmann::json::parse(zsString2Std(ps_string));
+                    auto ps_string = zsString2Std(prim_in->userData()->get_string("psizes"));
+                    auto ps_json = nlohmann::json::parse(ps_string);
 
                     std::vector<Portal> portals {};
 
@@ -1106,6 +1039,9 @@ struct GraphicsManager {
         bool changelight = false;
         for (auto const &[key, obj] : objs) {
             if(ins.may_emplace(key)) {
+                const std::string& stamptag = zsString2Std(obj->userData()->get_string("stamp-change", "TotalChange"));
+                const int& stamptag1 = obj->userData()->get_int("stamp-base", -1);
+                const std::string& stamptag2 = zsString2Std(obj->userData()->get_string("stamp-dataChange-hint", ""));
                 changelight = true;
             }
         }
@@ -1119,7 +1055,7 @@ struct GraphicsManager {
         }
 
         auto& ud = zeno::getSession().userData();
-        bool show_background = ud.get2<bool>("optix_show_background", false);
+        bool show_background = ud.get_bool("optix_show_background", false);
         xinxinoptix::show_background(show_background);
 
         return changelight;
@@ -1161,7 +1097,7 @@ struct GraphicsManager {
 
         for (auto const &[key, obj] : objs) {
             if (ins.may_emplace(key) && key.find(":static:")!=key.npos) {
-                zeno::log_info("load_static_object: loading graphics [{}]", key);
+                //zeno::log_info("load_static_object: loading graphics [{}]", key);
                 changed = true;
 
                 if (auto cam = dynamic_cast<zeno::CameraObject *>(obj))
@@ -1174,14 +1110,17 @@ struct GraphicsManager {
                             ud->get_float("shutter_speed"),
                             ud->get_float("iso"),
                             ud->get_bool("aces"),
-                            ud->get_bool("exposure")
+                            ud->get_bool("exposure"),
+                            ud->get_bool("panorama_camera"),
+                            ud->get_bool("panorama_vr180"),
+                            ud->get_float("pupillary_distance")
                         );
                     }
                 }
 
                 auto ig = std::make_unique<ZxxGraphic>(key, obj);
 
-                zeno::log_info("load_static_object: loaded graphics to {}", ig.get());
+                //zeno::log_info("load_static_object: loaded graphics to {}", ig.get());
                 ins.try_emplace(key, std::move(ig));
             }
         }
@@ -1236,7 +1175,7 @@ struct GraphicsManager {
             //auto ikey = key + ':' + std::string(std::to_string(idx));
             if (ins.may_emplace(key) && key.find(":static:")==key.npos) {
 
-                zeno::log_info("load_object: loading graphics [{}]", key);
+//                zeno::log_info("load_object: loading graphics [{}]", key);
                 changed = true;
 
                 if (!scene->drawOptions->updateMatlOnly) {
@@ -1249,7 +1188,10 @@ struct GraphicsManager {
                                 ud->get_float("shutter_speed"),
                                 ud->get_float("iso"),
                                 ud->get_bool("aces"),
-                                ud->get_bool("exposure")
+                                ud->get_bool("exposure"),
+                                ud->get_bool("panorama_camera"),
+                                ud->get_bool("panorama_vr180"),
+                                ud->get_float("pupillary_distance")
                             );
                         }
                     }
@@ -1266,7 +1208,7 @@ struct GraphicsManager {
 
                 auto ig = std::make_unique<ZxxGraphic>(key, obj);
 
-                zeno::log_info("load_object: loaded graphics to {}", ig.get());
+//                zeno::log_info("load_object: loaded graphics to {}", ig.get());
                 ins.try_emplace(key, std::move(ig));
             }
         }
@@ -1303,39 +1245,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         return posWS;
     }
 
-    std::map<std::string, int> objsType;
-    void setUpdateLightCameraMaterialOnly(std::map<std::string, std::shared_ptr<zeno::IObject>>& addObjs, std::vector<std::string>& removeList) {
-        if (!addObjs.empty() || !removeList.empty()) {
-            int lightCameraCount = 0, materialCount = 0, normalCount = 0;
-            for (auto& key : removeList) {
-                int type = objsType[key];
-                type == 0 ? lightCameraCount++ : type == 1 ? materialCount++ : normalCount++;
-            }
-            for (auto [key, spObj] : addObjs) {
-                if (spObj->userData()->get_int("isL", 0) || std::dynamic_pointer_cast<zeno::CameraObject>(spObj)) {
-                    objsType[key] = 0;
-                    lightCameraCount++;
-                }
-                else if (std::dynamic_pointer_cast<zeno::MaterialObject>(spObj)) {
-                    objsType[key] = 1;
-                    materialCount++;
-                }
-                else {
-                    objsType[key] = 2;
-                    normalCount++;
-                }
-            }
-            for (auto& key : removeList) {
-                objsType.erase(key);
-            }
-            lightNeedUpdate = lightCameraCount > 0 || normalCount > 0;
-            scene->drawOptions->needRefresh = lightCameraCount > 0 || normalCount > 0;
-            matNeedUpdate = materialCount > 0 || normalCount > 0;
-            meshNeedUpdate = normalCount > 0;
-            scene->drawOptions->updateMatlOnly = !lightNeedUpdate && !meshNeedUpdate;
-        }
-    }
-
     auto setupState() {
         return std::tuple{
             opengl::scopeGLEnable(GL_BLEND, false),
@@ -1360,12 +1269,48 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         xinxinoptix::optixinit(std::size(argv), argv);
     }
 
-    void load_object(zeno::render_update_info info) override {
+    void process_listobj(std::shared_ptr<zeno::ListObject> spList, zeno::container_elem_update_info info) {
+#if 0
+        std::map<std::string, std::vector<zeno::MaterialObject*>> mats;
+        for (auto spObject : spList->m_impl->get()) {
+            std::shared_ptr<zeno::MaterialObject> spMaterial = std::dynamic_pointer_cast<zeno::MaterialObject>(spObject);
+            if (spMaterial)
+            {
+                auto iter = mats.find(spMaterial->mtlidkey);
+                if (iter == mats.end()) {
+                    mats.insert(std::make_pair(spMaterial->mtlidkey, std::vector<zeno::MaterialObject*>()));
+                    iter = mats.find(spMaterial->mtlidkey);
+                }
+                std::vector<zeno::MaterialObject*>& vec = iter->second;
+                vec.push_back(spMaterial.get());
+            }
+        }
+#endif
 
-    }
+        for (auto spObject : spList->m_impl->get()) {
+            std::string const& key = zsString2Std(spObject->key());
+            if (info.new_added.find(key) != info.new_added.end() ||
+                info.modified.find(key) != info.modified.end()) {
 
-    void load_objects(const std::vector<zeno::render_update_info>& infos) override {
-        //TODO
+                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    //暂不支持嵌套
+                    //process_listobj(_spList);
+                }
+                else
+                {
+                    graphicsMan->add_object(spObject);
+                    matNeedUpdate = meshNeedUpdate = true;
+                }
+            }
+        }
+
+        for (auto& key : info.removed) {
+            auto& graphics_ = graphicsMan->graphics.m_curr;
+            auto iter = graphics_.find(key);
+            if (iter == graphics_.end())
+                continue;
+            graphics_.erase(key);
+        }
     }
 
     void reload(const zeno::render_reload_info& info) override {
@@ -1424,57 +1369,23 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 assert(spNode);
                 zeno::zany spObject = spNode->get_default_output_object();
                 if (spObject) {
-                    //可能是对象没有通过子图的Suboutput连出来
-                    graphicsMan->add_object(spObject);
-                    matNeedUpdate = meshNeedUpdate = true;
+                    if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                        process_listobj(_spList, update.cond_update_info);
+                    }
+                    else {
+                        //可能是对象没有通过子图的Suboutput连出来
+                        graphicsMan->add_object(spObject);
+                        matNeedUpdate = meshNeedUpdate = true;
+                    }
                 }
             }
         }
     }
 
-    void load_objects(const zeno::RenderObjsInfo& objs) override {
-
-        //light update condition
-        graphicsMan->load_light_objects(objs.lightObjs);
-
-        //增删对象无法沿用viewport逻辑，否则always模式移动数值滑块会有拖影
-        graphicsMan->objOrder.clear();
-        size_t idx = 0;
-        std::map<std::string, zeno::zany> allViewObjs, allConvertedViewObjs, addObjs;
-        zeno::getSession().objsMan->export_all_view_objs(allViewObjs);
-        for (auto& [key, obj] : allViewObjs) {
-            scene->convertListObjs(obj, allConvertedViewObjs);              //展平所有view对象
-        }
-        for (auto& [key, obj] : objs.newObjs) {
-            scene->convertListObjs(obj, addObjs);                           //展平所有新增对象
-        }
-        for (auto& [key, obj] : objs.modifyObjs) {
-            scene->convertListObjs(obj, addObjs);                           //展平所有修改对象
-        }
-        for (auto [key, spObj] : addObjs) {
-            graphicsMan->add_object(spObj);                                 //加入graphics
-            graphicsMan->objOrder[key] = idx++;
-        }
-        std::vector<std::string> removeList;                                //根据实际不使用的对象删除
-        for (auto& [key, spObj] : graphicsMan->graphics.m_curr)
-            if (allConvertedViewObjs.find(key) == allConvertedViewObjs.end())
-                removeList.push_back(key);
-        for (auto& key : removeList)
-            graphicsMan->remove_object(key);
-
-        //设置仅更新灯光相机材质
-        setUpdateLightCameraMaterialOnly(addObjs, removeList);
-
-        if (!objs.allObjects.empty()) {
-            std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>> vecObjs;
-            for (auto [key, spObj] : objs.allObjects) {
-                vecObjs.push_back(std::make_pair(key, spObj));
-            }
-            graphicsMan->load_shader_uniforms(vecObjs);
-        }
+    void optxShowBackground(bool showbg) override {
+        xinxinoptix::show_background(showbg);
     }
 
-    //deprecated
     void update() override {
 
         if(graphicsMan->need_update_light(scene->objectsMan->pairs())
@@ -1536,12 +1447,14 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
     ShaderTemplateInfo _light_shader_template {
         "Light.cu", false, {}, {}, {}
     };
-    
-    std::set<std::string> cachedMeshesMaterials, cachedSphereMaterials;
+
     std::map<std::string, std::vector<zeno::CurveType>> cachedCurvesMaterials;
 
-    std::map<std::string, int> cachedMeshMatLUT;
-    bool meshMatLUTChanged(std::map<std::string, int>& newLUT) {
+    std::map<std::string, std::set<ShaderMark>> required_shader_names;
+    std::map<shader_key_t, std::shared_ptr<ShaderPrepared>, ByShaderKey> cached_shaders{};
+
+    std::map<std::string, uint16_t> cachedMeshMatLUT;
+    bool meshMatLUTChanged(std::map<std::string, uint16_t>& newLUT) {
         bool changed = false;
         if (cachedMeshMatLUT.size() != newLUT.size()) {
             changed = true;
@@ -1592,14 +1505,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         }
         
         _template.ensured = true;
-    }
-
-    bool hasEnding (std::string const &fullString, std::string const &ending) {
-        if (fullString.length() >= ending.length()) {
-            return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
-        } else {
-            return false;
-        }
     }
 
     void draw(bool _) override {
@@ -1657,53 +1562,19 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 cam.zOptixCameraSettingInfo.shutter_speed,
                 cam.zOptixCameraSettingInfo.iso,
                 cam.zOptixCameraSettingInfo.aces,
-                cam.zOptixCameraSettingInfo.exposure
+                cam.zOptixCameraSettingInfo.exposure,
+                cam.zOptixCameraSettingInfo.panorama_camera,
+                cam.zOptixCameraSettingInfo.panorama_vr180,
+                cam.zOptixCameraSettingInfo.pupillary_distance
             );
         }
 
+
+        //zeno::log_info("meshNeedUpdate:{},matNeedUpdate:{},staticNeedUpdate:{},lightNeedUpdate:{}",meshNeedUpdate,matNeedUpdate,staticNeedUpdate,lightNeedUpdate);
         if (meshNeedUpdate || matNeedUpdate || staticNeedUpdate) {
 
-            if ( matNeedUpdate && (staticNeedUpdate || meshNeedUpdate) ) {
-                cachedMeshesMaterials = xinxinoptix::uniqueMatsForMesh();
-                cachedSphereMaterials = xinxinoptix::uniqueMatsForSphere();
-
-                for (auto& [key, _] : hair_xxx_cache) 
-                {
-                    auto& [filePath, mode, mtid] = key;
-
-                    auto ctype = (zeno::CurveType)mode;
-
-                    if (cachedCurvesMaterials.count(mtid) > 0) {
-                        auto& ref = cachedCurvesMaterials.at(mtid);
-                        ref.push_back( ctype );
-                        continue;
-                    }
-                    cachedCurvesMaterials[mtid] = { ctype };
-                }
-
-                for (auto& ele : curveGroupCache) {
-
-                    auto ctype = ele->curveType;
-                    auto mtlid = ele->mtlid;
-
-                    if (cachedCurvesMaterials.count(mtlid) > 0) {
-                        auto& ref = cachedCurvesMaterials.at(mtlid);
-                        ref.push_back( ctype );
-                        continue;
-                    }
-                    cachedCurvesMaterials[mtlid] = { ctype };
-                }
- 
-            } // preserve material names for materials-only updating case 
-
-            std::vector<std::shared_ptr<ShaderPrepared>> _meshes_shader_list{};
-            std::vector<std::shared_ptr<ShaderPrepared>> _sphere_shader_list{};
-            std::vector<std::shared_ptr<ShaderPrepared>> _curves_shader_list{};
-
-            std::vector<std::shared_ptr<ShaderPrepared>> _volume_shader_list{};
-
-            std::map<std::string, int> meshMatLUT{};
-            std::map<std::string, uint> matIDtoShaderIndex{};
+            std::map<std::string,  uint16_t> meshMatLUT{};
+            std::map<shader_key_t, uint16_t> ShaderKeyIndex{};
 
             ensure_shadtmpl(_default_callable_template);
             ensure_shadtmpl(_volume_callable_template);
@@ -1711,58 +1582,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             ensure_shadtmpl(_default_shader_template);
             ensure_shadtmpl(_volume_shader_template);
             ensure_shadtmpl(_light_shader_template);
-
-            //if (cachedMeshesMaterials.count("Default")) 
-            {
-                auto tmp = std::make_shared<ShaderPrepared>();
-
-                tmp->mark = ShaderMark::Mesh;
-                tmp->matid = "Default";
-                tmp->filename = _default_shader_template.name;
-                tmp->callable = _default_callable_template.shadtmpl;
-
-                _meshes_shader_list.push_back(tmp);
-
-                meshMatLUT.insert({"Default", 0});
-            }
-
-            //if (cachedSphereMaterials.count("Default")) 
-            {
-                auto tmp = std::make_shared<ShaderPrepared>();
-
-                tmp->mark = ShaderMark::Sphere;
-                tmp->matid = "Default";
-                tmp->filename = _default_shader_template.name;
-                tmp->callable = _default_callable_template.shadtmpl;
-
-                _sphere_shader_list.push_back(tmp);
-            }
-
-            unsigned int usesCurveTypeFlags = 0;
-            auto mark_task = [&usesCurveTypeFlags](zeno::CurveType ele) {
-
-                usesCurveTypeFlags |= CURVE_FLAG_MAP.at(ele);
-                return CURVE_SHADER_MARK.at(ele);
-            };
-
-            if (cachedCurvesMaterials.count("Default") ) {
-
-                auto& ref = cachedCurvesMaterials.at("Default"); 
-
-                for (auto& ele : ref) {
-
-                    auto tmp = std::make_shared<ShaderPrepared>();
-                    tmp->matid = "Default";
-                    tmp->filename = _default_shader_template.name;
-                    tmp->callable = _default_callable_template.shadtmpl;
-
-                    tmp->mark = mark_task(ele);
-                    _curves_shader_list.push_back(tmp);
-                }                
-            }
-
-            OptixUtil::g_vdb_indice_visible.clear();
-            OptixUtil::g_vdb_list_for_each_shader.clear();
 
             //first pass, remove duplicated mat and keep the later
             std::map<std::string, GraphicsManager::DetMaterial*> matMap;
@@ -1788,15 +1607,101 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 }
             }
 
+            const auto make_default_shader = [&](ShaderMark mark) {
+                auto default_shader = std::make_shared<ShaderPrepared>();
+                default_shader->mark = mark;
+                default_shader->matid = "Default";
+                default_shader->filename = _default_shader_template.name;
+                default_shader->callable = _default_callable_template.shadtmpl;
+                return default_shader;
+            };
+
+            bool ShaderDirty = false;
+
+            if ( matNeedUpdate && (staticNeedUpdate || meshNeedUpdate) ) {
+                required_shader_names = defaultScene.prepareShaderSet();
+
+                const auto shaderCount = cached_shaders.size();
+
+                for (const auto& [key, value] : required_shader_names) {
+
+                    bool use_default = matMap.count(key) == 0;                       
+
+                    for (const auto& mark : value) {
+                        auto shader_key = std::tuple {key, mark};
+                        //auto default_key = std::tuple {"Default", mark};
+                        
+                        if (use_default) {
+                            auto shader_ref = cached_shaders[shader_key];
+                            if (shader_ref==nullptr || shader_ref->dirty)
+                                cached_shaders[shader_key] = make_default_shader(mark);
+                        } else {
+                            auto& shader_ref = matMap.at(key);
+                            if (shader_ref->dirty) {
+                                cached_shaders[shader_key] = nullptr;
+                                ShaderDirty = true;
+                            } // dirty
+                        }
+                    }
+                }
+
+                ShaderDirty |= (cached_shaders.size() != shaderCount);
+
+                // for (auto& [key, _] : hair_xxx_cache) 
+                // {
+                //     auto& [filePath, mode, mtid] = key;
+
+                //     auto ctype = (zeno::CurveType)mode;
+
+                //     if (cachedCurvesMaterials.count(mtid) > 0) {
+                //         auto& ref = cachedCurvesMaterials.at(mtid);
+                //         ref.push_back( ctype );
+                //         continue;
+                //     }
+                //     cachedCurvesMaterials[mtid] = { ctype };
+                // }
+
+                // for (auto& [key, ele] : curveGroupCache) {
+
+                //     auto ctype = ele->curveType;
+                //     auto mtlid = ele->mtlid;
+
+                //     if (cachedCurvesMaterials.count(mtlid) > 0) {
+                //         auto& ref = cachedCurvesMaterials.at(mtlid);
+                //         ref.push_back( ctype );
+                //         continue;
+                //     }
+                //     cachedCurvesMaterials[mtlid] = { ctype };
+                // }
+ 
+            } // preserve material names for materials-only updating case
+
+            unsigned int usesCurveTypeFlags = 0;
+            auto mark_task = [&usesCurveTypeFlags](zeno::CurveType ele) {
+
+                usesCurveTypeFlags |= CURVE_FLAG_MAP.at(ele);
+                return CURVE_SHADER_MARK.at(ele);
+            };
+
+            if (cachedCurvesMaterials.count("Default") ) {
+
+                auto& ref = required_shader_names.at("Default"); 
+
+                for (auto& ele : ref) {
+
+                    auto tmp = std::make_shared<ShaderPrepared>();
+                    tmp->matid = "Default";
+                    tmp->filename = _default_shader_template.name;
+                    tmp->callable = _default_callable_template.shadtmpl;
+                    tmp->mark = ele;
+                }                
+            }
 
             // Auto unload unused texure
             {
                 std::set<OptixUtil::TexKey> realNeedTexPaths;
                 for(auto const &[matkey, mtldet] : matMap) {
-                    if (mtldet->parameters.find("vol") != std::string::npos
-                        || cachedCurvesMaterials.count(mtldet->mtlidkey) > 0
-                        || cachedMeshesMaterials.count(mtldet->mtlidkey) > 0
-                        || cachedSphereMaterials.count(mtldet->mtlidkey) > 0) 
+                    if (required_shader_names.count( mtldet->mtlidkey ) > 0) 
                     {
                         for(auto& tex: mtldet->tex2Ds) {
                             realNeedTexPaths.insert( {tex->path, tex->blockCompression} );
@@ -1806,9 +1711,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 }
                 // add light map
                 for(auto const &[_, ld]: xinxinoptix::get_lightdats()) {
-                    // if (ld.profileKey.size()) {
-                    //     realNeedTexPaths.emplace_back(ld.profileKey);
-                    // }
                     if (ld.textureKey.size()) {
                         realNeedTexPaths.insert( {ld.textureKey, false});
                     }
@@ -1831,41 +1733,15 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                     OptixUtil::removeTexture(need_remove_tex);
                 }
                 for (const auto& realNeedTexKey: realNeedTexPaths) {
-
                     OptixUtil::addTexture(realNeedTexKey.path, realNeedTexKey.blockCompression);
+                }
             }
-            }
+
             for(auto const &[matkey, mtldet] : matMap)
             {       
-                    bool has_vdb = false;
-                    if (mtldet->tex3Ds.size() > 0) {
-                        glm::mat4 linear_transform(1.0);  
-                        //prepareVolumeTransform(mtldet->, linear_transform);
-                        
-                        std::vector<std::string> g_vdb_list_for_this_shader;
-                        g_vdb_list_for_this_shader.reserve(mtldet->tex3Ds.size());
-
-                        for (uint k=0; k<mtldet->tex3Ds.size(); ++k) 
-                        {
-                            auto& tex = mtldet->tex3Ds.at(k);
-                            auto vdb_path = tex->path;
-
-                            static const auto extension = std::string("vdb");
-                            auto found_vdb = hasEnding(vdb_path, extension);
-                            if (!found_vdb) { continue; }
-
-                            auto index_of_shader = _volume_shader_list.size();
-                            std::string combined_key;
-
-                            auto loaded = OptixUtil::preloadVDB(*tex, index_of_shader, k, linear_transform, combined_key); 
-                            has_vdb = has_vdb || loaded;
-
-                            g_vdb_list_for_this_shader.push_back(combined_key);
-                        }
-                        if (has_vdb) {
-                            OptixUtil::g_vdb_list_for_each_shader[_volume_shader_list.size()] = (g_vdb_list_for_this_shader);
-                        }
-                    }
+                if ( !mtldet->dirty ) continue;
+                if ( required_shader_names.count(mtldet->mtlidkey) == 0 ) continue;
+                mtldet->dirty = false;
 
                     const bool isVol = mtldet->parameters.find("vol") != std::string::npos;
                     
@@ -1897,45 +1773,63 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                         shaderP.parameters = mtldet->parameters;
 
                         shaderP.matid = mtldet->mtlidkey;
+                        shaderP.tex_keys.reserve(mtldet->tex2Ds.size());
+
                         for(auto tex:mtldet->tex2Ds)
                         {
                             shaderP.tex_keys.push_back( {tex->path, tex->blockCompression} );
                         }
 
+                        if (mtldet->tex3Ds.size() > 0) {
+
+                            shaderP.vdb_keys.resize(mtldet->tex3Ds.size());
+        
+                            for (uint k=0; k<mtldet->tex3Ds.size(); ++k) 
+                            {
+                                auto& tex = mtldet->tex3Ds.at(k);
+                                auto vdb_path = tex->path;
+        
+                                static const auto extension = std::string("vdb");
+                                auto found_vdb = zeno::ends_with(vdb_path, extension);
+                                if (!found_vdb) { continue; }
+        
+                                std::string vdb_key;
+                                auto loaded = defaultScene.preloadVDB(*tex, vdb_key); 
+                                shaderP.vdb_keys[k] = vdb_key;
+                            }
+                        }
+
                     if (isVol) {
                         
                         shaderP.mark = ShaderMark::Volume;
-                        _volume_shader_list.push_back(std::make_shared<ShaderPrepared>(shaderP));
+                        auto this_key = std::tuple{shaderP.matid, ShaderMark::Volume};
+                        cached_shaders[this_key] = std::make_shared<ShaderPrepared>(shaderP);
                     } else {
 
-                        if (cachedMeshesMaterials.count(mtldet->mtlidkey) > 0) {
-                            meshMatLUT.insert({mtldet->mtlidkey, (int)_meshes_shader_list.size()});
+                        auto reuiredSet = required_shader_names.at(mtldet->mtlidkey);
+                        
+                        for (auto& mark : reuiredSet) {
+                            shaderP.mark = mark;
 
-                            shaderP.mark = ShaderMark::Mesh;
-                            _meshes_shader_list.push_back(std::make_shared<ShaderPrepared>(shaderP));
+                            auto _shader_key = std::tuple{mtldet->mtlidkey, mark};                            
+                            cached_shaders[_shader_key] = std::make_shared<ShaderPrepared>(shaderP);
                         }
-
-                        if (cachedSphereMaterials.count(mtldet->mtlidkey) > 0) {
-
-                            shaderP.mark = ShaderMark::Sphere;
-                            _sphere_shader_list.push_back(std::make_shared<ShaderPrepared>(shaderP));
-                        }
-
-                        if (cachedCurvesMaterials.count(mtldet->mtlidkey) > 0) {
-
-                            auto& ref = cachedCurvesMaterials.at(mtldet->mtlidkey); 
-                            for (auto& ele : ref) {
-
-                                shaderP.mark = mark_task(ele);
-                                _curves_shader_list.push_back(std::make_shared<ShaderPrepared>(shaderP));
-                            }
-                        }  
                     }
             }
 
-            const auto requireTriangObj = !_meshes_shader_list.empty();
-            const auto requireSphereObj = !_sphere_shader_list.empty();
-            const auto requireVolumeObj = !_volume_shader_list.empty();
+            bool requireTriangObj = false;
+            bool requireSphereObj = false;
+            bool requireVolumeObj = false;
+
+            for (const auto& [key, shader] : cached_shaders) {
+                const auto [k, v] = key;
+                if (v == ShaderMark::Mesh)
+                    requireTriangObj = true;
+                if (v == ShaderMark::Sphere)
+                    requireSphereObj = true;
+                if (v == ShaderMark::Volume)
+                    requireVolumeObj = true;
+            }
 
             bool requireSphereLight = false;
             bool requireTriangLight = false;
@@ -1964,7 +1858,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 tmp->mark = ShaderMark::Mesh;
                 tmp->matid = "Light";
 
-                _meshes_shader_list.push_back(tmp);
+                //cachedMaterial[ std::tuple{"Light", ShaderMark::Mesh} ] = tmp;
             }
 
             if (requireSphereLight) {
@@ -1975,36 +1869,28 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 tmp->mark = ShaderMark::Sphere;
                 tmp->matid = "Light";
                 
-                _sphere_shader_list.push_back(tmp);
+                //cachedMaterial[ std::tuple{"Light", ShaderMark::Sphere} ] = tmp;
             }
 
             std::vector<std::shared_ptr<ShaderPrepared>> allShaders{};
-            allShaders.reserve(_meshes_shader_list.size()+_sphere_shader_list.size()+_volume_shader_list.size());            
+            allShaders.reserve(cached_shaders.size()+2);
 
-            allShaders.insert(allShaders.end(), _meshes_shader_list.begin(), _meshes_shader_list.end());
-            allShaders.insert(allShaders.end(), _sphere_shader_list.begin(), _sphere_shader_list.end());
-            allShaders.insert(allShaders.end(), _volume_shader_list.begin(), _volume_shader_list.end());
+            ShaderKeyIndex.clear();
+            for (const auto& [key, shader] : cached_shaders) {
+                auto idx = allShaders.size();
 
-            allShaders.insert(allShaders.end(), _curves_shader_list.begin(), _curves_shader_list.end());
-
-            const size_t sphere_shader_offset = _meshes_shader_list.size();
-            const size_t volume_shader_offset = _meshes_shader_list.size() + _sphere_shader_list.size();
-
-                for (uint i=0; i<allShaders.size(); ++i) {
-                    auto& ref = allShaders[i];
-
-                    auto combinedID = ref->matid + ":" + std::to_string((ref->mark));
-                    matIDtoShaderIndex[combinedID] = i;
-                }
-
-            if (meshNeedUpdate) {
-                OptixUtil::processVolumeBox();
+                allShaders.push_back(shader);
+                ShaderKeyIndex[key] = idx;
+                
+                if (std::get<1>(key) == ShaderMark::Mesh)
+                    meshMatLUT[std::get<0>(key)] = idx;
             }
 
-            if (matNeedUpdate)
+            defaultScene.processVolumeBox(OptixUtil::context);
+            defaultScene.shader_indice_table = ShaderKeyIndex;
+            bool second_matNeedUpdate = zeno::getSession().userData().get_bool("viewport-optix-matNeedUpdate", true);
+            if (matNeedUpdate && second_matNeedUpdate)
             {
-                std::cout<<"shaders size "<< allShaders.size() << std::endl;
-
                 unsigned int usesPrimitiveTypeFlags = 0u;
                 if (requireTriangObj || requireTriangLight)
                     usesPrimitiveTypeFlags |= OPTIX_PRIMITIVE_TYPE_FLAGS_TRIANGLE;
@@ -2016,56 +1902,45 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                     usesPrimitiveTypeFlags |= usesCurveTypeFlags;
 
                 auto refresh = OptixUtil::configPipeline((OptixPrimitiveTypeFlags)usesPrimitiveTypeFlags);
+                ShaderDirty |= refresh;
+
+                if (refresh) {
+                    for (auto& shader : allShaders)
+                        shader->dirty = true;
+                }
                 
                 xinxinoptix::updateShaders(allShaders, 
                                                     requireTriangObj, requireTriangLight, 
                                                     requireSphereObj, requireSphereLight, 
                                                     requireVolumeObj, usesCurveTypeFlags, refresh);
-                xinxinoptix::updateVolume(volume_shader_offset);
+                                                    
+                defaultScene.prepareVolumeAssets();
             }
-
-            OptixUtil::matIDtoShaderIndex = matIDtoShaderIndex;
 
             bool bMeshMatLUTChanged = false;    //if meshMatLUT need update
             if (scene->drawOptions->updateMatlOnly) {
                 bMeshMatLUTChanged = meshMatLUTChanged(meshMatLUT);
             }
             if (bMeshMatLUTChanged || matNeedUpdate && (staticNeedUpdate || meshNeedUpdate)) {
-                std::map<std::string, int>().swap(cachedMeshMatLUT);
+                std::map<std::string, uint16_t>().swap(cachedMeshMatLUT);
                 cachedMeshMatLUT = meshMatLUT;
             }
 
             if (meshNeedUpdate || bMeshMatLUTChanged)
             {
-                OptixUtil::logInfoVRAM("Before update Mesh");
+                defaultScene.updateMeshMaterials(meshMatLUT);
 
-                if(staticNeedUpdate) {
-                    xinxinoptix::UpdateStaticMesh(meshMatLUT);
-                }
-                xinxinoptix::UpdateDynamicMesh(meshMatLUT);
-
-                OptixUtil::logInfoVRAM("Before update Inst");
-
-                xinxinoptix::UpdateInst();
-                OptixUtil::logInfoVRAM("After update Inst");
-
-                xinxinoptix::updateSphereXAS();
-                OptixUtil::logInfoVRAM("After update Sphere");
                 xinxinoptix::updateCurves();
+                xinxinoptix::prepareScene();
 
-                xinxinoptix::UpdateInstMesh(meshMatLUT);
-                
-                xinxinoptix::UpdateMeshGasAndIas(staticNeedUpdate);
-            
-                xinxinoptix::cleanupSpheresCPU();
-
-                xinxinoptix::optixupdateend();
+                xinxinoptix::configPipeline(ShaderDirty);
                 std::cout<< "Finish optix update" << std::endl;
             }
 
             if (scene->drawOptions->updateMatlOnly && !bMeshMatLUTChanged)
             {
-                xinxinoptix::optixupdateend();
+
+                xinxinoptix::configPipeline(ShaderDirty);
                 std::cout << "Finish optix update" << std::endl;
             }
 
@@ -2074,7 +1949,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         if(lightNeedUpdate){
             CppTimer timer; timer.tick();
             xinxinoptix::buildLightTree();
-            timer.tock("Build LightTree");
+//            timer.tock("Build LightTree");
         }
 
         if (lightNeedUpdate || matNeedUpdate || meshNeedUpdate || staticNeedUpdate) {
@@ -2104,22 +1979,31 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         xinxinoptix::optixDestroy();
     }
 
-    void cleanupScene() override {
-        graphicsMan->objOrder.clear();
-        std::map<std::string, std::shared_ptr<zeno::IObject>> allviews;
-        zeno::getSession().objsMan->export_all_view_objs(allviews);
-        for (auto& [key, obj]: allviews) {
-            graphicsMan->remove_object(key);
-        }
+    void assetLoad() {
+        int a = 0;
+        defaultScene = {};
+    }
 
-        lightNeedUpdate = true;
-        meshNeedUpdate = true;
-        matNeedUpdate = true;
-        scene->drawOptions->needRefresh = true;
+    void run() {
+        int a = 0;
+    }
+
+    void beginFrameLoading(int frameid) {
+        int a = 0;
+    }
+
+    void endFrameLoading(int frameid) {
+        int a = 0;
     }
 
     void cleanupAssets() override {
+        cached_shaders = {};
+        OptixUtil::rtMaterialShaders.clear();
+
         xinxinoptix::optixCleanup();
+    }
+
+    void cleanupScene() override {
     }
 
     void cleanupWhenExit() override {
@@ -2131,3 +2015,4 @@ static auto definer = RenderManager::registerRenderEngine<RenderEngineOptx>("opt
 
 } // namespace zenovis::optx
 #endif
+

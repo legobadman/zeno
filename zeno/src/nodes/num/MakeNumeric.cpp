@@ -138,7 +138,7 @@ struct NumericVec4 : INode {
         auto y = ZImpl(get_param<float>("y"));
         auto z = ZImpl(get_param<float>("z"));
         auto w = ZImpl(get_param<float>("w"));
-        ZImpl(set_primitive_output("vec2", vec4f(x, y, z, w)));
+        ZImpl(set_primitive_output("vec4", vec4f(x, y, z, w)));
     }
 };
 

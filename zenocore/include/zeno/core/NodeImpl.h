@@ -92,7 +92,9 @@ namespace zeno
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
+        zany get_input_obj(std::string const& name) const;
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
+        ParamType get_anyparam_type(bool bInput, const std::string& name);
 
         /*container_info是记录参数的ListObject的增删改情况，便于作部分加载*/
         container_elem_update_info get_input_container_info(const std::string& param);
@@ -274,7 +276,7 @@ namespace zeno
     private:
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
         std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
-        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
+        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty);
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
         void reportStatus(bool bDirty, NodeRunStatus status);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);

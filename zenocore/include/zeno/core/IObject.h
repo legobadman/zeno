@@ -62,7 +62,7 @@ namespace zeno {
         IObject(const IObject& rhs);
         IObject& operator=(const IObject& rhs);
         virtual ~IObject();     // don't consider abi problem right now.
-        virtual zeno::SharedPtr<IObject> clone() const = 0; //TODO:abi compatible for shared_ptr
+        virtual zeno::SharedPtr<IObject> clone() const = 0; //TODO：abi compatible for shared_ptr
         virtual String key() const;
         virtual void update_key(const String& key);
         IUserData* userData();

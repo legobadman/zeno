@@ -13,6 +13,7 @@ public:
     Zpy_Graph(std::shared_ptr<zeno::Graph> graph);
     Zpy_Node createNode(const std::string& nodecls, const std::string& originalname = "", bool bAssets = false);
     Zpy_Node getNode(const std::string& name);
+    Zpy_Object getInputObject(const std::string& node_name, const std::string& param);
     void removeNode(const std::string& name);
     std::string getName() const;
     void addEdge(const std::string& out_node, const std::string& out_param,

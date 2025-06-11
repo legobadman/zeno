@@ -126,7 +126,7 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
                 zeno::ParamObject paramObj;
                 paramObj.bInput = false;
                 paramObj.name = "port";
-                paramObj.type = gParamType_Geometry;
+                paramObj.type = get_anyparam_type(true, name);//  gParamType_Geometry;
                 paramObj.socketType = Socket_Output;
                 newNode->add_output_obj_param(paramObj);
             }
@@ -180,7 +180,7 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
                 zeno::ParamObject paramObj;
                 paramObj.bInput = true;
                 paramObj.name = "port";
-                paramObj.type = gParamType_Geometry;
+                paramObj.type = get_anyparam_type(false, name); //gParamType_Geometry;
                 paramObj.socketType = Socket_Clone;
                 newNode->add_input_obj_param(paramObj);
             }

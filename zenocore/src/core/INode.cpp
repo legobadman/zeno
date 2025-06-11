@@ -13,6 +13,10 @@ namespace zeno
         return Node_Normal;
     }
 
+    zeno::String INode::uuid() const {
+        return stdString2zs(m_pAdapter->get_uuid());
+    }
+
     zany INode::get_input(const zeno::String& param) { 
         return m_pAdapter->get_input(zsString2Std(param));
     }
@@ -120,6 +124,10 @@ namespace zeno
 
     void INode::set_output_float(const zeno::String& param, float val) {
         return m_pAdapter->set_output2(zsString2Std(param), val);
+    }
+
+    void INode::set_output_string(const zeno::String& param, zeno::String val) {
+        return m_pAdapter->set_output2(zsString2Std(param), zsString2Std(val));
     }
 
     void INode::set_output_vec2f(const zeno::String& param, Vec2f val) {
