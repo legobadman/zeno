@@ -707,7 +707,9 @@ static void createSBT( PathTracerState& state )
 
             for(int t=0;t<32;t++)
             {
-                hitgroup_records[sbt_idx].data.textures[t] = shader_ref.getTexture(t);
+                cudaTextureObject_t wtf = shader_ref.getTexture(t);
+                //TEMPCODE: test texture idx.
+                hitgroup_records[sbt_idx].data.textures[t] = wtf;
             }
 
             hitgroup_records[sbt_idx+1] = hitgroup_records[sbt_idx]; // SBT for occlusion ray-type for ith material
