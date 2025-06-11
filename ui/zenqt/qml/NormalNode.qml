@@ -191,7 +191,7 @@ Qan.NodeItem {
         source: "qrc:/icons/node/error.svg"
         anchors.right: nodeItem.left
         y: right_status_group.y + right_status_group.height / 2 - height / 2
-    }     
+    }
 
     ColumnLayout {
         id: mainmain_layout
@@ -221,6 +221,9 @@ Qan.NodeItem {
                         bg_color: socket_color
 
                         visible: true
+
+                        Layout.preferredHeight: height
+                        Layout.preferredWidth: width
 
                         onSocketClicked: function() {
                             var centerpos = Qt.point(input_obj_socket.width / 2, input_obj_socket.height / 2)
@@ -481,6 +484,9 @@ Qan.NodeItem {
                     required property string name
                     required property int group
                     required property color socket_color
+
+                    Layout.preferredHeight: height
+                    Layout.preferredWidth: width
 
                     socket_name: name
                     socket_group: group
