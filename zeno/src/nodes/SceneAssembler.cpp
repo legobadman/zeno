@@ -1060,10 +1060,10 @@ struct MakeXform : zeno::INode {
         glm::mat4 matScale  = glm::scale( glm::vec3(scale[0], scale[1], scale[2] ));
 
 
-        auto order = ZImpl(get_input2<std::string>("EulerRotationOrder:"));
+        auto order = ZImpl(get_input2<std::string>("EulerRotationOrder"));
         auto orderTyped = magic_enum::enum_cast<EulerAngle::RotationOrder>(order).value_or(EulerAngle::RotationOrder::YXZ);
 
-        auto measure = ZImpl(get_input2<std::string>("EulerAngleMeasure:"));
+        auto measure = ZImpl(get_input2<std::string>("EulerAngleMeasure"));
         auto measureTyped = magic_enum::enum_cast<EulerAngle::Measure>(measure).value_or(EulerAngle::Measure::Radians);
 
         glm::vec3 eularAngleXYZ = glm::vec3(eulerXYZ[0], eulerXYZ[1], eulerXYZ[2]);

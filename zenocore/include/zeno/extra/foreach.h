@@ -38,7 +38,7 @@ namespace zeno
         void adjustCollectObjInfo();
 
         zany m_iterate_object;
-        zeno::SharedPtr<ListObject> m_collect_objs;     //TODO: Èç¹ûforeachµÄ¶ÔÏóÊÇDict£¬µ«ÕâÀïÊÕ¼¯µÄ½á¹û½«»áÒÔlist·µ»Ø³öÈ¥£¬ÒÔºóÔÙÖ§³ÖDictµÄÊÕ¼¯
+        zeno::SharedPtr<ListObject> m_collect_objs;     //TODO: å¦‚æœforeachçš„å¯¹è±¡æ˜¯Dictï¼Œä½†è¿™é‡Œæ”¶é›†çš„ç»“æœå°†ä¼šä»¥listè¿”å›å‡ºå»ï¼Œä»¥åå†æ”¯æŒDictçš„æ”¶é›†
         std::vector<zany> m_last_collect_objs;
     };
 }

@@ -3270,6 +3270,17 @@ ParamType NodeImpl::get_anyparam_type(bool bInput, const std::string& name) {
     return Param_Null;
 }
 
+bool NodeImpl::has_input_value(std::string const& id) const
+{
+    auto iter = m_inputObjs.find(id);
+    if (iter != m_inputObjs.end()) {
+        return !iter->second.links.empty();
+    }
+    else {
+        return m_inputPrims.find(id) != m_inputPrims.end();
+    }
+}
+
 bool NodeImpl::has_input(std::string const &id) const {
     //这个has_input在旧的语义里，代表的是input obj，如果有一些边没有连上，那么有一些参数值仅有默认值，未必会设这个input的，
     //还有一种情况，就是对象值是否有输入引入

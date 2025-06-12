@@ -213,7 +213,8 @@ namespace zeno
         Session* getThisSession() const;
         GlobalState* getGlobalState() const;
 
-        bool has_input(std::string const& id) const;
+        bool has_input_value(std::string const& id) const;  //不需要有边和其相连（默认值）
+        bool has_input(std::string const& id) const;        //需要有边和其相连
         zany get_input(std::string const& id) const;
         zany get_output_obj(std::string const& sock_name);
         std::vector<zany> get_output_objs();
@@ -236,6 +237,12 @@ namespace zeno
         template <class T>
         bool has_input2(std::string const& id) const {
             if (!has_input(id)) return false;
+            return objectIsLiterial<T>(get_input(id));
+        }
+
+        template <class T>
+        bool has_input_value(std::string const& id) const {
+            if (!has_input_value(id)) return false;
             return objectIsLiterial<T>(get_input(id));
         }
 
