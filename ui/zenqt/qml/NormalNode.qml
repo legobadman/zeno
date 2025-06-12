@@ -77,27 +77,40 @@ Qan.NodeItem {
 
     function getSocketObject(paramName, group) {
         if (group == ParamGroup.InputObject) {
-            var idx = nodeItem.node.params.inputObjects().indexFromName(paramName);
-            var instZObjSock = inputobjparams.itemAt(idx)
-            return instZObjSock;
+            for (let i = 0; i < inputsocks_layout.children.length; i++) {
+                let instZObjSock = inputsocks_layout.children[i];
+                if (instZObjSock.socket_name == paramName) {
+                    return instZObjSock
+                }
+            }
+            return null
         }
         else if (group == ParamGroup.InputPrimitive) {
-            var idx = nodeItem.node.params.inputPrims().indexFromName(paramName);
-            var instZObjSock = inputprimparams.itemAt(idx)
-            return instZObjSock.sockid;
+            for (let i = 0; i < nodebody_layout.children.length; i++) {
+                let child = nodebody_layout.children[i]
+                if (child.name == paramName && child.group == group) {
+                    return child.sockid
+                }
+            }
+            return null
         }
         else if (group == ParamGroup.OutputPrimitive) {
-            var idx = nodeItem.node.params.outputPrims().indexFromName(paramName);
-            var instZObjSock = outputprimparams.itemAt(idx)
-            if (instZObjSock == null) {
-                console.log("paramName:" + paramName)
+            for (let i = 0; i < nodebody_layout.children.length; i++) {
+                let child = nodebody_layout.children[i]
+                if (child.name == paramName && child.group == group) {
+                    return child.sockid
+                }
             }
-            return instZObjSock.sockid;
+            return null
         }
         else if (group == ParamGroup.OutputObject) {
-            var idx = nodeItem.node.params.outputObjects().indexFromName(paramName);
-            var instZObjSock = outputobjparams.itemAt(idx)
-            return instZObjSock
+            for (let i = 0; i < outputsocks_layout.children.length; i++) {
+                let instZObjSock = outputsocks_layout.children[i];
+                if (instZObjSock.socket_name == paramName) {
+                    return instZObjSock
+                }
+            }
+            return null
         }
     }
 
