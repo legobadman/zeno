@@ -1493,7 +1493,7 @@ void ZenoPropPanel::onSettings()
             return;
         ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS));
 
-        QStandardItemModel* viewParams = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS))->customParamModel();
+        CustomUIModel* viewParams = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS))->customUIModel();
         ZASSERT_EXIT(viewParams);
 
         if (m_idx.data(QtRole::ROLE_NODETYPE) != zeno::Node_SubgraphNode) 

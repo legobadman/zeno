@@ -2,6 +2,8 @@
 #include "GraphsTreeModel.h"
 #include "assetsmodel.h"
 #include "uicommon.h"
+#include "dialog/zeditparamlayoutdlg.h"
+#include "customuimodel.h"
 #include <zeno/io/zsg2reader.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/scope_exit.h>
@@ -464,6 +466,21 @@ void GraphsManager::redo(const QString& name)
 
 void GraphsManager::openProject(const QString& zsgpath) {
     zenoApp->getMainWindow()->openFile(zsgpath);
+}
+
+void GraphsManager::openCustomUIDialog(CustomUIModel* customUIM) {
+    if (!customUIM)
+        return;
+    auto mainWin = zenoApp->getMainWindow();
+    ZEditParamLayoutDlg dlg(customUIM, mainWin);
+    if (QDialog::Accepted == dlg.exec())
+    {
+        zeno::ParamsUpdateInfo info = dlg.getEdittedUpdateInfo();
+        ParamsModel* paramsM = customUIM->coreModel();
+        const zeno::CustomUI& ui = dlg.getCustomUiInfo();
+        paramsM->resetCustomUi(ui);
+        paramsM->batchModifyParams(info);
+    }
 }
 
 void GraphsManager::onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx) {

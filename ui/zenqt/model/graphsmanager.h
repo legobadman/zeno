@@ -15,6 +15,7 @@ class GraphModel;
 class NodeCateModel;
 class GraphsManager;
 class PluginsModel;
+class CustomUIModel;
 
 class GraphsManager : public QObject
 {
@@ -30,6 +31,7 @@ public:
     Q_INVOKABLE void redo(const QString& name);
     Q_INVOKABLE QStringList recentFiles() const;
     Q_INVOKABLE void openProject(const QString& zsgpath);
+    Q_INVOKABLE void openCustomUIDialog(CustomUIModel* customUIM);
     Q_INVOKABLE void onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx);
     Q_INVOKABLE void addPlugin();
     Q_INVOKABLE void copy(const QModelIndexList& nodes);

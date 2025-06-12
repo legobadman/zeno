@@ -237,7 +237,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             auto mainWin = zenoApp->getMainWindow();
             //if (_ZenoSubGraphView* pView = qobject_cast<_ZenoSubGraphView*>(pScene->views().first()))
             {
-                ZEditParamLayoutDlg dlg(paramsM->customParamModel(), mainWin);
+                ZEditParamLayoutDlg dlg(paramsM->customUIModel(), mainWin);
                 if (QDialog::Accepted == dlg.exec())
                 {
                     zeno::ParamsUpdateInfo info = dlg.getEdittedUpdateInfo();

@@ -39,6 +39,8 @@ StackLayout {
         }
         graphsmanager.currentPath = path_str
 
+        console.log("stack_subnet_views.children: " + stack_subnet_views.children)
+
         for (var i = 0; i < stack_subnet_views.children.length; i++) {
             var child = stack_subnet_views.children[i];
             var paths = child.graphModel.path();

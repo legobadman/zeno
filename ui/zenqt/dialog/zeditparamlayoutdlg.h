@@ -68,7 +68,7 @@ class ZEditParamLayoutDlg : public QDialog
 {
     Q_OBJECT
 public:
-    ZEditParamLayoutDlg(QStandardItemModel* pModel, QWidget* parent = nullptr);
+    ZEditParamLayoutDlg(CustomUIModel* pModel, QWidget* parent = nullptr);
     zeno::ParamsUpdateInfo getEdittedUpdateInfo() const;
     zeno::CustomUI getCustomUiInfo() const;
 
@@ -84,7 +84,7 @@ private slots:
     void onOk();
     void onCancel();
     void onTreeCurrentChanged(const QModelIndex& current, const QModelIndex& previous);
-    void onOutputsListCurrentChanged(const QModelIndex& current, const QModelIndex& previous);
+    void onOutputsListCurrentChanged(const zeno::NodeDataGroup group, const QModelIndex& current, const QModelIndex& previous);
     void onNameEditFinished();      //name lineedit.
     void onLabelEditFinished();
     void onHintEditFinished();
@@ -97,6 +97,10 @@ private slots:
     void onOutputsViewParamDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     void onSocketTypeChanged(int idx);
     void onObjTypeChanged(int idx);
+    void onMinEditFinished();
+    void onMaxEditFinished();
+    void onStepEditFinished();
+    void onComboTableItemsCellChanged(int row, int column);
 
 private:
     void initUI();
@@ -104,7 +108,8 @@ private:
     QIcon getIcon(const QStandardItem *pItem);
     void proxyModelSetData(const QModelIndex& index, const zeno::reflect::Any& newValue, int role);
     void switchStackProperties(int ctrl, QStandardItem *pItem);
-    void initModel(const QStandardItemModel* pModel);
+    void initModel(CustomUIModel* pModel);
+    void updateSliderInfo();
 
     QStringList getExistingNames(bool bInput, VPARAM_TYPE type) const;
 

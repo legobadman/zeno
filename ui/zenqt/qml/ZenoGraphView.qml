@@ -245,6 +245,23 @@ Qan.GraphView {
         proppanel.height = Math.min(graphView.height * 0.6, contentH)
     }
 
+    Menu {
+        id: nodeMenu
+        property var node: null
+
+        MenuItem {
+            text: "编辑自定义参数"
+            onTriggered: {
+                var nodeobj = nodeMenu.node
+                nodeMenu.close()
+                Qt.callLater(() => {   // 再延迟打开对话框
+                    showDialog(nodeobj)
+                });
+                // showDialog(nodeMenu.node)
+            }
+        }
+    }
+
     graph: Qan.Graph {
         parent: graphView
         id: graph
@@ -273,7 +290,9 @@ Qan.GraphView {
             graphsmanager.onNodeSelected(path_list, node.index)
         }
         onNodeRightClicked: function(node) {
-            showDialog(node)
+            var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+            nodeMenu.node = node
+            nodeMenu.popup(mousepos)
         }
         onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }
         onNodeMoved: function(node) {
@@ -716,6 +735,10 @@ Qan.GraphView {
 
     property var editparamDlg : undefined 
     function showDialog(node) {
+        var customuiM = node.params.customUIModel()
+        graphsmanager.openCustomUIDialog(customuiM)
+        return
+
         var component = Qt.createComponent("ZEditparamDlg.qml");
         if (component.status === Component.Ready) {
             if(!editparamDlg) {

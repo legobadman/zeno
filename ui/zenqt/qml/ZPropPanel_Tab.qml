@@ -26,6 +26,9 @@ Item {
             delegate: ColumnLayout {
                 Layout.fillWidth: true
 
+                // Layout.preferredHeight: height
+                // Layout.preferredWidth: width
+
                 Button {
                     Layout.fillWidth: true
                     text: groupname

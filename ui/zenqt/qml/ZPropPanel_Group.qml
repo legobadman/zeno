@@ -90,9 +90,9 @@ Item {
             text: {
                 //保留小数点7位，并自动舍弃无用的零
                 if (mvalue != null) {
-                //console.log("text about to change: mvalue = " + mvalue)
-                return formatWithSignificantDigits(mvalue, 7)
-            }
+                    //console.log("text about to change: mvalue = " + mvalue)
+                    return formatWithSignificantDigits(mvalue, 7)
+                }
                 else{
                     return "";
                 }
@@ -438,6 +438,9 @@ Item {
                     //这个margin竟然能决定显示warning:  Qt Quick Layouts: Detected recursive rearrange. Aborting after two iterations.
                     Layout.topMargin: showVertically ? 5 : 0
                     Layout.bottomMargin: showVertically ? 5 : 0
+                    
+                    Layout.preferredHeight: height
+                    Layout.preferredWidth: width
 
                     rows: showVertically ? 2 : 1
                     columns: showVertically ? 2 : 3

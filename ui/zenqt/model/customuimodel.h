@@ -50,6 +50,7 @@ public:
     bool isClonedModel();
     //clone的情况下，导出customui和editupdateinfo，给parammodel重设参数
     void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
+    void updateModelIncremental(const zeno::params_change_info& params, const zeno::CustomUI& customui);
 
 private:
     ParamsModel* m_params;
@@ -104,6 +105,8 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
     Qt::ItemFlags flags(const QModelIndex& index) const override;
+    
+    QStandardItemModel* toStandardModel() const;
 
     Q_INVOKABLE bool insertRow(int row, QString name);
     Q_INVOKABLE bool removeRow(int row);
@@ -205,6 +208,7 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
+    QStandardItemModel* toStandardModel() const;
 
     Q_INVOKABLE bool insertRow(int row, QString name);
     Q_INVOKABLE bool removeRow(int row);
@@ -246,6 +250,7 @@ public:
 
     void reset();
     void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
+    QStandardItemModel* toStandardModel() const;
 
 private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
@@ -276,6 +281,7 @@ public:
 
     void reset();
     void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
+    QStandardItemModel* toStandardModel() const;
 
 private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param

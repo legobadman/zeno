@@ -2921,16 +2921,16 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             const std::string oldname = _pair.oldName;
             const std::string newname = param.name;
 
-            auto& in_outputs = param.bInput ? m_inputObjs : m_outputObjs;
+            auto& self_obj_params = param.bInput ? m_inputObjs : m_outputObjs;
             auto& new_params = param.bInput ? changes.new_inputs : changes.new_outputs;
             auto& remove_params = param.bInput ? changes.remove_inputs : changes.remove_outputs;
             auto& rename_params = param.bInput ? changes.rename_inputs : changes.rename_outputs;
 
             if (oldname.empty()) {
                 //new added name.
-                if (in_outputs.find(newname) != in_outputs.end()) {
+                if (self_obj_params.find(newname) != self_obj_params.end()) {
                     // the new name happen to have the same name with the old name, but they are not the same param.
-                    in_outputs.erase(newname);
+                    self_obj_params.erase(newname);
                     if (param.bInput)
                         obj_inputs_old.erase(newname);
                     else
@@ -2950,15 +2950,15 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     sparam.socketType = param.socketType;
                 }
                 sparam.m_wpNode = this;
-                in_outputs[newname] = std::move(sparam);
+                self_obj_params[newname] = std::move(sparam);
 
                 new_params.insert(newname);
             }
-            else if (in_outputs.find(oldname) != in_outputs.end()) {
+            else if (self_obj_params.find(oldname) != self_obj_params.end()) {
                 if (oldname != newname) {
                     //exist name changed.
-                    in_outputs[newname] = std::move(in_outputs[oldname]);
-                    in_outputs.erase(oldname);
+                    self_obj_params[newname] = std::move(self_obj_params[oldname]);
+                    self_obj_params.erase(oldname);
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -2971,7 +2971,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 else
                     obj_outputs_old.erase(oldname);
 
-                auto& spParam = in_outputs[newname];
+                auto& spParam = self_obj_params[newname];
                 spParam.type = param.type;
                 spParam.name = newname;
                 spParam.bWildcard = param.bWildcard;
@@ -2990,16 +2990,16 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             const std::string oldname = _pair.oldName;
             const std::string newname = param.name;
 
-            auto& in_outputs = param.bInput ? m_inputPrims : m_outputPrims;
+            auto& self_prim_params = param.bInput ? m_inputPrims : m_outputPrims;
             auto& new_params = param.bInput ? changes.new_inputs : changes.new_outputs;
             auto& remove_params = param.bInput ? changes.remove_inputs : changes.remove_outputs;
             auto& rename_params = param.bInput ? changes.rename_inputs : changes.rename_outputs;
 
             if (oldname.empty()) {
                 //new added name.
-                if (in_outputs.find(newname) != in_outputs.end()) {
+                if (self_prim_params.find(newname) != self_prim_params.end()) {
                     // the new name happen to have the same name with the old name, but they are not the same param.
-                    in_outputs.erase(newname);
+                    self_prim_params.erase(newname);
                     if (param.bInput)
                         inputs_old.erase(newname);
                     else
@@ -3022,15 +3022,15 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 sparam.bWildcard = param.bWildcard;
                 sparam.m_wpNode = this;
                 sparam.bSocketVisible = param.bSocketVisible;
-                in_outputs[newname] = std::move(sparam);
+                self_prim_params[newname] = std::move(sparam);
 
                 new_params.insert(newname);
             }
-            else if (in_outputs.find(oldname) != in_outputs.end()) {
+            else if (self_prim_params.find(oldname) != self_prim_params.end()) {
                 if (oldname != newname) {
                     //exist name changed.
-                    in_outputs[newname] = std::move(in_outputs[oldname]);
-                    in_outputs.erase(oldname);
+                    self_prim_params[newname] = std::move(self_prim_params[oldname]);
+                    self_prim_params.erase(oldname);
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -3043,7 +3043,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 else
                     outputs_old.erase(oldname);
 
-                auto& spParam = in_outputs[newname];
+                auto& spParam = self_prim_params[newname];
                 spParam.defl = param.defl;
                 if (param.type != spParam.type) {
                     spParam.defl = initAnyDeflValue(spParam.type);

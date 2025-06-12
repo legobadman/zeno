@@ -1051,9 +1051,9 @@ void ZenoGraphsEditor::onAssetsCustomParamsClicked(const QString& assetsName)
     //ensure the graph be loaded.
     assetsMgr->getAssetGraph(name, true);
 
-    QStandardItemModel paramsM;
-    UiHelper::newCustomModel(&paramsM, asset.m_customui);
-    ZEditParamLayoutDlg dlg(&paramsM, this);
+    ParamsModel paramsM(asset.m_customui);
+    CustomUIModel* pCustomM = paramsM.customUIModel();
+    ZEditParamLayoutDlg dlg(pCustomM, this);
     if (QDialog::Accepted == dlg.exec())
     {
         auto graphsMgr = zenoApp->graphsManager();
@@ -1151,9 +1151,9 @@ void ZenoGraphsEditor::onAction(QAction* pAction, const QVariantList& args, bool
                     QMessageBox::information(this, tr("Info"), tr("Cannot edit parameters!"));
                     return;
                 }
-                QStandardItemModel* viewParams = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(QtRole::ROLE_PARAMS))->customParamModel();
-                ZASSERT_EXIT(viewParams);
-                ZEditParamLayoutDlg dlg(viewParams, this);
+                CustomUIModel* customuiM = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(QtRole::ROLE_PARAMS))->customUIModel();
+                ZASSERT_EXIT(customuiM);
+                ZEditParamLayoutDlg dlg(customuiM, this);
                 if (QDialog::Accepted == dlg.exec())
                 {
                     ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(QtRole::ROLE_PARAMS));

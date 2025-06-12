@@ -196,6 +196,7 @@ public:
         ROLE_SUBGRAPH,      //get the subgraph by the subgraph node.
         ROLE_GRAPH,         //get the graph which owns the current node index.
         ROLE_PARAM_NAME,
+        ROLE_PARAM_NAME_EXIST,  //for customui edition, to store the exist name of param.
         ROLE_PARAM_VALUE,
         ROLE_PARAM_QML_VALUE,   //the paramvalue which can be recognized by qml.
         ROLE_PARAM_TYPE,

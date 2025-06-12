@@ -1,6 +1,8 @@
 #include "customuimodel.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
+#include <unordered_set>
+#include <string>
 #include "style/colormanager.h"
 #include "util/uihelper.h"
 #include "zeno_types/reflect/reflection.generated.hpp"
@@ -37,6 +39,15 @@ static CUSTOMUI_CTRL_ITEM_INFO customui_controlList[] = {
     {"Slider",              zeno::Slider,       gParamType_Int,    "qrc:/icons/parameter_control_slider.svg"},
     {"SpinBoxSlider",       zeno::SpinBoxSlider,gParamType_Int,    "qrc:/icons/parameter_control_slider.svg"},
 };
+
+static bool hasElement(QAbstractListModel* pModel, const QString& name) {
+    for (int r = 0; r < pModel->rowCount(); r++) {
+        QModelIndex idx = pModel->index(r, 0);
+        if (idx.data(QtRole::ROLE_PARAM_NAME) == name)
+            return true;
+    }
+    return false;
+}
 
 void appendClonedItem(QVector<ParamItem>& parasm, ParamsModel* m_paramsModel, const QModelIndex& idx) {
     ParamItem item;
@@ -309,6 +320,59 @@ void CustomUIModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui,
     m_objOutputModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
 }
 
+void CustomUIModel::updateModelIncremental(const zeno::params_change_info& changes, const zeno::CustomUI& customui) {
+    std::unordered_set<std::string> ensure_tabnames, groupnames;
+    for (int tabCount = 0; tabCount < customui.inputPrims.size(); tabCount++) {
+        for (int groupCount = 0; groupCount < customui.inputPrims[tabCount].groups.size(); groupCount++) {
+            groupnames.insert(customui.inputPrims[tabCount].groups[groupCount].name);
+        }
+        ensure_tabnames.insert(customui.inputPrims[tabCount].name);
+    }
+
+    //先删除customui里没有的tab,group和changes明确删除的参数
+    for (int r = m_tabModel->rowCount() - 1; r >= 0; r--) {
+        QModelIndex idxTab(m_tabModel->index(r, 0));
+        QString tabName = idxTab.data(QtRole::ROLE_PARAM_NAME).toString();
+
+        ParamGroupModel* pGroupsM = idxTab.data(QmlCUIRole::GroupModel).value<ParamGroupModel*>();
+        for (int j = pGroupsM->rowCount() - 1; j >= 0; j--) {
+            QModelIndex idxGrp(pGroupsM->index(j, 0));
+            QString groupName = idxGrp.data(QtRole::ROLE_PARAM_NAME).toString();
+
+            ParamPlainModel* paramsM = idxGrp.data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
+            for (int k = paramsM->rowCount() - 1; k >= 0; k--) {
+                QModelIndex idxParam(paramsM->index(k, 0));
+                QString paramName = idxParam.data(QtRole::ROLE_PARAM_NAME).toString();
+
+                if (changes.remove_inputs.find(paramName.toStdString()) != changes.remove_inputs.end()) {
+                    paramsM->removeRow(k);
+                }
+            }
+
+            if ((!paramsM || paramsM->rowCount() == 0) && !groupnames.count(groupName.toStdString())) {
+                pGroupsM->removeRow(j);
+            }
+        }
+
+        if ((!pGroupsM || pGroupsM->rowCount() == 0) && !ensure_tabnames.count(tabName.toStdString())) {
+            m_tabModel->removeRow(r);
+        }
+    }
+
+    for (auto ensure_tab : ensure_tabnames) {
+        if (!hasElement(m_tabModel, QString::fromStdString(ensure_tab))) {
+
+        }
+        else {
+            //tab存在，但仍然要看tab下的group的增删情况
+        }
+    }
+
+}
+
+
+
+
 //////////////////////////////////////////////////////////
 ParamTabModel::ParamTabModel(zeno::CustomUIParams tabs, CustomUIModel* pModel)
     : QAbstractListModel(pModel)
@@ -320,6 +384,50 @@ ParamTabModel::ParamTabModel(zeno::CustomUIParams tabs, CustomUIModel* pModel)
         item.groupM = new ParamGroupModel(tab, this);
         m_items.push_back(std::move(item));
     }
+}
+
+QStandardItemModel* ParamTabModel::toStandardModel() const {
+    QStandardItemModel* pModel = new QStandardItemModel;
+    for (auto& tab : m_items) {
+        QStandardItem* tabItem = new QStandardItem(tab.name);
+        tabItem->setData(VPARAM_TAB, ROLE_ELEMENT_TYPE);
+        tabItem->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
+        tabItem->setData(tab.name, QtRole::ROLE_PARAM_NAME);
+
+        ParamGroupModel* groupsM = tab.groupM;
+        for (int i = 0; i < groupsM->rowCount(); i++) {
+            QModelIndex groupIdx = groupsM->index(i);
+            QString groupName = groupsM->data(groupIdx, Qt::DisplayRole).toString();
+            ParamPlainModel* paramsM = groupsM->data(groupIdx, QmlCUIRole::PrimModel).value<ParamPlainModel*>();
+            QStandardItem* groupItem = new QStandardItem(groupName);
+            groupItem->setData(VPARAM_GROUP, ROLE_ELEMENT_TYPE);
+            groupItem->setData(zeno::Role_InputPrimitive, QtRole::ROLE_PARAM_GROUP);
+            groupItem->setData(groupName, QtRole::ROLE_PARAM_NAME);
+
+            for (int j = 0; j < paramsM->rowCount(); j++) {
+                QModelIndex idx = paramsM->index(j);
+                auto paramName = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+                QStandardItem* pItem = new QStandardItem(paramName);
+                pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
+                pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+                pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
+                pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
+                pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL_PROPS), QtRole::ROLE_PARAM_CONTROL_PROPS);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_VISIBLE), QtRole::ROLE_PARAM_VISIBLE);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_SOCKET_VISIBLE), QtRole::ROLE_PARAM_SOCKET_VISIBLE);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_GROUP), QtRole::ROLE_PARAM_GROUP);
+                pItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
+                groupItem->appendRow(pItem);
+            }
+            tabItem->appendRow(groupItem);
+        }
+        pModel->invisibleRootItem()->appendRow(tabItem);
+    }
+    return pModel;
 }
 
 int ParamTabModel::rowCount(const QModelIndex& parent) const {
@@ -444,7 +552,7 @@ QVariant ParamGroupModel::data(const QModelIndex& index, int role) const {
     if (!index.isValid()) {
         return false;
     }
-    if (role == Qt::DisplayRole) {
+    if (role == Qt::DisplayRole || role == QtRole::ROLE_PARAM_NAME) {
         return m_items[index.row()].name;
     }
     else if (role == QmlCUIRole::PrimModel) {
@@ -742,6 +850,30 @@ QHash<int, QByteArray> PrimParamOutputModel::roleNames() const {
     return roles;
 }
 
+QStandardItemModel* PrimParamOutputModel::toStandardModel() const {
+    QStandardItemModel* pModel = new QStandardItemModel;
+    for (int j = 0; j < rowCount(); j++) {
+        QModelIndex idx = index(j);
+        auto paramName = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+        QStandardItem* pItem = new QStandardItem(paramName);
+        pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
+        pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
+        pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL_PROPS), QtRole::ROLE_PARAM_CONTROL_PROPS);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VISIBLE), QtRole::ROLE_PARAM_VISIBLE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_SOCKET_VISIBLE), QtRole::ROLE_PARAM_SOCKET_VISIBLE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_GROUP), QtRole::ROLE_PARAM_GROUP);
+        pItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
+        pModel->appendRow(pItem);
+    }
+    return pModel;
+}
+
 QString PrimParamOutputModel::getMaxLengthName() const
 {
     QString maxName;
@@ -952,6 +1084,30 @@ void objParamInputModel::reset()
     endResetModel();
 }
 
+QStandardItemModel* objParamInputModel::toStandardModel() const {
+    QStandardItemModel* pModel = new QStandardItemModel;
+    for (int j = 0; j < rowCount(); j++) {
+        QModelIndex idx = index(j);
+        auto paramName = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+        QStandardItem* pItem = new QStandardItem(paramName);
+        pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
+        pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
+        pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL_PROPS), QtRole::ROLE_PARAM_CONTROL_PROPS);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VISIBLE), QtRole::ROLE_PARAM_VISIBLE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_SOCKET_VISIBLE), QtRole::ROLE_PARAM_SOCKET_VISIBLE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_GROUP), QtRole::ROLE_PARAM_GROUP);
+        pItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
+        pModel->appendRow(pItem);
+    }
+    return pModel;
+}
+
 void objParamInputModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo)
 {
     if (m_bIscloned) {
@@ -1101,6 +1257,31 @@ void objParamOutputModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& cus
         }
     }
 }
+
+QStandardItemModel* objParamOutputModel::toStandardModel() const {
+    QStandardItemModel* pModel = new QStandardItemModel;
+    for (int j = 0; j < rowCount(); j++) {
+        QModelIndex idx = index(j);
+        auto paramName = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+        QStandardItem* pItem = new QStandardItem(paramName);
+        pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
+        pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
+        pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL_PROPS), QtRole::ROLE_PARAM_CONTROL_PROPS);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VISIBLE), QtRole::ROLE_PARAM_VISIBLE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_SOCKET_VISIBLE), QtRole::ROLE_PARAM_SOCKET_VISIBLE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_GROUP), QtRole::ROLE_PARAM_GROUP);
+        pItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
+        pModel->appendRow(pItem);
+    }
+    return pModel;
+}
+
 
 ControlItemListModel::ControlItemListModel(CustomUIModel* pModel) : QAbstractListModel(pModel)
 {
