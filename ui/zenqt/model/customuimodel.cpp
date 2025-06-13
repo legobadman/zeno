@@ -411,8 +411,8 @@ QStandardItemModel* ParamTabModel::toStandardModel() const {
                 pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
                 pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
                 pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
-                pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
-                pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_VALUE);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_PARAM_CONTROL);
                 pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
                 pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
                 pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
@@ -859,8 +859,8 @@ QStandardItemModel* PrimParamOutputModel::toStandardModel() const {
         pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
         pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
-        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
-        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_VALUE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_PARAM_CONTROL);
         pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
         pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
         pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
@@ -1093,8 +1093,8 @@ QStandardItemModel* objParamInputModel::toStandardModel() const {
         pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
         pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
-        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
-        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_VALUE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_PARAM_CONTROL);
         pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
         pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
         pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
@@ -1267,8 +1267,8 @@ QStandardItemModel* objParamOutputModel::toStandardModel() const {
         pItem->setData(paramName, QtRole::ROLE_PARAM_NAME);
         pItem->setData(paramName, QtRole::ROLE_PARAM_NAME_EXIST);
         pItem->setData(idx.data(QtRole::ROLE_PARAM_TYPE), QtRole::ROLE_PARAM_TYPE);
-        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_CONTROL);
-        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_SOCKET_TYPE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_VALUE), QtRole::ROLE_PARAM_VALUE);
+        pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL), QtRole::ROLE_PARAM_CONTROL);
         pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
         pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
         pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
