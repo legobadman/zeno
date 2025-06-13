@@ -66,6 +66,7 @@ void initQml()
     zenoApp->initQuickQanavas();
 }
 
+#ifdef ZENO_WITH_PYTHON
 PyMODINIT_FUNC PyInit_zen(void);
 
 void initPyzenModule() {
@@ -76,6 +77,7 @@ void initPyzenModule() {
         }
     });
 }
+#endif
 
 void startUp(bool bEnableCrashReport)
 {
@@ -99,7 +101,9 @@ void startUp(bool bEnableCrashReport)
     QDir docDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     docDir.mkpath("Zeno/assets");
 
+#ifdef ZENO_WITH_PYTHON
     initPyzenModule();
+#endif
 }
 
 std::string getZenoVersion() {

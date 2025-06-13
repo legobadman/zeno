@@ -33,7 +33,9 @@
 #include <reflect/registry.hpp>
 #include <reflect/container/any>
 #include <reflect/container/arraylist>
+#ifdef ZENO_WITH_PYTHON
 #include <Python.h>
+#endif
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -57,6 +59,7 @@ namespace zeno {
     };
     static std::map<size_t, _ObjUIInfo> s_objsUIInfo;
 
+#ifdef ZENO_WITH_PYTHON
     PyMODINIT_FUNC PyInit_zen(void);
 
     void initPythonEnv(const char* progName)
@@ -180,6 +183,7 @@ sys.stderr = catchOutErr\n\
         }
         return 0;
     }
+#endif
 
 
 ZENO_API Session::Session()
@@ -191,7 +195,9 @@ ZENO_API Session::Session()
     , mainGraph(std::make_shared<Graph>("main"))
     , assets(std::make_shared<AssetsMgr>())
     , objsMan(std::make_unique<ObjectManager>())
+#ifdef ZENO_WITH_PYTHON
     , m_pyWrapper(std::make_unique<PythonEnvWrapper>())
+#endif
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
     , m_mainThreadId(0)
@@ -705,18 +711,24 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
 }
 
 void Session::initPyzen(std::function<void()> pyzenFunc) {
+#ifdef ZENO_WITH_PYTHON
     if (m_pyWrapper)
         m_pyWrapper->initPyzenFunc(pyzenFunc);
+#endif
 }
 
 void Session::asyncRunPython(const std::string& code) {
+#ifdef ZENO_WITH_PYTHON
     if (m_pyWrapper)
         m_pyWrapper->asyncRunPython(code);
+#endif
 }
 
 void* Session::hEventOfPyFinish() {
+#ifdef ZENO_WITH_PYTHON
     if (m_pyWrapper)
         return m_pyWrapper->m_hEventPyReady;
+#endif
     return nullptr;
 }
 

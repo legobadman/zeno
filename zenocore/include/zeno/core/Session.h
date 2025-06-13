@@ -114,7 +114,9 @@ private:
     std::string m_solver;
     unsigned long m_mainThreadId;
 
+#ifdef ZENO_WITH_PYTHON
     std::unique_ptr<PythonEnvWrapper> m_pyWrapper;
+#endif
 
     zeno::NodeRegistry m_cates;
     //std::map<std::string, std::vector<NodeInfo>> m_cates;

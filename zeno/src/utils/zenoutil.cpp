@@ -7,7 +7,9 @@
 
 static bool init_env = false;
 
+#ifdef ZENO_WITH_PYTHON
 PyMODINIT_FUNC PyInit_zen(void);
+#endif
 
 namespace zeno {
     ZENO_API bool runPython(const std::string& script) {

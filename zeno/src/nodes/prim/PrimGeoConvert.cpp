@@ -8,7 +8,7 @@ namespace zeno {
 
     using namespace zeno::reflect;
 
-    struct ZDEFNODE() PrimitiveToGeometry : INode {
+    struct PrimitiveToGeometry : INode {
         ReflectCustomUI m_uilayout = {
             _Group {
                 {"input_prim", ParamObject("Input", Socket_Clone)},
@@ -24,7 +24,7 @@ namespace zeno {
         }
     };
 
-    struct ZDEFNODE() GeometryToPrimitive : INode {
+    struct GeometryToPrimitive : INode {
         ReflectCustomUI m_uilayout = {
             _Group {
                 {"input_geometry", ParamObject("Input", Socket_Clone)},
