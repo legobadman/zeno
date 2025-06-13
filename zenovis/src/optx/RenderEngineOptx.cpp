@@ -1,9 +1,9 @@
 #include <tuple>
 #include <unordered_map>
 #include <vcruntime_string.h>
-#include <vector_types.h>
-#ifdef ZENO_ENABLE_OPTIX
 
+#ifdef ZENO_ENABLE_OPTIX
+#include <vector_types.h>
 #include "Scene.h"
 #include "optixPathTracer.h"
 #include "vec_math.h"
