@@ -385,22 +385,100 @@ Item {
                         }
                     }
                 }
-                    
-                // 2.定义ListView
-                ListView {
-                    id: listView
+
+                Menu {
+                    id: assetMenu
+                    property var node: null
+
+                    MenuItem {
+                        text: "创建Zeno资产(zda)"
+                        onTriggered: {
+                            assetMenu.close()
+                            Qt.callLater(() => {   // 再延迟打开对话框
+                                graphsmanager.createAssetDialog()
+                            });
+                        }
+                    }
+
+                    MenuItem {
+                        text: "打开资产文件"
+                        onTriggered: {
+                            assetMenu.close()
+                            Qt.callLater(() => {   // 再延迟打开对话框
+                                graphsmanager.loadAssetDialog()
+                            });
+                        }
+                    }
+                }
+
+                ColumnLayout {
                     anchors.fill: parent
+                    RowLayout {
+                        Layout.fillWidth: true
 
-                    // 使用先前设置的delegate
-                    delegate: assetItemDelegate
+                        Text {
+                            text: "Assets:"
+                            font.pixelSize: 16
+                            color: "grey"
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+
+                        ToolButton {
+                            // id: plugins_more
+                            checkable: false
+                            width: 16
+                            height: 16
+                            
+                            icon.source: hovered ? "qrc:/icons/add-on.svg" : "qrc:/icons/add.svg"
+
+                            onClicked: {
+                                assetMenu.popup()
+                            }
+                
+                            contentItem: Image {
+                                x: 2
+                                y: 2
+                                source: parent.icon.source
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                                smooth: true
+                                antialiasing: true
+                            }
+
+                            background: Rectangle {
+                                width: 20
+                                height: 20
+                                anchors.fill: parent
+                                color: "transparent"  // 不改变背景，只保证 hover 区域
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1
+                        Layout.fillWidth: true
+                        color: "grey"
+                    }
+
+                    ListView {
+                        id: listView
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+
+                        // 使用先前设置的delegate
+                        delegate: assetItemDelegate
                         
-                    // 3.ListModel专门定义列表数据的，它内部维护一个 ListElement 的列表。
-                    model: assetsModel
+                        // 3.ListModel专门定义列表数据的，它内部维护一个 ListElement 的列表。
+                        model: assetsModel
 
-                    // 背景高亮
-                    focus: true
-                    highlight: Rectangle{
-                        color: "#3D3D3D"
+                        // 背景高亮
+                        focus: true
+                        highlight: Rectangle{
+                            color: "#3D3D3D"
+                        }
                     }
                 }
             }
@@ -558,7 +636,6 @@ Item {
                             contentItem: Image {
                                 x: 2
                                 y: 2
-                                id: icon_more_plugins
                                 source: parent.icon.source
                                 sourceSize.width: 16
                                 sourceSize.height: 16

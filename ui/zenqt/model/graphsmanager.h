@@ -34,6 +34,8 @@ public:
     Q_INVOKABLE void openCustomUIDialog(CustomUIModel* customUIM);
     Q_INVOKABLE void onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx);
     Q_INVOKABLE void addPlugin();
+    Q_INVOKABLE void createAssetDialog();
+    Q_INVOKABLE void loadAssetDialog();
     Q_INVOKABLE void copy(const QModelIndexList& nodes);
     Q_INVOKABLE QStringList paste(const QPointF& pos, const QStringList& path_of_graphM);
 

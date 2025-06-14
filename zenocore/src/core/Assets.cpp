@@ -392,8 +392,9 @@ std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGra
 
 void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
 {
-    NodeImpl* input1Node = newAsst.sharedGraph->getNode("input1");
+    NodeImpl* input1Node = newAsst.sharedGraph->getNode("data_input");
 
+    //SubInput的port是一个output参数
     zeno::ParamPrimitive paramInput;
     paramInput.bInput = false;
     paramInput.name = "port";
@@ -403,7 +404,7 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     paramInput.bSocketVisible = false;
     input1Node->add_output_prim_param(paramInput);
 
-    NodeImpl* output1Node = newAsst.sharedGraph->getNode("output1");
+    NodeImpl* output1Node = newAsst.sharedGraph->getNode("data_output");
     zeno::ParamPrimitive paramOutput;
     paramOutput.bInput = true;
     paramOutput.name = "port";
@@ -411,14 +412,14 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     paramOutput.type = newAsst.primitive_outputs[0].type;
     output1Node->add_input_prim_param(paramOutput);
 
-    NodeImpl* objInput1Node = newAsst.sharedGraph->getNode("objInput1");
+    NodeImpl* objInput1Node = newAsst.sharedGraph->getNode("Input");
     zeno::ParamObject paramObj;
     paramObj.bInput = false;
     paramObj.name = "port";
     paramObj.type = newAsst.object_inputs[0].type;
     objInput1Node->add_output_obj_param(paramObj);
 
-    NodeImpl* objOutput1Node = newAsst.sharedGraph->getNode("objOutput1");
+    NodeImpl* objOutput1Node = newAsst.sharedGraph->getNode("Output");
     paramObj.bInput = true;
     objOutput1Node->add_input_obj_param(paramObj);
 }

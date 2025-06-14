@@ -3,6 +3,7 @@
 #include "assetsmodel.h"
 #include "uicommon.h"
 #include "dialog/zeditparamlayoutdlg.h"
+#include "dialog/znewassetdlg.h"
 #include "customuimodel.h"
 #include <zeno/io/zsg2reader.h>
 #include <zeno/utils/log.h>
@@ -490,6 +491,22 @@ void GraphsManager::onNodeSelected(const QStringList& graphs_path, const QModelI
         auto mainWin = zenoApp->getMainWindow();
         mainWin->onNodesSelected(m_main, { idx }, true);
     }
+}
+
+void GraphsManager::createAssetDialog()
+{
+    ZNewAssetDlg dlg(zenoApp->getMainWindow());
+    if (QDialog::Accepted == dlg.exec())
+    {
+        zeno::AssetInfo asset = dlg.getAsset();
+        AssetsModel* pModel = zenoApp->graphsManager()->assetsModel();
+        pModel->newAsset(asset);
+    }
+}
+
+void GraphsManager::loadAssetDialog()
+{
+    //TODO
 }
 
 void GraphsManager::addPlugin()
