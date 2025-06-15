@@ -90,7 +90,12 @@ void ZenoGraphsEditor::initUI()
     m_ui->graphsViewTab->setContextMenuPolicy(Qt::CustomContextMenu);
     initRecentFiles();
 
-    showWelcomPage();
+    auto graphsMgr = zenoApp->graphsManager();
+    QString path = graphsMgr->currentGraphPath();
+    if (path.isEmpty())
+        m_ui->mainStacked->setCurrentIndex(0);
+    else
+        resetMainModel(false);
 }
 
 void ZenoGraphsEditor::initModel()
@@ -119,7 +124,9 @@ void ZenoGraphsEditor::initModel()
 void ZenoGraphsEditor::initSignals()
 {
     auto graphsMgr = zenoApp->graphsManager();
-    connect(graphsMgr, SIGNAL(modelInited()), this, SLOT(resetMainModel()));
+    connect(graphsMgr, &GraphsManager::modelInited, this, [&]() {
+        resetMainModel(true);
+        });
     connect(graphsMgr->logModel(), &QStandardItemModel::rowsInserted, this, &ZenoGraphsEditor::onLogInserted);
 
     connect(m_selection, &QItemSelectionModel::selectionChanged, this, &ZenoGraphsEditor::onSideBtnToggleChanged);
@@ -167,12 +174,12 @@ void ZenoGraphsEditor::initRecentFiles()
     m_ui->welcomePage->initRecentFiles();
 }
 
-void ZenoGraphsEditor::resetMainModel()
+void ZenoGraphsEditor::resetMainModel(bool clearExistModel)
 {
     auto mgr = zenoApp->graphsManager();
     ZASSERT_EXIT(mgr);
     GraphsTreeModel* pModel = mgr->currentModel();
-    if (!pModel) {
+    if (clearExistModel && !pModel) {
         onModelCleared();
         return;
     }
