@@ -233,7 +233,7 @@ bool GraphsManager::saveFile(const QString& filePath, APP_SETTINGS)
 GraphsTreeModel* GraphsManager::newFile()
 {
     clear();
-    m_main = new GraphModel("/main", false, m_model, this);
+    m_main = new GraphModel("/main", false, m_model, nullptr, this);
     m_model->init(m_main);
 
     //TODO: assets may be kept.
@@ -481,6 +481,27 @@ void GraphsManager::openCustomUIDialog(CustomUIModel* customUIM) {
         const zeno::CustomUI& ui = dlg.getCustomUiInfo();
         paramsM->resetCustomUi(ui);
         paramsM->batchModifyParams(info);
+    }
+}
+
+void GraphsManager::onAssetsCustomUIDialog(const QString& assetsName) {
+    auto& assetsMgr = zeno::getSession().assets;
+    const auto& name = assetsName.toStdString();
+    const zeno::Asset& asset = assetsMgr->getAsset(name);
+    auto mainWin = zenoApp->getMainWindow();
+
+    //ensure the graph be loaded.
+    assetsMgr->getAssetGraph(name, true);
+
+    ParamsModel paramsM(asset.m_customui);
+    CustomUIModel* pCustomM = paramsM.customUIModel();
+    ZEditParamLayoutDlg dlg(pCustomM, mainWin);
+    if (QDialog::Accepted == dlg.exec())
+    {
+        auto graphsMgr = zenoApp->graphsManager();
+        zeno::ParamsUpdateInfo info = dlg.getEdittedUpdateInfo();
+        zeno::CustomUI customui = dlg.getCustomUiInfo();
+        updateAssets(assetsName, info, customui);
     }
 }
 

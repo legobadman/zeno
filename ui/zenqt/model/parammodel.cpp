@@ -130,6 +130,9 @@ ParamsModel::ParamsModel(const zeno::CustomUI& customui)
     , m_inPrimProxy(nullptr)
     , m_outPrimProxy(nullptr)
     , m_outObjProxy(nullptr)
+    , m_wpNode(nullptr)
+    , m_bTempModel(true)
+    , m_tempUI(customui)
 {
     initProxyModels();
     initParamItems(customui);
@@ -325,7 +328,10 @@ void ParamsModel::initParamItems(const zeno::CustomUI& customui)
 }
 
 zeno::CustomUI ParamsModel::customUI() const {
-    return m_wpNode->export_customui();
+    if (m_bTempModel && !m_wpNode)
+        return m_tempUI;
+    else
+        return m_wpNode->export_customui();
 }
 
 void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
@@ -375,7 +381,8 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
         customui.inputPrims[0].name == "Tab1" &&
         customui.inputPrims[0].groups.size() == 1 &&
         customui.inputPrims[0].groups[0].name == "Group1" &&
-        !dynamic_cast<zeno::SubnetNode*>(m_wpNode)) {
+        !dynamic_cast<zeno::SubnetNode*>(m_wpNode) &&
+        !m_bTempModel) {
         return;
     }
     else {

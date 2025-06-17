@@ -330,41 +330,48 @@ Item {
 
                         //资产列表被点击时，tab新增/跳转:
                         MouseArea {
-                            anchors.fill: parent;
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+
                             onClicked: {
                                 wrapper.ListView.view.currentIndex = index
                                 var idx = assetsModel.index(index, 0)
                                 var assetname = assetsModel.data(idx)
-                                var asset_graph_model = assetsModel.getAssetGraph(assetname)
-
-                                for (var i = 0; i < graphs_tabbar.count; i++) {
-                                    let tab = graphs_tabbar.itemAt(i);
-                                    if (tab.text == assetname) {
-                                        //已存在tab，直接激活即可
-                                        graphs_tabbar.currentIndex = i;
-                                        return;
-                                    }
+                                if (mouse.button == Qt.RightButton) {
+                                    assetsitem_menu.assetname = assetname
+                                    assetsitem_menu.popup(Qt.point(mouse.x + parent.x + 32, mouse.y + parent.y));
                                 }
-
-                                //TODO: 如何为CustomTabButton指定合适的宽度？
-                                const newtabbutton = myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200, z:1000})
-                                graphs_tabbar.addItem(newtabbutton)
-                                newtabbutton.closeTab.connect(function onCloseTab() {
+                                else {
+                                    var asset_graph_model = assetsModel.getAssetGraph(assetname)
                                     for (var i = 0; i < graphs_tabbar.count; i++) {
-                                        let tab = graphs_tabbar.itemAt(i);
+                                        let tab = graphs_tabbar.itemAt(i)
                                         if (tab.text == assetname) {
-                                            //移除当前tab，同时也把stacklayout里面的graphview也一并移除
-                                            //目前将索引调为一致状态
-                                            graphs_tabbar.removeItem(i);
-                                            graphs_stack.children[i].destroy()
+                                            //已存在tab，直接激活即可
+                                            graphs_tabbar.currentIndex = i
+                                            return;
                                         }
                                     }
-                                })
-                                
-                                const graphsview_comp = Qt.createComponent("qrc:/ZenoSubnetsView.qml")
-                                const newgraphview = graphsview_comp.createObject(graphs_stack, {root_graphmodel: asset_graph_model})
-                                graphs_tabbar.currentIndex = graphs_tabbar.count - 1;
-                                //TODO: delete and adjust index
+
+                                    //TODO: 如何为CustomTabButton指定合适的宽度？
+                                    const newtabbutton = myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200, z:1000})
+                                    graphs_tabbar.addItem(newtabbutton)
+                                    newtabbutton.closeTab.connect(function onCloseTab() {
+                                        for (var i = 0; i < graphs_tabbar.count; i++) {
+                                            let tab = graphs_tabbar.itemAt(i);
+                                            if (tab.text == assetname) {
+                                                //移除当前tab，同时也把stacklayout里面的graphview也一并移除
+                                                //目前将索引调为一致状态
+                                                graphs_tabbar.removeItem(i);
+                                                graphs_stack.children[i].destroy()
+                                            }
+                                        }
+                                    })
+                                    
+                                    const graphsview_comp = Qt.createComponent("qrc:/ZenoSubnetsView.qml")
+                                    const newgraphview = graphsview_comp.createObject(graphs_stack, {root_graphmodel: asset_graph_model})
+                                    graphs_tabbar.currentIndex = graphs_tabbar.count - 1;
+                                    //TODO: delete and adjust index
+                                }
                             }
                         }
 
@@ -410,6 +417,25 @@ Item {
                         }
                     }
                 }
+
+                Menu {
+                    id: assetsitem_menu
+                    property var assetname: ""
+
+                    MenuItem {
+                        text: "Custom UI"
+                        onTriggered: {
+                            assetsitem_menu.close()
+                            Qt.callLater(() => {   // 再延迟打开对话框
+                                graphsmanager.onAssetsCustomUIDialog(assetsitem_menu.assetname)
+                            });
+                        }
+                    }
+                    MenuItem {
+                        text: "Open Container Folder"
+                        onTriggered: {}
+                    }
+                } 
 
                 ColumnLayout {
                     anchors.fill: parent

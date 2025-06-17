@@ -20,7 +20,11 @@ struct ZENO_API SubnetNode : NodeImpl {
     Graph* get_subgraph() const;
     void init_graph(std::shared_ptr<Graph> subg);
     bool isAssetsNode() const;
-    
+    bool is_loaded() const override;
+    bool is_locked() const override;
+    void set_locked(bool bLocked) override;
+    NodeType nodeType() const override;
+
     NodeData exportInfo() const override;
     CustomUI get_customui() const override;
     CustomUI export_customui() const override;
@@ -28,9 +32,14 @@ struct ZENO_API SubnetNode : NodeImpl {
     void setCustomUi(const CustomUI& ui);
     void mark_subnetdirty(bool bOn);
 
+    CALLBACK_REGIST(lockChanged, void, void)
+
 protected:
     CustomUI m_customUi;
     std::shared_ptr<Graph> m_subgraph;    //assets subnetnode
+
+private:
+    bool m_bLocked; //只给资产用
 };
 
 struct ZENO_API DopNetwork : zeno::SubnetNode {

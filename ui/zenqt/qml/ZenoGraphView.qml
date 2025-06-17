@@ -59,10 +59,24 @@ Qan.GraphView {
 
     property var tempEdge: undefined    //由于tempEdge需要挂在containerItem下，所以不能以组件的方式直接定义
 
+        // 背景透明层
+    Rectangle {
+        id: backgroundOverlay
+        anchors.fill: parent
+        color: "#25FFFFFF"
+        z: 999
+        visible: graph.locked
+    }
+
     //background
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(26/255, 26/255, 26/255, 1)
+        color: {
+            //if (graph.locked)
+            //    return Qt.rgba(83/255, 83/255, 85/255, 0.3)
+            //else
+                return Qt.rgba(26/255, 26/255, 26/255, 1)
+        }
         z: -10
     }
 
@@ -251,6 +265,25 @@ Qan.GraphView {
 
         MenuItem {
             text: "编辑自定义参数"
+            height: visible ? implicitHeight : 0
+            visible: {
+                if (nodeMenu.node) {
+                    var model = graphView.graphModel
+                    var nodeType = model.data(nodeMenu.node.index, Model.ROLE_NODETYPE)
+                    var islocked = model.data(nodeMenu.node.index, Model.ROLE_NODE_LOCKED)
+                    if (nodeType == NodeType.Node_AssetInstance) {
+                        //解锁的资产才可以编辑，此时编辑的对象是这个节点自己，而不是整个资产
+                        return !islocked
+                    }
+                    else if (nodeType == NodeType.Node_SubgraphNode) {
+                        return true;
+                    }
+                    return false;
+                }
+                else {
+                    return false
+                }
+            }
             onTriggered: {
                 var nodeobj = nodeMenu.node
                 nodeMenu.close()
@@ -260,6 +293,68 @@ Qan.GraphView {
                 // showDialog(nodeMenu.node)
             }
         }
+
+        MenuItem {
+            text: "资产还原并锁定"
+            height: visible ? implicitHeight : 0
+            visible: {
+                if (nodeMenu.node) {
+                    var model = graphView.graphModel
+                    var nodeType = model.data(nodeMenu.node.index, Model.ROLE_NODETYPE)
+                    var islocked = model.data(nodeMenu.node.index, Model.ROLE_NODE_LOCKED)
+                    return nodeType == NodeType.Node_AssetInstance && islocked == false
+                }
+                else {
+                    return false
+                }
+            }
+            onTriggered: {
+                var model = graphView.graphModel
+                model.resetAssetAndLock(nodeMenu.node.index)
+                // model.setData(nodeMenu.node.index, true, Model.ROLE_NODE_LOCKED)
+            }
+        }
+
+        MenuItem {
+            text: "解锁资产"
+            height: visible ? implicitHeight : 0
+            visible: {
+                if (nodeMenu.node) {
+                    var model = graphView.graphModel
+                    var nodeType = model.data(nodeMenu.node.index, Model.ROLE_NODETYPE)
+                    var islocked = model.data(nodeMenu.node.index, Model.ROLE_NODE_LOCKED)
+                    return nodeType == NodeType.Node_AssetInstance && islocked == true
+                }
+                else {
+                    return false
+                }
+            }
+            onTriggered: {
+                var model = graphView.graphModel
+                model.setData(nodeMenu.node.index, false, Model.ROLE_NODE_LOCKED)
+            }
+        }
+
+        /* //这个功能不好做，先搁置，只能用户到assetgraph去编辑，子图独立编辑也只能做些验证，如果想同步，也只能手动拷过去了
+        MenuItem {
+            text: "同步资产修改"
+            height: visible ? implicitHeight : 0
+            visible: {
+                if (nodeMenu.node) {
+                    var model = graphView.graphModel
+                    var nodeType = model.data(nodeMenu.node.index, Model.ROLE_NODETYPE)
+                    var islocked = model.data(nodeMenu.node.index, Model.ROLE_NODE_LOCKED)
+                    return nodeType == NodeType.Node_AssetInstance && islocked == false
+                }
+                else {
+                    return false
+                }
+            }
+            onTriggered: {
+
+            }
+        }
+        */
     }
 
     graph: Qan.Graph {
@@ -737,32 +832,6 @@ Qan.GraphView {
     function showDialog(node) {
         var customuiM = node.params.customUIModel()
         graphsmanager.openCustomUIDialog(customuiM)
-        return
-
-        var component = Qt.createComponent("ZEditparamDlg.qml");
-        if (component.status === Component.Ready) {
-            if(!editparamDlg) {
-                var editparamDlg = component.createObject(null); // 创建顶层对象
-                if (editparamDlg) {
-                    editparamDlg.node = node
-                    var customuiModelCloned = node.params.customUIModelCloned()
-                    editparamDlg.controlItemM = customuiModelCloned.controlItemModel()
-                    editparamDlg.tabelM = customuiModelCloned.tabModel()
-                    editparamDlg.primOutputM = customuiModelCloned.primOutputModel()
-                    editparamDlg.objInputM = customuiModelCloned.objInputModel()
-                    editparamDlg.objOutputM = customuiModelCloned.objOutputModel()
-                    if(node.params.customUIModelCloned().isSubnetNode()) {//只有subnet节点才允许编辑
-                        editparamDlg.openDialog(); // 调用 openDialog 方法显示窗口
-                    }
-                } else {
-                    console.error("对话框实例创建失败");
-                }
-            } else {
-                editparamDlg.node = node
-            }
-        } else if (component.status === Component.Error) {
-            console.error("加载对话框组件失败:", component.errorString());
-        }
     }
 
     Qan.GraphPreview {

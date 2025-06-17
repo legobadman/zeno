@@ -290,7 +290,8 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         QAction* pLock = new QAction(bLocked ? tr("UnLock") : tr("Lock"));
         nodeMenu->addAction(pLock);
         connect(pLock, &QAction::triggered, this, [=]() {
-            pSubgGraphM->setLocked(!bLocked);
+            //TODO: oldui case
+            //pSubgGraphM->setLocked(!bLocked);
         });
         if (!bLocked)
         {

@@ -293,22 +293,27 @@
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="editLabel"/>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="nameLbl">
-           <property name="text">
-            <string>Name</string>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="0">
           <widget class="QLabel" name="controlLbl">
            <property name="text">
             <string>Control</string>
            </property>
           </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="editHint"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="cbSocketType"/>
+         </item>
+         <item row="5" column="1">
+          <widget class="QComboBox" name="cbObjectType"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="editLabel"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="editName"/>
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="hintLbl">
@@ -324,6 +329,20 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="nameLbl">
+           <property name="text">
+            <string>Name</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="lblObjType">
+           <property name="text">
+            <string>object type</string>
+           </property>
+          </widget>
+         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="labelLbl">
            <property name="text">
@@ -334,24 +353,15 @@
          <item row="2" column="1">
           <widget class="ZComboBox" name="cbControl"/>
          </item>
-         <item row="4" column="1">
-          <widget class="QComboBox" name="cbSocketType"/>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="editName"/>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="editHint"/>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="lblObjType">
+         <item row="6" column="0">
+          <widget class="QLabel" name="lblPrimOutput">
            <property name="text">
-            <string>object type</string>
+            <string>outprim type</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
-          <widget class="QComboBox" name="cbObjectType"/>
+         <item row="6" column="1">
+          <widget class="QComboBox" name="cbOutputPrim"/>
          </item>
         </layout>
        </item>
@@ -494,7 +504,7 @@
           </widget>
          </item>
         </layout>
-       </item>       
+       </item>
       </layout>
      </item>
     </layout>

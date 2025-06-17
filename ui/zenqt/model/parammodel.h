@@ -148,6 +148,7 @@ private:
 
     zeno::NodeImpl* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了
     std::string cbUpdateParam;
+    zeno::CustomUI m_tempUI;
     mutable bool m_bReentry = false;
     bool m_bTempModel = false;  //给CustomUI面板用的临时悬空模型，不依附于任何节点
 };

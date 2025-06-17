@@ -128,7 +128,6 @@
             <property name="styleSheet">
              <string notr="true">QListView
                     {
-                        background-color: transparent;
                         show-decoration-selected: 1;
                         font-size: 12pt;
                         font-weight: bold;
@@ -211,7 +210,6 @@
             <property name="styleSheet">
              <string notr="true">QListView
                     {
-                        background-color: transparent;
                         show-decoration-selected: 1;
                         font-size: 12pt;
                         font-weight: bold;
@@ -228,7 +226,7 @@
             </property>
            </widget>
           </item>
-         </layout>        
+         </layout>
         </widget>
         <widget class="QWidget" name="mainPage">
          <layout class="QVBoxLayout" name="verticalLayout2_">

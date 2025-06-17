@@ -27,7 +27,7 @@ class GraphModel : public QAbstractListModel
     QML_ELEMENT
 
 public:
-    GraphModel(std::string const& asset_or_maingraph, bool bAsset, GraphsTreeModel* pTree, QObject* parent = nullptr);
+    GraphModel(std::string const& asset_or_maingraph, bool bAsset, GraphsTreeModel* pTree, GraphModel* parentGraph, QObject* parent = nullptr);
     ~GraphModel();
     Q_INVOKABLE LinkModel* getLinkModel() const { return m_linkModel; }
     Q_INVOKABLE int indexFromId(const QString& name) const;
@@ -45,9 +45,14 @@ public:
     Q_INVOKABLE QStringList path() const;
     Q_INVOKABLE void insertNode(const QString& nodeCls, const QString& cate, const QPointF& pos);
     Q_INVOKABLE bool removeNode(const QString& name);
+    Q_INVOKABLE void resetAssetAndLock(const QModelIndex& assetNode);
+    Q_INVOKABLE void syncAssetInst(const QModelIndex& assetNode);
 
     //TEST API
     Q_INVOKABLE QString owner() const;
+
+    Q_PROPERTY(bool lock READ isLocked NOTIFY lockStatusChanged)
+    bool isLocked() const;
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -93,8 +98,7 @@ public:
     ParamsModel* params(QModelIndex nodeIdx);
     GraphModel* subgraph(QModelIndex nodeIdx);
     GraphsTreeModel* treeModel() const;
-    void setLocked(bool bLocked);
-    bool isLocked() const;
+
     QStringList pasteNodes(const zeno::NodesData& nodes, const zeno::LinksData& links, const QPointF& pos);
     QString name2uuid(const QString& name);
 
@@ -147,7 +151,6 @@ private:
     LinkModel* m_linkModel;
 
     GraphMImpl* m_impl;
-    bool m_bLocked = false;
     friend class NodeItem;
 };
 

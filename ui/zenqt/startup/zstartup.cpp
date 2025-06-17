@@ -47,6 +47,8 @@ void initQml()
     qRegisterMetaType<ControlItemListModel*>("ControlItemListModel*");
     qRegisterMetaType<NodeCateModel*>("NodeCateModel*");
     qRegisterMetaType<QStandardItemModel*>("QStandardItemModel*");
+
+    qmlRegisterUncreatableType<QmlNodeType>("zeno.enum", 1, 0, "NodeType", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlParamGroup>("zeno.enum", 1, 0, "ParamGroup", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<RunStatus>("zeno.enum", 1, 0, "RunStatus", "Not creatable as it is an enum type");

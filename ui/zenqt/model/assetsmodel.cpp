@@ -62,7 +62,7 @@ GraphModel* AssetsModel::getAssetGraph(const QString& graphName)
                 std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
                 auto spAsset = assets->getAssetGraph(assetName, true);
                 if (spAsset) {
-                    auto pNewAsstModel = new GraphModel(assetName, true, nullptr, this);
+                    auto pNewAsstModel = new GraphModel(assetName, true, nullptr, nullptr, this);
                     m_assets[i].pGraphM = pNewAsstModel;
                     return pNewAsstModel;
                 }
@@ -252,7 +252,7 @@ void AssetsModel::_addAsset(zeno::AssetInfo info)
     std::shared_ptr<zeno::AssetsMgr> asts = zeno::getSession().assets;
     zeno::Graph* spAsset = asts->getAsset(info.name).sharedGraph.get();
     if (spAsset) {
-        auto pNewAsstModel = new GraphModel(info.name, true, nullptr, this);
+        auto pNewAsstModel = new GraphModel(info.name, true, nullptr, nullptr, this);
         item.pGraphM = pNewAsstModel;
     }
 

@@ -68,6 +68,10 @@ namespace zeno
         INode* coreNode() const;
         void initUuid(Graph* pGraph, const std::string nodecls);
 
+        virtual NodeType nodeType() const;
+        virtual bool is_locked() const;
+        virtual void set_locked(bool);
+
         void set_view(bool bOn);
         CALLBACK_REGIST(set_view, void, bool)
         bool is_view() const;
@@ -148,7 +152,7 @@ namespace zeno
         void update_layout(params_change_info& changes);
         CALLBACK_REGIST(update_layout, void, params_change_info& changes)
 
-        bool is_loaded() const;
+        virtual bool is_loaded() const;
         void update_load_info(bool bDisable);
         CALLBACK_REGIST(update_load_info, void, bool)
 
@@ -272,6 +276,11 @@ namespace zeno
         virtual void apply();
         void reflectNode_apply();
         virtual void initParams(const NodeData& dat);
+
+        std::map<std::string, ObjectParam> m_inputObjs;
+        std::map<std::string, PrimitiveParam> m_inputPrims;
+        std::map<std::string, PrimitiveParam> m_outputPrims;
+        std::map<std::string, ObjectParam> m_outputObjs;
         
     private:
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
@@ -297,16 +306,10 @@ namespace zeno
         void foreachend_apply(CalcContext* pContext);
         void init_output_container_updateinfo();
 
-
         std::string m_name;
         std::string m_nodecls;
         std::string m_uuid;
         std::pair<float, float> m_pos;
-
-        std::map<std::string, ObjectParam> m_inputObjs;
-        std::map<std::string, PrimitiveParam> m_inputPrims;
-        std::map<std::string, PrimitiveParam> m_outputPrims;
-        std::map<std::string, ObjectParam> m_outputObjs;
 
         std::string m_uuidPath;
         NodeRunStatus m_status = Node_DirtyReadyToRun;

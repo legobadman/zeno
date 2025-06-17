@@ -97,6 +97,7 @@ private slots:
     void onOutputsViewParamDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     void onSocketTypeChanged(int idx);
     void onObjTypeChanged(int idx);
+    void onOutputPrimTypeChanged(int idx);
     void onMinEditFinished();
     void onMaxEditFinished();
     void onStepEditFinished();

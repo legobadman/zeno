@@ -59,6 +59,7 @@ namespace qan { // ::qan
 /* Graph Object Management *///------------------------------------------------
 Graph::Graph(QQuickItem* parent) noexcept :
     super_t{parent}
+    , m_model(nullptr)
 {
     setContainerItem(this);
     setAntialiasing(true);
@@ -288,6 +289,13 @@ qan::Group* Graph::groupAt(const QPointF& p, const QSizeF& s, const QQuickItem* 
     return nullptr;
 }
 
+bool Graph::isLocked() const {
+    if (m_model)
+        return m_model->isLocked();
+    else
+        return false;
+}
+
 void    Graph::setContainerItem(QQuickItem* containerItem)
 {
     // PRECONDITIONS:
@@ -377,6 +385,8 @@ void Graph::setModel(GraphModel* pGraphM)
             this->groupNode(group, node);
         }
     });
+    connect(m_model, &GraphModel::lockStatusChanged, this, &qan::Graph::lockedChanged);
+    emit lockedChanged();
 }
 
 //-----------------------------------------------------------------------------

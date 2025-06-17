@@ -22,6 +22,7 @@ namespace zeno {
 SubnetNode::SubnetNode(INode* pNode)
     : NodeImpl(pNode)
     , m_subgraph(std::make_shared<Graph>(""))
+    , m_bLocked(true)
 {
     //auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
     //m_customUi = cl->m_customui;
@@ -81,6 +82,17 @@ void SubnetNode::initParams(const NodeData& dat)
         m_subgraph->init(*dat.subgraph);
 }
 
+NodeType SubnetNode::nodeType() const {
+    bool bAssets = get_subgraph()->isAssets();
+    if (bAssets) {
+        if (in_asset_file())
+            return zeno::Node_AssetReference;
+        else
+            return zeno::Node_AssetInstance;
+    }
+    return zeno::Node_SubgraphNode;
+}
+
 Graph* SubnetNode::get_subgraph() const
 {
     return m_subgraph.get();
@@ -94,11 +106,31 @@ bool SubnetNode::isAssetsNode() const {
     return m_subgraph->isAssets();
 }
 
+bool SubnetNode::is_loaded() const {
+    //TODO: 资产没加载的情况
+    return true;
+}
+
+bool SubnetNode::is_locked() const {
+    if (nodeType() == Node_AssetInstance)
+        return m_bLocked;
+    else
+        return false;
+}
+
+void SubnetNode::set_locked(bool bLocked) {
+    if (nodeType() == Node_AssetInstance) {
+        m_bLocked = bLocked;
+        CALLBACK_NOTIFY(lockChanged)
+    }
+}
+
 params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
 {
     params_change_info changes = NodeImpl::update_editparams(params);
     //update subnetnode.
-    if (!m_subgraph->isAssets()) {
+    //没有锁定的节点（包括资产实例和普通子图，都可以在这里更新Subnet的SubInput/SubOutput等）
+    if (!is_locked()) {
         for (auto name : changes.new_inputs) {
             NodeImpl* newNode = m_subgraph->createNode("SubInput", name);
 

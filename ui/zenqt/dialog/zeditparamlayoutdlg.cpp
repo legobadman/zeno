@@ -305,6 +305,7 @@ ZEditParamLayoutDlg::ZEditParamLayoutDlg(CustomUIModel* pModel, QWidget* parent)
     connect(m_ui->cbControl, SIGNAL(currentIndexChanged(int)), this, SLOT(onControlItemChanged(int)));
     connect(m_ui->cbSocketType, SIGNAL(currentIndexChanged(int)), this, SLOT(onSocketTypeChanged(int)));
     connect(m_ui->cbObjectType, SIGNAL(currentIndexChanged(int)), this, SLOT(onObjTypeChanged(int)));
+    connect(m_ui->cbOutputPrim, SIGNAL(currentIndexChanged(int)), this, SLOT(onOutputPrimTypeChanged(int)));
 
     m_ui->itemsTable->setHorizontalHeaderLabels({ tr("Item Name") });
     connect(m_ui->itemsTable, SIGNAL(cellChanged(int, int)), this, SLOT(onComboTableItemsCellChanged(int, int)));
@@ -423,6 +424,21 @@ void ZEditParamLayoutDlg::initUI()
     m_ui->cbObjectType->addItem(tr("Geometry"), (quint64)gParamType_Geometry);
     m_ui->cbObjectType->addItem(tr("Object"), (quint64)gParamType_IObject);
     m_ui->cbObjectType->hide();
+
+    m_ui->cbOutputPrim->addItem(tr("Integer"), (quint64)gParamType_Int);
+    m_ui->cbOutputPrim->addItem(tr("Float"), (quint64)gParamType_Float);
+    m_ui->cbOutputPrim->addItem(tr("vec3f"), (quint64)gParamType_Vec3f);
+    m_ui->cbOutputPrim->addItem(tr("vec3i"), (quint64)gParamType_Vec3i);
+    m_ui->cbOutputPrim->addItem(tr("vec2f"), (quint64)gParamType_Vec2f);
+    m_ui->cbOutputPrim->addItem(tr("vec2i"), (quint64)gParamType_Vec2i);
+    m_ui->cbOutputPrim->addItem(tr("vec4f"), (quint64)gParamType_Vec4f);
+    m_ui->cbOutputPrim->addItem(tr("vec4i"), (quint64)gParamType_Vec4i);
+    m_ui->cbOutputPrim->addItem(tr("string"), (quint64)gParamType_String);
+    m_ui->cbOutputPrim->addItem(tr("curve"), (quint64)gParamType_Curve);
+    m_ui->cbOutputPrim->addItem(tr("heatmap"), (quint64)gParamType_Heatmap);
+    m_ui->cbOutputPrim->addItem(tr("shader"), (quint64)gParamType_Shader);
+    m_ui->lblPrimOutput->hide();
+    m_ui->cbOutputPrim->hide();
 
     //m_ui->paramsView->setFocusPolicy(Qt::NoFocus);
     resize(ZenoStyle::dpiScaled(900), ZenoStyle::dpiScaled(620));
@@ -590,6 +606,8 @@ void ZEditParamLayoutDlg::onTreeCurrentChanged(const QModelIndex& current, const
     m_ui->editLabel->setText(pCurrentItem->data(QtRole::ROLE_PARAM_TOOLTIP).toString());
     m_ui->cbObjectType->hide();
     m_ui->lblObjType->hide();
+    m_ui->cbOutputPrim->hide();
+    m_ui->lblPrimOutput->hide();
 
     //delete old control.
     QLayoutItem* pLayoutItem = m_ui->gridLayout->itemAtPosition(rowValueControl, 1);
@@ -728,6 +746,8 @@ void ZEditParamLayoutDlg::onOutputsListCurrentChanged(const zeno::NodeDataGroup 
     if (group == zeno::Role_InputObject || group == zeno::Role_OutputObject) {
         m_ui->controlLbl->hide();
         m_ui->cbControl->hide();
+        m_ui->lblPrimOutput->hide();
+        m_ui->cbOutputPrim->hide();
         m_ui->cbObjectType->show();
         m_ui->lblObjType->show();
         for (int i = 0; i < m_ui->cbObjectType->count(); i++) {
@@ -738,10 +758,18 @@ void ZEditParamLayoutDlg::onOutputsListCurrentChanged(const zeno::NodeDataGroup 
         }
     }
     else if (group == zeno::Role_OutputPrimitive) {
-        m_ui->controlLbl->show();
-        m_ui->cbControl->show();
+        m_ui->controlLbl->hide();
+        m_ui->cbControl->hide();
         m_ui->cbObjectType->hide();
         m_ui->lblObjType->hide();
+        m_ui->lblPrimOutput->show();
+        m_ui->cbOutputPrim->show();
+        for (int i = 0; i < m_ui->cbOutputPrim->count(); i++) {
+            if (m_ui->cbOutputPrim->itemData(i).value<zeno::ParamType>() == paramType) {
+                m_ui->cbOutputPrim->setCurrentIndex(i);
+                break;
+            }
+        }
     }
 
     switchStackProperties(ctrl, pCurrentItem);
@@ -902,6 +930,9 @@ void ZEditParamLayoutDlg::onBtnAddOutputs()
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), QtRole::ROLE_PARAM_VALUE);
     pNewItem->setData(zeno::Socket_Clone, QtRole::ROLE_SOCKET_TYPE);
+    pNewItem->setData(gParamType_Float, QtRole::ROLE_PARAM_TYPE);
+    zeno::reflect::Any anyVal = zeno::initAnyDeflValue(gParamType_Float);
+    pNewItem->setData(QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
 
     m_paramsLayoutM_outputs->appendRow(pNewItem);
     pNewItem->setData(getIcon(pNewItem), Qt::DecorationRole);
@@ -1163,6 +1194,15 @@ void ZEditParamLayoutDlg::onSocketTypeChanged(int idx)
     const QString& socketType = m_ui->cbSocketType->itemText(idx);
     auto type = m_ui->cbSocketType->itemData(idx);
     pItem->setData(type, QtRole::ROLE_SOCKET_TYPE);
+}
+
+void ZEditParamLayoutDlg::onOutputPrimTypeChanged(int idx) {
+    const QModelIndex& currIdx = m_ui->outputsView->currentIndex();
+    if (!currIdx.isValid())
+        return;
+    QStandardItem* pItem = m_paramsLayoutM_outputs->itemFromIndex(currIdx);
+    auto type = m_ui->cbOutputPrim->itemData(idx);
+    pItem->setData(type, QtRole::ROLE_PARAM_TYPE);
 }
 
 void ZEditParamLayoutDlg::onObjTypeChanged(int idx)

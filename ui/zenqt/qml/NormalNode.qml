@@ -46,6 +46,8 @@ Qan.NodeItem {
     property alias isview : right_status_group.isview
     property alias isbypass: right_status_group.isbypass
     property bool isloaded : true
+    property var node_type : NodeType.Node_Normal
+    property bool is_locked: false
     property var node_enable_bg_color: "#0277D1"
     property var nodestatus: 0
 
@@ -141,6 +143,9 @@ Qan.NodeItem {
             nodeItem.x = data.x
             nodeItem.y = data.y           
         }
+        if (role == Model.ROLE_NODE_LOCKED) {
+            nodeItem.is_locked = data
+        }
         if (role == Model.ROLE_NODE_RUN_STATE) {
             nodeItem.nodestatus = data
         }
@@ -181,19 +186,45 @@ Qan.NodeItem {
         }
     }
 
-    EditableText {
+    Column {
         id: detach_name_editor
         anchors.right: nodeItem.left
         y: right_status_group.y + right_status_group.height / 2 - height / 2
-        //anchors.verticalCenter: right_status_group.verticalCenter
-        //anchors.verticalCenter: mainmain_layout.verticalCenter
-        text: nodeItem.node.label
 
-        handle_mouseevent : nodeItem.clsname !== "SubInput" && nodeItem.clsname !== "SubOutput"
-        onTextChanged: {
-            nodeItem.node.label = text
+        EditableText {
+            //anchors.verticalCenter: right_status_group.verticalCenter
+            //anchors.verticalCenter: mainmain_layout.verticalCenter
+            text: nodeItem.node.label
+            fontsize: 22
+            handle_mouseevent : nodeItem.clsname !== "SubInput" && nodeItem.clsname !== "SubOutput"
+            onTextChanged: {
+                nodeItem.node.label = text
+            }
+        }
+        Row {
+            Text {
+                color: "gray"
+                text: nodeItem.clsname
+                font.pixelSize: 16
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            Image {
+                id: lockimg
+                visible: {
+                    return nodeItem.node_type == NodeType.Node_AssetInstance
+                }
+                width: 16
+                height: 16
+                z: 10
+                source: {
+                    if (nodeItem.node_type != NodeType.Node_AssetInstance)   return ""
+                    return nodeItem.is_locked ? "qrc:/icons/lock.svg" : "qrc:/icons/unlock.svg"
+                }
+            }
         }
     }
+
 
     Image {
         id: errormark
@@ -530,6 +561,8 @@ Qan.NodeItem {
         nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
         nodeItem.clsname = graphM.data(idx, Model.ROLE_CLASS_NAME)
         nodeItem.isloaded = graphM.data(idx, Model.ROLE_NODE_IS_LOADED)
+        nodeItem.node_type = graphM.data(idx, Model.ROLE_NODETYPE)
+        nodeItem.is_locked = graphM.data(idx, Model.ROLE_NODE_LOCKED)
 
         var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
         if (uistyle["icon"] != "") {

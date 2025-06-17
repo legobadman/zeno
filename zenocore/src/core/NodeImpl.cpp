@@ -61,6 +61,18 @@ NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
         m_pNode->m_pAdapter = this;
 }
 
+NodeType NodeImpl::nodeType() const {
+    return m_pNode->type();
+}
+
+bool NodeImpl::is_locked() const {
+    return false;
+}
+
+void NodeImpl::set_locked(bool bLocked) {
+
+}
+
 void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
     //TODO: 考虑asset的情况
     m_nodecls = nodecls;
