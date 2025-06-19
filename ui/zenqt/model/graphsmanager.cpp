@@ -441,27 +441,33 @@ void GraphsManager::saveProject(const QString& name)
     }
 }
 
-void GraphsManager::undo(const QString& name)
+void GraphsManager::undo(const QStringList& path)
 {
-    if (name == "main") {
+    if (path.isEmpty()) return;
+
+    QString graph(path[0]);
+    if (graph == "main") {
         m_main->undo();
     }
     else {
-        GraphModel* pAssetM = assetsModel()->getAssetGraph(name);
-        ZASSERT_EXIT(pAssetM);
-        pAssetM->undo();
+        GraphModel* pModel = m_assets->getAssetGraph(graph);
+        ZASSERT_EXIT(pModel);
+        pModel->undo();
     }
 }
 
-void GraphsManager::redo(const QString& name)
+void GraphsManager::redo(const QStringList& path)
 {
-    if (name == "main") {
+    if (path.isEmpty()) return;
+
+    QString graph(path[0]);
+    if (graph == "main") {
         m_main->redo();
     }
     else {
-        GraphModel* pAssetM = assetsModel()->getAssetGraph(name);
-        ZASSERT_EXIT(pAssetM);
-        pAssetM->redo();
+        GraphModel* pModel = m_assets->getAssetGraph(graph);
+        ZASSERT_EXIT(pModel);
+        pModel->redo();
     }
 }
 
@@ -630,7 +636,7 @@ void GraphsManager::updateAssets(const QString& assetsName, zeno::ParamsUpdateIn
     //update to each assets node on the tree
     GraphModel* mainM = m_model->getGraphByPath({"main"});
     ZASSERT_EXIT(mainM);
-    mainM->syncToAssetsInstance(assetsName, info, customui);
+    mainM->syncToAssetsInstance_customui(assetsName, info, customui);
 
     //also need to sync all other assets.
     for (int i = 0; i < m_assets->rowCount(); i++)
@@ -638,7 +644,7 @@ void GraphsManager::updateAssets(const QString& assetsName, zeno::ParamsUpdateIn
         GraphModel* pAssetM = m_assets->getAssetGraph(i);
         if (pAssetM && pAssetM->name() != assetsName)
         {
-            pAssetM->syncToAssetsInstance(assetsName, info, customui);
+            pAssetM->syncToAssetsInstance_customui(assetsName, info, customui);
         }
     }
 }

@@ -172,8 +172,14 @@ Qan.NodeItem {
             //子图
             var graph_path = graphM.path()
             var nodename = graphM.data(idx, Model.ROLE_NODE_NAME)   //ROLE_NODE_NAME
+            var is_asset_ref = graphM.data(idx, Model.ROLE_NODETYPE) == NodeType.Node_AssetReference
             graph_path.push(nodename)
-            stack_main_graphview.jumpTo(graph_path);
+            if (is_asset_ref) {
+                graphs_stack.jumpToAsset(nodeItem.clsname)
+            }
+            else {
+                graphs_stack.stepIntoSubnet(graph_path)
+            }
         } else {
             var pos2 = nodename_editor.mapFromItem(nodeItem, pos)
             if (pos2.x > 0 && pos2.y > 0 &&
@@ -212,13 +218,16 @@ Qan.NodeItem {
             Image {
                 id: lockimg
                 visible: {
-                    return nodeItem.node_type == NodeType.Node_AssetInstance
+                    return nodeItem.node_type == NodeType.Node_AssetInstance || 
+                        nodeItem.node_type == NodeType.Node_AssetReference
                 }
                 width: 16
                 height: 16
                 z: 10
                 source: {
-                    if (nodeItem.node_type != NodeType.Node_AssetInstance)   return ""
+                    if (nodeItem.node_type != NodeType.Node_AssetInstance && nodeItem.node_type != NodeType.Node_AssetReference) {
+                        return ""
+                    }
                     return nodeItem.is_locked ? "qrc:/icons/lock.svg" : "qrc:/icons/unlock.svg"
                 }
             }

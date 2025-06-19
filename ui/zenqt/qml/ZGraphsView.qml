@@ -312,6 +312,38 @@ Item {
             visible: false
             z: 1000
 
+            function activate_asset_tab(assetname) {
+                var asset_graph_model = assetsModel.getAssetGraph(assetname)
+                for (var i = 0; i < graphs_tabbar.count; i++) {
+                    let tab = graphs_tabbar.itemAt(i)
+                    if (tab.text == assetname) {
+                        //已存在tab，直接激活即可
+                        graphs_tabbar.currentIndex = i
+                        return;
+                    }
+                }
+
+                //TODO: 如何为CustomTabButton指定合适的宽度？
+                const newtabbutton = myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200, z:1000})
+                graphs_tabbar.addItem(newtabbutton)
+                newtabbutton.closeTab.connect(function onCloseTab() {
+                    for (var i = 0; i < graphs_tabbar.count; i++) {
+                        let tab = graphs_tabbar.itemAt(i);
+                        if (tab.text == assetname) {
+                            //移除当前tab，同时也把stacklayout里面的graphview也一并移除
+                            //目前将索引调为一致状态
+                            graphs_tabbar.removeItem(i);
+                            graphs_stack.children[i].destroy()
+                        }
+                    }
+                })
+                                    
+                const graphsview_comp = Qt.createComponent("qrc:/ZenoSubnetsView.qml")
+                const newgraphview = graphsview_comp.createObject(graphs_stack, {root_graphmodel: asset_graph_model})
+                graphs_tabbar.currentIndex = graphs_tabbar.count - 1;
+                //TODO: delete and adjust index
+            }
+
             Rectangle {
                 id: assets_block
                 width: 200
@@ -339,38 +371,10 @@ Item {
                                 var assetname = assetsModel.data(idx)
                                 if (mouse.button == Qt.RightButton) {
                                     assetsitem_menu.assetname = assetname
-                                    assetsitem_menu.popup(Qt.point(mouse.x + parent.x + 32, mouse.y + parent.y));
+                                    assetsitem_menu.popup(Qt.point(mouse.x + parent.x + 32, mouse.y + parent.y))
                                 }
                                 else {
-                                    var asset_graph_model = assetsModel.getAssetGraph(assetname)
-                                    for (var i = 0; i < graphs_tabbar.count; i++) {
-                                        let tab = graphs_tabbar.itemAt(i)
-                                        if (tab.text == assetname) {
-                                            //已存在tab，直接激活即可
-                                            graphs_tabbar.currentIndex = i
-                                            return;
-                                        }
-                                    }
-
-                                    //TODO: 如何为CustomTabButton指定合适的宽度？
-                                    const newtabbutton = myTabButton.createObject(graphs_tabbar, {text: assetname, width: 200, z:1000})
-                                    graphs_tabbar.addItem(newtabbutton)
-                                    newtabbutton.closeTab.connect(function onCloseTab() {
-                                        for (var i = 0; i < graphs_tabbar.count; i++) {
-                                            let tab = graphs_tabbar.itemAt(i);
-                                            if (tab.text == assetname) {
-                                                //移除当前tab，同时也把stacklayout里面的graphview也一并移除
-                                                //目前将索引调为一致状态
-                                                graphs_tabbar.removeItem(i);
-                                                graphs_stack.children[i].destroy()
-                                            }
-                                        }
-                                    })
-                                    
-                                    const graphsview_comp = Qt.createComponent("qrc:/ZenoSubnetsView.qml")
-                                    const newgraphview = graphsview_comp.createObject(graphs_stack, {root_graphmodel: asset_graph_model})
-                                    graphs_tabbar.currentIndex = graphs_tabbar.count - 1;
-                                    //TODO: delete and adjust index
+                                    stack_main_or_asset.activate_asset_tab(assetname)
                                 }
                             }
                         }
@@ -752,6 +756,14 @@ Item {
                 ZenoSubnetsView {
                     id: stack_main_graphview
                     root_graphmodel: nodesModel
+                }
+
+                function stepIntoSubnet(path_list) {
+                    graphs_stack.children[graphs_stack.currentIndex].jumpTo(path_list)
+                }
+
+                function jumpToAsset(asset_name) {
+                    stack_main_or_asset.activate_asset_tab(asset_name)
                 }
 
                 /*

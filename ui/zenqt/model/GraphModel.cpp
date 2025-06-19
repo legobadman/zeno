@@ -6,6 +6,7 @@
 #include <zeno/core/NodeImpl.h>
 #include "model/GraphsTreeModel.h"
 #include "model/graphsmanager.h"
+#include "model/assetsmodel.h"
 #include "parammodel.h"
 #include "LinkModel.h"
 #include "zenoapplication.h"
@@ -90,6 +91,7 @@ public:
     NodeItem(QObject* parent);
     ~NodeItem();
     void init(GraphModel* pGraphM, zeno::NodeImpl* spNode);
+    void init_subgraph(GraphModel* parentGraphM);
     QString getName() {
         return name;
     }
@@ -183,24 +185,8 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
     this->bLoaded = spNode->is_loaded();
 
     setProperty("uuid-path", QString::fromStdString(uuidPath));
-    if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(spNode))
-    {
-        GraphModel* parentM = qobject_cast<GraphModel*>(this->parent());
-        std::string const& subnetpath = spNode->get_path();
-        auto pModel = new GraphModel(subnetpath, false, parentM->treeModel(), parentM, this);
-        bool bAssets = subnetnode->get_subgraph()->isAssets();
-        if (bAssets) {
-            m_cbLockChanged = subnetnode->register_lockChanged([=]() {
-                QModelIndex idx = pGraphM->indexFromName(this->name);
-                bool bLocked = spNode->is_locked();
-                emit pModel->lockStatusChanged();
-                emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_LOCKED });
-                });
-            //TODO: init value from io.
-            emit pModel->lockStatusChanged();
-        }
-        this->optSubgraph = pModel;
-    }
+    init_subgraph(pGraphM);
+
     //DopNetwork
     if (auto subnetnode = dynamic_cast<zeno::DopNetwork*>(spNode))
     {
@@ -218,6 +204,26 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
             ZASSERT_EXIT(timeline);
             timeline->updateDopnetworkFrameCached(frame);
         });
+    }
+}
+
+void NodeItem::init_subgraph(GraphModel* parentGraphM) {
+    if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(m_wpNode))
+    {
+        std::string const& subnetpath = m_wpNode->get_path();
+        auto pModel = new GraphModel(subnetpath, false, parentGraphM->treeModel(), parentGraphM, this);
+        bool bAssets = subnetnode->get_subgraph()->isAssets();
+        if (bAssets) {
+            m_cbLockChanged = subnetnode->register_lockChanged([=]() {
+                QModelIndex idx = parentGraphM->indexFromName(this->name);
+                bool bLocked = m_wpNode->is_locked();
+                emit pModel->lockStatusChanged();
+                emit parentGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_LOCKED });
+                });
+            //TODO: init value from io.
+            emit pModel->lockStatusChanged();
+        }
+        this->optSubgraph = pModel;
     }
 }
 
@@ -1483,6 +1489,123 @@ bool GraphModel::removeNode(const QString& name)
     return false;
 }
 
+void GraphModel::setView(const QModelIndex& idx, bool bOn)
+{
+    _setViewImpl(idx, bOn, true);
+}
+
+void GraphModel::setMute(const QModelIndex& idx, bool bOn)
+{
+    _setMuteImpl(idx, bOn, true);
+}
+
+QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)
+{
+    auto spCoreGraph = m_impl->m_wpCoreGraph;
+    ZASSERT_EXIT(spCoreGraph, "");
+
+    std::string oldName = idx.data(QtRole::ROLE_NODE_NAME).toString().toStdString();
+    newName = QString::fromStdString(spCoreGraph->updateNodeName(oldName, newName.toStdString()));
+    return newName;
+}
+
+void GraphModel::updateSocketValue(const QModelIndex& nodeidx, const QString socketName, const QVariant newValue)
+{
+    m_impl->m_wpCoreGraph->hasNode("");
+    if (ParamsModel* paramModel = params(nodeidx))
+    {
+        const QModelIndex& socketIdx = paramModel->paramIdx(socketName, true);
+        paramModel->setData(socketIdx, newValue, QtRole::ROLE_PARAM_VALUE);
+    }
+}
+
+QHash<int, QByteArray> GraphModel::roleNames() const
+{
+    QHash<int, QByteArray> roles;
+    roles[QtRole::ROLE_CLASS_NAME] = "classname";
+    roles[QtRole::ROLE_NODE_NAME] = "name";
+    //roles[QtRole::ROLE_NODE_UISTYLE] = "uistyle";
+    roles[QtRole::ROLE_PARAMS] = "params";
+    roles[QtRole::ROLE_LINKS] = "linkModel";
+    roles[QtRole::ROLE_OBJPOS] = "pos";
+    roles[QtRole::ROLE_SUBGRAPH] = "subgraph";
+    roles[QtRole::ROLE_NODE_LOCKED] = "locked";
+    return roles;
+}
+
+void GraphModel::_clear()
+{
+    while (rowCount() > 0)
+    {
+        const QString& nodeName = index(0, 0).data(QtRole::ROLE_NODE_NAME).toString();
+        removeNode(nodeName);
+    }
+}
+
+bool GraphModel::removeRows(int row, int count, const QModelIndex& parent)
+{
+    //this is a private impl method, called by callback function.
+    beginRemoveRows(parent, row, row);
+
+    QString id = m_row2uuid[row];
+    NodeItem* pItem = m_nodes[id];
+    const QString& name = pItem->getName();
+
+    for (int r = row + 1; r < rowCount(); r++)
+    {
+        const QString& id_ = m_row2uuid[r];
+        m_row2uuid[r - 1] = id_;
+        m_uuid2Row[id_] = r - 1;
+    }
+
+    m_row2uuid.remove(rowCount() - 1);
+    m_uuid2Row.remove(id);
+    m_nodes.remove(id);
+    m_name2uuid.remove(name);
+
+    if (m_subgNodes.find(id) != m_subgNodes.end())
+        m_subgNodes.remove(id);
+
+    delete pItem;
+
+    endRemoveRows();
+
+    emit nodeRemoved(name);
+    return true;
+}
+
+void GraphModel::syncToAssetsInstance_customui(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui)
+{
+    QModelIndexList results = match(QModelIndex(), QtRole::ROLE_CLASS_NAME, assetsName);
+    for (QModelIndex res : results) {
+        zeno::NodeType type = (zeno::NodeType)res.data(QtRole::ROLE_NODETYPE).toInt();
+        if (!res.data(QtRole::ROLE_NODE_LOCKED).toBool())
+            continue;
+        if (type == zeno::Node_AssetInstance || type == zeno::Node_AssetReference) {
+            ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(res.data(QtRole::ROLE_PARAMS));
+            ZASSERT_EXIT(paramsM);
+            paramsM->resetCustomUi(customui);
+            paramsM->batchModifyParams(info);
+        }
+    }
+
+    const QStringList& path = currentPath();
+    if (!path.isEmpty() && path[0] != "main") {
+        return;
+    }
+
+    syncToAssetsInstance(assetsName);
+
+    for (QString subgnode : m_subgNodes) {
+        ZASSERT_EXIT(m_name2uuid.find(subgnode) != m_name2uuid.end());
+        QString uuid = m_name2uuid[subgnode];
+        ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end());
+        GraphModel* pSubgM = m_nodes[uuid]->optSubgraph.value();
+        ZASSERT_EXIT(pSubgM);
+        pSubgM->syncToAssetsInstance_customui(assetsName, info, customui);
+    }
+}
+
 void GraphModel::resetAssetAndLock(const QModelIndex& assetNode)
 {
     auto spCoreGraph = m_impl->m_wpCoreGraph;
@@ -1490,6 +1613,8 @@ void GraphModel::resetAssetAndLock(const QModelIndex& assetNode)
     auto iter = m_row2uuid.find(assetNode.row());
     ZASSERT_EXIT(iter != m_row2uuid.end());
     NodeItem* item = m_nodes[m_row2uuid[assetNode.row()]];
+    zeno::NodeImpl* spNode = item->m_wpNode;
+    zeno::SubnetNode* subnetnode = static_cast<zeno::SubnetNode*>(spNode);
     std::string assetname = item->cls.toStdString();
 
     //只需要把最终要确定的参数加到updateInfo即可
@@ -1544,127 +1669,74 @@ void GraphModel::resetAssetAndLock(const QModelIndex& assetNode)
     paramsM->resetCustomUi(asset.m_customui);
     paramsM->batchModifyParams(updateInfo);
 
+    GraphModel* oldSubgraphM = item->optSubgraph.value();
+    //要清掉旧的图（但不包括容器本身，只是删节点和边）
+    oldSubgraphM->clear();
+
+    std::shared_ptr<zeno::Graph> newSubgraph = assets->forkAssetGraph(asset.sharedGraph, spNode);
+    subnetnode->init_graph(newSubgraph);
+    oldSubgraphM->m_impl->m_wpCoreGraph = newSubgraph.get();
+    oldSubgraphM->registerCoreNotify();
+
+    //重新把点和边加回去
+    std::map<std::string, zeno::NodeImpl*> nodes;
+    nodes = newSubgraph->getNodes();
+    for (auto& [name, node] : nodes) {
+        oldSubgraphM->_appendNode(node);
+    }
+    oldSubgraphM->_initLink();
+
     setData(assetNode, true, QtRole::ROLE_NODE_LOCKED);
+
+    //得把事务清掉，因为这里没法支持undo/redo
+    GraphModel* mainG = zenoApp->graphsManager()->getGraph({ "main" });
+    mainG->m_undoRedoStack.value()->clear();
 }
 
 void GraphModel::syncAssetInst(const QModelIndex& assetNode) {
-    //好像不是很好做，先放着
-}
+    
+    if (!assetNode.isValid()) return;
 
-void GraphModel::setView(const QModelIndex& idx, bool bOn)
-{
-    _setViewImpl(idx, bOn, true);
-}
+    bool isLocked = assetNode.data(QtRole::ROLE_NODE_LOCKED).toBool();
+    ZASSERT_EXIT(!isLocked);
 
-void GraphModel::setMute(const QModelIndex& idx, bool bOn)
-{
-    _setMuteImpl(idx, bOn, true);
-}
+    QString assetName = assetNode.data(QtRole::ROLE_CLASS_NAME).toString();
+    NodeItem* item = m_nodes[m_row2uuid[assetNode.row()]];
+    zeno::NodeImpl* spNode = item->m_wpNode;
+    zeno::SubnetNode* subnetnode = static_cast<zeno::SubnetNode*>(spNode);
 
-QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)
-{
-    auto spCoreGraph = m_impl->m_wpCoreGraph;
-    ZASSERT_EXIT(spCoreGraph, "");
+    std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
+    AssetsModel* assetsM = zenoApp->graphsManager()->assetsModel();
+    GraphModel* pAssetGraph = assetsM->getAssetGraph(assetName);
+    GraphModel* mainG = zenoApp->graphsManager()->getGraph({ "main" });
 
-    std::string oldName = idx.data(QtRole::ROLE_NODE_NAME).toString().toStdString();
-    newName = QString::fromStdString(spCoreGraph->updateNodeName(oldName, newName.toStdString()));
-    return newName;
-}
+    //先移除assetModel所有的节点
+    pAssetGraph->clear();
 
-void GraphModel::updateSocketValue(const QModelIndex& nodeidx, const QString socketName, const QVariant newValue)
-{
-    m_impl->m_wpCoreGraph->hasNode("");
-    if (ParamsModel* paramModel = params(nodeidx))
-    {
-        const QModelIndex& socketIdx = paramModel->paramIdx(socketName, true);
-        paramModel->setData(socketIdx, newValue, QtRole::ROLE_PARAM_VALUE);
+    //fork一份assetNode的graph，设置到asset上
+    std::shared_ptr<zeno::Graph> newSharedAsset = assets->syncInstToAssets(spNode);
+    zeno::CustomUI newUi = subnetnode->export_customui();
+    assets->updateAssetInfo(assetName.toStdString(), newSharedAsset, newUi);
+    //uimodel上增加节点和边
+    std::map<std::string, zeno::NodeImpl*> nodes;
+    nodes = newSharedAsset->getNodes();
+    for (auto& [name, node] : nodes) {
+        pAssetGraph->_appendNode(node);
     }
-}
+    pAssetGraph->_initLink();
 
-QHash<int, QByteArray> GraphModel::roleNames() const
-{
-    QHash<int, QByteArray> roles;
-    roles[QtRole::ROLE_CLASS_NAME] = "classname";
-    roles[QtRole::ROLE_NODE_NAME] = "name";
-    //roles[QtRole::ROLE_NODE_UISTYLE] = "uistyle";
-    roles[QtRole::ROLE_PARAMS] = "params";
-    roles[QtRole::ROLE_LINKS] = "linkModel";
-    roles[QtRole::ROLE_OBJPOS] = "pos";
-    roles[QtRole::ROLE_SUBGRAPH] = "subgraph";
-    roles[QtRole::ROLE_NODE_LOCKED] = "locked";
-    return roles;
-}
+    //同步到其他的instance
+    mainG->syncToAssetsInstance(assetName);
 
-void GraphModel::_clear()
-{
-    while (rowCount() > 0) {
-        //only delete ui model element itself, and then unregister from core.
-        removeRows(0, 1);
-    }
-}
+    //有可能改了asset的customui，而别的asset引用了这个修改后的asset，而且有节点参数ui，就意味着
+    //所有asset也得同步一下这个
 
-bool GraphModel::removeRows(int row, int count, const QModelIndex& parent)
-{
-    //this is a private impl method, called by callback function.
-    beginRemoveRows(parent, row, row);
 
-    QString id = m_row2uuid[row];
-    NodeItem* pItem = m_nodes[id];
-    const QString& name = pItem->getName();
+    //最后给当前assetNode上锁
+    setData(assetNode, true, QtRole::ROLE_NODE_LOCKED);
 
-    for (int r = row + 1; r < rowCount(); r++)
-    {
-        const QString& id_ = m_row2uuid[r];
-        m_row2uuid[r - 1] = id_;
-        m_uuid2Row[id_] = r - 1;
-    }
-
-    m_row2uuid.remove(rowCount() - 1);
-    m_uuid2Row.remove(id);
-    m_nodes.remove(id);
-    m_name2uuid.remove(name);
-
-    if (m_subgNodes.find(id) != m_subgNodes.end())
-        m_subgNodes.remove(id);
-
-    delete pItem;
-
-    endRemoveRows();
-
-    emit nodeRemoved(name);
-    return true;
-}
-
-void GraphModel::syncToAssetsInstance(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui)
-{
-    QModelIndexList results = match(QModelIndex(), QtRole::ROLE_CLASS_NAME, assetsName);
-    for (QModelIndex res : results) {
-        zeno::NodeType type = (zeno::NodeType)res.data(QtRole::ROLE_NODETYPE).toInt();
-        if (!res.data(QtRole::ROLE_NODE_LOCKED).toBool())
-            continue;
-        if (type == zeno::Node_AssetInstance || type == zeno::Node_AssetReference) {
-            ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(res.data(QtRole::ROLE_PARAMS));
-            ZASSERT_EXIT(paramsM);
-            paramsM->resetCustomUi(customui);
-            paramsM->batchModifyParams(info);
-        }
-    }
-
-    const QStringList& path = currentPath();
-    if (!path.isEmpty() && path[0] != "main") {
-        return;
-    }
-
-    syncToAssetsInstance(assetsName);
-
-    for (QString subgnode : m_subgNodes) {
-        ZASSERT_EXIT(m_name2uuid.find(subgnode) != m_name2uuid.end());
-        QString uuid = m_name2uuid[subgnode];
-        ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end());
-        GraphModel* pSubgM = m_nodes[uuid]->optSubgraph.value();
-        ZASSERT_EXIT(pSubgM);
-        pSubgM->syncToAssetsInstance(assetsName, info, customui);
-    }
+    //得把事务清掉，因为这里没法支持undo/redo
+    mainG->m_undoRedoStack.value()->clear();
 }
 
 void GraphModel::syncToAssetsInstance(const QString& assetsName)
@@ -1750,6 +1822,7 @@ bool GraphModel::isLocked() const
 
     //观察当前图是不是资产图，以及找到上层的资产节点，看是不是上锁了
     zeno::NodeImpl* parSubnetNode = m_impl->m_wpCoreGraph->getParentSubnetNode();
+    if (!parSubnetNode) return false;
     ZASSERT_EXIT(parSubnetNode, false);
     if (zeno::Node_AssetInstance == parSubnetNode->nodeType()) {
         return parSubnetNode->is_locked();

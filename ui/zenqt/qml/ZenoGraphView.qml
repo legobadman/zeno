@@ -335,7 +335,6 @@ Qan.GraphView {
             }
         }
 
-        /* //这个功能不好做，先搁置，只能用户到assetgraph去编辑，子图独立编辑也只能做些验证，如果想同步，也只能手动拷过去了
         MenuItem {
             text: "同步资产修改"
             height: visible ? implicitHeight : 0
@@ -351,10 +350,10 @@ Qan.GraphView {
                 }
             }
             onTriggered: {
-
+                var model = graphView.graphModel
+                model.syncAssetInst(nodeMenu.node.index)
             }
         }
-        */
     }
 
     graph: Qan.Graph {
@@ -727,10 +726,10 @@ Qan.GraphView {
             graphsmanager.saveProject(graph_path[0])
         }
         else if ((event.key === Qt.Key_Z) && (event.modifiers & Qt.ControlModifier)) {
-            graphsmanager.undo(graphView.graphModel.name())
+            graphsmanager.undo(graphView.graphModel.path())
         }
         else if ((event.key === Qt.Key_Y) && (event.modifiers & Qt.ControlModifier)) {
-            graphsmanager.redo(graphView.graphModel.name())
+            graphsmanager.redo(graphView.graphModel.path())
         }
         else if ((event.key === Qt.Key_C) && (event.modifiers & Qt.ControlModifier)) {
             var selNodes = graph.getSelectionNodes()

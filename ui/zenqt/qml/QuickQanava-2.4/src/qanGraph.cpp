@@ -386,6 +386,9 @@ void Graph::setModel(GraphModel* pGraphM)
         }
     });
     connect(m_model, &GraphModel::lockStatusChanged, this, &qan::Graph::lockedChanged);
+    connect(m_model, &GraphModel::layoutAboutToBeChanged, this, [&]() {
+        clearGraph();
+        });
     emit lockedChanged();
 }
 

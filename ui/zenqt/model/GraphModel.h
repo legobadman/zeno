@@ -88,7 +88,7 @@ public:
 
     //test functions:
     void updateParamName(QModelIndex nodeIdx, int row, QString newName);
-    void syncToAssetsInstance(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui);
+    void syncToAssetsInstance_customui(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui);
     void syncToAssetsInstance(const QString& assetsName);
     void removeParam(QModelIndex nodeIdx, int row);
     void removeLink(const QModelIndex& linkIdx);

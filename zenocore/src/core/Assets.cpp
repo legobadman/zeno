@@ -354,6 +354,46 @@ ZENO_API void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo i
     assets.m_customui = customui;
 }
 
+std::shared_ptr<Graph> AssetsMgr::syncInstToAssets(NodeImpl* assetInstNode)
+{
+    if (assetInstNode->nodeType() == Node_AssetInstance) {
+        SubnetNode* pInstNode = static_cast<SubnetNode*>(assetInstNode);
+        const std::string& assetname = pInstNode->get_nodecls();
+
+        Graph* pSubnetGraph = pInstNode->get_subgraph();
+        std::shared_ptr<Graph> newAssetGraph = std::make_shared<Graph>(assetname, true);
+        for (const auto& [uuid, spNode] : pSubnetGraph->getNodes())
+        {
+            zeno::NodeData nodeDat;
+            const std::string& name = spNode->get_name();
+            const std::string& cls = spNode->get_nodecls();
+            if (auto spSubnetNode = dynamic_cast<SubnetNode*>(spNode)) {
+                if (m_assets.find(cls) != m_assets.end()) {
+                    //资产节点
+                }
+                else {
+                    //普通子图
+                    NodeImpl* spNewNode = newAssetGraph->createNode(cls, name);
+                    nodeDat = spNode->exportInfo();
+                    spNewNode->init(nodeDat);
+                }
+            }
+            else {
+                NodeImpl* spNewNode = newAssetGraph->createNode(cls, name);
+                nodeDat = spNode->exportInfo();
+                spNewNode->init(nodeDat);
+            }
+        }
+
+        LinksData oldLinks = pSubnetGraph->exportLinks();
+        for (zeno::EdgeInfo oldLink : oldLinks) {
+            newAssetGraph->addLink(oldLink);
+        }
+        return newAssetGraph;
+    }
+    return nullptr;
+}
+
 std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGraph, NodeImpl* subNode)
 {
     std::shared_ptr<Graph> newGraph = std::make_shared<Graph>(assetGraph->getName(), true);
@@ -373,7 +413,7 @@ std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGra
             else {
                 NodeImpl* spNewNode = newGraph->createNode(cls, name);
                 nodeDat = spNode->exportInfo();
-                spNewNode->init(nodeDat);   //should clone graph.
+                spNewNode->init(nodeDat);
             }
         }
         else {
@@ -448,7 +488,12 @@ ZENO_API bool AssetsMgr::generateAssetName(std::string& name)
     return true;
 }
 
-ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(Graph* pGraph, const std::string& assetName, const std::string& nodeName, bool createInAsset) {
+ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(
+        Graph* pGraph,
+        const std::string& assetName,
+        const std::string& nodeName,
+        bool createInAsset)
+{
     if (m_assets.find(assetName) == m_assets.end()) {
         return nullptr;
     }
@@ -467,12 +512,12 @@ ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(Graph* pGraph, const s
     if (!createInAsset) {
         //should expand the asset graph into a tree.
         assetGraph = forkAssetGraph(assets.sharedGraph, pNode.get());
+        pNode->init_graph(assetGraph);
     }
     else {
-        assetGraph = std::move(assets.sharedGraph);
+        //只是一个引用，不需要graph.
     }
 
-    pNode->init_graph(assetGraph);
     pNode->set_name(nodeName);
     pNode->setCustomUi(assets.m_customui);
 
@@ -491,7 +536,40 @@ ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(Graph* pGraph, const s
     return pNode;
 }
 
-ZENO_API void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, SubnetNode* spNode)
+void zeno::AssetsMgr::updateAssetInfo(const std::string& assetName, std::shared_ptr<Graph> new_shared_gra, CustomUI customui)
+{
+    if (m_assets.find(assetName) == m_assets.end()) {
+        return;
+    }
+
+    Asset& assets = m_assets[assetName];
+    assets.sharedGraph = new_shared_gra;
+    assets.m_customui = customui;
+
+    assets.primitive_inputs.clear();
+    assets.primitive_outputs.clear();
+    assets.object_inputs.clear();
+    assets.object_outputs.clear();
+
+    for (auto tab : assets.m_customui.inputPrims) {
+        for (auto group : tab.groups) {
+            for (auto param : group.params) {
+                assets.primitive_inputs.push_back(param);
+            }
+        }
+    }
+    for (auto inputobj : assets.m_customui.inputObjs) {
+        assets.object_inputs.push_back(inputobj);
+    }
+    for (auto outputobj : assets.m_customui.outputObjs) {
+        assets.object_outputs.push_back(outputobj);
+    }
+    for (auto outputprim : assets.m_customui.outputPrims) {
+        assets.primitive_outputs.push_back(outputprim);
+    }
+}
+
+void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, SubnetNode* spNode)
 {
     if(m_assets.find(assetName) == m_assets.end()) {
         return;

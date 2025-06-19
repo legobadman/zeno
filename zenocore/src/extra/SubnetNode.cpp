@@ -83,8 +83,7 @@ void SubnetNode::initParams(const NodeData& dat)
 }
 
 NodeType SubnetNode::nodeType() const {
-    bool bAssets = get_subgraph()->isAssets();
-    if (bAssets) {
+    if (isAssetsNode()) {
         if (in_asset_file())
             return zeno::Node_AssetReference;
         else
@@ -103,7 +102,8 @@ void SubnetNode::init_graph(std::shared_ptr<Graph> subg) {
 }
 
 bool SubnetNode::isAssetsNode() const {
-    return m_subgraph->isAssets();
+    zeno::Asset asst = zeno::getSession().assets->getAsset(get_nodecls());
+    return !asst.m_info.name.empty();
 }
 
 bool SubnetNode::is_loaded() const {
@@ -112,7 +112,7 @@ bool SubnetNode::is_loaded() const {
 }
 
 bool SubnetNode::is_locked() const {
-    if (nodeType() == Node_AssetInstance)
+    if (nodeType() == Node_AssetInstance || nodeType() == Node_AssetReference)
         return m_bLocked;
     else
         return false;
@@ -357,7 +357,12 @@ NodeData SubnetNode::exportInfo() const {
     const Asset& asset = zeno::getSession().assets->getAsset(node.cls);
     if (!asset.m_info.name.empty()) {
         node.asset = asset.m_info;
-        node.type = Node_AssetInstance;
+        if (in_asset_file()) {
+            node.type = Node_AssetReference;
+        }
+        else {
+            node.type = Node_AssetInstance;
+        }
     }
     else {
         node.subgraph = m_subgraph->exportGraph();

@@ -27,8 +27,8 @@ public:
     ~GraphsManager();
 
     Q_INVOKABLE void saveProject(const QString& name);
-    Q_INVOKABLE void undo(const QString& name);
-    Q_INVOKABLE void redo(const QString& name);
+    Q_INVOKABLE void undo(const QStringList& path);
+    Q_INVOKABLE void redo(const QStringList& path);
     Q_INVOKABLE QStringList recentFiles() const;
     Q_INVOKABLE void openProject(const QString& zsgpath);
     Q_INVOKABLE void openCustomUIDialog(CustomUIModel* customUIM);
