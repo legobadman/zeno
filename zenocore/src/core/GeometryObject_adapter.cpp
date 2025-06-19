@@ -312,9 +312,9 @@ namespace zeno
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim) {
+    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim, bool basePrimTopo) {
         auto pGeom = std::make_shared<GeometryObject_Adapter>();
-        pGeom->m_impl = new GeometryObject(prim);
+        pGeom->m_impl = new GeometryObject(prim, true);
         pGeom->m_usrData = prim->m_usrData->clone();
         return pGeom;
     }

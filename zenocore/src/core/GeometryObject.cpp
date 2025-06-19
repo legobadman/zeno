@@ -55,10 +55,28 @@ namespace zeno
     GeometryObject::~GeometryObject() {
     }
 
-    GeometryObject::GeometryObject(PrimitiveObject* prim)
-        : m_spTopology(std::make_shared<GeometryTopology>())
+    GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo)
     {
-        initFromPrim(prim);
+        if (basePrimTopo) {
+            m_spTopology = std::make_shared<GeometryTopology>(spPrim);
+            //提取出prim所有的属性
+            create_attr(ATTR_POINT, "pos", spPrim->verts.values);
+
+            for (auto& [attr_name, var_vec] : spPrim->verts.attrs) {
+                create_attr_from_AttrVector(ATTR_POINT, attr_name, var_vec);
+            }
+            //面属性
+            for (auto& [attr_name, var_vec] : spPrim->polys.attrs) {
+                create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
+            }
+            for (auto& [attr_name, var_vec] : spPrim->tris.attrs) {
+                create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
+            }
+        }
+        else {
+            m_spTopology = std::make_shared<GeometryTopology>();
+            initFromPrim(spPrim.get());
+        }
     }
 
     std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
@@ -85,7 +103,19 @@ namespace zeno
             sp_attr_data.to_prim_attr(spPrim, false, m_spTopology->is_base_triangle(), name);
         }
 
-        m_spTopology->toPrimitive(spPrim);
+        std::shared_ptr<PrimitiveObject> primTopo = m_spTopology->getPrimTopo();
+        if (primTopo) {
+            spPrim->lines = primTopo->lines;
+            spPrim->tris = primTopo->tris;
+            spPrim->quads = primTopo->quads;
+            spPrim->loops = primTopo->loops;
+            spPrim->polys = primTopo->polys;
+            spPrim->edges = primTopo->edges;
+        }
+        else {
+            m_spTopology->toPrimitive(spPrim);
+        }
+
         //spPrim->m_userData = m_userData; //TODO: usrdata copy from geom to prim.
         return spPrim;
     }

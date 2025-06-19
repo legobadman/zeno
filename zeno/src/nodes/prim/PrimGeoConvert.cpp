@@ -19,7 +19,7 @@ namespace zeno {
         };
 
         std::shared_ptr<GeometryObject> apply(std::shared_ptr<PrimitiveObject> input_prim) {
-            std::shared_ptr<GeometryObject> out_geo = std::make_shared<GeometryObject>(input_prim.get());
+            std::shared_ptr<GeometryObject> out_geo = std::make_shared<GeometryObject>(input_prim, false);
             return out_geo;
         }
     };

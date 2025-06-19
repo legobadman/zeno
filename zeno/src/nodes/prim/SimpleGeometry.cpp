@@ -1511,7 +1511,7 @@ struct HEdgeGeoSelfTest : zeno::INode {
         if (ZImpl(has_input("prim"))) {
             prim = get_input_PrimitiveObject("prim");
         }
-        auto spGeom = std::make_shared<GeometryObject>(prim.get());
+        auto spGeom = std::make_shared<GeometryObject>(prim, false);
         auto spRes = spGeom->toPrimitive();
         set_output("prim", spRes);
     }
@@ -1533,7 +1533,7 @@ struct HEdgeBasedPrim : zeno::INode {
         if (has_input("prim")) {
             prim = get_input_PrimitiveObject("prim");
         }
-        auto spGeom = create_GeometryObject(prim.get());
+        auto spGeom = create_GeometryObject(prim, false);
         set_output("prim", spGeom);
     }
 };

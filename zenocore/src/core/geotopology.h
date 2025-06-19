@@ -44,10 +44,12 @@ namespace zeno
     {
         GeometryTopology() = default;
         GeometryTopology(const GeometryTopology& rhs);
+        GeometryTopology(std::shared_ptr<PrimitiveObject> prim);
         GeometryTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
 
         void initFromPrim(PrimitiveObject* prim);
         void toPrimitive(std::shared_ptr<PrimitiveObject> spPrim);
+        std::shared_ptr<PrimitiveObject> getPrimTopo() const;
 
         HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
         std::tuple<HF_Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
@@ -108,6 +110,8 @@ namespace zeno
 
     private:
         bool isLineFace(HF_Face* f) const;
+
+        std::shared_ptr<PrimitiveObject> m_indiceMesh_topo;
 
         std::vector<std::shared_ptr<HF_Point>> m_points;
         std::vector<std::shared_ptr<HF_Face>> m_faces;

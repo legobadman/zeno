@@ -76,6 +76,11 @@ namespace zeno
 #endif
     }
 
+    GeometryTopology::GeometryTopology(std::shared_ptr<PrimitiveObject> prim)
+        : m_indiceMesh_topo(prim)
+    {
+    }
+
     bool GeometryTopology::isLineFace(HF_Face* f) const {
         HEdge* firsth = f->h;
         HEdge* h = firsth;
@@ -94,6 +99,10 @@ namespace zeno
         } else {
             return -1;
         }
+    }
+
+    std::shared_ptr<PrimitiveObject> GeometryTopology::getPrimTopo() const {
+        return m_indiceMesh_topo;
     }
 
     void GeometryTopology::toPrimitive(std::shared_ptr<PrimitiveObject> spPrim) {

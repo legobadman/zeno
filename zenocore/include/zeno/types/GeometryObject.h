@@ -8,6 +8,7 @@
 #include <zeno/core/IObject.h>
 #include <zeno/utils/api.h>
 #include <zeno/types/AttrVector.h>
+#include <zeno/types/PrimitiveObject.h>
 
 namespace zeno
 {
@@ -25,7 +26,7 @@ namespace zeno
         GeometryObject();
         GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         GeometryObject(const GeometryObject& rhs);
-        GeometryObject(PrimitiveObject* prim);
+        GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo);
         std::shared_ptr<PrimitiveObject> toPrimitive();
         void inheritAttributes(
             GeometryObject* rhs,
