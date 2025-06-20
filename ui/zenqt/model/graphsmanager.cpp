@@ -278,6 +278,9 @@ void GraphsManager::clear()
         m_scenes.clear();
     }
 
+    //前面delete main的时候会removeNode，导致treemodel又脏了})
+    zeno::scope_exit sp([&] {    m_model->markDirty(false); });
+
     //clear main model
     if (m_main) {
         m_main->clear();
