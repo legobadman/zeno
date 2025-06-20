@@ -112,7 +112,9 @@ GraphModel* GraphsManager::getGraph(const QStringList& objPath) const
         return nullptr;
 
     if (objPath[0] == "main") {
-        return m_model ? m_model->getGraphByPath(objPath) : nullptr;
+        QStringList _path = objPath;
+        _path.removeFirst();
+        return m_main->getGraphByPath(_path);
     }
     else {
         QStringList assetGraphPath = objPath;
@@ -634,9 +636,8 @@ void GraphsManager::updateAssets(const QString& assetsName, zeno::ParamsUpdateIn
 {
     zeno::getSession().assets->updateAssets(assetsName.toStdString(), info, customui);
     //update to each assets node on the tree
-    GraphModel* mainM = m_model->getGraphByPath({"main"});
-    ZASSERT_EXIT(mainM);
-    mainM->syncToAssetsInstance_customui(assetsName, info, customui);
+    ZASSERT_EXIT(m_main);
+    m_main->syncToAssetsInstance_customui(assetsName, info, customui);
 
     //also need to sync all other assets.
     for (int i = 0; i < m_assets->rowCount(); i++)
