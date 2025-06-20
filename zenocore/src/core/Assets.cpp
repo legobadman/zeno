@@ -311,7 +311,51 @@ ZENO_API void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo i
 
     //update subnetnode.
     for (auto name : changes.new_inputs) {
-        assets.sharedGraph->createNode("SubInput", name);
+        NodeImpl* subInput = assets.sharedGraph->createNode("SubInput", name);
+
+        for (const zeno::ParamUpdateInfo paraminfo : info) {
+            bool bFinded = std::visit([&](auto&& var)->bool {
+                using T = std::decay_t<decltype(var)>;
+                if constexpr (std::is_same_v<T, zeno::ParamPrimitive>) {
+                    if (var.bInput && var.name == name) {
+                        zeno::ParamPrimitive primitive;
+                        primitive.bInput = false;
+                        primitive.name = "port";
+                        primitive.type = var.type;
+                        primitive.defl = var.defl;
+                        subInput->add_output_prim_param(primitive);
+
+                        //通知ui更新
+                        params_change_info changes;
+                        changes.new_outputs.insert("port");
+                        changes.outputs.push_back("port");
+                        changes.outputs.push_back("hasValue");
+                        subInput->update_layout(changes);
+                        return true;
+                    }
+                }
+                else if constexpr (std::is_same_v<T, zeno::ParamObject>) {
+                    if (var.bInput && var.name == name) {
+                        zeno::ParamObject paramObj;
+                        paramObj.bInput = false;
+                        paramObj.name = "port";
+                        paramObj.type = var.type;        //TODO: 如何获取类型？
+                        subInput->add_output_obj_param(paramObj);
+
+                        params_change_info changes;
+                        changes.new_outputs.insert("port");
+                        changes.outputs.push_back("port");
+                        changes.outputs.push_back("hasValue");
+                        subInput->update_layout(changes);
+                        return true;
+                    }
+                }
+                return false;
+                }, paraminfo.param);
+            if (bFinded) {
+                break;
+            }
+        }
     }
     for (const auto& [old_name, new_name] : changes.rename_inputs) {
         assets.sharedGraph->updateNodeName(old_name, new_name);
@@ -321,8 +365,50 @@ ZENO_API void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo i
     }
 
     for (auto name : changes.new_outputs) {
-        assets.sharedGraph->createNode("SubOutput", name);
+        NodeImpl* subOutput = assets.sharedGraph->createNode("SubOutput", name);
+
+        for (const zeno::ParamUpdateInfo paraminfo : info) {
+            bool bFinded = std::visit([&](auto&& var)->bool {
+                using T = std::decay_t<decltype(var)>;
+                if constexpr (std::is_same_v<T, zeno::ParamPrimitive>) {
+                    if (!var.bInput && var.name == name) {
+                        zeno::ParamPrimitive primitive;
+                        primitive.bInput = true;
+                        primitive.name = "port";
+                        primitive.type = var.type;
+                        primitive.defl = var.defl;
+                        subOutput->add_input_prim_param(primitive);
+
+                        params_change_info changes;
+                        changes.new_inputs.insert("port");
+                        changes.inputs.push_back("port");
+                        subOutput->update_layout(changes);
+                        return true;
+                    }
+                }
+                else if constexpr (std::is_same_v<T, zeno::ParamObject>) {
+                    if (!var.bInput && var.name == name) {
+                        zeno::ParamObject paramObj;
+                        paramObj.bInput = true;
+                        paramObj.name = "port";
+                        paramObj.type = var.type;        //TODO: 如何获取类型？
+                        subOutput->add_input_obj_param(paramObj);
+
+                        params_change_info changes;
+                        changes.new_inputs.insert("port");
+                        changes.inputs.push_back("port");
+                        subOutput->update_layout(changes);
+                        return true;
+                    }
+                }
+                return false;
+                }, paraminfo.param);
+            if (bFinded) {
+                break;
+            }
+        }
     }
+
     for (const auto& [old_name, new_name] : changes.rename_outputs) {
         assets.sharedGraph->updateNodeName(old_name, new_name);
     }
