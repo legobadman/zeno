@@ -1,3 +1,4 @@
+#if 0
 #include <opencv2/core/utility.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -938,3 +939,4 @@ ZENDEFNODE(ReadImageByOpenCV, {
 }
 
 }
+#endif

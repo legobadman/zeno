@@ -1,3 +1,4 @@
+#if 0
 #include <opencv2/core/utility.hpp>
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -57,3 +58,4 @@ ZENDEFNODE(ReadImageFromVideo, {
 
 }
 }
+#endif
