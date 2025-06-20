@@ -1,0 +1,509 @@
+{
+    "main": {
+        "type": 2,
+        "nodes": {
+            "Input_Picture": {
+                "name": "Input_Picture",
+                "class": "Subnet",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "Input Image": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": "read path"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "模糊半径": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "HF Image": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    151.0,
+                    295.0
+                ],
+                "status": [],
+                "collasped": false,
+                "subnet-customUi": {
+                    "nickname": "",
+                    "iconResPath": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>",
+                    "category": "",
+                    "doc": "",
+                    "tabs": {
+                        "Tab1": {
+                            "Group1": {
+                                "Input Image": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "",
+                                    "control": {
+                                        "name": "read path"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "模糊半径": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 0.0,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            }
+                        }
+                    }
+                },
+                "subnet": {
+                    "type": 0,
+                    "nodes": {
+                        "HF Image": {
+                            "name": "HF Image",
+                            "class": "SubOutput",
+                            "object_inputs": {
+                                "port": {
+                                    "links": null,
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {},
+                            "primitive_outputs": {},
+                            "object_outputs": {},
+                            "uipos": [
+                                330.0,
+                                686.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "HF_Creation1": {
+                            "name": "HF_Creation1",
+                            "class": "HF_Creation",
+                            "object_inputs": {},
+                            "primitive_inputs": {
+                                "Terrain Position": {
+                                    "links": null,
+                                    "type": "vec3f",
+                                    "default-value": [
+                                        0.0,
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "control": {
+                                        "name": "Float Vector 3"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Terrain Resolution": {
+                                    "links": null,
+                                    "type": "int",
+                                    "default-value": 1000,
+                                    "control": {
+                                        "name": "Integer"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Terrain Scale": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 1000.0,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "HeightField": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                -110.0,
+                                333.0
+                            ],
+                            "status": [],
+                            "collasped": false,
+                            "asset": {
+                                "name": "HF_Creation",
+                                "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Creation.zda",
+                                "version": "1.0"
+                            }
+                        },
+                        "ImageFlip1": {
+                            "name": "ImageFlip1",
+                            "class": "ImageFlip",
+                            "object_inputs": {
+                                "image": {
+                                    "links": [
+                                        {
+                                            "out-node": "ReadImageFile1",
+                                            "out-socket": "image",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "Flip Horizontally": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "Flip Vertically": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "image": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                195.0,
+                                310.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "Input Image": {
+                            "name": "Input Image",
+                            "class": "SubInput",
+                            "object_inputs": {},
+                            "primitive_inputs": {},
+                            "primitive_outputs": {
+                                "hasValue": {
+                                    "type": "bool",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "port": {
+                                    "type": "string",
+                                    "socket-type": "clone",
+                                    "visible": true
+                                }
+                            },
+                            "object_outputs": {},
+                            "uipos": [
+                                -216.0,
+                                98.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "PrimSample2D1": {
+                            "name": "PrimSample2D1",
+                            "class": "PrimSample2D",
+                            "object_inputs": {
+                                "image": {
+                                    "links": [
+                                        {
+                                            "out-node": "ImageFlip1",
+                                            "out-socket": "image",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                },
+                                "prim": {
+                                    "links": [
+                                        {
+                                            "out-node": "HF_Creation1",
+                                            "out-socket": "HeightField",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "uvChannel": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "uv",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "uvSource": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "vertex",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "targetChannel": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "clr",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "remapMin": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 0.0,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "remapMax": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 1.0,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "wrap": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "REPEAT",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "filter": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "nearest",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "borderColor": {
+                                    "links": null,
+                                    "type": "vec3f",
+                                    "default-value": [
+                                        0.0,
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "control": {
+                                        "name": "Float Vector 3"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "invert U": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "invert V": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "scale": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 1.0,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "rotate": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 0.0,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "translate": {
+                                    "links": null,
+                                    "type": "vec2f",
+                                    "default-value": [
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "control": {
+                                        "name": "Float Vector 2"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "outPrim": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                16.0,
+                                480.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "ReadImageFile1": {
+                            "name": "ReadImageFile1",
+                            "class": "ReadImageFile",
+                            "object_inputs": {},
+                            "primitive_inputs": {
+                                "path": {
+                                    "links": [
+                                        {
+                                            "out-node": "Input Image",
+                                            "out-socket": "port",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "string",
+                                    "default-value": "",
+                                    "control": {
+                                        "name": "read path"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": true
+                                },
+                                "Linearize Non-linear Images": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": true,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "image": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                178.0,
+                                106.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "模糊半径": {
+                            "name": "模糊半径",
+                            "class": "SubInput",
+                            "object_inputs": {},
+                            "primitive_inputs": {},
+                            "primitive_outputs": {
+                                "hasValue": {
+                                    "type": "bool",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "port": {
+                                    "type": "float",
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "object_outputs": {},
+                            "uipos": [
+                                633.0,
+                                15.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "views": {
+        "timeline": {
+            "start-frame": 0,
+            "end-frame": 100,
+            "curr-frame": 0,
+            "always": true,
+            "timeline-fps": 24
+        }
+    },
+    "version": "v3"
+}
