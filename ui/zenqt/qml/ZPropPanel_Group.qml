@@ -439,8 +439,8 @@ Item {
                     Layout.topMargin: showVertically ? 5 : 0
                     Layout.bottomMargin: showVertically ? 5 : 0
                     
-                    Layout.preferredHeight: height
-                    Layout.preferredWidth: width
+                    //Layout.preferredHeight: height
+                    //Layout.preferredWidth: width
 
                     rows: showVertically ? 2 : 1
                     columns: showVertically ? 2 : 3
