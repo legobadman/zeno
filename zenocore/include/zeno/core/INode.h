@@ -9,6 +9,7 @@ namespace zeno
     struct ListObject;
     struct DictObject;
     struct PrimitiveObject;
+    struct GeometryObject_Adapter;
     struct GlobalState;
     struct CalcContext;
 
@@ -22,6 +23,7 @@ namespace zeno
         zany get_input(const zeno::String& param);
         zany get_output(const zeno::String& param);
         zeno::SharedPtr<PrimitiveObject> get_input_PrimitiveObject(const zeno::String& param);
+        zeno::SharedPtr<GeometryObject_Adapter> get_input_Geometry(const zeno::String& param);
         zeno::SharedPtr<ListObject> get_input_ListObject(const zeno::String& param);
         zeno::SharedPtr<DictObject> get_input_DictObject(const zeno::String& param);
         int get_input2_int(const zeno::String& param);

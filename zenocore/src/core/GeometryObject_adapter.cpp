@@ -37,13 +37,8 @@ namespace zeno
         m_impl->inheritAttributes(rhs->m_impl, vtx_offset, pt_offset, std_pt_nocopy, face_offset, std_face_nocopy);
     }
 
-    Vector<Vec3f> GeometryObject_Adapter::points_pos() {
-        const std::vector<vec3f>& vec = m_impl->points_pos();
-        Vector<Vec3f> _vec(vec.size());
-        for (size_t i = 0; i < vec.size(); i++) {
-            _vec[i] = toAbiVec3f(vec[i]);
-        }
-        return _vec;
+    std::vector<zeno::vec3f> GeometryObject_Adapter::points_pos() {
+        return m_impl->points_pos();
     }
 
     Vector<Vec3i> GeometryObject_Adapter::tri_indice() const {
@@ -59,8 +54,8 @@ namespace zeno
         return stdVec2zeVec(m_impl->edge_list());
     }
 
-    void GeometryObject_Adapter::set_pos(int i, Vec3f pos) {
-        m_impl->set_attr_elem(ATTR_POINT, "pos", i, zeno::vec3f(pos.x, pos.y, pos.z));
+    void GeometryObject_Adapter::set_pos(int i, zeno::vec3f pos) {
+        m_impl->set_attr_elem(ATTR_POINT, "pos", i, pos);
     }
 
     bool GeometryObject_Adapter::is_base_triangle() const {
@@ -107,6 +102,14 @@ namespace zeno
 
     int GeometryObject_Adapter::create_geometry_attr(const zeno::String& attr_name, const Any& defl) {
         return m_impl->create_geometry_attr(zsString2Std(attr_name), abiAnyToAttrVar(defl));
+    }
+
+    std::vector<float> GeometryObject_Adapter::get_float_attr(GeoAttrGroup grp, const zeno::String& attr_name) {
+        return m_impl->get_attrs<float>(grp, zsString2Std(attr_name));
+    }
+
+    std::vector<vec3f> GeometryObject_Adapter::get_vec3f_attr(GeoAttrGroup grp, const zeno::String& attr_name) {
+        return m_impl->get_attrs<vec3f>(grp, zsString2Std(attr_name));
     }
 
     int GeometryObject_Adapter::set_attr(GeoAttrGroup grp, const zeno::String& name, const Any& val) {

@@ -1,7 +1,7 @@
 #include <zeno/core/INode.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/utils/interfaceutil.h>
-
+#include <zeno/types/IGeometryObject.h>
 
 namespace zeno
 {
@@ -27,6 +27,10 @@ namespace zeno
 
     zeno::SharedPtr<PrimitiveObject> INode::get_input_PrimitiveObject(const zeno::String& param) { 
         return std::dynamic_pointer_cast<PrimitiveObject>(get_input(param));
+    }
+
+    zeno::SharedPtr<GeometryObject_Adapter> INode::get_input_Geometry(const zeno::String& param) {
+        return std::dynamic_pointer_cast<GeometryObject_Adapter>(get_input(param));
     }
 
     zeno::SharedPtr<ListObject> INode::get_input_ListObject(const zeno::String& param) {

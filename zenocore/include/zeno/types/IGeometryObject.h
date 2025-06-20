@@ -30,10 +30,11 @@ namespace zeno
             std::set<zeno::String> face_nocopy
         );
 
-        Vector<Vec3f> points_pos();
+        std::vector<zeno::vec3f> points_pos();
         Vector<Vec3i> tri_indice() const;
         Vector<int> edge_list() const;
-        void set_pos(int i, Vec3f pos);
+        void set_pos(int i, zeno::vec3f pos);
+        //zeno::vec3f pos(int index) const;
 
         bool is_base_triangle() const;
         bool is_Line() const;
@@ -48,6 +49,10 @@ namespace zeno
         int create_point_attr(const zeno::String& attr_name, const Any& defl);
         int create_vertex_attr(const zeno::String& attr_name, const Any& defl);
         int create_geometry_attr(const zeno::String& attr_name, const Any& defl);
+
+        //获取属性
+        std::vector<float> get_float_attr(GeoAttrGroup grp, const zeno::String& attr_name);
+        std::vector<vec3f> get_vec3f_attr(GeoAttrGroup grp, const zeno::String& attr_name);
 
         //设置属性
         int set_attr(GeoAttrGroup grp, const zeno::String& name, const Any& val);
