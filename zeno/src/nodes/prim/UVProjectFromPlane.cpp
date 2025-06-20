@@ -2,6 +2,7 @@
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/HeatmapObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/scope_exit.h>
 #include <stdexcept>
@@ -164,11 +165,11 @@ struct PrimSample2D : zeno::INode {
     }
 
     virtual void apply() override {
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = ZImpl(get_input<GeometryObject_Adapter>("prim"));
         auto srcChannel = ZImpl(get_input2<std::string>("uvChannel"));
         auto uvSource = ZImpl(get_input2<std::string>("uvSource"));
         auto dstChannel = ZImpl(get_input2<std::string>("targetChannel"));
-        auto image = ZImpl(get_input2<PrimitiveObject>("image"));
+        auto image = ZImpl(get_input2<GeometryObject_Adapter>("image"));
         auto wrap = ZImpl(get_input2<std::string>("wrap"));
         auto filter = ZImpl(get_input2<std::string>("filter"));
         auto borderColor = ZImpl(get_input2<zeno::vec3f>("borderColor"));
@@ -194,8 +195,10 @@ struct PrimSample2D : zeno::INode {
         auto w = image->userData()->get_int("w");
         auto h = image->userData()->get_int("h");
 
-        auto &clrs = prim->add_attr<zeno::vec3f>(dstChannel);
-        auto data = image->verts.data();
+        prim->create_point_attr(stdString2zs(dstChannel), zeno::vec3f());
+        std::vector<zeno::vec3f> clrs(prim->npoints());
+
+        auto data = image->points_pos().data();
         std::function<zeno::vec3f(vec3f, const vec3f*, int, int, vec3f)> queryColor;
         if (filter == "nearest") {
             if (wrap == "REPEAT") {
@@ -255,7 +258,7 @@ struct PrimSample2D : zeno::INode {
         }
 
         if (uvSource == "vertex") {
-            auto &uv = prim->attr<zeno::vec3f>(srcChannel);
+            auto uv = prim->get_vec3f_attr(ATTR_POINT, stdString2zs(srcChannel));
             #pragma omp parallel for
             for (auto i = 0; i < uv.size(); i++) {
                 auto coord = zeno::vec_to_other<glm::vec3>(uv[i]);
@@ -265,12 +268,12 @@ struct PrimSample2D : zeno::INode {
             }
         }
         else if (uvSource == "tris") {
-            auto uv0 = prim->tris.attr<zeno::vec3f>("uv0");
-            auto uv1 = prim->tris.attr<zeno::vec3f>("uv1");
-            auto uv2 = prim->tris.attr<zeno::vec3f>("uv2");
+            auto uv0 = prim->get_vec3f_attr(ATTR_FACE, "uv0");
+            auto uv1 = prim->get_vec3f_attr(ATTR_FACE, "uv1");
+            auto uv2 = prim->get_vec3f_attr(ATTR_FACE, "uv2");
 
             #pragma omp parallel for
-            for (auto i = 0; i < prim->tris.size(); i++) {
+            for (auto i = 0; i < prim->nfaces(); i++) {
                 // not tested just for completeness
                 auto coord = zeno::vec_to_other<glm::vec3>(uv0[i]);
                 coord = mapplypos(matrix, coord);
@@ -282,7 +285,7 @@ struct PrimSample2D : zeno::INode {
                 coord = mapplypos(matrix, coord);
                 uv2[i] = zeno::other_to_vec<3>(coord);
 
-                auto tri = prim->tris[i];
+                auto tri = prim->face_points(i);
                 clrs[tri[0]] = queryColor(uv0[i], data, w, h, borderColor);
                 clrs[tri[1]] = queryColor(uv1[i], data, w, h, borderColor);
                 clrs[tri[2]] = queryColor(uv2[i], data, w, h, borderColor);
@@ -290,6 +293,8 @@ struct PrimSample2D : zeno::INode {
 
         }
         else if (uvSource == "loopsuv") {
+            throw std::runtime_error("don't support loopsuv right now");
+#if 0
             auto &loopsuv = prim->loops.attr<int>("uvs");
             #pragma omp parallel for
             for (auto i = 0; i < prim->loops.size(); i++) {
@@ -304,6 +309,7 @@ struct PrimSample2D : zeno::INode {
                 int index = prim->loops[i];
                 clrs[index] = queryColor({uv[0], uv[1], 0}, data, w, h, borderColor);
             }
+#endif
         }
         else {
             zeno::log_error("unknown uvSource");
@@ -315,8 +321,8 @@ struct PrimSample2D : zeno::INode {
 };
 ZENDEFNODE(PrimSample2D, {
     {
-        {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
-        {gParamType_Primitive, "image", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim", ""},
+        {gParamType_Geometry, "image", ""},
         {gParamType_String, "uvChannel", "uv"},
         {"enum vertex tris loopsuv", "uvSource", "vertex"},
         {gParamType_String, "targetChannel", "clr"},
@@ -332,12 +338,12 @@ ZENDEFNODE(PrimSample2D, {
         {gParamType_Vec2f, "translate", "0,0"},
     },
     {
-        {gParamType_Primitive, "outPrim"}
+        {gParamType_Geometry, "outPrim"}
     },
     {},
     {"primitive"},
 });
-std::shared_ptr<PrimitiveObject> readImageFile(std::string const &path) {
+std::shared_ptr<GeometryObject_Adapter> readImageFile(std::string const &path) {
     int w, h, n;
     stbi_set_flip_vertically_on_load(true);
     std::string native_path = std::filesystem::u8path(path).string();
@@ -346,23 +352,25 @@ std::shared_ptr<PrimitiveObject> readImageFile(std::string const &path) {
         throw zeno::Exception("cannot open image file at path: " + native_path);
     }
     scope_exit delData = [=] { stbi_image_free(data); };
-    auto img = std::make_shared<PrimitiveObject>();
-    img->verts.resize(w * h);
+    auto img = create_GeometryObject(true, w*h, 0);
+    auto imagevrerts = img->points_pos();
     if (n == 3) {
-        std::memcpy(img->verts.data(), data, w * h * n * sizeof(float));
+        std::memcpy(imagevrerts.data(), data, w * h * n * sizeof(float));
     } else if (n == 4) {
-        auto &alpha = img->verts.add_attr<float>("alpha");
+        img->create_point_attr("alpha", 0.f);
+        auto alpha = img->get_float_attr(ATTR_POINT, "alpha");
         for (int i = 0; i < w * h; i++) {
-            img->verts[i] = {data[i*4+0], data[i*4+1], data[i*4+2]};
+            imagevrerts[i] = {data[i*4+0], data[i*4+1], data[i*4+2]};
             alpha[i] = data[i*4+3];
         }
+        img->set_point_attr("alpha", alpha);
     } else if (n == 2) {
         for (int i = 0; i < w * h; i++) {
-            img->verts[i] = {data[i*2+0], data[i*2+1], 0};
+            imagevrerts[i] = {data[i*2+0], data[i*2+1], 0};
         }
     } else if (n == 1) {
         for (int i = 0; i < w * h; i++) {
-            img->verts[i] = vec3f(data[i]);
+            imagevrerts[i] = vec3f(data[i]);
         }
     } else {
         throw zeno::Exception("too much number of channels");
@@ -441,12 +449,14 @@ struct ReadImageFile : INode {//todo: select custom color space
             ZImpl(set_output("image", readPFMFile(path)));
         }
         else {
-            auto image = readImageFile(path); 
+            auto image = readImageFile(path);
+            auto imageverts = image->points_pos();
             if (!linearize) {
-                for (auto i = 0; i < image->size(); i++) {
-                    image->verts[i] = pow(image->verts[i], 1.0/2.2f);
+                for (auto i = 0; i < imageverts.size(); i++) {
+                    imageverts[i] = pow(imageverts[i], 1.0/2.2f);
                 }
             }
+            image->set_point_attr("pos", imageverts);
             ZImpl(set_output("image", image));
         }
     }
@@ -457,11 +467,12 @@ ZENDEFNODE(ReadImageFile, {
         {gParamType_Bool, "Linearize Non-linear Images", "1"},
     },
     {
-        {gParamType_Primitive, "image"},
+        {gParamType_Geometry, "image"},
     },
     {},
     {"deprecated"},
 });
+
 
 std::shared_ptr<PrimitiveObject> readImageFileRawData(std::string const &path) {
     int w, h, n;
@@ -869,6 +880,7 @@ ZENDEFNODE(ImageFloatGaussianBlur, {
     {"deprecated"},
 });
 
+#if 0
 struct EnvMapRot : INode {
     virtual void apply() override {
         auto path = ZImpl(get_input2<std::string>("path"));
@@ -914,6 +926,7 @@ ZENDEFNODE(EnvMapRot, {
     {},
     {"comp"},
 });
+#endif
 
 struct PrimLoadExrToChannel : INode {
     void apply() override {
