@@ -11,7 +11,9 @@
 #include <numeric>
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
+#include <zeno/types/UserData.h>
 #include <zeno/utils/vectorutil.h>
+#include <zeno/utils/interfaceutil.h>
 #include <zeno/core/data.h>
 #include <zeno/core/FunctionManager.h>
 #include <zeno/extra/CalcContext.h>
@@ -1815,6 +1817,83 @@ namespace zeno
                     }
                     return ret;
                 }
+            }
+            if (funcname == "setud") {
+                zeno::String key = zeno::stdString2zs(get_zfxvar<std::string>(args[0].value[0]));
+                auto ud = pContext->spObject->userData();
+                const zfxvariant& val = args[1].value[0];
+
+                std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, int>) {
+                        ud->set_int(key, arg);
+                    }
+                    else if constexpr (std::is_same_v<T, float>) {
+                        ud->set_float(key, arg);
+                    }
+                    else if constexpr (std::is_same_v<T, std::string>) {
+                        ud->set_string(key, stdString2zs(arg));
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec2>) {
+                        ud->set_vec2f(key, Vec2f(arg[0], arg[1]));
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec3>) {
+                        ud->set_vec3f(key, Vec3f(arg[0], arg[1], arg[2]));
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec4>) {
+                        //ud->set_vec4f(key, Vec4f(arg[0], arg[1], arg[2], arg[3]));
+                    }
+                    else {
+                        throw makeError<UnimplError>("no supported value to set userdata.");
+                    }
+                    }, val);
+                ZfxVariable ret;
+                return ret;
+            }
+            if (funcname == "getud") {
+                zeno::String key = zeno::stdString2zs(get_zfxvar<std::string>(args[0].value[0]));
+                auto ud = pContext->spObject->userData();
+                zeno::UserData* pUserData = static_cast<zeno::UserData*>(ud);
+
+                ZfxVariable ret;
+                zany spud = pUserData->m_data[zsString2Std(key)];
+                if (auto strobj = std::dynamic_pointer_cast<zeno::StringObject>(spud)) {
+                    ret.value.push_back(strobj->get());
+                }
+                else if (auto numobj = std::dynamic_pointer_cast<zeno::NumericObject>(spud)) {
+                    NumericValue val = numobj->value;
+                    std::visit([&](auto&& arg) {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            ret.value.push_back(arg);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            ret.value.push_back(arg);
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec2i>) {
+                            ret.value.push_back(glm::vec2(arg[0], arg[1]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec2f>) {
+                            ret.value.push_back(glm::vec2(arg[0], arg[1]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec3i>) {
+                            ret.value.push_back(glm::vec3(arg[0], arg[1], arg[2]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec3f>) {
+                            ret.value.push_back(glm::vec3(arg[0], arg[1], arg[2]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec4i>) {
+                            ret.value.push_back(glm::vec4(arg[0], arg[1], arg[2], arg[3]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec4f>) {
+                            ret.value.push_back(glm::vec4(arg[0], arg[1], arg[2], arg[3]));
+                        }
+                        }, val);
+                }
+                else {
+                    throw makeError<UnimplError>("unknown type from userdata");
+                }
+                return ret;
             }
             throw makeError<UnimplError>("unknown function call");
         }

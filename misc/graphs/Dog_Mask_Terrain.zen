@@ -39,7 +39,9 @@
                     151.0,
                     295.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false,
                 "subnet-customUi": {
                     "nickname": "",
@@ -81,7 +83,15 @@
                             "class": "SubOutput",
                             "object_inputs": {
                                 "port": {
-                                    "links": null,
+                                    "links": [
+                                        {
+                                            "out-node": "PrimSample2D1",
+                                            "out-socket": "outPrim",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
                                     "type": "geometry",
                                     "socket-type": "clone"
                                 }
@@ -90,10 +100,12 @@
                             "primitive_outputs": {},
                             "object_outputs": {},
                             "uipos": [
-                                330.0,
-                                686.0
+                                -6.0,
+                                650.0
                             ],
-                            "status": [],
+                            "status": [
+                                "View"
+                            ],
                             "collasped": false
                         },
                         "HF_Creation1": {
@@ -239,15 +251,7 @@
                             "class": "PrimSample2D",
                             "object_inputs": {
                                 "image": {
-                                    "links": [
-                                        {
-                                            "out-node": "ImageFlip1",
-                                            "out-socket": "image",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
+                                    "links": null,
                                     "type": "geometry",
                                     "socket-type": "clone"
                                 },
