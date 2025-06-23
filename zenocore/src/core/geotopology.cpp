@@ -508,14 +508,27 @@ namespace zeno
     }
 
     int GeometryTopology::npoints() const {
+        if (m_indiceMesh_topo)
+            return m_indiceMesh_topo->size();
         return m_points.size();
     }
 
     int GeometryTopology::nfaces() const {
-        return m_faces.size();
+        if (m_indiceMesh_topo) {
+            if (m_indiceMesh_topo->tris->size() > 0) {
+                return m_indiceMesh_topo->tris->size();
+            }
+            else {
+                return m_indiceMesh_topo->polys->size();
+            }
+        }
+        else {
+            return m_faces.size();
+        }
     }
 
     int GeometryTopology::nvertices() const {
+        assert(!m_indiceMesh_topo);
         if (m_faces.empty()) {
             return 0;
         }
