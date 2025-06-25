@@ -127,6 +127,81 @@ namespace zeno {
     });
 
 
+    struct HasAttribute : INode {
+        void apply() override {
+            auto spGeo = get_input_Geometry("Input");
+            auto attr_name = get_input2_string("attr_name");
+            auto attrgroup = get_input2_string("Attribute Group");
+            if (attr_name == "") {
+                throw makeError<UnimplError>("the attribute name cannot be empty.");
+            }
+
+            bool hasAttr = false;
+            if (attrgroup == "Point") {
+                hasAttr = spGeo->has_point_attr(attr_name);
+            }
+            else if (attrgroup == "Face") {
+                hasAttr = spGeo->has_face_attr(attr_name);
+            }
+            else if (attrgroup == "Geometry") {
+                hasAttr = spGeo->has_face_attr(attr_name);
+            }
+            else {
+                throw makeError<UnimplError>("unknown group");
+            }
+            set_output_int("hasAttr", hasAttr);
+        }
+    };
+    ZENDEFNODE(HasAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("attr_name", gParamType_String, "attribute1"),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+        },
+        {
+            ParamPrimitive("hasAttr", gParamType_Int)
+        },
+        {},
+        {"geom"}
+    });
+
+
+    struct CopyAttribute : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            auto source = get_input2_string("Source Attribute");
+            auto target = get_input2_string("Target Attribute");
+            std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
+            GeoAttrGroup group;
+            if (m_attrgroup == "Point") {
+                group = ATTR_POINT;
+            }
+            else if (m_attrgroup == "Face") {
+                group = ATTR_FACE;
+            }
+            else if (m_attrgroup == "Geometry") {
+                group = ATTR_GEO;
+            }
+            input_object->copy_attr(group, source, target);
+            set_output("Output", input_object);
+        }
+    };
+    ZENDEFNODE(CopyAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("Source Attribute", gParamType_String, ""),
+            ParamPrimitive("Target Attribute", gParamType_String, ""),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
+
     struct SetAttribute : INode {
         void apply() override {
             auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));

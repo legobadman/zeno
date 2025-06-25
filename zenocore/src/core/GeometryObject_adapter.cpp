@@ -104,6 +104,10 @@ namespace zeno
         return m_impl->create_geometry_attr(zsString2Std(attr_name), abiAnyToAttrVar(defl));
     }
 
+    void GeometryObject_Adapter::copy_attr(GeoAttrGroup grp, const zeno::String& src_attr, const zeno::String& dest_attr) {
+        m_impl->copy_attr(grp, zsString2Std(src_attr), zsString2Std(dest_attr));
+    }
+
     std::vector<float> GeometryObject_Adapter::get_float_attr(GeoAttrGroup grp, const zeno::String& attr_name) {
         return m_impl->get_attrs<float>(grp, zsString2Std(attr_name));
     }
@@ -312,6 +316,9 @@ namespace zeno
     zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
         auto pGeom = std::make_shared<GeometryObject_Adapter>();
         pGeom->m_impl = new GeometryObject(bTriangle, nPoints, nFaces, bInitFaces);
+        //提前添加pos
+        std::vector<vec3f> points(nPoints);
+        pGeom->create_attr(ATTR_POINT, "pos", points);
         return pGeom;
     }
 

@@ -529,15 +529,14 @@ namespace zeno
     {
         PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
+        const int n = get_attr_size(grp);
         auto iter = container.find(attr_name);
         if (iter != container.end()) {
-            return -1;   //already exist
+            iter->second = AttributeVector(val_or_vec, n == 0 ? 1 : n);
+            return 0;   //already exist
         }
 
-        int n = get_attr_size(grp);
         container.insert(std::make_pair(attr_name, AttributeVector(val_or_vec, n == 0 ? 1 : n)));
-
-        //返回啥？
         return 0;
     }
 
@@ -560,11 +559,12 @@ namespace zeno
             attr = "pos";
         }
 
+        int n = m_spTopology->npoints();
         auto iter = m_point_attrs.find(attr);
         if (iter != m_point_attrs.end()) {
-            return -1;   //already exist
+            iter->second = AttributeVector(defl, n);
+            return 0;
         }
-        int n = m_spTopology->npoints();
         m_point_attrs.insert(std::make_pair(attr, AttributeVector(defl, n)));
         return 0;
     }
@@ -592,6 +592,24 @@ namespace zeno
         }
         m_geo_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, 1)));
         return 0;
+    }
+
+    void GeometryObject::copy_attr(GeoAttrGroup grp, const std::string& src_attr, const std::string& dest_attr) {
+        PROXY_PRIM_THROW
+        std::map<std::string, AttributeVector>& container = get_container(grp);
+        auto iter_source = container.find(src_attr);
+        if (iter_source == container.end()) {
+            throw makeError<UnimplError>("the source attr `" + src_attr + "` doesn't exist when copy attr.");
+        }
+        const AttributeVector& srcattr = iter_source->second;
+        auto iter_dest = container.find(dest_attr);
+        if (iter_dest == container.end()) {
+            AttributeVector attrvec(srcattr);
+            container.emplace(std::make_pair(dest_attr, std::move(attrvec)));
+        }
+        else {
+            iter_dest->second = srcattr;
+        }
     }
 
     int GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
