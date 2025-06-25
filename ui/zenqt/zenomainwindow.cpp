@@ -975,6 +975,12 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         title = tr("Node Editor(QML)");
         break;
     }
+    case ACTION_IMAGE: {
+        auto panel = new ZenoImagePanel;
+        pWid = panel;
+        title = tr("Image");
+        break;
+    }
     case ACTION_OPEN_PATH: {
         break;
     }
@@ -1125,6 +1131,18 @@ QVector<DisplayWidget*> ZenoMainWindow::viewports() const
         }
     }
     return views;
+}
+
+QVector<ZenoImagePanel*> ZenoMainWindow::imagepanels() const {
+    QVector<ZenoImagePanel*> images;
+    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
+    {
+        QWidget* wid = dock->widget();
+        if (ZenoImagePanel* view = qobject_cast<ZenoImagePanel*>(wid)) {
+            images.append(view);
+        }
+    }
+    return images;
 }
 
 DisplayWidget* ZenoMainWindow::getCurrentViewport() const
@@ -2307,7 +2325,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
                     zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                    std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject);
+                    auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pObject);
                     panel->setGeometry(subgraph, idx, spGeom);
                 }
             }

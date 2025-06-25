@@ -7,6 +7,7 @@
 #include "model/GraphsTreeModel.h"
 #include "model/graphsmanager.h"
 #include "model/assetsmodel.h"
+#include "panel/zenoimagepanel.h"
 #include "parammodel.h"
 #include "LinkModel.h"
 #include "zenoapplication.h"
@@ -51,6 +52,11 @@ static void triggerView(const QString& nodepath, bool bView) {
     const auto& views = zenoApp->getMainWindow()->viewports();
     for (DisplayWidget* view : views) {
         view->reload(info);
+    }
+
+    const auto& images = zenoApp->getMainWindow()->imagepanels();
+    for (ZenoImagePanel* panel : images) {
+        panel->reload(info);
     }
 }
 
