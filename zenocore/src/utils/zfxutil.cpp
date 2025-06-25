@@ -695,6 +695,30 @@ namespace zeno
             if (ref.empty()) {
                 zeno::log_warn("ref empty");
             }
+
+            if (zeno::starts_with(ref, "..")) {
+                //子图直接获取参数
+                if (zeno::starts_with(ref, "../")) {
+                    auto thisNode = pContext->spNode;
+                    auto thisGraph = thisNode->getGraph();
+                    paramPath = ref.substr(3);
+                    auto paramPathItems = split_str(paramPath, '.');
+                    paramName = paramPathItems.empty() ? paramPath : paramPathItems[0];
+
+                    //找出参数对应的SubInput节点
+                    NodeImpl* pSubInput = thisGraph->getNode(paramName);
+                    paramName = "port";
+                    if (paramPathItems.size() == 2) {
+                        paramPath = paramName + "." + paramPathItems[1];
+                    }
+                    else {
+                        paramPath = "port";
+                    }
+                    return pSubInput;
+                }
+                return nullptr;
+            }
+
             std::string fullPath, graphAbsPath;
             auto thisNode = pContext->spNode;
             const std::string& thisnodePath = thisNode->get_path();

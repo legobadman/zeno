@@ -523,8 +523,8 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
     });
 
     //有部分下游节点因为某些原因没有标脏，而上游节点已经脏了的情况下不会继续传播，所以不检查缓存
-    //if (m_dirty == bOn)
-    //    return;
+    if (m_dirty == bOn)
+        return;
 
     m_dirty = bOn;
 
@@ -686,6 +686,20 @@ void NodeImpl::preApplyTimeshift(CalcContext* pContext)
     propagateDirty(this, "$F");
 
     preApply(pContext);
+}
+
+void NodeImpl::switchif_apply(CalcContext* pContext)
+{
+    //获取Condition的结果
+    const zeno::reflect::Any& res = this->get_param_result("Condition");
+    int cond = zeno::reflect::any_cast<int>(res);
+    if (cond != 0) {
+        requireInput("If True", pContext);
+    }
+    else {
+        requireInput("If False", pContext);
+    }
+    apply();
 }
 
 void NodeImpl::foreachend_apply(CalcContext* pContext)
@@ -1138,7 +1152,16 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
 
     for (const auto& [source_node_uuidpath, source_param] : newAdded)
     {
-        NodeImpl* srcNode = getSession().getNodeByUuidPath(source_node_uuidpath);
+        //目前引用功能只支持本图引用，不能跨图引用
+        std::string sourcenode_uuid;
+        if (source_node_uuidpath.find('/') != std::string::npos) {
+            sourcenode_uuid = source_node_uuidpath.substr(source_node_uuidpath.find_last_of('/') + 1);
+        }
+        else {
+            sourcenode_uuid = source_node_uuidpath;
+        }
+
+        NodeImpl* srcNode = getGraph()->getNodeByUuidPath(sourcenode_uuid);
         auto iterSrcParam = srcNode->m_inputPrims.find(source_param);
         if (iterSrcParam != srcNode->m_inputPrims.end()) {
             PrimitiveParam& srcparam = iterSrcParam->second;
@@ -1161,6 +1184,18 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                 reflink->dest_inparam = target_param;
                 target_param->reflinks.push_back(reflink);
                 srcObj.reflinks.push_back(reflink);
+            }
+            else {
+                auto iterOutPrim = srcNode->m_outputPrims.find(source_param);
+                if (iterOutPrim != srcNode->m_outputPrims.end()) {
+                    PrimitiveParam& srcparam = iterOutPrim->second;
+                    //构造reflink
+                    std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
+                    reflink->source_inparam = &srcparam;
+                    reflink->dest_inparam = target_param;
+                    target_param->reflinks.push_back(reflink);
+                    srcparam.reflinks.push_back(reflink);
+                }
             }
         }
     }
@@ -1817,7 +1852,7 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
 bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
     // 目前假设输入对象和输入数值，不能重名（不难实现，老节点直接改）。
 
-    if (ds == "Cache Path") {
+    if (ds == "Center") {
         int j;
         j = 0;
     }
@@ -2002,7 +2037,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
 
     if (m_nodecls == "TimeShift") {
         preApplyTimeshift(pContext);
-    } else if (m_nodecls == "ForEachEnd") {
+    } else if (m_nodecls == "ForEachEnd" || m_nodecls == "SwitchIf") {
         preApply_Primitives(pContext);
     } else {
         preApply(pContext);
@@ -2024,7 +2059,11 @@ void NodeImpl::doApply(CalcContext* pContext) {
             reportStatus(true, Node_Running);
             if (m_nodecls == "ForEachEnd") {
                 foreachend_apply(pContext);
-            } else {
+            } 
+            else if (m_nodecls == "SwitchIf") {
+                switchif_apply(pContext);
+            }
+            else {
                 apply();
             }
         }
@@ -2033,7 +2072,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
 
     update_out_objs_key();
     init_output_container_updateinfo();
-            reportStatus(false, Node_RunSucceed);
+    reportStatus(false, Node_RunSucceed);
     if (m_bView) {
         //commit_to_render(Update_Reconstruct);
     }
@@ -3294,8 +3333,11 @@ bool NodeImpl::has_input(std::string const &id) const {
     else {
         auto iter = m_inputPrims.find(id);
         if (iter != m_inputPrims.end()) {
+            const auto& _prim = iter->second;
+            if (_prim.result.has_value())
+                return true;
+            //看有没有边连着
             return !iter->second.links.empty();
-            //return m_inputPrims.find(id) != m_inputPrims.end();
         }
         return false;
     }

@@ -208,8 +208,13 @@ namespace zeno
 
             bool bExist = false;
             ParamPrimitive paramData = spNode->get_input_prim_param(paramname, &bExist);
-            if (!bExist)
-                throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
+            if (!bExist) {
+                //试一下拿prim_output，有些情况，比如获取SubInput的port，是需要拿Output的
+                paramData = spNode->get_output_prim_param(paramname, &bExist);
+                if (!bExist) {
+                    throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
+                }
+            }
 
             //直接拿引用源的计算结果，所以本节点在执行前，引用源必须先执行（比如引用源的数值也是依赖另一个节点），参考代码INode::requireInput
             //，所以要在preApply的基础上作提前依赖计算
@@ -233,6 +238,30 @@ namespace zeno
                 }
                 else if (primtype == zeno::types::gParamType_Float) {
                     res = zeno::reflect::any_cast<float>(paramData.result);
+                }
+                else if (primtype == zeno::types::gParamType_Vec2f) {
+                    throw makeError<UnimplError>();
+                }
+                else if (primtype == zeno::types::gParamType_Vec2i) {
+                    throw makeError<UnimplError>();
+                }
+                else if (primtype == zeno::types::gParamType_Vec3f) {
+                    vec3f vec = zeno::reflect::any_cast<vec3f>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(glm::vec3(vec[0], vec[1], vec[2]));
+                    return varres;
+                }
+                else if (primtype == zeno::types::gParamType_Vec3i) {
+                    vec3i vec = zeno::reflect::any_cast<vec3i>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(glm::vec3(vec[0], vec[1], vec[2]));
+                    return varres;
+                }
+                else if (primtype == zeno::types::gParamType_Vec4f) {
+                    throw makeError<UnimplError>();
+                }
+                else if (primtype == zeno::types::gParamType_Vec4i) {
+                    throw makeError<UnimplError>();
                 }
                 else {
                     throw makeError<UnimplError>();
