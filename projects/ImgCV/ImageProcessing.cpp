@@ -393,7 +393,7 @@ struct ImageFlip: INode {
         }
         else if(!fliphori&&!flipvert){
         }
-        image->set_point_attr("alpha", imageverts);
+        image->set_point_attr("pos", imageverts);
         set_output("image", image);
     }
 };
@@ -1166,14 +1166,14 @@ struct ImageErode: INode {
 };
 ZENDEFNODE(ImageErode, {
     {
-        {gParamType_Primitive, "image"},
+        {gParamType_Geometry, "image"},
         {gParamType_Int, "strength", "1"},
         {gParamType_Int, "kernel_width", "3"},
         {gParamType_Int, "kernel_height", "3"},
 
     },
     {
-        {gParamType_Primitive, "image"},
+        {gParamType_Geometry, "image"},
     },
     {},
     {"image"},
