@@ -1,4 +1,4 @@
-#include "customuimodel.h"
+﻿#include "customuimodel.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
 #include <unordered_set>
@@ -49,131 +49,7 @@ static bool hasElement(QAbstractListModel* pModel, const QString& name) {
     return false;
 }
 
-void appendClonedItem(QVector<ParamItem>& parasm, ParamsModel* m_paramsModel, const QModelIndex& idx) {
-    ParamItem item;
-    item.bInput = m_paramsModel->data(idx, QtRole::ROLE_ISINPUT).toBool();
-    item.control = (zeno::ParamControl)m_paramsModel->data(idx, QtRole::ROLE_PARAM_CONTROL).toInt();
-    item.optCtrlprops = m_paramsModel->data(idx, QtRole::ROLE_PARAM_CTRL_PROPERTIES).value<zeno::reflect::Any>();
-    item.name = m_paramsModel->data(idx, QtRole::ROLE_PARAM_NAME).toString();
-    item.type = (zeno::ParamType)m_paramsModel->data(idx, QtRole::ROLE_PARAM_TYPE).toLongLong();
-    item.value = m_paramsModel->data(idx, QtRole::ROLE_PARAM_VALUE).value<zeno::reflect::Any>();
-    item.connectProp = (zeno::SocketType)m_paramsModel->data(idx, QtRole::ROLE_SOCKET_TYPE).toInt();
-    item.bSocketVisible = m_paramsModel->data(idx, QtRole::ROLE_PARAM_SOCKET_VISIBLE).toBool();
-    item.bVisible = m_paramsModel->data(idx, QtRole::ROLE_PARAM_VISIBLE).toBool();
-    item.bEnable = m_paramsModel->data(idx, QtRole::ROLE_PARAM_ENABLE).toBool();
-    item.group = (zeno::NodeDataGroup)m_paramsModel->data(idx, QtRole::ROLE_PARAM_GROUP).toInt();
-    item.sockProp = (zeno::SocketProperty)m_paramsModel->data(idx, QtRole::ROLE_PARAM_SOCKPROP).toUInt();
-    parasm.append(item);
-}
-
-QVariant cloneItemGetData(const QVector<ParamItem>& clonedItems, const QModelIndex& index, int role) {
-    if (!index.isValid()) {
-        return QVariant();
-    }
-    if (role == Qt::DecorationRole) {
-        for (auto& item : customui_controlList) {
-            if (item.ctrl == clonedItems[index.row()].control && item.type == clonedItems[index.row()].type) { return item.icon; }
-        }
-    }
-    else if (role == QtRole::ROLE_NODE_NAME) {
-        return clonedItems[index.row()].name;
-    }
-    else if (role == QtRole::ROLE_PARAM_NAME) {
-        return clonedItems[index.row()].name;
-    }
-    else if (role == QtRole::ROLE_PARAM_TYPE) {
-        return (quint64)clonedItems[index.row()].type;
-    }
-    else if (role == QtRole::ROLE_PARAM_CONTROL) {
-        return clonedItems[index.row()].control;
-    }
-    else if (role == QtRole::ROLE_PARAM_QML_VALUE) {
-        return QVariant::fromValue(clonedItems[index.row()].value);
-    }
-    else if (role == QtRole::ROLE_ISINPUT) {
-        return clonedItems[index.row()].bInput;
-    }
-    else if (role == QtRole::ROLE_PARAM_GROUP) {
-        return clonedItems[index.row()].group;
-    }
-    else if (role == QtRole::ROLE_PARAM_SOCKET_VISIBLE) {
-        return clonedItems[index.row()].bSocketVisible;
-    }
-    else if (role == QtRole::ROLE_PARAM_CONTROL_PROPS) {
-        QVariantMap map;
-        if (clonedItems[index.row()].optCtrlprops.has_value()) {
-            if (clonedItems[index.row()].optCtrlprops.type().hash_code() == gParamType_StringList) {
-                const auto& items = zeno::reflect::any_cast<std::vector<std::string>>(clonedItems[index.row()].optCtrlprops);
-                QStringList qitems;
-                for (const auto& item : items) { qitems.append(QString::fromStdString(item)); }
-                map["combobox_items"] = qitems;
-            }
-            if (clonedItems[index.row()].optCtrlprops.type().hash_code() == gParamType_IntList) {
-                const auto& items = zeno::reflect::any_cast<std::vector<int>>(clonedItems[index.row()].optCtrlprops);
-                QVariantList qitems;
-                for (int item : items) { qitems.append(item); }
-                map["slider"] = qitems;
-            }
-        }
-        return map;
-    }
-    else if (role == QtRole::ROLE_PARAM_SOCKET_CLR) {
-        QColor color = ZColorManager::getColorByType(clonedItems[index.row()].type);
-        return color;
-    }
-    else if (role == QtRole::ROLE_PARAM_PERSISTENT_INDEX) {
-        return false;
-    }
-    else {
-        return QVariant();
-    }
-}
-
-bool cloneItemSetdata(QVector<ParamItem>& clonedItems, const QModelIndex& index, const QVariant& value, int role) {
-    ParamItem& param = clonedItems[index.row()];
-    switch (role) {
-    case QtRole::ROLE_PARAM_NAME:
-        param.name = value.toString();
-        break;
-    case QtRole::ROLE_PARAM_TYPE:
-        param.type = (zeno::ParamType)value.toLongLong();
-        break;
-    case QtRole::ROLE_PARAM_QML_VALUE: {
-        //在QML初始化的时候，比如onValueChanged时也会直接调用，要考虑是不是做同值过滤
-        const zeno::reflect::Any& anyVal = UiHelper::qvarToAnyByType(value, param.type, param.control == zeno::Lineedit);
-        param.value = anyVal;
-        break;
-    }
-    case QtRole::ROLE_PARAM_VALUE: {
-        const zeno::reflect::Any& anyVal = value.value<zeno::reflect::Any>();
-        if (anyVal == param.value) {
-            return false;
-        }
-        param.value = anyVal;
-        return false;
-    }
-
-    case QtRole::ROLE_PARAM_CONTROL:
-        param.control = (zeno::ParamControl)value.toInt();
-        break;
-    case QtRole::ROLE_PARAM_CTRL_PROPERTIES:
-        param.optCtrlprops = value.value<zeno::reflect::Any>();
-    case QtRole::ROLE_SOCKET_TYPE:
-        param.connectProp = (zeno::SocketType)value.toInt();
-        break;
-    case QtRole::ROLE_PARAM_IS_WILDCARD:
-        param.bWildcard = value.toBool();
-        break;
-    case QtRole::ROLE_PARAM_SOCKET_VISIBLE:
-        param.bSocketVisible = value.toBool();
-        break;
-    case QtRole::ROLE_PARAM_PERSISTENT_INDEX:
-        return false;
-    }
-    return true;
-}
-
-CustomUIModel::CustomUIModel(ParamsModel* params, QObject* parent, bool isCloneCustomuiModel)
+CustomUIModel::CustomUIModel(ParamsModel* params, QObject* parent)
     : QObject(parent)
     , m_params(params)
     , m_tabModel(nullptr)
@@ -181,7 +57,6 @@ CustomUIModel::CustomUIModel(ParamsModel* params, QObject* parent, bool isCloneC
     , m_objInputModel(nullptr)
     , m_objOutputModel(nullptr)
     , m_ctrlItemModel(nullptr)
-    , m_bIsCloneCustomuiModel(isCloneCustomuiModel)
 {
     const zeno::CustomUI& customUI = m_params->customUI();
     m_tabModel = new ParamTabModel(customUI.inputPrims, this);
@@ -287,12 +162,11 @@ void CustomUIModel::initCustomuiConnections(QStandardItemModel* customuiStandard
 
 Q_INVOKABLE void CustomUIModel::reset()
 {
-    if (!m_bIsCloneCustomuiModel) {
-        m_tabModel->reset();
-        m_primOutputModel->reset();
-        m_objInputModel->reset();
-        m_objOutputModel->reset();
-    }
+    m_tabModel->reset();
+    m_primOutputModel->reset();
+    m_objInputModel->reset();
+    m_objOutputModel->reset();
+    emit resetCustomuiModel();
 }
 
 bool CustomUIModel::isSubnetNode()
@@ -306,72 +180,6 @@ bool CustomUIModel::isSubnetNode()
     }
     return false;
 }
-
-bool CustomUIModel::isClonedModel()
-{
-    return m_bIsCloneCustomuiModel;
-}
-
-void CustomUIModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo)
-{
-    m_tabModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
-    m_primOutputModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
-    m_objInputModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
-    m_objOutputModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
-}
-
-void CustomUIModel::updateModelIncremental(const zeno::params_change_info& changes, const zeno::CustomUI& customui) {
-    std::unordered_set<std::string> ensure_tabnames, groupnames;
-    for (int tabCount = 0; tabCount < customui.inputPrims.size(); tabCount++) {
-        for (int groupCount = 0; groupCount < customui.inputPrims[tabCount].groups.size(); groupCount++) {
-            groupnames.insert(customui.inputPrims[tabCount].groups[groupCount].name);
-        }
-        ensure_tabnames.insert(customui.inputPrims[tabCount].name);
-    }
-
-    //先删除customui里没有的tab,group和changes明确删除的参数
-    for (int r = m_tabModel->rowCount() - 1; r >= 0; r--) {
-        QModelIndex idxTab(m_tabModel->index(r, 0));
-        QString tabName = idxTab.data(QtRole::ROLE_PARAM_NAME).toString();
-
-        ParamGroupModel* pGroupsM = idxTab.data(QmlCUIRole::GroupModel).value<ParamGroupModel*>();
-        for (int j = pGroupsM->rowCount() - 1; j >= 0; j--) {
-            QModelIndex idxGrp(pGroupsM->index(j, 0));
-            QString groupName = idxGrp.data(QtRole::ROLE_PARAM_NAME).toString();
-
-            ParamPlainModel* paramsM = idxGrp.data(QmlCUIRole::PrimModel).value<ParamPlainModel*>();
-            for (int k = paramsM->rowCount() - 1; k >= 0; k--) {
-                QModelIndex idxParam(paramsM->index(k, 0));
-                QString paramName = idxParam.data(QtRole::ROLE_PARAM_NAME).toString();
-
-                if (changes.remove_inputs.find(paramName.toStdString()) != changes.remove_inputs.end()) {
-                    paramsM->removeRow(k);
-                }
-            }
-
-            if ((!paramsM || paramsM->rowCount() == 0) && !groupnames.count(groupName.toStdString())) {
-                pGroupsM->removeRow(j);
-            }
-        }
-
-        if ((!pGroupsM || pGroupsM->rowCount() == 0) && !ensure_tabnames.count(tabName.toStdString())) {
-            m_tabModel->removeRow(r);
-        }
-    }
-
-    for (auto ensure_tab : ensure_tabnames) {
-        if (!hasElement(m_tabModel, QString::fromStdString(ensure_tab))) {
-
-        }
-        else {
-            //tab存在，但仍然要看tab下的group的增删情况
-        }
-    }
-
-}
-
-
-
 
 //////////////////////////////////////////////////////////
 ParamTabModel::ParamTabModel(zeno::CustomUIParams tabs, CustomUIModel* pModel)
@@ -387,6 +195,9 @@ ParamTabModel::ParamTabModel(zeno::CustomUIParams tabs, CustomUIModel* pModel)
 }
 
 QStandardItemModel* ParamTabModel::toStandardModel() const {
+	QStandardItem* rootItem = new QStandardItem("Root");
+    rootItem->setData(VPARAM_ROOT, ROLE_ELEMENT_TYPE);
+
     QStandardItemModel* pModel = new QStandardItemModel;
     for (auto& tab : m_items) {
         QStandardItem* tabItem = new QStandardItem(tab.name);
@@ -425,8 +236,9 @@ QStandardItemModel* ParamTabModel::toStandardModel() const {
             }
             tabItem->appendRow(groupItem);
         }
-        pModel->invisibleRootItem()->appendRow(tabItem);
+        rootItem->appendRow(tabItem);
     }
+    pModel->invisibleRootItem()->appendRow(rootItem);
     return pModel;
 }
 
@@ -476,6 +288,16 @@ Qt::ItemFlags ParamTabModel::flags(const QModelIndex& index) const
     return Qt::ItemIsEditable | QAbstractListModel::flags(index);
 }
 
+QModelIndex ParamTabModel::indexFromName(QString name)
+{
+	for (int i = 0; i < m_items.size(); i++) {
+		if (m_items[i].name == name) {
+			return createIndex(i, 0);
+		}
+	}
+	return QModelIndex();
+}
+
 bool ParamTabModel::insertRow(int row, QString name) {
     if (row < 0 || row > m_items.size()) {
         return false;
@@ -517,18 +339,6 @@ void ParamTabModel::reset()
         m_items.push_back(std::move(item));
     }
     endResetModel();
-}
-
-void ParamTabModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo)
-{
-    for (auto& tabitem : m_items) {
-        zeno::ParamTab tabInfo;
-        tabInfo.name = tabitem.name.toStdString();
-        std::vector<zeno::ParamGroup> groupinfo;
-        tabitem.groupM->exportCustomuiAndEdittedUpdateInfo(groupinfo, editUpdateInfo);
-        tabInfo.groups = groupinfo;
-        customui.inputPrims.push_back(tabInfo);
-    }
 }
 
 //////////////////////////////////////////////////
@@ -582,6 +392,30 @@ QHash<int, QByteArray> ParamGroupModel::roleNames() const {
 }
 
 
+QModelIndex ParamGroupModel::indexFromName(QString name)
+{
+    for (int i = 0; i < m_items.size(); i++) {
+        if (m_items[i].name == name) {
+            return createIndex(i, 0);
+        }
+    }
+    return QModelIndex();
+}
+
+QString ParamGroupModel::parentName()
+{
+    if (!m_tabModel) {
+        return "";
+    }
+    for (int i = 0; i < m_tabModel->rowCount(); i++) {
+        ParamGroupModel* pgroup = m_tabModel->data(m_tabModel->index(i), QmlCUIRole::GroupModel).value<ParamGroupModel*>();
+        if (this == pgroup) {
+            return m_tabModel->data(m_tabModel->index(i), QtRole::ROLE_PARAM_NAME).toString();
+        }
+    }
+    return "";
+}
+
 bool ParamGroupModel::insertRow(int row, QString name)
 {
     if (row < 0 || row > m_items.size()) {
@@ -609,99 +443,53 @@ bool ParamGroupModel::removeRow(int row)
     return true;
 }
 
-void ParamGroupModel::exportCustomuiAndEdittedUpdateInfo(std::vector<zeno::ParamGroup>& group, zeno::ParamsUpdateInfo& editUpdateInfo)
-{
-    for (auto& groupitem : m_items) {
-        zeno::ParamGroup groupinfo;
-        groupinfo.name = groupitem.name.toStdString();
-        std::vector<zeno::ParamPrimitive> params;
-        groupitem.paramM->exportCustomuiAndEdittedUpdateInfo(params, editUpdateInfo);
-        groupinfo.params = params;
-        group.push_back(groupinfo);
-    }
-}
-
 ////////////////////////////////////////////////////////
 ParamPlainModel::ParamPlainModel(zeno::ParamGroup group, ParamGroupModel* pModel)
     : QAbstractListModel(pModel)
     , m_groupModel(pModel)
     , m_paramsModel(nullptr)
-    , m_bIscloned(m_groupModel->tabModel()->uimodel()->isClonedModel())
 {
     m_paramsModel = m_groupModel->tabModel()->uimodel()->coreModel();
-    if (m_bIscloned) {
-        for (const zeno::ParamPrimitive& param : group.params) {
-            int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), true);
-            auto idx = m_paramsModel->index(r);
-            appendClonedItem(m_clonedItems, m_paramsModel, idx);
-        }
-    }
-    else {
-        for (const zeno::ParamPrimitive& param : group.params) {
-            int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), true);
-            QPersistentModelIndex idx = m_paramsModel->index(r);
-            m_items.push_back(idx);
-        }
+    for (const zeno::ParamPrimitive& param : group.params) {
+        int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), true);
+        QPersistentModelIndex idx = m_paramsModel->index(r);
+        m_items.push_back(idx);
     }
 }
 
 QString ParamPlainModel::getMaxLengthName() const
 {
     QString maxName;
-    if (m_bIscloned) {
-        for (auto& item : m_clonedItems) {
-            const QString& name = item.name;
-            if (name.length() > maxName.length()) {
-                maxName = name;
-            }
-        }
-    }
-    else {
-        for (auto& idx : m_items) {
-             const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
-             if (name.length() > maxName.length()) {
-                 maxName = name;
-             }
-        }
-    }
+	for (auto& idx : m_items) {
+		const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+		if (name.length() > maxName.length()) {
+			maxName = name;
+		}
+	}
     return maxName;
 }
 
 int ParamPlainModel::rowCount(const QModelIndex& parent) const {
-    if (m_bIscloned) {
-        return m_clonedItems.size();
-    }
-    else {
-        return m_items.size();
-    }
+    return m_items.size();
 }
 
 QVariant ParamPlainModel::data(const QModelIndex& index, int role) const {
-    if (m_bIscloned) {
-        return cloneItemGetData(m_clonedItems, index, role);
+    if (!index.isValid()) {
+        return QVariant();
     }
-    else {
-        if (!index.isValid()) {
-            return QVariant();
-        }
-        if (role == Qt::DecorationRole) {
-            auto currtype = m_items[index.row()].data(QtRole::ROLE_PARAM_TYPE).toLongLong();
-            for (auto& item: customui_controlList) {
-                if (item.type == currtype) {
-                    return item.icon;
-                }
+    if (role == Qt::DecorationRole) {
+        auto currtype = m_items[index.row()].data(QtRole::ROLE_PARAM_TYPE).toLongLong();
+        for (auto& item: customui_controlList) {
+            if (item.type == currtype) {
+                return item.icon;
             }
         }
-        return m_items[index.row()].data(role);
     }
+    return m_items[index.row()].data(role);
 }
 
 bool ParamPlainModel::setData(const QModelIndex& index, const QVariant& value, int role) {
-    if (m_bIscloned) {
-        return cloneItemSetdata(m_clonedItems, index, value, role);
-    } else {
-        return m_paramsModel->setData(m_items[index.row()], value, role);
-    }
+    return m_paramsModel->setData(m_items[index.row()], value, role);
 }
 
 QHash<int, QByteArray> ParamPlainModel::roleNames() const {
@@ -724,114 +512,61 @@ QHash<int, QByteArray> ParamPlainModel::roleNames() const {
 }
 
 
+QString ParamPlainModel::parentName()
+{
+    if (!m_groupModel) {
+        return "";
+    }
+    for (int i = 0; i < m_groupModel->rowCount(); i++) {
+        ParamPlainModel* plainM = m_groupModel->data(m_groupModel->index(i), QmlCUIRole::PrimModel).value<ParamPlainModel*>();
+        if (this == plainM) {
+            return m_groupModel->data(m_groupModel->index(i), QtRole::ROLE_PARAM_NAME).toString();
+        }
+    }
+    return "";
+}
+
+QPersistentModelIndex ParamPlainModel::getParamsModelIndex(int row)
+{
+    if (row >= m_items.size()) {
+        return QPersistentModelIndex();
+    }
+    return m_items[row];
+}
+
 bool ParamPlainModel::insertRow(int row, QString name, int ctrlItemRow)
 {
-    if (m_bIscloned) {
-        if (row < 0 || row > m_clonedItems.size()) {
-            return false;
-        }
-        beginInsertRows(QModelIndex(), row, row);
-        ParamItem item;
-        item.bInput = true;
-        item.control = customui_controlList[ctrlItemRow].ctrl;
-        if (item.control == zeno::NullControl)
-            item.control = zeno::getDefaultControl(customui_controlList[ctrlItemRow].type);
-        //item.optCtrlprops = spParam.ctrlProps;
-        item.name = name;
-        item.type = customui_controlList[ctrlItemRow].type;
-        item.value = zeno::initAnyDeflValue(item.type);
-        item.connectProp = zeno::Socket_Primitve;
-        item.bSocketVisible = true;
-        item.bVisible = true;
-        item.bEnable = true;
-        item.group = zeno::Role_InputPrimitive;
-        m_clonedItems.insert(row, std::move(item));
-        endInsertRows();
-        return true;
-    }
     return false;
 }
 
 bool ParamPlainModel::removeRow(int row)
 {
-    if (m_bIscloned) {
-        if (row < 0 || row >= m_clonedItems.size()) {
-            return false;
-        }
-        beginRemoveRows(QModelIndex(), row, row);
-        m_clonedItems.erase(m_clonedItems.begin() + row);
-        endRemoveRows();
-        return true;
-    }
     return false;
 }
-
-void ParamPlainModel::exportCustomuiAndEdittedUpdateInfo(std::vector<zeno::ParamPrimitive>& params, zeno::ParamsUpdateInfo& editUpdateInfo)
-{
-    if (m_bIscloned) {
-        for (auto& paramitem : m_clonedItems) {
-            zeno::ParamPrimitive param;
-            param.name = paramitem.name.toStdString();
-            param.defl = paramitem.value;
-            param.control = paramitem.control;
-            param.type = paramitem.type;
-            //lineEdit组件的值类型设为gParamType_PrimVariant（和ParamsModel::setData类型为QtRole::ROLE_PARAM_QML_VALUE的数据时的判断保持一致）
-            //param.type = paramitem.control == zeno::Lineedit ? gParamType_PrimVariant : paramitem.type;
-            param.socketType = paramitem.connectProp;
-            param.ctrlProps = paramitem.optCtrlprops;
-            params.push_back(param);
-
-            int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), true);
-            editUpdateInfo.push_back({ param, r == -1 ? "" : param.name });
-        }
-    }
-}
-
 
 ///////////////////////////////////////////////////////////////
 PrimParamOutputModel::PrimParamOutputModel(zeno::PrimitiveParams params, CustomUIModel* pModel)
     : QAbstractListModel(pModel)
     , m_paramsModel(nullptr)
-    , m_bIscloned(pModel->isClonedModel())
 {
     m_paramsModel = pModel->coreModel();
     for (const zeno::ParamPrimitive& param : params) {
         int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), false);
         QPersistentModelIndex idx = m_paramsModel->index(r);
-        if (m_bIscloned) {
-            appendClonedItem(m_clonedItems, m_paramsModel, m_paramsModel->index(r));
-        }
-        else {
-            m_items.push_back(idx);
-        }
+        m_items.push_back(idx);
     }
 }
 
 int PrimParamOutputModel::rowCount(const QModelIndex& parent) const {
-    if (m_bIscloned) {
-        return m_clonedItems.size();
-    }
-    else {
-        return m_items.size();
-    }
+    return m_items.size();
 }
 
 QVariant PrimParamOutputModel::data(const QModelIndex& index, int role) const {
-    if (m_bIscloned) {
-        return cloneItemGetData(m_clonedItems, index, role);
-    }
-    else {
-        return m_items[index.row()].data(role);
-    }
+    return m_items[index.row()].data(role);
 }
 
 bool PrimParamOutputModel::setData(const QModelIndex& index, const QVariant& value, int role) {
-    if (m_bIscloned) {
-        return cloneItemSetdata(m_clonedItems, index, value, role);
-    }
-    else {
-        return m_paramsModel->setData(m_items[index.row()], value, role);
-    }
+    return m_paramsModel->setData(m_items[index.row()], value, role);
 }
 
 QHash<int, QByteArray> PrimParamOutputModel::roleNames() const {
@@ -874,23 +609,21 @@ QStandardItemModel* PrimParamOutputModel::toStandardModel() const {
     return pModel;
 }
 
+QPersistentModelIndex PrimParamOutputModel::getParamsModelIndex(int row)
+{
+	if (row >= m_items.size()) {
+		return QPersistentModelIndex();
+	}
+	return m_items[row];
+}
+
 QString PrimParamOutputModel::getMaxLengthName() const
 {
     QString maxName;
-    if (m_bIscloned) {
-        for (auto& item : m_clonedItems) {
-            const QString& name = item.name;
-            if (name.length() > maxName.length()) {
-                maxName = name;
-            }
-        }
-    }
-    else {
-        for (auto& idx : m_items) {
-            const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
-            if (name.length() > maxName.length()) {
-                maxName = name;
-            }
+    for (auto& idx : m_items) {
+        const QString& name = idx.data(QtRole::ROLE_PARAM_NAME).toString();
+        if (name.length() > maxName.length()) {
+            maxName = name;
         }
     }
     return maxName;
@@ -898,40 +631,12 @@ QString PrimParamOutputModel::getMaxLengthName() const
 
 Q_INVOKABLE bool PrimParamOutputModel::insertRow(int row, QString name)
 {
-    if (m_bIscloned) {
-        if (row < 0 || row > m_clonedItems.size()) {
-            return false;
-        }
-
-        beginInsertRows(QModelIndex(), row, row);
-        ParamItem item;
-        item.bInput = false;
-        item.control = zeno::NullControl;
-        //item.optCtrlprops = spParam.ctrlProps;
-        item.name = name;
-        item.value = zeno::initAnyDeflValue(item.type);
-        item.connectProp = zeno::Socket_Primitve;
-        item.bSocketVisible = true;
-        item.bVisible = true;
-        item.bEnable = true;
-        item.group = zeno::Role_OutputPrimitive;
-        m_clonedItems.insert(row, item);
-        endInsertRows();
-        return true;
-    }
+    return false;
 }
 
 Q_INVOKABLE bool PrimParamOutputModel::removeRow(int row)
 {
-    if (m_bIscloned) {
-         if (row < 0 || row >= m_clonedItems.size()) {
-            return false;
-        }
-        beginRemoveRows(QModelIndex(), row, row);
-        m_clonedItems.erase(m_clonedItems.begin() + row);
-        endRemoveRows();
-        return true;
-    }
+    return false;
 }
 
 void PrimParamOutputModel::reset()
@@ -947,73 +652,32 @@ void PrimParamOutputModel::reset()
     endResetModel();
 }
 
-void PrimParamOutputModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo)
-{
-    if (m_bIscloned) {
-        for (auto& paramitem : m_clonedItems) {
-            zeno::ParamPrimitive param;
-            param.bInput = false;
-            param.control = paramitem.control;
-            param.type = paramitem.type;
-            param.defl = paramitem.value;
-            param.name = paramitem.name.toStdString();
-            param.socketType = paramitem.connectProp;
-            param.ctrlProps = paramitem.optCtrlprops;
-            customui.outputPrims.push_back(param);
-
-            int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), false);
-            editUpdateInfo.push_back({ param, r == -1 ? "" : param.name });
-        }
-    }
-}
-
 objParamInputModel::objParamInputModel(zeno::ObjectParams params, CustomUIModel* pModel)
     : QAbstractListModel(pModel)
     , m_paramsModel(nullptr)
-    , m_bIscloned(pModel->isClonedModel())
 {
     m_paramsModel = pModel->coreModel();
     for (const zeno::ParamObject& param : params) {
         int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), true);
         QPersistentModelIndex idx = m_paramsModel->index(r);
-        if (m_bIscloned) {
-            appendClonedItem(m_clonedItems, m_paramsModel, m_paramsModel->index(r));
-        }
-        else {
-            m_items.push_back(idx);
-        }
+        m_items.push_back(idx);
     }
 }
 
 
 int objParamInputModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
-    if (m_bIscloned) {
-        return m_clonedItems.size();
-    }
-    else {
-        return m_items.size();
-    }
+    return m_items.size();
 }
 
 QVariant objParamInputModel::data(const QModelIndex& index, int role /*= Qt::DisplayRole*/) const
 {
-    if (m_bIscloned) {
-        return cloneItemGetData(m_clonedItems, index, role);
-    }
-    else {
-        return m_items[index.row()].data(role);
-    }
+    return m_items[index.row()].data(role);
 }
 
 bool objParamInputModel::setData(const QModelIndex& index, const QVariant& value, int role /*= Qt::EditRole*/)
 {
-    if (m_bIscloned) {
-        return cloneItemSetdata(m_clonedItems, index, value, role);
-    }
-    else {
-        return m_paramsModel->setData(m_items[index.row()], value, role);
-    }
+    return m_paramsModel->setData(m_items[index.row()], value, role);
 }
 
 QHash<int, QByteArray> objParamInputModel::roleNames() const
@@ -1035,40 +699,12 @@ QHash<int, QByteArray> objParamInputModel::roleNames() const
 
 Q_INVOKABLE bool objParamInputModel::insertRow(int row, QString name)
 {
-    if (m_bIscloned) {
-        if (row < 0 || row > m_clonedItems.size()) {
-            return false;
-        }
-
-        beginInsertRows(QModelIndex(), row, row);
-        ParamItem item;
-        item.bInput = true;
-        item.control = zeno::NullControl;
-        item.type = gParamType_IObject;     //主动添加的就给IObject（默认就是geo)，后续再支持特定类型的添加
-        item.name = name;
-        item.value = zeno::initAnyDeflValue(item.type);
-        item.connectProp = zeno::Socket_Output;
-        item.bSocketVisible = true;
-        item.bVisible = true;
-        item.bEnable = true;
-        item.group = zeno::Role_InputObject;
-        m_clonedItems.insert(row, std::move(item));
-        endInsertRows();
-        return true;
-    }
+    return false;
 }
 
 Q_INVOKABLE bool objParamInputModel::removeRow(int row)
 {
-    if (m_bIscloned) {
-        if (row < 0 || row >= m_clonedItems.size()) {
-            return false;
-        }
-        beginRemoveRows(QModelIndex(), row, row);
-        m_clonedItems.erase(m_clonedItems.begin() + row);
-        endRemoveRows();
-        return true;
-    }
+    return false;
 }
 
 void objParamInputModel::reset()
@@ -1108,69 +744,31 @@ QStandardItemModel* objParamInputModel::toStandardModel() const {
     return pModel;
 }
 
-void objParamInputModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo)
-{
-    if (m_bIscloned) {
-        for (auto& paramitem : m_clonedItems) {
-            zeno::ParamObject param;
-            param.bInput = true;
-            param.type = paramitem.type;
-            param.name = paramitem.name.toStdString();
-            param.socketType = paramitem.connectProp;
-            customui.inputObjs.push_back(param);
-
-            int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), true);
-            editUpdateInfo.push_back({ param, r == -1 ? "" : param.name });
-        }
-    }
-}
-
 objParamOutputModel::objParamOutputModel(zeno::ObjectParams params, CustomUIModel* pModel)
     : QAbstractListModel(pModel)
     , m_paramsModel(nullptr)
-    , m_bIscloned(pModel->isClonedModel())
 {
     m_paramsModel = pModel->coreModel();
     for (const zeno::ParamObject& param : params) {
         int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), false);
         QPersistentModelIndex idx = m_paramsModel->index(r);
-        if (m_bIscloned) {
-            appendClonedItem(m_clonedItems, m_paramsModel, m_paramsModel->index(r));
-        }
-        else {
-            m_items.push_back(idx);
-        }
+        m_items.push_back(idx);
     }
 }
 
 int objParamOutputModel::rowCount(const QModelIndex& parent /*= QModelIndex()*/) const
 {
-    if (m_bIscloned) {
-        return m_clonedItems.size();
-    }
-    else {
-        return m_items.size();
-    }
+    return m_items.size();
 }
 
 QVariant objParamOutputModel::data(const QModelIndex& index, int role /*= Qt::DisplayRole*/) const
 {
-    if (m_bIscloned) {
-        return cloneItemGetData(m_clonedItems, index, role);
-    }
-    else {
-        return m_items[index.row()].data(role);
-    }
+    return m_items[index.row()].data(role);
 }
 
 bool objParamOutputModel::setData(const QModelIndex& index, const QVariant& value, int role /*= Qt::EditRole*/)
 {
-    if (m_bIscloned) {
-        return cloneItemSetdata(m_clonedItems, index, value, role);
-    }
-    else {
-        return m_paramsModel->setData(m_items[index.row()], value, role);
-    }
+    return m_paramsModel->setData(m_items[index.row()], value, role);
 }
 
 QHash<int, QByteArray> objParamOutputModel::roleNames() const
@@ -1190,42 +788,13 @@ QHash<int, QByteArray> objParamOutputModel::roleNames() const
 
 Q_INVOKABLE bool objParamOutputModel::insertRow(int row, QString name)
 {
-    if (m_bIscloned) {
-        if (row < 0 || row > m_clonedItems.size()) {
-            return false;
-        }
-
-        beginInsertRows(QModelIndex(), row, row);
-        ParamItem item;
-        item.bInput = false;
-        item.control = zeno::NullControl;
-        //item.optCtrlprops = spParam.ctrlProps;
-        item.type = gParamType_IObject;
-        item.name = name;
-        item.value = zeno::initAnyDeflValue(item.type);
-        item.connectProp = zeno::Socket_Output;
-        item.bSocketVisible = true;
-        item.bVisible = true;
-        item.bEnable = true;
-        item.group = zeno::Role_InputObject;
-        m_clonedItems.insert(row, std::move(item));
-        endInsertRows();
-        return true;
-    }
+    return false;
 }
 
 
 Q_INVOKABLE bool objParamOutputModel::removeRow(int row)
 {
-    if (m_bIscloned) {
-        if (row < 0 || row >= m_clonedItems.size()) {
-            return false;
-        }
-        beginRemoveRows(QModelIndex(), row, row);
-        m_clonedItems.erase(m_clonedItems.begin() + row);
-        endRemoveRows();
-        return true;
-    }
+    return false;
 }
 
 void objParamOutputModel::reset()
@@ -1239,23 +808,6 @@ void objParamOutputModel::reset()
         m_items.push_back(idx);
     }
     endResetModel();
-}
-
-void objParamOutputModel::exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo)
-{
-    if (m_bIscloned) {
-        for (auto& paramitem : m_clonedItems) {
-            zeno::ParamObject param;
-            param.bInput = false;
-            param.type = paramitem.type;
-            param.name = paramitem.name.toStdString();
-            param.socketType = paramitem.connectProp;
-            customui.outputObjs.push_back(param);
-
-            int r = m_paramsModel->indexFromName(QString::fromStdString(param.name), false);
-            editUpdateInfo.push_back({ param, r == -1 ? "" : param.name });
-        }
-    }
 }
 
 QStandardItemModel* objParamOutputModel::toStandardModel() const {

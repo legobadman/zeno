@@ -1,4 +1,4 @@
-#include "zeditparamlayoutdlg.h"
+﻿#include "zeditparamlayoutdlg.h"
 #include "ui_zeditparamlayoutdlg.h"
 #include "zassert.h"
 #include "util/uihelper.h"
@@ -1386,7 +1386,7 @@ void ZEditParamLayoutDlg::onApply()
 
     //m_model->batchModifyParams(params);
     //for custom UI:
-    QStandardItem* pRoot = m_paramsLayoutM_inputs->invisibleRootItem();
+    QStandardItem* pRoot = m_paramsLayoutM_inputs->item(0);
     for (int i = 0; i < pRoot->rowCount(); i++)
     {
         auto tabItem = pRoot->child(i);

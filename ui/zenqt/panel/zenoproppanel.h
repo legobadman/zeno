@@ -1,4 +1,4 @@
-#ifndef __NODE_PROPERTIES_PANEL_H__
+﻿#ifndef __NODE_PROPERTIES_PANEL_H__
 #define __NODE_PROPERTIES_PANEL_H__
 
 #include <QtWidgets>
@@ -13,6 +13,10 @@ class ZExpandableSection;
 class ZScrollArea;
 class ZenoDictListLinksTable;
 class zenoDopNetworkPanel;
+
+class ParamPlainModel;
+class ParamGroupModel;
+class PrimParamOutputModel;
 
 class ZenoPropPanel : public QWidget
 {
@@ -43,10 +47,7 @@ public:
 
 public slots:
     //subnet/普通节点
-    void onCustomParamDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
-    void onViewParamInserted(const QModelIndex& parent, int first, int last);
-    void onViewParamAboutToBeRemoved(const QModelIndex& parent, int first, int last);
-    void onViewParamsMoved(const QModelIndex& parent, int start, int end, const QModelIndex& destination, int destRow);
+    void onParamModelDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     //MakeDict/MakeList
     void onLinkAdded(const zeno::EdgeInfo& link);
     void onLinkRemoved(const zeno::EdgeInfo& link);
@@ -71,19 +72,21 @@ private:
     //MakeDict/MakeList节点
     QWidget* resetMakeDictMakeListLayout();
     void clearMakeDictMakeListLayout();
+#if 0
     //DopNetwork节点
     QWidget* resetDopNetworkLayout();
     void clearDopNetworkLayout();
+#endif
     //subnet节点
     QWidget* resetSubnetLayout();
-    bool syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout* pGroupLayout, QStandardItem* paramItem, int row);
-    bool syncAddGroup(QVBoxLayout* pTabLayout, QStandardItem* pGroupItem, int row);
-    bool syncAddTab(QTabWidget* pTabWidget, QStandardItem* pTabItem, int row);
+    bool syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout* pGroupLayout, ParamPlainModel* paramM, int row);
+    bool syncAddGroup(QVBoxLayout* pTabLayout, ParamPlainModel* paramM, QString groupName, int row);
+    bool syncAddTab(QTabWidget* pTabWidget, ParamGroupModel* groupM, QString tabName, int row);
     ZExpandableSection* findGroup(const QString& tabName, const QString& groupName);
     //普通节点
     QWidget* resetNormalNodeLayout();
-    void normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayout* pLayout, QStandardItem* pItem, int row);
-    void addOutputWidget(ZScrollArea* scrollArea, QGridLayout* pLayout, QStandardItem* pOutputItem, int row);
+    void normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayout* pLayout, ParamPlainModel* paramM, int row);
+    void addOutputWidget(ZScrollArea* scrollArea, QGridLayout* pLayout, PrimParamOutputModel* primOutputM, int row);
     //keyframe
     void setKeyFrame(const _PANEL_CONTROL &ctrl, const QStringList  &keys);
     void delKeyFrame(const _PANEL_CONTROL &ctrl, const QStringList &keys);

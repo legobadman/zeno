@@ -1,4 +1,4 @@
-#ifndef __PARAMS_MODEL_H__
+﻿#ifndef __PARAMS_MODEL_H__
 #define __PARAMS_MODEL_H__
 
 #include <QObject>
@@ -70,13 +70,10 @@ public:
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
     Q_INVOKABLE QStandardItemModel* customParamModel();
     Q_INVOKABLE CustomUIModel* customUIModel();
-    Q_INVOKABLE CustomUIModel* customUIModelCloned();
     Q_INVOKABLE ParamFilterModel* inputObjects();
     Q_INVOKABLE ParamFilterModel* inputPrims();
     Q_INVOKABLE ParamFilterModel* outputPrims();
     Q_INVOKABLE ParamFilterModel* outputObjects();
-    Q_INVOKABLE void applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel);
-    Q_INVOKABLE void cancleEditCustomUIModelCloned();
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
@@ -139,7 +136,6 @@ private:
     QVector<ParamItem> m_items;
 
     CustomUIModel* m_customUIM;
-    CustomUIModel* m_customUIMCloned;
 
     ParamFilterModel* m_inObjProxy;
     ParamFilterModel* m_inPrimProxy;

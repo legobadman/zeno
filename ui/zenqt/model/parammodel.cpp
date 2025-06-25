@@ -1,4 +1,4 @@
-#include "parammodel.h"
+﻿#include "parammodel.h"
 #include "zassert.h"
 #include "util/uihelper.h"
 #include <zeno/core/data.h>
@@ -125,7 +125,6 @@ public:
 ParamsModel::ParamsModel(const zeno::CustomUI& customui)
     : QAbstractListModel(nullptr)
     , m_customUIM(nullptr)
-    , m_customUIMCloned(nullptr)
     , m_inObjProxy(nullptr)
     , m_inPrimProxy(nullptr)
     , m_outPrimProxy(nullptr)
@@ -143,7 +142,6 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
     : QAbstractListModel(parent)
     , m_wpNode(spNode)
     , m_customUIM(nullptr)
-    , m_customUIMCloned(nullptr)
     , m_inObjProxy(nullptr)
     , m_inPrimProxy(nullptr)
     , m_outPrimProxy(nullptr)
@@ -336,6 +334,7 @@ zeno::CustomUI ParamsModel::customUI() const {
 
 void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
 {
+#if 0
     QStandardItemModel* legacy_customParamsM = constructProxyModel();
     UiHelper::newCustomModel(legacy_customParamsM, customui);
 
@@ -389,6 +388,8 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
         m_customUIM = new CustomUIModel(this, this);
         m_customUIM->initCustomuiConnections(legacy_customParamsM);
     }
+#endif
+	m_customUIM = new CustomUIModel(this, this);
 }
 
 QStandardItemModel* ParamsModel::constructProxyModel()
@@ -1013,14 +1014,6 @@ CustomUIModel* ParamsModel::customUIModel()
     return m_customUIM;
 }
 
-CustomUIModel* ParamsModel::customUIModelCloned()
-{
-    if (!m_customUIM)
-        return nullptr;
-    m_customUIMCloned = new CustomUIModel(this, this, true);
-    return m_customUIMCloned;
-}
-
 ParamFilterModel* ParamsModel::inputObjects() {
     return m_inObjProxy;
 }
@@ -1035,26 +1028,6 @@ ParamFilterModel* ParamsModel::outputPrims() {
 
 ParamFilterModel* ParamsModel::outputObjects() {
     return m_outObjProxy;
-}
-
-void ParamsModel::applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel)
-{
-    zeno::CustomUI customui;
-    zeno::ParamsUpdateInfo editUpdateInfo;
-    edittedCustomuiModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
-    resetCustomUi(customui);//重设customui
-    batchModifyParams(editUpdateInfo);//更新该节点参数，更新视图
-
-    m_customUIM->reset();//重置直接引用ParamsModel的index的模型
-
-    delete m_customUIMCloned;
-    m_customUIMCloned = nullptr;
-}
-
-void ParamsModel::cancleEditCustomUIModelCloned()
-{
-    delete m_customUIMCloned;
-    m_customUIMCloned = nullptr;
 }
 
 Qt::ItemFlags ParamsModel::flags(const QModelIndex& index) const

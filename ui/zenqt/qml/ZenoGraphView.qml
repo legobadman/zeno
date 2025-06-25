@@ -384,9 +384,12 @@ Qan.GraphView {
             graphsmanager.onNodeSelected(path_list, node.index)
         }
         onNodeRightClicked: function(node) {
-            var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
-            nodeMenu.node = node
-            nodeMenu.popup(mousepos)
+            var nodeType = graphView.graphModel.data(node.index, Model.ROLE_NODETYPE)
+            if (nodeType == NodeType.Node_AssetInstance || nodeType == NodeType.Node_SubgraphNode) {
+                var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+                nodeMenu.node = node
+                nodeMenu.popup(mousepos)
+            }
         }
         onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }
         onNodeMoved: function(node) {
