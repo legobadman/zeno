@@ -198,7 +198,8 @@ struct PrimSample2D : zeno::INode {
         prim->create_point_attr(stdString2zs(dstChannel), zeno::vec3f());
         std::vector<zeno::vec3f> clrs(prim->npoints());
 
-        auto data = image->points_pos().data();
+        const auto& pts = image->points_pos();
+        auto data = pts.data();
         std::function<zeno::vec3f(vec3f, const vec3f*, int, int, vec3f)> queryColor;
         if (filter == "nearest") {
             if (wrap == "REPEAT") {
@@ -315,6 +316,7 @@ struct PrimSample2D : zeno::INode {
             zeno::log_error("unknown uvSource");
             throw std::runtime_error("unknown uvSource");
         }
+        prim->create_point_attr(stdString2zs(dstChannel), clrs);
 
         ZImpl(set_output("outPrim", std::move(prim)));
     }
@@ -375,6 +377,7 @@ std::shared_ptr<GeometryObject_Adapter> readImageFile(std::string const &path) {
     } else {
         throw zeno::Exception("too much number of channels");
     }
+    img->set_point_attr("pos", imagevrerts);
     img->userData()->set_int("isImage", 1);
     img->userData()->set_int("w", w);
     img->userData()->set_int("h", h);
@@ -455,8 +458,8 @@ struct ReadImageFile : INode {//todo: select custom color space
                 for (auto i = 0; i < imageverts.size(); i++) {
                     imageverts[i] = pow(imageverts[i], 1.0/2.2f);
                 }
+                image->set_point_attr("pos", imageverts);
             }
-            image->set_point_attr("pos", imageverts);
             ZImpl(set_output("image", image));
         }
     }
