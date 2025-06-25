@@ -112,7 +112,7 @@ void ParamTreeItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *mo
     QString oldName = index.data().toString();
     QString newName = editor->property(editor->metaObject()->userProperty().name()).toString();
     if (oldName != newName) {
-        if (m_isGlobalUniqueFunc(newName)) {
+        if (m_isGlobalUniqueFunc(true, newName)) {
             QStyledItemDelegate::setModelData(editor, model, index);
             model->setData(index, newName, QtRole::ROLE_PARAM_NAME);
         }
@@ -127,9 +127,10 @@ void ParamTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem 
     QStyledItemDelegate::paint(painter, option, index);
 }
 
-outputListItemDelegate::outputListItemDelegate(QStandardItemModel* model, QObject* parent)
+outputListItemDelegate::outputListItemDelegate(QStandardItemModel* model, zeno::NodeDataGroup group, QObject* parent)
     : QStyledItemDelegate(parent)
     , m_model(model)
+    , m_group(group)
 {
 }
 
@@ -154,7 +155,7 @@ void outputListItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
     QString oldName = index.data().toString();
     QString newName = editor->property(editor->metaObject()->userProperty().name()).toString();
     if (oldName != newName) {
-        if (m_isGlobalUniqueFunc(newName)) {
+        if (m_isGlobalUniqueFunc(m_group == zeno::Role_InputObject || m_group == zeno::Role_InputPrimitive, newName)) {
             QStyledItemDelegate::setModelData(editor, model, index);
             model->setData(index, newName, QtRole::ROLE_PARAM_NAME);
         }
@@ -211,21 +212,33 @@ ZEditParamLayoutDlg::ZEditParamLayoutDlg(CustomUIModel* pModel, QWidget* parent)
     m_ui->objInputsView->setModel(m_paramsLayoutM_objInputs);
     m_ui->objOutputsView->setModel(m_paramsLayoutM_objOutputs);
     ParamTreeItemDelegate* treeDelegate = new ParamTreeItemDelegate(m_paramsLayoutM_inputs, m_ui->paramsView);
-    outputListItemDelegate* listDelegate = new outputListItemDelegate(m_paramsLayoutM_outputs, m_ui->outputsView);
-    outputListItemDelegate* listDelegate_objInput = new outputListItemDelegate(m_paramsLayoutM_objInputs, m_ui->objInputsView);
-    outputListItemDelegate* listDelegate_objOutput = new outputListItemDelegate(m_paramsLayoutM_objOutputs, m_ui->objOutputsView);
+    outputListItemDelegate* listDelegate = new outputListItemDelegate(m_paramsLayoutM_outputs, zeno::Role_OutputPrimitive, m_ui->outputsView);
+    outputListItemDelegate* listDelegate_objInput = new outputListItemDelegate(m_paramsLayoutM_objInputs, zeno::Role_InputObject, m_ui->objInputsView);
+    outputListItemDelegate* listDelegate_objOutput = new outputListItemDelegate(m_paramsLayoutM_objOutputs, zeno::Role_OutputObject, m_ui->objOutputsView);
     m_ui->paramsView->setItemDelegate(treeDelegate);
     m_ui->outputsView->setItemDelegate(listDelegate);
     m_ui->objInputsView->setItemDelegate(listDelegate_objInput);
     m_ui->objOutputsView->setItemDelegate(listDelegate_objOutput);
 
-    m_isGlobalUniqueFunc = [&](QString name) -> bool {
+    m_isGlobalUniqueFunc = [&](bool bInput, QString name) -> bool {
         QStandardItem* pParamsViewRoot = m_paramsLayoutM_inputs->item(0);
         auto paramsResLst = m_paramsLayoutM_inputs->match(pParamsViewRoot->index(), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
         auto outputResLst = m_paramsLayoutM_outputs->match(m_paramsLayoutM_outputs->index(0, 0), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
         auto objectInResLst = m_paramsLayoutM_objInputs->match(m_paramsLayoutM_objInputs->index(0, 0), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
         auto objOutResLst = m_paramsLayoutM_objOutputs->match(m_paramsLayoutM_objOutputs->index(0, 0), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
         return paramsResLst.empty() && outputResLst.empty() && objectInResLst.empty() && objOutResLst.empty();
+        /* 由于SubInput和SubOutput是单独节点，名称作为参数名，不能在一张图里重复，所以现阶段只能限制输入输出不能重名
+        if (bInput) {
+            auto paramsResLst = m_paramsLayoutM_inputs->match(pParamsViewRoot->index(), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
+            auto objectInResLst = m_paramsLayoutM_objInputs->match(m_paramsLayoutM_objInputs->index(0, 0), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
+            return paramsResLst.empty() && objectInResLst.empty();
+        }
+        else {
+            auto outputResLst = m_paramsLayoutM_outputs->match(m_paramsLayoutM_outputs->index(0, 0), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
+            auto objOutResLst = m_paramsLayoutM_objOutputs->match(m_paramsLayoutM_objOutputs->index(0, 0), QtRole::ROLE_PARAM_NAME, name, 1, Qt::MatchRecursive);
+            return outputResLst.empty() && objOutResLst.empty();
+        }
+        */
     };
     treeDelegate->m_isGlobalUniqueFunc = m_isGlobalUniqueFunc;
     listDelegate->m_isGlobalUniqueFunc = m_isGlobalUniqueFunc;
@@ -695,50 +708,53 @@ void ZEditParamLayoutDlg::onOutputsListCurrentChanged(const zeno::NodeDataGroup 
     if (!pCurrentItem)
         return;
 
-    const QString& name = pCurrentItem->data(QtRole::ROLE_PARAM_NAME).toString();
-    m_ui->editName->setText(name);
-    bool bEditable = true;// m_proxyModel->isEditable(current);
-    m_ui->editName->setEnabled(bEditable);
-    m_ui->editLabel->setText(pCurrentItem->data(QtRole::ROLE_PARAM_TOOLTIP).toString());
-
-    //delete old control.
-    QLayoutItem* pLayoutItem = m_ui->gridLayout->itemAtPosition(rowValueControl, 1);
-    if (pLayoutItem)
-    {
-        QWidget* pControlWidget = pLayoutItem->widget();
-        delete pControlWidget;
-    }
-
-    zeno::ParamControl ctrl = (zeno::ParamControl)pCurrentItem->data(QtRole::ROLE_PARAM_CONTROL).toInt();
     const zeno::ParamType paramType = (zeno::ParamType)pCurrentItem->data(QtRole::ROLE_PARAM_TYPE).toLongLong();
-    const zeno::SocketType socketType = (zeno::SocketType)pCurrentItem->data(QtRole::ROLE_SOCKET_TYPE).toInt();
+    zeno::ParamControl ctrl = (zeno::ParamControl)pCurrentItem->data(QtRole::ROLE_PARAM_CONTROL).toInt();
 
-    const QString& ctrlName = ctrl != zeno::NullControl ? getControl(ctrl, paramType).name : "";
-    zeno::reflect::Any controlProperties = pCurrentItem->data(QtRole::ROLE_PARAM_CTRL_PROPERTIES).value<zeno::reflect::Any>();
+    if (zeno::Role_OutputPrimitive == group) {
+        const QString& name = pCurrentItem->data(QtRole::ROLE_PARAM_NAME).toString();
+        m_ui->editName->setText(name);
+        bool bEditable = true;// m_proxyModel->isEditable(current);
+        m_ui->editName->setEnabled(bEditable);
+        m_ui->editLabel->setText(pCurrentItem->data(QtRole::ROLE_PARAM_TOOLTIP).toString());
 
-    QVariant deflVal = pCurrentItem->data(QtRole::ROLE_PARAM_VALUE);
-    zeno::reflect::Any anyVal = deflVal.value<zeno::reflect::Any>();
-
-    CallbackCollection cbSets;
-    cbSets.cbEditFinished = [=](zeno::reflect::Any newValue) {
-        proxyModelSetData(pCurrentItem->index(), newValue, QtRole::ROLE_PARAM_VALUE);
-    };
-    if (!deflVal.isValid()) {
-        anyVal = zeno::initAnyDeflValue(paramType);
-        zeno::convertToEditVar(anyVal, paramType);
-    }
-
-    cbSets.cbGetIndexData = [=]() -> QVariant {
-        if (!pCurrentItem->data(QtRole::ROLE_PARAM_VALUE).isValid()) {
-            return UiHelper::initDefaultValue(paramType);
+        //delete old control.
+        QLayoutItem* pLayoutItem = m_ui->gridLayout->itemAtPosition(rowValueControl, 1);
+        if (pLayoutItem)
+        {
+            QWidget* pControlWidget = pLayoutItem->widget();
+            delete pControlWidget;
         }
-        return pCurrentItem->data(QtRole::ROLE_PARAM_VALUE);
-    };
 
-    QWidget* valueControl = zenoui::createWidget(QModelIndex(), anyVal, ctrl, paramType, cbSets, controlProperties);
-    if (valueControl) {
-        valueControl->setEnabled(bEditable);
-        m_ui->gridLayout->addWidget(valueControl, rowValueControl, 1);
+        const zeno::SocketType socketType = (zeno::SocketType)pCurrentItem->data(QtRole::ROLE_SOCKET_TYPE).toInt();
+
+        const QString& ctrlName = ctrl != zeno::NullControl ? getControl(ctrl, paramType).name : "";
+        zeno::reflect::Any controlProperties = pCurrentItem->data(QtRole::ROLE_PARAM_CTRL_PROPERTIES).value<zeno::reflect::Any>();
+
+        QVariant deflVal = pCurrentItem->data(QtRole::ROLE_PARAM_VALUE);
+        zeno::reflect::Any anyVal = deflVal.value<zeno::reflect::Any>();
+
+        CallbackCollection cbSets;
+        cbSets.cbEditFinished = [=](zeno::reflect::Any newValue) {
+            proxyModelSetData(pCurrentItem->index(), newValue, QtRole::ROLE_PARAM_VALUE);
+        };
+        if (!deflVal.isValid()) {
+            anyVal = zeno::initAnyDeflValue(paramType);
+            zeno::convertToEditVar(anyVal, paramType);
+        }
+
+        cbSets.cbGetIndexData = [=]() -> QVariant {
+            if (!pCurrentItem->data(QtRole::ROLE_PARAM_VALUE).isValid()) {
+                return UiHelper::initDefaultValue(paramType);
+            }
+            return pCurrentItem->data(QtRole::ROLE_PARAM_VALUE);
+        };
+
+        QWidget* valueControl = zenoui::createWidget(QModelIndex(), anyVal, ctrl, paramType, cbSets, controlProperties);
+        if (valueControl) {
+            valueControl->setEnabled(bEditable);
+            m_ui->gridLayout->addWidget(valueControl, rowValueControl, 1);
+        }
     }
 
     m_ui->hintLbl->hide();
@@ -1135,20 +1151,25 @@ void ZEditParamLayoutDlg::onNameEditFinished()
 
     QStandardItem* currentItem = nullptr;
     QString oldName;
+    bool bInput = true;
     if (paramsViewCurrIdx.isValid()) {          //修改的参数来自paramsView
+        bInput = true;
         currentItem = m_paramsLayoutM_inputs->itemFromIndex(paramsViewCurrIdx);
     }else if (outputsViewCurrIdx.isValid()) {   //修改的参数来自outputView
+        bInput = false;
         currentItem = m_paramsLayoutM_outputs->itemFromIndex(outputsViewCurrIdx);
     } else if (objInputsViewCurrIdx.isValid()) {   //修改的参数来自objInputsView
+        bInput = true;
         currentItem = m_paramsLayoutM_objInputs->itemFromIndex(objInputsViewCurrIdx);
     } else if (objOutputsViewCurrIdx.isValid()) {   //修改的参数来自objOutputsView
+        bInput = false;
         currentItem = m_paramsLayoutM_objOutputs->itemFromIndex(objOutputsViewCurrIdx);
     }
     if (!currentItem)
         return;
     oldName = currentItem->data(QtRole::ROLE_PARAM_NAME).toString();
     if (oldName != newName) {
-        if (currentItem && m_isGlobalUniqueFunc(newName))
+        if (currentItem && m_isGlobalUniqueFunc(bInput, newName))
         {
             currentItem->setData(newName, QtRole::ROLE_PARAM_NAME);
             currentItem->setText(newName);

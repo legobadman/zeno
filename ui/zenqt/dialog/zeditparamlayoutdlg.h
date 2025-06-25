@@ -37,7 +37,7 @@ public:
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
-    std::function<bool(QString)> m_isGlobalUniqueFunc;
+    std::function<bool(bool, QString)> m_isGlobalUniqueFunc;
 
 private:
     QStandardItemModel* m_model;
@@ -47,7 +47,7 @@ class outputListItemDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
-    explicit outputListItemDelegate(QStandardItemModel* model, QObject* parent = nullptr);
+    explicit outputListItemDelegate(QStandardItemModel* model, zeno::NodeDataGroup group, QObject* parent = nullptr);
     ~outputListItemDelegate();
 
     // editing
@@ -58,10 +58,11 @@ public:
     void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
-    std::function<bool(QString)> m_isGlobalUniqueFunc;
+    std::function<bool(bool, QString)> m_isGlobalUniqueFunc;
 
 private:
     QStandardItemModel* m_model;
+    zeno::NodeDataGroup m_group;
 };
 
 class ZEditParamLayoutDlg : public QDialog
@@ -114,7 +115,7 @@ private:
 
     QStringList getExistingNames(bool bInput, VPARAM_TYPE type) const;
 
-    std::function<bool(QString)> m_isGlobalUniqueFunc;
+    std::function<bool(bool, QString)> m_isGlobalUniqueFunc;
 
     QStandardItemModel * m_paramsLayoutM_inputs;
     QStandardItemModel * m_paramsLayoutM_outputs;
