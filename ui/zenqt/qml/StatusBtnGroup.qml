@@ -31,7 +31,7 @@ Item {
 
         onHoveredChanged: {
             if (bypass_btn.hovered) {
-                statusImgGroup.visible = true;
+                statusImgGroup.visible = false;//true;
             }
         }
 
@@ -52,7 +52,7 @@ Item {
 
         onHoveredChanged: {
             if (view_btn.hovered) {
-                statusImgGroup.visible = true;
+                statusImgGroup.visible = false;//true;
             }
         }
 

@@ -140,7 +140,7 @@ ZENO_API std::vector<Asset> AssetsMgr::getAssets() const {
     return assets;
 }
 
-ZENO_API void AssetsMgr::updateAssets(const std::string name, ParamsUpdateInfo info, const zeno::CustomUI& customui)
+ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdateInfo& info, const zeno::CustomUI& customui)
 {
     if (m_assets.find(name) == m_assets.end()) {
         return;

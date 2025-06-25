@@ -10,10 +10,11 @@
                     "Input Image": {
                         "links": null,
                         "type": "string",
-                        "default-value": "",
+                        "default-value": "C:/AI_test/test_data/Panda.png",
                         "control": {
                             "name": "read path"
                         },
+                        "controlProps": null,
                         "socket-type": "primitive",
                         "visible": false
                     },
@@ -24,6 +25,7 @@
                         "control": {
                             "name": "Float"
                         },
+                        "controlProps": null,
                         "socket-type": "primitive",
                         "visible": false
                     }
@@ -36,8 +38,8 @@
                     }
                 },
                 "uipos": [
-                    151.0,
-                    295.0
+                    184.0,
+                    263.0
                 ],
                 "status": [
                     "View"
@@ -54,10 +56,11 @@
                                 "Input Image": {
                                     "links": null,
                                     "type": "string",
-                                    "default-value": "",
+                                    "default-value": "C:/AI_test/test_data/Panda.png",
                                     "control": {
                                         "name": "read path"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "primitive",
                                     "visible": false
                                 },
@@ -68,6 +71,7 @@
                                     "control": {
                                         "name": "Float"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "primitive",
                                     "visible": false
                                 }
@@ -78,11 +82,11 @@
                 "subnet": {
                     "type": 0,
                     "nodes": {
-                        "HF Image": {
-                            "name": "HF Image",
-                            "class": "SubOutput",
+                        "AttributeWrangle1": {
+                            "name": "AttributeWrangle1",
+                            "class": "AttributeWrangle",
                             "object_inputs": {
-                                "port": {
+                                "Input": {
                                     "links": [
                                         {
                                             "out-node": "PrimSample2D1",
@@ -96,17 +100,429 @@
                                     "socket-type": "clone"
                                 }
                             },
+                            "primitive_inputs": {
+                                "Run Over": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "Points",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "controlProps": {
+                                        "items": [
+                                            "Points",
+                                            "Faces",
+                                            "Geometry"
+                                        ]
+                                    },
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "Zfx Code": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "if (@clr.x < 0.6) {\r\n    @mask = 1;\r\n}else{\r\n    @mask = 0;\r\n}\r\n@clr = vec3(1,1,1);",
+                                    "control": {
+                                        "name": "CodeEditor"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "clone",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "Output": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                21.0,
+                                637.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "CompImport1": {
+                            "name": "CompImport1",
+                            "class": "CompImport",
+                            "object_inputs": {
+                                "prim": {
+                                    "links": [
+                                        {
+                                            "out-node": "HF_Blur_OpenCV_v3_1",
+                                            "out-socket": "高度场地形_out",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "attrName": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "mask",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "Remap": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "RemapRange": {
+                                    "links": null,
+                                    "type": "vec2f",
+                                    "default-value": [
+                                        0.0,
+                                        1.0
+                                    ],
+                                    "control": {
+                                        "name": "Float Vector 2"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "clone",
+                                    "visible": false
+                                },
+                                "AttributesType": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "float",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "controlProps": {
+                                        "items": [
+                                            "float",
+                                            "vec3f"
+                                        ]
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "image": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                29.0,
+                                1190.0
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
+                        "HF Image": {
+                            "name": "HF Image",
+                            "class": "SubOutput",
+                            "object_inputs": {
+                                "port": {
+                                    "links": [
+                                        {
+                                            "out-node": "AttributeWrangle1",
+                                            "out-socket": "Output",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
                             "primitive_inputs": {},
                             "primitive_outputs": {},
                             "object_outputs": {},
                             "uipos": [
-                                -6.0,
-                                650.0
+                                358.0,
+                                1376.0
                             ],
-                            "status": [
-                                "View"
-                            ],
+                            "status": [],
                             "collasped": false
+                        },
+                        "HF_Blur_OpenCV_v3_1": {
+                            "name": "HF_Blur_OpenCV_v3_1",
+                            "class": "HF_Blur_OpenCV_v3",
+                            "object_inputs": {
+                                "高度场地形_in": {
+                                    "links": [
+                                        {
+                                            "out-node": "HF_Blur_OpenCV_v3_2",
+                                            "out-socket": "高度场地形_out",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "显示Mask": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "被平滑的属性": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "mask",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "模糊类型": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "blur",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "controlProps": {
+                                        "items": [
+                                            "blur",
+                                            "erode",
+                                            "dilate"
+                                        ]
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "模糊半径": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": 20.0,
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Mask名字": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Clone": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": true,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "invert U": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "invert V": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "高度场地形_out": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                9.0,
+                                979.0
+                            ],
+                            "status": [],
+                            "collasped": false,
+                            "asset": {
+                                "name": "HF_Blur_OpenCV_v3",
+                                "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Blur_OpenCV_v3.zda",
+                                "version": "1.0"
+                            }
+                        },
+                        "HF_Blur_OpenCV_v3_2": {
+                            "name": "HF_Blur_OpenCV_v3_2",
+                            "class": "HF_Blur_OpenCV_v3",
+                            "object_inputs": {
+                                "高度场地形_in": {
+                                    "links": [
+                                        {
+                                            "out-node": "AttributeWrangle1",
+                                            "out-socket": "Output",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "显示Mask": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "被平滑的属性": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "mask",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "模糊类型": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "blur",
+                                    "control": {
+                                        "name": "Enum"
+                                    },
+                                    "controlProps": {
+                                        "items": [
+                                            "blur",
+                                            "erode",
+                                            "dilate"
+                                        ]
+                                    },
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "模糊半径": {
+                                    "links": null,
+                                    "type": "float",
+                                    "default-value": "ref(\"../模糊半径\")",
+                                    "control": {
+                                        "name": "Float"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Mask名字": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Clone": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": true,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "invert U": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "invert V": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": false,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "高度场地形_out": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                -5.0,
+                                824.0
+                            ],
+                            "status": [],
+                            "collasped": false,
+                            "asset": {
+                                "name": "HF_Blur_OpenCV_v3",
+                                "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Blur_OpenCV_v3.zda",
+                                "version": "1.0"
+                            }
                         },
                         "HF_Creation1": {
                             "name": "HF_Creation1",
@@ -124,6 +540,7 @@
                                     "control": {
                                         "name": "Float Vector 3"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "primitive",
                                     "visible": false
                                 },
@@ -134,6 +551,7 @@
                                     "control": {
                                         "name": "Integer"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "primitive",
                                     "visible": false
                                 },
@@ -144,6 +562,7 @@
                                     "control": {
                                         "name": "Float"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "primitive",
                                     "visible": false
                                 }
@@ -164,6 +583,93 @@
                             "asset": {
                                 "name": "HF_Creation",
                                 "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Creation.zda",
+                                "version": "1.0"
+                            }
+                        },
+                        "HF_Visual_Mask1": {
+                            "name": "HF_Visual_Mask1",
+                            "class": "HF_Visual_Mask",
+                            "object_inputs": {
+                                "HeightField_in": {
+                                    "links": [
+                                        {
+                                            "out-node": "HF_Blur_OpenCV_v3_1",
+                                            "out-socket": "高度场地形_out",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
+                                    "type": "geometry",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {
+                                "Clone HF for Visualize": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": true,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Mask Name": {
+                                    "links": null,
+                                    "type": "string",
+                                    "default-value": "mask",
+                                    "control": {
+                                        "name": "String"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Reset Base Color": {
+                                    "links": null,
+                                    "type": "bool",
+                                    "default-value": true,
+                                    "control": {
+                                        "name": "Boolean"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                },
+                                "Visualize Color": {
+                                    "links": null,
+                                    "type": "vec3f",
+                                    "default-value": [
+                                        1.0,
+                                        0.0,
+                                        0.0
+                                    ],
+                                    "control": {
+                                        "name": "Float Vector 3"
+                                    },
+                                    "controlProps": null,
+                                    "socket-type": "primitive",
+                                    "visible": false
+                                }
+                            },
+                            "primitive_outputs": {},
+                            "object_outputs": {
+                                "HeightField_out": {
+                                    "type": "geometry",
+                                    "socket-type": "output"
+                                }
+                            },
+                            "uipos": [
+                                -179.0,
+                                1163.0
+                            ],
+                            "status": [],
+                            "collasped": false,
+                            "asset": {
+                                "name": "HF_Visual_Mask",
+                                "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Visual_Mask.zda",
                                 "version": "1.0"
                             }
                         },
@@ -193,6 +699,7 @@
                                     "control": {
                                         "name": "Boolean"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -203,6 +710,7 @@
                                     "control": {
                                         "name": "Boolean"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 }
@@ -251,7 +759,15 @@
                             "class": "PrimSample2D",
                             "object_inputs": {
                                 "image": {
-                                    "links": null,
+                                    "links": [
+                                        {
+                                            "out-node": "ImageFlip1",
+                                            "out-socket": "image",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": ""
+                                        }
+                                    ],
                                     "type": "geometry",
                                     "socket-type": "clone"
                                 },
@@ -277,6 +793,7 @@
                                     "control": {
                                         "name": "String"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -286,6 +803,13 @@
                                     "default-value": "vertex",
                                     "control": {
                                         "name": "Enum"
+                                    },
+                                    "controlProps": {
+                                        "items": [
+                                            "vertex",
+                                            "tris",
+                                            "loopsuv"
+                                        ]
                                     },
                                     "socket-type": "primitive",
                                     "visible": false
@@ -297,6 +821,7 @@
                                     "control": {
                                         "name": "String"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -307,6 +832,7 @@
                                     "control": {
                                         "name": "Float"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -317,6 +843,7 @@
                                     "control": {
                                         "name": "Float"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -327,6 +854,13 @@
                                     "control": {
                                         "name": "Enum"
                                     },
+                                    "controlProps": {
+                                        "items": [
+                                            "REPEAT",
+                                            "CLAMP_TO_EDGE",
+                                            "CLAMP_TO_BORDER"
+                                        ]
+                                    },
                                     "socket-type": "primitive",
                                     "visible": false
                                 },
@@ -336,6 +870,12 @@
                                     "default-value": "nearest",
                                     "control": {
                                         "name": "Enum"
+                                    },
+                                    "controlProps": {
+                                        "items": [
+                                            "nearest",
+                                            "linear"
+                                        ]
                                     },
                                     "socket-type": "primitive",
                                     "visible": false
@@ -351,6 +891,7 @@
                                     "control": {
                                         "name": "Float Vector 3"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -361,6 +902,7 @@
                                     "control": {
                                         "name": "Boolean"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -371,6 +913,7 @@
                                     "control": {
                                         "name": "Boolean"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -381,6 +924,7 @@
                                     "control": {
                                         "name": "Float"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -391,6 +935,7 @@
                                     "control": {
                                         "name": "Float"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 },
@@ -404,6 +949,7 @@
                                     "control": {
                                         "name": "Float Vector 2"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 }
@@ -442,6 +988,7 @@
                                     "control": {
                                         "name": "read path"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": true
                                 },
@@ -452,6 +999,7 @@
                                     "control": {
                                         "name": "Boolean"
                                     },
+                                    "controlProps": null,
                                     "socket-type": "clone",
                                     "visible": false
                                 }

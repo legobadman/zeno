@@ -16,6 +16,7 @@ class LiveHttpServer;
 class LiveSignalsBridge;
 class ViewportWidget;
 class ZenoPropPanel;
+class ZenoImagePanel;
 
 namespace ads
 {
@@ -45,6 +46,7 @@ public:
     void initUserdata(USERDATA_SETTING info);
     ZTimeline* timeline() const;
     QVector<DisplayWidget*> viewports() const;
+    QVector<ZenoImagePanel*> imagepanels() const;
     DisplayWidget* getCurrentViewport() const;
     DisplayWidget* getOptixWidget() const;
     ZenoGraphsEditor* getAnyEditor() const;

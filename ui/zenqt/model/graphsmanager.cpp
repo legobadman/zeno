@@ -637,7 +637,8 @@ NodeCates GraphsManager::getCates() const
 
 void GraphsManager::updateAssets(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui)
 {
-    zeno::getSession().assets->updateAssets(assetsName.toStdString(), info, customui);
+    const std::string& sasset = assetsName.toStdString();
+    zeno::getSession().assets->updateAssets(sasset, info, customui);
     //update to each assets node on the tree
     ZASSERT_EXIT(m_main);
     m_main->syncToAssetsInstance_customui(assetsName, info, customui);

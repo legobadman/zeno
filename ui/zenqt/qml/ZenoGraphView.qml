@@ -719,7 +719,7 @@ Qan.GraphView {
     */
 
     Keys.onPressed: {
-        console.log("Keys.onPressed on ZenoGraphView")
+        // console.log("Keys.onPressed on ZenoGraphView")
         if (event.key === Qt.Key_P) {
             proppanel.visible = !proppanel.visible
         }
