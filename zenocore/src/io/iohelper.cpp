@@ -1429,7 +1429,46 @@ namespace zenoio
         }
     }
 
-    bool importControl(const rapidjson::Value& controlObj, zeno::ParamControl& ctrl, zeno::reflect::Any& props)
+    bool importControlProps(const rapidjson::Value& controlPropsObj, zeno::reflect::Any& props)
+    {
+        if (!controlPropsObj.IsObject())
+            return false;
+
+        if (controlPropsObj.HasMember("items") && controlPropsObj["items"].IsArray()) {
+            auto arr = controlPropsObj["items"].GetArray();
+            std::vector<std::string> items;
+            for (int i = 0; i < arr.Size(); i++)
+            {
+                items.push_back(arr[i].GetString());
+            }
+            props = items;
+            return true;
+        }
+        else if (controlPropsObj.HasMember("min") &&
+                 controlPropsObj.HasMember("max") &&
+                 controlPropsObj.HasMember("step"))
+        {
+            const auto& minObj = controlPropsObj["min"];
+            const auto& maxObj = controlPropsObj["max"];
+            const auto& stepObj = controlPropsObj["step"];
+
+            if (minObj.IsInt() && maxObj.IsInt() && stepObj.IsInt())
+            {
+                std::vector<int> items = { minObj.GetInt(), maxObj.GetInt(), stepObj.GetInt() };
+                props = items;
+                return true;
+            }
+            else if (minObj.IsFloat() && maxObj.IsFloat() && stepObj.IsFloat())
+            {
+                std::vector<float> items = { minObj.GetFloat(), maxObj.GetFloat(), stepObj.GetFloat() };
+                props = items;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    bool importControl(const rapidjson::Value& controlObj, zeno::ParamControl& ctrl)
     {
         if (!controlObj.IsObject())
             return false;
@@ -1443,33 +1482,6 @@ namespace zenoio
 
         const std::string& ctrlName = nameObj.GetString();
         ctrl = getControlByName(ctrlName);
-
-        if (controlObj.HasMember("min") && controlObj.HasMember("max") &&
-            controlObj.HasMember("step"))
-        {
-            if (controlObj["min"].IsNumber() && controlObj["max"].IsNumber() && controlObj["step"].IsNumber())
-            {
-                std::vector<float> ranges = {
-                    controlObj["min"].GetFloat(),
-                    controlObj["max"].GetFloat(),
-                    controlObj["step"].GetFloat()
-                };
-                props = ranges;
-            }
-        }
-        if (controlObj.HasMember("items"))
-        {
-            if (controlObj["items"].IsArray())
-            {
-                auto arr = controlObj["items"].GetArray();
-                std::vector<std::string> items;
-                for (int i = 0; i < arr.Size(); i++)
-                {
-                    items.push_back(arr[i].GetString());
-                }
-                props = items;
-            }
-        }
         return true;
     }
 

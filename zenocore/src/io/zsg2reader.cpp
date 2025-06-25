@@ -354,7 +354,7 @@ void Zsg2Reader::_parseSocket(
 
     if (sockObj.HasMember("control"))
     {
-        zenoio::importControl(sockObj["control"], ctrl, ctrlProps);
+        zenoio::importControl(sockObj["control"], ctrl);
     }
 
     if (sockObj.HasMember("tooltip")) 
@@ -479,14 +479,13 @@ bool Zsg2Reader::_parseParams(const std::string& id, const std::string& nodeCls,
                 param.type = zeno::convertToType(valueObj["type"].GetString());
             }
 
-            //����֪���᲻���SubInput��type������ͻ����������ᣬ����ֱ�ӽ������ˣ�������ʷ����
             param.defl = zenoio::jsonValueToAny(valueObj[iotags::params::params_valueKey], param.type);
-            param.socketType = zeno::NoSocket; //��ǰ�Ķ����ǲ���������ġ�
+            param.socketType = zeno::NoSocket;
 
             if (valueObj.HasMember("control"))
             {
                 zeno::ParamControl ctrl;
-                zenoio::importControl(valueObj["control"], ctrl, param.ctrlProps);
+                zenoio::importControl(valueObj["control"], ctrl);
             }
 
             if (valueObj.HasMember("tooltip"))

@@ -227,6 +227,7 @@ QStandardItemModel* ParamTabModel::toStandardModel() const {
                 pItem->setData(idx.data(QtRole::ROLE_SOCKET_TYPE), QtRole::ROLE_SOCKET_TYPE);
                 pItem->setData(idx.data(QtRole::ROLE_ISINPUT), QtRole::ROLE_ISINPUT);
                 pItem->setData(idx.data(QtRole::ROLE_NODEIDX), QtRole::ROLE_NODEIDX);
+                pItem->setData(idx.data(QtRole::ROLE_PARAM_CTRL_PROPERTIES), QtRole::ROLE_PARAM_CTRL_PROPERTIES);
                 pItem->setData(idx.data(QtRole::ROLE_PARAM_CONTROL_PROPS), QtRole::ROLE_PARAM_CONTROL_PROPS);
                 pItem->setData(idx.data(QtRole::ROLE_PARAM_VISIBLE), QtRole::ROLE_PARAM_VISIBLE);
                 pItem->setData(idx.data(QtRole::ROLE_PARAM_SOCKET_VISIBLE), QtRole::ROLE_PARAM_SOCKET_VISIBLE);

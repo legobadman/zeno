@@ -396,7 +396,11 @@ namespace zenoio
 
         if (sockObj.HasMember("control"))
         {
-            bool bret = zenoio::importControl(sockObj["control"], ctrl, ctrlProps);
+            zenoio::importControl(sockObj["control"], ctrl);
+        }
+        if (sockObj.HasMember("controlProps"))
+        {
+            zenoio::importControlProps(sockObj["controlProps"], ctrlProps);
         }
 
         if (sockObj.HasMember("tooltip"))
@@ -472,12 +476,16 @@ namespace zenoio
                 if (paramValue.HasMember("control") && paramValue["control"].IsObject())
                 {
                     zeno::reflect::Any props;
-                    bool bret = zenoio::importControl(paramValue["control"], paramInfo.control, paramInfo.ctrlProps);
-                    if (bret) {
-                        if (paramInfo.control == zeno::NullControl)
-                            paramInfo.control = zeno::getDefaultControl(paramInfo.type);
+                    bool bret = zenoio::importControl(paramValue["control"], paramInfo.control);
+                    if (bret && paramInfo.control == zeno::NullControl) {
+                        paramInfo.control = zeno::getDefaultControl(paramInfo.type);
                     }
                 }
+                if (paramValue.HasMember("controlProps") && paramValue["controlProps"].IsObject())
+                {
+                    zenoio::importControlProps(paramValue["controlProps"], paramInfo.ctrlProps);
+                }
+
                 if (paramValue.HasMember("tooltip"))
                     paramInfo.tooltip = paramValue["tooltip"].GetString();
                 if (paramValue.HasMember("visible"))
