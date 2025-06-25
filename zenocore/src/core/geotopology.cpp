@@ -528,7 +528,16 @@ namespace zeno
     }
 
     int GeometryTopology::nvertices() const {
-        assert(!m_indiceMesh_topo);
+        if (m_indiceMesh_topo) {
+            if (m_indiceMesh_topo->loops->empty() && !m_indiceMesh_topo->tris->empty()) {
+                return m_indiceMesh_topo->tris->size() * 3;
+            }
+            else {
+                //TODO: 多边形的情况
+                assert(false);
+                return 0;
+            }
+        }
         if (m_faces.empty()) {
             return 0;
         }

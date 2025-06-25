@@ -1,6 +1,6 @@
 #include "zgeometryspreadsheet.h"
 #include "../layout/docktabcontent.h"
-#include <zeno/types/GeometryObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include "model/geometrymodel.h"
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
@@ -102,7 +102,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
 void ZGeometrySpreadsheet::setGeometry(
         GraphModel* subgraph,
         QModelIndex nodeidx,
-        std::shared_ptr<zeno::GeometryObject> spObject
+        std::shared_ptr<zeno::GeometryObject_Adapter> spObject
 ) {
     if (nodeidx.isValid()) {
         QString nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
@@ -185,11 +185,11 @@ void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const Q
                 clearModel();
             } else if (currStatus == zeno::Node_RunSucceed) {
                 zeno::zany pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                if (std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject)) {
+                if (auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pObject)) {
                     setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom);
+                }
+            }
         }
-    }
-}
     }
 }
 
