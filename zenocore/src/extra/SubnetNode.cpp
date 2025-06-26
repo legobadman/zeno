@@ -1,4 +1,4 @@
-#include <zeno/core/NodeImpl.h>
+﻿#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/INodeClass.h>
@@ -383,42 +383,18 @@ CustomUI SubnetNode::export_customui() const {
         for (auto& tab : exportCustomui.inputPrims) {
             for (auto& group : tab.groups) {
                 for (auto& param : group.params) {
-                    if (auto node = m_subgraph->getNode(param.name)) {
-                        ParamType type;
-                        SocketType socketype;
-                        bool _wildcard;
-                        node->getParamTypeAndSocketType("port", true, false, type, socketype, _wildcard);
-                        param.type = type;
-                    }
+                    param = get_input_prim_param(param.name);
                 }
             }
         }
         for (auto& param : exportCustomui.inputObjs) {
-            if (auto node = m_subgraph->getNode(param.name)) {
-                ParamType type;
-                SocketType socketype;
-                bool _wildcard;
-                node->getParamTypeAndSocketType("port", false, false, type, socketype, _wildcard);
-                param.type = type;
-            }
+            param = get_input_obj_param(param.name);
         }
         for (auto& param : exportCustomui.outputPrims) {
-            if (auto node = m_subgraph->getNode(param.name)) {
-                ParamType type;
-                SocketType socketype;
-                bool _wildcard;
-                node->getParamTypeAndSocketType("port", true, true, type, socketype, _wildcard);
-                param.type = type;
-            }
+            param = get_output_prim_param(param.name);
         }
         for (auto& param : exportCustomui.outputObjs) {
-            if (auto node = m_subgraph->getNode(param.name)) {
-                ParamType type;
-                SocketType socketype;
-                bool _wildcard;
-                node->getParamTypeAndSocketType("port", false, true, type, socketype, _wildcard);
-                param.type = type;
-            }
+            param = get_output_obj_param(param.name);
         }
     }
     return exportCustomui;

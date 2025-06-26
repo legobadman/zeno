@@ -1,4 +1,4 @@
-#include <zeno/core/NodeImpl.h>
+﻿#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Session.h>
@@ -3200,7 +3200,10 @@ void NodeImpl::init(const NodeData& dat)
     }
     if (SubnetNode* pSubnetNode = dynamic_cast<SubnetNode*>(this))
     {
-        pSubnetNode->setCustomUi(dat.customUi);
+        zeno::NodeType nodetype = pSubnetNode->nodeType();
+        if (nodetype != zeno::Node_AssetInstance && nodetype != zeno::Node_AssetReference) {//asset初始化时已设置过customui
+            pSubnetNode->setCustomUi(dat.customUi);
+        }
     }
     initParams(dat);
     m_dirty = true;

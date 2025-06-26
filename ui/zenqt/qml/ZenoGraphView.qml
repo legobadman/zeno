@@ -386,7 +386,7 @@ Qan.GraphView {
         onNodeRightClicked: function(node) {
             var nodeType = graphView.graphModel.data(node.index, Model.ROLE_NODETYPE)
             if (nodeType == NodeType.Node_AssetInstance || nodeType == NodeType.Node_SubgraphNode) {
-                var mousepos = graphView.containerItem.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+                var mousepos = graphView.mapFromGlobal(MouseUtils.getGlobalMousePosition())
                 nodeMenu.node = node
                 nodeMenu.popup(mousepos)
             }
