@@ -398,5 +398,7 @@
     <file>icons/broom_clear_clean_tool.svg</file>
     <file>icons/plugin_unselected.svg</file>
     <file>icons/plugin_selected.svg</file>
+    <file>icons/geo_userdata-idle.svg</file>
+    <file>icons/geo_userdata-on.svg</file>
 </qresource>
 </RCC>

@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <zeno/types/IGeometryObject.h>
+#include <zeno/types/UserData.h>
 
 
 struct VertexInfo {
@@ -101,6 +102,24 @@ public:
 private:
     QMap<int, AttributeInfo> m_colMap;
     std::weak_ptr<zeno::GeometryObject_Adapter> m_object;
+};
+
+class GeomUserDataModel : public QAbstractTableModel
+{
+    Q_OBJECT
+public:
+    GeomUserDataModel(std::shared_ptr<zeno::GeometryObject_Adapter> pObject, QObject* parent = nullptr);
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    void setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> pObject);
+
+private:
+    QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const;
+
+    std::weak_ptr<zeno::GeometryObject_Adapter> m_object;
+    zeno::UserData* m_userData;
 };
 
 #endif

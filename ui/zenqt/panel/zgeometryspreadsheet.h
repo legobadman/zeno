@@ -28,6 +28,7 @@ private:
     ZToolBarButton* m_point;
     ZToolBarButton* m_face;
     ZToolBarButton* m_geom;
+    ZToolBarButton* m_ud;
     QStackedWidget* m_views;
 
     GraphModel* m_model;

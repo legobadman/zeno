@@ -452,3 +452,109 @@ void GeomDetailModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter>
     m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_GEO);
     endResetModel();
 }
+
+
+GeomUserDataModel::GeomUserDataModel(std::shared_ptr<zeno::GeometryObject_Adapter> pObject, QObject* parent)
+    : QAbstractTableModel(parent)
+    , m_object(pObject)
+    , m_userData(nullptr)
+{
+    if (pObject) {
+        m_userData = static_cast<zeno::UserData*>(pObject->userData());
+    }
+}
+
+QVariant GeomUserDataModel::data(const QModelIndex& index, int role) const {
+    if (!m_userData) return QVariant();
+
+    if (role == Qt::DisplayRole) {
+        auto it = std::next(m_userData->begin(), index.row());
+        auto currentData = userDataToString(it->second);
+        if (currentData.isValid()) {
+            return currentData;
+        }
+        else {
+            return QString("Invalid data");
+        }
+    }
+    else {
+        return QVariant();
+    }
+}
+
+int GeomUserDataModel::rowCount(const QModelIndex& parent) const
+{
+    if (!m_userData) return 0;
+    return m_userData->size();
+}
+
+int GeomUserDataModel::columnCount(const QModelIndex& parent) const {
+    return 1;
+}
+
+QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const {
+    if (zeno::objectIsLiterial<float>(object)) {
+        auto v = zeno::objectToLiterial<float>(object);
+        return QString::number(v);
+    }
+    else if (zeno::objectIsLiterial<int>(object)) {
+        auto v = zeno::objectToLiterial<int>(object);
+        return QString::number(v);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec2f>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec2f>(object);
+        return QString("%1, %2").arg(v[0]).arg(v[1]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec2i>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec2i>(object);
+        return QString("%1, %2").arg(v[0]).arg(v[1]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec3f>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec3f>(object);
+        return QString("%1, %2, %3").arg(v[0]).arg(v[1]).arg(v[2]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec3i>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec3i>(object);
+        return QString("%1, %2, %3").arg(v[0]).arg(v[1]).arg(v[2]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec4f>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec4f>(object);
+        return QString("%1, %2, %3, %4").arg(v[0]).arg(v[1]).arg(v[2]).arg(v[3]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec4i>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec4i>(object);
+        return QString("%1, %2, %3, %4").arg(v[0]).arg(v[1]).arg(v[2]).arg(v[3]);
+    }
+    else if (zeno::objectIsLiterial<std::string>(object)) {
+        auto v = zeno::objectToLiterial<std::string>(object);
+        return QString(v.c_str());
+    }
+    return QVariant();
+}
+
+QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    if (role == Qt::DisplayRole) {
+        if (orientation == Qt::Horizontal) {
+            return "Value";
+        }
+        else {
+            if (m_userData->size() != 0)
+            {
+                auto it = std::next(m_userData->begin(), section);
+                if (it == m_userData->end()) {
+                    return QVariant();
+                }
+                return QString::fromStdString(it->first);
+            }
+        }
+    }
+    return QAbstractTableModel::headerData(section, orientation, role);
+}
+
+void GeomUserDataModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> pObject) {
+    beginResetModel();
+    if (pObject) {
+        m_userData = static_cast<zeno::UserData*>(pObject->userData());
+    }
+    endResetModel();
+}

@@ -16,6 +16,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     , m_point(new ZToolBarButton(true, ":/icons/geomsheet_point_idle.svg", ":/icons/geomsheet_point_on.svg"))
     , m_face(new ZToolBarButton(true, ":/icons/geomsheet_face_idle.svg", ":/icons/geomsheet_face_on.svg"))
     , m_geom(new ZToolBarButton(true, ":/icons/geomsheet_geometry_idle.svg", ":/icons/geomsheet_geometry_on.svg"))
+    , m_ud(new ZToolBarButton(true, ":/icons/geo_userdata-idle.svg", ":/icons/geo_userdata-on.svg"))
     , m_model(nullptr)
     , m_nodeIdx(QModelIndex())
 {
@@ -23,6 +24,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_views->addWidget(new QTableView); //point
     m_views->addWidget(new QTableView); //face
     m_views->addWidget(new QTableView); //geom
+    m_views->addWidget(new QTableView); //ud
 
     QLabel* pLblBlank = new QLabel("No object available, may be not apply or result is null");
     m_views->addWidget(pLblBlank);    //blank
@@ -38,15 +40,17 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     pToolbarLayout->addWidget(m_point);
     pToolbarLayout->addWidget(m_face);
     pToolbarLayout->addWidget(m_geom);
+    pToolbarLayout->addWidget(m_ud);
 
     QVBoxLayout* pMainLayout = new QVBoxLayout;
     pMainLayout->addLayout(pToolbarLayout);
     pMainLayout->addWidget(m_views);
 
-    m_vertex->setChecked(true);
-    m_point->setChecked(false);
+    m_vertex->setChecked(false);
+    m_point->setChecked(true);
     m_face->setChecked(false);
     m_geom->setChecked(false);
+    m_ud->setChecked(false);
 
     connect(m_vertex, &ZToolBarButton::toggled, [&](bool bChecked) {
         if (!bChecked) {
@@ -56,6 +60,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         m_point->setChecked(!bChecked);
         m_face->setChecked(!bChecked);
         m_geom->setChecked(!bChecked);
+        m_ud->setChecked(!bChecked);
         m_views->setCurrentIndex(0);
         });
 
@@ -67,6 +72,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         m_vertex->setChecked(!bChecked);
         m_face->setChecked(!bChecked);
         m_geom->setChecked(!bChecked);
+        m_ud->setChecked(!bChecked);
         m_views->setCurrentIndex(1);
         });
 
@@ -78,6 +84,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         m_vertex->setChecked(!bChecked);
         m_point->setChecked(!bChecked);
         m_geom->setChecked(!bChecked);
+        m_ud->setChecked(!bChecked);
         m_views->setCurrentIndex(2);
         });
 
@@ -89,7 +96,20 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
         m_vertex->setChecked(!bChecked);
         m_face->setChecked(!bChecked);
         m_point->setChecked(!bChecked);
+        m_ud->setChecked(!bChecked);
         m_views->setCurrentIndex(3);
+        });
+
+    connect(m_ud, &ZToolBarButton::toggled, [&](bool bChecked) {
+        if (!bChecked) {
+            m_ud->setChecked(true);
+            return;
+        }
+        m_vertex->setChecked(!bChecked);
+        m_face->setChecked(!bChecked);
+        m_point->setChecked(!bChecked);
+        m_geom->setChecked(!bChecked);
+        m_views->setCurrentIndex(4);
         });
 
     connect(zenoApp->graphsManager(), &GraphsManager::fileClosed, this, [this]() {
@@ -110,6 +130,7 @@ void ZGeometrySpreadsheet::setGeometry(
     }
 
     if (!spObject) { 
+        //unavailable page
         m_views->setCurrentIndex(m_views->count() - 1);
         return;
     }
@@ -125,6 +146,9 @@ void ZGeometrySpreadsheet::setGeometry(
 
         if (m_geom->isChecked())
             m_views->setCurrentIndex(3);
+
+        if (m_ud->isChecked())
+            m_views->setCurrentIndex(4);
     }
 
     if (subgraph) {
@@ -166,7 +190,14 @@ void ZGeometrySpreadsheet::setGeometry(
     else {
         view->setModel(new GeomDetailModel(spObject));
     }
-    //TODO: geom model
+
+    view = qobject_cast<QTableView*>(m_views->widget(4));
+    if (GeomUserDataModel* udmodel = qobject_cast<GeomUserDataModel*>(view->model())) {
+        udmodel->setGeoObject(spObject);
+    }
+    else {
+        view->setModel(new GeomUserDataModel(spObject));
+    }
 }
 
 void ZGeometrySpreadsheet::onNodeRemoved(QString nodename)
