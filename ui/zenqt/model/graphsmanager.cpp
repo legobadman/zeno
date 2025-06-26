@@ -519,10 +519,9 @@ void GraphsManager::onAssetsCustomUIDialog(const QString& assetsName) {
 void GraphsManager::onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx) {
     if (graphs_path.empty())
         return;
-    if (graphs_path[0] == "main") {
-        auto mainWin = zenoApp->getMainWindow();
-        mainWin->onNodesSelected(m_main, { idx }, true);
-    }
+    auto mainWin = zenoApp->getMainWindow();
+    auto graphM = getGraph(graphs_path);
+    mainWin->onNodesSelected(graphM, { idx }, true);
 }
 
 void GraphsManager::createAssetDialog()
