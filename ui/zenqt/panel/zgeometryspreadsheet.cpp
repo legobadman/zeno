@@ -26,6 +26,9 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_views->addWidget(new QTableView); //geom
     m_views->addWidget(new QTableView); //ud
 
+    QLabel* pImgBlank = new QLabel("Current Object Is an image, please watch it in image panel");
+    m_views->addWidget(pImgBlank);
+
     QLabel* pLblBlank = new QLabel("No object available, may be not apply or result is null");
     m_views->addWidget(pLblBlank);    //blank
 
@@ -33,6 +36,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     palette.setColor(QPalette::WindowText, Qt::white);  // 设置字体颜色为蓝色
     m_lblNode->setPalette(palette);
     pLblBlank->setPalette(palette);
+    pImgBlank->setPalette(palette);
 
     QHBoxLayout* pToolbarLayout = new QHBoxLayout;
     pToolbarLayout->addWidget(m_lblNode);
@@ -135,6 +139,11 @@ void ZGeometrySpreadsheet::setGeometry(
         return;
     }
     else {
+        if (spObject->userData()->has("isImage")) {
+            m_views->setCurrentIndex(m_views->count() - 2);
+            return;
+        }
+
         if (m_vertex->isChecked())
             m_views->setCurrentIndex(0);
 

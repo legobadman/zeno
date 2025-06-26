@@ -79,14 +79,26 @@ CalculationMgr::CalculationMgr(QObject* parent)
 
 void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState state)
 {
-    GraphsTreeModel* pMainTree = zenoApp->graphsManager()->currentModel();
+    auto graphsMgr = zenoApp->graphsManager();
+    GraphsTreeModel* pMainTree = graphsMgr->currentModel();
     if (pMainTree) {
-        const QModelIndex targetNode = pMainTree->getIndexByUuidPath(uuidPath);
-        if (targetNode.isValid()) {
-            UiHelper::qIndexSetData(targetNode, QVariant::fromValue(state), QtRole::ROLE_NODE_RUN_STATE);
-            if (!m_bMultiThread) {
-                //TODO: 处理的时间里可能会包括改变节点状态和数据的操作，比如滑动时间轴，所以必须要控制事件的范围
-                //zenoApp->processEvents();
+        if (state.runstatus == zeno::Node_RunError) {
+            //为了方便查看错误，整个子图路径的节点都要标红
+            GraphModel* pMain = graphsMgr->getGraph({ "main" });
+            QModelIndexList pathNodes;
+            pMain->indiceFromUuidPath(uuidPath, pathNodes);
+            for (auto idx : pathNodes) {
+                UiHelper::qIndexSetData(idx, QVariant::fromValue(state), QtRole::ROLE_NODE_RUN_STATE);
+            }
+        }
+        else {
+            const QModelIndex targetNode = pMainTree->getIndexByUuidPath(uuidPath);
+            if (targetNode.isValid()) {
+                UiHelper::qIndexSetData(targetNode, QVariant::fromValue(state), QtRole::ROLE_NODE_RUN_STATE);
+                if (!m_bMultiThread) {
+                    //TODO: 处理的时间里可能会包括改变节点状态和数据的操作，比如滑动时间轴，所以必须要控制事件的范围
+                    //zenoApp->processEvents();
+                }
             }
         }
     }

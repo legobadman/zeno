@@ -39,6 +39,7 @@ public:
     Q_INVOKABLE void loadAssetDialog();
     Q_INVOKABLE void copy(const QModelIndexList& nodes);
     Q_INVOKABLE QStringList paste(const QPointF& pos, const QStringList& path_of_graphM);
+    Q_INVOKABLE QModelIndex getNodeIndexByUuidPath(const QString& objPath);
 
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath NOTIFY currentPathChanged)
     QString currentGraphPath() const;

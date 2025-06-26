@@ -581,6 +581,14 @@ QStringList GraphsManager::paste(const QPointF& pos, const QStringList& path_of_
     return newnodes_name;
 }
 
+QModelIndex GraphsManager::getNodeIndexByUuidPath(const QString& objPath)
+{
+    if (!m_main)
+        return QModelIndex();
+
+    return m_main->indexFromUuidPath(objPath.toStdString());
+}
+
 QStringList GraphsManager::recentFiles() const
 {
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);

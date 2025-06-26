@@ -253,9 +253,7 @@ GraphModel* GraphsTreeModel::getGraphByPath(const QStringList& objPath)
 
 QModelIndex GraphsTreeModel::getIndexByUuidPath(const zeno::ObjPath& objPath)
 {
-    if (!m_main)
-        return QModelIndex();
-    return m_main->indexFromUuidPath(objPath);
+    return zenoApp->graphsManager()->getNodeIndexByUuidPath(QString::fromStdString(objPath));
 }
 
 QModelIndex GraphsTreeModel::getIndexByPath(const QStringList& objPath)

@@ -75,9 +75,11 @@ public:
     QList<SEARCH_RESULT> searchByUuidPath(const zeno::ObjPath& uuidPath);
     QStringList uuidPath2ObjPath(const zeno::ObjPath& uuidPath);
     GraphModel* getGraphByPath(const QStringList& objPath);
-    QModelIndex indexFromUuidPath(const zeno::ObjPath& uuidPath);
     QStringList currentPath() const;
     QModelIndex indexFromName(const QString& name) const;
+    QModelIndex indexFromUuid(const QString& uuid) const;
+    QModelIndex indexFromUuidPath(const zeno::ObjPath& uuidPath) const;
+    void indiceFromUuidPath(const zeno::ObjPath& uuidPath, QModelIndexList& pathNodes) const;
     std::set<std::string> getViewNodePath() const;
     void clear();
     void undo();

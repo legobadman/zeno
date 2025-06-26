@@ -391,6 +391,55 @@ QModelIndex GraphModel::indexFromName(const QString& name) const {
     return createIndex(row, 0);
 }
 
+QModelIndex GraphModel::indexFromUuid(const QString& uuid) const {
+    auto iter = m_uuid2Row.find(uuid);
+    if (iter == m_uuid2Row.end()) return QModelIndex();
+    return createIndex(iter.value(), 0);
+}
+
+QModelIndex GraphModel::indexFromUuidPath(const zeno::ObjPath& uuidPath) const {
+    //uuidpath是这种：xxxx-subnet/xxx-attributewrangle
+    if (uuidPath.empty())
+        return QModelIndex();
+
+    int idx = uuidPath.find("/");
+    const QString& uuid = QString::fromStdString(uuidPath.substr(0, idx));
+    if (m_nodes.find(uuid) != m_nodes.end()) {
+        NodeItem* pItem = m_nodes[uuid];
+        zeno::ObjPath _path = uuidPath;
+        if (idx < 0) {
+            return createIndex(m_uuid2Row[uuid], 0, nullptr);
+        }
+        else if (pItem->optSubgraph.has_value()) {
+            _path = uuidPath.substr(idx + 1, uuidPath.size() - idx);
+            return pItem->optSubgraph.value()->indexFromUuidPath(_path);
+        }
+    }
+    return QModelIndex();
+}
+
+void GraphModel::indiceFromUuidPath(const zeno::ObjPath& uuidPath, QModelIndexList& pathNodes) const {
+    if (uuidPath.empty())
+        return;
+
+    int idx = uuidPath.find("/");
+    const QString& uuid = QString::fromStdString(uuidPath.substr(0, idx));
+    if (m_nodes.find(uuid) != m_nodes.end()) {
+        NodeItem* pItem = m_nodes[uuid];
+        zeno::ObjPath _path = uuidPath;
+        if (idx < 0) {
+            QModelIndex finalNode = createIndex(m_uuid2Row[uuid], 0, nullptr);
+            pathNodes.append(finalNode);
+        }
+        else if (pItem->optSubgraph.has_value()) {
+            _path = uuidPath.substr(idx + 1, uuidPath.size() - idx);
+            QModelIndex subnetNode = createIndex(m_uuid2Row[uuid], 0, nullptr);
+            pathNodes.append(subnetNode);
+            pItem->optSubgraph.value()->indiceFromUuidPath(_path, pathNodes);
+        }
+    }
+}
+
 std::set<std::string> GraphModel::getViewNodePath() const {
     auto viewnodenames = m_impl->m_wpCoreGraph->get_viewnodes();
     std::set<std::string> nodes;
@@ -858,27 +907,6 @@ QStringList GraphModel::uuidPath2ObjPath(const zeno::ObjPath& uuidPath)
     }
 
     return res;
-}
-
-QModelIndex GraphModel::indexFromUuidPath(const zeno::ObjPath& uuidPath)
-{
-    if (uuidPath.empty())
-        return QModelIndex();
-
-    int idx = uuidPath.find("/");
-    const QString& uuid = QString::fromStdString(uuidPath.substr(0, idx));
-    if (m_nodes.find(uuid) != m_nodes.end()) {
-        NodeItem* pItem = m_nodes[uuid];
-        zeno::ObjPath _path = uuidPath;
-        if (idx < 0) {
-            return createIndex(m_uuid2Row[uuid], 0, nullptr);
-        }
-        else if (pItem->optSubgraph.has_value()) {
-            _path = uuidPath.substr(idx + 1, uuidPath.size() - idx);
-            return pItem->optSubgraph.value()->indexFromUuidPath(_path);
-        }
-    }
-    return QModelIndex();
 }
 
 GraphModel* GraphModel::getGraphByPath(const QStringList& objPath)
