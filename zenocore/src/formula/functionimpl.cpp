@@ -239,6 +239,12 @@ namespace zeno
                 else if (primtype == zeno::types::gParamType_Float) {
                     res = zeno::reflect::any_cast<float>(paramData.result);
                 }
+                else if (primtype == zeno::types::gParamType_String) {
+                    auto str = zeno::reflect::any_cast<std::string>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(str);
+                    return varres;
+                }
                 else if (primtype == zeno::types::gParamType_Vec2f) {
                     throw makeError<UnimplError>();
                 }

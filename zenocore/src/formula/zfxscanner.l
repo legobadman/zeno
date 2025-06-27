@@ -40,8 +40,8 @@
 %option prefix="ZFX_"
 
 /*正则式的各种简写，使程序有层次感而显得明晰 */
-string  \"[^\n"]+\"
-singlequote '[^\n']+'
+string  \"[^\n"]*\"
+singlequote '[^\n']*'
 uncompstring \"[^\n"]*
 ws      [ \t]+
 alpha   [A-Za-z]
