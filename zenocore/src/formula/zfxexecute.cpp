@@ -125,7 +125,7 @@ std::shared_ptr<ZfxASTNode> ZfxExecute::makeTypeNode(std::string text, bool bArr
     else if (text == "vector2") {
         spNode->opVal = bArray ? TYPE_VECTOR2_ARR : TYPE_VECTOR2;
     }
-    else if (text == "vector3") {
+    else if (text == "vector3" || text == "vec3" || text == "vector") {
         spNode->opVal = bArray ? TYPE_VECTOR3_ARR : TYPE_VECTOR3;
     }
     else if (text == "vector4") {

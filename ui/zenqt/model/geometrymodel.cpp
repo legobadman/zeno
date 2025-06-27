@@ -457,18 +457,15 @@ void GeomDetailModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter>
 GeomUserDataModel::GeomUserDataModel(std::shared_ptr<zeno::GeometryObject_Adapter> pObject, QObject* parent)
     : QAbstractTableModel(parent)
     , m_object(pObject)
-    , m_userData(nullptr)
 {
-    if (pObject) {
-        m_userData = static_cast<zeno::UserData*>(pObject->userData());
-    }
 }
 
 QVariant GeomUserDataModel::data(const QModelIndex& index, int role) const {
-    if (!m_userData) return QVariant();
+    auto pUserData = userData();
+    if (!pUserData) return QVariant();
 
     if (role == Qt::DisplayRole) {
-        auto it = std::next(m_userData->begin(), index.row());
+        auto it = std::next(pUserData->begin(), index.row());
         auto currentData = userDataToString(it->second);
         if (currentData.isValid()) {
             return currentData;
@@ -484,12 +481,22 @@ QVariant GeomUserDataModel::data(const QModelIndex& index, int role) const {
 
 int GeomUserDataModel::rowCount(const QModelIndex& parent) const
 {
-    if (!m_userData) return 0;
-    return m_userData->size();
+    auto pUserData = userData();
+    if (!pUserData) return 0;
+    return pUserData->size();
 }
 
 int GeomUserDataModel::columnCount(const QModelIndex& parent) const {
     return 1;
+}
+
+zeno::UserData* GeomUserDataModel::userData() const {
+    if (auto spObject = m_object.lock()) {
+        return static_cast<zeno::UserData*>(spObject->userData());
+    }
+    else {
+        return nullptr;
+    }
 }
 
 QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const {
@@ -538,10 +545,11 @@ QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation,
             return "Value";
         }
         else {
-            if (m_userData->size() != 0)
+            auto pUserData = userData();
+            if (pUserData->size() != 0)
             {
-                auto it = std::next(m_userData->begin(), section);
-                if (it == m_userData->end()) {
+                auto it = std::next(pUserData->begin(), section);
+                if (it == pUserData->end()) {
                     return QVariant();
                 }
                 return QString::fromStdString(it->first);
@@ -553,8 +561,6 @@ QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation,
 
 void GeomUserDataModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> pObject) {
     beginResetModel();
-    if (pObject) {
-        m_userData = static_cast<zeno::UserData*>(pObject->userData());
-    }
+    m_object = pObject;
     endResetModel();
 }

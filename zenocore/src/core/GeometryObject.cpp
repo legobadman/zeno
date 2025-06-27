@@ -528,6 +528,10 @@ namespace zeno
     int GeometryObject::create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& val_or_vec)
     {
         PROXY_PRIM_THROW
+        if (attr_name.find(' ') != std::string::npos) {
+            throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
+        }
+
         std::map<std::string, AttributeVector>& container = get_container(grp);
         const int n = get_attr_size(grp);
         auto iter = container.find(attr_name);
@@ -542,6 +546,10 @@ namespace zeno
 
     int GeometryObject::create_face_attr(std::string const& attr_name, const AttrVar& defl) {
         PROXY_PRIM_THROW
+        if (attr_name.find(' ') != std::string::npos) {
+            throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
+        }
+
         auto iter = m_face_attrs.find(attr_name);
         if (iter != m_face_attrs.end()) {
             return -1;   //already exist
@@ -554,6 +562,10 @@ namespace zeno
 
     int GeometryObject::create_point_attr(std::string const& attr_name, const AttrVar& defl) {
         PROXY_PRIM_THROW
+        if (attr_name.find(' ') != std::string::npos) {
+            throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
+        }
+
         std::string attr = attr_name;
         if (attr == "P") {
             attr = "pos";
@@ -571,6 +583,10 @@ namespace zeno
 
     int GeometryObject::create_vertex_attr(std::string const& attr_name, const AttrVar& defl) {
         PROXY_PRIM_THROW
+        if (attr_name.find(' ') != std::string::npos) {
+            throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
+        }
+
         if (attr_name == "Point Number") {
             throw makeError<UnimplError>("Point Number is an internal attribute");
         }
@@ -586,6 +602,10 @@ namespace zeno
 
     int GeometryObject::create_geometry_attr(std::string const& attr_name, const AttrVar& defl) {
         PROXY_PRIM_THROW
+        if (attr_name.find(' ') != std::string::npos) {
+            throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
+        }
+
         auto iter = m_geo_attrs.find(attr_name);
         if (iter != m_geo_attrs.end()) {
             return -1;   //already exist

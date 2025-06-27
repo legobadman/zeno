@@ -117,9 +117,9 @@ public:
 
 private:
     QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const;
+    zeno::UserData* userData() const;
 
     std::weak_ptr<zeno::GeometryObject_Adapter> m_object;
-    zeno::UserData* m_userData;
 };
 
 #endif

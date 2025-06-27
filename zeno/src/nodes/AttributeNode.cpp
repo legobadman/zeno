@@ -85,31 +85,26 @@ namespace zeno {
 
     struct DeleteAttribute : INode {
         void apply() override {
-            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            auto spGeo = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
             std::string attr_name = ZImpl(get_input2<std::string>("attr_name"));
             std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
             if (attr_name == "") {
                 throw makeError<UnimplError>("the attribute name cannot be empty.");
             }
 
-            if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
-                throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
-            }
-            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
+            auto attrnames = zeno::split_str(attr_name, ' ', false);
+            for (auto attrname : attrnames) {
                 if (m_attrgroup == "Point") {
-                    spGeo->m_impl->delete_attr(ATTR_POINT, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_POINT, attrname);
                 }
                 else if (m_attrgroup == "Face") {
-                    spGeo->m_impl->delete_attr(ATTR_FACE, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_FACE, attrname);
                 }
                 else if (m_attrgroup == "Geometry") {
-                    spGeo->m_impl->delete_attr(ATTR_GEO, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_GEO, attrname);
                 }
             }
-            else {
-                throw makeError<UnimplError>("Unsupport Object for creating attribute");
-            }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", spGeo));
         }
     };
     ZENDEFNODE(DeleteAttribute,
