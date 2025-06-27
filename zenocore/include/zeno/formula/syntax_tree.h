@@ -8,7 +8,6 @@
 #include <cmath>
 #include <memory>
 #include <zeno/core/common.h>
-#include <zeno/core/NodeImpl.h>
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -234,12 +233,15 @@ struct PointCloud
     int maxpoints = 0;
 };
 
+class NodeImpl;
+
 struct ZfxContext
 {
     /* in */ zany spObject;
     /* in */ NodeImpl* spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;
+    /* in */ bool bSingleFmla = false;      //只是计算一个表达式
     /**/     std::vector<PointCloud> pchandles;
     /**/     VariableTable* zfxVariableTbl = nullptr;
     /* inout */ ZfxParamConstrain param_constrain;

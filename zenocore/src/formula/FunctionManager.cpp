@@ -1781,7 +1781,10 @@ namespace zeno {
                 pushStack();
                 scope_exit sp([this]() {this->popStack(); });
                 for (auto pSegment : root->children) {
-                    execute(pSegment, filter, pContext);
+                    const ZfxVariable& res = execute(pSegment, filter, pContext);
+                    if (pContext->bSingleFmla)
+                        return res;
+
                     if (pContext->jumpFlag == JUMP_BREAK ||
                         pContext->jumpFlag == JUMP_CONTINUE ||
                         pContext->jumpFlag == JUMP_RETURN) {

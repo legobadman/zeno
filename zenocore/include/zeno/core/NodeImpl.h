@@ -13,6 +13,7 @@
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/extra/GlobalState.h>
+#include <zeno/formula/syntax_tree.h>
 #include <zeno/core/data.h>
 #include <zeno/utils/uuid.h>
 #include <zeno/utils/safe_at.h>
@@ -289,6 +290,8 @@ namespace zeno
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
         void reportStatus(bool bDirty, NodeRunStatus status);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);
+        std::string resolve_string(const std::string& fmla, const std::string& defl);
+        zfxvariant execute_fmla(const std::string& expression);
         template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
         std::set<std::pair<std::string, std::string>> resolveReferSource(const zeno::reflect::Any& param_defl);
         void initReferLinks(PrimitiveParam* target_param);

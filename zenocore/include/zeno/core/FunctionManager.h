@@ -29,6 +29,8 @@ namespace zeno {
         void executeZfx(std::shared_ptr<ZfxASTNode> root, ZfxContext* ctx);
         zfxvariant calc(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext);
 
+        ZfxVariable execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext);
+
         //得到所有的引用源信息，每一项是 < 节点uuid-path, 参数名 >
         std::set<std::pair<std::string, std::string>>
             getReferSources(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext);
@@ -49,7 +51,7 @@ namespace zeno {
         bool assignVariable(const std::string& name, ZfxVariable var, ZfxContext* pContext);
         void validateVar(operatorVals varType, ZfxVariable& newvar);
         ZfxVariable parseArray(std::shared_ptr<ZfxASTNode> pNode, ZfxElemFilter& filter, ZfxContext* pContext);
-        ZfxVariable execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext);
+
         std::vector<ZfxVariable> process_args(std::shared_ptr<ZfxASTNode> parent, ZfxElemFilter& filter, ZfxContext* pContext);
 
         ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel = 0);

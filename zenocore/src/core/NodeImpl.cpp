@@ -1694,7 +1694,17 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     }
     case zeno::types::gParamType_String:
     {
-        //TODO: format string as formula
+        if (in_param->control != Lineedit &&
+            in_param->control != Multiline &&
+            in_param->control != ReadPathEdit &&
+            in_param->control != WritePathEdit &&
+            in_param->control != CodeEditor) {
+            //不可能是公式
+            break;
+        }
+        //有很多ref子图中字符串类型的参数，所以一切字符串都要parse
+        const std::string& code = any_cast<std::string>(defl);
+        result = resolve_string(code, code);
         break;
     }
     case gParamType_Vec2f:
@@ -3580,36 +3590,52 @@ TempNodeCaller NodeImpl::temp_node(std::string const &id) {
     return TempNodeCaller(spGraph, id);
 }
 
-float NodeImpl::resolve(const std::string& expression, const ParamType type)
+zfxvariant NodeImpl::execute_fmla(const std::string& expression)
 {
     std::string code = expression;
-    Formula fmla(code, get_path());
-    int ret = fmla.parse();
-    if (ret == 0)
-    {
-        auto& funcMgr = zeno::getSession().funcManager;
-        auto astRoot = fmla.getASTResult();
-        ZfxContext ctx;
-        ctx.code = code;
-        ctx.spNode = this;
-        zfxvariant res = funcMgr->calc(astRoot, &ctx);
-        //是否需要整合calc和executezfx?
-        //funcMgr->executeZfx(astRoot, &ctx);
 
-        if (std::holds_alternative<int>(res)) {
-            return std::get<int>(res);
-        }
-        else if (std::holds_alternative<float>(res)) {
-            return std::get<float>(res);
-        }
-        else {
-            throw makeError<UnimplError>();
-        }
+    ZfxContext ctx;
+    ctx.spNode = this;
+    ctx.spObject = nullptr;
+    ctx.code = code;
+    ctx.runover = ATTR_GEO;
+    ctx.bSingleFmla = true;
+    if (!ctx.code.empty() && ctx.code.back() != ';') {
+        ctx.code.push_back(';');
+    }
+
+    ZfxExecute zfx(ctx.code, &ctx);
+    zeno::zfxvariant res = zfx.execute_fmla();
+    return res;
+}
+
+float NodeImpl::resolve(const std::string& expression, const ParamType type) {
+    const zfxvariant& res = execute_fmla(expression);
+    if (std::holds_alternative<int>(res)) {
+        return std::get<int>(res);
+    }
+    else if (std::holds_alternative<float>(res)) {
+        return std::get<float>(res);
     }
     else {
-        //TODO: kframe issues
+        throw makeError<UnimplError>("the result of formula is not numeric");
     }
-    return 0.f;
+    //TODO: kframe issues
+    //k帧太麻烦，现阶段用不上先不处理
+}
+
+std::string NodeImpl::resolve_string(const std::string& fmla, const std::string& defl) {
+    try
+    {
+        const zfxvariant& res = execute_fmla(fmla);
+        if (std::holds_alternative<std::string>(res)) {
+            return std::get<std::string>(res);
+        }
+    }
+    catch(...)
+    {
+    }
+    return defl;
 }
 
 void NodeImpl::initTypeBase(zeno::reflect::TypeBase* pTypeBase)

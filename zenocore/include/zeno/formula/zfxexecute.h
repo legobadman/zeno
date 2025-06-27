@@ -18,6 +18,7 @@ public:
 
     ZENO_API int parse();
     ZENO_API int execute();
+    zfxvariant execute_fmla();
 
     std::shared_ptr<ZfxASTNode> makeNewNode(nodeType type, operatorVals op, std::vector<std::shared_ptr<ZfxASTNode>> children);
     std::shared_ptr<ZfxASTNode> makeNewNumberNode(float value);

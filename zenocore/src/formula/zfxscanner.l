@@ -134,7 +134,6 @@ equalto \=
                    strcmp(yytext, "vector2") == 0 ||
                    strcmp(yytext, "vector3") == 0 ||
                    strcmp(yytext, "vector") == 0 ||
-                   strcmp(yytext, "vec3") == 0 ||
                    strcmp(yytext, "vector4") == 0 ||
                    strcmp(yytext, "matrix2") == 0 ||
                    strcmp(yytext, "matrix3") == 0 ||
