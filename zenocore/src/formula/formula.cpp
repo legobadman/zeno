@@ -1,5 +1,6 @@
 #include <zeno/formula/formula.h>
 #include <zeno/core/Session.h>
+#include <zeno/core/Assets.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/core/Graph.h>
 #include <zeno/extra/GraphException.h>
@@ -287,6 +288,139 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
 
                                 const std::string& refcontent = std::get<std::string>(last->children[0]->value);
 
+                                //UPDATE: 现在只能查询本级图下的节点，以及上层子图节点的参数
+#if 1
+                                if (zeno::starts_with(refcontent, "../")) {
+                                    auto parampath = refcontent.substr(3);
+                                    //看看m_nodepath是不是某一子图下的节点，如果是，找到对应的子图节点，直接推荐参数
+                                    auto idx = m_nodepath.rfind('/');
+                                    auto subnetnode = m_nodepath.substr(0, idx);
+                                    if (subnetnode == "/main" || subnetnode == "main") {
+                                        //已经在最外面的main了，无法得到更上层的子图，返回空
+                                        ret.type = FMLA_TIP_REFERENCE;
+                                        break;
+                                    }
+                                    else if (subnetnode.front() != '/') {
+                                        //考察是不是assetgraph
+                                        const zeno::Asset& asset = zeno::getSession().assets->getAsset(subnetnode);
+                                        std::vector<std::string> items = zeno::split_str(parampath, '.', false);
+                                        bool bEndsWithDot = !parampath.empty() && parampath.back() == '.';
+                                        std::string param_part, param_component;
+                                        if (items.size() == 2) {
+                                            param_part = items[0];
+                                            param_component = items[1];
+                                        }
+                                        else if (items.size() == 1){
+                                            param_part = parampath;
+                                        }
+                                        else if (items.size() > 2){
+                                            //不可能多于两个，直接返回空
+                                            ret.type = FMLA_TIP_REFERENCE;
+                                            break;
+                                        }
+
+                                        if (asset.m_info.name != "") {
+                                            //不存在特定节点，直接拿asset的参数去推荐
+                                            PrimitiveParams params = asset.primitive_inputs;
+                                            for (auto param : params) {
+                                                if (param.name.find(param_part) != std::string::npos) {
+                                                    if (!param_part.empty() && (!param_component.empty() || bEndsWithDot)) {
+                                                        if (param.name == param_part) {
+                                                            switch (param.type) {
+                                                            case zeno::types::gParamType_Vec2f:
+                                                            case zeno::types::gParamType_Vec2i:
+                                                            {
+                                                                ret.type = FMLA_TIP_REFERENCE;
+                                                                ret.prefix = param_component;
+                                                                if (param_component == "x" || param_component == "y") {
+                                                                    std::string iconres = "";
+                                                                    ret.ref_candidates.push_back({ param_component, iconres });
+                                                                }
+                                                                else if (param_component.empty()) {
+                                                                    ret.ref_candidates = { {"x", ""}, {"y", ""} };
+                                                                }
+                                                                else
+                                                                {
+                                                                    ret.ref_candidates.clear();
+                                                                    ret.type = FMLA_NO_MATCH;
+                                                                    return ret;
+                                                                }
+                                                                break;
+                                                            }
+                                                            case zeno::types::gParamType_Vec3f:
+                                                            case zeno::types::gParamType_Vec3i:
+                                                            {
+                                                                ret.type = FMLA_TIP_REFERENCE;
+                                                                ret.prefix = param_component;
+                                                                if (param_component == "x" || param_component == "y" || param_component == "z") {
+                                                                    std::string iconres = "";
+                                                                    ret.ref_candidates.push_back({ param_component, iconres });
+                                                                }
+                                                                else if (param_component.empty()) {
+                                                                    ret.ref_candidates = { {"x", ""}, {"y", ""}, {"z", ""} };
+                                                                }
+                                                                else
+                                                                {
+                                                                    ret.ref_candidates.clear();
+                                                                    ret.type = FMLA_NO_MATCH;
+                                                                    return ret;
+                                                                }
+                                                                break;
+                                                            }
+                                                            case zeno::types::gParamType_Vec4f:
+                                                            case zeno::types::gParamType_Vec4i:
+                                                            {
+                                                                ret.type = FMLA_TIP_REFERENCE;
+                                                                ret.prefix = param_component;
+                                                                if (param_component == "x" || param_component == "y" || param_component == "z" || param_component == "w") {
+                                                                    std::string iconres = "";
+                                                                    ret.ref_candidates.push_back({ param_component, iconres });
+                                                                }
+                                                                else if (param_component.empty()) {
+                                                                    ret.ref_candidates = { {"x", ""}, {"y", ""}, {"z", ""}, {"w", ""} };
+                                                                }
+                                                                else
+                                                                {
+                                                                    ret.ref_candidates.clear();
+                                                                    ret.type = FMLA_NO_MATCH;
+                                                                    return ret;
+                                                                }
+                                                                break;
+                                                            }
+                                                            default:
+                                                            {
+                                                                ret.ref_candidates.clear();
+                                                                ret.type = FMLA_NO_MATCH;
+                                                                return ret;
+                                                            }
+                                                            }
+                                                        }
+                                                        else {
+                                                            ret.ref_candidates.clear();
+                                                            ret.type = FMLA_NO_MATCH;
+                                                            return ret;
+                                                        }
+                                                    }
+                                                    else {
+                                                        ret.type = FMLA_TIP_REFERENCE;
+                                                        ret.prefix = param_part;
+                                                        ret.ref_candidates.push_back({ param.name, "" /*icon*/ });
+                                                    }
+                                                }
+                                            }
+                                        
+                                            break;
+                                        }
+                                    }
+
+                                    auto subnetnode_name = subnetnode.substr(subnetnode.rfind('/') + 1);
+                                    auto nodepath = subnetnode_name + "." + parampath;
+                                    ret = getNodesByPath(subnetnode, ".", nodepath);
+                                }
+                                else {
+                                    ret = getNodesByPath(m_nodepath, ".", refcontent);
+                                }
+#else
                                 if (refcontent == "") {
                                     ret.ref_candidates.push_back({ "/", /*TODO: icon*/"" });
                                     ret.type = FMLA_TIP_REFERENCE;
@@ -311,8 +445,8 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                                         break;
                                     }
                                 }
-
                                 ret = getNodesByPath(m_nodepath, graphpath, nodepath);
+#endif
                                 break;
                             }
                         }
