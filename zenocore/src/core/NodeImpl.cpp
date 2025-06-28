@@ -1698,13 +1698,20 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
             in_param->control != Multiline &&
             in_param->control != ReadPathEdit &&
             in_param->control != WritePathEdit &&
-            in_param->control != CodeEditor) {
+            in_param->control != NullControl/*初始化的时候只有type没有control，而ui会自动初始化*/) {
             //不可能是公式
             break;
         }
+        if (in_param->control == CodeEditor) {
+            //单独在wrangle里parse execute.
+            break;
+        }
+
         //有很多ref子图中字符串类型的参数，所以一切字符串都要parse
         const std::string& code = any_cast<std::string>(defl);
-        result = resolve_string(code, code);
+        if (!code.empty()) {
+            result = resolve_string(code, code);
+        }
         break;
     }
     case gParamType_Vec2f:
@@ -2039,7 +2046,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
     });
 
 #if 1
-    if (m_nodecls == "RenderScene"){//}&& pContext->curr_iter == 1) {
+    if (m_name == "CopyAttribute1"){//}&& pContext->curr_iter == 1) {
         int j;
         j = 0;
     }
@@ -3196,7 +3203,7 @@ void NodeImpl::init(const NodeData& dat)
     if (!dat.name.empty())
         m_name = dat.name;
 
-    if (m_name == "selfinc") {
+    if (m_name == "CopyAttribute1") {
         int j;
         j = -0;
     }

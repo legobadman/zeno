@@ -832,6 +832,11 @@ NodeImpl* Graph::createNode(
     CORE_API_BATCH
     const std::string& name = generateNewName(cls, orgin_name, bAssets);
 
+    if (name == "CopyAttribute1") {
+        int j;
+        j = 0;
+    }
+
     std::string uuid;
     NodeImpl* pNode = nullptr;
     std::unique_ptr<NodeImpl> upNode;

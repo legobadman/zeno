@@ -255,7 +255,9 @@
                                 358.0,
                                 1376.0
                             ],
-                            "status": [],
+                            "status": [
+                                "View"
+                            ],
                             "collasped": false
                         },
                         "HF_Blur_OpenCV_v3_1": {
@@ -547,7 +549,7 @@
                                 "Terrain Resolution": {
                                     "links": null,
                                     "type": "int",
-                                    "default-value": 1000,
+                                    "default-value": 500,
                                     "control": {
                                         "name": "Integer"
                                     },
@@ -558,7 +560,7 @@
                                 "Terrain Scale": {
                                     "links": null,
                                     "type": "float",
-                                    "default-value": 1000.0,
+                                    "default-value": 3000.0,
                                     "control": {
                                         "name": "Float"
                                     },
