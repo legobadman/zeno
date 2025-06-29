@@ -2585,6 +2585,7 @@ NodeData NodeImpl::exportInfo() const
         node.type = Node_SubgraphNode;
     else
         node.type = Node_Normal;
+    node.bLocked = false;
 
     node.customUi = get_customui();
     node.customUi.inputObjs.clear();

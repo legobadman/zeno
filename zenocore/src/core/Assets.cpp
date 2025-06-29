@@ -578,7 +578,9 @@ ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(
         Graph* pGraph,
         const std::string& assetName,
         const std::string& nodeName,
-        bool createInAsset)
+        bool createInAsset,
+        bool bAssetLocked
+    )
 {
     if (m_assets.find(assetName) == m_assets.end()) {
         return nullptr;
@@ -595,7 +597,7 @@ ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(
 
     pNode->initUuid(pGraph, assetName);
     std::shared_ptr<Graph> assetGraph;
-    if (!createInAsset) {
+    if (!createInAsset && bAssetLocked) {
         //should expand the asset graph into a tree.
         assetGraph = forkAssetGraph(assets.sharedGraph, pNode.get());
         pNode->init_graph(assetGraph);

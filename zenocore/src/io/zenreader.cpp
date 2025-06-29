@@ -135,6 +135,10 @@ namespace zenoio
             bool bCollasped = objValue["collasped"].GetBool();
             retNode.bCollasped = bCollasped;
         }
+        if (objValue.HasMember("asset_locked")) {
+            bool bLocked = objValue["asset_locked"].GetBool();
+            retNode.bLocked = bLocked;
+        }
 
         if (cls == "Blackboard")
         {
@@ -182,14 +186,22 @@ namespace zenoio
             //TODO: import group.
         //}
 
+        bool bAsset = objValue.HasMember("asset");
+
         if (objValue.HasMember("subnet")) {
             zeno::GraphData subgraph;
             _parseGraph(objValue["subnet"], assets, subgraph);
             retNode.subgraph = subgraph;
-            retNode.type = zeno::Node_SubgraphNode;
+            if (bAsset) {
+                assert(!retNode.bLocked);
+                retNode.type = zeno::Node_AssetInstance;
+            }
+            else {
+                retNode.type = zeno::Node_SubgraphNode;
+            }
         }
 
-        if (objValue.HasMember("asset")) {
+        if (bAsset) {
             zeno::AssetInfo info;
             auto& assetObj = objValue["asset"];
             if (assetObj.HasMember("name") && assetObj.HasMember("version"))

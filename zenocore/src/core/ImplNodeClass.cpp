@@ -40,7 +40,6 @@ namespace zeno {
         NodeType type = pNode->type();
         if (type == Node_SubgraphNode) {
             auto subnetNode = std::make_unique<SubnetNode>(pNode);
-            subnetNode->get_subgraph()->initParentSubnetNode(subnetNode.get());
             spNode = std::move(subnetNode);
         }
         else if (type == Node_Solver) {

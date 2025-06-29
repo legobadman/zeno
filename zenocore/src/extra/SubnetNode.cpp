@@ -24,6 +24,8 @@ SubnetNode::SubnetNode(INode* pNode)
     , m_subgraph(std::make_shared<Graph>(""))
     , m_bLocked(true)
 {
+    m_subgraph->initParentSubnetNode(this);
+
     //auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
     //m_customUi = cl->m_customui;
     //添加一些default的输入输出
@@ -80,6 +82,9 @@ void SubnetNode::initParams(const NodeData& dat)
     NodeImpl::initParams(dat);
     if (dat.subgraph)
         m_subgraph->init(*dat.subgraph);
+    if (zeno::Node_AssetInstance == nodeType()) {
+        m_bLocked = dat.bLocked;
+    }
 }
 
 NodeType SubnetNode::nodeType() const {
@@ -362,6 +367,10 @@ NodeData SubnetNode::exportInfo() const {
         }
         else {
             node.type = Node_AssetInstance;
+            node.bLocked = m_bLocked;
+            if (!m_bLocked) {
+                node.subgraph = m_subgraph->exportGraph();
+            }
         }
     }
     else {

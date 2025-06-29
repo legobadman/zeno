@@ -116,7 +116,9 @@ namespace zenoio
             dumpCustomUI(node.customUi, writer);
         }
 
-        if (node.subgraph.has_value() && node.type == zeno::Node_SubgraphNode)
+        if (node.subgraph.has_value() &&
+            (node.type == zeno::Node_SubgraphNode ||
+            (node.type == zeno::Node_AssetInstance && !node.bLocked)))
         {
             writer.Key("subnet");
             dumpGraph(node.subgraph.value(), writer);
@@ -124,6 +126,10 @@ namespace zenoio
 
         if (node.asset.has_value()) {
             zeno::AssetInfo asset = node.asset.value();
+
+            writer.Key("asset_locked");
+            writer.Bool(node.bLocked);
+
             writer.Key("asset");
             JsonObjScope scope(writer);
             writer.Key("name");

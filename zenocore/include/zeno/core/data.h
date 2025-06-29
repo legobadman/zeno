@@ -261,6 +261,7 @@ namespace zeno {
         bool bView = false;
         NodeType type;
         bool bCollasped = false;
+        bool bLocked = true;   //asset instance.
     };
 
     struct NodeDesc {

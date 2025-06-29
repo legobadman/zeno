@@ -343,7 +343,8 @@ void Graph::init(const GraphData& graph) {
     //import nodes first.
     for (const auto& [name, node] : graph.nodes) {
         bool bAssets = node.asset.has_value();
-        auto spNode = createNode(node.cls, name, bAssets, node.uipos, true);
+        bool bAssetLock = node.bLocked;
+        auto spNode = createNode(node.cls, name, bAssets, node.uipos, true, bAssets ? &bAssetLock : nullptr);
         spNode->init(node);
         initSpecialNode(spNode, node);
     }
@@ -826,7 +827,8 @@ NodeImpl* Graph::createNode(
     const std::string& orgin_name,
     bool bAssets,
     std::pair<float, float> pos,
-    bool isIOInit
+    bool isIOInit,
+    bool* pbAssetLock
     )
 {
     CORE_API_BATCH
@@ -860,7 +862,8 @@ NodeImpl* Graph::createNode(
     }
     else {
         bool isCurrentGraphAsset = getSession().assets->isAssetGraph(this);
-        upNode = std::move(getSession().assets->newInstance(this, cls, name, isCurrentGraphAsset));
+        bool bAssetLocked = pbAssetLock ? *pbAssetLock : true;
+        upNode = std::move(getSession().assets->newInstance(this, cls, name, isCurrentGraphAsset, bAssetLocked));
         pNode = upNode.get();
         uuid = pNode->get_uuid();
         asset_nodes.insert(uuid);
