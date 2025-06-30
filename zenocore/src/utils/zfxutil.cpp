@@ -699,6 +699,8 @@ namespace zeno
             if (zeno::starts_with(ref, "..")) {
                 //子图直接获取参数
                 if (zeno::starts_with(ref, "../")) {
+                    return nullptr; //根本无须确立引用关系，直接取上层子图的参数就可以了
+#if 0
                     auto thisNode = pContext->spNode;
                     auto thisGraph = thisNode->getGraph();
                     paramPath = ref.substr(3);
@@ -715,6 +717,7 @@ namespace zeno
                         paramPath = "port";
                     }
                     return pSubInput;
+#endif
                 }
                 return nullptr;
             }

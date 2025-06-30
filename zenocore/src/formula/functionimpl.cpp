@@ -201,18 +201,38 @@ namespace zeno
         }
 
         static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
-            std::string parampath, _;
-            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
-            auto items = split_str(parampath, '.');
-            std::string paramname = items[0];
+            ParamPrimitive paramData;
+            std::vector<std::string> items;
 
-            bool bExist = false;
-            ParamPrimitive paramData = spNode->get_input_prim_param(paramname, &bExist);
-            if (!bExist) {
-                //试一下拿prim_output，有些情况，比如获取SubInput的port，是需要拿Output的
-                paramData = spNode->get_output_prim_param(paramname, &bExist);
+            if (zeno::starts_with(ref, "../")) {
+                //直接取上层子图节点的参数
+                std::string parampath = ref.substr(3);
+                items = split_str(parampath, '.');
+                std::string paramname = items[0];
+                NodeImpl* parSbnNode = pContext->spNode->getGraph()->getParentSubnetNode();
+                if (!parSbnNode) {
+                    throw makeError<UnimplError>("cannot locate parent subnetnode, when refering params");
+                }
+                bool bExisted = false;
+                paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
+                if (!bExisted) {
+                    throw makeError<UnimplError>("there is no param `" + paramname + "` in subnetnode");
+                }
+            }
+            else {
+                std::string parampath, _;
+                auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
+                items = split_str(parampath, '.');
+                std::string paramname = items[0];
+
+                bool bExist = false;
+                paramData = spNode->get_input_prim_param(paramname, &bExist);
                 if (!bExist) {
-                    throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
+                    //试一下拿prim_output，有些情况，比如获取SubInput的port，是需要拿Output的
+                    paramData = spNode->get_output_prim_param(paramname, &bExist);
+                    if (!bExist) {
+                        throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
+                    }
                 }
             }
 
@@ -1886,12 +1906,23 @@ namespace zeno
                 return ret;
             }
             if (funcname == "getud") {
-                zeno::String key = zeno::stdString2zs(get_zfxvar<std::string>(args[0].value[0]));
-                auto ud = pContext->spObject->userData();
+                const std::string& nodename = get_zfxvar<std::string>(args[0].value[0]);
+                const std::string& objparam = get_zfxvar<std::string>(args[1].value[0]);
+                const std::string& key = get_zfxvar<std::string>(args[2].value[0]);
+
+                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                if (!pObjNode) {
+                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                }
+                zany targetObj = pObjNode->get_output_obj(objparam);
+                if (!targetObj)
+                    throw makeError<UnimplError>("get nullptr obj from `" + objparam + "` when `getud` is called");
+
+                auto ud = targetObj->userData();
                 zeno::UserData* pUserData = static_cast<zeno::UserData*>(ud);
 
                 ZfxVariable ret;
-                zany spud = pUserData->m_data[zsString2Std(key)];
+                zany spud = pUserData->m_data[key];
                 if (auto strobj = std::dynamic_pointer_cast<zeno::StringObject>(spud)) {
                     ret.value.push_back(strobj->get());
                 }
