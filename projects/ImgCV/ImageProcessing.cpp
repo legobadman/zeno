@@ -669,7 +669,7 @@ struct ImageBlur : INode {
         if(type == "Gaussian" && fastgaussian){
             std::vector<vec3f> imgout_data = img_out->points_pos();
             gaussBlur(img_data, imgout_data, w, h, sigmaX, 3);
-            img_out->set_point_attr("image", imgout_data);
+            img_out->set_point_attr("pos", imgout_data);
         }
         else{//CV BLUR
             cv::Mat imagecvin(h, w, CV_32FC3);
@@ -1077,6 +1077,7 @@ struct ImageDilate: INode {
                 imageverts[i * w + j] = {rgb[0], rgb[1], rgb[2]};
             }
         }
+        image->set_point_attr("pos", imageverts);
         set_output("image", image);
     }
 };

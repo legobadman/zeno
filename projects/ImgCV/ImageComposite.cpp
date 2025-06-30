@@ -391,7 +391,7 @@ struct CompImport : INode {
 
         if (attributesType == "float") {
             if (!prim->has_point_attr(attrName)) {
-                zeno::log_error("No such attribute '{}' in prim", zsString2Std(attrName));
+                throw makeError<UnimplError>("No such attribute in prim");
                 return;
             }
             auto& attr = prim->get_float_attr(ATTR_POINT, attrName);
@@ -418,8 +418,8 @@ struct CompImport : INode {
         else if (attributesType == "vec3f") {
             //TODO
         }
-
-        set_output("image", image);
+        zeno::SharedPtr<GeometryObject_Adapter> geo = create_GeometryObject(image, true);
+        set_output("image", geo);
     }
 };
 
