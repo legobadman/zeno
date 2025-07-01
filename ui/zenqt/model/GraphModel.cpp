@@ -1597,8 +1597,8 @@ bool GraphModel::removeRows(int row, int count, const QModelIndex& parent)
     m_nodes.remove(id);
     m_name2uuid.remove(name);
 
-    if (m_subgNodes.find(id) != m_subgNodes.end())
-        m_subgNodes.remove(id);
+    if (m_subgNodes.find(name) != m_subgNodes.end())
+        m_subgNodes.remove(name);
 
     delete pItem;
 
