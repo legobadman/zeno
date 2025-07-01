@@ -614,8 +614,8 @@ void NodeImpl::preApply(CalcContext* pContext) {
         return;
 
     //debug
-#if 0
-    if (m_name == "Seed") {
+#if 1
+    if (m_name == "CompImport2") {
         int j;
         j = 0;
     }
@@ -699,6 +699,35 @@ void NodeImpl::switchif_apply(CalcContext* pContext)
     else {
         requireInput("If False", pContext);
     }
+    apply();
+}
+
+void NodeImpl::switchbetween_apply(CalcContext* pContext)
+{
+    int cond = zeno::reflect::any_cast<int>(get_param_result("cond1"));
+    if (cond != 0) requireInput("b1", pContext);
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond2"));
+    if (cond != 0) requireInput("b2", pContext);
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond3"));
+    if (cond != 0) requireInput("b3", pContext);
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond4"));
+    if (cond != 0) requireInput("b4", pContext);
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond5"));
+    if (cond != 0) requireInput("b5", pContext);
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond6"));
+    if (cond != 0) requireInput("b6", pContext);
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond7"));
+    if (cond != 0) requireInput("b7", pContext);
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond8"));
+    if (cond != 0) requireInput("b8", pContext);
+
     apply();
 }
 
@@ -2054,7 +2083,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
 
     if (m_nodecls == "TimeShift") {
         preApplyTimeshift(pContext);
-    } else if (m_nodecls == "ForEachEnd" || m_nodecls == "SwitchIf") {
+    } else if (m_nodecls == "ForEachEnd" || m_nodecls == "SwitchIf" || m_nodecls == "SwitchBetween") {
         preApply_Primitives(pContext);
     } else {
         preApply(pContext);
@@ -2079,6 +2108,9 @@ void NodeImpl::doApply(CalcContext* pContext) {
             } 
             else if (m_nodecls == "SwitchIf") {
                 switchif_apply(pContext);
+            }
+            else if (m_nodecls == "SwitchBetween") {
+                switchbetween_apply(pContext);
             }
             else {
                 apply();

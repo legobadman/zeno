@@ -308,6 +308,7 @@ namespace zeno
         //foreach特供
         void foreachend_apply(CalcContext* pContext);
         void switchif_apply(CalcContext* pContext);
+        void switchbetween_apply(CalcContext* pContext);
         void init_output_container_updateinfo();
 
         std::string m_name;
