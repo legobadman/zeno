@@ -63,6 +63,9 @@ namespace zeno
         int set_face_attr(const zeno::String& attr_name, const Any& defl);
         int set_geometry_attr(const zeno::String& attr_name, const Any& defl);
 
+        void foreach_vec3_attr_update(GeoAttrGroup grp, const zeno::String& attr_name, char channel, std::function<zeno::vec3f(int idx, zeno::vec3f old_elem_value)>&& evalf);
+        void foreach_float_attr_update(GeoAttrGroup grp, const zeno::String& attr_name, char channel, std::function<float(int idx, float old_elem_value)>&& evalf);
+
         /* 检查属性是否存在 */
         bool has_attr(GeoAttrGroup grp, const zeno::String& name, GeoAttrType type = ATTR_TYPE_UNKNOWN);
         bool has_vertex_attr(const zeno::String& name) const;

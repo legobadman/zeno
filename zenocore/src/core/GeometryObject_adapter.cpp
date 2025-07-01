@@ -136,6 +136,23 @@ namespace zeno
         return m_impl->set_geometry_attr(zsString2Std(attr_name), abiAnyToAttrVar(defl));
     }
 
+
+    void GeometryObject_Adapter::foreach_vec3_attr_update(
+        GeoAttrGroup grp,
+        const zeno::String& attr_name,
+        char channel,
+        std::function<zeno::vec3f(int idx, zeno::vec3f old_elem_value)>&& evalf) {
+        m_impl->foreach_attr_update<zeno::vec3f>(grp, zsString2Std(attr_name), channel, std::move(evalf));
+    }
+
+    void GeometryObject_Adapter::foreach_float_attr_update(
+        GeoAttrGroup grp,
+        const zeno::String& attr_name,
+        char channel,
+        std::function<float(int idx, float old_elem_value)>&& evalf) {
+        m_impl->foreach_attr_update<float>(grp, zsString2Std(attr_name), channel, std::move(evalf));
+    }
+
     bool GeometryObject_Adapter::has_attr(GeoAttrGroup grp, const zeno::String& name, GeoAttrType type) {
         return m_impl->has_attr(grp, zsString2Std(name));
     }

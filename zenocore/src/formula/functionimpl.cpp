@@ -256,6 +256,12 @@ namespace zeno
                 if (primtype == zeno::types::gParamType_Int) {
                     res = zeno::reflect::any_cast<int>(paramData.result);
                 }
+                else if (primtype == zeno::types::gParamType_Bool) {
+                    bool bret = zeno::reflect::any_cast<bool>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(bret ? 1 : 0);
+                    return varres;
+                }
                 else if (primtype == zeno::types::gParamType_Float) {
                     res = zeno::reflect::any_cast<float>(paramData.result);
                 }
@@ -1872,6 +1878,32 @@ namespace zeno
                     }
                     return ret;
                 }
+            }
+            if (funcname == "clamp") {
+                const ZfxVariable& var = args[0];
+                const ZfxVariable& arg_min = args[1], arg_max = args[2];
+                float min = 0, max = 0;
+                min = get_zfxvar<float>(arg_min.value[0]);
+                max = get_zfxvar<float>(arg_max.value[0]);
+
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->int {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            return std::min(std::max((float)_arg, min), max);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            return std::min(std::max(_arg, min), max);
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept arr type on `len`");
+                        }
+                        }, var.value[i]);
+                }
+                return ret;
             }
             if (funcname == "setud") {
                 zeno::String key = zeno::stdString2zs(get_zfxvar<std::string>(args[0].value[0]));

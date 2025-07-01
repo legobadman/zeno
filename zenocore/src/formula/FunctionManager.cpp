@@ -1829,8 +1829,10 @@ namespace zeno {
         {
             const std::string& funcname = std::get<std::string>(root->value);
             if (funcname == "ref") {
-                if (root->children.size() != 1)
-                    throw makeError<UnimplError>();
+                if (root->children.size() != 1) {
+                    //可能只是编辑时候无意输入，没必要抛异常
+                    return {};
+                }
                 const zeno::zfxvariant& res = calc(root->children[0], pContext);
                 const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                 //收集ref信息源，包括源节点和参数

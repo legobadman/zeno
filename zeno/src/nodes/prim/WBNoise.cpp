@@ -4,6 +4,7 @@
 
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
 #include <glm/gtx/quaternion.hpp>
@@ -131,50 +132,48 @@ float noise_perlin(float x, float y, float z)
 
 struct erode_noise_perlin : INode {
     void apply() override {
-        auto terrain = ZImpl(get_input<PrimitiveObject>("prim_2DGrid"));
+        auto terrain = get_input_Geometry("prim_2DGrid");
 
-        auto attrName = ZImpl(get_param<std::string>("attrName"));
-        auto attrType = ZImpl(get_param<std::string>("attrType"));
-        if (!terrain->has_attr(attrName)) {
-            if (attrType == "float3") terrain->add_attr<zeno::vec3f>(attrName);
-            else if (attrType == "float") terrain->add_attr<float>(attrName);
-        }
-
-        auto vec3fAttrName = ZImpl(get_input<StringObject>("vec3fAttrName"))->get();
-        if (!terrain->verts.has_attr(vec3fAttrName))
-        {
-            zeno::log_error("no such data named '{}'.", vec3fAttrName);
-        }
-        auto& vec3fAttr = terrain->verts.attr<zeno::vec3f>(vec3fAttrName);
-
-
-        terrain->attr_visit(attrName, [&](auto& arr) {
-#pragma omp parallel for
-            for (int i = 0; i < arr.size(); i++)
-            {
-                if constexpr (is_decay_same_v<decltype(arr[i]), vec3f>)
-                {
-                    float x = noise_perlin(vec3fAttr[i][0], vec3fAttr[i][1], vec3fAttr[i][2]);
-                    float y = noise_perlin(vec3fAttr[i][1], vec3fAttr[i][2], vec3fAttr[i][0]);
-                    float z = noise_perlin(vec3fAttr[i][2], vec3fAttr[i][0], vec3fAttr[i][1]);
-                    arr[i] = vec3f(x, y, z);
-                }
-                else
-                {
-                    arr[i] = noise_perlin(vec3fAttr[i][0], vec3fAttr[i][1], vec3fAttr[i][2]);
-                }
+        auto attrName = get_input2_string("attrName");
+        auto attrType = get_input2_string("attrType");
+        if (!terrain->has_point_attr(attrName)) {
+            if (attrType == "float3") {
+                terrain->create_point_attr(attrName, vec3f());
             }
-            });
+            else if (attrType == "float") {
+                terrain->create_point_attr(attrName, 0.0f);
+            }
+        }
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        auto vec3fAttrName = get_input2_string("vec3fAttrName");
+        if (!terrain->has_point_attr(vec3fAttrName))
+        {
+            throw makeError<UnimplError>("no such data named `" + zsString2Std(vec3fAttrName) + "`.");
+        }
+        auto& vec3fAttr = terrain->get_vec3f_attr(ATTR_POINT, vec3fAttrName);
+        if (attrType == "float3") {
+            terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, vec3f oldval)->vec3f {
+                float x = noise_perlin(vec3fAttr[i][0], vec3fAttr[i][1], vec3fAttr[i][2]);
+                float y = noise_perlin(vec3fAttr[i][1], vec3fAttr[i][2], vec3fAttr[i][0]);
+                float z = noise_perlin(vec3fAttr[i][2], vec3fAttr[i][0], vec3fAttr[i][1]);
+                return vec3f(x, y, z);
+                });
+        }
+        else if (attrType == "float") {
+            terrain->foreach_float_attr_update(ATTR_POINT, attrName, 0, [&](int i, float oldval)->float {
+                float fval = noise_perlin(vec3fAttr[i][0], vec3fAttr[i][1], vec3fAttr[i][2]);
+                return fval;
+                });
+        }
+        set_output("prim_2DGrid", terrain);
     }
 };
 ZENDEFNODE(erode_noise_perlin,
     { /* inputs: */ {
-            {gParamType_Primitive, "prim_2DGrid", "", zeno::Socket_ReadOnly},
+            {gParamType_Geometry, "prim_2DGrid", "", zeno::Socket_ReadOnly},
             {gParamType_String, "vec3fAttrName", "pos"},
         }, /* outputs: */ {
-            {gParamType_Primitive, "prim_2DGrid"},
+            {gParamType_Geometry, "prim_2DGrid"},
         }, /* params: */ {
             {gParamType_String, "attrName", "noise"},
             {"enum float float3", "attrType", "float"},
@@ -532,47 +531,49 @@ float noise_simplexNoise4(float x, float y, float z, float w) {
 //
 struct erode_noise_simplex : INode {
     void apply() override {
-        auto terrain = ZImpl(get_input<PrimitiveObject>("prim_2DGrid"));
-        auto attrName = ZImpl(get_param<std::string>("attrName"));
-        auto attrType = ZImpl(get_param<std::string>("attrType"));
-        if (!terrain->has_attr(attrName)) {
-            if (attrType == "float3") terrain->add_attr<zeno::vec3f>(attrName);
-            else if (attrType == "float") terrain->add_attr<float>(attrName);
-        }
-
-        auto posLikeAttrName = ZImpl(get_input<StringObject>("posLikeAttrName"))->get();
-        if (!terrain->verts.has_attr(posLikeAttrName))
-        {
-            zeno::log_error("no such data named '{}'.", posLikeAttrName);
-        }
-        auto& pos = terrain->verts.attr<zeno::vec3f>(posLikeAttrName);
-
-        terrain->attr_visit(attrName, [&](auto& arr) {
-#pragma omp parallel for
-            for (int i = 0; i < arr.size(); i++)
-            {
-                if constexpr (is_decay_same_v<decltype(arr[i]), vec3f>) {
-                    float x = noise_simplexNoise3(pos[i][0], pos[i][1], pos[i][2]);
-                    float y = noise_simplexNoise3(pos[i][1], pos[i][2], pos[i][0]);
-                    float z = noise_simplexNoise3(pos[i][2], pos[i][0], pos[i][1]);
-                    arr[i] = vec3f(x, y, z);
-                }
-                else
-                {
-                    arr[i] = noise_simplexNoise3(pos[i][0], pos[i][1], pos[i][2]);
-                }
+        auto terrain = get_input_Geometry("prim_2DGrid");
+        auto attrName = get_input2_string("attrName");
+        auto attrType = get_input2_string("attrType");
+        if (!terrain->has_point_attr(attrName)) {
+            if (attrType == "float3") {
+                terrain->create_point_attr(attrName, zeno::vec3f());
             }
-            });
+            else if (attrType == "float") {
+                terrain->create_point_attr(attrName, 0.0f);
+            }
+        }
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        auto posLikeAttrName = get_input2_string("posLikeAttrName");
+        if (!terrain->has_point_attr(posLikeAttrName))
+        {
+            throw makeError<UnimplError>("no such data name `" + zsString2Std(posLikeAttrName) + "`.");
+        }
+        const auto& pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
+
+        if (attrType == "float3") {
+            terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, zeno::vec3f old_val)->vec3f {
+                float x = noise_simplexNoise3(pos[i][0], pos[i][1], pos[i][2]);
+                float y = noise_simplexNoise3(pos[i][1], pos[i][2], pos[i][0]);
+                float z = noise_simplexNoise3(pos[i][2], pos[i][0], pos[i][1]);
+                return vec3f(x, y, z);
+                });
+        }
+        else if (attrType == "float") {
+            terrain->foreach_float_attr_update(ATTR_POINT, attrName, 0, [&](int i, float old_val)->float {
+                float fval = noise_simplexNoise3(pos[i][0], pos[i][1], pos[i][2]);
+                return fval;
+                });
+        }
+
+        set_output("prim_2DGrid", terrain);
     }
 };
 ZENDEFNODE(erode_noise_simplex,
     { /* inputs: */ {
-            {gParamType_Primitive, "prim_2DGrid", "", zeno::Socket_ReadOnly},
+            {gParamType_Geometry, "prim_2DGrid", "", zeno::Socket_ReadOnly},
             {gParamType_String, "posLikeAttrName", "pos"},
         }, /* outputs: */ {
-            {gParamType_Primitive, "prim_2DGrid"},
+            {gParamType_Geometry, "prim_2DGrid"},
         }, /* params: */ {
             {gParamType_String, "attrName", "noise"},
             {"enum float float3", "attrType", "float"},
@@ -1131,52 +1132,56 @@ ZENDEFNODE(NoiseImageGen, {
 struct erode_noise_sparse_convolution : INode {
     void apply() override {
 
-        auto terrain = ZImpl(get_input<PrimitiveObject>("prim_2DGrid"));
+        zeno::SharedPtr<GeometryObject_Adapter> terrain = get_input_Geometry("prim_2DGrid");
         auto pulsenum = ZImpl(get_input2<int>("pulsenum"));
-        auto attrName = ZImpl(get_input2<std::string>("attrName"));
+        auto attrName = get_input2_string("attrName");
         auto attrType = ZImpl(get_input2<std::string>("attrType"));
         auto seed = ZImpl(get_input2<int>("seed"));
 
-        if (!terrain->has_attr(attrName)) {
-            if (attrType == "float3")
-                terrain->add_attr<zeno::vec3f>(attrName);
-            else if (attrType == "float")
-                terrain->add_attr<float>(attrName);
-        }
+        const int n = terrain->npoints();
 
-        auto posLikeAttrName = ZImpl(get_input<StringObject>("posLikeAttrName"))->get();
-        if (!terrain->verts.has_attr(posLikeAttrName)) {
-            zeno::log_error("no such data named '{}'.", posLikeAttrName);
-        }
-
-        auto &pos = terrain->verts.attr<zeno::vec3f>(posLikeAttrName);
-
-        terrain->attr_visit(attrName, [&](auto &arr) {
-#pragma omp parallel for
-            for (int i = 0; i < arr.size(); i++) {
-                if constexpr (is_decay_same_v<decltype(arr[i]), vec3f>) {
-                    float x = scnoise(pos[i][0], pos[i][1], pos[i][2], pulsenum, seed);
-                    float y = scnoise(pos[i][1], pos[i][2], pos[i][0], pulsenum, seed);
-                    float z = scnoise(pos[i][2], pos[i][0], pos[i][1], pulsenum, seed);
-                    arr[i] = vec3f(x, y, z);
-                } else {
-                    arr[i] = scnoise(pos[i][0], pos[i][1], pos[i][2], pulsenum, seed);
-                }
+        if (!terrain->has_point_attr(attrName)) {
+            if (attrType == "float3") {
+                terrain->create_point_attr(attrName, zeno::vec3f());
             }
-        });
+            else if (attrType == "float") {
+                terrain->create_point_attr(attrName, 0.0f);
+            }
+        }
 
+        auto posLikeAttrName = get_input2_string("posLikeAttrName");
+        if (!terrain->has_point_attr(posLikeAttrName)) {
+            throw makeError<UnimplError>("no such data named `" + zsString2Std(posLikeAttrName) + "`");
+        }
+
+        const std::vector<vec3f>& pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
+
+        if (attrType == "float3") {
+            terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, zeno::vec3f old_val)->vec3f {
+                float x = scnoise(pos[i][0], pos[i][1], pos[i][2], pulsenum, seed);
+                float y = scnoise(pos[i][1], pos[i][2], pos[i][0], pulsenum, seed);
+                float z = scnoise(pos[i][2], pos[i][0], pos[i][1], pulsenum, seed);
+                return vec3f(x, y, z);
+                });
+        }
+        else if (attrType == "float") {
+            terrain->foreach_float_attr_update(ATTR_POINT, attrName, 0, [&](int i, float old_val)->float {
+                float fVal = scnoise(pos[i][0], pos[i][1], pos[i][2], pulsenum, seed);
+                return fVal;
+                });
+        }
         ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_noise_sparse_convolution, {/* inputs: */ {
-                                                {gParamType_Primitive, "prim_2DGrid", "", zeno::Socket_ReadOnly},
+                                                {gParamType_Geometry, "prim_2DGrid", "", zeno::Socket_ReadOnly},
                                                 {gParamType_String, "posLikeAttrName", "pos"},
                                                 {gParamType_Int, "pulsenum", "3"},
                                                 {gParamType_Int, "seed", "1"},
                                             },
                                             /* outputs: */
                                             {
-                                                {gParamType_Primitive, "prim_2DGrid"},
+                                                {gParamType_Geometry, "prim_2DGrid"},
                                             },
                                             /* params: */
                                             {
@@ -1438,13 +1443,13 @@ float noise_WorleyNoise3(float px, float py, float pz, int fType, int distType, 
 
 struct erode_noise_worley : INode {
     void apply() override {
-        auto terrain = ZImpl(get_input<PrimitiveObject>("prim_2DGrid"));
-        auto posLikeAttrName = ZImpl(get_input<StringObject>("posLikeAttrName"))->get();
-        if (!terrain->verts.has_attr(posLikeAttrName))
+        auto terrain = get_input_Geometry("prim_2DGrid");
+        auto posLikeAttrName = get_input2_string("posLikeAttrName");
+        if (!terrain->has_point_attr(posLikeAttrName))
         {
-            zeno::log_error("no such data named '{}'.", posLikeAttrName);
+            throw makeError<UnimplError>("no such data named '" + zsString2Std(posLikeAttrName) + "'");
         }
-        auto& pos = terrain->verts.attr<zeno::vec3f>(posLikeAttrName);
+        const auto& pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
         auto jitter = ZImpl(get_input2<float>("celljitter"));
         vec3f offset;
         if (!ZImpl(has_input("seed"))) {
@@ -1467,45 +1472,45 @@ struct erode_noise_worley : INode {
         if (distTypeStr == "Chebyshev") distType = 1;
         if (distTypeStr == "Manhattan") distType = 2;
 
-        auto attrName = ZImpl(get_param<std::string>("attrName"));
-        auto attrType = ZImpl(get_param<std::string>("attrType"));
+        auto attrName = get_input2_string("attrName");
+        auto attrType = get_input2_string("attrType");
 
-        if (!terrain->has_attr(attrName)) {
-            if (attrType == "float3") terrain->add_attr<zeno::vec3f>(attrName);
-            else if (attrType == "float") terrain->add_attr<float>(attrName);
+        if (!terrain->has_point_attr(attrName)) {
+            if (attrType == "float3") {
+                terrain->create_point_attr(attrName, vec3f());
+            }
+            else if (attrType == "float") {
+                terrain->create_point_attr(attrName, 0.0f);
+            }
         }
 
-        terrain->attr_visit(attrName, [&](auto& arr) {
-#pragma omp parallel for
-            for (int i = 0; i < arr.size(); i++)
-            {
-                if constexpr (is_decay_same_v<decltype(arr[i]), vec3f>)
-                {
-                    float x = noise_WorleyNoise3(pos[i][0], pos[i][1], pos[i][2], fType, distType, offset[0], offset[1], offset[2], jitter);
-                    float y = noise_WorleyNoise3(pos[i][1], pos[i][2], pos[i][0], fType, distType, offset[0], offset[1], offset[2], jitter);
-                    float z = noise_WorleyNoise3(pos[i][2], pos[i][0], pos[i][1], fType, distType, offset[0], offset[1], offset[2], jitter);
-                    arr[i] = vec3f(x, y, z);
-                }
-                else
-                {
-                    arr[i] = noise_WorleyNoise3(pos[i][0], pos[i][1], pos[i][2], fType, distType, offset[0], offset[1], offset[2], jitter);
-                }
-            }
-            });
-
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        if (attrType == "float3") {
+            terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, vec3f)->vec3f {
+                float x = noise_WorleyNoise3(pos[i][0], pos[i][1], pos[i][2], fType, distType, offset[0], offset[1], offset[2], jitter);
+                float y = noise_WorleyNoise3(pos[i][1], pos[i][2], pos[i][0], fType, distType, offset[0], offset[1], offset[2], jitter);
+                float z = noise_WorleyNoise3(pos[i][2], pos[i][0], pos[i][1], fType, distType, offset[0], offset[1], offset[2], jitter);
+                return vec3f(x, y, z);
+                });
+        }
+        else if (attrType == "float") {
+            terrain->foreach_float_attr_update(ATTR_POINT, attrName, 0, [&](int i, float)->float {
+                float fVal = noise_WorleyNoise3(pos[i][0], pos[i][1], pos[i][2], fType, distType, offset[0], offset[1], offset[2], jitter);
+                return fVal;
+                });
+        }
+        set_output("prim_2DGrid", terrain);
     }
 };
 ZENDEFNODE(erode_noise_worley,
     { /* inputs: */ {
-        {gParamType_Primitive, "prim_2DGrid", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim_2DGrid", "", zeno::Socket_ReadOnly},
         {gParamType_Vec3f, "seed", "0,0,0"},
         {gParamType_String, "posLikeAttrName", "pos"},
         {gParamType_Float, "celljitter", "1"},
         {"enum Euclidean Chebyshev Manhattan", "distType", "Euclidean"},
         {"enum F1 F2-F1", "fType", "F1"},
     }, /* outputs: */ {
-        {gParamType_Primitive, "prim_2DGrid"},
+        {gParamType_Geometry, "prim_2DGrid"},
     }, /* params: */ {
         {gParamType_String, "attrName", "noise"},
         {"enum float float3", "attrType", "float"},
