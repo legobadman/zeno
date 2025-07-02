@@ -104,10 +104,13 @@ QWidget* ParamTreeItemDelegate::createEditor(QWidget* parent, const QStyleOption
     bool bEditable = pItem->isEditable();
     if (!bEditable)
         return nullptr;
-    return QStyledItemDelegate::createEditor(parent, option, index);
+    QLineEdit* lineedit = new QLineEdit(parent);
+    lineedit->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    return lineedit;
+    //return QStyledItemDelegate::createEditor(parent, option, index);
 }
 
-void ParamTreeItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const 
+void ParamTreeItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
 {
     QString oldName = index.data().toString();
     QString newName = editor->property(editor->metaObject()->userProperty().name()).toString();
@@ -122,9 +125,20 @@ void ParamTreeItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *mo
     }
 }
 
+void ParamTreeItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+{
+	QString value = index.model()->data(index, Qt::EditRole).toString();
+	QLineEdit* lineedit = qobject_cast<QLineEdit*>(editor);
+	if (lineedit) {
+		lineedit->setText(value);
+	}
+}
+
 void ParamTreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
                                   const QModelIndex &index) const {
-    QStyledItemDelegate::paint(painter, option, index);
+    QStyleOptionViewItem opt(option);
+    opt.displayAlignment = Qt::AlignVCenter;
+    QStyledItemDelegate::paint(painter, opt, index);
 }
 
 outputListItemDelegate::outputListItemDelegate(QStandardItemModel* model, zeno::NodeDataGroup group, QObject* parent)
@@ -147,7 +161,11 @@ QWidget* outputListItemDelegate::createEditor(QWidget* parent, const QStyleOptio
     bool bEditable = pItem->isEditable();
     if (!bEditable)
         return nullptr;
-    return QStyledItemDelegate::createEditor(parent, option, index);
+	QLineEdit* lineedit = new QLineEdit(parent);
+	lineedit->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    lineedit->setStyleSheet("QLineEdit { padding: 0px;}");
+    return lineedit;
+    //return QStyledItemDelegate::createEditor(parent, option, index);
 }
 
 void outputListItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
@@ -165,9 +183,20 @@ void outputListItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* m
     }
 }
 
+void outputListItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
+{
+	QString value = index.model()->data(index, Qt::EditRole).toString();
+	QLineEdit* lineedit = qobject_cast<QLineEdit*>(editor);
+	if (lineedit) {
+		lineedit->setText(value);
+	}
+}
+
 void outputListItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
     const QModelIndex& index) const {
-    QStyledItemDelegate::paint(painter, option, index);
+    QStyleOptionViewItem opt(option);
+    opt.displayAlignment = Qt::AlignVCenter;
+    QStyledItemDelegate::paint(painter, opt, index);
 }
 
 
@@ -254,6 +283,7 @@ ZEditParamLayoutDlg::ZEditParamLayoutDlg(CustomUIModel* pModel, QWidget* parent)
     const QModelIndex& wtfIdx = m_paramsLayoutM_inputs->index(0, 0);
     selModelInputPrims->setCurrentIndex(wtfIdx, QItemSelectionModel::SelectCurrent);
     m_ui->paramsView->expandAll();
+    m_ui->paramsView->setDragEnabled(false);    //拖动会崩溃，先禁用
 
     connect(selModelInputPrims, &QItemSelectionModel::currentChanged,
         [&](const QModelIndex& current, const QModelIndex& previous) {
@@ -311,6 +341,12 @@ ZEditParamLayoutDlg::ZEditParamLayoutDlg(CustomUIModel* pModel, QWidget* parent)
     m_ui->outputsView->installEventFilter(this);
     m_ui->objInputsView->installEventFilter(this);
     m_ui->objOutputsView->installEventFilter(this);
+
+    QFontMetrics fm(m_ui->outputsView->font());
+    auto itemHeightStyle = "QListView::item { height: " + QString::number(ZenoStyle::dpiScaled(fm.height() + 4)) + "px; }";
+	m_ui->outputsView->setStyleSheet(itemHeightStyle);
+	m_ui->objInputsView->setStyleSheet(itemHeightStyle);
+	m_ui->objOutputsView->setStyleSheet(itemHeightStyle);
 
     connect(m_ui->editMin, SIGNAL(editingFinished()), this, SLOT(onMinEditFinished()));
     connect(m_ui->editMax, SIGNAL(editingFinished()), this, SLOT(onMaxEditFinished()));

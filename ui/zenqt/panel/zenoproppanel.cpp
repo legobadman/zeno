@@ -738,8 +738,12 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
     pLayout->addWidget(pIcon, row, 0, Qt::AlignCenter);
 
     pLayout->addWidget(pLabel, row, 1, Qt::AlignLeft | Qt::AlignVCenter);
-    if (pControl)
+    if (pControl) {
+		if (ZCodeEditor* pCodeEditor = qobject_cast<ZCodeEditor*>(pControl)) {
+			pCodeEditor->setFixedHeight(this->height() - ZenoStyle::dpiScaled(60));
+		}
         pLayout->addWidget(pControl, row, 2, Qt::AlignVCenter);
+    }
 
     if (ZLineEdit* pLineEdit = qobject_cast<ZLineEdit*>(pControl)) {
         pLineEdit->setHintListWidget(m_hintlist.get(), m_descLabel.get());
@@ -748,7 +752,6 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
         pVecEdit->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
     else if (ZCodeEditor* pCodeEditor = qobject_cast<ZCodeEditor*>(pControl)) {
-        pCodeEditor->setFixedHeight(this->height() - ZenoStyle::dpiScaled(30));
         pCodeEditor->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
 
@@ -1267,7 +1270,7 @@ void ZenoPropPanel::resizeEvent(QResizeEvent* e)
         for (auto& [_, group] : tab) {
             for (auto& [_, control] : group) {
                 if (ZCodeEditor* pCodeEditor = qobject_cast<ZCodeEditor*>(control.pControl)) {
-                    pCodeEditor->setFixedHeight(this->height() - ZenoStyle::dpiScaled(30));
+                    pCodeEditor->setFixedHeight(this->height() - ZenoStyle::dpiScaled(60));
                 }
             }
         }

@@ -1,4 +1,4 @@
-#ifndef __ZEDIT_PARAM_LAYOUT_DLG_H__
+﻿#ifndef __ZEDIT_PARAM_LAYOUT_DLG_H__
 #define __ZEDIT_PARAM_LAYOUT_DLG_H__
 
 /*
@@ -35,6 +35,7 @@ public:
         const QModelIndex& index) const override;
 
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
+    void setEditorData(QWidget* editor, const QModelIndex& index) const override;
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
     std::function<bool(bool, QString)> m_isGlobalUniqueFunc;
@@ -56,6 +57,7 @@ public:
         const QModelIndex& index) const override;
 
     void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
+    void setEditorData(QWidget* editor, const QModelIndex& index) const override;
     void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
     std::function<bool(bool, QString)> m_isGlobalUniqueFunc;
