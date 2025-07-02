@@ -1142,6 +1142,10 @@ void NodeImpl::constructReference(const std::string& param_name) {
 }
 
 void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
+    if (m_pGraph->isAssetRoot()) {
+        //资产图不会执行，无须构造引用关系
+        return;
+    }
     std::set<std::pair<std::string, std::string>> refSources = resolveReferSource(target_param->defl);
     auto newAdded = refSources;
 

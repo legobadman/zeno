@@ -103,6 +103,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     CALLBACK_REGIST(clear, void)
 
     bool isAssets() const;
+    bool isAssetRoot() const;
     std::set<std::string> searchByClass(const std::string& name) const;
 
     void clearNodes();

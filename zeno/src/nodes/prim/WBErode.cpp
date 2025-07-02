@@ -4,6 +4,7 @@
 
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/parallel_reduce.h>
 #include <zeno/types/ListObject_impl.h>
@@ -2572,13 +2573,12 @@ ZENDEFNODE(HF_rotate_displacement_2d,
 
 struct HF_remap : INode {
     void apply() override {
-        auto terrain = ZImpl(get_input<PrimitiveObject>("prim"));
-        auto remapLayer = ZImpl(get_input2<std::string>("remap layer"));
-        if (!terrain->verts.has_attr(remapLayer)) {
-            zeno::log_error("Node [HF_remap], no such data layer named '{}'.",
-                            remapLayer);
+        auto terrain = get_input_Geometry("prim");
+        auto remapLayer = get_input2_string("remap layer");
+        if (!terrain->has_point_attr(remapLayer)) {
+            throw makeError<UnimplError>("Node [HF_remap], no such data layer named '" + zsString2Std(remapLayer) + "'");
         }
-        auto& var = terrain->verts.attr<float>(remapLayer);
+        const auto& var = terrain->get_float_attr(ATTR_POINT, remapLayer);
         auto autoCompute = ZImpl(get_input2<bool>("Auto Compute input range"));
         auto inMin = ZImpl(get_input2<float>("input min"));
         auto inMax = ZImpl(get_input2<float>("input max"));
@@ -2594,50 +2594,47 @@ struct HF_remap : INode {
             inMax = zeno::parallel_reduce_array<float>(var.size(), var[0], [&] (size_t i) -> float { return var[i]; },
             [&] (float i, float j) -> float { return zeno::max(i, j); });
         }
-#pragma omp parallel for
-        for (int i = 0; i < terrain->verts.size(); i++)
-        {
-            if (var[i] < inMin)
-            {
-                if (clampMin)
-                {
-                    var[i] = outMin;
+
+        terrain->foreach_float_attr_update(ATTR_POINT, remapLayer, 0, [&](int i, float old_val)->float {
+            float new_val = old_val;
+            if (old_val < inMin) {
+                if (clampMin) {
+                    new_val = outMin;
+                }
+                else {
+                    new_val -= inMin;
+                    new_val += outMin;
+                }
+            }
+            else if (old_val > inMax) {
+                if (clampMax) {
+                    new_val = outMax;
                 }
                 else
                 {
-                    var[i] -= inMin;
-                    var[i] += outMin;
+                    new_val -= inMax;
+                    new_val += outMax;
                 }
             }
-            else if (var[i] > inMax)
-            {
-                if (clampMax)
-                {
-                    var[i] = outMax;
-                }
-                else
-                {
-                    var[i] -= inMax;
-                    var[i] += outMax;
-                }
+            else {
+                new_val = fit(new_val, inMin, inMax, 0, 1);
+                new_val = curve.eval(new_val);
+                new_val = fit(new_val, 0, 1, outMin, outMax);
             }
-            else
-            {
-                var[i] = fit(var[i], inMin, inMax, 0, 1);
-                var[i] = curve.eval(var[i]);
-                var[i] = fit(var[i], 0, 1, outMin, outMax);
-            }
-            if (remapLayer == "height"){
+            /* TODO
+            if (remapLayer == "height") {
                 terrain->verts.attr<zeno::vec3f>("pos")[i][1] = var[i];
             }
-        }
+            */
+            return new_val;
+            });
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        set_output("prim", terrain);
     }
 };
 ZENDEFNODE(HF_remap,
            { /* inputs: */ {
-               {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+               {gParamType_Geometry, "prim"},
                {gParamType_String, "remap layer", "height"},
                {gParamType_Bool, "Auto Compute input range", "0"},
                {gParamType_Float, "input min", "0"},
@@ -2648,8 +2645,8 @@ ZENDEFNODE(HF_remap,
                {gParamType_Bool, "clamp min", "0"},
                {gParamType_Bool, "clamp max", "0"}
            }, /* outputs: */ {
-{gParamType_Primitive, "prim"},
-}, /* params: */ {
+               {gParamType_Geometry, "prim"},
+           }, /* params: */ {
            }, /* category: */ {
                "deprecated",
            } });

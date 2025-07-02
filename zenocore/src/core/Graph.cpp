@@ -751,6 +751,17 @@ bool Graph::isAssets() const
     return m_bAssets;
 }
 
+bool Graph::isAssetRoot() const
+{
+    NodeImpl* pNode = m_parSubnetNode;
+    const Graph* pGraph = this;
+    while (pNode) {
+        pGraph = pNode->getGraph();
+        pNode = pGraph->m_parSubnetNode;
+    }
+    return pGraph->m_bAssets;
+}
+
 std::set<std::string> Graph::searchByClass(const std::string& name) const
 {
     auto it = node_set.find(name);
@@ -1029,6 +1040,8 @@ zeno::NodeImpl* Graph::getNodeByPath(const std::string& pa)
     std::string nodename = pathitems.back();
     pathitems.pop_back();
     auto spGraph = _getGraphByPath(pathitems);
+    if (!spGraph)
+        return nullptr;
     return spGraph->getNode(nodename);
 }
 

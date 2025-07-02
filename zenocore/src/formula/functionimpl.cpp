@@ -16,6 +16,7 @@
 #include <zeno/utils/interfaceutil.h>
 #include <zeno/core/data.h>
 #include <zeno/core/FunctionManager.h>
+#include <zeno/utils/parallel_reduce.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/geo/kdsearch.h>
 #include <random>
@@ -45,6 +46,32 @@ namespace zeno
                     return T(val);
                 }
                 }, value);
+        }
+
+        template <class T>
+        static T prim_reduce(std::vector<T> const& temp, std::string type)
+        {
+            if (type == std::string("avg")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), T(0), [&](size_t i) -> T { return temp[i]; },
+                    [&](T i, T j) -> T { return i + j; });
+                return total / (T)(temp.size());
+            }
+            if (type == std::string("max")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), temp[0], [&](size_t i) -> T { return temp[i]; },
+                    [&](T i, T j) -> T { return zeno::max(i, j); });
+                return total;
+            }
+            if (type == std::string("min")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), temp[0], [&](size_t i) -> T { return temp[i]; },
+                    [&](T i, T j) -> T { return zeno::min(i, j); });
+                return total;
+            }
+            if (type == std::string("absmax")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), temp[0], [&](size_t i) -> T { return zeno::abs(temp[i]); },
+                    [&](T i, T j) -> T { return zeno::max(i, j); });
+                return total;
+            }
+            return T(0);
         }
 
         template <class T>
@@ -1878,6 +1905,42 @@ namespace zeno
                     }
                     return ret;
                 }
+            }
+            if (funcname == "primreduce") {
+                auto _attrName = get_zfxvar<std::string>(args[0].value[0]);
+                zeno::String attrName = stdString2zs(_attrName);
+                auto op = get_zfxvar<std::string>(args[1].value[0]);
+                auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
+                zeno::GeoAttrType type = spGeo->get_attr_type(ATTR_POINT, attrName);
+                zeno::NumericValue result;
+                if (zeno::ATTR_FLOAT == type) {
+                    std::vector<float> attrData = spGeo->get_float_attr(ATTR_POINT, attrName);
+                    result = prim_reduce(attrData, op);
+                }
+                else if (zeno::ATTR_VEC3 == type) {
+                    std::vector<zeno::vec3f> attrData = spGeo->get_vec3f_attr(ATTR_POINT, attrName);
+                    result = prim_reduce(attrData, op);
+                }
+                else {
+                    throw makeError<UnimplError>("attr type unknown when calling primreduce");
+                }
+                ZfxVariable ret;
+                std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, int>) {
+                        ret.value.push_back(arg);
+                    }
+                    else if constexpr (std::is_same_v<T, float>) {
+                        ret.value.push_back(arg);
+                    }
+                    else if constexpr (std::is_same_v<T, zeno::vec3f>) {
+                        ret.value.push_back(glm::vec3(arg[0], arg[1], arg[2]));
+                    }
+                    else {
+                        throw makeError<UnimplError>("unknown type");
+                    }
+                }, result);
+                return ret;
             }
             if (funcname == "clamp") {
                 const ZfxVariable& var = args[0];
