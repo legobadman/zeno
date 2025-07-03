@@ -1103,7 +1103,7 @@ namespace zeno {
                 std::shared_ptr<ZfxASTNode> zenvarNode = root->children[0];
                 if (zenvarNode->bAttr) {
                     //无须把值拎出来再计算，直接往属性数据内部设置
-                    const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
+                    std::string attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
                     //DEBUG:
 #if 0
                     if (attrname == "type") {
@@ -1111,6 +1111,9 @@ namespace zeno {
                         j = 0;
                     }
 #endif
+                    if (attrname == "P") {
+                        attrname = "pos";
+                    }
 
                     std::string channel;
                     if (zenvarNode->opVal == COMPVISIT) {
