@@ -363,6 +363,24 @@ Qan.GraphView {
         nodeDelegate: Qt.createComponent("qrc:/NormalNode.qml")
         selectionColor: Qt.rgba(250/255, 100/255, 0, 1.0)
 
+        Item {
+            id: nodeClickStatus
+            property bool moving : false
+            property bool doubleClicked: false
+            property var node: null
+
+            Timer {
+                id: singleClickTimer
+                interval: 300
+                running: false
+                repeat: false
+                onTriggered: {
+                    var path_list = graphView.graphModel.path()
+                    graphsmanager.onNodeSelected(path_list, nodeClickStatus.node.index)
+                }
+            }
+        }
+
         Component.onCompleted: {
             //graph.model.name()
 
@@ -380,8 +398,6 @@ Qan.GraphView {
                 graphView.temp_edge_close()
             }
             graphView.nodeClicked(node)
-            var path_list = graphView.graphModel.path()
-            graphsmanager.onNodeSelected(path_list, node.index)
         }
         onNodeRightClicked: function(node) {
             var nodeType = graphView.graphModel.data(node.index, Model.ROLE_NODETYPE)
@@ -391,12 +407,25 @@ Qan.GraphView {
                 nodeMenu.popup(mousepos)
             }
         }
-        onNodeDoubleClicked: function(node) { notifyUser( "Node <b>" + node.label + "</b> double clicked" ) }
+        onNodeDoubleClicked: function(node) {
+            nodeClickStatus.doubleClicked = true
+            singleClickTimer.stop()
+            notifyUser( "Node <b>" + node.label + "</b> double clicked" )
+        }
         onNodeMoved: function(node) {
             var idx = node.index
             var x = node.item.x
             var y = node.item.y
             model.setData(idx, Qt.point(x, y), Model.ROLE_OBJPOS)
+            nodeClickStatus.moving = true
+        }
+        onNodeClickReleased : function(node, pos){
+            if(!singleClickTimer.running && !nodeClickStatus.doubleClicked && !nodeClickStatus.moving) {
+                nodeClickStatus.node = node
+                singleClickTimer.start()
+            }
+            nodeClickStatus.doubleClicked = false
+            nodeClickStatus.moving = false
         }
 
         onNodeSocketClicked: function(node, group, name, socket_pos) {
