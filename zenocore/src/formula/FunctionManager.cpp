@@ -1393,6 +1393,43 @@ namespace zeno {
                     throw makeError<UnimplError>("op error");
                 }
             }
+            case NEGATIVE: {
+                if (root->children.size() != 1) {
+                    throw makeError<UnimplError>("NEGATIVE number is missing");
+                }
+
+                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
+                ZfxVariable arg = args[0];
+                const int N = arg.value.size();
+                ZfxVariable result;
+                result.value.resize(N);
+
+                for (int i = 0; i < N; i++)
+                {
+                    result.value[i] = std::visit([&](auto& arg) -> zfxvariant {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                            return -1 * arg;
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec2>)
+                        {
+                            return glm::vec2{ -1 * arg[0], -1 * arg[1] };
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec3>)
+                        {
+                            return glm::vec3{ -1 * arg[0], -1 * arg[1], -1 * arg[2] };
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec4>)
+                        {
+                            return glm::vec4{ -1 * arg[0], -1 * arg[1], -1 * arg[2], -1 * arg[3] };
+                        }
+                        else {
+                            throw makeError<UnimplError>("NEGATIVE number type is invalid");
+                        }
+                        }, arg.value[i]);
+                }
+                return result;
+            }
             case ATTR_VISIT: {
                 if (root->children.size() != 2) {
                     throw makeError<UnimplError>("op args at attr visit");

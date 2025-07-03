@@ -1942,6 +1942,27 @@ namespace zeno
                 }, result);
                 return ret;
             }
+            if (funcname == "abs") {
+                const ZfxVariable& var = args[0];
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->zfxvariant {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            return std::abs(_arg);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            return std::abs(_arg);
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept int or float on `abs`");
+                        }
+                        }, var.value[i]);
+                }
+                return ret;
+            }
             if (funcname == "clamp") {
                 const ZfxVariable& var = args[0];
                 const ZfxVariable& arg_min = args[1], arg_max = args[2];
@@ -2056,7 +2077,7 @@ namespace zeno
                 }
                 return ret;
             }
-            throw makeError<UnimplError>("unknown function call");
+            throw makeError<UnimplError>("unknown function call `" + funcname + "`");
         }
     }
 }

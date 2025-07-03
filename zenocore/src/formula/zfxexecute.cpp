@@ -182,6 +182,15 @@ std::shared_ptr<ZfxASTNode> ZfxExecute::makeQuoteStringNode(std::string text) {
     return spNode;
 }
 
+std::shared_ptr<ZfxASTNode> ZfxExecute::makeNegativeNode(std::shared_ptr<ZfxASTNode> exp) {
+    std::shared_ptr<ZfxASTNode> spNode = std::make_shared<ZfxASTNode>();
+    spNode->type = NEGATIVE;
+    spNode->opVal = NEG;
+    if (exp)
+        spNode->children.push_back(exp);
+    return spNode;
+}
+
 void ZfxExecute::setASTResult(std::shared_ptr<ZfxASTNode> pNode) {
     m_root = pNode;
 }

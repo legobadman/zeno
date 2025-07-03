@@ -435,7 +435,7 @@ term: NUMBER            { $$ = driver.makeNewNumberNode($1); }
     | LITERAL           { $$ = driver.makeStringNode($1); }
     | UNCOMPSTR         { $$ = driver.makeQuoteStringNode($1); }
     | LPAREN exp-statement RPAREN { $$ = $2; }
-    | SUB exp-statement %prec NEG { $2->value = -1 * std::get<float>($2->value); $$ = $2; }
+    | SUB exp-statement %prec NEG { $$ = driver.makeNegativeNode($2); }
     | zenvar            { $$ = $1; }
     | VARNAME func-content  { 
         $$ = $2;
