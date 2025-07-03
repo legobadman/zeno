@@ -497,7 +497,8 @@ std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGra
                 auto spNewSubnetNode = newGraph->createNode(cls, name, true, spNode->get_pos());
             }
             else {
-                NodeImpl* spNewNode = newGraph->createNode(cls, name);
+                //打开ioinit,这里类似io的导入数据，而非直接创建
+                NodeImpl* spNewNode = newGraph->createNode(cls, name, false, spNode->get_pos(), true);
                 nodeDat = spNode->exportInfo();
                 spNewNode->init(nodeDat);
             }
