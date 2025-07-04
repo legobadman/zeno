@@ -1963,6 +1963,52 @@ namespace zeno
                 }
                 return ret;
             }
+            if (funcname == "min") {
+                const ZfxVariable& var = args[0];
+                float cmpval = get_zfxvar<float>(args[1].value[0]);
+                //TODO: 目前只考虑一个数值的min
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->zfxvariant {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            return zeno::min(cmpval, std::abs(_arg));
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            return zeno::min(cmpval, std::abs(_arg));
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept int or float on `abs`");
+                        }
+                        }, var.value[i]);
+                }
+                return ret;
+            }
+            if (funcname == "max") {
+                const ZfxVariable& var = args[0];
+                float cmpval = get_zfxvar<float>(args[1].value[0]);
+                //TODO: 目前只考虑一个数值的min
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->zfxvariant {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            return zeno::max(cmpval, std::abs(_arg));
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            return zeno::max(cmpval, std::abs(_arg));
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept int or float on `abs`");
+                        }
+                        }, var.value[i]);
+                }
+                return ret;
+            }
             if (funcname == "clamp") {
                 const ZfxVariable& var = args[0];
                 const ZfxVariable& arg_min = args[1], arg_max = args[2];
@@ -1974,7 +2020,7 @@ namespace zeno
                 ZfxVariable ret;
                 ret.value.resize(N);
                 for (int i = 0; i < N; i++) {
-                    ret.value[i] = std::visit([&](auto&& _arg)->int {
+                    ret.value[i] = std::visit([&](auto&& _arg)->float {
                         using T = std::decay_t<decltype(_arg)>;
                         if constexpr (std::is_same_v<T, int>) {
                             return std::min(std::max((float)_arg, min), max);
@@ -1983,7 +2029,7 @@ namespace zeno
                             return std::min(std::max(_arg, min), max);
                         }
                         else {
-                            throw makeError<UnimplError>("only accept arr type on `len`");
+                            throw makeError<UnimplError>("only accept int or float on `clamp`");
                         }
                         }, var.value[i]);
                 }
