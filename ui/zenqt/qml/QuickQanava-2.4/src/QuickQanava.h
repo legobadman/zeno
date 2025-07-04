@@ -1,4 +1,4 @@
-/*
+﻿/*
  Copyright (c) 2008-2023, Benoit AUTHEMAN All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@ struct QuickQanava {
             engine->rootContext()->setContextProperty("defaultNodeStyle", QVariant::fromValue(qan::Node::style()));
             engine->rootContext()->setContextProperty("defaultEdgeStyle", QVariant::fromValue(qan::Edge::style()));
             engine->rootContext()->setContextProperty("defaultGroupStyle", QVariant::fromValue(qan::Group::style()));
+            engine->rootContext()->setContextProperty("doubleClickInterval", QVariant::fromValue(QApplication::doubleClickInterval()));
 
             engine->rootContext()->setContextProperty("qanEdgeStraightPathComponent", new QQmlComponent(engine, "qrc:/QuickQanava/EdgeStraightPath.qml"));
             engine->rootContext()->setContextProperty("qanEdgeOrthoPathComponent", new QQmlComponent(engine, "qrc:/QuickQanava/EdgeOrthoPath.qml"));

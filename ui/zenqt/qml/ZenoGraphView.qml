@@ -365,13 +365,14 @@ Qan.GraphView {
 
         Item {
             id: nodeClickStatus
-            property bool moving : false
-            property bool doubleClicked: false
+            property var clickedCount: 0
             property var node: null
+            property var originX : 0
+            property var originY : 0
 
             Timer {
                 id: singleClickTimer
-                interval: 300
+                interval: doubleClickInterval
                 running: false
                 repeat: false
                 onTriggered: {
@@ -398,6 +399,9 @@ Qan.GraphView {
                 graphView.temp_edge_close()
             }
             graphView.nodeClicked(node)
+
+            nodeClickStatus.originX = node.item.x
+            nodeClickStatus.originY = node.item.y
         }
         onNodeRightClicked: function(node) {
             var nodeType = graphView.graphModel.data(node.index, Model.ROLE_NODETYPE)
@@ -408,8 +412,11 @@ Qan.GraphView {
             }
         }
         onNodeDoubleClicked: function(node) {
-            nodeClickStatus.doubleClicked = true
             singleClickTimer.stop()
+            var nodeType = model.data(node.index, Model.ROLE_NODETYPE)
+            if(nodeType != NodeType.Node_AssetInstance && nodeType != NodeType.Node_SubgraphNode) {
+                nodeClickStatus.clickedCount = 2
+            }
             notifyUser( "Node <b>" + node.label + "</b> double clicked" )
         }
         onNodeMoved: function(node) {
@@ -417,15 +424,18 @@ Qan.GraphView {
             var x = node.item.x
             var y = node.item.y
             model.setData(idx, Qt.point(x, y), Model.ROLE_OBJPOS)
-            nodeClickStatus.moving = true
         }
         onNodeClickReleased : function(node, pos){
-            if(!singleClickTimer.running && !nodeClickStatus.doubleClicked && !nodeClickStatus.moving) {
-                nodeClickStatus.node = node
-                singleClickTimer.start()
+            if(!singleClickTimer.running) {
+                if(nodeClickStatus.clickedCount != 2) {//如果是doubleclick触发第二次release，不执行
+                    //单击时可能误移动一小段，4以内视为单击
+                    if(Math.abs(node.item.x - nodeClickStatus.originX) <= 4 && Math.abs(node.item.y - nodeClickStatus.originY) <= 4) {
+                        nodeClickStatus.node = node
+                        singleClickTimer.start()
+                    }
+                }
             }
-            nodeClickStatus.doubleClicked = false
-            nodeClickStatus.moving = false
+            nodeClickStatus.clickedCount = 0
         }
 
         onNodeSocketClicked: function(node, group, name, socket_pos) {
