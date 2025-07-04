@@ -426,13 +426,14 @@ Qan.GraphView {
             model.setData(idx, Qt.point(x, y), Model.ROLE_OBJPOS)
         }
         onNodeClickReleased : function(node, pos){
-            if(!singleClickTimer.running) {
-                if(nodeClickStatus.clickedCount != 2) {//如果是doubleclick触发第二次release，不执行
-                    //单击时可能误移动一小段，4以内视为单击
-                    if(Math.abs(node.item.x - nodeClickStatus.originX) <= 4 && Math.abs(node.item.y - nodeClickStatus.originY) <= 4) {
-                        nodeClickStatus.node = node
-                        singleClickTimer.start()
-                    }
+            if(nodeClickStatus.clickedCount != 2) {//如果是doubleclick触发第二次release，不执行
+                if(singleClickTimer.running) {
+                    singleClickTimer.stop()
+                }
+                //单击时可能误移动一小段，4以内视为单击
+                if(Math.abs(node.item.x - nodeClickStatus.originX) <= 4 && Math.abs(node.item.y - nodeClickStatus.originY) <= 4) {
+                    nodeClickStatus.node = node
+                    singleClickTimer.start()
                 }
             }
             nodeClickStatus.clickedCount = 0
