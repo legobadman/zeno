@@ -1170,7 +1170,7 @@ struct erode_noise_sparse_convolution : INode {
                 return fVal;
                 });
         }
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        set_output("prim_2DGrid", terrain);
     }
 };
 ZENDEFNODE(erode_noise_sparse_convolution, {/* inputs: */ {
