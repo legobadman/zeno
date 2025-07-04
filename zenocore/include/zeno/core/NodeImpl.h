@@ -299,6 +299,8 @@ namespace zeno
         //preApply是先解决所有输入参数（上游）的求值问题
         void preApply(CalcContext* pContext);
         void preApply_Primitives(CalcContext* pContext);
+        void preApply_SwitchIf(CalcContext* pContext);
+        void preApply_SwitchBetween(CalcContext* pContext);
         void commit_to_render(UpdateReason reason);
         void bypass();
         CustomUI _deflCustomUI() const;
@@ -307,8 +309,6 @@ namespace zeno
         void preApplyTimeshift(CalcContext* pContext);
         //foreach特供
         void foreachend_apply(CalcContext* pContext);
-        void switchif_apply(CalcContext* pContext);
-        void switchbetween_apply(CalcContext* pContext);
         void init_output_container_updateinfo();
 
         std::string m_name;

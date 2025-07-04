@@ -636,6 +636,71 @@ void NodeImpl::preApply(CalcContext* pContext) {
     }
 }
 
+void NodeImpl::preApply_SwitchIf(CalcContext* pContext) {
+    preApply_Primitives(pContext);
+
+    const zeno::reflect::Any& res = this->get_param_result("Condition");
+    int cond = zeno::reflect::any_cast<int>(res);
+    if (cond != 0) {
+        requireInput("If True", pContext);
+    }
+    else {
+        requireInput("If False", pContext);
+    }
+}
+
+void NodeImpl::preApply_SwitchBetween(CalcContext* pContext) {
+    preApply_Primitives(pContext);
+
+    int cond = zeno::reflect::any_cast<int>(get_param_result("cond1"));
+    if (cond != 0) {
+        requireInput("b1", pContext);
+        return;
+    }
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond2"));
+    if (cond != 0) {
+        requireInput("b2", pContext);
+        return;
+    }
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond3"));
+    if (cond != 0) {
+        requireInput("b3", pContext);
+        return;
+    }
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond4"));
+    if (cond != 0) {
+        requireInput("b4", pContext);
+        return;
+    }
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond5"));
+    if (cond != 0) {
+        requireInput("b5", pContext);
+        return;
+    }
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond6"));
+    if (cond != 0) {
+        requireInput("b6", pContext);
+        return;
+    }
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond7"));
+    if (cond != 0) {
+        requireInput("b7", pContext);
+        return;
+    }
+
+    cond = zeno::reflect::any_cast<int>(get_param_result("cond8"));
+    if (cond != 0) {
+        requireInput("b8", pContext);
+        return;
+    }
+}
+
 void NodeImpl::preApply_Primitives(CalcContext* pContext) {
     if (!m_dirty)
         return;
@@ -686,49 +751,6 @@ void NodeImpl::preApplyTimeshift(CalcContext* pContext)
     propagateDirty(this, "$F");
 
     preApply(pContext);
-}
-
-void NodeImpl::switchif_apply(CalcContext* pContext)
-{
-    //获取Condition的结果
-    const zeno::reflect::Any& res = this->get_param_result("Condition");
-    int cond = zeno::reflect::any_cast<int>(res);
-    if (cond != 0) {
-        requireInput("If True", pContext);
-    }
-    else {
-        requireInput("If False", pContext);
-    }
-    apply();
-}
-
-void NodeImpl::switchbetween_apply(CalcContext* pContext)
-{
-    int cond = zeno::reflect::any_cast<int>(get_param_result("cond1"));
-    if (cond != 0) requireInput("b1", pContext);
-
-    cond = zeno::reflect::any_cast<int>(get_param_result("cond2"));
-    if (cond != 0) requireInput("b2", pContext);
-
-    cond = zeno::reflect::any_cast<int>(get_param_result("cond3"));
-    if (cond != 0) requireInput("b3", pContext);
-
-    cond = zeno::reflect::any_cast<int>(get_param_result("cond4"));
-    if (cond != 0) requireInput("b4", pContext);
-
-    cond = zeno::reflect::any_cast<int>(get_param_result("cond5"));
-    if (cond != 0) requireInput("b5", pContext);
-
-    cond = zeno::reflect::any_cast<int>(get_param_result("cond6"));
-    if (cond != 0) requireInput("b6", pContext);
-
-    cond = zeno::reflect::any_cast<int>(get_param_result("cond7"));
-    if (cond != 0) requireInput("b7", pContext);
-
-    cond = zeno::reflect::any_cast<int>(get_param_result("cond8"));
-    if (cond != 0) requireInput("b8", pContext);
-
-    apply();
 }
 
 void NodeImpl::foreachend_apply(CalcContext* pContext)
@@ -2087,7 +2109,11 @@ void NodeImpl::doApply(CalcContext* pContext) {
 
     if (m_nodecls == "TimeShift") {
         preApplyTimeshift(pContext);
-    } else if (m_nodecls == "ForEachEnd" || m_nodecls == "SwitchIf" || m_nodecls == "SwitchBetween") {
+    } else if (m_nodecls == "SwitchIf") {
+        preApply_SwitchIf(pContext);
+    } else if (m_nodecls == "SwitchBetween") {
+        preApply_SwitchBetween(pContext);
+    } else if (m_nodecls == "ForEachEnd") {
         preApply_Primitives(pContext);
     } else {
         preApply(pContext);
@@ -2109,12 +2135,6 @@ void NodeImpl::doApply(CalcContext* pContext) {
             reportStatus(true, Node_Running);
             if (m_nodecls == "ForEachEnd") {
                 foreachend_apply(pContext);
-            } 
-            else if (m_nodecls == "SwitchIf") {
-                switchif_apply(pContext);
-            }
-            else if (m_nodecls == "SwitchBetween") {
-                switchbetween_apply(pContext);
             }
             else {
                 apply();
