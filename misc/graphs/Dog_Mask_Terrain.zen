@@ -2362,7 +2362,7 @@
                                             "显示Mask": {
                                                 "links": [
                                                     {
-                                                        "out-node": "Use Mask",
+                                                        "out-node": "显示Mask",
                                                         "out-socket": "port",
                                                         "out-key": "",
                                                         "in-key": "",
@@ -2453,7 +2453,15 @@
                                                 "visible": false
                                             },
                                             "Use Mask": {
-                                                "links": null,
+                                                "links": [
+                                                    {
+                                                        "out-node": "Use Mask",
+                                                        "out-socket": "port",
+                                                        "out-key": "",
+                                                        "in-key": "",
+                                                        "target-socket": ""
+                                                    }
+                                                ],
                                                 "type": "bool",
                                                 "default-value": false,
                                                 "control": {
@@ -2461,7 +2469,7 @@
                                                 },
                                                 "controlProps": null,
                                                 "socket-type": "primitive",
-                                                "visible": false
+                                                "visible": true
                                             },
                                             "Mask Layer": {
                                                 "links": null,
@@ -3828,7 +3836,7 @@
                                                     },
                                                     "uipos": [
                                                         467.0,
-                                                        3194.0
+                                                        3195.0
                                                     ],
                                                     "status": [],
                                                     "collasped": false
@@ -6624,7 +6632,7 @@
                                                         "Zfx Code": {
                                                             "links": null,
                                                             "type": "string",
-                                                            "default-value": "float gain = ref(\"../Gain\");\nfloat bias = ref(\"../Bias\");\n\nfloat c = (1.0/(1.0-gain+0.0001) - 2) * (1 - 2*@_result);\nfloat val = @_result<0.5? @_result/(c+1) : (c-@_result)/(c - 1);\n\n//val = pow(val, log($bias)/log(0.5))\n@_result = val/((1.0/bias - 2) * (1 - val)+1);\n",
+                                                            "default-value": "float gain = ref(\"../Gain\");\nfloat bias = ref(\"../Bias\");\n\nfloat c = (1.0/(1.0-gain+0.0001) - 2) * (1 - 2*@_result);\n\n//@_result = c;\n\nif (@_result < 0.5) {\n    float val = @_result/(c+1);\n    @_result = val/((1.0/bias - 2) * (1 - val)+1);\n}\nelse {\n    float val = (c-@_result)/(c - 1);\n    @_result = val/((1.0/bias - 2) * (1 - val)+1);\n}\n\n//float val = @_result<0.5? @_result/(c+1) : (c-@_result)/(c - 1);\n\n//val = pow(val, log($bias)/log(0.5))\n//@_result = val/((1.0/bias - 2) * (1 - val)+1);\n",
                                                             "control": {
                                                                 "name": "CodeEditor"
                                                             },
@@ -7241,7 +7249,7 @@
                                                         "Current Iteration": {
                                                             "links": null,
                                                             "type": "int",
-                                                            "default-value": 1,
+                                                            "default-value": 10,
                                                             "control": {
                                                                 "name": ""
                                                             },
@@ -11029,8 +11037,8 @@
                                         },
                                         "object_outputs": {},
                                         "uipos": [
-                                            -519.0,
-                                            1324.0
+                                            -526.0,
+                                            1351.0
                                         ],
                                         "status": [],
                                         "collasped": false
@@ -11049,13 +11057,13 @@
                                             "port": {
                                                 "type": "bool",
                                                 "socket-type": "clone",
-                                                "visible": false
+                                                "visible": true
                                             }
                                         },
                                         "object_outputs": {},
                                         "uipos": [
-                                            518.0,
-                                            -49.0
+                                            -475.0,
+                                            1129.0
                                         ],
                                         "status": [],
                                         "collasped": false
@@ -11092,8 +11100,8 @@
                                             "port": {
                                                 "links": [
                                                     {
-                                                        "out-node": "HF_Noise_Core_v2",
-                                                        "out-socket": "Height Field out",
+                                                        "out-node": "SwitchIf2",
+                                                        "out-socket": "Output",
                                                         "out-key": "",
                                                         "in-key": "",
                                                         "target-socket": ""
@@ -11107,8 +11115,8 @@
                                         "primitive_outputs": {},
                                         "object_outputs": {},
                                         "uipos": [
-                                            450.0,
-                                            930.0
+                                            -296.0,
+                                            2710.0
                                         ],
                                         "status": [],
                                         "collasped": false
