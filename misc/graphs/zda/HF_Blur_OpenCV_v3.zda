@@ -229,7 +229,7 @@
                     "Zfx Code": {
                         "links": null,
                         "type": "string",
-                        "default-value": "@pos.y = @height",
+                        "default-value": "@pos.y = @height;",
                         "control": {
                             "name": "CodeEditor"
                         },
@@ -725,7 +725,7 @@
                 ],
                 "status": [],
                 "collasped": false,
-                "asset_locked": false,
+                "asset_locked": true,
                 "asset": {
                     "name": "HF_Visual_Mask",
                     "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Visual_Mask.zda",

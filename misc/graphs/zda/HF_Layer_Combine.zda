@@ -1276,6 +1276,94 @@
                 "status": [],
                 "collasped": false
             },
+            "HF_Visual_Mask1": {
+                "name": "HF_Visual_Mask1",
+                "class": "HF_Visual_Mask",
+                "object_inputs": {
+                    "HeightField_in": {
+                        "links": [
+                            {
+                                "out-node": "DeleteAttribute1",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "Clone HF for Visualize": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "Mask Name": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "mask",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "Reset Base Color": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "Visualize Color": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "primitive",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "HeightField_out": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    966.0,
+                    3827.0
+                ],
+                "status": [],
+                "collasped": false,
+                "asset_locked": true,
+                "asset": {
+                    "name": "HF_Visual_Mask",
+                    "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Visual_Mask.zda",
+                    "version": "1.0"
+                }
+            },
             "HasAttribute1": {
                 "name": "HasAttribute1",
                 "class": "HasAttribute",
@@ -1572,14 +1660,22 @@
                         "socket-type": "clone"
                     },
                     "b7": {
-                        "links": null,
+                        "links": [
+                            {
+                                "out-node": "aw7",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
                         "type": "iobject",
                         "socket-type": "clone"
                     },
                     "b8": {
                         "links": [
                             {
-                                "out-node": "aw7",
+                                "out-node": "aw8",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -2010,7 +2106,15 @@
                         "socket-type": "clone"
                     },
                     "If True": {
-                        "links": null,
+                        "links": [
+                            {
+                                "out-node": "HF_Visual_Mask1",
+                                "out-socket": "HeightField_out",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
                         "type": "iobject",
                         "socket-type": "clone"
                     }
@@ -2551,6 +2655,68 @@
                 "status": [],
                 "collasped": false
             },
+            "aw8": {
+                "name": "aw8",
+                "class": "AttributeWrangle",
+                "object_inputs": {
+                    "Input": {
+                        "links": [
+                            {
+                                "out-node": "SwitchIf1",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "Run Over": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Points",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "Points",
+                                "Faces",
+                                "Geometry"
+                            ]
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Zfx Code": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "float blend = ref(\"../Blend\");\n@_temp_mask_c = (1 - blend) * @_temp_mask_a + @_temp_mask_b * blend;",
+                        "control": {
+                            "name": "CodeEditor"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1817.0,
+                    1831.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "显示Mask": {
                 "name": "显示Mask",
                 "class": "SubInput",
@@ -2634,30 +2800,14 @@
     "Parameters": {
         "object_inputs": {
             "高度场地形_in": {
-                "links": [
-                    {
-                        "out-node": "AttributeWrangle1",
-                        "out-socket": "Output",
-                        "out-key": "",
-                        "in-key": "",
-                        "target-socket": ""
-                    }
-                ],
+                "links": null,
                 "type": "geometry",
                 "socket-type": "clone"
             }
         },
         "primitive_inputs": {
             "显示Mask": {
-                "links": [
-                    {
-                        "out-node": "显示Mask",
-                        "out-socket": "port",
-                        "out-key": "",
-                        "in-key": "",
-                        "target-socket": ""
-                    }
-                ],
+                "links": null,
                 "type": "bool",
                 "default-value": false,
                 "control": {
@@ -2690,15 +2840,7 @@
                 "visible": false
             },
             "Combine Type": {
-                "links": [
-                    {
-                        "out-node": "Combine Method",
-                        "out-socket": "port",
-                        "out-key": "",
-                        "in-key": "",
-                        "target-socket": ""
-                    }
-                ],
+                "links": null,
                 "type": "string",
                 "default-value": "Replace ( B )",
                 "control": {
@@ -2742,15 +2884,7 @@
                 "visible": false
             },
             "Use Mask": {
-                "links": [
-                    {
-                        "out-node": "Use Mask",
-                        "out-socket": "port",
-                        "out-key": "",
-                        "in-key": "",
-                        "target-socket": ""
-                    }
-                ],
+                "links": null,
                 "type": "bool",
                 "default-value": false,
                 "control": {
@@ -2921,15 +3055,7 @@
             "Base": {
                 "Base2": {
                     "显示Mask": {
-                        "links": [
-                            {
-                                "out-node": "显示Mask",
-                                "out-socket": "port",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
+                        "links": null,
                         "type": "bool",
                         "default-value": false,
                         "control": {
@@ -2962,15 +3088,7 @@
                         "visible": false
                     },
                     "Combine Type": {
-                        "links": [
-                            {
-                                "out-node": "Combine Method",
-                                "out-socket": "port",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
+                        "links": null,
                         "type": "string",
                         "default-value": "Replace ( B )",
                         "control": {
@@ -3018,15 +3136,7 @@
             "Masking": {
                 "Group(0)": {
                     "Use Mask": {
-                        "links": [
-                            {
-                                "out-node": "Use Mask",
-                                "out-socket": "port",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
+                        "links": null,
                         "type": "bool",
                         "default-value": false,
                         "control": {

@@ -849,7 +849,7 @@
                 ],
                 "status": [],
                 "collasped": false,
-                "asset_locked": false,
+                "asset_locked": true,
                 "asset": {
                     "name": "HF_Layer_Combine",
                     "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Layer_Combine.zda",
@@ -2276,7 +2276,7 @@
                                 "attr_name": {
                                     "links": null,
                                     "type": "string",
-                                    "default-value": "_originalPos _pp _signal _weight _tmp_pos _tmp_noise LoopCount Remainder",
+                                    "default-value": "noise _originalPos _pp _signal _weight _tmp_pos _tmp_noise LoopCount Remainder",
                                     "control": {
                                         "name": ""
                                     },
@@ -6030,7 +6030,7 @@
                 ],
                 "status": [],
                 "collasped": false,
-                "asset_locked": false,
+                "asset_locked": true,
                 "asset": {
                     "name": "HF_Visual_Mask",
                     "path": "C:\\Users\\Ada51\\Documents/Zeno/assets\\HF_Visual_Mask.zda",
