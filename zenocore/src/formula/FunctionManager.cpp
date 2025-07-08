@@ -209,6 +209,26 @@ namespace zeno {
         }, value);
     }
 
+    template <class _Ty = void>
+    struct glmdot {
+        using _FIRST_ARGUMENT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
+        using _SECOND_ARGUMENT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
+        using _RESULT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
+
+        _NODISCARD constexpr float operator()(const _Ty& _Left, const _Ty& _Right) const {
+            return glm::dot(_Left, _Right);
+        }
+    };
+
+    template <>
+    struct glmdot<void> {
+        template <class _Ty1, class _Ty2>
+        _NODISCARD constexpr float operator()(_Ty1&& _Left, _Ty2&& _Right) const {
+            return glm::dot(static_cast<_Ty1&&>(_Left), static_cast<_Ty2&&>(_Right));
+        }
+    };
+
+
     template<typename Operator>
     ZfxVariable calc_exp(const ZfxVariable& lhs, const ZfxVariable& rhs, const ZfxElemFilter& filter, Operator method) {
 
@@ -250,8 +270,21 @@ namespace zeno {
                     else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, float>) {
                         return method((int)lval, (int)rval);
                     }
-                    throw makeError<UnimplError>("");
-                } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
+                    throw makeError<UnimplError>("error type for mudulus");
+                }
+                else if constexpr (std::is_same_v<Op, glmdot<>>) {
+                    if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<E, glm::vec2>) {
+                        return method(lval, rval);
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec3> && std::is_same_v<E, glm::vec3>) {
+                        return method(lval, rval);
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec4> && std::is_same_v<E, glm::vec4>) {
+                        return method(lval, rval);
+                    }
+                    throw makeError<UnimplError>("error type for glmdot");
+                } 
+                else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
                     return method(lval, rval);
                 } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, float>) {
                     return method(E(lval), rval);
@@ -1337,6 +1370,9 @@ namespace zeno {
                 //函数
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 const std::string& funcname = get_zfxvar<std::string>(root->value);
+                if (funcname == "dot") {
+                    return calc_exp(args[0], args[1], filter, glmdot());
+                }
                 ZfxVariable result = eval(funcname, args, filter, pContext);
                 return result;
             }
