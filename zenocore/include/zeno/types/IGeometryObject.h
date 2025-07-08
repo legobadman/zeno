@@ -51,6 +51,7 @@ namespace zeno
         int create_geometry_attr(const zeno::String& attr_name, const Any& defl);
 
         void copy_attr(GeoAttrGroup grp, const zeno::String& src_attr, const zeno::String& dest_attr);
+        void copy_attr_from(GeoAttrGroup grp, GeometryObject_Adapter* pSrcObject, const zeno::String& src_attr, const zeno::String& dest_attr);
 
         //获取属性
         std::vector<float> get_float_attr(GeoAttrGroup grp, const zeno::String& attr_name);

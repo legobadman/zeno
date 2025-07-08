@@ -632,6 +632,28 @@ namespace zeno
         }
     }
 
+    void GeometryObject::copy_attr_from(GeoAttrGroup grp, GeometryObject* pSrcObject, const std::string& src_attr, const std::string& dest_attr)
+    {
+        PROXY_PRIM_THROW
+        std::map<std::string, AttributeVector>& src_container = pSrcObject->get_container(grp);
+        std::map<std::string, AttributeVector>& dest_container = get_container(grp);
+
+        auto iter_source = src_container.find(src_attr);
+        if (iter_source == src_container.end()) {
+            throw makeError<UnimplError>("the source attr `" + src_attr + "` doesn't exist when copy attr.");
+        }
+        const AttributeVector& srcattr = iter_source->second;
+
+        auto iter_dest = dest_container.find(dest_attr);
+        if (iter_dest == dest_container.end()) {
+            AttributeVector attrvec(srcattr);
+            dest_container.emplace(std::make_pair(dest_attr, std::move(attrvec)));
+        }
+        else {
+            iter_dest->second = srcattr;
+        }
+    }
+
     int GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
     {
         PROXY_PRIM_THROW

@@ -1858,6 +1858,11 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
         break;
 #endif
     }
+    case gParamType_Curve:
+    {
+        result = defl;
+        break;
+    }
     }
     return result;
 }

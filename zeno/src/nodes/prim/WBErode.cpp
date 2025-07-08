@@ -2344,21 +2344,22 @@ struct HF_maskByFeature : INode {
         ////////////////////////////////////////////////////////////////////////////////////////
 
         // 初始化网格
-        auto terrain = ZImpl(get_input<PrimitiveObject>("HeightField"));
+        auto terrain = get_input_Geometry("HeightField");
         int nx, nz;
         auto ud = terrain->userData();
         if ((!ud->has("nx")) || (!ud->has("nz")))
             zeno::log_error("no such UserData named '{}' and '{}'.", "nx", "nz");
         nx = ud->get_int("nx");
         nz = ud->get_int("nz");
-        auto &pos = terrain->verts;
+
+        const auto &pos = terrain->points_pos();
         vec3f p0 = pos[0];
         vec3f p1 = pos[1];
         float cellSize = length(p1 - p0);
 
         // 获取面板参数
-        auto heightLayer = ZImpl(get_input2<std::string>("height_layer"));
-        auto maskLayer = ZImpl(get_input2<std::string>("mask_layer"));
+        auto heightLayer = get_input2_string("height_layer");
+        auto maskLayer = get_input2_string("mask_layer");
         auto smoothRadius = ZImpl(get_input2<int>("smooth_radius"));
         auto invertMask = ZImpl(get_input2<bool>("invert_mask"));
 
@@ -2375,17 +2376,20 @@ struct HF_maskByFeature : INode {
         auto useHeight = ZImpl(get_input2<bool>("use_height"));
         auto minHeight = ZImpl(get_input2<float>("min_height"));
         auto maxHeight = ZImpl(get_input2<float>("max_height"));
-        auto curve_height = ZImpl(get_input_prim<CurvesData>("height_ramp"));
+        auto curve_height = zeno::reflect::any_cast<CurvesData>(ZImpl(get_param_result("height_ramp")));
 
         // 初始化网格属性
-        if (!terrain->verts.has_attr(heightLayer) || !terrain->verts.has_attr(maskLayer)) {
-            zeno::log_error("Node [HF_maskByFeature], no such data layer named '{}' or '{}'.",
-                            heightLayer, maskLayer);
+        if (!terrain->has_point_attr(heightLayer) || !terrain->has_point_attr(maskLayer)) {
+            throw makeError<UnimplError>("Node [HF_maskByFeature], no such data layer named '" + 
+                zsString2Std(heightLayer) + "' or '" + zsString2Std(maskLayer));
         }
-        auto &height = terrain->verts.attr<float>(heightLayer);
-        auto &mask = terrain->verts.attr<float>(maskLayer);
+        const auto& height = terrain->get_float_attr(ATTR_POINT, heightLayer);
+        auto mask = terrain->get_float_attr(ATTR_POINT, maskLayer);
 
-        auto &_grad = terrain->verts.add_attr<zeno::vec3f>("_grad");
+        assert(!terrain->has_point_attr("_grad"));
+
+        std::vector<vec3f> _grad(terrain->npoints());
+        //auto &_grad = terrain->verts.add_attr<zeno::vec3f>("_grad");
         std::fill(_grad.begin(), _grad.end(), vec3f(0,0,0));
 
         ////////////////////////////////////////////////////////////////////////////////////////
@@ -2496,13 +2500,14 @@ struct HF_maskByFeature : INode {
                 }
             }
         }
-        terrain->verts.erase_attr("_grad");
-        ZImpl(set_output("HeightField", std::move(terrain)));
+
+        terrain->set_point_attr(maskLayer, mask);
+        set_output("HeightField", terrain);
     }
 };
 ZENDEFNODE(HF_maskByFeature,
            {/* inputs: */ {
-                   {gParamType_Primitive, "HeightField", "", zeno::Socket_ReadOnly},
+                   {gParamType_Geometry, "HeightField"},
                    {gParamType_Bool, "invert_mask", "0"},
                    {gParamType_String, "height_layer", "height"},
                    {gParamType_String, "mask_layer", "mask"},
@@ -2524,7 +2529,7 @@ ZENDEFNODE(HF_maskByFeature,
                },
                /* outputs: */
                {
-                   {gParamType_Primitive, "HeightField"},
+                   {gParamType_Geometry, "HeightField"},
                },
                /* params: */
                {

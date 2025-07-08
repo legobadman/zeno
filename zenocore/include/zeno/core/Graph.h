@@ -167,7 +167,7 @@ private:
     std::set<std::string> m_viewnodes;
     std::string m_name;
 
-    const bool m_bAssets;
+    const bool m_bAssets;   //只是说明这个图是一个资产，可以是实例也可以是资产图引用
 };
 
 }

@@ -64,6 +64,7 @@ namespace zeno
         //CALLBACK_REGIST(create_geometry_attr, void, std::string)
 
         void copy_attr(GeoAttrGroup grp, const std::string& src_attr, const std::string& dest_attr);
+        void copy_attr_from(GeoAttrGroup grp, GeometryObject* pSrcObject, const std::string& src_attr, const std::string& dest_attr);
 
         //设置属性
         int set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);

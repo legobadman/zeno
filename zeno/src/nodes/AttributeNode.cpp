@@ -161,6 +161,42 @@ namespace zeno {
         {"geom"}
     });
 
+    struct CopyAttributeFrom : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            auto from_object = get_input_Geometry("From");
+            auto source = get_input2_string("Source Attribute");
+            auto target = get_input2_string("Target Attribute");
+            std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
+            GeoAttrGroup group;
+            if (m_attrgroup == "Point") {
+                group = ATTR_POINT;
+            }
+            else if (m_attrgroup == "Face") {
+                group = ATTR_FACE;
+            }
+            else if (m_attrgroup == "Geometry") {
+                group = ATTR_GEO;
+            }
+            input_object->copy_attr_from(group, from_object.get(), source, target);
+            set_output("Output", input_object);
+        }
+    };
+    ZENDEFNODE(CopyAttributeFrom,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            {gParamType_Geometry, "From"},
+            ParamPrimitive("Source Attribute", gParamType_String, ""),
+            ParamPrimitive("Target Attribute", gParamType_String, ""),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
 
     struct CopyAttribute : INode {
         void apply() override {

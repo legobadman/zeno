@@ -364,6 +364,7 @@ NodeData SubnetNode::exportInfo() const {
         node.asset = asset.m_info;
         if (in_asset_file()) {
             node.type = Node_AssetReference;
+            node.bLocked = true;    //资产图里的资产只是引用，故不能展开，自然不能解锁
         }
         else {
             node.type = Node_AssetInstance;

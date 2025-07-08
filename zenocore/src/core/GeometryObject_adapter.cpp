@@ -108,6 +108,10 @@ namespace zeno
         m_impl->copy_attr(grp, zsString2Std(src_attr), zsString2Std(dest_attr));
     }
 
+    void GeometryObject_Adapter::copy_attr_from(GeoAttrGroup grp, GeometryObject_Adapter* pSrcObject, const zeno::String& src_attr, const zeno::String& dest_attr) {
+        m_impl->copy_attr_from(grp, pSrcObject->m_impl, zsString2Std(src_attr), zsString2Std(dest_attr));
+    }
+
     std::vector<float> GeometryObject_Adapter::get_float_attr(GeoAttrGroup grp, const zeno::String& attr_name) {
         return m_impl->get_attrs<float>(grp, zsString2Std(attr_name));
     }
