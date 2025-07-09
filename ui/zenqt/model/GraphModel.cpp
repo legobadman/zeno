@@ -606,7 +606,8 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         }
         case QtRole::ROLE_NODE_RUN_STATE:
         {
-            return QVariant::fromValue(item->runState);
+            QmlNodeRunStatus::Value qmlstate = static_cast<QmlNodeRunStatus::Value>(item->runState.runstatus);
+            return qmlstate;
         }
         case QtRole::ROLE_NODE_DIRTY:
         {

@@ -361,8 +361,7 @@ void Graph::setModel(GraphModel* pGraphM)
         int role = roles[0];
         if (role == QtRole::ROLE_NODE_RUN_STATE) {
             const QVariant& dat = topLeft.data(role);
-            NodeState state = dat.value<NodeState>();
-            QmlNodeRunStatus::Value qmlstate = static_cast<QmlNodeRunStatus::Value>(state.runstatus);
+            QmlNodeRunStatus::Value qmlstate = dat.value<QmlNodeRunStatus::Value>();
             pNodeItem->getItem()->dataChanged(qmlstate, role);
         }
         else if (role == QtRole::ROLE_NODE_NAME) {

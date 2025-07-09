@@ -572,6 +572,7 @@ Qan.NodeItem {
         nodeItem.isloaded = graphM.data(idx, Model.ROLE_NODE_IS_LOADED)
         nodeItem.node_type = graphM.data(idx, Model.ROLE_NODETYPE)
         nodeItem.is_locked = graphM.data(idx, Model.ROLE_NODE_LOCKED)
+        nodeItem.nodestatus = graphM.data(idx, Model.ROLE_NODE_RUN_STATE)
 
         var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
         if (uistyle["icon"] != "") {
