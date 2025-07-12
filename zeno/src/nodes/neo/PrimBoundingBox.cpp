@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/PrimitiveUtils.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/para/parallel_reduce.h>
@@ -16,13 +17,20 @@ ZENO_API std::pair<vec3f, vec3f> primBoundingBox(PrimitiveObject *prim) {
     return parallel_reduce_minmax(prim->verts.begin(), prim->verts.end());
 }
 
+static std::pair<vec3f, vec3f> geoBoundingBox(GeometryObject_Adapter* prim) {
+    const std::vector<zeno::vec3f>& pts = prim->points_pos();
+    if (pts.empty())
+        return {{0, 0, 0}, {0, 0, 0}};
+    return parallel_reduce_minmax(pts.begin(), pts.end());
+}
+
 namespace {
 
 struct PrimBoundingBox : INode {
   virtual void apply() override {
-    auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+    auto prim = get_input_Geometry("prim");
     auto extraBound = ZImpl(get_input2<float>("extraBound"));
-    auto [bmin, bmax] = primBoundingBox(prim.get());
+    auto [bmin, bmax] = geoBoundingBox(prim.get());
     if (extraBound != 0) {
         bmin -= extraBound;
         bmax += extraBound;
@@ -40,7 +48,7 @@ struct PrimBoundingBox : INode {
 
 ZENO_DEFNODE(PrimBoundingBox)({
     {
-    {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "prim"},
     {gParamType_Float, "extraBound", "0"},
     },
     {

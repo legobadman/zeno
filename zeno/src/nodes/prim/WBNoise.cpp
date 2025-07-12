@@ -737,38 +737,34 @@ glm::vec3 sdnoise(glm::vec2 pos) {
 
 struct erode_noise_analytic_simplex_2d : INode {
     void apply() override {
-        auto terrain = ZImpl(get_input<PrimitiveObject>("prim_2DGrid"));
+        auto terrain = get_input_Geometry("prim_2DGrid");
 
-        auto attrName = ZImpl(get_param<std::string>("attrName"));
-        if (!terrain->has_attr(attrName)) {
-            terrain->add_attr<zeno::vec3f>(attrName);
+        auto attrName = get_input2_string("attrName");
+        if (!terrain->has_point_attr(attrName)) {
+            terrain->create_point_attr(attrName, zeno::vec3f());
         }
-        auto& noise = terrain->verts.attr<zeno::vec3f>(attrName);
 
-        auto posLikeAttrName = ZImpl(get_input<StringObject>("posLikeAttrName"))->get();
-        if (!terrain->verts.has_attr(posLikeAttrName))
+        auto posLikeAttrName = get_input2_string("posLikeAttrName");
+        if (!terrain->has_point_attr(posLikeAttrName))
         {
-            zeno::log_error("no such data named '{}'.", posLikeAttrName);
+            throw makeError<UnimplError>("no such attr named `" + zsString2Std(posLikeAttrName) + "`");
         }
-        auto& pos = terrain->verts.attr<zeno::vec3f>(posLikeAttrName);
+        auto& pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
 
-#pragma omp parallel for
-        for (int i = 0; i < terrain->verts.size(); i++)
-        {
-            glm::vec3 ret{};// = glm::vec3(0, 0, 0);
-            ret = sdnoise(glm::vec2(pos[i][0], pos[i][2]));
-            noise[i] = vec3f(ret.x, ret.y, ret.z);
-        }
+        terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, zeno::vec3f old_elem_value)->zeno::vec3f {
+            glm::vec3 ret = sdnoise(glm::vec2(pos[i][0], pos[i][2]));
+            return vec3f(ret.x, ret.y, ret.z);
+            });
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        set_output("prim_2DGrid", terrain);
     }
 };
 ZENDEFNODE(erode_noise_analytic_simplex_2d,
     { /* inputs: */ {
-            {gParamType_Primitive, "prim_2DGrid", "", zeno::Socket_ReadOnly},
+            {gParamType_Geometry, "prim_2DGrid", "", zeno::Socket_ReadOnly},
             {gParamType_String, "posLikeAttrName", "pos"},
         }, /* outputs: */ {
-            {gParamType_Primitive, "prim_2DGrid"},
+            {gParamType_Geometry, "prim_2DGrid"},
         }, /* params: */ {
             {gParamType_String, "attrName", "analyticNoise"},
         }, /* category: */ {

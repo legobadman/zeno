@@ -261,8 +261,8 @@ namespace zenoui
                 ZComboBox *pComboBox = new ZComboBox;
                 pComboBox->setFixedHeight(ZenoStyle::dpiScaled(zenoui::g_ctrlHeight));
                 pComboBox->addItems(items);
-                pComboBox->setCurrentText(text);
                 pComboBox->setEditable(true);
+                pComboBox->setCurrentText(text);
                 pComboBox->setItemDelegate(new ZComboBoxItemDelegate2(pComboBox));
 
                 QObject::connect(pComboBox, &ZComboBox::_textActivated, [=](const QString& newText) {

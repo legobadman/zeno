@@ -2589,7 +2589,7 @@ struct HF_remap : INode {
         auto inMax = ZImpl(get_input2<float>("input max"));
         auto outMin = ZImpl(get_input2<float>("output min"));
         auto outMax = ZImpl(get_input2<float>("output max"));
-        auto curve = ZImpl(get_input_prim<CurvesData>("remap ramp"));
+        auto curve = zeno::reflect::any_cast<CurvesData>(ZImpl(get_param_result("remap ramp")));
         auto clampMin = ZImpl(get_input2<bool>("clamp min"));
         auto clampMax = ZImpl(get_input2<bool>("clamp max"));
 

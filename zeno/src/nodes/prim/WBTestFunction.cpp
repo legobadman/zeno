@@ -6,6 +6,7 @@
 #include <zeno/zeno.h>
 
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/UserData.h>
@@ -421,7 +422,7 @@ T lerp(T a, T b, float c) {
 }
 
 template <class T>
-void sample2D_M(std::vector<zeno::vec3f> &coord, std::vector<T> &field, std::vector<T> &field2, int nx, int ny, float h,
+void sample2D_M(const std::vector<zeno::vec3f> &coord, std::vector<T> &field, const std::vector<T> &field2, int nx, int ny, float h,
                 zeno::vec3f bmin) {
     std::vector<T> temp(field.size());
 #pragma omp parallel for
@@ -445,30 +446,36 @@ struct Grid2DSample_M : zeno::INode {
         auto nx = ZImpl(get_input<zeno::NumericObject>("nx"))->get<int>();
         auto ny = ZImpl(get_input<zeno::NumericObject>("ny"))->get<int>();
         auto bmin = ZImpl(get_input2<zeno::vec3f>("bmin"));
-        auto grid = ZImpl(get_input<zeno::PrimitiveObject>("grid"));
-        auto grid2 = ZImpl(get_input<zeno::PrimitiveObject>("grid2"));
-        auto attrT = ZImpl(get_param<std::string>("attrT"));
-        auto channel = ZImpl(get_input<zeno::StringObject>("channel"))->get();
-        auto sampleby = ZImpl(get_input<zeno::StringObject>("sampleBy"))->get();
-        auto h = ZImpl(get_input<zeno::NumericObject>("h"))->get<float>();
-        if (grid->has_attr(channel) && grid->has_attr(sampleby)) {
+        auto grid = get_input_Geometry("grid");
+        auto grid2 = get_input_Geometry("grid2");
+        auto attrT = get_input2_string("attrT");
+        auto channel = get_input2_string("channel");
+        auto sampleby = get_input2_string("sampleBy");
+        auto h = get_input2_float("h");
+        if (grid->has_point_attr(channel) && grid->has_point_attr(sampleby)) {
             if (attrT == "float") {
-                sample2D_M<float>(grid->attr<zeno::vec3f>(sampleby), grid->attr<float>(channel),
-                                  grid2->attr<float>(channel), nx, ny, h, bmin);
-            } else if (attrT == "vec3f") {
-                sample2D_M<zeno::vec3f>(grid->attr<zeno::vec3f>(sampleby), grid->attr<zeno::vec3f>(channel),
-                                        grid2->attr<zeno::vec3f>(channel), nx, ny, h, bmin);
+                const auto& dat1 =   grid->get_vec3f_attr(ATTR_POINT, sampleby);
+                auto dat2 = grid->get_float_attr(ATTR_POINT, channel);
+                const auto& dat3 = grid2->get_float_attr(ATTR_POINT, channel);
+                sample2D_M<float>(dat1, dat2, dat3, nx, ny, h, bmin);
+                grid->set_point_attr(channel, dat2);
+            }
+            else if (attrT == "vec3f") {
+                const auto& dat1 = grid->get_vec3f_attr(ATTR_POINT, sampleby);
+                auto dat2 = grid->get_vec3f_attr(ATTR_POINT, channel);
+                const auto& dat3 = grid2->get_vec3f_attr(ATTR_POINT, channel);
+                sample2D_M<zeno::vec3f>(dat1, dat2, dat3, nx, ny, h, bmin);
+                grid->set_point_attr(channel, dat2);
             }
         }
-
-        ZImpl(set_output("prim", std::move(grid)));
+        set_output("prim", std::move(grid));
     }
 };
 ZENDEFNODE(Grid2DSample_M, {
     /* inputs: */
     {
-        {gParamType_Primitive, "grid", "", zeno::Socket_ReadOnly},
-        {gParamType_Primitive, "grid2", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "grid"},
+        {gParamType_Geometry, "grid2"},
         {gParamType_Int, "nx", "1"},
         {gParamType_Int, "ny", "1"},
         {gParamType_Float, "h", "1"},
@@ -478,7 +485,7 @@ ZENDEFNODE(Grid2DSample_M, {
     },
     /* outputs: */
     {
-        {gParamType_Primitive, "prim"},
+        {gParamType_Geometry, "prim"},
     },
     /* params: */
     {
