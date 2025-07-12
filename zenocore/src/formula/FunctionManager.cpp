@@ -1600,21 +1600,43 @@ namespace zeno {
             }
             case CONDEXP: {
                 //条件表达式
-                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
-                if (args.size() != 3) {
+                if (root->children.size() != 3) {
                     throw makeError<UnimplError>("cond exp args");
                 }
-                auto& pCond = args[0];
-
-                ZfxElemFilter newFilter, elseFilter;
-                if (hasTrue(pCond, filter, newFilter, elseFilter)) {
-                    auto pCodesExp = root->children[1];
-                    return execute(pCodesExp, newFilter, pContext);
+                auto pCondExp = root->children[0];
+                const ZfxVariable& cond = execute(pCondExp, filter, pContext);
+                if (cond.value.size() == 1) {
+                    //单值，不是向量
+                    ZfxElemFilter newFilter, elseFilter;
+                    if (hasTrue(cond, filter, newFilter, elseFilter)) {
+                        auto pCodesExp = root->children[1];
+                        return execute(pCodesExp, newFilter, pContext);
+                    }
+                    else {
+                        auto pelseExp = root->children[2];
+                        return execute(pelseExp, filter, pContext);
+                    }
                 }
                 else {
-                    auto pCodesExp = root->children[2];
-                    return execute(pCodesExp, newFilter, pContext);
+                    //向量的情况，每个分支都要执行，然后合并
+                    ZfxElemFilter ifFilter, elseFilter;
+                    ZfxVariable switch1, switch2, ret;
+                    hasTrue(cond, filter, ifFilter, elseFilter);
+  
+                    auto pifExp = root->children[1];
+                    switch1 = execute(pifExp, ifFilter, pContext);
+
+                    auto pelseExp = root->children[2];
+                    switch2 = execute(pelseExp, elseFilter, pContext);
+
+                    int n = cond.value.size();
+                    ret.value.resize(n);
+                    for (int i = 0; i < n; i++) {
+                        ret.value[i] = ifFilter[i] ? switch1.value[i] : switch2.value[i];
+                    }
+                    return ret;
                 }
+                throw makeError<UnimplError>("error condition on condexp");
             }
             case IF:{
                 if (root->children.size() != 2 && root->children.size() != 3) {

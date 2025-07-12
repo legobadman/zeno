@@ -526,9 +526,9 @@ namespace zeno
             }
             else {
                 for (int i = 0; i < N; i++) {
-                    int ni = std::min(i, nx);
-                    int nj = std::min(i, ny);
-                    int nk = std::min(i, nz);
+                    int ni = std::min(i, nx - 1);
+                    int nj = std::min(i, ny - 1);
+                    int nk = std::min(i, nz - 1);
                     float x = get_zfxvar<float>(xvar.value[ni]);
                     float y = get_zfxvar<float>(yvar.value[nj]);
                     float z = get_zfxvar<float>(zvar.value[nk]);
@@ -1833,6 +1833,26 @@ namespace zeno
                 glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                 return bmin;
             }
+            if (funcname == "bboxmin") {
+                const std::string& nodename = get_zfxvar<std::string>(args[0].value[0]);
+                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                if (!pObjNode) {
+                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                }
+                zany targetObj = pObjNode->get_default_output_object();
+                if (!targetObj) {
+                    throw makeError<UnimplError>("get nullptr obj from default output when `prim_has_attr` is called");
+                }
+
+                if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(targetObj)) {
+                    std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl);
+                    glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
+                    return bmin;
+                }
+                else {
+                    throw makeError<UnimplError>("get not geometry obj when calling `prim_has_attr`");
+                }
+            }
             if (funcname == "get_bboxmax") {
                 auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
                 assert(spGeo);
@@ -1986,26 +2006,46 @@ namespace zeno
                 }
                 return ret;
             }
-            if (funcname == "max") {
-                const ZfxVariable& var = args[0];
-                float cmpval = get_zfxvar<float>(args[1].value[0]);
-                //TODO: 目前只考虑一个数值的min
-                const int N = var.value.size();
+            if (funcname == "max" || funcname == "min") {
+                const ZfxVariable& left = args[0];
+                const ZfxVariable& right = args[1];
+                const int Nleft = left.value.size();
+                const int Nright = right.value.size();
+                const int N = std::max(Nleft, Nright);
                 ZfxVariable ret;
                 ret.value.resize(N);
+                bool bMax = funcname == "max";
+
                 for (int i = 0; i < N; i++) {
-                    ret.value[i] = std::visit([&](auto&& _arg)->zfxvariant {
-                        using T = std::decay_t<decltype(_arg)>;
-                        if constexpr (std::is_same_v<T, int>) {
-                            return zeno::max(cmpval, std::abs(_arg));
+                    ret.value[i] = std::visit([&](auto&& _arg1, auto&& _arg2)->zfxvariant {
+                        using LeftT = std::decay_t<decltype(_arg1)>;
+                        using RightT = std::decay_t<decltype(_arg2)>;
+                        if constexpr (std::is_same_v<LeftT, int>) {
+                            if constexpr (std::is_same_v<RightT, int>) {
+                                return bMax ? std::max(_arg1, _arg2) : std::min(_arg1, _arg2);
+                            }
+                            else if constexpr (std::is_same_v<RightT, float>) {
+                                return bMax ? std::max((float)_arg1, _arg2) : std::min((float)_arg1, _arg2);
+                            }
+                            else {
+                                throw makeError<UnimplError>("only accept int or float on `abs`");
+                            }
                         }
-                        else if constexpr (std::is_same_v<T, float>) {
-                            return zeno::max(cmpval, std::abs(_arg));
+                        else if constexpr (std::is_same_v<LeftT, float>) {
+                            if constexpr (std::is_same_v<RightT, int>) {
+                                return bMax ? std::max(_arg1, (float)_arg2) : std::min(_arg1, (float)_arg2);
+                            }
+                            else if constexpr (std::is_same_v<RightT, float>) {
+                                return bMax ? std::max(_arg1, _arg2) : std::min(_arg1, _arg2);
+                            }
+                            else {
+                                throw makeError<UnimplError>("only accept int or float on `abs`");
+                            }
                         }
                         else {
                             throw makeError<UnimplError>("only accept int or float on `abs`");
                         }
-                        }, var.value[i]);
+                    }, left.value[std::min(i,Nleft-1)], right.value[std::min(i, Nright-1)]);
                 }
                 return ret;
             }
@@ -2066,6 +2106,26 @@ namespace zeno
                     }, val);
                 ZfxVariable ret;
                 return ret;
+            }
+            if (funcname == "prim_has_attr") {
+                const std::string& nodename = get_zfxvar<std::string>(args[0].value[0]);
+                const std::string& attrname = get_zfxvar<std::string>(args[1].value[0]);
+
+                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                if (!pObjNode) {
+                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                }
+                zany targetObj = pObjNode->get_default_output_object();
+                if (!targetObj)
+                    throw makeError<UnimplError>("get nullptr obj from default output when `prim_has_attr` is called");
+
+                if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(targetObj)) {
+                    zfxvariant ret = (int)spGeo->has_point_attr(stdString2zs(attrname));
+                    return ZfxVariable(ret);
+                }
+                else {
+                    throw makeError<UnimplError>("get not geometry obj when calling `prim_has_attr`");
+                }
             }
             if (funcname == "getud") {
                 const std::string& nodename = get_zfxvar<std::string>(args[0].value[0]);
