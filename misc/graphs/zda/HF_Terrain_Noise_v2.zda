@@ -581,15 +581,7 @@
                 },
                 "primitive_inputs": {
                     "显示Mask": {
-                        "links": [
-                            {
-                                "out-node": "显示Mask",
-                                "out-socket": "port",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
+                        "links": null,
                         "type": "bool",
                         "default-value": false,
                         "control": {
@@ -597,7 +589,7 @@
                         },
                         "controlProps": null,
                         "socket-type": "primitive",
-                        "visible": true
+                        "visible": false
                     },
                     "Input A Layer": {
                         "links": null,
@@ -870,11 +862,6 @@
                                 "target-socket": ""
                             }
                         ],
-                        "type": "geometry",
-                        "socket-type": "clone"
-                    },
-                    "Input": {
-                        "links": null,
                         "type": "geometry",
                         "socket-type": "clone"
                     }
@@ -1208,10 +1195,6 @@
                 },
                 "object_outputs": {
                     "Height Field out": {
-                        "type": "geometry",
-                        "socket-type": "output"
-                    },
-                    "Output": {
                         "type": "geometry",
                         "socket-type": "output"
                     }
@@ -3516,31 +3499,6 @@
                             "status": [],
                             "collasped": false
                         },
-                        "Input": {
-                            "name": "Input",
-                            "class": "SubInput",
-                            "object_inputs": {},
-                            "primitive_inputs": {},
-                            "primitive_outputs": {
-                                "hasValue": {
-                                    "type": "bool",
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
-                            "object_outputs": {
-                                "port": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
-                                }
-                            },
-                            "uipos": [
-                                0.0,
-                                0.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
                         "Lacunarity": {
                             "name": "Lacunarity",
                             "class": "SubInput",
@@ -3818,26 +3776,6 @@
                             "uipos": [
                                 -57.0,
                                 -152.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "Output": {
-                            "name": "Output",
-                            "class": "SubOutput",
-                            "object_inputs": {
-                                "port": {
-                                    "links": null,
-                                    "type": "geometry",
-                                    "socket-type": "clone"
-                                }
-                            },
-                            "primitive_inputs": {},
-                            "primitive_outputs": {},
-                            "object_outputs": {},
-                            "uipos": [
-                                0.0,
-                                500.0
                             ],
                             "status": [],
                             "collasped": false

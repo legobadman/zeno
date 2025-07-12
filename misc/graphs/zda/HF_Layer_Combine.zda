@@ -172,8 +172,8 @@
                     }
                 },
                 "uipos": [
-                    400.0,
-                    2238.0
+                    547.0,
+                    2195.0
                 ],
                 "status": [],
                 "collasped": false
@@ -185,7 +185,7 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "SwitchBetween1",
+                                "out-node": "AttributeWrangle12",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -234,8 +234,8 @@
                     }
                 },
                 "uipos": [
-                    726.0,
-                    2232.0
+                    809.0,
+                    2318.0
                 ],
                 "status": [],
                 "collasped": false
@@ -247,7 +247,7 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "SwitchIf2",
+                                "out-node": "if_use_clamp_min",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -296,8 +296,8 @@
                     }
                 },
                 "uipos": [
-                    764.0,
-                    2542.0
+                    799.0,
+                    2582.0
                 ],
                 "status": [],
                 "collasped": false
@@ -309,7 +309,7 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "SwitchIf3",
+                                "out-node": "if_use_clamp_max",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -1049,7 +1049,7 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "SwitchIf4",
+                                "out-node": "if_use_mask",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -1371,7 +1371,7 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "SwitchIf4",
+                                "out-node": "if_use_mask",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -1848,180 +1848,6 @@
                 "status": [],
                 "collasped": false
             },
-            "SwitchIf2": {
-                "name": "SwitchIf2",
-                "class": "SwitchIf",
-                "object_inputs": {
-                    "If False": {
-                        "links": [
-                            {
-                                "out-node": "AttributeWrangle12",
-                                "out-socket": "Output",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    },
-                    "If True": {
-                        "links": [
-                            {
-                                "out-node": "AttributeWrangle13",
-                                "out-socket": "Output",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    }
-                },
-                "primitive_inputs": {
-                    "Condition": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": "ref(\"../Use Clamp Min\")",
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {},
-                "object_outputs": {
-                    "Output": {
-                        "type": "iobject",
-                        "socket-type": "output"
-                    }
-                },
-                "uipos": [
-                    548.0,
-                    2402.0
-                ],
-                "status": [],
-                "collasped": false
-            },
-            "SwitchIf3": {
-                "name": "SwitchIf3",
-                "class": "SwitchIf",
-                "object_inputs": {
-                    "If False": {
-                        "links": [
-                            {
-                                "out-node": "SwitchIf2",
-                                "out-socket": "Output",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    },
-                    "If True": {
-                        "links": [
-                            {
-                                "out-node": "AttributeWrangle14",
-                                "out-socket": "Output",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    }
-                },
-                "primitive_inputs": {
-                    "Condition": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": "ref(\"../Use Clamp Max\")",
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {},
-                "object_outputs": {
-                    "Output": {
-                        "type": "iobject",
-                        "socket-type": "output"
-                    }
-                },
-                "uipos": [
-                    588.0,
-                    2698.0
-                ],
-                "status": [],
-                "collasped": false
-            },
-            "SwitchIf4": {
-                "name": "SwitchIf4",
-                "class": "SwitchIf",
-                "object_inputs": {
-                    "If False": {
-                        "links": [
-                            {
-                                "out-node": "SwitchIf3",
-                                "out-socket": "Output",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    },
-                    "If True": {
-                        "links": [
-                            {
-                                "out-node": "AttributeWrangle15",
-                                "out-socket": "Output",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": ""
-                            }
-                        ],
-                        "type": "iobject",
-                        "socket-type": "clone"
-                    }
-                },
-                "primitive_inputs": {
-                    "Condition": {
-                        "links": null,
-                        "type": "int",
-                        "default-value": "ref(\"../Use Mask\")",
-                        "control": {
-                            "name": "Integer"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {},
-                "object_outputs": {
-                    "Output": {
-                        "type": "iobject",
-                        "socket-type": "output"
-                    }
-                },
-                "uipos": [
-                    540.0,
-                    2970.0
-                ],
-                "status": [],
-                "collasped": false
-            },
             "SwitchIf5": {
                 "name": "SwitchIf5",
                 "class": "SwitchIf",
@@ -2042,7 +1868,7 @@
                     "If True": {
                         "links": [
                             {
-                                "out-node": "SwitchIf4",
+                                "out-node": "if_use_mask",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -2713,6 +2539,180 @@
                 "uipos": [
                     1817.0,
                     1831.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "if_use_clamp_max": {
+                "name": "if_use_clamp_max",
+                "class": "SwitchIf",
+                "object_inputs": {
+                    "If False": {
+                        "links": [
+                            {
+                                "out-node": "if_use_clamp_min",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    },
+                    "If True": {
+                        "links": [
+                            {
+                                "out-node": "AttributeWrangle14",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "Condition": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": "ref(\"../Use Clamp Max\")",
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "iobject",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    588.0,
+                    2698.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "if_use_clamp_min": {
+                "name": "if_use_clamp_min",
+                "class": "SwitchIf",
+                "object_inputs": {
+                    "If False": {
+                        "links": [
+                            {
+                                "out-node": "AttributeWrangle12",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    },
+                    "If True": {
+                        "links": [
+                            {
+                                "out-node": "AttributeWrangle13",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "Condition": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": "ref(\"../Use Clamp Min\")",
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "iobject",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    568.0,
+                    2448.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "if_use_mask": {
+                "name": "if_use_mask",
+                "class": "SwitchIf",
+                "object_inputs": {
+                    "If False": {
+                        "links": [
+                            {
+                                "out-node": "if_use_clamp_max",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    },
+                    "If True": {
+                        "links": [
+                            {
+                                "out-node": "AttributeWrangle15",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "Condition": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": "ref(\"../Use Mask\")",
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "iobject",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    540.0,
+                    2970.0
                 ],
                 "status": [],
                 "collasped": false
