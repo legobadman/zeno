@@ -628,21 +628,24 @@ namespace zenoio
             break;
         }
         case gParamType_Heatmap: {
-            if (val.IsArray()) {
-                zeno::HeatmapData hd;
-                auto colors = val.GetArray();
-                for (int i = 0; i < colors.Size(); i++) {
-                    if (colors[i].IsArray()) {
-                        auto clr = colors[i].GetArray();
-                        zeno::vec3f vec3;
-                        vec3[0] = clr[0].GetFloat();
-                        vec3[1] = clr[0].GetFloat();
-                        vec3[2] = clr[0].GetFloat();
-                        hd.colors.push_back(vec3);
-                    }
+            zeno::HeatmapData hd;
+            if (val.IsObject()) {
+                const auto& facArray = val["fac"].GetArray();
+                const auto& clrArray = val["color"].GetArray();
+                for (int i = 0; i < facArray.Size(); i++) {
+                    float fac = facArray[i].GetFloat();
+                    hd.facs.push_back(fac);
                 }
-                defl = hd;
+                for (int i = 0; i < clrArray.Size(); i++) {
+                    auto clr = clrArray[i].GetArray();
+                    zeno::vec3f vec3;
+                    vec3[0] = clr[0].GetFloat();
+                    vec3[1] = clr[1].GetFloat();
+                    vec3[2] = clr[2].GetFloat();
+                    hd.colors.push_back(vec3);
+                }
             }
+            defl = hd;
             break;
         }
         case Param_Null:
@@ -1163,18 +1166,26 @@ namespace zenoio
             }
             case gParamType_Heatmap:
             {
-                //TODO:
-                if (auto pHeatmapdata = zeno::reflect::any_cast<zeno::HeatmapData>(&any)) {
+                auto heatmap = zeno::reflect::any_cast<zeno::HeatmapData>(any);
+                writer.StartObject();
+                writer.Key("fac");
+                writer.StartArray();
+                for (auto fac : heatmap.facs) {
+                    writer.Double(fac);
+                }
+                writer.EndArray();
+
+                writer.Key("color");
+                writer.StartArray();
+                for (auto clr : heatmap.colors) {
                     writer.StartArray();
-                    for (auto vec3 : pHeatmapdata->colors) {
-                        writer.StartArray();
-                        writer.Double(vec3[0]);
-                        writer.Double(vec3[1]);
-                        writer.Double(vec3[2]);
-                        writer.EndArray();
-                    }
+                    writer.Double(clr[0]);
+                    writer.Double(clr[1]);
+                    writer.Double(clr[2]);
                     writer.EndArray();
                 }
+                writer.EndArray();
+                writer.EndObject();
                 break;
             }
             case gParamType_Vec2i:

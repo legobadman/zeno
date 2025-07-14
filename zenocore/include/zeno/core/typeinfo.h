@@ -43,7 +43,6 @@ registerObjectTypeHash(InstancingObject, Instance)
 #define gParamType_JsonObject       238
 #define gParamType_FBXObject        239
 #define gParamType_Scene            240
-#define gParamType_Heatmap          241
 #define gParamType_ABCTree          242
 
 #endif

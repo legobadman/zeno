@@ -299,32 +299,6 @@ static void initSpecialNode(zeno::NodeImpl* pNodeImpl, const NodeData& node) {
             pNodeImpl->update_param("items", join_str(node.group->items, ","));
             }
         }
-        //Compatible with older versions
-        else if (node.cls == "MakeHeatmap")
-        {
-            std::string color;
-            int nres = 0;
-            const PrimitiveParams& primparams = customUiToParams(node.customUi.inputPrims);
-            for (const auto& input : primparams)
-            {
-                if (input.name == "_RAMPS")
-                {
-                    color = zeno_get<std::string>(input.defl);
-                }
-                else if (input.name == "nres")
-                {
-                    nres = zeno_get<int>(input.defl);
-                }
-            }
-            if (!color.empty() && nres > 0)
-            {
-                std::regex pattern("\n");
-                std::string fmt = "\\n";
-                color = std::regex_replace(color, pattern, fmt);
-                std::string json = "{\"nres\": " + std::to_string(nres) + ", \"color\":\"" + color + "\"}";
-            pNodeImpl->update_param("heatmap", json);
-            }
-        }
         else if (zeno::isDerivedFromSubnetNodeName(node.cls))
         {
         if (auto sbn = dynamic_cast<SubnetNode*>(pNodeImpl))
