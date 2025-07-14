@@ -695,6 +695,10 @@ namespace zeno {
         {
             return ShaderData();
         }
+        else if (type == gParamType_StringList)
+        {
+            return std::vector<std::string>();
+        }
         else {
             assert(false);
         }
@@ -1156,7 +1160,7 @@ namespace zeno {
 
     bool isNumericType(ParamType type)
     {
-        if (type == types::gParamType_Int || type == types::gParamType_Float)
+        if (type == types::gParamType_Int || type == types::gParamType_Float || type == types::gParamType_Bool)
             return true;
         return false;
     }
@@ -1853,7 +1857,8 @@ namespace zeno {
             type == gParamType_Bool ||
             type == gParamType_Heatmap ||
             type == gParamType_Curve ||
-            type == gParamType_Shader;
+            type == gParamType_Shader ||
+            type == gParamType_StringList;
         //TODO: heatmap type.
     }
 

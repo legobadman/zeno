@@ -227,6 +227,67 @@ ZENDEFNODE(GetUserData2, {
                             {"lifecycle"},
                         });
 
+struct GetUserData3 : zeno::INode {
+    virtual void apply() override {
+        auto object = ZImpl(get_input("object"));
+        auto key = ZImpl(get_input2<std::string>("key"));
+        UserData* pUsrData = static_cast<UserData*>(object->userData());
+        if (pUsrData->has(key)) {
+            auto data = pUsrData->get(key);
+            if (auto numericObj = std::dynamic_pointer_cast<NumericObject>(data)) {
+                std::visit([&](auto&& val) {
+                    using T = std::decay_t<decltype(val)>;
+                    if (std::is_same_v<T, int>) {
+                        ZImpl(set_primitive_output("data", std::get<int>(numericObj->get())));
+                    }
+                    else if (std::is_same_v<T, float>) {
+                        ZImpl(set_primitive_output("data", std::get<float>(numericObj->get())));
+                    }
+                    else if (std::is_same_v<T, vec2i>) {
+                        ZImpl(set_primitive_output("data", std::get<vec2i>(numericObj->get())));
+                    }
+                    else if (std::is_same_v<T, vec3i>) {
+                        ZImpl(set_primitive_output("data", std::get<vec3i>(numericObj->get())));
+                    }
+                    else if (std::is_same_v<T, vec4i>) {
+                        ZImpl(set_primitive_output("data", std::get<vec4i>(numericObj->get())));
+                    }
+                    else if (std::is_same_v<T, vec2f>) {
+                        ZImpl(set_primitive_output("data", std::get<vec2f>(numericObj->get())));
+                    }
+                    else if (std::is_same_v<T, vec3f>) {
+                        ZImpl(set_primitive_output("data", std::get<vec3f>(numericObj->get())));
+                    }
+                    else if (std::is_same_v<T, vec4f>) {
+                        ZImpl(set_primitive_output("data", std::get<vec4f>(numericObj->get())));
+                    }
+                }, numericObj->get());
+            }
+            else if (auto stringObj = std::dynamic_pointer_cast<StringObject>(object)) {
+                ZImpl(set_primitive_output("data", stringObj->get()));
+            }
+            else {
+                throw makeError<UnimplError>("ObjectToBasetype expect not numericObject or stringObject");
+            }
+        }
+        else {
+            throw makeError<UnimplError>("only support numeric or string");
+        }
+    }
+};
+
+ZENDEFNODE(GetUserData3, {
+    {
+        {gParamType_IObject, "object"},
+        {gParamType_String, "key", ""},
+    },
+    {
+        {gParamType_AnyNumeric, "data"},
+    },
+    {},
+    {"lifecycle"},
+});
+
 
 struct DelUserData : zeno::INode {
     virtual void apply() override {

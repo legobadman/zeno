@@ -586,6 +586,29 @@ std::string& trim(std::string &s)
     return s;
 }
 
+struct GetStringFromList : zeno::INode {
+    virtual void apply() override {
+        const auto& vecstr = zeno::reflect::any_cast<std::vector<std::string>>(m_pAdapter->get_param_result("list"));
+        int index = get_input2_int("index");
+        if (index < 0 || index >= vecstr.size())
+            throw makeError<IndexError>(index, vecstr.size(), "GetStringFromList");
+        std::string str = vecstr[index];
+        m_pAdapter->set_primitive_output("string", str);
+    }
+};
+
+ZENDEFNODE(GetStringFromList, {
+    {
+        {gParamType_StringList, "list", ""},
+        {gParamType_Int, "index"}
+    },
+    {{gParamType_String, "string"},
+    },
+    {},
+    {"string"},
+});
+
+
 struct StringToList : zeno::INode {
     virtual void apply() override {
         auto stringlist = ZImpl(get_input2<std::string>("string"));
@@ -609,12 +632,8 @@ struct StringToList : zeno::INode {
             if(trimoption) trim(word);
             if(keepempty || !word.empty()) strings.push_back(word);
         }
-        for(const auto &string : strings) {
-            auto obj = std::make_unique<StringObject>();
-            obj->set(string);
-            list->m_impl->push_back(std::move(obj));
-        }
-        ZImpl(set_output("list", std::move(list)));
+        m_pAdapter->set_primitive_output("list", strings);
+        m_pAdapter->set_primitive_output("count", static_cast<int>(strings.size()));
     }
 };
 
@@ -625,7 +644,9 @@ ZENDEFNODE(StringToList, {
         {gParamType_Bool, "Trim", "false"},
         {gParamType_Bool, "KeepEmpty", "false"},
     },
-    {{gParamType_List, "list"},
+    {
+        {gParamType_StringList, "list"},
+        {gParamType_Int, "count"}
     },
     {},
     {"string"},
