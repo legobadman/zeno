@@ -104,6 +104,10 @@ namespace zeno
         return m_impl->create_geometry_attr(zsString2Std(attr_name), abiAnyToAttrVar(defl));
     }
 
+    std::vector<std::string> GeometryObject_Adapter::attributes(GeoAttrGroup grp) {
+        return m_impl->attributes(grp);
+    }
+
     void GeometryObject_Adapter::copy_attr(GeoAttrGroup grp, const zeno::String& src_attr, const zeno::String& dest_attr) {
         m_impl->copy_attr(grp, zsString2Std(src_attr), zsString2Std(dest_attr));
     }

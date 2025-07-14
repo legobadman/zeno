@@ -757,6 +757,16 @@ namespace zeno
         return attrType == type;
     }
 
+    std::vector<std::string> GeometryObject::attributes(GeoAttrGroup grp) {
+        PROXY_PRIM_THROW
+        std::map<std::string, AttributeVector>& container = get_container(grp);
+        std::vector<std::string> attrs;
+        for (const auto& [name, _] : container) {
+            attrs.push_back(name);
+        }
+        return attrs;
+    }
+
     bool GeometryObject::has_vertex_attr(std::string const& name) const
     {
         PROXY_PRIM_THROW

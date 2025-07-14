@@ -102,6 +102,7 @@ namespace zeno
         bool has_point_attr(std::string const& name) const;
         bool has_face_attr(std::string const& name) const;
         bool has_geometry_attr(std::string const& name) const;
+        std::vector<std::string> attributes(GeoAttrGroup grp);
 
         //删除属性
         int delete_attr(GeoAttrGroup grp, const std::string& attr_name);

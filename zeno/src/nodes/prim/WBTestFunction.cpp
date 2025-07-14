@@ -498,5 +498,132 @@ ZENDEFNODE(Grid2DSample_M, {
 
 
 
+template <class T>
+static void sample2D(const std::vector<zeno::vec3f>& coord, const std::vector<T>& field, std::vector<T>& primAttr, int nx, int ny, float h,
+    zeno::vec3f bmin, bool isPeriodic) {
+    std::vector<T> temp(coord.size());
+//#pragma omp parallel for
+    for (auto tidx = 0; tidx < coord.size(); tidx++) {
+        auto uv = coord[tidx];
+        zeno::vec3f uv2;
+        if (isPeriodic) {
+            auto Lx = (nx - 1) * h;
+            auto Ly = (ny - 1) * h;
+            int gid_x = std::floor((uv[0] - bmin[0]) / Lx);
+            int gid_y = std::floor((uv[2] - bmin[2]) / Ly);
+            uv2 = (uv - (bmin + zeno::vec3f{ gid_x * Lx, 0, gid_y * Ly })) / h;
+            uv2 = zeno::min(zeno::max(uv2, zeno::vec3f(0.00, 0.0, 0.00)),
+                zeno::vec3f((float)nx - 1.01, 0.0, (float)ny - 1.01));
+        }
+        else {
+            uv2 = (uv - bmin) / h;
+            uv2 = zeno::min(zeno::max(uv2, zeno::vec3f(0.01, 0.0, 0.01)),
+                zeno::vec3f((float)nx - 1.01, 0.0, (float)ny - 1.01));
+        }
+
+        int i = uv2[0];
+        int j = uv2[2];
+        float cx = uv2[0] - i, cy = uv2[2] - j;
+        size_t idx00 = j * nx + i, idx01 = j * nx + i + 1, idx10 = (j + 1) * nx + i, idx11 = (j + 1) * nx + i + 1;
+        temp[tidx] = lerp<T>(lerp<T>(field[idx00], field[idx01], cx), lerp<T>(field[idx10], field[idx11], cx), cy);
+    }
+//#pragma omp parallel for
+    for (auto tidx = 0; tidx < coord.size(); tidx++) {
+        primAttr[tidx] = temp[tidx];
+    }
+}
+
+struct Grid2DSample_M2 : zeno::INode {
+    virtual void apply() override {
+        auto nx = get_input2_int("nx");
+        auto ny = get_input2_int("ny");
+        auto bmin = toVec3f(get_input2_vec3f("bmin"));
+        auto prim = get_input_Geometry("prim");
+        auto grid = get_input_Geometry("sampleGrid");
+        auto channelList = get_input2_string("channel");
+        auto sampleby = get_input2_string("sampleBy");
+        auto isPeriodic = get_input2_string("sampleType") == "Periodic";
+        auto h = get_input2_float("h");
+
+        bool sampleAll = false;
+
+        std::vector<std::string> channels;
+        std::istringstream iss(zsString2Std(channelList));
+        std::string word;
+        while (iss >> word) {
+            if (word == "*") {
+                sampleAll = true;
+                channels = grid->attributes(ATTR_POINT);
+                break;
+            }
+            channels.push_back(word);
+        }
+
+        if (prim->has_point_attr(sampleby)) {
+            if (!(sampleby == "pos" || prim->has_attr(ATTR_POINT, sampleby, ATTR_VEC3)))
+                throw std::runtime_error("[sampleBy] has to be a vec3f attribute!");
+
+            for (const auto& ch : channels) {
+                if (ch != "pos") {
+                    auto _ch = stdString2zs(ch);
+                    GeoAttrType type = grid->get_attr_type(ATTR_POINT, _ch);
+                    if (type == ATTR_VEC3) {
+                        if (!prim->has_point_attr(_ch)) {
+                            prim->create_point_attr(_ch, zeno::vec3f());
+                        }
+                        std::vector<vec3f> primAttr = prim->get_vec3f_attr(ATTR_POINT, _ch);
+                        sample2D<vec3f>(
+                            prim->get_vec3f_attr(ATTR_POINT, sampleby),
+                            grid->get_vec3f_attr(ATTR_POINT, stdString2zs(ch)),
+                            primAttr,
+                            nx, ny, h, bmin, isPeriodic);
+                        prim->set_point_attr(_ch, primAttr);
+                    }
+                    else if (type == ATTR_FLOAT) {
+                        if (!prim->has_point_attr(_ch)) {
+                            prim->create_point_attr(_ch, 0.f);
+                        }
+                        std::vector<float> primAttr = prim->get_float_attr(ATTR_POINT, _ch);
+                        sample2D<float>(
+                            prim->get_vec3f_attr(ATTR_POINT, sampleby),
+                            grid->get_float_attr(ATTR_POINT, stdString2zs(ch)),
+                            primAttr,
+                            nx, ny, h, bmin, isPeriodic);
+                        prim->set_point_attr(_ch, primAttr);
+                    }
+                    else {
+                        throw makeError<UnimplError>("only support vec3f or float in Grid2DSample");
+                    }
+                    /*std::visit(
+                        [&](auto&& ref) {
+                            using T = std::remove_cv_t<std::remove_reference_t<decltype(ref[0])>>;
+                            prim->add_attr<T>(ch);
+                            sample2D<T>(prim->attr<zeno::vec3f>(sampleby), grid->attr<T>(ch), prim->attr<T>(ch), nx, ny,
+                                h, bmin, isPeriodic);
+                        },
+                        grid->attr(ch));*/
+                }
+            }
+        }
+        set_output("prim", std::move(prim));
+    }
+};
+ZENDEFNODE(Grid2DSample_M2, {
+                             {{gParamType_Geometry, "prim"},
+                              {gParamType_Geometry, "sampleGrid"},
+                              {gParamType_Int, "nx", "1"},
+                              {gParamType_Int, "ny", "1"},
+                              {gParamType_Float, "h", "1"},
+                              {gParamType_Vec3f, "bmin", "0,0,0"},
+                              {gParamType_String, "channel", "*"},
+                              {gParamType_String, "sampleBy", "pos"},
+                              {"enum Clamp Periodic", "sampleType", "Clamp"}},
+                             {{gParamType_Geometry, "prim"}},
+                             {},
+                             {"zenofx"},
+    });
+
+
+
 } // namespace
 } // namespace zeno
