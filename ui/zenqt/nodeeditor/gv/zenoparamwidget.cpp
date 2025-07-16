@@ -1461,7 +1461,7 @@ ZenoMinStatusBtnItem::ZenoMinStatusBtnItem(const StatusComponent& statusComp, QG
 
 void ZenoMinStatusBtnItem::setOptions(int options)
 {
-    setChecked(STATUS_MUTE, options & zeno::Mute);
+    setChecked(STATUS_MUTE, options & zeno::ByPass);
     setChecked(STATUS_VIEW, options & zeno::View);
 }
 

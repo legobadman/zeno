@@ -380,12 +380,12 @@ bool NodeImpl::is_view() const
     return m_bView;
 }
 
-void NodeImpl::set_mute(bool bOn)
+void NodeImpl::set_bypass(bool bOn)
 {
     CORE_API_BATCH
 
-    m_mute = bOn;
-    CALLBACK_NOTIFY(set_mute, m_mute)
+    m_bypass = bOn;
+    CALLBACK_NOTIFY(set_bypass, m_bypass)
     mark_dirty(true);
 
     //Graph* spGraph = graph;
@@ -393,9 +393,21 @@ void NodeImpl::set_mute(bool bOn)
     //spGraph->viewNodeUpdated(m_name, bOn);
 }
 
-bool NodeImpl::is_mute() const
+bool NodeImpl::is_bypass() const
 {
-    return m_mute;
+    return m_bypass;
+}
+
+void NodeImpl::set_nocache(bool bOn) {
+    CORE_API_BATCH
+
+    m_nocache = bOn;
+    CALLBACK_NOTIFY(set_nocache, m_nocache)
+    mark_dirty(true);
+}
+
+bool NodeImpl::is_nocache() const {
+    return m_nocache;
 }
 
 void NodeImpl::reportStatus(bool bDirty, NodeRunStatus status) {
@@ -2133,7 +2145,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
 #ifdef ZENO_BENCHMARKING
         Timer _(m_name);
 #endif
-        if (m_mute) {
+        if (m_bypass) {
             bypass();
         }
         else {
@@ -2641,6 +2653,7 @@ NodeData NodeImpl::exportInfo() const
     node.name = m_name;
     node.bView = m_bView;
     node.uipos = m_pos;
+    node.bnocache = m_nocache;
     //TODO: node type
     if (node.subgraph.has_value())
         node.type = Node_SubgraphNode;
@@ -3272,6 +3285,8 @@ void NodeImpl::init(const NodeData& dat)
 
     m_pos = dat.uipos;
     m_bView = dat.bView;
+    m_bypass = dat.bypass;
+    m_nocache = dat.bnocache;
     if (m_bView) {
         Graph* spGraph = m_pGraph;
         assert(spGraph);

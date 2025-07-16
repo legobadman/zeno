@@ -21,8 +21,6 @@ struct ZENO_API SubnetNode : NodeImpl {
     void init_graph(std::shared_ptr<Graph> subg);
     bool isAssetsNode() const;
     bool is_loaded() const override;
-    bool is_locked() const override;
-    void set_locked(bool bLocked) override;
     NodeType nodeType() const override;
 
     NodeData exportInfo() const override;
@@ -32,7 +30,13 @@ struct ZENO_API SubnetNode : NodeImpl {
     void setCustomUi(const CustomUI& ui);
     void mark_subnetdirty(bool bOn);
 
+    bool is_locked() const override;
+    void set_locked(bool bLocked) override;
     CALLBACK_REGIST(lockChanged, void, void)
+
+    bool is_clearsubnet() const;
+    void set_clearsubnet(bool bOn);
+    CALLBACK_REGIST(clearSubnetChanged, void, bool)
 
 protected:
     CustomUI m_customUi;
@@ -40,6 +44,7 @@ protected:
 
 private:
     bool m_bLocked; //只给资产用
+    bool m_bClearSubnet;    //计算后清除子图节点缓存
 };
 
 struct ZENO_API DopNetwork : zeno::SubnetNode {

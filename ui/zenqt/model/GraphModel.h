@@ -67,7 +67,9 @@ public:
     zeno::NodeData createNode(const QString& nodeCls, const QString& cate, const QPointF& pos);
     void appendSubgraphNode(QString name, QString cls, NODE_DESCRIPTOR desc, GraphModel* subgraph, const QPointF& pos);
     void setView(const QModelIndex& idx, bool bOn);
-    void setMute(const QModelIndex& idx, bool bOn);
+    void setBypass(const QModelIndex& idx, bool bOn);
+    void setNocache(const QModelIndex& idx, bool bOn);
+    void setClearSubnet(const QModelIndex& idx, bool bOn);
     QString updateNodeName(const QModelIndex& idx, QString newName);
     void updateSocketValue(const QModelIndex& nodeidx, const QString socketName, const QVariant newValue);
     void addLink(const zeno::EdgeInfo& link);
@@ -112,7 +114,9 @@ public:
     void _removeLinkImpl(const zeno::EdgeInfo& link, bool endTransaction = false);
     bool setModelData(const QModelIndex& index, const QVariant& newValue, int role);
     void _setViewImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
-    void _setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _setByPassImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _setNoCacheImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
 
 signals:
     void reloaded();

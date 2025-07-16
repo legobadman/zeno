@@ -77,9 +77,13 @@ namespace zeno
         CALLBACK_REGIST(set_view, void, bool)
         bool is_view() const;
 
-        void set_mute(bool bOn);
-        CALLBACK_REGIST(set_mute, void, bool)
-        bool is_mute() const;
+        void set_bypass(bool bOn);
+        CALLBACK_REGIST(set_bypass, void, bool)
+        bool is_bypass() const;
+
+        void set_nocache(bool bOn);
+        CALLBACK_REGIST(set_nocache, void, bool)
+        bool is_nocache() const;
 
         bool is_dirty() const { return m_dirty; }
         NodeRunStatus get_run_status() const { return m_status; }
@@ -321,7 +325,8 @@ namespace zeno
         Graph* m_pGraph;
         std::unique_ptr<INode> m_pNode;
         bool m_bView = false;
-        bool m_mute = false;
+        bool m_bypass = false;
+        bool m_nocache = false;
         bool m_dirty = true;
 
         zeno::reflect::TypeBase* m_pTypebase = nullptr;

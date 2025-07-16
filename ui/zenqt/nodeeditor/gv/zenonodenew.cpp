@@ -1363,7 +1363,7 @@ void ZenoNodeNew::onOptionsBtnToggled(STATUS_BTN btn, bool toggled)
         QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
         GraphModel* pGraphM = qobject_cast<GraphModel*>(pModel);
         ZASSERT_EXIT(pGraphM);
-        pGraphM->setMute(m_index, toggled);
+        pGraphM->setBypass(m_index, toggled);
     }
     else if (btn == STATUS_VIEW)
     {

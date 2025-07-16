@@ -184,6 +184,10 @@ QPersistentModelIndex Node::getIndex() const {
     return m_index;
 }
 
+int Node::getNodeType() const {
+    return m_index.data(QtRole::ROLE_NODETYPE).toInt();
+}
+
 bool    Node::setIsProtected(bool isProtected)
 {
     if (isProtected != _isProtected) {

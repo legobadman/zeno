@@ -43,10 +43,13 @@ Qan.NodeItem {
     implicitHeight: mainmain_layout.implicitHeight;
     resizable: false
 
-    property alias isview : right_status_group.isview
-    property alias isbypass: right_status_group.isbypass
+    property alias isview : view_btn.checked
+    property alias isbypass: bypass_btn.checked
+    property alias isnocache: nocache_btn.checked
+    property alias isclearsubnet: clearcache_btn.checked
     property bool isloaded : true
     property var node_type : NodeType.Node_Normal
+    property bool is_subnet_or_asset: false
     property bool is_locked: false
     property var node_enable_bg_color: "#0277D1"
     property var nodestatus: 0
@@ -130,26 +133,44 @@ Qan.NodeItem {
         //console.log("onIsbypassChanged: " + nodeItem.isbypass)
     }
 
+    onIsnocacheChanged: function() {
+        var graphM = nodeItem.graph.model
+        var idx = nodeItem.node.index
+        graphM.setData(idx, nodeItem.isnocache, Model.ROLE_NODE_NOCACHE)
+    }
+
+    onIsclearsubnetChanged: function() {
+        var graphM = nodeItem.graph.model
+        var idx = nodeItem.node.index
+        graphM.setData(idx, nodeItem.isclearsubnet, Model.ROLE_NODE_CLEARSUBNET)
+    }
+
     onDataChanged: function(data, role) {
         //console.log(nodeItem.node.label + " onDataChanged: " + data + ", role = " + role)
         if (role == Model.ROLE_NODE_ISVIEW) {
             //console.log("data = " + data)
             nodeItem.isview = data
         }
-        if (role == Model.ROLE_NODE_BYPASS) {
+        else if (role == Model.ROLE_NODE_BYPASS) {
             nodeItem.isbypass = data
         }
-        if (role == Model.ROLE_OBJPOS) {
+        else if (role == Model.ROLE_NODE_CLEARSUBNET) {
+            nodeItem.isclearsubnet = data
+        }
+        else if (role == Model.ROLE_NODE_NOCACHE) {
+            nodeItem.isnocache = data
+        }
+        else if (role == Model.ROLE_OBJPOS) {
             nodeItem.x = data.x
             nodeItem.y = data.y           
         }
-        if (role == Model.ROLE_NODE_LOCKED) {
+        else if (role == Model.ROLE_NODE_LOCKED) {
             nodeItem.is_locked = data
         }
-        if (role == Model.ROLE_NODE_RUN_STATE) {
+        else if (role == Model.ROLE_NODE_RUN_STATE) {
             nodeItem.nodestatus = data
         }
-        if (role == Model.ROLE_NODE_IS_LOADED) {
+        else if (role == Model.ROLE_NODE_IS_LOADED) {
             //console.log("onDataChanged: Model.ROLE_NODE_IS_LOADED")
             nodeItem.isloaded = data
             if (nodeItem.isloaded) {
@@ -195,7 +216,7 @@ Qan.NodeItem {
     Column {
         id: detach_name_editor
         anchors.right: nodeItem.left
-        y: right_status_group.y + right_status_group.height / 2 - height / 2
+        y:0//y: right_status_group.y + right_status_group.height / 2 - height / 2
 
         EditableText {
             //anchors.verticalCenter: right_status_group.verticalCenter
@@ -257,7 +278,7 @@ Qan.NodeItem {
                 Layout.fillWidth: true
             }
 
-            Repeater{
+            Repeater {
                 id: inputobjparams
                 model: nodeItem.node.params.inputObjects()
 
@@ -324,7 +345,7 @@ Qan.NodeItem {
                     Item {
                         id: nodeheader
                         implicitWidth: nodeheader_layout.implicitWidth
-                        implicitHeight: nodeheader_layout.implicitHeight
+                        implicitHeight: 40//nodeheader_layout.implicitHeight
                         Layout.fillWidth: true
 
                         /*以下两个rect各选一，视乎数值参数是否隐藏*/
@@ -347,13 +368,54 @@ Qan.NodeItem {
                         RowLayout {
                             id: nodeheader_layout
                             Layout.fillWidth: true
-                            spacing: 1
+                            spacing: 0
+
+                            Item {
+                                id: left_status_group
+                                width: {
+                                    //is_subnet_or_asset可能还没更新导致第一次判断不对，直接用内置属性
+                                    var type = nodeItem.node.nodeType
+                                    if (type == NodeType.Node_SubgraphNode ||
+                                        type == NodeType.Node_AssetInstance ||
+                                        type == NodeType.Node_AssetReference)
+                                    {
+                                        return nocache_btn.width + clearcache_btn.width - 4/*xoffset*/ + 1/*space*/
+                                    }
+                                    else {
+                                        return nocache_btn.width
+                                    }
+                                }
+                                height: 40
+
+                                StatusRoundBtnLeft {
+                                    id: nocache_btn
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    basefillcolor: "#FF3300"
+                                    radius: nodeItem.backRadius - 1
+                                    is_round_bottom: !nodebody.visible
+                                    height: 40
+                                    z: 100
+                                }
+
+                                StatusSquareBtn {
+                                    id: clearcache_btn
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    basefillcolor: "#E302F8"
+                                    is_left: true
+                                    visible: nodeItem.is_subnet_or_asset
+                                    height: 40
+                                    z: 100
+                                }
+                            }
 
                             RowLayout {
                                 id: nodenamelayout
                                 Layout.fillWidth: true
 
                                 Rectangle {
+                                    id: left_block
                                     width: 18
                                     Layout.fillHeight: true
                                     color: "transparent"
@@ -379,17 +441,38 @@ Qan.NodeItem {
                                 }    
 
                                 Rectangle {
+                                    id: right_block
                                     width: 18
                                     Layout.fillHeight: true
                                     color: "transparent"
                                 }
                             }
 
-                            StatusBtnGroup {
+                            Item {
                                 id: right_status_group
-                                radius: nodeItem.backRadius
-                                round_last_btn: !nodebody.visible
-                                z: -50
+                                width: view_btn.width + bypass_btn.width - 4/*xoffset*/ + 1/*space*/
+                                height: 40
+
+                                StatusSquareBtn {
+                                    id: bypass_btn
+                                    basefillcolor: "#FFBD21"
+                                    is_left: false
+                                    height: 40
+                                    z: 100
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                }
+
+                                StatusRoundBtnRight {
+                                    id: view_btn
+                                    basefillcolor: "#30BDD4"
+                                    height: 40
+                                    radius: nodeItem.backRadius - 1
+                                    is_round_bottom: !nodebody.visible
+                                    z: 100
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                }
                             }
                         }
                     }
@@ -568,11 +651,14 @@ Qan.NodeItem {
         nodeItem.x = pos.x
         nodeItem.y = pos.y
         nodeItem.isview = graphM.data(idx, Model.ROLE_NODE_ISVIEW)
+        nodeItem.isnocache = graphM.data(idx, Model.ROLE_NODE_NOCACHE)
+        nodeItem.isclearsubnet = graphM.data(idx, Model.ROLE_NODE_CLEARSUBNET)
         nodeItem.clsname = graphM.data(idx, Model.ROLE_CLASS_NAME)
         nodeItem.isloaded = graphM.data(idx, Model.ROLE_NODE_IS_LOADED)
         nodeItem.node_type = graphM.data(idx, Model.ROLE_NODETYPE)
         nodeItem.is_locked = graphM.data(idx, Model.ROLE_NODE_LOCKED)
         nodeItem.nodestatus = graphM.data(idx, Model.ROLE_NODE_RUN_STATE)
+        nodeItem.is_subnet_or_asset = nodeItem.node_type == NodeType.Node_SubgraphNode || nodeItem.node_type == NodeType.Node_AssetInstance || nodeItem.node_type == NodeType.Node_AssetReference
 
         var uistyle = graphM.data(idx, Model.ROLE_NODE_UISTYLE)
         if (uistyle["icon"] != "") {

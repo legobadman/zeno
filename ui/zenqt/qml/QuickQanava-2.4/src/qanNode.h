@@ -178,6 +178,9 @@ public:
     Q_PROPERTY(QPersistentModelIndex index READ getIndex CONSTANT FINAL)
     QPersistentModelIndex getIndex() const;
 
+    Q_PROPERTY(int nodeType READ getNodeType CONSTANT FINAL)
+    int getNodeType() const;
+
 private:
     QString         _label = "";
     QPersistentModelIndex m_index;

@@ -77,6 +77,8 @@ public:
     std::string m_cbSetPos;
     std::string m_cbSetView;
     std::string m_cbSetByPass;
+    std::string m_cbSetNoCache;
+    std::string m_cbSetClearSbn;
     //for DopnetWork
     std::string m_cbFrameCached;
     std::string m_cbFrameRemoved;
@@ -86,6 +88,8 @@ public:
     ParamsModel* params = nullptr;
     bool bView = false;
     bool bByPass = false;
+    bool bNoCache = false;
+    bool bClearSbn = false;
     bool bCollasped = false;
     bool bLoaded = true;   //如果节点所处的插件模块被卸载了，此项为false
     NodeState runState;
@@ -123,8 +127,20 @@ void NodeItem::unregister()
         ZASSERT_EXIT(ret);
         ret = spNode->unregister_set_view(m_cbSetView);
         ZASSERT_EXIT(ret);
-        ret = spNode->unregister_set_mute(m_cbSetByPass);
+        ret = spNode->unregister_set_bypass(m_cbSetByPass);
         ZASSERT_EXIT(ret);
+        ret = spNode->unregister_set_nocache(m_cbSetNoCache);
+        ZASSERT_EXIT(ret);
+
+        zeno::NodeType nodetype = spNode->nodeType();
+        if (nodetype == zeno::Node_SubgraphNode ||
+            nodetype == zeno::Node_AssetReference ||
+            nodetype == zeno::Node_AssetInstance) {
+            auto subnetnode = static_cast<zeno::SubnetNode*>(spNode);
+            bool ret = subnetnode->unregister_clearSubnetChanged(m_cbSetClearSbn);
+            ZASSERT_EXIT(ret);
+        }
+
         //DopNetwork
         if (auto subnetnode = dynamic_cast<zeno::DopNetwork*>(spNode))
         {
@@ -163,11 +179,17 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
         triggerView(nodepath, bView);
     });
 
-    m_cbSetByPass = spNode->register_set_mute([=](bool bypass) {
+    m_cbSetByPass = spNode->register_set_bypass([=](bool bypass) {
         this->bByPass = bypass;
         QModelIndex idx = pGraphM->indexFromName(this->name);
         emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_BYPASS });
     });
+
+    m_cbSetNoCache = spNode->register_set_nocache([=](bool nocache) {
+        this->bNoCache = nocache;
+        QModelIndex idx = pGraphM->indexFromName(this->name);
+        emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_NOCACHE });
+        });
 
     spNode->register_update_load_info([=](bool bDisable) {
         this->bLoaded = !bDisable;
@@ -181,7 +203,8 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
     this->dispName = QString::fromStdString(spNode->get_show_name());
     this->dispIcon = QString::fromStdString(spNode->get_show_icon());
     this->bView = spNode->is_view();
-    this->bByPass = spNode->is_mute();
+    this->bByPass = spNode->is_bypass();
+    this->bNoCache = spNode->is_nocache();
     this->runState.bDirty = spNode->is_dirty();
     this->runState.runstatus = spNode->get_run_status();
     auto pair = spNode->get_pos();
@@ -192,6 +215,19 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
 
     setProperty("uuid-path", QString::fromStdString(uuidPath));
     init_subgraph(pGraphM);
+
+    zeno::NodeType nodetype = spNode->nodeType();
+    if (nodetype == zeno::Node_SubgraphNode ||
+        nodetype == zeno::Node_AssetReference ||
+        nodetype == zeno::Node_AssetInstance) {
+        auto subnetnode = static_cast<zeno::SubnetNode*>(spNode);
+        this->bClearSbn = subnetnode->is_clearsubnet();
+        m_cbSetClearSbn = subnetnode->register_clearSubnetChanged([=](bool bClearSbn) {
+            this->bClearSbn = bClearSbn;
+            QModelIndex idx = pGraphM->indexFromName(this->name);
+            emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_CLEARSUBNET });
+            });
+    }
 
     //DopNetwork
     if (auto subnetnode = dynamic_cast<zeno::DopNetwork*>(spNode))
@@ -580,7 +616,11 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             if (item->bView)
                 options |= zeno::View;
             if (item->bByPass)
-                options |= zeno::Mute;
+                options |= zeno::ByPass;
+            if (item->bClearSbn)
+                options |= zeno::ClearSbn;
+            if (item->bNoCache)
+                options |= zeno::Nocache;
             return QVariant(options);
         }
         case QtRole::ROLE_OUTPUT_OBJS:
@@ -603,6 +643,14 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         case QtRole::ROLE_NODE_BYPASS:
         {
             return item->bByPass;
+        }
+        case QtRole::ROLE_NODE_NOCACHE:
+        {
+            return item->bNoCache;
+        }
+        case QtRole::ROLE_NODE_CLEARSUBNET:
+        {
+            return item->bClearSbn;
         }
         case QtRole::ROLE_NODE_RUN_STATE:
         {
@@ -765,7 +813,17 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
         }
         case QtRole::ROLE_NODE_BYPASS:
         {
-            setMute(index, value.toBool());
+            setBypass(index, value.toBool());
+            break;
+        }
+        case QtRole::ROLE_NODE_NOCACHE:
+        {
+            setNocache(index, value.toBool());
+            break;
+        }
+        case QtRole::ROLE_NODE_CLEARSUBNET:
+        {
+            setClearSubnet(index, value.toBool());
             break;
         }
         case QtRole::ROLE_INPUTS:
@@ -1446,7 +1504,6 @@ bool GraphModel::setModelData(const QModelIndex& index, const QVariant& newValue
 
 void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransaction)
 {
-    
     bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
@@ -1454,7 +1511,7 @@ void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransact
     if (endTransaction)
     {
         auto currtPath = currentPath();
-        NodeStatusCommand* pCmd = new NodeStatusCommand(true, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
+        NodeStatusCommand* pCmd = new NodeStatusCommand(zeno::View, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
         if (auto topLevelGraph = getTopLevelGraph(currtPath))
             topLevelGraph->pushToplevelStack(pCmd);
     }
@@ -1468,16 +1525,14 @@ void GraphModel::_setViewImpl(const QModelIndex& idx, bool bOn, bool endTransact
     }
 }
 
-void GraphModel::_setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransaction)
-{
+void GraphModel::_setNoCacheImpl(const QModelIndex& idx, bool bOn, bool endTransaction) {
     bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)
         endTransaction = false;
 
-    if (endTransaction)
-    {
+    if (endTransaction) {
         auto currtPath = currentPath();
-        NodeStatusCommand* pCmd = new NodeStatusCommand(false, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
+        NodeStatusCommand* pCmd = new NodeStatusCommand(zeno::Nocache, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
         if (auto topLevelGraph = getTopLevelGraph(currtPath))
             topLevelGraph->pushToplevelStack(pCmd);
     }
@@ -1487,7 +1542,52 @@ void GraphModel::_setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransact
         NodeItem* item = m_nodes[m_row2uuid[idx.row()]];
         auto spCoreNode = item->m_wpNode;
         ZASSERT_EXIT(spCoreNode);
-        spCoreNode->set_mute(bOn);
+        spCoreNode->set_nocache(bOn);
+    }
+}
+
+void GraphModel::_setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endTransaction) {
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
+    if (bEnableIoProc)
+        endTransaction = false;
+
+    if (endTransaction) {
+        auto currtPath = currentPath();
+        NodeStatusCommand* pCmd = new NodeStatusCommand(zeno::ClearSbn, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
+        if (auto topLevelGraph = getTopLevelGraph(currtPath))
+            topLevelGraph->pushToplevelStack(pCmd);
+    }
+    else {
+        auto spCoreGraph = m_impl->m_wpCoreGraph;
+        ZASSERT_EXIT(spCoreGraph);
+        NodeItem* item = m_nodes[m_row2uuid[idx.row()]];
+        auto spCoreNode = item->m_wpNode;
+        ZASSERT_EXIT(spCoreNode);
+        zeno::SubnetNode* subnetnode = static_cast<zeno::SubnetNode*>(spCoreNode);
+        subnetnode->set_clearsubnet(bOn);
+    }
+}
+
+void GraphModel::_setByPassImpl(const QModelIndex& idx, bool bOn, bool endTransaction)
+{
+    bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
+    if (bEnableIoProc)
+        endTransaction = false;
+
+    if (endTransaction)
+    {
+        auto currtPath = currentPath();
+        NodeStatusCommand* pCmd = new NodeStatusCommand(zeno::ByPass, idx.data(QtRole::ROLE_NODE_NAME).toString(), bOn, currtPath);
+        if (auto topLevelGraph = getTopLevelGraph(currtPath))
+            topLevelGraph->pushToplevelStack(pCmd);
+    }
+    else {
+        auto spCoreGraph = m_impl->m_wpCoreGraph;
+        ZASSERT_EXIT(spCoreGraph);
+        NodeItem* item = m_nodes[m_row2uuid[idx.row()]];
+        auto spCoreNode = item->m_wpNode;
+        ZASSERT_EXIT(spCoreNode);
+        spCoreNode->set_bypass(bOn);
     }
 }
 
@@ -1529,9 +1629,17 @@ void GraphModel::setView(const QModelIndex& idx, bool bOn)
     _setViewImpl(idx, bOn, true);
 }
 
-void GraphModel::setMute(const QModelIndex& idx, bool bOn)
+void GraphModel::setBypass(const QModelIndex& idx, bool bOn)
 {
-    _setMuteImpl(idx, bOn, true);
+    _setByPassImpl(idx, bOn, true);
+}
+
+void GraphModel::setNocache(const QModelIndex& idx, bool bOn) {
+    _setNoCacheImpl(idx, bOn, true);
+}
+
+void GraphModel::setClearSubnet(const QModelIndex& idx, bool bOn) {
+    _setClearSubnetImpl(idx, bOn, true);
 }
 
 QString GraphModel::updateNodeName(const QModelIndex& idx, QString newName)

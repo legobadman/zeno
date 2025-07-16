@@ -94,6 +94,15 @@ namespace zenoio
             if (node.bView) {
                 options.push_back("View");
             }
+            if (node.bypass) {
+                options.push_back("ByPass");
+            }
+            if (node.bnocache) {
+                options.push_back("NoCache");
+            }
+            if (node.bclearsbn) {
+                options.push_back("ClearSubnet");
+            }
             writer.StartArray();
             for (auto item : options)
             {

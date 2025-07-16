@@ -39,8 +39,10 @@ namespace zeno {
     enum NodeStatus : unsigned int
     {
         None = 0,
-        Mute = 1,
+        ByPass = 1,
         View = 1 << 1,
+        Nocache = 1 << 2,
+        ClearSbn = 1 << 3
     };
     ENUM_FLAGS(NodeStatus)
 

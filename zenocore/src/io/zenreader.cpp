@@ -125,8 +125,17 @@ namespace zenoio
                 {
                     retNode.bView = true;
                 }
-                else if (optName == "MUTE")
+                else if (optName == "ByPass")
                 {
+                    retNode.bypass = true;
+                }
+                else if (optName == "NoCache")
+                {
+                    retNode.bnocache = true;
+                }
+                else if (optName == "ClearSubnet")
+                {
+                    retNode.bclearsbn = true;
                 }
             }
         }

@@ -23,6 +23,7 @@ SubnetNode::SubnetNode(INode* pNode)
     : NodeImpl(pNode)
     , m_subgraph(std::make_shared<Graph>(""))
     , m_bLocked(true)
+    , m_bClearSubnet(false)
 {
     m_subgraph->initParentSubnetNode(this);
 
@@ -80,6 +81,7 @@ SubnetNode::~SubnetNode() = default;
 void SubnetNode::initParams(const NodeData& dat)
 {
     NodeImpl::initParams(dat);
+    m_bClearSubnet = dat.bclearsbn;
     if (dat.subgraph)
         m_subgraph->init(*dat.subgraph);
     if (zeno::Node_AssetInstance == nodeType()) {
@@ -128,6 +130,15 @@ void SubnetNode::set_locked(bool bLocked) {
         m_bLocked = bLocked;
         CALLBACK_NOTIFY(lockChanged)
     }
+}
+
+bool SubnetNode::is_clearsubnet() const {
+    return m_bClearSubnet;
+}
+
+void SubnetNode::set_clearsubnet(bool bOn) {
+    m_bClearSubnet = bOn;
+    CALLBACK_NOTIFY(clearSubnetChanged, bOn)
 }
 
 params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
@@ -359,6 +370,7 @@ void SubnetNode::apply() {
 NodeData SubnetNode::exportInfo() const {
     //要注意，这里必须要手动cast为SubnetNode才能拿，因为NodeImpl已经和INode分离了
     NodeData node = NodeImpl::exportInfo();
+    node.bclearsbn = m_bClearSubnet;
     const Asset& asset = zeno::getSession().assets->getAsset(node.cls);
     if (!asset.m_info.name.empty()) {
         node.asset = asset.m_info;

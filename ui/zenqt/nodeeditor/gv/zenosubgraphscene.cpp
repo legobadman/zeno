@@ -1339,7 +1339,7 @@ void ZenoSubGraphScene::keyPressEvent(QKeyEvent* event)
     }
     else if (!event->isAccepted() && uKey == ZenoSettingsManager::GetInstance().getShortCut(ShortCut_Bypass))
     {
-        updateNodeStatus(zeno::Mute);
+        updateNodeStatus(zeno::ByPass);
     } 
     else if (!event->isAccepted() && uKey == ZenoSettingsManager::GetInstance().getShortCut(ShortCut_View)) 
     {

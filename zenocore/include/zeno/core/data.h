@@ -262,6 +262,9 @@ namespace zeno {
         NodeType type;
         bool bCollasped = false;
         bool bLocked = true;   //asset instance.
+        bool bypass = false;
+        bool bnocache = false;
+        bool bclearsbn = false;
     };
 
     struct NodeDesc {

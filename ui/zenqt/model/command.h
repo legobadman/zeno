@@ -76,15 +76,15 @@ private:
 class NodeStatusCommand : public QUndoCommand
 {
 public:
-    NodeStatusCommand(bool isSetView, const QString& name, bool bOn, const QStringList& graphPath);
+    NodeStatusCommand(zeno::NodeStatus status, const QString& name, bool bOn, const QStringList& graphPath);
     void redo() override;
     void undo() override;
 
 private:
-    bool m_isSetView;
+    zeno::NodeStatus m_status;
     QString m_lastViewNodeName;
 
-    bool m_On;
+    bool m_bOn;
     QStringList m_graphPath;
 
     GraphModel* m_model;

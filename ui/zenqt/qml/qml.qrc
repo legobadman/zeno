@@ -45,6 +45,9 @@
         <file>Socket.qml</file>
         <file>SocketName.qml</file>
         <file>StatusBtn.qml</file>
+        <file>StatusSquareBtn.qml</file>
+        <file>StatusRoundBtnLeft.qml</file>
+        <file>StatusRoundBtnRight.qml</file>
         <file>StatusBtnGroup.qml</file>
         <file>StatusBtnSeperator.qml</file>
         <file>StatusImgBtn.qml</file>

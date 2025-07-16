@@ -227,12 +227,12 @@ void ModelDataCommand::undo()
     }
 }
 
-NodeStatusCommand::NodeStatusCommand(bool isSetView, const QString& name, bool bOn, const QStringList& graphPath)
-    : m_On(bOn)
+NodeStatusCommand::NodeStatusCommand(zeno::NodeStatus status, const QString& name, bool bOn, const QStringList& graphPath)
+    : m_bOn(bOn)
     , m_graphPath(graphPath)
     , m_model(nullptr)
     , m_nodeName(name)
-    , m_isSetView(isSetView)
+    , m_status(status)
 {
 }
 
@@ -243,23 +243,35 @@ void NodeStatusCommand::redo()
     {
         auto idx = m_model->indexFromName(m_nodeName);
         if (idx.isValid()) {
-            if (m_isSetView)
+            switch (m_status)
             {
-                if (m_On) {
+            case zeno::View: {
+                if (m_bOn) {
                     QStringList linkedNodes = UiHelper::findAllLinkdNodes(m_model, m_nodeName);
                     for (auto& node : linkedNodes) {
                         auto nodeidx = m_model->indexFromName(node);
                         if (nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool() && nodeidx.data(QtRole::ROLE_NODE_NAME).toString() != m_nodeName) {
                             m_lastViewNodeName = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
-                            m_model->_setViewImpl(nodeidx, !m_On);
+                            m_model->_setViewImpl(nodeidx, !m_bOn);
                             break;
                         }
                     }
                 }
-                m_model->_setViewImpl(idx, m_On);
+                m_model->_setViewImpl(idx, m_bOn);
+                break;
             }
-            else {
-                m_model->_setMuteImpl(idx, m_On);
+            case zeno::ByPass: {
+                m_model->_setByPassImpl(idx, m_bOn);
+                break;
+            }
+            case zeno::ClearSbn: {
+                m_model->_setClearSubnetImpl(idx, m_bOn);
+                break;
+            }
+            case zeno::Nocache: {
+                m_model->_setNoCacheImpl(idx, m_bOn);
+                break;
+            }
             }
         }
     }
@@ -272,16 +284,28 @@ void NodeStatusCommand::undo()
     {
         auto idx = m_model->indexFromName(m_nodeName);
         if (idx.isValid()) {
-            if (m_isSetView)
+            switch (m_status)
             {
-                if (m_On && !m_lastViewNodeName.isEmpty()) {
+            case zeno::View: {
+                if (m_bOn && !m_lastViewNodeName.isEmpty()) {
                     auto lastViewNodeIdx = m_model->indexFromName(m_lastViewNodeName);
-                    m_model->_setViewImpl(lastViewNodeIdx, m_On);
+                    m_model->_setViewImpl(lastViewNodeIdx, m_bOn);
                 }
-                m_model->_setViewImpl(idx, !m_On);
+                m_model->_setViewImpl(idx, !m_bOn);
+                break;
             }
-            else {
-                m_model->_setMuteImpl(idx, !m_On);
+            case zeno::ByPass: {
+                m_model->_setByPassImpl(idx, !m_bOn);
+                break;
+            }
+            case zeno::ClearSbn: {
+                m_model->_setClearSubnetImpl(idx, !m_bOn);
+                break;
+            }
+            case zeno::Nocache: {
+                m_model->_setNoCacheImpl(idx, !m_bOn);
+                break;
+            }
             }
         }
     }
