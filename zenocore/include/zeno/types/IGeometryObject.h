@@ -21,6 +21,8 @@ namespace zeno
         zany clone() const override;
         void Delete() override;
 
+        virtual ~GeometryObject_Adapter();
+
         void inheritAttributes(
             GeometryObject_Adapter* rhs,
             int vtx_offset,

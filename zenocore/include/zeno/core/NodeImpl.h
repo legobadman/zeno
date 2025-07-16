@@ -179,6 +179,7 @@ namespace zeno
         void func2() {}
         bool isInDopnetwork();
         bool has_frame_relative_params() const;
+        bool only_single_output_object() const;
 
         //foreach特供
         virtual bool is_continue_to_run();

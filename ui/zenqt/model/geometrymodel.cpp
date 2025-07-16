@@ -546,7 +546,7 @@ QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation,
         }
         else {
             auto pUserData = userData();
-            if (pUserData->size() != 0)
+            if (pUserData && pUserData->size() != 0)
             {
                 auto it = std::next(pUserData->begin(), section);
                 if (it == pUserData->end()) {

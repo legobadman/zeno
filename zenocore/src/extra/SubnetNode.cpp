@@ -139,6 +139,7 @@ bool SubnetNode::is_clearsubnet() const {
 void SubnetNode::set_clearsubnet(bool bOn) {
     m_bClearSubnet = bOn;
     CALLBACK_NOTIFY(clearSubnetChanged, bOn)
+    mark_dirty(true);
 }
 
 params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
@@ -364,6 +365,11 @@ void SubnetNode::apply() {
             bool ret = set_output(suboutput_node, spObject);
             assert(ret);
         }
+    }
+
+    if (m_bClearSubnet) {
+        //所有子图的节点都移除对象并标脏
+        m_subgraph->markDirtyAndCleanup();
     }
 }
 

@@ -19,6 +19,10 @@ namespace zeno
         m_impl = nullptr;
     }
 
+    GeometryObject_Adapter::~GeometryObject_Adapter() {
+        Delete();
+    }
+
     void GeometryObject_Adapter::inheritAttributes(
         GeometryObject_Adapter* rhs,
         int vtx_offset,

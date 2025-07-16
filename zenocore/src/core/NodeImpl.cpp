@@ -433,6 +433,10 @@ void NodeImpl::mark_previous_ref_dirty() {
     */
 }
 
+bool NodeImpl::only_single_output_object() const {
+    return m_outputObjs.size() == 1 && m_outputPrims.empty();
+}
+
 bool NodeImpl::has_frame_relative_params() const {
     for (auto& [name, param] : m_inputPrims) {
         assert(param.defl.has_value());
@@ -1900,6 +1904,20 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
         }
     }
 
+    //因为要同时清除所有输入输出，所以只考虑最常见的情况，以免复杂的检查链路
+    bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
+    if (outNode->is_nocache() && outNode->only_single_output_object()) {
+        bAllTaken = true;
+        for (auto link : out_param->links) {
+            ObjectParam* toparam = link->toparam;
+            NodeImpl* otherInNode = toparam->m_wpNode;
+            if (otherInNode != this && otherInNode->is_dirty()) {
+                bAllTaken = false;
+                break;
+            }
+        }
+    }
+
     if (bCloned) {
         in_param->spObject = out_param->spObject->clone();
     }
@@ -1909,6 +1927,12 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
         out_param->spObject.reset();
         outNode->mark_dirty(true);
 #endif
+    }
+
+    if (bAllTaken) {
+        //似乎要把输入也干掉，但如果一锅清掉，可能会漏了数值输出，或者多对象输出的情况（虽然很少见）
+        outNode->clearCalcResults();
+        outNode->mark_dirty(true, zeno::Dirty_All, true, false);
     }
 
     if (auto splist = std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
