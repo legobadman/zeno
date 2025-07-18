@@ -479,7 +479,8 @@ struct CreateCube : zeno::INode {
         }
 
         NORMUV_CIHOU
-        set_output("prim", std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -498,7 +499,7 @@ ZENDEFNODE(CreateCube, {
         {gParamType_Float, "size", "1", Socket_Primitve, Lineedit},
         {gParamType_Bool, "quads", "0", Socket_Primitve, Checkbox},
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"create"}
 });
@@ -547,7 +548,8 @@ struct CreateDisk : zeno::INode {
         tris[tris.size()-1] = zeno::vec3i(divisions, 0, 1);
 
         NORMUV_CIHOU
-        set_output("prim", std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim", geo);
     }
 };
 
@@ -562,7 +564,7 @@ ZENDEFNODE(CreateDisk, {
         {gParamType_Float, "radius", "1"},
         {gParamType_Int, "divisions", "32"},
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"create"},
 });
@@ -709,7 +711,8 @@ struct CreatePlane : zeno::INode {
         prim->userData()->set_vec3f("rotate", toAbiVec3f(rotate));
 
         NORMUV_CIHOU
-        set_output("prim", std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim", prim);
     }
 };
 
@@ -726,7 +729,7 @@ ZENDEFNODE(CreatePlane, {
         {gParamType_Int, "columns", "1"},
         {gParamType_Bool, "quads", "0"},
     },
-   { {gParamType_Primitive, "prim"}},
+   { {gParamType_Geometry, "prim"}},
     {},
     {"create"},
 });
@@ -951,7 +954,8 @@ struct CreateTube : zeno::INode {
         }
 
         NORMUV_CIHOU
-        set_output("prim", std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim", geo);
     }
 };
 
@@ -969,7 +973,7 @@ ZENDEFNODE(CreateTube, {
         {gParamType_Int, "rows", "3"},
         {gParamType_Int, "columns", "12"}
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"create"},
 });
@@ -1071,7 +1075,8 @@ struct CreateTorus : zeno::INode {
         if (!get_input2_bool("quads")){
             primTriangulate(prim.get());
         }
-        set_output("prim",std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim",std::move(geo));
     }
 };
 
@@ -1087,7 +1092,7 @@ ZENDEFNODE(CreateTorus, {
         {gParamType_Int, "MinorSegment", "12"},
         {gParamType_Bool, "quads", "0"},
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {
         {"enum " + EulerAngle::RotationOrderListString(), "EulerRotationOrder", "XYZ"},
         {"enum " + EulerAngle::MeasureListString(), "EulerAngleMeasure", "Degree"}
@@ -1316,7 +1321,8 @@ struct CreateSphere : zeno::INode {
             prim->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
         }
 
-        set_output("prim",std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim",std::move(geo));
     }
 };
 
@@ -1334,7 +1340,7 @@ ZENDEFNODE(CreateSphere, {
         {gParamType_Bool, "quads", "0"},
         {gParamType_Bool, "SphereRT", "0"}
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {
         {"enum " + EulerAngle::RotationOrderListString(), "EulerRotationOrder", "XYZ"},
         {"enum " + EulerAngle::MeasureListString(), "EulerAngleMeasure", "Degree"}
@@ -1366,7 +1372,8 @@ struct CreateCone : zeno::INode {
             tris.push_back(vec3i(lons, i, (i + 1) % lons));
             tris.push_back(vec3i(i, lons + 1, (i + 1) % lons));
         }
-        set_output("prim", std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -1378,7 +1385,7 @@ ZENDEFNODE(CreateCone, {
         {gParamType_Float, "height", "2"},
         {gParamType_Int, "lons", "32"},
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"create"},
 });
@@ -1423,7 +1430,8 @@ struct CreateCylinder : zeno::INode {
             tris.push_back(vec3i(_1, _0, _2));
             tris.push_back(vec3i(_2, _0, _3));
         }
-        set_output("prim", std::move(prim));
+        auto geo = create_GeometryObject(prim, true);
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -1435,7 +1443,7 @@ ZENDEFNODE(CreateCylinder, {
         {gParamType_Float, "height", "2"},
         {gParamType_Int, "lons", "32"},
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"create"},
 });

@@ -51,7 +51,7 @@ namespace zeno {
             if (pivotType == "bboxCenter") {
                 zeno::vec3f _min;
                 zeno::vec3f _max;
-                std::tie(_min, _max) = geomBoundingBox(geom->m_impl);
+                std::tie(_min, _max) = geomBoundingBox(geom->m_impl.get());
                 _pivot = (_min + _max) / 2;
             }
             else if (pivotType == "custom") {

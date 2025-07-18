@@ -50,7 +50,7 @@ static QMap<int, AttributeInfo> initColMapping(zeno::GeometryObject* pObject, ze
 /// <param name="pObject"></param>
 VertexModel::VertexModel(std::shared_ptr<zeno::GeometryObject_Adapter> spObject, QObject* parent) : m_object(spObject), m_nvertices(spObject->nvertices())
 {
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_VERTEX);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
     spObject->m_impl->register_add_vertex([this](int vertext_linearIdx) {
         if (vertext_linearIdx != -1) {
             beginInsertRows(QModelIndex(), vertext_linearIdx, vertext_linearIdx);
@@ -159,7 +159,7 @@ void VertexModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spO
     beginResetModel();
     m_object = spObject;
     m_nvertices = spObject->nvertices();
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_VERTEX);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
     endResetModel();
 }
 
@@ -172,7 +172,7 @@ bool VertexModel::removeRows(int row, int count, const QModelIndex& parent) {
 /// </summary>
 /// <param name="pObject"></param>
 PointModel::PointModel(std::shared_ptr<zeno::GeometryObject_Adapter> spObject, QObject* parent) : m_object(spObject), m_npoints(spObject->npoints()) {
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_POINT);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
     spObject->m_impl->register_add_point([this](int ptnum) {
         if (ptnum != -1) {
             beginInsertRows(QModelIndex(), ptnum, ptnum);
@@ -263,7 +263,7 @@ void PointModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spOb
     beginResetModel();
     m_object = spObject;
     m_npoints = spObject->npoints();
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_POINT);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
     endResetModel();
 }
 
@@ -284,7 +284,7 @@ bool PointModel::removeRows(int row, int count, const QModelIndex& parent) {
 /// <param name="pObject"></param>
 
 FaceModel::FaceModel(std::shared_ptr<zeno::GeometryObject_Adapter> spObject, QObject* parent) : m_object(spObject), m_nfaces(spObject->nfaces()) {
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_FACE);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     spObject->m_impl->register_add_face([this](int faceid) {
         if (faceid != -1) {
             beginInsertRows(QModelIndex(), faceid, faceid);
@@ -393,7 +393,7 @@ void FaceModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spObj
     beginResetModel();
     m_object = spObject;
     m_nfaces = spObject->nfaces();
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_FACE);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     endResetModel();
 }
 
@@ -402,7 +402,7 @@ GeomDetailModel::GeomDetailModel(std::shared_ptr<zeno::GeometryObject_Adapter> s
     : QAbstractTableModel(parent)
     , m_object(spObject)
 {
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_GEO);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
 }
 
 QVariant GeomDetailModel::data(const QModelIndex& index, int role) const
@@ -449,7 +449,7 @@ QVariant GeomDetailModel::headerData(int section, Qt::Orientation orientation, i
 void GeomDetailModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spObject) {
     beginResetModel();
     m_object = spObject;
-    m_colMap = initColMapping(spObject->m_impl, zeno::ATTR_GEO);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
     endResetModel();
 }
 

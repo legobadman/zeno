@@ -1,10 +1,10 @@
+#include "geotopology.h"
 #include <zeno/types/GeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <assert.h>
 #include <zeno/formula/syntax_tree.h>
 #include <zeno/utils/vectorutil.h>
 #include <zeno/utils/format.h>
-#include "geotopology.h"
 #include "../utils/zfxutil.h"
 #include "zeno_types/reflect/reflection.generated.hpp"
 #include <zeno/para/parallel_for.h>
@@ -34,31 +34,63 @@ namespace zeno
     }
 
     GeometryObject::GeometryObject()
-        : m_spTopology(std::make_shared<GeometryTopology>())
     {
     }
 
-    GeometryObject::GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
-        : m_spTopology(std::make_shared<GeometryTopology>(bTriangle, nPoints, nFaces, bInitFaces))
+    GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
     {
+        if (Topo_IndiceMesh == type) {
+            m_spTopology = create_indicemesh_topo(bTriangle, nPoints, nFaces, bInitFaces);
+        }
+        else if (Topo_HalfEdge == type) {
+            m_spTopology = create_halfedge_topo(bTriangle, nPoints, nFaces, bInitFaces);
+        }
+        else if (Topo_Line == type) {
+            throw makeError<UnimplError>("TODO: construct Line");
+        }
+        else {
+            throw makeError<UnimplError>("unknown type of Geometry Topology");
+        }
+    }
+
+    GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
+    {
+        if (Topo_IndiceMesh == type) {
+            m_spTopology = create_indicemesh_topo(bTriangle, nPoints, faces);
+        }
+        else if (Topo_HalfEdge == type) {
+            m_spTopology = create_halfedge_topo(bTriangle, nPoints, faces);
+        }
+        else if (Topo_Line == type) {
+            throw makeError<UnimplError>("TODO: construct Line");
+        }
+        else {
+            throw makeError<UnimplError>("unknown type of Geometry Topology");
+        }
     }
 
     GeometryObject::GeometryObject(const GeometryObject& rhs)
         : m_spTopology(rhs.m_spTopology)
         , m_host(rhs.m_host)
     {
+        m_vert_attrs = rhs.m_vert_attrs;
         m_point_attrs = rhs.m_point_attrs;
         m_face_attrs = rhs.m_face_attrs;
         m_geo_attrs = rhs.m_geo_attrs;
     }
 
     GeometryObject::~GeometryObject() {
+        int usecnt = m_spTopology.use_count();
+        if (usecnt > 0) {
+            int j;
+            j = 0;
+        }
     }
 
     GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo)
     {
         if (basePrimTopo) {
-            m_spTopology = std::make_shared<GeometryTopology>(spPrim);
+            m_spTopology = create_indicemesh_topo(spPrim);
             //提取出prim所有的属性
             create_attr(ATTR_POINT, "pos", spPrim->verts.values);
 
@@ -74,8 +106,10 @@ namespace zeno
             }
         }
         else {
-            m_spTopology = std::make_shared<GeometryTopology>();
-            initFromPrim(spPrim.get());
+            //deprecated:
+            assert(false);
+            /*m_spTopology = std::make_shared<GeometryTopology>();
+            initFromPrim(spPrim.get());*/
         }
     }
 
@@ -103,20 +137,14 @@ namespace zeno
             sp_attr_data.to_prim_attr(spPrim, false, m_spTopology->is_base_triangle(), name);
         }
 
-        std::shared_ptr<PrimitiveObject> primTopo = m_spTopology->getPrimTopo();
-        if (primTopo) {
-            spPrim->lines = primTopo->lines;
-            spPrim->tris = primTopo->tris;
-            spPrim->quads = primTopo->quads;
-            spPrim->loops = primTopo->loops;
-            spPrim->polys = primTopo->polys;
-            spPrim->edges = primTopo->edges;
-        }
-        else {
-            m_spTopology->toPrimitive(spPrim);
-        }
-
-        //spPrim->m_userData = m_userData; //TODO: usrdata copy from geom to prim.
+        std::shared_ptr<PrimitiveObject> primTopo = get_primitive_topo(m_spTopology);
+        //拷拓扑就行
+        spPrim->lines = primTopo->lines;
+        spPrim->tris = primTopo->tris;
+        spPrim->quads = primTopo->quads;
+        spPrim->loops = primTopo->loops;
+        spPrim->polys = primTopo->polys;
+        spPrim->edges = primTopo->edges;
         return spPrim;
     }
 
@@ -206,13 +234,19 @@ namespace zeno
         }, var_vec);
     }
 
-    void GeometryObject::initFromPrim(PrimitiveObject* prim) {
+    void GeometryObject::initFromPrim(std::shared_ptr<PrimitiveObject> prim) {
+        //不考虑points，lines, quads, edges, mtl. inst，遇到再处理
+        if (!prim->points->empty() || !prim->lines->empty() || !prim->edges->empty()
+            || !prim->quads->empty()) {
+            throw makeError<UnimplError>("cannot wrap primitive Object by Geom for points, lines, edges and quads");
+        }
+
         //现在有bind机制，也许不需要再这么麻烦地转来转去
         create_attr(ATTR_POINT, "pos", prim->verts.values);
-        m_spTopology->initFromPrim(prim);
+
+        m_spTopology = create_indicemesh_topo(prim);
 
         //顶点属性
-        //TODO: pos如何处理？
         for (auto& [attr_name, var_vec] : prim->verts.attrs) {
             create_attr_from_AttrVector(ATTR_POINT, attr_name, var_vec);
         }
@@ -224,12 +258,46 @@ namespace zeno
         for (auto& [attr_name, var_vec] : prim->tris.attrs) {
             create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
         }
-
-        //不考虑points，lines, quads, edges, loops, mtl. inst，遇到再处理
     }
 
     void GeometryObject::bindPrimitive(std::shared_ptr<PrimitiveObject> prim) {
         m_host = std::move(prim);
+    }
+
+    GeometryObject* GeometryObject::toIndiceMeshesTopo() const {
+        if (!m_spTopology) return nullptr;
+
+        GeometryObject* pGeom = new GeometryObject;
+        zeno::GeomTopoType type = m_spTopology->type();
+        if (zeno::Topo_IndiceMesh == type) {
+            pGeom = new GeometryObject(*this);
+        }
+        else {
+            pGeom->m_spTopology = create_indicemesh_by_halfedge(m_spTopology);
+            pGeom->m_point_attrs = m_point_attrs;
+            pGeom->m_vert_attrs = m_vert_attrs;
+            pGeom->m_face_attrs = m_face_attrs;
+            pGeom->m_geo_attrs = m_geo_attrs;
+        }
+        return pGeom;
+    }
+
+    GeometryObject* GeometryObject::toHalfEdgeTopo() const {
+        if (!m_spTopology) return nullptr;
+
+        GeometryObject* pGeom = new GeometryObject;
+        zeno::GeomTopoType type = m_spTopology->type();
+        if (zeno::Topo_IndiceMesh == type) {
+            pGeom->m_spTopology = create_halfedge_by_indicemesh(m_spTopology);
+            pGeom->m_point_attrs = m_point_attrs;
+            pGeom->m_vert_attrs = m_vert_attrs;
+            pGeom->m_face_attrs = m_face_attrs;
+            pGeom->m_geo_attrs = m_geo_attrs;
+        }
+        else {
+            pGeom = new GeometryObject(*this);
+        }
+        return pGeom;
     }
 
     std::shared_ptr<PrimitiveObject> GeometryObject::forkPrimitive() {
@@ -294,7 +362,7 @@ namespace zeno
             //TODO
             return;
         }
-        m_spTopology->geomTriangulate(info);
+        //m_spTopology->geomTriangulate(info);
         //TODO: uv
     }
 
@@ -459,7 +527,7 @@ namespace zeno
 
     void GeometryObject::copyTopologyAccordtoUseCount() {
         if (m_spTopology.use_count() > 1) {
-            m_spTopology = std::make_shared<GeometryTopology>(*m_spTopology.get());
+            m_spTopology = clone_topology(m_spTopology);
         }
     }
 
@@ -1001,26 +1069,7 @@ namespace zeno
     int GeometryObject::isLineFace(int faceid)
     {
         PROXY_PRIM_THROW
-        return m_spTopology->isLineFace(faceid);
-    }
-
-    void GeometryObject::fusePoints(std::vector<int>& fusedPoints) {
-        PROXY_PRIM_THROW
-        int npoints = this->npoints();
-        m_spTopology->fusePoints(fusedPoints);
-
-#if 0
-        bool isline = m_spTopology->is_line();
-        for (std::vector<int>::reverse_iterator it = fusedPoints.rbegin(); it != fusedPoints.rend(); ++it) {
-            if ((*it) != -1) {
-                int ptToRemove = npoints - 1 - (it - fusedPoints.rbegin());
-                remove_point(ptToRemove);
-                if (isline && (ptToRemove == npoints - 1)) {
-                    m_spTopology->setLineNextPt(ptToRemove - 1, fusedPoints[ptToRemove]);
-                }
-            }
-        }
-#endif
+        return m_spTopology->type() == Topo_Line;
     }
 
     int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {

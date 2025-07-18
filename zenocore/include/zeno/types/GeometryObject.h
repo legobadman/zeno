@@ -10,13 +10,14 @@
 #include <zeno/types/AttrVector.h>
 #include <zeno/types/PrimitiveObject.h>
 
+
 namespace zeno
 {
     using namespace zeno::reflect;
 
     struct PrimitiveObject;
 
-    class GeometryTopology;
+    class IGeomTopology;
     class AttributeVector;
 
     using ATTR_VEC_PTR = std::shared_ptr<AttributeVector>;
@@ -24,7 +25,8 @@ namespace zeno
     class ZENO_API GeometryObject {
     public:
         GeometryObject();
-        GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+        GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+        GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
         GeometryObject(const GeometryObject& rhs);
         GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo);
         std::shared_ptr<PrimitiveObject> toPrimitive();
@@ -39,6 +41,9 @@ namespace zeno
 
         void bindPrimitive(std::shared_ptr<PrimitiveObject> prim);
         std::shared_ptr<PrimitiveObject> forkPrimitive();
+
+        GeometryObject* toIndiceMeshesTopo() const;
+        GeometryObject* toHalfEdgeTopo() const;
 
         std::vector<vec3f> points_pos();
         std::vector<vec3i> tri_indice() const;
@@ -194,12 +199,10 @@ namespace zeno
         int vertex_face_index(int linear_vertex_id);
         std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
-        //特殊功能
-        void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
         int isLineFace(int faceid);
 
     private:
-        void initFromPrim(PrimitiveObject* prim);
+        void initFromPrim(std::shared_ptr<PrimitiveObject> prim);
         std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
         const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         size_t get_attr_size(GeoAttrGroup grp) const;
@@ -207,7 +210,7 @@ namespace zeno
         void removeAttribElem(AttributeVector& attrib_vec, int idx);
         void create_attr_from_AttrVector(GeoAttrGroup grp, const std::string& attr_name, const AttrVectorVariant& vec);
 
-        std::shared_ptr<GeometryTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
+        std::shared_ptr<IGeomTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
 
         //有许多老的资源和模型，深度依赖于Prim，要做转换很麻烦且没必要，于是可以尝试用Geom和引用计数管理起来
         //另外，m_host和m_spTopology是互斥的

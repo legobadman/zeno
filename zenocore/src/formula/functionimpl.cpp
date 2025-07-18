@@ -1471,7 +1471,7 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             assert(spGeo);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl, grp, name);
+            var.value = getAttrs(spGeo->m_impl.get(), grp, name);
             return var;
         }
 
@@ -1483,7 +1483,7 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             assert(spGeo);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl, ATTR_VERTEX, name);
+            var.value = getAttrs(spGeo->m_impl.get(), ATTR_VERTEX, name);
             return var;
         }
 
@@ -1496,7 +1496,7 @@ namespace zeno
             assert(spGeo);
 
             ZfxVariable ret;
-            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl, ATTR_POINT, name);
+            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl.get(), ATTR_POINT, name);
             if (args.size() == 2) {
                 //取索引
                 //TODO: 调getElem，就不用整个attrs都拿出来，因为可能在循环下调用的
@@ -1522,13 +1522,13 @@ namespace zeno
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             ZfxVariable var;
-            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl, ATTR_FACE, name);
+            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl.get(), ATTR_FACE, name);
             if (args.size() == 2) {
                 //TODO:
                 assert(false);
             }
             else {
-                var.value = getAttrs(spGeo->m_impl, ATTR_FACE, name);
+                var.value = getAttrs(spGeo->m_impl.get(), ATTR_FACE, name);
             }
             return var;
         }
@@ -1540,7 +1540,7 @@ namespace zeno
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl, ATTR_GEO, name);
+            var.value = getAttrs(spGeo->m_impl.get(), ATTR_GEO, name);
             return var;
         }
 
@@ -1829,7 +1829,7 @@ namespace zeno
             if (funcname == "get_bboxmin") {
                 auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl);
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
                 glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                 return bmin;
             }
@@ -1845,7 +1845,7 @@ namespace zeno
                 }
 
                 if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(targetObj)) {
-                    std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl);
+                    std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
                     glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                     return bmin;
                 }
@@ -1856,7 +1856,7 @@ namespace zeno
             if (funcname == "get_bboxmax") {
                 auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl);
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
                 glm::vec3 bmax(ret.second[0], ret.second[1], ret.second[2]);
                 return bmax;
             }

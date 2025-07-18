@@ -126,15 +126,23 @@ namespace zeno
 
         zeno::SharedPtr<PrimitiveObject> toPrimitiveObject() const;
 
+        zeno::SharedPtr<GeometryObject_Adapter> toIndiceMeshesTopo() const;
+        zeno::SharedPtr<GeometryObject_Adapter> toHalfEdgeTopo() const;
+
         void bindPrimitive(std::shared_ptr<PrimitiveObject> prim);
         std::shared_ptr<PrimitiveObject> forkPrimitive();
 
-        GeometryObject* m_impl;     //TODO: unique_ptr with abi compatible
+        std::unique_ptr<GeometryObject> m_impl;
     };
 
     //没有放到外面，是因为用户要直接include当前文件，干脆直接在这里构造
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject();
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(
+        GeomTopoType type,
+        bool bTriangle,
+        const std::vector<zeno::vec3f>& points,
+        const std::vector<std::vector<int>>& faces);
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim, bool basePrimTopo);
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(zeno::SharedPtr<GeometryObject_Adapter> pGeom);
 }

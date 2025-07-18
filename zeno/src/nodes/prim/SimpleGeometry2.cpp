@@ -1,5 +1,6 @@
 ﻿#include <zeno/zeno.h>
-#include <zeno/types/GeometryObject.h>
+//#include <zeno/types/GeometryObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/geo/geometryutil.h>
 #include <zeno/utils/interfaceutil.h>
 #include "glm/gtc/matrix_transform.hpp"
@@ -50,9 +51,10 @@ namespace zeno {
             int nPoints = 2 * (x_division * y_division) + (z_division - 2) * (2 * y_division + 2 * x_division - 4);
             int nFaces = 2 * (x_division - 1) * (y_division - 1) + 2 * (x_division - 1) * (z_division - 1) + 2 * (y_division - 1) * (z_division - 1);
 
-            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
             std::vector<zeno::vec3f> points, normals;
+            std::vector<std::vector<int>> faces;
             points.resize(nPoints);
+            faces.reserve(nFaces);
             if (bCalcPointNormals)
                 normals.resize(nPoints);
 
@@ -90,26 +92,26 @@ namespace zeno {
 
                                 if (bFirstFace) {
                                     if (bQuad) {
-                                        std::vector _newface = { leftdown, rightdown, rightup, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, rightdown, rightup, leftup };
+                                        faces.push_back(_newface);
                                     }
                                     else {
-                                        std::vector _newface = { leftdown, rightdown, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, rightdown, leftup };
+                                        faces.push_back(_newface);
                                         _newface = { rightdown, rightup, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        faces.push_back(_newface);
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        std::vector _newface = { leftdown, leftup, rightup, rightdown };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, leftup, rightup, rightdown };
+                                        faces.push_back(_newface);
                                     }
                                     else {
-                                        std::vector _newface = { leftdown, leftup, rightup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, leftup, rightup };
+                                        faces.push_back(_newface);
                                         _newface = { rightup, rightdown, leftdown };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        faces.push_back(_newface);
                                     }
                                 }
                             }
@@ -173,26 +175,26 @@ namespace zeno {
 
                                 if (bTop) {
                                     if (bQuad) {
-                                        std::vector _newface = { leftdown, rightdown, rightup, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, rightdown, rightup, leftup };
+                                        faces.push_back(_newface);
                                     }
                                     else {
-                                        std::vector _newface = { leftdown, rightdown, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, rightdown, leftup };
+                                        faces.push_back(_newface);
                                         _newface = { rightdown, rightup, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        faces.push_back(_newface);
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        std::vector _newface = { leftdown, leftup, rightup, rightdown };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, leftup, rightup, rightdown };
+                                        faces.push_back(_newface);
                                     }
                                     else {
-                                        std::vector _newface = { leftdown, leftup, rightup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, leftup, rightup };
+                                        faces.push_back(_newface);
                                         _newface = { rightdown, leftdown, rightup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        faces.push_back(_newface);
                                     }
                                 }
                             }
@@ -298,26 +300,26 @@ namespace zeno {
 
                                 if (bRight) {
                                     if (bQuad) {
-                                        std::vector _newface = { leftdown, rightdown, rightup, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, rightdown, rightup, leftup };
+                                        faces.push_back(_newface);
                                     }
                                     else {
-                                        std::vector _newface = { leftdown, rightdown, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, rightdown, leftup };
+                                        faces.push_back(_newface);
                                         _newface = { rightdown, rightup, leftup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        faces.push_back(_newface);
                                     }
                                 }
                                 else {
                                     if (bQuad) {
-                                        std::vector _newface = { leftdown, leftup, rightup, rightdown };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, leftup, rightup, rightdown };
+                                        faces.push_back(_newface);
                                     }
                                     else {
-                                        std::vector _newface = { leftdown, leftup, rightup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        std::vector<int> _newface = { leftdown, leftup, rightup };
+                                        faces.push_back(_newface);
                                         _newface = { rightdown, leftdown, rightup };
-                                        geo->add_face(stdVec2zeVec(_newface));
+                                        faces.push_back(_newface);
                                     }
                                 }
                             }
@@ -342,11 +344,10 @@ namespace zeno {
                 }
             }
 
-            geo->create_attr(ATTR_POINT, "pos", points);
+            auto geo = create_GeometryObject(Topo_IndiceMesh, !bQuad, points, faces);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
-
-            ZImpl(set_output("Output", geo));
+            set_output("Output", geo);
         }
     };
 
@@ -422,9 +423,11 @@ namespace zeno {
                 throw makeError<UnimplError>("Unknown Direction");
             }
 
-            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
+            
             std::vector<vec3f> points, normals;
+            std::vector<std::vector<int>> faces;
             points.resize(nPoints);
+            faces.reserve(nFaces);
             if (bCalcPointNormals)
                 normals.resize(nPoints);
 
@@ -458,13 +461,13 @@ namespace zeno {
 
                         if (bQuad) {
                             std::vector<int> _face = { ij, i_1j, i_1j_1, ij_1 };
-                            geo->add_face(stdVec2zeVec(_face));
+                            faces.push_back(_face);
                         }
                         else {
                             std::vector<int> _face = { ij, i_1j, i_1j_1 };
-                            geo->add_face(stdVec2zeVec(_face));
+                            faces.push_back(_face);
                             _face = { ij, i_1j_1, ij_1 };
-                            geo->add_face(stdVec2zeVec(_face));
+                            faces.push_back(_face);
                         }
                     }
                 }
@@ -485,7 +488,7 @@ namespace zeno {
                 }
             }
 
-            geo->create_attr(ATTR_POINT, "pos", points);
+            auto geo = create_GeometryObject(zeno::Topo_IndiceMesh, !bQuad, points, faces);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
 
@@ -543,9 +546,10 @@ namespace zeno {
                 nPoints += 2;
             }
 
-            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
             std::vector<vec3f> points, normals;
+            std::vector<std::vector<int>> faces;
             points.resize(nPoints);
+            faces.reserve(nFaces);
             if (bCalcPointNormals)
                 normals.resize(nPoints);
 
@@ -562,8 +566,8 @@ namespace zeno {
                         int down_idx = (Rows - 1) * Columns + col;
                         down_pts.push_back(down_idx);
                     }
-                    geo->add_face(stdVec2zeVec(up_pts));
-                    geo->add_face(stdVec2zeVec(down_pts));
+                    faces.push_back(up_pts);
+                    faces.push_back(down_pts);
                 }
                 else {
                     if (Direction == "Y Axis") {
@@ -586,21 +590,21 @@ namespace zeno {
                     {
                         int idx = col + 2;
                         if (col > 0) {
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx - 1, idx }));
+                            faces.push_back(std::vector<int>{ 0, idx - 1, idx });
                         }
                         if (col == Columns - 1) {
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx, 2 }));
+                            faces.push_back(std::vector<int>{ 0, idx, 2 });
                         }
                     }
                     for (int col = 0; col < Columns; col++)
                     {
                         int idx = (Rows - 1) * Columns + col + 2;
                         if (col > 0) {
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ 1, idx, idx - 1 }));
+                            faces.push_back(std::vector<int>{ 1, idx, idx - 1 });
                         }
                         if (col == Columns - 1) {
                             int last_start = (Rows - 1) * Columns + 2;
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ 1, last_start, idx }));
+                            faces.push_back(std::vector<int>{ 1, last_start, idx });
                         }
                     }
                 }
@@ -658,11 +662,11 @@ namespace zeno {
                         int left_top = right_top - 1;
 
                         if (bQuad) {
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom, right_top }));
+                            faces.push_back(std::vector<int>{ left_top, left_bottom, right_bottom, right_top });
                         }
                         else {
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom }));
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, right_bottom, right_top }));
+                            faces.push_back(std::vector<int>{ left_top, left_bottom, right_bottom });
+                            faces.push_back(std::vector<int>{ left_top, right_bottom, right_top });
                         }
 
                         if (col == Columns - 1) {
@@ -673,11 +677,11 @@ namespace zeno {
                             right_top = right_bottom - Columns;
 
                             if (bQuad) {
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom, right_top }));
+                                faces.push_back(std::vector<int>{ left_top, left_bottom, right_bottom, right_top });
                             }
                             else {
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, left_bottom, right_bottom }));
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ left_top, right_bottom, right_top }));
+                                faces.push_back(std::vector<int>{ left_top, left_bottom, right_bottom });
+                                faces.push_back(std::vector<int>{ left_top, right_bottom, right_top });
                             }
                         }
                     }
@@ -700,7 +704,7 @@ namespace zeno {
                 }
             }
 
-            geo->create_attr(ATTR_POINT, "pos", points);
+            auto geo = create_GeometryObject(zeno::Topo_IndiceMesh, !bQuad, points, faces);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
 
@@ -791,7 +795,8 @@ namespace zeno {
             std::vector<vec3f> points;
             points.resize(nPoints);
 
-            auto geo = create_GeometryObject(!bQuad, nPoints, nFaces);
+            std::vector<std::vector<int>> faces;
+            faces.reserve(nFaces);
 
             //先加顶部和底部两个顶点
             vec3f topPos;
@@ -858,9 +863,9 @@ namespace zeno {
                     if (col > 0) {
                         if (row == 1) {
                             //与顶部顶点构成三角面
-                            geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx - 1, idx }));
+                            faces.push_back(std::vector<int>{ 0, idx - 1, idx });
                             if (col == Columns - 1) {
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ 0, idx, startIdx }));
+                                faces.push_back(std::vector<int>{ 0, idx, startIdx });
                             }
                         }
                         else {
@@ -869,11 +874,11 @@ namespace zeno {
                             int rightup = 2/*顶部底部两个点*/ + (row - 2) * Columns + col;
                             int leftup = rightup - 1;
                             if (bQuad) {
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup, leftdown }));
+                                faces.push_back(std::vector<int>{ rightdown, rightup, leftup, leftdown });
                             }
                             else {
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup }));
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, leftup, leftdown }));
+                                faces.push_back(std::vector<int>{ rightdown, rightup, leftup });
+                                faces.push_back(std::vector<int>{ rightdown, leftup, leftdown });
                             }
 
                             if (col == Columns - 1) {
@@ -883,19 +888,19 @@ namespace zeno {
                                 rightup = 2 + (row - 2) * Columns;
 
                                 if (bQuad) {
-                                    geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup, leftdown }));
+                                    faces.push_back(std::vector<int>{ rightdown, rightup, leftup, leftdown });
                                 }
                                 else {
-                                    geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, rightup, leftup }));
-                                    geo->add_face(stdVec2zeVec(std::vector<int>{ rightdown, leftup, leftdown }));
+                                    faces.push_back(std::vector<int>{ rightdown, rightup, leftup });
+                                    faces.push_back(std::vector<int>{ rightdown, leftup, leftdown });
                                 }
                             }
 
                             if (row == Rows - 2) {
                                 //与底部顶点构成三角面
-                                geo->add_face(stdVec2zeVec(std::vector<int>{ idx, idx - 1, 1 }));
+                                faces.push_back(std::vector<int>{ idx, idx - 1, 1 });
                                 if (col == Columns - 1) {
-                                    geo->add_face(stdVec2zeVec(std::vector<int>{ 1, startIdx, idx }));
+                                    faces.push_back(std::vector<int>{ 1, startIdx, idx });
                                 }
                             }
                         }
@@ -917,7 +922,7 @@ namespace zeno {
                 //todo: normal.
             }
 
-            geo->create_attr(ATTR_POINT, "pos", points);
+            auto geo = create_GeometryObject(Topo_IndiceMesh, !bQuad, points, faces);
             ZImpl(set_output("Output", std::move(geo)));
         }
     };
@@ -1003,15 +1008,18 @@ namespace zeno {
                 faceNumber = segments;
             }
 
-            auto spgeo = create_GeometryObject(true, pointNumber, faceNumber);
-
             std::vector<vec3f> points, normals;
+            std::vector<std::vector<int>> faces;
+            faces.reserve(faceNumber);
             points.resize(pointNumber);
             if (bCalcPointNormals)
                 normals.resize(pointNumber);
 
             if (arcType == "Closed") {
                 if (segments == 1) {
+                    points.push_back(Center);
+                    //TODO: 可能要加其他类型
+                    auto spgeo = create_GeometryObject(zeno::Topo_IndiceMesh, true, points, {});
                     spgeo->create_attr(ATTR_POINT, "pos", { Center });
                     ZImpl(set_output("Output", spgeo));
                     return;
@@ -1041,15 +1049,14 @@ namespace zeno {
                         normals[i] = nrm;
 
                     if (i > 1) {
-                        spgeo->add_face(stdVec2zeVec(std::vector<int>{ 0, i - 1, i }));
+                        faces.push_back(std::vector<int>{ 0, i - 1, i });
                     }
 
                     if (segments == 2) {//加一条线
                         //spgeo->initLineNextPoint(i);
                     }
                 }
-
-                spgeo->add_face(stdVec2zeVec(std::vector<int>{ 0, (int)pointNumber - 1, 1 }));
+                faces.push_back(std::vector<int>{ 0, (int)pointNumber - 1, 1 });
             }
             else if (arcType == "Open Arc") {
                 float startAngle = arcAngle[0];
@@ -1074,7 +1081,7 @@ namespace zeno {
                     points[i] = pt;
                     ptIndice.push_back(i);
                 }
-                spgeo->add_face(stdVec2zeVec(ptIndice), false);
+                faces.push_back(ptIndice);
                 bCalcPointNormals = false;
             }
             else if (arcType == "Sliced Arc") {
@@ -1104,7 +1111,7 @@ namespace zeno {
                         normals[i] = nrm;
 
                     if (i > 1) {
-                        spgeo->add_face(stdVec2zeVec(std::vector<int>{ 0, i - 1, i }));
+                        faces.push_back(std::vector<int>{ 0, i - 1, i });
                     }
                 }
             }
@@ -1124,6 +1131,7 @@ namespace zeno {
                 }
             }
 
+            auto spgeo = create_GeometryObject(zeno::Topo_IndiceMesh, true, pointNumber, faceNumber);
             spgeo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals) {
                 spgeo->create_attr(ATTR_POINT, "nrm", normals);
@@ -1153,8 +1161,8 @@ namespace zeno {
     struct PointCreate : INode {
         void apply() override {
             zeno::vec3f Position = ZImpl(get_input2<vec3f>("Position"));
-            auto spPoint = create_GeometryObject(false, 1, 0);
-            spPoint->create_point_attr("pos", Position);
+            std::vector<zeno::vec3f> pos = { Position };
+            auto spPoint = create_GeometryObject(zeno::Topo_IndiceMesh, false, pos, {});
             ZImpl(set_output("Output", spPoint));
         }
     };
@@ -1173,6 +1181,8 @@ namespace zeno {
 
     struct Line : INode {
         void apply() override {
+            //TODO: REFACTOR
+#if 0
             int npoints = ZImpl(get_input2<int>("npoints"));
             zeno::vec3f direction = ZImpl(get_input2<zeno::vec3f>("direction"));
             zeno::vec3f origin = ZImpl(get_input2<zeno::vec3f>("origin"));
@@ -1226,6 +1236,7 @@ namespace zeno {
             spgeo->add_face(stdVec2zeVec(pts), false);
             spgeo->create_attr(ATTR_POINT, "pos", points);
             ZImpl(set_output("Output", spgeo));
+#endif
         }
     };
 

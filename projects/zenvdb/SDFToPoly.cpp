@@ -32,7 +32,7 @@ struct SDFToGeometry : zeno::INode {
         }
 
         if (!quads.empty()) {
-            auto mesh = create_GeometryObject(false, points.size(), quads.size(), true);
+            auto mesh = create_GeometryObject(zeno::Topo_HalfEdge, false, points.size(), quads.size(), true);
 //#pragma omp parallel for
             for (int i = 0; i < quads.size(); i++)
             {

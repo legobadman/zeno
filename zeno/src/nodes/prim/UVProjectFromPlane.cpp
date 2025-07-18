@@ -354,7 +354,7 @@ std::shared_ptr<GeometryObject_Adapter> readImageFile(std::string const &path) {
         throw zeno::Exception("cannot open image file at path: " + native_path);
     }
     scope_exit delData = [=] { stbi_image_free(data); };
-    auto img = create_GeometryObject(true, w*h, 0);
+    auto img = create_GeometryObject(zeno::Topo_HalfEdge, true, w*h, 0);
     auto imagevrerts = img->points_pos();
     if (n == 3) {
         std::memcpy(imagevrerts.data(), data, w * h * n * sizeof(float));

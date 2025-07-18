@@ -1,125 +1,76 @@
-#ifndef __GEOMETRY_TOPOLOGY_H__
-#define __GEOMETRY_TOPOLOGY_H__
+#ifndef __IGEOMETRY_TOPOLOGY_H__
+#define __IGEOMETRY_TOPOLOGY_H__
 
 #include <vector>
 #include <string>
 #include <zeno/core/common.h>
-#include <zeno/core/IObject.h>
 #include <zeno/types/PrimitiveObject.h>
 
 namespace zeno
 {
-    struct HEdge;
-    struct HF_Face;
-    struct HF_Point;
-
-    struct HEdge {
-        std::string id;
-        HEdge* pair = 0, * next = 0;
-        size_t point = -1;
-        size_t point_from = -1;
-        size_t face = -1;
-
-        size_t find_from() {
-            if (point_from != -1) return point_from;
-            if (pair) return pair->point;
-            HEdge* h = this;
-            while (h->next != this) {
-                h = h->next;
-            }
-            return h->point;
-        }
-    };
-
-    struct HF_Face {
-        int start_linearIdx;  //the vertex index of start vertex.
-        HEdge* h = 0;      //应该是起始边
-    };
-
-    struct HF_Point {
-        std::set<HEdge*> edges;    //all h-edge starting from this point.
-    };
-
-    struct GeometryTopology
+    struct IGeomTopology
     {
-        GeometryTopology() = default;
-        GeometryTopology(const GeometryTopology& rhs);
-        GeometryTopology(std::shared_ptr<PrimitiveObject> prim);
-        GeometryTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+        IGeomTopology() = default;
+        virtual ~IGeomTopology() = default;
+        virtual GeomTopoType type() const = 0;
+        virtual std::shared_ptr<IGeomTopology> clone() = 0;
 
-        void initFromPrim(PrimitiveObject* prim);
-        void toPrimitive(std::shared_ptr<PrimitiveObject> spPrim);
-        std::shared_ptr<PrimitiveObject> getPrimTopo() const;
-
-        HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
-        std::tuple<HF_Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
-        size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
-        size_t getPointTo(HEdge* hedge) const;
-
-        std::vector<vec3i> tri_indice() const;
-        std::vector<std::vector<int>> face_indice() const;
-        std::vector<int> edge_list() const;
-        bool is_base_triangle() const;
-        bool is_line() const;
-        int npoints_in_face(HF_Face* face) const;
-        void geomTriangulate(zeno::TriangulateInfo& info);
+        virtual std::vector<vec3i> tri_indice() const = 0;
+        virtual std::vector<std::vector<int>> face_indice() const = 0;
+        virtual std::vector<int> edge_list() const = 0;
+        virtual bool is_base_triangle() const = 0;
+        virtual bool is_line() const = 0;
 
         /* 添加元素 */
-        int add_face(const std::vector<int>& points, bool bClose);
-        void set_face(int idx, const std::vector<int>& points, bool bClose);
-        int add_point();
-        int add_vertex(int face_id, int point_id);
+        virtual int add_face(const std::vector<int>& points, bool bClose) = 0;
+        virtual void set_face(int idx, const std::vector<int>& points, bool bClose) = 0;
+        virtual int add_point() = 0;
+        virtual int add_vertex(int face_id, int point_id) = 0;
 
         /* 移除元素相关 */
-        bool remove_faces(const std::set<int>& faces, bool includePoints, std::vector<int>& removedPtnum);
-        bool remove_point(int ptnum);
-        bool remove_vertex(int face_id, int vert_id);
+        virtual bool remove_faces(const std::set<int>& faces, bool includePoints, std::vector<int>& removedPtnum) = 0;
+        virtual bool remove_point(int ptnum) = 0;
+        virtual bool remove_vertex(int face_id, int vert_id) = 0;
 
         /* 返回元素个数 */
-        int npoints() const;
-        int nfaces() const;
-        int nvertices() const;
-        int nvertices(int face_id) const;
+        virtual int npoints() const = 0;
+        virtual int nfaces() const = 0;
+        virtual int nvertices() const = 0;
+        virtual int nvertices(int face_id) const = 0;
 
         /* 点相关 */
-        std::vector<int> point_faces(int point_id);
-        int point_vertex(int point_id);
-        std::vector<int> point_vertices(int point_id);
+        virtual std::vector<int> point_faces(int point_id) = 0;
+        virtual int point_vertex(int point_id) = 0;
+        virtual std::vector<int> point_vertices(int point_id) = 0;
 
         /* 面相关 */
-        int face_point(int face_id, int vert_id) const;
-        std::vector<int> face_points(int face_id) const;
-        int face_vertex(int face_id, int vert_id);
-        int face_vertex_count(int face_id);
-        std::vector<int> face_vertices(int face_id);
+        virtual int face_point(int face_id, int vert_id) const = 0;
+        virtual std::vector<int> face_points(int face_id) const = 0;
+        virtual int face_vertex(int face_id, int vert_id) = 0;
+        virtual int face_vertex_count(int face_id) = 0;
+        virtual std::vector<int> face_vertices(int face_id) = 0;
 
         /* Vertex相关 */
-        int vertex_index(int face_id, int vertex_id);
-        int vertex_next(int linear_vertex_id);
-        int vertex_prev(int linear_vertex_id);
-        std::tuple<int, int, int>  vertex_info(int linear_vertex_id);
-        int vertex_point(int linear_vertex_id);
-        int vertex_face(int linear_vertex_id);
-        int vertex_face_index(int linear_vertex_id);
-
-        void update_linear_vertex();
-
-        //特殊功能
-        void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
-        int isLineFace(int faceid) const;
-
-    private:
-        bool isLineFace(HF_Face* f) const;
-
-        std::shared_ptr<PrimitiveObject> m_indiceMesh_topo;
-
-        std::vector<std::shared_ptr<HF_Point>> m_points;
-        std::vector<std::shared_ptr<HF_Face>> m_faces;
-        std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;
-        bool m_bTriangle = true;    //所有面都是三角面
+        virtual int vertex_index(int face_id, int vertex_id) = 0;
+        virtual int vertex_next(int linear_vertex_id) = 0;
+        virtual int vertex_prev(int linear_vertex_id) = 0;
+        virtual std::tuple<int, int, int>  vertex_info(int linear_vertex_id) = 0;
+        virtual int vertex_point(int linear_vertex_id) = 0;
+        virtual int vertex_face(int linear_vertex_id) = 0;
+        virtual int vertex_face_index(int linear_vertex_id) = 0;
     };
+
+    std::shared_ptr<IGeomTopology> create_halfedge_topo(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+    std::shared_ptr<IGeomTopology> create_halfedge_topo(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
+    std::shared_ptr<IGeomTopology> create_indicemesh_topo(std::shared_ptr<PrimitiveObject> prim);
+    std::shared_ptr<IGeomTopology> create_indicemesh_topo(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+    std::shared_ptr<IGeomTopology> create_indicemesh_topo(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
+    std::shared_ptr<IGeomTopology> create_indicemesh_by_halfedge(std::shared_ptr<IGeomTopology> halfedge);
+    std::shared_ptr<IGeomTopology> create_halfedge_by_indicemesh(std::shared_ptr<IGeomTopology> indicemesh);
+    std::shared_ptr<IGeomTopology> clone_topology(std::shared_ptr<IGeomTopology> topology);
+
+    //从拓扑中获得PrimitiveObject的表达，如果topo是indiceMesh，直接返回内建的prim，如果是halfedge，就构造一个新的返回
+    std::shared_ptr<PrimitiveObject> get_primitive_topo(std::shared_ptr<IGeomTopology> topology);
 }
-
-
 
 #endif
