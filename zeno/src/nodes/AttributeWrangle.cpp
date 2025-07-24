@@ -36,7 +36,7 @@ namespace zeno
             ZfxExecute zfx(zfxCode, &ctx);
             zfx.execute();
 
-            ZImpl(set_output("Output", spGeo));
+            ZImpl(set_output("Output", ctx.spObject));
         }
     };
 

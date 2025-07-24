@@ -110,6 +110,16 @@ namespace zeno {
 
     void FunctionManager::executeZfx(std::shared_ptr<ZfxASTNode> root, ZfxContext* pCtx) {
         //printSyntaxTree(root, pCtx->code);
+        //检查语法树，观察是否存在几何拓扑的增删改，如有则转为半边结构的拓扑
+        auto spGeom = std::static_pointer_cast<GeometryObject_Adapter>(pCtx->spObject);
+        bool bConvertHalfEdge = false;
+        if (spGeom && spGeom->m_impl->type() == zeno::Topo_IndiceMesh) {
+            bConvertHalfEdge = hasGeomTopoQueryModify(root);
+            if (bConvertHalfEdge) {
+                pCtx->spObject = spGeom->toHalfEdgeTopo();
+            }
+        }
+
         pCtx->zfxVariableTbl = &m_globalAttrCached;
         if (pCtx->spObject) {
             int nFilterSize = getElementCount(pCtx->spObject, pCtx->runover);
@@ -123,6 +133,10 @@ namespace zeno {
         }
         else {
             throw makeError<UnimplError>("no object or param constrain when executing zfx");
+        }
+
+        if (bConvertHalfEdge && spGeom) {
+            pCtx->spObject = spGeom->toIndiceMeshesTopo();
         }
     }
 
@@ -847,6 +861,43 @@ namespace zeno {
         res.bArray = true;
         res.value.push_back(current);
         return res;
+    }
+
+    bool FunctionManager::hasGeomTopoQueryModify(std::shared_ptr<ZfxASTNode> pNode) const {
+        for (auto child : pNode->children) {
+            if (child->type == FUNC) {
+                const std::string& funcname = get_zfxvar<std::string>(child->value);
+                if (funcname == "add_vertex" ||
+                    funcname == "add_point" ||
+                    funcname == "add_face" ||
+                    funcname == "remove_face" ||
+                    funcname == "remove_point" ||
+                    funcname == "remove_vertex" ||
+                    funcname == "point_faces" ||
+                    funcname == "point_vertex" ||
+                    funcname == "point_vertices" ||
+                    funcname == "face_point" ||
+                    funcname == "face_points" ||
+                    funcname == "face_vertex" ||
+                    funcname == "face_vertex_count" ||
+                    funcname == "face_vertices" ||
+                    funcname == "vertex_index" ||
+                    funcname == "vertex_next" ||
+                    funcname == "vertex_prev" ||
+                    funcname == "vertex_point" ||
+                    funcname == "vertex_face" ||
+                    funcname == "vertex_face_index"
+                    ) {
+                    return true;
+                }
+            }
+            else {
+                bool ret = hasGeomTopoQueryModify(child);
+                if (ret)
+                    return ret;
+            }
+        }
+        return false;
     }
 
     bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const {

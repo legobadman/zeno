@@ -1989,7 +1989,7 @@ struct NewFBXGeometryList : INode {
         }
         auto geo_list = std::make_shared<zeno::ListObject>();
         for (auto prim : prims) {
-            zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject();
+            zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject(Topo_IndiceMesh);
             spGeom->bindPrimitive(prim);
             geo_list->push_back(spGeom);
         }

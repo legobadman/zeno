@@ -329,7 +329,7 @@ struct AlembicPrimList : INode {
         std::shared_ptr<ListObject> new_geoms = create_ListObject();
         for (auto obj : new_prims->get()) {
             auto prim = std::static_pointer_cast<PrimitiveObject>(obj);
-            auto newgeo = create_GeometryObject();
+            auto newgeo = create_GeometryObject(Topo_IndiceMesh);
             newgeo->bindPrimitive(prim);
             new_geoms->push_back(newgeo);
         }

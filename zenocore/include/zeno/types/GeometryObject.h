@@ -24,12 +24,14 @@ namespace zeno
 
     class ZENO_API GeometryObject {
     public:
-        GeometryObject();
+        GeometryObject() = delete;
+        GeometryObject(GeomTopoType type);
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
         GeometryObject(const GeometryObject& rhs);
         GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo);
         std::shared_ptr<PrimitiveObject> toPrimitive();
+        GeomTopoType type() const;
         void inheritAttributes(
             GeometryObject* rhs,
             int vtx_offset,
@@ -42,8 +44,8 @@ namespace zeno
         void bindPrimitive(std::shared_ptr<PrimitiveObject> prim);
         std::shared_ptr<PrimitiveObject> forkPrimitive();
 
-        GeometryObject* toIndiceMeshesTopo() const;
-        GeometryObject* toHalfEdgeTopo() const;
+        std::unique_ptr<GeometryObject> toIndiceMeshesTopo() const;
+        std::unique_ptr<GeometryObject> toHalfEdgeTopo() const;
 
         std::vector<vec3f> points_pos();
         std::vector<vec3i> tri_indice() const;
@@ -220,6 +222,8 @@ namespace zeno
         std::map<std::string, AttributeVector> m_face_attrs;
         std::map<std::string, AttributeVector> m_geo_attrs;
         std::map<std::string, AttributeVector> m_vert_attrs;
+
+        const GeomTopoType m_type;
     };
 
 }

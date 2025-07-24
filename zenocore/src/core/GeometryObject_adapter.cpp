@@ -1,6 +1,6 @@
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/IGeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/GeometryObject.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/interfaceutil.h>
 
@@ -321,17 +321,15 @@ namespace zeno
     }
 
     zeno::SharedPtr<GeometryObject_Adapter> GeometryObject_Adapter::toIndiceMeshesTopo() const {
-        GeometryObject* pImpl = m_impl->toIndiceMeshesTopo();
         auto newGeom = std::make_shared<GeometryObject_Adapter>();
-        newGeom->m_impl = std::make_unique<GeometryObject>(*pImpl);
+        newGeom->m_impl = m_impl->toIndiceMeshesTopo();
         newGeom->m_usrData = this->m_usrData->clone();
         return newGeom;
     }
 
     zeno::SharedPtr<GeometryObject_Adapter> GeometryObject_Adapter::toHalfEdgeTopo() const {
-        GeometryObject* pImpl = m_impl->toHalfEdgeTopo();
         auto newGeom = std::make_shared<GeometryObject_Adapter>();
-        newGeom->m_impl = std::make_unique<GeometryObject>(*pImpl);
+        newGeom->m_impl = m_impl->toHalfEdgeTopo();
         newGeom->m_usrData = this->m_usrData->clone();
         return newGeom;
     }
@@ -349,9 +347,9 @@ namespace zeno
         return spPrim;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject() {
+    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type) {
         auto pGeom = std::make_shared<GeometryObject_Adapter>();
-        pGeom->m_impl = std::make_unique<GeometryObject>();
+        pGeom->m_impl = std::make_unique<GeometryObject>(type);
         return pGeom;
     }
 

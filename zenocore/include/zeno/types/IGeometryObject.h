@@ -136,7 +136,7 @@ namespace zeno
     };
 
     //没有放到外面，是因为用户要直接include当前文件，干脆直接在这里构造
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject();
+    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type);
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(
         GeomTopoType type,

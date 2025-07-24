@@ -45,6 +45,7 @@ namespace zeno {
         void pushStack();
         void popStack();
         bool hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const;
+        bool hasGeomTopoQueryModify(std::shared_ptr<ZfxASTNode> pNode) const;
 
         ZfxVariable& getVariableRef(const std::string& name, ZfxContext* pContext);
         bool declareVariable(const std::string& name);

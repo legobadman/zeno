@@ -33,11 +33,13 @@ namespace zeno
         throw makeError<UnimplError>("the geometry is a proxy object of primitive, cannot use the apis of geom.");\
     }
 
-    GeometryObject::GeometryObject()
+    GeometryObject::GeometryObject(GeomTopoType type)
+        : m_type(type)
     {
     }
 
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
+        : m_type(type)
     {
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, nFaces, bInitFaces);
@@ -54,6 +56,7 @@ namespace zeno
     }
 
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
+        : m_type(type)
     {
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, faces);
@@ -72,6 +75,7 @@ namespace zeno
     GeometryObject::GeometryObject(const GeometryObject& rhs)
         : m_spTopology(rhs.m_spTopology)
         , m_host(rhs.m_host)
+        , m_type(rhs.m_type)
     {
         m_vert_attrs = rhs.m_vert_attrs;
         m_point_attrs = rhs.m_point_attrs;
@@ -88,6 +92,7 @@ namespace zeno
     }
 
     GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo)
+        : m_type(Topo_IndiceMesh)
     {
         if (basePrimTopo) {
             m_spTopology = create_indicemesh_topo(spPrim);
@@ -111,6 +116,10 @@ namespace zeno
             /*m_spTopology = std::make_shared<GeometryTopology>();
             initFromPrim(spPrim.get());*/
         }
+    }
+
+    GeomTopoType GeometryObject::type() const {
+        return m_type;
     }
 
     std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
@@ -264,40 +273,40 @@ namespace zeno
         m_host = std::move(prim);
     }
 
-    GeometryObject* GeometryObject::toIndiceMeshesTopo() const {
+    std::unique_ptr<GeometryObject> GeometryObject::toIndiceMeshesTopo() const {
         if (!m_spTopology) return nullptr;
 
-        GeometryObject* pGeom = new GeometryObject;
         zeno::GeomTopoType type = m_spTopology->type();
         if (zeno::Topo_IndiceMesh == type) {
-            pGeom = new GeometryObject(*this);
+            return std::make_unique<GeometryObject>(*this);
         }
         else {
+            auto pGeom = std::make_unique<GeometryObject>(Topo_IndiceMesh);
             pGeom->m_spTopology = create_indicemesh_by_halfedge(m_spTopology);
             pGeom->m_point_attrs = m_point_attrs;
             pGeom->m_vert_attrs = m_vert_attrs;
             pGeom->m_face_attrs = m_face_attrs;
             pGeom->m_geo_attrs = m_geo_attrs;
+            return pGeom;
         }
-        return pGeom;
     }
 
-    GeometryObject* GeometryObject::toHalfEdgeTopo() const {
+    std::unique_ptr<GeometryObject> GeometryObject::toHalfEdgeTopo() const {
         if (!m_spTopology) return nullptr;
 
-        GeometryObject* pGeom = new GeometryObject;
         zeno::GeomTopoType type = m_spTopology->type();
         if (zeno::Topo_IndiceMesh == type) {
+            auto pGeom = std::make_unique<GeometryObject>(Topo_HalfEdge);
             pGeom->m_spTopology = create_halfedge_by_indicemesh(m_spTopology);
             pGeom->m_point_attrs = m_point_attrs;
             pGeom->m_vert_attrs = m_vert_attrs;
             pGeom->m_face_attrs = m_face_attrs;
             pGeom->m_geo_attrs = m_geo_attrs;
+            return pGeom;
         }
         else {
-            pGeom = new GeometryObject(*this);
+            return std::make_unique<GeometryObject>(*this);
         }
-        return pGeom;
     }
 
     std::shared_ptr<PrimitiveObject> GeometryObject::forkPrimitive() {
