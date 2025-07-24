@@ -41,6 +41,8 @@
 #include "./qanEdge.h"
 #include "./qanEdgeItem.h"
 #include "./qanGraph.h"
+#include "zenoapplication.h"
+#include "model/graphsmanager.h"
 
 namespace qan { // ::qan
 
@@ -73,11 +75,7 @@ void    Edge::setItem(qan::EdgeItem* edgeItem) noexcept
 /* Edge Static Factories *///--------------------------------------------------
 QQmlComponent*  Edge::delegate(QQmlEngine& engine, QObject* parent) noexcept
 {
-    static std::unique_ptr<QQmlComponent>   delegate;
-    if (!delegate)
-        delegate = std::make_unique<QQmlComponent>(&engine, "qrc:/QuickQanava/Edge.qml",
-                                                   QQmlComponent::PreferSynchronous, parent);
-    return delegate.get();
+    return zenoApp->graphsManager()->edgeDelegate();
 }
 
 qan::EdgeStyle* Edge::style(QObject* parent) noexcept

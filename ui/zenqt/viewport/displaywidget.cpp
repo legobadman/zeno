@@ -78,10 +78,10 @@ DisplayWidget::DisplayWidget(bool bGLView, QWidget *parent)
 
     setLayout(pLayout);
 
-    m_camera_keyframe = new CameraKeyframeWidget;
+    m_camera_keyframe.reset(new CameraKeyframeWidget);
     Zenovis *pZenovis = getZenoVis();
     if (pZenovis) {
-        pZenovis->m_camera_keyframe = m_camera_keyframe;
+        pZenovis->m_camera_keyframe = m_camera_keyframe.get();
     }
     //connect(m_view, SIGNAL(sig_Draw()), this, SLOT(onRun()));
 

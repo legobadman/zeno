@@ -827,17 +827,17 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
     m_resizeViewport = new ZToolBarButton(false, ":/icons/nodeEditor_fullScreen_unselected.svg", ":/icons/nodeEditor_fullScreen_selected.svg");
     m_resizeViewport->setToolTip(tr("resize viewport"));
 
-    m_menuView = new QMenu(tr("View"));
+    m_menuView = new QMenu(tr("View"), this);
     {
-        m_menuViewport = new QMenu(tr("Viewport"));
-        m_pFocus = new QAction(tr("Focus"));
-        m_pOrigin = new QAction(tr("Origin"));
-        m_front = new QAction(tr("Front"));
-        m_right = new QAction(tr("Right"));
-        m_top = new QAction(tr("Top"));
-        m_back = new QAction(tr("Back"));
-        m_left = new QAction(tr("Left"));
-        m_bottom = new QAction(tr("Bottom"));
+        m_menuViewport = new QMenu(tr("Viewport"), m_menuView);
+        m_pFocus = new QAction(tr("Focus"), m_menuView);
+        m_pOrigin = new QAction(tr("Origin"), m_menuView);
+        m_front = new QAction(tr("Front"), m_menuView);
+        m_right = new QAction(tr("Right"), m_menuView);
+        m_top = new QAction(tr("Top"), m_menuView);
+        m_back = new QAction(tr("Back"), m_menuView);
+        m_left = new QAction(tr("Left"), m_menuView);
+        m_bottom = new QAction(tr("Bottom"), m_menuView);
         ZenoSettingsManager& settings = ZenoSettingsManager::GetInstance();
         m_pFocus->setShortcut(settings.getShortCut(ShortCut_Focus));
         m_pFocus->setShortcutContext(Qt::WidgetShortcut);

@@ -56,7 +56,7 @@ ZenoGraphsEditor::~ZenoGraphsEditor()
 
 void ZenoGraphsEditor::initUI()
 {
-    m_ui = new Ui::GraphsEditor;
+    m_ui.reset(new Ui::GraphsEditor);
     m_ui->setupUi(this);
 
     int _margin = ZenoStyle::dpiScaled(10);

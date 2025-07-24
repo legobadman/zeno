@@ -134,7 +134,7 @@ private:
 #else
     ZOptixViewport* m_optixView;
 #endif
-    CameraKeyframeWidget* m_camera_keyframe;
+    QScopedPointer<CameraKeyframeWidget> m_camera_keyframe;
     QTimer* m_pTimer;
     RecordVideoMgr m_recordMgr;
     bool m_bRecordRun;

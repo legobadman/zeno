@@ -290,7 +290,7 @@ GraphModel::GraphModel(std::string const& asset_or_graphpath, bool bAsset, Graph
 {
     std::shared_ptr<zeno::Graph> spGraph;
     if (bAsset) {
-        std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
+        auto& assets = zeno::getSession().assets;
         spGraph = assets->getAssetGraph(asset_or_graphpath, true);
     }
     else {
@@ -1761,7 +1761,7 @@ void GraphModel::resetAssetAndLock(const QModelIndex& assetNode)
     std::string assetname = item->cls.toStdString();
 
     //只需要把最终要确定的参数加到updateInfo即可
-    std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
+    auto& assets = zeno::getSession().assets;
     const zeno::Asset& asset = assets->getAsset(assetname);
     ParamsModel* paramsM = item->params;
     PARAMS_INFO oldinputs = paramsM->getInputs();
@@ -1848,7 +1848,7 @@ void GraphModel::syncAssetInst(const QModelIndex& assetNode) {
     zeno::NodeImpl* spNode = item->m_wpNode;
     zeno::SubnetNode* subnetnode = static_cast<zeno::SubnetNode*>(spNode);
 
-    std::shared_ptr<zeno::AssetsMgr> assets = zeno::getSession().assets;
+    auto& assets = zeno::getSession().assets;
     AssetsModel* assetsM = zenoApp->graphsManager()->assetsModel();
     GraphModel* pAssetGraph = assetsM->getAssetGraph(assetName);
     GraphModel* mainG = zenoApp->graphsManager()->getGraph({ "main" });

@@ -14,7 +14,7 @@
 #include "declmetatype.h"
 
 
-CalcWorker::CalcWorker(QObject* parent) {
+CalcWorker::CalcWorker(QObject* parent) : QObject(parent) {
     auto& sess = zeno::getSession();
     if (m_bReportNodeStatus) {
         sess.registerNodeCallback([=](zeno::ObjPath nodePath, bool bDirty, zeno::NodeRunStatus status) {

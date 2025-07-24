@@ -89,7 +89,7 @@ private:
     void showInGraphicalShell(const QString& pathIn);
 
     ZenoMainWindow* m_mainWin;
-    Ui::GraphsEditor* m_ui;
+    QScopedPointer<Ui::GraphsEditor> m_ui;
     //IGraphsModel* m_model;
     QItemSelectionModel* m_selection;
     QStandardItemModel* m_sideBarModel;

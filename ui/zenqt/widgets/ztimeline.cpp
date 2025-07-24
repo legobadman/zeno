@@ -17,7 +17,7 @@
 ZTimeline::ZTimeline(QWidget* parent)
     : QWidget(parent)
 {
-    m_ui = new Ui::Timeline;
+    m_ui.reset(new Ui::Timeline);
     m_ui->setupUi(this);
 
     QStringList items = { "23.5 fps", "24 fps", "25 fps", "30 fps", "60 fps" };
@@ -46,10 +46,10 @@ ZTimeline::ZTimeline(QWidget* parent)
     initSignals();
     initButtons();
     initSize();
-    m_ui->fpsEdit->setValidator(new QIntValidator);
-    m_ui->editFrom->setValidator(new QIntValidator);
-    m_ui->editTo->setValidator(new QIntValidator);
-    m_ui->editFrame->setValidator(new QIntValidator);
+    m_ui->fpsEdit->setValidator(new QIntValidator(this));
+    m_ui->editFrom->setValidator(new QIntValidator(this));
+    m_ui->editTo->setValidator(new QIntValidator(this));
+    m_ui->editFrame->setValidator(new QIntValidator(this));
     m_ui->comboBox->hide();
 }
 

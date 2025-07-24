@@ -239,7 +239,7 @@ private:
     bool m_bAlways;
     int m_nResizeTimes;
     bool m_bOnlyOptix;          //isolate optix window.
-    Ui::MainWindow* m_ui;
+    QScopedPointer<Ui::MainWindow> m_ui;
 
     std::unique_ptr<QLocalSocket> optixClientSocket;
     bool m_bOptixProcRecording = false;

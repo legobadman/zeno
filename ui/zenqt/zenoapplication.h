@@ -34,6 +34,7 @@ public:
     QStandardItemModel* logModel() const;
     bool isUIApplication() const { return m_bUIApp; }
     QString readQss(const QString& qssPath);
+    void cleanQmlEngine();
 
 private slots:
     void onThreadLogReady(const QString& msg);

@@ -44,12 +44,13 @@ struct Session {
     std::unique_ptr<UserData> const m_userData;
     std::unique_ptr<ObjectManager> const objsMan;
     std::shared_ptr<Graph> mainGraph;
-    std::shared_ptr<AssetsMgr> assets;
+    std::unique_ptr<AssetsMgr> assets;
     std::unique_ptr<GlobalVariableManager> globalVariableManager;
     std::unique_ptr<FunctionManager> funcManager;
 
     ZENO_API Session();
     ZENO_API ~Session();
+    ZENO_API void destroy();
 
     Session(Session const &) = delete;
     Session &operator=(Session const &) = delete;

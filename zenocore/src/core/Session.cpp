@@ -193,7 +193,7 @@ ZENO_API Session::Session()
     , eventCallbacks(std::make_unique<EventCallbacks>())
     , m_userData(std::make_unique<UserData>())
     , mainGraph(std::make_shared<Graph>("main"))
-    , assets(std::make_shared<AssetsMgr>())
+    , assets(std::make_unique<AssetsMgr>())
     , objsMan(std::make_unique<ObjectManager>())
 #ifdef ZENO_WITH_PYTHON
     , m_pyWrapper(std::make_unique<PythonEnvWrapper>())
@@ -205,7 +205,15 @@ ZENO_API Session::Session()
     m_mainThreadId = GetCurrentThreadId();
 }
 
-ZENO_API Session::~Session() = default;
+ZENO_API Session::~Session() {
+    int j;
+    j = 0;
+}
+
+void Session::destroy() {
+    assets.reset();
+    mainGraph.reset();
+}
 
 
 static CustomUI descToCustomui(const Descriptor& desc) {

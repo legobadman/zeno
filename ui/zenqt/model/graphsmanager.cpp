@@ -61,6 +61,8 @@ GraphsManager::GraphsManager(QObject* parent)
     , m_version(zeno::VER_3)
     , m_bIniting(false)
     , m_bImporting(false)
+    , m_nodeDelegate(nullptr)
+    , m_edgeDelegate(nullptr)
 {
     m_logModel = new QStandardItemModel(this);
     m_model = new GraphsTreeModel(this);
@@ -89,6 +91,22 @@ void GraphsManager::initRootObjects() {
 
 void GraphsManager::registerCoreNotify() {
 
+}
+
+QQmlComponent* GraphsManager::nodeDelegate() {
+    if (!m_nodeDelegate) {
+        m_nodeDelegate = new QQmlComponent(zenoApp->getQmlEngine(), "qrc:/NormalNode.qml",
+            QQmlComponent::PreferSynchronous, this);
+    }
+    return m_nodeDelegate;
+}
+
+QQmlComponent* GraphsManager::edgeDelegate() {
+    if (!m_edgeDelegate) {
+        m_edgeDelegate = new QQmlComponent(zenoApp->getQmlEngine(), "qrc:/QuickQanava/Edge.qml",
+            QQmlComponent::PreferSynchronous, this);
+    }
+    return m_edgeDelegate;
 }
 
 AssetsModel* GraphsManager::assetsModel() const

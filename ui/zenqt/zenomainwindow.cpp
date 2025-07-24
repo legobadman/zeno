@@ -101,7 +101,7 @@ ZenoMainWindow::~ZenoMainWindow()
 
 void ZenoMainWindow::init(PANEL_TYPE onlyView)
 {
-    m_ui = new Ui::MainWindow;
+    m_ui.reset(new Ui::MainWindow);
     m_ui->setupUi(this);
 
     initMenu();
@@ -435,8 +435,7 @@ void ZenoMainWindow::resetDocks(const QString& state, const QStringList& widgets
         m_pDockManager->removeDockWidget(pair);
     }
 
-
-    ads::CDockWidget* cake = new ads::CDockWidget(UiHelper::generateUuid("dock"));
+    ads::CDockWidget* cake = new ads::CDockWidget(UiHelper::generateUuid("dock"), this);
     ads::CDockAreaWidget* cakeArea = m_pDockManager->addDockWidget(ads::TopDockWidgetArea, cake);
     for (const auto& name :widgets)
         addDockWidget(cakeArea, name);
@@ -717,7 +716,7 @@ void ZenoMainWindow::initCustomLayoutAction(const QStringList &list, bool isDefa
         if (name == g_latest_layout) {
             continue;
         }
-        QAction *pCustomLayout_ = new QAction(name);
+        QAction *pCustomLayout_ = new QAction(name, this);
         connect(pCustomLayout_, &QAction::triggered, this, [=]() { 
             loadDockLayout(name, isDefault); 
             updateLatestLayout(name);
@@ -1457,7 +1456,7 @@ void ZenoMainWindow::closeEvent(QCloseEvent *event)
 
         // trigger destroy event
         zeno::getSession().eventCallbacks->triggerEvent("beginDestroy");
-
+        zenoApp->cleanQmlEngine();
         QMainWindow::closeEvent(event);
     } 
     else 
@@ -1810,7 +1809,7 @@ void ZenoMainWindow::loadRecentFiles()
         const QString &key = lst[i];
         const QString &path = settings.value(key).toString();
         if (!path.isEmpty()) {
-            QAction *action = new QAction(path);
+            QAction *action = new QAction(path, this);
             m_ui->menuRecent_Files->addAction(action);
             connect(action, &QAction::triggered, this, [=]() {
                 if (!resetProc())
@@ -2420,56 +2419,3 @@ bool ZenoMainWindow::propPanelIsFloating(ZenoPropPanel* panel)
     }
     return false;
 }
-
-static bool openFileAndExportAsZsl(const char *inPath, const char *outPath) {
-    //TODO: deprecated.
-#if 0
-    auto pGraphs = zenoApp->graphsManager();
-    GraphsTreeModel* pModel = pGraphs->openZsgFile(inPath);
-    if (!pModel) {
-        qWarning() << "cannot open zsg file" << inPath;
-        return false;
-    }
-    {
-        rapidjson::StringBuffer s;
-        RAPIDJSON_WRITER writer(s);
-        writer.StartArray();
-        LAUNCH_PARAM launchParam;
-        serializeScene(pModel, writer, launchParam);
-        writer.EndArray();
-        QFile fout(outPath);
-        /* printf("sadfkhjl jghkasdf [%s]\n", s.GetString()); */
-        if (!fout.open(QIODevice::WriteOnly)) {
-            qWarning() << "failed to open out zsl" << outPath;
-            return false;
-        }
-        fout.write(s.GetString(), s.GetLength());
-        fout.close();
-    }
-#endif
-    return true;
-}
-
-static int subprogram_dumpzsg2zsl_main(int argc, char **argv) {
-    //TODO: deprecated.
-#if 0
-    if (!argv[1]) {
-        qWarning() << "please specify input zsg file path";
-        return -1;
-    }
-    if (!argv[2]) {
-        qWarning() << "please specify output zsl file path";
-        return -1;
-    }
-    if (!openFileAndExportAsZsl(argv[1], argv[2])) {
-        qWarning() << "failed to convert zsg to zsl";
-        return -1;
-    }
-#endif
-    return 0;
-}
-
-static int defDumpZsgToZslInit = zeno::getSession().eventCallbacks->hookEvent("init", [] (auto _) {
-    zeno::getSession().userData().set("subprogram_dumpzsg2zsl", std::make_shared<zeno::GenericObject<int(*)(int, char **)>>(subprogram_dumpzsg2zsl_main));
-});
-

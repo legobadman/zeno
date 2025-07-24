@@ -56,7 +56,7 @@ private:
 
     int m_frames;
 
-    Ui::Timeline *m_ui;
+    QScopedPointer<Ui::Timeline> m_ui;
 };
 
 #endif

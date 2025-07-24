@@ -43,6 +43,8 @@
 #include "./qanGraph.h"
 #include "./qanTableCell.h"
 #include "variantptr.h"
+#include "zenoapplication.h"
+#include "model/graphsmanager.h"
 
 namespace qan { // ::qan
 
@@ -85,13 +87,7 @@ void    Node::setItem(qan::NodeItem* nodeItem) noexcept
 /* Node Static Factories *///--------------------------------------------------
 QQmlComponent*  Node::delegate(QQmlEngine& engine, QObject* parent) noexcept
 {
-    Q_UNUSED(parent)
-    static std::unique_ptr<QQmlComponent> delegate;
-    if (!delegate) { 
-        delegate = std::make_unique<QQmlComponent>(&engine, "qrc:/NormalNode.qml", 
-            QQmlComponent::PreferSynchronous);
-    }
-    return delegate.get();
+    return zenoApp->graphsManager()->nodeDelegate();
 }
 
 qan::NodeStyle* Node::style(QObject* parent) noexcept

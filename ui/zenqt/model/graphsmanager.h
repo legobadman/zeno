@@ -80,6 +80,9 @@ public:
     void clearMarkOnGv();
     void initRootObjects();
 
+    QQmlComponent* nodeDelegate();
+    QQmlComponent* edgeDelegate();
+
 signals:
     void modelInited();
     void modelDataChanged();
@@ -104,6 +107,9 @@ private:
 
     QString m_filePath;
     QString m_graphPath;
+
+    QQmlComponent* m_nodeDelegate;
+    QQmlComponent* m_edgeDelegate;
 
     mutable std::mutex m_mtx;
     zeno::TimelineInfo m_timerInfo;

@@ -15,7 +15,7 @@ struct Asset {
     CustomUI m_customui;
 };
 
-struct AssetsMgr : std::enable_shared_from_this<AssetsMgr> {
+struct AssetsMgr {
     Session *session = nullptr;
 
     std::map<std::string, Asset> m_assets;

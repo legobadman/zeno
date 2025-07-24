@@ -81,6 +81,7 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
 
 ZenoApplication::~ZenoApplication()
 {
+    zeno::getSession().destroy(); //在卸载插件前先清空所有图
 }
 
 void ZenoApplication::onThreadLogReady(const QString& msg)
@@ -123,6 +124,11 @@ QString ZenoApplication::readQss(const QString& qssPath)
     ret = file.open(QIODevice::ReadOnly | QIODevice::Text);
     ZASSERT_EXIT(ret, "");
     return ZenoStyle::dpiScaleSheet(file.readAll());
+}
+
+void ZenoApplication::cleanQmlEngine() {
+    delete m_engine;
+    m_engine = nullptr;
 }
 
 void ZenoApplication::initMetaTypes() 
