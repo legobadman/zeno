@@ -243,7 +243,7 @@ namespace zeno {
         size_t size() const;
 
     private:
-        AttributeImpl* m_pImpl;
+         std::unique_ptr<AttributeImpl> m_pImpl;
     };
 
 }

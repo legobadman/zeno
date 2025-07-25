@@ -8,7 +8,15 @@
 
 namespace zeno
 {
-    ListObject::ListObject() : m_impl(new ListObject_impl) {
+    ListObject::ListObject() : m_impl(std::make_unique<ListObject_impl>()) {
+    }
+
+    ListObject::ListObject(const ListObject& rhs) {
+        m_impl = std::make_unique<ListObject_impl>(*rhs.m_impl);
+    }
+
+    zeno::SharedPtr<IObject> ListObject::clone() const {
+        return std::make_shared<ListObject>(*this);
     }
 
     void ListObject::Delete() {
@@ -163,16 +171,14 @@ namespace zeno
         m_objects.clear();
     }
 
-
     ZENO_API zeno::SharedPtr<ListObject> create_ListObject() {
         zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
-        pList->m_impl = new ListObject_impl;
         return pList;
     }
 
     ZENO_API zeno::SharedPtr<ListObject> create_ListObject(zeno::Vector<zany> arrin) {
         zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
-        pList->m_impl = new ListObject_impl(zeVec2stdVec(arrin));
+        pList->m_impl =std::make_unique<ListObject_impl>(zeVec2stdVec(arrin));
         return pList;
     }
 }

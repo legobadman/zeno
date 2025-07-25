@@ -156,7 +156,7 @@ private:
     GraphsTreeModel* m_pTree;
     LinkModel* m_linkModel;
 
-    GraphMImpl* m_impl;
+    QScopedPointer<GraphMImpl> m_impl;
     friend class NodeItem;
 };
 

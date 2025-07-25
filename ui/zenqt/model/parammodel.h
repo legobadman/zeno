@@ -43,7 +43,7 @@ class ParamFilterModel : public QSortFilterProxyModel {
     QML_ELEMENT
 
 public:
-    ParamFilterModel(zeno::NodeDataGroup group);
+    ParamFilterModel(zeno::NodeDataGroup group, QObject* parent = nullptr);
     Q_INVOKABLE int indexFromName(const QString& name) const;
 
 protected:

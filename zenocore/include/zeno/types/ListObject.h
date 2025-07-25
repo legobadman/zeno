@@ -12,7 +12,9 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     typedef IObjectClone<ListObject> base;
 
     ListObject();
+    ListObject(const ListObject& rhs);
     ~ListObject();
+    zeno::SharedPtr<IObject> clone() const override;
     void Delete() override;
     size_t size();
     zany get(int index);
@@ -23,7 +25,7 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     void set(size_t index, zany obj);
     void update_key(const String& key) override;
 
-    ListObject_impl* m_impl;
+    std::unique_ptr<ListObject_impl> m_impl;
 };
 
 ZENO_API zeno::SharedPtr<ListObject> create_ListObject();

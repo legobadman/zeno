@@ -297,7 +297,7 @@ GraphModel::GraphModel(std::string const& asset_or_graphpath, bool bAsset, Graph
         spGraph = zeno::getSession().getGraphByPath(asset_or_graphpath);
     }
 
-    m_impl = new GraphMImpl(spGraph.get(), parentGraph);
+    m_impl.reset(new GraphMImpl(spGraph.get(), parentGraph));
 
     m_graphName = QString::fromStdString(spGraph->getName());
     m_undoRedoStack = m_graphName == "main" || zeno::getSession().assets->isAssetGraph(spGraph.get()) ? new QUndoStack(this) : nullptr;

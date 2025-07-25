@@ -241,10 +241,10 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
 }
 
 void ParamsModel::initProxyModels() {
-    m_inObjProxy = new ParamFilterModel(zeno::Role_InputObject);
-    m_inPrimProxy = new ParamFilterModel(zeno::Role_InputPrimitive);
-    m_outPrimProxy = new ParamFilterModel(zeno::Role_OutputPrimitive);
-    m_outObjProxy = new ParamFilterModel(zeno::Role_OutputObject);
+    m_inObjProxy = new ParamFilterModel(zeno::Role_InputObject, this);
+    m_inPrimProxy = new ParamFilterModel(zeno::Role_InputPrimitive, this);
+    m_outPrimProxy = new ParamFilterModel(zeno::Role_OutputPrimitive, this);
+    m_outObjProxy = new ParamFilterModel(zeno::Role_OutputObject, this);
 
     m_inObjProxy->setSourceModel(this);
     m_inPrimProxy->setSourceModel(this);
@@ -1299,8 +1299,10 @@ bool ParamsModel::getShowPrimSocks() const {
     return false;
 }
 
-ParamFilterModel::ParamFilterModel(zeno::NodeDataGroup group) : m_group(group) {
-
+ParamFilterModel::ParamFilterModel(zeno::NodeDataGroup group, QObject* parent)
+    : QSortFilterProxyModel(parent)
+    , m_group(group)
+{
 }
 
 int ParamFilterModel::indexFromName(const QString& target_name) const {
