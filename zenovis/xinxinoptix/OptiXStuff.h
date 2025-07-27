@@ -29,14 +29,6 @@
 #include "zeno/utils/log.h"
 #include "zeno/utils/string.h"
 #include <filesystem>
-#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
-
-#define CRYPTOPP_LINK
-
-#ifdef CRYPTOPP_LINK
-#include <cryptopp/md5.h>
-#include <cryptopp/hex.h>
-#endif
 #include <zeno/utils/image_proc.h>
 #include <png.h>
 
@@ -59,6 +51,7 @@
 
 #include "BCX.h"
 #include "ies/ies.h"
+#include "md5.hpp"
 
 #include "zeno/utils/fileio.h"
 #include "zeno/extra/TempNode.h"
@@ -881,18 +874,22 @@ inline void calc_sky_cdf_map(cuTexture* tex, int nx, int ny, int nc, std::functi
 }
 
 static std::string calculateMD5(const std::vector<char>& input) {
-#ifdef CRYPTOPP_LINK
-    unsigned char digest[CryptoPP::Weak::MD5::DIGESTSIZE];
-    CryptoPP::Weak::MD5().CalculateDigest(digest, (const unsigned char*)input.data(), input.size());
-    CryptoPP::HexEncoder encoder;
-    std::string output;
-    encoder.Attach(new CryptoPP::StringSink(output));
-    encoder.Put(digest, sizeof(digest));
-    encoder.MessageEnd();
-    return output;
-#else
-    return "";
-#endif
+    websocketpp::md5::md5_state_t ctx;
+    websocketpp::md5::md5_init(&ctx);
+    websocketpp::md5::md5_append(&ctx,
+        reinterpret_cast<const websocketpp::md5::md5_byte_t*>(input.data()),
+        input.size()
+    );
+    websocketpp::md5::md5_byte_t digest[16];
+    websocketpp::md5::md5_finish(&ctx, digest);
+
+    // 转为十六进制字符串
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (int i = 0; i < 16; ++i) {
+        oss << std::setw(2) << static_cast<int>(digest[i]);
+    }
+    return oss.str();
 }
 
 namespace detail {

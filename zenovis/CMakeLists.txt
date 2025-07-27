@@ -72,10 +72,3 @@ endif()
 
 find_package(PNG REQUIRED)
 target_link_libraries(zenovis PRIVATE PNG::PNG)
-
-if(WIN32)
-    find_package(cryptopp CONFIG REQUIRED)
-    target_link_libraries(zenovis PRIVATE cryptopp::cryptopp)
-else()
-    target_link_libraries(zenovis PRIVATE cryptopp)
-endif()
