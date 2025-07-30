@@ -2080,11 +2080,18 @@ void NodeImpl::doOnlyApply() {
 }
 
 void NodeImpl::clearCalcResults() {
+    if (m_nodecls == "ForEachEnd") {
+        ForEachEnd* foreachend = static_cast<ForEachEnd*>(m_pNode.get());
+        foreachend->clearCalcResults();
+    }
+
     for (auto& [key, param] : m_inputObjs) {
         param.spObject.reset();
+        param.listdict_update.clear();
     }
     for (auto& [key, param] : m_outputObjs) {
         param.spObject.reset();
+        param.listdict_update.clear();
     }
     for (auto& [key, param] : m_inputPrims) {
         param.result.reset();
@@ -2092,6 +2099,7 @@ void NodeImpl::clearCalcResults() {
     for (auto& [key, param] : m_outputPrims) {
         param.result.reset();
     }
+    mark_dirty(true);
 }
 
 void NodeImpl::doApply_Parameter(std::string const& name, CalcContext* pContext) {
@@ -2167,7 +2175,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
     log_debug("==> enter {}", m_name);
     {
 #ifdef ZENO_BENCHMARKING
-        Timer _(m_name);
+        //Timer _(m_name);
 #endif
         if (m_bypass) {
             bypass();

@@ -118,6 +118,10 @@ public:
     void _setNoCacheImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
     void _setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
 
+    //unrevertable:
+    void clearNodeObjs(const QModelIndex& nodeIdx);
+    void clearSubnetObjs(const QModelIndex& nodeIdx);
+
 signals:
     void reloaded();
     void clearLayout();

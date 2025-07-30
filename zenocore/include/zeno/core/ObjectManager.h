@@ -108,6 +108,8 @@ public:
     ZENO_API void getModifyObjsInfo(std::set<std::string>& modifyInteractiveObjs);  //interactive objs
     ZENO_API void syncObjNodeInfo(zany spObj, NodeImpl* spNode);
 
+    std::set<char*> m_rec_geoms;
+
 private:
     void clear_batch_updates();
 

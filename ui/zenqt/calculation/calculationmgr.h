@@ -14,7 +14,7 @@ class CalcWorker : public QObject
 {
     Q_OBJECT
 public:
-    CalcWorker(QObject* parent = nullptr);
+    CalcWorker();
     void setCurrentGraphPath(const QString& current_graph_path);
 
 signals:
@@ -45,7 +45,10 @@ public:
 
     Q_INVOKABLE void run();
     Q_INVOKABLE void kill();
+    Q_INVOKABLE void run_and_clean();
     Q_INVOKABLE void clear();
+    Q_INVOKABLE void clearNodeObjs(const QModelIndex& nodeIdx);
+    Q_INVOKABLE void clearSubnetObjs(const QModelIndex& nodeIdx);
 
     void registerRenderWid(DisplayWidget* pDisp);
     void unRegisterRenderWid(DisplayWidget* pDisp);
@@ -73,7 +76,7 @@ private:
     void setRunStatus(RunStatus::Value runstatus);
 
     bool m_bMultiThread;
-    CalcWorker* m_worker;
+    QScopedPointer<CalcWorker> m_worker;
     QThread m_thread;
     QTimer* m_playTimer;
     QSet<DisplayWidget*> m_registerRenders;

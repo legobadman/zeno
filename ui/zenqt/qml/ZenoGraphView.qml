@@ -264,6 +264,33 @@ Qan.GraphView {
         property var node: null
 
         MenuItem {
+            text: "清空节点对象缓存"
+            onTriggered: {
+                calcmgr.clearNodeObjs(nodeMenu.node.index)
+            }
+        }
+
+        MenuItem {
+            text: "清空子图中间结果"
+            visible: {
+                if (nodeMenu.node) {
+                    var model = graphView.graphModel
+                    var nodeType = model.data(nodeMenu.node.index, Model.ROLE_NODETYPE)
+                    if (nodeType == NodeType.Node_SubgraphNode || nodeType == NodeType.Node_AssetInstance) {
+                        return true;
+                    }
+                    return false;
+                }
+                else {
+                    return false
+                }
+            }
+            onTriggered: {
+                calcmgr.clearSubnetObjs(nodeMenu.node.index)
+            }
+        }
+
+        MenuItem {
             text: "编辑自定义参数"
             height: visible ? implicitHeight : 0
             visible: {
@@ -405,11 +432,9 @@ Qan.GraphView {
         }
         onNodeRightClicked: function(node) {
             var nodeType = graphView.graphModel.data(node.index, Model.ROLE_NODETYPE)
-            if (nodeType == NodeType.Node_AssetInstance || nodeType == NodeType.Node_SubgraphNode) {
-                var mousepos = graphView.mapFromGlobal(MouseUtils.getGlobalMousePosition())
-                nodeMenu.node = node
-                nodeMenu.popup(mousepos)
-            }
+            var mousepos = graphView.mapFromGlobal(MouseUtils.getGlobalMousePosition())
+            nodeMenu.node = node
+            nodeMenu.popup(mousepos)
         }
         onNodeDoubleClicked: function(node) {
             singleClickTimer.stop()

@@ -1546,6 +1546,29 @@ void GraphModel::_setNoCacheImpl(const QModelIndex& idx, bool bOn, bool endTrans
     }
 }
 
+void GraphModel::clearNodeObjs(const QModelIndex& nodeIdx) {
+    auto spCoreGraph = m_impl->m_wpCoreGraph;
+    ZASSERT_EXIT(spCoreGraph);
+    auto iter = m_row2uuid.find(nodeIdx.row());
+    ZASSERT_EXIT(iter != m_row2uuid.end());
+    NodeItem* item = m_nodes[m_row2uuid[nodeIdx.row()]];
+    zeno::NodeImpl* spNode = item->m_wpNode;
+    spNode->clearCalcResults();
+}
+
+void GraphModel::clearSubnetObjs(const QModelIndex& nodeIdx) {
+    auto spCoreGraph = m_impl->m_wpCoreGraph;
+    ZASSERT_EXIT(spCoreGraph);
+    auto iter = m_row2uuid.find(nodeIdx.row());
+    ZASSERT_EXIT(iter != m_row2uuid.end());
+    NodeItem* item = m_nodes[m_row2uuid[nodeIdx.row()]];
+    zeno::NodeImpl* spNode = item->m_wpNode;
+    ZASSERT_EXIT(spNode->nodeType() == zeno::Node_SubgraphNode ||
+        spNode->nodeType() == zeno::Node_AssetInstance);
+    zeno::SubnetNode* subnetnode = static_cast<zeno::SubnetNode*>(spNode);
+    subnetnode->cleanInternalCaches();
+}
+
 void GraphModel::_setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endTransaction) {
     bool bEnableIoProc = zenoApp->graphsManager()->isInitializing() || zenoApp->graphsManager()->isImporting();
     if (bEnableIoProc)

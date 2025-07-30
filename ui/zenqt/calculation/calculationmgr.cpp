@@ -1,3 +1,4 @@
+//#include <vld.h>
 #include "calculationmgr.h"
 #include <zeno/core/Session.h>
 #include <zeno/extra/GraphException.h>
@@ -14,7 +15,7 @@
 #include "declmetatype.h"
 
 
-CalcWorker::CalcWorker(QObject* parent) : QObject(parent) {
+CalcWorker::CalcWorker() {
     auto& sess = zeno::getSession();
     if (m_bReportNodeStatus) {
         sess.registerNodeCallback([=](zeno::ObjPath nodePath, bool bDirty, zeno::NodeRunStatus status) {
@@ -63,12 +64,12 @@ CalculationMgr::CalculationMgr(QObject* parent)
     , m_playTimer(new QTimer(this))
     , m_runstatus(RunStatus::NoRun)
 {
-    m_worker = new CalcWorker(this);
+    m_worker.reset(new CalcWorker);
     m_worker->moveToThread(&m_thread);
-    connect(&m_thread, &QThread::started, m_worker, &CalcWorker::run);
-    connect(m_worker, &CalcWorker::calcFinished, this, &CalculationMgr::onCalcFinished);
-    connect(m_worker, &CalcWorker::commitRenderInfo, this, &CalculationMgr::commitRenderInfo) ;
-    connect(m_worker, &CalcWorker::nodeStatusChanged, this, &CalculationMgr::onNodeStatusReported);
+    connect(&m_thread, &QThread::started, m_worker.get(), &CalcWorker::run);
+    connect(m_worker.get(), &CalcWorker::calcFinished, this, &CalculationMgr::onCalcFinished);
+    connect(m_worker.get(), &CalcWorker::commitRenderInfo, this, &CalculationMgr::commitRenderInfo) ;
+    connect(m_worker.get(), &CalcWorker::nodeStatusChanged, this, &CalculationMgr::onNodeStatusReported);
     connect(m_playTimer, SIGNAL(timeout()), this, SLOT(onPlayReady()));
 
     auto& sess = zeno::getSession();
@@ -206,11 +207,53 @@ void CalculationMgr::kill()
     zeno::getSession().globalState->set_working(false);
 }
 
-void CalculationMgr::clear()
-{
+void CalculationMgr::clear() {
     zeno::getSession().markDirtyAndCleanResult();
     for (auto view : zenoApp->getMainWindow()->viewports())
         view->cleanUpScene();
+}
+
+void CalculationMgr::run_and_clean() {
+    // 清掉之前的分配记录
+    //VLDGlobalDisable();
+    //VLDGlobalEnable();  // 重新启用，开始新一轮记录
+    auto& sess = zeno::getSession();
+    auto& objman = sess.objsMan;
+
+    setRunStatus(RunStatus::Running);
+    m_worker->setCurrentGraphPath(zenoApp->graphsManager()->currentGraphPath());
+    //不执行异步操作
+    m_worker->run();
+    clear();
+
+    for (auto it = objman->m_rec_geoms.begin(); it != objman->m_rec_geoms.end(); it++) {
+        auto pGeom = (zeno::GeometryObject_Adapter*)(*it);
+        int j;
+        j = 0;
+    }
+
+    Sleep(5000);
+    //VLDReportLeaks();  // 会立即报告这个泄漏
+}
+
+void CalculationMgr::clearNodeObjs(const QModelIndex& nodeIdx)
+{
+    GraphModel* pGraphM = qobject_cast<GraphModel*>(const_cast<QAbstractItemModel*>(nodeIdx.model()));
+    if (pGraphM)
+        pGraphM->clearNodeObjs(nodeIdx);
+    bool isview = nodeIdx.data(QtRole::ROLE_NODE_ISVIEW).toBool();
+    if (isview) {
+        for (auto view : zenoApp->getMainWindow()->viewports()) {
+            view->cleanUpScene();
+        }
+    }
+}
+
+void CalculationMgr::clearSubnetObjs(const QModelIndex& nodeIdx)
+{
+    GraphModel* pGraphM = qobject_cast<GraphModel*>(const_cast<QAbstractItemModel*>(nodeIdx.model()));
+    if (pGraphM)
+        pGraphM->clearSubnetObjs(nodeIdx);
 }
 
 RunStatus::Value CalculationMgr::getRunStatus() const

@@ -23,6 +23,8 @@ struct ZENO_API SubnetNode : NodeImpl {
     bool is_loaded() const override;
     NodeType nodeType() const override;
 
+    void cleanInternalCaches();
+
     NodeData exportInfo() const override;
     CustomUI get_customui() const override;
     CustomUI export_customui() const override;

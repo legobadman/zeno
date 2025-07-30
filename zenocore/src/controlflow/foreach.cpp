@@ -298,6 +298,12 @@ namespace zeno {
             ZImpl(set_output("Output Object", nullptr));
         }
 
+    void ForEachEnd::clearCalcResults() {
+        m_last_collect_objs.clear();
+        m_collect_objs.reset();
+        m_iterate_object.reset();
+    }
+
     void ForEachEnd::adjustCollectObjInfo() {
             std::function<void(zany)> flattenList = [&flattenList, this](zany obj) {
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {

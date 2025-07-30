@@ -373,6 +373,11 @@ void SubnetNode::apply() {
     }
 }
 
+void SubnetNode::cleanInternalCaches() {
+    //所有子图的节点都移除对象并标脏
+    m_subgraph->markDirtyAndCleanup();
+}
+
 NodeData SubnetNode::exportInfo() const {
     //要注意，这里必须要手动cast为SubnetNode才能拿，因为NodeImpl已经和INode分离了
     NodeData node = NodeImpl::exportInfo();
