@@ -2646,7 +2646,7 @@ bool NodeImpl::removeLink(bool bInput, const EdgeInfo& edge) {
         {
             for (auto spLink : iter->second.links) {
                 if (auto inNode = spLink->toparam->m_wpNode) {
-                    if (inNode->get_name() == edge.inNode && spLink->toparam->name == edge.inParam && spLink->tokey == edge.inKey) {
+                    if (inNode->get_name() == edge.inNode && spLink->toparam->name == edge.inParam/* && spLink->tokey == edge.inKey*/) {
                         iter->second.links.remove(spLink);
                         return true;
                     }

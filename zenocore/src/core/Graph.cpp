@@ -1195,7 +1195,7 @@ bool Graph::addLink(const EdgeInfo& edge) {
 
     EdgeInfo adjustEdge = edge;
 
-    bool bRemOldLinks = true, bConnectWithKey = false;
+    bool bConnectWithKey = false;
     adjustEdge.inKey = edge.inKey;
 
     if (!bInputPrim)
@@ -1204,33 +1204,37 @@ bool Graph::addLink(const EdgeInfo& edge) {
         ParamObject outParam = outNode->get_output_obj_param(edge.outParam);
         if (inParam.type == gParamType_Dict || inParam.type == gParamType_List) {
             std::vector<EdgeInfo> inParamLinks = inParam.links;
-            if (inParamLinks.size() == 1) {
-                if (auto node = getNode(inParamLinks[0].outNode)) {
-                    ParamObject existOneParam = node->get_output_obj_param(inParamLinks[0].outParam);
-                    if (existOneParam.type == inParam.type) {
-                        updateLink(inParamLinks[0], false, inParamLinks[0].inKey, "obj0");
-                        adjustEdge.inKey = "obj0";
-                        inParam = inNode->get_input_obj_param(edge.inParam);
-                    }
-                }
-                bRemOldLinks = false;
-                bConnectWithKey = true;
-            }else if (inParamLinks.size() < 1)
+            if (inParamLinks.size() <= 1)
             {
+                //像IObject这种既可能是List也可能是子元素的，用coreapi没法区分，只能在外部指定key决定
+                //是直连还是子元素
                 if (inParam.type == outParam.type) {
-                    bRemOldLinks = true;
                     bConnectWithKey = false;
                 }
                 else {
-                    bRemOldLinks = false;
                     bConnectWithKey = true;
                 }
             }
             else {
-                bRemOldLinks = false;
                 bConnectWithKey = true;
             }
+
+            if (!edge.inKey.empty()) {
+                //如果指定了inKey，无论外面是不是List，必须作为子元素
+                bConnectWithKey = true;
+            }
+            else if (inParam.type == outParam.type || outParam.type == gParamType_IObject) {
+                //连一个list/obj进来，而且没有指定key，就认为是直连
+                bConnectWithKey = false;
+            }
+
             if (bConnectWithKey) {
+                //要先检查一下已有的边是不是直连，如果是，要删掉
+                if (inParam.links.size() == 1 && inParam.links[0].inKey.empty()) {
+                    removeLinks(inNode->get_name(), true, edge.inParam);
+                    inParam.links.clear();
+                }
+
                 std::set<std::string> ss;
                 for (const EdgeInfo& spLink : inParam.links) {
                     ss.insert(spLink.inKey);
@@ -1246,13 +1250,9 @@ bool Graph::addLink(const EdgeInfo& edge) {
                 }
             }
         }
-        if (inParam.socketType == Socket_Owning)
-        {
-            removeLinks(outNode->get_name(), false, edge.outParam);
-        }
     }
 
-    if (bRemOldLinks)
+    if (!bConnectWithKey)
         removeLinks(inNode->get_name(), true, edge.inParam);
 
     assert(bInputPrim == bOutputPrim);

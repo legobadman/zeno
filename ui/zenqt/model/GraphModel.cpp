@@ -408,6 +408,34 @@ void GraphModel::clear()
     spGraph->clear();
 }
 
+QmlParamType::Value GraphModel::getParamType(const QString& node, bool bInput, const QString& param) const {
+    if (m_name2uuid.find(node) == m_name2uuid.end()) {
+        zeno::log_error("error type");
+        return QmlParamType::Unknown;
+    }
+
+    QString uuid = m_name2uuid[node];
+    NodeItem* item = m_nodes[uuid];
+    QModelIndex paramIdx = item->params->paramIdx(param, bInput);
+    if (!paramIdx.isValid()) {
+        return QmlParamType::Unknown;
+    }
+    zeno::ParamType type = paramIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
+    switch (type)
+    {
+    case zeno::types::gParamType_String:    return QmlParamType::String;
+    case zeno::types::gParamType_Int:       return QmlParamType::Int;
+    case zeno::types::gParamType_Float:     return QmlParamType::Float;
+    case zeno::types::gParamType_Vec3f:     return QmlParamType::Vec3f;
+    case gParamType_List:       return QmlParamType::List;
+    case gParamType_Dict:       return QmlParamType::Dict;
+    case gParamType_Geometry:   return QmlParamType::Geometry;
+    case gParamType_IObject:    return QmlParamType::IObject;
+    default:
+        return QmlParamType::Unknown;
+    }
+}
+
 int GraphModel::indexFromId(const QString& name) const
 {
     if (m_name2uuid.find(name) == m_name2uuid.end())
@@ -487,17 +515,36 @@ std::set<std::string> GraphModel::getViewNodePath() const {
     return nodes;
 }
 
-void GraphModel::addLink(const QString& fromNodeStr, const QString& fromParamStr,
-    const QString& toNodeStr, const QString& toParamStr)
+void GraphModel::addLink(
+    const QString& outNode,
+    const QString& outParam,
+    const QString& inNode,
+    const QString& inParam,
+    bool asListElement)
 {
-    if (fromNodeStr == toNodeStr)
+    if (outNode == inNode)
         return;
 
     zeno::EdgeInfo link;
-    link.inNode = toNodeStr.toStdString();
-    link.inParam = toParamStr.toStdString();
-    link.outNode = fromNodeStr.toStdString();
-    link.outParam = fromParamStr.toStdString();
+    link.inNode = inNode.toStdString();
+    link.inParam = inParam.toStdString();
+    link.outNode = outNode.toStdString();
+    link.outParam = outParam.toStdString();
+
+    QmlParamType::Value outparam_type = getParamType(outNode, false, outParam);
+    QmlParamType::Value inparam_type = getParamType(inNode, true, inParam);
+    if (QmlParamType::List == inparam_type) {
+        QModelIndex inNodeIdx = indexFromName(inNode);
+        QString uuid = m_name2uuid[inNode];
+        QModelIndex inParamIdx = m_nodes[uuid]->params->paramIdx(inParam, true);
+        PARAM_LINKS links = inParamIdx.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
+        if ((outparam_type == QmlParamType::List || outparam_type == QmlParamType::IObject) && !asListElement) {
+            link.inKey = "";
+        }
+        else {
+            link.inKey = "obj0";    //内核代码会自动纠正
+        }
+    }
     _addLink_apicall(link, true);
 }
 

@@ -1,6 +1,7 @@
 ﻿#ifndef __ZENO_UI_COMMON_H__
 #define __ZENO_UI_COMMON_H__
 
+#include <zeno/core/typeinfo.h>
 #include <QModelIndex>
 #include <QSize>
 #include <QDockWidget>
@@ -675,5 +676,24 @@ public:
     };
     Q_ENUM(Value)
 };
+
+class QmlParamType : public QObject
+{
+    Q_OBJECT
+public:
+    enum Value {
+        Unknown = 0,
+        Int = 1,
+        Float,
+        String,
+        Vec3f,
+        Geometry,
+        List,
+        Dict,
+        IObject
+    };
+    Q_ENUM(Value)
+};
+Q_DECLARE_METATYPE(QmlParamType::Value)
 
 #endif

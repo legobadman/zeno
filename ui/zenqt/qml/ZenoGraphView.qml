@@ -68,6 +68,62 @@ Qan.GraphView {
         visible: graph.locked
     }
 
+    Dialog {
+        id: listkeydialog
+        modal: true
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        z: 1000
+        standardButtons: Dialog.NoButton
+        width: 300
+        height: 150
+        focus: true
+
+        property var _resolve
+
+        contentItem: Column {
+            spacing: 20
+            padding: 20
+
+            Text {
+                text: "是否作为子元素加入 List？"
+                font.pointSize: 12
+                wrapMode: Text.Wrap
+            }
+
+            Row {
+                spacing: 10
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 10
+
+                Button {
+                    text: "作为子元素"
+                    onClicked: {
+                        listkeydialog._resolve(true)
+                        listkeydialog.close()
+                    }
+                }
+
+                Button {
+                    text: "作为整体"
+                    onClicked: {
+                        listkeydialog._resolve(false)
+                        listkeydialog.close()
+                    }
+                }
+            }
+        }
+    }
+
+    // 包装一个返回 Promise 的函数
+    function askUserChoice() {
+        return new Promise(function(resolve, reject) {
+            listkeydialog.open()
+            listkeydialog._resolve = resolve
+        })
+    } 
+
     //background
     Rectangle {
         anchors.fill: parent
@@ -85,7 +141,7 @@ Qan.GraphView {
         Edge {
             visible: true
             color: "#5FD2FF"
-            thickness: 4
+            thickness: 2
 
             /*
             //此方式没法动态更新，因为没法捕获globalpos的changed信号，必须要加上hoverInfo才能捕获，干脆在onHoverInfoChanged做好了
@@ -120,8 +176,7 @@ Qan.GraphView {
     }
 
     function temp_edge_close() {
-        //console.log("边闭合，信息如下：")
-
+        //!!!from指的是连线时操作的起点，不是指参数的from/output
         var from_node = tempEdge.tempedge_from_sock["node_name"]
         var from_sock = tempEdge.tempedge_from_sock["sock_name"]
         var from_group = tempEdge.tempedge_from_sock["group"]
@@ -131,19 +186,37 @@ Qan.GraphView {
         var to_sock = tempEdge.tempedge_to_sock["sock_name"]
         var to_group = tempEdge.tempedge_to_sock["group"]
         //console.log("to_node = " + to_node + ", to_sock = " + to_sock + ", to_group = " + to_group)
-        
-        if (from_group == ParamGroup.OutputObject) {
-            graphView.graph.model.addLink(from_node, from_sock, to_node, to_sock)
+
+        var out_node = "", in_node = "", out_sock = "", in_sock = ""
+        if (from_group == ParamGroup.OutputObject || from_group == ParamGroup.OutputPrimitive) {
+            out_node = from_node
+            out_sock = from_sock
+            in_node = to_node
+            in_sock = to_sock
         }
-        else if (from_group == ParamGroup.InputObject){
-            graphView.graph.model.addLink(to_node, to_sock, from_node, from_sock)
+        else {
+            out_node = to_node
+            out_sock = to_sock
+            in_node = from_node
+            in_sock = from_sock
         }
-        else if (from_group == ParamGroup.OutputPrimitive){
-            graphView.graph.model.addLink(from_node, from_sock, to_node, to_sock)
+
+        //如果发现输入口是一个List，要询问是作为List的元素连进来，还是作为List的整体传输过来
+        var out_param_type = graphView.graphModel.getParamType(out_node, false, out_sock)
+        var in_param_type = graphView.graphModel.getParamType(in_node, true, in_sock)
+        //console.log("in_param_type is " + in_param_type)
+        //console.log("ParamType.List is " + ParamType.List)
+        if (in_param_type == ParamType.List) {
+            //如果输出是list或者object，要询问作为子元素还是整体
+            if (out_param_type == ParamType.List || out_param_type == ParamType.IObject) {
+                askUserChoice().then(function(asListChild) {
+                    graphView.graph.model.addLink(out_node, out_sock, in_node, in_sock, asListChild)
+                })
+                clear_temp_edge()
+                return
+            }
         }
-        else if (from_group == ParamGroup.InputPrimitive) {
-            graphView.graph.model.addLink(to_node, to_sock, from_node, from_sock)
-        }
+        graphView.graph.model.addLink(out_node, out_sock, in_node, in_sock)
         clear_temp_edge()
     }
 
@@ -827,9 +900,11 @@ Qan.GraphView {
                 var out_node_name = graphView.graph.getNode(outobj[0]).label
                 var in_param = inobj[1]
                 var out_param = outobj[1]
-                console.log("in_param = " + in_param)
-                console.log("out_param = " + out_param)
-                graphView.graph.model.removeLink(out_node_name, out_param, in_node_name, in_param)
+                var in_key = inobj[3];
+                var out_key = outobj[3]
+                // console.log("in_param = " + in_param + " in_key = " + in_key)
+                // console.log("out_param = " + out_param + " out_key = " + out_key)
+                graphView.graph.model.removeLink(out_node_name, out_param, in_node_name, in_param, out_key, in_key)
             }
 
         var nodes = []

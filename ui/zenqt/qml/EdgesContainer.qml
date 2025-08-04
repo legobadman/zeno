@@ -27,13 +27,34 @@ Item {
             point2x: 0
             point2y: 0
             p1_group: out_group
+            in_key: toParam[3]
             //color: fromParam[2] ? "#7D2020" : "#4E9EF4"
-            property color color: Qt.rgba(192/255, 36/255, 36/255, 0.6)
-            property color color_hover: "#FFFFFF"
-            property color color_selected: Qt.rgba(250/255, 100/255, 0, 1.0)
+            color: {
+                if (toParam[3] != "") {
+                    return Qt.rgba(1, 1, 1, 0.6)
+                }
+                else if (out_group == ParamGroup.OutputObject || in_group == ParamGroup.InputObject) {
+                    return Qt.rgba(255/255, 255/255, 255/255, 0.6)
+                }
+                else {
+                    return Qt.rgba(71/255, 165/255, 226/255, 1.0)
+                }
+            }
+            color_hover: "#FFFFFF"
+            color_selected: Qt.rgba(250/255, 100/255, 0, 1.0)
             z: 100
 
-            thickness: 4
+            thickness: {
+                if (toParam[3] != "") {
+                    return 1;
+                }
+                else if (out_group == ParamGroup.OutputObject || in_group == ParamGroup.InputObject) {
+                    return 3;
+                }
+                else {
+                    return 1;
+                }
+            }
 
             onStateChanged: function (state) {
                 isSelected = (state == "select") ? true : false;

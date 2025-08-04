@@ -31,8 +31,13 @@ public:
     ~GraphModel();
     Q_INVOKABLE LinkModel* getLinkModel() const { return m_linkModel; }
     Q_INVOKABLE int indexFromId(const QString& name) const;
-    Q_INVOKABLE void addLink(const QString& fromNodeStr, const QString& fromParamStr,
-        const QString& toNodeStr, const QString& toParamStr);
+    Q_INVOKABLE QmlParamType::Value getParamType(const QString& node, bool bInput, const QString& param) const;
+    Q_INVOKABLE void addLink(
+        const QString& fromNodeStr,
+        const QString& fromParamStr,
+        const QString& toNodeStr,
+        const QString& toParamStr,
+        bool asListElement = false);
 
     Q_INVOKABLE bool removeLink(
         const QString& outNode,
