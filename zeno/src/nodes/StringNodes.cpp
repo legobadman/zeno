@@ -608,6 +608,51 @@ ZENDEFNODE(GetStringFromList, {
     {"string"},
 });
 
+struct LegacyStringToList : zeno::INode {
+    virtual void apply() override {
+        auto stringlist = ZImpl(get_input2<std::string>("string"));
+        auto list = create_ListObject();
+        auto separator = ZImpl(get_input2<std::string>("Separator"));
+        auto trimoption = ZImpl(get_input2<bool>("Trim"));
+        auto keepempty = ZImpl(get_input2<bool>("KeepEmpty"));
+        std::vector<std::string> strings;
+        size_t pos = 0;
+        size_t posbegin = 0;
+        std::string word;
+        while ((pos = stringlist.find(separator, pos)) != std::string::npos) {
+            word = stringlist.substr(posbegin, pos - posbegin);
+            if (trimoption) trim(word);
+            if (keepempty || !word.empty()) strings.push_back(word);
+            pos += separator.length();
+            posbegin = pos;
+        }
+        if (posbegin < stringlist.length()) { //push last word
+            word = stringlist.substr(posbegin);
+            if (trimoption) trim(word);
+            if (keepempty || !word.empty()) strings.push_back(word);
+        }
+        for (const auto& string : strings) {
+            auto obj = std::make_unique<StringObject>();
+            obj->set(string);
+            list->m_impl->push_back(std::move(obj));
+        }
+        ZImpl(set_output("list", std::move(list)));
+    }
+};
+
+ZENDEFNODE(LegacyStringToList, {
+    {
+        {gParamType_String, "string", ""},
+        {gParamType_String, "Separator", ""},
+        {gParamType_Bool, "Trim", "false"},
+        {gParamType_Bool, "KeepEmpty", "false"},
+    },
+    {{gParamType_List, "list"},
+    },
+    {},
+    {"string"},
+    });
+
 
 struct StringToList : zeno::INode {
     virtual void apply() override {
