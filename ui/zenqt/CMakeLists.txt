@@ -74,6 +74,12 @@ endif()
 
 target_link_libraries(zeno PUBLIC ScintillaEditBase)
 
+if (ZENO_WITH_VLD)
+    target_include_directories(zeno PRIVATE "C:/vld2/src")
+    target_link_libraries(zeno PRIVATE "C:/vld2/src/bin/x64/Debug-v143/vld.lib")
+    target_compile_definitions(zeno PRIVATE -DZENO_WITH_VLD)
+endif()
+
 target_include_directories(zeno PUBLIC Qt${QT_VERSION_MAJOR}::QuickControls2 ScintillaEditBase ScintillaEdit)
 target_include_directories(zeno PRIVATE 
     .

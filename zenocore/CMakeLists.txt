@@ -124,6 +124,11 @@ if (MSVC)  # must use this to make msvc linker happy
     )
 endif()
 
+if (ZENO_WITH_VLD)
+    target_include_directories(zenocore PRIVATE "C:/vld/src")
+    target_link_libraries(zenocore PRIVATE "C:/vld2/src/bin/x64/Debug-v143/vld.lib")
+endif()
+
 if (ZENO_WITH_REFLECTOR)
     #生成反射信息
     target_compile_definitions(zenocore PUBLIC -DZENO_WITH_REFLECTOR)

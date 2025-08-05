@@ -1,4 +1,13 @@
-//#include <Python.h>
+#ifdef ZENO_WITH_VLD
+#include <vld.h>
+struct VLDGuard {
+    VLDGuard() {
+        VLDGlobalDisable(); // 尽可能早地停止记录
+    }
+};
+static VLDGuard _earlyVLDGuard; // 构造函数会在 main() 之前调用
+#endif
+
 #include <QApplication>
 #include "style/zenostyle.h"
 #include "zenoapplication.h"
@@ -47,6 +56,12 @@ int	main(int argc, char** argv)
 #else
 int main(int argc, char *argv[]) 
 {
+    //VLDGlobalDisable();
+    auto& sess = zeno::getSession();
+    zeno::scope_exit sp([&]() {
+        sess.destroy();
+    });
+
 #ifdef ENABLE_HIGHDPI_SCALE
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif

@@ -1019,8 +1019,6 @@ QStringList UiHelper::getAllControls()
 
 QString UiHelper::getTypeDesc(zeno::ParamType type)
 {
-    //���������ͨ����Щhash�룬�õ���Ӧ��type_info����type_info���¼��
-    //����metadata��������1.�Ƿ�Ϊobject 2.���Ƽ�� ������Դ����������Ȼ�ķ�ʽ�ˡ�
     switch (type)
     {
     case zeno::types::gParamType_String:    return "string";

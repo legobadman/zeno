@@ -55,6 +55,10 @@ void initQml()
     qmlRegisterUncreatableType<QtRole>("zeno.enum", 1, 0, "Model", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlNodeCateRole>("zeno.enum", 1, 0, "NodeCate", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlNodeRunStatus>("zeno.enum", 1, 0, "NodeStatus", "");
+
+    qRegisterMetaType<QmlParamType::Value>("QmlParamType::Value");
+    qmlRegisterUncreatableType<QmlParamType>("zeno.enum", 1, 0, "ParamType", "");
+
     qmlRegisterUncreatableType<QmlCUIRole>("zeno.enum", 1, 0, "CustomuiModelType", "Not creatable as it is an enum type");
     qmlRegisterType<GraphsManager>("Zeno", 1, 0, "GraphsManager");
     qmlRegisterType<GraphsTotalView>("Zeno", 1, 0, "GraphsTotalView");
@@ -84,8 +88,10 @@ void initPyzenModule() {
 void startUp(bool bEnableCrashReport)
 {
 #ifdef Q_OS_WIN
+#ifndef ZENO_WITH_VLD
     if (bEnableCrashReport)
         registerExceptionFilter();
+#endif
     SetConsoleOutputCP(CP_UTF8);
 #endif
 

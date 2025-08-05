@@ -1,5 +1,6 @@
 #include "exceptionhandle.h"
 
+#ifndef ZENO_WITH_VLD
 #if defined(Q_OS_WIN)
 
 #include <windows.h>
@@ -45,4 +46,5 @@ void registerExceptionFilter()
     sTempDir.setAutoRemove(false);
 }
 
+#endif
 #endif
