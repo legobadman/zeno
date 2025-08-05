@@ -89,7 +89,7 @@ void    Graph::classBegin()
     setGroupDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/Group.qml")));
     // Note: Do not set a default node delegate, otherwise it would be used instead
     //  of qan::Node::delegate(), just let the user specify one.
-    setEdgeDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/Edge.qml")));
+    //setEdgeDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/Edge.qml")));
     setSelectionDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/SelectionItem.qml")));
 
     const auto engine = qmlEngine(this);
@@ -106,6 +106,7 @@ void    Graph::componentComplete()
     const auto engine = qmlEngine(this);
     if (engine != nullptr) {
         // Visual connector initialization
+#if 0
         auto connectorComponent = std::make_unique<QQmlComponent>(engine, QStringLiteral("qrc:/QuickQanava/VisualConnector.qml"));
         if (connectorComponent) {
             qan::Style* style = qan::Connector::style(nullptr);
@@ -128,6 +129,7 @@ void    Graph::componentComplete()
                 }
             } else qWarning() << "qan::Graph::componentComplete(): Error: No style available for connector creation.";
         }
+#endif
     } else qWarning() << "qan::Graph::componentComplete(): Error: No QML engine available to register default QML delegates.";
 }
 

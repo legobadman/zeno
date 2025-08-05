@@ -31,6 +31,9 @@ StackLayout {
     }
 
     function jumpTo(path_list) {
+
+        //console.log("jumpTo start: " + path_list)
+
         //寻找stack_subnet_views下所有的view对应到model，和当前的路径进行比较，如果找到，直接切换，找不到就新建并加入Layout
         let path_str = ""
         for (var i = 0; i < path_list.length; i++) {
@@ -39,13 +42,19 @@ StackLayout {
         }
         graphsmanager.currentPath = path_str
 
-        // console.log("stack_subnet_views.children: " + stack_subnet_views.children)
+        var n = stack_subnet_views.children.length
+        //console.log("stack.length = " + n)
 
-        for (var i = 0; i < stack_subnet_views.children.length; i++) {
-            var child = stack_subnet_views.children[i];
+        for (var i = 0; i < n; i++) {
+            var child = stack_subnet_views.children[i]
+            if (child.graphModel == null) {
+                console.log("cannot get fucking child")
+                console.log("stack_subnet_views.children: " + stack_subnet_views.children)
+                continue
+            }
             var paths = child.graphModel.path();
             if (arraysEqual(paths, path_list)) {
-                stack_subnet_views.currentIndex = i;
+                stack_subnet_views.currentIndex = i
                 return;
             }
         }
@@ -56,9 +65,11 @@ StackLayout {
         var subnet_model = treeModel.getGraphByPath(path_list)
         const newgraphview = graphsview_comp.createObject(stack_subnet_views, {graphModel: subnet_model})
         stack_subnet_views.currentIndex = stack_subnet_views.count - 1;
+        //console.log("subnet_model is " + subnet_model)
 
         //跳转的信号
         newgraphview.navigateRequest.connect(function onNavigateRequest(varlst) {
+            //console.log("jump to " + varlst)
             jumpTo(varlst)
         })
     }

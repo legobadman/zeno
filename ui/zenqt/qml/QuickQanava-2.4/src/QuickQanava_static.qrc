@@ -5,7 +5,6 @@
         <file>HeatMapPreview.qml</file>
         <file>LineGrid.qml</file>
         <file>Edge.qml</file>
-        <file>EdgeTemplate.qml</file>
         <file>EdgeStraightPath.qml</file>
         <file>EdgeOrthoPath.qml</file>
         <file>EdgeCurvedPath.qml</file>
