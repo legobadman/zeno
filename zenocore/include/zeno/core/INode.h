@@ -31,6 +31,7 @@ namespace zeno
         String get_input2_string(const zeno::String& param);
         bool get_input2_bool(const zeno::String& param);
         bool has_input(const zeno::String& param);
+        bool has_link_input(const zeno::String& param);
 
         container_elem_update_info get_input_container_info(const zeno::String& param);
         container_elem_update_info get_output_container_info(const zeno::String& param);

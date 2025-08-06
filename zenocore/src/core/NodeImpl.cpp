@@ -539,6 +539,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
     });
 
     //有部分下游节点因为某些原因没有标脏，而上游节点已经脏了的情况下不会继续传播，所以不检查缓存
+    //还是要检查，否则子图比较大的时候传播脏位会比较慢
     if (m_dirty == bOn)
         return;
 
@@ -3450,11 +3451,29 @@ ParamType NodeImpl::get_anyparam_type(bool bInput, const std::string& name) {
     return Param_Null;
 }
 
+bool NodeImpl::has_link_input(std::string const& id) const {
+    //这个对应的是老版本的has_input
+    auto iter = m_inputObjs.find(id);
+    if (iter != m_inputObjs.end()) {
+        return !iter->second.links.empty();
+    }
+    else {
+        auto iter = m_inputPrims.find(id);
+        if (iter != m_inputPrims.end()) {
+            return !iter->second.links.empty();
+        }
+        return false;
+    }
+}
+
 bool NodeImpl::has_input(std::string const &id) const {
-    //这个has_input在旧的语义里，代表的是input obj，如果有一些边没有连上，那么有一些参数值仅有默认值，未必会设这个input的，
-    //还有一种情况，就是对象值是否有输入引入
-    //这种情况要看旧版本怎么处理。
-    //对于新版本而言，对于数值型输入，没有连上边仅有默认值，就不算has_input，有点奇怪，因此这里直接判断参数是否存在。
+    //这个has_input在旧的语义里，代表的是input obj，如果有一些边没有连上，或者有些参数没有设置默认值，就不会加到这个`input`里
+    // 设计上过于随意，参考老版本的NewFBXSceneInfo.frameid
+   
+    // 由于新版本已经和旧版本不一致，如果要最大限度兼容，只能考虑：
+    //1. 有边连着都算
+    //2. 只要参数有数值结果，都算（如果是老版本的不带默认参数的，请用has_link_input）
+
     auto iter = m_inputObjs.find(id);
     if (iter != m_inputObjs.end()) {
         return !iter->second.links.empty();

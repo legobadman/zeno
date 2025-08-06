@@ -223,6 +223,7 @@ namespace zeno
         Session* getThisSession() const;
         GlobalState* getGlobalState() const;
 
+        bool has_link_input(std::string const& id) const;
         bool has_input(std::string const& id) const;
         zany get_input(std::string const& id) const;
         zany get_output_obj(std::string const& sock_name);

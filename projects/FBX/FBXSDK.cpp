@@ -1827,7 +1827,7 @@ ZENDEFNODE(NewFBXImportCamera, {
 struct NewFBXSceneInfo : INode {
     virtual void apply() override {
         int frameid;
-        if (has_input("frameid")) {
+        if (has_link_input("frameid")) {
             frameid = std::lround(get_input2_int("frameid"));
         } else {
             frameid = GetFrameId();

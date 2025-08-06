@@ -85,6 +85,9 @@ namespace zeno
         return m_pAdapter->has_input(zsString2Std(param));
     }
 
+    bool INode::has_link_input(const zeno::String& param) {
+        return m_pAdapter->has_link_input(zsString2Std(param));
+    }
 
     container_elem_update_info INode::get_input_container_info(const zeno::String& param) {
         return m_pAdapter->get_input_container_info(zsString2Std(param));
