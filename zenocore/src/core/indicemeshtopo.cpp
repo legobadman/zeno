@@ -1,4 +1,5 @@
 #include "indicemeshtopo.h"
+#include <zeno/para/parallel_reduce.h>
 
 namespace zeno
 {
@@ -119,11 +120,26 @@ namespace zeno
     }
 
     int IndiceMeshTopology::nvertices() const {
-        throw makeError<UnimplError>("");
+        if (is_base_triangle()) {
+            return m_indiceMesh_topo->tris->size() * 3;
+        }
+        else {
+            return parallel_reduce_sum(m_indiceMesh_topo->polys->begin(), m_indiceMesh_topo->polys->end(), [&](vec2i const& ind) {
+                return ind[1];
+            });
+        }
     }
 
     int IndiceMeshTopology::nvertices(int face_id) const {
-        throw makeError<UnimplError>("");
+        if (is_base_triangle()) {
+            return 3;
+        }
+        else {
+            if (face_id < 0 || face_id >= m_indiceMesh_topo->polys->size()) {
+                throw makeError<UnimplError>("face_id invalid");
+            }
+            return m_indiceMesh_topo->polys[face_id][1];
+        }
     }
 
     /* µ„œ‡πÿ */
@@ -174,18 +190,22 @@ namespace zeno
     }
 
     std::tuple<int, int, int> IndiceMeshTopology::vertex_info(int linear_vertex_id) {
-        throw makeError<UnimplError>("");
+        //throw makeError<UnimplError>("");
+        return { -1,-1,-1 };
     }
 
     int IndiceMeshTopology::vertex_point(int linear_vertex_id) {
-        throw makeError<UnimplError>("");
+        //throw makeError<UnimplError>("");
+        return -1;
     }
 
     int IndiceMeshTopology::vertex_face(int linear_vertex_id) {
-        throw makeError<UnimplError>("");
+        //throw makeError<UnimplError>("");
+        return -1;
     }
 
     int IndiceMeshTopology::vertex_face_index(int linear_vertex_id) {
-        throw makeError<UnimplError>("");
+        //throw makeError<UnimplError>("");
+        return -1;
     }
 }

@@ -3,6 +3,7 @@
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/interfaceutil.h>
+#include <zeno/core/ObjectManager.h>
 
 
 namespace zeno
@@ -16,8 +17,17 @@ namespace zeno
 
     void GeometryObject_Adapter::Delete() {}
 
+    GeometryObject_Adapter::GeometryObject_Adapter() {
+        //auto id = zsString2Std(key());
+        auto& objsman = zeno::getSession().objsMan;
+        objsman->m_rec_geoms.insert((char*)this);
+    }
+
     GeometryObject_Adapter::~GeometryObject_Adapter() {
         Delete();
+        //auto id = zsString2Std(key());
+        auto& objsman = zeno::getSession().objsMan;
+        objsman->m_rec_geoms.erase((char*)this);
     }
 
     void GeometryObject_Adapter::inheritAttributes(
@@ -334,19 +344,6 @@ namespace zeno
         return newGeom;
     }
 
-    void GeometryObject_Adapter::bindPrimitive(std::shared_ptr<PrimitiveObject> prim) {
-        m_impl->bindPrimitive(prim);
-        //userdata要拷贝
-        m_usrData = prim->userData()->clone();
-    }
-
-    std::shared_ptr<PrimitiveObject> GeometryObject_Adapter::forkPrimitive() {
-        std::shared_ptr<PrimitiveObject> spPrim = m_impl->forkPrimitive();
-        //在这套代理机制下，userData由Geom管理，以应对同一拓扑属性但不同userData的情况
-        spPrim->m_usrData = this->userData()->clone();
-        return spPrim;
-    }
-
     zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type) {
         auto pGeom = std::make_shared<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(type);
@@ -374,9 +371,9 @@ namespace zeno
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim, bool basePrimTopo) {
+    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim) {
         auto pGeom = std::make_shared<GeometryObject_Adapter>();
-        pGeom->m_impl = std::make_unique<GeometryObject>(prim, true);
+        pGeom->m_impl = std::make_unique<GeometryObject>(prim);
         pGeom->m_usrData = prim->m_usrData->clone();
         return pGeom;
     }

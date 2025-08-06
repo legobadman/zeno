@@ -21,6 +21,7 @@ namespace zeno
         zany clone() const override;
         void Delete() override;
 
+        GeometryObject_Adapter();
         virtual ~GeometryObject_Adapter();
 
         void inheritAttributes(
@@ -125,12 +126,8 @@ namespace zeno
         std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
         zeno::SharedPtr<PrimitiveObject> toPrimitiveObject() const;
-
         zeno::SharedPtr<GeometryObject_Adapter> toIndiceMeshesTopo() const;
         zeno::SharedPtr<GeometryObject_Adapter> toHalfEdgeTopo() const;
-
-        void bindPrimitive(std::shared_ptr<PrimitiveObject> prim);
-        std::shared_ptr<PrimitiveObject> forkPrimitive();
 
         std::unique_ptr<GeometryObject> m_impl;
     };
@@ -143,7 +140,7 @@ namespace zeno
         bool bTriangle,
         const std::vector<zeno::vec3f>& points,
         const std::vector<std::vector<int>>& faces);
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim, bool basePrimTopo);
+    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim);
     ZENO_API zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(zeno::SharedPtr<GeometryObject_Adapter> pGeom);
 }
 

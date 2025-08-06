@@ -660,7 +660,7 @@ struct ImageBlur : INode {
         auto ud = image->userData();
         int w = ud->get_int("w");
         int h = ud->get_int("h");
-        auto img_out = create_GeometryObject(zeno::Topo_HalfEdge, true, w * h, 0);
+        auto img_out = create_GeometryObject(zeno::Topo_IndiceMesh, true, w * h, 0);
         img_out->userData()->set_int("w", w);
         img_out->userData()->set_int("h", h);
         img_out->userData()->set_int("isImage", 1);
@@ -791,7 +791,7 @@ struct ImageToNormalMap : INode {
         int h = ud->get_int("h");
         auto InvertR = get_input2_bool("InvertR");
         auto InvertG = get_input2_bool("InvertG");
-        auto normalmap = create_GeometryObject(zeno::Topo_HalfEdge, true, w * h, 0);
+        auto normalmap = create_GeometryObject(zeno::Topo_IndiceMesh, true, w * h, 0);
         auto normalmap_verts = normalmap->points_pos();
         normalmap->userData()->set_int("isImage", 1);
         normalmap->userData()->set_int("w", w);
@@ -976,7 +976,7 @@ struct ImageTile: INode {
         int h = ud->get_int("h");
         int w1 = w * cols;
         int h1 = h * rows;
-        auto image2 = create_GeometryObject(zeno::Topo_HalfEdge, true, w1 * h1, 0);
+        auto image2 = create_GeometryObject(zeno::Topo_IndiceMesh, true, w1 * h1, 0);
         image2->userData()->set_int("isImage", 1);
         image2->userData()->set_int("w", w1);
         image2->userData()->set_int("h", h1);
@@ -1014,7 +1014,7 @@ void imagedilate(std::shared_ptr<GeometryObject_Adapter>& image, std::vector<std
 
 #pragma omp parallel for
     for (int iter = 0; iter < iterations; iter++){
-        auto imagetmp = create_GeometryObject(zeno::Topo_HalfEdge, true, image_width * image_height, 0);
+        auto imagetmp = create_GeometryObject(zeno::Topo_IndiceMesh, true, image_width * image_height, 0);
         imagetmp->userData()->set_int("isImage", 1);
         imagetmp->userData()->set_int("w", image_width);
         imagetmp->userData()->set_int("h", image_height);
@@ -1102,7 +1102,7 @@ void imageerode(std::shared_ptr<GeometryObject_Adapter>& image, std::vector<std:
     int kernel_width = kernel[0].size();
 #pragma omp parallel for
     for (int iter = 0; iter < iterations; iter++) {
-        auto imagetmp = create_GeometryObject(zeno::Topo_HalfEdge, true, image_width * image_height, 0);
+        auto imagetmp = create_GeometryObject(zeno::Topo_IndiceMesh, true, image_width * image_height, 0);
         imagetmp->userData()->set_int("isImage", 1);
         imagetmp->userData()->set_int("w", image_width);
         imagetmp->userData()->set_int("h", image_height);
@@ -1188,7 +1188,7 @@ struct ImageColor : INode {
         auto size = get_input2_vec2i("Size");
         auto balpha = get_input2_bool("alpha");
         auto vertsize = size.x * size.y;
-        auto image = create_GeometryObject(zeno::Topo_HalfEdge, true, vertsize, 0);
+        auto image = create_GeometryObject(zeno::Topo_IndiceMesh, true, vertsize, 0);
         image->userData()->set_int("isImage", 1);
         image->userData()->set_int("w", size.x);
         image->userData()->set_int("h", size.y);

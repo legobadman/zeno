@@ -29,7 +29,7 @@ namespace zeno
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
         GeometryObject(const GeometryObject& rhs);
-        GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo);
+        GeometryObject(std::shared_ptr<PrimitiveObject> spPrim);
         std::shared_ptr<PrimitiveObject> toPrimitive();
         GeomTopoType type() const;
         void inheritAttributes(
@@ -40,9 +40,6 @@ namespace zeno
             int face_offset,
             std::set<std::string> face_nocopy);
         ~GeometryObject();
-
-        void bindPrimitive(std::shared_ptr<PrimitiveObject> prim);
-        std::shared_ptr<PrimitiveObject> forkPrimitive();
 
         std::unique_ptr<GeometryObject> toIndiceMeshesTopo() const;
         std::unique_ptr<GeometryObject> toHalfEdgeTopo() const;
@@ -204,6 +201,9 @@ namespace zeno
         int isLineFace(int faceid);
 
     private:
+        void _temp_code_regist();
+        void _temp_code_unregist();
+
         void initFromPrim(std::shared_ptr<PrimitiveObject> prim);
         std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
         const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
@@ -213,10 +213,6 @@ namespace zeno
         void create_attr_from_AttrVector(GeoAttrGroup grp, const std::string& attr_name, const AttrVectorVariant& vec);
 
         std::shared_ptr<IGeomTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
-
-        //有许多老的资源和模型，深度依赖于Prim，要做转换很麻烦且没必要，于是可以尝试用Geom和引用计数管理起来
-        //另外，m_host和m_spTopology是互斥的
-        std::shared_ptr<PrimitiveObject> m_host;
 
         std::map<std::string, AttributeVector> m_point_attrs;
         std::map<std::string, AttributeVector> m_face_attrs;

@@ -161,7 +161,7 @@ struct Blend: INode {//optimize
             }
         }
 
-        auto image2 = create_GeometryObject(zeno::Topo_HalfEdge, true, imagesize, 0);
+        auto image2 = create_GeometryObject(zeno::Topo_IndiceMesh, true, imagesize, 0);
         image2->userData()->set_int("isImage", 1);
         image2->userData()->set_int("w", w1);
         image2->userData()->set_int("h", h1);
@@ -250,7 +250,7 @@ struct CompBlur : INode {//TODO::delete
         auto ud = image->userData();
         int w = ud->get_int("w");
         int h = ud->get_int("h");
-        auto blurredImage = create_GeometryObject(zeno::Topo_HalfEdge, true, w*h, 0);
+        auto blurredImage = create_GeometryObject(zeno::Topo_IndiceMesh, true, w*h, 0);
         blurredImage->userData()->set_int("h", h);
         blurredImage->userData()->set_int("w", w);
         blurredImage->userData()->set_int("isImage", 1);
@@ -322,7 +322,7 @@ struct ImageExtractChannel : INode {
         int w = ud1->get_int("w");
         int h = ud1->get_int("h");
         int N = image->npoints();
-        auto image2 = create_GeometryObject(zeno::Topo_HalfEdge, true, N, 0);
+        auto image2 = create_GeometryObject(zeno::Topo_IndiceMesh, true, N, 0);
         image2->userData()->set_int("isImage", 1);
         image2->userData()->set_int("w", w);
         image2->userData()->set_int("h", h);
@@ -418,7 +418,7 @@ struct CompImport : INode {
         else if (attributesType == "vec3f") {
             //TODO
         }
-        zeno::SharedPtr<GeometryObject_Adapter> geo = create_GeometryObject(image, true);
+        zeno::SharedPtr<GeometryObject_Adapter> geo = create_GeometryObject(image);
         set_output("image", geo);
     }
 };

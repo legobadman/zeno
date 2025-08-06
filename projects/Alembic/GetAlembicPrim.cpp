@@ -243,9 +243,17 @@ struct AlembicPrimList : INode {
                 prims->push_back(np);
             });
         }
-        auto new_prims = std::make_shared<zeno::ListObject>();
-        std::vector<zany>& arr = new_prims->m_impl->m_objects;  //不应该在插件内部暴露细节，不过暂时没有实现Vector::iterator，只能先拿出来
 
+        bool bSplitByFaceset = get_input2_bool("splitByFaceset");
+        std::shared_ptr<ListObject> new_prims;
+        if (bSplitByFaceset) {
+            new_prims = std::make_shared<zeno::ListObject>();
+        }
+        else {
+            new_prims = std::dynamic_pointer_cast<zeno::ListObject>(prims->clone());
+        }
+        
+        std::vector<zany>& arr = new_prims->m_impl->m_objects;
         if (get_input2_bool("splitByFaceset")) {
             for (auto &prim: prims->get()) {
                 auto list = abc_split_by_name(std::dynamic_pointer_cast<PrimitiveObject>(prim), false);
@@ -253,10 +261,7 @@ struct AlembicPrimList : INode {
                 arr.insert(arr.end(), listarr.begin(), listarr.end());
             }
         }
-        else {
-            new_prims = std::dynamic_pointer_cast<zeno::ListObject>(prims->clone());
-            arr = new_prims->m_impl->m_objects;
-        }
+
         auto pathInclude = zeno::split_str(zsString2Std(get_input2_string("pathInclude")), {' ', '\n'});
         auto pathExclude = zeno::split_str(zsString2Std(get_input2_string("pathExclude")), {' ', '\n'});
         auto facesetInclude = zeno::split_str(zsString2Std(get_input2_string("facesetInclude")), {' ', '\n'});
@@ -329,8 +334,7 @@ struct AlembicPrimList : INode {
         std::shared_ptr<ListObject> new_geoms = create_ListObject();
         for (auto obj : new_prims->get()) {
             auto prim = std::static_pointer_cast<PrimitiveObject>(obj);
-            auto newgeo = create_GeometryObject(Topo_IndiceMesh);
-            newgeo->bindPrimitive(prim);
+            auto newgeo = create_GeometryObject(prim);
             new_geoms->push_back(newgeo);
         }
         set_output("geoms", std::move(new_geoms));

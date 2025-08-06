@@ -213,7 +213,7 @@ struct Make2DGridPrimitive : INode {
     prim->userData()->set_int("nx", (int)nx);//zhxx
     prim->userData()->set_int("ny", (int)ny);//zhxx
 
-    auto geom = create_GeometryObject(prim, true);
+    auto geom = create_GeometryObject(prim);
     ZImpl(set_output("prim", std::move(geom)));
   }
 };

@@ -28,11 +28,6 @@ namespace zeno
             }, value);
     }
 
-#define PROXY_PRIM_THROW \
-    if (m_host) {\
-        throw makeError<UnimplError>("the geometry is a proxy object of primitive, cannot use the apis of geom.");\
-    }
-
     GeometryObject::GeometryObject(GeomTopoType type)
         : m_type(type)
     {
@@ -74,7 +69,6 @@ namespace zeno
 
     GeometryObject::GeometryObject(const GeometryObject& rhs)
         : m_spTopology(rhs.m_spTopology)
-        , m_host(rhs.m_host)
         , m_type(rhs.m_type)
     {
         m_vert_attrs = rhs.m_vert_attrs;
@@ -91,30 +85,29 @@ namespace zeno
         }
     }
 
-    GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim, bool basePrimTopo)
+    void GeometryObject::_temp_code_regist() {
+        
+    }
+
+    void GeometryObject::_temp_code_unregist() {
+
+    }
+
+    GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim)
         : m_type(Topo_IndiceMesh)
     {
-        if (basePrimTopo) {
-            m_spTopology = create_indicemesh_topo(spPrim);
-            //提取出prim所有的属性
-            create_attr(ATTR_POINT, "pos", spPrim->verts.values);
-
-            for (auto& [attr_name, var_vec] : spPrim->verts.attrs) {
-                create_attr_from_AttrVector(ATTR_POINT, attr_name, var_vec);
-            }
-            //面属性
-            for (auto& [attr_name, var_vec] : spPrim->polys.attrs) {
-                create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
-            }
-            for (auto& [attr_name, var_vec] : spPrim->tris.attrs) {
-                create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
-            }
+        m_spTopology = create_indicemesh_topo(spPrim);
+        //提取出prim所有的属性
+        create_attr(ATTR_POINT, "pos", spPrim->verts.values);
+        for (auto& [attr_name, var_vec] : spPrim->verts.attrs) {
+            create_attr_from_AttrVector(ATTR_POINT, attr_name, var_vec);
         }
-        else {
-            //deprecated:
-            assert(false);
-            /*m_spTopology = std::make_shared<GeometryTopology>();
-            initFromPrim(spPrim.get());*/
+        //面属性
+        for (auto& [attr_name, var_vec] : spPrim->polys.attrs) {
+            create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
+        }
+        for (auto& [attr_name, var_vec] : spPrim->tris.attrs) {
+            create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
         }
     }
 
@@ -123,9 +116,6 @@ namespace zeno
     }
 
     std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
-        if (m_host)
-            return m_host;
-
         std::shared_ptr<PrimitiveObject> spPrim = std::make_shared<PrimitiveObject>();
         std::vector<vec3f> vec_pos = points_pos();
         int nPoints = m_spTopology->npoints();
@@ -269,10 +259,6 @@ namespace zeno
         }
     }
 
-    void GeometryObject::bindPrimitive(std::shared_ptr<PrimitiveObject> prim) {
-        m_host = std::move(prim);
-    }
-
     std::unique_ptr<GeometryObject> GeometryObject::toIndiceMeshesTopo() const {
         if (!m_spTopology) return nullptr;
 
@@ -309,17 +295,7 @@ namespace zeno
         }
     }
 
-    std::shared_ptr<PrimitiveObject> GeometryObject::forkPrimitive() {
-        //不能把host的指针暴露出去，否则会被传染到各种地方导致错误修改。
-        if (m_host)
-            return std::dynamic_pointer_cast<PrimitiveObject>(m_host->clone());
-        else
-            return nullptr;
-    }
-
     std::vector<vec3f> GeometryObject::points_pos() {
-        PROXY_PRIM_THROW
-
         std::map<std::string, AttributeVector>& container = get_container(ATTR_POINT);
         auto iter = container.find("pos");
         if (iter == container.end()) {
@@ -329,32 +305,26 @@ namespace zeno
     }
 
     std::vector<vec3i> GeometryObject::tri_indice() const {
-        PROXY_PRIM_THROW
         return m_spTopology->tri_indice();
     }
 
     std::vector<int> GeometryObject::edge_list() const {
-        PROXY_PRIM_THROW
         return m_spTopology->edge_list();
     }
 
     std::vector<std::vector<int>> GeometryObject::face_indice() const {
-        PROXY_PRIM_THROW
         return m_spTopology->face_indice();
     }
 
     bool GeometryObject::is_base_triangle() const {
-        PROXY_PRIM_THROW
         return m_spTopology->is_base_triangle();
     }
 
     bool GeometryObject::is_Line() const {
-        PROXY_PRIM_THROW
         return m_spTopology->is_line();
     }
 
     int GeometryObject::get_group_count(GeoAttrGroup grp) const {
-        PROXY_PRIM_THROW
         switch (grp) {
         case ATTR_POINT: return m_spTopology->npoints();
         case ATTR_FACE: return m_spTopology->nfaces();
@@ -366,7 +336,6 @@ namespace zeno
     }
 
     void GeometryObject::geomTriangulate(zeno::TriangulateInfo& info) {
-        PROXY_PRIM_THROW
         if (is_base_triangle()) {
             //TODO
             return;
@@ -376,7 +345,6 @@ namespace zeno
     }
 
     bool GeometryObject::remove_point(int ptnum) {
-        PROXY_PRIM_THROW
         std::vector<vec3f> vec_pos = points_pos();
         assert(m_spTopology->npoints() == vec_pos.size());
 
@@ -416,7 +384,6 @@ namespace zeno
     }
 
     bool GeometryObject::remove_vertex(int face_id, int vert_id) {
-        PROXY_PRIM_THROW
         copyTopologyAccordtoUseCount();
 
         size_t linear_vertex = m_spTopology->vertex_index(face_id, vert_id);
@@ -445,38 +412,35 @@ namespace zeno
     //给定 face_id 和 vert_id，返回顶点索引编号 point_idx。
     int GeometryObject::face_point(int face_id, int vert_id) const
     {
-        PROXY_PRIM_THROW
         return m_spTopology->face_point(face_id, vert_id);
     }
 
     //通过 face_id，获取此 face 所有 points 索引编号。
     std::vector<int> GeometryObject::face_points(int face_id)
     {
-        PROXY_PRIM_THROW
         return m_spTopology->face_points(face_id);
     }
 
     //通过 face_id和内部的vertex_id索引，返回其linearindex.
     int GeometryObject::face_vertex(int face_id, int vert_id)
     {
-        PROXY_PRIM_THROW
         return m_spTopology->face_vertex(face_id, vert_id);
     }
 
     int GeometryObject::face_vertex_count(int face_id)
     {
-        PROXY_PRIM_THROW
+
         return m_spTopology->face_vertex_count(face_id);
     }
 
     std::vector<int> GeometryObject::face_vertices(int face_id)
     {
-        PROXY_PRIM_THROW
+
         return m_spTopology->face_vertices(face_id);
     }
 
     zeno::vec3f GeometryObject::face_normal(int face_id) {
-        PROXY_PRIM_THROW
+
         const std::vector<int>& pts = face_points(face_id);
         std::vector<vec3f> pos = points_pos();
         if (pts.size() > 2) {
@@ -490,7 +454,6 @@ namespace zeno
     //返回包含指定 point 的 face 列表。
     std::vector<int> GeometryObject::point_faces(int point_id)
     {
-        PROXY_PRIM_THROW
         return m_spTopology->point_faces(point_id);
     }
 
@@ -500,7 +463,6 @@ namespace zeno
     */
     int GeometryObject::point_vertex(int point_id)
     {
-        PROXY_PRIM_THROW
         return m_spTopology->point_vertex(point_id);
     }
 
@@ -511,12 +473,10 @@ namespace zeno
      */
     std::vector<int> GeometryObject::point_vertices(int point_id)
     {
-        PROXY_PRIM_THROW
         return m_spTopology->point_vertices(point_id);
     }
 
     size_t GeometryObject::get_attr_size(GeoAttrGroup grp) const {
-        PROXY_PRIM_THROW
         if (grp == ATTR_GEO) {
             return 1;
         }
@@ -542,7 +502,6 @@ namespace zeno
 
     void GeometryObject::removeAttribElem(AttributeVector& attrib_vec, int idx)
     {
-        PROXY_PRIM_THROW
         GeoAttrType attrType = attrib_vec.type();
         if (attrType == ATTR_INT) {
             attrib_vec.remove_elem<int>(idx);
@@ -565,7 +524,6 @@ namespace zeno
     }
 
     std::map<std::string, AttributeVector>& GeometryObject::get_container(GeoAttrGroup grp) {
-        PROXY_PRIM_THROW
         if (grp == ATTR_GEO) {
             return m_geo_attrs;
         }
@@ -604,7 +562,6 @@ namespace zeno
 
     int GeometryObject::create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& val_or_vec)
     {
-        PROXY_PRIM_THROW
         if (attr_name.find(' ') != std::string::npos) {
             throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
         }
@@ -622,7 +579,6 @@ namespace zeno
     }
 
     int GeometryObject::create_face_attr(std::string const& attr_name, const AttrVar& defl) {
-        PROXY_PRIM_THROW
         if (attr_name.find(' ') != std::string::npos) {
             throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
         }
@@ -638,7 +594,6 @@ namespace zeno
     }
 
     int GeometryObject::create_point_attr(std::string const& attr_name, const AttrVar& defl) {
-        PROXY_PRIM_THROW
         if (attr_name.find(' ') != std::string::npos) {
             throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
         }
@@ -659,7 +614,6 @@ namespace zeno
     }
 
     int GeometryObject::create_vertex_attr(std::string const& attr_name, const AttrVar& defl) {
-        PROXY_PRIM_THROW
         if (attr_name.find(' ') != std::string::npos) {
             throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
         }
@@ -678,7 +632,6 @@ namespace zeno
     }
 
     int GeometryObject::create_geometry_attr(std::string const& attr_name, const AttrVar& defl) {
-        PROXY_PRIM_THROW
         if (attr_name.find(' ') != std::string::npos) {
             throw makeError<UnimplError>("space is not allowed to ocurrs into the attr_name");
         }
@@ -692,7 +645,6 @@ namespace zeno
     }
 
     void GeometryObject::copy_attr(GeoAttrGroup grp, const std::string& src_attr, const std::string& dest_attr) {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter_source = container.find(src_attr);
         if (iter_source == container.end()) {
@@ -711,7 +663,6 @@ namespace zeno
 
     void GeometryObject::copy_attr_from(GeoAttrGroup grp, GeometryObject* pSrcObject, const std::string& src_attr, const std::string& dest_attr)
     {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& src_container = pSrcObject->get_container(grp);
         std::map<std::string, AttributeVector>& dest_container = get_container(grp);
 
@@ -733,7 +684,6 @@ namespace zeno
 
     int GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
     {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(attr_name);
         if (iter == container.end())
@@ -744,7 +694,6 @@ namespace zeno
 
     int GeometryObject::delete_vertex_attr(std::string const& attr_name)
     {
-        PROXY_PRIM_THROW
         auto iter = m_vert_attrs.find(attr_name);
         if (iter == m_vert_attrs.end())
             return 0;
@@ -754,7 +703,6 @@ namespace zeno
 
     int GeometryObject::delete_point_attr(std::string const& attr_name)
     {
-        PROXY_PRIM_THROW
         auto iter = m_point_attrs.find(attr_name);
         if (iter == m_point_attrs.end())
             return 0;
@@ -764,7 +712,6 @@ namespace zeno
 
     int GeometryObject::delete_face_attr(std::string const& attr_name)
     {
-        PROXY_PRIM_THROW
         auto iter = m_face_attrs.find(attr_name);
         if (iter == m_face_attrs.end())
             return 0;
@@ -774,7 +721,6 @@ namespace zeno
 
     int GeometryObject::delete_geometry_attr(std::string const& attr_name)
     {
-        PROXY_PRIM_THROW
         auto iter = m_geo_attrs.find(attr_name);
         if (iter == m_geo_attrs.end())
             return 0;
@@ -784,7 +730,6 @@ namespace zeno
 
     AttrValue GeometryObject::get_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx)
     {
-        PROXY_PRIM_THROW
         const std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iterContainer = container.find(attr_name);
         if (iterContainer != container.end()) {
@@ -798,7 +743,6 @@ namespace zeno
 
     void GeometryObject::set_attr_elem(GeoAttrGroup grp, const std::string& attr_name, size_t idx, AttrValue val)
     {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iterContainer = container.find(attr_name);
         if (iterContainer != container.end()) {
@@ -824,7 +768,6 @@ namespace zeno
 
     bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type)
     {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto it = container.find(name);
         if (it == container.end()) return false;
@@ -835,7 +778,6 @@ namespace zeno
     }
 
     std::vector<std::string> GeometryObject::attributes(GeoAttrGroup grp) {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
         std::vector<std::string> attrs;
         for (const auto& [name, _] : container) {
@@ -846,30 +788,25 @@ namespace zeno
 
     bool GeometryObject::has_vertex_attr(std::string const& name) const
     {
-        PROXY_PRIM_THROW
         return m_vert_attrs.find(name) != m_vert_attrs.end();
     }
 
     bool GeometryObject::has_point_attr(std::string const& name) const
     {
-        PROXY_PRIM_THROW
         return m_point_attrs.find(name) != m_point_attrs.end();
     }
 
     bool GeometryObject::has_face_attr(std::string const& name) const
     {
-        PROXY_PRIM_THROW
         return m_face_attrs.find(name) != m_face_attrs.end();
     }
 
     bool GeometryObject::has_geometry_attr(std::string const& name) const
     {
-        PROXY_PRIM_THROW
         return m_geo_attrs.find(name) != m_geo_attrs.end();
     }
 
     GeoAttrType GeometryObject::get_attr_type(GeoAttrGroup grp, std::string const& name) {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
@@ -887,7 +824,6 @@ namespace zeno
     }
 
     std::vector<std::string> GeometryObject::get_attr_names(GeoAttrGroup grp) {
-        PROXY_PRIM_THROW
         std::vector<std::string> names;
         switch (grp) {
         case ATTR_GEO:
@@ -916,7 +852,6 @@ namespace zeno
 
     int GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val)
     {
-        PROXY_PRIM_THROW
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
         if (iter == container.end()) {
@@ -931,7 +866,6 @@ namespace zeno
 
     int GeometryObject::set_vertex_attr(std::string const& attr_name, const AttrVar& defl)
     {
-        PROXY_PRIM_THROW
         auto iter = m_vert_attrs.find(attr_name);
         if (iter == m_vert_attrs.end()) {
             return -1;
@@ -944,7 +878,6 @@ namespace zeno
 
     int GeometryObject::set_point_attr(std::string const& attr_name, const AttrVar& defl)
     {
-        PROXY_PRIM_THROW
         auto iter = m_point_attrs.find(attr_name);
         if (iter == m_point_attrs.end()) {
             return -1;
@@ -957,7 +890,6 @@ namespace zeno
 
     int GeometryObject::set_face_attr(std::string const& attr_name, const AttrVar& defl)
     {
-        PROXY_PRIM_THROW
         auto iter = m_face_attrs.find(attr_name);
         if (iter == m_face_attrs.end()) {
             return -1;
@@ -970,7 +902,6 @@ namespace zeno
 
     int GeometryObject::set_geometry_attr(std::string const& attr_name, const AttrVar& defl)
     {
-        PROXY_PRIM_THROW
         auto iter = m_geo_attrs.find(attr_name);
         if (iter == m_geo_attrs.end()) {
             return -1;
@@ -982,7 +913,6 @@ namespace zeno
     }
 
     int GeometryObject::add_point(zeno::vec3f pos) {
-        PROXY_PRIM_THROW
         copyTopologyAccordtoUseCount();
 
         auto pointAttrIter = m_point_attrs.find("pos");
@@ -997,7 +927,6 @@ namespace zeno
     }
         
     int GeometryObject::add_vertex(int face_id, int point_id) {
-        PROXY_PRIM_THROW
         copyTopologyAccordtoUseCount();
         int ret = m_spTopology->add_vertex(face_id, point_id);
         if (ret != -1) {
@@ -1026,7 +955,6 @@ namespace zeno
       返回linear_vertex_idx.
      */
     int GeometryObject::vertex_index(int face_id, int vertex_id) {
-        PROXY_PRIM_THROW
         return m_spTopology->vertex_index(face_id, vertex_id);
     }
 
@@ -1034,7 +962,6 @@ namespace zeno
      * 与linear_vertex_id共享一个point的下一个vertex的linear_vertex_id;
      */
     int GeometryObject::vertex_next(int linear_vertex_id) {
-        PROXY_PRIM_THROW
         return m_spTopology->vertex_next(linear_vertex_id);
     }
 
@@ -1042,7 +969,6 @@ namespace zeno
      * 与linear_vertex_id共享一个point的上一个vertex的linear_vertex_id;
      */
     int GeometryObject::vertex_prev(int linear_vertex_id) {
-        PROXY_PRIM_THROW
         return m_spTopology->vertex_prev(linear_vertex_id);
     }
 
@@ -1050,7 +976,6 @@ namespace zeno
      * 与linear_vertex_id关联的point的id;
      */
     int GeometryObject::vertex_point(int linear_vertex_id) {
-        PROXY_PRIM_THROW
         return m_spTopology->vertex_point(linear_vertex_id);
     }
 
@@ -1058,7 +983,6 @@ namespace zeno
      * 与linear_vertex_id关联的face的id;
      */
     int GeometryObject::vertex_face(int linear_vertex_id) {
-        PROXY_PRIM_THROW
         return m_spTopology->vertex_face(linear_vertex_id);
     }
 
@@ -1066,23 +990,19 @@ namespace zeno
      * 将linear_vertex_id转为它所在的那个面上的idx（就是2:3里面的3);
      */
     int GeometryObject::vertex_face_index(int linear_vertex_id) {
-        PROXY_PRIM_THROW
         return m_spTopology->vertex_face_index(linear_vertex_id);
     }
 
     std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) {
-        PROXY_PRIM_THROW
         return m_spTopology->vertex_info(linear_vertex_id);
     }
 
     int GeometryObject::isLineFace(int faceid)
     {
-        PROXY_PRIM_THROW
         return m_spTopology->type() == Topo_Line;
     }
 
     int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {
-        PROXY_PRIM_THROW
         copyTopologyAccordtoUseCount();
         int faceid = m_spTopology->add_face(points, bClose);
         CALLBACK_NOTIFY(add_face, faceid);
@@ -1091,7 +1011,6 @@ namespace zeno
     }
 
     void GeometryObject::set_face(int idx, const std::vector<int>& points, bool bClose) {
-        PROXY_PRIM_THROW
         m_spTopology->set_face(idx, points, bClose);
     }
 
@@ -1102,7 +1021,6 @@ namespace zeno
         的任何点。
     */
     bool GeometryObject::remove_faces(const std::set<int>& faces, bool includePoints) {
-        PROXY_PRIM_THROW
         copyTopologyAccordtoUseCount();
 
         std::vector<int> removedPtnums;
@@ -1140,27 +1058,22 @@ namespace zeno
     }
 
     int GeometryObject::npoints() const {
-        PROXY_PRIM_THROW
         return m_spTopology->npoints();
     }
 
     int GeometryObject::nfaces() const {
-        PROXY_PRIM_THROW
         return m_spTopology->nfaces();
     }
 
     int GeometryObject::nvertices() const {
-        PROXY_PRIM_THROW
         return m_spTopology->nvertices();
     }
 
     int GeometryObject::nvertices(int face_id) const {
-        PROXY_PRIM_THROW
         return m_spTopology->nvertices(face_id);
     }
 
     int GeometryObject::nattributes(GeoAttrGroup grp) const {
-        PROXY_PRIM_THROW
         switch (grp) {
         case ATTR_GEO: return m_geo_attrs.size();
         case ATTR_FACE: return m_face_attrs.size();
