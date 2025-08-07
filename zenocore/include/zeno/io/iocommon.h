@@ -133,6 +133,7 @@ namespace zenoio {
         zeno::GraphData mainGraph;
         zeno::ZSG_VERSION iover;
         zeno::TimelineInfo timeline;
+        std::wstring path;
         ERR_CODE code;
     };
 }

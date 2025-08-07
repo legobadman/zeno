@@ -631,6 +631,14 @@ ZENO_API std::string Session::get_solver() {
     return m_solver;
 }
 
+std::wstring Session::get_project_path() const {
+    return m_proj_path;
+}
+
+void Session::init_project_path(const std::wstring& path) {
+    m_proj_path = path;
+}
+
 void Session::terminate_solve() {
     SolverImpl* pSolverNode = static_cast<SolverImpl*>(getNodeByUuidPath(m_solver));
     if (pSolverNode) {
@@ -711,6 +719,7 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
     resetMainGraph();
     mainGraph->init(ioresult.mainGraph);
     mainGraph->initRef(ioresult.mainGraph);
+    m_proj_path = ioresult.path;
     //referManager->init(mainGraph);
 
     switchToFrame(ioresult.timeline.currFrame);

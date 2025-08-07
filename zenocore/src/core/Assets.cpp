@@ -13,7 +13,8 @@
 namespace zeno {
 
 ZENO_API AssetsMgr::AssetsMgr() {
-    initAssetsInfo();
+    //先不加载，待主工程加载后延迟加载asset
+    //initAssetsInfo();
 }
 
 ZENO_API AssetsMgr::~AssetsMgr() {
@@ -130,6 +131,10 @@ ZENO_API Asset AssetsMgr::getAsset(const std::string& name) const {
         return m_assets.at(name);
     }
     return Asset();
+}
+
+bool AssetsMgr::hasAsset(const std::string& name) const {
+    return m_assets.find(name) != m_assets.end();
 }
 
 ZENO_API std::vector<Asset> AssetsMgr::getAssets() const {

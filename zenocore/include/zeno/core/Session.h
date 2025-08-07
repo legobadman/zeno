@@ -69,6 +69,8 @@ struct Session {
     ZENO_API void set_solver(const std::string& solver);
     ZENO_API std::string get_solver();
     ZENO_API void terminate_solve();
+    ZENO_API void init_project_path(const std::wstring& path);
+    ZENO_API std::wstring get_project_path() const;
     //ZENO_API 
     ZENO_API void set_auto_run(bool bOn);
     ZENO_API bool is_auto_run() const;
@@ -113,6 +115,7 @@ private:
     bool m_bReentrance = false;
     std::string m_current_loading_module;
     std::string m_solver;
+    std::wstring m_proj_path;
     unsigned long m_mainThreadId;
 
 #ifdef ZENO_WITH_PYTHON

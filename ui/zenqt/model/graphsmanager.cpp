@@ -160,19 +160,21 @@ void GraphsManager::setCurrentGraphPath(const QString& path)
 
 GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE& code)
 {
-    zeno::ZSG_VERSION ver = zenoio::getVersion(fn.toStdWString());
     zenoio::ZSG_PARSE_RESULT result;
+
+    result.path = fn.toStdWString();
+    zeno::getSession().init_project_path(result.path);
+    zeno::ZSG_VERSION ver = zenoio::getVersion(fn.toStdWString());
 
     m_bIniting = true;
     zeno::scope_exit sp([=] { m_bIniting = false; });
-
     if (ver == zeno::VER_2_5) {
         zenoio::Zsg2Reader reader;
-        result = reader.openFile(fn.toStdWString());
+        result = reader.openFile(result.path);
     }
     else if (ver == zeno::VER_3) {
         zenoio::ZenReader reader;
-        result = reader.openFile(fn.toStdWString());
+        result = reader.openFile(result.path);
     }
     else {
         m_version = zeno::UNKNOWN_VER;
