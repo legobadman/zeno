@@ -700,10 +700,14 @@ LayerPathWidget::LayerPathWidget(QWidget* parent)
 
 void LayerPathWidget::paintEvent(QPaintEvent* event)
 {
-    QStyleOption opt;
-    opt.init(this);
-    QPainter p(this);
-    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+    //QStyleOption opt;
+    //opt.init(this);
+    //QPainter p(this);
+    //style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+}
+
+void LayerPathWidget::mousePressEvent(QMouseEvent* event) {
+    QWidget::mousePressEvent(event);
 }
 
 void LayerPathWidget::setPath(const QStringList& path)
