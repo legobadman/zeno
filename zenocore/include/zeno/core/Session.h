@@ -61,6 +61,8 @@ struct Session {
     ZENO_API std::shared_ptr<Graph> createGraph(const std::string& name);
     ZENO_API NodeImpl* getNodeByUuidPath(std::string const& uuid_path);
     ZENO_API void resetMainGraph();
+    ZENO_API void clearMainGraph();
+    ZENO_API void clearAssets();
     ZENO_API bool run(const std::string& currgraph, render_reload_info& infos);
     ZENO_API void interrupt();
     ZENO_API bool is_interrupted() const;

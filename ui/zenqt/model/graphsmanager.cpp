@@ -254,7 +254,11 @@ bool GraphsManager::saveFile(const QString& filePath, APP_SETTINGS)
 
 GraphsTreeModel* GraphsManager::newFile()
 {
+    auto& sess = zeno::getSession();
     clear();
+    if (!sess.mainGraph) {
+        sess.resetMainGraph();
+    }
     m_main = new GraphModel("/main", false, m_model, nullptr, this);
     m_model->init(m_main);
 
@@ -301,12 +305,14 @@ void GraphsManager::clear()
     //前面delete main的时候会removeNode，导致treemodel又脏了})
     zeno::scope_exit sp([&] {    m_model->markDirty(false); });
 
-    //clear main model
+    //先清理UIModel，再清理内核模型
     if (m_main) {
         m_main->clear();
         delete m_main;
         m_main = nullptr;
-        zeno::getSession().resetMainGraph();
+
+        zeno::getSession().clearMainGraph();
+        zeno::getSession().clearAssets();
     }
     m_filePath = "";
     emit fileClosed();

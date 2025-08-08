@@ -31,6 +31,9 @@ struct AssetsMgr {
     ZENO_API void createAsset(const zeno::ZenoAsset asset, bool isFirstCreate = false);
     CALLBACK_REGIST(createAsset, void, zeno::AssetInfo)
 
+    ZENO_API void clear();
+    CALLBACK_REGIST(clear, void)
+
     ZENO_API void removeAsset(const std::string& name);
     CALLBACK_REGIST(removeAsset, void, const std::string&)
 

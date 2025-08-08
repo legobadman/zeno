@@ -192,7 +192,7 @@ ZENO_API Session::Session()
     , globalError(std::make_unique<GlobalError>())
     , eventCallbacks(std::make_unique<EventCallbacks>())
     , m_userData(std::make_unique<UserData>())
-    , mainGraph(std::make_shared<Graph>("main"))
+    //, mainGraph(std::make_shared<Graph>("main"))
     , assets(std::make_unique<AssetsMgr>())
     , objsMan(std::make_unique<ObjectManager>())
 #ifdef ZENO_WITH_PYTHON
@@ -466,7 +466,8 @@ void Session::uninstallModule(const std::string& module_path) {
             const std::string uninstall_nodecls = info.name;
             nodeClasses.erase(uninstall_nodecls);
             //所有节点要disable掉，只留一个空壳
-            mainGraph->update_load_info(uninstall_nodecls, true);
+            if (mainGraph)
+                mainGraph->update_load_info(uninstall_nodecls, true);
         }
     }
 }
@@ -476,7 +477,8 @@ void Session::endLoadModule() {
     for (NodeInfo& info : m_cates) {
         if (info.module_path == m_current_loading_module) {
             info.status = ZModule_Loaded;
-            mainGraph->update_load_info(info.name, false);
+            if (mainGraph)
+                mainGraph->update_load_info(info.name, false);
         }
     }
     m_current_loading_module = "";
@@ -505,6 +507,14 @@ ZENO_API void Session::resetMainGraph() {
     mainGraph = std::make_shared<Graph>("main");
     globalVariableManager.reset();
     globalVariableManager = std::make_unique<GlobalVariableManager>();
+}
+
+void Session::clearMainGraph() {
+    mainGraph.reset();
+}
+
+ZENO_API void Session::clearAssets() {
+    assets->clear();
 }
 
 ZENO_API void Session::setApiLevelEnable(bool bEnable)

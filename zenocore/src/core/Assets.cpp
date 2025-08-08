@@ -116,6 +116,11 @@ ZENO_API void AssetsMgr::createAsset(const zeno::ZenoAsset asset, bool isFirstCr
     CALLBACK_NOTIFY(createAsset, asset.info)
 }
 
+void AssetsMgr::clear() {
+    CALLBACK_NOTIFY(clear)
+    m_assets.clear();
+}
+
 ZENO_API void AssetsMgr::removeAsset(const std::string& name) {
     m_assets.erase(name);
     CALLBACK_NOTIFY(removeAsset, name)

@@ -17,6 +17,14 @@ AssetsModel::AssetsModel(QObject* parent)
         _addAsset(info);
     });
 
+    assets->register_clear([&]() {
+        if (!m_assets.isEmpty()) {
+            beginRemoveRows(QModelIndex(), 0, m_assets.size() - 1);
+            m_assets.clear();
+            endRemoveRows();
+        }
+    });
+
     m_cbRemoveAsset = assets->register_removeAsset([&](const std::string& name) {
         _removeAsset(QString::fromStdString(name));
     });
@@ -284,7 +292,7 @@ QModelIndexList AssetsModel::match(const QModelIndex& start, int role,
 
 bool AssetsModel::removeRows(int row, int count, const QModelIndex& parent)
 {
-    return false;
+    return QAbstractListModel::removeRows(row, count, parent);
 }
 
 QHash<int, QByteArray> AssetsModel::roleNames() const
