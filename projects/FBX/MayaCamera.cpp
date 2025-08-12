@@ -29,9 +29,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
-
 #include <fstream>
-#include "zeno_types/reflect/reflection.generated.hpp"
+
 
 #define SET_CAMERA_DATA                         \
     out_pos = (n->pos);                       \
