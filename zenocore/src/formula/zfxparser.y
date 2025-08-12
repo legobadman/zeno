@@ -349,6 +349,14 @@ compareexp: addsubexp   { $$ = $1; }
             std::vector<std::shared_ptr<ZfxASTNode>> exps({spCond, $5, $7});
             $$ = driver.makeNewNode(CONDEXP, DEFAULT_FUNCVAL, exps);
         }
+    | LPAREN compareexp compare-op addsubexp RPAREN QUESTION exp-statement COLON exp-statement {
+            std::vector<std::shared_ptr<ZfxASTNode>> children({$2, $4});
+            auto spCond = driver.makeNewNode(COMPOP, $3, children);
+            spCond->value = $3;
+
+            std::vector<std::shared_ptr<ZfxASTNode>> exps({spCond, $7, $9});
+            $$ = driver.makeNewNode(CONDEXP, DEFAULT_FUNCVAL, exps);
+        }
     ;
 
 addsubexp: factor              { $$ = $1; }
@@ -427,7 +435,7 @@ term: NUMBER            { $$ = driver.makeNewNumberNode($1); }
     | LITERAL           { $$ = driver.makeStringNode($1); }
     | UNCOMPSTR         { $$ = driver.makeQuoteStringNode($1); }
     | LPAREN exp-statement RPAREN { $$ = $2; }
-    | SUB exp-statement %prec NEG { $2->value = -1 * std::get<float>($2->value); $$ = $2; }
+    | SUB exp-statement %prec NEG { $$ = driver.makeNegativeNode($2); }
     | zenvar            { $$ = $1; }
     | VARNAME func-content  { 
         $$ = $2;

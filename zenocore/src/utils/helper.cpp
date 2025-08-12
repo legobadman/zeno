@@ -11,6 +11,7 @@
 #include <zeno/reflect/type.hpp>
 #include <zeno/core/Graph.h>
 #include <zeno/extra/SubnetNode.h>
+#include <zeno/extra/GlobalComm.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/utils/interfaceutil.h>
@@ -40,6 +41,7 @@ namespace zeno {
         else if (type == "vec3f") { return gParamType_Vec3f; }
         else if (type == "vec4f") { return gParamType_Vec4f; }
         else if (type == "Matrix4") { return gParamType_Matrix4; }
+        else if (type == "iobject") { return gParamType_IObject; }
         else if (type == "prim" || type == "PrimitiveObject" || type == "primitive") { return gParamType_Primitive; }
         else if (type == "geometry") { return gParamType_Geometry; }
         else if (type == "list" || type == "ListObject") { return gParamType_List; }
@@ -232,6 +234,7 @@ namespace zeno {
         case gParamType_Vec2f:   return "vec2f";
         case gParamType_Vec3f:   return "vec3f";
         case gParamType_Vec4f:   return "vec4f";
+        case gParamType_IObject: return "iobject";
         case gParamType_Primitive:    return "prim";
         case gParamType_Geometry:return "geometry";
         case gParamType_Dict:    return "dict";
@@ -286,6 +289,16 @@ namespace zeno {
         return true;
     }
 
+    std::vector<zany> fromZenCache(const std::string& cachedir, int frameid) {
+        std::vector<zany> objs;
+        GlobalComm::ViewObjects _objs;
+        GlobalComm::fromDisk(cachedir, frameid, _objs);
+        for (auto iter : _objs) {
+            objs.push_back(iter.second);
+        }
+        return objs;
+    }
+
     ZENO_API bool convertToEditVar(Any& val, const ParamType type) {
         if (!val.has_value()) return false;
 
@@ -299,10 +312,15 @@ namespace zeno {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
-            if (anyType == gParamType_Float) {
+            else if (anyType == gParamType_Float) {
                 val = (int)any_cast<float>(val);
             }
-            val = PrimVar(any_cast<int>(val));
+            else if (anyType == gParamType_Double) {
+                val = (int)any_cast<double>(val);
+            }
+            else {
+                val = PrimVar(any_cast<int>(val));
+            }
             return true;
         }
         else if (type == gParamType_Float) {
@@ -310,10 +328,15 @@ namespace zeno {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
-            if (anyType == gParamType_Int) {
+            else if (anyType == gParamType_Int) {
                 val = (float)any_cast<int>(val);
             }
-            val = PrimVar(any_cast<float>(val));
+            else if (anyType == gParamType_Double) {
+                val = (float)any_cast<double>(val);
+            }
+            else {
+                val = PrimVar(any_cast<float>(val));
+            }
             return true;
         }
         else if (type == gParamType_Vec2f) {
@@ -672,6 +695,10 @@ namespace zeno {
         else if (type == gParamType_Shader)
         {
             return ShaderData();
+        }
+        else if (type == gParamType_StringList)
+        {
+            return std::vector<std::string>();
         }
         else {
             assert(false);
@@ -1134,7 +1161,7 @@ namespace zeno {
 
     bool isNumericType(ParamType type)
     {
-        if (type == types::gParamType_Int || type == types::gParamType_Float)
+        if (type == types::gParamType_Int || type == types::gParamType_Float || type == types::gParamType_Bool)
             return true;
         return false;
     }
@@ -1831,7 +1858,8 @@ namespace zeno {
             type == gParamType_Bool ||
             type == gParamType_Heatmap ||
             type == gParamType_Curve ||
-            type == gParamType_Shader;
+            type == gParamType_Shader ||
+            type == gParamType_StringList;
         //TODO: heatmap type.
     }
 

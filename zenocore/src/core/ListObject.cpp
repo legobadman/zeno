@@ -8,10 +8,31 @@
 
 namespace zeno
 {
-    ListObject::ListObject() : m_impl(new ListObject_impl) {
+    ListObject::ListObject() : m_impl(std::make_unique<ListObject_impl>()) {
+    }
+
+    ListObject::ListObject(const ListObject& rhs) {
+        m_impl = std::make_unique<ListObject_impl>(*rhs.m_impl);
+    }
+
+    zeno::SharedPtr<IObject> ListObject::clone() const {
+        return std::make_shared<ListObject>(*this);
     }
 
     void ListObject::Delete() {
+    }
+
+    void ListObject::update_key(const String& key) {
+        if (key.empty()) return;
+
+        base::update_key(key);
+        for (int i = 0; i < m_impl->m_objects.size(); i++) {
+            zany obj = m_impl->m_objects[i];
+            if (obj->key().empty()) {
+                std::string newkey = zsString2Std(m_key) + "/" + std::to_string(i);
+                obj->update_key(stdString2zs(newkey));
+            }
+        }
     }
 
     ListObject::~ListObject() {
@@ -66,10 +87,11 @@ namespace zeno
     }
 
     void ListObject_impl::remove_children() {
-        for (auto pObject : m_objects) {
-            pObject->Delete();
+        m_objects.clear();
+        //for (auto pObject : m_objects) {
+        //    pObject->Delete();
+        //}
         }
-    }
 
     std::vector<std::string> ListObject_impl::paths() const {
         std::vector<std::string> _paths;
@@ -94,7 +116,7 @@ namespace zeno
 
     void ListObject_impl::append(zany&& spObj) {
         m_objects.push_back(spObj);
-        //spObj->set_parent(this);  //目前暂时不需要parent体系
+        //spObj->set_parent(this);  //目前锟斤拷时锟斤拷锟斤拷要parent锟斤拷系
         //m_ptr2Index.insert(std::make_pair((uint16_t)spObj.get(), m_objects.size()));
     }
 
@@ -149,16 +171,14 @@ namespace zeno
         m_objects.clear();
     }
 
-
     zeno::SharedPtr<ListObject> create_ListObject() {
         zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
-        pList->m_impl = new ListObject_impl;
         return pList;
     }
 
     zeno::SharedPtr<ListObject> create_ListObject(zeno::Vector<zany> arrin) {
         zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
-        pList->m_impl = new ListObject_impl(zeVec2stdVec(arrin));
+        pList->m_impl =std::make_unique<ListObject_impl>(zeVec2stdVec(arrin));
         return pList;
     }
 }

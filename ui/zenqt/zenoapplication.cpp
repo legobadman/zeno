@@ -3,6 +3,7 @@
 #include "model/graphsmanager.h"
 #include "zenomainwindow.h"
 #include <zeno/utils/log.h>
+#include <zeno/core/Session.h>
 #include "util/log.h"
 #include "startup/zstartup.h"
 #include <style/zenostyle.h>
@@ -18,6 +19,27 @@
 
 static MouseUtils mouseUtils;
 
+class WinEventFilter : public QAbstractNativeEventFilter
+{
+public:
+    bool nativeEventFilter(const QByteArray& eventType, void* message, long* result) override {
+        if (eventType == "windows_generic_MSG" || eventType == "windows_dispatcher_MSG") {
+            MSG* msg = static_cast<MSG*>(message);
+            if (msg->message >= zeno::SOVLER_START && msg->message <= zeno::SOLVER_END) {
+                int lp = static_cast<int>(msg->lParam);
+                int wp = static_cast<int>(msg->wParam);
+                zenoApp->getMainWindow()->onSolverCallback((zeno::SOLVER_MSG)msg->message, std::min(lp, wp), std::max(lp, wp));
+                return true;
+            }
+        }
+        return false;
+    }
+
+};
+static WinEventFilter win32Filter;
+
+
+
 
 ZenoApplication::ZenoApplication(int &argc, char **argv)
     : QApplication(argc, argv)
@@ -32,6 +54,8 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
     initFonts();
     initStyleSheets();
     verifyVersion();
+
+    installNativeEventFilter(&win32Filter);
 
     QStringList locations;
     locations = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
@@ -57,6 +81,7 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
 
 ZenoApplication::~ZenoApplication()
 {
+    zeno::getSession().destroy(); //在卸载插件前先清空所有图
 }
 
 void ZenoApplication::onThreadLogReady(const QString& msg)
@@ -101,12 +126,17 @@ QString ZenoApplication::readQss(const QString& qssPath)
     return ZenoStyle::dpiScaleSheet(file.readAll());
 }
 
+void ZenoApplication::cleanQmlEngine() {
+    delete m_engine;
+    m_engine = nullptr;
+}
+
 void ZenoApplication::initMetaTypes() 
 {
     QMetaType::registerEqualsComparator<UI_VECTYPE>();
     QMetaType::registerEqualsComparator<CURVES_DATA>();
     QMetaType::registerEqualsComparator<zeno::reflect::Any>();
-    qRegisterMetaType<NodeState>();
+    qRegisterMetaType<QmlNodeRunStatus::Value>();
     qRegisterMetaType<zeno::ObjPath>();
     qRegisterMetaType<zeno::CustomUI>();
     qRegisterMetaType<zeno::reflect::Any>();

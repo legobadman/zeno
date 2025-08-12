@@ -3,6 +3,7 @@
 #include "zenoapplication.h"
 #include <zeno/core/Session.h>
 #include <zeno/extra/GlobalComm.h>
+#include "calculation/calculationmgr.h"
 #include "zassert.h"
 
 
@@ -50,6 +51,10 @@ static void drawText(QPainter* painter, qreal x, qreal y, Qt::Alignment flags,
 
 void ZSlider::setSliderValue(int value)
 {
+    RunStatus::Value val = zenoApp->calculationMgr()->getRunStatus();
+    if (val == RunStatus::Running)
+        return;
+
     int newVal = qMin(qMax(m_from, value), m_to);
     if (newVal == m_value)
         return;

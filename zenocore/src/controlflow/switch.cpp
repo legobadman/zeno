@@ -33,8 +33,124 @@ namespace zeno
         {"reflect"}
     });
 
-    //TODO:
-    //struct SwitchIf : INode
-    //{
-    //};
+    struct SwitchIf : INode
+    {
+        CustomUI export_customui() const override {
+            CustomUI ui = INode::export_customui();
+            ui.uistyle.iconResPath = ":/icons/node/switchif.svg";
+            ui.uistyle.background = "#CEFFB3";
+            return ui;
+        }
+
+        void apply() override {
+            int cond = get_input2_int("Condition");
+            if (cond != 0) {
+                set_output("Output", get_input("If True"));
+            }
+            else {
+                set_output("Output", get_input("If False"));
+            }
+        }
+    };
+
+    ZENDEFNODE(SwitchIf,
+    {
+        {
+            {gParamType_IObject, "If False"},
+            {gParamType_IObject, "If True"},
+            {gParamType_Int, "Condition"}
+        },
+        {
+            {gParamType_IObject, "Output"}
+        },
+        {},
+        {"flow"}
+    });
+
+    struct SwitchBetween : INode
+    {
+        CustomUI export_customui() const override {
+            CustomUI ui = INode::export_customui();
+            ui.uistyle.iconResPath = ":/icons/node/switch-between.svg";
+            ui.uistyle.background = "#CEFFB3";
+            return ui;
+        }
+
+        void apply() override {
+            int cond = get_input2_int("cond1");
+            if (cond != 0) {
+                set_output("Output", get_input("b1"));
+                return;
+            }
+
+            cond = get_input2_int("cond2");
+            if (cond != 0) {
+                set_output("Output", get_input("b2"));
+                return;
+            }
+
+            cond = get_input2_int("cond3");
+            if (cond != 0) {
+                set_output("Output", get_input("b3"));
+                return;
+            }
+
+            cond = get_input2_int("cond4");
+            if (cond != 0) {
+                set_output("Output", get_input("b4"));
+                return;
+            }
+
+            cond = get_input2_int("cond5");
+            if (cond != 0) {
+                set_output("Output", get_input("b5"));
+                return;
+            }
+
+            cond = get_input2_int("cond6");
+            if (cond != 0) {
+                set_output("Output", get_input("b6"));
+                return;
+            }
+
+            cond = get_input2_int("cond7");
+            if (cond != 0) {
+                set_output("Output", get_input("b7"));
+                return;
+            }
+
+            cond = get_input2_int("cond8");
+            if (cond != 0) {
+                set_output("Output", get_input("b8"));
+                return;
+            }
+        }
+    };
+
+    ZENDEFNODE(SwitchBetween,
+    {
+        {
+            {gParamType_IObject, "b1"},
+            {gParamType_IObject, "b2"},
+            {gParamType_IObject, "b3"},
+            {gParamType_IObject, "b4"},
+            {gParamType_IObject, "b5"},
+            {gParamType_IObject, "b6"},
+            {gParamType_IObject, "b7"},
+            {gParamType_IObject, "b8"},
+            {gParamType_Int, "cond1", "0"},
+            {gParamType_Int, "cond2", "0"},
+            {gParamType_Int, "cond3", "0"},
+            {gParamType_Int, "cond4", "0"},
+            {gParamType_Int, "cond5", "0"},
+            {gParamType_Int, "cond6", "0"},
+            {gParamType_Int, "cond7", "0"},
+            {gParamType_Int, "cond8", "0"},
+        },
+        {
+            {gParamType_IObject, "Output"}
+        },
+        {},
+        {"flow"}
+    });
 }

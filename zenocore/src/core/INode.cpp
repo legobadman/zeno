@@ -1,7 +1,7 @@
 #include <zeno/core/INode.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/utils/interfaceutil.h>
-
+#include <zeno/types/IGeometryObject.h>
 
 namespace zeno
 {
@@ -11,6 +11,10 @@ namespace zeno
 
     NodeType INode::type() const {
         return Node_Normal;
+    }
+
+    zeno::String INode::uuid() const {
+        return stdString2zs(m_pAdapter->get_uuid());
     }
 
     zany INode::get_input(const zeno::String& param) { 
@@ -23,6 +27,10 @@ namespace zeno
 
     zeno::SharedPtr<PrimitiveObject> INode::get_input_PrimitiveObject(const zeno::String& param) { 
         return std::dynamic_pointer_cast<PrimitiveObject>(get_input(param));
+    }
+
+    zeno::SharedPtr<GeometryObject_Adapter> INode::get_input_Geometry(const zeno::String& param) {
+        return std::dynamic_pointer_cast<GeometryObject_Adapter>(get_input(param));
     }
 
     zeno::SharedPtr<ListObject> INode::get_input_ListObject(const zeno::String& param) {
@@ -77,6 +85,26 @@ namespace zeno
         return m_pAdapter->has_input(zsString2Std(param));
     }
 
+    bool INode::has_link_input(const zeno::String& param) {
+        return m_pAdapter->has_link_input(zsString2Std(param));
+    }
+
+    container_elem_update_info INode::get_input_container_info(const zeno::String& param) {
+        return m_pAdapter->get_input_container_info(zsString2Std(param));
+    }
+
+    container_elem_update_info INode::get_output_container_info(const zeno::String& param) {
+        return m_pAdapter->get_output_container_info(zsString2Std(param));
+    }
+
+    void INode::set_input_container_info(const zeno::String& param, const container_elem_update_info& info) {
+        m_pAdapter->set_input_container_info(zsString2Std(param), info);
+    }
+
+    void INode::set_output_container_info(const zeno::String& param, const container_elem_update_info& info) {
+        m_pAdapter->set_output_container_info(zsString2Std(param), info);
+    }
+
     bool INode::set_output(const zeno::String& param, zany pObject) {
         return m_pAdapter->set_output(zsString2Std(param), pObject);
     }
@@ -97,17 +125,16 @@ namespace zeno
         return get_input2_bool(param);
     }
 
-    bool INode::is_continue_to_run() { return false; }
-    void INode::increment() {}
-    void INode::reset_forloop_settings() {}
-    zany INode::get_iterate_object() { return 0; }
-
     void INode::set_output_int(const zeno::String& param, int val) {
         return m_pAdapter->set_output2(zsString2Std(param), val);
     }
 
     void INode::set_output_float(const zeno::String& param, float val) {
         return m_pAdapter->set_output2(zsString2Std(param), val);
+    }
+
+    void INode::set_output_string(const zeno::String& param, zeno::String val) {
+        return m_pAdapter->set_output2(zsString2Std(param), zsString2Std(val));
     }
 
     void INode::set_output_vec2f(const zeno::String& param, Vec2f val) {

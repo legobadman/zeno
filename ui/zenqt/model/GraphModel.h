@@ -27,12 +27,17 @@ class GraphModel : public QAbstractListModel
     QML_ELEMENT
 
 public:
-    GraphModel(std::string const& asset_or_maingraph, bool bAsset, GraphsTreeModel* pTree, QObject* parent = nullptr);
+    GraphModel(std::string const& asset_or_maingraph, bool bAsset, GraphsTreeModel* pTree, GraphModel* parentGraph, QObject* parent = nullptr);
     ~GraphModel();
     Q_INVOKABLE LinkModel* getLinkModel() const { return m_linkModel; }
     Q_INVOKABLE int indexFromId(const QString& name) const;
-    Q_INVOKABLE void addLink(const QString& fromNodeStr, const QString& fromParamStr,
-        const QString& toNodeStr, const QString& toParamStr);
+    Q_INVOKABLE QmlParamType::Value getParamType(const QString& node, bool bInput, const QString& param) const;
+    Q_INVOKABLE void addLink(
+        const QString& fromNodeStr,
+        const QString& fromParamStr,
+        const QString& toNodeStr,
+        const QString& toParamStr,
+        bool asListElement = false);
 
     Q_INVOKABLE bool removeLink(
         const QString& outNode,
@@ -45,9 +50,14 @@ public:
     Q_INVOKABLE QStringList path() const;
     Q_INVOKABLE void insertNode(const QString& nodeCls, const QString& cate, const QPointF& pos);
     Q_INVOKABLE bool removeNode(const QString& name);
+    Q_INVOKABLE void resetAssetAndLock(const QModelIndex& assetNode);
+    Q_INVOKABLE void syncAssetInst(const QModelIndex& assetNode);
 
     //TEST API
     Q_INVOKABLE QString owner() const;
+
+    Q_PROPERTY(bool lock READ isLocked NOTIFY lockStatusChanged)
+    bool isLocked() const;
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -62,7 +72,9 @@ public:
     zeno::NodeData createNode(const QString& nodeCls, const QString& cate, const QPointF& pos);
     void appendSubgraphNode(QString name, QString cls, NODE_DESCRIPTOR desc, GraphModel* subgraph, const QPointF& pos);
     void setView(const QModelIndex& idx, bool bOn);
-    void setMute(const QModelIndex& idx, bool bOn);
+    void setBypass(const QModelIndex& idx, bool bOn);
+    void setNocache(const QModelIndex& idx, bool bOn);
+    void setClearSubnet(const QModelIndex& idx, bool bOn);
     QString updateNodeName(const QModelIndex& idx, QString newName);
     void updateSocketValue(const QModelIndex& nodeidx, const QString socketName, const QVariant newValue);
     void addLink(const zeno::EdgeInfo& link);
@@ -70,9 +82,11 @@ public:
     QList<SEARCH_RESULT> searchByUuidPath(const zeno::ObjPath& uuidPath);
     QStringList uuidPath2ObjPath(const zeno::ObjPath& uuidPath);
     GraphModel* getGraphByPath(const QStringList& objPath);
-    QModelIndex indexFromUuidPath(const zeno::ObjPath& uuidPath);
     QStringList currentPath() const;
     QModelIndex indexFromName(const QString& name) const;
+    QModelIndex indexFromUuid(const QString& uuid) const;
+    QModelIndex indexFromUuidPath(const zeno::ObjPath& uuidPath) const;
+    void indiceFromUuidPath(const zeno::ObjPath& uuidPath, QModelIndexList& pathNodes) const;
     std::set<std::string> getViewNodePath() const;
     void clear();
     void undo();
@@ -83,7 +97,7 @@ public:
 
     //test functions:
     void updateParamName(QModelIndex nodeIdx, int row, QString newName);
-    void syncToAssetsInstance(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui);
+    void syncToAssetsInstance_customui(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui);
     void syncToAssetsInstance(const QString& assetsName);
     void removeParam(QModelIndex nodeIdx, int row);
     void removeLink(const QModelIndex& linkIdx);
@@ -93,8 +107,7 @@ public:
     ParamsModel* params(QModelIndex nodeIdx);
     GraphModel* subgraph(QModelIndex nodeIdx);
     GraphsTreeModel* treeModel() const;
-    void setLocked(bool bLocked);
-    bool isLocked() const;
+
     QStringList pasteNodes(const zeno::NodesData& nodes, const zeno::LinksData& links, const QPointF& pos);
     QString name2uuid(const QString& name);
 
@@ -106,7 +119,13 @@ public:
     void _removeLinkImpl(const zeno::EdgeInfo& link, bool endTransaction = false);
     bool setModelData(const QModelIndex& index, const QVariant& newValue, int role);
     void _setViewImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
-    void _setMuteImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _setByPassImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _setNoCacheImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+
+    //unrevertable:
+    void clearNodeObjs(const QModelIndex& nodeIdx);
+    void clearSubnetObjs(const QModelIndex& nodeIdx);
 
 signals:
     void reloaded();
@@ -146,8 +165,7 @@ private:
     GraphsTreeModel* m_pTree;
     LinkModel* m_linkModel;
 
-    GraphMImpl* m_impl;
-    bool m_bLocked = false;
+    QScopedPointer<GraphMImpl> m_impl;
     friend class NodeItem;
 };
 

@@ -61,6 +61,7 @@ DisplayWidget::DisplayWidget(bool bGLView, QWidget *parent)
         m_glView = new ZOpenGLQuickView;
         QWidget* wid = QWidget::createWindowContainer(m_glView);
         pLayout->addWidget(wid);
+        connect(m_glView, &ZOpenGLQuickView::sig_render_reload_finished, this, &DisplayWidget::render_reload_finished);
 #endif
     }
     else
@@ -72,14 +73,15 @@ DisplayWidget::DisplayWidget(bool bGLView, QWidget *parent)
 #endif
         pLayout->addWidget(m_optixView);
         connect(this, SIGNAL(frameRunFinished(int)), m_optixView, SLOT(onFrameRunFinished(int)));
+        connect(m_optixView, SIGNAL(sig_reload_finished()), this, SIGNAL(render_reload_finished()));
     }
 
     setLayout(pLayout);
 
-    m_camera_keyframe = new CameraKeyframeWidget;
+    m_camera_keyframe.reset(new CameraKeyframeWidget);
     Zenovis *pZenovis = getZenoVis();
     if (pZenovis) {
-        pZenovis->m_camera_keyframe = m_camera_keyframe;
+        pZenovis->m_camera_keyframe = m_camera_keyframe.get();
     }
     //connect(m_view, SIGNAL(sig_Draw()), this, SLOT(onRun()));
 
@@ -237,11 +239,11 @@ void DisplayWidget::setSimpleRenderOption()
         m_glView->setSimpleRenderOption();
 }
 
-void DisplayWidget::setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly) {
-    if (m_optixView)
-    {
-        m_optixView->setRenderSeparately(updateLightCameraOnly, updateMatlOnly);
-    }
+void DisplayWidget::setRenderSeparately(/*runType runtype*/) {
+    //if (m_optixView)
+    //{
+    //    m_optixView->setRenderSeparately(runtype);
+    //}
 }
 
 bool DisplayWidget::isCameraMoving() const
@@ -412,46 +414,92 @@ void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
     updateFrame();
 }
 
-void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString) {
+void DisplayWidget::submit(zeno::render_reload_info render_summary) {
+
+    render_summary.current_ui_graph;
+    render_summary.policy = zeno::Reload_Calculation;
+
+    render_summary.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
+    if (render_summary.current_ui_graph.empty()) {
+        //以后可能有些情况是在非ui下跑的，此时是没有“当前图层级路径”这一说法，
+        //这种情况就默认从主图跑
+        render_summary.current_ui_graph = "/main";
+    }
+
+    //这里要对不在current_ui_graph的节点进行过滤
+    //TODO: 应该在graphmodel上做
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(render_summary.current_ui_graph);
+    for (auto iter = render_summary.objs.begin(); iter != render_summary.objs.end(); ) {
+        if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
+            iter = render_summary.objs.erase(iter);
+        }
+        else {
+            iter++;
+        }
+    }
+    if (!render_summary.objs.empty()) {
+        if (m_bGLView) {
+            m_glView->reload_objects(render_summary);
+        }
+        else {
+            m_optixView->reload_objects(render_summary);
+        }
+        updateFrame();
+    }
+}
+
+void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {
+    zeno::render_reload_info reload;
+    reload.current_ui_graph;
+    reload.policy = zeno::Reload_Calculation;
+
+    reload.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
+    if (reload.current_ui_graph.empty()) {
+        //以后可能有些情况是在非ui下跑的，此时是没有“当前图层级路径”这一说法，
+        //这种情况就默认从主图跑
+        reload.current_ui_graph = "/main";
+    }
+
+    //这里要对不在current_ui_graph的节点进行过滤
+    //TODO: 应该在graphmodel上做
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(reload.current_ui_graph);
+    for (auto iter = infos.begin(); iter != infos.end(); ) {
+        if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
+            iter = infos.erase(iter);
+        }
+        else {
+            iter++;
+        }
+    }
+    reload.objs = infos;
+    if (!reload.objs.empty()) {
+        if (m_bGLView) {
+            m_glView->reload_objects(reload);
+        }
+        else {
+            m_optixView->reload_objects(reload);
+        }
+        updateFrame();
+    }
+}
+
+void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
+    std::vector<zeno::render_update_info> infos;
+    zeno::render_update_info info;
+    info.reason = zeno::Update_Reconstruct;
+    info.uuidpath_node_objkey = nodeuuidpath.toStdString();
+    infos.emplace_back(std::move(info));
+    submit(infos);
+}
+
+void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info info) {
     if (bSucceed) {
         //先从objManager拿出
-        auto& sess = zeno::getSession();
-        std::vector<zeno::render_update_info> infos;
-        sess.objsMan->export_render_infos(infos);
-
-        zeno::render_reload_info reload;
-        reload.current_ui_graph;
-        reload.policy = zeno::Reload_Calculation;
-
-        reload.current_ui_graph = zenoApp->graphsManager()->currentGraphPath().toStdString();
-        if (reload.current_ui_graph.empty()) {
-            //以后可能有些情况是在非ui下跑的，此时是没有“当前图层级路径”这一说法，
-            //这种情况就默认从主图跑
-            reload.current_ui_graph = "/main";
-        }
-
-        //这里要对不在current_ui_graph的节点进行过滤
-        //TODO: 应该在graphmodel上做
-        std::shared_ptr<zeno::Graph> curr_graph = sess.mainGraph->getGraphByPath(reload.current_ui_graph);
-        for (auto iter = infos.begin(); iter != infos.end(); ) {
-            if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
-                iter = infos.erase(iter);
-            }
-            else {
-                iter++;
-            }
-        }
-        reload.objs = infos;
-        if (!reload.objs.empty()) {
-            if (m_bGLView) {
-                m_glView->reload_objects(reload);
-                emit render_objects_loaded();
-            }
-            else {
-                m_optixView->reload_objects(reload);
-            }
-            updateFrame();
-        }
+        submit(info);
+        //auto& sess = zeno::getSession();
+        //std::vector<zeno::render_update_info> infos;
+        //sess.objsMan->export_render_infos(infos);
+        //submit(infos);
     }
 }
 
@@ -646,7 +694,7 @@ void DisplayWidget::onSliderValueChanged(int frame)
 
     for (auto displayWid : mainWin->viewports())
         if (!displayWid->isGLViewport())
-            displayWid->setRenderSeparately(false, false);
+            displayWid->setRenderSeparately(/*false, false*/);
     if (mainWin->isAlways())
     {
         auto pGraphsMgr = zenoApp->graphsManager();
@@ -722,7 +770,7 @@ void DisplayWidget::afterRun()
         ZASSERT_EXIT(session);
         auto scene = session->get_scene();
         ZASSERT_EXIT(scene);
-        scene->objectsMan->lightObjects.clear();
+        //scene->objectsMan->lightObjects.clear();
     }
 }
 
@@ -818,6 +866,13 @@ void DisplayWidget::onSetBackground(bool bShowBackground)
 {
     if (!m_bGLView) {
         m_optixView->showBackground(bShowBackground);
+    }
+}
+
+void DisplayWidget::setSampleNumber(int sample_number)
+{
+    if (!m_bGLView) {
+        m_optixView->setSampleNumber(sample_number);
     }
 }
 

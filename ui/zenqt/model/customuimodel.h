@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CUSTOMUI_MODEL_H__
 #define __CUSTOMUI_MODEL_H__
@@ -36,7 +36,7 @@ public:
 class CustomUIModel : public QObject {
     Q_OBJECT
 public:
-    CustomUIModel(ParamsModel* params, QObject* parent = nullptr, bool isCloneCustomuiModel = false);
+    CustomUIModel(ParamsModel* params, QObject* parent = nullptr);
     Q_INVOKABLE ParamTabModel* tabModel() const;
     Q_INVOKABLE PrimParamOutputModel* primOutputModel() const;
     Q_INVOKABLE objParamInputModel* objInputModel() const;
@@ -47,9 +47,9 @@ public:
 
     Q_INVOKABLE void reset();
     Q_INVOKABLE bool isSubnetNode();
-    bool isClonedModel();
-    //clone的情况下，导出customui和editupdateinfo，给parammodel重设参数
-    void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
+
+signals:
+    void resetCustomuiModel();
 
 private:
     ParamsModel* m_params;
@@ -58,8 +58,6 @@ private:
     objParamInputModel* m_objInputModel;
     objParamOutputModel* m_objOutputModel;
     ControlItemListModel* m_ctrlItemModel;
-
-    bool m_bIsCloneCustomuiModel;
 };
 
 
@@ -105,11 +103,14 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
+	QModelIndex indexFromName(QString name);
+    
+    QStandardItemModel* toStandardModel() const;
+
     Q_INVOKABLE bool insertRow(int row, QString name);
     Q_INVOKABLE bool removeRow(int row);
 
     void reset();
-    void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
 
 private:
     QVector<_TabItem> m_items;
@@ -136,10 +137,11 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
+    QModelIndex indexFromName(QString name);
+    QString parentName();
+
     Q_INVOKABLE bool insertRow(int row, QString name);
     Q_INVOKABLE bool removeRow(int row);
-
-    void exportCustomuiAndEdittedUpdateInfo(std::vector<zeno::ParamGroup>& group, zeno::ParamsUpdateInfo& editUpdateInfo);
 
 private:
     QVector<_GroupItem> m_items;
@@ -168,10 +170,12 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
 
-    Q_INVOKABLE bool insertRow(int row, QString name, int ctrlItemRow);
-    Q_INVOKABLE bool removeRow(int row);
+    QString parentName();
+    QPersistentModelIndex getParamsModelIndex(int row);
 
-    void exportCustomuiAndEdittedUpdateInfo(std::vector<zeno::ParamPrimitive>& params, zeno::ParamsUpdateInfo& editUpdateInfo);
+	Q_INVOKABLE bool insertRow(int row, QString name, int ctrlItemRow);
+	Q_INVOKABLE bool removeRow(int row);
+
 signals:
     void maxLengthName_changed();
 
@@ -181,9 +185,6 @@ private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
     ParamGroupModel* m_groupModel;
     ParamsModel* m_paramsModel;
-
-    bool m_bIscloned;
-    QVector<ParamItem> m_clonedItems;//如果customuiModel是以克隆的方式创建，就缓存所有的param，编辑时修改这个变量。
 };
 
 
@@ -205,12 +206,14 @@ public:
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames() const override;
+    QStandardItemModel* toStandardModel() const;
+
+	QPersistentModelIndex getParamsModelIndex(int row);
 
     Q_INVOKABLE bool insertRow(int row, QString name);
     Q_INVOKABLE bool removeRow(int row);
 
     void reset();
-    void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
 
 signals:
     void maxLengthName_changed();
@@ -220,9 +223,6 @@ private:
 
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
     ParamsModel* m_paramsModel;
-
-    bool m_bIscloned;
-    QVector<ParamItem> m_clonedItems;
 };
 
 class objParamInputModel : public QAbstractListModel
@@ -245,14 +245,11 @@ public:
     Q_INVOKABLE bool removeRow(int row);
 
     void reset();
-    void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
+    QStandardItemModel* toStandardModel() const;
 
 private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
     ParamsModel* m_paramsModel;
-
-    bool m_bIscloned;
-    QVector<ParamItem> m_clonedItems;
 };
 
 class objParamOutputModel : public QAbstractListModel
@@ -275,14 +272,11 @@ public:
     Q_INVOKABLE bool removeRow(int row);
 
     void reset();
-    void exportCustomuiAndEdittedUpdateInfo(zeno::CustomUI& customui, zeno::ParamsUpdateInfo& editUpdateInfo);
+    QStandardItemModel* toStandardModel() const;
 
 private:
     QVector<QPersistentModelIndex> m_items;    //一个group下所有的param
     ParamsModel* m_paramsModel;
-
-    bool m_bIscloned;
-    QVector<ParamItem> m_clonedItems;
 };
 
 #endif

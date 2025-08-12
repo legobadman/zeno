@@ -10,7 +10,9 @@
 #include <zeno/core/Session.h>
 #include <zenovis/Camera.h>
 #include <zeno/funcs/ParseObjectFromUi.h>
+#include "viewport/displaywidget.h"
 #include <zenovis/ObjectsManager.h>
+#include <zenovis/RenderEngine.h>
 #include "zassert.h"
 #include "nodeeditor/gv/zenographseditor.h"
 #include "style/dpiscale.h"
@@ -58,10 +60,23 @@ OptixWorker::OptixWorker(const QString& graph_path, Zenovis *pzenoVis)
 
     //启动光追时加载obj
     //TODO: 是否需要在worker线程load?
+    ZASSERT_EXIT(m_zenoVis);
+    auto session = m_zenoVis->getSession();
+    ZASSERT_EXIT(session);
+    auto scene = session->get_scene();
+    ZASSERT_EXIT(scene);
+    ZASSERT_EXIT(scene->renderMan);
+    if (zenovis::RenderEngine* pEngine = scene->renderMan->getEngine()) {
+        pEngine->optxShowBackground(true);
+    }
+
     zeno::render_reload_info info;
+    GraphsManager* graphsMgr = zenoApp->graphsManager();
+    info.current_ui_graph = graphsMgr->currentGraphPath().toStdString();
     info.policy = zeno::Reload_SwitchGraph;
-    info.current_ui_graph = graph_path.toStdString();
-    m_zenoVis->reload(info);
+    if (graphsMgr->getGraph({ "main" }) && info.current_ui_graph != "") {
+        m_zenoVis->reload(info);
+    }
 }
 
 OptixWorker::~OptixWorker()
@@ -111,7 +126,7 @@ void OptixWorker::onPlayToggled(bool bToggled)
     else {
         m_pTimer->start(m_sampleFeq);
     }
-    setRenderSeparately(false, false);
+    //setRenderSeparately(RunALL);
 }
 
 void OptixWorker::onSetSlidFeq(int feq)
@@ -199,10 +214,11 @@ void OptixWorker::cancelRecording()
     m_bRecording = false;
 }
 
-void OptixWorker::setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly) {
-    auto scene = m_zenoVis->getSession()->get_scene();
-    scene->drawOptions->updateLightCameraOnly = updateLightCameraOnly;
-    scene->drawOptions->updateMatlOnly = updateMatlOnly;
+void OptixWorker::setRenderSeparately(int runtype) {
+    //auto scene = m_zenoVis->getSession()->get_scene();
+    //scene->drawOptions->updateLightCameraOnly = (runType)runtype == RunLightCamera;
+    //scene->drawOptions->updateMatlOnly = (runType)runtype == RunMaterial;
+    //scene->drawOptions->updateMatrixOnly = (runType)runtype == RunMatrix;
 }
 
 void OptixWorker::onSetSafeFrames(bool bLock, int nx, int ny) {
@@ -399,20 +415,34 @@ void OptixWorker::on_load_data(zeno::render_update_info info)
 void OptixWorker::on_reload_objects(const zeno::render_reload_info& info)
 {
     m_zenoVis->reload(info);
+    emit sig_reloadFinished();
 }
 
 void OptixWorker::onSetBackground(bool bShowBg)
 {
-    auto& ud = zeno::getSession().userData();
-    ud.set2("optix_show_background", bShowBg);
-
+    //auto& ud = zeno::getSession().userData();
+    //ud.set2("optix_show_background", bShowBg);
     ZASSERT_EXIT(m_zenoVis);
     auto session = m_zenoVis->getSession();
     ZASSERT_EXIT(session);
     auto scene = session->get_scene();
     ZASSERT_EXIT(scene);
+    ZASSERT_EXIT(scene->renderMan);
+    if (zenovis::RenderEngine* pEngine = scene->renderMan->getEngine()) {
+        pEngine->optxShowBackground(bShowBg);
+    }
     //scene->objectsMan->needUpdateLight = true;
     //scene->drawOptions->simpleRender = true;
+    //updateFrame();
+}
+
+void OptixWorker::onSetSampleNumber(int sample_number) {
+    ZASSERT_EXIT(m_zenoVis);
+    auto session = m_zenoVis->getSession();
+    ZASSERT_EXIT(session);
+    auto scene = session->get_scene();
+    ZASSERT_EXIT(scene);
+    scene->drawOptions->num_samples = sample_number;
     updateFrame();
 }
 
@@ -421,7 +451,10 @@ void OptixWorker::onSetData(
     float shutter_speed,
     float iso,
     bool aces,
-    bool exposure
+    bool exposure,
+    bool panorama_camera,
+    bool panorama_vr180,
+    float pupillary_distance
 ) {
 //    zeno::log_info("I am in optix thread, now I want to set value {}", iso);
     auto scene = m_zenoVis->getSession()->get_scene();
@@ -430,6 +463,9 @@ void OptixWorker::onSetData(
     scene->camera->zOptixCameraSettingInfo.iso = iso;
     scene->camera->zOptixCameraSettingInfo.aces = aces;
     scene->camera->zOptixCameraSettingInfo.exposure = exposure;
+    scene->camera->zOptixCameraSettingInfo.panorama_camera = panorama_camera;
+    scene->camera->zOptixCameraSettingInfo.panorama_vr180 = panorama_vr180;
+    scene->camera->zOptixCameraSettingInfo.pupillary_distance = pupillary_distance;
     scene->drawOptions->needRefresh = true;
 }
 
@@ -450,14 +486,26 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
         //    emit mainWin->visObjectsUpdated(this, frameid);
     });
 
-    //no need to notify timeline to update.
-    /*
     connect(m_zenovis, &Zenovis::frameUpdated, this, [=](int frameid) {
         auto mainWin = zenoApp->getMainWindow();
-        if (mainWin)
+        if (mainWin) {
+            bool hasglViewport = false;
+            for (auto view: mainWin->viewports()) {
+                if (view->isGLViewport() && view->isVisible()) {
+                    hasglViewport = true;
+                    break;
+                }
+            }
+            if (!hasglViewport) {//有visible的gl窗口，则不更新timeline
             emit mainWin->visFrameUpdated(false, frameid);
+            }
+        }
     }, Qt::BlockingQueuedConnection);
-    */
+
+    //初始化timeline置为起始帧
+    auto mainWin = zenoApp->getMainWindow();
+    ZASSERT_EXIT(mainWin);
+    mainWin->onSetTimelineValue();
 
     //fake GL
     m_zenovis->initializeGL();
@@ -469,9 +517,8 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
     const char *e = "optx";
     m_zenovis->getSession()->set_render_engine(e);
 
-    auto scene = m_zenovis->getSession()->get_scene();
+    //auto scene = m_zenovis->getSession()->get_scene();
 
-    auto mainWin = zenoApp->getMainWindow();
     ZenoGraphsEditor* editor = mainWin->getAnyEditor();
     QString graphpath;
     if (editor) {
@@ -489,8 +536,8 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
         update();
     });
     connect(this, &ZOptixViewport::cameraAboutToRefresh, m_worker, &OptixWorker::needUpdateCamera);
-    connect(this, &ZOptixViewport::stopRenderOptix, m_worker, &OptixWorker::stop);
-    connect(this, &ZOptixViewport::resumeWork, m_worker, &OptixWorker::work);
+    connect(this, &ZOptixViewport::stopRenderOptix, m_worker, &OptixWorker::stop, Qt::BlockingQueuedConnection);
+    connect(this, &ZOptixViewport::resumeWork, m_worker, &OptixWorker::work, Qt::BlockingQueuedConnection);
     connect(this, &ZOptixViewport::sigRecordVideo, m_worker, &OptixWorker::recordVideo, Qt::QueuedConnection);
     connect(this, &ZOptixViewport::sigscreenshoot, m_worker, &OptixWorker::screenShoot, Qt::QueuedConnection);
     connect(this, &ZOptixViewport::sig_setSafeFrames, m_worker, &OptixWorker::onSetSafeFrames);
@@ -500,20 +547,22 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
 
     connect(this, &ZOptixViewport::sig_switchTimeFrame, m_worker, &OptixWorker::onFrameSwitched);
     connect(this, &ZOptixViewport::sig_togglePlayButton, m_worker, &OptixWorker::onPlayToggled);
-    connect(this, &ZOptixViewport::sig_setRenderSeparately, m_worker, &OptixWorker::setRenderSeparately);
+    connect(this, &ZOptixViewport::sig_setRunType, m_worker, &OptixWorker::setRenderSeparately);
     connect(this, &ZOptixViewport::sig_setLoopPlaying, m_worker, &OptixWorker::onSetLoopPlaying);
     connect(this, &ZOptixViewport::sig_setSlidFeq, m_worker, &OptixWorker::onSetSlidFeq);
     connect(this, &ZOptixViewport::sig_modifyLightData, m_worker, &OptixWorker::onModifyLightData);
     connect(this, &ZOptixViewport::sig_updateCameraProp, m_worker, &OptixWorker::onUpdateCameraProp);
     connect(this, &ZOptixViewport::sig_cleanUpScene, m_worker, &OptixWorker::onCleanUpScene);
-    bool ret = connect(this, &ZOptixViewport::sig_loadObjects, m_worker, &OptixWorker::load_objects);
+    connect(this, &ZOptixViewport::sig_loadObjects, m_worker, &OptixWorker::load_objects);
     connect(this, &ZOptixViewport::sig_cleanUpView, m_worker, &OptixWorker::onCleanUpView);
     connect(this, &ZOptixViewport::sig_setBackground, m_worker, &OptixWorker::onSetBackground);
+    connect(this, &ZOptixViewport::sig_setSampleNumber, m_worker, &OptixWorker::onSetSampleNumber);
     connect(this, &ZOptixViewport::sig_setdata_on_optix_thread, m_worker, &OptixWorker::onSetData);
     connect(this, &ZOptixViewport::sig_loadObject, m_worker, &OptixWorker::on_load_data);
     connect(this, &ZOptixViewport::sig_reload_objects, m_worker, &OptixWorker::on_reload_objects);
+    connect(m_worker, &OptixWorker::sig_reloadFinished, this, &ZOptixViewport::sig_reload_finished);
 
-    setRenderSeparately(false, false);
+    //setRenderSeparately(RunALL);
     m_thdOptix.start();
 }
 
@@ -537,7 +586,10 @@ void ZOptixViewport::setdata_on_optix_thread(zenovis::ZOptixCameraSettingInfo va
             value.shutter_speed,
             value.iso,
             value.aces,
-            value.exposure
+            value.exposure,
+            value.panorama_camera,
+            value.panorama_vr180,
+            value.pupillary_distance
     );
 }
 
@@ -563,8 +615,8 @@ void ZOptixViewport::setSimpleRenderOption()
     scene->drawOptions->simpleRender = true;
 }
 
-void ZOptixViewport::setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly) {
-    emit sig_setRenderSeparately(updateLightCameraOnly, updateMatlOnly);
+void ZOptixViewport::setRenderSeparately(/*runType runtype*/) {
+    //emit sig_setRunType((int)runtype);
 }
 
 void ZOptixViewport::cameraLookTo(zenovis::CameraLookToDir dir)
@@ -681,6 +733,11 @@ void ZOptixViewport::setNumSamples(int samples)
 void ZOptixViewport::showBackground(bool bShow)
 {
     emit sig_setBackground(bShow);
+}
+
+void ZOptixViewport::setSampleNumber(int sample_number)
+{
+    emit sig_setSampleNumber(sample_number);
 }
 
 void ZOptixViewport::resizeEvent(QResizeEvent* event)

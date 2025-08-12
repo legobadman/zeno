@@ -15,6 +15,7 @@ class GraphModel;
 class NodeCateModel;
 class GraphsManager;
 class PluginsModel;
+class CustomUIModel;
 
 class GraphsManager : public QObject
 {
@@ -26,14 +27,19 @@ public:
     ~GraphsManager();
 
     Q_INVOKABLE void saveProject(const QString& name);
-    Q_INVOKABLE void undo(const QString& name);
-    Q_INVOKABLE void redo(const QString& name);
+    Q_INVOKABLE void undo(const QStringList& path);
+    Q_INVOKABLE void redo(const QStringList& path);
     Q_INVOKABLE QStringList recentFiles() const;
     Q_INVOKABLE void openProject(const QString& zsgpath);
+    Q_INVOKABLE void openCustomUIDialog(CustomUIModel* customUIM);
+    Q_INVOKABLE void onAssetsCustomUIDialog(const QString& assetsName);
     Q_INVOKABLE void onNodeSelected(const QStringList& graphs_path, const QModelIndex& idx);
     Q_INVOKABLE void addPlugin();
+    Q_INVOKABLE void createAssetDialog();
+    Q_INVOKABLE void loadAssetDialog();
     Q_INVOKABLE void copy(const QModelIndexList& nodes);
     Q_INVOKABLE QStringList paste(const QPointF& pos, const QStringList& path_of_graphM);
+    Q_INVOKABLE QModelIndex getNodeIndexByUuidPath(const QString& objPath);
 
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath NOTIFY currentPathChanged)
     QString currentGraphPath() const;
@@ -74,6 +80,9 @@ public:
     void clearMarkOnGv();
     void initRootObjects();
 
+    QQmlComponent* nodeDelegate();
+    QQmlComponent* edgeDelegate();
+
 signals:
     void modelInited();
     void modelDataChanged();
@@ -98,6 +107,9 @@ private:
 
     QString m_filePath;
     QString m_graphPath;
+
+    QQmlComponent* m_nodeDelegate;
+    QQmlComponent* m_edgeDelegate;
 
     mutable std::mutex m_mtx;
     zeno::TimelineInfo m_timerInfo;

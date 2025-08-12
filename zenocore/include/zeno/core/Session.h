@@ -31,6 +31,7 @@ struct UserData;
 struct CalcManager;
 struct ObjectManager;
 struct AssetsMgr;
+struct PythonEnvWrapper;
 class FunctionManager;
 
 struct Session {
@@ -43,12 +44,13 @@ struct Session {
     std::unique_ptr<UserData> const m_userData;
     std::unique_ptr<ObjectManager> const objsMan;
     std::shared_ptr<Graph> mainGraph;
-    std::shared_ptr<AssetsMgr> assets;
+    std::unique_ptr<AssetsMgr> assets;
     std::unique_ptr<GlobalVariableManager> globalVariableManager;
     std::unique_ptr<FunctionManager> funcManager;
 
     ZENO_API Session();
     ZENO_API ~Session();
+    ZENO_API void destroy();
 
     Session(Session const &) = delete;
     Session &operator=(Session const &) = delete;
@@ -59,13 +61,22 @@ struct Session {
     ZENO_API std::shared_ptr<Graph> createGraph(const std::string& name);
     ZENO_API NodeImpl* getNodeByUuidPath(std::string const& uuid_path);
     ZENO_API void resetMainGraph();
-    ZENO_API bool run(const std::string& currgraph = "");
+    ZENO_API void clearMainGraph();
+    ZENO_API void clearAssets();
+    ZENO_API bool run(const std::string& currgraph, render_reload_info& infos);
     ZENO_API void interrupt();
     ZENO_API bool is_interrupted() const;
+    ZENO_API unsigned long mainThreadId() const;
+    ZENO_API void setMainThreadId(unsigned long threadId);
+    ZENO_API void set_solver(const std::string& solver);
+    ZENO_API std::string get_solver();
+    ZENO_API void terminate_solve();
+    ZENO_API void init_project_path(const std::wstring& path);
+    ZENO_API std::wstring get_project_path() const;
     //ZENO_API 
     ZENO_API void set_auto_run(bool bOn);
     ZENO_API bool is_auto_run() const;
-    ZENO_API void set_Rerun();
+    ZENO_API void markDirtyAndCleanResult();
     ZENO_API std::string dumpDescriptorsJSON() const;
     ZENO_API zeno::NodeRegistry dumpCoreCates();
     ZENO_API void defNodeClass(INode*(*ctor)(), std::string const &id, Descriptor const &desc = {});
@@ -92,6 +103,9 @@ struct Session {
     ZENO_API void registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip);
     ZENO_API bool getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip);
     ZENO_API void initEnv(const zenoio::ZSG_PARSE_RESULT ioresult);
+    ZENO_API void initPyzen(std::function<void()> pyzenFunc);
+    ZENO_API void asyncRunPython(const std::string& code);
+    ZENO_API void* hEventOfPyFinish();
     void reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status);
 
 private:
@@ -102,6 +116,13 @@ private:
     bool m_bDisableRunning = false;
     bool m_bReentrance = false;
     std::string m_current_loading_module;
+    std::string m_solver;
+    std::wstring m_proj_path;
+    unsigned long m_mainThreadId;
+
+#ifdef ZENO_WITH_PYTHON
+    std::unique_ptr<PythonEnvWrapper> m_pyWrapper;
+#endif
 
     zeno::NodeRegistry m_cates;
     //std::map<std::string, std::vector<NodeInfo>> m_cates;

@@ -40,8 +40,8 @@
 %option prefix="ZFX_"
 
 /*正则式的各种简写，使程序有层次感而显得明晰 */
-string  \"[^\n"]+\"
-singlequote '[^\n']+'
+string  \"[^\n"]*\"
+singlequote '[^\n']*'
 uncompstring \"[^\n"]*
 ws      [ \t]+
 alpha   [A-Za-z]
@@ -133,6 +133,7 @@ equalto \=
                    strcmp(yytext, "string") == 0 ||
                    strcmp(yytext, "vector2") == 0 ||
                    strcmp(yytext, "vector3") == 0 ||
+                   strcmp(yytext, "vector") == 0 ||
                    strcmp(yytext, "vector4") == 0 ||
                    strcmp(yytext, "matrix2") == 0 ||
                    strcmp(yytext, "matrix3") == 0 ||

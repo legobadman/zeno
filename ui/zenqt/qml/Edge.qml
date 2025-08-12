@@ -12,6 +12,8 @@ Shape {
     property bool isFromInput: false
     property int p1_group: ParamGroup.InputObject       //point1的group
 
+    property string in_key;
+
     property var tempedge_from_sock: undefined      //临时边起始的socket对象，可以是input或者output
     property var tempedge_to_sock: undefined      //吸附时记录的目标socket对象,只有临时边会用
 
@@ -56,6 +58,13 @@ Shape {
         // border.width: 2
     }
 
+    Text {
+        x: (root.startX + root.endX) / 2
+        y: (root.startY + root.endY) / 2
+        color: Qt.rgba(1, 1, 1, 0.6)
+        text: root.in_key
+    }
+
     ShapePath {
         id: path
         startX: root.startX
@@ -63,12 +72,38 @@ Shape {
         fillColor: "transparent"
         strokeColor: root.isSelected ? root.color_selected : root.color
         //strokeStyle: edge !== undefined && ((edge.src !== undefined && edge.src.isOutput) || edge.dst === undefined) ? ShapePath.SolidLine : ShapePath.DashLine
-        strokeStyle: ShapePath.SolidLine
-        strokeWidth: 4
+        strokeStyle: {
+            if (root.p1_group == ParamGroup.InputObject || root.p1_group == ParamGroup.OutputObject) {
+                return ShapePath.SolidLine
+            }
+            else {
+                return ShapePath.DashLine
+            }
+        } 
+        strokeWidth: 2
         // final visual width of this path (never below 1)
         readonly property real visualWidth: Math.max(strokeWidth, 1)
-        dashPattern: [6/visualWidth, 4/visualWidth]
+        dashPattern: [4/visualWidth, 4/visualWidth]
         capStyle: ShapePath.RoundCap
+
+        //两点连线和垂直轴的夹角（0-90度）
+        property real p1p2_vertical_angle: {
+            var xDiff = Math.abs(root.endX - root.startX)
+            var yDiff = Math.abs(root.endY - root.startY)
+            var vertical_angle = 0
+            if (xDiff == 0) {
+                vertical_angle = 0
+            }
+            else if (yDiff == 0) {
+                vertical_angle = Math.PI / 4
+            }
+            else {
+                vertical_angle = Math.atan(xDiff / yDiff)
+            }
+            vertical_angle = 180 / Math.PI * vertical_angle
+            //console.log("vertical_angle is " + vertical_angle)
+            return vertical_angle
+        }
 
         PathCubic {
             id: cubic
@@ -77,12 +112,14 @@ Shape {
             y: root.endY
             control1X: {
                 if (root.p1_group == ParamGroup.InputObject) {
+                    if (path.p1p2_vertical_angle < 30) return path.startX
                     return path.startX;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
                     return path.startX - ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
+                    if (path.p1p2_vertical_angle < 30) return path.startX
                     return path.startX;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){
@@ -92,12 +129,14 @@ Shape {
             }
             control1Y: {
                 if (root.p1_group == ParamGroup.InputObject) {
+                    if (path.p1p2_vertical_angle < 30) return path.startY
                     return path.startY - ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
                     return path.startY;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
+                    if (path.p1p2_vertical_angle < 30) return path.startY
                     return path.startY + ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){
@@ -107,12 +146,14 @@ Shape {
             }
             control2X: {
                 if (root.p1_group == ParamGroup.InputObject) {
+                    if (path.p1p2_vertical_angle < 30) return root.endX
                     return root.endX;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
                     return root.endX + ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
+                    if (path.p1p2_vertical_angle < 30) return root.endX
                     return root.endX;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){
@@ -122,12 +163,14 @@ Shape {
             }
             control2Y: {
                 if (root.p1_group == ParamGroup.InputObject) {
+                    if (path.p1p2_vertical_angle < 30) return root.endY
                     return root.endY + ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.InputPrimitive){
                     return root.endY;
                 }
                 else if (root.p1_group == ParamGroup.OutputObject){
+                    if (path.p1p2_vertical_angle < 30) return root.endY
                     return root.endY - ctrlPtDist;
                 }
                 else if (root.p1_group == ParamGroup.OutputPrimitive){

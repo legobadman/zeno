@@ -29,12 +29,18 @@ struct ListGetItem : zeno::INode {
         auto index = ZImpl(get_input<zeno::NumericObject>("index"))->get<int>();
         if (ZImpl(has_input<DictObject>("list"))) {
             auto dict = ZImpl(get_input<zeno::DictObject>("list"));
+            if (index < 0) {
+                index += dict->lut.size();
+            }
             if (index < 0 || index >= dict->lut.size())
                 throw makeError<IndexError>(index, dict->lut.size(), "ListGetItem (for dict)");
             auto obj = std::next(dict->lut.begin(), index)->second;
             ZImpl(set_output("object", std::move(obj)));
         } else {
             auto list = ZImpl(get_input<zeno::ListObject>("list"));
+            if (index < 0) {
+                index += list->size();
+            }
             if (index < 0 || index >= list->m_impl->size())
                 throw makeError<IndexError>(index, list->m_impl->size(), "ListGetItem");
             auto obj = list->m_impl->get(index);
@@ -186,6 +192,7 @@ ZENDEFNODE(MakeSmallList, {
 struct MakeList : zeno::INode {
     virtual void apply() override {
         auto list = ZImpl(get_input<zeno::ListObject>("objs"));
+        set_output_container_info("list", get_input_container_info("objs"));
         ZImpl(set_output("list", std::move(list)));
     }
 };
@@ -193,6 +200,50 @@ struct MakeList : zeno::INode {
 ZENDEFNODE(MakeList, {
     {{gParamType_List, "objs", "", zeno::Socket_ReadOnly}},
     {{gParamType_List, "list"}},
+    {},
+    {"list"},
+    });
+
+
+struct MergeList : zeno::INode {
+    virtual void apply() override {
+        auto list1 = ZImpl(get_input<zeno::ListObject>("list1"));
+        auto list2 = ZImpl(get_input<zeno::ListObject>("list2"));
+        auto update1 = get_input_container_info("list1");
+        auto update2 = get_input_container_info("list2");
+        
+        auto lst = create_ListObject();
+        for (zany inobj : list1->get()) {
+            lst->push_back(inobj);
+        }
+
+        for (zany inobj : list2->get()) {
+            lst->push_back(inobj);
+        }
+
+        container_elem_update_info updateinfo;
+        updateinfo.new_added.insert(update1.new_added.begin(), update1.new_added.end());
+        updateinfo.new_added.insert(update2.new_added.begin(), update2.new_added.end());
+
+        updateinfo.modified.insert(update1.modified.begin(), update1.modified.end());
+        updateinfo.modified.insert(update2.modified.begin(), update2.modified.end());
+
+        updateinfo.removed.insert(update1.removed.begin(), update1.removed.end());
+        updateinfo.removed.insert(update2.removed.begin(), update2.removed.end());
+
+        set_output_container_info("list", updateinfo);
+        set_output("list", lst);
+    }
+};
+
+ZENDEFNODE(MergeList, {
+    {
+        {gParamType_List, "list1"},
+        {gParamType_List, "list2"}
+    },
+    {
+        {gParamType_List, "list"}
+    },
     {},
     {"list"},
     });
@@ -265,3 +316,4 @@ ZENO_DEFOVERLOADNODE(ToVisualize, _ListObject, typeid(ListObject).name())({
 #endif*/
 
 }
+

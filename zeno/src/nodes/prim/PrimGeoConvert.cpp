@@ -8,7 +8,7 @@ namespace zeno {
 
     using namespace zeno::reflect;
 
-    struct ZDEFNODE() PrimitiveToGeometry : INode {
+    struct PrimitiveToGeometry : INode {
         ReflectCustomUI m_uilayout = {
             _Group {
                 {"input_prim", ParamObject("Input", Socket_Clone)},
@@ -19,12 +19,12 @@ namespace zeno {
         };
 
         std::shared_ptr<GeometryObject> apply(std::shared_ptr<PrimitiveObject> input_prim) {
-            std::shared_ptr<GeometryObject> out_geo = std::make_shared<GeometryObject>(input_prim.get());
+            std::shared_ptr<GeometryObject> out_geo = std::make_shared<GeometryObject>(input_prim);
             return out_geo;
         }
     };
 
-    struct ZDEFNODE() GeometryToPrimitive : INode {
+    struct GeometryToPrimitive : INode {
         ReflectCustomUI m_uilayout = {
             _Group {
                 {"input_geometry", ParamObject("Input", Socket_Clone)},

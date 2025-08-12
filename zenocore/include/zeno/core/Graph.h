@@ -56,7 +56,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
         const std::string& orgin_name = "",
         bool bAssets = false,
         std::pair<float, float> pos = {},
-        bool isIOInit = false);
+        bool isIOInit = false,
+        bool* pbAssetLock = nullptr);
     CALLBACK_REGIST(createNode, void, const std::string&, zeno::NodeImpl*)
 
     bool removeNode(std::string const& name);
@@ -102,11 +103,13 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     CALLBACK_REGIST(clear, void)
 
     bool isAssets() const;
+    bool isAssetRoot() const;
     std::set<std::string> searchByClass(const std::string& name) const;
 
     void clearNodes();
-    void runGraph();
-    void applyNodes(std::set<std::string> const &ids);
+    void clearContainerUpdateInfo();
+    void runGraph(render_reload_info& infos);
+    void applyNodes(std::set<std::string> const &ids, render_reload_info& infos);
     void addNode(std::string const &cls, std::string const &id);
     Graph *addSubnetNode(std::string const &id);
     Graph *getSubnetGraph(std::string const &id) const;
@@ -131,7 +134,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     std::set<std::string> getSubOutputs();
     void viewNodeUpdated(const std::string node, bool bView);
     void markDirtyWhenFrameChanged();
-    void markDirtyAll();
+    void markDirtyAndCleanup();
     void onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value);
     void parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any& new_value);
 
@@ -147,7 +150,7 @@ private:
     void resetWildCardParamsType(bool bWildcard, NodeImpl* node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
     std::shared_ptr<Graph> _getGraphByPath(std::vector<std::string> items);
     bool isLinkValid(const EdgeInfo& edge);
-    bool applyNode(std::string const& id);
+    void applyNode(std::string const& id, render_update_info& info);
 
     NodeImpl* m_parSubnetNode = nullptr;
     std::map<std::string, std::unique_ptr<NodeImpl>> m_nodes;  //based on uuid.
@@ -164,7 +167,7 @@ private:
     std::set<std::string> m_viewnodes;
     std::string m_name;
 
-    const bool m_bAssets;
+    const bool m_bAssets;   //只是说明这个图是一个资产，可以是实例也可以是资产图引用
 };
 
 }

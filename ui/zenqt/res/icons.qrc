@@ -398,5 +398,13 @@
     <file>icons/broom_clear_clean_tool.svg</file>
     <file>icons/plugin_unselected.svg</file>
     <file>icons/plugin_selected.svg</file>
+    <file>icons/geo_userdata-idle.svg</file>
+    <file>icons/geo_userdata-on.svg</file>
+
+    <file>icons/node/cube.svg</file>
+    <file>icons/node/switchif.svg</file>
+    <file>icons/node/switch-between.svg</file>
+    <file>icons/node/aw.svg</file>
+    <file>icons/node/subnet.svg</file>
 </qresource>
 </RCC>

@@ -12,6 +12,10 @@ if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zenocore)
 endif()
 
+if(MSVC)
+    target_compile_options(zenocore PRIVATE /MP)
+endif()
+
 if (ZENO_ENABLE_OPENMP)
     find_package(OpenMP)
     if (TARGET OpenMP::OpenMP_CXX)
@@ -74,6 +78,8 @@ if (ZENO_WITH_PYTHON)
     #target_link_libraries(zenocore PUBLIC ${Python3_LIBRARIES})
     #target_include_directories(zenocore PUBLIC ${Python3_INCLUDE_DIRS})
     target_compile_definitions(zenocore PRIVATE -DZENO_WITH_PYTHON)
+    target_link_libraries(zenocore PRIVATE ${Python3_LIBRARIES})
+    target_include_directories(zenocore PRIVATE ${Python3_INCLUDE_DIRS})
     #target_link_options(zenocore PRIVATE /NODEFAULTLIB:python311.lib)
 
     #add_subdirectory(pybind11)
@@ -116,4 +122,9 @@ if (MSVC)  # must use this to make msvc linker happy
         PRIVATE
         $<IF:$<COMPILE_LANGUAGE:CXX>, /bigobj, >
     )
+endif()
+
+if (ZENO_WITH_VLD)
+    target_include_directories(zenocore PRIVATE "C:/vld/src")
+    target_link_libraries(zenocore PRIVATE "C:/vld2/src/bin/x64/Debug-v143/vld.lib")
 endif()

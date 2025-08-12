@@ -48,9 +48,10 @@ struct NODES_MIME_DATA : public QObjectUserData
 enum STATUS_BTN
 {
 	STATUS_OWNING,  //no clone by each other.
-    STATUS_MUTE,
+    STATUS_BYPASS,
     STATUS_VIEW,
-    STATUS_CACHE,
+    STATUS_NOCACHE,
+    STATUS_CLEARSUBNET,
 };
 
 #define PIXELS_IN_CELL 8

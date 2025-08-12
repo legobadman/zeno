@@ -5,6 +5,7 @@
 #include "recordvideomgr.h"
 #include "uicommon.h"
 #include "zenovis/Camera.h"
+//#include "launch/corelaunch.h"
 
 
 class Zenovis;
@@ -24,6 +25,7 @@ signals:
     void sig_recordFinished();
     void sig_frameRecordFinished(int frame);
     void sig_recordCanceled();
+    void sig_reloadFinished();
 
 public slots:
     void stop();
@@ -35,7 +37,7 @@ public slots:
     void onPlayToggled(bool bToggled);
     void onFrameSwitched(int frame);
     void cancelRecording();
-    void setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly);
+    void setRenderSeparately(int runtype);
     void onSetSafeFrames(bool bLock, int nx, int ny);
     bool recordFrame_impl(VideoRecInfo recInfo, int frame);
     void onSetLoopPlaying(bool enbale);
@@ -46,9 +48,11 @@ public slots:
     void load_objects();
     void onCleanUpView();
     void onSetBackground(bool bShowBg);
+    void onSetSampleNumber(int sample_number);
+
     void on_load_data(zeno::render_update_info info);
     void on_reload_objects(const zeno::render_reload_info& info);
-    void onSetData(float, float, float, bool, bool);
+    void onSetData(float, float, float, bool, bool, bool, bool, float);
 
 private:
     Zenovis *m_zenoVis;
@@ -68,7 +72,7 @@ public:
     ZOptixViewport(QWidget* parent = nullptr);
     ~ZOptixViewport();
     void setSimpleRenderOption();
-    void setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly);
+    void setRenderSeparately(/*runType runtype*/);
     void cameraLookTo(zenovis::CameraLookToDir dir);
     void updateCameraProp(float aperture, float disPlane, UI_VECTYPE skipParam = UI_VECTYPE());
     void updatePerspective();
@@ -76,6 +80,7 @@ public:
     void setSafeFrames(bool bLock, int nx, int ny);
     void setNumSamples(int samples);
     void showBackground(bool bShow);
+    void setSampleNumber(int sample_number);
     Zenovis* getZenoVis() const;
     bool isCameraMoving() const;
     void updateCamera();
@@ -109,7 +114,7 @@ signals:
     void sig_switchTimeFrame(int frame);
     void sig_setSafeFrames(bool bLock, int nx, int ny);
     void sig_cancelRecording();
-    void sig_setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly);
+    void sig_setRunType(int runtype);
     void sig_setLoopPlaying(bool enable);
     void sig_setSlidFeq(int feq);
     void sigscreenshoot(QString, QString, int, int);
@@ -119,8 +124,10 @@ signals:
     void sig_loadObjects();
     void sig_cleanUpView();
     void sig_setBackground(bool bShowBg);
-    void sig_setdata_on_optix_thread(float, float, float, bool, bool);
+    void sig_setSampleNumber(int sample_number);
+    void sig_setdata_on_optix_thread(float, float, float, bool, bool, bool, bool, float);
     void sig_reload_objects(const zeno::render_reload_info&);
+    void sig_reload_finished();
 
 public slots:
     void onFrameRunFinished(int frame);

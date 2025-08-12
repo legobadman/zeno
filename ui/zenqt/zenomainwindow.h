@@ -16,6 +16,7 @@ class LiveHttpServer;
 class LiveSignalsBridge;
 class ViewportWidget;
 class ZenoPropPanel;
+class ZenoImagePanel;
 
 namespace ads
 {
@@ -40,19 +41,17 @@ public:
     void setInDlgEventLoop(bool bOn);
     zeno::TimelineInfo timelineInfo();
     void setAlways(bool bAlways);
-    void setAlwaysLightCameraMaterial(bool bAlwaysLightCamera, bool bAlwaysMaterial);
     bool isAlways() const;
-    bool isAlwaysLightCamera() const;
-    bool isAlwaysMaterial() const;
     void resetTimeline(zeno::TimelineInfo info);
     void initUserdata(USERDATA_SETTING info);
     ZTimeline* timeline() const;
     QVector<DisplayWidget*> viewports() const;
+    QVector<ZenoImagePanel*> imagepanels() const;
     DisplayWidget* getCurrentViewport() const;
     DisplayWidget* getOptixWidget() const;
     ZenoGraphsEditor* getAnyEditor() const;
     void dispatchCommand(QAction* pAction, bool bTriggered);
-
+    void onSolverCallback(zeno::SOLVER_MSG msg, int startFrame, int endFrame);
     void sortRecentFile(QStringList &lst);
     bool isOnlyOptixWindow() const;
     bool isRecordByCommandLine() const;
@@ -135,6 +134,8 @@ public:
         ACTION_ZENCACHE,
         ACTION_SET_SHORTCUT,
         ACTION_PREFERENCES,
+        //tools
+        ACTION_COMPOSE_VIDEO,
         //Others
         ACTION_CUSTOM_UI,
         ACTION_ZOOM,
@@ -178,7 +179,7 @@ public slots:
     void onLangChanged(bool bChecked);
     void optixClientSend(QString& info);
     void optixClientStartRec();
-    void onRunTriggered(bool applyLightAndCameraOnly = false, bool applyMaterialOnly = false);
+    void onRunTriggered();
     void updateNativeWinTitle(const QString& title);
     void toggleTimelinePlay(bool bOn);
     void onZenovisFrameUpdate(bool bGLView, int frameid);
@@ -186,6 +187,8 @@ public slots:
     void onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg);
     void justLoadObjects();
     void reload_qml();
+    void onSetTimelineValue();
+    void onComposeVideo();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -234,11 +237,9 @@ private:
     PtrLayoutNode m_layoutRoot;
     bool m_bInDlgEventloop;
     bool m_bAlways;
-    bool m_bAlwaysLightCamera;
-    bool m_bAlwaysMaterial;
     int m_nResizeTimes;
     bool m_bOnlyOptix;          //isolate optix window.
-    Ui::MainWindow* m_ui;
+    QScopedPointer<Ui::MainWindow> m_ui;
 
     std::unique_ptr<QLocalSocket> optixClientSocket;
     bool m_bOptixProcRecording = false;
@@ -250,3 +251,4 @@ private:
 };
 
 #endif
+

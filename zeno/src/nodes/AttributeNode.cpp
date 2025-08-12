@@ -85,31 +85,26 @@ namespace zeno {
 
     struct DeleteAttribute : INode {
         void apply() override {
-            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            auto spGeo = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
             std::string attr_name = ZImpl(get_input2<std::string>("attr_name"));
             std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
             if (attr_name == "") {
                 throw makeError<UnimplError>("the attribute name cannot be empty.");
             }
 
-            if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
-                throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
-            }
-            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
+            auto attrnames = zeno::split_str(attr_name, ' ', false);
+            for (auto attrname : attrnames) {
                 if (m_attrgroup == "Point") {
-                    spGeo->m_impl->delete_attr(ATTR_POINT, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_POINT, attrname);
                 }
                 else if (m_attrgroup == "Face") {
-                    spGeo->m_impl->delete_attr(ATTR_FACE, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_FACE, attrname);
                 }
                 else if (m_attrgroup == "Geometry") {
-                    spGeo->m_impl->delete_attr(ATTR_GEO, attr_name);
+                    spGeo->m_impl->delete_attr(ATTR_GEO, attrname);
                 }
             }
-            else {
-                throw makeError<UnimplError>("Unsupport Object for creating attribute");
-            }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", spGeo));
         }
     };
     ZENDEFNODE(DeleteAttribute,
@@ -126,6 +121,117 @@ namespace zeno {
         {"geom"}
     });
 
+
+    struct HasAttribute : INode {
+        void apply() override {
+            auto spGeo = get_input_Geometry("Input");
+            auto attr_name = get_input2_string("attr_name");
+            auto attrgroup = get_input2_string("Attribute Group");
+            if (attr_name == "") {
+                throw makeError<UnimplError>("the attribute name cannot be empty.");
+            }
+
+            bool hasAttr = false;
+            if (attrgroup == "Point") {
+                hasAttr = spGeo->has_point_attr(attr_name);
+            }
+            else if (attrgroup == "Face") {
+                hasAttr = spGeo->has_face_attr(attr_name);
+            }
+            else if (attrgroup == "Geometry") {
+                hasAttr = spGeo->has_face_attr(attr_name);
+            }
+            else {
+                throw makeError<UnimplError>("unknown group");
+            }
+            set_output_int("hasAttr", hasAttr);
+        }
+    };
+    ZENDEFNODE(HasAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("attr_name", gParamType_String, "attribute1"),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+        },
+        {
+            ParamPrimitive("hasAttr", gParamType_Int)
+        },
+        {},
+        {"geom"}
+    });
+
+    struct CopyAttributeFrom : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            auto from_object = get_input_Geometry("From");
+            auto source = get_input2_string("Source Attribute");
+            auto target = get_input2_string("Target Attribute");
+            std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
+            GeoAttrGroup group;
+            if (m_attrgroup == "Point") {
+                group = ATTR_POINT;
+            }
+            else if (m_attrgroup == "Face") {
+                group = ATTR_FACE;
+            }
+            else if (m_attrgroup == "Geometry") {
+                group = ATTR_GEO;
+            }
+            input_object->copy_attr_from(group, from_object.get(), source, target);
+            set_output("Output", input_object);
+        }
+    };
+    ZENDEFNODE(CopyAttributeFrom,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            {gParamType_Geometry, "From"},
+            ParamPrimitive("Source Attribute", gParamType_String, ""),
+            ParamPrimitive("Target Attribute", gParamType_String, ""),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
+
+    struct CopyAttribute : INode {
+        void apply() override {
+            auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
+            auto source = get_input2_string("Source Attribute");
+            auto target = get_input2_string("Target Attribute");
+            std::string m_attrgroup = ZImpl(get_input2<std::string>("Attribute Group"));
+            GeoAttrGroup group;
+            if (m_attrgroup == "Point") {
+                group = ATTR_POINT;
+            }
+            else if (m_attrgroup == "Face") {
+                group = ATTR_FACE;
+            }
+            else if (m_attrgroup == "Geometry") {
+                group = ATTR_GEO;
+            }
+            input_object->copy_attr(group, source, target);
+            set_output("Output", input_object);
+        }
+    };
+    ZENDEFNODE(CopyAttribute,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("Source Attribute", gParamType_String, ""),
+            ParamPrimitive("Target Attribute", gParamType_String, ""),
+            ParamPrimitive("Attribute Group", gParamType_String, "Point", zeno::Combobox, std::vector<std::string>{"Point", "Face", "Geometry"})
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
 
     struct SetAttribute : INode {
         void apply() override {

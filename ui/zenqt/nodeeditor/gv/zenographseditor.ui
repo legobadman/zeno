@@ -62,7 +62,7 @@
          <string notr="true"/>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="assetsPage">
          <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -128,7 +128,6 @@
             <property name="styleSheet">
              <string notr="true">QListView
                     {
-                        background-color: transparent;
                         show-decoration-selected: 1;
                         font-size: 12pt;
                         font-weight: bold;
@@ -211,7 +210,6 @@
             <property name="styleSheet">
              <string notr="true">QListView
                     {
-                        background-color: transparent;
                         show-decoration-selected: 1;
                         font-size: 12pt;
                         font-weight: bold;
@@ -228,7 +226,7 @@
             </property>
            </widget>
           </item>
-         </layout>        
+         </layout>
         </widget>
         <widget class="QWidget" name="mainPage">
          <layout class="QVBoxLayout" name="verticalLayout2_">
@@ -326,7 +324,7 @@
        </widget>
        <widget class="QStackedWidget" name="mainStacked">
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QScrollArea" name="welcomeScrollPage">
          <property name="frameShape">
@@ -355,77 +353,7 @@
           </property>
          </widget>
         </widget>
-        <widget class="QTabWidget" name="graphsViewTab">
-         <property name="palette">
-          <palette>
-           <active>
-            <colorrole role="Base">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>255</red>
-               <green>255</green>
-               <blue>255</blue>
-              </color>
-             </brush>
-            </colorrole>
-            <colorrole role="Window">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>58</red>
-               <green>58</green>
-               <blue>58</blue>
-              </color>
-             </brush>
-            </colorrole>
-           </active>
-           <inactive>
-            <colorrole role="Base">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>255</red>
-               <green>255</green>
-               <blue>255</blue>
-              </color>
-             </brush>
-            </colorrole>
-            <colorrole role="Window">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>58</red>
-               <green>58</green>
-               <blue>58</blue>
-              </color>
-             </brush>
-            </colorrole>
-           </inactive>
-           <disabled>
-            <colorrole role="Base">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>58</red>
-               <green>58</green>
-               <blue>58</blue>
-              </color>
-             </brush>
-            </colorrole>
-            <colorrole role="Window">
-             <brush brushstyle="SolidPattern">
-              <color alpha="255">
-               <red>58</red>
-               <green>58</green>
-               <blue>58</blue>
-              </color>
-             </brush>
-            </colorrole>
-           </disabled>
-          </palette>
-         </property>
-         <property name="autoFillBackground">
-          <bool>true</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true"/>
-         </property>
+        <widget class="NodeEditorTabWidget" name="graphsViewTab">
          <property name="documentMode">
           <bool>true</bool>
          </property>
@@ -454,6 +382,12 @@
    <class>ZenoWelcomePage</class>
    <extends>QWidget</extends>
    <header>nodeeditor/gv/zenowelcomepage.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>NodeEditorTabWidget</class>
+   <extends>QTabWidget</extends>
+   <header>layout/nodeedittabwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

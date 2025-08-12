@@ -4,20 +4,19 @@
 namespace zeno {
 
     AttrColumn::AttrColumn(AttrVarVec value, size_t size) : m_pImpl(nullptr) {
-        m_pImpl = new AttributeImpl;
+        m_pImpl = std::make_unique<AttributeImpl>();
         m_pImpl->m_data = value;
         m_pImpl->m_size = size;
     }
 
     AttrColumn::AttrColumn(const AttrColumn& rhs) : m_pImpl(nullptr) {
         if (!m_pImpl)
-            m_pImpl = new AttributeImpl;
+            m_pImpl = std::make_unique<AttributeImpl>();
         m_pImpl->m_data = rhs.m_pImpl->m_data;
         m_pImpl->m_size = rhs.m_pImpl->m_size;
     }
 
     AttrColumn::~AttrColumn() {
-        delete m_pImpl;
     }
 
     AttrVarVec& AttrColumn::value() const {

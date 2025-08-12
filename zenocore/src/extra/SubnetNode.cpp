@@ -1,4 +1,4 @@
-#include <zeno/core/NodeImpl.h>
+﻿#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/INodeClass.h>
@@ -22,7 +22,11 @@ namespace zeno {
 SubnetNode::SubnetNode(INode* pNode)
     : NodeImpl(pNode)
     , m_subgraph(std::make_shared<Graph>(""))
+    , m_bLocked(true)
+    , m_bClearSubnet(false)
 {
+    m_subgraph->initParentSubnetNode(this);
+
     //auto cl = safe_at(getSession().nodeClasses, "Subnet", "node class name").get();
     //m_customUi = cl->m_customui;
     //添加一些default的输入输出
@@ -69,7 +73,7 @@ SubnetNode::SubnetNode(INode* pNode)
     m_customUi.outputObjs.push_back(objOutput);
 
     m_customUi.uistyle.background = "#1D5F51";
-    m_customUi.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
+    m_customUi.uistyle.iconResPath = ":/icons/node/subnet.svg";
 }
 
 SubnetNode::~SubnetNode() = default;
@@ -77,8 +81,22 @@ SubnetNode::~SubnetNode() = default;
 void SubnetNode::initParams(const NodeData& dat)
 {
     NodeImpl::initParams(dat);
+    m_bClearSubnet = dat.bclearsbn;
     if (dat.subgraph)
         m_subgraph->init(*dat.subgraph);
+    if (zeno::Node_AssetInstance == nodeType()) {
+        m_bLocked = dat.bLocked;
+    }
+}
+
+NodeType SubnetNode::nodeType() const {
+    if (isAssetsNode()) {
+        if (in_asset_file())
+            return zeno::Node_AssetReference;
+        else
+            return zeno::Node_AssetInstance;
+    }
+    return zeno::Node_SubgraphNode;
 }
 
 Graph* SubnetNode::get_subgraph() const
@@ -91,14 +109,45 @@ void SubnetNode::init_graph(std::shared_ptr<Graph> subg) {
 }
 
 bool SubnetNode::isAssetsNode() const {
-    return m_subgraph->isAssets();
+    zeno::Asset asst = zeno::getSession().assets->getAsset(get_nodecls());
+    return !asst.m_info.name.empty();
+}
+
+bool SubnetNode::is_loaded() const {
+    //TODO: 资产没加载的情况
+    return true;
+}
+
+bool SubnetNode::is_locked() const {
+    if (nodeType() == Node_AssetInstance || nodeType() == Node_AssetReference)
+        return m_bLocked;
+    else
+        return false;
+}
+
+void SubnetNode::set_locked(bool bLocked) {
+    if (nodeType() == Node_AssetInstance) {
+        m_bLocked = bLocked;
+        CALLBACK_NOTIFY(lockChanged)
+    }
+}
+
+bool SubnetNode::is_clearsubnet() const {
+    return m_bClearSubnet;
+}
+
+void SubnetNode::set_clearsubnet(bool bOn) {
+    m_bClearSubnet = bOn;
+    CALLBACK_NOTIFY(clearSubnetChanged, bOn)
+    mark_dirty(true);
 }
 
 params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit)
 {
     params_change_info changes = NodeImpl::update_editparams(params);
     //update subnetnode.
-    if (!m_subgraph->isAssets()) {
+    //没有锁定的节点（包括资产实例和普通子图，都可以在这里更新Subnet的SubInput/SubOutput等）
+    if (!is_locked()) {
         for (auto name : changes.new_inputs) {
             NodeImpl* newNode = m_subgraph->createNode("SubInput", name);
 
@@ -126,7 +175,7 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
                 zeno::ParamObject paramObj;
                 paramObj.bInput = false;
                 paramObj.name = "port";
-                paramObj.type = gParamType_Geometry;
+                paramObj.type = get_anyparam_type(true, name);//  gParamType_Geometry;
                 paramObj.socketType = Socket_Output;
                 newNode->add_output_obj_param(paramObj);
             }
@@ -180,7 +229,7 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
                 zeno::ParamObject paramObj;
                 paramObj.bInput = true;
                 paramObj.name = "port";
-                paramObj.type = gParamType_Geometry;
+                paramObj.type = get_anyparam_type(false, name); //gParamType_Geometry;
                 paramObj.socketType = Socket_Clone;
                 newNode->add_input_obj_param(paramObj);
             }
@@ -250,7 +299,7 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
 void SubnetNode::mark_subnetdirty(bool bOn)
 {
     if (bOn) {
-        m_subgraph->markDirtyAll();
+        m_subgraph->markDirtyAndCleanup();
     }
 }
 
@@ -290,7 +339,10 @@ void SubnetNode::apply() {
     for (auto const &suboutput_node: m_subgraph->getSubOutputs()) {
         nodesToExec.insert(suboutput_node);
     }
-    m_subgraph->applyNodes(nodesToExec);
+
+    //子图的list/dict更新如何处理？
+    zeno::render_reload_info _;
+    m_subgraph->applyNodes(nodesToExec, _);
 
     //TODO: 多输出其实是一个问题，不知道view哪一个，所以目前先规定子图只能有一个输出
     auto suboutputs = m_subgraph->getSubOutputs();
@@ -314,15 +366,36 @@ void SubnetNode::apply() {
             assert(ret);
         }
     }
+
+    if (m_bClearSubnet) {
+        //所有子图的节点都移除对象并标脏
+        m_subgraph->markDirtyAndCleanup();
+    }
+}
+
+void SubnetNode::cleanInternalCaches() {
+    //所有子图的节点都移除对象并标脏
+    m_subgraph->markDirtyAndCleanup();
 }
 
 NodeData SubnetNode::exportInfo() const {
     //要注意，这里必须要手动cast为SubnetNode才能拿，因为NodeImpl已经和INode分离了
     NodeData node = NodeImpl::exportInfo();
+    node.bclearsbn = m_bClearSubnet;
     const Asset& asset = zeno::getSession().assets->getAsset(node.cls);
     if (!asset.m_info.name.empty()) {
         node.asset = asset.m_info;
-        node.type = Node_AssetInstance;
+        if (in_asset_file()) {
+            node.type = Node_AssetReference;
+            node.bLocked = true;    //资产图里的资产只是引用，故不能展开，自然不能解锁
+        }
+        else {
+            node.type = Node_AssetInstance;
+            node.bLocked = m_bLocked;
+            if (!m_bLocked) {
+                node.subgraph = m_subgraph->exportGraph();
+            }
+        }
     }
     else {
         node.subgraph = m_subgraph->exportGraph();
@@ -343,42 +416,18 @@ CustomUI SubnetNode::export_customui() const {
         for (auto& tab : exportCustomui.inputPrims) {
             for (auto& group : tab.groups) {
                 for (auto& param : group.params) {
-                    if (auto node = m_subgraph->getNode(param.name)) {
-                        ParamType type;
-                        SocketType socketype;
-                        bool _wildcard;
-                        node->getParamTypeAndSocketType("port", true, false, type, socketype, _wildcard);
-                        param.type = type;
-                    }
+                    param = get_input_prim_param(param.name);
                 }
             }
         }
         for (auto& param : exportCustomui.inputObjs) {
-            if (auto node = m_subgraph->getNode(param.name)) {
-                ParamType type;
-                SocketType socketype;
-                bool _wildcard;
-                node->getParamTypeAndSocketType("port", false, false, type, socketype, _wildcard);
-                param.type = type;
-            }
+            param = get_input_obj_param(param.name);
         }
         for (auto& param : exportCustomui.outputPrims) {
-            if (auto node = m_subgraph->getNode(param.name)) {
-                ParamType type;
-                SocketType socketype;
-                bool _wildcard;
-                node->getParamTypeAndSocketType("port", true, true, type, socketype, _wildcard);
-                param.type = type;
-            }
+            param = get_output_prim_param(param.name);
         }
         for (auto& param : exportCustomui.outputObjs) {
-            if (auto node = m_subgraph->getNode(param.name)) {
-                ParamType type;
-                SocketType socketype;
-                bool _wildcard;
-                node->getParamTypeAndSocketType("port", false, true, type, socketype, _wildcard);
-                param.type = type;
-            }
+            param = get_output_obj_param(param.name);
         }
     }
     return exportCustomui;
@@ -389,7 +438,7 @@ void SubnetNode::setCustomUi(const CustomUI& ui)
     m_customUi = ui;
     //保证颜色图标
     m_customUi.uistyle.background = "#1D5F51";
-    m_customUi.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
+    m_customUi.uistyle.iconResPath = ":/icons/node/subnet.svg";
 }
 
 
@@ -416,7 +465,7 @@ void DopNetwork::apply()
     for (int i = startFrame; i <= currentFarme; i++) {
         if (m_frameCaches.find(i) == m_frameCaches.end()) {
             sess.globalState->updateFrameId(i);
-            m_subgraph->markDirtyAll();
+            m_subgraph->markDirtyAndCleanup();
             zeno::SubnetNode::apply();
 
             const ObjectParams& outputObjs = get_output_object_params();

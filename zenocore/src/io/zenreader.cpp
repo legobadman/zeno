@@ -2,10 +2,27 @@
 #include <zeno/io/iohelper.h>
 #include <zeno/utils/helper.h>
 #include <zeno/io/iotags.h>
+#include <zeno/io/zdareader.h>
+#include <zeno/core/Assets.h>
+#include <filesystem>
 
 
 namespace zenoio
 {
+    static std::wstring s2ws(std::string const& s) {
+        std::wstring ws(s.size(), L' '); // Overestimate number of code points.
+        ws.resize(std::mbstowcs(ws.data(), s.data(), s.size())); // Shrink to fit.
+        return ws;
+    }
+
+    static std::string ws2s(std::wstring const& wstr) {
+        std::setlocale(LC_ALL, "");  // 设置为系统默认 locale
+        size_t len = std::wcstombs(nullptr, wstr.c_str(), 0);
+        std::string str(len, '\0');
+        std::wcstombs(&str[0], wstr.c_str(), len);
+        return str;
+    }
+
     ZENO_API ZenReader::ZenReader()
     {
     }
@@ -125,8 +142,17 @@ namespace zenoio
                 {
                     retNode.bView = true;
                 }
-                else if (optName == "MUTE")
+                else if (optName == "ByPass")
                 {
+                    retNode.bypass = true;
+                }
+                else if (optName == "NoCache")
+                {
+                    retNode.bnocache = true;
+                }
+                else if (optName == "ClearSubnet")
+                {
+                    retNode.bclearsbn = true;
                 }
             }
         }
@@ -134,6 +160,10 @@ namespace zenoio
         {
             bool bCollasped = objValue["collasped"].GetBool();
             retNode.bCollasped = bCollasped;
+        }
+        if (objValue.HasMember("asset_locked")) {
+            bool bLocked = objValue["asset_locked"].GetBool();
+            retNode.bLocked = bLocked;
         }
 
         if (cls == "Blackboard")
@@ -182,19 +212,28 @@ namespace zenoio
             //TODO: import group.
         //}
 
+        bool bAsset = objValue.HasMember("asset");
+
         if (objValue.HasMember("subnet")) {
             zeno::GraphData subgraph;
             _parseGraph(objValue["subnet"], assets, subgraph);
             retNode.subgraph = subgraph;
-            retNode.type = zeno::Node_SubgraphNode;
+            if (bAsset) {
+                assert(!retNode.bLocked);
+                retNode.type = zeno::Node_AssetInstance;
+            }
+            else {
+                retNode.type = zeno::Node_SubgraphNode;
+            }
         }
 
-        if (objValue.HasMember("asset")) {
+        if (bAsset) {
             zeno::AssetInfo info;
             auto& assetObj = objValue["asset"];
-            if (assetObj.HasMember("name") && assetObj.HasMember("version"))
+            assert(assetObj.HasMember("name") && assetObj.HasMember("path"));
+            info.name = assetObj["name"].GetString();
+            if (assetObj.HasMember("version"))
             {
-                info.name = assetObj["name"].GetString();
                 std::string verStr = assetObj["version"].GetString();
                 std::vector<std::string> vec = zeno::split_str(verStr.c_str(), '.');
                 if (vec.size() == 1)
@@ -207,10 +246,42 @@ namespace zenoio
                     info.minorVer = std::stoi(vec[1]);
                 }
             }
+
+            //观察asset是否有加载
+            auto& sess = zeno::getSession();
+            auto& assets = sess.assets;
+            if (!assets->hasAsset(info.name)) {
+                std::string zdaPath = assetObj["path"].GetString();
+                if (!std::filesystem::exists(zdaPath)) {
+                    std::filesystem::path projpath = ws2s(sess.get_project_path());
+                    std::filesystem::path directory = projpath.parent_path();
+
+                    // 拼接路径
+                    std::filesystem::path fsZda = directory / zdaPath;
+                    if (!std::filesystem::exists(fsZda)) {
+                        zdaPath = "";
+                    }
+                    else {
+                        zdaPath = fsZda.string();
+                    }
+                }
+
+                if (!zdaPath.empty()) {
+                    zenoio::ZdaReader reader;
+                    reader.setDelayReadGraph(true);
+                    zeno::scope_exit sp([&] {reader.setDelayReadGraph(false); });
+                    zenoio::ZSG_PARSE_RESULT result = reader.openFile(s2ws(zdaPath));
+                    if (result.code == zenoio::PARSE_NOERROR) {
+                        zeno::ZenoAsset zasset = reader.getParsedAsset();
+                        zasset.info.path = zdaPath;
+                        assets->createAsset(zasset);
+                    }
+                }
+            }
+
             retNode.type = zeno::Node_AssetInstance;
             retNode.asset = info;
         }
-
         return retNode;
     }
 
@@ -396,7 +467,11 @@ namespace zenoio
 
         if (sockObj.HasMember("control"))
         {
-            bool bret = zenoio::importControl(sockObj["control"], ctrl, ctrlProps);
+            zenoio::importControl(sockObj["control"], ctrl);
+        }
+        if (sockObj.HasMember("controlProps"))
+        {
+            zenoio::importControlProps(sockObj["controlProps"], ctrlProps);
         }
 
         if (sockObj.HasMember("tooltip"))
@@ -472,12 +547,16 @@ namespace zenoio
                 if (paramValue.HasMember("control") && paramValue["control"].IsObject())
                 {
                     zeno::reflect::Any props;
-                    bool bret = zenoio::importControl(paramValue["control"], paramInfo.control, paramInfo.ctrlProps);
-                    if (bret) {
-                        if (paramInfo.control == zeno::NullControl)
-                            paramInfo.control = zeno::getDefaultControl(paramInfo.type);
+                    bool bret = zenoio::importControl(paramValue["control"], paramInfo.control);
+                    if (bret && paramInfo.control == zeno::NullControl) {
+                        paramInfo.control = zeno::getDefaultControl(paramInfo.type);
                     }
                 }
+                if (paramValue.HasMember("controlProps") && paramValue["controlProps"].IsObject())
+                {
+                    zenoio::importControlProps(paramValue["controlProps"], paramInfo.ctrlProps);
+                }
+
                 if (paramValue.HasMember("tooltip"))
                     paramInfo.tooltip = paramValue["tooltip"].GetString();
                 if (paramValue.HasMember("visible"))

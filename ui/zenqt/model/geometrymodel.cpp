@@ -1,6 +1,8 @@
 #include "geometrymodel.h"
+#include <zeno/types/GeometryObject.h>
 
-void addCol(std::shared_ptr<zeno::GeometryObject> pObject, zeno::GeoAttrGroup group, QMap<int, AttributeInfo>& colMapping, std::string name, int& nCol) {
+
+void addCol(zeno::GeometryObject* pObject, zeno::GeoAttrGroup group, QMap<int, AttributeInfo>& colMapping, std::string name, int& nCol) {
     QString qName = QString::fromStdString(name);
     //TODO: pos这种要放到最前头
     zeno::GeoAttrType type = pObject->get_attr_type(group, name);
@@ -24,7 +26,7 @@ void addCol(std::shared_ptr<zeno::GeometryObject> pObject, zeno::GeoAttrGroup gr
     }
 }
 
-QMap<int, AttributeInfo> initColMapping(std::shared_ptr<zeno::GeometryObject> pObject, zeno::GeoAttrGroup group)
+static QMap<int, AttributeInfo> initColMapping(zeno::GeometryObject* pObject, zeno::GeoAttrGroup group)
 {
     QMap<int, AttributeInfo> colMapping;
     std::vector<std::string> names = pObject->get_attr_names(group);
@@ -46,24 +48,24 @@ QMap<int, AttributeInfo> initColMapping(std::shared_ptr<zeno::GeometryObject> pO
 /// 
 /// </summary>
 /// <param name="pObject"></param>
-VertexModel::VertexModel(std::shared_ptr<zeno::GeometryObject> spObject, QObject* parent) : m_object(spObject), m_nvertices(spObject->nvertices())
+VertexModel::VertexModel(std::shared_ptr<zeno::GeometryObject_Adapter> spObject, QObject* parent) : m_object(spObject), m_nvertices(spObject->nvertices())
 {
-    m_colMap = initColMapping(spObject, zeno::ATTR_VERTEX);
-    spObject->register_add_vertex([this](int vertext_linearIdx) {
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
+    spObject->m_impl->register_add_vertex([this](int vertext_linearIdx) {
         if (vertext_linearIdx != -1) {
             beginInsertRows(QModelIndex(), vertext_linearIdx, vertext_linearIdx);
             m_nvertices++;
             endInsertRows();
         }
     });
-    spObject->register_remove_vertex([this](int vertext_linearIdx) {
+    spObject->m_impl->register_remove_vertex([this](int vertext_linearIdx) {
         if (vertext_linearIdx != -1) {
             beginRemoveRows(QModelIndex(), vertext_linearIdx, vertext_linearIdx);
             m_nvertices--;
             endRemoveRows();
         }
     });
-    spObject->register_reset_vertices([&]() {
+    spObject->m_impl->register_reset_vertices([&]() {
         beginResetModel();
         m_nvertices = spObject->nvertices();
         endResetModel();
@@ -107,7 +109,7 @@ QVariant VertexModel::data(const QModelIndex& index, int role) const {
     if (role == Qt::DisplayRole) {
         if (col == 0 || col == 1) {
             //Point Number
-            const auto& [face, vertidx, point] = spObject->vertex_info(row);
+            const auto& [face, vertidx, point] = spObject->m_impl->vertex_info(row);
             if (col == 0)
                 return QString("%1:%2").arg(face).arg(vertidx);
             else
@@ -116,15 +118,15 @@ QVariant VertexModel::data(const QModelIndex& index, int role) const {
         else {
             const AttributeInfo& info = m_colMap[col];
             if (info.type == AttrFloat) {
-                float val = spObject->get_elem<float>(zeno::ATTR_VERTEX, info.name, info.channel, row);
+                float val = spObject->m_impl->get_elem<float>(zeno::ATTR_VERTEX, info.name, info.channel, row);
                 return QString::number(val);
             }
             else if (info.type == AttrInt) {
-                int val = spObject->get_elem<int>(zeno::ATTR_VERTEX, info.name, info.channel, row);
+                int val = spObject->m_impl->get_elem<int>(zeno::ATTR_VERTEX, info.name, info.channel, row);
                 return QString::number(val);
             }
             else if (info.type == AttrString) {
-                std::string val = spObject->get_elem<std::string>(zeno::ATTR_VERTEX, info.name, info.channel, row);
+                std::string val = spObject->m_impl->get_elem<std::string>(zeno::ATTR_VERTEX, info.name, info.channel, row);
                 return QString::fromStdString(val);
             }
         }
@@ -152,12 +154,12 @@ QVariant VertexModel::headerData(int section, Qt::Orientation orientation, int r
     return QAbstractTableModel::headerData(section, orientation, role);
 }
 
-void VertexModel::setGeoObject(std::shared_ptr<zeno::GeometryObject> spObject)
+void VertexModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spObject)
 {
     beginResetModel();
     m_object = spObject;
     m_nvertices = spObject->nvertices();
-    m_colMap = initColMapping(spObject, zeno::ATTR_VERTEX);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
     endResetModel();
 }
 
@@ -169,16 +171,16 @@ bool VertexModel::removeRows(int row, int count, const QModelIndex& parent) {
 ///
 /// </summary>
 /// <param name="pObject"></param>
-PointModel::PointModel(std::shared_ptr<zeno::GeometryObject> spObject, QObject* parent) : m_object(spObject), m_npoints(spObject->npoints()) {
-    m_colMap = initColMapping(spObject, zeno::ATTR_POINT);
-    spObject->register_add_point([this](int ptnum) {
+PointModel::PointModel(std::shared_ptr<zeno::GeometryObject_Adapter> spObject, QObject* parent) : m_object(spObject), m_npoints(spObject->npoints()) {
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
+    spObject->m_impl->register_add_point([this](int ptnum) {
         if (ptnum != -1) {
             beginInsertRows(QModelIndex(), ptnum, ptnum);
             m_npoints++;
             endInsertRows();
         }
     });
-    spObject->register_remove_point([this](int ptnum) {
+    spObject->m_impl->register_remove_point([this](int ptnum) {
         if (ptnum != -1) {
             beginRemoveRows(QModelIndex(), ptnum, ptnum);
             m_npoints--;
@@ -224,15 +226,15 @@ QVariant PointModel::data(const QModelIndex& index, int role) const {
     if (role == Qt::DisplayRole) {
         const AttributeInfo& info = m_colMap[col];
         if (info.type == AttrFloat) {
-            float val = spObject->get_elem<float>(zeno::ATTR_POINT, info.name, info.channel, row);
+            float val = spObject->m_impl->get_elem<float>(zeno::ATTR_POINT, info.name, info.channel, row);
             return QString::number(val);
         }
         else if (info.type == AttrInt) {
-            int val = spObject->get_elem<int>(zeno::ATTR_POINT, info.name, info.channel, row);
+            int val = spObject->m_impl->get_elem<int>(zeno::ATTR_POINT, info.name, info.channel, row);
             return QString::number(val);
         }
         else if (info.type == AttrString) {
-            std::string val = spObject->get_elem<std::string>(zeno::ATTR_POINT, info.name, info.channel, row);
+            std::string val = spObject->m_impl->get_elem<std::string>(zeno::ATTR_POINT, info.name, info.channel, row);
             return QString::fromStdString(val);
         }
     }
@@ -256,12 +258,12 @@ QVariant PointModel::headerData(int section, Qt::Orientation orientation, int ro
     return QAbstractTableModel::headerData(section, orientation, role);
 }
 
-void PointModel::setGeoObject(std::shared_ptr<zeno::GeometryObject> spObject)
+void PointModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spObject)
 {
     beginResetModel();
     m_object = spObject;
     m_npoints = spObject->npoints();
-    m_colMap = initColMapping(spObject, zeno::ATTR_POINT);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
     endResetModel();
 }
 
@@ -281,23 +283,23 @@ bool PointModel::removeRows(int row, int count, const QModelIndex& parent) {
 /// </summary>
 /// <param name="pObject"></param>
 
-FaceModel::FaceModel(std::shared_ptr<zeno::GeometryObject> spObject, QObject* parent) : m_object(spObject), m_nfaces(spObject->nfaces()) {
-    m_colMap = initColMapping(spObject, zeno::ATTR_FACE);
-    spObject->register_add_face([this](int faceid) {
+FaceModel::FaceModel(std::shared_ptr<zeno::GeometryObject_Adapter> spObject, QObject* parent) : m_object(spObject), m_nfaces(spObject->nfaces()) {
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
+    spObject->m_impl->register_add_face([this](int faceid) {
         if (faceid != -1) {
             beginInsertRows(QModelIndex(), faceid, faceid);
             m_nfaces++;
             endInsertRows();
         }
     });
-    spObject->register_remove_face([this](int faceid) {
+    spObject->m_impl->register_remove_face([this](int faceid) {
         if (faceid != -1) {
             beginRemoveRows(QModelIndex(), faceid, faceid);
             m_nfaces--;
             endRemoveRows();
         }
     });
-    spObject->register_reset_faces([this]() {
+    spObject->m_impl->register_reset_faces([this]() {
         beginResetModel();
         auto _spObject = m_object.lock();
         m_nfaces = _spObject->nfaces();
@@ -343,15 +345,15 @@ QVariant FaceModel::data(const QModelIndex& index, int role) const {
     if (role == Qt::DisplayRole) {
         const AttributeInfo& info = m_colMap[col];
         if (info.type == AttrFloat) {
-            float val = spObject->get_elem<float>(zeno::ATTR_FACE, info.name, info.channel, row);
+            float val = spObject->m_impl->get_elem<float>(zeno::ATTR_FACE, info.name, info.channel, row);
             return QString::number(val);
         }
         else if (info.type == AttrInt) {
-            int val = spObject->get_elem<int>(zeno::ATTR_FACE, info.name, info.channel, row);
+            int val = spObject->m_impl->get_elem<int>(zeno::ATTR_FACE, info.name, info.channel, row);
             return QString::number(val);
         }
         else if (info.type == AttrString) {
-            std::string val = spObject->get_elem<std::string>(zeno::ATTR_FACE, info.name, info.channel, row);
+            std::string val = spObject->m_impl->get_elem<std::string>(zeno::ATTR_FACE, info.name, info.channel, row);
             return QString::fromStdString(val);
         }
     }
@@ -383,7 +385,7 @@ QVariant FaceModel::headerData(int section, Qt::Orientation orientation, int rol
     return QAbstractTableModel::headerData(section, orientation, role);
 }
 
-void FaceModel::setGeoObject(std::shared_ptr<zeno::GeometryObject> spObject)
+void FaceModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spObject)
 {
     if (!spObject) {
         return;
@@ -391,16 +393,16 @@ void FaceModel::setGeoObject(std::shared_ptr<zeno::GeometryObject> spObject)
     beginResetModel();
     m_object = spObject;
     m_nfaces = spObject->nfaces();
-    m_colMap = initColMapping(spObject, zeno::ATTR_FACE);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     endResetModel();
 }
 
 
-GeomDetailModel::GeomDetailModel(std::shared_ptr<zeno::GeometryObject> spObject, QObject* parent)
+GeomDetailModel::GeomDetailModel(std::shared_ptr<zeno::GeometryObject_Adapter> spObject, QObject* parent)
     : QAbstractTableModel(parent)
     , m_object(spObject)
 {
-    m_colMap = initColMapping(spObject, zeno::ATTR_GEO);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
 }
 
 QVariant GeomDetailModel::data(const QModelIndex& index, int role) const
@@ -413,15 +415,15 @@ QVariant GeomDetailModel::data(const QModelIndex& index, int role) const
     if (role == Qt::DisplayRole) {
         const AttributeInfo& info = m_colMap[col];
         if (info.type == AttrFloat) {
-            float val = spObject->get_elem<float>(zeno::ATTR_GEO, info.name, info.channel, row);
+            float val = spObject->m_impl->get_elem<float>(zeno::ATTR_GEO, info.name, info.channel, row);
             return QString::number(val);
         }
         else if (info.type == AttrInt) {
-            int val = spObject->get_elem<int>(zeno::ATTR_GEO, info.name, info.channel, row);
+            int val = spObject->m_impl->get_elem<int>(zeno::ATTR_GEO, info.name, info.channel, row);
             return QString::number(val);
         }
         else if (info.type == AttrString) {
-            std::string val = spObject->get_elem<std::string>(zeno::ATTR_GEO, info.name, info.channel, row);
+            std::string val = spObject->m_impl->get_elem<std::string>(zeno::ATTR_GEO, info.name, info.channel, row);
             return QString::fromStdString(val);
         }
     }
@@ -444,9 +446,121 @@ QVariant GeomDetailModel::headerData(int section, Qt::Orientation orientation, i
     return QAbstractTableModel::headerData(section, orientation, role);
 }
 
-void GeomDetailModel::setGeoObject(std::shared_ptr<zeno::GeometryObject> spObject) {
+void GeomDetailModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> spObject) {
     beginResetModel();
     m_object = spObject;
-    m_colMap = initColMapping(spObject, zeno::ATTR_GEO);
+    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
+    endResetModel();
+}
+
+
+GeomUserDataModel::GeomUserDataModel(std::shared_ptr<zeno::GeometryObject_Adapter> pObject, QObject* parent)
+    : QAbstractTableModel(parent)
+    , m_object(pObject)
+{
+}
+
+QVariant GeomUserDataModel::data(const QModelIndex& index, int role) const {
+    auto pUserData = userData();
+    if (!pUserData) return QVariant();
+
+    if (role == Qt::DisplayRole) {
+        auto it = std::next(pUserData->begin(), index.row());
+        auto currentData = userDataToString(it->second);
+        if (currentData.isValid()) {
+            return currentData;
+        }
+        else {
+            return QString("Invalid data");
+        }
+    }
+    else {
+        return QVariant();
+    }
+}
+
+int GeomUserDataModel::rowCount(const QModelIndex& parent) const
+{
+    auto pUserData = userData();
+    if (!pUserData) return 0;
+    return pUserData->size();
+}
+
+int GeomUserDataModel::columnCount(const QModelIndex& parent) const {
+    return 1;
+}
+
+zeno::UserData* GeomUserDataModel::userData() const {
+    if (auto spObject = m_object.lock()) {
+        return static_cast<zeno::UserData*>(spObject->userData());
+    }
+    else {
+        return nullptr;
+    }
+}
+
+QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const {
+    if (zeno::objectIsLiterial<float>(object)) {
+        auto v = zeno::objectToLiterial<float>(object);
+        return QString::number(v);
+    }
+    else if (zeno::objectIsLiterial<int>(object)) {
+        auto v = zeno::objectToLiterial<int>(object);
+        return QString::number(v);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec2f>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec2f>(object);
+        return QString("%1, %2").arg(v[0]).arg(v[1]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec2i>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec2i>(object);
+        return QString("%1, %2").arg(v[0]).arg(v[1]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec3f>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec3f>(object);
+        return QString("%1, %2, %3").arg(v[0]).arg(v[1]).arg(v[2]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec3i>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec3i>(object);
+        return QString("%1, %2, %3").arg(v[0]).arg(v[1]).arg(v[2]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec4f>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec4f>(object);
+        return QString("%1, %2, %3, %4").arg(v[0]).arg(v[1]).arg(v[2]).arg(v[3]);
+    }
+    else if (zeno::objectIsLiterial<zeno::vec4i>(object)) {
+        auto v = zeno::objectToLiterial<zeno::vec4i>(object);
+        return QString("%1, %2, %3, %4").arg(v[0]).arg(v[1]).arg(v[2]).arg(v[3]);
+    }
+    else if (zeno::objectIsLiterial<std::string>(object)) {
+        auto v = zeno::objectToLiterial<std::string>(object);
+        return QString(v.c_str());
+    }
+    return QVariant();
+}
+
+QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    if (role == Qt::DisplayRole) {
+        if (orientation == Qt::Horizontal) {
+            return "Value";
+        }
+        else {
+            auto pUserData = userData();
+            if (pUserData && pUserData->size() != 0)
+            {
+                auto it = std::next(pUserData->begin(), section);
+                if (it == pUserData->end()) {
+                    return QVariant();
+                }
+                return QString::fromStdString(it->first);
+            }
+        }
+    }
+    return QAbstractTableModel::headerData(section, orientation, role);
+}
+
+void GeomUserDataModel::setGeoObject(std::shared_ptr<zeno::GeometryObject_Adapter> pObject) {
+    beginResetModel();
+    m_object = pObject;
     endResetModel();
 }

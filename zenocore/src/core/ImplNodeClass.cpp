@@ -3,6 +3,7 @@
 #include <regex>
 #include <zeno/utils/helper.h>
 #include <zeno/extra/SubnetNode.h>
+#include <zeno/core/SolverImpl.h>
 
 namespace zeno {
 
@@ -36,10 +37,14 @@ namespace zeno {
     std::unique_ptr<NodeImpl> ImplNodeClass::new_instance(Graph* pGraph, std::string const& name) {
         INode* pNode = ctor();
         std::unique_ptr<NodeImpl> spNode;
-        if (pNode->type() == Node_SubgraphNode) {
+        NodeType type = pNode->type();
+        if (type == Node_SubgraphNode) {
             auto subnetNode = std::make_unique<SubnetNode>(pNode);
-            subnetNode->get_subgraph()->initParentSubnetNode(subnetNode.get());
             spNode = std::move(subnetNode);
+        }
+        else if (type == Node_Solver) {
+            auto solverNode = std::make_unique<SolverImpl>(pNode);
+            spNode = std::move(solverNode);
         }
         else {
             spNode = std::make_unique<NodeImpl>(pNode);

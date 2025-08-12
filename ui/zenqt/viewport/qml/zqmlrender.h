@@ -46,6 +46,7 @@ public:
 
 signals:
     void requestUpdate();
+    void sig_reload_finished();
 
 public slots:
     void reload_objects(zeno::render_reload_info info);

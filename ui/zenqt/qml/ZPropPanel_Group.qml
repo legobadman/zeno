@@ -89,8 +89,13 @@ Item {
 
             text: {
                 //保留小数点7位，并自动舍弃无用的零
-                //console.log("text about to change: mvalue = " + mvalue)
-                return formatWithSignificantDigits(mvalue, 7)
+                if (mvalue != null) {
+                    //console.log("text about to change: mvalue = " + mvalue)
+                    return formatWithSignificantDigits(mvalue, 7)
+                }
+                else{
+                    return "";
+                }
             }
 
             onEditingFinished: {
@@ -323,6 +328,10 @@ Item {
                 selectByMouse: true // 启用鼠标选择文本功能
                 text: mvalue
                 color: "white"
+
+                onEditingFinished: {
+                    root.model.setData(mindex, text, Model.ROLE_PARAM_QML_VALUE)
+                }
             }
 
             Button {
@@ -332,9 +341,8 @@ Item {
                         title: "select file"
                     })
                     dialog.onAccepted.connect(function() {
-                        var filePath = dialog.fileUrl.toString()
+                        var filePath = dialog.fileUrl.toString().replace("file:///", "")
                         console.log("fileUrl = " + filePath)
-                        //TODO: 这种fileUrl是file:// 需要转为普通的路径，否则不好处理
                         root.model.setData(mindex, filePath, Model.ROLE_PARAM_QML_VALUE)
                     })
                     dialog.open()
@@ -430,6 +438,9 @@ Item {
                     //这个margin竟然能决定显示warning:  Qt Quick Layouts: Detected recursive rearrange. Aborting after two iterations.
                     Layout.topMargin: showVertically ? 5 : 0
                     Layout.bottomMargin: showVertically ? 5 : 0
+                    
+                    //Layout.preferredHeight: height
+                    //Layout.preferredWidth: width
 
                     rows: showVertically ? 2 : 1
                     columns: showVertically ? 2 : 3

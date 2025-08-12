@@ -7,6 +7,8 @@
 #include <zeno/core/common.h>
 #include <zeno/core/IObject.h>
 #include <zeno/utils/api.h>
+#include <zeno/types/AttrVector.h>
+#include <zeno/types/PrimitiveObject.h>
 
 
 namespace zeno
@@ -15,18 +17,21 @@ namespace zeno
 
     struct PrimitiveObject;
 
-    class GeometryTopology;
+    class IGeomTopology;
     class AttributeVector;
 
     using ATTR_VEC_PTR = std::shared_ptr<AttributeVector>;
 
     class ZENO_API GeometryObject {
     public:
-        GeometryObject();
-        GeometryObject(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+        GeometryObject() = delete;
+        GeometryObject(GeomTopoType type);
+        GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+        GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
         GeometryObject(const GeometryObject& rhs);
-        GeometryObject(PrimitiveObject* prim);
+        GeometryObject(std::shared_ptr<PrimitiveObject> spPrim);
         std::shared_ptr<PrimitiveObject> toPrimitive();
+        GeomTopoType type() const;
         void inheritAttributes(
             GeometryObject* rhs,
             int vtx_offset,
@@ -35,6 +40,9 @@ namespace zeno
             int face_offset,
             std::set<std::string> face_nocopy);
         ~GeometryObject();
+
+        std::unique_ptr<GeometryObject> toIndiceMeshesTopo() const;
+        std::unique_ptr<GeometryObject> toHalfEdgeTopo() const;
 
         std::vector<vec3f> points_pos();
         std::vector<vec3i> tri_indice() const;
@@ -58,6 +66,9 @@ namespace zeno
         //CALLBACK_REGIST(create_point_attr, void, std::string)
         //CALLBACK_REGIST(create_vertex_attr, void, std::string)
         //CALLBACK_REGIST(create_geometry_attr, void, std::string)
+
+        void copy_attr(GeoAttrGroup grp, const std::string& src_attr, const std::string& dest_attr);
+        void copy_attr_from(GeoAttrGroup grp, GeometryObject* pSrcObject, const std::string& src_attr, const std::string& dest_attr);
 
         //设置属性
         int set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
@@ -90,11 +101,12 @@ namespace zeno
         }
 
         /* 检查属性是否存在 */
-        bool has_attr(GeoAttrGroup grp, std::string const& name);
+        bool has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type = ATTR_TYPE_UNKNOWN);
         bool has_vertex_attr(std::string const& name) const;
         bool has_point_attr(std::string const& name) const;
         bool has_face_attr(std::string const& name) const;
         bool has_geometry_attr(std::string const& name) const;
+        std::vector<std::string> attributes(GeoAttrGroup grp);
 
         //删除属性
         int delete_attr(GeoAttrGroup grp, const std::string& attr_name);
@@ -186,23 +198,28 @@ namespace zeno
         int vertex_face_index(int linear_vertex_id);
         std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
-        //特殊功能
-        void fusePoints(std::vector<int>& fusedPoints);//将origin点合并到target点
         int isLineFace(int faceid);
 
     private:
-        void initFromPrim(PrimitiveObject* prim);
+        void _temp_code_regist();
+        void _temp_code_unregist();
+
+        void initFromPrim(std::shared_ptr<PrimitiveObject> prim);
         std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
         const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         size_t get_attr_size(GeoAttrGroup grp) const;
         void copyTopologyAccordtoUseCount();
         void removeAttribElem(AttributeVector& attrib_vec, int idx);
+        void create_attr_from_AttrVector(GeoAttrGroup grp, const std::string& attr_name, const AttrVectorVariant& vec);
 
-        std::shared_ptr<GeometryTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
+        std::shared_ptr<IGeomTopology> m_spTopology; //如果拓扑结构发生变化，就得写时复制了
+
         std::map<std::string, AttributeVector> m_point_attrs;
         std::map<std::string, AttributeVector> m_face_attrs;
         std::map<std::string, AttributeVector> m_geo_attrs;
         std::map<std::string, AttributeVector> m_vert_attrs;
+
+        const GeomTopoType m_type;
     };
 
 }

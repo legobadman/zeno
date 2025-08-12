@@ -170,7 +170,27 @@ namespace zeno {
         std::string category;
         std::string nickname;
         std::string doc;
-        std::string reflectReturnName;      //the name of return value on reflected function.
+
+        CustomUI() = default;
+        CustomUI(
+            const ObjectParams& inObjs,
+            const CustomUIParams& inPrims,
+            const PrimitiveParams& outPrims,
+            const ObjectParams& outObjs,
+            const NodeUIStyle& uisty,
+            const std::string& _category,
+            const std::string& _nickname,
+            const std::string& _doc
+            )
+            : inputObjs(inObjs)
+            , inputPrims(inPrims)
+            , outputPrims(outPrims)
+            , outputObjs(outObjs)
+            , uistyle(uisty)
+            , category(_category)
+            , nickname(_nickname)
+            , doc(_doc)
+        {}
     };
 
     struct ParamUpdateInfo {
@@ -241,6 +261,10 @@ namespace zeno {
         bool bView = false;
         NodeType type;
         bool bCollasped = false;
+        bool bLocked = true;   //asset instance.
+        bool bypass = false;
+        bool bnocache = false;
+        bool bclearsbn = false;
     };
 
     struct NodeDesc {
@@ -286,6 +310,42 @@ namespace zeno {
         std::set<std::pair<std::string, std::string>> rename_outputs;    //pair: <old_name, new_name>
         std::set<std::string> remove_inputs;
         std::set<std::string> remove_outputs;
+    };
+
+    struct HeatmapData {
+        std::vector<float> facs;
+        std::vector<zeno::vec3f> colors;
+
+        bool operator==(const HeatmapData& rhs) {
+            return rhs.facs == facs && rhs.colors == colors;
+        }
+
+        std::vector<zeno::vec3f> toVecColors(int nres) const {
+            std::vector<zeno::vec3f> clrs;
+            for (int i = 0; i < nres; i++) {
+                float fac = i * (1.f / nres);
+                zeno::vec3f clr;
+                for (int j = 0; j < colors.size(); j++) {
+                    float f = facs[j];
+                    auto rgb = colors[j];
+                    if (f >= fac) {
+                        if (j != 0) {
+                            float last_f = facs[j - 1];
+                            auto last_rgb = colors[j - 1];
+                            auto intfac = (fac - last_f) / (f - last_f);
+                            //printf("%f %f %f %f\n", fac, last_f, f, intfac);
+                            clr = zeno::mix(last_rgb, rgb, intfac);
+                        }
+                        else {
+                            clr = rgb;
+                        }
+                        break;
+                    }
+                }
+                clrs.push_back(clr);
+            }
+            return clrs;
+        }
     };
 
     template<typename T, typename E>

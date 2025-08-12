@@ -295,6 +295,21 @@ void ZenoSubGraphScene::onDataChanged(const QModelIndex& topLeft, const QModelIn
         ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
         m_nodes[id]->onViewUpdated(idx.data(QtRole::ROLE_NODE_ISVIEW).toBool());
     }
+    if (role == QtRole::ROLE_NODE_BYPASS)
+    {
+        ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
+        m_nodes[id]->onByPassUpdated(idx.data(QtRole::ROLE_NODE_BYPASS).toBool());
+    }
+    if (role == QtRole::ROLE_NODE_NOCACHE)
+    {
+        ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
+        m_nodes[id]->onNoCachedUpdated(idx.data(QtRole::ROLE_NODE_NOCACHE).toBool());
+    }
+    if (role == QtRole::ROLE_NODE_CLEARSUBNET)
+    {
+        ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
+        m_nodes[id]->onClearSubnetUpdated(idx.data(QtRole::ROLE_NODE_CLEARSUBNET).toBool());
+    }
     if (role == QtRole::ROLE_COLLASPED)
     {
         ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
@@ -1339,7 +1354,7 @@ void ZenoSubGraphScene::keyPressEvent(QKeyEvent* event)
     }
     else if (!event->isAccepted() && uKey == ZenoSettingsManager::GetInstance().getShortCut(ShortCut_Bypass))
     {
-        updateNodeStatus(zeno::Mute);
+        updateNodeStatus(zeno::ByPass);
     } 
     else if (!event->isAccepted() && uKey == ZenoSettingsManager::GetInstance().getShortCut(ShortCut_View)) 
     {

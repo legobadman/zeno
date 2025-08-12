@@ -24,6 +24,8 @@
 #include "widgets/zcodeeditor.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
+#include "zenoapplication.h"
+#include "zenomainwindow.h"
 #include "declmetatype.h"
 
 
@@ -172,14 +174,13 @@ namespace zenoui
                 QPushButton* pBtn = new QPushButton("Edit Heatmap");
                 pBtn->setProperty("cssClass", "proppanel");
                 QObject::connect(pBtn, &QPushButton::clicked, [=]() {
-                    //TODO
-                    /*
-                    QString val = cbSet.cbGetIndexData().toString();
-                    ZenoHeatMapEditor editor(val);
+                    const auto& qvar = cbSet.cbGetIndexData();
+                    const auto& anyVal = qvar.value<zeno::reflect::Any>();
+                    zeno::HeatmapData heatmap = any_cast<zeno::HeatmapData>(anyVal);
+                    ZenoHeatMapEditor editor(heatmap, zenoApp->getMainWindow());
                     editor.exec();
-                    QString newVal = editor.colorRamps();
-                    cbSet.cbEditFinished(QVariant::fromValue(newVal));
-                    */
+                    heatmap = editor.colorRamps();
+                    cbSet.cbEditFinished(heatmap);
                 });
                 return pBtn;
             }
@@ -199,7 +200,7 @@ namespace zenoui
                 pBtn->setFixedSize(ZenoStyle::dpiScaled(100), ZenoStyle::dpiScaled(30));
                 pBtn->setStyleSheet(QString("background-color:%1; border:0;").arg(currentColor.name()));
                 QObject::connect(pBtn, &QPushButton::clicked, [=]() {
-                    QColor color = ColorEditor::getColor(pBtn->palette().window().color());
+                    QColor color = ColorEditor::getColor(pBtn->palette().window().color(), zenoApp->getMainWindow());
                     if (color.isValid()) 
                     {
                         pBtn->setStyleSheet(QString("background-color:%1; border:0;").arg(color.name()));
@@ -261,8 +262,8 @@ namespace zenoui
                 ZComboBox *pComboBox = new ZComboBox;
                 pComboBox->setFixedHeight(ZenoStyle::dpiScaled(zenoui::g_ctrlHeight));
                 pComboBox->addItems(items);
-                pComboBox->setCurrentText(text);
                 pComboBox->setEditable(true);
+                pComboBox->setCurrentText(text);
                 pComboBox->setItemDelegate(new ZComboBoxItemDelegate2(pComboBox));
 
                 QObject::connect(pComboBox, &ZComboBox::_textActivated, [=](const QString& newText) {
@@ -275,7 +276,7 @@ namespace zenoui
                 QPushButton* pBtn = new QPushButton("Edit Curve");
                 pBtn->setProperty("cssClass", "proppanel");
                 QObject::connect(pBtn, &QPushButton::clicked, [=]() {
-                    ZCurveMapEditor* pEditor = new ZCurveMapEditor(true);
+                    ZCurveMapEditor* pEditor = new ZCurveMapEditor(true, zenoApp->getMainWindow());
                     pEditor->setAttribute(Qt::WA_DeleteOnClose);
 
                     QObject::connect(pEditor, &ZCurveMapEditor::finished, [=](int result) {

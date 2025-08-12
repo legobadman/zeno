@@ -14,7 +14,7 @@
 namespace zeno {
 namespace {
 
-static std::shared_ptr<VDBGrid> readGenericVDBGrid(const std::string &fn) {
+static std::shared_ptr<VDBGrid> readGenericVDBGrid(const std::string &fn, uint32_t index=0) {
   using GridTypes = std::tuple
     < openvdb::points::PointDataGrid
     , openvdb::FloatGrid
@@ -26,9 +26,16 @@ static std::shared_ptr<VDBGrid> readGenericVDBGrid(const std::string &fn) {
   file.open();
   openvdb::GridPtrVecPtr my_grids = file.getGrids();
   file.close();
+
+	if (index >= my_grids->size()) index=0;
+
   std::shared_ptr<VDBGrid> grid;
   for (openvdb::GridPtrVec::iterator iter = my_grids->begin();
        iter != my_grids->end(); ++iter) {
+
+	std::size_t idx = std::distance(my_grids->begin(), iter);
+	if (idx != index) continue;
+
     openvdb::GridBase::Ptr it = *iter;
     if (zeno::static_for<0, std::tuple_size_v<GridTypes>>([&] (auto i) {
         using GridT = std::tuple_element_t<i, GridTypes>;
@@ -103,11 +110,11 @@ ZENDEFNODE(CacheVDBGrid,
     }});
 #endif
 
-static std::shared_ptr<VDBGrid> readvdb(std::string path, std::string type)
+static std::shared_ptr<VDBGrid> readvdb(std::string path, std::string type, uint32_t index=0)
 {
     if (type == "") {
       std::cout << "vdb read generic data" << std::endl;
-      return readGenericVDBGrid(path);
+      return readGenericVDBGrid(path, index);
     }
     std::shared_ptr<VDBGrid> data;
     if (type == "float") {
@@ -160,7 +167,8 @@ struct ImportVDBGrid : zeno::INode {
   virtual void apply() override {
     auto path = zsString2Std(get_input2_string("path"));
     // auto type = zsString2Std(get_param_string("type"));
-    auto data = readvdb(path, "");
+	auto index = get_input2_int("index");
+    auto data = readvdb(path, "", index);
     set_output("data", std::move(data));
   }
 };
@@ -181,6 +189,7 @@ struct ReadVDB : ImportVDBGrid {
 static int defReadVDB = zeno::defNodeClass<ReadVDB>("ReadVDB",
     { /* inputs: */ {
     {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
+	{"int", "index", "0"}
     }, /* outputs: */ {
     {gParamType_VDBGrid,"data"},
     }, /* params: */ {
@@ -191,3 +200,4 @@ static int defReadVDB = zeno::defNodeClass<ReadVDB>("ReadVDB",
 
 }
 } // namespace zeno
+

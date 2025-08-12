@@ -1,4 +1,4 @@
-#ifndef __PARAMS_MODEL_H__
+﻿#ifndef __PARAMS_MODEL_H__
 #define __PARAMS_MODEL_H__
 
 #include <QObject>
@@ -43,7 +43,7 @@ class ParamFilterModel : public QSortFilterProxyModel {
     QML_ELEMENT
 
 public:
-    ParamFilterModel(zeno::NodeDataGroup group);
+    ParamFilterModel(zeno::NodeDataGroup group, QObject* parent = nullptr);
     Q_INVOKABLE int indexFromName(const QString& name) const;
 
 protected:
@@ -60,6 +60,7 @@ class ParamsModel : public QAbstractListModel
 
 public:
     ParamsModel(zeno::NodeImpl* spNode, QObject* parent = nullptr);
+    ParamsModel(const zeno::CustomUI& customui);
 
     Q_PROPERTY(bool showPrimSocks READ getShowPrimSocks WRITE setShowPrimSocks NOTIFY showPrimSocks_changed)
     Q_PROPERTY(int numOfOutputPrims READ getNumOfOutputPrims NOTIFY numOfOutputPrims_changed)
@@ -69,13 +70,10 @@ public:
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
     Q_INVOKABLE QStandardItemModel* customParamModel();
     Q_INVOKABLE CustomUIModel* customUIModel();
-    Q_INVOKABLE CustomUIModel* customUIModelCloned();
     Q_INVOKABLE ParamFilterModel* inputObjects();
     Q_INVOKABLE ParamFilterModel* inputPrims();
     Q_INVOKABLE ParamFilterModel* outputPrims();
     Q_INVOKABLE ParamFilterModel* outputObjects();
-    Q_INVOKABLE void applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel);
-    Q_INVOKABLE void cancleEditCustomUIModelCloned();
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
@@ -125,11 +123,11 @@ signals:
     void maxLengthName_changed();
 
 private:
-    void initParamItems();
+    void initParamItems(const zeno::CustomUI& customui);
     void initCustomUI(const zeno::CustomUI& customui);
+    void initProxyModels();
     void updateCustomUiModelIncremental(const zeno::params_change_info& params, const zeno::CustomUI& customui); //增量更新m_customParamsM，防止zenoproppanl接收不到数据
     GraphModel* parentGraph() const;
-    void test_customparamsmodel() const;
     QString getMaxLengthName() const;
     void updateParamData(const QString& name, const QVariant& val, int role, bool bInput = true);
     QStandardItemModel* constructProxyModel();
@@ -138,8 +136,6 @@ private:
     QVector<ParamItem> m_items;
 
     CustomUIModel* m_customUIM;
-    CustomUIModel* m_customUIMCloned;
-    QStandardItemModel* m_customParamsM;
 
     ParamFilterModel* m_inObjProxy;
     ParamFilterModel* m_inPrimProxy;
@@ -148,7 +144,9 @@ private:
 
     zeno::NodeImpl* m_wpNode;    //直接用裸指针，反正如果核心没了这个model肯定也没了
     std::string cbUpdateParam;
+    zeno::CustomUI m_tempUI;
     mutable bool m_bReentry = false;
+    bool m_bTempModel = false;  //给CustomUI面板用的临时悬空模型，不依附于任何节点
 };
 
 

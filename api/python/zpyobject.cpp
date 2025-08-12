@@ -1,6 +1,7 @@
 #include "zpyobject.h"
 #include "apiutil.h"
 #include <zeno/core/Graph.h>
+#include <zeno/types/UserData.h>
 #include <zeno/utils/interfaceutil.h>
 #include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 //#include "zeno_types/reflect/reflection.generated.hpp"
@@ -10,6 +11,115 @@
 auto spNode = wpObj;\
 if (!spNode) {\
     throw std::runtime_error("the node has been destroyed in core data");\
+}
+
+Zpy_Object::Zpy_Object(zeno::zany obj) : m_wpObject(obj) {
+
+}
+
+VAR_USER_DATA Zpy_Object::get_user_data(const std::string& key) {
+    auto spObject = m_wpObject.lock();
+    if (!spObject) {
+        throw std::runtime_error("object has been destroyed");
+    }
+    zeno::UserData* pUserData = static_cast<zeno::UserData*>(spObject->m_usrData.get());
+    auto iter = pUserData->m_data.find(key);
+    if (iter == pUserData->m_data.end())
+        throw std::runtime_error("the key \"" + key + "\" doesn't exist");
+
+    zeno::zany dat = iter->second;
+    if (auto numobj = std::dynamic_pointer_cast<zeno::NumericObject>(dat)) {
+        return std::visit([&](auto&& arg)->VAR_USER_DATA {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, int>) {
+                return arg;
+            }
+            else if constexpr (std::is_same_v<T, float>) {
+                return arg;
+            }
+            else if constexpr (std::is_same_v<T, zeno::vec2i>) {
+                return arg;
+            }
+            else if constexpr (std::is_same_v<T, zeno::vec2f>) {
+                return arg;
+            }
+            else if constexpr (std::is_same_v<T, zeno::vec3f>) {
+                return arg;
+            }
+            else if constexpr (std::is_same_v<T, zeno::vec3i>) {
+                return arg;
+            }
+            else if constexpr (std::is_same_v<T, zeno::vec4i>) {
+                return arg;
+            }
+            else if constexpr (std::is_same_v<T, zeno::vec4f>) {
+                return arg;
+            }
+            }, numobj->value);
+    }
+    else if (auto strobj = std::dynamic_pointer_cast<zeno::StringObject>(dat)) {
+        return strobj->get();
+    }
+    else {
+        throw std::runtime_error("no numeric or string on userdata");
+    }
+}
+
+void Zpy_Object::set_user_data(const std::string& key, const VAR_USER_DATA& dat) {
+    auto spObject = m_wpObject.lock();
+    if (!spObject) {
+        throw std::runtime_error("object has been destroyed");
+    }
+
+    zeno::UserData* pUserData = static_cast<zeno::UserData*>(spObject->m_usrData.get());
+
+    std::visit([&](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, int>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, std::string>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, zeno::vec2i>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, zeno::vec2f>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, zeno::vec3f>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, zeno::vec3i>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, zeno::vec4i>) {
+            pUserData->set2(key, arg);
+        }
+        else if constexpr (std::is_same_v<T, zeno::vec4f>) {
+            pUserData->set2(key, arg);
+        }
+        }, dat);
+}
+
+std::vector<Zpy_Object> Zpy_Object::toList() const {
+    auto spObject = m_wpObject.lock();
+    if (!spObject) {
+        throw std::runtime_error("object has been destroyed");
+    }
+    if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+        std::vector<Zpy_Object> vec;
+        for (auto spObj : spList->get()) {
+            vec.push_back(Zpy_Object(spObj));
+        }
+        return vec;
+    }
+    else {
+        throw std::runtime_error("the object is not a list object");
+    }
 }
 
 
@@ -48,7 +158,8 @@ Zpy_Camera::Zpy_Camera(
     spNode->set_view(true);
 
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 Zpy_Camera::Zpy_Camera(zeno::NodeImpl* wpNode)
@@ -59,7 +170,8 @@ Zpy_Camera::Zpy_Camera(zeno::NodeImpl* wpNode)
 void Zpy_Camera::run() {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 std::shared_ptr<zeno::CameraObject> Zpy_Camera::getCamera() const {
@@ -209,7 +321,8 @@ Zpy_Light::Zpy_Light(
     spNode->set_view(true);
 
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 Zpy_Light::Zpy_Light(zeno::NodeImpl* wpNode)
@@ -289,7 +402,8 @@ void Zpy_Light::setIntensity(float intensity) {
 void Zpy_Light::run() {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
     auto nodename = spNode->get_name();
-    zeno::getSession().mainGraph->applyNodes({ nodename });
+    zeno::render_reload_info render_;
+    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
 std::shared_ptr<zeno::PrimitiveObject> Zpy_Light::getLight() const {

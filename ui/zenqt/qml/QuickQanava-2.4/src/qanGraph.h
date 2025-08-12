@@ -141,15 +141,18 @@ public:
      */
     Q_PROPERTY(QQuickItem*      containerItem READ getContainerItem NOTIFY containerItemChanged FINAL)
     Q_PROPERTY(GraphModel*      model READ getModel WRITE setModel FINAL)
+    Q_PROPERTY(bool locked READ isLocked NOTIFY lockedChanged FINAL)
     //! \sa containerItem
     inline QQuickItem*          getContainerItem() noexcept { return _containerItem.data(); }
     inline const QQuickItem*    getContainerItem() const noexcept { return _containerItem.data(); }
+    bool                        isLocked() const;
     void                        setContainerItem(QQuickItem* containerItem);
     GraphModel*                 getModel() const noexcept { return m_model; }
     void                        setModel(GraphModel* pModel);
     QVector<qan::Node*>         getNodes(const QStringList& node_names);
 signals:
     void                        containerItemChanged();
+    void                        lockedChanged();
 private:
     QPointer<QQuickItem>        _containerItem;
     //@}

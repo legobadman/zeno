@@ -1019,8 +1019,6 @@ QStringList UiHelper::getAllControls()
 
 QString UiHelper::getTypeDesc(zeno::ParamType type)
 {
-    //���������ͨ����Щhash�룬�õ���Ӧ��type_info����type_info���¼��
-    //����metadata��������1.�Ƿ�Ϊobject 2.���Ƽ�� ������Դ����������Ȼ�ķ�ʽ�ˡ�
     switch (type)
     {
     case zeno::types::gParamType_String:    return "string";
@@ -1951,6 +1949,33 @@ QString UiHelper::gradient2colorString(const QLinearGradient& grad)
         colorStr += "\n";
     }
     return colorStr;
+}
+
+zeno::HeatmapData UiHelper::grad2heatmap(const QLinearGradient& grad) {
+    zeno::HeatmapData heatmap;
+    const QGradientStops& stops = grad.stops();
+    int n = stops.size();
+    heatmap.colors.resize(stops.size());
+    heatmap.facs.resize(stops.size());
+    for (int i = 0; i < n; i++) {
+        auto grad = stops[i];
+        heatmap.facs[i] = grad.first;
+        heatmap.colors[i] = { (float)grad.second.redF(), (float)grad.second.greenF(), (float)grad.second.blueF() };
+    }
+    return heatmap;
+}
+
+QLinearGradient UiHelper::heatmap2Grad(const zeno::HeatmapData& heatmap) {
+    QLinearGradient grad;
+    if (heatmap.colors.empty()) return grad;
+    ZASSERT_EXIT(heatmap.colors.size() == heatmap.facs.size(), grad);
+    for (int i = 0; i < heatmap.colors.size(); i++) {
+        zeno::vec3f vec = heatmap.colors[i];
+        QColor clr;
+        clr.setRgbF(vec[0], vec[1], vec[2]);
+        grad.setColorAt(heatmap.facs[i], clr);
+    }
+    return grad;
 }
 
 QLinearGradient UiHelper::colorString2Grad(const QString& colorStr)

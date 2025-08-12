@@ -59,6 +59,7 @@ namespace qan { // ::qan
 /* Graph Object Management *///------------------------------------------------
 Graph::Graph(QQuickItem* parent) noexcept :
     super_t{parent}
+    , m_model(nullptr)
 {
     setContainerItem(this);
     setAntialiasing(true);
@@ -88,7 +89,7 @@ void    Graph::classBegin()
     setGroupDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/Group.qml")));
     // Note: Do not set a default node delegate, otherwise it would be used instead
     //  of qan::Node::delegate(), just let the user specify one.
-    setEdgeDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/Edge.qml")));
+    //setEdgeDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/Edge.qml")));
     setSelectionDelegate(createComponent(QStringLiteral("qrc:/QuickQanava/SelectionItem.qml")));
 
     const auto engine = qmlEngine(this);
@@ -105,6 +106,7 @@ void    Graph::componentComplete()
     const auto engine = qmlEngine(this);
     if (engine != nullptr) {
         // Visual connector initialization
+#if 0
         auto connectorComponent = std::make_unique<QQmlComponent>(engine, QStringLiteral("qrc:/QuickQanava/VisualConnector.qml"));
         if (connectorComponent) {
             qan::Style* style = qan::Connector::style(nullptr);
@@ -127,6 +129,7 @@ void    Graph::componentComplete()
                 }
             } else qWarning() << "qan::Graph::componentComplete(): Error: No style available for connector creation.";
         }
+#endif
     } else qWarning() << "qan::Graph::componentComplete(): Error: No QML engine available to register default QML delegates.";
 }
 
@@ -288,6 +291,13 @@ qan::Group* Graph::groupAt(const QPointF& p, const QSizeF& s, const QQuickItem* 
     return nullptr;
 }
 
+bool Graph::isLocked() const {
+    if (m_model)
+        return m_model->isLocked();
+    else
+        return false;
+}
+
 void    Graph::setContainerItem(QQuickItem* containerItem)
 {
     // PRECONDITIONS:
@@ -353,8 +363,7 @@ void Graph::setModel(GraphModel* pGraphM)
         int role = roles[0];
         if (role == QtRole::ROLE_NODE_RUN_STATE) {
             const QVariant& dat = topLeft.data(role);
-            NodeState state = dat.value<NodeState>();
-            QmlNodeRunStatus::Value qmlstate = static_cast<QmlNodeRunStatus::Value>(state.runstatus);
+            QmlNodeRunStatus::Value qmlstate = dat.value<QmlNodeRunStatus::Value>();
             pNodeItem->getItem()->dataChanged(qmlstate, role);
         }
         else if (role == QtRole::ROLE_NODE_NAME) {
@@ -377,6 +386,11 @@ void Graph::setModel(GraphModel* pGraphM)
             this->groupNode(group, node);
         }
     });
+    connect(m_model, &GraphModel::lockStatusChanged, this, &qan::Graph::lockedChanged);
+    connect(m_model, &GraphModel::layoutAboutToBeChanged, this, [&]() {
+        clearGraph();
+        });
+    emit lockedChanged();
 }
 
 //-----------------------------------------------------------------------------

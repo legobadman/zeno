@@ -53,7 +53,7 @@ struct _SGlobal_initPythonEnv
     }
 };
 
-static _SGlobal_initPythonEnv _inst;
+//static _SGlobal_initPythonEnv _inst;
 
 
 #endif

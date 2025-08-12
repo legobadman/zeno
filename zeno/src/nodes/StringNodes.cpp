@@ -586,6 +586,74 @@ std::string& trim(std::string &s)
     return s;
 }
 
+struct GetStringFromList : zeno::INode {
+    virtual void apply() override {
+        const auto& vecstr = zeno::reflect::any_cast<std::vector<std::string>>(m_pAdapter->get_param_result("list"));
+        int index = get_input2_int("index");
+        if (index < 0 || index >= vecstr.size())
+            throw makeError<IndexError>(index, vecstr.size(), "GetStringFromList");
+        std::string str = vecstr[index];
+        m_pAdapter->set_primitive_output("string", str);
+    }
+};
+
+ZENDEFNODE(GetStringFromList, {
+    {
+        {gParamType_StringList, "list", ""},
+        {gParamType_Int, "index"}
+    },
+    {{gParamType_String, "string"},
+    },
+    {},
+    {"string"},
+});
+
+struct LegacyStringToList : zeno::INode {
+    virtual void apply() override {
+        auto stringlist = ZImpl(get_input2<std::string>("string"));
+        auto list = create_ListObject();
+        auto separator = ZImpl(get_input2<std::string>("Separator"));
+        auto trimoption = ZImpl(get_input2<bool>("Trim"));
+        auto keepempty = ZImpl(get_input2<bool>("KeepEmpty"));
+        std::vector<std::string> strings;
+        size_t pos = 0;
+        size_t posbegin = 0;
+        std::string word;
+        while ((pos = stringlist.find(separator, pos)) != std::string::npos) {
+            word = stringlist.substr(posbegin, pos - posbegin);
+            if (trimoption) trim(word);
+            if (keepempty || !word.empty()) strings.push_back(word);
+            pos += separator.length();
+            posbegin = pos;
+        }
+        if (posbegin < stringlist.length()) { //push last word
+            word = stringlist.substr(posbegin);
+            if (trimoption) trim(word);
+            if (keepempty || !word.empty()) strings.push_back(word);
+        }
+        for (const auto& string : strings) {
+            auto obj = std::make_unique<StringObject>();
+            obj->set(string);
+            list->m_impl->push_back(std::move(obj));
+        }
+        ZImpl(set_output("list", std::move(list)));
+    }
+};
+
+ZENDEFNODE(LegacyStringToList, {
+    {
+        {gParamType_String, "string", ""},
+        {gParamType_String, "Separator", ""},
+        {gParamType_Bool, "Trim", "false"},
+        {gParamType_Bool, "KeepEmpty", "false"},
+    },
+    {{gParamType_List, "list"},
+    },
+    {},
+    {"string"},
+    });
+
+
 struct StringToList : zeno::INode {
     virtual void apply() override {
         auto stringlist = ZImpl(get_input2<std::string>("string"));
@@ -609,12 +677,8 @@ struct StringToList : zeno::INode {
             if(trimoption) trim(word);
             if(keepempty || !word.empty()) strings.push_back(word);
         }
-        for(const auto &string : strings) {
-            auto obj = std::make_unique<StringObject>();
-            obj->set(string);
-            list->m_impl->push_back(std::move(obj));
-        }
-        ZImpl(set_output("list", std::move(list)));
+        m_pAdapter->set_primitive_output("list", strings);
+        m_pAdapter->set_primitive_output("count", static_cast<int>(strings.size()));
     }
 };
 
@@ -625,7 +689,9 @@ ZENDEFNODE(StringToList, {
         {gParamType_Bool, "Trim", "false"},
         {gParamType_Bool, "KeepEmpty", "false"},
     },
-    {{gParamType_List, "list"},
+    {
+        {gParamType_StringList, "list"},
+        {gParamType_Int, "count"}
     },
     {},
     {"string"},
@@ -671,6 +737,40 @@ ZENDEFNODE(NumbertoString, {
     {"string"},
 });
 
+struct NumberToTime : zeno::INode {
+  virtual void apply() override {
+    auto num = int(std::round(get_input2_float("number")));
+    auto obj = std::make_unique<zeno::StringObject>();
+    int h = num / 60 / 60;
+    int m = num % (60 * 60) / 60;
+    int s = num % 60;
+    if (get_input2_string("format") == "string") {
+      auto str = zeno::format("{:02}:{:02}:{:02}", h, m, s);
+      set_output_string("time", stdString2zs(str));
+    }
+    else if (get_input2_string("format") == "vec3f") {
+      auto value = vec3f(h, m, s);
+      set_output_vec3f("time", toAbiVec3f(value));
+    }
+    else if (get_input2_string("format") == "vec3i") {
+      auto value = vec3i(h, m, s);
+      set_output_vec3i("time", toAbiVec3i(value));
+    }
+  }
+};
+
+ZENDEFNODE(NumberToTime, {
+   {
+       {gParamType_Float, "number"},
+       {"enum vec3i vec3f string", "format", "string"},
+   },
+   {
+       {gParamType_AnyNumeric, "time"}
+   },
+   {},
+   {"string"},
+});
+
 std::string strreplace(std::string textToSearch, std::string_view toReplace, std::string_view replacement)
 {
     size_t pos = 0;
@@ -701,8 +801,8 @@ struct StringReplace : zeno::INode {
 ZENDEFNODE(StringReplace, {
     {
         {gParamType_String, "string", "", Socket_Primitve, Multiline},
-        {gParamType_String, "old", ""},
-        {gParamType_String, "new", ""},
+        {gParamType_String, "old", "", Socket_Primitve, Lineedit},
+        {gParamType_String, "new", "", Socket_Primitve, Lineedit},
     },
     {{gParamType_String, "string"},
     },

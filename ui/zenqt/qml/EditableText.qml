@@ -12,12 +12,14 @@ Column {
     property bool isEditing: false
     property string text: ""
     property bool handle_mouseevent: true
+    property var fontsize: 16
 
     Text {
         id: displayText
         visible: !comp.isEditing
         text: comp.text
         color: "#FFFFFF"
+        font.pixelSize: comp.fontsize
 
         MouseArea{
             anchors.fill: parent

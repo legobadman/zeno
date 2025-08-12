@@ -628,6 +628,24 @@ namespace zenoio
             break;
         }
         case gParamType_Heatmap: {
+            zeno::HeatmapData hd;
+            if (val.IsObject()) {
+                const auto& facArray = val["fac"].GetArray();
+                const auto& clrArray = val["color"].GetArray();
+                for (int i = 0; i < facArray.Size(); i++) {
+                    float fac = facArray[i].GetFloat();
+                    hd.facs.push_back(fac);
+                }
+                for (int i = 0; i < clrArray.Size(); i++) {
+                    auto clr = clrArray[i].GetArray();
+                    zeno::vec3f vec3;
+                    vec3[0] = clr[0].GetFloat();
+                    vec3[1] = clr[1].GetFloat();
+                    vec3[2] = clr[2].GetFloat();
+                    hd.colors.push_back(vec3);
+                }
+            }
+            defl = hd;
             break;
         }
         case Param_Null:
@@ -1024,6 +1042,9 @@ namespace zenoio
                         if constexpr (std::is_same_v<T, int>) {
                             writer.Int(arg);
                         }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            writer.Int(arg);
+                        }
                         else if constexpr (std::is_same_v<T, std::string>) {
                             writer.String(arg.c_str());
                         }
@@ -1145,8 +1166,26 @@ namespace zenoio
             }
             case gParamType_Heatmap:
             {
-                //TODO:
-                writer.Null();
+                auto heatmap = zeno::reflect::any_cast<zeno::HeatmapData>(any);
+                writer.StartObject();
+                writer.Key("fac");
+                writer.StartArray();
+                for (auto fac : heatmap.facs) {
+                    writer.Double(fac);
+                }
+                writer.EndArray();
+
+                writer.Key("color");
+                writer.StartArray();
+                for (auto clr : heatmap.colors) {
+                    writer.StartArray();
+                    writer.Double(clr[0]);
+                    writer.Double(clr[1]);
+                    writer.Double(clr[2]);
+                    writer.EndArray();
+                }
+                writer.EndArray();
+                writer.EndObject();
                 break;
             }
             case gParamType_Vec2i:
@@ -1401,7 +1440,46 @@ namespace zenoio
         }
     }
 
-    bool importControl(const rapidjson::Value& controlObj, zeno::ParamControl& ctrl, zeno::reflect::Any& props)
+    bool importControlProps(const rapidjson::Value& controlPropsObj, zeno::reflect::Any& props)
+    {
+        if (!controlPropsObj.IsObject())
+            return false;
+
+        if (controlPropsObj.HasMember("items") && controlPropsObj["items"].IsArray()) {
+            auto arr = controlPropsObj["items"].GetArray();
+            std::vector<std::string> items;
+            for (int i = 0; i < arr.Size(); i++)
+            {
+                items.push_back(arr[i].GetString());
+            }
+            props = items;
+            return true;
+        }
+        else if (controlPropsObj.HasMember("min") &&
+                 controlPropsObj.HasMember("max") &&
+                 controlPropsObj.HasMember("step"))
+        {
+            const auto& minObj = controlPropsObj["min"];
+            const auto& maxObj = controlPropsObj["max"];
+            const auto& stepObj = controlPropsObj["step"];
+
+            if (minObj.IsInt() && maxObj.IsInt() && stepObj.IsInt())
+            {
+                std::vector<int> items = { minObj.GetInt(), maxObj.GetInt(), stepObj.GetInt() };
+                props = items;
+                return true;
+            }
+            else if (minObj.IsFloat() && maxObj.IsFloat() && stepObj.IsFloat())
+            {
+                std::vector<float> items = { minObj.GetFloat(), maxObj.GetFloat(), stepObj.GetFloat() };
+                props = items;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    bool importControl(const rapidjson::Value& controlObj, zeno::ParamControl& ctrl)
     {
         if (!controlObj.IsObject())
             return false;
@@ -1415,33 +1493,6 @@ namespace zenoio
 
         const std::string& ctrlName = nameObj.GetString();
         ctrl = getControlByName(ctrlName);
-
-        if (controlObj.HasMember("min") && controlObj.HasMember("max") &&
-            controlObj.HasMember("step"))
-        {
-            if (controlObj["min"].IsNumber() && controlObj["max"].IsNumber() && controlObj["step"].IsNumber())
-            {
-                std::vector<float> ranges = {
-                    controlObj["min"].GetFloat(),
-                    controlObj["max"].GetFloat(),
-                    controlObj["step"].GetFloat()
-                };
-                props = ranges;
-            }
-        }
-        if (controlObj.HasMember("items"))
-        {
-            if (controlObj["items"].IsArray())
-            {
-                auto arr = controlObj["items"].GetArray();
-                std::vector<std::string> items;
-                for (int i = 0; i < arr.Size(); i++)
-                {
-                    items.push_back(arr[i].GetString());
-                }
-                props = items;
-            }
-        }
         return true;
     }
 

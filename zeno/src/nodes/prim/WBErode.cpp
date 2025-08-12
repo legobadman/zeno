@@ -4,6 +4,7 @@
 
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/parallel_reduce.h>
 #include <zeno/types/ListObject_impl.h>
@@ -2343,21 +2344,22 @@ struct HF_maskByFeature : INode {
         ////////////////////////////////////////////////////////////////////////////////////////
 
         // 初始化网格
-        auto terrain = ZImpl(get_input<PrimitiveObject>("HeightField"));
+        auto terrain = get_input_Geometry("HeightField");
         int nx, nz;
         auto ud = terrain->userData();
         if ((!ud->has("nx")) || (!ud->has("nz")))
             zeno::log_error("no such UserData named '{}' and '{}'.", "nx", "nz");
         nx = ud->get_int("nx");
         nz = ud->get_int("nz");
-        auto &pos = terrain->verts;
+
+        const auto &pos = terrain->points_pos();
         vec3f p0 = pos[0];
         vec3f p1 = pos[1];
         float cellSize = length(p1 - p0);
 
         // 获取面板参数
-        auto heightLayer = ZImpl(get_input2<std::string>("height_layer"));
-        auto maskLayer = ZImpl(get_input2<std::string>("mask_layer"));
+        auto heightLayer = get_input2_string("height_layer");
+        auto maskLayer = get_input2_string("mask_layer");
         auto smoothRadius = ZImpl(get_input2<int>("smooth_radius"));
         auto invertMask = ZImpl(get_input2<bool>("invert_mask"));
 
@@ -2374,17 +2376,20 @@ struct HF_maskByFeature : INode {
         auto useHeight = ZImpl(get_input2<bool>("use_height"));
         auto minHeight = ZImpl(get_input2<float>("min_height"));
         auto maxHeight = ZImpl(get_input2<float>("max_height"));
-        auto curve_height = ZImpl(get_input_prim<CurvesData>("height_ramp"));
+        auto curve_height = zeno::reflect::any_cast<CurvesData>(ZImpl(get_param_result("height_ramp")));
 
         // 初始化网格属性
-        if (!terrain->verts.has_attr(heightLayer) || !terrain->verts.has_attr(maskLayer)) {
-            zeno::log_error("Node [HF_maskByFeature], no such data layer named '{}' or '{}'.",
-                            heightLayer, maskLayer);
+        if (!terrain->has_point_attr(heightLayer) || !terrain->has_point_attr(maskLayer)) {
+            throw makeError<UnimplError>("Node [HF_maskByFeature], no such data layer named '" + 
+                zsString2Std(heightLayer) + "' or '" + zsString2Std(maskLayer));
         }
-        auto &height = terrain->verts.attr<float>(heightLayer);
-        auto &mask = terrain->verts.attr<float>(maskLayer);
+        const auto& height = terrain->get_float_attr(ATTR_POINT, heightLayer);
+        auto mask = terrain->get_float_attr(ATTR_POINT, maskLayer);
 
-        auto &_grad = terrain->verts.add_attr<zeno::vec3f>("_grad");
+        assert(!terrain->has_point_attr("_grad"));
+
+        std::vector<vec3f> _grad(terrain->npoints());
+        //auto &_grad = terrain->verts.add_attr<zeno::vec3f>("_grad");
         std::fill(_grad.begin(), _grad.end(), vec3f(0,0,0));
 
         ////////////////////////////////////////////////////////////////////////////////////////
@@ -2495,13 +2500,14 @@ struct HF_maskByFeature : INode {
                 }
             }
         }
-        terrain->verts.erase_attr("_grad");
-        ZImpl(set_output("HeightField", std::move(terrain)));
+
+        terrain->set_point_attr(maskLayer, mask);
+        set_output("HeightField", terrain);
     }
 };
 ZENDEFNODE(HF_maskByFeature,
            {/* inputs: */ {
-                   {gParamType_Primitive, "HeightField", "", zeno::Socket_ReadOnly},
+                   {gParamType_Geometry, "HeightField"},
                    {gParamType_Bool, "invert_mask", "0"},
                    {gParamType_String, "height_layer", "height"},
                    {gParamType_String, "mask_layer", "mask"},
@@ -2523,7 +2529,7 @@ ZENDEFNODE(HF_maskByFeature,
                },
                /* outputs: */
                {
-                   {gParamType_Primitive, "HeightField"},
+                   {gParamType_Geometry, "HeightField"},
                },
                /* params: */
                {
@@ -2572,19 +2578,18 @@ ZENDEFNODE(HF_rotate_displacement_2d,
 
 struct HF_remap : INode {
     void apply() override {
-        auto terrain = ZImpl(get_input<PrimitiveObject>("prim"));
-        auto remapLayer = ZImpl(get_input2<std::string>("remap layer"));
-        if (!terrain->verts.has_attr(remapLayer)) {
-            zeno::log_error("Node [HF_remap], no such data layer named '{}'.",
-                            remapLayer);
+        auto terrain = get_input_Geometry("prim");
+        auto remapLayer = get_input2_string("remap layer");
+        if (!terrain->has_point_attr(remapLayer)) {
+            throw makeError<UnimplError>("Node [HF_remap], no such data layer named '" + zsString2Std(remapLayer) + "'");
         }
-        auto& var = terrain->verts.attr<float>(remapLayer);
+        const auto& var = terrain->get_float_attr(ATTR_POINT, remapLayer);
         auto autoCompute = ZImpl(get_input2<bool>("Auto Compute input range"));
         auto inMin = ZImpl(get_input2<float>("input min"));
         auto inMax = ZImpl(get_input2<float>("input max"));
         auto outMin = ZImpl(get_input2<float>("output min"));
         auto outMax = ZImpl(get_input2<float>("output max"));
-        auto curve = ZImpl(get_input_prim<CurvesData>("remap ramp"));
+        auto curve = zeno::reflect::any_cast<CurvesData>(ZImpl(get_param_result("remap ramp")));
         auto clampMin = ZImpl(get_input2<bool>("clamp min"));
         auto clampMax = ZImpl(get_input2<bool>("clamp max"));
 
@@ -2594,50 +2599,47 @@ struct HF_remap : INode {
             inMax = zeno::parallel_reduce_array<float>(var.size(), var[0], [&] (size_t i) -> float { return var[i]; },
             [&] (float i, float j) -> float { return zeno::max(i, j); });
         }
-#pragma omp parallel for
-        for (int i = 0; i < terrain->verts.size(); i++)
-        {
-            if (var[i] < inMin)
-            {
-                if (clampMin)
-                {
-                    var[i] = outMin;
+
+        terrain->foreach_float_attr_update(ATTR_POINT, remapLayer, 0, [&](int i, float old_val)->float {
+            float new_val = old_val;
+            if (old_val < inMin) {
+                if (clampMin) {
+                    new_val = outMin;
+                }
+                else {
+                    new_val -= inMin;
+                    new_val += outMin;
+                }
+            }
+            else if (old_val > inMax) {
+                if (clampMax) {
+                    new_val = outMax;
                 }
                 else
                 {
-                    var[i] -= inMin;
-                    var[i] += outMin;
+                    new_val -= inMax;
+                    new_val += outMax;
                 }
             }
-            else if (var[i] > inMax)
-            {
-                if (clampMax)
-                {
-                    var[i] = outMax;
-                }
-                else
-                {
-                    var[i] -= inMax;
-                    var[i] += outMax;
-                }
+            else {
+                new_val = fit(new_val, inMin, inMax, 0, 1);
+                new_val = curve.eval(new_val);
+                new_val = fit(new_val, 0, 1, outMin, outMax);
             }
-            else
-            {
-                var[i] = fit(var[i], inMin, inMax, 0, 1);
-                var[i] = curve.eval(var[i]);
-                var[i] = fit(var[i], 0, 1, outMin, outMax);
-            }
-            if (remapLayer == "height"){
+            /* TODO
+            if (remapLayer == "height") {
                 terrain->verts.attr<zeno::vec3f>("pos")[i][1] = var[i];
             }
-        }
+            */
+            return new_val;
+            });
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        set_output("prim", terrain);
     }
 };
 ZENDEFNODE(HF_remap,
            { /* inputs: */ {
-               {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+               {gParamType_Geometry, "prim"},
                {gParamType_String, "remap layer", "height"},
                {gParamType_Bool, "Auto Compute input range", "0"},
                {gParamType_Float, "input min", "0"},
@@ -2648,8 +2650,8 @@ ZENDEFNODE(HF_remap,
                {gParamType_Bool, "clamp min", "0"},
                {gParamType_Bool, "clamp max", "0"}
            }, /* outputs: */ {
-{gParamType_Primitive, "prim"},
-}, /* params: */ {
+               {gParamType_Geometry, "prim"},
+           }, /* params: */ {
            }, /* category: */ {
                "deprecated",
            } });

@@ -9,6 +9,13 @@ namespace zeno
 {
     struct AttributeWrangle : zeno::INode
     {
+        CustomUI export_customui() const override {
+            CustomUI ui = INode::export_customui();
+            ui.uistyle.iconResPath = ":/icons/node/aw.svg";
+            ui.uistyle.background = "#DE6E10";
+            return ui;
+        }
+
         void apply() override {
             auto spGeo = ZImpl(get_input2<GeometryObject_Adapter>("Input"));
             std::string zfxCode = ZImpl(get_input2<std::string>("Zfx Code"));
@@ -29,7 +36,7 @@ namespace zeno
             ZfxExecute zfx(zfxCode, &ctx);
             zfx.execute();
 
-            ZImpl(set_output("Output", spGeo));
+            ZImpl(set_output("Output", ctx.spObject));
         }
     };
 

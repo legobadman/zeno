@@ -216,7 +216,7 @@ namespace zeno
 
         std::vector<zeno::vec3f> newObjPos(nTotalPts);
 
-        auto mergedObj = create_GeometryObject(false, nTotalPts, nTotalFaces, true);
+        auto mergedObj = create_GeometryObject(zeno::Topo_IndiceMesh, false, nTotalPts, nTotalFaces, true);
         size_t pt_offset = 0, face_offset = 0;
         for (int iGeom = 0; iGeom < geoobjs.size(); iGeom++)
         {
@@ -641,11 +641,9 @@ namespace zeno
             }
         }
 
-        auto spOutput = create_GeometryObject(false, new_pos.size(), newFaces.size());
-        for (const std::vector<int>& face_indice : newFaces) {
-            spOutput->m_impl->add_face(face_indice, true);  //todo: 考虑线
-        }
-        spOutput->m_impl->create_point_attr("pos", new_pos);
+        //todo: 考虑线
+        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, false, new_pos, newFaces);
+
         //去除被排除的部分
         for (auto iter = rem_points.rbegin(); iter != rem_points.rend(); iter++) {
             spOutput->m_impl->remove_point(*iter);
@@ -659,7 +657,7 @@ namespace zeno
         const int nPointCount,
         int seed)
     {
-        auto spOutput = create_GeometryObject(input->is_base_triangle(), nPointCount, 0);
+        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, input->is_base_triangle(), nPointCount, 0);
         if (seed == -1) seed = std::random_device{}();
 
         const int nFaces = input->m_impl->nfaces();
@@ -668,7 +666,7 @@ namespace zeno
         std::vector<vec3f> newPts(nPointCount);
 
         if (sampleRegion == "Volumn") {
-            const auto& bbox = geomBoundingBox(input->m_impl);
+            const auto& bbox = geomBoundingBox(input->m_impl.get());
             //目前只考虑通过bbox直接采样，不考虑复杂的空间
             parallel_for((size_t)0, (size_t)nPointCount, [&](size_t i) {
                 wangsrng rng(i);
@@ -734,7 +732,7 @@ namespace zeno
         for (auto& facePts : faces) {
             nPoints += facePts.size();
         }
-        auto spOutput = create_GeometryObject(false, nPoints, nFaces);
+        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, false, nPoints, nFaces);
         std::vector<vec3f> points;
         points.resize(nPoints);
         int nInitPoints = 0;
@@ -857,14 +855,14 @@ namespace zeno
             }
         }
 
-        auto spOutput = create_GeometryObject(false, new_points.size(), newFaces.size());
+        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, false, new_points.size(), newFaces.size());
         for (int iFace = 0; iFace < newFaces.size(); iFace++) {
             const std::vector<int>& facePts = newFaces[iFace];
             const zeno::Vector<int>& _facePts = stdVec2zeVec(facePts);
             spOutput->add_face(_facePts);
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);
-        copyAttribute(input->m_impl, spOutput->m_impl, ATTR_POINT, pointMapping, { "pos" });
+        copyAttribute(input->m_impl.get(), spOutput->m_impl.get(), ATTR_POINT, pointMapping, {"pos"});
         if (newFaces.size() == faces.size()) {
             //just a patch...
             spOutput->inheritAttributes(input, -1, -1, {}, 0, {});

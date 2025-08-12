@@ -9,17 +9,21 @@ namespace zeno
     struct ListObject;
     struct DictObject;
     struct PrimitiveObject;
+    struct GeometryObject_Adapter;
     struct GlobalState;
+    struct CalcContext;
 
     struct ZENO_API INode {
         virtual void apply() = 0;
         virtual CustomUI export_customui() const;
         virtual NodeType type() const;
+        virtual zeno::String uuid() const;
         virtual ~INode() = default;     //暂时不考虑abi问题
 
         zany get_input(const zeno::String& param);
         zany get_output(const zeno::String& param);
         zeno::SharedPtr<PrimitiveObject> get_input_PrimitiveObject(const zeno::String& param);
+        zeno::SharedPtr<GeometryObject_Adapter> get_input_Geometry(const zeno::String& param);
         zeno::SharedPtr<ListObject> get_input_ListObject(const zeno::String& param);
         zeno::SharedPtr<DictObject> get_input_DictObject(const zeno::String& param);
         int get_input2_int(const zeno::String& param);
@@ -27,6 +31,12 @@ namespace zeno
         String get_input2_string(const zeno::String& param);
         bool get_input2_bool(const zeno::String& param);
         bool has_input(const zeno::String& param);
+        bool has_link_input(const zeno::String& param);
+
+        container_elem_update_info get_input_container_info(const zeno::String& param);
+        container_elem_update_info get_output_container_info(const zeno::String& param);
+        void set_input_container_info(const zeno::String& param, const container_elem_update_info& info);
+        void set_output_container_info(const zeno::String& param, const container_elem_update_info& info);
 
         zeno::Vec2i get_input2_vec2i(const zeno::String& param);
         zeno::Vec2f get_input2_vec2f(const zeno::String& param);
@@ -51,12 +61,6 @@ namespace zeno
 
         int GetFrameId() const;
         GlobalState* getGlobalState();
-
-        //foreach issues.
-        virtual bool is_continue_to_run();
-        virtual void increment();
-        virtual void reset_forloop_settings();
-        virtual zany get_iterate_object();
 
         NodeImpl* m_pAdapter = nullptr;
     };

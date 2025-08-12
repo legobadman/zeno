@@ -1,7 +1,10 @@
 #include "GraphsTreeModel.h"
 #include "uicommon.h"
+#include "graphsmanager.h"
+#include "zenoapplication.h"
 #include "variantptr.h"
 #include <zeno/core/common.h>
+#include "assetsmodel.h"
 #include "zassert.h"
 
 
@@ -154,7 +157,7 @@ void GraphsTreeModel::onGraphRowsAboutToBeRemoved(const QModelIndex& parent, int
         ZASSERT_EXIT(graphItem);
 
         graphItem->removeRow(first);
-        emit layoutChanged({ graphItem->index() });
+        //emit layoutChanged({ graphItem->index() }); //树比较大的时候有性能损耗
     }
 }
 
@@ -237,15 +240,20 @@ GraphModel* GraphsTreeModel::getGraphByPath(const QStringList& objPath)
             items.removeAt(0);
             return m_main->getGraphByPath(items);
         }
+        else {
+            //资产的情况
+            AssetsModel* assets = zenoApp->graphsManager()->assetsModel();
+            GraphModel* pAssetGraph = assets->getAssetGraph(items[0]);
+            items.removeAt(0);
+            return pAssetGraph->getGraphByPath(items);
+        }
     }
     return nullptr;
 }
 
 QModelIndex GraphsTreeModel::getIndexByUuidPath(const zeno::ObjPath& objPath)
 {
-    if (!m_main)
-        return QModelIndex();
-    return m_main->indexFromUuidPath(objPath);
+    return zenoApp->graphsManager()->getNodeIndexByUuidPath(QString::fromStdString(objPath));
 }
 
 QModelIndex GraphsTreeModel::getIndexByPath(const QStringList& objPath)

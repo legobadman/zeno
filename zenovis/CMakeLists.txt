@@ -20,8 +20,16 @@ endif()
 add_subdirectory(freeglut)
 target_link_libraries(zenovis PRIVATE freeglut)
 
+if(MSVC)
+    target_compile_options(zenovis PRIVATE /MP)
+endif()
+
 if (ZENO_DEBUG_MSVC)
     zeno_dbg_msvc(zenovis)
+endif()
+
+if (MSVC)
+    target_compile_options(zenovis PRIVATE /MP)
 endif()
 
 option(ZENO_ENABLE_OPTIX "Enable NVIDIA OptiX in ZENO for path tracing" OFF)
@@ -62,9 +70,5 @@ endif()
     #install(TARGETS zenovis EXPORT ZenoTargets)
 #endif()
 
-#if(WIN32)
-#    find_package(cryptopp CONFIG REQUIRED)
-#    target_link_libraries(zenovis PRIVATE cryptopp)
-#else()
-#    target_link_libraries(zenovis PRIVATE cryptopp)
-#endif()
+find_package(PNG REQUIRED)
+target_link_libraries(zenovis PRIVATE PNG::PNG)

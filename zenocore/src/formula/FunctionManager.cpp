@@ -110,6 +110,16 @@ namespace zeno {
 
     void FunctionManager::executeZfx(std::shared_ptr<ZfxASTNode> root, ZfxContext* pCtx) {
         //printSyntaxTree(root, pCtx->code);
+        //检查语法树，观察是否存在几何拓扑的增删改，如有则转为半边结构的拓扑
+        auto spGeom = std::static_pointer_cast<GeometryObject_Adapter>(pCtx->spObject);
+        bool bConvertHalfEdge = false;
+        if (spGeom && spGeom->m_impl->type() == zeno::Topo_IndiceMesh) {
+            bConvertHalfEdge = hasGeomTopoQueryModify(root);
+            if (bConvertHalfEdge) {
+                pCtx->spObject = spGeom->toHalfEdgeTopo();
+            }
+        }
+
         pCtx->zfxVariableTbl = &m_globalAttrCached;
         if (pCtx->spObject) {
             int nFilterSize = getElementCount(pCtx->spObject, pCtx->runover);
@@ -123,6 +133,10 @@ namespace zeno {
         }
         else {
             throw makeError<UnimplError>("no object or param constrain when executing zfx");
+        }
+
+        if (bConvertHalfEdge && spGeom) {
+            pCtx->spObject = spGeom->toIndiceMeshesTopo();
         }
     }
 
@@ -209,6 +223,26 @@ namespace zeno {
         }, value);
     }
 
+    template <class _Ty = void>
+    struct glmdot {
+        using _FIRST_ARGUMENT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
+        using _SECOND_ARGUMENT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
+        using _RESULT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
+
+        _NODISCARD constexpr float operator()(const _Ty& _Left, const _Ty& _Right) const {
+            return glm::dot(_Left, _Right);
+        }
+    };
+
+    template <>
+    struct glmdot<void> {
+        template <class _Ty1, class _Ty2>
+        _NODISCARD constexpr float operator()(_Ty1&& _Left, _Ty2&& _Right) const {
+            return glm::dot(static_cast<_Ty1&&>(_Left), static_cast<_Ty2&&>(_Right));
+        }
+    };
+
+
     template<typename Operator>
     ZfxVariable calc_exp(const ZfxVariable& lhs, const ZfxVariable& rhs, const ZfxElemFilter& filter, Operator method) {
 
@@ -250,8 +284,21 @@ namespace zeno {
                     else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, float>) {
                         return method((int)lval, (int)rval);
                     }
-                    throw makeError<UnimplError>("");
-                } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
+                    throw makeError<UnimplError>("error type for mudulus");
+                }
+                else if constexpr (std::is_same_v<Op, glmdot<>>) {
+                    if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<E, glm::vec2>) {
+                        return method(lval, rval);
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec3> && std::is_same_v<E, glm::vec3>) {
+                        return method(lval, rval);
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec4> && std::is_same_v<E, glm::vec4>) {
+                        return method(lval, rval);
+                    }
+                    throw makeError<UnimplError>("error type for glmdot");
+                } 
+                else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
                     return method(lval, rval);
                 } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, float>) {
                     return method(E(lval), rval);
@@ -816,6 +863,43 @@ namespace zeno {
         return res;
     }
 
+    bool FunctionManager::hasGeomTopoQueryModify(std::shared_ptr<ZfxASTNode> pNode) const {
+        for (auto child : pNode->children) {
+            if (child->type == FUNC) {
+                const std::string& funcname = get_zfxvar<std::string>(child->value);
+                if (funcname == "add_vertex" ||
+                    funcname == "add_point" ||
+                    funcname == "add_face" ||
+                    funcname == "remove_face" ||
+                    funcname == "remove_point" ||
+                    funcname == "remove_vertex" ||
+                    funcname == "point_faces" ||
+                    funcname == "point_vertex" ||
+                    funcname == "point_vertices" ||
+                    funcname == "face_point" ||
+                    funcname == "face_points" ||
+                    funcname == "face_vertex" ||
+                    funcname == "face_vertex_count" ||
+                    funcname == "face_vertices" ||
+                    funcname == "vertex_index" ||
+                    funcname == "vertex_next" ||
+                    funcname == "vertex_prev" ||
+                    funcname == "vertex_point" ||
+                    funcname == "vertex_face" ||
+                    funcname == "vertex_face_index"
+                    ) {
+                    return true;
+                }
+            }
+            else {
+                bool ret = hasGeomTopoQueryModify(child);
+                if (ret)
+                    return ret;
+            }
+        }
+        return false;
+    }
+
     bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const {
         int N = cond.value.size();
         assert(N == filter.size() || N == 1);
@@ -1103,7 +1187,7 @@ namespace zeno {
                 std::shared_ptr<ZfxASTNode> zenvarNode = root->children[0];
                 if (zenvarNode->bAttr) {
                     //无须把值拎出来再计算，直接往属性数据内部设置
-                    const std::string& attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
+                    std::string attrname = get_zfxvar<std::string>(zenvarNode->value).substr(1);
                     //DEBUG:
 #if 0
                     if (attrname == "type") {
@@ -1111,6 +1195,9 @@ namespace zeno {
                         j = 0;
                     }
 #endif
+                    if (attrname == "P") {
+                        attrname = "pos";
+                    }
 
                     std::string channel;
                     if (zenvarNode->opVal == COMPVISIT) {
@@ -1334,6 +1421,9 @@ namespace zeno {
                 //函数
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 const std::string& funcname = get_zfxvar<std::string>(root->value);
+                if (funcname == "dot") {
+                    return calc_exp(args[0], args[1], filter, glmdot());
+                }
                 ZfxVariable result = eval(funcname, args, filter, pContext);
                 return result;
             }
@@ -1389,6 +1479,43 @@ namespace zeno {
                 default:
                     throw makeError<UnimplError>("op error");
                 }
+            }
+            case NEGATIVE: {
+                if (root->children.size() != 1) {
+                    throw makeError<UnimplError>("NEGATIVE number is missing");
+                }
+
+                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
+                ZfxVariable arg = args[0];
+                const int N = arg.value.size();
+                ZfxVariable result;
+                result.value.resize(N);
+
+                for (int i = 0; i < N; i++)
+                {
+                    result.value[i] = std::visit([&](auto& arg) -> zfxvariant {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                            return -1 * arg;
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec2>)
+                        {
+                            return glm::vec2{ -1 * arg[0], -1 * arg[1] };
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec3>)
+                        {
+                            return glm::vec3{ -1 * arg[0], -1 * arg[1], -1 * arg[2] };
+                        }
+                        else if constexpr (std::is_same_v<T, glm::vec4>)
+                        {
+                            return glm::vec4{ -1 * arg[0], -1 * arg[1], -1 * arg[2], -1 * arg[3] };
+                        }
+                        else {
+                            throw makeError<UnimplError>("NEGATIVE number type is invalid");
+                        }
+                        }, arg.value[i]);
+                }
+                return result;
             }
             case ATTR_VISIT: {
                 if (root->children.size() != 2) {
@@ -1524,21 +1651,43 @@ namespace zeno {
             }
             case CONDEXP: {
                 //条件表达式
-                std::vector<ZfxVariable> args = process_args(root, filter, pContext);
-                if (args.size() != 3) {
+                if (root->children.size() != 3) {
                     throw makeError<UnimplError>("cond exp args");
                 }
-                auto& pCond = args[0];
-
-                ZfxElemFilter newFilter, elseFilter;
-                if (hasTrue(pCond, filter, newFilter, elseFilter)) {
-                    auto pCodesExp = root->children[1];
-                    return execute(pCodesExp, newFilter, pContext);
+                auto pCondExp = root->children[0];
+                const ZfxVariable& cond = execute(pCondExp, filter, pContext);
+                if (cond.value.size() == 1) {
+                    //单值，不是向量
+                    ZfxElemFilter newFilter, elseFilter;
+                    if (hasTrue(cond, filter, newFilter, elseFilter)) {
+                        auto pCodesExp = root->children[1];
+                        return execute(pCodesExp, newFilter, pContext);
+                    }
+                    else {
+                        auto pelseExp = root->children[2];
+                        return execute(pelseExp, filter, pContext);
+                    }
                 }
                 else {
-                    auto pCodesExp = root->children[2];
-                    return execute(pCodesExp, newFilter, pContext);
+                    //向量的情况，每个分支都要执行，然后合并
+                    ZfxElemFilter ifFilter, elseFilter;
+                    ZfxVariable switch1, switch2, ret;
+                    hasTrue(cond, filter, ifFilter, elseFilter);
+  
+                    auto pifExp = root->children[1];
+                    switch1 = execute(pifExp, ifFilter, pContext);
+
+                    auto pelseExp = root->children[2];
+                    switch2 = execute(pelseExp, elseFilter, pContext);
+
+                    int n = cond.value.size();
+                    ret.value.resize(n);
+                    for (int i = 0; i < n; i++) {
+                        ret.value[i] = ifFilter[i] ? switch1.value[i] : switch2.value[i];
+                    }
+                    return ret;
                 }
+                throw makeError<UnimplError>("error condition on condexp");
             }
             case IF:{
                 if (root->children.size() != 2 && root->children.size() != 3) {
@@ -1781,7 +1930,10 @@ namespace zeno {
                 pushStack();
                 scope_exit sp([this]() {this->popStack(); });
                 for (auto pSegment : root->children) {
-                    execute(pSegment, filter, pContext);
+                    const ZfxVariable& res = execute(pSegment, filter, pContext);
+                    if (pContext->bSingleFmla)
+                        return res;
+
                     if (pContext->jumpFlag == JUMP_BREAK ||
                         pContext->jumpFlag == JUMP_CONTINUE ||
                         pContext->jumpFlag == JUMP_RETURN) {
@@ -1826,8 +1978,10 @@ namespace zeno {
         {
             const std::string& funcname = std::get<std::string>(root->value);
             if (funcname == "ref") {
-                if (root->children.size() != 1)
-                    throw makeError<UnimplError>();
+                if (root->children.size() != 1) {
+                    //可能只是编辑时候无意输入，没必要抛异常
+                    return {};
+                }
                 const zeno::zfxvariant& res = calc(root->children[0], pContext);
                 const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
                 //收集ref信息源，包括源节点和参数

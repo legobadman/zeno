@@ -36,6 +36,7 @@ namespace zeno {
     ZENO_API std::string getControlDesc(zeno::ParamControl ctrl, zeno::ParamType type);
     ZENO_API zeno::ParamControl getDefaultControl(const zeno::ParamType type);
     ZENO_API std::string editVariantToStr(const PrimVar& var);
+    ZENO_API std::vector<zany> fromZenCache(const std::string& cachedir, int frameid);
     ZENO_API std::wstring s2ws();
     bool isEqual(const zvariant& lhs, const zvariant& rhs, ParamType const type);
     zany strToZAny(std::string const& defl, ParamType const& type);

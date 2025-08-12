@@ -49,7 +49,7 @@ public:
     void setSafeFrames(bool bLock, int nx, int ny);
     void setCameraRes(const QVector2D& res);
     void setSimpleRenderOption();
-    void setRenderSeparately(bool updateLightCameraOnly, bool updateMatlOnly);
+    void setRenderSeparately(/*runType runtype*/);
     bool isCameraMoving() const;
     bool isPlaying() const;
     bool isGLViewport() const;
@@ -86,18 +86,20 @@ public slots:
     void onNodeSelected(GraphModel* subgraph, const QModelIndexList& nodes, bool select);
     void onMouseHoverMoved();
     void onDockViewAction(bool triggered);
-    void onCalcFinished(bool bSucceed, zeno::ObjPath, QString);
+    void onRenderRequest(QString nodeuuidpath);
+    void onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info);
     void onRenderInfoCommitted(zeno::render_update_info info);
     void onJustLoadObjects();
     void onSetCamera(zenovis::ZOptixCameraSettingInfo value);
     void onSetBackground(bool bShowBackground);
+    void setSampleNumber(int sample_number);
     zenovis::ZOptixCameraSettingInfo getCamera() const;
 
 signals:
     void frameUpdated(int new_frame);
     void frameRunFinished(int frame);
     void optixProcStartRecord();
-    void render_objects_loaded();
+    void render_reload_finished();
 
 public:
     enum DockViewActionType {
@@ -118,6 +120,8 @@ private:
     bool isOptxRendering() const;
     void initRecordMgr();
     void sendTaskToServer(const VideoRecInfo& info);
+    void submit(std::vector<zeno::render_update_info> infos);
+    void submit(zeno::render_reload_info render_summary);
 
 #ifdef BASE_QML_VIEWPORT
     ZOpenGLQuickView* m_glView;
@@ -130,7 +134,7 @@ private:
 #else
     ZOptixViewport* m_optixView;
 #endif
-    CameraKeyframeWidget* m_camera_keyframe;
+    QScopedPointer<CameraKeyframeWidget> m_camera_keyframe;
     QTimer* m_pTimer;
     RecordVideoMgr m_recordMgr;
     bool m_bRecordRun;

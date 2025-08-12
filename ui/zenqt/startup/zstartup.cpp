@@ -4,6 +4,12 @@
 #include <zeno/utils/log.h>
 #include <zeno/types/UserData.h>
 #include <zeno/types/GenericObject.h>
+#ifdef ZENO_WITH_PYTHON
+#include <Python.h>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+#endif
+
 #include "zstartup.h"
 #include <QApplication>
 #include <QSettings>
@@ -41,12 +47,18 @@ void initQml()
     qRegisterMetaType<ControlItemListModel*>("ControlItemListModel*");
     qRegisterMetaType<NodeCateModel*>("NodeCateModel*");
     qRegisterMetaType<QStandardItemModel*>("QStandardItemModel*");
+
+    qmlRegisterUncreatableType<QmlNodeType>("zeno.enum", 1, 0, "NodeType", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlParamControl>("zeno.enum", 1, 0, "ParamControl", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlParamGroup>("zeno.enum", 1, 0, "ParamGroup", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<RunStatus>("zeno.enum", 1, 0, "RunStatus", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QtRole>("zeno.enum", 1, 0, "Model", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlNodeCateRole>("zeno.enum", 1, 0, "NodeCate", "Not creatable as it is an enum type");
     qmlRegisterUncreatableType<QmlNodeRunStatus>("zeno.enum", 1, 0, "NodeStatus", "");
+
+    qRegisterMetaType<QmlParamType::Value>("QmlParamType::Value");
+    qmlRegisterUncreatableType<QmlParamType>("zeno.enum", 1, 0, "ParamType", "");
+
     qmlRegisterUncreatableType<QmlCUIRole>("zeno.enum", 1, 0, "CustomuiModelType", "Not creatable as it is an enum type");
     qmlRegisterType<GraphsManager>("Zeno", 1, 0, "GraphsManager");
     qmlRegisterType<GraphsTotalView>("Zeno", 1, 0, "GraphsTotalView");
@@ -60,11 +72,26 @@ void initQml()
     zenoApp->initQuickQanavas();
 }
 
+#ifdef ZENO_WITH_PYTHON
+PyMODINIT_FUNC PyInit_zen(void);
+
+void initPyzenModule() {
+    zeno::getSession().initPyzen([]() {
+        if (PyImport_AppendInittab("zen", PyInit_zen) == -1) {
+            fprintf(stderr, "Error: could not extend in-built modules table\n");
+            exit(1);
+        }
+    });
+}
+#endif
+
 void startUp(bool bEnableCrashReport)
 {
 #ifdef Q_OS_WIN
+#ifndef ZENO_WITH_VLD
     if (bEnableCrashReport)
         registerExceptionFilter();
+#endif
     SetConsoleOutputCP(CP_UTF8);
 #endif
 
@@ -81,6 +108,10 @@ void startUp(bool bEnableCrashReport)
 
     QDir docDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     docDir.mkpath("Zeno/assets");
+
+#ifdef ZENO_WITH_PYTHON
+    initPyzenModule();
+#endif
 }
 
 std::string getZenoVersion() {

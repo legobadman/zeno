@@ -64,6 +64,7 @@
 #include <QFileSystemWatcher>
 #include "panel/pythonexecutor.h"
 #include <zeno/types/UserData.h>
+#include "dialog/ZComposeVideoDlg.h"
 
 
 const QString g_latest_layout = "LatestLayout";
@@ -72,8 +73,6 @@ ZenoMainWindow::ZenoMainWindow(QWidget *parent, Qt::WindowFlags flags, PANEL_TYP
     : QMainWindow(parent, flags)
     , m_bInDlgEventloop(false)
     , m_bAlways(false)
-    , m_bAlwaysLightCamera(false)
-    , m_bAlwaysMaterial(false)
     , m_pTimeline(nullptr)
     , m_layoutRoot(nullptr)
     , m_nResizeTimes(0)
@@ -102,7 +101,7 @@ ZenoMainWindow::~ZenoMainWindow()
 
 void ZenoMainWindow::init(PANEL_TYPE onlyView)
 {
-    m_ui = new Ui::MainWindow;
+    m_ui.reset(new Ui::MainWindow);
     m_ui->setupUi(this);
 
     initMenu();
@@ -297,7 +296,10 @@ void ZenoMainWindow::onMenuActionTriggered(bool bTriggered)
         onCheckUpdate();
         break;
     }
-    case ACTION_NODE_EDITOR:
+    case ACTION_COMPOSE_VIDEO: {
+        onComposeVideo();
+        break;
+    }    case ACTION_NODE_EDITOR:
     case ACTION_OBJECT_DATA:
     case ACTION_OBJECT_DATA_QML:
     case ACTION_GL_VIEWPORT:
@@ -317,6 +319,13 @@ void ZenoMainWindow::onMenuActionTriggered(bool bTriggered)
         dispatchCommand(pAction, bTriggered);
         break;
     }
+    }
+}
+
+void ZenoMainWindow::onSolverCallback(zeno::SOLVER_MSG msg, int startFrame, int endFrame)
+{
+    if (m_pTimeline) {
+        m_pTimeline->onSolverUpdate(msg, startFrame, endFrame);
     }
 }
 
@@ -426,8 +435,7 @@ void ZenoMainWindow::resetDocks(const QString& state, const QStringList& widgets
         m_pDockManager->removeDockWidget(pair);
     }
 
-
-    ads::CDockWidget* cake = new ads::CDockWidget(UiHelper::generateUuid("dock"));
+    ads::CDockWidget* cake = new ads::CDockWidget(UiHelper::generateUuid("dock"), this);
     ads::CDockAreaWidget* cakeArea = m_pDockManager->addDockWidget(ads::TopDockWidgetArea, cake);
     for (const auto& name :widgets)
         addDockWidget(cakeArea, name);
@@ -708,7 +716,7 @@ void ZenoMainWindow::initCustomLayoutAction(const QStringList &list, bool isDefa
         if (name == g_latest_layout) {
             continue;
         }
-        QAction *pCustomLayout_ = new QAction(name);
+        QAction *pCustomLayout_ = new QAction(name, this);
         connect(pCustomLayout_, &QAction::triggered, this, [=]() { 
             loadDockLayout(name, isDefault); 
             updateLatestLayout(name);
@@ -966,6 +974,12 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         title = tr("Node Editor(QML)");
         break;
     }
+    case ACTION_IMAGE: {
+        auto panel = new ZenoImagePanel;
+        pWid = panel;
+        title = tr("Image");
+        break;
+    }
     case ACTION_OPEN_PATH: {
         break;
     }
@@ -1037,6 +1051,7 @@ void ZenoMainWindow::assetsWatcher()
 
 void ZenoMainWindow::initTimeline()
 {
+    //master版本改动过大，而且都是cache相关，因此先不合并，维持3的设定
     auto pCalcMgr = zenoApp->calculationMgr();
     connect(m_pTimeline, &ZTimeline::playForward, pCalcMgr, &CalculationMgr::onPlayTriggered);
     connect(m_pTimeline, &ZTimeline::playForward, this, &ZenoMainWindow::reload_qml);
@@ -1117,6 +1132,18 @@ QVector<DisplayWidget*> ZenoMainWindow::viewports() const
     return views;
 }
 
+QVector<ZenoImagePanel*> ZenoMainWindow::imagepanels() const {
+    QVector<ZenoImagePanel*> images;
+    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
+    {
+        QWidget* wid = dock->widget();
+        if (ZenoImagePanel* view = qobject_cast<ZenoImagePanel*>(wid)) {
+            images.append(view);
+        }
+    }
+    return images;
+}
+
 DisplayWidget* ZenoMainWindow::getCurrentViewport() const
 {
     for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
@@ -1152,15 +1179,15 @@ void ZenoMainWindow::reload_qml() {
     }
 }
 
-void ZenoMainWindow::onRunTriggered(bool applyLightAndCameraOnly, bool applyMaterialOnly)
+void ZenoMainWindow::onRunTriggered(/*bool applyLightAndCameraOnly, bool applyMaterialOnly*/)
 {
+#if 0
     QVector<DisplayWidget*> views = viewports();
 
     clearErrorMark();
 
     //TODO: the run procedure shoule be designed carefully.
 
-#if 0
     for (auto view : views)
     {
         view->beforeRun();
@@ -1179,8 +1206,7 @@ void ZenoMainWindow::onRunTriggered(bool applyLightAndCameraOnly, bool applyMate
         LAUNCH_PARAM launchParam;
         launchParam.beginFrame = beginFrame;
         launchParam.endFrame = endFrame;
-        launchParam.applyLightAndCameraOnly = applyLightAndCameraOnly;
-        launchParam.applyMaterialOnly = applyMaterialOnly;
+        launchParam.runtype = runtype;
         QString path = pModel->filePath();
         path = path.left(path.lastIndexOf("/"));
         launchParam.zsgPath = path;
@@ -1280,6 +1306,23 @@ void ZenoMainWindow::updateViewport(const QString& action)
                 }
             }
         }
+        if (action == "newFrame") {
+            int endFrame = zeno::getSession().globalComm->maxPlayFrames() - 1;
+            int beginframe = m_pTimeline->fromTo().first;
+            if (endFrame == beginframe) {   //run的时候起始帧计算完成后，将timeline重置为起始帧
+#if 0
+                runType oldtype = m_runtype;
+                bool oldalways = m_bAlways;
+                m_bAlways = false;
+                m_runtype = RunALL;
+                zeno::scope_exit sp([this, oldalways, oldtype]() {
+                    m_bAlways = oldalways;
+                    m_runtype = oldtype;
+                    });
+                m_pTimeline->setSliderValue(beginframe);
+#endif
+    }
+}
     }
 }
 
@@ -1413,7 +1456,7 @@ void ZenoMainWindow::closeEvent(QCloseEvent *event)
 
         // trigger destroy event
         zeno::getSession().eventCallbacks->triggerEvent("beginDestroy");
-
+        zenoApp->cleanQmlEngine();
         QMainWindow::closeEvent(event);
     } 
     else 
@@ -1554,6 +1597,18 @@ void ZenoMainWindow::onCheckUpdate()
     });
     dlg.exec();
 #endif
+}
+
+void ZenoMainWindow::onSetTimelineValue()
+{
+    ZASSERT_EXIT(m_pTimeline);
+    m_pTimeline->setSliderValue(m_pTimeline->fromTo().first);
+}
+
+void ZenoMainWindow::onComposeVideo()
+{
+    ZComposeVideoDlg dlg(this);
+    dlg.exec();
 }
 
 void ZenoMainWindow::importGraph(bool bPreset)
@@ -1754,7 +1809,7 @@ void ZenoMainWindow::loadRecentFiles()
         const QString &key = lst[i];
         const QString &path = settings.value(key).toString();
         if (!path.isEmpty()) {
-            QAction *action = new QAction(path);
+            QAction *action = new QAction(path, this);
             m_ui->menuRecent_Files->addAction(action);
             connect(action, &QAction::triggered, this, [=]() {
                 if (!resetProc())
@@ -1954,6 +2009,7 @@ void ZenoMainWindow::setActionProperty()
     m_ui->actionFeedback->setProperty("ActionType", ACTION_FEEDBACK);
     m_ui->actionAbout->setProperty("ActionType", ACTION_ABOUT);
     m_ui->actionCheck_Update->setProperty("ActionType", ACTION_CHECKUPDATE);
+    m_ui->actionCombine_video->setProperty("ActionType", ACTION_COMPOSE_VIDEO);
 }
 
 void ZenoMainWindow::screenShoot() 
@@ -2160,14 +2216,6 @@ bool ZenoMainWindow::isAlways() const
     return m_bAlways;
 }
 
-bool ZenoMainWindow::isAlwaysLightCamera() const {
-    return m_bAlwaysLightCamera;
-}
-
-bool ZenoMainWindow::isAlwaysMaterial() const {
-    return m_bAlwaysMaterial;
-}
-
 void ZenoMainWindow::setAlways(bool bAlways)
 {
     m_bAlways = bAlways;
@@ -2176,10 +2224,7 @@ void ZenoMainWindow::setAlways(bool bAlways)
         m_pTimeline->togglePlayButton(false);
 }
 
-void ZenoMainWindow::setAlwaysLightCameraMaterial(bool bAlwaysLightCamera, bool bAlwaysMaterial) {
-    m_bAlwaysLightCamera = bAlwaysLightCamera;
-    m_bAlwaysMaterial = bAlwaysMaterial;
-}
+
 
 void ZenoMainWindow::resetTimeline(zeno::TimelineInfo info)
 {
@@ -2279,7 +2324,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
                     zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                    std::shared_ptr<zeno::GeometryObject> spGeom = std::dynamic_pointer_cast<zeno::GeometryObject>(pObject);
+                    auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pObject);
                     panel->setGeometry(subgraph, idx, spGeom);
                 }
             }
@@ -2374,55 +2419,3 @@ bool ZenoMainWindow::propPanelIsFloating(ZenoPropPanel* panel)
     }
     return false;
 }
-
-static bool openFileAndExportAsZsl(const char *inPath, const char *outPath) {
-    //TODO: deprecated.
-#if 0
-    auto pGraphs = zenoApp->graphsManager();
-    GraphsTreeModel* pModel = pGraphs->openZsgFile(inPath);
-    if (!pModel) {
-        qWarning() << "cannot open zsg file" << inPath;
-        return false;
-    }
-    {
-        rapidjson::StringBuffer s;
-        RAPIDJSON_WRITER writer(s);
-        writer.StartArray();
-        LAUNCH_PARAM launchParam;
-        serializeScene(pModel, writer, launchParam);
-        writer.EndArray();
-        QFile fout(outPath);
-        /* printf("sadfkhjl jghkasdf [%s]\n", s.GetString()); */
-        if (!fout.open(QIODevice::WriteOnly)) {
-            qWarning() << "failed to open out zsl" << outPath;
-            return false;
-        }
-        fout.write(s.GetString(), s.GetLength());
-        fout.close();
-    }
-#endif
-    return true;
-}
-
-static int subprogram_dumpzsg2zsl_main(int argc, char **argv) {
-    //TODO: deprecated.
-#if 0
-    if (!argv[1]) {
-        qWarning() << "please specify input zsg file path";
-        return -1;
-    }
-    if (!argv[2]) {
-        qWarning() << "please specify output zsl file path";
-        return -1;
-    }
-    if (!openFileAndExportAsZsl(argv[1], argv[2])) {
-        qWarning() << "failed to convert zsg to zsl";
-        return -1;
-    }
-#endif
-    return 0;
-}
-
-static int defDumpZsgToZslInit = zeno::getSession().eventCallbacks->hookEvent("init", [] (auto _) {
-    zeno::getSession().userData().set("subprogram_dumpzsg2zsl", std::make_shared<zeno::GenericObject<int(*)(int, char **)>>(subprogram_dumpzsg2zsl_main));
-});

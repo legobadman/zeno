@@ -18,6 +18,7 @@ public:
 
     ZENO_API int parse();
     ZENO_API int execute();
+    zfxvariant execute_fmla();
 
     std::shared_ptr<ZfxASTNode> makeNewNode(nodeType type, operatorVals op, std::vector<std::shared_ptr<ZfxASTNode>> children);
     std::shared_ptr<ZfxASTNode> makeNewNumberNode(float value);
@@ -27,6 +28,7 @@ public:
     std::shared_ptr<ZfxASTNode> makeZfxVarNode(std::shared_ptr<ZfxASTNode> func_call);
     void markZfxAttr(std::shared_ptr<ZfxASTNode> pVarNode);
     std::shared_ptr<ZfxASTNode> makeQuoteStringNode(std::string text);
+    std::shared_ptr<ZfxASTNode> makeNegativeNode(std::shared_ptr<ZfxASTNode> exp);
     std::shared_ptr<ZfxASTNode> makeComponentVisit(std::shared_ptr<ZfxASTNode> pVarNode, std::string component);
     std::shared_ptr<ZfxASTNode> makeTypeNode(std::string text, bool bArray = false);
     std::shared_ptr<ZfxASTNode> makeEmptyNode();

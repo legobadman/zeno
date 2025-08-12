@@ -2,13 +2,15 @@
 #include <zeno/extra/ShaderNode.h>
 #include <zeno/types/ShaderObject.h>
 #include <zeno/types/NumericObject.h>
+#include <zeno/utils/type_traits.h>
 #include <zeno/core/NodeImpl.h>
 #include <sstream>
 #include <cassert>
 
 namespace zeno {
 
-static std::string ftos(float x) {
+template<typename T>
+static std::string ftos(T x) {
     std::ostringstream ss;
     ss << x;
     return ss.str();
@@ -41,25 +43,23 @@ ZENO_API int EmissionPass::determineType(const ShaderData& shader) {
 
         int type = std::visit([&](auto const& value) -> int {
             using T = std::decay_t<decltype(value)>;
-            if constexpr (std::is_same_v<float, T>) {
-                return 1;
-            }
-            else if constexpr (std::is_same_v<vec2f, T>) {
-                return 2;
-            }
-            else if constexpr (std::is_same_v<vec3f, T>) {
-                return 3;
-            }
-            else if constexpr (std::is_same_v<vec4f, T>) {
-                return 4;
-            }
-            else {
-                throw zeno::Exception("bad numeric object type: " + (std::string)typeid(T).name());
-            }
+            size_t typeIdx = 0;
+
+            zeno::static_for<0, std::tuple_size_v<ShaderDataTypeList>>([&] (auto i) {
+                using ThisType = std::tuple_element_t<i, ShaderDataTypeList>;
+
+                if (std::is_same_v<ThisType, T>) {
+                    typeIdx = i;
+                    return true;
+                }
+                return false;
+            });
+
+            return TypeHint.at(ShaderDataTypeNames.at(typeIdx));
         }, numvalue);
 
         constmap[shader.curr_param] = constants.size();
-        constants.push_back(ConstInfo{ type, numvalue });
+        constants.push_back(ConstInfo{type, numvalue });
         return type;
     }
     else {
@@ -134,16 +134,49 @@ ZENO_API std::string EmissionPass::getCommonCode() const {
 }
 
 ZENO_API std::string EmissionPass::typeNameOf(int type) const {
-    if (type == 1) return "float";
-    else return (backend == HLSL ? "float" : "vec") + std::to_string(type);
+    return TypeHintReverse.at(type);
 }
 
 ZENO_API std::string EmissionPass::collectDefs() const {
     std::string res;
     int cnt = 0;
     for (auto const &var: constants) {
+
+        // auto type = std::visit([&] (auto const &value) -> std::string {
+        //     using T = std::decay_t<decltype(value)>;
+        //     std::string expression {};
+        //     std::string value_string = ftos(value);
+
+        //     zeno::static_for<0, std::tuple_size_v<ShaderDataTypeList>>([&] (auto i) {
+        //         using ThisType = std::tuple_element_t<i, ShaderDataTypeList>;
+
+        //         if (std::is_same_v<ThisType, T>) {
+        //             auto type_string = ShaderDataTypeNames[i];
+        //             //auto type_int = TypeHint.at(type_string);
+        //             expression = std::string(type_string) + "(" + value_string + ")";
+        //             return true;
+        //         }
+        //         return false;
+        //     });
+
+        //     return expression;
+        // }, var.value);
+
         auto expr = std::visit([&] (auto const &value) -> std::string {
             using T = std::decay_t<decltype(value)>;
+
+            if constexpr (std::is_same_v<bool, T>) 
+                return "bool(" + ftos(value) + ")";
+            if constexpr (std::is_same_v<int, T>) 
+                return "int(" + ftos(value) + ")";
+            if constexpr (std::is_same_v<unsigned int, T>) 
+                return "uint(" + ftos(value) + ")";
+
+            if constexpr (std::is_same_v<int64_t, T>) 
+                return "int64_t(" + ftos(value) + ")";
+            if constexpr (std::is_same_v<uint64_t, T>) 
+                return "uint64_t(" + ftos(value) + ")";
+
             if constexpr (std::is_same_v<float, T>) {
                 return typeNameOf(1) + "(" + ftos(value) + ")";
             } else if constexpr (std::is_same_v<vec2f, T>) {
@@ -262,3 +295,4 @@ ZENO_API void EmissionPass::translateCommonCode() {
 }
 
 }
+

@@ -70,7 +70,7 @@ namespace zeno {
             bmax = user_data->getLiterial<zeno::vec3f>("_bboxMax");
         }
         else {
-            std::tie(bmin, bmax) = zeno::geomBoundingBox(object->m_impl);
+            std::tie(bmin, bmax) = zeno::geomBoundingBox(object->m_impl.get());
             user_data->setLiterial("_bboxMin", bmin);
             user_data->setLiterial("_bboxMax", bmax);
         }
@@ -685,7 +685,7 @@ namespace zeno {
         auto user_data = dynamic_cast<UserData*>(object->userData());
         if (!user_data->has("_pivot")) {
             zeno::vec3f bmin, bmax;
-            std::tie(bmin, bmax) = zeno::geomBoundingBox(object->m_impl);
+            std::tie(bmin, bmax) = zeno::geomBoundingBox(object->m_impl.get());
             zeno::vec3f translate = { 0, 0, 0 };
             user_data->setLiterial("_translate", translate);
             zeno::vec4f rotate = { 0, 0, 0, 1 };

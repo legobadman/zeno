@@ -550,6 +550,17 @@ Window {
                                                         }
                                                     }
                                                 }
+                                                Button {
+                                                    Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                                                    implicitWidth: 30
+                                                    implicitHeight: 25
+                                                    padding: 0
+                                                    text: "remove"
+                                                    font.pointSize: 6
+                                                    onClicked: {
+                                                        objinColumn.objInputModel.removeRow(listView2.currentIdx)
+                                                    }
+                                                }
                                             }
                                         }
                                         Rectangle {
@@ -673,6 +684,17 @@ Window {
                                                         }else{
                                                             objoutColumn.objOutputModel.insertRow(listView3.currentIdx + 1, getNewName())
                                                         }
+                                                    }
+                                                }
+                                                Button {
+                                                    Layout.alignment: Qt.AlignTop | Qt.AlignRight
+                                                    implicitWidth: 40
+                                                    implicitHeight: 25
+                                                    padding: 0
+                                                    text: "remove"
+                                                    font.pointSize: 6
+                                                    onClicked: {
+                                                        objoutColumn.objOutputModel.removeRow(listView3.currentIdx)
                                                     }
                                                 }
                                             }

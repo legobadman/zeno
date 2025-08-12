@@ -11,9 +11,12 @@
 #include <numeric>
 #include <zeno/geo/geometryutil.h>
 #include <zeno/types/GeometryObject.h>
+#include <zeno/types/UserData.h>
 #include <zeno/utils/vectorutil.h>
+#include <zeno/utils/interfaceutil.h>
 #include <zeno/core/data.h>
 #include <zeno/core/FunctionManager.h>
+#include <zeno/utils/parallel_reduce.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/geo/kdsearch.h>
 #include <random>
@@ -43,6 +46,32 @@ namespace zeno
                     return T(val);
                 }
                 }, value);
+        }
+
+        template <class T>
+        static T prim_reduce(std::vector<T> const& temp, std::string type)
+        {
+            if (type == std::string("avg")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), T(0), [&](size_t i) -> T { return temp[i]; },
+                    [&](T i, T j) -> T { return i + j; });
+                return total / (T)(temp.size());
+            }
+            if (type == std::string("max")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), temp[0], [&](size_t i) -> T { return temp[i]; },
+                    [&](T i, T j) -> T { return zeno::max(i, j); });
+                return total;
+            }
+            if (type == std::string("min")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), temp[0], [&](size_t i) -> T { return temp[i]; },
+                    [&](T i, T j) -> T { return zeno::min(i, j); });
+                return total;
+            }
+            if (type == std::string("absmax")) {
+                T total = zeno::parallel_reduce_array<T>(temp.size(), temp[0], [&](size_t i) -> T { return zeno::abs(temp[i]); },
+                    [&](T i, T j) -> T { return zeno::max(i, j); });
+                return total;
+            }
+            return T(0);
         }
 
         template <class T>
@@ -199,15 +228,40 @@ namespace zeno
         }
 
         static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
-            std::string parampath, _;
-            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
-            auto items = split_str(parampath, '.');
-            std::string paramname = items[0];
+            ParamPrimitive paramData;
+            std::vector<std::string> items;
 
-            bool bExist = false;
-            ParamPrimitive paramData = spNode->get_input_prim_param(paramname, &bExist);
-            if (!bExist)
-                throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
+            if (zeno::starts_with(ref, "../")) {
+                //直接取上层子图节点的参数
+                std::string parampath = ref.substr(3);
+                items = split_str(parampath, '.');
+                std::string paramname = items[0];
+                NodeImpl* parSbnNode = pContext->spNode->getGraph()->getParentSubnetNode();
+                if (!parSbnNode) {
+                    throw makeError<UnimplError>("cannot locate parent subnetnode, when refering params");
+                }
+                bool bExisted = false;
+                paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
+                if (!bExisted) {
+                    throw makeError<UnimplError>("there is no param `" + paramname + "` in subnetnode");
+                }
+            }
+            else {
+                std::string parampath, _;
+                auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
+                items = split_str(parampath, '.');
+                std::string paramname = items[0];
+
+                bool bExist = false;
+                paramData = spNode->get_input_prim_param(paramname, &bExist);
+                if (!bExist) {
+                    //试一下拿prim_output，有些情况，比如获取SubInput的port，是需要拿Output的
+                    paramData = spNode->get_output_prim_param(paramname, &bExist);
+                    if (!bExist) {
+                        throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
+                    }
+                }
+            }
 
             //直接拿引用源的计算结果，所以本节点在执行前，引用源必须先执行（比如引用源的数值也是依赖另一个节点），参考代码INode::requireInput
             //，所以要在preApply的基础上作提前依赖计算
@@ -229,8 +283,44 @@ namespace zeno
                 if (primtype == zeno::types::gParamType_Int) {
                     res = zeno::reflect::any_cast<int>(paramData.result);
                 }
+                else if (primtype == zeno::types::gParamType_Bool) {
+                    bool bret = zeno::reflect::any_cast<bool>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(bret ? 1 : 0);
+                    return varres;
+                }
                 else if (primtype == zeno::types::gParamType_Float) {
                     res = zeno::reflect::any_cast<float>(paramData.result);
+                }
+                else if (primtype == zeno::types::gParamType_String) {
+                    auto str = zeno::reflect::any_cast<std::string>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(str);
+                    return varres;
+                }
+                else if (primtype == zeno::types::gParamType_Vec2f) {
+                    throw makeError<UnimplError>();
+                }
+                else if (primtype == zeno::types::gParamType_Vec2i) {
+                    throw makeError<UnimplError>();
+                }
+                else if (primtype == zeno::types::gParamType_Vec3f) {
+                    vec3f vec = zeno::reflect::any_cast<vec3f>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(glm::vec3(vec[0], vec[1], vec[2]));
+                    return varres;
+                }
+                else if (primtype == zeno::types::gParamType_Vec3i) {
+                    vec3i vec = zeno::reflect::any_cast<vec3i>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value.push_back(glm::vec3(vec[0], vec[1], vec[2]));
+                    return varres;
+                }
+                else if (primtype == zeno::types::gParamType_Vec4f) {
+                    throw makeError<UnimplError>();
+                }
+                else if (primtype == zeno::types::gParamType_Vec4i) {
+                    throw makeError<UnimplError>();
                 }
                 else {
                     throw makeError<UnimplError>();
@@ -436,9 +526,9 @@ namespace zeno
             }
             else {
                 for (int i = 0; i < N; i++) {
-                    int ni = std::min(i, nx);
-                    int nj = std::min(i, ny);
-                    int nk = std::min(i, nz);
+                    int ni = std::min(i, nx - 1);
+                    int nj = std::min(i, ny - 1);
+                    int nk = std::min(i, nz - 1);
                     float x = get_zfxvar<float>(xvar.value[ni]);
                     float y = get_zfxvar<float>(yvar.value[nj]);
                     float z = get_zfxvar<float>(zvar.value[nk]);
@@ -1381,7 +1471,7 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             assert(spGeo);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl, grp, name);
+            var.value = getAttrs(spGeo->m_impl.get(), grp, name);
             return var;
         }
 
@@ -1393,7 +1483,7 @@ namespace zeno
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             assert(spGeo);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl, ATTR_VERTEX, name);
+            var.value = getAttrs(spGeo->m_impl.get(), ATTR_VERTEX, name);
             return var;
         }
 
@@ -1406,7 +1496,7 @@ namespace zeno
             assert(spGeo);
 
             ZfxVariable ret;
-            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl, ATTR_POINT, name);
+            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl.get(), ATTR_POINT, name);
             if (args.size() == 2) {
                 //取索引
                 //TODO: 调getElem，就不用整个attrs都拿出来，因为可能在循环下调用的
@@ -1432,13 +1522,13 @@ namespace zeno
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             ZfxVariable var;
-            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl, ATTR_FACE, name);
+            std::vector<zfxvariant> attrs = getAttrs(spGeo->m_impl.get(), ATTR_FACE, name);
             if (args.size() == 2) {
                 //TODO:
                 assert(false);
             }
             else {
-                var.value = getAttrs(spGeo->m_impl, ATTR_FACE, name);
+                var.value = getAttrs(spGeo->m_impl.get(), ATTR_FACE, name);
             }
             return var;
         }
@@ -1450,7 +1540,7 @@ namespace zeno
             std::string name = get_zfxvar<std::string>(args[0].value[0]);
             auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl, ATTR_GEO, name);
+            var.value = getAttrs(spGeo->m_impl.get(), ATTR_GEO, name);
             return var;
         }
 
@@ -1739,14 +1829,34 @@ namespace zeno
             if (funcname == "get_bboxmin") {
                 auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl);
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
                 glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                 return bmin;
+            }
+            if (funcname == "bboxmin") {
+                const std::string& nodename = get_zfxvar<std::string>(args[0].value[0]);
+                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                if (!pObjNode) {
+                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                }
+                zany targetObj = pObjNode->get_default_output_object();
+                if (!targetObj) {
+                    throw makeError<UnimplError>("get nullptr obj from default output when `prim_has_attr` is called");
+                }
+
+                if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(targetObj)) {
+                    std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
+                    glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
+                    return bmin;
+                }
+                else {
+                    throw makeError<UnimplError>("get not geometry obj when calling `prim_has_attr`");
+                }
             }
             if (funcname == "get_bboxmax") {
                 auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl);
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
                 glm::vec3 bmax(ret.second[0], ret.second[1], ret.second[2]);
                 return bmax;
             }
@@ -1816,7 +1926,264 @@ namespace zeno
                     return ret;
                 }
             }
-            throw makeError<UnimplError>("unknown function call");
+            if (funcname == "primreduce") {
+                auto _attrName = get_zfxvar<std::string>(args[0].value[0]);
+                zeno::String attrName = stdString2zs(_attrName);
+                auto op = get_zfxvar<std::string>(args[1].value[0]);
+                auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
+                zeno::GeoAttrType type = spGeo->get_attr_type(ATTR_POINT, attrName);
+                zeno::NumericValue result;
+                if (zeno::ATTR_FLOAT == type) {
+                    std::vector<float> attrData = spGeo->get_float_attr(ATTR_POINT, attrName);
+                    result = prim_reduce(attrData, op);
+                }
+                else if (zeno::ATTR_VEC3 == type) {
+                    std::vector<zeno::vec3f> attrData = spGeo->get_vec3f_attr(ATTR_POINT, attrName);
+                    result = prim_reduce(attrData, op);
+                }
+                else {
+                    throw makeError<UnimplError>("attr type unknown when calling primreduce");
+                }
+                ZfxVariable ret;
+                std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, int>) {
+                        ret.value.push_back(arg);
+                    }
+                    else if constexpr (std::is_same_v<T, float>) {
+                        ret.value.push_back(arg);
+                    }
+                    else if constexpr (std::is_same_v<T, zeno::vec3f>) {
+                        ret.value.push_back(glm::vec3(arg[0], arg[1], arg[2]));
+                    }
+                    else {
+                        throw makeError<UnimplError>("unknown type");
+                    }
+                }, result);
+                return ret;
+            }
+            if (funcname == "abs") {
+                const ZfxVariable& var = args[0];
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->zfxvariant {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            return std::abs(_arg);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            return std::abs(_arg);
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept int or float on `abs`");
+                        }
+                        }, var.value[i]);
+                }
+                return ret;
+            }
+            if (funcname == "min") {
+                const ZfxVariable& var = args[0];
+                float cmpval = get_zfxvar<float>(args[1].value[0]);
+                //TODO: 目前只考虑一个数值的min
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->zfxvariant {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            return zeno::min(cmpval, std::abs(_arg));
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            return zeno::min(cmpval, std::abs(_arg));
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept int or float on `abs`");
+                        }
+                        }, var.value[i]);
+                }
+                return ret;
+            }
+            if (funcname == "max" || funcname == "min") {
+                const ZfxVariable& left = args[0];
+                const ZfxVariable& right = args[1];
+                const int Nleft = left.value.size();
+                const int Nright = right.value.size();
+                const int N = std::max(Nleft, Nright);
+                ZfxVariable ret;
+                ret.value.resize(N);
+                bool bMax = funcname == "max";
+
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg1, auto&& _arg2)->zfxvariant {
+                        using LeftT = std::decay_t<decltype(_arg1)>;
+                        using RightT = std::decay_t<decltype(_arg2)>;
+                        if constexpr (std::is_same_v<LeftT, int>) {
+                            if constexpr (std::is_same_v<RightT, int>) {
+                                return bMax ? std::max(_arg1, _arg2) : std::min(_arg1, _arg2);
+                            }
+                            else if constexpr (std::is_same_v<RightT, float>) {
+                                return bMax ? std::max((float)_arg1, _arg2) : std::min((float)_arg1, _arg2);
+                            }
+                            else {
+                                throw makeError<UnimplError>("only accept int or float on `abs`");
+                            }
+                        }
+                        else if constexpr (std::is_same_v<LeftT, float>) {
+                            if constexpr (std::is_same_v<RightT, int>) {
+                                return bMax ? std::max(_arg1, (float)_arg2) : std::min(_arg1, (float)_arg2);
+                            }
+                            else if constexpr (std::is_same_v<RightT, float>) {
+                                return bMax ? std::max(_arg1, _arg2) : std::min(_arg1, _arg2);
+                            }
+                            else {
+                                throw makeError<UnimplError>("only accept int or float on `abs`");
+                            }
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept int or float on `abs`");
+                        }
+                    }, left.value[std::min(i,Nleft-1)], right.value[std::min(i, Nright-1)]);
+                }
+                return ret;
+            }
+            if (funcname == "clamp") {
+                const ZfxVariable& var = args[0];
+                const ZfxVariable& arg_min = args[1], arg_max = args[2];
+                float min = 0, max = 0;
+                min = get_zfxvar<float>(arg_min.value[0]);
+                max = get_zfxvar<float>(arg_max.value[0]);
+
+                const int N = var.value.size();
+                ZfxVariable ret;
+                ret.value.resize(N);
+                for (int i = 0; i < N; i++) {
+                    ret.value[i] = std::visit([&](auto&& _arg)->float {
+                        using T = std::decay_t<decltype(_arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            return std::min(std::max((float)_arg, min), max);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            return std::min(std::max(_arg, min), max);
+                        }
+                        else {
+                            throw makeError<UnimplError>("only accept int or float on `clamp`");
+                        }
+                        }, var.value[i]);
+                }
+                return ret;
+            }
+            if (funcname == "setud") {
+                zeno::String key = zeno::stdString2zs(get_zfxvar<std::string>(args[0].value[0]));
+                auto ud = pContext->spObject->userData();
+                const zfxvariant& val = args[1].value[0];
+
+                std::visit([&](auto&& arg) {
+                    using T = std::decay_t<decltype(arg)>;
+                    if constexpr (std::is_same_v<T, int>) {
+                        ud->set_int(key, arg);
+                    }
+                    else if constexpr (std::is_same_v<T, float>) {
+                        ud->set_float(key, arg);
+                    }
+                    else if constexpr (std::is_same_v<T, std::string>) {
+                        ud->set_string(key, stdString2zs(arg));
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec2>) {
+                        ud->set_vec2f(key, Vec2f(arg[0], arg[1]));
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec3>) {
+                        ud->set_vec3f(key, Vec3f(arg[0], arg[1], arg[2]));
+                    }
+                    else if constexpr (std::is_same_v<T, glm::vec4>) {
+                        //ud->set_vec4f(key, Vec4f(arg[0], arg[1], arg[2], arg[3]));
+                    }
+                    else {
+                        throw makeError<UnimplError>("no supported value to set userdata.");
+                    }
+                    }, val);
+                ZfxVariable ret;
+                return ret;
+            }
+            if (funcname == "prim_has_attr") {
+                const std::string& nodename = get_zfxvar<std::string>(args[0].value[0]);
+                const std::string& attrname = get_zfxvar<std::string>(args[1].value[0]);
+
+                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                if (!pObjNode) {
+                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                }
+                zany targetObj = pObjNode->get_default_output_object();
+                if (!targetObj)
+                    throw makeError<UnimplError>("get nullptr obj from default output when `prim_has_attr` is called");
+
+                if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(targetObj)) {
+                    zfxvariant ret = (int)spGeo->has_point_attr(stdString2zs(attrname));
+                    return ZfxVariable(ret);
+                }
+                else {
+                    throw makeError<UnimplError>("get not geometry obj when calling `prim_has_attr`");
+                }
+            }
+            if (funcname == "getud") {
+                const std::string& nodename = get_zfxvar<std::string>(args[0].value[0]);
+                const std::string& objparam = get_zfxvar<std::string>(args[1].value[0]);
+                const std::string& key = get_zfxvar<std::string>(args[2].value[0]);
+
+                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                if (!pObjNode) {
+                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                }
+                zany targetObj = pObjNode->get_output_obj(objparam);
+                if (!targetObj)
+                    throw makeError<UnimplError>("get nullptr obj from `" + objparam + "` when `getud` is called");
+
+                auto ud = targetObj->userData();
+                zeno::UserData* pUserData = static_cast<zeno::UserData*>(ud);
+
+                ZfxVariable ret;
+                zany spud = pUserData->m_data[key];
+                if (auto strobj = std::dynamic_pointer_cast<zeno::StringObject>(spud)) {
+                    ret.value.push_back(strobj->get());
+                }
+                else if (auto numobj = std::dynamic_pointer_cast<zeno::NumericObject>(spud)) {
+                    NumericValue val = numobj->value;
+                    std::visit([&](auto&& arg) {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            ret.value.push_back(arg);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            ret.value.push_back(arg);
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec2i>) {
+                            ret.value.push_back(glm::vec2(arg[0], arg[1]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec2f>) {
+                            ret.value.push_back(glm::vec2(arg[0], arg[1]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec3i>) {
+                            ret.value.push_back(glm::vec3(arg[0], arg[1], arg[2]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec3f>) {
+                            ret.value.push_back(glm::vec3(arg[0], arg[1], arg[2]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec4i>) {
+                            ret.value.push_back(glm::vec4(arg[0], arg[1], arg[2], arg[3]));
+                        }
+                        else if constexpr (std::is_same_v<T, zeno::vec4f>) {
+                            ret.value.push_back(glm::vec4(arg[0], arg[1], arg[2], arg[3]));
+                        }
+                        }, val);
+                }
+                else {
+                    throw makeError<UnimplError>("unknown type from userdata");
+                }
+                return ret;
+            }
+            throw makeError<UnimplError>("unknown function call `" + funcname + "`");
         }
     }
 }

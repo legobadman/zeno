@@ -1539,202 +1539,215 @@ namespace  zeno  {
 #line 1540 "zfxparser.cpp"
     break;
 
-  case 72: // addsubexp: factor
-#line 354 "zfxparser.y"
-                               { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > (); }
-#line 1546 "zfxparser.cpp"
+  case 72: // compareexp: LPAREN compareexp compare-op addsubexp RPAREN QUESTION exp-statement COLON exp-statement
+#line 352 "zfxparser.y"
+                                                                                               {
+            std::vector<std::shared_ptr<ZfxASTNode>> children({yystack_[7].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[5].value.as < std::shared_ptr<ZfxASTNode> > ()});
+            auto spCond = driver.makeNewNode(COMPOP, yystack_[6].value.as < operatorVals > (), children);
+            spCond->value = yystack_[6].value.as < operatorVals > ();
+
+            std::vector<std::shared_ptr<ZfxASTNode>> exps({spCond, yystack_[2].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()});
+            yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNode(CONDEXP, DEFAULT_FUNCVAL, exps);
+        }
+#line 1553 "zfxparser.cpp"
     break;
 
-  case 73: // addsubexp: addsubexp ADD factor
-#line 355 "zfxparser.y"
+  case 73: // addsubexp: factor
+#line 362 "zfxparser.y"
+                               { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > (); }
+#line 1559 "zfxparser.cpp"
+    break;
+
+  case 74: // addsubexp: addsubexp ADD factor
+#line 363 "zfxparser.y"
                            {
                 std::vector<std::shared_ptr<ZfxASTNode>> children({yystack_[2].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()});
                 yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNode(FOUROPERATIONS, PLUS, children);
             }
-#line 1555 "zfxparser.cpp"
+#line 1568 "zfxparser.cpp"
     break;
 
-  case 74: // addsubexp: addsubexp SUB factor
-#line 359 "zfxparser.y"
+  case 75: // addsubexp: addsubexp SUB factor
+#line 367 "zfxparser.y"
                            {
                 std::vector<std::shared_ptr<ZfxASTNode>> children({yystack_[2].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()});
                 yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNode(FOUROPERATIONS, MINUS, children);
             }
-#line 1564 "zfxparser.cpp"
+#line 1577 "zfxparser.cpp"
     break;
 
-  case 75: // factor: term
-#line 367 "zfxparser.y"
+  case 76: // factor: term
+#line 375 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > (); }
-#line 1570 "zfxparser.cpp"
+#line 1583 "zfxparser.cpp"
     break;
 
-  case 76: // factor: factor MUL term
-#line 368 "zfxparser.y"
+  case 77: // factor: factor MUL term
+#line 376 "zfxparser.y"
                         {
                 std::vector<std::shared_ptr<ZfxASTNode>>children({yystack_[2].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()});
                 yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNode(FOUROPERATIONS, MUL, children);
             }
-#line 1579 "zfxparser.cpp"
+#line 1592 "zfxparser.cpp"
     break;
 
-  case 77: // factor: factor DIV term
-#line 372 "zfxparser.y"
+  case 78: // factor: factor DIV term
+#line 380 "zfxparser.y"
                       {
             std::vector<std::shared_ptr<ZfxASTNode>>children({yystack_[2].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()});
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNode(FOUROPERATIONS, DIV, children);
         }
-#line 1588 "zfxparser.cpp"
+#line 1601 "zfxparser.cpp"
     break;
 
-  case 78: // factor: factor MOD term
-#line 376 "zfxparser.y"
+  case 79: // factor: factor MOD term
+#line 384 "zfxparser.y"
                       {
             std::vector<std::shared_ptr<ZfxASTNode>>children({yystack_[2].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()});
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNode(FOUROPERATIONS, MOD, children); 
         }
-#line 1597 "zfxparser.cpp"
+#line 1610 "zfxparser.cpp"
     break;
 
-  case 79: // zenvar: DOLLARVARNAME
-#line 382 "zfxparser.y"
+  case 80: // zenvar: DOLLARVARNAME
+#line 390 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeZfxVarNode(yystack_[0].value.as < string > (), BulitInVar); }
-#line 1603 "zfxparser.cpp"
+#line 1616 "zfxparser.cpp"
     break;
 
-  case 80: // zenvar: VARNAME
-#line 383 "zfxparser.y"
+  case 81: // zenvar: VARNAME
+#line 391 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeZfxVarNode(yystack_[0].value.as < string > ()); }
-#line 1609 "zfxparser.cpp"
+#line 1622 "zfxparser.cpp"
     break;
 
-  case 81: // zenvar: ATTRAT zenvar
-#line 384 "zfxparser.y"
+  case 82: // zenvar: ATTRAT zenvar
+#line 392 "zfxparser.y"
                     {
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ();
             driver.markZfxAttr(yylhs.value.as < std::shared_ptr<ZfxASTNode> > ());
         }
-#line 1618 "zfxparser.cpp"
+#line 1631 "zfxparser.cpp"
     break;
 
-  case 82: // zenvar: zenvar LSQBRACKET exp-statement RSQBRACKET
-#line 388 "zfxparser.y"
+  case 83: // zenvar: zenvar LSQBRACKET exp-statement RSQBRACKET
+#line 396 "zfxparser.y"
                                                  {
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[3].value.as < std::shared_ptr<ZfxASTNode> > ();
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->opVal = Indexing;
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->children.push_back(yystack_[1].value.as < std::shared_ptr<ZfxASTNode> > ());
         }
-#line 1628 "zfxparser.cpp"
+#line 1641 "zfxparser.cpp"
     break;
 
-  case 83: // zenvar: AUTOINC zenvar
-#line 393 "zfxparser.y"
+  case 84: // zenvar: AUTOINC zenvar
+#line 401 "zfxparser.y"
                      {
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ();
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->opVal = AutoIncreaseFirst;
         }
-#line 1637 "zfxparser.cpp"
+#line 1650 "zfxparser.cpp"
     break;
 
-  case 84: // zenvar: zenvar AUTOINC
-#line 397 "zfxparser.y"
+  case 85: // zenvar: zenvar AUTOINC
+#line 405 "zfxparser.y"
                      {
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[1].value.as < std::shared_ptr<ZfxASTNode> > ();
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->opVal = AutoIncreaseLast;
         }
-#line 1646 "zfxparser.cpp"
+#line 1659 "zfxparser.cpp"
     break;
 
-  case 85: // zenvar: AUTODEC zenvar
-#line 401 "zfxparser.y"
+  case 86: // zenvar: AUTODEC zenvar
+#line 409 "zfxparser.y"
                      {
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ();
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->opVal = AutoDecreaseFirst;
         }
-#line 1655 "zfxparser.cpp"
+#line 1668 "zfxparser.cpp"
     break;
 
-  case 86: // zenvar: zenvar AUTODEC
-#line 405 "zfxparser.y"
+  case 87: // zenvar: zenvar AUTODEC
+#line 413 "zfxparser.y"
                      {
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[1].value.as < std::shared_ptr<ZfxASTNode> > ();
             yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->opVal = AutoDecreaseLast;
         }
-#line 1664 "zfxparser.cpp"
+#line 1677 "zfxparser.cpp"
     break;
 
-  case 87: // funcargs: %empty
-#line 411 "zfxparser.y"
+  case 88: // funcargs: %empty
+#line 419 "zfxparser.y"
                  { yylhs.value.as < std::vector<std::shared_ptr<ZfxASTNode>> > () = std::vector<std::shared_ptr<ZfxASTNode>>(); }
-#line 1670 "zfxparser.cpp"
+#line 1683 "zfxparser.cpp"
     break;
 
-  case 88: // funcargs: exp-statement
-#line 412 "zfxparser.y"
+  case 89: // funcargs: exp-statement
+#line 420 "zfxparser.y"
                                { yylhs.value.as < std::vector<std::shared_ptr<ZfxASTNode>> > () = std::vector<std::shared_ptr<ZfxASTNode>>({yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()}); }
-#line 1676 "zfxparser.cpp"
+#line 1689 "zfxparser.cpp"
     break;
 
-  case 89: // funcargs: funcargs COMMA exp-statement
-#line 413 "zfxparser.y"
+  case 90: // funcargs: funcargs COMMA exp-statement
+#line 421 "zfxparser.y"
                                    { yystack_[2].value.as < std::vector<std::shared_ptr<ZfxASTNode>> > ().push_back(yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()); yylhs.value.as < std::vector<std::shared_ptr<ZfxASTNode>> > () = yystack_[2].value.as < std::vector<std::shared_ptr<ZfxASTNode>> > (); }
-#line 1682 "zfxparser.cpp"
+#line 1695 "zfxparser.cpp"
     break;
 
-  case 90: // func-content: LPAREN funcargs RPAREN
-#line 417 "zfxparser.y"
+  case 91: // func-content: LPAREN funcargs RPAREN
+#line 425 "zfxparser.y"
                                      { 
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNode(FUNC, DEFAULT_FUNCVAL, yystack_[1].value.as < std::vector<std::shared_ptr<ZfxASTNode>> > ());
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->isParenthesisNodeComplete = true;
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->func_match = Match_Exactly;
     }
-#line 1692 "zfxparser.cpp"
+#line 1705 "zfxparser.cpp"
     break;
 
-  case 91: // term: NUMBER
-#line 425 "zfxparser.y"
+  case 92: // term: NUMBER
+#line 433 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNewNumberNode(yystack_[0].value.as < float > ()); }
-#line 1698 "zfxparser.cpp"
+#line 1711 "zfxparser.cpp"
     break;
 
-  case 92: // term: bool-stmt
-#line 426 "zfxparser.y"
+  case 93: // term: bool-stmt
+#line 434 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeBoolNode(yystack_[0].value.as < bool > ()); }
-#line 1704 "zfxparser.cpp"
+#line 1717 "zfxparser.cpp"
     break;
 
-  case 93: // term: LITERAL
-#line 427 "zfxparser.y"
+  case 94: // term: LITERAL
+#line 435 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeStringNode(yystack_[0].value.as < string > ()); }
-#line 1710 "zfxparser.cpp"
+#line 1723 "zfxparser.cpp"
     break;
 
-  case 94: // term: UNCOMPSTR
-#line 428 "zfxparser.y"
+  case 95: // term: UNCOMPSTR
+#line 436 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeQuoteStringNode(yystack_[0].value.as < string > ()); }
-#line 1716 "zfxparser.cpp"
+#line 1729 "zfxparser.cpp"
     break;
 
-  case 95: // term: LPAREN exp-statement RPAREN
-#line 429 "zfxparser.y"
+  case 96: // term: LPAREN exp-statement RPAREN
+#line 437 "zfxparser.y"
                                   { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[1].value.as < std::shared_ptr<ZfxASTNode> > (); }
-#line 1722 "zfxparser.cpp"
+#line 1735 "zfxparser.cpp"
     break;
 
-  case 96: // term: SUB exp-statement
-#line 430 "zfxparser.y"
-                                  { yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()->value = -1 * std::get<float>(yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()->value); yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > (); }
-#line 1728 "zfxparser.cpp"
+  case 97: // term: SUB exp-statement
+#line 438 "zfxparser.y"
+                                  { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeNegativeNode(yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ()); }
+#line 1741 "zfxparser.cpp"
     break;
 
-  case 97: // term: zenvar
-#line 431 "zfxparser.y"
+  case 98: // term: zenvar
+#line 439 "zfxparser.y"
                         { yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > (); }
-#line 1734 "zfxparser.cpp"
+#line 1747 "zfxparser.cpp"
     break;
 
-  case 98: // term: VARNAME func-content
-#line 432 "zfxparser.y"
+  case 99: // term: VARNAME func-content
+#line 440 "zfxparser.y"
                             { 
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = yystack_[0].value.as < std::shared_ptr<ZfxASTNode> > ();
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->opVal = DEFAULT_FUNCVAL;
@@ -1742,19 +1755,19 @@ namespace  zeno  {
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->value = yystack_[1].value.as < string > ();
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > ()->isParenthesisNode = true;
     }
-#line 1746 "zfxparser.cpp"
+#line 1759 "zfxparser.cpp"
     break;
 
-  case 99: // term: term DOT VARNAME
-#line 439 "zfxparser.y"
+  case 100: // term: term DOT VARNAME
+#line 447 "zfxparser.y"
                        {
         yylhs.value.as < std::shared_ptr<ZfxASTNode> > () = driver.makeComponentVisit(yystack_[2].value.as < std::shared_ptr<ZfxASTNode> > (), yystack_[0].value.as < string > ());
     }
-#line 1754 "zfxparser.cpp"
+#line 1767 "zfxparser.cpp"
     break;
 
 
-#line 1758 "zfxparser.cpp"
+#line 1771 "zfxparser.cpp"
 
             default:
               break;
@@ -2106,154 +2119,154 @@ namespace  zeno  {
   }
 
 
-  const signed char  ZfxParser ::yypact_ninf_ = -115;
+  const signed char  ZfxParser ::yypact_ninf_ = -120;
 
   const signed char  ZfxParser ::yytable_ninf_ = -1;
 
   const short
    ZfxParser ::yypact_[] =
   {
-     138,  -115,  -115,  -115,  -115,  -115,  -115,  -115,   184,   -46,
-     -28,   -13,    -6,    26,    26,  -115,  -115,  -115,    48,    26,
-      12,    67,   286,   286,   286,   101,   138,   184,  -115,  -115,
-      81,    85,  -115,    86,  -115,    87,  -115,    89,    64,    65,
-      58,    34,   -42,    72,    57,    97,   286,  -115,   286,     9,
-     286,  -115,    72,    72,    90,    72,   -15,    94,  -115,   102,
-    -115,   123,  -115,  -115,  -115,  -115,  -115,  -115,    49,  -115,
-      30,    30,  -115,  -115,  -115,  -115,  -115,  -115,    30,    30,
-      30,    30,    30,    30,  -115,  -115,   286,   103,  -115,  -115,
-    -115,  -115,  -115,   230,  -115,  -115,    62,   125,  -115,   104,
-     105,   250,   106,   129,    99,   108,  -115,   112,   115,   122,
-      76,  -115,  -115,  -115,    65,    58,   -10,   -42,   -42,   102,
-     102,   102,   114,  -115,   230,  -115,  -115,  -115,  -115,   286,
-      67,  -115,  -115,  -115,   286,   128,  -115,    67,  -115,   230,
-     143,  -115,    26,   286,   286,  -115,  -115,    37,  -115,  -115,
-    -115,  -115,  -115,   147,  -115,  -115,  -115,  -115,   132,    36,
-     154,   139,   230,  -115,    67,   126,    67,   136,   286,  -115,
-    -115,  -115,  -115,  -115,  -115
+     157,  -120,  -120,  -120,  -120,  -120,  -120,  -120,   203,   -45,
+     -35,   -31,   -30,    46,    46,  -120,  -120,  -120,    47,    46,
+       7,    55,   248,   248,   248,    79,   157,   203,  -120,  -120,
+      63,    81,  -120,    84,  -120,    85,  -120,    89,    64,    66,
+     126,    -8,    68,   159,   112,    95,   248,  -120,   248,     9,
+     248,  -120,   159,   159,   104,   159,    88,    92,  -120,   105,
+    -120,   129,   126,  -120,  -120,  -120,  -120,  -120,  -120,    77,
+    -120,   260,   260,  -120,  -120,  -120,  -120,  -120,  -120,   280,
+     280,   280,   280,   280,   280,  -120,  -120,   248,   115,  -120,
+    -120,  -120,  -120,  -120,    37,  -120,  -120,    99,   138,  -120,
+     118,   119,    76,   121,   150,   124,   133,  -120,   131,   137,
+     153,   103,  -120,   280,  -120,  -120,    66,   126,   248,     2,
+      68,    68,   105,   105,   105,   140,  -120,    37,  -120,  -120,
+    -120,  -120,   248,    55,  -120,  -120,  -120,   248,   154,  -120,
+      55,  -120,    37,   163,  -120,    46,   248,    42,   248,  -120,
+    -120,    52,  -120,  -120,  -120,  -120,  -120,   177,  -120,  -120,
+    -120,  -120,   158,     6,   180,   167,   174,    37,  -120,    55,
+     160,    55,   170,   248,   248,  -120,  -120,  -120,  -120,  -120,
+     178,  -120,   248,  -120
   };
 
   const signed char
    ZfxParser ::yydefact_[] =
   {
-       0,     2,    91,    21,    22,    93,    94,    79,     4,    80,
+       0,     2,    92,    21,    22,    94,    95,    80,     4,    81,
        0,     0,     0,     0,     0,    25,    26,    24,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     4,    12,    92,
+       0,     0,     0,     0,     0,     0,     0,     4,    12,    93,
        0,     0,    35,     0,     8,    37,     9,     0,    63,    65,
-      67,    69,    72,    97,    75,     0,    87,    98,     0,     0,
-       0,    80,    83,    85,    32,    81,     0,     0,    64,    75,
-      96,     0,     1,     3,     5,     7,    10,     6,     0,    11,
-       0,     0,    57,    58,    59,    60,    61,    62,     0,     0,
-       0,     0,     0,     0,    84,    86,     0,     0,    15,    16,
-      17,    18,    19,     0,    20,    88,     0,     0,    41,     0,
-       0,     0,     0,     0,     0,    34,    50,     0,     0,     0,
-       0,    95,    38,    39,    66,    68,    70,    73,    74,    76,
-      77,    78,     0,    99,     0,    23,    14,    13,    90,     0,
-       0,    43,    42,    45,    47,     0,    44,     0,    33,     0,
-       0,    51,     0,     0,     0,    82,    29,     0,    28,    27,
-      89,    40,    49,     0,    48,    46,    55,    36,     0,     0,
-       0,     0,     0,    31,     0,     0,     0,     0,     0,    30,
-      53,    52,    54,    56,    71
+      67,    69,    73,    98,    76,     0,    88,    99,     0,     0,
+       0,    81,    84,    86,    32,    82,     0,     0,    64,    76,
+      97,     0,    67,     1,     3,     5,     7,    10,     6,     0,
+      11,     0,     0,    57,    58,    59,    60,    61,    62,     0,
+       0,     0,     0,     0,     0,    85,    87,     0,     0,    15,
+      16,    17,    18,    19,     0,    20,    89,     0,     0,    41,
+       0,     0,     0,     0,     0,     0,    34,    50,     0,     0,
+       0,     0,    96,     0,    38,    39,    66,    68,     0,    70,
+      74,    75,    77,    78,    79,     0,   100,     0,    23,    14,
+      13,    91,     0,     0,    43,    42,    45,    47,     0,    44,
+       0,    33,     0,     0,    51,     0,     0,    70,     0,    83,
+      29,     0,    28,    27,    90,    40,    49,     0,    48,    46,
+      55,    36,     0,     0,     0,     0,     0,     0,    31,     0,
+       0,     0,     0,     0,     0,    30,    53,    52,    54,    56,
+       0,    71,     0,    72
   };
 
   const short
    ZfxParser ::yypgoto_[] =
   {
-    -115,   137,     5,  -115,    25,  -115,   -17,  -115,   -44,  -115,
-       4,  -115,  -114,  -115,  -115,   124,   107,  -115,  -115,  -115,
-    -115,  -115,  -115,  -115,   -22,  -115,   109,   100,    96,     2,
-      -7,  -115,  -115,     3
+    -120,   172,     5,  -120,    54,  -120,   -15,  -120,   -42,  -120,
+      32,  -120,  -119,  -120,  -120,   164,   143,  -120,  -120,  -120,
+    -120,  -120,  -120,   145,   -22,  -120,   144,    -5,   -67,   -63,
+      -9,  -120,  -120,     3
   };
 
   const unsigned char
    ZfxParser ::yydefgoto_[] =
   {
-       0,    25,    26,    27,   125,    93,    28,    29,    30,    31,
-     146,   147,   126,   105,    32,    33,    34,    35,   101,   134,
-     153,   109,    36,    78,    37,    38,    39,    40,    41,    42,
-      43,    96,    47,    59
+       0,    25,    26,    27,   128,    94,    28,    29,    30,    31,
+     150,   151,   129,   106,    32,    33,    34,    35,   102,   137,
+     157,   110,    36,    79,    37,    38,    39,    40,    41,    42,
+      43,    97,    47,    59
   };
 
   const unsigned char
    ZfxParser ::yytable_[] =
   {
-      58,    60,    61,    44,    57,    99,    52,    53,   144,   106,
-     148,    44,    55,    45,     2,     3,     4,    81,   107,    82,
-      46,    83,     5,     6,    95,     7,    97,   102,   103,    44,
-      44,   108,    64,     9,    98,     2,     3,     4,    48,   166,
-      13,    14,     7,     5,     6,    79,     7,    80,   148,   162,
-      51,   112,    44,    49,     9,    18,    19,    13,    14,   163,
-      50,    13,    14,    22,   122,   128,    23,    84,    85,    86,
-       8,   127,    54,    19,   129,    24,    10,    19,    56,   135,
-      87,   117,   118,    88,   119,   120,   121,    23,     8,    79,
-     152,    80,    89,    90,    91,    92,    24,    72,    73,    74,
-      75,    62,   149,    84,    85,    86,    65,   150,    76,    77,
-      66,    67,   154,   151,    69,    68,    70,   127,    71,    94,
-     156,   160,   161,   104,   110,    87,   111,   123,   130,   131,
-     132,   136,   137,   138,   139,   159,   140,    44,     1,   141,
-     149,   142,   143,     2,     3,     4,   174,   170,   145,   172,
-     164,     5,     6,   155,     7,   158,   165,   167,   168,     8,
-     171,   173,     9,    63,   157,    10,   169,    11,    12,    13,
-      14,   115,     0,   100,   116,   113,     0,     0,     0,   114,
-       0,    15,    16,    17,    18,    19,    20,    21,     0,     2,
-       3,     4,    22,     0,     0,    23,     0,     5,     6,     0,
-       7,     0,     0,     0,    24,     8,     0,     0,     9,     0,
-       0,    10,     0,    11,    12,    13,    14,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,    15,    16,    17,
-      18,    19,    20,    21,     0,     2,     3,     4,    22,     0,
-       0,    23,     0,     5,     6,     0,     7,     0,     0,     0,
-      24,   124,     0,     0,     9,     2,     3,     4,     0,     0,
-       0,    13,    14,     5,     6,     0,     7,     0,     0,     0,
-       0,     0,     0,     0,     9,   133,     0,    19,     0,     0,
-       0,    13,    14,     0,    22,     0,     0,    23,     0,     0,
-       0,     2,     3,     4,     0,     0,    24,    19,     0,     5,
-       6,     0,     7,     0,    22,     0,     0,    23,     0,     0,
-       9,     0,     0,     0,     0,     0,    24,    13,    14,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    19,     0,     0,     0,     0,     0,     0,
-      22,     0,     0,    23,     0,     0,     0,     0,     0,     0,
-       0,     0,    24
+      58,    60,    61,    44,    52,    53,    57,   100,   152,   171,
+      55,    44,   119,    45,     2,     3,     4,   120,   121,    62,
+     148,    46,     5,     6,    96,     7,    98,   103,   104,    44,
+      44,    48,    65,     9,    99,    49,    50,    85,    86,    87,
+      13,    14,     2,     3,     4,   165,   147,    80,   152,    81,
+       5,     6,    44,     7,   114,    18,    19,    80,   127,    81,
+     148,     9,     7,    22,   167,   125,    23,   117,    13,    14,
+      51,    54,   130,    56,   168,    24,     8,    13,    14,    63,
+     138,     2,     3,     4,    19,   122,   123,   124,    66,     5,
+       6,    22,     7,    19,    23,   156,    61,    80,     8,    81,
+       9,   136,   131,    24,    10,   153,    67,    13,    14,    68,
+     154,   132,   107,    69,    70,   158,    71,    95,   155,    72,
+     130,   108,   111,    19,   164,   160,   166,    82,    88,    83,
+      22,    84,   112,    23,   109,    88,   163,   105,    89,   126,
+      44,   133,    24,   134,   135,   153,   139,    90,    91,    92,
+      93,   180,   181,   140,   176,   143,   178,     1,   141,   142,
+     183,   144,     2,     3,     4,    73,    74,    75,    76,   146,
+       5,     6,   145,     7,   149,   162,    77,    78,     8,   159,
+     169,     9,   170,   172,    10,   173,    11,    12,    13,    14,
+      85,    86,    87,   174,   177,   179,   161,   182,    64,   175,
+      15,    16,    17,    18,    19,    20,    21,   113,     2,     3,
+       4,    22,   115,   101,    23,   116,     5,     6,     0,     7,
+       0,     0,     0,    24,     8,     0,     0,     9,     0,     0,
+      10,     0,    11,    12,    13,    14,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,    15,    16,    17,    18,
+      19,    20,    21,     2,     3,     4,     0,    22,     0,     0,
+      23,     5,     6,     0,     7,     2,     3,     4,     0,    24,
+       0,     0,     9,     5,     6,     0,     7,     0,     0,    13,
+      14,     0,     0,     0,     9,     2,     3,     4,     0,     0,
+       0,    13,    14,     5,     6,    19,     7,     0,     0,     0,
+       0,     0,    22,     0,     9,    23,     0,    19,     0,     0,
+       0,    13,    14,     0,    24,     0,     0,    23,     0,     0,
+       0,     0,     0,     0,     0,     0,    24,    19,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    23,     0,     0,
+       0,     0,     0,     0,     0,     0,   118
   };
 
   const short
    ZfxParser ::yycheck_[] =
   {
-      22,    23,    24,     0,    21,    49,    13,    14,    18,    24,
-     124,     8,    19,     8,     5,     6,     7,    59,    33,    61,
-      66,    63,    13,    14,    46,    16,    48,    49,    50,    26,
-      27,    46,    27,    24,    25,     5,     6,     7,    66,     3,
-      31,    32,    16,    13,    14,    55,    16,    57,   162,    12,
-      24,    68,    49,    66,    24,    46,    47,    31,    32,    22,
-      66,    31,    32,    54,    86,     3,    57,    31,    32,    33,
-      21,    93,    24,    47,    12,    66,    27,    47,    66,   101,
-      23,    79,    80,    26,    81,    82,    83,    57,    21,    55,
-     134,    57,    35,    36,    37,    38,    66,    39,    40,    41,
-      42,     0,   124,    31,    32,    33,    25,   129,    50,    51,
-      25,    25,   134,   130,    25,    28,    52,   139,    53,    22,
-     137,   143,   144,    33,    30,    23,     3,    24,     3,    25,
-      25,    25,     3,    34,    26,   142,    24,   134,     0,    24,
-     162,    19,    66,     5,     6,     7,   168,   164,    34,   166,
-       3,    13,    14,    25,    16,    12,    24,     3,    19,    21,
-      34,    25,    24,    26,   139,    27,   162,    29,    30,    31,
-      32,    71,    -1,    49,    78,    68,    -1,    -1,    -1,    70,
-      -1,    43,    44,    45,    46,    47,    48,    49,    -1,     5,
-       6,     7,    54,    -1,    -1,    57,    -1,    13,    14,    -1,
-      16,    -1,    -1,    -1,    66,    21,    -1,    -1,    24,    -1,
-      -1,    27,    -1,    29,    30,    31,    32,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    43,    44,    45,
-      46,    47,    48,    49,    -1,     5,     6,     7,    54,    -1,
-      -1,    57,    -1,    13,    14,    -1,    16,    -1,    -1,    -1,
-      66,    21,    -1,    -1,    24,     5,     6,     7,    -1,    -1,
-      -1,    31,    32,    13,    14,    -1,    16,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    24,    25,    -1,    47,    -1,    -1,
-      -1,    31,    32,    -1,    54,    -1,    -1,    57,    -1,    -1,
-      -1,     5,     6,     7,    -1,    -1,    66,    47,    -1,    13,
-      14,    -1,    16,    -1,    54,    -1,    -1,    57,    -1,    -1,
-      24,    -1,    -1,    -1,    -1,    -1,    66,    31,    32,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    47,    -1,    -1,    -1,    -1,    -1,    -1,
-      54,    -1,    -1,    57,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    66
+      22,    23,    24,     0,    13,    14,    21,    49,   127,     3,
+      19,     8,    79,     8,     5,     6,     7,    80,    81,    24,
+      18,    66,    13,    14,    46,    16,    48,    49,    50,    26,
+      27,    66,    27,    24,    25,    66,    66,    31,    32,    33,
+      31,    32,     5,     6,     7,     3,   113,    55,   167,    57,
+      13,    14,    49,    16,    69,    46,    47,    55,    21,    57,
+      18,    24,    16,    54,    12,    87,    57,    72,    31,    32,
+      24,    24,    94,    66,    22,    66,    21,    31,    32,     0,
+     102,     5,     6,     7,    47,    82,    83,    84,    25,    13,
+      14,    54,    16,    47,    57,   137,   118,    55,    21,    57,
+      24,    25,     3,    66,    27,   127,    25,    31,    32,    25,
+     132,    12,    24,    28,    25,   137,    52,    22,   133,    53,
+     142,    33,    30,    47,   146,   140,   148,    59,    23,    61,
+      54,    63,     3,    57,    46,    23,   145,    33,    26,    24,
+     137,     3,    66,    25,    25,   167,    25,    35,    36,    37,
+      38,   173,   174,     3,   169,    24,   171,     0,    34,    26,
+     182,    24,     5,     6,     7,    39,    40,    41,    42,    66,
+      13,    14,    19,    16,    34,    12,    50,    51,    21,    25,
+       3,    24,    24,     3,    27,    18,    29,    30,    31,    32,
+      31,    32,    33,    19,    34,    25,   142,    19,    26,   167,
+      43,    44,    45,    46,    47,    48,    49,    62,     5,     6,
+       7,    54,    69,    49,    57,    71,    13,    14,    -1,    16,
+      -1,    -1,    -1,    66,    21,    -1,    -1,    24,    -1,    -1,
+      27,    -1,    29,    30,    31,    32,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    43,    44,    45,    46,
+      47,    48,    49,     5,     6,     7,    -1,    54,    -1,    -1,
+      57,    13,    14,    -1,    16,     5,     6,     7,    -1,    66,
+      -1,    -1,    24,    13,    14,    -1,    16,    -1,    -1,    31,
+      32,    -1,    -1,    -1,    24,     5,     6,     7,    -1,    -1,
+      -1,    31,    32,    13,    14,    47,    16,    -1,    -1,    -1,
+      -1,    -1,    54,    -1,    24,    57,    -1,    47,    -1,    -1,
+      -1,    31,    32,    -1,    66,    -1,    -1,    57,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    66,    47,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    57,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    66
   };
 
   const signed char
@@ -2265,18 +2278,19 @@ namespace  zeno  {
       75,    76,    81,    82,    83,    84,    89,    91,    92,    93,
       94,    95,    96,    97,   100,    69,    66,    99,    66,    66,
       66,    24,    97,    97,    24,    97,    66,    73,    91,   100,
-      91,    91,     0,    68,    69,    25,    25,    25,    28,    25,
-      52,    53,    39,    40,    41,    42,    50,    51,    90,    55,
-      57,    59,    61,    63,    31,    32,    33,    23,    26,    35,
-      36,    37,    38,    72,    22,    91,    98,    91,    25,    75,
-      82,    85,    91,    91,    33,    80,    24,    33,    46,    88,
-      30,     3,    73,    83,    93,    94,    95,    96,    96,   100,
-     100,   100,    91,    24,    21,    71,    79,    91,     3,    12,
-       3,    25,    25,    25,    86,    91,    25,     3,    34,    26,
-      24,    24,    19,    66,    18,    34,    77,    78,    79,    91,
-      91,    73,    75,    87,    91,    25,    73,    71,    12,    97,
-      91,    91,    12,    22,     3,    24,     3,     3,    19,    77,
-      73,    34,    73,    25,    91
+      91,    91,    94,     0,    68,    69,    25,    25,    25,    28,
+      25,    52,    53,    39,    40,    41,    42,    50,    51,    90,
+      55,    57,    59,    61,    63,    31,    32,    33,    23,    26,
+      35,    36,    37,    38,    72,    22,    91,    98,    91,    25,
+      75,    82,    85,    91,    91,    33,    80,    24,    33,    46,
+      88,    30,     3,    90,    73,    83,    93,    94,    66,    95,
+      96,    96,   100,   100,   100,    91,    24,    21,    71,    79,
+      91,     3,    12,     3,    25,    25,    25,    86,    91,    25,
+       3,    34,    26,    24,    24,    19,    66,    95,    18,    34,
+      77,    78,    79,    91,    91,    73,    75,    87,    91,    25,
+      73,    71,    12,    97,    91,     3,    91,    12,    22,     3,
+      24,     3,     3,    18,    19,    77,    73,    34,    73,    25,
+      91,    91,    19,    91
   };
 
   const signed char
@@ -2289,9 +2303,10 @@ namespace  zeno  {
       84,    85,    85,    85,    85,    86,    86,    87,    87,    87,
       88,    88,    88,    89,    89,    89,    89,    90,    90,    90,
       90,    90,    90,    91,    91,    92,    92,    93,    93,    94,
-      94,    94,    95,    95,    95,    96,    96,    96,    96,    97,
-      97,    97,    97,    97,    97,    97,    97,    98,    98,    98,
-      99,   100,   100,   100,   100,   100,   100,   100,   100,   100
+      94,    94,    94,    95,    95,    95,    96,    96,    96,    96,
+      97,    97,    97,    97,    97,    97,    97,    97,    98,    98,
+      98,    99,   100,   100,   100,   100,   100,   100,   100,   100,
+     100
   };
 
   const signed char
@@ -2304,9 +2319,10 @@ namespace  zeno  {
        5,     1,     2,     2,     2,     1,     2,     0,     1,     1,
        1,     2,     5,     7,     7,     5,     7,     1,     1,     1,
        1,     1,     1,     1,     2,     1,     3,     1,     3,     1,
-       3,     7,     1,     3,     3,     1,     3,     3,     3,     1,
-       1,     2,     4,     2,     2,     2,     2,     0,     1,     3,
-       3,     1,     1,     1,     1,     3,     2,     1,     2,     3
+       3,     7,     9,     1,     3,     3,     1,     3,     3,     3,
+       1,     1,     2,     4,     2,     2,     2,     2,     0,     1,
+       3,     3,     1,     1,     1,     1,     3,     2,     1,     2,
+       3
   };
 
 
@@ -2349,9 +2365,10 @@ namespace  zeno  {
      254,   259,   260,   261,   262,   265,   266,   269,   270,   271,
      274,   278,   283,   290,   294,   299,   303,   309,   310,   311,
      312,   313,   314,   317,   318,   324,   325,   331,   332,   338,
-     339,   344,   354,   355,   359,   367,   368,   372,   376,   382,
-     383,   384,   388,   393,   397,   401,   405,   411,   412,   413,
-     417,   425,   426,   427,   428,   429,   430,   431,   432,   439
+     339,   344,   352,   362,   363,   367,   375,   376,   380,   384,
+     390,   391,   392,   396,   401,   405,   409,   413,   419,   420,
+     421,   425,   433,   434,   435,   436,   437,   438,   439,   440,
+     447
   };
 
   void
@@ -2384,9 +2401,9 @@ namespace  zeno  {
 
 #line 10 "zfxparser.y"
 } //  zeno 
-#line 2388 "zfxparser.cpp"
+#line 2405 "zfxparser.cpp"
 
-#line 446 "zfxparser.y"
+#line 454 "zfxparser.y"
 
 
 // Bison expects us to provide implementation - otherwise linker complains

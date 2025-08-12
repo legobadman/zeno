@@ -13,6 +13,7 @@
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/extra/GlobalState.h>
+#include <zeno/formula/syntax_tree.h>
 #include <zeno/core/data.h>
 #include <zeno/utils/uuid.h>
 #include <zeno/utils/safe_at.h>
@@ -48,8 +49,9 @@ namespace zeno
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         void doOnlyApply();
-        virtual void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
-        void clear();
+        void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
+        virtual void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
+        virtual void clearCalcResults();
 
         //BEGIN new api
         void init(const NodeData& dat);
@@ -67,13 +69,21 @@ namespace zeno
         INode* coreNode() const;
         void initUuid(Graph* pGraph, const std::string nodecls);
 
+        virtual NodeType nodeType() const;
+        virtual bool is_locked() const;
+        virtual void set_locked(bool);
+
         void set_view(bool bOn);
         CALLBACK_REGIST(set_view, void, bool)
         bool is_view() const;
 
-        void set_mute(bool bOn);
-        CALLBACK_REGIST(set_mute, void, bool)
-        bool is_mute() const;
+        void set_bypass(bool bOn);
+        CALLBACK_REGIST(set_bypass, void, bool)
+        bool is_bypass() const;
+
+        void set_nocache(bool bOn);
+        CALLBACK_REGIST(set_nocache, void, bool)
+        bool is_nocache() const;
 
         bool is_dirty() const { return m_dirty; }
         NodeRunStatus get_run_status() const { return m_status; }
@@ -91,7 +101,16 @@ namespace zeno
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
+        zany get_input_obj(std::string const& name) const;
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
+        ParamType get_anyparam_type(bool bInput, const std::string& name);
+
+        /*container_info是记录参数的ListObject的增删改情况，便于作部分加载*/
+        container_elem_update_info get_input_container_info(const std::string& param);
+        container_elem_update_info get_output_container_info(const std::string& param);
+        void set_input_container_info(const std::string& param, const container_elem_update_info& info);
+        void set_output_container_info(const std::string& param, const container_elem_update_info& info);
+        void clear_container_info();
 
         std::string get_viewobject_output_param() const;
         virtual NodeData exportInfo() const;
@@ -138,7 +157,7 @@ namespace zeno
         void update_layout(params_change_info& changes);
         CALLBACK_REGIST(update_layout, void, params_change_info& changes)
 
-        bool is_loaded() const;
+        virtual bool is_loaded() const;
         void update_load_info(bool bDisable);
         CALLBACK_REGIST(update_load_info, void, bool)
 
@@ -160,6 +179,7 @@ namespace zeno
         void func2() {}
         bool isInDopnetwork();
         bool has_frame_relative_params() const;
+        bool only_single_output_object() const;
 
         //foreach特供
         virtual bool is_continue_to_run();
@@ -169,7 +189,7 @@ namespace zeno
 
         void onInterrupted();
         void mark_previous_ref_dirty();
-        void registerObjToManager();
+        void update_out_objs_key();
 
         //END new api
         bool add_input_prim_param(ParamPrimitive param);
@@ -195,36 +215,6 @@ namespace zeno
 
         CALLBACK_REGIST(update_visable_enable, void, zeno::NodeImpl*, std::set<std::string>, std::set<std::string>)
 
-    protected:
-        virtual void complete();
-        virtual void apply();
-        void reflectNode_apply();
-
-        virtual void initParams(const NodeData& dat);
-        
-    private:
-        zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
-        std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
-        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
-        bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
-        void reportStatus(bool bDirty, NodeRunStatus status);
-        float resolve(const std::string& formulaOrKFrame, const ParamType type);
-        template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
-        std::set<std::pair<std::string, std::string>> resolveReferSource(const zeno::reflect::Any& param_defl);
-        void initReferLinks(PrimitiveParam* target_param);
-
-        //preApply是先解决所有输入参数（上游）的求值问题
-        void preApply(CalcContext* pContext);
-        void preApply_Primitives(CalcContext* pContext);
-        void commit_to_render(UpdateReason reason);
-        void bypass();
-        CustomUI _deflCustomUI() const;
-
-        //for timeshift node
-        void preApplyTimeshift(CalcContext* pContext);
-        //foreach特供
-        void reflectForeach_apply(CalcContext* pContext);
-
     public:
         //为名为ds的输入参数，求得这个参数在依赖边的求值下的值，或者没有依赖边下的默认值。
         bool requireInput(std::string const& ds, CalcContext* pContext);
@@ -233,11 +223,13 @@ namespace zeno
         Session* getThisSession() const;
         GlobalState* getGlobalState() const;
 
+        bool has_link_input(std::string const& id) const;
         bool has_input(std::string const& id) const;
         zany get_input(std::string const& id) const;
         zany get_output_obj(std::string const& sock_name);
         std::vector<zany> get_output_objs();
         virtual zany get_default_output_object();
+        virtual container_elem_update_info get_default_output_container_info();
 
         template <class T>
         std::shared_ptr<T> get_input(std::string const& id) const {
@@ -286,23 +278,57 @@ namespace zeno
 
         TempNodeCaller temp_node(std::string const& id);
 
-    private:
-        std::string m_name;
-        std::string m_nodecls;
-        std::string m_uuid;
-        std::pair<float, float> m_pos;
+    protected:
+        virtual void complete();
+        virtual void apply();
+        void reflectNode_apply();
+        virtual void initParams(const NodeData& dat);
 
         std::map<std::string, ObjectParam> m_inputObjs;
         std::map<std::string, PrimitiveParam> m_inputPrims;
         std::map<std::string, PrimitiveParam> m_outputPrims;
         std::map<std::string, ObjectParam> m_outputObjs;
+        
+    private:
+        zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
+        std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
+        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty);
+        bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
+        void reportStatus(bool bDirty, NodeRunStatus status);
+        float resolve(const std::string& formulaOrKFrame, const ParamType type);
+        std::string resolve_string(const std::string& fmla, const std::string& defl);
+        zfxvariant execute_fmla(const std::string& expression);
+        template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
+        std::set<std::pair<std::string, std::string>> resolveReferSource(const zeno::reflect::Any& param_defl);
+        void initReferLinks(PrimitiveParam* target_param);
+
+        //preApply是先解决所有输入参数（上游）的求值问题
+        void preApply(CalcContext* pContext);
+        void preApply_Primitives(CalcContext* pContext);
+        void preApply_SwitchIf(CalcContext* pContext);
+        void preApply_SwitchBetween(CalcContext* pContext);
+        void commit_to_render(UpdateReason reason);
+        void bypass();
+        CustomUI _deflCustomUI() const;
+
+        //for timeshift node
+        void preApplyTimeshift(CalcContext* pContext);
+        //foreach特供
+        void foreachend_apply(CalcContext* pContext);
+        void init_output_container_updateinfo();
+
+        std::string m_name;
+        std::string m_nodecls;
+        std::string m_uuid;
+        std::pair<float, float> m_pos;
 
         std::string m_uuidPath;
         NodeRunStatus m_status = Node_DirtyReadyToRun;
         Graph* m_pGraph;
         std::unique_ptr<INode> m_pNode;
         bool m_bView = false;
-        bool m_mute = false;
+        bool m_bypass = false;
+        bool m_nocache = false;
         bool m_dirty = true;
 
         zeno::reflect::TypeBase* m_pTypebase = nullptr;

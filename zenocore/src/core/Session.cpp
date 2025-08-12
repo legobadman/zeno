@@ -10,6 +10,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/NodeImpl.h>
+#include <zeno/core/SolverImpl.h>
 #include <zeno/core/CoreParam.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/utils/logger.h>
@@ -24,14 +25,20 @@
 #include <zeno/core/GlobalVariable.h>
 #include <zeno/core/FunctionManager.h>
 #include <regex>
-
-
+#include <Windows.h>
+#include <zeno/extra/CalcContext.h>
 #include <zeno/reflect/core.hpp>
 #include <zeno/reflect/type.hpp>
 #include <zeno/reflect/metadata.hpp>
 #include <zeno/reflect/registry.hpp>
 #include <zeno/reflect/container/any>
 #include <zeno/reflect/container/arraylist>
+#ifdef ZENO_WITH_PYTHON
+#include <Python.h>
+#endif
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 #include <zeno/core/reflectdef.h>
 #include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 //#include "zeno_nodes/reflect/reflection.generated.hpp"
@@ -52,21 +59,161 @@ namespace zeno {
     };
     static std::map<size_t, _ObjUIInfo> s_objsUIInfo;
 
+#ifdef ZENO_WITH_PYTHON
+    PyMODINIT_FUNC PyInit_zen(void);
+
+    void initPythonEnv(const char* progName)
+    {
+        wchar_t* program = Py_DecodeLocale(progName, NULL);
+        if (program == NULL) {
+            fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
+            exit(1);
+        }
+
+        //if (PyImport_AppendInittab("zen", PyInit_zen) == -1) {
+        //    fprintf(stderr, "Error: could not extend in-built modules table\n");
+        //    exit(1);
+        //}
+
+        Py_SetProgramName(program);
+
+        Py_Initialize();
+
+        //std::string tempCode;
+        //tempCode = "import zen";
+        //if (PyRun_SimpleString(tempCode.c_str()) < 0) {
+        //    zeno::log_warn("Failed to initialize Python module");
+        //    return;
+        //}
+
+        PyMem_RawFree(program);
+    }
+
+    DWORD funcForPythonEnv(LPVOID lpThreadParameter);
+
+    struct PythonEnvWrapper
+    {
+        HANDLE m_thdPython;
+        HANDLE m_hEventForPy;
+        HANDLE m_hEventPyReady;
+        DWORD m_threadID;
+        std::string script;
+        std::function<void()> m_pyzenFunc;
+        bool m_bInitPyZen = false;
+
+        PythonEnvWrapper() {
+            initPyThread();
+        }
+
+        void initPyzenFunc(std::function<void()> pyzenFunc) {
+            m_pyzenFunc = pyzenFunc;
+            SetEvent(m_hEventForPy);
+        }
+
+        void asyncRunPython(const std::string& code) {
+            script = code;
+            SetEvent(m_hEventForPy);
+        }
+
+        void initPyThread() {
+            m_hEventForPy = CreateEvent(NULL, TRUE, FALSE, NULL);
+            m_hEventPyReady = CreateEvent(NULL, TRUE, FALSE, NULL);
+            m_thdPython = CreateThread(NULL, 0, funcForPythonEnv, this, 0, &m_threadID);
+        }
+    };
+
+    DWORD funcForPythonEnv(LPVOID lpThreadParameter) {
+        PythonEnvWrapper* wrapper = static_cast<PythonEnvWrapper*>(lpThreadParameter);
+        while (true) {
+            WaitForSingleObject(wrapper->m_hEventForPy, INFINITE);
+            if (!wrapper->m_bInitPyZen) {
+                wrapper->m_pyzenFunc();
+                char filename[MAX_PATH];
+                DWORD size = GetModuleFileNameA(NULL, filename, MAX_PATH);
+                initPythonEnv(filename);
+                wrapper->m_bInitPyZen = true;
+            }
+            else {
+                //runPython(wrapper->script);
+                std::string stdOutErr =
+                    "import sys\n\
+\
+class CatchOutErr:\n\
+    def __init__(self):\n\
+        self.value = ''\n\
+    def write(self, txt):\n\
+        self.value += txt\n\
+    def flush(self):\n\
+        pass\n\
+catchOutErr = CatchOutErr()\n\
+sys.stdout = catchOutErr\n\
+sys.stderr = catchOutErr\n\
+"; //this is python code to redirect stdouts/stderr
+
+                //Py_Initialize();
+
+                PyObject* pModule = PyImport_AddModule("__main__"); //create main module
+                int ret = PyRun_SimpleString(stdOutErr.c_str()); //invoke code to redirect
+
+                bool bFailed = false;
+                if (PyRun_SimpleString(wrapper->script.c_str()) < 0) {
+                    bFailed = true;
+                }
+                if (1) { //output log and error
+                    PyObject* catcher = PyObject_GetAttrString(pModule, "catchOutErr"); //get our catchOutErr created above
+                    PyObject* output = PyObject_GetAttrString(catcher, "value"); //get the stdout and stderr from our catchOutErr object
+                    if (output != Py_None)
+                    {
+                        std::string str = _PyUnicode_AsString(output);
+                        for (const auto& line : split_str(str, '\n'))
+                        {
+                            if (!line.empty())
+                            {
+                                zeno::log_info(line);
+                            }
+                        }
+                    }
+                }
+                //return !bFailed; //how to run?
+                int j;
+                j = 0;
+                SetEvent(wrapper->m_hEventPyReady);
+            }
+            ResetEvent(wrapper->m_hEventForPy);
+        }
+        return 0;
+    }
+#endif
+
+
 ZENO_API Session::Session()
     : globalState(std::make_unique<GlobalState>())
     , globalComm(std::make_unique<GlobalComm>())
     , globalError(std::make_unique<GlobalError>())
     , eventCallbacks(std::make_unique<EventCallbacks>())
     , m_userData(std::make_unique<UserData>())
-    , mainGraph(std::make_shared<Graph>("main"))
-    , assets(std::make_shared<AssetsMgr>())
+    //, mainGraph(std::make_shared<Graph>("main"))
+    , assets(std::make_unique<AssetsMgr>())
     , objsMan(std::make_unique<ObjectManager>())
+#ifdef ZENO_WITH_PYTHON
+    , m_pyWrapper(std::make_unique<PythonEnvWrapper>())
+#endif
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
+    , m_mainThreadId(0)
 {
+    m_mainThreadId = GetCurrentThreadId();
 }
 
-ZENO_API Session::~Session() = default;
+ZENO_API Session::~Session() {
+    int j;
+    j = 0;
+}
+
+void Session::destroy() {
+    assets.reset();
+    mainGraph.reset();
+}
 
 
 static CustomUI descToCustomui(const Descriptor& desc) {
@@ -187,10 +334,10 @@ static CustomUI descToCustomui(const Descriptor& desc) {
     }
     for (const SocketDescriptor& param_desc : desc.outputs) {
         if (param_desc._desc.type == Desc_Prim) {
-            ui.outputObjs.push_back(param_desc._desc.objparam);
+            ui.outputPrims.push_back(param_desc._desc.primparam);
         }
         else if (param_desc._desc.type == Desc_Obj) {
-            ui.outputPrims.push_back(param_desc._desc.primparam);
+            ui.outputObjs.push_back(param_desc._desc.objparam);
         }
         else {
             ParamType type = param_desc.type;
@@ -266,6 +413,14 @@ ZENO_API void Session::defNodeClass2(INode* (*ctor)(), std::string const& nodecl
     CustomUI ui = customui;
     initControlsByType(ui);
     auto cls = std::make_unique<ImplNodeClass>(ctor, ui, nodecls);
+
+    NodeInfo info;
+    info.module_path = m_current_loading_module;
+    info.name = nodecls;
+    info.status = ZModule_Loaded;
+    info.cate = cls->m_customui.category;
+
+    m_cates.push_back(std::move(info));
     nodeClasses.emplace(nodecls, std::move(cls));
 }
 
@@ -311,6 +466,7 @@ void Session::uninstallModule(const std::string& module_path) {
             const std::string uninstall_nodecls = info.name;
             nodeClasses.erase(uninstall_nodecls);
             //所有节点要disable掉，只留一个空壳
+            if (mainGraph)
             mainGraph->update_load_info(uninstall_nodecls, true);
         }
     }
@@ -321,6 +477,7 @@ void Session::endLoadModule() {
     for (NodeInfo& info : m_cates) {
         if (info.module_path == m_current_loading_module) {
             info.status = ZModule_Loaded;
+            if (mainGraph)
             mainGraph->update_load_info(info.name, false);
         }
     }
@@ -352,6 +509,14 @@ ZENO_API void Session::resetMainGraph() {
     globalVariableManager = std::make_unique<GlobalVariableManager>();
 }
 
+void Session::clearMainGraph() {
+    mainGraph.reset();
+}
+
+ZENO_API void Session::clearAssets() {
+    assets->clear();
+}
+
 ZENO_API void Session::setApiLevelEnable(bool bEnable)
 {
     m_bApiLevelEnable = bEnable;
@@ -373,7 +538,9 @@ ZENO_API void Session::endApiCall()
                 m_callbackRunTrigger();
             }
             else {
-                run();
+                //这里后续是给非ui框架使用，比如命令行，而ui会走RunTrigger.
+                zeno::render_reload_info infos;
+                run("", infos);
             }
         }
     }
@@ -458,7 +625,38 @@ ZENO_API bool Session::is_interrupted() const {
     return m_bInterrupted;
 }
 
-ZENO_API bool Session::run(const std::string& currgraph) {
+ZENO_API unsigned long Session::mainThreadId() const {
+    return m_mainThreadId;
+}
+
+ZENO_API void Session::setMainThreadId(unsigned long threadId) {
+    m_mainThreadId = threadId;
+}
+
+ZENO_API void Session::set_solver(const std::string& solver) {
+    m_solver = solver;
+}
+
+ZENO_API std::string Session::get_solver() {
+    return m_solver;
+}
+
+std::wstring Session::get_project_path() const {
+    return m_proj_path;
+}
+
+void Session::init_project_path(const std::wstring& path) {
+    m_proj_path = path;
+}
+
+void Session::terminate_solve() {
+    SolverImpl* pSolverNode = static_cast<SolverImpl*>(getNodeByUuidPath(m_solver));
+    if (pSolverNode) {
+        pSolverNode->terminate_solve();
+    }
+}
+
+ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& infos) {
     if (m_bDisableRunning)
         return false;
 
@@ -483,12 +681,13 @@ ZENO_API bool Session::run(const std::string& currgraph) {
     //对之前删除节点时记录的obj，对应的所有其他关联节点，都标脏
     objsMan->remove_attach_node_by_removing_objs();
 
-    if (!currgraph.empty()) {
-        getGraphByPath(currgraph);
-    }
-    else {
-        mainGraph->runGraph();
-    }
+    //if (!currgraph.empty()) {
+    //    getGraphByPath(currgraph);
+    //}
+    mainGraph->runGraph(infos);
+    //马上清除不必要的缓存信息
+    mainGraph->clearContainerUpdateInfo();
+
     return true;
 }
 
@@ -500,9 +699,9 @@ ZENO_API bool Session::is_auto_run() const {
     return m_bAutoRun;
 }
 
-ZENO_API void Session::set_Rerun()
+ZENO_API void Session::markDirtyAndCleanResult()
 {
-    mainGraph->markDirtyAll();
+    mainGraph->markDirtyAndCleanup();
 }
 
 ZENO_API void Session::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {
@@ -530,11 +729,34 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
     resetMainGraph();
     mainGraph->init(ioresult.mainGraph);
     mainGraph->initRef(ioresult.mainGraph);
+    m_proj_path = ioresult.path;
     //referManager->init(mainGraph);
 
     switchToFrame(ioresult.timeline.currFrame);
     //init $F globalVariable
     //zeno::getSession().globalVariableManager->overrideVariable(zeno::GVariable("$F", zeno::reflect::make_any<float>(ioresult.timeline.currFrame)));
+}
+
+void Session::initPyzen(std::function<void()> pyzenFunc) {
+#ifdef ZENO_WITH_PYTHON
+    if (m_pyWrapper)
+        m_pyWrapper->initPyzenFunc(pyzenFunc);
+#endif
+}
+
+void Session::asyncRunPython(const std::string& code) {
+#ifdef ZENO_WITH_PYTHON
+    if (m_pyWrapper)
+        m_pyWrapper->asyncRunPython(code);
+#endif
+}
+
+void* Session::hEventOfPyFinish() {
+#ifdef ZENO_WITH_PYTHON
+    if (m_pyWrapper)
+        return m_pyWrapper->m_hEventPyReady;
+#endif
+    return nullptr;
 }
 
 ZENO_API zeno::NodeRegistry Session::dumpCoreCates() {

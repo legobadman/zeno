@@ -237,7 +237,7 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             auto mainWin = zenoApp->getMainWindow();
             //if (_ZenoSubGraphView* pView = qobject_cast<_ZenoSubGraphView*>(pScene->views().first()))
             {
-                ZEditParamLayoutDlg dlg(paramsM->customParamModel(), mainWin);
+                ZEditParamLayoutDlg dlg(paramsM->customUIModel(), mainWin);
                 if (QDialog::Accepted == dlg.exec())
                 {
                     zeno::ParamsUpdateInfo info = dlg.getEdittedUpdateInfo();
@@ -290,7 +290,8 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         QAction* pLock = new QAction(bLocked ? tr("UnLock") : tr("Lock"));
         nodeMenu->addAction(pLock);
         connect(pLock, &QAction::triggered, this, [=]() {
-            pSubgGraphM->setLocked(!bLocked);
+            //TODO: oldui case
+            //pSubgGraphM->setLocked(!bLocked);
         });
         if (!bLocked)
         {

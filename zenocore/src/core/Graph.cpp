@@ -57,6 +57,12 @@ void Graph::clearNodes() {
     m_nodes.clear();
 }
 
+void Graph::clearContainerUpdateInfo() {
+    for (const auto& [uuid, node] : m_nodes) {
+        node->clear_container_info();
+    }
+}
+
 void Graph::addNode(std::string const &cls, std::string const &id) {
     //todo: deprecated.
 #if 0
@@ -78,14 +84,12 @@ Graph *Graph::getSubnetGraph(std::string const & node_name) const {
     return node ? node->get_subgraph() : nullptr;
 }
 
-bool Graph::applyNode(std::string const &node_name) {
+void Graph::applyNode(std::string const &node_name, render_update_info& info) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
 
     CalcContext ctx;
-
-    if (m_parSubnetNode)
-    {
+    if (m_parSubnetNode) {
         ctx.isSubnetApply = true;
     }
 
@@ -93,29 +97,39 @@ bool Graph::applyNode(std::string const &node_name) {
         node->doApply(&ctx);
     }, node);
 
-    return true;
-}
-
-void Graph::applyNodes(std::set<std::string> const &nodes) {
-    for (auto const& node_name: nodes) {
-        applyNode(node_name);
+    if (node->is_view()) {
+        info.reason = Update_Reconstruct;
+        info.cond_update_info = node->get_default_output_container_info();
+        info.uuidpath_node_objkey = node->get_uuid_path();
     }
 }
 
-void Graph::runGraph() {
+void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& infos) {
+    for (auto const& node_name: nodes) {
+        render_update_info info;
+        applyNode(node_name, info);
+        infos.objs.push_back(info);
+    }
+    infos.policy = Reload_Calculation;
+}
+
+void Graph::runGraph(render_reload_info& infos) {
     log_debug("{} nodes to exec", m_viewnodes.size());
-    applyNodes(m_viewnodes);
+    return applyNodes(m_viewnodes, infos);
 }
 
 void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
     auto spNode = spParam->m_wpNode;
     assert(spNode);
     const std::string& uuid = spNode->get_uuid();
+    const std::string& cls = spNode->get_nodecls();
     bool bHasFrameRel = spNode->has_frame_relative_params();
     if (bHasFrameRel) {
         frame_nodes.insert(uuid);
     }
     else {
+        static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver" };
+        if (frame_node_cls.find(cls) == frame_node_cls.end())
         frame_nodes.erase(uuid);
     }
 }
@@ -266,6 +280,32 @@ void Graph::setNodeParam(std::string const &id, std::string const &par,
     }, val);
 }
 
+static void initSpecialNode(zeno::NodeImpl* pNodeImpl, const NodeData& node) {
+    if (node.cls == "FlipSolver") {
+        //节点在初始化的时候是脏的，但还需要手动触发solver的dirty_changed，让它删cache
+        pNodeImpl->dirty_changed(true, Dirty_All, false, false);
+    }
+        if (node.cls == "SubInput") {
+            //TODO
+        }
+        else if (node.cls == "SubOutput") {
+            //TODO
+        }
+        else if (node.cls == "Group") {
+            if (node.group.has_value()) {
+            pNodeImpl->update_param("title", node.group->title);
+            pNodeImpl->update_param("background", node.group->background);
+            pNodeImpl->update_param("size", node.group->sz);
+            pNodeImpl->update_param("items", join_str(node.group->items, ","));
+            }
+        }
+        else if (zeno::isDerivedFromSubnetNodeName(node.cls))
+        {
+        if (auto sbn = dynamic_cast<SubnetNode*>(pNodeImpl))
+                sbn->setCustomUi(node.customUi);
+        }
+    }
+
 void Graph::init(const GraphData& graph) {
     auto& sess = getSession();
     sess.setApiLevelEnable(false);
@@ -277,53 +317,10 @@ void Graph::init(const GraphData& graph) {
     //import nodes first.
     for (const auto& [name, node] : graph.nodes) {
         bool bAssets = node.asset.has_value();
-        auto spNode = createNode(node.cls, name, bAssets, node.uipos, true);
+        bool bAssetLock = node.bLocked;
+        auto spNode = createNode(node.cls, name, bAssets, node.uipos, true, bAssets ? &bAssetLock : nullptr);
         spNode->init(node);
-        if (node.cls == "SubInput") {
-            //TODO
-        }
-        else if (node.cls == "SubOutput") {
-            //TODO
-        }
-        else if (node.cls == "Group") {
-            if (node.group.has_value()) {
-                spNode->update_param("title", node.group->title);
-                spNode->update_param("background", node.group->background);
-                spNode->update_param("size", node.group->sz);
-                spNode->update_param("items", join_str(node.group->items, ","));
-            }
-        }
-        //Compatible with older versions
-        else if (node.cls == "MakeHeatmap")
-        {
-            std::string color;
-            int nres = 0;
-            const PrimitiveParams& primparams = customUiToParams(node.customUi.inputPrims);
-            for (const auto& input : primparams)
-            {
-                if (input.name == "_RAMPS")
-                {
-                    color = zeno_get<std::string>(input.defl);
-                }
-                else if (input.name == "nres")
-                {
-                    nres = zeno_get<int>(input.defl);
-                }
-            }
-            if (!color.empty() && nres > 0)
-            {
-                std::regex pattern("\n");
-                std::string fmt = "\\n";
-                color = std::regex_replace(color, pattern, fmt);
-                std::string json = "{\"nres\": " + std::to_string(nres) + ", \"color\":\"" + color + "\"}";
-                spNode->update_param("heatmap", json);
-            }
-        }
-        else if (zeno::isDerivedFromSubnetNodeName(node.cls))
-        {
-            if (auto sbn = dynamic_cast<SubnetNode*>(spNode))
-                sbn->setCustomUi(node.customUi);
-        }
+        initSpecialNode(spNode, node);
     }
     //import edges
     for (const auto& link : graph.links) {
@@ -382,10 +379,8 @@ void Graph::markDirtyWhenFrameChanged()
         auto pNode = m_nodes[uuid].get();
         assert(pNode);
         auto pNodeImpl = pNode;
-        if (!pNodeImpl->isInDopnetwork()) {
-            pNodeImpl->mark_dirty(true, Dirty_ParamChanged);
+        pNode->mark_dirty(true, Dirty_FrameChanged);
         }
-    }
     std::set<std::string> nodes = subnet_nodes;
     nodes.insert(asset_nodes.begin(), asset_nodes.end());
     for (const std::string& uuid : nodes) {
@@ -397,11 +392,11 @@ void Graph::markDirtyWhenFrameChanged()
     }
 }
 
-void Graph::markDirtyAll()
+void Graph::markDirtyAndCleanup()
 {
     for (const auto& [uuid, node] : m_nodes) {
         node->mark_dirty(true);
-        node->clear();  //clear all result prim and objs
+        node->clearCalcResults();  //clear all result prim and objs
     }
 }
 
@@ -730,6 +725,17 @@ bool Graph::isAssets() const
     return m_bAssets;
 }
 
+bool Graph::isAssetRoot() const
+{
+    NodeImpl* pNode = m_parSubnetNode;
+    const Graph* pGraph = this;
+    while (pNode) {
+        pGraph = pNode->getGraph();
+        pNode = pGraph->m_parSubnetNode;
+    }
+    return pGraph->m_bAssets;
+}
+
 std::set<std::string> Graph::searchByClass(const std::string& name) const
 {
     auto it = node_set.find(name);
@@ -806,11 +812,17 @@ NodeImpl* Graph::createNode(
     const std::string& orgin_name,
     bool bAssets,
     std::pair<float, float> pos,
-    bool isIOInit
+    bool isIOInit,
+    bool* pbAssetLock
     )
 {
     CORE_API_BATCH
     const std::string& name = generateNewName(cls, orgin_name, bAssets);
+
+    if (name == "CopyAttribute1") {
+        int j;
+        j = 0;
+    }
 
     std::string uuid;
     NodeImpl* pNode = nullptr;
@@ -835,16 +847,15 @@ NodeImpl* Graph::createNode(
     }
     else {
         bool isCurrentGraphAsset = getSession().assets->isAssetGraph(this);
-        upNode = std::move(getSession().assets->newInstance(this, cls, name, isCurrentGraphAsset));
+        bool bAssetLocked = pbAssetLock ? *pbAssetLock : true;
+        upNode = std::move(getSession().assets->newInstance(this, cls, name, isCurrentGraphAsset, bAssetLocked));
         pNode = upNode.get();
         uuid = pNode->get_uuid();
         asset_nodes.insert(uuid);
     }
 
-    if (cls == "GetFrameNum") {
-        frame_nodes.insert(uuid);
-    }
-    if (cls == "CameraNode") {
+    static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver", "NewFBXSceneInfo"};
+    if (frame_node_cls.count(cls) > 0) {
         frame_nodes.insert(uuid);
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {
@@ -1003,6 +1014,8 @@ zeno::NodeImpl* Graph::getNodeByPath(const std::string& pa)
     std::string nodename = pathitems.back();
     pathitems.pop_back();
     auto spGraph = _getGraphByPath(pathitems);
+    if (!spGraph)
+        return nullptr;
     return spGraph->getNode(nodename);
 }
 
@@ -1182,7 +1195,7 @@ bool Graph::addLink(const EdgeInfo& edge) {
 
     EdgeInfo adjustEdge = edge;
 
-    bool bRemOldLinks = true, bConnectWithKey = false;
+    bool bConnectWithKey = false;
     adjustEdge.inKey = edge.inKey;
 
     if (!bInputPrim)
@@ -1191,33 +1204,37 @@ bool Graph::addLink(const EdgeInfo& edge) {
         ParamObject outParam = outNode->get_output_obj_param(edge.outParam);
         if (inParam.type == gParamType_Dict || inParam.type == gParamType_List) {
             std::vector<EdgeInfo> inParamLinks = inParam.links;
-            if (inParamLinks.size() == 1) {
-                if (auto node = getNode(inParamLinks[0].outNode)) {
-                    ParamObject existOneParam = node->get_output_obj_param(inParamLinks[0].outParam);
-                    if (existOneParam.type == inParam.type) {
-                        updateLink(inParamLinks[0], false, inParamLinks[0].inKey, "obj0");
-                        adjustEdge.inKey = "obj0";
-                        inParam = inNode->get_input_obj_param(edge.inParam);
-                    }
-                }
-                bRemOldLinks = false;
-                bConnectWithKey = true;
-            }else if (inParamLinks.size() < 1)
+            if (inParamLinks.size() <= 1)
             {
+                //像IObject这种既可能是List也可能是子元素的，用coreapi没法区分，只能在外部指定key决定
+                //是直连还是子元素
                 if (inParam.type == outParam.type) {
-                    bRemOldLinks = true;
                     bConnectWithKey = false;
                 }
                 else {
-                    bRemOldLinks = false;
                     bConnectWithKey = true;
                 }
             }
             else {
-                bRemOldLinks = false;
                 bConnectWithKey = true;
             }
+
+            if (!edge.inKey.empty()) {
+                //如果指定了inKey，无论外面是不是List，必须作为子元素
+                bConnectWithKey = true;
+            }
+            else if (inParam.type == outParam.type || outParam.type == gParamType_IObject) {
+                //连一个list/obj进来，而且没有指定key，就认为是直连
+                bConnectWithKey = false;
+            }
+
             if (bConnectWithKey) {
+                //要先检查一下已有的边是不是直连，如果是，要删掉
+                if (inParam.links.size() == 1 && inParam.links[0].inKey.empty()) {
+                    removeLinks(inNode->get_name(), true, edge.inParam);
+                    inParam.links.clear();
+                }
+
                 std::set<std::string> ss;
                 for (const EdgeInfo& spLink : inParam.links) {
                     ss.insert(spLink.inKey);
@@ -1233,13 +1250,9 @@ bool Graph::addLink(const EdgeInfo& edge) {
                 }
             }
         }
-        if (inParam.socketType == Socket_Owning)
-        {
-            removeLinks(outNode->get_name(), false, edge.outParam);
-        }
     }
 
-    if (bRemOldLinks)
+    if (!bConnectWithKey)
         removeLinks(inNode->get_name(), true, edge.inParam);
 
     assert(bInputPrim == bOutputPrim);

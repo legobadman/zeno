@@ -3,6 +3,7 @@
 #include <cstring>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/vec.h>
 #include <zeno/zeno.h>
@@ -211,7 +212,9 @@ struct Make2DGridPrimitive : INode {
 
     prim->userData()->set_int("nx", (int)nx);//zhxx
     prim->userData()->set_int("ny", (int)ny);//zhxx
-    ZImpl(set_output("prim", std::move(prim)));
+
+    auto geom = create_GeometryObject(prim);
+    ZImpl(set_output("prim", std::move(geom)));
   }
 };
 
@@ -224,7 +227,7 @@ ZENDEFNODE(Make2DGridPrimitive,
         {gParamType_Float, "scale", "1"},
         {gParamType_Vec3f, "origin", "0,0,0"},
         }, /* outputs: */ {
-        {gParamType_Primitive, "prim"},
+        {gParamType_Geometry, "prim"},
         }, /* params: */ {
         {"enum XZ XY YZ", "Direction", "XZ"}, // zhxxhappy
         {"enum Column-major Row-major", "Layout", "Column-major"},

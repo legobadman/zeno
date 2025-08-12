@@ -84,6 +84,8 @@ public:
 
     static QString gradient2colorString(const QLinearGradient& grad);
     static QLinearGradient colorString2Grad(const QString& colorStr);
+    static zeno::HeatmapData grad2heatmap(const QLinearGradient& grad);
+    static QLinearGradient heatmap2Grad(const zeno::HeatmapData& heatmap);
     static QVariant getParamValue(const QModelIndex& idx, const QString& name);
     static int tabIndexOfName(const QTabWidget* pTabWidget, const QString& name);
     static void getAllParamsIndex(const QModelIndex &nodeIdx,

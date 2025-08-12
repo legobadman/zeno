@@ -32,8 +32,8 @@ namespace zeno {
                 throw makeError<UnimplError>("empty target object.");
             }
 
-            auto input_object = _input_object->m_impl;
-            auto target_Obj = _target_Obj->m_impl;
+            auto input_object = _input_object->m_impl.get();
+            auto target_Obj = _target_Obj->m_impl.get();
             if (!input_object->has_point_attr("pos")) {
                 throw makeError<UnimplError>("invalid input object.");
             }
@@ -75,8 +75,8 @@ namespace zeno {
             if (hasNrm) {
                 newObjNrm.resize(newObjPointsCount);
             }
-
-            auto spgeo = create_GeometryObject(input_object->is_base_triangle(), newObjPointsCount, newObjFacesCount, true);
+            std::vector<std::vector<int>> faces;
+            std::vector<size_t> pts_offset, faces_offset;
 
             for (size_t i = 0; i < targetObjPointsCount; ++i) {
                 zeno::vec3f targetPos = target_Obj->get_elem<zeno::vec3f>(ATTR_POINT, "pos", 0, i);
@@ -103,16 +103,21 @@ namespace zeno {
                     for (int k = 0; k < facePoints.size(); ++k) {
                         facePoints[k] += pt_offset;
                     }
-                    spgeo->set_face(face_offset + j, stdVec2zeVec(facePoints), !std::get<0>(inputFacesPoints[j]));
+                    //TODO: line如何考虑？
+                    faces.push_back(facePoints);
+                    //spgeo->set_face(face_offset + j, stdVec2zeVec(facePoints), !std::get<0>(inputFacesPoints[j]));
                 }
-                spgeo->inheritAttributes(_input_object.get(), -1, pt_offset, {"pos", "nrm"}, face_offset, {});
+                pts_offset.push_back(pt_offset);
+                faces_offset.push_back(face_offset);
             }
 
-            spgeo->create_attr(ATTR_POINT, "pos", newObjPos);
+            auto spgeo = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), newObjPos, faces);
             if (hasNrm) {
                 spgeo->create_attr(ATTR_POINT, "nrm", newObjNrm);
             }
-
+            for (int i = 0; i < pts_offset.size(); i++) {
+                spgeo->inheritAttributes(_input_object.get(), -1, pts_offset[i], {"pos", "nrm"}, faces_offset[i], {});
+            }
             ZImpl(set_output("Output", spgeo));
         }
     };
@@ -437,7 +442,7 @@ namespace zeno {
             zeno::vec3f Size = ZImpl(get_input2<zeno::vec3f>("Size"));
             bool remove_shared_edge = ZImpl(get_input2<bool>("Remove Shared Edges"));
 
-            auto bbox = geomBoundingBox(input_object->m_impl);
+            auto bbox = geomBoundingBox(input_object->m_impl.get());
             float xmin = bbox.first[0], ymin = bbox.first[1], zmin = bbox.first[2],
                 xmax = bbox.second[0], ymax = bbox.second[1], zmax = bbox.second[2];
             float dx = Size[0], dy = Size[1], dz = Size[2];
@@ -526,11 +531,7 @@ namespace zeno {
                 newfaces.push_back(newface);
             }
 
-            auto spOutput = create_GeometryObject(input_object->is_base_triangle(), newpos.size(), newfaces.size());
-            for (auto faceindice : newfaces) {
-                spOutput->add_face(stdVec2zeVec(faceindice));
-            }
-            spOutput->create_point_attr("pos", newpos);
+            auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), newpos, newfaces);
             ZImpl(set_output("Output", spOutput));
         }
     };
@@ -555,14 +556,13 @@ namespace zeno {
             auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
             const int nface = input_object->nfaces();
             const auto& pos = input_object->points_pos();
-            auto spOutput = create_GeometryObject(input_object->is_base_triangle(), pos.size(), nface);
-
+            std::vector<std::vector<int>> faces;
             for (int iFace = 0; iFace < nface; iFace++) {
                 std::vector<int> face_indice = input_object->m_impl->face_points(iFace);
                 std::reverse(face_indice.begin() + 1, face_indice.end());
-                spOutput->add_face(stdVec2zeVec(face_indice)); //TODO: line
+                faces.emplace_back(std::move(face_indice));
             }
-            spOutput->create_point_attr("pos", pos);    //暂时不考虑其他属性
+            auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), pos, faces);
             ZImpl(set_output("Output", spOutput));
         }
     };
@@ -774,8 +774,9 @@ namespace zeno {
             int Nface = bKeepOriginal ? 2 * nface : nface;
 
             std::vector<vec3f> new_pos(Npos);
+            std::vector<std::vector<int>> faces;
+            faces.reserve(nface);
 
-            auto spOutput = std::make_shared<zeno::GeometryObject>(input_object->is_base_triangle(), Npos, Nface);
             std::copy(pos.begin(), pos.end(), new_pos.begin());
             if (bKeepOriginal) {
                 std::copy(pos.begin(), pos.end(), new_pos.begin() + npos);
@@ -784,7 +785,7 @@ namespace zeno {
             if (bKeepOriginal) {
                 for (int iFace = 0; iFace < nface; iFace++) {
                     std::vector<int> pts = input_object->m_impl->face_points(iFace);
-                    spOutput->add_face(pts);
+                    faces.emplace_back(pts);
                 }
             }
 
@@ -807,10 +808,10 @@ namespace zeno {
                     new_pos[pt] = P_mirror;
                     offset_pts.push_back(pt);
                 }
-                spOutput->add_face(offset_pts);
+                faces.emplace_back(offset_pts);
             }
-            spOutput->create_point_attr("pos", new_pos);
 
+            auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), new_pos, faces);
             ZImpl(set_output("Output", input_object));
         }
     };
@@ -864,11 +865,11 @@ namespace zeno {
                 return;
             }
 
-            const auto& currbbox = geomBoundingBox(input_object->m_impl);
+            const auto& currbbox = geomBoundingBox(input_object->m_impl.get());
 
             zeno::vec3f boxmin, boxmax;
             if (match_object) {
-                const auto& bbox = geomBoundingBox(match_object->m_impl);
+                const auto& bbox = geomBoundingBox(match_object->m_impl.get());
                 boxmin = bbox.first;
                 boxmax = bbox.second;
             }
@@ -1022,6 +1023,8 @@ namespace zeno {
     struct ConvertLine : INode {
         void apply() override
         {
+            //TODO:
+#if 0
             auto input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Object"));
             bool bKeepOrder = ZImpl(get_input2<bool>("Keep Order"));
             std::string lengthAttr = ZImpl(get_input2<std::string>("Length Attribute"));
@@ -1052,6 +1055,7 @@ namespace zeno {
             }
 
             ZImpl(set_output("Output", line_object));
+#endif
         }
     };
     ZENDEFNODE(ConvertLine,
@@ -1136,9 +1140,11 @@ namespace zeno {
             if (pointSort == "By Vertex Order") {
                 std::set<std::string> edges;
                 std::vector<vec3f> new_pos(pos.size());
+                std::vector<std::vector<int>> faces;
+                faces.reserve(nfaces);
                 int nSortPoints = 0;
                 std::map<int, int> old2new;
-                auto spOutput = create_GeometryObject(false, npts, nfaces, true);
+                
                 for (int iFace = 0; iFace < nfaces; iFace++) {
                     std::vector<int> pts = input_object->m_impl->face_points(iFace);
                     std::vector<int> newface;
@@ -1172,13 +1178,14 @@ namespace zeno {
                         old2new.insert(std::make_pair(toPt, newTo));
                         newface.push_back(newFrom);
                     }
-                    spOutput->m_impl->set_face(iFace, newface);
+                    faces.emplace_back(newface);
                 }
                 for (int oldpt = 0; oldpt < pos.size(); oldpt++) {
                     int newpt = old2new[oldpt];
                     new_pos[newpt] = pos[oldpt];
                 }
-                spOutput->create_point_attr("pos", new_pos);
+
+                auto spOutput = create_GeometryObject(Topo_IndiceMesh, false, new_pos, faces);
                 ZImpl(set_output("Output", spOutput));
             }
         }
@@ -1385,7 +1392,7 @@ namespace zeno {
                             currPt = pts[i];
                         }
                         bool needFace = false;
-                        const auto& spread = getExtrudeDest(input_object->m_impl, lastPt, currPt, iFace, Distance, needFace);
+                        const auto& spread = getExtrudeDest(input_object->m_impl.get(), lastPt, currPt, iFace, Distance, needFace);
                         zeno::vec3f last_spread = spread.first;
                         zeno::vec3f curr_spread = spread.second;
 
@@ -1505,41 +1512,8 @@ namespace zeno {
             if (!input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
-#if 1
             auto spOutput = fuseGeometry(input_object.get(), snapDistance);
             ZImpl(set_output("Output", spOutput));
-#else
-            int ptnumber = input_object->npoints();
-            std::map < int, std::vector<int> > pointsToFuse;
-            std::vector<int> fusedPoints(ptnumber, -1);
-            const std::vector<zeno::vec3f>& inputPos = input_object->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
-            for (int i = 0; i < inputPos.size(); ++i) {
-                if (fusedPoints[i] != -1) {
-                    continue;
-                }
-                for (int j = i + 1; j < inputPos.size(); ++j) {
-                    if (fusedPoints[j] != -1) {
-                        continue;
-                    }
-                    if (glm::distance(glm::vec3(inputPos[i][0], inputPos[i][1], inputPos[i][2]), glm::vec3(inputPos[j][0], inputPos[j][1], inputPos[j][2])) <= snapDistance) {
-                        pointsToFuse[i].push_back(j);
-                        fusedPoints[j] = i;
-                    }
-                }
-            }
-
-            for (auto& [targetPt, fusePoints] : pointsToFuse) {
-                zeno::vec3f pos = input_object->get_elem<zeno::vec3f>(ATTR_POINT, "pos", 0, targetPt);
-                for (auto& pt : fusePoints) {
-                    pos += input_object->get_elem<zeno::vec3f>(ATTR_POINT, "pos", 0, pt);
-                }
-                pos /= (fusePoints.size() + 1);
-                input_object->set_elem<zeno::vec3f>(ATTR_POINT, "pos", targetPt, pos);
-            }
-            input_object->fusePoints(fusedPoints);
-
-            return input_object;
-#endif
         }
     };
 

@@ -1,4 +1,4 @@
-#include "parammodel.h"
+﻿#include "parammodel.h"
 #include "zassert.h"
 #include "util/uihelper.h"
 #include <zeno/core/data.h>
@@ -122,25 +122,33 @@ public:
     std::weak_ptr<zeno::NodeImpl> m_wpNode;
 };
 
-
+ParamsModel::ParamsModel(const zeno::CustomUI& customui)
+    : QAbstractListModel(nullptr)
+    , m_customUIM(nullptr)
+    , m_inObjProxy(nullptr)
+    , m_inPrimProxy(nullptr)
+    , m_outPrimProxy(nullptr)
+    , m_outObjProxy(nullptr)
+    , m_wpNode(nullptr)
+    , m_bTempModel(true)
+    , m_tempUI(customui)
+{
+    initProxyModels();
+    initParamItems(customui);
+    initCustomUI(customui);
+}
 
 ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
     : QAbstractListModel(parent)
     , m_wpNode(spNode)
-    , m_customParamsM(nullptr)
     , m_customUIM(nullptr)
-    , m_customUIMCloned(nullptr)
-    , m_inObjProxy(new ParamFilterModel(zeno::Role_InputObject))
-    , m_inPrimProxy(new ParamFilterModel(zeno::Role_InputPrimitive))
-    , m_outPrimProxy(new ParamFilterModel(zeno::Role_OutputPrimitive))
-    , m_outObjProxy(new ParamFilterModel(zeno::Role_OutputObject))
+    , m_inObjProxy(nullptr)
+    , m_inPrimProxy(nullptr)
+    , m_outPrimProxy(nullptr)
+    , m_outObjProxy(nullptr)
 {
-    m_inObjProxy->setSourceModel(this);
-    m_inPrimProxy->setSourceModel(this);
-    m_outPrimProxy->setSourceModel(this);
-    m_outObjProxy->setSourceModel(this);
-
-    initParamItems();
+    initProxyModels();
+    initParamItems(m_wpNode->export_customui());
     initCustomUI(spNode->export_customui());
 
     cbUpdateParam = spNode->register_update_param(
@@ -232,12 +240,21 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
         });
 }
 
-void ParamsModel::initParamItems()
+void ParamsModel::initProxyModels() {
+    m_inObjProxy = new ParamFilterModel(zeno::Role_InputObject, this);
+    m_inPrimProxy = new ParamFilterModel(zeno::Role_InputPrimitive, this);
+    m_outPrimProxy = new ParamFilterModel(zeno::Role_OutputPrimitive, this);
+    m_outObjProxy = new ParamFilterModel(zeno::Role_OutputObject, this);
+
+    m_inObjProxy->setSourceModel(this);
+    m_inPrimProxy->setSourceModel(this);
+    m_outPrimProxy->setSourceModel(this);
+    m_outObjProxy->setSourceModel(this);
+}
+
+void ParamsModel::initParamItems(const zeno::CustomUI& customui)
 {
-    auto spNode = m_wpNode/*.lock()*/;
-    ZASSERT_EXIT(spNode);
     //primitive inputs
-    const zeno::CustomUI& customui = spNode->export_customui();
     if (!customui.inputPrims.empty() && !customui.inputPrims[0].groups.empty()) {
         for (auto& tab : customui.inputPrims) {
             for (auto& group: tab.groups) {
@@ -309,24 +326,23 @@ void ParamsModel::initParamItems()
 }
 
 zeno::CustomUI ParamsModel::customUI() const {
-    return m_wpNode->export_customui();
+    if (m_bTempModel && !m_wpNode)
+        return m_tempUI;
+    else
+        return m_wpNode->export_customui();
 }
 
 void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
 {
-    if (m_customParamsM) {
-        m_customParamsM->clear();
-    }
-    else {
-        m_customParamsM = constructProxyModel();
-    }
-    UiHelper::newCustomModel(m_customParamsM, customui);
+#if 0
+    QStandardItemModel* legacy_customParamsM = constructProxyModel();
+    UiHelper::newCustomModel(legacy_customParamsM, customui);
 
     //m_customParamsM创建后需更新初始值
-    m_customParamsM->blockSignals(true);
-    zeno::scope_exit sp([=] {m_customParamsM->blockSignals(false); });
+    legacy_customParamsM->blockSignals(true);
+    zeno::scope_exit sp([=] {legacy_customParamsM->blockSignals(false); });
 
-    QStandardItem* pInputsRoot = m_customParamsM->item(0);
+    QStandardItem* pInputsRoot = legacy_customParamsM->item(0);
     for (int i = 0; i < pInputsRoot->rowCount(); i++)
     {
         auto tabItem = pInputsRoot->child(i);
@@ -348,7 +364,7 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
             }
         }
     }
-    QStandardItem* pOutputsRoot = m_customParamsM->item(1);
+    QStandardItem* pOutputsRoot = legacy_customParamsM->item(1);
     for (int i = 0; i < pOutputsRoot->rowCount(); i++)
     {
         auto paramItem = pOutputsRoot->child(i);
@@ -364,13 +380,16 @@ void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
         customui.inputPrims[0].name == "Tab1" &&
         customui.inputPrims[0].groups.size() == 1 &&
         customui.inputPrims[0].groups[0].name == "Group1" &&
-        !dynamic_cast<zeno::SubnetNode*>(m_wpNode)) {
+        !dynamic_cast<zeno::SubnetNode*>(m_wpNode) &&
+        !m_bTempModel) {
         return;
     }
     else {
         m_customUIM = new CustomUIModel(this, this);
-        m_customUIM->initCustomuiConnections(m_customParamsM);
+        m_customUIM->initCustomuiConnections(legacy_customParamsM);
     }
+#endif
+	m_customUIM = new CustomUIModel(this, this);
 }
 
 QStandardItemModel* ParamsModel::constructProxyModel()
@@ -423,6 +442,10 @@ QStandardItemModel* ParamsModel::constructProxyModel()
 
 void ParamsModel::updateCustomUiModelIncremental(const zeno::params_change_info& params, const zeno::CustomUI& customui)
 {
+    //m_customUIM->updateModelIncremental(params, customui);
+    if (m_customUIM)
+        m_customUIM->reset();
+#if 0
     if (m_customParamsM) {
         UiHelper::udpateCustomModelIncremental(m_customParamsM, params, customui);
     }
@@ -471,6 +494,7 @@ void ParamsModel::updateCustomUiModelIncremental(const zeno::params_change_info&
             paramItem->setData(m_items[row].bWildcard, QtRole::ROLE_PARAM_IS_WILDCARD);
         }
     }
+#endif
 }
 
 bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int role)
@@ -981,18 +1005,13 @@ GraphModel* ParamsModel::parentGraph() const
 
 QStandardItemModel* ParamsModel::customParamModel()
 {
-    return m_customParamsM;
+    return nullptr;
+    //return m_customParamsM;
 }
 
 CustomUIModel* ParamsModel::customUIModel()
 {
     return m_customUIM;
-}
-
-CustomUIModel* ParamsModel::customUIModelCloned()
-{
-    m_customUIMCloned = new CustomUIModel(this, this, true);
-    return m_customUIMCloned;
 }
 
 ParamFilterModel* ParamsModel::inputObjects() {
@@ -1009,26 +1028,6 @@ ParamFilterModel* ParamsModel::outputPrims() {
 
 ParamFilterModel* ParamsModel::outputObjects() {
     return m_outObjProxy;
-}
-
-void ParamsModel::applyParamsByEditparamDlg(CustomUIModel* edittedCustomuiModel)
-{
-    zeno::CustomUI customui;
-    zeno::ParamsUpdateInfo editUpdateInfo;
-    edittedCustomuiModel->exportCustomuiAndEdittedUpdateInfo(customui, editUpdateInfo);
-    resetCustomUi(customui);//重设customui
-    batchModifyParams(editUpdateInfo);//更新该节点参数，更新视图
-
-    m_customUIM->reset();//重置直接引用ParamsModel的index的模型
-
-    delete m_customUIMCloned;
-    m_customUIMCloned = nullptr;
-}
-
-void ParamsModel::cancleEditCustomUIModelCloned()
-{
-    delete m_customUIMCloned;
-    m_customUIMCloned = nullptr;
 }
 
 Qt::ItemFlags ParamsModel::flags(const QModelIndex& index) const
@@ -1096,7 +1095,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
 
     m_items.clear();
     //reconstruct params.
-    initParamItems();
+    initParamItems(m_wpNode->export_customui());
     //TODO: 尽量废弃dynamic_cast这种写法
     if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode)) {
         updateCustomUiModelIncremental(changes, sbn->get_customui());
@@ -1174,28 +1173,9 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         }
     }
     //resetCustomParamModel();
+
+    initProxyModels();
     emit layoutChanged();
-
-}
-
-void ParamsModel::test_customparamsmodel() const
-{
-    QStandardItem* pRoot = m_customParamsM->invisibleRootItem();
-    for (int i = 0; i < pRoot->rowCount(); i++)
-    {
-        QStandardItem* pItem = pRoot->child(i);
-        QString wtf = pItem->text();
-        for (int j = 0; j < pItem->rowCount(); j++)
-        {
-            QStandardItem* ppItem = pItem->child(j);
-            wtf = ppItem->text();
-            for (int k = 0; k < ppItem->rowCount(); k++)
-            {
-                QStandardItem* pppItem = ppItem->child(k);
-                wtf = pppItem->text();
-            }
-        }
-    }
 }
 
 void ParamsModel::updateParamData(const QString& name, const QVariant& val, int role, bool bInput)
@@ -1319,8 +1299,10 @@ bool ParamsModel::getShowPrimSocks() const {
     return false;
 }
 
-ParamFilterModel::ParamFilterModel(zeno::NodeDataGroup group) : m_group(group) {
-
+ParamFilterModel::ParamFilterModel(zeno::NodeDataGroup group, QObject* parent)
+    : QSortFilterProxyModel(parent)
+    , m_group(group)
+{
 }
 
 int ParamFilterModel::indexFromName(const QString& target_name) const {

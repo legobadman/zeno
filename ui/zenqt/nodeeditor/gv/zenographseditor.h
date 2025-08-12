@@ -41,7 +41,7 @@ public:
     bool welComPageShowed();
 
 public slots:
-    void resetMainModel();
+    void resetMainModel(bool clearExistModel);
     void resetAssetsModel();
     void initPluginModel();
     void sideButtonToggled(bool bToggled);
@@ -89,7 +89,7 @@ private:
     void showInGraphicalShell(const QString& pathIn);
 
     ZenoMainWindow* m_mainWin;
-    Ui::GraphsEditor* m_ui;
+    QScopedPointer<Ui::GraphsEditor> m_ui;
     //IGraphsModel* m_model;
     QItemSelectionModel* m_selection;
     QStandardItemModel* m_sideBarModel;

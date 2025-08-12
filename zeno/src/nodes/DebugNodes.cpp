@@ -212,72 +212,49 @@ ZENDEFNODE(Group, {
     {"layout"},
     });
 
-#if 0
 struct CustomNode : zeno::INode {
     virtual void apply() override {
 
     }
 };
 
-ZENDEFINE(CustomNode, {
-    {
-        {"obj_intput1", Param_Null, zeno::Socket_ReadOnly},
+ZENO_CUSTOMUI_NODE(CustomNode,
+    zeno::ObjectParams{
+         zeno::ParamObject("Input", gParamType_Geometry)
     },
-    {
-        {
+    zeno::CustomUIParams{
+        zeno::ParamTab {
+            "Tab1",
             {
-                "Default",
-                {
-                    {
-                        "Group1",
-                        {
-                            {"param1", Param_Null, zeno::Socket_ReadOnly},
-                            {"param2", gParamType_Primitive, zeno::Socket_ReadOnly},
-                            {"param3", zeno::types::gParamType_Int,  zeno::NoSocket, 2, zeno::Lineedit, {}}
-                        }
-                    },
-                    {
-                        "Group2",
-                        {
-                            {"param4", zeno::types::gParamType_String, zeno::Socket_ReadOnly, "", zeno::Multiline, {}},
-                            {"param5", gParamType_Primitive, zeno::Socket_ReadOnly},
-                            {"param6", Param_Null, zeno::NoSocket}
-                        }
+                zeno::ParamGroup {
+                    "Group1",
+                    zeno::PrimitiveParams {
+                        zeno::ParamPrimitive("Int Val", gParamType_Int, 2),
+                        zeno::ParamPrimitive("String Val", gParamType_String, "abc")
+                    }
+                },
+                zeno::ParamGroup {
+                    "Group2",
+                    zeno::PrimitiveParams {
+                        zeno::ParamPrimitive("Float Val", gParamType_Float, 3.2f),
+                        zeno::ParamPrimitive("Items", gParamType_String, "Item 1", zeno::Combobox, std::vector<std::string>{"Item1", "Item2", "Item3"})
                     }
                 }
-            },
-            {
-                "Default2",
-                {
-                    {
-                        "Group3",
-                        {
-                            {"param7", Param_Null, zeno::Socket_ReadOnly},
-                            {"param8", gParamType_Primitive, zeno::Socket_ReadOnly},
-                            {"param9", Param_Null, zeno::NoSocket}
-                        }
-                    },
-                    {
-                        "Group4",
-                        {
-                            {"param10", Param_Null, zeno::Socket_ReadOnly},
-                            {"param11", gParamType_Primitive, zeno::Socket_ReadOnly},
-                            {"param12", Param_Null, zeno::NoSocket}
-                        }
-                    }
-                }
-            },
+            }
         }
     },
-    {
-        {"prim_output1", Param_Null, zeno::Socket_ReadOnly},
+    /*output prims:*/
+    zeno::PrimitiveParams{
+        zeno::ParamPrimitive("output prim", gParamType_Int, 3),
     },
-    {
-        {"obj_output1", Param_Null, zeno::Socket_ReadOnly},
+    /*output objects:*/
+    zeno::ObjectParams{
+        zeno::ParamObject("obj_output", gParamType_Geometry)
     },
-    "debug",
-    "CUI",
-});
-#endif
+    zeno::NodeUIStyle{ "", "" },
+    "debug",     //category
+    "",     //nickname
+    ""      //doc
+);
 
 }

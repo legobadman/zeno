@@ -59,7 +59,8 @@ namespace zeno {
 
     struct ObjectParam : CoreParam {
         std::list<std::shared_ptr<ObjectLink>> links;
-        zany /*zeno::reflect::Any*/ spObject;        //只储存基类指针，其实已经是一种"any"了。
+        container_elem_update_info listdict_update;
+        zany spObject;
 
         ParamObject exportParam() const;
     };
