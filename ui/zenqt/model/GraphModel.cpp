@@ -92,7 +92,7 @@ public:
     bool bClearSbn = false;
     bool bCollasped = false;
     bool bLoaded = true;   //如果节点所处的插件模块被卸载了，此项为false
-    NodeState runState;
+    QmlNodeRunStatus::Value runStatus;
     zeno::NodeUIStyle uistyle;
 
     //for subgraph, but not include assets:
@@ -205,8 +205,7 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
     this->bView = spNode->is_view();
     this->bByPass = spNode->is_bypass();
     this->bNoCache = spNode->is_nocache();
-    this->runState.bDirty = spNode->is_dirty();
-    this->runState.runstatus = spNode->get_run_status();
+    this->runStatus = static_cast<QmlNodeRunStatus::Value>(spNode->get_run_status());
     auto pair = spNode->get_pos();
     this->pos = QPointF(pair.first, pair.second);
     this->uuidPath = spNode->get_uuid_path();
@@ -701,12 +700,12 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         }
         case QtRole::ROLE_NODE_RUN_STATE:
         {
-            QmlNodeRunStatus::Value qmlstate = static_cast<QmlNodeRunStatus::Value>(item->runState.runstatus);
+            QmlNodeRunStatus::Value qmlstate = static_cast<QmlNodeRunStatus::Value>(item->runStatus);
             return qmlstate;
         }
         case QtRole::ROLE_NODE_DIRTY:
         {
-            return item->runState.bDirty;
+            return item->runStatus != QmlNodeRunStatus::RunSucceed;
         }
         case QtRole::ROLE_NODETYPE:
         {
@@ -843,7 +842,7 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
         }
         case QtRole::ROLE_NODE_RUN_STATE:
         {
-            item->runState = value.value<NodeState>();
+            item->runStatus = value.value<QmlNodeRunStatus::Value>();
             emit dataChanged(index, index, QVector<int>{role});
             return true;
         }

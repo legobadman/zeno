@@ -96,7 +96,7 @@ private:
     bool removeSocketLayout(bool bInput, const QString& sockName);
     void addOnlySocketToLayout(ZGraphicsLayout* pSocketLayout, const QModelIndex& paramIdx);
     SocketBackgroud* addSocket(const QModelIndex& idx, bool bInput);
-    void markNodeStatus(zeno::NodeRunStatus status);
+    void markNodeStatus(QmlNodeRunStatus::Value status);
 
     QVector<ZSocketLayout*> getSocketLayouts(bool bInput) const;
     QVector<ZenoSocketItem*> getSocketItems(bool bInput) const;
@@ -127,7 +127,7 @@ private:
     ZGraphicsLayout* m_inputsLayout;
     ZGraphicsLayout* m_outputsLayout;
 
-    zeno::NodeRunStatus m_nodeStatus;
+    QmlNodeRunStatus::Value m_nodeStatus;
 
     QPointF _cache_name_move;
 };

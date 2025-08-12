@@ -19,10 +19,8 @@ CalcWorker::CalcWorker() {
     auto& sess = zeno::getSession();
     if (m_bReportNodeStatus) {
         sess.registerNodeCallback([=](zeno::ObjPath nodePath, bool bDirty, zeno::NodeRunStatus status) {
-            NodeState state;
-            state.bDirty = bDirty;
-            state.runstatus = status;
-            emit nodeStatusChanged(nodePath, state);
+            QmlNodeRunStatus::Value q_status = static_cast<QmlNodeRunStatus::Value>(status);
+            emit nodeStatusChanged(nodePath, q_status);
             });
     }
 }
@@ -44,11 +42,8 @@ void CalcWorker::run() {
 
     if (sess.globalError->failed()) {
         QString errMsg = QString::fromStdString(sess.globalError->getErrorMsg());
-        NodeState state;
-        state.bDirty = true;
-        state.runstatus = zeno::Node_RunError;
         zeno::ObjPath path = sess.globalError->getNode();
-        emit nodeStatusChanged(path, state);
+        emit nodeStatusChanged(path, QmlNodeRunStatus::RunError);
         emit calcFinished(false, path, errMsg, render_infos); //会发送到：DisplayWidget::onCalcFinished
     }
     else {
@@ -78,12 +73,12 @@ CalculationMgr::CalculationMgr(QObject* parent)
     });
 }
 
-void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, NodeState state)
+void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, QmlNodeRunStatus::Value state)
 {
     auto graphsMgr = zenoApp->graphsManager();
     GraphsTreeModel* pMainTree = graphsMgr->currentModel();
     if (pMainTree) {
-        if (state.runstatus == zeno::Node_RunError) {
+        if (state == QmlNodeRunStatus::RunError) {
             //为了方便查看错误，整个子图路径的节点都要标红
             GraphModel* pMain = graphsMgr->getGraph({ "main" });
             QModelIndexList pathNodes;

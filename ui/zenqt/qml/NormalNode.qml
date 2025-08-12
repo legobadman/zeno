@@ -168,6 +168,7 @@ Qan.NodeItem {
             nodeItem.is_locked = data
         }
         else if (role == Model.ROLE_NODE_RUN_STATE) {
+            console.log("ROLE_NODE_RUN_STATE change, data = " + data)
             nodeItem.nodestatus = data
         }
         else if (role == Model.ROLE_NODE_IS_LOADED) {

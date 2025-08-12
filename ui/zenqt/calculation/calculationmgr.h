@@ -19,7 +19,7 @@ public:
 
 signals:
     void calcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info);
-    void nodeStatusChanged(zeno::ObjPath, NodeState);
+    void nodeStatusChanged(zeno::ObjPath, QmlNodeRunStatus::Value);
     void commitRenderInfo(zeno::render_update_info);
 
 public slots:
@@ -57,7 +57,7 @@ public:
 signals:
     void calcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info);
     void renderRequest(QString);
-    void nodeStatusChanged(zeno::ObjPath, NodeState);
+    void nodeStatusChanged(zeno::ObjPath, QmlNodeRunStatus::Value);
     void commitRenderInfo(zeno::render_update_info);
     void runStatus_changed();
     void autorun_changed();
@@ -68,7 +68,7 @@ public slots:
 
 private slots:
     void onCalcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info info);
-    void onNodeStatusReported(zeno::ObjPath, NodeState);
+    void onNodeStatusReported(zeno::ObjPath, QmlNodeRunStatus::Value);
     void on_render_objects_loaded();
     void onPlayReady();
 

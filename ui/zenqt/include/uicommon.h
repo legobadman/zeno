@@ -655,12 +655,6 @@ struct BLACKBOARD_INFO
     BLACKBOARD_INFO() : special(false) {}
 };
 
-struct NodeState
-{
-    zeno::NodeRunStatus runstatus;
-    bool bDirty;
-};
-
 class QmlNodeRunStatus
 {
     Q_GADGET

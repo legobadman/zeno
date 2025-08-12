@@ -367,7 +367,7 @@ void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const Q
 {
     if (topLeft.data(QtRole::ROLE_NODE_NAME).toString() == m_nodeIdx.data(QtRole::ROLE_NODE_NAME).toString()) {
         if (!roles.empty() && roles[0] == QtRole::ROLE_NODE_RUN_STATE) {
-            zeno::NodeRunStatus currStatus = topLeft.data(QtRole::ROLE_NODE_RUN_STATE).value<NodeState>().runstatus;
+            QmlNodeRunStatus::Value currStatus = topLeft.data(QtRole::ROLE_NODE_RUN_STATE).value<QmlNodeRunStatus::Value>();
             if (currStatus == zeno::Node_Running) {
                 clearModel();
             } else if (currStatus == zeno::Node_RunSucceed) {

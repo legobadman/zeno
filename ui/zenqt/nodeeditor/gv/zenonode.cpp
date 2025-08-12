@@ -55,7 +55,7 @@ ZenoNode::ZenoNode(const NodeUtilParam &params, QGraphicsItem *parent)
     , m_bottomOutputSockets(nullptr)
     //, m_border(new QGraphicsRectItem)
     , m_NameItem(nullptr)
-    , m_nodeStatus(zeno::Node_DirtyReadyToRun)
+    , m_nodeStatus(QmlNodeRunStatus::DirtyReadyToRun)
     , m_bodyLayout(nullptr)
     , m_inputsLayout(nullptr)
     , m_outputsLayout(nullptr)
@@ -417,9 +417,8 @@ ZLayoutBackground* ZenoNode::initHeaderWidget()
         });
     }
 
-    const NodeState& state = m_index.data(QtRole::ROLE_NODE_RUN_STATE).value<NodeState>();
-
 #if 0
+    const NodeState& state = m_index.data(QtRole::ROLE_NODE_RUN_STATE).value<NodeState>();
     m_statusMarker = new QGraphicsPolygonItem(headerWidget);
     QPolygonF points;
     points.append(QPointF(0, 0));
@@ -531,9 +530,9 @@ ZLayoutBackground* ZenoNode::initBodyWidget()
 
 void ZenoNode::onRunStateChanged()
 {
-    const NodeState& state = m_index.data(QtRole::ROLE_NODE_RUN_STATE).value<NodeState>();
-    this->onMarkDataChanged(state.bDirty);
-    markNodeStatus(state.runstatus);
+    auto status = m_index.data(QtRole::ROLE_NODE_RUN_STATE).value<QmlNodeRunStatus::Value>();
+    this->onMarkDataChanged(status != QmlNodeRunStatus::RunSucceed);
+    markNodeStatus(status);
 }
 
 void ZenoNode::onLayoutAboutToBeChanged()
@@ -1134,11 +1133,11 @@ void ZenoNode::onSocketLinkChanged(const QModelIndex& paramIdx, bool bInput, boo
     }
 }
 
-void ZenoNode::markNodeStatus(zeno::NodeRunStatus status)
+void ZenoNode::markNodeStatus(QmlNodeRunStatus::Value status)
 {
     m_nodeStatus = status;
     QColor clrHeaderBg;
-    if (m_nodeStatus == zeno::Node_RunError)
+    if (m_nodeStatus == QmlNodeRunStatus::RunError)
     {
         qreal szIcon = ZenoStyle::dpiScaled(64);
         if (!m_errorTip) {
@@ -1156,19 +1155,19 @@ void ZenoNode::markNodeStatus(zeno::NodeRunStatus status)
         if (m_statusMarker) {
             switch (m_nodeStatus)
             {
-            case zeno::Node_RunSucceed: {
+            case QmlNodeRunStatus::RunSucceed: {
                 m_statusMarker->setBrush(QBrush(QColor("#319E36")));
                 break;
             }
-            case zeno::Node_Pending: {
+            case QmlNodeRunStatus::Pending: {
                 m_statusMarker->setBrush(QBrush(QColor("#868686")));
                 break;
             }
-            case zeno::Node_DirtyReadyToRun: {
+            case QmlNodeRunStatus::DirtyReadyToRun: {
                 m_statusMarker->setBrush(QBrush(QColor("#EAED4B")));
                 break;
             }
-            case zeno::Node_Running: {
+            case QmlNodeRunStatus::Running: {
                 m_statusMarker->setBrush(QBrush(QColor("#02F8F8")));
                 break;
             }
