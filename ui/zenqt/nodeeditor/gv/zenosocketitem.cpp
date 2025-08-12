@@ -351,7 +351,7 @@ void ZenoObjSocketItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*
 
     painter->setRenderHint(QPainter::Antialiasing, true);
 
-    if (type == zeno::Socket_Owning)
+    if (false/*type == zeno::Socket_Owning*/)
     {
         ZASSERT_EXIT(m_bInput);
 
@@ -383,8 +383,9 @@ void ZenoObjSocketItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*
 
         painter->drawText(rc, Qt::AlignHCenter | Qt::AlignTop, name);
     }
-    else if (type == zeno::Socket_ReadOnly)
+    else if (false/*type == zeno::Socket_ReadOnly*/)
     {
+        //DEPRECATED
         ZASSERT_EXIT(m_bInput);
         QPen pen(m_color, 4);
         pen.setJoinStyle(Qt::MiterJoin);
@@ -403,9 +404,9 @@ void ZenoObjSocketItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*
         rc.adjust(0, 2, 0, 2);
         painter->drawText(rc, Qt::AlignCenter, name);
     }
-    else if (type == zeno::Socket_Clone)
+    else if (true/*type == zeno::Socket_Clone*/)
     {
-        ZASSERT_EXIT(m_bInput);
+        //ZASSERT_EXIT(m_bInput);
         QPen pen(m_color, 4);
         QBrush brush(m_color);
         painter->setPen(pen);
@@ -419,6 +420,7 @@ void ZenoObjSocketItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*
         painter->drawText(rc, Qt::AlignCenter, name);
     }
     else {
+        //DEPRECATED
         //ZASSERT_EXIT(!m_bInput && type == zeno::Socket_Output);   //可能是wildcard的Input/Output
         qreal radius = rc.height() * 0.2;
         QPen pen = QPen(Qt::white, 2);

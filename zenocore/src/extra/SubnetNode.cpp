@@ -73,7 +73,7 @@ SubnetNode::SubnetNode(INode* pNode)
     m_customUi.outputObjs.push_back(objOutput);
 
     m_customUi.uistyle.background = "#1D5F51";
-    m_customUi.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
+    m_customUi.uistyle.iconResPath = ":/icons/node/subnet.svg";
 }
 
 SubnetNode::~SubnetNode() = default;
@@ -438,7 +438,7 @@ void SubnetNode::setCustomUi(const CustomUI& ui)
     m_customUi = ui;
     //保证颜色图标
     m_customUi.uistyle.background = "#1D5F51";
-    m_customUi.uistyle.iconResPath = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M4 7H12L15 10H28V25H4V7Z\" stroke=\"#CCCCCC\" stroke-width=\"2\" stroke-linejoin=\"round\"/>    <line x1=\"4\" y1=\"14\" x2=\"28\" y2=\"14\" stroke=\"#CCCCCC\" stroke-width=\"2\"/></svg>";
+    m_customUi.uistyle.iconResPath = ":/icons/node/subnet.svg";
 }
 
 

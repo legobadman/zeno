@@ -94,12 +94,13 @@ ZenoNodeNew::ZenoNodeNew(const NodeUtilParam &params, QGraphicsItem *parent)
     , m_headerWidget(nullptr)
     , m_inputObjSockets(nullptr)
     , m_outputObjSockets(nullptr)
-    , m_NameItem(nullptr)
+    , m_nameEditor(nullptr)
     , m_nodeStatus(zeno::Node_DirtyReadyToRun)
     , m_bodyLayout(nullptr)
     , m_inputsLayout(nullptr)
     , m_outputsLayout(nullptr)
-    , m_pStatusWidgets(nullptr)
+    , m_pStatusWidgets1(nullptr)
+    , m_pStatusWidgets2(nullptr)
     , m_NameItemTip(nullptr)
     , m_statusMarker(nullptr)
     , m_errorTip(nullptr)
@@ -193,6 +194,8 @@ void ZenoNodeNew::initLayout()
     mainLayout->addSpacing(6);
     mainLayout->addItem(m_headerWidget);
     mainLayout->addItem(m_bodyWidget);
+    mainLayout->addSpacing(1);
+    mainLayout->addItem(m_dirtyMarker, Qt::AlignHCenter);
     mainLayout->addSpacing(3);
     mainLayout->addLayout(m_outputObjSockets);
 
@@ -256,8 +259,29 @@ void ZenoNodeNew::setVisibleForParams(bool bVisible) {
         m_headerWidget->setRadius(10, 10, 0, 0);
     else
         m_headerWidget->setRadius(10, 10, 10, 10);
-    m_pStatusWidgets->updateRightButtomRadius(!bVisible);
+    m_pStatusWidgets1->updateRightButtomRadius(!bVisible);
+    m_pStatusWidgets2->updateRightButtomRadius(!bVisible);
     updateWhole();
+}
+
+void ZenoNodeNew::updateNodeNameByEditor() {
+    ZGraphicsTextItem* textEditor = qobject_cast<ZGraphicsTextItem*>(sender());
+    ZASSERT_EXIT(textEditor);
+    QString newVal = textEditor->toPlainText();
+    QString oldName = m_index.data(QtRole::ROLE_NODE_NAME).toString();
+    if (newVal == oldName)
+        return;
+    if (GraphModel* pModel = QVariantPtr<GraphModel>::asPtr(m_index.data(QtRole::ROLE_GRAPH)))
+    {
+        QString name = pModel->updateNodeName(m_index, newVal);
+        if (name != newVal)
+        {
+            QMessageBox::warning(nullptr, tr("Rename warring"), tr("The name %1 is existed").arg(newVal));
+            textEditor->setText(name);
+        }
+    }
+    if (textEditor == m_nameItem)
+        ZGraphicsLayout::updateHierarchy(textEditor);
 }
 
 ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
@@ -271,6 +295,9 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     ZASSERT_EXIT(m_index.isValid(), nullptr);
 
     zeno::NodeType type = static_cast<zeno::NodeType>(m_index.data(QtRole::ROLE_NODETYPE).toInt());
+    const QVariantMap& uistyle = m_index.data(QtRole::ROLE_NODE_UISTYLE).toMap();
+    QString iconResPath = uistyle["icon"].toString();
+    QString background = uistyle["background"].toString();
 
     QColor clrBgFrom, clrBgTo;
     if (type == zeno::NoVersionNode) {
@@ -281,9 +308,12 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
         clrBgFrom = QColor("#1A5447");
         clrBgTo = QColor("#289880");
     }
+    else if (!background.isEmpty()) {
+        clrBgFrom = clrBgTo = QColor(background);
+    }
     else {
-        clrBgFrom = QColor("#5F5F5F");
-        clrBgTo = QColor("#5F5F5F");
+        clrBgFrom = QColor("#0277D1");
+        clrBgTo = QColor("#0277D1");
     }
 
     //headerWidget->setColors(headerBg.bAcceptHovers, clrHeaderBg, clrHeaderBg, clrHeaderBg);
@@ -293,7 +323,7 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 
     const QString& nodeCls = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
     const QString& name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
-    const QString& iconResPath = m_index.data(QtRole::ROLE_NODE_DISPLAY_ICON).toString();
+    //const QString& iconResPath = m_index.data(QtRole::ROLE_NODE_DISPLAY_ICON).toString();
 
     const QString& category = m_index.data(QtRole::ROLE_NODE_CATEGORY).toString();
 
@@ -315,45 +345,8 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     //icons
 
     //ZGraphicsLayout* pNameLayout = new ZGraphicsLayout(true);
-    const QSizeF szIcon = ZenoStyle::dpiScaledSize(QSizeF(36, 36));
-    if (false && !iconResPath.isEmpty())
-    {
-        ImageElement elem;
-        elem.image = elem.imageHovered = elem.imageOn = elem.imageOnHovered = iconResPath;
-        auto node_icon = new ZenoImageItem(elem, szIcon);
-        pHLayout->addItem(node_icon, Qt::AlignVCenter);
-    }
-    else
-    {
-        //pHLayout->addSpacing(szIcon.width());
-    }
 
-    //m_NameItem = new ZEditableTextItem(name, headerWidget);
-    //m_NameItem->setDefaultTextColor(QColor("#CCCCCC"));
-    //m_NameItem->setTextLengthAsBounding(true);
-    //m_NameItem->setFont(font2);
-    //qreal ww = m_NameItem->boundingRect().width() + ZenoStyle::dpiScaled(2);
-    //m_NameItem->setPos(-ww, 14);
-    //connect(m_nameItem, &ZGraphicsTextItem::contentsChanged, this, [=](QString oldText, QString newText) {
-    //    qreal ww = m_nameItem->textLength() + ZenoStyle::dpiScaled(2);
-    //    m_nameItem->setPos(-ww, 14);
-    //});
-    connect(m_nameItem, &ZGraphicsTextItem::editingFinished, this, [=]() {
-        QString newVal = m_nameItem->toPlainText();
-        QString oldName = m_index.data(QtRole::ROLE_NODE_NAME).toString();
-        if (newVal == oldName)
-            return;
-        if (GraphModel* pModel = QVariantPtr<GraphModel>::asPtr(m_index.data(QtRole::ROLE_GRAPH)))
-        {
-            QString name = pModel->updateNodeName(m_index, newVal);
-            if (name != newVal)
-            {
-                QMessageBox::warning(nullptr, tr("Rename warring"), tr("The name %1 is existed").arg(newVal));
-                m_nameItem->setText(name);
-            }
-        }
-        ZGraphicsLayout::updateHierarchy(m_nameItem);
-    });
+    connect(m_nameItem, &ZGraphicsTextItem::editingFinished, this, &ZenoNodeNew::updateNodeNameByEditor);
     ////TODO: 参照houdini，当名字与类名不重合时，就另外显示。
     //m_NameItem->hide();
 
@@ -370,30 +363,67 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     RoundRectInfo buttonShapeInfo;
     buttonShapeInfo.W = ZenoStyle::dpiScaled(22.);
     buttonShapeInfo.H = ZenoStyle::dpiScaled(50.);
-    buttonShapeInfo.rtradius = ZenoStyle::dpiScaled(9.);
+    buttonShapeInfo.ltradius = buttonShapeInfo.rtradius = ZenoStyle::dpiScaled(9.);
     //根据是否有visible的socket显示来决定
-    buttonShapeInfo.rbradius = bBodyVisible ? 0 : ZenoStyle::dpiScaled(9.);
+    buttonShapeInfo.lbradius = buttonShapeInfo.rbradius = bBodyVisible ? 0 : ZenoStyle::dpiScaled(9.);
 
     bool bHasOptimStatus = false;
     if (type == zeno::Node_SubgraphNode || type == zeno::Node_AssetInstance) {
         bHasOptimStatus = true;
     }
 
-    m_pStatusWidgets = new StatusGroup(bHasOptimStatus, buttonShapeInfo);
     bool bView = m_index.data(QtRole::ROLE_NODE_ISVIEW).toBool();
-    m_pStatusWidgets->setView(bView);
-    connect(m_pStatusWidgets, SIGNAL(toggleChanged(STATUS_BTN, bool)), this, SLOT(onOptionsBtnToggled(STATUS_BTN, bool)));
+    bool bypass = m_index.data(QtRole::ROLE_NODE_BYPASS).toBool();
+    bool nocache = m_index.data(QtRole::ROLE_NODE_NOCACHE).toBool();
+    bool clearsubnet = m_index.data(QtRole::ROLE_NODE_CLEARSUBNET).toBool();
 
     //pHLayout->addLayout(pNameLayout);
+
+    m_pStatusWidgets1 = new LeftStatusBtnGroup(type, buttonShapeInfo);
+    m_pStatusWidgets1->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    m_pStatusWidgets1->setNoCache(nocache);
+    m_pStatusWidgets1->setClearSubnet(clearsubnet);
+    connect(m_pStatusWidgets1, SIGNAL(toggleChanged(STATUS_BTN, bool)), this, SLOT(onOptionsBtnToggled(STATUS_BTN, bool)));
+
+    m_pStatusWidgets2 = new RightStatusBtnGroup(buttonShapeInfo);
+    m_pStatusWidgets2->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    m_pStatusWidgets2->setByPass(bypass);
+    m_pStatusWidgets2->setView(bView);
+    connect(m_pStatusWidgets2, SIGNAL(toggleChanged(STATUS_BTN, bool)), this, SLOT(onOptionsBtnToggled(STATUS_BTN, bool)));
+
+    pHLayout->addItem(m_pStatusWidgets1, Qt::AlignLeft);
+
     pHLayout->addSpacing(ZenoStyle::dpiScaled(16.));
-    pHLayout->addItem(m_nameItem, Qt::AlignVCenter);
+    const QSizeF szIcon = ZenoStyle::dpiScaledSize(QSizeF(26, 26));
+    if (!iconResPath.isEmpty())
+    {
+        ImageElement elem;
+        elem.image = elem.imageHovered = elem.imageOn = elem.imageOnHovered = iconResPath;
+        auto node_icon = new ZenoImageItem(elem, szIcon);
+        node_icon->setClickable(false);
+        pHLayout->addItem(node_icon, Qt::AlignVCenter);
+
+        m_nameEditor = new ZEditableTextItem(name, headerWidget);
+        m_nameEditor->setDefaultTextColor(QColor("#CCCCCC"));
+        m_nameEditor->setTextLengthAsBounding(true);
+        m_nameEditor->setFont(font2);
+        qreal ww = m_nameEditor->boundingRect().width() + ZenoStyle::dpiScaled(8);
+        m_nameEditor->setPos(-ww, 14);
+        connect(m_nameEditor, &ZEditableTextItem::contentsChanged, this, [=]() {
+            qreal ww = m_nameEditor->textLength() + ZenoStyle::dpiScaled(8);
+            m_nameEditor->setPos(-ww, 14);
+        });
+        connect(m_nameEditor, &ZGraphicsTextItem::editingFinished, this, &ZenoNodeNew::updateNodeNameByEditor);
+    }
+    else {
+        //补充一些距离
+        //pHLayout->addSpacing(szIcon.width());// +ZenoStyle::dpiScaled(20.));
+        //pHLayout->addSpacing(100, QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed));
+        pHLayout->addItem(m_nameItem, Qt::AlignVCenter);
+    }
     pHLayout->addSpacing(ZenoStyle::dpiScaled(16.));
 
-    //补充一些距离
-    //pHLayout->addSpacing(szIcon.width());// +ZenoStyle::dpiScaled(20.));
-
-    //pHLayout->addSpacing(100, QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed));
-    pHLayout->addItem(m_pStatusWidgets, Qt::AlignRight);
+    pHLayout->addItem(m_pStatusWidgets2, Qt::AlignRight);
 
     m_dirtyMarker = new ZLayoutBackground;
     m_dirtyMarker->setColors(false, QColor(240, 215, 4));
@@ -402,15 +432,16 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 
     ZGraphicsLayout* pVLayout = new ZGraphicsLayout(false);
     pVLayout->addLayout(pHLayout);
-    pVLayout->addItem(m_dirtyMarker, Qt::AlignHCenter);
 
     headerWidget->setLayout(pVLayout);
     headerWidget->setZValue(ZVALUE_BACKGROUND);
     if (const GraphModel* pModel = QVariantPtr<GraphModel>::asPtr(m_index.data(QtRole::ROLE_GRAPH)))
     {
-        m_pStatusWidgets->setEnabled(!pModel->isLocked());
+        m_pStatusWidgets1->setEnabled(!pModel->isLocked());
+        m_pStatusWidgets2->setEnabled(!pModel->isLocked());
         connect(pModel, &GraphModel::lockStatusChanged, this, [=]() {
-            m_pStatusWidgets->setEnabled(!pModel->isLocked());
+            m_pStatusWidgets1->setEnabled(!pModel->isLocked());
+            m_pStatusWidgets2->setEnabled(!pModel->isLocked());
             for (auto layout : getSocketLayouts(true))
             {
                 if (auto pControl = layout->control())
@@ -1146,7 +1177,7 @@ QPointF ZenoNodeNew::getSocketPos(const QModelIndex& sockIdx, const QString keyN
 
 void ZenoNodeNew::onZoomed()
 {
-    m_pStatusWidgets->onZoomed();
+    //m_pStatusWidgets->onZoomed();
     qreal factor = 0.2;
     bool bVisible = true;
     if (editor_factor < factor) {
@@ -1202,9 +1233,9 @@ bool ZenoNodeNew::sceneEventFilter(QGraphicsItem* watched, QEvent* event)
 
 bool ZenoNodeNew::eventFilter(QObject* obj, QEvent* event)
 {
-    if (obj == m_NameItem)
+    if (obj == m_nameEditor)
     {
-        if ((event->type() == QEvent::InputMethod || event->type() == QEvent::KeyPress) && m_NameItem->textInteractionFlags() == Qt::TextEditable)
+        if ((event->type() == QEvent::InputMethod || event->type() == QEvent::KeyPress) && m_nameEditor->textInteractionFlags() == Qt::TextEditable)
         {
             bool bDelete = false;
             if (event->type() == QEvent::KeyPress)
@@ -1218,32 +1249,32 @@ bool ZenoNodeNew::eventFilter(QObject* obj, QEvent* event)
             {
                 QString name = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
                 QColor color = QColor(255, 255, 255);
-                QColor textColor = m_NameItem->defaultTextColor();
+                QColor textColor = m_nameEditor->defaultTextColor();
                 if (textColor != color)
                 {
-                    m_NameItem->setDefaultTextColor(color);
+                    m_nameEditor->setDefaultTextColor(color);
                 }
 
-                if (m_NameItem->toPlainText() == name)
+                if (m_nameEditor->toPlainText() == name)
                 {
-                    m_NameItem->setText("");
+                    m_nameEditor->setText("");
                 }
 
-                if (m_NameItem->textInteractionFlags() != Qt::TextEditorInteraction)
+                if (m_nameEditor->textInteractionFlags() != Qt::TextEditorInteraction)
                 {
-                    m_NameItem->setTextInteractionFlags(Qt::TextEditorInteraction);
+                    m_nameEditor->setTextInteractionFlags(Qt::TextEditorInteraction);
                 }
             }
         }
-        else if (event->type() == QEvent::KeyRelease && m_NameItem->textInteractionFlags() == Qt::TextEditorInteraction)
+        else if (event->type() == QEvent::KeyRelease && m_nameEditor->textInteractionFlags() == Qt::TextEditorInteraction)
         {
-            QString text = m_NameItem->toPlainText();
+            QString text = m_nameEditor->toPlainText();
             if (text.isEmpty())
             {
                 QString name = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
-                m_NameItem->setText(name);
-                m_NameItem->setTextInteractionFlags(Qt::TextEditable);
-                m_NameItem->setDefaultTextColor(QColor(255, 255, 255, 40));
+                m_nameEditor->setText(name);
+                m_nameEditor->setTextInteractionFlags(Qt::TextEditable);
+                m_nameEditor->setDefaultTextColor(QColor(255, 255, 255, 40));
             }
         }
     }
@@ -1286,20 +1317,20 @@ void ZenoNodeNew::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
     }
     _base::mouseDoubleClickEvent(event);
     QList<QGraphicsItem*> items = scene()->items(event->scenePos());
-    if (items.contains(m_NameItem))
+    if (items.contains(m_nameEditor))
     {
         QString name = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
-        if (name == m_NameItem->toPlainText())
+        if (name == m_nameEditor->toPlainText())
         {
-            m_NameItem->setTextInteractionFlags(Qt::TextEditable);
-            m_NameItem->setDefaultTextColor(QColor(255, 255, 255, 40));
+            m_nameEditor->setTextInteractionFlags(Qt::TextEditable);
+            m_nameEditor->setDefaultTextColor(QColor(255, 255, 255, 40));
         }
         else
         {
-            m_NameItem->setTextInteractionFlags(Qt::TextEditorInteraction);
-            m_NameItem->setDefaultTextColor(QColor(255, 255, 255));
+            m_nameEditor->setTextInteractionFlags(Qt::TextEditorInteraction);
+            m_nameEditor->setDefaultTextColor(QColor(255, 255, 255));
         }
-        m_NameItem->setFocus();
+        m_nameEditor->setFocus();
     }
     else if (items.contains(m_headerWidget) || items.contains(m_bodyWidget))
     {
@@ -1358,19 +1389,21 @@ void ZenoNodeNew::onOptionsBtnToggled(STATUS_BTN btn, bool toggled)
     zeno::NodeStatus options = (zeno::NodeStatus)m_index.data(QtRole::ROLE_NODE_STATUS).toInt();
     int oldOpts = options;
 
-    if (btn == STATUS_MUTE)
-    {
-        QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
-        GraphModel* pGraphM = qobject_cast<GraphModel*>(pModel);
-        ZASSERT_EXIT(pGraphM);
+    QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
+    GraphModel* pGraphM = qobject_cast<GraphModel*>(pModel);
+    ZASSERT_EXIT(pGraphM);
+
+    if (btn == STATUS_BYPASS) {
         pGraphM->setBypass(m_index, toggled);
     }
-    else if (btn == STATUS_VIEW)
-    {
-        QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
-        GraphModel* pGraphM = qobject_cast<GraphModel*>(pModel);
-        ZASSERT_EXIT(pGraphM);
+    else if (btn == STATUS_VIEW) {
         pGraphM->setView(m_index, toggled);
+    }
+    else if (btn == STATUS_CLEARSUBNET) {
+        pGraphM->setClearSubnet(m_index, toggled);
+    }
+    else if (btn == STATUS_NOCACHE) {
+        pGraphM->setNocache(m_index, toggled);
     }
 }
 
@@ -1398,20 +1431,35 @@ void ZenoNodeNew::onCollaspeUpdated(bool collasped)
 
 void ZenoNodeNew::onViewUpdated(bool bView)
 {
-    if (m_pStatusWidgets)
-    {
-        m_pStatusWidgets->blockSignals(true);
-        m_pStatusWidgets->setView(bView);
-        m_pStatusWidgets->blockSignals(false);
-    }
+    ZASSERT_EXIT(m_pStatusWidgets2);
+    m_pStatusWidgets2->blockSignals(true);
+    m_pStatusWidgets2->setView(bView);
+    m_pStatusWidgets2->blockSignals(false);
+}
+
+void ZenoNodeNew::onByPassUpdated(bool bypass) {
+    ZASSERT_EXIT(m_pStatusWidgets2);
+    m_pStatusWidgets2->blockSignals(true);
+    m_pStatusWidgets2->setByPass(bypass);
+    m_pStatusWidgets2->blockSignals(false);
+}
+
+void ZenoNodeNew::onNoCachedUpdated(bool nocache) {
+    ZASSERT_EXIT(m_pStatusWidgets1);
+    m_pStatusWidgets1->blockSignals(true);
+    m_pStatusWidgets1->setNoCache(nocache);
+    m_pStatusWidgets1->blockSignals(false);
+}
+
+void ZenoNodeNew::onClearSubnetUpdated(bool clearSubnet) {
+    ZASSERT_EXIT(m_pStatusWidgets1);
+    m_pStatusWidgets1->blockSignals(true);
+    m_pStatusWidgets1->setClearSubnet(clearSubnet);
+    m_pStatusWidgets1->blockSignals(false);
 }
 
 void ZenoNodeNew::onOptionsUpdated(int options)
 {
-    if (m_pStatusWidgets) 
-    {
-        m_pStatusWidgets->blockSignals(true);
-        m_pStatusWidgets->setOptions(options);
-        m_pStatusWidgets->blockSignals(false);
-    }
+    //DEPRECATED
+    assert(false);
 }

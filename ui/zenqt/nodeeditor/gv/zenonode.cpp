@@ -1818,7 +1818,7 @@ void ZenoNode::onOptionsBtnToggled(STATUS_BTN btn, bool toggled)
     zeno::NodeStatus options = (zeno::NodeStatus)m_index.data(QtRole::ROLE_NODE_STATUS).toInt();
     int oldOpts = options;
 
-    if (btn == STATUS_MUTE)
+    if (btn == STATUS_BYPASS)
     {
         //TODO:
     }

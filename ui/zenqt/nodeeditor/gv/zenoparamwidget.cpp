@@ -1450,7 +1450,7 @@ ZenoMinStatusBtnItem::ZenoMinStatusBtnItem(const StatusComponent& statusComp, QG
     connect(m_mute, SIGNAL(toggled(bool)), m_minMute, SLOT(toggle(bool)));
 
     connect(m_minMute, &ZenoImageItem::toggled, [=](bool hovered) {
-        emit toggleChanged(STATUS_MUTE, hovered);
+        emit toggleChanged(STATUS_BYPASS, hovered);
     });
     connect(m_minView, &ZenoImageItem::toggled, [=](bool hovered) {
         emit toggleChanged(STATUS_VIEW, hovered);
@@ -1461,7 +1461,7 @@ ZenoMinStatusBtnItem::ZenoMinStatusBtnItem(const StatusComponent& statusComp, QG
 
 void ZenoMinStatusBtnItem::setOptions(int options)
 {
-    setChecked(STATUS_MUTE, options & zeno::ByPass);
+    setChecked(STATUS_BYPASS, options & zeno::ByPass);
     setChecked(STATUS_VIEW, options & zeno::View);
 }
 
@@ -1472,7 +1472,7 @@ void ZenoMinStatusBtnItem::setView(bool isView)
 
 void ZenoMinStatusBtnItem::setChecked(STATUS_BTN btn, bool bChecked)
 {
-    if (btn == STATUS_MUTE)
+    if (btn == STATUS_BYPASS)
     {
         m_mute->toggle(bChecked);
         m_minMute->toggle(bChecked);

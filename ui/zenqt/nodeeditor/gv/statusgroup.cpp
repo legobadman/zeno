@@ -3,6 +3,301 @@
 #include "zenosvgitem.h"
 #include "style/zenostyle.h"
 #include "nodeeditor/gv/zgraphicstextitem.h"
+#include <QDebug>
+
+
+static const int skew = 6;  // 倾斜偏移
+static const int side = 24; // 底边直线的边长
+static const int button_margin = 2; //两个按钮之间的空隙
+
+
+CommonStatusBtn::CommonStatusBtn(RoundRectInfo info, QGraphicsItem* parent)
+    : QGraphicsObject(parent)
+    , m_rectInfo(info)
+    , m_bOn(false)
+    , m_bHovered(false)
+    , m_bHasRadiusOnButtom(true)
+{
+    setAcceptHoverEvents(true);
+    setCursor(Qt::PointingHandCursor);
+}
+
+void CommonStatusBtn::updateHasRadiusOnButtom(bool bOn) {
+    m_bHasRadiusOnButtom = bOn;
+}
+
+void CommonStatusBtn::setHovered(bool bHovered) {
+    m_bHovered = bHovered;
+    update();
+}
+
+void CommonStatusBtn::toggle(bool bSelected) {
+    if (bSelected == m_bOn)
+        return;
+
+    m_bOn = bSelected;
+    if (!m_bOn) {
+        m_bHovered = false;
+    }
+    emit toggled(m_bOn);
+    update();
+}
+
+void CommonStatusBtn::hoverEnterEvent(QGraphicsSceneHoverEvent* event) {
+    _base::hoverEnterEvent(event);
+    m_bHovered = true;
+}
+
+void CommonStatusBtn::hoverMoveEvent(QGraphicsSceneHoverEvent* event) {
+    _base::hoverLeaveEvent(event);
+}
+
+void CommonStatusBtn::hoverLeaveEvent(QGraphicsSceneHoverEvent* event) {
+    _base::hoverLeaveEvent(event);
+    m_bHovered = false;
+}
+
+void CommonStatusBtn::mousePressEvent(QGraphicsSceneMouseEvent* event) {
+    _base::mousePressEvent(event);
+    event->setAccepted(true);
+}
+
+void CommonStatusBtn::mouseReleaseEvent(QGraphicsSceneMouseEvent* event) {
+    _base::mouseReleaseEvent(event);
+    toggle(!m_bOn);
+}
+
+
+ByPassButton::ByPassButton(RoundRectInfo info, QGraphicsItem* parent)
+    : CommonStatusBtn(info, parent)
+{
+    setToolTip(tr("by pass: disable this node and pass through the data"));
+}
+
+QRectF ByPassButton::boundingRect() const {
+    static const int width = skew + side;
+    return QRectF(0, 0, width, m_rectInfo.H);
+}
+
+void ByPassButton::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
+    QPainterPath path;
+
+    const int width = skew + side;
+    const int height = m_rectInfo.H;
+
+    path.moveTo(0 + skew, 0);
+    path.lineTo(width, 0);
+    path.lineTo(width - skew, height);
+    path.lineTo(0, height);
+    path.closeSubpath();
+
+    QColor fillColor = m_bHovered || m_bOn ? QColor("#FFBD21") : QColor("#2E313A");
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->fillPath(path, fillColor);
+}
+
+
+ViewButton::ViewButton(RoundRectInfo info, QGraphicsItem* parent)
+    : CommonStatusBtn(info, parent)
+{
+    setToolTip(tr("view"));
+}
+
+QRectF ViewButton::boundingRect() const {
+    static const int width = side;
+    return QRectF(0, 0, width, m_rectInfo.H);
+}
+
+void ViewButton::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
+    const int radius = m_rectInfo.rtradius;
+    const int width = side;
+    const int height = m_rectInfo.H;
+
+    QPainterPath path;
+    path.moveTo(0 + skew, 0);
+
+    path.lineTo(width - radius, 0);
+    path.quadTo(width, 0, width, radius);
+
+    // 右下角
+    if (m_bHasRadiusOnButtom) {
+        path.lineTo(width, height - radius);
+        path.quadTo(width, height, width - radius, height);
+    }
+    else {
+        path.lineTo(width, height);
+    }
+
+    path.lineTo(0, height);
+    path.closeSubpath();
+
+    QColor fillColor = m_bHovered || m_bOn ? QColor("#00BCD4") : QColor("#2E313A");  // 浅蓝/高亮蓝
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->fillPath(path, fillColor);
+}
+
+NoCacheButton::NoCacheButton(RoundRectInfo info, QGraphicsItem* parent)
+    : CommonStatusBtn(info, parent)
+{
+    setToolTip(tr("no cache:\n the cache will be removed when the data flow to downstream node"));
+}
+
+QRectF NoCacheButton::boundingRect() const {
+    static const int width = side;
+    return QRectF(0, 0, width, m_rectInfo.H);
+}
+
+void NoCacheButton::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
+    const int radius = m_rectInfo.rtradius;
+    const int width = side;
+    const int height = m_rectInfo.H;
+
+    QPainterPath path;
+
+    path.moveTo(radius, 0);
+    path.lineTo(width, 0);
+    path.lineTo(width - skew, m_rectInfo.H);
+
+    if (m_bHasRadiusOnButtom) {
+        path.lineTo(width - skew - radius, m_rectInfo.H);
+        path.quadTo(0, m_rectInfo.H, 0, m_rectInfo.H - radius);
+    }
+    else {
+        path.lineTo(0, m_rectInfo.H);
+    }
+
+    path.lineTo(0, m_rectInfo.ltradius);
+    path.quadTo(0, 0, m_rectInfo.ltradius, 0);
+
+    path.closeSubpath();
+
+    QColor fillColor = m_bHovered || m_bOn ? QColor("#FF3300") : QColor("#2E313A");
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->fillPath(path, fillColor);
+}
+
+
+ClearSbnCacheButton::ClearSbnCacheButton(RoundRectInfo info, QGraphicsItem* parent)
+    : CommonStatusBtn(info, parent)
+{
+    setToolTip(tr("clear subnet:\n the cache inside the subnet will be removed when the calculation is over"));
+}
+
+QRectF ClearSbnCacheButton::boundingRect() const {
+    static const int width = skew + side;
+    return QRectF(0, 0, width, m_rectInfo.H);  // 宽 60，高 50，实际内容是个倾斜的四边形
+}
+
+void ClearSbnCacheButton::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) {
+    QPainterPath path;
+
+    const int width = skew + side;
+    const int height = m_rectInfo.H;
+
+    path.moveTo(0 + skew, 0);
+    path.lineTo(width, 0);
+    path.lineTo(width - skew, height);
+    path.lineTo(0, height);
+    path.closeSubpath();
+
+    QColor fillColor = m_bHovered || m_bOn ? QColor("#E302F8") : QColor("#2E313A");
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->fillPath(path, fillColor);
+}
+
+
+LeftStatusBtnGroup::LeftStatusBtnGroup(zeno::NodeType type, RoundRectInfo info, QGraphicsItem* parent)
+    : _base(parent)
+    , m_rectInfo(info)
+    , m_clearsubnet(nullptr)
+    , m_nocache(nullptr)
+{
+    m_nocache = new NoCacheButton(info, this);
+    m_nocache->setPos(0, 0);
+
+    connect(m_nocache, &NoCacheButton::toggled, [&](bool hovered) {
+        emit toggleChanged(STATUS_NOCACHE, hovered);
+        });
+
+    if (type == zeno::Node_SubgraphNode ||
+        type == zeno::Node_AssetInstance ||
+        type == zeno::Node_AssetReference)
+    {
+        m_clearsubnet = new ClearSbnCacheButton(info, this);
+        m_clearsubnet->setPos(side - skew + button_margin, 0);
+        connect(m_clearsubnet, &ClearSbnCacheButton::toggled, [&](bool hovered) {
+            emit toggleChanged(STATUS_CLEARSUBNET, hovered);
+            });
+    }
+}
+
+QRectF LeftStatusBtnGroup::boundingRect() const {
+    if (m_clearsubnet)
+        return QRectF(0, 0, side * 2 + button_margin, m_rectInfo.H);
+    else
+        return QRectF(0, 0, side + button_margin, m_rectInfo.H);
+}
+
+void LeftStatusBtnGroup::setNoCache(bool nocache) {
+    if (m_nocache)
+        m_nocache->toggle(nocache);
+}
+
+void LeftStatusBtnGroup::setClearSubnet(bool clearSbn) {
+    if (m_clearsubnet)
+        m_clearsubnet->toggle(clearSbn);
+}
+
+void LeftStatusBtnGroup::updateRightButtomRadius(bool bHasRadius) {
+    if (m_nocache)
+        m_nocache->updateHasRadiusOnButtom(bHasRadius);
+}
+
+
+/// <summary>
+
+/// </summary>
+RightStatusBtnGroup::RightStatusBtnGroup(RoundRectInfo info, QGraphicsItem* parent)
+    : _base(parent)
+    , m_rectInfo(info)
+    , m_bypass(nullptr)
+    , m_view(nullptr)
+{
+    m_bypass = new ByPassButton(info, this);
+    m_view = new ViewButton(info, this);
+    m_bypass->setPos(0, 0);
+    m_view->setPos(side + button_margin, 0);
+
+    //connect(m_view, SIGNAL(hoverChanged(bool)), m_Imgview, SLOT(setHovered(bool)));
+    //connect(m_view, SIGNAL(toggled(bool)), m_Imgview, SLOT(toggle(bool)));
+    connect(m_view, &ViewButton::toggled, [&](bool hovered) {
+        emit toggleChanged(STATUS_VIEW, hovered);
+        });
+
+    connect(m_bypass, &ByPassButton::toggled, [&](bool hovered) {
+        emit toggleChanged(STATUS_BYPASS, hovered);
+        });
+}
+
+QRectF RightStatusBtnGroup::boundingRect() const {
+    return QRectF(0, 0, side * 2 + button_margin, m_rectInfo.H);
+}
+
+void RightStatusBtnGroup::setView(bool isView) {
+    if (m_view)
+        m_view->toggle(isView);
+}
+
+void RightStatusBtnGroup::setByPass(bool bypass) {
+    if (m_bypass)
+        m_bypass->toggle(bypass);
+}
+
+void RightStatusBtnGroup::updateRightButtomRadius(bool bHasRadius) {
+    if (m_view)
+        m_view->updateHasRadiusOnButtom(bHasRadius);
+}
+
 
 
 StatusGroup::StatusGroup(bool bHasOptimStatus, RoundRectInfo info, QGraphicsItem* parent)
@@ -101,7 +396,7 @@ StatusGroup::StatusGroup(bool bHasOptimStatus, RoundRectInfo info, QGraphicsItem
     connect(m_mute, SIGNAL(hoverChanged(bool)), m_minMute, SLOT(setHovered(bool)));
     connect(m_mute, SIGNAL(toggled(bool)), m_minMute, SLOT(toggle(bool)));
     connect(m_minMute, &StatusButton::toggled, [=](bool hovered) {
-        emit toggleChanged(STATUS_MUTE, hovered);
+        emit toggleChanged(STATUS_BYPASS, hovered);
         });
 
     setAcceptHoverEvents(true);
