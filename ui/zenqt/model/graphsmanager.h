@@ -46,7 +46,7 @@ public:
     void setCurrentGraphPath(const QString& path);
 
     void createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult);
-    inline GraphsTreeModel* currentModel() const { return m_model; }
+    inline GraphsTreeModel* currentModel() const { return m_treemodel; }
     AssetsModel* assetsModel() const;
     PluginsModel* pluginModel() const;
     QStandardItemModel* logModel() const;
@@ -99,7 +99,7 @@ private slots:
 private:
     void registerCoreNotify();
 
-    GraphsTreeModel* m_model;
+    GraphsTreeModel* m_treemodel;
     GraphModel* m_main;
     QStandardItemModel* m_logModel;     //connection with scene.
     AssetsModel* m_assets;

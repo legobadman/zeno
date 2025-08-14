@@ -17,6 +17,7 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     zeno::SharedPtr<IObject> clone() const override;
     void Delete() override;
     size_t size();
+    void clear();
     zany get(int index);
     zeno::Vector<zany> get();
     void push_back(zany&& obj);

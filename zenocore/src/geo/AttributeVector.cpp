@@ -1,9 +1,13 @@
 #include <zeno/types/AttributeVector.h>
 
+#define SHARED_COLUMN_DATA
 
 namespace zeno {
 
+    static bool sigval_init = true; //是否用单值优化：一列相同的数据用一个数值表达
+
     ZENO_API AttributeVector::AttributeVector(const AttributeVector& rhs)
+#ifdef SHARED_COLUMN_DATA
         : x_comp(rhs.x_comp)
         , y_comp(rhs.y_comp)
         , z_comp(rhs.z_comp)
@@ -11,7 +15,17 @@ namespace zeno {
         , m_size(rhs.m_size)
         , m_type(rhs.m_type)
         , self(rhs.self)
+#endif
     {
+#ifndef SHARED_COLUMN_DATA
+        if (rhs.x_comp) x_comp = std::make_shared<AttrColumn>(*rhs.x_comp);
+        if (rhs.y_comp) y_comp = std::make_shared<AttrColumn>(*rhs.y_comp);
+        if (rhs.z_comp) z_comp = std::make_shared<AttrColumn>(*rhs.z_comp);
+        if (rhs.w_comp) w_comp = std::make_shared<AttrColumn>(*rhs.w_comp);
+        if (rhs.self) self = std::make_shared<AttrColumn>(*rhs.self);
+        m_size = rhs.m_size;
+        m_type = rhs.m_type;
+#endif
     }
 
     ZENO_API AttributeVector::AttributeVector(const AttrVar& val_or_vec, size_t size, bool sigval_init)
@@ -27,11 +41,6 @@ namespace zeno {
 
     ZENO_API GeoAttrType AttributeVector::type() const {
         return m_type;
-    }
-
-    ZENO_API AttrVarVec AttributeVector::get() {
-        //vec?
-        return self->value();
     }
 
     ZENO_API AttrValue AttributeVector::getelem(size_t idx) const {
@@ -122,27 +131,28 @@ namespace zeno {
         }
     }
 
-    ZENO_API void AttributeVector::set(const AttrVar& val_or_vec, bool sigval_init) {
-        sigval_init = false; //先关闭
-        const int N_vec = sigval_init ? 1 : m_size;
+    ZENO_API void AttributeVector::set(const AttrVar& val_or_vec, bool) {
         std::visit([&](auto&& val) {
             using E = std::decay_t<decltype(val)>;
 
             if constexpr (std::is_same_v<E, int>) {
                 if (m_type != ATTR_TYPE_UNKNOWN && m_type != ATTR_INT && m_type != ATTR_FLOAT)
                     throw makeError<UnimplError>("type dismatch, cannot change type of attrvector");
+                const int N_vec = sigval_init ? 1 : m_size;
                 self = std::make_shared<AttrColumn>(std::vector<E>(N_vec, val), m_size);
                 m_type = ATTR_INT;
             }
             else if constexpr (std::is_same_v<E, float>) {
                 if (m_type != ATTR_TYPE_UNKNOWN && m_type != ATTR_INT && m_type != ATTR_FLOAT)
                     throw makeError<UnimplError>("type dismatch, cannot change type of attrvector");
+                const int N_vec = sigval_init ? 1 : m_size;
                 self = std::make_shared<AttrColumn>(std::vector<E>(N_vec, val), m_size);
                 m_type = ATTR_FLOAT;
             }
             else if constexpr (std::is_same_v<E, std::string>) {
                 if (m_type != ATTR_TYPE_UNKNOWN && m_type != ATTR_STRING)
                     throw makeError<UnimplError>("type dismatch, cannot change type of attrvector");
+                const int N_vec = sigval_init ? 1 : m_size;
                 self = std::make_shared<AttrColumn>(std::vector<E>(N_vec, val), m_size);
                 m_type = ATTR_STRING;
             }
@@ -150,6 +160,7 @@ namespace zeno {
                 //只能以float储存
                 if (m_type != ATTR_TYPE_UNKNOWN && m_type != ATTR_VEC2)
                     throw makeError<UnimplError>("type dismatch, cannot change type of attrvector");
+                const int N_vec = sigval_init ? 1 : m_size;
                 x_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[0]), m_size);
                 y_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[0]), m_size);
                 m_type = ATTR_VEC2;
@@ -158,6 +169,7 @@ namespace zeno {
                 //只能以float储存
                 if (m_type != ATTR_TYPE_UNKNOWN && m_type != ATTR_VEC3)
                     throw makeError<UnimplError>("type dismatch, cannot change type of attrvector");
+                const int N_vec = sigval_init ? 1 : m_size;
                 x_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[0]), m_size);
                 y_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[1]), m_size);
                 z_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[2]), m_size);
@@ -167,6 +179,7 @@ namespace zeno {
                 //只能以float储存
                 if (m_type != ATTR_TYPE_UNKNOWN && m_type != ATTR_VEC4)
                     throw makeError<UnimplError>("type dismatch, cannot change type of attrvector");
+                const int N_vec = sigval_init ? 1 : m_size;
                 x_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[0]), m_size);
                 y_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[1]), m_size);
                 z_comp = std::make_shared<AttrColumn>(std::vector<float>(N_vec, val[2]), m_size);
@@ -241,4 +254,46 @@ namespace zeno {
             }
         }, val_or_vec);
     }
+
+#ifdef TRACE_GEOM_ATTR_DATA
+    void AttributeVector::set_xcomp_id(const std::string& id) {
+        if (x_comp)
+            x_comp->_id = id;
+    }
+
+    void AttributeVector::set_ycomp_id(const std::string& id) {
+        if (y_comp)
+            y_comp->_id = id;
+    }
+
+    void AttributeVector::set_zcomp_id(const std::string& id) {
+        if (z_comp)
+            z_comp->_id = id;
+    }
+
+    void AttributeVector::set_self_id(const std::string& id) {
+        if (self)
+            self->_id = id;
+    }
+
+    std::string AttributeVector::xcomp_id() {
+        return x_comp ? x_comp->_id : "";
+    }
+
+    std::string AttributeVector::ycomp_id() {
+        return y_comp ? y_comp->_id : "";
+    }
+
+    std::string AttributeVector::zcomp_id() {
+        return z_comp ? z_comp->_id : "";
+    }
+
+    std::string AttributeVector::wcomp_id() {
+        return w_comp ? w_comp->_id : "";
+    }
+
+    std::string AttributeVector::self_id() {
+        return self ? self->_id : "";
+    }
+#endif
 }

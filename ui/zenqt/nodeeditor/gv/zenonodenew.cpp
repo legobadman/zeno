@@ -1314,15 +1314,15 @@ bool ZenoNodeNew::eventFilter(QObject* obj, QEvent* event)
 
 void ZenoNodeNew::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 {
-    if (const GraphModel* pModel = QVariantPtr<GraphModel>::asPtr(m_index.data(QtRole::ROLE_GRAPH)))
-    {
-        if (pModel->isLocked())
-            return;
-    }
     _base::mouseDoubleClickEvent(event);
     QList<QGraphicsItem*> items = scene()->items(event->scenePos());
     if (items.contains(m_nameEditor))
     {
+        if (const GraphModel* pModel = QVariantPtr<GraphModel>::asPtr(m_index.data(QtRole::ROLE_GRAPH)))
+        {
+            if (pModel->isLocked())
+                return;
+        }
         QString name = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
         if (name == m_nameEditor->toPlainText())
         {

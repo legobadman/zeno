@@ -384,7 +384,7 @@ void _ZenoSubGraphView::focusOn(const QString& nodeName, const QPointF& pos, boo
     if (pSelNode)
     {
         QRectF rcBounding = pSelNode->sceneBoundingRect();
-        //rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width(), rcBounding.height());
+        rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width(), rcBounding.height());
         fitInView(rcBounding, Qt::KeepAspectRatio);
         target_scene_pos = rcBounding.center();
         editor_factor = transform().m11();
@@ -906,15 +906,16 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
         _ZenoSubGraphView* pView = qobject_cast<_ZenoSubGraphView*>(m_stackedView->widget(i));
         ZASSERT_EXIT(pView);
         ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(pView->scene());
-        ZASSERT_EXIT(pScene);
-        GraphModel* pModel = pScene->getGraphModel();
-        ZASSERT_EXIT(pModel);
-        auto currpath = pModel->currentPath();
-        if (currpath == path) {
-            m_stackedView->setCurrentIndex(i);
-            bFound = true;
-            pCurrentView = pView;
-            break;
+        if (pScene) {
+            GraphModel* pModel = pScene->getGraphModel();
+            ZASSERT_EXIT(pModel);
+            auto currpath = pModel->currentPath();
+            if (currpath == path) {
+                m_stackedView->setCurrentIndex(i);
+                bFound = true;
+                pCurrentView = pView;
+                break;
+            }
         }
     }
 

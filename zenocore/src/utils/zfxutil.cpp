@@ -85,11 +85,6 @@ namespace zeno
             }, var);
         }
 
-        std::vector<zfxvariant> attrvarVecToZfxVec(AttrVarVec anyval, int size) {
-            std::vector<zfxvariant> ret;
-            return ret;
-        }
-
         std::vector<zfxvariant> extractAttrValue(Any anyval, int size)
         {
             std::vector<zfxvariant> res;

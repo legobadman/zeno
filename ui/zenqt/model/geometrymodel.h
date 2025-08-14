@@ -25,6 +25,7 @@ enum AttrColType {
 struct AttributeInfo {
     std::string name;
     std::string showName;
+    std::string _id;
     AttrColType type;
     char channel = 0;
 };

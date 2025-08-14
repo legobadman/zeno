@@ -10,7 +10,7 @@ namespace zeno {
 
     class AttributeImpl {
     public:
-        void set(AttrVarVec elemVal) {
+        void set(AttrVarOrVec elemVal) {
             m_data = elemVal;
         }
 
@@ -29,7 +29,7 @@ namespace zeno {
                 else if constexpr (std::is_same_v<E, std::vector<int>> ||
                         std::is_same_v<E, std::vector<float>> ||
                         std::is_same_v<E, std::vector<std::string>>) {
-                    if (vec.size() == 1) {
+                    if (vec.size() == 1 && m_size > 1) {
                         vec.resize(m_size, vec[0]);
                     }
                     vec[index] = elemVal;
@@ -68,7 +68,7 @@ namespace zeno {
             }, m_data);
         }
 
-        AttrVarVec get() const {
+        AttrVarOrVec get() const {
             return m_data;
         }
 
@@ -97,7 +97,12 @@ namespace zeno {
                     std::is_same_v<E, std::vector<vec2f>> ||
                     std::is_same_v<E, std::vector<vec3f>> ||
                     std::is_same_v<E, std::vector<vec4f>>) {
-                    return vec[idx];
+                    if (vec.size() == 1) {
+                        return vec[0];
+                    }
+                    else {
+                        return vec[idx];
+                    }
                 }
             }, m_data);
         }
@@ -116,7 +121,7 @@ namespace zeno {
                 else if constexpr (std::is_same_v<E, std::vector<int>> ||
                     std::is_same_v < E, std::vector<float>> ||
                     std::is_same_v < E, std::vector<std::string>>) {
-                    if (vec.size() == 1) {
+                    if (vec.size() == 1 && m_size > 1) {
                         vec.resize(m_size, vec[0]);
                     }
                     vec.insert(vec.begin() + index, elemVal);
@@ -134,7 +139,7 @@ namespace zeno {
                 } else if constexpr (std::is_same_v<E, std::vector<int>> ||
                     std::is_same_v<E, std::vector<float>> ||
                     std::is_same_v<E, std::vector<std::string>>) {
-                    if (vec.size() == 1) {
+                    if (vec.size() == 1 && m_size > 1) {
                         vec.resize(m_size, vec[0]);
                     }
                     vec.push_back(elementVal);
@@ -196,25 +201,24 @@ namespace zeno {
             }, m_data);
         }
 
-        size_t m_size;
+        size_t m_size;      //代表向量的大小，并不是向量实际的大小（可能是单值）
         //暂时不储存核心类型，不过有可能出现类型错误赋值的情况
-        AttrVarVec m_data;
+        AttrVarOrVec m_data;
     };
 
     class AttrColumn {
     public:
         ZENO_API AttrColumn() = delete;
         ZENO_API AttrColumn(const AttrColumn& rhs);
-        ZENO_API AttrColumn(AttrVarVec value, size_t size);
+        ZENO_API AttrColumn(AttrVarOrVec value, size_t size);
         ZENO_API ~AttrColumn();
-        ZENO_API AttrVarVec& value() const;
+        ZENO_API AttrVarOrVec& value() const;
 
         template<typename T>
         T get(size_t index) const {
             return m_pImpl->get<T>(index);
         }
 
-        AttrVarVec get() const;
         AttrValue get_elem(size_t idx) const;
         AttrValue front() const;
 
@@ -223,7 +227,7 @@ namespace zeno {
             m_pImpl->set(index, val);
         }
 
-        void set(const AttrVarVec& val);
+        void set(const AttrVarOrVec& val);
 
         template<typename T>
         void insert(size_t index, T val) {
@@ -241,6 +245,9 @@ namespace zeno {
 
         void remove(size_t index);
         size_t size() const;
+#ifdef TRACE_GEOM_ATTR_DATA
+        std::string _id;
+#endif
 
     private:
          std::unique_ptr<AttributeImpl> m_pImpl;

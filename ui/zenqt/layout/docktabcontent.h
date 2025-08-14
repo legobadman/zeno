@@ -124,6 +124,7 @@ private:
     QCheckBox*pAlways;
     ZToolBarButton *pSearchBtn;
     ZToolBarButton *pSettings;
+    ZToolBarButton *pCleanProj;
 
     ZToolMenuButton *m_btnRun;
     ZTextIconButton* m_btnKill;

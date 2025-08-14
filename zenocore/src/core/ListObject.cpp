@@ -22,6 +22,10 @@ namespace zeno
     void ListObject::Delete() {
     }
 
+    void ListObject::clear() {
+        m_impl->clear();
+    }
+
     void ListObject::update_key(const String& key) {
         if (key.empty()) return;
 

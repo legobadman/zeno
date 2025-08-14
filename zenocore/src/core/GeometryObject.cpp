@@ -806,6 +806,22 @@ namespace zeno
         return m_geo_attrs.find(name) != m_geo_attrs.end();
     }
 
+#ifdef TRACE_GEOM_ATTR_DATA
+    std::string GeometryObject::get_attr_data_id(GeoAttrGroup grp, std::string const& name, std::string channel) {
+        std::map<std::string, AttributeVector>& container = get_container(grp);
+        auto iter = container.find(name);
+        if (iter != container.end()) {
+            auto& attrVec = iter->second;
+            if (channel == "") return attrVec.self_id();
+            if (channel == "x") return attrVec.xcomp_id();
+            if (channel == "y") return attrVec.ycomp_id();
+            if (channel == "z") return attrVec.zcomp_id();
+            if (channel == "w") return attrVec.wcomp_id();
+        }
+        return "";
+    }
+#endif
+
     GeoAttrType GeometryObject::get_attr_type(GeoAttrGroup grp, std::string const& name) {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);

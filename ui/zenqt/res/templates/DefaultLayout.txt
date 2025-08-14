@@ -1,13 +1,11 @@
 {
     "Default Layout 1": {
-        "state": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><QtAdvancedDockingSystem Version=\"1\" UserVersion=\"0\" Containers=\"1\"><Container Floating=\"0\"><Splitter Orientation=\"-\" Count=\"1\"><Splitter Orientation=\"|\" Count=\"2\"><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"View\"><Widget Name=\"View\" Closed=\"0\"/></Area><Area Tabs=\"4\" Current=\"Logger\"><Widget Name=\"Logger\" Closed=\"0\"/><Widget Name=\"Node Parameters\" Closed=\"0\"/><Widget Name=\"Python Executor\" Closed=\"0\"/><Widget Name=\"Geometry Data\" Closed=\"0\"/></Area><Sizes>494 414 </Sizes></Splitter><Area Tabs=\"2\" Current=\"Node Editor(QML)\"><Widget Name=\"Node Editor(QML)\" Closed=\"0\"/><Widget Name=\"Editor\" Closed=\"1\"/></Area><Sizes>832 903 </Sizes></Splitter><Sizes>913 </Sizes></Splitter></Container></QtAdvancedDockingSystem>\n",
+        "state": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><QtAdvancedDockingSystem Version=\"1\" UserVersion=\"0\" Containers=\"1\"><Container Floating=\"0\"><Splitter Orientation=\"-\" Count=\"1\"><Splitter Orientation=\"|\" Count=\"2\"><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"View\"><Widget Name=\"View\" Closed=\"0\"/></Area><Area Tabs=\"4\" Current=\"Logger\"><Widget Name=\"Logger\" Closed=\"0\"/><Widget Name=\"Geometry Data\" Closed=\"0\"/></Area><Sizes>494 414 </Sizes></Splitter><Splitter Orientation=\"-\" Count=\"2\"><Area Tabs=\"1\" Current=\"Node Parameters\"><Widget Name=\"Node Parameters\" Closed=\"0\"/></Area><Area Tabs=\"1\" Current=\"Node Editor\"><Widget Name=\"Node Editor\" Closed=\"0\"/></Area><Sizes>281 627 </Sizes></Splitter><Sizes>848 921 </Sizes></Splitter><Sizes>913 </Sizes></Splitter></Container></QtAdvancedDockingSystem>\n",
         "widgets": [
-            "Editor",
             "Geometry Data",
             "Logger",
-            "Node Editor(QML)",
+            "Node Editor",
             "Node Parameters",
-            "Python Executor",
             "View"
         ]
     },

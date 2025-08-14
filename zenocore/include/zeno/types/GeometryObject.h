@@ -52,6 +52,9 @@ namespace zeno
         bool is_Line() const;
         int get_group_count(GeoAttrGroup grp) const;
         GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
+#ifdef TRACE_GEOM_ATTR_DATA
+        std::string get_attr_data_id(GeoAttrGroup grp, std::string const& name, std::string channel = "");
+#endif
         std::vector<std::string> get_attr_names(GeoAttrGroup grp);
         void geomTriangulate(zeno::TriangulateInfo& info);
         //standard API

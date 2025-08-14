@@ -20,10 +20,21 @@ namespace zeno {
         ZENO_API size_t size() const;
         ZENO_API void set(const AttrVar& val_or_vec, bool sigval_init = true);
         ZENO_API GeoAttrType type() const;
-        ZENO_API AttrVarVec get();
         ZENO_API AttrValue front() const;
         ZENO_API AttrValue getelem(size_t idx) const;
         ZENO_API void copySlice(const AttributeVector& rhs, int fromIndex);
+
+#ifdef TRACE_GEOM_ATTR_DATA
+        void set_xcomp_id(const std::string& id);
+        void set_ycomp_id(const std::string& id);
+        void set_zcomp_id(const std::string& id);
+        void set_self_id(const std::string& id);
+        std::string xcomp_id();
+        std::string ycomp_id();
+        std::string zcomp_id();
+        std::string wcomp_id();
+        std::string self_id();
+#endif
 
         void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {
             if (self) {
@@ -268,7 +279,7 @@ namespace zeno {
                     }, spComp->value());
                 }
                 else {
-                    AttrVarVec& attrval = self->value();
+                    AttrVarOrVec& attrval = self->value();
                     return self->get<T>(idx);
                 }
             }
@@ -588,7 +599,7 @@ namespace zeno {
                     throw makeError<UnimplError>("Unknown channel");
                 }
 
-                AttrVarVec& var = spComp->value();
+                AttrVarOrVec& var = spComp->value();
                 std::visit([&](auto& vec) {
                     using E = std::decay_t<decltype(vec)>;
                     if constexpr (std::is_same_v<std::vector<T>, E>) {
@@ -615,8 +626,8 @@ namespace zeno {
                         x_comp = std::make_shared<AttrColumn>(*x_comp);
                     if (y_comp.use_count() > 1)
                         y_comp = std::make_shared<AttrColumn>(*y_comp);
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     if (!pXVec || !pYVec)
@@ -647,9 +658,9 @@ namespace zeno {
                     if (z_comp.use_count() > 1)
                         z_comp = std::make_shared<AttrColumn>(*z_comp);
 
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
-                    AttrVarVec& zvar = z_comp->value();
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
+                    AttrVarOrVec& zvar = z_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     auto pZVec = std::get_if<std::vector<float>>(&zvar);
@@ -686,8 +697,8 @@ namespace zeno {
                         x_comp = std::make_shared<AttrColumn>(*x_comp);
                     if (y_comp.use_count() > 1)
                         y_comp = std::make_shared<AttrColumn>(*y_comp);
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     if (!pXVec || !pYVec)
@@ -718,9 +729,9 @@ namespace zeno {
                     if (z_comp.use_count() > 1)
                         z_comp = std::make_shared<AttrColumn>(*z_comp);
 
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
-                    AttrVarVec& zvar = z_comp->value();
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
+                    AttrVarOrVec& zvar = z_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     auto pZVec = std::get_if<std::vector<float>>(&zvar);
@@ -756,7 +767,7 @@ namespace zeno {
                     if (self.use_count() > 1) {
                         self = std::make_shared<AttrColumn>(*self);
                     }
-                    AttrVarVec& selfvar = self->value();
+                    AttrVarOrVec& selfvar = self->value();
                     std::visit([&](auto&& val) {
                         using E = std::decay_t<decltype(val)>;
                         int sz = val.size();

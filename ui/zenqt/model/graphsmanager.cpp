@@ -54,7 +54,7 @@ void GraphsTotalView::openFile() {
 
 GraphsManager::GraphsManager(QObject* parent)
     : QObject(parent)
-    , m_model(nullptr)
+    , m_treemodel(nullptr)
     , m_logModel(nullptr)
     , m_assets(nullptr)
     , m_main(nullptr)
@@ -65,7 +65,7 @@ GraphsManager::GraphsManager(QObject* parent)
     , m_edgeDelegate(nullptr)
 {
     m_logModel = new QStandardItemModel(this);
-    m_model = new GraphsTreeModel(this);
+    m_treemodel = new GraphsTreeModel(this);
     //m_main = new GraphModel("/main", false, m_model, this);
     //m_model->init(m_main);
     m_assets = new AssetsModel(this);
@@ -81,8 +81,8 @@ void GraphsManager::initRootObjects() {
     engine->rootContext()->setContextProperty("graphsmanager", this);
     if (m_main)
         engine->rootContext()->setContextProperty("nodesModel", m_main);
-    if (m_model)
-        engine->rootContext()->setContextProperty("treeModel", m_model);
+    if (m_treemodel)
+        engine->rootContext()->setContextProperty("treeModel", m_treemodel);
     if (m_assets)
         engine->rootContext()->setContextProperty("assetsModel", m_assets);
     if (m_plugins)
@@ -196,8 +196,8 @@ GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE&
     m_filePath = fn;
 
     emit fileOpened(fn);
-    m_model->markDirty(false);
-    return m_model;
+    m_treemodel->markDirty(false);
+    return m_treemodel;
 }
 
 bool GraphsManager::isInitializing() const
@@ -218,7 +218,7 @@ void GraphsManager::createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult)
 
 bool GraphsManager::saveFile(const QString& filePath, APP_SETTINGS)
 {
-    if (m_model == nullptr) {
+    if (m_treemodel == nullptr) {
         zeno::log_error("The current model is empty.");
         return false;
     }
@@ -245,7 +245,7 @@ bool GraphsManager::saveFile(const QString& filePath, APP_SETTINGS)
 
     m_filePath = filePath;
 
-    m_model->clearDirty();
+    m_treemodel->clearDirty();
 
     QFileInfo info(filePath);
     emit fileSaved(filePath);
@@ -259,21 +259,21 @@ GraphsTreeModel* GraphsManager::newFile()
     if (!sess.mainGraph) {
         sess.resetMainGraph();
     }
-    m_main = new GraphModel("/main", false, m_model, nullptr, this);
-    m_model->init(m_main);
+    m_main = new GraphModel("/main", false, m_treemodel, nullptr, this);
+    m_treemodel->init(m_main);
 
     //TODO: assets may be kept.
     initRootObjects();
 
     emit modelInited();
 
-    connect(m_model, SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)),
+    connect(m_treemodel, SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)),
         this, SLOT(onRowsAboutToBeRemoved(const QModelIndex&, int, int)));
-    connect(m_model, &GraphsTreeModel::dirtyChanged, this, [=]() {
-        emit dirtyChanged(m_model->isDirty());
+    connect(m_treemodel, &GraphsTreeModel::dirtyChanged, this, [=]() {
+        emit dirtyChanged(m_treemodel->isDirty());
     });
 
-    return m_model;
+    return m_treemodel;
 }
 
 void GraphsManager::importGraph(const QString& fn)
@@ -292,9 +292,9 @@ void GraphsManager::importSubGraphs(const QString& fn, const QMap<QString, QStri
 
 void GraphsManager::clear()
 {
-    if (m_model)
+    if (m_treemodel)
     {
-        m_model->clear();
+        m_treemodel->clear();
         for (auto scene : m_scenes)
         {
             delete scene;
@@ -303,7 +303,7 @@ void GraphsManager::clear()
     }
 
     //前面delete main的时候会removeNode，导致treemodel又脏了})
-    zeno::scope_exit sp([&] {    m_model->markDirty(false); });
+    zeno::scope_exit sp([&] {    m_treemodel->markDirty(false); });
 
     //先清理UIModel，再清理内核模型
     if (m_main) {
@@ -350,7 +350,7 @@ void GraphsManager::onModelDataChanged(const QModelIndex& subGpIdx, const QModel
 
 void GraphsManager::removeCurrent()
 {
-    if (m_model) {
+    if (m_treemodel) {
         
     }
 }

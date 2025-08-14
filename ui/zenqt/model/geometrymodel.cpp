@@ -5,24 +5,36 @@
 void addCol(zeno::GeometryObject* pObject, zeno::GeoAttrGroup group, QMap<int, AttributeInfo>& colMapping, std::string name, int& nCol) {
     QString qName = QString::fromStdString(name);
     //TODO: pos这种要放到最前头
+    std::string data_id, xattr_id, yattr_id, zattr_id, wattr_id;
+#ifdef TRACE_GEOM_ATTR_DATA
+    data_id = pObject->get_attr_data_id(group, name);
+    xattr_id = pObject->get_attr_data_id(group, name, "x");
+    yattr_id = pObject->get_attr_data_id(group, name, "y");
+    zattr_id = pObject->get_attr_data_id(group, name, "z");
+    wattr_id = pObject->get_attr_data_id(group, name, "w");
+#endif
+
     zeno::GeoAttrType type = pObject->get_attr_type(group, name);
     if (type == zeno::ATTR_VEC2 || type == zeno::ATTR_VEC3 || type == zeno::ATTR_VEC4) {
-        colMapping[nCol++] = AttributeInfo{ name, name + ".x", AttrFloat, 'x' };
-        colMapping[nCol++] = AttributeInfo{ name, name + ".y", AttrFloat, 'y' };
+        colMapping[nCol++] = AttributeInfo{ name, name + ".x", xattr_id, AttrFloat, 'x' };
+        colMapping[nCol++] = AttributeInfo{ name, name + ".y", yattr_id, AttrFloat, 'y' };
         if (type == zeno::ATTR_VEC3 || type == zeno::ATTR_VEC4) {
-            colMapping[nCol++] = AttributeInfo{ name, name + ".z", AttrFloat, 'z' };
+            colMapping[nCol++] = AttributeInfo{ name, name + ".z", zattr_id, AttrFloat, 'z' };
             if (type == zeno::ATTR_VEC4) {
-                colMapping[nCol++] = AttributeInfo{ name, name + ".w", AttrFloat, 'w' };
+                colMapping[nCol++] = AttributeInfo{ name, name + ".w", wattr_id, AttrFloat, 'w' };
             }
         }
     }
     else {
-        if (type == zeno::ATTR_FLOAT)
-            colMapping[nCol++] = AttributeInfo{ name, name, AttrFloat };
-        else if (type == zeno::ATTR_INT)
-            colMapping[nCol++] = AttributeInfo{ name, name, AttrInt };
-        else if (type == zeno::ATTR_STRING)
-            colMapping[nCol++] = AttributeInfo{ name, name, AttrString };
+        if (type == zeno::ATTR_FLOAT) {
+            colMapping[nCol++] = AttributeInfo{ name, name, data_id, AttrFloat };
+        }
+        else if (type == zeno::ATTR_INT) {
+            colMapping[nCol++] = AttributeInfo{ name, name, data_id, AttrInt };
+        }
+        else if (type == zeno::ATTR_STRING) {
+            colMapping[nCol++] = AttributeInfo{ name, name, data_id, AttrString };
+        }
     }
 }
 
@@ -32,8 +44,8 @@ static QMap<int, AttributeInfo> initColMapping(zeno::GeometryObject* pObject, ze
     std::vector<std::string> names = pObject->get_attr_names(group);
     int nCol = 0;
     if (zeno::ATTR_VERTEX == group) {
-        colMapping[nCol++] = AttributeInfo{ "Face-Vertex", "Face-Vertex", AttrInt };
-        colMapping[nCol++] = AttributeInfo{ "Point Number", "Point Number", AttrInt };
+        colMapping[nCol++] = AttributeInfo{ "Face-Vertex", "Face-Vertex", "", AttrInt};
+        colMapping[nCol++] = AttributeInfo{ "Point Number", "Point Number", "", AttrInt};
     }
 
     for (auto name : names) {
@@ -145,7 +157,11 @@ int VertexModel::columnCount(const QModelIndex& parent) const {
 QVariant VertexModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (role == Qt::DisplayRole) {
         if (orientation == Qt::Horizontal) {
+#ifdef TRACE_GEOM_ATTR_DATA
+            return QString::fromStdString(m_colMap[section].showName + "(" + m_colMap[section]._id +")");
+#else
             return QString::fromStdString(m_colMap[section].showName);
+#endif
         }
         else {
             return QString::number(section);
@@ -249,7 +265,11 @@ QVariant PointModel::headerData(int section, Qt::Orientation orientation, int ro
     if (role == Qt::DisplayRole) {
         if (orientation == Qt::Horizontal) {
             const AttributeInfo& info = m_colMap[section];
+#ifdef TRACE_GEOM_ATTR_DATA
+            return QString::fromStdString(info.showName + "(" + info._id + ")");
+#else
             return QString::fromStdString(info.showName);
+#endif
         }
         else {
             return QString::number(section);

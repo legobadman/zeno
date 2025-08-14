@@ -36,6 +36,8 @@ namespace zeno {
     #define Param_Null 0
     #define gParamType_Unknown 233
 
+    //#define TRACE_GEOM_ATTR_DATA
+
     enum NodeStatus : unsigned int
     {
         None = 0,
@@ -226,7 +228,7 @@ namespace zeno {
 
     using AttrValue = std::variant<float, int, vec3f, vec2f, vec4f, std::string>;
 
-    using AttrVarVec = std::variant
+    using AttrVarOrVec = std::variant
         < std::vector<int>
         , std::vector<float>
         , std::vector<std::string>

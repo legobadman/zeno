@@ -341,6 +341,8 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pSearchBtn = new ZToolBarButton(true, ":/icons/toolbar_search_idle.svg", ":/icons/toolbar_search_light.svg");
     pSettings = new ZToolBarButton(false, ":/icons/toolbar_localSetting_idle.svg", ":/icons/toolbar_localSetting_light.svg");
     pTestApi = new ZToolBarButton(false, ":/icons/timeline-curvemap.svg", ":/icons/timeline-curvemap.svg");
+    pCleanProj = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
+
     pAlways = new QCheckBox(tr("Auto"), this);
     pAlways->setChecked(false);
     pAlways->setProperty("cssClass", "AlwaysCheckBox");
@@ -445,12 +447,13 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pToolLayout->addWidget(pShowThumb);
     pToolLayout->addWidget(pRearrangeGraph);
     pToolLayout->addWidget(pTestApi);     //TOFIX: 添加此项竟然导致最大化窗口无效，要研究布局细节。
-    pToolLayout->addWidget(pAlways);
 
     //pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
-
+    pToolLayout->addStretch(4);
+    pToolLayout->addWidget(pAlways);
     pToolLayout->addWidget(m_btnRun);
     pToolLayout->addWidget(m_btnKill);
+    pToolLayout->addWidget(pCleanProj);
 
     pToolLayout->addStretch(4);
 
@@ -688,6 +691,10 @@ void DockContent_Editor::initConnections()
 
     connect(m_btnKill, &ZTextIconButton::clicked, this, [=]() {
         zenoApp->calculationMgr()->kill();
+    });
+
+    connect(pCleanProj, &ZToolBarButton::clicked, this, [=]() {
+        zenoApp->calculationMgr()->clear();
     });
 
     connect(&ZenoSettingsManager::GetInstance(), &ZenoSettingsManager::valueChanged, this, [=](QString name) {
