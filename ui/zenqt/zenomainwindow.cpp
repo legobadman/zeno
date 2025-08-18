@@ -1086,20 +1086,6 @@ void ZenoMainWindow::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
     }
 }
 
-void ZenoMainWindow::justLoadObjects()
-{
-    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
-    {
-        if (dock->isVisible())
-        {
-            QWidget* wid = dock->widget();
-            if (DockContent_View* view = qobject_cast<DockContent_View*>(wid)) {
-                view->getDisplayWid()->onJustLoadObjects();
-            }
-        }
-    }
-}
-
 void ZenoMainWindow::onMaximumTriggered()
 {
     //TODO
@@ -2330,32 +2316,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
             }
             else if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(wid))
             {
-                if (select && nodes.size() == 1)
-                {
-                    const QModelIndex& idx = nodes[0];
-                    panel->onNodeSelected(idx);
-
-                    QString nodeId = idx.data(QtRole::ROLE_NODE_NAME).toString();
-
-                    ZenoMainWindow* pWin = zenoApp->getMainWindow();
-                    ZASSERT_EXIT(pWin);
-                    QVector<DisplayWidget*> views = pWin->viewports();
-                    for (auto pDisplay : views)
-                    {
-                        auto pZenoVis = pDisplay->getZenoVis();
-                        ZASSERT_EXIT(pZenoVis);
-                        auto* scene = pZenoVis->getSession()->get_scene();
-                        scene->selected.clear();
-                        std::string nodeid = nodeId.toStdString();
-                        for (auto const& [key, ptr] : scene->objectsMan->pairs()) {
-                            if (nodeid == key.substr(0, key.find_first_of(':'))) {
-                                scene->selected.insert(key);
-                            }
-                        }
-                        onPrimitiveSelected(scene->selected);
-                        pDisplay->updateFrame();
-                    }
-                }
+                //DEPRECATED
             }
             else if (DockContent_Editor* editor = qobject_cast<DockContent_Editor*>(wid)) {
                 if (select && nodes.size() <= 1)

@@ -2,7 +2,6 @@
 #include "cameracontrol.h"
 #include "zenovis.h"
 //#include <zenovis/Camera.h>
-#include <zenovis/ObjectsManager.h>
 #include "zenomainwindow.h"
 #include "nodeeditor/gv/zenographseditor.h"
 #include <zeno/types/UserData.h>
@@ -185,12 +184,14 @@ void CameraControl::changeTransformOperation(const QString &node)
     ZASSERT_EXIT(m_zenovis);
 
     auto scene = m_zenovis->getSession()->get_scene();
+#if 0
     for (auto const &[key, _] : scene->objectsMan->pairs()) {
         if (key.find(node.toStdString()) != std::string::npos) {
             scene->selected.insert(key);
             m_transformer->addObject(key);
         }
     }
+#endif
     m_transformer->setTransOpt(opt);
     m_transformer->changeTransOpt();
     zenoApp->getMainWindow()->updateViewport();
@@ -480,6 +481,7 @@ void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
     auto scene = m_zenovis->getSession()->get_scene();
     auto picked_prim = m_picker->just_pick_prim(pos.x(), pos.y());
     if (!picked_prim.empty()) {
+        /*
         auto primList = scene->objectsMan->pairs();
         QString mtlid;
         for (auto const &[key, ptr]: primList) {
@@ -489,6 +491,7 @@ void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
                 std::cout<<"selected MatId: "<< zsString2Std(ud->get_string("mtlid", "Default"))<<"\n";
             }
         }
+        */
 
         //TODO: the base tree model is GraphsTreeModel, not plain models any more
         //NEED TO UPDATE THIS.
@@ -685,6 +688,7 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
                 for(auto prim:m_picker->get_picked_prims())
                 {
                     if (!prim.empty()) {
+                        /*
                         auto primList = scene->objectsMan->pairs();
                         for (auto const &[key, ptr]: primList) {
                             if (prim == key) {
@@ -693,6 +697,7 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
                                 std::cout<<"selected MatId: "<<zsString2Std(mtlidstr)<<"\n";
                             }
                         }
+                        */
                     }
                 }
             } else {
@@ -723,6 +728,7 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
                 for(auto prim:m_picker->get_picked_prims())
                 {
                     if (!prim.empty()) {
+                        /*
                         auto primList = scene->objectsMan->pairs();
                         for (auto const &[key, ptr]: primList) {
                             if (prim == key) {
@@ -731,6 +737,7 @@ void CameraControl::fakeMouseReleaseEvent(ViewMouseInfo info) {
                                 std::cout<<"selected MatId: "<< zsString2Std(mtlidstr) <<"\n";
                             }
                         }
+                        */
                         auto obj_node_location = zeno::NodeSyncMgr::GetInstance().searchNodeOfPrim(prim);
                         if (!obj_node_location)
                         {

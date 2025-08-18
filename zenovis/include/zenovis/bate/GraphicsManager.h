@@ -23,24 +23,6 @@ struct GraphicsManager {
     explicit GraphicsManager(Scene *scene) : scene(scene) {
     }
 
-    bool load_realtime_object(const std::string &key, std::shared_ptr<zeno::IObject> const &obj) {
-        int interactive;
-        if (obj->userData()->has("interactive"))
-            interactive = obj->userData()->get_int("interactive");
-        else return false;
-        if (interactive) {
-            zeno::log_debug("load_realtime_object: loading realtime graphics [{}]", key);
-            // printf("reload %s\n", key.c_str());
-            auto ig = makeGraphic(scene, obj.get());
-            zeno::log_debug("load_realtime_object: loaded realtime graphics to {}", ig.get());
-            ig->nameid = key;
-            ig->objholder = obj;
-            realtime_graphics.try_emplace(key, std::move(ig));
-            return true;
-        }
-        return false;
-    }
-
     bool add_object(zeno::zany obj) {
         if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
             for (auto obj : spList->m_impl->get()) {
@@ -288,83 +270,6 @@ struct GraphicsManager {
                 }
             }
         }
-    }
-
-    void load_objects3(const std::vector<zeno::render_update_info>& infos) {
-        auto& sess = zeno::getSession();
-        for (const zeno::render_update_info& info : infos) {
-            auto spNode = sess.getNodeByUuidPath(info.uuidpath_node_objkey);
-            assert(spNode);
-            zeno::zany spObject = spNode->get_default_output_object();
-            assert(spObject);
-
-            std::string const& objkey = zsString2Std(spObject->key());
-            if (info.reason == zeno::Update_Reconstruct) {
-                add_object(spObject);
-            }
-            else if (info.reason == zeno::Update_View) {
-                //要观察当前绘制端是否已经缓存了objkey
-                auto& wtf = graphics.m_curr.m_curr;
-                auto it = wtf.find(objkey);
-                if (it == wtf.end()) {
-                    add_object(spObject);
-                }
-                else {
-                    //只是切换view而已，而这个要绘制的object已经在这里绘制端缓存了，不需要重新load
-                    int j;
-                    j = 0;
-                }
-            }
-            else if (info.reason == zeno::Update_Remove) {
-                //包括节点删除以及view移除的情况，在绘制端看来都是移除
-                remove_object(spObject);
-            }
-        }
-    }
-
-    void load_objects2(const zeno::RenderObjsInfo& objs) {
-        for (auto [key, spObj] : objs.remObjs) {    //if obj both in remObjs and in newObjs, need remove first?
-            remove_object(spObj);
-        }
-        for (auto [key, spObj] : objs.newObjs) {
-            add_object(spObj);
-        }
-        for (auto [key, spObj] : objs.modifyObjs) {
-            bool isListDict = false;
-            if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(spObj)) {
-                isListDict = true;
-            } else if (auto spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObj)) {
-                isListDict = true;
-            }
-            if (isListDict) {
-                auto& wtf = graphics.m_curr.m_curr;
-                for (auto it = wtf.begin(); it != wtf.end(); ) {
-                    if (it->first.find(key) != std::string::npos)
-                        it = wtf.erase(it);
-                    else
-                        ++it;
-                }
-            }
-            add_object(spObj);
-        }
-    }
-
-    //deprecated
-    bool load_objects(std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>> const &objs) {
-        auto ins = graphics.insertPass();
-        realtime_graphics.clear();
-        for (auto const &[key, obj] : objs) {
-            if (load_realtime_object(key, obj)) continue;
-            if (ins.may_emplace(key)) {
-                zeno::log_debug("load_object: loading graphics [{}]", key);
-                auto ig = makeGraphic(scene, obj.get());
-                zeno::log_debug("load_object: loaded graphics to {}", ig.get());
-                ig->nameid = key;
-                ig->objholder = obj;
-                ins.try_emplace(key, std::move(ig));
-            }
-        }
-        return ins.has_changed();
     }
 
     void draw() {

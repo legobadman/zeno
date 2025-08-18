@@ -25,7 +25,6 @@
 #include "widgets/zwidgetfactory.h"
 #include <zeno/core/Session.h>
 #include <zeno/types/UserData.h>
-#include <zenovis/ObjectsManager.h>
 #include "nodeeditor/gv/callbackdef.h"
 #include "zassert.h"
 #include "viewport/zenovis.h"

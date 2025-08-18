@@ -20,7 +20,6 @@
 #include "viewport/viewportwidget.h"
 #include "viewport/displaywidget.h"
 #include "zenomainwindow.h"
-#include <zenovis/ObjectsManager.h>
 #include "viewport/picker.h"
 #include "settings/zenosettingsmanager.h"
 #include "widgets/ztimeline.h"
@@ -1229,10 +1228,12 @@ void ZenoSubGraphScene::selectObjViaNodes() {
         for (auto item : selItems) {
             if (auto *pNode = qgraphicsitem_cast<ZenoNodeBase*>(item)) {
                 auto node_id = pNode->index().data(QtRole::ROLE_NODE_NAME).toString().toStdString();
+                /*
                 for (const auto &[prim_name, _] : scene->objectsMan->pairsShared()) {
                     if (prim_name.find(node_id) != std::string::npos)
                         picker->add(prim_name);
                 }
+                */
             }
         }
         picker->sync_to_scene();

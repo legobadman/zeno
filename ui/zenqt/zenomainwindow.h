@@ -185,7 +185,6 @@ public slots:
     void onZenovisFrameUpdate(bool bGLView, int frameid);
     void onCheckUpdate();
     void onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg);
-    void justLoadObjects();
     void reload_qml();
     void onSetTimelineValue();
     void onComposeVideo();

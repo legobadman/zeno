@@ -11,7 +11,6 @@
 #include <zenovis/Camera.h>
 #include <zeno/funcs/ParseObjectFromUi.h>
 #include "viewport/displaywidget.h"
-#include <zenovis/ObjectsManager.h>
 #include <zenovis/RenderEngine.h>
 #include "zassert.h"
 #include "nodeeditor/gv/zenographseditor.h"
@@ -132,64 +131,6 @@ void OptixWorker::onPlayToggled(bool bToggled)
 void OptixWorker::onSetSlidFeq(int feq)
 {
     m_slidFeq = feq;
-}
-
-void OptixWorker::onModifyLightData(UI_VECTYPE posvec, UI_VECTYPE scalevec, UI_VECTYPE rotatevec, UI_VECTYPE colorvec, float intensity, QString nodename, UI_VECTYPE skipParam)
-{
-    std::string name = nodename.toStdString();
-    zeno::vec3f pos = zeno::vec3f(posvec[0], posvec[1], posvec[2]);
-    zeno::vec3f scale = zeno::vec3f(scalevec[0], scalevec[1], scalevec[2]);
-    zeno::vec3f rotate = zeno::vec3f(rotatevec[0], rotatevec[1], rotatevec[2]);
-    zeno::vec3f color = zeno::vec3f(colorvec[0], colorvec[1], colorvec[2]);
-    auto verts = computeLightPrim(pos, rotate, scale);
-
-    auto scene = m_zenoVis->getSession()->get_scene();
-    ZASSERT_EXIT(scene);
-
-    std::shared_ptr<zeno::IObject> obj;
-    for (auto const& [key, ptr] : scene->objectsMan->lightObjects) {
-        if (key.find(name) != std::string::npos) {
-            obj = ptr;
-            name = key;
-        }
-    }
-    auto prim_in = dynamic_cast<zeno::PrimitiveObject*>(obj.get());
-
-    if (prim_in) {
-        auto& prim_verts = prim_in->verts;
-        prim_verts[0] = verts[0];
-        prim_verts[1] = verts[1];
-        prim_verts[2] = verts[2];
-        prim_verts[3] = verts[3];
-
-        auto pUserData = dynamic_cast<zeno::UserData*>(prim_in->userData());
-        if (skipParam[0])
-            pos = pUserData->get2<zeno::vec3f>("pos");
-        if (skipParam[1])
-            scale = pUserData->get2<zeno::vec3f>("scale");
-        if (skipParam[2])
-            rotate = pUserData->get2<zeno::vec3f>("rotate");
-        if (skipParam[3])
-            color = pUserData->get2<zeno::vec3f>("color");
-        if (skipParam[4])
-            intensity = pUserData->get2<float>("intensity");
-
-        prim_in->verts.attr<zeno::vec3f>("clr")[0] = color * intensity;
-
-        pUserData->setLiterial<zeno::vec3f>("pos", std::move(pos));
-        pUserData->setLiterial<zeno::vec3f>("scale", std::move(scale));
-        pUserData->setLiterial<zeno::vec3f>("rotate", std::move(rotate));
-        if (pUserData->has("intensity")) {
-            pUserData->setLiterial<zeno::vec3f>("color", std::move(color));
-            pUserData->setLiterial<float>("intensity", std::move(intensity));
-        }
-
-        scene->objectsMan->needUpdateLight = true;
-        //pDisplay->setSimpleRenderOption();
-    }
-    else {
-        zeno::log_info("modifyLightData not found {}", name);
-    }
 }
 
 void OptixWorker::onUpdateCameraProp(float aperture, float disPlane, UI_VECTYPE skipParam)
@@ -395,23 +336,6 @@ void OptixWorker::onCleanUpView()
     m_zenoVis->cleanupView();
 }
 
-void OptixWorker::load_objects()
-{
-#if 0
-    zeno::RenderObjsInfo objs;
-    zeno::getSession().objsMan->export_loading_objs(objs);
-    m_zenoVis->load_objects(objs);
-#endif
-    std::vector<zeno::render_update_info> infos;
-    zeno::getSession().objsMan->export_render_infos(infos);
-    m_zenoVis->load_objects(infos);
-}
-
-void OptixWorker::on_load_data(zeno::render_update_info info)
-{
-    m_zenoVis->load_object(info);
-}
-
 void OptixWorker::on_reload_objects(const zeno::render_reload_info& info)
 {
     m_zenoVis->reload(info);
@@ -550,15 +474,12 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
     connect(this, &ZOptixViewport::sig_setRunType, m_worker, &OptixWorker::setRenderSeparately);
     connect(this, &ZOptixViewport::sig_setLoopPlaying, m_worker, &OptixWorker::onSetLoopPlaying);
     connect(this, &ZOptixViewport::sig_setSlidFeq, m_worker, &OptixWorker::onSetSlidFeq);
-    connect(this, &ZOptixViewport::sig_modifyLightData, m_worker, &OptixWorker::onModifyLightData);
     connect(this, &ZOptixViewport::sig_updateCameraProp, m_worker, &OptixWorker::onUpdateCameraProp);
     connect(this, &ZOptixViewport::sig_cleanUpScene, m_worker, &OptixWorker::onCleanUpScene);
-    connect(this, &ZOptixViewport::sig_loadObjects, m_worker, &OptixWorker::load_objects);
     connect(this, &ZOptixViewport::sig_cleanUpView, m_worker, &OptixWorker::onCleanUpView);
     connect(this, &ZOptixViewport::sig_setBackground, m_worker, &OptixWorker::onSetBackground);
     connect(this, &ZOptixViewport::sig_setSampleNumber, m_worker, &OptixWorker::onSetSampleNumber);
     connect(this, &ZOptixViewport::sig_setdata_on_optix_thread, m_worker, &OptixWorker::onSetData);
-    connect(this, &ZOptixViewport::sig_loadObject, m_worker, &OptixWorker::on_load_data);
     connect(this, &ZOptixViewport::sig_reload_objects, m_worker, &OptixWorker::on_reload_objects);
     connect(m_worker, &OptixWorker::sig_reloadFinished, this, &ZOptixViewport::sig_reload_finished);
 
@@ -591,17 +512,6 @@ void ZOptixViewport::setdata_on_optix_thread(zenovis::ZOptixCameraSettingInfo va
             value.panorama_vr180,
             value.pupillary_distance
     );
-}
-
-
-void ZOptixViewport::load_objects()
-{
-    emit sig_loadObjects();
-}
-
-void ZOptixViewport::load_object(zeno::render_update_info info)
-{
-    emit sig_loadObject(info);
 }
 
 void ZOptixViewport::reload_objects(const zeno::render_reload_info& info)
@@ -659,11 +569,6 @@ void ZOptixViewport::cleanUpScene()
 void ZOptixViewport::cleanupView()
 {
     emit sig_cleanUpView();
-}
-
-void ZOptixViewport::modifyLightData(UI_VECTYPE pos, UI_VECTYPE scale, UI_VECTYPE rotate, UI_VECTYPE color, float intensity, QString name, UI_VECTYPE skipParam)
-{
-    emit sig_modifyLightData(pos, scale, rotate, color, intensity, name, skipParam);
 }
 
 void ZOptixViewport::stopRender()

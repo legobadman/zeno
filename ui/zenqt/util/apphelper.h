@@ -3,7 +3,6 @@
 
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
-#include <zenovis/ObjectsManager.h>
 #include <viewport/viewportwidget.h>
 #include "settings/zsettings.h"
 #include "viewport/recordvideomgr.h"

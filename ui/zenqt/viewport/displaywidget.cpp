@@ -3,7 +3,6 @@
 #include "optixviewport.h"
 #include "zoptixviewport.h"
 #include <zenovis/RenderEngine.h>
-#include <zenovis/ObjectsManager.h>
 #include <zenovis/Camera.h>
 #include <zeno/extra/GlobalComm.h>
 #include <zeno/extra/GlobalState.h>
@@ -403,17 +402,6 @@ void DisplayWidget::onPlayClicked(bool bChecked)
     }
 }
 
-void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
-    if (m_bGLView) {
-        m_glView->load_object(info);
-        //emit render_objects_loaded();
-    }
-    else {
-        m_optixView->load_object(info);
-    }
-    updateFrame();
-}
-
 void DisplayWidget::submit(zeno::render_reload_info render_summary) {
 
     render_summary.current_ui_graph;
@@ -494,12 +482,7 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
 
 void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info info) {
     if (bSucceed) {
-        //先从objManager拿出
         submit(info);
-        //auto& sess = zeno::getSession();
-        //std::vector<zeno::render_update_info> infos;
-        //sess.objsMan->export_render_infos(infos);
-        //submit(infos);
     }
 }
 
@@ -512,15 +495,6 @@ void DisplayWidget::reload(const zeno::render_reload_info& info)
         m_optixView->reload_objects(info);
     }
     updateFrame();
-}
-
-void DisplayWidget::onJustLoadObjects() {
-    if (m_bGLView) {
-        m_glView->load_objects();
-    }
-    else {
-        m_optixView->load_objects();
-    }
 }
 
 void DisplayWidget::updateFrame(const QString &action) // cihou optix
@@ -644,6 +618,7 @@ void DisplayWidget::onCommandDispatched(int actionType, bool bChecked)
         {
             int frameid = m_glView->getSession()->get_curr_frameid();
             auto *scene = m_glView->getSession()->get_scene();
+            /*
             for (auto const &[key, ptr] : scene->objectsMan->pairs()) {
                 if (key.find("MakeCamera") != std::string::npos &&
                     key.find(zeno::format(":{}:", frameid)) != std::string::npos) {
@@ -652,6 +627,7 @@ void DisplayWidget::onCommandDispatched(int actionType, bool bChecked)
                     updateFrame();
                 }
             }
+            */
         }
     }
     else if (actionType == ZenoMainWindow::ACTION_RECORD_VIDEO)
@@ -1295,10 +1271,12 @@ void DisplayWidget::onNodeSelected(GraphModel* subgraph, const QModelIndexList &
             // find prim in object manager
             auto input_node_id = input_nodes[0].get_node_id();
             string prim_name;
+            /*
             for (const auto &[k, v] : scene->objectsMan->pairsShared()) {
                 if (k.find(input_node_id.toStdString()) != string::npos)
                     prim_name = k;
             }
+            */
             if (prim_name.empty())
                 return;
 

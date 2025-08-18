@@ -1,7 +1,6 @@
 #include <zenovis/RenderEngine.h>
 #include <zenovis/DrawOptions.h>
 #include <zenovis/bate/GraphicsManager.h>
-#include <zenovis/ObjectsManager.h>
 #include <zenovis/DrawOptions.h>
 #include <zenovis/bate/IGraphic.h>
 #include <zenovis/opengl/vao.h>
@@ -47,17 +46,6 @@ struct RenderEngineBate : RenderEngine {
         graphicsMan->reload(info);
     }
 
-    void load_objects(const zeno::RenderObjsInfo& objs) override {
-        graphicsMan->load_objects2(objs);
-    }
-
-    void load_objects(const std::vector<zeno::render_update_info>& infos) {
-        graphicsMan->load_objects3(infos);
-    }
-
-    void load_object(zeno::render_update_info info) override {
-    }
-
     void assetLoad() override {
 
     }
@@ -72,11 +60,6 @@ struct RenderEngineBate : RenderEngine {
 
     void endFrameLoading(int frameid) override {
 
-    }
-
-    //deprecated
-    void update() override {
-        graphicsMan->load_objects(scene->objectsMan->pairsShared());
     }
 
     void draw(bool record) override {

@@ -7,7 +7,6 @@
 #include "dialog/zrecorddlg.h"
 #include "dialog/zrecprogressdlg.h"
 #include <zeno/utils/log.h>
-#include <zenovis/ObjectsManager.h>
 #include <zenovis/DrawOptions.h>
 #include <zeno/funcs/ObjectGeometryInfo.h>
 #include <util/log.h>
@@ -234,23 +233,6 @@ void ViewportWidget::setSafeFrames(bool bLock, int nx, int ny)
 void ViewportWidget::updatePerspective()
 {
     m_camera->updatePerspective();
-}
-
-void ViewportWidget::load_objects()
-{
-#if 0
-    zeno::RenderObjsInfo objs;
-    zeno::getSession().objsMan->export_loading_objs(objs);
-    m_zenovis->load_objects(objs);
-#endif
-    std::vector<zeno::render_update_info> infos;
-    zeno::getSession().objsMan->export_render_infos(infos);
-    m_zenovis->load_objects(infos);
-}
-
-void ViewportWidget::load_object(zeno::render_update_info info)
-{
-    m_zenovis->load_object(info);
 }
 
 void ViewportWidget::reload_objects(const zeno::render_reload_info& info)

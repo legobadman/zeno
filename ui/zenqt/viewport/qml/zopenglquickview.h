@@ -49,10 +49,6 @@ public:
     void cameraLookTo(zenovis::CameraLookToDir dir);
     void setViewWidgetInfo(DockContentWidgetInfo& info);
 
-    //DEPRECATED:
-    void load_objects() {}
-    void load_object(zeno::render_update_info info) {}
-
 signals:
     void sig_Reload(zeno::render_reload_info);
     void sig_render_reload_finished();

@@ -88,8 +88,6 @@ public slots:
     void onDockViewAction(bool triggered);
     void onRenderRequest(QString nodeuuidpath);
     void onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info);
-    void onRenderInfoCommitted(zeno::render_update_info info);
-    void onJustLoadObjects();
     void onSetCamera(zenovis::ZOptixCameraSettingInfo value);
     void onSetBackground(bool bShowBackground);
     void setSampleNumber(int sample_number);

@@ -307,7 +307,6 @@ namespace zeno
         void preApply_Primitives(CalcContext* pContext);
         void preApply_SwitchIf(CalcContext* pContext);
         void preApply_SwitchBetween(CalcContext* pContext);
-        void commit_to_render(UpdateReason reason);
         void bypass();
         CustomUI _deflCustomUI() const;
 

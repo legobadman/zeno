@@ -3,7 +3,6 @@
 #include <zenovis/Scene.h>
 #include <zenovis/bate/IGraphic.h>
 #include <zenovis/ShaderManager.h>
-#include <zenovis/ObjectsManager.h>
 #include <zenovis/opengl/buffer.h>
 #include <zenovis/opengl/shader.h>
 #include <zenovis/opengl/texture.h>
@@ -287,7 +286,8 @@ struct FrameBufferPicker : IPicker {
         // use focus_prim if focus_prim_name is not empty else all prims
         vector<std::pair<string, zeno::zany>> prims, prims_shared;
         std::map<std::string, zeno::zany> tmp;
-        zeno::getSession().objsMan->export_all_view_objs(tmp);
+        //TODO: get all view objs
+        //zeno::getSession().objsMan->export_all_view_objs(tmp);
         for (auto& [key, obj]:tmp)
             scene->convertListObjs(obj, prims_shared);
 

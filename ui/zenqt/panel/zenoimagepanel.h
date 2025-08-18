@@ -9,7 +9,7 @@
 #if 1
 #include <QtWidgets>
 #include "widgets/zcombobox.h"
-#include <zeno/core/common.h>
+#include <zeno/core/data.h>
 
 class ZenoImageView: public QGraphicsView {
     Q_OBJECT

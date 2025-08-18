@@ -29,7 +29,6 @@ struct GlobalError;
 struct EventCallbacks;
 struct UserData;
 struct CalcManager;
-struct ObjectManager;
 struct AssetsMgr;
 struct PythonEnvWrapper;
 class FunctionManager;
@@ -42,7 +41,6 @@ struct Session {
     std::unique_ptr<GlobalError> const globalError;
     std::unique_ptr<EventCallbacks> const eventCallbacks;
     std::unique_ptr<UserData> const m_userData;
-    std::unique_ptr<ObjectManager> const objsMan;
     std::shared_ptr<Graph> mainGraph;
     std::unique_ptr<AssetsMgr> assets;
     std::unique_ptr<GlobalVariableManager> globalVariableManager;
@@ -92,14 +90,9 @@ struct Session {
     ZENO_API void setDisableRunning(bool bOn);
     ZENO_API void switchToFrame(int frameid);
     ZENO_API void updateFrameRange(int start, int end);
-    ZENO_API int registerObjId(const std::string& objprefix);
     ZENO_API void registerRunTrigger(std::function<void()> func);
     ZENO_API void registerNodeCallback(F_NodeStatus func);
-    ZENO_API void registerCommitRender(F_CommitRender&& func);
     ZENO_API std::shared_ptr<Graph> getGraphByPath(const std::string& path);
-
-    void commit_to_render(render_update_info info);
-
     ZENO_API void registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip);
     ZENO_API bool getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip);
     ZENO_API void initEnv(const zenoio::ZSG_PARSE_RESULT ioresult);
@@ -130,7 +123,6 @@ private:
 
     std::function<void()> m_callbackRunTrigger;
     F_NodeStatus m_funcNodeStatus;
-    F_CommitRender m_func_commitrender;
 };
 
 ZENO_API Session &getSession();

@@ -305,25 +305,6 @@ namespace zeno {
             removed.insert(rhs.removed.begin(), rhs.removed.end());
         }
     };
-
-    //一条计算链路的更新信息：
-    struct render_update_info {
-        UpdateReason reason = Update_Unknown;
-        std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
-        std::vector<std::string> remove_objs;
-
-        //如果uuidpath_node_objkey是List或Dict，这里将记录元素的增删改信息，否则为空。
-        container_elem_update_info cond_update_info;
-    };
-
-    typedef std::function<void(render_update_info)> F_CommitRender;
-
-    struct render_reload_info {
-        render_reload_policy policy;
-        std::string current_ui_graph;   //当前用户在编辑器端的ui图层，以普通路径表达
-        std::vector<render_update_info> objs;
-    };
-
 }
 
 

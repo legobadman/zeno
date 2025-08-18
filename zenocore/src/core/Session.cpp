@@ -2,7 +2,6 @@
 #include <zeno/core/IObject.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/core/Assets.h>
-#include <zeno/core/ObjectManager.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/extra/GlobalComm.h>
 #include <zeno/extra/GlobalError.h>
@@ -194,7 +193,6 @@ ZENO_API Session::Session()
     , m_userData(std::make_unique<UserData>())
     //, mainGraph(std::make_shared<Graph>("main"))
     , assets(std::make_unique<AssetsMgr>())
-    , objsMan(std::make_unique<ObjectManager>())
 #ifdef ZENO_WITH_PYTHON
     , m_pyWrapper(std::make_unique<PythonEnvWrapper>())
 #endif
@@ -561,10 +559,6 @@ ZENO_API void Session::registerNodeCallback(F_NodeStatus func)
     m_funcNodeStatus = func;
 }
 
-ZENO_API void Session::registerCommitRender(F_CommitRender&& func) {
-    m_func_commitrender = func;
-}
-
 ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path) {
     //对于assets
     //可能的形式包括： /ABC/subnet1/subnet2   ABC   /ABC
@@ -583,23 +577,11 @@ ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path)
     return nullptr;
 }
 
-void Session::commit_to_render(render_update_info info) {
-    if (m_func_commitrender) {
-        m_func_commitrender(info);
-    }
-}
-
 void Session::reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status)
 {
     if (m_funcNodeStatus) {
         m_funcNodeStatus(path, bDirty, status);
     }
-}
-
-ZENO_API int Session::registerObjId(const std::string& objprefix)
-{
-    int objid = objsMan->registerObjId(objprefix);
-    return objid;
 }
 
 ZENO_API void Session::switchToFrame(int frameid)
@@ -666,18 +648,11 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
     m_bInterrupted = false;
     globalState->set_working(true);
 
-    objsMan->beforeRun();
     zeno::scope_exit sp([&]() { 
-        objsMan->afterRun();
         m_bReentrance = false;
     });
 
     globalError->clearState();
-
-    //本次运行清除m_objects中上一次运行时被标记移除的obj，不能立刻清除因为视窗export_loading_objs时，需要在m_objects中查找被删除的obj
-    objsMan->clearLastUnregisterObjs();
-    //对之前删除节点时记录的obj，对应的所有其他关联节点，都标脏
-    objsMan->remove_attach_node_by_removing_objs();
 
     //if (!currgraph.empty()) {
     //    getGraphByPath(currgraph);

@@ -21,7 +21,6 @@
 #include <zeno/types/TextureObject.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/types/MatrixObject.h>
-#include <zenovis/ObjectsManager.h>
 #include <zeno/utils/UserData.h>
 #include <zeno/extra/TempNode.h>
 #include <zeno/utils/fileio.h>
@@ -1161,66 +1160,6 @@ struct GraphicsManager {
             return;
         wtf.erase(key);
     }
-
-    bool load_objects(std::vector<std::pair<std::string, zeno::IObject *>> const &objs) {
-        auto ins = graphics.insertPass();
-        objOrder.clear();
-        bool changed = false;
-        size_t idx = 0;
-        for (auto const &[key, obj] : objs) {
-            objOrder[key] = idx;
-            idx++;
-        }
-        for (auto const &[key, obj] : objs) {
-            //auto ikey = key + ':' + std::string(std::to_string(idx));
-            if (ins.may_emplace(key) && key.find(":static:")==key.npos) {
-
-//                zeno::log_info("load_object: loading graphics [{}]", key);
-                changed = true;
-
-                if (!scene->drawOptions->updateMatlOnly) {
-                    if (auto cam = dynamic_cast<zeno::CameraObject *>(obj)) {
-                        scene->camera->setCamera(cam->get()); // pyb fix
-                        auto ud = cam->userData();
-                        if (ud->has("aces")) {
-                            scene->camera->setPhysicalCamera(
-                                ud->get_float("aperture"),
-                                ud->get_float("shutter_speed"),
-                                ud->get_float("iso"),
-                                ud->get_bool("aces"),
-                                ud->get_bool("exposure"),
-                                ud->get_bool("panorama_camera"),
-                                ud->get_bool("panorama_vr180"),
-                                ud->get_float("pupillary_distance")
-                            );
-                        }
-                    }
-                }
-
-                if (0) {
-                    auto ud = obj->userData();
-                    if (ud->has("stamp_mode")) {
-                        auto stamp_mode = ud->get_string("stamp_mode");
-                        if (!stamp_mode.empty()) {
-                        }
-                    }
-                }
-
-                auto ig = std::make_unique<ZxxGraphic>(key, obj);
-
-//                zeno::log_info("load_object: loaded graphics to {}", ig.get());
-                ins.try_emplace(key, std::move(ig));
-            }
-        }
-        {   //when turn off last node in always mode
-            static int objsNum = 0;
-            if (objsNum > objs.size() && !changed)
-                changed = true;
-            objsNum = objs.size();
-        }
-        // return ins.has_changed();
-        return changed;
-    }
 };
 
 struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
@@ -1384,37 +1323,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
     void optxShowBackground(bool showbg) override {
         xinxinoptix::show_background(showbg);
-    }
-
-    void update() override {
-
-        if(graphicsMan->need_update_light(scene->objectsMan->pairs())
-            || scene->objectsMan->needUpdateLight)
-        {
-            graphicsMan->load_light_objects(scene->objectsMan->lightObjects);
-            lightNeedUpdate = true;
-            scene->objectsMan->needUpdateLight = false;
-            scene->drawOptions->needRefresh = true;
-        }
-
-        if (graphicsMan->load_static_objects(scene->objectsMan->pairs())) {
-            staticNeedUpdate = true;
-        }
-        if (graphicsMan->load_objects(scene->objectsMan->pairs()))
-        {
-            meshNeedUpdate = matNeedUpdate = true;
-            if (scene->drawOptions->updateMatlOnly)
-            {
-                lightNeedUpdate = meshNeedUpdate = false;
-                matNeedUpdate = true;
-            }
-            if (scene->drawOptions->updateLightCameraOnly)
-            {
-                lightNeedUpdate = true;
-                matNeedUpdate = meshNeedUpdate = false;
-            }
-        }
-        graphicsMan->load_shader_uniforms(scene->objectsMan->pairsShared());
     }
 
 #define MY_CAM_ID(cam) cam.m_nx, cam.m_ny, cam.m_rotation, cam.m_pos, cam.m_fov, cam.focalPlaneDistance, cam.m_aperture

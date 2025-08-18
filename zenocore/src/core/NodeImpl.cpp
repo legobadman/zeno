@@ -3,7 +3,6 @@
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/Assets.h>
-#include <zeno/core/ObjectManager.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/types/DummyObject.h>
 #include <zeno/types/NumericObject.h>
@@ -619,7 +618,6 @@ void NodeImpl::mark_dirty_objs()
             if (param.spObject->key().empty()) {
                 continue;
             }
-            getSession().objsMan->collect_removing_objs(zsString2Std(param.spObject->key()));
         }
     }
 }
@@ -977,26 +975,17 @@ void NodeImpl::reflectNode_apply()
 #endif
 }
 
-void NodeImpl::commit_to_render(UpdateReason reason) {
-    render_update_info info;
-    info.reason = reason;
-    info.uuidpath_node_objkey = m_uuidPath;
-
-    auto& sess = zeno::getSession();
-    sess.objsMan->collect_render_update(info);
-}
-
 void NodeImpl::update_out_objs_key()
 {
     for (auto const& [name, param] : m_outputObjs)
     {
         if (param.spObject && param.spObject->key().empty())
         {
-                //目前节点处所看到的object，都隶属于此节点本身。
-                param.spObject->update_key(stdString2zs(m_uuid));
-            }
+            //目前节点处所看到的object，都隶属于此节点本身。
+            param.spObject->update_key(stdString2zs(m_uuid));
         }
     }
+}
 
 void NodeImpl::on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded) {
     checkParamsConstrain();
@@ -2194,9 +2183,6 @@ void NodeImpl::doApply(CalcContext* pContext) {
     update_out_objs_key();
     init_output_container_updateinfo();
     reportStatus(false, Node_RunSucceed);
-    if (m_bView) {
-        //commit_to_render(Update_Reconstruct);
-    }
 }
 
 CommonParam NodeImpl::get_input_param(std::string const& name, bool* bExist) {

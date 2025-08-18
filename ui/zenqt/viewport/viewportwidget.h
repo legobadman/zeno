@@ -55,8 +55,6 @@ public:
     void setSimpleRenderOption();
     void setViewWidgetInfo(DockContentWidgetInfo& info);
     void glDrawForCommandLine();
-    void load_objects();
-    void load_object(zeno::render_update_info info);
     void reload_objects(const zeno::render_reload_info& info);
 
 signals:

@@ -8,7 +8,9 @@
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include <zeno/core/common.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/extra/CalcContext.h>
+#include <zeno/extra/GlobalState.h>
 #include "model/graphsmanager.h"
 #include "model/GraphsTreeModel.h"
 #include "widgets/ztimeline.h"
@@ -63,7 +65,6 @@ CalculationMgr::CalculationMgr(QObject* parent)
     m_worker->moveToThread(&m_thread);
     connect(&m_thread, &QThread::started, m_worker.get(), &CalcWorker::run);
     connect(m_worker.get(), &CalcWorker::calcFinished, this, &CalculationMgr::onCalcFinished);
-    connect(m_worker.get(), &CalcWorker::commitRenderInfo, this, &CalculationMgr::commitRenderInfo) ;
     connect(m_worker.get(), &CalcWorker::nodeStatusChanged, this, &CalculationMgr::onNodeStatusReported);
     connect(m_playTimer, SIGNAL(timeout()), this, SLOT(onPlayReady()));
 
@@ -213,7 +214,7 @@ void CalculationMgr::run_and_clean() {
     //VLDGlobalDisable();
     //VLDGlobalEnable();  // 重新启用，开始新一轮记录
     auto& sess = zeno::getSession();
-    auto& objman = sess.objsMan;
+    
 
     setRunStatus(RunStatus::Running);
     m_worker->setCurrentGraphPath(zenoApp->graphsManager()->currentGraphPath());
@@ -221,11 +222,14 @@ void CalculationMgr::run_and_clean() {
     m_worker->run();
     clear();
 
+#if 0 //TODO: 完善记录机制
+    auto& objman = sess.objsMan;
     for (auto it = objman->m_rec_geoms.begin(); it != objman->m_rec_geoms.end(); it++) {
         auto pGeom = (zeno::GeometryObject_Adapter*)(*it);
         int j;
         j = 0;
     }
+#endif
 
     Sleep(5000);
     //VLDReportLeaks();  // 会立即报告这个泄漏
@@ -285,8 +289,6 @@ void CalculationMgr::registerRenderWid(DisplayWidget* pDisp)
     m_registerRenders.insert(pDisp);
     connect(this, &CalculationMgr::calcFinished, pDisp, &DisplayWidget::onCalcFinished);
     connect(this, &CalculationMgr::renderRequest, pDisp, &DisplayWidget::onRenderRequest);
-    connect(this, &CalculationMgr::commitRenderInfo, pDisp,
-        &DisplayWidget::onRenderInfoCommitted);
     connect(pDisp, &DisplayWidget::render_reload_finished, this, &CalculationMgr::on_render_objects_loaded);
 }
 

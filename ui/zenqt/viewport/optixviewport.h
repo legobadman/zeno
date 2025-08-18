@@ -42,15 +42,11 @@ public slots:
     bool recordFrame_impl(VideoRecInfo recInfo, int frame);
     void onSetLoopPlaying(bool enbale);
     void onSetSlidFeq(int feq);
-    void onModifyLightData(UI_VECTYPE pos, UI_VECTYPE scale, UI_VECTYPE rotate, UI_VECTYPE color, float intensity, QString nodename, UI_VECTYPE skipParam);
     void onUpdateCameraProp(float aperture, float disPlane, UI_VECTYPE skipParam = UI_VECTYPE());
     void onCleanUpScene();
-    void load_objects();
     void onCleanUpView();
     void onSetBackground(bool bShowBg);
     void onSetSampleNumber(int sample_number);
-
-    void on_load_data(zeno::render_update_info info);
     void on_reload_objects(const zeno::render_reload_info& info);
     void onSetData(float, float, float, bool, bool, bool, bool, float);
 
@@ -91,10 +87,7 @@ public:
     void cancelRecording(VideoRecInfo recInfo);
     void killThread();
     void setSlidFeq(int feq);
-    void modifyLightData(UI_VECTYPE pos, UI_VECTYPE scale, UI_VECTYPE rotate, UI_VECTYPE color, float intensity, QString name, UI_VECTYPE skipParam);
     void cleanUpScene();
-    void load_objects();
-    void load_object(zeno::render_update_info info);
     void reload_objects(const zeno::render_reload_info& info);
     void cleanupView();
 
@@ -106,7 +99,6 @@ signals:
     void stopRenderOptix();
     void resumeWork();
     void sigRecordVideo(VideoRecInfo recInfo);
-    void sig_loadObject(zeno::render_update_info info);
     void sig_recordFinished();
     void sig_frameRecordFinished(int frame);
     void sig_frameRunFinished(int frame);
@@ -118,10 +110,8 @@ signals:
     void sig_setLoopPlaying(bool enable);
     void sig_setSlidFeq(int feq);
     void sigscreenshoot(QString, QString, int, int);
-    void sig_modifyLightData(UI_VECTYPE pos, UI_VECTYPE scale, UI_VECTYPE rotate, UI_VECTYPE color, float intensity, QString name, UI_VECTYPE skipParam);
     void sig_updateCameraProp(float aperture, float disPlane, UI_VECTYPE skipParam = UI_VECTYPE());
     void sig_cleanUpScene();
-    void sig_loadObjects();
     void sig_cleanUpView();
     void sig_setBackground(bool bShowBg);
     void sig_setSampleNumber(int sample_number);

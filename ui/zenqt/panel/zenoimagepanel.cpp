@@ -6,9 +6,9 @@
 #include "zenoimagepanel.h"
 #include "PrimAttrTableModel.h"
 #include "viewport/zenovis.h"
-#include "zenovis/ObjectsManager.h"
 #include "zeno/utils/format.h"
 #include <zeno/types/UserData.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/types/PrimitiveObject.h>
 #include "zeno/utils/vec.h"
 #include "zeno/utils/log.h"
