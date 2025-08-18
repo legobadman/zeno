@@ -4,16 +4,18 @@
 
 namespace zeno
 {
-    struct IndiceMeshTopology : IGeomTopology
+    class IndiceMeshTopology : public IGeomTopology
     {
+    public:
         IndiceMeshTopology() = default;
-        IndiceMeshTopology(const IndiceMeshTopology& rhs) = default;
+        IndiceMeshTopology(const IndiceMeshTopology& rhs) = delete;
         IndiceMeshTopology(std::shared_ptr<PrimitiveObject> prim);
         IndiceMeshTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces);
         IndiceMeshTopology(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
 
         GeomTopoType type() const override;
         std::shared_ptr<IGeomTopology> clone() override;
+        std::shared_ptr<PrimitiveObject> toPrimitiveObject() const;
 
         std::vector<vec3i> tri_indice() const override;
         std::vector<std::vector<int>> face_indice() const override;
@@ -59,7 +61,8 @@ namespace zeno
         int vertex_face(int linear_vertex_id) override;
         int vertex_face_index(int linear_vertex_id) override;
 
-
-        std::shared_ptr<PrimitiveObject> m_indiceMesh_topo;
+    private:
+        std::unique_ptr<PrimitiveObject> m_indiceMesh_topo;
+        int m_point_size;
     };
 }

@@ -47,7 +47,7 @@ namespace zeno
 
         std::shared_ptr<IndiceMeshTopology> indice_topo = std::static_pointer_cast<IndiceMeshTopology>(indicemesh);
         std::shared_ptr<HalfEdgeTopology> halfedge_topo = std::make_shared<HalfEdgeTopology>();
-        halfedge_topo->initFromPrim(indice_topo->m_indiceMesh_topo.get());
+        halfedge_topo->initFromPrim(indice_topo->toPrimitiveObject().get());
         return halfedge_topo;
     }
 
@@ -60,7 +60,7 @@ namespace zeno
         GeomTopoType type = topology->type();
         if (Topo_IndiceMesh == type) {
             std::shared_ptr<IndiceMeshTopology> indice_topo = std::static_pointer_cast<IndiceMeshTopology>(topology);
-            return indice_topo->m_indiceMesh_topo;
+            return indice_topo->toPrimitiveObject();
         }
         else if (Topo_HalfEdge == type) {
             std::shared_ptr<HalfEdgeTopology> halfedge_topo = std::static_pointer_cast<HalfEdgeTopology>(topology);

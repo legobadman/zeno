@@ -105,6 +105,10 @@ namespace zeno
         m_pAdapter->set_output_container_info(zsString2Std(param), info);
     }
 
+    void INode::clearCalcResults() {
+
+    }
+
     bool INode::set_output(const zeno::String& param, zany pObject) {
         return m_pAdapter->set_output(zsString2Std(param), pObject);
     }

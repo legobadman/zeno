@@ -1822,6 +1822,203 @@ ZENDEFNODE(NewFBXImportCamera, {
     {"FBXSDK"},
 });
 
+struct FBXSceneInfos : INode {
+    void apply() override {
+        int start_frame = std::lround(get_input2_int("Start Frame"));
+        int end_frame = std::lround(get_input2_int("End Frame"));
+
+        // Change the following filename to a suitable filename value.
+        auto lFilename = zsString2Std(get_input2_string("FBX Path"));
+
+        // Initialize the SDK manager. This object handles all our memory management.
+        FbxManager* lSdkManager = FbxManager::Create();
+
+        // Create the IO settings object.
+        FbxIOSettings* ios = FbxIOSettings::Create(lSdkManager, IOSROOT);
+        lSdkManager->SetIOSettings(ios);
+
+        // Create an importer using the SDK manager.
+        FbxImporter* lImporter = FbxImporter::Create(lSdkManager, "");
+
+        // Use the first argument as the filename for the importer.
+        if (!lImporter->Initialize(lFilename.c_str(), -1, lSdkManager->GetIOSettings())) {
+            printf("Call to FbxImporter::Initialize() failed.\n");
+            printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
+            exit(-1);
+        }
+        int major, minor, revision;
+        lImporter->GetFileVersion(major, minor, revision);
+        auto fbx_object = std::make_shared<FBXObject>();
+        fbx_object->lSdkManager = lSdkManager;
+        // Create a new scene so that it can be populated by the imported file.
+        fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
+
+        // Import the contents of the file into the scene.
+        lImporter->Import(fbx_object->lScene);
+        FbxRootNodeUtility::RemoveAllFbxRoots(fbx_object->lScene);
+
+        // The file is imported; so get rid of the importer.
+        lImporter->Destroy();
+        fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
+        fbx_object->userData()->set_string("file_path", stdString2zs(lFilename));
+
+        auto lst = create_ListObject();
+        for (int frameid = start_frame; frameid <= end_frame; frameid++) {
+            float fps = get_input2_float("fps");
+            float t = float(frameid) / fps;
+            FbxTime curTime;       // The time for each key in the animation curve(s)
+            curTime.SetSecondDouble(t);   // Starting time
+
+            auto lScene = fbx_object->lScene;
+            FbxNode* lRootNode = lScene->GetRootNode();
+            auto json_obj = std::make_shared<JsonObject>();
+            if (lRootNode != nullptr) {
+                TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
+            }
+            lst->push_back(json_obj);
+        }
+        lSdkManager->Destroy();
+        set_output("list_json", lst);
+    }
+};
+
+ZENDEFNODE(FBXSceneInfos, {
+    {
+        {gParamType_String, "FBX Path", "", Socket_Primitve, ReadPathEdit},
+        {gParamType_Int, "Start Frame"},
+        {gParamType_Int, "End Frame"},
+        {gParamType_Float, "fps", "25"},
+    },
+    {
+        {gParamType_List, "list_json"},
+    },
+    {},
+    {"FBXSDK"},
+});
+
+
+struct ParseFBX : INode {
+    void apply() override {
+        auto lFilename = zsString2Std(get_input2_string("FBX Path"));
+        int start_frame = std::lround(get_input2_int("Start Frame"));
+        int end_frame = std::lround(get_input2_int("End Frame"));
+
+        // Initialize the SDK manager. This object handles all our memory management.
+        FbxManager* lSdkManager = FbxManager::Create();
+
+        // Create the IO settings object.
+        FbxIOSettings* ios = FbxIOSettings::Create(lSdkManager, IOSROOT);
+        lSdkManager->SetIOSettings(ios);
+
+        // Create an importer using the SDK manager.
+        FbxImporter* lImporter = FbxImporter::Create(lSdkManager, "");
+
+        // Use the first argument as the filename for the importer.
+        if (!lImporter->Initialize(lFilename.c_str(), -1, lSdkManager->GetIOSettings())) {
+            printf("Call to FbxImporter::Initialize() failed.\n");
+            printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
+            exit(-1);
+        }
+        int major, minor, revision;
+        lImporter->GetFileVersion(major, minor, revision);
+        auto fbx_object = std::make_shared<FBXObject>();
+        fbx_object->lSdkManager = lSdkManager;
+        // Create a new scene so that it can be populated by the imported file.
+        fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
+
+        // Import the contents of the file into the scene.
+        lImporter->Import(fbx_object->lScene);
+        FbxRootNodeUtility::RemoveAllFbxRoots(fbx_object->lScene);
+
+        // The file is imported; so get rid of the importer.
+        lImporter->Destroy();
+        fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
+        fbx_object->userData()->set_string("file_path", stdString2zs(lFilename));
+
+        auto lScene = fbx_object->lScene;
+        // Print the nodes of the scene and their attributes recursively.
+        // Note that we are not printing the root node because it should
+        // not contain any attributes.
+        FbxNode* lRootNode = lScene->GetRootNode();
+        bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
+        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        if (lRootNode) {
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+        }
+
+        auto vectors_str = zsString2Std(get_input2_string("vectors"));
+        std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
+
+        for (auto prim : prims) {
+            if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
+                for (auto vector : vectors) {
+                    vector = zeno::trim_string(vector);
+                    if (vector.size() && prim->loops.attr_is<vec3f>(vector)) {
+                        auto& nrm = prim->loops.attr<vec3f>(vector);
+                        auto& vnrm = prim->verts.add_attr<vec3f>(vector);
+                        for (auto i = 0; i < prim->loops.size(); i++) {
+                            vnrm[prim->loops[i]] += nrm[i];
+                        }
+                        for (auto i = 0; i < prim->verts.size(); i++) {
+                            vnrm[i] = normalizeSafe(vnrm[i]);
+                        }
+                    }
+                }
+            }
+            if (get_input2_bool("CopyFacesetToMatid")) {
+                prim_copy_faceset_to_matid(prim.get());
+            }
+        }
+
+        auto scene_info_list = create_ListObject();
+        for (int frameid = start_frame; frameid <= end_frame; frameid++) {
+            float fps = get_input2_float("fps");
+            float t = float(frameid) / fps;
+            FbxTime curTime;       // The time for each key in the animation curve(s)
+            curTime.SetSecondDouble(t);   // Starting time
+
+            auto lScene = fbx_object->lScene;
+            FbxNode* lRootNode = lScene->GetRootNode();
+            auto json_obj = std::make_shared<JsonObject>();
+            if (lRootNode != nullptr) {
+                TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
+            }
+            scene_info_list->push_back(json_obj);
+        }
+
+        lSdkManager->Destroy();
+
+        auto geo_list = std::make_shared<zeno::ListObject>();
+        for (auto prim : prims) {
+            zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject(prim);
+            geo_list->push_back(spGeom);
+        }
+
+        set_output("Scene Json List", scene_info_list);
+        set_output("Geometry List", geo_list);
+    }
+};
+
+ZENDEFNODE(ParseFBX, {
+    {
+        {gParamType_String, "FBX Path", "", Socket_Primitve, ReadPathEdit},
+        {gParamType_String, "vectors", "nrm,tang"},
+        {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
+        {gParamType_Bool, "CopyFacesetToMatid", "1"},
+        {gParamType_Bool, "OutputTexEvenMissing", "0"},
+        {gParamType_Bool, "SkipInvisibleMesh", "0"},
+        {gParamType_Int, "Start Frame"},
+        {gParamType_Int, "End Frame"},
+        {gParamType_Float, "fps", "25"}
+    },
+    {
+        {gParamType_List, "Geometry List"},
+        {gParamType_List, "Scene Json List"}
+    },
+    {},
+    {"FBXSDK"}
+});
+
 
 
 struct NewFBXSceneInfo : INode {
@@ -1832,24 +2029,27 @@ struct NewFBXSceneInfo : INode {
         } else {
             frameid = GetFrameId();
         }
+
         float fps = get_input2_float("fps");
         float t = float(frameid) / fps;
         FbxTime curTime;       // The time for each key in the animation curve(s)
         curTime.SetSecondDouble(t);   // Starting time
-        auto fbx_object = std::dynamic_pointer_cast<FBXObject>(get_input("fbx_object"));
-        auto lScene = fbx_object->lScene;
-        FbxNode* lRootNode = lScene->GetRootNode();
-        auto json_obj = std::make_shared<JsonObject>();
-        if (lRootNode != nullptr){
-            TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
+
+        auto json_list = get_input_ListObject("Json List");
+        int start_frame = get_input2_int("Start Frame");
+        int idx = frameid - start_frame;
+        if (idx < 0 || idx >= json_list->size()) {
+            throw makeError<IndexError>(idx, json_list->size(), "ListGetItem (for list)");
         }
+        auto json_obj = json_list->get(idx);
         set_output("json", json_obj);
     }
 };
 
 ZENDEFNODE(NewFBXSceneInfo, {
     {
-        {gParamType_FBXObject, "fbx_object"},
+        {gParamType_List, "Json List"},
+        {gParamType_Int, "Start Frame"},
         {gParamType_Int, "frameid"},
         {gParamType_Float, "fps", "25"},
     },
@@ -2011,6 +2211,154 @@ ZENDEFNODE(NewFBXGeometryList, {
     {},
     {"FBXSDK"},
 });
+
+
+struct ParseFBXPrimList : INode {
+    vec3f transform_pos(glm::mat4& transform, vec3f pos) {
+        auto p = transform * glm::vec4(pos[0], pos[1], pos[2], 1);
+        return { p.x, p.y, p.z };
+    }
+    vec3f transform_nrm(glm::mat4& transform, vec3f pos) {
+        auto p = glm::transpose(glm::inverse(transform)) * glm::vec4(pos[0], pos[1], pos[2], 0);
+        return { p.x, p.y, p.z };
+    }
+
+    void apply() override {
+        auto lFilename = zsString2Std(get_input2_string("FBX Path"));
+
+        // Initialize the SDK manager. This object handles all our memory management.
+        FbxManager* lSdkManager = FbxManager::Create();
+
+        // Create the IO settings object.
+        FbxIOSettings* ios = FbxIOSettings::Create(lSdkManager, IOSROOT);
+        lSdkManager->SetIOSettings(ios);
+
+        // Create an importer using the SDK manager.
+        FbxImporter* lImporter = FbxImporter::Create(lSdkManager, "");
+
+        // Use the first argument as the filename for the importer.
+        if (!lImporter->Initialize(lFilename.c_str(), -1, lSdkManager->GetIOSettings())) {
+            printf("Call to FbxImporter::Initialize() failed.\n");
+            printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
+            exit(-1);
+        }
+        int major, minor, revision;
+        lImporter->GetFileVersion(major, minor, revision);
+        auto fbx_object = std::make_shared<FBXObject>();
+        fbx_object->lSdkManager = lSdkManager;
+        // Create a new scene so that it can be populated by the imported file.
+        fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
+
+        // Import the contents of the file into the scene.
+        lImporter->Import(fbx_object->lScene);
+        FbxRootNodeUtility::RemoveAllFbxRoots(fbx_object->lScene);
+
+        // The file is imported; so get rid of the importer.
+        lImporter->Destroy();
+        fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
+        fbx_object->userData()->set_string("file_path", stdString2zs(lFilename));
+
+        auto lScene = fbx_object->lScene;
+
+        // Print the nodes of the scene and their attributes recursively.
+        // Note that we are not printing the root node because it should
+        // not contain any attributes.
+        FbxNode* lRootNode = lScene->GetRootNode();
+        bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
+        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        if (lRootNode) {
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+        }
+
+        auto vectors_str = zsString2Std(get_input2_string("vectors"));
+        std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
+        if (has_input("scene_info")) {
+            auto json = std::dynamic_pointer_cast<JsonObject>(get_input("scene_info"));
+            std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
+            for (auto prim : prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                if (get_input2_bool("SkipInvisibleMesh")) {
+                    if (get_visibility_from_json(json->json, fbx_path)) {
+                        new_prims.push_back(prim);
+                    }
+                }
+                else {
+                    new_prims.push_back(prim);
+                }
+            }
+            prims = new_prims;
+            for (auto prim : prims) {
+                auto ud = prim->userData();
+                auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
+                glm::mat4 xform = get_xfrom_from_json(json->json, fbx_path);
+                for (auto& v : prim->verts) {
+                    v = transform_pos(xform, v);
+                }
+                for (auto& vector : vectors) {
+                    if (prim->verts.attr_is<vec3f>(vector)) {
+                        auto& attr = prim->verts.attr<vec3f>(vector);
+                        for (auto& v : attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                    else if (prim->loops.attr_is<vec3f>(vector)) {
+                        auto& attr = prim->loops.attr<vec3f>(vector);
+                        for (auto& v : attr) {
+                            v = transform_nrm(xform, v);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (auto prim : prims) {
+            if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
+                for (auto vector : vectors) {
+                    vector = zeno::trim_string(vector);
+                    if (vector.size() && prim->loops.attr_is<vec3f>(vector)) {
+                        auto& nrm = prim->loops.attr<vec3f>(vector);
+                        auto& vnrm = prim->verts.add_attr<vec3f>(vector);
+                        for (auto i = 0; i < prim->loops.size(); i++) {
+                            vnrm[prim->loops[i]] += nrm[i];
+                        }
+                        for (auto i = 0; i < prim->verts.size(); i++) {
+                            vnrm[i] = normalizeSafe(vnrm[i]);
+                        }
+                    }
+                }
+            }
+            if (get_input2_bool("CopyFacesetToMatid")) {
+                prim_copy_faceset_to_matid(prim.get());
+            }
+        }
+        auto prim_list = std::make_shared<zeno::ListObject>();
+        for (auto prim : prims) {
+            prim_list->push_back(prim);
+        }
+
+        lSdkManager->Destroy();
+
+        set_output("prims", prim_list);
+    }
+};
+
+ZENDEFNODE(ParseFBXPrimList, {
+    {
+        {gParamType_String, "FBX Path", "", Socket_Primitve, ReadPathEdit},
+        {gParamType_JsonObject, "scene_info"},
+        {gParamType_String, "vectors", "nrm,tang"},
+        {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
+        {gParamType_Bool, "CopyFacesetToMatid", "1"},
+        {gParamType_Bool, "OutputTexEvenMissing", "0"},
+        {gParamType_Bool, "SkipInvisibleMesh", "0"},
+    },
+    {
+        {gParamType_List, "prims"},
+    },
+    {},
+    {"FBXSDK"},
+    });
 
 
 

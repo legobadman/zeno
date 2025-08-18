@@ -2081,10 +2081,8 @@ void NodeImpl::doOnlyApply() {
 }
 
 void NodeImpl::clearCalcResults() {
-    if (m_nodecls == "ForEachEnd") {
-        ForEachEnd* foreachend = static_cast<ForEachEnd*>(m_pNode.get());
-        foreachend->clearCalcResults();
-    }
+    if (m_pNode)
+        m_pNode->clearCalcResults();
 
     for (auto& [key, param] : m_inputObjs) {
         param.spObject.reset();

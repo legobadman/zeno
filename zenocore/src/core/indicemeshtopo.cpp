@@ -4,14 +4,18 @@
 namespace zeno
 {
     IndiceMeshTopology::IndiceMeshTopology(std::shared_ptr<PrimitiveObject> prim)
-        : m_indiceMesh_topo(prim)
+        : m_indiceMesh_topo(std::make_unique<PrimitiveObject>(*prim))
+        , m_point_size(prim->size())
     {
+        //不需要顶点数据和属性，是记录在外面的
+        m_indiceMesh_topo->verts.clear();
+        m_indiceMesh_topo->verts.attrs.clear();
     }
 
     IndiceMeshTopology::IndiceMeshTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
+        : m_point_size(nPoints)
     {
-        m_indiceMesh_topo = std::make_shared<PrimitiveObject>();
-        m_indiceMesh_topo->resize(nPoints);
+        m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
         if (nFaces > 0) {
             assert(false);
             //loops不知道如何初始化，因为面的点个数不一致
@@ -19,9 +23,9 @@ namespace zeno
     }
 
     IndiceMeshTopology::IndiceMeshTopology(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
+        : m_point_size(nPoints)
     {
-        m_indiceMesh_topo = std::make_shared<PrimitiveObject>();
-        m_indiceMesh_topo->resize(nPoints);  //不需要设置verts，给个大小就行，坐标是储存在属性上的
+        m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
         int nFace = faces.size();
         if (bTriangle) {
             m_indiceMesh_topo->tris->resize(nFace);
@@ -52,6 +56,10 @@ namespace zeno
     std::shared_ptr<IGeomTopology> IndiceMeshTopology::clone() {
         auto newtopo = std::make_shared<PrimitiveObject>(*m_indiceMesh_topo);
         return std::make_shared<IndiceMeshTopology>(newtopo);
+    }
+
+    std::shared_ptr<PrimitiveObject> IndiceMeshTopology::toPrimitiveObject() const {
+        return std::make_shared<PrimitiveObject>(*m_indiceMesh_topo);
     }
 
     std::vector<vec3i> IndiceMeshTopology::tri_indice() const {
@@ -107,12 +115,12 @@ namespace zeno
     /* 返回元素个数 */
     int IndiceMeshTopology::npoints() const {
         //verts其实只存在Geom层面，拓扑层面后续会自定义，而不是沿用PrimitiveObject
-        return m_indiceMesh_topo->verts->size();
+        return m_point_size;
     }
 
     int IndiceMeshTopology::nfaces() const {
         if (is_base_triangle()) {
-            return m_indiceMesh_topo->verts->size();
+            return m_point_size;
         }
         else {
             return m_indiceMesh_topo->polys->size();
