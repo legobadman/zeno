@@ -199,10 +199,8 @@ struct GraphicsManager {
                 }
             }
             else {
-                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
-                assert(spNode);
-                zeno::zany spObject = spNode->get_default_output_object();
-                if (spObject) {
+                if (update.spObject) {
+                    zeno::zany spObject = update.spObject;
                     if (update.reason == zeno::Update_View) {
                         add_object(spObject);
                     }
@@ -214,9 +212,7 @@ struct GraphicsManager {
         }
         else if (zeno::Reload_Calculation == info.policy) {
             for (const zeno::render_update_info& update : info.objs) {
-                auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
-                assert(spNode);
-                zeno::zany spObject = spNode->get_default_output_object();
+                zeno::zany spObject = update.spObject;
                 if (spObject) {
                     //可能是对象没有通过子图的Suboutput连出来
                     if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {

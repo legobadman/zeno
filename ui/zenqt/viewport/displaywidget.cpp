@@ -476,6 +476,11 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     zeno::render_update_info info;
     info.reason = zeno::Update_Reconstruct;
     info.uuidpath_node_objkey = nodeuuidpath.toStdString();
+    auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath.toStdString());
+    assert(spNode);
+    if (spNode) {
+        info.spObject = spNode->get_default_output_object();
+    }
     infos.emplace_back(std::move(info));
     submit(infos);
 }

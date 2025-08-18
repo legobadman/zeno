@@ -507,7 +507,7 @@ namespace zeno {
     struct render_update_info {
         UpdateReason reason = Update_Unknown;
         std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
-        //std::shared_ptr<IObject> spObject;  //对象所属权可藉此传送到渲染端
+        std::shared_ptr<IObject> spObject;  //对象所属权可藉此传送到渲染端
         std::vector<std::string> remove_objs;
 
         //如果uuidpath_node_objkey是List或Dict，这里将记录元素的增删改信息，否则为空。

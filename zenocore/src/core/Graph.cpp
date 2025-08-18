@@ -89,6 +89,9 @@ Graph *Graph::getSubnetGraph(std::string const & node_name) const {
 void Graph::applyNode(std::string const &node_name, render_update_info& info) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
+    if (!node->is_dirty()) {
+        return;
+    }
 
     CalcContext ctx;
     if (m_parSubnetNode) {
@@ -102,7 +105,16 @@ void Graph::applyNode(std::string const &node_name, render_update_info& info) {
     if (node->is_view()) {
         info.reason = Update_Reconstruct;
         info.cond_update_info = node->get_default_output_container_info();
+        info.spObject = node->get_default_output_object();
         info.uuidpath_node_objkey = node->get_uuid_path();
+
+        if (node->is_nocache()) {
+            //销毁对象，所属权已经移交到info上
+            node->clearCalcResults();
+            //为了防止用户重复运行，去掉脏位，除非节点链路被用户再次修改
+            node->mark_dirty(false);
+            node->reportStatus(false, Node_RunSucceed);
+        }
     }
 }
 

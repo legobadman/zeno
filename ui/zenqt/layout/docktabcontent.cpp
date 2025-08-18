@@ -33,7 +33,7 @@
 #include "model/GraphModel.h"
 #include "dialog/ZOptixCameraSetting.h"
 #include <zeno/core/typeinfo.h>
-
+#include <zeno/core/NodeImpl.h>
 
 
 ZToolBarButton::ZToolBarButton(bool bCheckable, const QString& icon, const QString& iconOn)
@@ -1091,6 +1091,7 @@ void DockContent_View::initConnections()
 
     connect(m_pointIndicator, &ZToolBarButton::toggled, this, [=](bool bToggled) {
         GraphsManager* graphsMgr = zenoApp->graphsManager();
+        auto& sess = zeno::getSession();
         QString path = graphsMgr->currentGraphPath();
 
         QStringList paths = path.split('/', Qt::SkipEmptyParts);
@@ -1107,6 +1108,11 @@ void DockContent_View::initConnections()
             zeno::render_update_info update;
             update.reason = zeno::Update_View;
             update.uuidpath_node_objkey = nodeuuidpath;
+            auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath);
+            assert(spNode);
+            if (spNode) {
+                update.spObject = spNode->get_default_output_object();
+            }
             info.objs.push_back(update);
         }
 

@@ -230,6 +230,7 @@ namespace zeno
         std::vector<zany> get_output_objs();
         virtual zany get_default_output_object();
         virtual container_elem_update_info get_default_output_container_info();
+        void reportStatus(bool bDirty, NodeRunStatus status);
 
         template <class T>
         std::shared_ptr<T> get_input(std::string const& id) const {
@@ -294,7 +295,6 @@ namespace zeno
         std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
         std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty);
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
-        void reportStatus(bool bDirty, NodeRunStatus status);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);
         std::string resolve_string(const std::string& fmla, const std::string& defl);
         zfxvariant execute_fmla(const std::string& expression);
