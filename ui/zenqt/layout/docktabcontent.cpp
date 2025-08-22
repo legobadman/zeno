@@ -34,6 +34,7 @@
 #include "dialog/ZOptixCameraSetting.h"
 #include <zeno/core/typeinfo.h>
 #include <zeno/core/NodeImpl.h>
+#include <zeno/core/ObjectRecorder.h>
 
 
 ZToolBarButton::ZToolBarButton(bool bCheckable, const QString& icon, const QString& iconOn)
@@ -533,6 +534,11 @@ void DockContent_Editor::initConnections()
         m_pEditor->onAction(&act);
     });
     connect(pSnapGrid, &ZToolBarButton::toggled, this, [=](bool bChecked) {
+        auto& sess = zeno::getSession();
+        auto& objrec = sess.m_recorder;
+        if (objrec->m_geoms.empty()) {
+            return;
+        }
         if (m_pEditor->welComPageShowed())
             return;
         ZenoSettingsManager::GetInstance().setValue(zsSnapGrid, bChecked);

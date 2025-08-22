@@ -101,7 +101,7 @@ void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, QmlNodeRunStat
     }
 }
 
-void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg, zeno::render_reload_info info)
+void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg, const zeno::render_reload_info& info)
 {
     //确保此时计算线程不再跑逻辑，这里暂时是代码上约束，也就是CalcWorker::run()走完就发信号。
     if (m_bMultiThread)

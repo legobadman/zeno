@@ -1042,7 +1042,7 @@ void ZenoGraphsEditor::toggleViewForSelected(bool bOn)
             else {
                 options = options ^ zeno::View;
             }
-            pModel->setData(idx, options, QtRole::ROLE_NODE_STATUS);
+            pModel->setData(idx, bOn, QtRole::ROLE_NODE_ISVIEW);
         }
     }
 }

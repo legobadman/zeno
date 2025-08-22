@@ -123,12 +123,26 @@ struct SceneTreeNode {
     int visibility = 1;
 };
 
-struct SceneObject : IObjectClone<SceneObject> {
+struct SceneObject : IObject {
     IndexMap<std::string, SceneTreeNode> scene_tree;
     std::unordered_map<std::string, glm::mat4> node_to_matrix;
     std::unordered_map<std::string, std::shared_ptr<PrimitiveObject>> prim_list;
     std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> geom_list;
+    std::vector<std::string> geom_path;
     std::string root_name;
+
+    zeno::SharedPtr<IObject> clone() const override {
+        auto newSceneObj = std::make_shared<SceneObject>();
+        newSceneObj->scene_tree = scene_tree;
+        newSceneObj->node_to_matrix = node_to_matrix;
+        newSceneObj->root_name = root_name;
+        newSceneObj->geom_path = geom_path;
+        for (auto& [key, geom] : geom_list) {
+            auto new_geom = std::static_pointer_cast<GeometryObject_Adapter>(geom->clone());
+            newSceneObj->geom_list.emplace(key, std::move(new_geom));
+        }
+        return newSceneObj;
+    }
 
     std::string get_new_root_name(const std::string &root_name, const std::string &new_root_name, const std::string &path) {
         return new_root_name + path.substr(root_name.size());
@@ -164,6 +178,10 @@ struct SceneObject : IObjectClone<SceneObject> {
             auto new_prim = std::static_pointer_cast<PrimitiveObject>(p->clone());
             new_prim->userData()->set_string("ObjectName", stdString2zs(new_key));
             new_scene_obj->prim_list[new_key] = new_prim;
+        }
+        for (const auto& k : geom_path) {
+            auto new_key = get_new_root_name(root_name, new_root_name, k);
+            new_scene_obj->geom_path.push_back(new_key);
         }
         for (auto &[k, p]: geom_list) {
             auto new_key = get_new_root_name(root_name, new_root_name, k);
@@ -450,16 +468,31 @@ struct SceneObject : IObjectClone<SceneObject> {
             ud->set_string("ResourceType", "SceneDescriptor");
             Json json;
             json["BasicRenderInstances"] = Json();
-            for (const auto &[path, prim]: geom_list) {
-                json["BasicRenderInstances"][path]["Geom"] = path;
-                json["BasicRenderInstances"][path]["Material"] = "Default";
-                if (use_static) {
-                    json["StaticRenderGroups"]["StaticObjects"][path] = Json::array({path+"_m"});
-                }
-                else {
-                    json["DynamicRenderGroups"]["DynamicObjects"][path] = Json::array({path+"_m"});
+            if (!geom_path.empty()) {
+                for (const auto& path : geom_path) {
+                    json["BasicRenderInstances"][path]["Geom"] = path;
+                    json["BasicRenderInstances"][path]["Material"] = "Default";
+                    if (use_static) {
+                        json["StaticRenderGroups"]["StaticObjects"][path] = Json::array({ path + "_m" });
+                    }
+                    else {
+                        json["DynamicRenderGroups"]["DynamicObjects"][path] = Json::array({ path + "_m" });
+                    }
                 }
             }
+            else {
+                for (const auto& [path, prim] : geom_list) {
+                    json["BasicRenderInstances"][path]["Geom"] = path;
+                    json["BasicRenderInstances"][path]["Material"] = "Default";
+                    if (use_static) {
+                        json["StaticRenderGroups"]["StaticObjects"][path] = Json::array({ path + "_m" });
+                    }
+                    else {
+                        json["DynamicRenderGroups"]["DynamicObjects"][path] = Json::array({ path + "_m" });
+                    }
+                }
+            }
+
             ud->set_string("Scene", stdString2zs(std::string(json.dump())));
 
             std::string objkey = summary_info.container_key + "\\json" + std::to_string(scene_list->size());
@@ -489,6 +522,7 @@ static std::shared_ptr<SceneObject> get_scene_tree_from_list(std::shared_ptr<Lis
         auto prim = std::static_pointer_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]);
         auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
         scene_tree->geom_list[object_name] = prim;
+        scene_tree->geom_path.push_back(object_name);
     }
     return scene_tree;
 }
@@ -689,6 +723,7 @@ struct FormSceneTree : zeno::INode {
                 geom->userData()->set_string("ObjectName", stdString2zs(abc_path));
                 //total_updateinfo.modified.insert(zsString2Std(p->key()));
                 sceneTree->geom_list[abc_path] = geom;
+                sceneTree->geom_path.push_back(abc_path);
             }
         }
         get_local_matrix_map(scene_json->json, "", sceneTree);
@@ -717,6 +752,61 @@ ZENDEFNODE( FormSceneTree, {
         "Scene",
     },
 });
+
+
+struct FormSceneTree2 : zeno::INode {
+    void apply() override {
+        auto sceneTree = std::make_shared<SceneObject>();
+        auto scene_json = ZImpl(get_input2<JsonObject>("Scene Info"));
+        sceneTree->root_name = "/ABC";
+        auto prim_geom_list = get_input_ListObject("Geometry List");
+        auto list_updateinfo = get_input_container_info("Geometry List");
+        std::vector<std::string> abc_paths;
+        if (has_link_input("ABC Path List")) {
+            abc_paths = zeno::reflect::any_cast<std::vector<std::string>>(ZImpl(get_param_result("ABC Path List")));
+        }
+
+        //如果prim_geom_list的上游节点标记为no-cache,那这里就不应该拿到prim_geom_list.
+        if (prim_geom_list) {
+            for (auto p : prim_geom_list->get()) {
+                auto abc_path = zsString2Std(p->userData()->get_string("abcpath_0"));
+                if (!p->userData()->has_string("ResourceType")) {
+                    auto sResourceType = ZImpl(get_input2<std::string>("ResourceType"));
+                    p->userData()->set_string("ResourceType", stdString2zs(sResourceType));
+                }
+                if (auto geom = std::dynamic_pointer_cast<GeometryObject_Adapter>(p)) {
+                    geom->userData()->set_string("ObjectName", stdString2zs(abc_path));
+                    if (!list_updateinfo.empty()) {
+                        sceneTree->geom_list[abc_path] = geom;
+                    }
+                }
+            }
+        }
+        sceneTree->geom_path = abc_paths;
+        get_local_matrix_map(scene_json->json, "", sceneTree);
+        set_output("scene", sceneTree);
+    }
+};
+
+ZENDEFNODE(FormSceneTree2, {
+    {
+        {gParamType_JsonObject, "Scene Info"},
+        {gParamType_List, "Geometry List"},
+        {"enum Mesh Matrixes SceneDescriptor", "ResourceType", "Mesh"},
+        {"enum UnChanged DataChange ShapeChange TotalChange", "stampMode", "UnChanged"},
+        {gParamType_String, "changeHint", ""},
+        {gParamType_StringList, "ABC Path List", ""}
+    },
+    {
+        {gParamType_Scene, "scene"},
+    },
+    {},
+    {
+        "Scene"
+    }
+});
+
+
 
 static void scene_add_prefix(
     std::string path
@@ -976,6 +1066,45 @@ ZENDEFNODE( SceneRootRename, {
     },
 });
 
+struct SceneRootRename2 : zeno::INode {
+    void apply() override {
+        auto scene_tree = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
+        auto new_root_name = zsString2Std(get_input2_string("new_root_name"));
+        if (zeno::ends_with(new_root_name, "/")) {
+            new_root_name.pop_back();
+        }
+        if (new_root_name.empty()) {
+            new_root_name = scene_tree->root_name;
+        }
+        if (zeno::starts_with(new_root_name, "/") == false) {
+            new_root_name = "/" + new_root_name;
+        }
+        std::optional<glm::mat4> root_xform = std::nullopt;
+        if (ZImpl(has_input2<PrimitiveObject>("xform"))) {
+            root_xform = get_xform_from_prim(get_input_PrimitiveObject("xform"));
+        }
+        auto new_scene_tree = scene_tree->root_rename(new_root_name, root_xform);
+        set_output("scene", new_scene_tree);
+    }
+};
+
+ZENDEFNODE( SceneRootRename2, {
+    {
+        {gParamType_Scene, "scene"},
+        {gParamType_String, "new_root_name", "new_scene"},
+        {gParamType_Primitive, "xform"},
+    },
+    {
+        {gParamType_Scene, "scene"}
+    },
+    {},
+    {
+        "Scene"
+    }
+});
+
+
+
 struct RenderScene : zeno::INode {
     std::shared_ptr<ListObject> m_static_scene = nullptr;
     void apply() override {
@@ -1044,6 +1173,82 @@ ZENDEFNODE( RenderScene, {
     },
     {
         {gParamType_List, "scene"},
+    },
+    {},
+    {
+        "Scene",
+    },
+});
+
+
+struct RenderScene2 : zeno::INode {
+    Json m_static_scene_descriptor;
+
+    void apply() override {
+        auto scene = std::make_shared<ListObject>();
+        Json scene_descriptor_json;
+        container_elem_update_info output_updateinfo;
+        output_updateinfo.container_key = zsString2Std(this->uuid());
+
+        if (has_input("Static Scene")) {
+            auto static_scene_tree = std::dynamic_pointer_cast<SceneObject>(get_input("Static Scene"));
+            if (static_scene_tree) {
+                //auto static_updateinfo = get_input_container_info("static_scene");
+                //output_updateinfo.merge(static_updateinfo);
+
+                auto new_static_scene_tree = static_scene_tree->root_rename("SRG", std::nullopt);
+                auto static_scene = get_input2_bool("flatten_static_scene") ? new_static_scene_tree->to_flatten_structure(output_updateinfo, true) : new_static_scene_tree->to_layer_structure(output_updateinfo, true);
+                for (auto i = 1; i < static_scene->m_impl->m_objects.size() - 2; i++) {
+                    scene->push_back(static_scene->m_impl->m_objects[i]);
+                }
+
+                auto scene_str = static_scene->m_impl->m_objects[static_scene->m_impl->m_objects.size() - 2]->userData()->get_string("Scene");
+                m_static_scene_descriptor = Json::parse(zsString2Std(scene_str));
+            }
+            scene_descriptor_json["StaticRenderGroups"] = m_static_scene_descriptor["StaticRenderGroups"];
+            scene_descriptor_json["BasicRenderInstances"].update(m_static_scene_descriptor["BasicRenderInstances"]);
+        }
+        if (has_input("Dynamic Scene")) {
+            auto dynamic_scene_tree = std::dynamic_pointer_cast<SceneObject>(get_input("Dynamic Scene"));
+            //auto dynamic_updateinfo = get_input_container_info("dynamic_scene");
+            //output_updateinfo.merge(dynamic_updateinfo);
+
+            auto new_dynamic_scene_tree = dynamic_scene_tree->root_rename("DRG", std::nullopt);
+            auto dynamic_scene = get_input2_bool("flatten_dynamic_scene") ? new_dynamic_scene_tree->to_flatten_structure(output_updateinfo, false) : new_dynamic_scene_tree->to_layer_structure(output_updateinfo, false);
+            for (auto i = 1; i < dynamic_scene->m_impl->m_objects.size() - 2; i++) {
+                scene->push_back(dynamic_scene->m_impl->m_objects[i]);
+            }
+            auto scene_str = dynamic_scene->m_impl->m_objects[dynamic_scene->m_impl->m_objects.size() - 2]->userData()->get_string("Scene");
+            auto dynamic_scene_descriptor = Json::parse(zsString2Std(scene_str));
+            scene_descriptor_json["DynamicRenderGroups"] = dynamic_scene_descriptor["DynamicRenderGroups"];
+            scene_descriptor_json["BasicRenderInstances"].update(dynamic_scene_descriptor["BasicRenderInstances"]);
+        }
+        {
+            auto scene_descriptor = std::make_shared<PrimitiveObject>();
+            auto ud = scene_descriptor->userData();
+            ud->set_string("ResourceType", "SceneDescriptor");
+            ud->set_string("Scene", stdString2zs(std::string(scene_descriptor_json.dump())));
+
+            std::string objkey = output_updateinfo.container_key + "\\SceneDescriptor";
+            scene_descriptor->update_key(stdString2zs(objkey));
+            //output_updateinfo.new_added.insert(objkey);
+
+            scene->push_back(scene_descriptor);
+        }
+
+        set_output("scene", scene);
+    }
+};
+
+ZENDEFNODE( RenderScene2, {
+    {
+        {gParamType_Scene, "Static Scene"},
+        {gParamType_Bool, "flatten_static_scene", "1"},
+        {gParamType_Scene, "Dynamic Scene"},
+        {gParamType_Bool, "flatten_dynamic_scene", "1"},
+    },
+    {
+        {gParamType_List, "scene"}
     },
     {},
     {

@@ -16,9 +16,12 @@ namespace zeno
         : m_point_size(nPoints)
     {
         m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
-        if (nFaces > 0) {
-            assert(false);
-            //loops不知道如何初始化，因为面的点个数不一致
+        if (bTriangle) {
+            m_indiceMesh_topo->tris->resize(nFaces);
+        }
+        else {
+            //loops目前还没初始化，需要知道拓扑
+            m_indiceMesh_topo->polys->resize(nFaces);
         }
     }
 
@@ -169,7 +172,14 @@ namespace zeno
     }
 
     std::vector<int> IndiceMeshTopology::face_points(int face_id) const {
-        throw makeError<UnimplError>("");
+        const auto& face_summary = m_indiceMesh_topo->polys[face_id];
+        int startIdx = face_summary[0];
+        int count = face_summary[1];
+        std::vector<int> face;
+        for (int vert = startIdx; vert < startIdx + count; vert++) {
+            face.push_back(m_indiceMesh_topo->loops[vert]);
+        }
+        return face;
     }
 
     int IndiceMeshTopology::face_vertex(int face_id, int vert_id) {

@@ -22,6 +22,7 @@ namespace zeno
         void Delete() override;
 
         GeometryObject_Adapter();
+        GeometryObject_Adapter(const GeometryObject_Adapter&) = delete;
         virtual ~GeometryObject_Adapter();
 
         void inheritAttributes(

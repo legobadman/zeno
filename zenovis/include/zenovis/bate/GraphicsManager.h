@@ -52,7 +52,6 @@ struct GraphicsManager {
                 return false;
             zeno::log_debug("load_object: loaded graphics to {}", ig.get());
             ig->nameid = key;
-            ig->objholder = obj;
             graphics.m_curr.m_curr.insert(std::make_pair(key, std::move(ig)));
         }
         else {
@@ -60,7 +59,6 @@ struct GraphicsManager {
             if (!ig)
                 return false;
             ig->nameid = key;
-            ig->objholder = obj;
             it->second = std::move(ig);
         }
         return true;

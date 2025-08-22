@@ -110,10 +110,7 @@ void Graph::applyNode(std::string const &node_name, render_update_info& info) {
 
         if (node->is_nocache()) {
             //销毁对象，所属权已经移交到info上
-            node->clearCalcResults();
-            //为了防止用户重复运行，去掉脏位，除非节点链路被用户再次修改
-            node->mark_dirty(false);
-            node->reportStatus(false, Node_RunSucceed);
+            node->mark_takeover();
         }
     }
 }

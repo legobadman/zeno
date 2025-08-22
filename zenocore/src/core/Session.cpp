@@ -26,6 +26,7 @@
 #include <regex>
 #include <Windows.h>
 #include <zeno/extra/CalcContext.h>
+#include <zeno/core/ObjectRecorder.h>
 #include <reflect/core.hpp>
 #include <reflect/type.hpp>
 #include <reflect/metadata.hpp>
@@ -198,6 +199,7 @@ ZENO_API Session::Session()
 #endif
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
+    , m_recorder(std::make_unique<ObjectRecorder>())
     , m_mainThreadId(0)
 {
     m_mainThreadId = GetCurrentThreadId();
@@ -379,7 +381,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
 }
 
 ZENO_API void Session::defNodeClass(INode* (*ctor)(), std::string const &clsname, Descriptor const &desc) {
-    if (clsname == "Subnet") {
+    if (clsname == "FormSceneTree2") {
         int j;
         j = 0;
     }
@@ -425,6 +427,13 @@ ZENO_API void Session::defNodeClass2(INode* (*ctor)(), std::string const& nodecl
 ZENO_API void Session::defNodeClass3(INode* (*ctor)(), const char* pName, Descriptor const& desc) {
     //auto cls = std::make_unique<ImplNodeClass>(ctor, desc, pName);
     //nodeClasses.emplace(pName, std::move(cls));
+}
+
+zeno::CustomUI Session::getOfficalUIDesc(const std::string& clsname) {
+    if (nodeClasses.find(clsname) == nodeClasses.end()) {
+        throw makeError<UnimplError>("no clsname call `" + clsname + "` when call `getOfficalUIDesc`");
+    }
+    return nodeClasses[clsname]->m_customui;
 }
 
 #if 0
@@ -587,8 +596,12 @@ void Session::reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus s
 ZENO_API void Session::switchToFrame(int frameid)
 {
     CORE_API_BATCH
-    mainGraph->markDirtyWhenFrameChanged();
-    globalState->updateFrameId(frameid);
+    if (mainGraph) {
+        mainGraph->markDirtyWhenFrameChanged();
+    }
+    if (globalState) {
+        globalState->updateFrameId(frameid);
+    }
 }
 
 ZENO_API void Session::updateFrameRange(int start, int end)

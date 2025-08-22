@@ -4,7 +4,7 @@
 
 namespace zeno {
 
-    static bool sigval_init = true; //是否用单值优化：一列相同的数据用一个数值表达
+    static bool sigval_init = false; //是否用单值优化：一列相同的数据用一个数值表达,TODO:copy没支持
 
     ZENO_API AttributeVector::AttributeVector(const AttributeVector& rhs)
 #ifdef SHARED_COLUMN_DATA

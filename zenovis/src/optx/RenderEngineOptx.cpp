@@ -1284,7 +1284,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             if (update.reason == zeno::Update_View) {
                 auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
                 assert(spNode);
-                zeno::zany spObject = spNode->get_default_output_object();
+                zeno::zany spObject = update.spObject;
                 if (spObject) {
                     auto it = wtf.find(update.uuidpath_node_objkey);
                     if (it == wtf.end()) {
@@ -1306,7 +1306,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             for (const zeno::render_update_info& update : info.objs) {
                 auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
                 assert(spNode);
-                zeno::zany spObject = spNode->get_default_output_object();
+                zeno::zany spObject = update.spObject;
                 if (spObject) {
                     if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                         process_listobj(_spList, update.cond_update_info);

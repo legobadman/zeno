@@ -10,6 +10,9 @@
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>
 #include <zeno/utils/variantswitch.h>
+#include <zeno/types/GeometryObject.h>
+#include <zeno/core/Session.h>
+#include <zeno/core/ObjectRecorder.h>
 #include <regex>
 
 
@@ -31,11 +34,13 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type)
         : m_type(type)
     {
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
     }
 
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
         : m_type(type)
     {
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, nFaces, bInitFaces);
         }
@@ -53,6 +58,7 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
         : m_type(type)
     {
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, faces);
         }
@@ -65,32 +71,6 @@ namespace zeno
         else {
             throw makeError<UnimplError>("unknown type of Geometry Topology");
         }
-    }
-
-    GeometryObject::GeometryObject(const GeometryObject& rhs)
-        : m_spTopology(rhs.m_spTopology)
-        , m_type(rhs.m_type)
-    {
-        m_vert_attrs = rhs.m_vert_attrs;
-        m_point_attrs = rhs.m_point_attrs;
-        m_face_attrs = rhs.m_face_attrs;
-        m_geo_attrs = rhs.m_geo_attrs;
-    }
-
-    GeometryObject::~GeometryObject() {
-        int usecnt = m_spTopology.use_count();
-        if (usecnt > 0) {
-            int j;
-            j = 0;
-        }
-    }
-
-    void GeometryObject::_temp_code_regist() {
-        
-    }
-
-    void GeometryObject::_temp_code_unregist() {
-
     }
 
     GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim)
@@ -109,6 +89,34 @@ namespace zeno
         for (auto& [attr_name, var_vec] : spPrim->tris.attrs) {
             create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
         }
+    }
+
+    GeometryObject::GeometryObject(const GeometryObject& rhs)
+        : m_spTopology(rhs.m_spTopology)
+        , m_type(rhs.m_type)
+    {
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+        m_vert_attrs = rhs.m_vert_attrs;
+        m_point_attrs = rhs.m_point_attrs;
+        m_face_attrs = rhs.m_face_attrs;
+        m_geo_attrs = rhs.m_geo_attrs;
+    }
+
+    GeometryObject::~GeometryObject() {
+        int usecnt = m_spTopology.use_count();
+        if (usecnt > 0) {
+            int j;
+            j = 0;
+        }
+        zeno::getSession().m_recorder->m_geom_impls.erase(this);
+    }
+
+    void GeometryObject::_temp_code_regist() {
+        
+    }
+
+    void GeometryObject::_temp_code_unregist() {
+
     }
 
     GeomTopoType GeometryObject::type() const {

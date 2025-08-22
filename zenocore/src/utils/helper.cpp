@@ -1842,6 +1842,38 @@ namespace zeno {
         return false;
     }
 
+    zeno::ParamType findParamType(const CustomUI& customui, bool bInput, const std::string& name) {
+        if (bInput) {
+            for (auto param : customui.inputObjs) {
+                if (param.name == name) {
+                    return param.type;
+                }
+            }
+            for (auto tab : customui.inputPrims) {
+                for (auto group : tab.groups) {
+                    for (auto param : group.params) {
+                        if (param.name == name) {
+                            return param.type;
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (auto param : customui.outputPrims) {
+                if (param.name == name) {
+                    return param.type;
+                }
+            }
+            for (auto param : customui.outputObjs) {
+                if (param.name == name) {
+                    return param.type;
+                }
+            }
+        }
+        return Param_Null;
+    }
+
     bool isPrimitiveType(const ParamType type) {
         //这个是给旧式定义节点使用的，新的反射定义方式不再使用，其初始化过程也不会走到这里判断。
         return type == gParamType_String ||

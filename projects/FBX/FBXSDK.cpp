@@ -324,7 +324,7 @@ namespace zeno {
 struct JsonObject : IObjectClone<JsonObject> {
     Json json;
 };
-struct FBXObject : PrimitiveObject {
+struct FBXObject : IObjectClone<FBXObject> {
     FbxManager* lSdkManager = nullptr;
     FbxScene* lScene = nullptr;
 };
@@ -1988,14 +1988,21 @@ struct ParseFBX : INode {
 
         lSdkManager->Destroy();
 
+        std::vector<std::string> abc_paths;
+        abc_paths.reserve(prims.size());
+
         auto geo_list = std::make_shared<zeno::ListObject>();
         for (auto prim : prims) {
             zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject(prim);
             geo_list->push_back(spGeom);
+
+            auto abc_path = zsString2Std(spGeom->userData()->get_string("abcpath_0"));
+            abc_paths.push_back(abc_path);
         }
 
         set_output("Scene Json List", scene_info_list);
         set_output("Geometry List", geo_list);
+        m_pAdapter->set_primitive_output("ABC Path List", abc_paths);
     }
 };
 
@@ -2013,7 +2020,8 @@ ZENDEFNODE(ParseFBX, {
     },
     {
         {gParamType_List, "Geometry List"},
-        {gParamType_List, "Scene Json List"}
+        {gParamType_List, "Scene Json List"},
+        {gParamType_StringList, "ABC Path List"}
     },
     {},
     {"FBXSDK"}
@@ -2043,18 +2051,21 @@ struct NewFBXSceneInfo : INode {
         }
         auto json_obj = json_list->get(idx);
         set_output("json", json_obj);
+        m_pAdapter->set_primitive_output("ABC Path List", m_pAdapter->get_param_result("ABC Path List"));
     }
 };
 
 ZENDEFNODE(NewFBXSceneInfo, {
     {
         {gParamType_List, "Json List"},
+        {gParamType_StringList, "ABC Path List"},
         {gParamType_Int, "Start Frame"},
         {gParamType_Int, "frameid"},
         {gParamType_Float, "fps", "25"},
     },
     {
         {gParamType_JsonObject, "json"},
+        {gParamType_StringList, "ABC Path List"}
     },
     {},
     {"FBXSDK"},

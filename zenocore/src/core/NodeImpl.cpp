@@ -548,6 +548,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
         return;
 
     if (m_dirty) {
+        m_takenover = false;
         for (auto& [name, param] : m_inputPrims) {
             for (auto link : param.reflinks) {
                 if (link->dest_inparam != &param) {
@@ -630,7 +631,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
 
     //debug
 #if 1
-    if (m_name == "CompImport2") {
+    if (m_name == "FormSceneTree2_1") {
         int j;
         j = 0;
     }
@@ -1487,9 +1488,15 @@ void NodeImpl::set_output_container_info(const std::string& param, const contain
 void NodeImpl::clear_container_info() {
     for (auto& [_, param] : m_inputObjs) {
         param.listdict_update.clear();
+        for (auto spLink : param.links) {
+            spLink->bTraceAndTaken = false;
+        }
     }
     for (auto& [_, param] : m_outputObjs) {
         param.listdict_update.clear();
+        for (auto spLink : param.links) {
+            spLink->bTraceAndTaken = false;
+        }
     }
 }
 
@@ -1509,17 +1516,28 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         std::shared_ptr<ObjectLink> spLink = in_param->links.front();
         auto out_param = spLink->fromparam;
         NodeImpl* outNode = out_param->m_wpNode;
-        bool is_upstream_dirty = outNode->is_dirty();
+
+        if (outNode->is_takenover()) {
+            //可能上一次计算被taken了
+            bDirty = false;
+            return nullptr;
+        }
 
         if (out_param->type == in_param->type || out_param->type == gParamType_IObject) {   //现在不允许List嵌套List，如果只有一个，直接认定为直连
+            bool is_upstream_dirty = outNode->is_dirty();
             if (is_upstream_dirty) {
                 GraphException::translated([&] {
                     outNode->doApply(pContext);
                     }, outNode);
             }
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-
+            bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
+            auto outResult = outNode->takeOutputObject(out_param, in_param, bAllTaken);
+            if (!outResult) {
+                throw makeError<UnimplError>("no outResult List from output");
+            }
+            if (outNode->is_nocache() && bAllTaken) {
+                outNode->mark_takeover();
+            }
             if (!is_upstream_dirty)
             {
                 auto input_cache_list = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
@@ -1592,11 +1610,15 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             }
         }
 
+        //TODO: 多个物体作为List的元素，如果其中有一个被take over，要怎么处理？
         for (const auto& spLink : in_param->links)
         {
             //list的情况下，keyName是不是没意义，顺序怎么维持？
             auto out_param = spLink->fromparam;
             NodeImpl* outNode = out_param->m_wpNode;
+            if (outNode->is_takenover()) {
+                continue;
+            }
             bool is_upstream_dirty = outNode->is_dirty();
 
             if (is_upstream_dirty) {  //list中的元素是dirty的，重新计算并加入list
@@ -1607,38 +1629,43 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
 
             //拿这个没有意义，因为links下的不可能是list
             container_elem_update_info upstream_info = out_param->listdict_update;
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-            {
-                zany newObj;
-                if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult.get())) {
-                    newObj = clone_by_key(_spList, m_uuid);
-                }
-                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult.get())) {
-                    newObj = clone_by_key(_spDict, m_uuid);
+            bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
+            auto outResult = outNode->takeOutputObject(out_param, in_param, bAllTaken);
+            if (!outResult) {
+                throw makeError<UnimplError>("no outResult List from output");
+            }
+            if (outNode->is_nocache() && bAllTaken) {
+                outNode->mark_takeover();
+            }
+
+            zany newObj;
+            if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult.get())) {
+                newObj = clone_by_key(_spList, m_uuid);
+            }
+            else if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult.get())) {
+                newObj = clone_by_key(_spDict, m_uuid);
+            }
+            else {
+                auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
+                newObj = outResult->clone();
+                newObj->update_key(newkey);
+            }
+            spList->m_impl->push_back(newObj);
+
+            //需要区分是新的还是旧的，这里先粗暴认为全是新的
+            std::string const& new_key = zsString2Std(newObj->key());
+            if (is_upstream_dirty) {
+                //需要区分是新的还是旧的，这里先粗暴认为全是新的
+                if (existInputObjs.find(new_key) != existInputObjs.end()) {
+                    input_container_updateinfo.modified.insert(new_key);
+                    existInputObjs.erase(new_key);
                 }
                 else {
-                    auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
-                        newObj = outResult->clone();
-                        newObj->update_key(newkey);
-                    }
-                spList->m_impl->push_back(newObj);
-
-                //需要区分是新的还是旧的，这里先粗暴认为全是新的
-                std::string const& new_key = zsString2Std(newObj->key());
-                if (is_upstream_dirty) {
-                    //需要区分是新的还是旧的，这里先粗暴认为全是新的
-                    if (existInputObjs.find(new_key) != existInputObjs.end()) {
-                        input_container_updateinfo.modified.insert(new_key);
-                        existInputObjs.erase(new_key);
-                    }
-                    else {
-                        input_container_updateinfo.new_added.insert(new_key);
-                    }
-                } else {
+                    input_container_updateinfo.new_added.insert(new_key);
                 }
-                existInputObjs.erase(new_key);
+            } else {
             }
+            existInputObjs.erase(new_key);
         }
         //剩下没出现的都认为是移除掉了
         std::function<void(zany)> flattenList = [&](zany obj) {
@@ -1657,7 +1684,6 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         for (auto& [key, removeobj] : existInputObjs) {
             flattenList(removeobj);//提前节需要移除的对象的key全部展平，在GraphicsManager.h中一次性移除，才能正确显示
         }
-
         spList->update_key(stdString2zs(m_uuid));
         in_param->listdict_update = input_container_updateinfo;
     }
@@ -1894,61 +1920,22 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
         }
     }
 
-    //因为要同时清除所有输入输出，所以只考虑最常见的情况，以免复杂的检查链路
-    bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
-    if (outNode->is_nocache() && outNode->only_single_output_object()) {
-        bAllTaken = true;
-        for (auto link : out_param->links) {
-            ObjectParam* toparam = link->toparam;
-            NodeImpl* otherInNode = toparam->m_wpNode;
-            if (otherInNode != this && otherInNode->is_dirty()) {
-                bAllTaken = false;
-                break;
-            }
-        }
-    }
+    bool bAllTaken = false;
+    auto outputObj = outNode->takeOutputObject(out_param, in_param, bAllTaken);
+    in_param->spObject = outputObj->clone();
+    in_param->spObject->update_key(stdString2zs(m_uuidPath));
 
-    if (bCloned) {
-        in_param->spObject = out_param->spObject->clone();
-    }
-    else {
-        in_param->spObject = out_param->spObject;
-#if OWING_UPSTREAM_NODE		//in_param和out_param暂时引用同一个object
-        out_param->spObject.reset();
-        outNode->mark_dirty(true);
-#endif
-    }
-
-    if (bAllTaken) {
+    if (outNode->is_nocache() && bAllTaken) {
         //似乎要把输入也干掉，但如果一锅清掉，可能会漏了数值输出，或者多对象输出的情况（虽然很少见）
-        outNode->clearCalcResults();
-        outNode->mark_dirty(true, zeno::Dirty_All, true, false);
+        outNode->mark_takeover();
     }
 
     if (auto splist = std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
         update_list_root_key(splist.get(), m_uuidPath);
     } else if (auto spdict = std::dynamic_pointer_cast<DictObject>(in_param->spObject)) {
         update_dict_root_key(spdict.get(), m_uuidPath);
-    } else {
-        in_param->spObject->update_key(stdString2zs(m_uuidPath));
     }
-#if 0
-    if (in_param->socketType == Socket_Clone) {
-        in_param->spObject = outputObj->clone();
-    }
-    else if (in_param->socketType == Socket_Owning) {
-        in_param->spObject = outputObj->move_clone();
-        assert(outNode);
-        outNode->mark_dirty(true);
-    }
-    else if (in_param->socketType == Socket_ReadOnly) {
-        in_param->spObject = outputObj;
-        //TODO: readonly property on object.
-    }
-    else if (in_param->bWildcard) {
-        in_param->spObject = outputObj;
-    }
-#endif
+
     return true;
 }
 
@@ -1996,6 +1983,10 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                         std::shared_ptr<ObjectLink> spLink = *(in_param->links.begin());
                         ObjectParam* out_param = spLink->fromparam;
                         auto outNode = out_param->m_wpNode;
+                        if (outNode->is_takenover()) {
+                            //维持原来的参数结果状态，不从上游取（事实上上游的内容已经被删掉了）
+                            return true;
+                        }
 
                         GraphException::translated([&] {
                             outNode->doApply(pContext);
@@ -2048,6 +2039,9 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                 if (in_param->links.size() == 1) {
                     std::shared_ptr<PrimitiveLink> spLink = *in_param->links.begin();
                     auto outNode = spLink->fromparam->m_wpNode;
+                    if (outNode->is_takenover()) {
+                        return true;
+                    }
 
                     GraphException::translated([&] {
                         outNode->doApply(pContext);
@@ -2055,7 +2049,11 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                     //数值基本类型，直接复制。
                     //注意：这里并不会检查类型，因为有一些特殊情况，比如Shader节点的连接，是允许将Shader类型连到数值输入里的（ShaderFinalize)
                     //这样，检查的工作就交给了节点本身（INode)。
-                    in_param->result = spLink->fromparam->result;
+                    bool bAllOutputTaken = false;
+                    in_param->result = outNode->takeOutputPrim(spLink->fromparam, in_param, bAllOutputTaken);
+                    if (bAllOutputTaken && outNode->is_nocache()) {
+                        outNode->mark_takeover();
+                    }
                 }
             }
         } else {
@@ -2087,7 +2085,6 @@ void NodeImpl::clearCalcResults() {
     for (auto& [key, param] : m_outputPrims) {
         param.result.reset();
     }
-    mark_dirty(true);
 }
 
 void NodeImpl::doApply_Parameter(std::string const& name, CalcContext* pContext) {
@@ -2138,7 +2135,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
     });
 
 #if 1
-    if (m_name == "CopyAttribute1"){//}&& pContext->curr_iter == 1) {
+    if (m_name == "NewFBXPrimList1"){//}&& pContext->curr_iter == 1) {
         int j;
         j = 0;
     }
@@ -3295,7 +3292,7 @@ void NodeImpl::init(const NodeData& dat)
     if (!dat.name.empty())
         m_name = dat.name;
 
-    if (m_name == "CopyAttribute1") {
+    if (m_name == "FormSceneTree2_2") {
         int j;
         j = -0;
     }
@@ -3351,6 +3348,9 @@ void NodeImpl::initParams(const NodeData& dat)
                 convertToEditVar(param.defl, param.type);
                 sparam.defl = param.defl;
                 convertToEditVar(sparam.defl, param.type);
+                if (!sparam.defl.has_value()) {
+                    sparam.defl = initAnyDeflValue(param.type);
+                }
 
                 // 普通子图的控件及参数类型，是由定义处决定的，而非IO值。
                 //sparam.control = param.control;
@@ -3692,6 +3692,61 @@ container_elem_update_info NodeImpl::get_default_output_container_info() {
 zany NodeImpl::get_output_obj(std::string const& param) {
     auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + m_name + "`");
     return spParam.spObject;
+}
+
+bool NodeImpl::checkAllOutputLinkTraced() {
+    bool bAllOutputTaken = true;
+    //检查是否当前节点是否所有边都被trace了
+    for (const auto& [_, outparam] : m_outputObjs) {
+        for (auto link : outparam.links) {
+            if (!link->bTraceAndTaken) {
+                bAllOutputTaken = false;
+                break;
+            }
+        }
+    }
+    for (const auto& [_, outparam] : m_outputPrims) {
+        for (auto link : outparam.links) {
+            if (!link->bTraceAndTaken) {
+                bAllOutputTaken = false;
+                break;
+            }
+        }
+    }
+    return bAllOutputTaken;
+}
+
+zeno::reflect::Any NodeImpl::takeOutputPrim(PrimitiveParam* out_param, PrimitiveParam* in_param, bool& bAllOutputTaken) {
+    for (auto link : out_param->links) {
+        if (link->toparam == in_param) {
+            link->bTraceAndTaken = true;
+            break;
+        }
+    }
+    bAllOutputTaken = checkAllOutputLinkTraced();
+    return out_param->result;
+}
+
+void NodeImpl::mark_takeover() {
+    m_takenover = true;
+    clearCalcResults();
+    mark_dirty(false);
+    reportStatus(false, Node_RunSucceed);
+}
+
+bool NodeImpl::is_takenover() const {
+    return m_takenover;
+}
+
+zany NodeImpl::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken) {
+    for (auto link : out_param->links) {
+        if (link->toparam == in_param) {
+            link->bTraceAndTaken = true;
+            break;
+        }
+    }
+    bAllOutputTaken = checkAllOutputLinkTraced();
+    return out_param->spObject;
 }
 
 std::vector<zany> NodeImpl::get_output_objs() {

@@ -21,6 +21,7 @@ struct Graph;
 struct Session;
 struct NodeImpl;
 struct GlobalVariableManager;
+struct ObjectRecorder;
 struct IObject;
 struct INodeClass;
 struct GlobalState;
@@ -45,6 +46,7 @@ struct Session {
     std::unique_ptr<AssetsMgr> assets;
     std::unique_ptr<GlobalVariableManager> globalVariableManager;
     std::unique_ptr<FunctionManager> funcManager;
+    std::unique_ptr<ObjectRecorder> m_recorder;
 
     ZENO_API Session();
     ZENO_API ~Session();
@@ -80,6 +82,7 @@ struct Session {
     ZENO_API void defNodeClass(INode*(*ctor)(), std::string const &id, Descriptor const &desc = {});
     ZENO_API void defNodeClass2(INode*(*ctor)(), std::string const& nodecls, CustomUI const& customui);
     ZENO_API void defNodeClass3(INode*(*ctor)(), const char* pName, Descriptor const& desc = {});
+    ZENO_API zeno::CustomUI getOfficalUIDesc(const std::string& clsname);
     //ZENO_API void defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase);
     ZENO_API void beginLoadModule(const std::string& module_name);
     ZENO_API void uninstallModule(const std::string& module_name);

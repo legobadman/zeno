@@ -402,8 +402,8 @@ void DisplayWidget::onPlayClicked(bool bChecked)
     }
 }
 
-void DisplayWidget::submit(zeno::render_reload_info render_summary) {
-
+void DisplayWidget::submit(const zeno::render_reload_info& info) {
+    zeno::render_reload_info render_summary = info;
     render_summary.current_ui_graph;
     render_summary.policy = zeno::Reload_Calculation;
 
@@ -485,7 +485,7 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     submit(infos);
 }
 
-void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info info) {
+void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString, const zeno::render_reload_info& info) {
     if (bSucceed) {
         submit(info);
     }

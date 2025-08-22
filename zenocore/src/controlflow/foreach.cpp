@@ -230,6 +230,7 @@ namespace zeno {
         int m_increment = ZImpl(get_input2<int>("Increment"));
         int m_start_value = ZImpl(get_input2<int>("Start Value"));
         int m_stop_condition = ZImpl(get_input2<int>("Stop Condition"));
+        bool output_list = get_input2_bool("Output List");
 
         //construct the `result` object
         m_iterate_object = iterate_object;
@@ -278,15 +279,20 @@ namespace zeno {
                 }
 
                 //先兼容Houdini，直接以merge的方式返回，如果日后有需求，再提供选项返回list
-                if (m_collect_objs->size() != 0) {
-                    if (auto geo = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(m_collect_objs->m_impl->get(0))) {
-                        auto mergedObj = zeno::mergeObjects(m_collect_objs);
-                        ZImpl(set_output("Output Object", mergedObj));
-                        return;
-                    }
+                if (output_list) {
+                    set_output("Output Object", m_collect_objs);
                 }
-                ZImpl(set_output("Output Object", m_collect_objs));
-                return;
+                else {
+                    if (m_collect_objs->size() != 0) {
+                        if (auto geo = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(m_collect_objs->m_impl->get(0))) {
+                            auto mergedObj = zeno::mergeObjects(m_collect_objs);
+                            set_output("Output Object", mergedObj);
+                            return;
+                        }
+                    }
+                    //如果收集的对象里没有几何对象，那就直接输出list
+                    set_output("Output Object", m_collect_objs);
+                }
             }
             else {
                 assert(false);
@@ -296,7 +302,6 @@ namespace zeno {
         else {
             throw makeError<UnimplError>("only support By Count or By Container at ForeachEnd");
         }
-        ZImpl(set_output("Output Object", nullptr));
     }
 
     void ForEachEnd::clearCalcResults() {
@@ -348,7 +353,8 @@ namespace zeno {
             ParamPrimitive("Iterations", gParamType_Int, 10, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
             ParamPrimitive("Increment", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
             ParamPrimitive("Start Value", gParamType_Int, 0, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
-            ParamPrimitive("Stop Condition", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';")
+            ParamPrimitive("Stop Condition", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
+            ParamPrimitive("Output List", gParamType_Bool, false, zeno::Checkbox, Any())
         },
         {
             {gParamType_IObject, "Output Object"}

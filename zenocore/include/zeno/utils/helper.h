@@ -47,6 +47,7 @@ namespace zeno {
     ZENO_API std::string objPathToStr(ObjPath path);
     ObjPath strToObjPath(const std::string& str);
     bool getParamInfo(const CustomUI& customui, std::vector<ParamPrimitive>& inputs, std::vector<ParamPrimitive>& outputs);
+    zeno::ParamType findParamType(const CustomUI& customui, bool bInput, const std::string& name);
     bool isPrimitiveType(const ParamType type);
     ZENO_API PrimitiveParams customUiToParams(const CustomUIParams& customparams);
     ZENO_API void parseUpdateInfo(const CustomUI& customui, ParamsUpdateInfo& infos);

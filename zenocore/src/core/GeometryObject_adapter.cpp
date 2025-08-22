@@ -3,6 +3,7 @@
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/interfaceutil.h>
+#include <zeno/core/ObjectRecorder.h>
 
 
 namespace zeno
@@ -17,10 +18,12 @@ namespace zeno
     void GeometryObject_Adapter::Delete() {}
 
     GeometryObject_Adapter::GeometryObject_Adapter() {
+        zeno::getSession().m_recorder->m_geoms.insert(this);
     }
 
     GeometryObject_Adapter::~GeometryObject_Adapter() {
         Delete();
+        zeno::getSession().m_recorder->m_geoms.erase(this);
     }
 
     void GeometryObject_Adapter::inheritAttributes(

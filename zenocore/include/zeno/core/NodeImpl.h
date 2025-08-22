@@ -232,6 +232,11 @@ namespace zeno
         virtual container_elem_update_info get_default_output_container_info();
         void reportStatus(bool bDirty, NodeRunStatus status);
 
+        zany takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
+        zeno::reflect::Any takeOutputPrim(PrimitiveParam* out_param, PrimitiveParam* in_param, bool& bAllOutputTaken);
+        void mark_takeover();
+        bool is_takenover() const;
+
         template <class T>
         std::shared_ptr<T> get_input(std::string const& id) const {
             auto obj = get_input(id);
@@ -301,6 +306,7 @@ namespace zeno
         template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
         std::set<std::pair<std::string, std::string>> resolveReferSource(const zeno::reflect::Any& param_defl);
         void initReferLinks(PrimitiveParam* target_param);
+        bool checkAllOutputLinkTraced();
 
         //preApply是先解决所有输入参数（上游）的求值问题
         void preApply(CalcContext* pContext);
@@ -328,7 +334,9 @@ namespace zeno
         bool m_bView = false;
         bool m_bypass = false;
         bool m_nocache = false;
+
         bool m_dirty = true;
+        bool m_takenover = false;   //标记为nocache的节点，在计算完毕后，其输出被“移动”到下游节点后，当前节点处于takenover的状态，即，不脏且无法取出数据
 
         zeno::reflect::TypeBase* m_pTypebase = nullptr;
 
