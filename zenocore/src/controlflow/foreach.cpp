@@ -73,9 +73,10 @@ namespace zeno {
         else if (m_fetch_mehod == "Element of Object") {
             //TODO
             ZImpl(set_output("Output Object", nullptr));
-            return;
         }
-        ZImpl(set_output("Output Object", nullptr));
+        else {
+            ZImpl(set_output("Output Object", nullptr));
+        }
     }
 
     int ForEachBegin::get_current_iteration() {
@@ -341,6 +342,10 @@ namespace zeno {
         }
         m_last_collect_objs.clear();
         m_last_collect_objs = m_collect_objs->m_impl->get();
+        if (get_input2_bool("Clear Cache In ForEach Begin")) {
+            ForEachBegin* foreach_begin = get_foreach_begin();
+            foreach_begin->m_pAdapter->mark_takeover();
+        }
     }
 
 
@@ -354,7 +359,8 @@ namespace zeno {
             ParamPrimitive("Increment", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
             ParamPrimitive("Start Value", gParamType_Int, 0, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
             ParamPrimitive("Stop Condition", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
-            ParamPrimitive("Output List", gParamType_Bool, false, zeno::Checkbox, Any())
+            ParamPrimitive("Output List", gParamType_Bool, false, zeno::Checkbox, Any()),
+            ParamPrimitive("Clear Cache In ForEach Begin", gParamType_Bool, false, zeno::Checkbox, Any())
         },
         {
             {gParamType_IObject, "Output Object"}
