@@ -140,6 +140,73 @@ namespace zeno {
         }
     }
 
+    static ZfxVector anyToZfxVector(Any const& var) {
+        if (!var.has_value())
+            return ZfxVector();
+        if (get_type<bool>() == var.type()) {
+            int res = any_cast<bool>(var);
+            return std::vector<int>{ res };
+        }
+        else if (get_type<int>() == var.type()) {
+            return std::vector<int>{ any_cast<int>(var) };
+        }
+        else if (get_type<float>() == var.type()) {
+            return std::vector<float>{ any_cast<float>(var) };
+        }
+        else if (get_type<std::string>() == var.type()) {
+            return std::vector<std::string>{ zeno::any_cast_to_string(var) };
+        }
+        else if (get_type<const char*>() == var.type()) {
+            return std::vector<std::string>{ zeno::any_cast_to_string(var) };
+        }
+        else if (get_type<zeno::vec2i>() == var.type()) {
+            auto vec = any_cast<zeno::vec2i>(var);
+            return std::vector{ glm::vec2{ vec[0], vec[1] } };
+        }
+        else if (get_type<zeno::vec3i>() == var.type()) {
+            auto vec = any_cast<zeno::vec3i>(var);
+            return std::vector{ glm::vec3{ vec[0], vec[1], vec[2] } };
+        }
+        else if (get_type<zeno::vec4i>() == var.type()) {
+            auto vec = any_cast<zeno::vec4i>(var);
+            return std::vector{ glm::vec4{ vec[0], vec[1], vec[2], vec[3] } };
+        }
+        else if (get_type<zeno::vec2f>() == var.type()) {
+            auto vec = any_cast<zeno::vec2f>(var);
+            return std::vector{ glm::vec2{ vec[0], vec[1] } };
+        }
+        else if (get_type<zeno::vec3f>() == var.type()) {
+            auto vec = any_cast<zeno::vec3f>(var);
+            return std::vector{ glm::vec3{ vec[0], vec[1], vec[2] } };
+        }
+        else if (get_type<zeno::vec4f>() == var.type()) {
+            auto vec = any_cast<zeno::vec4f>(var);
+            return std::vector{ glm::vec4{ vec[0], vec[1], vec[2], vec[3] } };
+        }
+        else if (get_type<zeno::PrimVar>() == var.type()) {
+            zeno::PrimVar primvar = any_cast<zeno::PrimVar>(var);
+            return std::visit([](zeno::PrimVar&& pvar) -> ZfxVector {
+                using T = std::decay_t<decltype(pvar)>;
+                if constexpr (std::is_same_v<int, T>) {
+                    return std::vector<int>{ std::get<int>(pvar) };
+                }
+                else if constexpr (std::is_same_v<float, T>) {
+                    return std::vector<float>{ std::get<float>(pvar) };
+                }
+                else if constexpr (std::is_same_v<std::string, T>) {
+                    return std::vector<std::string>{ std::get<std::string>(pvar) };
+                }
+                else {
+                    return ZfxVector();
+                }
+                }, primvar);
+        }
+        else {
+            assert(false);
+            return ZfxVector();
+        }
+    }
+
     static zfxvariant anyToZfxVariant(Any const& var) {
         if (!var.has_value())
             return zfxvariant();
@@ -245,9 +312,8 @@ namespace zeno {
 
     template<typename Operator>
     ZfxVariable calc_exp(const ZfxVariable& lhs, const ZfxVariable& rhs, const ZfxElemFilter& filter, Operator method) {
-
-        int N1 = lhs.value.size();
-        int N2 = rhs.value.size();
+        int N1 = lhs.size();
+        int N2 = rhs.size();
         int minsize = min(N1, N2);
         int maxsize = max(N1, N2);
         if (N1 != N2) {
@@ -256,166 +322,228 @@ namespace zeno {
         }
 
         ZfxVariable res;
-        res.value.resize(maxsize);
 
-        for (int i = 0; i < maxsize; i++)
-        {
-            if (!filter[i])
-                continue;
+        std::visit([&](const auto& lhs_vec, const auto& rhs_vec) {
+            using T1 = std::decay_t<decltype(lhs_vec)>;
+            using E1 = typename T1::value_type;
+            using T2 = std::decay_t<decltype(rhs_vec)>;
+            using E2 = typename T2::value_type;
+            using Op = std::decay_t<decltype(method)>;
 
-            const zfxvariant& _lhs = N1 <= i ? lhs.value[0] : lhs.value[i];
-            const zfxvariant& _rhs = N2 <= i ? rhs.value[0] : rhs.value[i];
-
-            res.value[i] = std::visit([method](auto&& lval, auto&& rval)->zfxvariant {
-                using T = std::decay_t<decltype(lval)>;
-                using E = std::decay_t<decltype(rval)>;
-                using Op = std::decay_t<decltype(method)>;
-
-                if constexpr (std::is_same_v<Op, std::modulus<>>) {
-                    if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
-                        return method((int)lval, (int)rval);
+            if constexpr (std::is_same_v<Op, std::modulus<>>) {
+                std::vector<int> result(maxsize);
+                for (int i = 0; i < maxsize; i++) {
+                    if (!filter[i])
+                        continue;
+                    if constexpr ((std::is_same_v<E1, int> && std::is_same_v<E2, int>) ||
+                            (std::is_same_v<E1, int> && std::is_same_v<E2, float>) ||
+                            (std::is_same_v<E1, float> && std::is_same_v<E2, int>) ||
+                            (std::is_same_v<E1, float> && std::is_same_v<E2, float>))
+                    {
+                        int lval = lhs_vec[std::min(i, N1-1)];
+                        int rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(lval, rval);
                     }
-                    else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, float>) {
-                        return method(lval, (int)rval);
+                    else {
+                        throw makeError<UnimplError>("error type for mudulus");
                     }
-                    else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, int>) {
-                        return method((int)lval, rval);
-                    }
-                    else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, float>) {
-                        return method((int)lval, (int)rval);
-                    }
-                    throw makeError<UnimplError>("error type for mudulus");
                 }
-                else if constexpr (std::is_same_v<Op, glmdot<>>) {
-                    if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<E, glm::vec2>) {
-                        return method(lval, rval);
+                res.value = result;
+            }
+            else if constexpr (std::is_same_v<Op, glmdot<>>)
+            {
+                if constexpr (std::is_same_v<E1, E2> &&
+                    (std::is_same_v<E1, glm::vec2> ||
+                        std::is_same_v<E1, glm::vec3> ||
+                        std::is_same_v<E1, glm::vec4>))
+                {
+                    std::vector<float> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1-1)];
+                        const auto& rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(lval, rval);
                     }
-                    else if constexpr (std::is_same_v<T, glm::vec3> && std::is_same_v<E, glm::vec3>) {
-                        return method(lval, rval);
-                    }
-                    else if constexpr (std::is_same_v<T, glm::vec4> && std::is_same_v<E, glm::vec4>) {
-                        return method(lval, rval);
-                    }
+                    res.value = result;
+                }
+                else {
                     throw makeError<UnimplError>("error type for glmdot");
-                } 
-                else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, int>) {
-                    return method(lval, rval);
-                } else if constexpr (std::is_same_v<T, int> && std::is_same_v<E, float>) {
-                    return method(E(lval), rval);
-                } else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, int>) {
-                    return method(lval, T(rval));
-                } else if constexpr (std::is_same_v<T, float> && std::is_same_v<E, float>) {
-                    return method(lval, rval);
-                } else if constexpr (std::is_same_v<T, glm::vec2> && std::is_same_v<T, E> ||
-                    std::is_same_v<T, glm::vec3> && std::is_same_v<T, E> ||
-                    std::is_same_v<T, glm::vec4> && std::is_same_v<T, E>)
+                }
+            }
+            else if constexpr (
+                (std::is_same_v<E1, int> || std::is_same_v<E1, float>) &&
+                (std::is_same_v<E2, int> || std::is_same_v<E2, float>))
+            {
+                if constexpr (std::is_same_v<E1, E2> && std::is_same_v<E1, int>) {
+                    std::vector<E1> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        int lval = lhs_vec[std::min(i, N1-1)];
+                        int rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(lval, rval);
+                    }
+                    res.value = result;
+                }
+                else {
+                    //意味着bool运算也可能会用float
+                    std::vector<float> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        float lval = lhs_vec[std::min(i, N1-1)];
+                        float rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(lval, rval);
+                    }
+                    res.value = result;
+                }
+            }
+            else if constexpr (
+                std::is_same_v<E1, E2> &&
+                (std::is_same_v<E1, glm::vec2> ||
+                 std::is_same_v<E1, glm::vec3> ||
+                 std::is_same_v<E2, glm::vec4>))
+            {
+                if constexpr (std::is_same_v<Op, std::less_equal<>> ||
+                    std::is_same_v<Op, std::less<>> ||
+                    std::is_same_v<Op, std::greater<>> ||
+                    std::is_same_v<Op, std::greater_equal<>> ||
+                    std::is_same_v<Op, std::logical_or<>> || 
+                    std::is_same_v<Op, std::logical_and<>> ||
+                    std::is_same_v<Op, std::equal_to<>> ||
+                    std::is_same_v<Op, std::not_equal_to<>>)
                 {
-                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::less<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::greater<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else
-                    {
-                        return method(lval, rval);
-                    }
-                } else if constexpr(std::is_same_v<T, glm::vec2> && (std::is_same_v<int, E> || std::is_same_v<float, E>) ||
-                    std::is_same_v<T, glm::vec3> && (std::is_same_v<int, E> || std::is_same_v<float, E>) ||
-                    std::is_same_v<T, glm::vec4> && (std::is_same_v<int, E> || std::is_same_v<float, E>))
+                    throw makeError<UnimplError>("not support boolean exp for glm::vec");
+                }
+                else
                 {
-                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    } else if constexpr (std::is_same_v<Op, std::less<>>) {
-                        throw makeError<UnimplError>("");
-                    } else if constexpr (std::is_same_v<Op, std::greater<>>) {
-                        throw makeError<UnimplError>("");
-                    } else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    } else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
-                        throw makeError<UnimplError>("");
-                    } else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
-                        throw makeError<UnimplError>("");
-                    } else {
-                        return method(lval, T(rval));
+                    std::vector<E1> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1-1)];
+                        const auto& rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(lval, rval);
                     }
+                    res.value = result;
                 }
-                else if constexpr ((std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec2> ||
-                    (std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec3> ||
-                    (std::is_same_v<int, T> || std::is_same_v<float, T>) && std::is_same_v<E, glm::vec4>) {\
-                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::less<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::greater<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else {
-                        return method(E(lval), rval);
-                    }
-                } else if constexpr (std::is_same_v<T, glm::mat3> && std::is_same_v<T, E> ||
-                    std::is_same_v<T, glm::mat4> && std::is_same_v<T, E> ||
-                    std::is_same_v<T, glm::mat2> && std::is_same_v<T, E>) {
-
-                    if constexpr (std::is_same_v<Op, std::less_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::less<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::greater<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::greater_equal<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::multiplies<>>)
-                    {
-                        //glm的实现里，乘法是顺序相反的，比如A*B, 其实是我们理解的B * A.
-                        return method(rval, lval);
-                    }
-                    else if constexpr (std::is_same_v<Op, std::logical_or<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else if constexpr (std::is_same_v<Op, std::logical_and<>>) {
-                        throw makeError<UnimplError>("");
-                    }
-                    else {
-                        return method(lval, rval);
-                    }
-                }
-                else if constexpr ((std::is_same_v<Op, std::equal_to<>> || std::is_same_v<Op, std::not_equal_to<>>) &&
-                    std::is_same_v<T, std::string> && std::is_same_v<T, E>) {
-                    return method(lval, rval);
-                }
-                else{
+            }
+            else if constexpr (
+                std::is_same_v<E1, glm::vec2> && (std::is_same_v<int, E2> || std::is_same_v<float, E2>) ||
+                std::is_same_v<E1, glm::vec3> && (std::is_same_v<int, E2> || std::is_same_v<float, E2>) ||
+                std::is_same_v<E2, glm::vec4> && (std::is_same_v<int, E2> || std::is_same_v<float, E2>))
+            {
+                if constexpr (std::is_same_v<Op, std::less_equal<>> ||
+                    std::is_same_v<Op, std::less<>> ||
+                    std::is_same_v<Op, std::greater<>> ||
+                    std::is_same_v<Op, std::greater_equal<>> ||
+                    std::is_same_v<Op, std::logical_or<>> ||
+                    std::is_same_v<Op, std::logical_and<>> ||
+                    std::is_same_v<Op, std::equal_to<>> ||
+                    std::is_same_v<Op, std::not_equal_to<>>) {
                     throw makeError<UnimplError>("");
                 }
-            }, _lhs, _rhs);
-        }
+                else
+                {
+                    std::vector<E1> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1-1)];
+                        const auto& rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(lval, E1(rval));
+                    }
+                    res.value = result;
+                }
+            }
+            else if constexpr (
+                (std::is_same_v<int, E1> || std::is_same_v<float, E1>) && std::is_same_v<E2, glm::vec2> ||
+                (std::is_same_v<int, E1> || std::is_same_v<float, E1>) && std::is_same_v<E2, glm::vec3> ||
+                (std::is_same_v<int, E1> || std::is_same_v<float, E1>) && std::is_same_v<E2, glm::vec4>)
+            {
+                if constexpr (std::is_same_v<Op, std::less_equal<>> ||
+                    std::is_same_v<Op, std::less<>> ||
+                    std::is_same_v<Op, std::greater<>> ||
+                    std::is_same_v<Op, std::greater_equal<>> ||
+                    std::is_same_v<Op, std::logical_or<>> ||
+                    std::is_same_v<Op, std::logical_and<>> ||
+                    std::is_same_v<Op, std::equal_to<>> ||
+                    std::is_same_v<Op, std::not_equal_to<>>) {
+                    throw makeError<UnimplError>("");
+                }
+                else
+                {
+                    std::vector<E2> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1-1)];
+                        const auto& rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(E2(lval), rval);
+                    }
+                    res.value = result;
+                }
+            }
+            else if constexpr (
+                std::is_same_v<E1, glm::mat3> && std::is_same_v<E1, E2> ||
+                std::is_same_v<E1, glm::mat4> && std::is_same_v<E1, E2> ||
+                std::is_same_v<E1, glm::mat2> && std::is_same_v<E1, E2>)
+            {
+                if constexpr (
+                    std::is_same_v<Op, std::less_equal<>> ||
+                    std::is_same_v<Op, std::less<>> ||
+                    std::is_same_v<Op, std::greater_equal<>> ||
+                    std::is_same_v<Op, std::greater<>> ||
+                    std::is_same_v<Op, std::logical_or<>> ||
+                    std::is_same_v<Op, std::logical_and<>> ||
+                    std::is_same_v<Op, std::equal_to<>> ||
+                    std::is_same_v<Op, std::not_equal_to<>>) {
+                    throw makeError<UnimplError>("");
+                }
+                else if constexpr (std::is_same_v<Op, std::multiplies<>>)
+                {
+                    //glm的实现里，乘法是顺序相反的，比如A*B, 其实是我们理解的B * A.
+                    std::vector<E1> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1-1)];
+                        const auto& rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(rval, lval);
+                    }
+                    res.value = result;
+                }
+                else {
+                    std::vector<E1> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1-1)];
+                        const auto& rval = rhs_vec[std::min(i, N2-1)];
+                        result[i] = method(lval, E1(rval));
+                    }
+                    res.value = result;
+                }
+            }
+            else if constexpr (
+                (std::is_same_v<Op, std::equal_to<>> || std::is_same_v<Op, std::not_equal_to<>>) &&
+                std::is_same_v<E1, std::string> && std::is_same_v<E1, E2>)
+            {
+                std::vector<int> result(maxsize);
+                for (int i = 0; i < maxsize; i++) {
+                    if (!filter[i])
+                        continue;
+                    const auto& lval = lhs_vec[std::min(i, N1-1)];
+                    const auto& rval = rhs_vec[std::min(i, N2-1)];
+                    result[i] = method(lval, E1(rval));
+                }
+                res.value = result;
+            }
+            else {
+                throw makeError<UnimplError>("unknown op or data type when executing `call_exp`");
+            }
+            }, lhs.value, rhs.value);
         return res;
     }
 
@@ -442,81 +570,96 @@ namespace zeno {
     }
 
     static void set_array_element(ZfxVariable& zfxarr, ZfxVariable idxarr, const ZfxVariable& zfxvalue) {
-        for (int i = 0; i < zfxarr.value.size(); i++) {
-            auto& arr = zfxarr.value[i];
-            auto& val = zfxvalue.value.size() == 1 ? zfxvalue.value[0] : zfxvalue.value[i];
-            int idx = idxarr.value.size() == 1 ? get_zfxvar<int>(idxarr.value[0]) : get_zfxvar<int>(idxarr.value[i]);
+        std::visit([&](auto& target_vec, const auto& idx_vec, const auto& value_vec) {
+            using T = std::decay_t<decltype(target_vec)>;
+            using T_ElementType = typename T::value_type;
+            using E = std::decay_t<decltype(value_vec)>;
+            using E_ElementType = typename E::value_type;
+            using IDX = std::decay_t<decltype(idx_vec)>;
+            using IDX_TYPE = typename IDX::value_type;
 
-            std::visit([idx](auto& arr, auto& value) {
-                using T = std::decay_t<decltype(arr)>;
-                using V = std::decay_t<decltype(value)>;
-                //mat取一层索引可能就是vec...
-                if constexpr ((std::is_same_v<T, zfxintarr> || std::is_same_v<T, zfxfloatarr>) &&
-                    std::is_arithmetic_v<V>) {
-                    arr[idx] = value;
+            if constexpr (std::is_same_v<IDX_TYPE, int> || std::is_same_v<IDX_TYPE, float>) {
+                //检查索引大小合法性
+                int idx = idx_vec.size() == 1 ? idx_vec[0] : -1;
+
+                if constexpr ((std::is_same_v<T_ElementType, float> ||
+                    std::is_same_v<T_ElementType, int>) &&
+                    (std::is_same_v<E_ElementType, float> ||
+                        std::is_same_v<E_ElementType, int>))
+                {
+                    int N = target_vec.size();
+                    if (idx_vec.size() == 1) {
+                        target_vec[idx_vec[0]] = value_vec[idx_vec[0]];
+                    }
+                    else {
+                        for (int i = 0; i < N; i++) {
+                            int idx = idx_vec[i];
+                            target_vec[idx] = value_vec[idx];
+                        }
+                    }
                 }
-                else if constexpr ((std::is_same_v<T, glm::vec2> ||
-                    std::is_same_v<T, glm::vec3> ||
-                    std::is_same_v<T, glm::vec4>) && std::is_same_v<V, float>) {
-                    arr[idx] = value;
+                else if constexpr (std::is_same_v<T_ElementType, E_ElementType>)
+                {
+                    int N = target_vec.size();
+                    if (idx_vec.size() == 1) {
+                        target_vec[idx_vec[0]] = value_vec[idx_vec[0]];
+                    }
+                    else {
+                        for (int i = 0; i < N; i++) {
+                            int idx = idx_vec[i];
+                            target_vec[idx] = value_vec[idx];
+                        }
+                    }
                 }
-            }, arr, val);
-        }
+                else {
+                    throw makeError<UnimplError>("unsupport type to call `set_array_element`");
+                }
+            }
+            else {
+                throw makeError<UnimplError>("[zfx::set_array_element]idx type should be `int` or `float`");
+            }
+        }, zfxarr.value, idxarr.value, zfxvalue.value);
     }
 
     static ZfxVariable get_array_element(const ZfxVariable& arr, const ZfxVariable& varidx) {
-        int idx = 0;
-        int nIdx = varidx.value.size();
-        if (nIdx == 1) {
-            idx = get_zfxvar<int>(varidx.value[0]);
-        }
-        else {
-            assert(arr.value.size() == nIdx);
-        }
+        //取的元素是指一个数据的分量，而不是某一个位元（点线面）的数据
+        return std::visit([&](const auto& vec, const auto& idxvec)->ZfxVariable {
+            using T = std::decay_t<decltype(vec)>;
+            using E = typename T::value_type;
+            using IDX = std::decay_t<decltype(idxvec)>;
+            using IDX_TYPE = typename IDX::value_type;
 
-        ZfxVariable res;
-#if 0
-        if (false && arr.bArray) {
-            //形如 int[] vec3[] float[] 这种
-            for (int i = 0; i < nIdx; i++)
-            {
-                int idx = get_zfxvar<int>(varidx.value[i]);
-                res.value.push_back(arr.value[idx]);
-            }
-        }
-        else
-#endif
-        {
-            for (int i = 0; i < arr.value.size(); i++) {
-                if (varidx.value.size() == 1)
-                    idx = get_zfxvar<int>(varidx.value[0]);
-                else
-                    idx = get_zfxvar<int>(varidx.value[i]);
+            if constexpr (std::is_same_v<IDX_TYPE, int> || std::is_same_v<IDX_TYPE, float>) {
+                if constexpr (std::is_same_v<E, zfxintarr> ||
+                    std::is_same_v<E, zfxfloatarr> ||
+                    //std::is_same_v<E, zfxstringarr> ||
+                    //std::is_same_v<E, zfxvec2arr> ||
+                    //std::is_same_v<E, zfxvec3arr> ||
+                    //std::is_same_v<E, zfxvec4arr> ||
+                    std::is_same_v<E, glm::vec2> ||
+                    std::is_same_v<E, glm::vec3> ||
+                    std::is_same_v<E, glm::vec4>/* ||
+                    std::is_same_v<E, glm::mat2> ||
+                    std::is_same_v<E, glm::mat3> ||
+                    std::is_same_v<E, glm::mat4>*/) {
 
-                res.value.push_back(std::visit([idx](auto&& arg) -> zfxvariant {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, zfxintarr> ||
-                        std::is_same_v<T, zfxfloatarr> ||
-                        std::is_same_v<T, zfxstringarr> ||
-                        std::is_same_v<T, zfxvec2arr> ||
-                        std::is_same_v<T, zfxvec3arr> ||
-                        std::is_same_v<T, zfxvec4arr> ||
-                        std::is_same_v<T, glm::vec2> ||
-                        std::is_same_v<T, glm::vec3> ||
-                        std::is_same_v<T, glm::vec4> ||
-                        std::is_same_v<T, glm::mat2> ||
-                        std::is_same_v<T, glm::mat3> ||
-                        std::is_same_v<T, glm::mat4>
-                        ) {
-                        return (T(arg))[idx];
+                    ZfxVariable res;
+                    std::vector<float> ret_vec(vec.size());
+                    for (int i = 0; i < vec.size(); i++) {
+                        int idx = (idxvec.size() == 1) ? idxvec[0] : idxvec[i];
+                        ret_vec[i] = vec[i][idx];
                     }
-                    else {
-                        throw makeError<UnimplError>("get elemvar from arr");
-                    }
-                }, arr.value[i]));
+                    res.value = std::move(ret_vec);
+                    return res;
+                }
+                else {
+                    throw makeError<UnimplError>("no support type to call `get_array_element`");
+                }
             }
-        }
-        return res;
+            else {
+                throw makeError<UnimplError>("[zfx::get_array_element]idx type should be `int` or `float`");
+            }
+            }, arr.value, varidx.value);
     }
 
     static ZfxVariable get_element_by_name(const ZfxVariable& arr, const std::string& name) {
@@ -530,7 +673,7 @@ namespace zeno {
             throw makeError<UnimplError>("Indexing Exceed");
         }
         ZfxVariable varidx;
-        varidx.value.push_back(idx);
+        varidx.value = std::vector{ idx };
         return get_array_element(arr, varidx);
     }
 
@@ -542,29 +685,30 @@ namespace zeno {
         else if (name == "w") idx = 3;
         else throw makeError<UnimplError>("index error.");
         ZfxVariable varidx;
-        varidx.value.push_back(idx);
+        varidx.value = std::vector{ idx };
         set_array_element(arr, varidx, value);
     }
 
     static void selfIncOrDec(ZfxVariable& var, bool bInc) {
-        for (auto& val : var.value) {
-            std::visit([bInc](auto&& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
-                    bInc ? (T)arg++ : (T)arg--;
+        std::visit([&](auto& vec) {
+            using T = std::decay_t<decltype(vec)>;
+            using E = typename T::value_type;
+            if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                for (auto& elem : vec) {
+                    elem++;
                 }
-                else {
-                    throw makeError<UnimplError>("Type Error");
-                }
-            }, val);
-        }
+            }
+            else {
+                throw makeError<UnimplError>("only support `int` and `float` to self inc or dec");
+            }
+            }, var.value);
     }
 
     std::vector<ZfxVariable> FunctionManager::process_args(std::shared_ptr<ZfxASTNode> parent, ZfxElemFilter& filter, ZfxContext* pContext) {
         std::vector<ZfxVariable> args;
         for (auto pChild : parent->children) {
             ZfxVariable argval = execute(pChild, filter, pContext);
-            args.push_back(argval);
+            args.emplace_back(argval);
         }
         return args;
     }
@@ -614,141 +758,140 @@ namespace zeno {
         return true;
     }
 
-    void FunctionManager::validateVar(operatorVals vartype, ZfxVariable& newvars) {
-        for (auto& newvar : newvars.value) {
-            switch (vartype)
-            {
-            case TYPE_INT: {
-                if (std::holds_alternative<float>(newvar)) {
-                    newvar = (int)std::get<float>(newvar);
+    void FunctionManager::validateVar(operatorVals vartype, ZfxVariable& vars) {
+        std::visit([&](auto& vec) {
+            using T = std::decay_t<decltype(vec)>;
+            using E = typename T::value_type;
+            if constexpr (std::is_same_v<E, float>) {
+                switch (vartype) {
+                case TYPE_INT: {
+                    std::vector<int> newvars(vec.size());
+                    for (int i = 0; i < vec.size(); i++) {
+                        newvars[i] = vec[i];
+                    }
+                    vars.value = newvars;
+                    break;
                 }
-                else if (std::holds_alternative<int>(newvar)) {
-
+                case TYPE_FLOAT: break;
+                default: {
+                    throw makeError<UnimplError>("type dismatch `float`");
                 }
-                else {
-                    throw makeError<UnimplError>("type dismatch TYPE_INT");
                 }
-                break;
             }
-            case TYPE_INT_ARR: {
-                if (std::holds_alternative<zfxfloatarr>(newvar)) {
-                    zfxintarr intarr;
-                    for (auto&& val : std::get<zfxfloatarr>(newvar))
-                        intarr.push_back(val);
-                    newvar = intarr;
+            else if constexpr (std::is_same_v<E, int>) {
+                switch (vartype) {
+                case TYPE_FLOAT: {
+                    std::vector<float> newvars(vec.size());
+                    for (int i = 0; i < vec.size(); i++)
+                        newvars[i] = vec[i];
+                    vars.value = newvars;
+                    break;
                 }
-                else if (!std::holds_alternative<zfxintarr>(newvar)) {
-                    throw makeError<UnimplError>("type dismatch TYPE_INT_ARR");
+                case TYPE_INT: break;
+                default: {
+                    throw makeError<UnimplError>("type dismatch `int`");
                 }
-                break;
+                }
             }
-            case TYPE_FLOAT: {
-                if (std::holds_alternative<float>(newvar)) {
-
+            else if constexpr (std::is_same_v<E, zfxintarr>) {
+                switch (vartype) {
+                case TYPE_FLOAT_ARR: {
+                    std::vector<zfxfloatarr> newvars(vec.size());
+                    for (int i = 0; i < vec.size(); i++) {
+                        newvars[i].resize(vec[i].size());
+                        for (int j = 0; j < newvars[i].size(); j++) {
+                            newvars[i][j] = vec[i][j];
+                        }
+                    }
+                    vars.value = newvars;
+                    break;
                 }
-                else if (std::holds_alternative<int>(newvar)) {
-                    newvar = (float)std::get<int>(newvar);
+                case TYPE_INT_ARR: break;
+                default: throw makeError<UnimplError>("type dismatch `zfxintarr`");
                 }
-                else {
-                    throw makeError<UnimplError>("type dismatch TYPE_FLOAT");
-                }
-                break;
             }
-            case TYPE_FLOAT_ARR: {
-                if (std::holds_alternative<zfxintarr>(newvar)) {
-                    zfxfloatarr floatarr;
-                    for (auto&& val : std::get<zfxintarr>(newvar))
-                        floatarr.push_back(val);
-                    newvar = floatarr;
+            else if constexpr (std::is_same_v<E, zfxfloatarr>) {
+                switch (vartype) {
+                case TYPE_INT_ARR: {
+                    std::vector<zfxintarr> newvars(vec.size());
+                    for (int i = 0; i < vec.size(); i++) {
+                        newvars[i].resize(vec[i].size());
+                        for (int j = 0; j < newvars[i].size(); j++) {
+                            newvars[i][j] = vec[i][j];
+                        }
+                    }
+                    vars.value = newvars;
+                    break;
                 }
-                else if (!std::holds_alternative<zfxfloatarr>(newvar)) {
-                    throw makeError<UnimplError>("type dismatch TYPE_FLOAT_ARR");
+                case TYPE_VECTOR2: {
+                    std::vector<glm::vec2> newvars(vec.size());
+                    for (int i = 0; i < vec.size(); i++) {
+                        if (vec[i].size() != 2) throw makeError<UnimplError>("num of elements of arr dismatch");
+                        newvars[i] = { vec[i][0], vec[i][1] };
+                    }
+                    break;
                 }
-                break;
+                case TYPE_VECTOR3: {
+                    std::vector<glm::vec3> newvars(vec.size());
+                    for (int i = 0; i < vec.size(); i++) {
+                        if (vec[i].size() != 3) throw makeError<UnimplError>("num of elements of arr dismatch");
+                        newvars[i] = { vec[i][0], vec[i][1], vec[i][2] };
+                    }
+                    break;
+                }
+                case TYPE_VECTOR4: {
+                    std::vector<glm::vec4> newvars(vec.size());
+                    for (int i = 0; i < vec.size(); i++) {
+                        if (vec[i].size() != 4) throw makeError<UnimplError>("num of elements of arr dismatch");
+                        newvars[i] = { vec[i][0], vec[i][1], vec[i][2], vec[i][3] };
+                    }
+                    break;
+                }
+                case TYPE_FLOAT_ARR: break;
+                default: throw makeError<UnimplError>("type dismatch `zfxfloatarr`");
+                }
             }
-            case TYPE_STRING: {
-                if (!std::holds_alternative<std::string>(newvar)) {
+            else if constexpr (std::is_same_v<E, std::string>) {
+                if (vartype != TYPE_STRING) {
                     throw makeError<UnimplError>("type dismatch TYPE_STRING");
                 }
-                break;
             }
-            case TYPE_STRING_ARR: {
-                if (!std::holds_alternative<zfxstringarr>(newvar)) {
+            else if constexpr (std::is_same_v<E, zfxstringarr>) {
+                if (vartype != TYPE_STRING_ARR) {
                     throw makeError<UnimplError>("type dismatch TYPE_STRING_ARR");
                 }
-                break;
             }
-            case TYPE_VECTOR2: {
-                if (std::holds_alternative<zfxfloatarr>(newvar)) {
-                    zfxfloatarr arr = std::get<zfxfloatarr>(newvar);
-                    if (arr.size() != 2) {
-                        throw makeError<UnimplError>("num of elements of arr dismatch");
-                    }
-                    glm::vec2 vec = { arr[0], arr[1] };
-                    newvar = vec;
-                }
-                else if (std::holds_alternative<glm::vec2>(newvar)) {
-
-                }
-                else {
+            else if constexpr (std::is_same_v<E, glm::vec2>) {
+                if (vartype != TYPE_VECTOR2) {
                     throw makeError<UnimplError>("type dismatch TYPE_VECTOR2");
                 }
-                break;
             }
-            case TYPE_VECTOR3: {
-                if (std::holds_alternative<zfxfloatarr>(newvar)) {
-                    zfxfloatarr arr = std::get<zfxfloatarr>(newvar);
-                    if (arr.size() != 3) {
-                        throw makeError<UnimplError>("num of elements of arr dismatch");
-                    }
-                    glm::vec3 vec = { arr[0], arr[1], arr[2] };
-                    newvar = vec;
-                }
-                else if (std::holds_alternative<glm::vec3>(newvar)) {
-
-                }
-                else {
+            else if constexpr (std::is_same_v<E, glm::vec3>) {
+                if (vartype != TYPE_VECTOR3) {
                     throw makeError<UnimplError>("type dismatch TYPE_VECTOR3");
                 }
-                break;
             }
-            case TYPE_VECTOR4: {
-                if (std::holds_alternative<zfxfloatarr>(newvar)) {
-                    zfxfloatarr arr = std::get<zfxfloatarr>(newvar);
-                    if (arr.size() != 4) {
-                        throw makeError<UnimplError>("num of elements of arr dismatch");
-                    }
-                    glm::vec4 vec = { arr[0], arr[1], arr[2], arr[3] };
-                    newvar = vec;
-                }
-                else if (std::holds_alternative<glm::vec4>(newvar)) {
-
-                }
-                else {
+            else if constexpr (std::is_same_v<E, glm::vec4>) {
+                if (vartype != TYPE_VECTOR4) {
                     throw makeError<UnimplError>("type dismatch TYPE_VECTOR4");
                 }
-                break;
             }
-            case TYPE_MATRIX2: {
-                if (!std::holds_alternative<glm::mat2>(newvar)) {
-                    throw makeError<UnimplError>("type dismatch TYPE_MATRIX2");
+            else if constexpr (std::is_same_v<E, glm::mat2>) {
+                if (vartype != TYPE_MATRIX2) {
+                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR2");
                 }
-                break;
             }
-            case TYPE_MATRIX3: {
-                if (!std::holds_alternative<glm::mat3>(newvar)) {
-                    throw makeError<UnimplError>("type dismatch TYPE_MATRIX3");
+            else if constexpr (std::is_same_v<E, glm::mat3>) {
+                if (vartype != TYPE_MATRIX3) {
+                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR3");
                 }
-                break;
             }
-            case TYPE_MATRIX4: {
-                if (!std::holds_alternative<glm::mat4>(newvar)) {
-                    throw makeError<UnimplError>("type dismatch TYPE_MATRIX4");
+            else if constexpr (std::is_same_v<E, glm::mat4>) {
+                if (vartype != TYPE_MATRIX4) {
+                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR4");
                 }
-                break;
             }
-            }
-        }
+            }, vars.value);
     }
 
     ZfxVariable FunctionManager::parseArray(std::shared_ptr<ZfxASTNode> pNode, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -761,105 +904,98 @@ namespace zeno {
             return ZfxVariable();
         }
 
-        zfxvariant current;
+        zfxfloatarr floatarr;
+        zfxstringarr strarr;
+        glm::mat2 m2;
+        glm::mat3 m3;
+        glm::mat4 m4;
+
         operatorVals dataType = UNDEFINE_OP;
         for (int idx = 0; idx < args.size(); idx++) {
             auto& arg = args[idx];
-            if (std::holds_alternative<int>(arg.value[0])) {
-                if (dataType == UNDEFINE_OP) {
+
+            std::visit([&](auto& vec) {
+                using T = std::decay_t<decltype(vec)>;
+                using E = typename T::value_type;
+                if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                    if (dataType != TYPE_FLOAT_ARR && dataType != UNDEFINE_OP)
+                        throw makeError<UnimplError>("data type inconsistent `float`");
                     dataType = TYPE_FLOAT_ARR;
-                    current = zfxfloatarr();
+                    floatarr.push_back(vec[0]);
                 }
-                if (dataType == TYPE_FLOAT_ARR) {
-                    auto& arr = std::get<zfxfloatarr>(current);
-                    arr.push_back(std::get<int>(arg.value[0]));
-                }
-                else {
-                    throw makeError<UnimplError>("data type inconsistent");
-                }
-            }
-            else if (std::holds_alternative<float>(arg.value[0])) {
-                if (dataType != UNDEFINE_OP && dataType != TYPE_FLOAT_ARR) {
-                    throw makeError<UnimplError>("data type inconsistent");
-                }
-                if (dataType == UNDEFINE_OP) {
-                    dataType = TYPE_FLOAT_ARR;
-                    current = zfxfloatarr();
-                }
-                if (dataType == TYPE_FLOAT_ARR) {
-                    auto& arr = std::get<zfxfloatarr>(current);
-                    arr.push_back(std::get<float>(arg.value[0]));
-                }
-            }
-            else if (std::holds_alternative<std::string>(arg.value[0])) {
-                if (dataType != UNDEFINE_OP && dataType != TYPE_STRING_ARR) {
-                    throw makeError<UnimplError>("data type inconsistent");
-                }
-                if (dataType == UNDEFINE_OP) {
+                else if constexpr (std::is_same_v<E, std::string>) {
+                    if (dataType != TYPE_STRING_ARR && dataType != UNDEFINE_OP)
+                        throw makeError<UnimplError>("data type inconsistent `string`");
                     dataType = TYPE_STRING_ARR;
-                    current = zfxstringarr();
+                    strarr.push_back(vec[0]);
                 }
-                if (dataType == TYPE_STRING_ARR) {
-                    auto& arr = std::get<zfxstringarr>(current);
-                    arr.push_back(std::get<std::string>(arg.value[0]));
-                }
-            }
-            //不考虑intarr，因为glm的vector/matrix都是储存float
-            else if (std::holds_alternative<zfxfloatarr>(arg.value[0])) {
-                if (dataType != UNDEFINE_OP && dataType != TYPE_MATRIX2 && dataType != TYPE_MATRIX3 && dataType != TYPE_MATRIX4) {
-                    throw makeError<UnimplError>("data type inconsistent");
-                }
-
-                auto& arr = std::get<zfxfloatarr>(arg.value[0]);
-
-                if (dataType == UNDEFINE_OP) {
-                    if (arr.size() == 2) {
-                        dataType = TYPE_MATRIX2;
-                        current = glm::mat2();
+                else if constexpr (std::is_same_v<E, zfxfloatarr>) {
+                    if (dataType != UNDEFINE_OP && dataType != TYPE_MATRIX2 && dataType != TYPE_MATRIX3 && dataType != TYPE_MATRIX4) {
+                        throw makeError<UnimplError>("data type inconsistent");
                     }
-                    else if (arr.size() == 3) {
-                        dataType = TYPE_MATRIX3;
-                        current = glm::mat3();
-                    }
-                    else if (arr.size() == 4) {
-                        dataType = TYPE_MATRIX4;
-                        current = glm::mat4();
-                    }
-                }
 
-                //{{0, 1}, {2, 3}}
-                if (dataType == TYPE_MATRIX2 && arr.size() == 2 && idx < 2) {
-                    auto& mat = std::get<glm::mat2>(current);
-                    mat[idx][0] = arr[0];
-                    mat[idx][1] = arr[1];
+                    auto& arr = vec[0];
+                    if (dataType == UNDEFINE_OP) {
+                        if (arr.size() == 2) {
+                            dataType = TYPE_MATRIX2;
+                        }
+                        else if (arr.size() == 3) {
+                            dataType = TYPE_MATRIX3;
+                        }
+                        else if (arr.size() == 4) {
+                            dataType = TYPE_MATRIX4;
+                        }
+                    }
+
+                    //{{0, 1}, {2, 3}}
+                    if (dataType == TYPE_MATRIX2 && arr.size() == 2 && idx < 2) {
+                        m2[idx][0] = arr[0];
+                        m2[idx][1] = arr[1];
+                    }
+                    //{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}
+                    else if (dataType == TYPE_MATRIX3 && arr.size() == 3 && idx < 3) {
+                        m3[idx][0] = arr[0];
+                        m3[idx][1] = arr[1];
+                        m3[idx][2] = arr[2];
+                    }
+                    //{{1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}, {0, 0, 1, 1}}
+                    else if (dataType == TYPE_MATRIX4 && arr.size() == 4 && idx < 4) {
+                        m4[idx][0] = arr[0];
+                        m4[idx][1] = arr[1];
+                        m4[idx][2] = arr[2];
+                        m4[idx][3] = arr[3];
+                    }
+                    else {
+                        throw makeError<UnimplError>("mat element dims inconsistent");
+                    }
                 }
-                //{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}
-                else if (dataType == TYPE_MATRIX3 && arr.size() == 3 && idx < 3) {
-                    auto& mat = std::get<glm::mat3>(current);
-                    mat[idx][0] = arr[0];
-                    mat[idx][1] = arr[1];
-                    mat[idx][2] = arr[2];
-                }
-                //{{1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}, {0, 0, 1, 1}}
-                else if (dataType == TYPE_MATRIX4 && arr.size() == 4 && idx < 4) {
-                    auto& mat = std::get<glm::mat4>(current);
-                    mat[idx][0] = arr[0];
-                    mat[idx][1] = arr[1];
-                    mat[idx][2] = arr[2];
-                    mat[idx][3] = arr[3];
+                else if constexpr (std::is_same_v<T, zfxintarr>) {
+                    //不考虑intarr，因为glm的vector/matrix都是储存float
+                    throw makeError<UnimplError>("unsupported type to construct array");
                 }
                 else {
-                    throw makeError<UnimplError>("mat element dims inconsistent");
+                    throw makeError<UnimplError>("unsupported type to construct array");
                 }
-            }
-            else {
-                throw makeError<UnimplError>("data type inconsistent");
-            }
+            }, arg.value);
         }
 
         ZfxVariable res;
         res.bArray = true;
-        res.value.push_back(current);
+        if (dataType == TYPE_FLOAT_ARR) {
+            res.value = std::vector<zfxfloatarr>{ floatarr };
+        }
+        else if (dataType == TYPE_STRING_ARR) {
+            res.value = std::vector<zfxstringarr>{ strarr };
+        }
+        else if (dataType == TYPE_MATRIX2) {
+            res.value = std::vector<glm::mat2>{ m2 };
+        }
+        else if (dataType == TYPE_MATRIX3) {
+            res.value = std::vector<glm::mat3>{ m3 };
+        }
+        else if (dataType == TYPE_MATRIX4) {
+            res.value = std::vector<glm::mat4>{ m4 };
+        }
         return res;
     }
 
@@ -901,26 +1037,35 @@ namespace zeno {
     }
 
     bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const {
-        int N = cond.value.size();
-        assert(N == filter.size() || N == 1);
-        ifFilter = filter;
-        elseFilter = filter;
-        bool bret = false;
-        for (int i = 0; i < cond.value.size(); i++) {
-            if (filter[i]) {
-                if (get_zfxvar<int>(cond.value[i]) ||
-                    get_zfxvar<float>(cond.value[i]))
-                {
-                    bret = true;
-                    elseFilter[i] = 0;
+        return std::visit([&](auto& vec)->bool {
+            using T = std::decay_t<decltype(vec)>;
+            using E = typename T::value_type;
+
+            if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                int N = vec.size();
+                assert(N == filter.size() || N == 1);
+                ifFilter = filter;
+                elseFilter = filter;
+                bool bret = false;
+                for (int i = 0; i < vec.size(); i++) {
+                    if (filter[i]) {
+                        if (vec[i])
+                        {
+                            bret = true;
+                            elseFilter[i] = 0;
+                        }
+                        else
+                        {
+                            ifFilter[i] = 0;
+                        }
+                    }
                 }
-                else
-                {
-                    ifFilter[i] = 0;
-                }
+                return bret;
             }
-        }
-        return bret;
+            else {
+                throw makeError<UnimplError>("not support type");
+            }
+        }, cond.value);
     }
 
     static void commitToObject(ZfxContext* pContext, const ZfxVariable& zfxvar, const std::string& attr_name, ZfxElemFilter& filter) {
@@ -979,30 +1124,38 @@ namespace zeno {
                 const auto& P = spPrim->attr<vec3f>("pos");
                 ZfxVariable res;
                 res.bAttr = true;
+                std::vector<glm::vec3> vecpos(P.size());
+                vecpos.reserve(P.size());
                 for (auto pos : P) {
-                    res.value.push_back(glm::vec3(pos[0], pos[1], pos[2]));
+                    vecpos.push_back(glm::vec3(pos[0], pos[1], pos[2]));
                 }
+                res.value = std::move(vecpos);
                 return res;
             }
             if (attr_name == "ptnum")
             {
                 int N = spPrim->verts->size();
                 ZfxVariable res;
-                res.value.resize(N);
                 res.bAttr = true;
+                std::vector<int> seq(N);
+                seq.reserve(N);
                 for (int i = 0; i < N; i++)
-                    res.value[i] = i;
+                    seq[i] = i;
+                res.value = seq;
                 return res;
             }
             if (attr_name == "nrm")
             {
                 if (spPrim->has_attr("nrm")) {
                     const auto& nrms = spPrim->attr<vec3f>("nrm");
+                    std::vector<glm::vec3> _nrms;
+                    _nrms.reserve(nrms.size());
+                    for (auto nrm : nrms) {
+                        _nrms.push_back(glm::vec3(nrm[0], nrm[1], nrm[2]));
+                    }
                     ZfxVariable res;
                     res.bAttr = true;
-                    for (auto nrm : nrms) {
-                        res.value.push_back(glm::vec3(nrm[0], nrm[1], nrm[2]));
-                    }
+                    res.value = _nrms;
                     return res;
                 }
                 else {
@@ -1016,19 +1169,19 @@ namespace zeno {
                 const auto& P = spGeo->points_pos();
                 ZfxVariable res;
                 res.bAttr = true;
-                for (auto pos : P) {
-                    res.value.push_back(glm::vec3(pos[0], pos[1], pos[2]));
-                }
+                res.value = zvec3toglm(P);
                 return res;
             }
             if (attr_name == "ptnum")
             {
                 int N = spGeo->npoints();
                 ZfxVariable res;
-                res.value.resize(N);
                 res.bAttr = true;
+                std::vector<int> seq(N);
+                seq.reserve(N);
                 for (int i = 0; i < N; i++)
-                    res.value[i] = i;
+                    seq[i] = i;
+                res.value = seq;
                 return res;
             }
             if (attr_name == "nrm")
@@ -1056,22 +1209,30 @@ namespace zeno {
     }
 
     ZfxVariable FunctionManager::trunkVariable(ZfxVariable origin, const ZfxElemFilter& filter) {
-        int ndim = origin.value.size();
-        int nfilter = filter.size();
-        if (nfilter == ndim)
-            return origin;
-        else if (nfilter < ndim) {
-            //裁剪origin
-            ZfxVariable truncate;
-            truncate.value.resize(nfilter);
-            std::copy(origin.value.begin(), origin.value.begin() + nfilter, truncate.value.begin());
-            return truncate;
-        }
-        else {
-            //扩大origin
-            origin.value.resize(nfilter);
-            return origin;
-        }
+        return std::visit([&](auto& vec)->ZfxVariable {
+            using T = std::decay_t<decltype(vec)>;
+            using E = typename T::value_type;
+
+            int ndim = vec.size();
+            int nfilter = filter.size();
+            if (nfilter == ndim) {
+                return origin;
+            }
+            else if (nfilter < ndim) {
+                //裁剪origin
+                ZfxVariable truncate;
+                auto trunc_vec = vec;
+                trunc_vec.resize(nfilter);
+                std::copy(vec.begin(), vec.begin() + nfilter, trunc_vec.begin());
+                truncate.value = std::move(vec);
+                return truncate;
+            }
+            else {
+                //扩大origin
+                vec.resize(nfilter);
+                return origin;
+            }
+            }, origin.value);
     }
 
     ZfxVariable FunctionManager::execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -1084,9 +1245,7 @@ namespace zeno {
             case STRING:
             case ATTR_VAR:
             case BOOLTYPE: {
-                ZfxVariable var;
-                var.value.push_back(root->value);
-                return var;
+                return initVarFromZvar(root->value);
             }
             case ZENVAR: {
                 //这里指的是取zenvar的值用于上层的计算或者输出，赋值并不会走到这里
@@ -1260,13 +1419,23 @@ namespace zeno {
                     if (!nodeparam.empty()) {
                         auto spNode = pContext->spNode;
                         bool bInputParam = pContext->param_constrain.bInput;
-                        bool bVal = get_zfxvar<int>(res.value[0]);
-                        if (targetvar == "visible") {
-                            pContext->param_constrain.update_nodeparam_prop = spNode->update_param_visible(nodeparam, bVal, bInputParam);
-                        }
-                        else if (targetvar == "enabled") {
-                            pContext->param_constrain.update_nodeparam_prop = spNode->update_param_enable(nodeparam, bVal, bInputParam);
-                        }
+
+                        std::visit([&](auto& vec) {
+                            using T = std::decay_t<decltype(vec)>;
+                            using E = typename T::value_type;
+                            if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                                bool bVal = get_zfxvar<int>(vec[0]);
+                                if (targetvar == "visible") {
+                                    pContext->param_constrain.update_nodeparam_prop = spNode->update_param_visible(nodeparam, bVal, bInputParam);
+                                }
+                                else if (targetvar == "enabled") {
+                                    pContext->param_constrain.update_nodeparam_prop = spNode->update_param_enable(nodeparam, bVal, bInputParam);
+                                }
+                            }
+                            else {
+                                throw makeError<UnimplError>("not support type when switch `ASSIGNMENT`");
+                            }
+                            }, res.value);
                         return ZfxVariable();
                     }
 
@@ -1314,14 +1483,30 @@ namespace zeno {
                         if (zenvarNode->bAttr) {
                             //属性的赋值不能修改其原来的维度。
                             //assert(res.value.size() <= var.value.size());
-                            if (res.value.size() < var.value.size()) {
-                                //如果右边的值的容器大小比当前赋值属性要小，很可能是单值，先只考虑这种情况。
-                                assert(res.value.size() == 1);
-                                std::fill(var.value.begin(), var.value.end(), res.value[0]);
-                            }
-                            else {
-                                var = std::move(res);
-                            }
+                            std::visit([&](auto& res_value, auto& var_value) {
+                                using T1 = std::decay_t<decltype(res_value)>;
+                                using E1 = typename T1::value_type;
+                                using T2 = std::decay_t<decltype(var_value)>;
+                                using E2 = typename T2::value_type;
+
+                                constexpr bool are_int_or_float_v =
+                                    (std::is_same_v<E1, int> || std::is_same_v<E1, float>) &&
+                                    (std::is_same_v<E2, int> || std::is_same_v<E2, float>);
+
+                                if constexpr (std::is_same_v<E1, E2> || are_int_or_float_v) {
+                                    if (res_value.size() < var_value.size()) {
+                                        //如果右边的值的容器大小比当前赋值属性要小，很可能是单值，先只考虑这种情况。
+                                        assert(res_value.size() == 1);
+                                        std::fill(var_value.begin(), var_value.end(), res_value[0]);
+                                    }
+                                    else {
+                                        var = std::move(res);
+                                    }
+                                }
+                                else {
+                                    throw makeError<UnimplError>("cannot assign when the type is not convertiable");
+                                }
+                                }, res.value, var.value);
                             return ZfxVariable();
                         }
                         else {
@@ -1348,53 +1533,53 @@ namespace zeno {
                     switch (vartype)
                     {
                     case TYPE_INT: {
-                        newvar.value.push_back(0);
+                        newvar.value = std::vector<int>{ 0 };
                         break;
                     }
                     case TYPE_INT_ARR: {
-                        newvar.value.push_back(zfxintarr());
+                        newvar.value = std::vector<zfxintarr>{ zfxintarr() };
                         break;
                     }
                     case TYPE_FLOAT: {
-                        newvar.value.push_back(0.f);
+                        newvar.value = std::vector<float>{ 0.f };
                         break;
                     }
                     case TYPE_FLOAT_ARR: {
-                        newvar.value.push_back(zfxfloatarr());
+                        newvar.value = std::vector<zfxfloatarr>{ zfxfloatarr() };
                         break;
                     }
                     case TYPE_STRING: {
-                        newvar.value.push_back("");
+                        newvar.value = std::vector<std::string>{ "" };
                         break;
                     }
                     case TYPE_STRING_ARR: {
-                        newvar.value.push_back(zfxstringarr());
+                        newvar.value = std::vector<zfxstringarr>{ zfxstringarr() };
                         break;
                     }
                     case TYPE_VECTOR2: {
-                        newvar.value.push_back(glm::vec2());
+                        newvar.value = std::vector<glm::vec2>{ glm::vec2() };
                         break;
                     }
                     case TYPE_VECTOR2_ARR: {
-                        newvar.value.push_back(zfxvec2arr());
+                        newvar.value = std::vector<zfxvec2arr>{ zfxvec2arr() };
                         break;
                     }
                     case TYPE_VECTOR3: {
-                        newvar.value.push_back(glm::vec3());
+                        newvar.value = std::vector<glm::vec3>{ glm::vec3() };
                         break;
                     }
                     case TYPE_VECTOR3_ARR: {
-                        newvar.value.push_back(zfxvec3arr());
+                        newvar.value = std::vector<zfxvec3arr>{ zfxvec3arr() };
                         break;
                     }
-                    case TYPE_VECTOR4:  newvar.value.push_back(glm::vec4()); break;
+                    case TYPE_VECTOR4:  newvar.value = std::vector<glm::vec4>{ glm::vec4() }; break;
                     case TYPE_VECTOR4_ARR: {
-                        newvar.value.push_back(zfxvec4arr());
+                        newvar.value = std::vector<zfxvec4arr>{ zfxvec4arr() };
                         break;
                     }
-                    case TYPE_MATRIX2:  newvar.value.push_back(glm::mat2()); break;
-                    case TYPE_MATRIX3:  newvar.value.push_back(glm::mat3()); break;
-                    case TYPE_MATRIX4:  newvar.value.push_back(glm::mat4()); break;
+                    case TYPE_MATRIX2:  newvar.value = std::vector<glm::mat2>{ glm::mat2() }; break;
+                    case TYPE_MATRIX3:  newvar.value = std::vector<glm::mat3>{ glm::mat3() }; break;
+                    case TYPE_MATRIX4:  newvar.value = std::vector<glm::mat4>{ glm::mat4() }; break;
                     }
                 }
                 else {
@@ -1432,34 +1617,38 @@ namespace zeno {
                 if (args.size() != 1) {
                     throw makeError<UnimplError>("num args of unary op should be 1");
                 }
-                const ZfxVariable& arg = args[0];
-                const int N = arg.value.size();
-                ZfxVariable result;
-                result.value.resize(N);
-                switch (root->opVal) {
-                case NOT: {
-                    for (int i = 0; i < N; i++)
-                    {
-                        result.value[i] = std::visit([&](auto&& argval)->zfxvariant {
-                            using T = std::decay_t<decltype(argval)>;
-                            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
-                                return (int)(argval <= 0);
-                            }
-                            else if constexpr (std::is_same_v<T, std::string>) {
-                                return !argval.empty();
-                            }
-                            else {
-                                //TODO: vectype
-                                throw makeError<UnimplError>("not support of nor operator for other types.");
-                            }
-                        }, arg.value[i]);
-                    }
-                    break;
-                }
-                default: {
+                if (root->opVal != NOT) {
                     throw makeError<UnimplError>("unknown unary op.");
                 }
-                }
+
+                const ZfxVariable& arg = args[0];
+                ZfxVariable result;
+
+                std::visit([&](const auto& vec) {
+                    using T = std::decay_t<decltype(vec)>;
+                    using E = typename T::value_type;
+                    const int N = vec.size();
+
+                    if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                        auto _vec = std::vector<int>(N);
+                        for (int i = 0; i < N; i++) {
+                            _vec[i] = vec[i];
+                        }
+                        result.value = _vec;
+                    }
+                    else if constexpr (std::is_same_v<E, std::string>) {
+                        auto _vec = std::vector<int>(N);
+                        for (int i = 0; i < N; i++) {
+                            _vec[i] = !vec[i].empty();
+                        }
+                        result.value = _vec;
+                    }
+                    else {
+                        //TODO: vectype
+                        throw makeError<UnimplError>("not support of nor operator for other types.");
+                    }
+                }, arg.value);
+
                 return result;
             }
             case FOUROPERATIONS: {
@@ -1486,35 +1675,46 @@ namespace zeno {
                 }
 
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
-                ZfxVariable arg = args[0];
-                const int N = arg.value.size();
-                ZfxVariable result;
-                result.value.resize(N);
+                const ZfxVariable& arg = args[0];
 
-                for (int i = 0; i < N; i++)
-                {
-                    result.value[i] = std::visit([&](auto& arg) -> zfxvariant {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
-                            return -1 * arg;
+                ZfxVariable result;
+                std::visit([&](auto& vec) {
+                    using T = std::decay_t<decltype(vec)>;
+                    using E = typename T::value_type;
+
+                    const int N = vec.size();
+
+                    if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                        std::vector<E> newvec(N);
+                        for (int i = 0; i < N; i++)
+                            newvec[i] = -1 * vec[i];
+                        result.value = std::move(newvec);
+                    }
+                    else if constexpr (std::is_same_v<E, glm::vec2>) {
+                        std::vector<E> newvec(N);
+                        for (int i = 0; i < N; i++) {
+                            newvec[i] = glm::vec2(-1*vec[i][0], -1*vec[i][1]);
                         }
-                        else if constexpr (std::is_same_v<T, glm::vec2>)
-                        {
-                            return glm::vec2{ -1 * arg[0], -1 * arg[1] };
+                        result.value = std::move(newvec);
+                    }
+                    else if constexpr (std::is_same_v<E, glm::vec3>) {
+                        std::vector<E> newvec(N);
+                        for (int i = 0; i < N; i++) {
+                            newvec[i] = glm::vec3(-1 * vec[i][0], -1 * vec[i][1], -1 * vec[i][2]);
                         }
-                        else if constexpr (std::is_same_v<T, glm::vec3>)
-                        {
-                            return glm::vec3{ -1 * arg[0], -1 * arg[1], -1 * arg[2] };
+                        result.value = std::move(newvec);
+                    }
+                    else if constexpr (std::is_same_v<E, glm::vec4>) {
+                        std::vector<E> newvec(N);
+                        for (int i = 0; i < N; i++) {
+                            newvec[i] = glm::vec4(-1 * vec[i][0], -1 * vec[i][1], -1 * vec[i][2], -1 * vec[i][3]);
                         }
-                        else if constexpr (std::is_same_v<T, glm::vec4>)
-                        {
-                            return glm::vec4{ -1 * arg[0], -1 * arg[1], -1 * arg[2], -1 * arg[3] };
-                        }
-                        else {
-                            throw makeError<UnimplError>("NEGATIVE number type is invalid");
-                        }
-                        }, arg.value[i]);
-                }
+                        result.value = std::move(newvec);
+                    }
+                    else {
+                        throw makeError<UnimplError>("not support type in `NEGATIVE`");
+                    }
+                    }, arg.value);
                 return result;
             }
             case ATTR_VISIT: {
@@ -1522,109 +1722,80 @@ namespace zeno {
                     throw makeError<UnimplError>("op args at attr visit");
                 }
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
-                std::string visit_attr = get_zfxvar<std::string>(args[1].value[0]);
 
-                int nVarSize = args[0].value.size();
+                return std::visit([&](auto& vec, const auto& arg_visit_attr) -> ZfxVariable {
+                    using T = std::decay_t<decltype(vec)>;
+                    using E = typename T::value_type;
+                    using T2 = std::decay_t<decltype(arg_visit_attr)>;
+                    using E2 = typename T2::value_type;
 
-                ZfxVariable res = std::visit([&](auto&& arg) -> ZfxVariable {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, ZfxLValue>) {
-                        return std::visit([&](auto&& nodeparam) -> zfxvariant {
-                            using E = std::decay_t<decltype(nodeparam)>;
-                            if constexpr (std::is_same_v<E, ParamPrimitive>) {
-                                if (visit_attr == "value") {
-                                    return anyToZfxVariant(nodeparam.defl);
+                    if constexpr (std::is_same_v<E2, std::string>) {
+                        const std::string& visit_attr = arg_visit_attr[0];
+
+                        if constexpr (std::is_same_v<E, ZfxLValue>) {
+                            return std::visit([&](auto&& nodeparam) -> ZfxVariable {
+                                using E3 = std::decay_t<decltype(nodeparam)>;
+                                if constexpr (std::is_same_v<E3, ParamPrimitive>) {
+                                    if (visit_attr == "value") {
+                                        return anyToZfxVector(nodeparam.defl);
+                                    }
+                                    else if (visit_attr == "connected") {
+                                        return std::vector<int>{ !nodeparam.links.empty() };
+                                    }
+                                    else if (visit_attr == "x") {
+                                        //TODO
+                                        return std::vector<float>{ 0.f };
+                                    }
+                                    else if (visit_attr == "y") {
+                                        return std::vector<float>{0.f};
+                                    }
+                                    else if (visit_attr == "z") {
+                                        return std::vector<float>{0.f};
+                                    }
+                                    else if (visit_attr == "w") {
+                                        return std::vector<float>{0.f};
+                                    }
+                                    else {
+                                        //unknown attr
+                                        throw makeError<UnimplError>("unknown attr when visit nodeparam");
+                                    }
                                 }
-                                else if (visit_attr == "connected") {
-                                    return !nodeparam.links.empty();
+                                else if constexpr (std::is_same_v<E3, ParamObject>) {
+                                    if (visit_attr == "connected") {
+                                        return std::vector<int>{ !nodeparam.links.empty() };
+                                    }
+                                    else {
+                                        throw makeError<UnimplError>("unknown attr when visit nodeparam");
+                                    }
                                 }
-                                else if (visit_attr == "x") {
-                                    //TODO
-                                    return 0.f;
-                                }
-                                else if (visit_attr == "y") {
-                                    return 0.f;
-                                }
-                                else if (visit_attr == "z") {
-                                    return 0.f;
-                                }
-                                else if (visit_attr == "w") {
-                                    return 0.f;
-                                }
-                                else {
-                                    //unknown attr
-                                    throw makeError<UnimplError>("unknown attr when visit nodeparam");
-                                }
-                            }
-                            else if constexpr (std::is_same_v<E, ParamObject>) {
-                                if (visit_attr == "connected") {
-                                    return !nodeparam.links.empty();
-                                }
-                                else {
-                                    throw makeError<UnimplError>("unknown attr when visit nodeparam");
-                                }
-                            }
-                        }, arg.var);
-                    }
-                    else if constexpr (std::is_same_v<T, glm::vec2>) {
-                        if (visit_attr == "x") {
-                            return arg[0];
+                                }, vec[0].var);
                         }
-                        else if (visit_attr == "y") {
-                            return arg[1];
+                        else if constexpr (std::is_same_v<E, glm::vec2> ||
+                            std::is_same_v<E, glm::vec3> ||
+                            std::is_same_v<E, glm::vec4>)
+                        {
+                            ZfxVariable ret;
+                            int nVarSize = vec.size();
+                            std::vector<float> ret_vec(nVarSize);
+                            int comp = 0;
+                            if (visit_attr == "x") comp = 0;
+                            else if (visit_attr == "y") comp = 1;
+                            else if (visit_attr == "z") comp = 2;
+
+                            for (int i = 0; i < nVarSize; i++) {
+                                ret_vec[i] = vec[i][comp];
+                            }
+                            ret.value = std::move(ret_vec);
+                            return ret;
                         }
                         else {
-                            throw makeError<UnimplError>("unknown comp in vec2");
-                        }
-                    }
-                    else if constexpr (std::is_same_v<T, glm::vec3>) {
-                        if (visit_attr == "x") {
-                            return arg[0];
-                        }
-                        else if (visit_attr == "y") {
-                            if (nVarSize > 1) {
-                                ZfxVariable ret;
-                                ret.value.resize(nVarSize);
-                                for (int i = 0; i < nVarSize; i++) {
-                                    auto v = get_zfxvar<glm::vec3>(args[0].value[i]);
-                                    ret.value[i] = v[1];
-                                }
-                                return ret;
-                            }
-                            else {
-                                return arg[1];
-                            }
-                        }
-                        else if (visit_attr == "z") {
-                            return arg[2];
-                        }
-                        else {
-                            throw makeError<UnimplError>("unknown comp in vec3");
-                        }
-                    }
-                    else if constexpr (std::is_same_v<T, glm::vec4>) {
-                        if (visit_attr == "x") {
-                            return arg[0];
-                        }
-                        else if (visit_attr == "y") {
-                            return arg[1];
-                        }
-                        else if (visit_attr == "z") {
-                            return arg[2];
-                        }
-                        else if (visit_attr == "w") {
-                            return arg[3];
-                        }
-                        else {
-                            throw makeError<UnimplError>("unknown comp in vec4");
+                            throw makeError<UnimplError>("not support type in scope `ATTR_VISIT`");
                         }
                     }
                     else {
-                        throw makeError<UnimplError>("only support visit attr for ZfxLvalue");
+                        throw makeError<UnimplError>("visit attr should be `string` type");
                     }
-                }, args[0].value[0]);
-
-                return res;
+                    }, args[0].value, args[1].value);
             }
             case COMPOP: {
                 //操作符
@@ -1656,7 +1827,7 @@ namespace zeno {
                 }
                 auto pCondExp = root->children[0];
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
-                if (cond.value.size() == 1) {
+                if (cond.size() == 1) {
                     //单值，不是向量
                     ZfxElemFilter newFilter, elseFilter;
                     if (hasTrue(cond, filter, newFilter, elseFilter)) {
@@ -1680,11 +1851,27 @@ namespace zeno {
                     auto pelseExp = root->children[2];
                     switch2 = execute(pelseExp, elseFilter, pContext);
 
-                    int n = cond.value.size();
-                    ret.value.resize(n);
-                    for (int i = 0; i < n; i++) {
-                        ret.value[i] = ifFilter[i] ? switch1.value[i] : switch2.value[i];
-                    }
+                    int n = cond.size();
+
+                    std::visit([&](const auto& switch1_value, const auto& switch2_value) {
+                        using T1 = std::decay_t<decltype(switch1_value)>;
+                        using E1 = typename T1::value_type;
+                        using T2 = std::decay_t<decltype(switch2_value)>;
+                        using E2 = typename T2::value_type;
+
+                        //先拿E1
+                        if constexpr (std::is_same_v<E1, E2>) {
+                            std::vector<E1> result(n);
+                            for (int i = 0; i < n; i++) {
+                                result[i] = ifFilter[i] ? switch1_value[i] : switch2_value[i];
+                            }
+                            ret.value = std::move(result);
+                        }
+                        else {
+                            throw makeError<UnimplError>("different type in `CONDEXP`");
+                        }
+                        }, switch1.value, switch2.value);
+
                     return ret;
                 }
                 throw makeError<UnimplError>("error condition on condexp");
@@ -1696,7 +1883,7 @@ namespace zeno {
                 auto pCondExp = root->children[0];
                 //todo: self inc
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
-                if (cond.value.size() == 1) {//不是向量的情况
+                if (cond.size() == 1) {//不是向量的情况
                     ZfxElemFilter newFilter, elseFilter;
                     if (hasTrue(cond, filter, newFilter, elseFilter)) {
                         auto pCodesExp = root->children[1];
@@ -1799,24 +1986,25 @@ namespace zeno {
                     const std::string& varName = get_zfxvar<std::string>(varNode->value);
                     declareVariable(varName);
 
-                    for (auto eacharr : arr.value)
-                    {
-                        std::visit([&](auto&& val) {
-                            using T = std::decay_t<decltype(val)>;
-                            if constexpr (std::is_same_v<T, zfxintarr> ||
-                                std::is_same_v<T, zfxfloatarr> ||
-                                std::is_same_v<T, zfxstringarr>) {
-
+                    std::visit([&](auto& vec) {
+                        using T = std::decay_t<decltype(vec)>;
+                        using E = typename T::value_type;
+                        if constexpr (std::is_same_v<E, zfxintarr> ||
+                            std::is_same_v<E, zfxfloatarr> ||
+                            std::is_same_v<E, zfxstringarr>)
+                        {
+                            using E2 = typename E::value_type;
+                            for (const auto& val : vec) {
                                 for (int i = 0; i < val.size(); i++) {
                                     //修改变量和索引的值为i, arrtest[i];
                                     if (idxNode) {
                                         ZfxVariable zfxvar;
-                                        zfxvar.value.push_back(i);
+                                        zfxvar.value = std::vector<int>{ i };
                                         assignVariable(idxName, zfxvar, pContext);
                                     }
 
                                     ZfxVariable zfxvar;
-                                    zfxvar.value.push_back(val[i]);
+                                    zfxvar.value = std::vector<E2>{ val[i] };
                                     assignVariable(varName, zfxvar, pContext);
 
                                     //修改定义后，再次运行code
@@ -1829,20 +2017,23 @@ namespace zeno {
                                     }
                                 }
                             }
-                            else if constexpr (std::is_same_v<T, glm::vec2> ||
-                                std::is_same_v<T, glm::vec3> ||
-                                std::is_same_v<T, glm::vec4>) {
-
+                        }
+                        else if constexpr (std::is_same_v<E, glm::vec2> ||
+                            std::is_same_v<E, glm::vec3> ||
+                            std::is_same_v<E, glm::vec4>)
+                        {
+                            using E2 = typename E::value_type;
+                            for (const auto& val : vec) {
                                 for (int i = 0; i < val.length(); i++) {
                                     //修改变量和索引的值为i, arrtest[i];
                                     if (idxNode) {
                                         ZfxVariable zfxvar;
-                                        zfxvar.value.push_back(i);
+                                        zfxvar.value = std::vector<int>{ i };
                                         assignVariable(idxName, zfxvar, pContext);
                                     }
 
                                     ZfxVariable zfxvar;
-                                    zfxvar.value.push_back(val[i]);
+                                    zfxvar.value = std::vector<E2>{ val[i] };
                                     assignVariable(varName, zfxvar, pContext);
 
                                     //修改定义后，再次运行code
@@ -1855,11 +2046,12 @@ namespace zeno {
                                     }
                                 }
                             }
-                            else {
-                                throw makeError<UnimplError>("foreach error: no array type");
-                            }
-                        }, eacharr);
-                    }
+                        }
+                        else {
+                            throw makeError<UnimplError>("not support type in `FOREACH`");
+                        }
+                        }, arr.value);
+
                     return ZfxVariable();
                 }
                 else {
@@ -2104,48 +2296,9 @@ namespace zeno {
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 const std::string& funcname = get_zfxvar<std::string>(root->value);
                 ZfxVariable result = eval(funcname, args, filter, pContext);
-                return result.value[0];
-#if 0
-                if (funcname == "ref") {
-                    if (root->children.size() != 1) throw makeError<UnimplError>();
-                    const std::string ref = std::get<std::string>(calc(root->children[0], pContext));
-                    
-                    std::vector<ZfxVariable> args;
-                    args.push_back(ZfxVariable(ref));
-                    ZfxVariable res = callFunction("ref", args, filter, pContext);
-                    return res.value[0];
-                }
-                else {
-                    //先简单匹配调用
-                    if (funcname == "sin") {
-                        if (root->children.size() != 1) throw makeError<UnimplError>();
-                        float val = std::get<float>(calc(root->children[0], pContext));
-                        return sin(val);
-                    }
-                    else if (funcname == "cos") {
-                        if (root->children.size() != 1) throw makeError<UnimplError>();
-                        float val = std::get<float>(calc(root->children[0], pContext));
-                        return cos(val);
-                    }
-                    else if (funcname == "sinh") {
-                        if (root->children.size() != 1) throw makeError<UnimplError>();
-                        float val = std::get<float>(calc(root->children[0], pContext));
-                        return sinh(val);
-                    }
-                    else if (funcname == "cosh") {
-                        if (root->children.size() != 1) throw makeError<UnimplError>();
-                        float val = std::get<float>(calc(root->children[0], pContext));
-                        return cosh(val);
-                    }
-                    else if (funcname == "rand") {
-                        if (!root->children.empty()) throw makeError<UnimplError>();
-                        return rand();
-                    }
-                    else {
-                        throw makeError<UnimplError>();
-                    }
-                }
-#endif
+                return std::visit([&](auto& vec)->zfxvariant {
+                    return vec[0];
+                    }, result.value);
             }
             }
         }

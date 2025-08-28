@@ -138,25 +138,47 @@ using zfxvariant = std::variant<int, float, std::string, ZfxLValue,
     glm::vec2, glm::vec3, glm::vec4, 
     glm::mat2, glm::mat3, glm::mat4>;
 
+using ZfxVector = std::variant<
+    std::vector<int>,
+    std::vector<float>,
+    std::vector<std::string>,
+    std::vector<ZfxLValue>,
+    std::vector<zfxintarr>,
+    std::vector<zfxfloatarr>,
+    std::vector<zfxstringarr>,
+    std::vector<zfxvec2arr>,
+    std::vector<zfxvec3arr>,
+    std::vector<zfxvec4arr>,
+    std::vector<glm::vec2>,
+    std::vector<glm::vec3>,
+    std::vector<glm::vec4>,
+    std::vector<glm::mat2>,
+    std::vector<glm::mat3>,
+    std::vector<glm::mat4>
+>;
+
+
+
 struct ZfxVariable
 {
-    std::vector<zfxvariant> value;  //如果是属性变量(bAttr=true)，那这个容器的大小就是runover（点线面）的元素个数，否则就是size=1，也可以单值表示所有属性的等值。
+    ZfxVector value;  //如果是属性变量(bAttr=true)，那这个容器的大小就是runover（点线面）的元素个数，否则就是size=1，也可以单值表示所有属性的等值。
 
     bool bAttr = false;     //是否与属性关联（好像没什么用）
     bool bAttrUpdated = false;      //ZfxVariable也记录属性值（比如@P, @N @ptnum等），此标记记录在zfx执行中，属性值是否修改了
     bool bArray = false;    //int[] float[] vectorN[]这种都array，而vec3这些不算
 
     ZfxVariable() {}
-    ZfxVariable(zfxvariant&& var) {
-        value.emplace_back(var);
+    ZfxVariable(ZfxVector&& var) {
+        value = var;
     }
-    ZfxVariable(const zfxvariant& var) {
-        value.push_back(var);
+    ZfxVariable(const ZfxVector& var) {
+        value = var;
     }
 
-    template <typename T, typename = std::enable_if_t<std::is_constructible_v<zfxvariant, T>>>
-    ZfxVariable(T&& val) {
-        value.emplace_back(std::forward<T>(val));
+    size_t size() const {
+        return std::visit([&](const auto& vec)->size_t {
+            return vec.size();
+        }, value);
     }
 };
 

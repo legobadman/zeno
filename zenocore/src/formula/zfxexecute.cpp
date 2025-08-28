@@ -7,6 +7,7 @@
 #include "zfxparser.hpp"
 #include <regex>
 #include <zeno/core/FunctionManager.h>
+#include "../utils/zfxutil.h"
 
 
 namespace zeno
@@ -59,7 +60,7 @@ zfxvariant ZfxExecute::execute_fmla() {
     ZfxElemFilter filter(1, 1);
     auto& funcMgr = zeno::getSession().funcManager;
     const ZfxVariable& res = funcMgr->execute(m_root, filter, m_context);
-    return res.value[0];
+    return zeno::zfx::getZfxVarElement(res.value, 0);
 }
 
 std::shared_ptr<ZfxASTNode> ZfxExecute::makeNewNode(nodeType type, operatorVals op, std::vector<std::shared_ptr<ZfxASTNode>> children) {

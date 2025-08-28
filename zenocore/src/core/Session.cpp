@@ -429,10 +429,12 @@ ZENO_API void Session::defNodeClass3(INode* (*ctor)(), const char* pName, Descri
     //nodeClasses.emplace(pName, std::move(cls));
 }
 
-zeno::CustomUI Session::getOfficalUIDesc(const std::string& clsname) {
+zeno::CustomUI Session::getOfficalUIDesc(const std::string& clsname, bool& bExist) {
     if (nodeClasses.find(clsname) == nodeClasses.end()) {
-        throw makeError<UnimplError>("no clsname call `" + clsname + "` when call `getOfficalUIDesc`");
+        bExist = false;
+        return zeno::CustomUI();
     }
+    bExist = true;
     return nodeClasses[clsname]->m_customui;
 }
 

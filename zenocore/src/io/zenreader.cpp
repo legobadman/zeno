@@ -407,14 +407,19 @@ namespace zenoio
             }
         }
 
-        if (bSubnetNode || bObjectParam) {
-            if (sockObj.HasMember("type")) {
-                paramType = zeno::convertToType(sockObj["type"].GetString());
-            }
+        assert(sockObj.HasMember("type"));
+        if (bSubnetNode || bObjectParam || nodeCls == "SubInput" || nodeCls == "SubOutput") {
+            paramType = zeno::convertToType(sockObj["type"].GetString());
         }
         else {
-            zeno::CustomUI descUI = zeno::getSession().getOfficalUIDesc(nodeCls);
-            paramType = findParamType(descUI, bInput, sockName);
+            bool bExist = false;
+            zeno::CustomUI descUI = zeno::getSession().getOfficalUIDesc(nodeCls, bExist);
+            if (bExist) {
+                paramType = findParamType(descUI, bInput, sockName);
+            }
+            else {
+                paramType = zeno::convertToType(sockObj["type"].GetString());
+            }
         }
 
         bool bPrimitiveType = !bObjectParam;
