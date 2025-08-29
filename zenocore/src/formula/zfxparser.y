@@ -140,7 +140,6 @@
 %%
 
 zfx-program: END {
-            std::cout << "END" << std::endl;
             $$ = driver.makeNewNode(CODEBLOCK, DEFAULT_FUNCVAL, {});
             driver.setASTResult($$);
         }
