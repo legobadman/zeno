@@ -112,7 +112,7 @@ namespace zenoui
             case zeno::WritePathEdit:
             case zeno::DirectoryPathEdit:
             {
-                if (value.type().hash_code() != gParamType_String) {
+                if (paramType != gParamType_String) {
                     ZASSERT_EXIT(false, nullptr);
                 }
                 QString text = QString::fromStdString(zeno::any_cast_to_string(value));
@@ -128,7 +128,7 @@ namespace zenoui
             }
             case zeno::Multiline:
             {
-                if (value.type().hash_code() != gParamType_String) {
+                if (paramType != gParamType_String) {
                     ZASSERT_EXIT(false, nullptr);
                 }
                 QString text = QString::fromStdString(zeno::any_cast_to_string(value));

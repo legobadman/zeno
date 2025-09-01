@@ -13,7 +13,14 @@
 #include <regex>
 
 namespace zeno {
-struct CameraNode: zeno::INode{
+struct CameraNode: zeno::INode {
+
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.iconResPath = ":/icons/node/camera.svg";
+        return ui;
+    }
+
     virtual void apply() override {
         auto camera = std::make_shared<zeno::CameraObject>();
 

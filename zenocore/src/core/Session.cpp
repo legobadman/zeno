@@ -687,6 +687,16 @@ ZENO_API bool Session::is_auto_run() const {
     return m_bAutoRun;
 }
 
+bool Session::is_frame_node(const std::string& node_cls) {
+    static std::set<std::string> frame_node_cls = {
+        "GetFrameNum",
+        "CameraNode",
+        "FlipSolver",
+        "NewFBXSceneInfo"
+    };
+    return frame_node_cls.find(node_cls) != frame_node_cls.end();
+}
+
 ZENO_API void Session::markDirtyAndCleanResult()
 {
     mainGraph->markDirtyAndCleanup();

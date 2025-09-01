@@ -39,7 +39,10 @@ namespace zeno
             FlipSolver* pNode = static_cast<FlipSolver*>(coreNode());
             //这里取到的帧未必就是当前ui的帧，因为用户可能不断滑动时间轴
             int frame = zeno::getSession().globalState->getFrameId();
-            std::string cache_path = get_input_prim<std::string>("Cache Path");
+            std::string cache_path;
+            if (has_input("Cache Path")) {
+                cache_path = get_input_prim<std::string>("Cache Path");
+            }
             zany result = pNode->checkCache(cache_path, frame);
             if (result && result->key().empty()) {
                 result->update_key(stdString2zs(get_uuid()));

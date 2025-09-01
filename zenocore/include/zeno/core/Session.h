@@ -76,6 +76,7 @@ struct Session {
     //ZENO_API 
     ZENO_API void set_auto_run(bool bOn);
     ZENO_API bool is_auto_run() const;
+    ZENO_API bool is_frame_node(const std::string& node_cls);
     ZENO_API void markDirtyAndCleanResult();
     ZENO_API std::string dumpDescriptorsJSON() const;
     ZENO_API zeno::NodeRegistry dumpCoreCates();

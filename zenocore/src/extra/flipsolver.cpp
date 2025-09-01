@@ -122,10 +122,10 @@ namespace zeno {
         const ParamPrimitive& param = m_pAdapter->get_input_prim_param("Cache Path");
         std::string cachepath;
         if (param.result.has_value()) {
-            cachepath = any_cast<std::string>(param.result);
+            cachepath = zeno::any_cast_to_string(param.result);
         }
         else {
-            cachepath = any_cast<std::string>(param.defl);
+            cachepath = zeno::any_cast_to_string(param.defl);
         }
         return cachepath;
     }
@@ -157,8 +157,8 @@ namespace zeno {
     }
 
     void FlipSolver::apply() {
-        zany init_fluid = get_input("Initialize Fluid");
-        zany static_collider = get_input("Static Collider");
+        auto init_fluid = get_input_Geometry("Initialize Fluid");
+        auto static_collider = get_input_Geometry("Static Collider");
         zany emission_source = get_input("Emission Source");
         float accuracy = get_input2_float("Accuracy");
         float timestep = get_input2_float("Timestep");
@@ -213,11 +213,11 @@ namespace zeno {
                 m_hReadPipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
                 std::vector<char> buf_initfluid, buf_static_collider;
-                bool bConvert = encodeObject(init_fluid.get(), buf_initfluid);
+                bool bConvert = encodeObject(init_fluid->toPrimitiveObject().get(), buf_initfluid);
                 if (!bConvert) {
                     throw makeError<UnimplError>("init fluid encoding failed");
                 }
-                bConvert = encodeObject(static_collider.get(), buf_static_collider);
+                bConvert = encodeObject(static_collider->toPrimitiveObject().get(), buf_static_collider);
                 if (!bConvert) {
                     throw makeError<UnimplError>("static collider encoding failed");
                 }
@@ -269,7 +269,7 @@ namespace zeno {
                 //写入
                 memcpy(pStaticCollBuf, buf_static_collider.data(), shm_staticcoll_size);
 
-#ifdef DEBUG_NODE
+                //创建进程和作业
                 auto cmdargs = zeno::format("C:/zensolver/Debug/bin/zensolver.exe --pipe-write {} --pipe-read {} --cache-path \"{}\" --start-frame {} --end-frame {}  --init-fluid \"{}\" --size-init-fluid \"{}\" --static-collider \"{}\" --size-static-collider \"{}\"",
                     (unsigned long long)m_hPipe_sovler_write, (unsigned long long)m_hPipe_solver_read, cache_path, start_frame, end_frame, shm_initname, shm_initfluid_size, shm_staiccoll_name, shm_staticcoll_size);
 
@@ -313,16 +313,6 @@ namespace zeno {
                 //从解算进程读取发来的通知
                 CreateThread(NULL, 0, bridgeBetweenUIandSolver, this, 0, &m_hIPCThread);
                 m_hReadPipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-#else
-                auto cmdargs = zeno::format("C:/zeno-master/out/build/x64-Release/bin/zensolver.exe --pipe-write {} --pipe-read {} --cache-path \"{}\" --init-fluid \"{}\" --size-init-fluid \"{}\" --static-collider \"{}\" --size-static-collider \"{}\"",
-                    m_hPipe_sovler_write, m_hPipe_solver_read, cache_path, shm_initname, shm_initfluid_size, shm_staiccoll_name, shm_staticcoll_size);
-                // 创建子进程
-                if (!CreateProcess((LPSTR)"C:/zeno-master/out/build/x64-Release/bin/zensolver.exe", (LPSTR)cmdargs.c_str(), NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &si, &m_pi)) {
-                    zeno::log_error("CreateProcess failed");
-                    return nullptr;
-                }
-#endif
             }
             else {
                 //解算进程已经在运行，但目前当前帧的cache还没结算完，只能返回空（不过返回空，也会使得程序清除脏位）
@@ -347,6 +337,7 @@ namespace zeno {
     CustomUI FlipSolver::export_customui() const {
         CustomUI ui = INode::export_customui();
         ui.uistyle.background = "#246283";
+        ui.uistyle.iconResPath = ":/icons/node/fluid.svg";
         return ui;
     }
 
@@ -368,8 +359,8 @@ namespace zeno {
 
     ZENO_CUSTOMUI_NODE(FlipSolver,
         zeno::ObjectParams{
-             zeno::ParamObject("Initialize Fluid", gParamType_IObject),
-             zeno::ParamObject("Static Collider", gParamType_IObject),
+             zeno::ParamObject("Initialize Fluid", gParamType_Geometry),
+             zeno::ParamObject("Static Collider", gParamType_Geometry),
              zeno::ParamObject("Emission Source", gParamType_IObject),
         },
         zeno::CustomUIParams{
@@ -379,7 +370,7 @@ namespace zeno {
                     ParamGroup {
                         "Solver",
                         PrimitiveParams {
-                            ParamPrimitive("Accuracy", gParamType_Int, 0.8),
+                            ParamPrimitive("Accuracy", gParamType_Float, 0.8),
                             ParamPrimitive("Max Substep", gParamType_Float, 1.0),
                             ParamPrimitive("Timestep", gParamType_Float, 0.04),
                             ParamPrimitive("Gravity", gParamType_Vec3f, zeno::vec3f(0,-9.8,0)),

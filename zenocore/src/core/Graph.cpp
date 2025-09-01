@@ -32,8 +32,6 @@
 
 namespace zeno {
 
-    static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver", "NewFBXSceneInfo" };
-
 Context::Context() = default;
 Context::~Context() = default;
 
@@ -139,7 +137,7 @@ void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_v
         frame_nodes.insert(uuid);
     }
     else {
-        if (frame_node_cls.find(cls) == frame_node_cls.end()) {
+        if (!zeno::getSession().is_frame_node(cls)) {
             frame_nodes.erase(uuid);
         }
     }
@@ -865,7 +863,7 @@ NodeImpl* Graph::createNode(
         asset_nodes.insert(uuid);
     }
 
-    if (frame_node_cls.count(cls) > 0) {
+    if (zeno::getSession().is_frame_node(cls)) {
         frame_nodes.insert(uuid);
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {

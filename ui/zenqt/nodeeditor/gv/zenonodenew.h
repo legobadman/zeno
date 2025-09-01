@@ -113,6 +113,7 @@ private:
     LeftStatusBtnGroup* m_pStatusWidgets1;
     RightStatusBtnGroup* m_pStatusWidgets2;
     ZenoImageItem* m_errorTip;
+    ZenoImageItem* m_frameNodeMark;
     QGraphicsPolygonItem* m_statusMarker;
     ZLayoutBackground* m_bodyWidget;
     ZLayoutBackground* m_headerWidget;

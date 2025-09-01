@@ -184,7 +184,9 @@ void CalculationMgr::onFrameSwitched(int frame) {
     sess.switchToFrame(frame);
 
     //如果有流体解算，直接取cache.
-    if (!sess.is_auto_run() && !sess.get_solver().empty()) {
+    //目前先不支持这种操作，原因是将流体解算和普通的图运算整合在一起，通过运行机制去获取，避免出现特例
+    if (false)//!sess.is_auto_run() && !sess.get_solver().empty())
+    {
         auto solvernode_path = sess.get_solver();
         zeno::NodeImpl* pSolverNode = sess.getNodeByUuidPath(solvernode_path);
         assert(pSolverNode);

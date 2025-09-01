@@ -2135,7 +2135,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
     });
 
 #if 1
-    if (m_name == "NewFBXPrimList1"){//}&& pContext->curr_iter == 1) {
+    if (m_name == "FlipSolver1"){//}&& pContext->curr_iter == 1) {
         int j;
         j = 0;
     }

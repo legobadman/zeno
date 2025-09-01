@@ -104,6 +104,7 @@ ZenoNodeNew::ZenoNodeNew(const NodeUtilParam &params, QGraphicsItem *parent)
     , m_NameItemTip(nullptr)
     , m_statusMarker(nullptr)
     , m_errorTip(nullptr)
+    , m_frameNodeMark(nullptr)
     , m_nameItem(nullptr)
     , m_dirtyMarker(nullptr)
 {
@@ -400,6 +401,13 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 
     pHLayout->addSpacing(ZenoStyle::dpiScaled(16.));
     const QSizeF szIcon = ZenoStyle::dpiScaledSize(QSizeF(26, 26));
+
+    if (zeno::getSession().is_frame_node(nodeCls.toStdString())) {
+        m_frameNodeMark = new ZenoImageItem(":/icons/time-frame-mark.svg", "", "", QSizeF(20, 20), headerWidget);
+        m_frameNodeMark->setPos(QPointF(-24, 28));
+        m_frameNodeMark->setToolTip(tr("Every time the frame is changed, the node will be marked dirty"));
+    }
+
     if (!iconResPath.isEmpty())
     {
         ImageElement elem;
@@ -412,12 +420,17 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
         m_nameEditor->setDefaultTextColor(QColor("#CCCCCC"));
         m_nameEditor->setTextLengthAsBounding(true);
         m_nameEditor->setFont(font2);
-        qreal ww = m_nameEditor->boundingRect().width() + ZenoStyle::dpiScaled(8);
-        m_nameEditor->setPos(-ww, 14);
+        QRectF brNameEditor = m_nameEditor->boundingRect();
+        qreal ww = brNameEditor.width() + ZenoStyle::dpiScaled(8);
+        qreal nameEditor_height = 14;
+        m_nameEditor->setPos(-ww, nameEditor_height);
         connect(m_nameEditor, &ZEditableTextItem::contentsChanged, this, [=]() {
             qreal ww = m_nameEditor->textLength() + ZenoStyle::dpiScaled(8);
-            m_nameEditor->setPos(-ww, 14);
+            m_nameEditor->setPos(-ww, nameEditor_height);
         });
+        if (m_frameNodeMark) {
+            m_frameNodeMark->setPos(-24, nameEditor_height + brNameEditor.height());
+        }
         connect(m_nameEditor, &ZGraphicsTextItem::editingFinished, this, &ZenoNodeNew::updateNodeNameByEditor);
     }
     else {
@@ -454,6 +467,8 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
             }
         });
     }
+
+
 
 #if 0
     const NodeState& state = m_index.data(QtRole::ROLE_NODE_RUN_STATE).value<NodeState>();
