@@ -9,6 +9,8 @@
 #include <zeno/utils/logger.h>
 #include <zeno/types/UserData.h>
 
+#include <tinygltf/json.hpp>
+
 namespace zeno {
 
 struct ShaderFinalize : INode {
@@ -136,9 +138,16 @@ struct ShaderFinalize : INode {
         mtl->mtlidkey = ZImpl(get_input2<std::string>("mtlid"));
         mtl->frag = std::move(code);
 
+        nlohmann::json j;
+        if (ZImpl(has_input("opacity"))) {
+            auto opacity = get_input2<float>("opacity"); // It's actually transparency not opacity
+            opacity = max(0.0f, 1.0f - opacity);
+            j["opacity"] = opacity;
+        }
+        mtl->parameters = j.dump();
+
         if (ZImpl(has_input("extensionsCode")))
             mtl->extensions = ZImpl(get_input<zeno::StringObject>("extensionsCode"))->get();
-
         {
             if (ZImpl(has_input("tex2dList"))) {
                 auto tex2dList = ZImpl(get_input<ListObject>("tex2dList"))->m_impl->get<zeno::Texture2DObject>();
@@ -163,7 +172,7 @@ struct ShaderFinalize : INode {
     }
 };
 
-//ä»¥ä¸‹æ•°æ®ç±»å‹æœ‰å¯èƒ½ä¼šæ¥æ”¶åˆ°å…¶ä»–ShaderèŠ‚ç‚¹ï¼Œè¿™æ—¶å€™ä¼ è¿‡æ¥çš„æ˜¯ShaderDataï¼Œä¸èƒ½èµ°ç±»å‹åˆ¤åˆ«ã€‚
+//ÒÔÏÂÊı¾İÀàĞÍÓĞ¿ÉÄÜ»á½ÓÊÕµ½ÆäËûShader½Úµã£¬ÕâÊ±ºò´«¹ıÀ´µÄÊÇShaderData£¬²»ÄÜ×ßÀàĞÍÅĞ±ğ¡£
 ZENDEFNODE(ShaderFinalize, {
     {
         {gParamType_Float, "base", "1"},

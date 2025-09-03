@@ -1,4 +1,4 @@
-#include "zenosubgraphscene.h"
+﻿#include "zenosubgraphscene.h"
 #include "uicommon.h"
 #include "model/graphsmanager.h"
 #include "zenosubgraphview.h"
@@ -363,8 +363,11 @@ void _ZenoSubGraphView::focusOnWithNoSelect(const QString& nodeId)
     if (pItem)
     {
         QRectF rcBounding = pItem->sceneBoundingRect();
-        rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width() / 10., rcBounding.height() / 10.);
-        fitInView(rcBounding, Qt::KeepAspectRatio);
+        //rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width() / 10., rcBounding.height() / 10.);
+        //fitInView(rcBounding, Qt::KeepAspectRatio);
+        target_scene_pos = rcBounding.center();
+        gentle_zoom(1.0);
+        centerOn(target_scene_pos);
     }
 }
 

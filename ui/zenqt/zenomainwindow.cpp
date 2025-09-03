@@ -1,4 +1,4 @@
-#include "zenomainwindow.h"
+﻿#include "zenomainwindow.h"
 #include "model/graphsmanager.h"
 #include <zeno/extra/EventCallbacks.h>
 #include <zeno/types/GenericObject.h>
@@ -1193,6 +1193,7 @@ void ZenoMainWindow::onRunTriggered(/*bool applyLightAndCameraOnly, bool applyMa
         launchParam.beginFrame = beginFrame;
         launchParam.endFrame = endFrame;
         launchParam.runtype = runtype;
+        launchParam.always = false;
         QString path = pModel->filePath();
         path = path.left(path.lastIndexOf("/"));
         launchParam.zsgPath = path;
@@ -1293,7 +1294,7 @@ void ZenoMainWindow::updateViewport(const QString& action)
             }
         }
         if (action == "newFrame") {
-            int endFrame = zeno::getSession().globalComm->maxPlayFrames() - 1;
+            int endFrame = zeno::getSession().globalComm->maxPlayFrames();
             int beginframe = m_pTimeline->fromTo().first;
             if (endFrame == beginframe) {   //run的时候起始帧计算完成后，将timeline重置为起始帧
 #if 0
@@ -1423,9 +1424,6 @@ void ZenoMainWindow::closeEvent(QCloseEvent *event)
     //killProgram();
     killOptix();
 
-    QSettings settings(zsCompanyName, zsEditor);
-    bool autoClean = settings.value("zencache-autoclean").isValid() ? settings.value("zencache-autoclean").toBool() : true;
-    bool autoRemove = settings.value("zencache-autoremove").isValid() ? settings.value("zencache-autoremove").toBool() : false;
 
     bool isClose = this->saveQuit();
     // todo: event->ignore() when saveQuit returns false?

@@ -5,6 +5,8 @@
 #include <zeno/types/UserData.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/core/Graph.h>
+#include <zeno/types/ListObject.h>
+#include <zeno/types/DictObject.h>
 
 namespace zeno {
 
@@ -79,7 +81,7 @@ ZENDEFNODE(Route, {
         {gParamType_Vec3f, "vec3f_val", "0,0,0"}
     },
     {{gParamType_IObject, "output"}},
-    {},
+    {{"enum normal lightCamera material matrix", "RunType", "normal"}},
     {"layout"},
 });
 

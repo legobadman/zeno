@@ -1,4 +1,4 @@
-#include "docktabcontent.h"
+﻿#include "docktabcontent.h"
 #include "style/zenostyle.h"
 #include "widgets/ziconbutton.h"
 #include "widgets/zlabel.h"
@@ -996,6 +996,7 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
         pToolLayout->addWidget(m_pointIndicator);
         m_uv_mode = new QCheckBox(tr("UV"));
         m_uv_mode->setStyleSheet("color: white;");
+		m_uv_mode->setMinimumWidth(1);
         pToolLayout->addWidget(m_uv_mode);
     }
     else {
@@ -1003,23 +1004,49 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
         m_background->setStyleSheet("color: white;");
         auto& ud = zeno::getSession().userData();
         m_background->setChecked(ud.get2<bool>("optix_show_background", false));
-        pToolLayout->addWidget(m_background);
         m_camera_setting = new QPushButton("Camera");
-        pToolLayout->addWidget(m_camera_setting);
-    }
+        m_pause = new QPushButton("Pause");
+        m_pause->setCheckable(true);
+        m_matNeedUpdate = new QCheckBox(tr("UpdateMat"));
+        auto& inst = ZenoSettingsManager::GetInstance();
+        QVariant varViewportUpdateMat = inst.getValue(zsViewportUpdateMat);
+        bool needUpdateMat = varViewportUpdateMat.isValid()? varViewportUpdateMat.toBool(): false;
+        zeno::getSession().userData().set2("viewport-optix-matNeedUpdate", needUpdateMat);
+        m_matNeedUpdate->setChecked(needUpdateMat);
+        m_matNeedUpdate->setStyleSheet("color: white;");
 
-    {
-    pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
         m_depth = new QCheckBox(tr("Depth[C]"));
         m_depth->setStyleSheet("color: white;");
         m_depth->setCheckState(Qt::Checked);
-        pToolLayout->addWidget(m_depth);
         m_FPN = new QCheckBox(tr("FPN[N]"));
         m_FPN->setStyleSheet("color: white;");
-        pToolLayout->addWidget(m_FPN);
         m_Reset = new QPushButton(tr("Reset"));
+    }
+
+    //允许无限窄
+    if (m_bGLView) {
+		m_cbRes->setMinimumWidth(1);
+    } else {
+        m_camera_setting->setMinimumWidth(1);
+        m_camera_setting->setMinimumWidth(1);
+        m_pause->setMinimumWidth(1);
+        m_matNeedUpdate->setMinimumWidth(1);
+        m_background->setMinimumWidth(1);
+        m_depth->setMinimumWidth(1);
+        m_FPN->setMinimumWidth(1);
+        m_Reset->setMinimumWidth(1);
+        m_cbRes->setMinimumWidth(1);
+
+        pToolLayout->addWidget(m_background);
+        pToolLayout->addWidget(m_camera_setting);
+        pToolLayout->addWidget(m_pause);
+        pToolLayout->addWidget(m_matNeedUpdate);
+        pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
+        pToolLayout->addWidget(m_depth);
+        pToolLayout->addWidget(m_FPN);
         pToolLayout->addWidget(m_Reset);
     }
+
     pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
     pToolLayout->addWidget(m_screenshoot);
     pToolLayout->addWidget(m_recordVideo);
@@ -1077,6 +1104,19 @@ void DockContent_View::initConnections()
 //                zeno::log_info("set ZOptixCameraSettingInfo");
                 m_pDisplay->onSetCamera(info);
             }
+        });
+    }
+    if (m_pause) {
+        connect(m_pause, &QPushButton::clicked, this, [=](bool bToggled) {
+            zeno::getSession().userData().set2("viewport-optix-pause", bToggled);
+        });
+    }
+    if (m_matNeedUpdate) {
+        connect(m_matNeedUpdate, &QCheckBox::stateChanged, this, [=](int state) {
+            bool bChecked = (state == Qt::Checked);
+            zeno::getSession().userData().set2("viewport-optix-matNeedUpdate", bChecked);
+            auto& inst = ZenoSettingsManager::GetInstance();
+            inst.setValue(zsViewportUpdateMat, bChecked);
         });
     }
     if (m_Reset) {

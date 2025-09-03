@@ -116,6 +116,7 @@ struct SetPhysicalCamera : INode {
         ud->set_bool("panorama_camera", get_input2_bool("panorama_camera"));
         ud->set_bool("panorama_vr180", get_input2_bool("panorama_vr180"));
         ud->set_float("pupillary_distance", get_input2_float("pupillary_distance"));
+        ud->set_float("pupillary_distance", get_input2<float>("pupillary_distance"));
 
         ZImpl(set_output("camera", std::move(camera)));
     }
@@ -127,6 +128,7 @@ ZENO_DEFNODE(SetPhysicalCamera)({
         {gParamType_Float, "aperture", "2"},
         {gParamType_Float, "shutter_speed", "0.04"},
         {gParamType_Float, "iso", "150"},
+        {gParamType_Int, "renderRatio", "1"},
         {gParamType_Bool, "aces", "0"},
         {gParamType_Bool, "exposure", "0"},
         {"bool", "exposure", "0"},
@@ -166,6 +168,11 @@ struct TargetCamera : INode {
         }else{
             camera->focalPlaneDistance = ZImpl(get_input2<float>("focalPlaneDistance"));
         }
+        camera->userData().set2("frame", get_input2<float>("frame"));
+        camera->userData().set2("is_target", int(1));
+        camera->userData().set2("refUp", refUp);
+        camera->userData().set2("target", target);
+        camera->userData().set2("AutoFocus", int(AF));
 
         ZImpl(set_output("camera", std::move(camera)));
     }
@@ -182,6 +189,7 @@ ZENO_DEFNODE(TargetCamera)({
         {gParamType_Float, "aperture", "11"},
         {gParamType_Bool,"AutoFocus","false"},
         {gParamType_Float, "focalPlaneDistance", "2.0"},
+        {"float", "frame", "0"},
     },
     {
         {"CameraObject", "camera"},
@@ -252,6 +260,8 @@ struct ScreenSpaceProjectedGrid : INode {
         float right_scale = std::tan(fov / 2) * ratio * float(width - 1) / float(raw_width - 1);
         float up_scale = std::tan(fov / 2) * float(height - 1) / float(raw_height - 1);
         prim->verts.resize(width * height);
+        auto &valid = prim->verts.add_attr<float>("valid");
+        #pragma omp parallel for
         for (auto j = 0; j <= height - 1; j++) {
             float v = float(j) / float(height - 1) * 2.0f - 1.0f;
             for (auto i = 0; i <= width - 1; i++) {
@@ -261,12 +271,10 @@ struct ScreenSpaceProjectedGrid : INode {
                 auto t = hitOnFloor(pos, ndir, sea_level);
                 if (t > 0 && t * zeno::dot(ndir, dir) < infinite) {
                     prim->verts[j * width + i] = pos + ndir * t;
+                    valid[j * width + i] = 1;
                 }
-                else {
-                    prim->verts[j * width + i] = pos + dir * infinite;
                 }
             }
-        }
         std::vector<vec3i> tris;
         tris.reserve((width - 1) * (height - 1) * 2);
         for (auto j = 0; j < height - 1; j++) {
@@ -275,24 +283,18 @@ struct ScreenSpaceProjectedGrid : INode {
                 auto _1 = j * width + i + 1;
                 auto _2 = j * width + i + 1 + width;
                 auto _3 = j * width + i + width;
+                if (valid[_0] > 0 && valid[_1] > 0 && valid[_2] > 0 ) {
                 tris.emplace_back(_0, _1, _2);
+                }
+                if (valid[_0] > 0 && valid[_2] > 0 && valid[_3] > 0 ) {
                 tris.emplace_back(_0, _2, _3);
             }
         }
+        }
         prim->tris.values = tris;
 
-        auto outs = zeno::TempNodeSimpleCaller("PrimitiveClip")
-                .set("prim", std::move(prim))
-                .set2<vec3f>("origin", pos)
-                .set2<vec3f>("direction", view)
-                .set2<float>("distance", infinite * 0.999)
-                .set2<bool>("reverse:", false)
-                .call();
 
-        // Create nodes
-        auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(outs.get("outPrim"));
-        for (auto i = 0; i < new_prim->verts.size(); i++) {
-            new_prim->verts[i][1] = sea_level;
+        set_output("prim", std::move(prim));
         }
         ZImpl(set_output("prim", std::move(new_prim)));
     }

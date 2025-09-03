@@ -10,8 +10,8 @@
 #include <zeno/utils/log.h>
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/stitching.hpp>
+//#include <opencv2/calib3d.hpp>
+//#include <opencv2/stitching.hpp>
 #include <zeno/types/ListObject.h>
 #include <Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
@@ -1335,7 +1335,7 @@ ZENDEFNODE(CreateCameraMatrix, {
     {},
     { "image" },
 });
-
+#if 0
 struct EstimateCameraMatrix : INode {
     void apply() override {
         auto image1 = get_input<PrimitiveObject>("image1");
@@ -1475,7 +1475,7 @@ ZENDEFNODE(EstimateCameraMatrix, {
     {},
     { "deprecated" },
 });
-
+#endif
 }
 }
 #endif

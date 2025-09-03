@@ -141,8 +141,7 @@ __device__ __inline__ auto EvalVolume(uint32_t& seed, float* m16, float sigma_t,
     
     vin.world2object = m16;
 
-    auto buffers = (void**)params.global_buffers;
-    optixDirectCall<void, const float4*, void**, void*, VolumeOut&>( sbt_data->dc_index, sbt_data->uniforms, buffers, (void*)&vin, out);
+    optixDirectCall<void, void*, VolumeOut&>( sbt_data->dc_index, (void*)&vin, out);
 }
 
 extern "C" __global__ void __closesthit__radiance_volume()
@@ -179,6 +178,11 @@ extern "C" __global__ void __closesthit__radiance_volume()
     {
         t1 = testPRD.maxDistance;
         surface_inside = true;
+
+        if (prd->depth == 0) {
+            prd->_tmax_ = testPRD.maxDistance;
+            prd->record = testPRD.record;
+        }
     }
 
     const float t_max = fmaxf(0.f, t1 - t0); // world space
@@ -222,27 +226,28 @@ extern "C" __global__ void __closesthit__radiance_volume()
             dt = -logf(1.0f-prob) / average(homo_out.extinction);
 
             auto pdf = expf(-homo_out.extinction * dt) * homo_out.extinction;
-            weight = (homo_out.extinction * homo_out.albedo ) / pdf;
+            weight = (homo_out.extinction * homo_out.albedo * homo_out.albedoAmp ) / pdf;
 
         } else {
 
             auto total_transmittance = expf(-homo_out.extinction * t_max);
-            dt = -logf(1.0f - prd->rndf() * (1.0f - average(total_transmittance))) / average(homo_out.extinction);
-
+            //dt = -logf(1.0f - prd->rndf() * (1.0f - average(total_transmittance))) / average(homo_out.extinction);
+            double x = 1.0 - prd->rndf() * (1.0 - average(total_transmittance));
+            dt = -log(x) / average(homo_out.extinction);
             auto cdf = 1.0f - total_transmittance;
             auto pdf = expf(-homo_out.extinction * dt) * homo_out.extinction;
-
-            weight = cdf / pdf;
+            auto e = homo_out.extinction;
+            //cdf / pdf = [ 1.0 - exp(-extinction * t_max) ] / [exp( - extinction * dt) * extinction]
+            //L'H?pital's law:
+            //lim extinction->0   cdf/pdf = [ t_max * e(-extinction * t_max) ] / [ -dt * exp( - extinction * dt) * extinction + exp( - extinction * dt )  ]
+            //weight = cdf / pdf;
+            weight.x = e.x>1e-4?cdf.x/pdf.x:(t_max * expf(-e.x * t_max))/(-dt*expf(-e.x*dt)*e.x + expf(-e.x*dt));
+            weight.y = e.y>1e-4?cdf.y/pdf.y:(t_max * expf(-e.y * t_max))/(-dt*expf(-e.y*dt)*e.y + expf(-e.y*dt));
+            weight.z = e.z>1e-4?cdf.z/pdf.z:(t_max * expf(-e.z * t_max))/(-dt*expf(-e.z*dt)*e.z + expf(-e.z*dt));
             weight *= homo_out.extinction;
 
             //auto tmp = expf(-t_max * homo_out.density);
             //dt = -logf(1.0 - prd->rndf() *(1-tmp)) / homo_out.density;
-        }
-
-        if (prd->vol.afterSingleScatter) {
-
-            dt = t_max;
-            prd->vol.afterSingleScatter = false;
         }
 
         if (dt >= t_max) {
@@ -261,10 +266,6 @@ extern "C" __global__ void __closesthit__radiance_volume()
                 float2 uu = { prd->rndf(), prd->rndf() };
                 auto pdf = hg.sample(-ray_dir, new_dir, uu);              
                 prd->samplePdf = pdf;
-            } else {
-
-                prd->vol.afterSingleScatter = true;
-                prd->_mask_ = VolumeMatMask;
             }
         }
 
@@ -279,7 +280,7 @@ extern "C" __global__ void __closesthit__radiance_volume()
         }
 
         ShadowPRD shadowPRD {};
-        shadowPRD.seed = prd->seed;
+        shadowPRD.seed = prd->seed ^ 0x9e3779b9u;
         shadowPRD.origin = new_orig; //camera sapce
         shadowPRD.attanuation = vec3(1.0f);
         
@@ -287,14 +288,31 @@ extern "C" __global__ void __closesthit__radiance_volume()
 
             pbrt::HenyeyGreenstein hg(homo_out.anisotropy);
             thisPDF = hg.p(_wo_, _wi_);
-            return homo_out.albedo * thisPDF;
+            return homo_out.albedo  * homo_out.albedoAmp;
         };
-
+        int sampleN = prd->depth<1?4:1;
         prd->depth += 1;
         prd->lightmask = VolumeMatMask;
-        DirectLighting<true>(prd, shadowPRD, new_orig+params.cam.eye, ray_dir, evalBxDF);
+
+        float l = length(new_orig);
+        float r = l * 0.0001;
+
+        for(int i=0;i<sampleN;i++) {
+            float2 uu = { prd->rndf(), prd->rndf() };
+            float2 dir = pbrt::SampleUniformDiskConcentric(uu);
+            Onb  tbn = Onb(vec3(ray_dir));
+            vec3 ddir = tbn.m_tangent * dir.x + tbn.m_binormal * dir.y;
+            float3 perturb = {ddir.x, ddir.y, ddir.z};
+            DirectLighting<true>(prd, shadowPRD, new_orig  + perturb * r + params.cam.eye, ray_dir, evalBxDF);
+        }
         //prd->radiance += prd->emission;
-        prd->radiance = prd->radiance * weight;
+        prd->radiance = prd->radiance / ((float)sampleN) * weight;
+
+        if (!sbt_data->multiscatter) {
+            transmittance = expf(-homo_out.extinction * (t_max-dt) );
+            prd->updateAttenuation( transmittance );
+            prd->_mask_ = EverythingMask ^ VolumeMatMask;
+        }
         return;
     }
 
@@ -344,10 +362,8 @@ extern "C" __global__ void __closesthit__radiance_volume()
         new_dir = normalize(new_dir);
         scattering = vol_out.albedo;
 
-        if (prd->trace_denoise_normal) {
+        if (prd->denoise) {
             prd->tmp_normal = normalize(-ray_dir + new_dir);
-        }
-        if(prd->trace_denoise_albedo) {
             prd->tmp_albedo = vol_out.albedo;
         }
         break;
@@ -370,7 +386,7 @@ extern "C" __global__ void __closesthit__radiance_volume()
     scattering = vol_out.albedo;
 
     ShadowPRD shadowPRD {};
-    shadowPRD.seed = prd->seed;
+    shadowPRD.seed = prd->seed ^ 0x9e3779b9u;
     shadowPRD.origin = new_orig; //camera sapce
     shadowPRD.attanuation = vec3(1.0f);
     

@@ -1,5 +1,4 @@
 #pragma once
-#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -42,11 +41,34 @@ struct ByShaderKey
 
         // if (a1=="Default")
         //     return true;
-        if (b1=="Default")
+        if (b1 == "Default")
+            return false;
+        if (a1 == "Light")
+            return false;
+        if (a1 < b1 || b1=="Light")
+            return true;
+        else
             return false;
     
         return a1 < b1;
     }
+
+    size_t operator()(const shader_key_t& key) const
+    {
+        return hash(key);
+    }
+
+    static size_t hash(const shader_key_t& key) noexcept
+    {
+        std::size_t h1 = std::hash<std::string>{}(std::get<0>(key));
+        std::size_t h2 = std::hash<int>{}(std::get<1>(key));
+        return h1 ^ (h2 << 1);
+    }
+
+    static bool equal( const shader_key_t& x, const shader_key_t& y ) {
+        return std::get<0>(x) == std::get<0>(y) && std::get<1>(x) == std::get<1>(y);
+    }
+
 };
 
 static const std::map<zeno::CurveType, ShaderMark> CURVE_SHADER_MARK {
@@ -71,7 +93,7 @@ struct ShaderPrepared {
 
     std::map<std::string, std::string> macros;
     
-    std::vector<OptixUtil::TexKey> tex_keys;
+    std::vector<std::shared_ptr<OptixUtil::cuTexture>> texs;
     std::vector<std::string>       vdb_keys;
 };
 
@@ -97,13 +119,14 @@ void buildLightTree();
 void configPipeline(bool dirty);
 
 void set_window_size(int nx, int ny);
-void set_outside_random_number(int32_t outside_random_number);
+void set_outside_random_number(unsigned int outside_random_number);
 void set_perspective(float const *U, float const *V, float const *W, float const *E, float aspect, float fov, float fpd, float aperture);
-void set_physical_camera_param(float aperture, float shutter_speed, float iso, bool aces, bool exposure, bool panorama_camera, bool panorama_vr180, float pupillary_distance);
+void set_physical_camera_param(float aperture, float shutter_speed, float iso, int scale, bool aces, bool exposure, bool panorama_camera, bool panorama_vr180, float pupillary_distance);
 void set_perspective_by_fov(float const *U, float const *V, float const *W, float const *E, float aspect, float fov, int fov_type, float L, float focal_distance, float aperture, float pitch, float yaw, float h_shift, float v_shift);
 void set_perspective_by_focal_length(float const *U, float const *V, float const *W, float const *E, float aspect, float focal_length, float w, float h, float focal_distance, float aperture, float pitch, float yaw, float h_shift, float v_shift);
 
-glm::vec3 get_click_pos(int x, int y);
+glm::vec3 get_click_pos(float x, float y);
+glm::uvec4 get_click_id(float x, float y);
 
 struct LightDat {
     std::vector<float> v0;

@@ -121,7 +121,7 @@ static void read_velocity(std::shared_ptr<PrimitiveObject> prim, V3fArraySampleP
     }
     if (marr->size() > 0) {
         if (!read_done) {
-            log_info("[alembic] totally {} velocities", marr->size());
+            //log_info("[alembic] totally {} velocities", marr->size());
         }
         auto &parr = prim->add_attr<vec3f>("v");
         for (size_t i = 0; i < marr->size(); i++) {
@@ -355,7 +355,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = samp.getVals()->get()[i];
             }
             if (!read_done) {
-                log_info("[alembic] float attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] float attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data(prim, samp.getScope(), p.getName(), data);
         }
@@ -369,7 +369,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = samp.getVals()->get()[i];
             }
             if (!read_done) {
-                log_info("[alembic] int attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] int attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data(prim, samp.getScope(), p.getName(), data);
         }
@@ -384,7 +384,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = {v[0], v[1], v[2]};
             }
             if (!read_done) {
-                log_info("[alembic] V3f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] V3f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
         }
@@ -399,7 +399,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = {v[0], v[1], v[2]};
             }
             if (!read_done) {
-                log_info("[alembic] N3f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] N3f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
         }
@@ -414,7 +414,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = {v[0], v[1], v[2]};
             }
             if (!read_done) {
-                log_info("[alembic] C3f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] C3f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
         }
@@ -433,17 +433,17 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data_w[i] = v[3];
             }
             if (!read_done) {
-                log_info("[alembic] C4f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] C4f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
             attr_from_data_vec(prim, samp.getScope(), p.getName() + "_rgb", data_xyz);
             attr_from_data_vec(prim, samp.getScope(), p.getName() + "_a", data_w);
         }
         else {
-            log_info("[alembic] unknown attr {}.", p.getName());
-            zeno::log_info("getExtent {} ", p.getDataType().getExtent());
-            zeno::log_info("getNumBytes {} ", p.getDataType().getNumBytes());
-            zeno::log_info("getPod {} ", p.getDataType().getPod());
+            //log_info("[alembic] unknown attr {}.", p.getName());
+            //zeno::log_info("getExtent {} ", p.getDataType().getExtent());
+            //zeno::log_info("getNumBytes {} ", p.getDataType().getNumBytes());
+            //zeno::log_info("getPod {} ", p.getDataType().getPod());
         }
     }
     {
@@ -703,6 +703,7 @@ static std::shared_ptr<PrimitiveObject> foundABCMesh(
     }
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
     read_attributes2(prim, arbattrs, iSS, read_done);
+    read_user_data(prim, arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
     read_user_data(prim, usrData, iSS, read_done);
 
@@ -852,6 +853,7 @@ static std::shared_ptr<PrimitiveObject> foundABCSubd(Alembic::AbcGeom::ISubDSche
     }
     ICompoundProperty arbattrs = subd.getArbGeomParams();
     read_attributes2(prim, arbattrs, iSS, read_done);
+    read_user_data(prim, arbattrs, iSS, read_done);
     ICompoundProperty usrData = subd.getUserProperties();
     read_user_data(prim, usrData, iSS, read_done);
 
@@ -892,12 +894,12 @@ static std::shared_ptr<CameraInfo> foundABCCamera(Alembic::AbcGeom::ICameraSchem
     cam_info._far = samp.getFarClippingPlane();
     cam_info.horizontalAperture = samp.getHorizontalAperture() * 10;
     cam_info.verticalAperture = samp.getVerticalAperture() * 10;
-    log_info(
-        "[alembic] Camera focal_length: {}, near: {}, far: {}",
-        cam_info.focal_length,
-        cam_info._near,
-        cam_info._far
-    );
+//    log_info(
+//        "[alembic] Camera focal_length: {}, near: {}, far: {}",
+//        cam_info.focal_length,
+//        cam_info._near,
+//        cam_info._far
+//    );
     return std::make_shared<CameraInfo>(cam_info);
 }
 
@@ -929,7 +931,7 @@ static std::shared_ptr<PrimitiveObject> foundABCPoints(Alembic::AbcGeom::IPoints
     Alembic::AbcGeom::IPointsSchema::Sample mesamp = mesh.getValue(iSS);
     if (auto marr = mesamp.getPositions()) {
         if (!read_done) {
-            log_info("[alembic] totally {} positions", marr->size());
+            //log_info("[alembic] totally {} positions", marr->size());
         }
         auto &parr = prim->verts;
         for (size_t i = 0; i < marr->size(); i++) {
@@ -948,6 +950,7 @@ static std::shared_ptr<PrimitiveObject> foundABCPoints(Alembic::AbcGeom::IPoints
     read_velocity(prim, mesamp.getVelocities(), read_done);
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
     read_attributes2(prim, arbattrs, iSS, read_done);
+    read_user_data(prim, arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
     read_user_data(prim, usrData, iSS, read_done);
     return prim;
@@ -970,7 +973,7 @@ static std::shared_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurves
     Alembic::AbcGeom::ICurvesSchema::Sample mesamp = mesh.getValue(iSS);
     if (auto marr = mesamp.getPositions()) {
         if (!read_done) {
-            log_info("[alembic] totally {} positions", marr->size());
+            //log_info("[alembic] totally {} positions", marr->size());
         }
         auto &parr = prim->verts;
         for (size_t i = 0; i < marr->size(); i++) {
@@ -1006,6 +1009,7 @@ static std::shared_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurves
     }
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
     read_attributes2(prim, arbattrs, iSS, read_done);
+    read_user_data(prim, arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
     read_user_data(prim, usrData, iSS, read_done);
     return prim;
@@ -1162,10 +1166,10 @@ Alembic::AbcGeom::IArchive readABC(std::string const &path) {
         hdr = buf;
     }
     if (hdr == "\x89HDF") {
-        log_info("[alembic] opening as HDF5 format");
+        //log_info("[alembic] opening as HDF5 format");
         return {Alembic::AbcCoreHDF5::ReadArchive(), native_path};
     } else if (hdr == "Ogaw") {
-        log_info("[alembic] opening as Ogawa format");
+        //log_info("[alembic] opening as Ogawa format");
         return {Alembic::AbcCoreOgawa::ReadArchive(), native_path};
     } else {
         throw Exception("[alembic] unrecognized ABC header: [" + hdr + "]");

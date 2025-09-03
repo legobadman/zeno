@@ -90,7 +90,7 @@ struct PrimitiveFilterByAttr : INode {
     
     std::vector<int> revamp;
     revamp.reserve(prim->size());
-    prim->attr_visit(attrName, [&] (auto const &attr) {
+    prim->attr_visit<std::variant<vec3f, float, int>>(attrName, [&] (auto const &attr) {
         using T = std::decay_t<decltype(attr[0])>;
         auto value = valueObj->get<T>();
         std::visit([&] (auto op, auto aop) {
@@ -251,6 +251,9 @@ ZENDEFNODE(PrimitiveFilterByAttr,
     {"enum cmpgt cmplt cmpge cmple cmpeq cmpne", "acceptIf", "cmpgt"},
     {"enum any all", "vecSelType", "all"},
     {gParamType_Bool, "mockTopos", "1"},
+    }, /* outputs: */ {
+        "prim",
+    }, /* params: */ {
     }, /* category: */ {
     "primitive",
     }});
