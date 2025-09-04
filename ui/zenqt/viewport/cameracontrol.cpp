@@ -561,7 +561,7 @@ void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
         }
         */
     }
-    else {//光追窗口
+    else {//TODO：双击光追窗口需跳转到节点编辑器对应材质子图或shaderfinalize节点
         auto scene = m_zenovis->getSession()->get_scene();
         auto& cam = scene->camera;
         auto ids = scene->renderMan->getEngine()->getClickedId((float)pos.x() / (float)cam->m_nx, (float)pos.y() / (float)cam->m_ny);

@@ -16,76 +16,10 @@
 #include "nodeeditor/gv/zenographseditor.h"
 #include "style/dpiscale.h"
 
-#include "nodesview/zenographseditor.h"
-#include "nodesys/zenosubgraphscene.h"
-#include <zenomodel/include/nodeparammodel.h>
-#include <zenomodel/include/uihelper.h>
-
-
 #include "tinygltf/json.hpp"
 using Json = nlohmann::json;
 
-static void add_set_node_xform(
-        ZENO_HANDLE hGraph
-        , std::optional<std::string> &cur_output_uuid
-        , std::string const &outline_node_name
-        , Json const &mat
-        , std::unordered_map<std::string, std::string> &outline_node_to_uuid
-) {
-//    zeno::log_info("outline_node_name: {}", outline_node_name);
-    if (mat["Mode"] == "Set") {
-        if (outline_node_to_uuid.count(outline_node_name) == 0) {
-            auto node = Zeno_GetNode(hGraph, cur_output_uuid.value());
-            if (!node.has_value()) {
-                return;
-            }
-
-            auto new_node_handle = Zeno_AddNode(hGraph, "SetNodeXform");
-//            Zeno_SetView(hGraph, new_node_handle, true);
-//            auto& node_sync = zeno::NodeSyncMgr::GetInstance();
-//            auto node_loc = node_sync.searchNode(cur_output_uuid.value());
-//            if (node_loc.has_value()) {
-//                node_sync.updateNodeVisibility(node_loc.value());
-//                zeno::log_info("node_loc.has_value");
-//            }
-            auto pos = Zeno_GetPos(hGraph, node.value());
-            if (pos.has_value()) {
-                zeno::vec2f npos = pos.value();
-                npos += zeno::vec2f(500, 0);
-                Zeno_SetPos(hGraph, new_node_handle, {npos[0], npos[1]});
-            }
-            std::string node_uuid;
-            auto err = Zeno_GetNodeUuid(hGraph, new_node_handle, node_uuid);
-            if (err != 0) {
-                return;
-            }
-            outline_node_to_uuid[outline_node_name] = node_uuid;
-            cur_output_uuid = node_uuid;
-            err = Zeno_SetInputDefl(hGraph, new_node_handle, "node", outline_node_name);
-            if (err != 0) {
-                return;
-            }
-            Zeno_AddLink(hGraph, node.value(), "scene", new_node_handle, "scene");
-//            Zeno_SetView(hGraph, new_node_handle, true);
-            Zeno_SetView(hGraph, node.value(), false);
-        }
-        auto output_uuid = outline_node_to_uuid[outline_node_name];
-        auto node = Zeno_GetNode(hGraph, output_uuid);
-        if (!node.has_value()) {
-            return;
-        }
-        auto const &r0 = mat["r0"];
-        auto const &r1 = mat["r1"];
-        auto const &r2 = mat["r2"];
-        auto const &t  = mat["t"];
-        Zeno_SetInputDefl(hGraph, node.value(), "r0", zeno::vec3f(r0[0], r0[1], r0[2]));
-        Zeno_SetInputDefl(hGraph, node.value(), "r1", zeno::vec3f(r1[0], r1[1], r1[2]));
-        Zeno_SetInputDefl(hGraph, node.value(), "r2", zeno::vec3f(r2[0], r2[1], r2[2]));
-        Zeno_SetInputDefl(hGraph, node.value(),  "t", zeno::vec3f( t[0],  t[1],  t[2]));
-    }
-}
-
-OptixWorker::OptixWorker(Zenovis *pzenoVis)
+OptixWorker::OptixWorker(const QString& graph_path, Zenovis *pzenoVis)
     : QObject(nullptr)
     , m_zenoVis(pzenoVis)
     , m_bRecording(false)
@@ -439,9 +373,6 @@ void OptixWorker::onSetBackground(bool bShowBg)
     }
     //scene->objectsMan->needUpdateLight = true;
     //scene->drawOptions->simpleRender = true;
-    //updateFrame();
-}
-
     //updateFrame();
 }
 

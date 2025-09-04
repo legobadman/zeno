@@ -434,8 +434,7 @@ struct GraphicsManager {
                     }
 
                     auto abcpath = zsString2Std(ud->get_string("abcpath_0", "Default"));
-                    const auto reName = prim_in->userData().get2<std::string>("ObjectName", abcpath);
-
+                    const auto reName = zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(abcpath)));
                     defaultScene.preloadCurveGroup(points, widths, normals, strands, curveTypeEnum, reName);
                     return;
                 }
@@ -443,7 +442,7 @@ struct GraphicsManager {
                 auto is_cyhair = prim_in_lslislSp->userData()->has("cyhair");
                 if (is_cyhair) {
                     auto ud = prim_in_lslislSp->userData();
-                    const auto objectName = zsString2Std(ud->get_string("ObjectName", key)); 
+                    const auto objectName = zsString2Std(ud->get_string("ObjectName", "key"));
 
                     auto type_index = ud->get_int("curve", 0);
                     auto path_string = zsString2Std(ud->get_string("path", ""));
@@ -1105,19 +1104,20 @@ struct GraphicsManager {
         if (!scene->drawOptions->updateMatlOnly) {
             if (auto cam = std::dynamic_pointer_cast<zeno::CameraObject>(obj)) {
                 scene->camera->setCamera(cam->get()); // pyb fix
-                        auto ud = cam->userData();
-                        if (ud->has("aces")) {
-                            scene->camera->setPhysicalCamera(
-                                ud->get_float("aperture"),
-                                ud->get_float("shutter_speed"),
-                                ud->get_float("iso"),
-                                zeno::getSession().userData().has("optix_image_path")?1:ud->get_int("renderRatio"),
-                                ud->get_bool("aces"),
-                                ud->get_bool("exposure"),
-                                ud->get_bool("panorama_camera"),
-                                ud->get_bool("panorama_vr180"),
-                                ud->get_float("pupillary_distance")
-                            );
+                auto ud = cam->userData();
+                if (ud->has("aces")) {
+                    scene->camera->setPhysicalCamera(
+                        ud->get_float("aperture"),
+                        ud->get_float("shutter_speed"),
+                        ud->get_float("iso"),
+                        zeno::getSession().userData().has("optix_image_path") ? 1 : ud->get_int("renderRatio"),
+                        ud->get_bool("aces"),
+                        ud->get_bool("exposure"),
+                        ud->get_bool("panorama_camera"),
+                        ud->get_bool("panorama_vr180"),
+                        ud->get_float("pupillary_distance")
+                    );
+                }
             }
         }
 
@@ -1143,6 +1143,44 @@ struct GraphicsManager {
         if (wtf.find(key) == wtf.end())
             return;
         wtf.erase(key);
+    }
+
+    void load_matrix_objects(std::vector<std::shared_ptr<zeno::IObject>> matrixs) {
+        std::unordered_map<std::string, std::shared_ptr<zeno::IObject>> map;
+        for (auto i = 0; i < matrixs.size(); i++) {
+            if (zsString2Std(matrixs[i]->userData()->get_string("ResourceType", "")) != "Matrixes") {
+                continue;
+            }
+            auto obj_name = zsString2Std(matrixs[i]->userData()->get_string("ObjectName", ""));
+            if (obj_name == "") {
+                continue;
+            }
+            if (auto mat = std::dynamic_pointer_cast<zeno::PrimitiveObject>(matrixs[i])) {
+                auto count = mat->verts->size() / 4;
+                std::vector<m3r4c> matrix_list(count);
+                std::copy_n((float*)mat->verts.data(), count * 12, (float*)matrix_list.data());
+                defaultScene.load_matrix_list(obj_name, matrix_list, {});
+            }
+            map[obj_name] = matrixs[i];
+        }
+        for (auto& [k, v] : graphics.m_curr) {
+            if (auto* ptr = std::get_if<DetPrimitive>(&v->det)) {
+                if (ptr == nullptr) {
+                    continue;
+                }
+                if (ptr->primSp == nullptr) {
+                    continue;
+                }
+                auto obj_name = zsString2Std(ptr->primSp->userData()->get_string("ObjectName", ""));
+                if (map.count(obj_name)) {
+                    auto prim_ptr = std::dynamic_pointer_cast<zeno::PrimitiveObject>(map[obj_name]);
+                    if (ptr->primSp->verts.size() == prim_ptr->verts.size()) {
+                        ptr->primSp->verts = prim_ptr->verts;
+                    }
+                }
+            }
+        }
+
     }
 };
 
@@ -1649,8 +1687,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 mat_prim->verts[3][1] = n_mat[2][2];
                 mat_prim->verts[3][2] = n_mat[3][2];
 
-                mat_prim->userData().set2("ResourceType", std::string("Matrixes"));
-                mat_prim->userData().set2("ObjectName", name+"_m");
+                mat_prim->userData()->set_string("ResourceType","Matrixes");
+                mat_prim->userData()->set_string("ObjectName", zeno::stdString2zs(name+"_m"));
                 load_matrix_objects({mat_prim});
                 {
                     Json xform_json;
@@ -1776,6 +1814,83 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         scene->drawOptions->needRefresh = true;
     };
 
+	void update_json(std::vector<std::pair<std::string, zeno::IObject*>> const& objs) {
+		for (auto const& [key, obj] : objs) {
+			Json message;
+			message["MessageType"] = "SceneTree";
+			if (obj == nullptr) {
+				continue;
+			}
+			const auto& ud = obj->userData();
+			if (ud->get_string("ResourceType", "") == "SceneTree") {
+				if (ud->get_string("SceneTreeType", "") == "static") {
+					if (!defaultScene.static_scene_tree.is_null()) {
+						continue;
+					}
+					auto content = zsString2Std(ud->get_string("json"));
+					defaultScene.static_scene_tree = Json::parse(content);
+					Json scene_tree;
+					scene_tree["root_name"] = defaultScene.static_scene_tree["root_name"];
+					scene_tree["scene_tree"] = defaultScene.static_scene_tree["scene_tree"];
+					message["StaticSceneTree"] = scene_tree;
+				}
+				else if (ud->get_string("SceneTreeType", "") == "dynamic") {
+					auto content = zsString2Std(ud->get_string("json"));
+					defaultScene.dynamic_scene_tree = Json::parse(content);
+					defaultScene.dynamic_scene_tree["node_key"] = key;
+
+					Json scene_tree;
+					scene_tree["root_name"] = defaultScene.dynamic_scene_tree["root_name"];
+					scene_tree["scene_tree"] = defaultScene.dynamic_scene_tree["scene_tree"];
+					scene_tree["node_key"] = defaultScene.dynamic_scene_tree["node_key"];
+					message["DynamicSceneTree"] = scene_tree;
+
+					defaultScene.dynamic_scene->from_json(defaultScene.dynamic_scene_tree);
+				}
+				else {
+					continue;
+				}
+				auto msg_str = message.dump();
+				fun(std::move(msg_str));
+			}
+		}
+		{
+			Json message;
+			message["MessageType"] = "XformPanelInitFeedback";
+			message["Matrixs"] = Json::object();
+			fun(message.dump());
+		}
+	}
+
+
+	void replace_with_modified_matrix() {
+		if (defaultScene.modified_xfroms.empty()) {
+			return;
+		}
+		std::vector<std::shared_ptr<zeno::IObject>> mat_prims;
+		for (auto const& [name, n_mat] : defaultScene.modified_xfroms) {
+			auto mat_prim = std::make_shared<zeno::PrimitiveObject>();
+			mat_prim->verts.resize(4);
+			mat_prim->verts[0][0] = n_mat[0][0];
+			mat_prim->verts[0][1] = n_mat[1][0];
+			mat_prim->verts[0][2] = n_mat[2][0];
+			mat_prim->verts[1][0] = n_mat[3][0];
+			mat_prim->verts[1][1] = n_mat[0][1];
+			mat_prim->verts[1][2] = n_mat[1][1];
+			mat_prim->verts[2][0] = n_mat[2][1];
+			mat_prim->verts[2][1] = n_mat[3][1];
+			mat_prim->verts[2][2] = n_mat[0][2];
+			mat_prim->verts[3][0] = n_mat[1][2];
+			mat_prim->verts[3][1] = n_mat[2][2];
+			mat_prim->verts[3][2] = n_mat[3][2];
+
+			mat_prim->userData()->set_string("ResourceType", zeno::String("Matrixes"));
+			mat_prim->userData()->set_string("ObjectName", zeno::stdString2zs(name + "_m"));
+			mat_prims.push_back(mat_prim);
+		}
+		load_matrix_objects(mat_prims);
+	}
+
     void process_listobj(std::shared_ptr<zeno::ListObject> spList, zeno::container_elem_update_info info) {
 #if 0
         std::map<std::string, std::vector<zeno::MaterialObject*>> mats;
@@ -1821,6 +1936,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
     }
 
     void reload(const zeno::render_reload_info& info) override {
+        //update_json(scene->objectsMan->pairs());  //TODO:收集对象信息传递给面板，可以移到其他地方
+
         auto& sess = zeno::getSession();
         if (zeno::Reload_SwitchGraph == info.policy) {
             //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
@@ -1887,6 +2004,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 }
             }
         }
+        replace_with_modified_matrix();
     }
 
     void optxShowBackground(bool showbg) override {
@@ -2277,7 +2395,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             }
 
             const auto prepareLightShader = [&](ShaderMark smark) {
-                const auto shader_key = std::tuple{ "Light", smark };
+                const auto shader_key = std::tuple{ std::string("Light"), smark };
                 if (cached_shaders.count(shader_key)>0) return;
 
                 auto tmp = std::make_shared<ShaderPrepared>();
