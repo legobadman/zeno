@@ -385,45 +385,33 @@ void ZenoSceneTreeModify::addMultiLineStrToXform(QString outNodeId, Json& msg, Q
                 }
             }
 
-            //TODO ZHOUHANG: 自行负责
-#if 0
             if (!linkedToSetSceneXform) {//如果没连上SetSceneXform节点的槽，连上
                 QModelIndex outnodeIdx = pModel->indexFromName(outNodeId);
                 auto newNodeIdxParams = QVariantPtr<ParamsModel>::asPtr(outnodeIdx.data(QtRole::ROLE_PARAMS));
                 QModelIndex newNodeIdxSockIdx = newNodeIdxParams->paramIdx(inModifyInfoSock, true);
-                QAbstractItemModel* pKeyObjModel = QVariantPtr<QAbstractItemModel>::asPtr(newNodeIdxSockIdx.data(ROLE_VPARAM_LINK_MODEL));
-                int n = pKeyObjModel->rowCount();
 
-                NodeParamModel* outNodeParams = QVariantPtr<NodeParamModel>::asPtr(multilinestrIdx.data(ROLE_NODE_PARAMS));
-                QModelIndex outSockIdx = outNodeParams->getParam(PARAM_OUTPUT, "value");
-
-                pModel->addExecuteCommand(new DictKeyAddRemCommand(true, pModel, newNodeIdxSockIdx.data(ROLE_OBJPATH).toString(), n));
-                pModel->addLink(subgIdx, outSockIdx, pKeyObjModel->index(n, 0));
+                auto outNodeParams = QVariantPtr<ParamsModel>::asPtr(multilinestrIdx.data(QtRole::ROLE_PARAMS));
+                QModelIndex outSockIdx = outNodeParams->paramIdx("value", false);
+                pModel->addLink(QString::fromStdString(multistring_uuid), "value", outNodeId, inModifyInfoSock);
             }
-            PARAMS_INFO params = multilinestrIdx.data(ROLE_PARAMETERS).value<PARAMS_INFO>();
-            PARAM_INFO param = params["value"];
-            PARAM_UPDATE_INFO paraminfo;
-            paraminfo.name = "value";
-            paraminfo.newValue = QString::fromStdString(msg.dump());
-            paraminfo.oldValue = param.value;
-            pModel->updateParamInfo(multilinestrIdx.data(ROLE_OBJID).toString(), paraminfo, subgIdx);
-#endif
+
+            auto outNodeParams = QVariantPtr<ParamsModel>::asPtr(multilinestrIdx.data(QtRole::ROLE_PARAMS));
+            const QModelIndex& idx = outNodeParams->paramIdx("value", true);
+            UiHelper::qIndexSetData(idx, QString::fromStdString(msg.dump()), QtRole::ROLE_PARAM_VALUE);
         }
         else {//无效的multilinestrIdx，也要新增
-            //QModelIndex xformIdx = pModel->index(outNodeId, subgIdx);
-            //multistring_uuid = addMultilineStr(xformIdx, msg, inModifyInfoSock);
+            QModelIndex xformIdx = pModel->indexFromName(outNodeId);
+            multistring_uuid = addMultilineStr(xformIdx, msg, inModifyInfoSock);
         }
     }
     else {//运行过了，新增multilinestr
-        //QModelIndex xformIdx = pModel->index(outNodeId, subgIdx);
-        //multistring_uuid = addMultilineStr(xformIdx, msg, inModifyInfoSock);
+        QModelIndex xformIdx = pModel->indexFromName(outNodeId);
+        multistring_uuid = addMultilineStr(xformIdx, msg, inModifyInfoSock);
     }
 }
 
 std::string ZenoSceneTreeModify::addMultilineStr(QModelIndex newNodeIdx, Json& msg, QString inModifyInfoSock)
 {
-    return "";
-#if 0
     auto main = zenoApp->getMainWindow();
     ZASSERT_EXIT(main, "");
     auto editor = main->getAnyEditor();
@@ -433,37 +421,23 @@ std::string ZenoSceneTreeModify::addMultilineStr(QModelIndex newNodeIdx, Json& m
     auto scene = view->scene();
     ZASSERT_EXIT(scene, "");
 
-    IGraphsModel* pModel = GraphsManagment::instance().currentModel();
+    GraphModel* pModel = scene->getGraphModel();
     ZASSERT_EXIT(pModel, "");
-    QModelIndex subgIdx = scene->subGraphIndex();
-    ZASSERT_EXIT(subgIdx.isValid(), "");
 
-    NodeParamModel* newNodeIdxParams = QVariantPtr<NodeParamModel>::asPtr(newNodeIdx.data(ROLE_NODE_PARAMS));
-    QModelIndex newNodeIdxSockIdx = newNodeIdxParams->getParam(PARAM_INPUT, inModifyInfoSock);
+    ParamsModel* newNodeIdxParams = QVariantPtr<ParamsModel>::asPtr(newNodeIdx.data(QtRole::ROLE_PARAMS));
+    QModelIndex newNodeIdxSockIdx = newNodeIdxParams->paramIdx(inModifyInfoSock, true);
 
-    QAbstractItemModel* pKeyObjModel = QVariantPtr<QAbstractItemModel>::asPtr(newNodeIdxSockIdx.data(ROLE_VPARAM_LINK_MODEL));
-    int n = pKeyObjModel->rowCount();
+    QPointF pos = newNodeIdx.data(QtRole::ROLE_OBJPOS).toPointF();
+    zeno::NodeData multinode_dat = pModel->createNode("MakeMultilineString", "", { pos.x() - 300, pos.y() + (0 + 1) * 300 });
+    QString multilinestrNodeident = QString::fromStdString(multinode_dat.name);
 
-    QPointF pos = newNodeIdx.data(ROLE_OBJPOS).toPointF();
-    QString multilinestrNodeident = NodesMgr::createNewNode(pModel, subgIdx, "MakeMultilineString", { pos.x() - 300, pos.y() + (n + 1) * 300 });
+    QModelIndex multilinestrIdx = pModel->indexFromName(multilinestrNodeident);
+    ParamsModel* multilinestrIdxParams = QVariantPtr<ParamsModel>::asPtr(multilinestrIdx.data(QtRole::ROLE_PARAMS));
+    QModelIndex multilinestrSockIdx = multilinestrIdxParams->paramIdx("value", false);
 
-    QModelIndex multilinestrIdx = pModel->index(multilinestrNodeident, subgIdx);
-    NodeParamModel* multilinestrIdxParams = QVariantPtr<NodeParamModel>::asPtr(multilinestrIdx.data(ROLE_NODE_PARAMS));
-    QModelIndex multilinestrSockIdx = multilinestrIdxParams->getParam(PARAM_OUTPUT, "value");
-
-    pModel->addExecuteCommand(new DictKeyAddRemCommand(true, pModel, newNodeIdxSockIdx.data(ROLE_OBJPATH).toString(), n));
-    pModel->addLink(subgIdx, multilinestrSockIdx, pKeyObjModel->index(n, 0));
-
-    PARAMS_INFO params = multilinestrIdx.data(ROLE_PARAMETERS).value<PARAMS_INFO>();
-    PARAM_INFO param = params["value"];
-    PARAM_UPDATE_INFO paraminfo;
-    paraminfo.name = "value";
-    paraminfo.newValue = QString::fromStdString(msg.dump());
-    paraminfo.oldValue = param.value;
-    pModel->updateParamInfo(multilinestrIdx.data(ROLE_OBJID).toString(), paraminfo, subgIdx);
-
+    pModel->addLink(multilinestrNodeident, "value", newNodeIdx.data(QtRole::ROLE_NODE_NAME).toString(), inModifyInfoSock);
+    UiHelper::qIndexSetData(multilinestrSockIdx, QString::fromStdString(msg.dump()), QtRole::ROLE_PARAM_VALUE);
     return multilinestrNodeident.toStdString();
-#endif
 }
 
 void ZenoSceneTreeModify::sendOptixMessage(Json &msg) {
