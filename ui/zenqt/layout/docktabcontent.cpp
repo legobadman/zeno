@@ -5,7 +5,6 @@
 #include "style/zstyleoption.h"
 #include "panel/zenodatapanel.h"
 #include "panel/zenoproppanel.h"
-#include "panel/zenospreadsheet.h"
 #include "panel/zlogpanel.h"
 #include "panel/zenoimagepanel.h"
 #include "nodeeditor/gv/zenographseditor.h"

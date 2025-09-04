@@ -103,9 +103,6 @@ void AppHelper::dumpTabsToZsg(QDockWidget* dockWidget, RAPIDJSON_WRITER& writer)
                 writer.Int(pView->curResComboBoxIndex());
                 writer.EndObject();
             }
-            else if (qobject_cast<ZenoSpreadsheet*>(wid)) {
-                writer.String("Data");
-            }
             else if (qobject_cast<DockContent_Log*>(wid)) {
                 writer.String("Logger");
             }

@@ -1,6 +1,4 @@
 ﻿#include "exceptionhandle.h"
-
-#include "cache/zcachemgr.h"
 #include "zenoapplication.h"
 
 #ifndef ZENO_WITH_VLD
@@ -14,9 +12,6 @@ QTemporaryDir sTempDir;
 LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS* ExceptionInfo)
 {
     //清理缓存
-	std::shared_ptr<ZCacheMgr> mgr = zenoApp->cacheMgr();
-	mgr->procExitCleanUp();
-
     QMessageBox::information(nullptr, "Crash", "Zeno has crashed, recording dump info right now...");
 
     QDateTime dateTime = QDateTime::currentDateTime();
@@ -55,8 +50,6 @@ BOOL WINAPI ConsoleHandler(DWORD ctrlType) {
     case CTRL_BREAK_EVENT:  // Ctrl+Break强制终止
     case CTRL_SHUTDOWN_EVENT:
     {
-		std::shared_ptr<ZCacheMgr> mgr = zenoApp->cacheMgr();
-		mgr->procExitCleanUp();
 		// 给清理操作留一定时间，然后允许进程退出
 		//Sleep(300); // 调整等待时间（根据清理逻辑耗时）
 		return TRUE;

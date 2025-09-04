@@ -6,7 +6,6 @@
 #include <viewport/viewportwidget.h>
 #include "settings/zsettings.h"
 #include "viewport/recordvideomgr.h"
-#include "panel/zenospreadsheet.h"
 
 class AppHelper
 {

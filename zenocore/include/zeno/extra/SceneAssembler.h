@@ -9,6 +9,8 @@
 #include <deque>
 
 #include "zeno/types/PrimitiveObject.h"
+#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include "zeno/types/ListObject.h"
 #include "zeno/types/UserData.h"
 #include "zeno/utils/log.h"

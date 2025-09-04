@@ -2,7 +2,6 @@
 #include "zenomainwindow.h"
 #include "zenoapplication.h"
 #include "viewport/displaywidget.h"
-#include <zenovis/ObjectsManager.h>
 #include <tinygltf/json.hpp>
 #include "viewport/zenovis.h"
 #include "viewport/displaywidget.h"

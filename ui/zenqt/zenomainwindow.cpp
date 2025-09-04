@@ -7,7 +7,6 @@
 #include "layout/docktabcontent.h"
 #include "panel/zenodatapanel.h"
 #include "panel/zenoproppanel.h"
-#include "panel/zenospreadsheet.h"
 #include "panel/zlogpanel.h"
 #include "panel/zgeometryspreadsheet.h"
 #include "panel/zqmlpanel.h"
@@ -516,12 +515,6 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
         pDockElem->setWidget(pParams, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
-    case PANEL_NODE_DATA:
-    {
-        auto pObjectData = new ZenoSpreadsheet;
-        pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
-        break;
-    }
     case PANEL_QML_GLVIEW:
     {
         ZOpenGLQuickView* view = new ZOpenGLQuickView;
@@ -664,12 +657,6 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
                 auto pParams = new DockContent_Parameter;
                 pParams->initUI();
                 pDockElem->setWidget(pParams, ads::CDockWidget::ForceNoScrollArea);
-                break;
-            }
-            case PANEL_NODE_DATA:
-            {
-                auto pObjectData = new ZenoSpreadsheet;
-                pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
             case PANEL_GEOM_DATA:
@@ -940,12 +927,6 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         pFloatWidget->initUI();
         pWid = pFloatWidget;
         title = tr("Node Editor");
-        break;
-    }
-    case ACTION_OBJECT_DATA: {
-        auto pObjectData = new ZenoSpreadsheet;
-        pWid = pObjectData;
-        title = tr("Object Data");
         break;
     }
     case ACTION_OBJECT_DATA_QML: {
@@ -2312,10 +2293,6 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     panel->setGeometry(subgraph, idx, spGeom);
                 }
             }
-            else if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(wid))
-            {
-                //DEPRECATED
-            }
             else if (DockContent_Editor* editor = qobject_cast<DockContent_Editor*>(wid)) {
                 if (select && nodes.size() <= 1)
                 {
@@ -2343,20 +2320,10 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
     }
 }
 
-void ZenoMainWindow::onPrimitiveSelected(const std::unordered_set<std::string>& primids) {
+void ZenoMainWindow::onPrimitiveSelected(const std::unordered_set<std::string>& primids, std::string mtlid, bool selecFromOpitx) {
+    //TODO ZHOUHANG:
     for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
     {
-#if 0
-        if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(dock->widget()))
-        {
-            if (primids.size() == 1) {
-                panel->setPrim(*primids.begin());
-            }
-            else {
-                panel->clear();
-            }
-        }
-#endif
     }
 }
 
