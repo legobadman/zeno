@@ -442,7 +442,7 @@ struct GraphicsManager {
                 auto is_cyhair = prim_in_lslislSp->userData()->has("cyhair");
                 if (is_cyhair) {
                     auto ud = prim_in_lslislSp->userData();
-                    const auto objectName = zsString2Std(ud->get_string("ObjectName", "key"));
+                    const auto objectName = zsString2Std(ud->get_string("ObjectName", zeno::stdString2zs(key)));
 
                     auto type_index = ud->get_int("curve", 0);
                     auto path_string = zsString2Std(ud->get_string("path", ""));
