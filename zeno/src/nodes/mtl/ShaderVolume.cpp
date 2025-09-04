@@ -186,7 +186,7 @@ struct ShaderVolumeHomogeneous : INode {
 
         auto albedo     = ZImpl(get_input2<zeno::vec3f>("albedo"));
         auto anisotropy = ZImpl(get_input2<float>("anisotropy"));
-        auto albedoAmp = get_input2<float>("albedoAmp");
+        auto albedoAmp = get_input2_float("albedoAmp");
 
         std::stringstream ss {};
         ss << std::setprecision(9);
@@ -228,7 +228,7 @@ ZENDEFNODE(ShaderVolumeHomogeneous, {
         {gParamType_Vec3f, "albedo", "1,1,1"},
         {gParamType_Vec3f, "extinction", "0.01,0.01,0.01"},
         {gParamType_Float, "anisotropy", "0"},
-        {"float", "albedoAmp", "1.0"},
+        {gParamType_Float, "albedoAmp", "1.0"},
         {gParamType_Bool, "debug", "false"},
         {gParamType_Bool, "multiscatter", "false"},
         {gParamType_String, "mtlid", "VolMat1"},

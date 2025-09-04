@@ -1357,27 +1357,26 @@ struct ResolveTexPath : INode {
     }
 
     void apply() override {
-        auto tex_path_str = get_input2<std::string>("tex_path");
+        auto tex_path_str = zsString2Std(get_input2_string("tex_path"));
         tex_path_str = zeno::replace_all(tex_path_str, "\\", "/");
 
-        std::string hint_directory = get_input2<std::string>("HintDirectory");
+        std::string hint_directory = zsString2Std(get_input2_string("HintDirectory"));
         std::string oPath;
         auto temp_path = deep_search(hint_directory, tex_path_str);
         if (temp_path.has_value()) {
             oPath = temp_path.value();
         }
-
-        set_output2("real_path", oPath);
+        set_output_string("real_path", stdString2zs(oPath));
     }
 };
 
 ZENDEFNODE(ResolveTexPath, {
     {
-       {"string", "tex_path"},
-       {"string", "HintDirectory"},
+        {gParamType_String, "tex_path"},
+        {gParamType_String, "HintDirectory"},
     },
     {
-        "real_path",
+        {gParamType_String, "real_path"}
     },
     {},
     {"FBXSDK"},

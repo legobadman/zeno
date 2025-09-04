@@ -140,7 +140,7 @@ struct ShaderFinalize : INode {
 
         nlohmann::json j;
         if (ZImpl(has_input("opacity"))) {
-            auto opacity = get_input2<float>("opacity"); // It's actually transparency not opacity
+            auto opacity = get_input2_float("opacity"); // It's actually transparency not opacity
             opacity = max(0.0f, 1.0f - opacity);
             j["opacity"] = opacity;
         }

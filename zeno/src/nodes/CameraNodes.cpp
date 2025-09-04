@@ -4,7 +4,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/utils/eulerangle.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
@@ -116,7 +116,7 @@ struct SetPhysicalCamera : INode {
         ud->set_bool("panorama_camera", get_input2_bool("panorama_camera"));
         ud->set_bool("panorama_vr180", get_input2_bool("panorama_vr180"));
         ud->set_float("pupillary_distance", get_input2_float("pupillary_distance"));
-        ud->set_float("pupillary_distance", get_input2<float>("pupillary_distance"));
+        ud->set_float("pupillary_distance", get_input2_float("pupillary_distance"));
 
         ZImpl(set_output("camera", std::move(camera)));
     }
@@ -159,20 +159,20 @@ struct TargetCamera : INode {
         camera->pos = pos;
         camera->up = up;
         camera->view = view;
-        camera->ffar = ZImpl(get_input2<float>("far"));
-        camera->fnear = ZImpl(get_input2<float>("near"));
-        camera->fov = ZImpl(get_input2<float>("fov"));
-        camera->aperture = ZImpl(get_input2<float>("aperture"));
+        camera->ffar = get_input2_float("far");
+        camera->fnear = get_input2_float("near");
+        camera->fov = get_input2_float("fov");
+        camera->aperture = get_input2_float("aperture");
         if(AF){
             camera->focalPlaneDistance = zeno::length(target-pos);
         }else{
-            camera->focalPlaneDistance = ZImpl(get_input2<float>("focalPlaneDistance"));
+            camera->focalPlaneDistance = get_input2_float("focalPlaneDistance");
         }
-        camera->userData().set2("frame", get_input2<float>("frame"));
-        camera->userData().set2("is_target", int(1));
-        camera->userData().set2("refUp", refUp);
-        camera->userData().set2("target", target);
-        camera->userData().set2("AutoFocus", int(AF));
+        camera->userData()->set_float("frame", get_input2_float("frame"));
+        camera->userData()->set_int("is_target", int(1));
+        camera->userData()->set_vec3f("refUp", toAbiVec3f(refUp));
+        camera->userData()->set_vec3f("target", toAbiVec3f(target));
+        camera->userData()->set_int("AutoFocus", int(AF));
 
         ZImpl(set_output("camera", std::move(camera)));
     }
@@ -239,13 +239,13 @@ struct ScreenSpaceProjectedGrid : INode {
         return t;
     }
     virtual void apply() override {
-        auto cam = ZImpl(get_input2<CameraObject>("cam"));
+        auto cam = std::dynamic_pointer_cast<CameraObject>(get_input("cam"));
         auto prim = std::make_shared<PrimitiveObject>();
-        auto raw_width = ZImpl(get_input2<int>("width"));
-        auto raw_height = ZImpl(get_input2<int>("height"));
-        auto u_padding = ZImpl(get_input2<int>("u_padding"));
-        auto v_padding = ZImpl(get_input2<int>("v_padding"));
-        auto sea_level = ZImpl(get_input2<float>("sea_level"));
+        auto raw_width = get_input2_int("width");
+        auto raw_height = get_input2_int("height");
+        auto u_padding = get_input2_int("u_padding");
+        auto v_padding = get_input2_int("v_padding");
+        auto sea_level = get_input2_float("sea_level");
         auto fov = glm::radians(cam->fov);
         auto pos = cam->pos;
         auto up = cam->up;
@@ -293,10 +293,8 @@ struct ScreenSpaceProjectedGrid : INode {
         }
         prim->tris.values = tris;
 
-
-        set_output("prim", std::move(prim));
-        }
-        ZImpl(set_output("prim", std::move(new_prim)));
+        auto geom = create_GeometryObject(prim);
+        set_output("prim", std::move(geom));
     }
 };
 
@@ -310,8 +308,8 @@ ZENO_DEFNODE(ScreenSpaceProjectedGrid)({
          {gParamType_Float, "sea_level", "0"},
      },
      {
-{gParamType_Primitive, "prim"},
-},
+         {gParamType_Geometry, "prim"},
+     },
      {
      },
      {"shader"},
@@ -320,9 +318,9 @@ ZENO_DEFNODE(ScreenSpaceProjectedGrid)({
 
 struct CameraFrustum : INode {
     virtual void apply() override {
-        auto cam = ZImpl(get_input2<CameraObject>("cam"));
-        auto width = ZImpl(get_input2<int>("width"));
-        auto height = ZImpl(get_input2<int>("height"));
+        auto cam = std::dynamic_pointer_cast<CameraObject>(get_input("cam"));
+        auto width = get_input2_int("width");
+        auto height = get_input2_int("height");
         auto fov = glm::radians(cam->fov);
         auto pos = cam->pos;
         auto up = cam->up;
@@ -375,8 +373,8 @@ ZENO_DEFNODE(CameraFrustum)({
          {gParamType_Int, "height", "1080"},
      },
      {
-{gParamType_Primitive, "prim"},
-},
+        {gParamType_Primitive, "prim"},
+     },
      {
      },
      {"shader"},

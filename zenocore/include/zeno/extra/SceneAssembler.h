@@ -31,12 +31,12 @@ struct SceneObject : IObject {
     std::unordered_map <std::string, SceneTreeNode> scene_tree;
     std::unordered_map <std::string, std::vector<glm::mat4>> node_to_matrix;
     std::unordered_map <std::string, std::vector<int>> node_to_id;
-    std::unordered_map <std::string, std::shared_ptr<PrimitiveObject>> prim_list;
     std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> geom_list;
     std::vector<std::string> geom_path;
     std::string root_name;
     std::string type = "static";
     std::string matrixMode = "TotalChange";
+    std::string json;   //MarkSceneStateª·”√µΩ
 
     zeno::SharedPtr<IObject> clone() const override {
         auto newSceneObj = std::make_shared<SceneObject>();
@@ -72,13 +72,13 @@ struct SceneObject : IObject {
         }
         std::vector<glm::vec3> bbox_points;
         for (const auto &mesh: stn.meshes) {
-            if (prim_list.count(mesh) == 0) {
+            if (geom_list.count(mesh) == 0) {
                 continue;
             }
-            auto prim = prim_list[mesh];
-            if (prim->userData()->has_vec3f("_bboxMin")) {
-                auto bmin_OS = zeno::bit_cast<glm::vec3>(toVec3f(prim->userData()->get_vec3f("_bboxMin")));
-                auto bmax_OS = zeno::bit_cast<glm::vec3>(toVec3f(prim->userData()->get_vec3f("_bboxMax")));
+            auto geom = geom_list[mesh];
+            if (geom->userData()->has_vec3f("_bboxMin")) {
+                auto bmin_OS = zeno::bit_cast<glm::vec3>(toVec3f(geom->userData()->get_vec3f("_bboxMin")));
+                auto bmax_OS = zeno::bit_cast<glm::vec3>(toVec3f(geom->userData()->get_vec3f("_bboxMax")));
                 for (const auto &gm: global_mat) {
                     auto bmin_WS = glm::vec3(gm * glm::vec4(bmin_OS, 1));
                     auto bmax_WS = glm::vec3(gm * glm::vec4(bmin_OS, 1));
@@ -174,12 +174,6 @@ struct SceneObject : IObject {
         for (auto &[k, v]: node_to_matrix) {
             auto new_key = get_new_root_name(root_name, new_root_name, k);
             new_scene_obj->node_to_matrix[new_key] = v;
-        }
-        for (auto &[k, p]: prim_list) {
-            auto new_key = get_new_root_name(root_name, new_root_name, k);
-            auto new_prim = std::static_pointer_cast<PrimitiveObject>(p->clone());
-            new_prim->userData()->set_string("ObjectName", stdString2zs(new_key));
-            new_scene_obj->prim_list[new_key] = new_prim;
         }
         for (const auto& k : geom_path) {
             auto new_key = get_new_root_name(root_name, new_root_name, k);
@@ -395,10 +389,10 @@ struct SceneObject : IObject {
             Json json;
             json["type"] = use_static ? "static" : "dynamic";
             Json BasicRenderInstances = Json();
-            for (const auto &[path, prim]: prim_list) {
+            for (const auto &[path, geom]: geom_list) {
                 BasicRenderInstances[path]["Geom"] = path;
                 BasicRenderInstances[path]["Material"] = "Default";
-                auto vol_mat = zsString2Std(prim->userData()->get_string("vol_mat", ""));
+                auto vol_mat = zsString2Std(geom->userData()->get_string("vol_mat", ""));
                 if (vol_mat.size()) {
                     BasicRenderInstances[path]["Material"] = vol_mat;
                 }

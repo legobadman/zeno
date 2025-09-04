@@ -329,8 +329,8 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
             type = "";
         }
         auto uvtiling = em->determineExpr(ZImpl(get_input_shader("uvtiling")));
-        auto nscale = em->determineExpr(get_input("normalScale").get());
-        auto hscale = em->determineExpr(get_input("heightScale").get());
+        auto nscale = em->determineExpr(ZImpl(get_input_shader("normalScale")));
+        auto hscale = em->determineExpr(ZImpl(get_input_shader("heightScale")));
         std::string coord = "att_uv";
         if (ZImpl(has_input("coord"))) {
             coord = em->determineExpr(ZImpl(get_input_shader("coord")));

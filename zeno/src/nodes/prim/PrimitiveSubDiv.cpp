@@ -2,6 +2,7 @@
 // Created by zh on 2025/7/9.
 //
 #include <zeno/zeno.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/utils/bit_operations.h>
@@ -15,7 +16,7 @@
 #include "zeno/extra/TempNode.h"
 
 namespace zeno {
-struct EdgeInfo {
+struct _EdgeInfo {
     //bool cutted = false;
     int v0 = 0;
     int v1 = 0;
@@ -37,7 +38,7 @@ struct PairHash {
     std::size_t operator()(const std::pair<T1, T2>& p) const {
         auto h1 = std::hash<T1>{}(p.first);
         auto h2 = std::hash<T2>{}(p.second);
-        // �򵥵Ĺ�ϣ��Ϸ�ʽ�����ܻ��ͻ���������ڴ���������
+        // 简单的哈希组合方式（可能会冲突，但适用于大多数情况）
         return h1 ^ (h2 << 1);
     }
 };
@@ -62,8 +63,8 @@ int computeHashNumber(PrimitiveObject *prim)
     }
     return res;
 }
-using EdgeInfoMap = tbb::concurrent_hash_map<std::pair<int, int>, EdgeInfo, PairHashCompare>;
-bool findEdge(std::pair<int, int> &e, int hashNumber, std::vector<std::vector<EdgeInfo>> &edge_split_mask2,EdgeInfo &ei)
+using EdgeInfoMap = tbb::concurrent_hash_map<std::pair<int, int>, _EdgeInfo, PairHashCompare>;
+bool findEdge(std::pair<int, int> &e, int hashNumber, std::vector<std::vector<_EdgeInfo>> &edge_split_mask2,_EdgeInfo &ei)
 {
     int index = e.first;
     if(edge_split_mask2[index].size()==0)
@@ -79,12 +80,12 @@ bool findEdge(std::pair<int, int> &e, int hashNumber, std::vector<std::vector<Ed
     }
     return res;
 }
-void insertEdge(std::pair<int, int> &e, int hashNumber, std::vector<std::vector<EdgeInfo>> &edge_split_mask2,EdgeInfo &ei)
+void insertEdge(std::pair<int, int> &e, int hashNumber, std::vector<std::vector<_EdgeInfo>> &edge_split_mask2,_EdgeInfo &ei)
 {
     int index = e.first;
     edge_split_mask2[index].push_back(ei);
 }
-void form_edge(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, EdgeInfo, PairHash> &edge_split_mask, std::vector<EdgeInfo> &edge_flatten_info,
+void form_edge(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, _EdgeInfo, PairHash> &edge_split_mask, std::vector<_EdgeInfo> &edge_flatten_info,
                std::vector<vec3i> &tri_edges, std::vector<int> &tri_new) {
     std::vector<long> callTimes;
 
@@ -92,7 +93,7 @@ void form_edge(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, Ed
     edge_flatten_info.resize(0);
     tri_edges.resize(prim->polys.size());
     int h = computeHashNumber(prim);
-    std::vector<std::vector<EdgeInfo>> edge_split_mask2;
+    std::vector<std::vector<_EdgeInfo>> edge_split_mask2;
     edge_split_mask2.resize(prim->verts.size());
 
     edge_flatten_info.reserve(prim->polys.size()*3);
@@ -111,9 +112,9 @@ void form_edge(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, Ed
         auto edge_0 = std::pair<int, int>(min(vert_id0, vert_id1), max(vert_id0, vert_id1));
         auto edge_1 = std::pair<int, int>(min(vert_id1, vert_id2), max(vert_id1, vert_id2));
         auto edge_2 = std::pair<int, int>(min(vert_id0, vert_id2), max(vert_id0, vert_id2));
-        EdgeInfo edgeInfo0 = {};
-        EdgeInfo edgeInfo1 = {};
-        EdgeInfo edgeInfo2 = {};
+        _EdgeInfo edgeInfo0 = {};
+        _EdgeInfo edgeInfo1 = {};
+        _EdgeInfo edgeInfo2 = {};
 
 
 
@@ -129,7 +130,7 @@ void form_edge(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, Ed
         else{
             tri_edges[i][0] = edge_flatten_info.size();
             //edge_split_mask[edge_0].edge_array_idx = edge_flatten_info.size();
-            EdgeInfo edgeInfo = {edge_0.first, edge_0.second, 0, -1, int(edge_flatten_info.size())};
+            _EdgeInfo edgeInfo = {edge_0.first, edge_0.second, 0, -1, int(edge_flatten_info.size())};
             insertEdge(edge_0,h, edge_split_mask2, edgeInfo);
             edge_flatten_info.emplace_back(edgeInfo);
         }
@@ -142,7 +143,7 @@ void form_edge(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, Ed
         else{
             tri_edges[i][1] = edge_flatten_info.size();
             //edge_split_mask[edge_0].edge_array_idx = edge_flatten_info.size();
-            EdgeInfo edgeInfo = {edge_1.first, edge_1.second, 0, -1, int(edge_flatten_info.size())};
+            _EdgeInfo edgeInfo = {edge_1.first, edge_1.second, 0, -1, int(edge_flatten_info.size())};
             insertEdge(edge_1,h, edge_split_mask2, edgeInfo);
             edge_flatten_info.emplace_back(edgeInfo);
         }
@@ -155,7 +156,7 @@ void form_edge(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, Ed
         else{
             tri_edges[i][2] = edge_flatten_info.size();
             //edge_split_mask[edge_0].edge_array_idx = edge_flatten_info.size();
-            EdgeInfo edgeInfo = {edge_2.first, edge_2.second, 0, -1, int(edge_flatten_info.size())};
+            _EdgeInfo edgeInfo = {edge_2.first, edge_2.second, 0, -1, int(edge_flatten_info.size())};
             insertEdge(edge_2,h, edge_split_mask2, edgeInfo);
             edge_flatten_info.emplace_back(edgeInfo);
         }
@@ -178,7 +179,7 @@ int edge_score2(vec3f v0, vec3f v1, CameraObject* cam, vec2i res, float factor, 
         return 0;
     }
     if (v0_vS[2] * v1_vS[2] < 0 && abs(v0_vS[2] * v1_vS[2])>0.0001 && iter<20) {
-        //��ʵ�ڲ�����Ϊɶ������ô��Ҫ�� �����Ű����ĵ��Ͳ�work�ˣ� Ȼ�����ұ����������Ӧ���й�ϵ������
+        //我实在不明白为啥这条这么重要， 你试着把它改掉就不work了， 然而像右边这种情况不应该有关系啊！！
         t = v0_vS[2] / (v0_vS[2] - v1_vS[2]);
         return 1;
     }
@@ -214,7 +215,7 @@ int edge_score2(vec3f v0, vec3f v1, CameraObject* cam, vec2i res, float factor, 
     return 0;
 }
 
-int rank_edges(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, EdgeInfo, PairHash> &edge_split_mask, std::vector<EdgeInfo> &edge_flatten_info,
+int rank_edges(PrimitiveObject *prim, std::unordered_map<std::pair<int, int>, _EdgeInfo, PairHash> &edge_split_mask, std::vector<_EdgeInfo> &edge_flatten_info,
                CameraObject *cam, vec2i res, float factor, std::vector<float> &T, int iter) {
     auto pos = bit_cast<glm::vec3>(cam->pos);
     auto up = bit_cast<glm::vec3>(cam->up);
@@ -297,7 +298,7 @@ float findScreenSpaceMidpointT(
     return glm::clamp(t_mid, 0.001f, 0.999f);
 }
 
-void emit_vert(PrimitiveObject *prim, std::vector<EdgeInfo> &edge_flatten_info, int edgeSum, CameraObject* cam, double nx, double ny, std::vector<float> &T) {
+void emit_vert(PrimitiveObject *prim, std::vector<_EdgeInfo> &edge_flatten_info, int edgeSum, CameraObject* cam, double nx, double ny, std::vector<float> &T) {
     AttrVector<vec3f> prim_new_verts;
     prim_new_verts.resize(prim->verts.size() + edgeSum);
     prim->verts.forall_attr([&](auto const &key, auto &arr) {
@@ -344,7 +345,7 @@ void emit_vert(PrimitiveObject *prim, std::vector<EdgeInfo> &edge_flatten_info, 
 
     prim->verts = std::move(prim_new_verts);
 }
-char count_tris(PrimitiveObject *prim, std::vector<EdgeInfo> &edge_flatten_info, std::vector<vec3i> &tri_edges, int idx) {
+char count_tris(PrimitiveObject *prim, std::vector<_EdgeInfo> &edge_flatten_info, std::vector<vec3i> &tri_edges, int idx) {
     char count = 1;
     if(tri_edges[idx][0]==-1)
         return 1;
@@ -359,9 +360,9 @@ char count_tris(PrimitiveObject *prim, std::vector<EdgeInfo> &edge_flatten_info,
     }
     return count;
 }
-void addEdge(int v0, int v1, std::vector<EdgeInfo> &edge_flatten_info, int &e0)
+void addEdge(int v0, int v1, std::vector<_EdgeInfo> &edge_flatten_info, int &e0)
 {
-    EdgeInfo ei;
+    _EdgeInfo ei;
     ei.v0 = min(v0,v1);
     ei.v1 = max(v0,v1);
     ei.edge_array_idx = edge_flatten_info.size();
@@ -370,7 +371,7 @@ void addEdge(int v0, int v1, std::vector<EdgeInfo> &edge_flatten_info, int &e0)
     e0 = edge_flatten_info.size()-1;
 }
 
-void split_tris(PrimitiveObject *prim, std::vector<EdgeInfo> &edge_flatten_info, std::vector<vec3i> &tri_edges, int idx, vec3i *v)
+void split_tris(PrimitiveObject *prim, std::vector<_EdgeInfo> &edge_flatten_info, std::vector<vec3i> &tri_edges, int idx, vec3i *v)
 {
     auto start = prim->polys[idx][0];
     auto v0 = prim->loops[start + 0];
@@ -452,7 +453,7 @@ void split_tris(PrimitiveObject *prim, std::vector<EdgeInfo> &edge_flatten_info,
         v[1] = {v5, v1, v2};
     }
 }
-void emit_tris(PrimitiveObject *prim, std::vector<EdgeInfo> &edge_flatten_info, std::vector<vec3i> &tri_edges, std::vector<int> &tri_new) {
+void emit_tris(PrimitiveObject *prim, std::vector<_EdgeInfo> &edge_flatten_info, std::vector<vec3i> &tri_edges, std::vector<int> &tri_new) {
     std::vector<zeno::vec3i> new_tris;
     std::vector<int> new_old_map;
 
@@ -607,33 +608,38 @@ static void prim_interp(PrimitiveObject *origin_prim,  PrimitiveObject *prim) {
 }
 struct PrimInterp : INode{
     void apply() override{
-        auto origin_prim = get_input2<PrimitiveObject>("original_prim");
-        auto prim = get_input2<PrimitiveObject>("interp_prim");
+        auto origin_prim = get_input_Geometry("original_prim")->toPrimitiveObject();
+        auto prim = get_input_Geometry("interp_prim")->toPrimitiveObject();
         prim_interp(origin_prim.get(), prim.get());
-        set_output2("prim", prim);
+        auto geom = create_GeometryObject(prim);
+        set_output("prim", geom);
     }
 };
 
 ZENDEFNODE(PrimInterp,
 { /* inputs: */ {
-    "original_prim",
-    "interp_prim",
+    {gParamType_Geometry, "original_prim"},
+    {gParamType_Geometry, "interp_prim"},
 }, /* outputs: */ {
-    "prim"
+    {gParamType_Geometry, "prim"}
 }, /* params: */ {
 }, /* category: */ {
     "primitive",
 }});
+
+//TODO: CALLTEMPNODE
+#if 0
 struct PrimDisplacement : INode {
     void apply() override {
-        auto prim_in = get_input2<PrimitiveObject>("prim_in");
+        auto prim_in = get_input_Geometry("prim_in")->toPrimitiveObject();
+
         if(!prim_in->verts.has_attr("disp"))
             prim_in->verts.add_attr<vec3f>("disp");
         if(!prim_in->verts.has_attr("sample_disp"))
             prim_in->verts.add_attr<vec3f>("sample_disp");
-        std::string image_file = get_input2<std::string>("image_file");
-        std::string mat_name = get_input2<std::string>("mat_name");
-        std::string displacement_code = get_input2<std::string>("displacement_code");
+        std::string image_file = zsString2Std(get_input2_string("image_file"));
+        std::string mat_name = zsString2Std(get_input2_string("mat_name"));
+        std::string displacement_code = zsString2Std(get_input2_string("displacement_code"));
 
         auto img = zeno::TempNodeSimpleCaller("ReadImageFile_v2")
                 .set2("path", image_file)
@@ -696,39 +702,40 @@ struct PrimDisplacement : INode {
         });
 
 
-        set_output2("out", disp_prim);
+        set_output("out", disp_prim);
     }
 };
 
 ZENDEFNODE(PrimDisplacement,
 { /* inputs: */ {
-    "prim_in",
-    {"readpath", "image_file"},
-    {"string", "mat_name"},
-    {"multiline_string", "displacement_code"},
+    {gParamType_Geometry, "prim_in"},
+    {gParamType_String, "image_file", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
+    {gParamType_String, "mat_name"},
+    {gParamType_String, "displacement_code", "", zeno::Socket_Primitve, zeno::CodeEditor},
 }, /* outputs: */ {
-    "out",
+    {gParamType_Geometry, "out"},
 }, /* params: */ {
 }, /* category: */ {
     "primitive",
 }});
+#endif
 
 
 struct PrimDice : INode {
     void apply() override {
-        auto origin_prim = get_input2<PrimitiveObject>("prim");
+        auto origin_prim = get_input_Geometry("prim")->toPrimitiveObject();
         primTriangulateIntoPolys(origin_prim.get());
         auto prim = std::dynamic_pointer_cast<PrimitiveObject>(origin_prim->clone());
         primTriangulateIntoPolys(prim.get());
-        auto camera = get_input2<CameraObject>("camera");
-        auto width = get_input2<int>("width");
-        auto height = get_input2<int>("height");
-        auto maxIterNum = get_input2<int>("maxIterNum");
-        auto factor = get_input2<float>("factor");
+        auto camera = std::dynamic_pointer_cast<CameraObject>(get_input("camera"));
+        auto width = get_input2_int("width");
+        auto height = get_input2_int("height");
+        auto maxIterNum = get_input2_int("maxIterNum");
+        auto factor = get_input2_float("factor");
         int iter_count = 0;
-        std::unordered_map<std::pair<int, int>, EdgeInfo, PairHash> edge_split_mask;
+        std::unordered_map<std::pair<int, int>, _EdgeInfo, PairHash> edge_split_mask;
         EdgeInfoMap concurrent_edges;
-        std::vector<EdgeInfo> e_info_vector;
+        std::vector<_EdgeInfo> e_info_vector;
         std::vector<vec3i> tri_edges;
         std::vector<int> tri_new;
         tri_new.assign(prim->polys.size(),1);
@@ -788,19 +795,20 @@ struct PrimDice : INode {
         });
         prim_interp(origin_prim.get(), prim.get());
 
-        set_output2("out", prim);
+        auto geom = create_GeometryObject(prim);
+        set_output("out", std::move(geom));
     }
 };
 ZENDEFNODE(PrimDice,
 { /* inputs: */ {
-    "prim",
-    "camera",
-    {"int", "width", "1920"},
-    {"int", "height", "1080"},
-    {"int", "maxIterNum", "1"},
-    {"float", "factor", "0.5"},
+    {gParamType_Geometry, "prim"},
+    {gParamType_Camera, "camera"},
+    {gParamType_Int, "width", "1920"},
+    {gParamType_Int, "height", "1080"},
+    {gParamType_Int, "maxIterNum", "1"},
+    {gParamType_Float, "factor", "0.5"},
 }, /* outputs: */ {
-    "out",
+    {gParamType_Geometry, "out"},
 }, /* params: */ {
 }, /* category: */ {
     "primitive",

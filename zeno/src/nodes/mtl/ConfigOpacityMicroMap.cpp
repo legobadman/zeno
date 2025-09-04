@@ -14,21 +14,20 @@ namespace zeno {
     struct ConfigOpacityMicroMap : INode {
 
     virtual void apply() override {
-
-        auto path = get_input2<std::string>("path", "");
+        auto path = zsString2Std(get_input2_string("path"));
         bool exist = std::filesystem::exists(path);
         if (!exist) {
             throw std::runtime_error("File " + path + " doesn't exist");
         }
         nlohmann::json ommj;
         ommj["path"] = path;
-        ommj["alphaMode"] = get_input2<std::string>("alphaMode");
-        ommj["opacityCutoff"] = get_input2<float>("opacityCutoff");
-        ommj["transparencyCutoff"] = get_input2<float>("transparencyCutoff");
-        ommj["binaryShadowTestDirectRay"] = get_input2<bool>("binaryShadowTestDirectRay");
-        ommj["binaryShadowTestIndirectRay"] = get_input2<bool>("binaryShadowTestIndirectRay");
+        ommj["alphaMode"] = zsString2Std(get_input2_string("alphaMode"));
+        ommj["opacityCutoff"] = get_input2_float("opacityCutoff");
+        ommj["transparencyCutoff"] = get_input2_float("transparencyCutoff");
+        ommj["binaryShadowTestDirectRay"] = get_input2_bool("binaryShadowTestDirectRay");
+        ommj["binaryShadowTestIndirectRay"] = get_input2_bool("binaryShadowTestIndirectRay");
 
-        auto mtl = get_input2<MaterialObject>("mtl");
+        auto mtl = std::dynamic_pointer_cast<MaterialObject>(get_input("mtl"));
         auto json = nlohmann::json::parse(mtl->parameters);
         json["omm"] = std::move(ommj);
         mtl->parameters = json.dump();
@@ -39,16 +38,16 @@ namespace zeno {
 
 ZENDEFNODE(ConfigOpacityMicroMap, {
     {
-        {"MaterialObject", "mtl"},
-        {"readpath", "path"},
+        {gParamType_Material, "mtl"},
+        {gParamType_String, "path", "", zeno::NoSocket, zeno::ReadPathEdit},
         {"enum Auto RGB Max X Y Z W", "alphaMode", "Auto"},
-        {"float", "opacityCutoff", "0.99"},
-        {"float", "transparencyCutoff", "0.89"},
-        {"bool", "binaryShadowTestDirectRay", "0"},
-        {"bool", "binaryShadowTestIndirectRay", "1"}
+        {gParamType_Float, "opacityCutoff", "0.99"},
+        {gParamType_Float, "transparencyCutoff", "0.89"},
+        {gParamType_Bool, "binaryShadowTestDirectRay", "0"},
+        {gParamType_Bool, "binaryShadowTestIndirectRay", "1"}
     },
     {
-        {"MaterialObject", "mtl"},
+        {gParamType_Material, "mtl"},
     },
     {},
     {

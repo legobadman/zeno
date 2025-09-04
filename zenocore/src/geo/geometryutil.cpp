@@ -207,6 +207,13 @@ namespace zeno
         return parallel_reduce_minmax(verts.begin(), verts.end());
     }
 
+    std::optional<std::pair<vec3f, vec3f>> geomBoundingBox2(GeometryObject* geo) {
+        const std::vector<vec3f>& verts = geo->points_pos();
+        if (!verts.size())
+            return std::nullopt;
+        return parallel_reduce_minmax(verts.begin(), verts.end());
+    }
+
     void geom_set_abcpath(GeometryObject_Adapter* geom, zeno::String path_name) {
         auto pUserData = geom->userData();
         int faceset_count = pUserData->get_int("abcpath_count", 0);

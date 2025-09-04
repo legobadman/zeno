@@ -23,20 +23,23 @@
 #include <zeno/utils/eulerangle.h>
 #include <zeno/funcs/PrimitiveTools.h>
 #include "zeno/extra/SceneAssembler.h"
+#include <zeno/geo/geometryutil.h>
+
 
 namespace zeno {
 static std::shared_ptr<SceneObject> get_scene_tree_from_list(std::shared_ptr<ListObject> list_obj) {
     auto scene_tree = std::make_shared<SceneObject>();
-    auto json_obj = std::static_pointer_cast<PrimitiveObject>(list_obj->arr.back());
-    scene_tree->from_json(json_obj->userData().get2<std::string>("json"));
-    auto prim_list_size = list_obj->arr.front()->userData().get2<int>("prim_count");
+    auto json_obj = std::static_pointer_cast<PrimitiveObject>(list_obj->m_impl->m_objects.back());
+    scene_tree->from_json(zsString2Std(json_obj->userData()->get_string("json")));
+    auto prim_list_size = list_obj->m_impl->m_objects.front()->userData()->get_int("prim_count");
     for (auto i = 1; i <= prim_list_size; i++) {
-        auto prim = std::static_pointer_cast<PrimitiveObject>(list_obj->arr[i]);
-        auto object_name = prim->userData().get2<std::string>("ObjectName");
-        scene_tree->prim_list[object_name] = prim;
-        }
-    return scene_tree;
+        auto prim = std::static_pointer_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]);
+        auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
+        scene_tree->geom_list[object_name] = prim;
+        scene_tree->geom_path.push_back(object_name);
     }
+    return scene_tree;
+}
 #if 0
 static std::string get_parent_path(const std::string& path) {
     if (path.empty() || path == "/") {
@@ -62,7 +65,6 @@ static std::string get_parent_path(const std::string& path) {
 
     return normalized.substr(0, last_slash);
 }
-#if 0
 std::shared_ptr<zeno::ListObject> scene_tree_to_structure(SceneObject* sceneSource) {
     std::unordered_map<std::string, glm::mat4> global_matrices;
     std::unordered_map<std::string, std::vector<std::shared_ptr<PrimitiveObject>>> temp_matrices;
@@ -220,97 +222,6 @@ static void get_local_matrix_map(
 }
 }
 
-struct FormSceneTree : zeno::INode {
-    void apply() override {
-        auto sceneTree = std::make_shared<SceneObject>();
-        auto scene_json = ZImpl(get_input2<JsonObject>("scene_info"));
-        sceneTree->root_name = "/ABC";
-        auto prim_geom_list = ZImpl(get_input2<ListObject>("prim_list"));
-        auto list_updateinfo = get_input_container_info("prim_list");
-
-//        zeno::log_info("prim_list: {}", prim_list->arr.size());
-        for (auto p: prim_geom_list->get()) {
-            if (auto prim = std::dynamic_pointer_cast<PrimitiveObject>(p)) {
-                auto bbox = zeno::primBoundingBox2(prim.get());
-                if (bbox.has_value()) {
-                    vec3f bmin = {};
-                    vec3f bmax = {};
-                    std::tie(bmax, bmax) = bbox.value();
-                    prim->userData().setLiterial("_bboxMin", bmin);
-                    prim->userData().setLiterial("_bboxMax", bmax);
-                }
-            }
-            auto abc_path = zsString2Std(p->userData()->get_string("abcpath_0"));
-            {
-                auto session = &zeno::getSession();
-                int currframe = session->globalState->getFrameId();
-                int beginframe = session->globalComm->beginFrameNumber;
-                /* zeno3不需要stamp机制
-                std::string mode = ZImpl(get_input2<std::string>("stampMode"));
-                if (mode == "UnChanged") {
-                    p->userData()->set_string("stamp-change", "UnChanged");
-                } else if (mode == "TotalChange") {
-                    p->userData()->set_string("stamp-change", "TotalChange");
-                } else if (mode == "DataChange") {
-                    p->userData()->set_string("stamp-change", "DataChange");
-                    std::string changehint = ZImpl(get_input2<std::string>("changeHint"));
-                    p->userData()->set_string("stamp-dataChange-hint", stdString2zs(changehint));
-                } else if (mode == "ShapeChange") {
-                    p->userData()->set_string("stamp-change", "TotalChange");//shapechange暂时全部按Totalchange处理
-                }
-                */
-                if (!p->userData()->has_string("ResourceType")) {
-                    auto sResourceType = ZImpl(get_input2<std::string>("ResourceType"));
-                    p->userData()->set_string("ResourceType", stdString2zs(sResourceType));
-                }
-            /*
-            if (auto prim = std::dynamic_pointer_cast<PrimitiveObject>(p)) {
-                prim->userData()->set_string("ObjectName", stdString2zs(abc_path));
-                sceneTree->prim_list[abc_path] = prim;
-            }
-            else */if (auto geom = std::dynamic_pointer_cast<GeometryObject_Adapter>(p)) {
-                geom->userData()->set_string("ObjectName", stdString2zs(abc_path));
-                //total_updateinfo.modified.insert(zsString2Std(p->key()));
-                sceneTree->geom_list[abc_path] = geom;
-                sceneTree->geom_path.push_back(abc_path);
-            }
-        }
-        get_local_matrix_map(scene_json->json, "", sceneTree);
-        sceneTree->type = get_input2<std::string>("type");
-        sceneTree->matrixMode = get_input2<std::string>("matrixMode");
-        if (get_input2<bool>("flattened")) {
-            sceneTree->flatten();
-        }
-        auto scene = sceneTree->to_list();
-
-        container_elem_update_info total_updateinfo;
-        total_updateinfo.merge(list_updateinfo);
-        total_updateinfo.container_key = zsString2Std(this->uuid());
-        set_output_container_info("scene", total_updateinfo);
-
-        set_output2("scene", scene);
-    }
-};
-
-ZENDEFNODE( FormSceneTree, {
-    {
-        {gParamType_JsonObject, "scene_info"},
-        {gParamType_List, "prim_list"},
-        {"enum UnChanged DataChange ShapeChange TotalChange", "stampMode", "UnChanged"},
-        {"enum static dynamic", "type", "dynamic"},
-        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
-        {gParamType_Bool, "flattened", "1"},
-    },
-    {
-        {gParamType_List, "scene"},
-    },
-    {},
-    {
-        "Scene",
-    },
-});
-
-
 struct FormSceneTree2 : zeno::INode {
     void apply() override {
         auto sceneTree = std::make_shared<SceneObject>();
@@ -326,12 +237,17 @@ struct FormSceneTree2 : zeno::INode {
         //如果prim_geom_list的上游节点标记为no-cache,那这里就不应该拿到prim_geom_list.
         if (prim_geom_list) {
             for (auto p : prim_geom_list->get()) {
-                auto abc_path = zsString2Std(p->userData()->get_string("abcpath_0"));
-                if (!p->userData()->has_string("ResourceType")) {
-                    auto sResourceType = ZImpl(get_input2<std::string>("ResourceType"));
-                    p->userData()->set_string("ResourceType", stdString2zs(sResourceType));
+                auto geom = std::dynamic_pointer_cast<GeometryObject_Adapter>(p);
+                if (geom) {
+                    const auto& [bmin, bmax] = zeno::geomBoundingBox(geom->m_impl.get());
+                    geom->userData()->set_vec3f("_bboxMin", toAbiVec3f(bmin));
+                    geom->userData()->set_vec3f("_bboxMax", toAbiVec3f(bmax));
                 }
-                if (auto geom = std::dynamic_pointer_cast<GeometryObject_Adapter>(p)) {
+
+                auto abc_path = zsString2Std(p->userData()->get_string("abcpath_0"));
+                p->userData()->set_string("ResourceType", "Mesh");
+
+                if (geom) {
                     geom->userData()->set_string("ObjectName", stdString2zs(abc_path));
                     if (!list_updateinfo.empty()) {
                         sceneTree->geom_list[abc_path] = geom;
@@ -341,7 +257,15 @@ struct FormSceneTree2 : zeno::INode {
         }
         sceneTree->geom_path = abc_paths;
         get_local_matrix_map(scene_json->json, "", sceneTree);
-        set_output("scene", sceneTree);
+
+        sceneTree->type = zsString2Std(get_input2_string("type"));
+        sceneTree->matrixMode = zsString2Std(get_input2_string("matrixMode"));
+        if (get_input2_bool("flattened")) {
+            sceneTree->flatten();
+        }
+        //auto scene = sceneTree->to_list();
+
+        set_output("scene", sceneTree); //还是整个输出，不转成list
     }
 };
 
@@ -350,9 +274,10 @@ ZENDEFNODE(FormSceneTree2, {
         {gParamType_JsonObject, "Scene Info"},
         {gParamType_List, "Geometry List"},
         {"enum Mesh Matrixes SceneDescriptor", "ResourceType", "Mesh"},
-        {"enum UnChanged DataChange ShapeChange TotalChange", "stampMode", "UnChanged"},
-        {gParamType_String, "changeHint", ""},
-        {gParamType_StringList, "ABC Path List", ""}
+        {"enum static dynamic", "type", "dynamic"},
+        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
+        {gParamType_StringList, "ABC Path List", ""},
+        {gParamType_Bool, "flattened", "1"}
     },
     {
         {gParamType_Scene, "scene"},
@@ -366,7 +291,7 @@ ZENDEFNODE(FormSceneTree2, {
 
 struct ConvertXformToMatrix : zeno::INode {
     void apply() override {
-        auto xform = get_input2<PrimitiveObject>("xform");
+        auto xform = get_input_PrimitiveObject("xform");
         AttrVector<vec3f> verts(xform->verts.size() * 4);
         {
             auto& t_attr = xform->verts.values;
@@ -395,15 +320,15 @@ struct ConvertXformToMatrix : zeno::INode {
         }
         xform->verts = verts;
 
-        set_output2("matrix", xform);
+        set_output("matrix", xform);
         }
 };
 ZENDEFNODE(ConvertXformToMatrix, {
     {
-		"xform",
+        {gParamType_Primitive, "xform"},
 	},
 	{
-		{"matrix"},
+		{gParamType_Primitive, "matrix"},
 	},
 	{},
 	{
@@ -593,8 +518,8 @@ static void scene_add_prefix_node(
         }
         scene_tree[prefix_node_name + key] = stn;
     }
-    std::unordered_map<std::string, std::shared_ptr<PrimitiveObject>> new_prim_list;
-    for (auto& [key, value] : sceneObject->prim_list) {
+    std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> new_prim_list;
+    for (auto& [key, value] : sceneObject->geom_list) {
         auto obj_name = zsString2Std(value->userData()->get_string("ObjectName"));
         obj_name = prefix_node_name + obj_name;
         value->userData()->set_string("ObjectName", stdString2zs(obj_name));
@@ -605,7 +530,7 @@ static void scene_add_prefix_node(
         new_node_to_matrix[prefix_node_name + key] = value;
     }
     sceneObject->scene_tree = scene_tree;
-    sceneObject->prim_list = new_prim_list;
+    sceneObject->geom_list = new_prim_list;
     sceneObject->node_to_matrix = new_node_to_matrix;
 
 
@@ -638,11 +563,11 @@ void merge_scene2_into_scene1(std::shared_ptr<SceneObject> main_object, std::sha
         }
         main_object->scene_tree[insert_path + key] = stn;
     }
-    for (auto& [key, value] : second_object->prim_list) {
-        auto obj_name = value->userData().get2<std::string>("ObjectName");
+    for (auto& [key, value] : second_object->geom_list) {
+        auto obj_name = zsString2Std(value->userData()->get_string("ObjectName"));
         obj_name = insert_path + obj_name;
-        value->userData().set2("ObjectName", obj_name);
-        main_object->prim_list[insert_path + key] = value;
+        value->userData()->set_string("ObjectName", stdString2zs(obj_name));
+        main_object->geom_list[insert_path + key] = value;
     }
 
     for (const auto& [key, value] : second_object->node_to_matrix) {
@@ -650,35 +575,36 @@ void merge_scene2_into_scene1(std::shared_ptr<SceneObject> main_object, std::sha
     }
     main_object->scene_tree[insert_path].children.push_back(insert_path+ second_object->root_name);
 }
+
 struct MergeScene : zeno::INode {
     void apply() override {
-        auto main_scene = get_scene_tree_from_list2(get_input2<ListObject>("main_scene"));
-        auto namespace1 = get_input2<std::string>("namespace1");
+        auto main_scene = std::dynamic_pointer_cast<SceneObject>(get_input("Main Scene"));
+        auto namespace1 = zsString2Std(get_input2_string("namespace1"));
         if (namespace1.size()) {
             if (!zeno::starts_with(namespace1, "/")) {
                 namespace1 = "/" + namespace1;
             }
             std::vector<glm::mat4> xform1;
-            if (has_input2<PrimitiveObject>("xform1")) {
-                xform1 = get_xform_from_prim(get_input2<PrimitiveObject>("xform1"));
+            if (has_link_input("xform1")) {
+                xform1 = get_xform_from_prim(get_input_PrimitiveObject("xform1"));
             }
             scene_add_prefix_node(namespace1, xform1, main_scene);
         }
-        if (has_input("second_scene")) {
-            auto second_scene = get_scene_tree_from_list2(get_input2<ListObject>("second_scene"));
+        if (has_link_input("Second Scene")) {
+            auto second_scene = std::dynamic_pointer_cast<SceneObject>(get_input("Second Scene"));
 
-            auto namespace2 = get_input2<std::string>("namespace2");
+            auto namespace2 = zsString2Std(get_input2_string("namespace2"));
             if (namespace2.size()) {
                 if (!zeno::starts_with(namespace2, "/")) {
                     namespace2 = "/" + namespace2;
                 }
                 std::vector<glm::mat4> xform2;
-                if (has_input2<PrimitiveObject>("xform2")) {
-                    xform2 = get_xform_from_prim(get_input2<PrimitiveObject>("xform2"));
+                if (has_link_input("xform2")) {
+                    xform2 = get_xform_from_prim(get_input_PrimitiveObject("xform2"));
                 }
                 scene_add_prefix_node(namespace2, xform2, second_scene);
             }
-            auto insert_path = get_input2<std::string>("insert_path");
+            auto insert_path = zsString2Std(get_input2_string("insert_path"));
             if (insert_path.size()) {
                 if (!zeno::starts_with(insert_path, "/")) {
                     insert_path = "/" + insert_path;
@@ -686,27 +612,27 @@ struct MergeScene : zeno::INode {
             }
             merge_scene2_into_scene1(main_scene, second_scene, namespace1 + insert_path);
         }
-        main_scene->type = get_input2<std::string>("type");
-        main_scene->matrixMode = get_input2<std::string>("matrixMode");
-        auto scene = main_scene->to_list();
-        set_output2("scene", scene);
+        main_scene->type = zsString2Std(get_input2_string("type"));
+        main_scene->matrixMode = zsString2Std(get_input2_string("matrixMode"));
+        //auto scene = main_scene->to_list();
+        set_output("scene", main_scene);
     }
 };
 
 ZENDEFNODE( MergeScene, {
     {
-        "main_scene",
-        "second_scene",
+        {gParamType_Scene, "Main Scene"},
+        {gParamType_Scene, "Second Scene"},
         {"enum static dynamic", "type", "static"},
         {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
-        {"string", "insert_path", ""},
-        {"string", "namespace1", ""},
-        {"xform1"},
-        {"string", "namespace2", "namespace2"},
-        {"xform2"},
+        {gParamType_String, "insert_path", ""},
+        {gParamType_String, "namespace1", ""},
+        {gParamType_Primitive, "xform1"},
+        {gParamType_String, "namespace2", "namespace2"},
+        {gParamType_Primitive, "xform2"},
     },
     {
-        {"scene"},
+        {gParamType_Scene, "scene"},
     },
     {},
     {
@@ -727,7 +653,7 @@ struct SceneRootRename2 : zeno::INode {
         if (zeno::starts_with(new_root_name, "/") == false) {
             new_root_name = "/" + new_root_name;
         }
-        std::optional<glm::mat4> root_xform = std::nullopt;
+        std::vector<glm::mat4> root_xform;
         if (ZImpl(has_input2<PrimitiveObject>("xform"))) {
             root_xform = get_xform_from_prim(get_input_PrimitiveObject("xform"));
         }
@@ -754,9 +680,9 @@ ZENDEFNODE( SceneRootRename2, {
 struct MergeMultiScenes : zeno::INode {
     void apply() override {
         auto main_scene = std::make_shared<SceneObject>();
-        main_scene->root_name = get_input2<std::string>("root_name");
-        main_scene->type = get_input2<std::string>("type");
-        main_scene->matrixMode = get_input2<std::string>("matrixMode");
+        main_scene->root_name = zsString2Std(get_input2_string("root_name"));
+        main_scene->type = zsString2Std(get_input2_string("type"));
+        main_scene->matrixMode = zsString2Std(get_input2_string("matrixMode"));
         if (zeno::starts_with(main_scene->root_name, "/") == false) {
             main_scene->root_name = "/" + main_scene->root_name;
         }
@@ -767,24 +693,11 @@ struct MergeMultiScenes : zeno::INode {
             main_scene->scene_tree[main_scene->root_name] = root_node;
         }
         std::unordered_map<std::string, int> sub_root_names;
-        if (has_input("scene_list")) {
+        if (has_input("Scene List")) {
             auto input_scene_list = std::make_shared<ListObject>();
-            auto scene_list = get_input2<ListObject>("scene_list");
-            {
-                auto sub_list = std::make_shared<ListObject>();
-                for (auto i = 0; i < scene_list->arr.size(); i++) {
-                    auto obj = scene_list->arr[i];
-                    sub_list->arr.push_back(obj);
-                    if (obj->userData().get2<std::string>("ResourceType", "") == "SceneTree") {
-                        input_scene_list->arr.push_back(sub_list);
-                        sub_list = std::make_shared<ListObject>();
-                    }
-                }
-            }
-
-            for (auto i = 0; i < input_scene_list->arr.size(); i++) {
-                auto sub_list = std::dynamic_pointer_cast<ListObject>(input_scene_list->arr[i]);
-                auto second_scene = get_scene_tree_from_list2(sub_list);
+            auto scene_list = get_input_ListObject("Scene List");
+            for (auto i = 0; i < scene_list->size(); i++) {
+                auto second_scene = std::dynamic_pointer_cast<SceneObject>(scene_list->m_impl->m_objects[i]);
                 auto sub_root_name = second_scene->root_name;
                 sub_root_names[sub_root_name] += 1;
                 if (sub_root_names[sub_root_name] > 1) {
@@ -794,162 +707,46 @@ struct MergeMultiScenes : zeno::INode {
             }
         }
 
-        auto scene = main_scene->to_list();
-        set_output2("scene", scene);
+        //auto scene = main_scene->to_list();
+        set_output("scene", main_scene);
     }
 };
 ZENDEFNODE( MergeMultiScenes, {
     {
-        {"list", "scene_list"},
-        {"string", "root_name", "dummyRoot"},
+        {gParamType_List, "Scene List"},
+        {gParamType_String, "root_name", "dummyRoot"},
         {"enum static dynamic", "type", "dynamic"},
         {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
     },
     {
-        {"scene"},
+        {gParamType_Scene, "scene"},
     },
     {},
     {
         "Scene",
     },
 });
+
 struct FlattenSceneTree : zeno::INode {
     void apply() override {
-        auto scene = get_scene_tree_from_list2(get_input2<ListObject>("scene"));
-        auto use_static = get_input2<bool>("use_static");
+        auto scene = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
+        auto use_static = get_input2_bool("use_static");
         scene->type = use_static? "static" : "dynamic";
-        scene->matrixMode = get_input2<std::string>("matrixMode");
+        scene->matrixMode = zsString2Std(get_input2_string("matrixMode"));
         scene->flatten();
-
-        set_output2("scene", scene);
-    }
-};
-
-ZENDEFNODE( FlattenSceneTree, {
-    {
-        "scene",
-        {"bool", "use_static", "1"},
-        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
-    },
-    {
-        {"scene"}
-    },
-    {},
-    {
-        "Scene",
-    },
-});
-
-struct SceneRootRename : zeno::INode {
-    void apply() override {
-        auto scene_tree = get_scene_tree_from_list2(get_input2<ListObject>("scene"));
-//        zeno::log_info("SceneRootRename input root_name {}", scene_tree->root_name);
-        auto new_root_name = get_input2<std::string>("new_root_name");
-        if (zeno::ends_with(new_root_name, "/")) {
-            new_root_name.pop_back();
-        }
-        if (new_root_name.empty()) {
-            new_root_name = scene_tree->root_name;
-        }
-        if (zeno::starts_with(new_root_name, "/") == false) {
-            new_root_name = "/" + new_root_name;
-        }
-        std::vector<glm::mat4> root_xform;
-        if (has_input2<PrimitiveObject>("xform")) {
-            root_xform = get_xform_from_prim(get_input2<PrimitiveObject>("xform"));
-        }
-        auto new_scene_tree = scene_tree->root_rename(new_root_name, root_xform);
-//        zeno::log_info("SceneRootRename output root_name {}", new_scene_tree->root_name);
-
-        auto scene = new_scene_tree->to_list();
-        set_output2("scene", scene);
-    }
-};
-
-ZENDEFNODE( SceneRootRename, {
-    {
-        "scene",
-        {"string", "new_root_name", "new_scene"},
-        "xform",
-    },
-    {
-        {"scene"},
-    },
-    {},
-    {
-        "Scene",
-    },
-});
-
-
-struct RenderScene2 : zeno::INode {
-    Json m_static_scene_descriptor;
-
-    void apply() override {
-        auto scene = std::make_shared<ListObject>();
-        Json scene_descriptor_json;
-        container_elem_update_info output_updateinfo;
-        output_updateinfo.container_key = zsString2Std(this->uuid());
-
-        if (has_input("Static Scene")) {
-            auto static_scene_tree = std::dynamic_pointer_cast<SceneObject>(get_input("Static Scene"));
-            if (static_scene_tree) {
-                //auto static_updateinfo = get_input_container_info("static_scene");
-                //output_updateinfo.merge(static_updateinfo);
-
-                auto new_static_scene_tree = static_scene_tree->root_rename("SRG", std::nullopt);
-                auto static_scene = get_input2_bool("flatten_static_scene") ? new_static_scene_tree->to_flatten_structure(output_updateinfo, true) : new_static_scene_tree->to_layer_structure(output_updateinfo, true);
-                for (auto i = 1; i < static_scene->m_impl->m_objects.size() - 2; i++) {
-                    scene->push_back(static_scene->m_impl->m_objects[i]);
-                }
-
-                auto scene_str = static_scene->m_impl->m_objects[static_scene->m_impl->m_objects.size() - 2]->userData()->get_string("Scene");
-                m_static_scene_descriptor = Json::parse(zsString2Std(scene_str));
-            }
-            scene_descriptor_json["StaticRenderGroups"] = m_static_scene_descriptor["StaticRenderGroups"];
-            scene_descriptor_json["BasicRenderInstances"].update(m_static_scene_descriptor["BasicRenderInstances"]);
-        }
-        if (has_input("Dynamic Scene")) {
-            auto dynamic_scene_tree = std::dynamic_pointer_cast<SceneObject>(get_input("Dynamic Scene"));
-            //auto dynamic_updateinfo = get_input_container_info("dynamic_scene");
-            //output_updateinfo.merge(dynamic_updateinfo);
-
-            auto new_dynamic_scene_tree = dynamic_scene_tree->root_rename("DRG", std::nullopt);
-            auto dynamic_scene = get_input2_bool("flatten_dynamic_scene") ? new_dynamic_scene_tree->to_flatten_structure(output_updateinfo, false) : new_dynamic_scene_tree->to_layer_structure(output_updateinfo, false);
-            for (auto i = 1; i < dynamic_scene->m_impl->m_objects.size() - 2; i++) {
-                scene->push_back(dynamic_scene->m_impl->m_objects[i]);
-            }
-            auto scene_str = dynamic_scene->m_impl->m_objects[dynamic_scene->m_impl->m_objects.size() - 2]->userData()->get_string("Scene");
-            auto dynamic_scene_descriptor = Json::parse(zsString2Std(scene_str));
-            scene_descriptor_json["DynamicRenderGroups"] = dynamic_scene_descriptor["DynamicRenderGroups"];
-            scene_descriptor_json["BasicRenderInstances"].update(dynamic_scene_descriptor["BasicRenderInstances"]);
-        }
-        {
-            auto scene_descriptor = std::make_shared<PrimitiveObject>();
-            auto ud = scene_descriptor->userData();
-            ud->set_string("ResourceType", "SceneDescriptor");
-            ud->set_string("Scene", stdString2zs(std::string(scene_descriptor_json.dump())));
-
-            std::string objkey = output_updateinfo.container_key + "\\SceneDescriptor";
-            scene_descriptor->update_key(stdString2zs(objkey));
-            //output_updateinfo.new_added.insert(objkey);
-
-            scene->push_back(scene_descriptor);
-        }
 
         set_output("scene", scene);
     }
 };
 
-ZENDEFNODE( RenderScene2, {
+ZENDEFNODE( FlattenSceneTree, {
     {
-        {gParamType_Scene, "Static Scene"},
-        {gParamType_Bool, "flatten_static_scene", "1"},
-        {gParamType_Scene, "Dynamic Scene"},
-        {gParamType_Bool, "flatten_dynamic_scene", "1"},
+        {gParamType_Scene, "scene"},
+        {gParamType_Bool, "use_static", "1"},
+        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
     },
     {
-        {gParamType_List, "scene"}
+        {gParamType_Scene, "scene"}
     },
     {},
     {
@@ -1007,24 +804,23 @@ ZENDEFNODE( MakeXform, {
 
 struct MarkSceneState : zeno::INode {
     void apply() override {
-        auto scene_tree_list = get_input2<ListObject>("scene");
-        std::shared_ptr<PrimitiveObject> json_ptr = std::dynamic_pointer_cast<PrimitiveObject>(scene_tree_list->arr.back());
-        auto json = Json::parse(json_ptr->userData().get2<std::string>("json"));
-        json["type"] = get_input2<std::string>("type");
-        json["matrixMode"] = get_input2<std::string>("matrixMode");
-        json_ptr->userData().set2("json", json.dump());
-        set_output2("scene", scene_tree_list);
+        auto scene = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
+        auto json = Json::parse(scene->to_json());
+        json["type"] = zsString2Std(get_input2_string("type"));
+        json["matrixMode"] = zsString2Std(get_input2_string("matrixMode"));
+        scene->from_json(json.dump());
+        set_output("scene", scene);
     }
 };
 
 ZENDEFNODE( MarkSceneState, {
     {
-        {"scene"},
+        {gParamType_Scene, "scene"},
         {"enum static dynamic", "type", "static"},
         {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
     },
     {
-        {"scene"},
+        {gParamType_Scene, "scene"},
     },
     {
     },
@@ -1035,16 +831,15 @@ ZENDEFNODE( MarkSceneState, {
 
 struct SetNodeXform : zeno::INode {
     void apply() override {
-        auto scene = get_input2<ListObject>("scene");
-        auto node = get_input2<std::string>("node");
+        auto scene = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
+        auto node = zsString2Std(get_input2_string("node"));
         if (!zeno::starts_with(node, "/")) {
             node = "/" + node;
 }
-        auto json_str = scene->arr.back()->userData().get2<std::string>("json");
-        auto st = Json::parse(json_str);
+        auto st = Json::parse(scene->to_json());
         auto &node_to_matrix = st["node_to_matrix"];
         if (has_input("xforms")) {
-            auto xforms = get_xform_from_prim(get_input2<PrimitiveObject>("xforms"));
+            auto xforms = get_xform_from_prim(get_input_PrimitiveObject("xforms"));
             Json mats = Json::array();
             for (const auto &xform: xforms) {
                 Json matrix = Json::array();
@@ -1063,7 +858,7 @@ struct SetNodeXform : zeno::INode {
                 mats.push_back(matrix);
             }
             node_to_matrix[node + "_m"] = mats;
-            auto ids = get_id_from_prim(get_input2<PrimitiveObject>("xforms"));
+            auto ids = get_id_from_prim(get_input_PrimitiveObject("xforms"));
             if (ids.size()) {
                 Json ids_json = Json::array();
                 for (auto id: ids) {
@@ -1073,11 +868,11 @@ struct SetNodeXform : zeno::INode {
             }
         }
         else {
-            auto index = get_input2<int>("index");
-            auto r0 = get_input2<vec3f>("r0");
-            auto r1 = get_input2<vec3f>("r1");
-            auto r2 = get_input2<vec3f>("r2");
-            auto t  = get_input2<vec3f>("t");
+            auto index = get_input2_int("index");
+            auto r0 = get_input2_vec3f("r0");
+            auto r1 = get_input2_vec3f("r1");
+            auto r2 = get_input2_vec3f("r2");
+            auto t  = get_input2_vec3f("t");
 
             if (node_to_matrix.contains(node + "_m")) {
                 Json matrix = Json::array();
@@ -1096,24 +891,24 @@ struct SetNodeXform : zeno::INode {
                 node_to_matrix[node + "_m"][index] = matrix;
             }
         }
-        scene->arr.back()->userData().set2("json", st.dump());
-        set_output2("scene", scene);
+        scene->from_json(st.dump());
+        set_output("scene", scene);
     }
 };
 
 ZENDEFNODE( SetNodeXform, {
     {
-        "scene",
-        {"string", "node", ""},
-        {"int", "index", "0"},
-        {"vec3f", "r0", "1, 0, 0"},
-        {"vec3f", "r1", "0, 1, 0"},
-        {"vec3f", "r2", "0, 0, 1"},
-        {"vec3f", "t", "0, 0, 0"},
-        "xforms"
+        {gParamType_Scene, "scene"},
+        {gParamType_String, "node", ""},
+        {gParamType_Int, "index", "0"},
+        {gParamType_Vec3f, "r0", "1, 0, 0"},
+        {gParamType_Vec3f, "r1", "0, 1, 0"},
+        {gParamType_Vec3f, "r2", "0, 0, 1"},
+        {gParamType_Vec3f, "t", "0, 0, 0"},
+        {gParamType_Primitive, "xforms"}
     },
     {
-        "scene",
+        {gParamType_Scene, "scene"},
     },
     {
     },
@@ -1124,36 +919,35 @@ ZENDEFNODE( SetNodeXform, {
 
 struct SetNodeId : zeno::INode {
     void apply() override {
-        auto scene = get_input2<ListObject>("scene");
-        auto node = get_input2<std::string>("node");
+        auto scene = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
+        auto node = zsString2Std(get_input2_string("node"));
         if (!zeno::starts_with(node, "/")) {
             node = "/" + node;
         }
-        auto json_str = scene->arr.back()->userData().get2<std::string>("json");
-        auto st = Json::parse(json_str);
+        auto st = Json::parse(scene->to_json());
         auto &node_to_id = st["node_to_id"];
         {
-            auto index = get_input2<int>("index");
-            auto id = get_input2<int>("id");
+            auto index = get_input2_int("index");
+            auto id = get_input2_int("id");
 
             if (node_to_id.contains(node + "_m")) {
                 node_to_id[node + "_m"][index] = id;
             }
         }
-        scene->arr.back()->userData().set2("json", st.dump());
-        set_output2("scene", scene);
+        scene->from_json(st.dump());
+        set_output("scene", scene);
     }
 };
 
 ZENDEFNODE( SetNodeId, {
     {
-        "scene",
-        {"string", "node", ""},
-        {"int", "index", "0"},
-        {"int", "id", "0"},
+        {gParamType_Scene, "scene"},
+        {gParamType_String, "node", ""},
+        {gParamType_Int, "index", "0"},
+        {gParamType_Int, "id", "0"},
     },
     {
-        "scene",
+        {gParamType_Scene, "scene"},
     },
     {
     },
@@ -1164,8 +958,8 @@ ZENDEFNODE( SetNodeId, {
 
 struct SetSceneXform : zeno::INode {
     void apply() override {
-        auto scene_tree = get_scene_tree_from_list2(get_input2<ListObject>("scene"));
-        auto xformsList = get_input<ListObject>("xformsList")->get2<std::string>();
+        auto scene_tree = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
+        auto xformsList = zeno::reflect::any_cast<std::vector<std::string>>(ZImpl(get_param_result("xformsList")));
         for (const auto &xforms_str: xformsList) {
             if (xforms_str.size()) {
                 auto xforms = Json::parse(xforms_str);
@@ -1184,19 +978,19 @@ struct SetSceneXform : zeno::INode {
                 }
             }
         }
-        auto scene = scene_tree->to_list();
-        set_output2("scene", scene);
+        //auto scene = scene_tree->to_list();
+        set_output("scene", scene_tree);
     }
 };
 
 ZENDEFNODE( SetSceneXform, {
     {
-        "scene",
-        {"list", "xformsList"},
+        {gParamType_Scene, "scene"},
+        {gParamType_StringList, "xformsList"},
 //        {"multiline_string", "xformsInfo", ""},
     },
     {
-        "scene",
+        {gParamType_Scene, "scene"},
     },
     {
     },
@@ -1207,27 +1001,27 @@ ZENDEFNODE( SetSceneXform, {
 struct MakeSceneNode : zeno::INode {
     void apply() override {
         auto scene_tree = std::make_shared<SceneObject>();
-        scene_tree->root_name = get_input2<std::string>("root_name");
+        scene_tree->root_name = zsString2Std(get_input2_string("root_name"));
         if (!zeno::starts_with(scene_tree->root_name, "/")) {
             scene_tree->root_name = "/" + scene_tree->root_name;
         }
-        scene_tree->type = get_input2<std::string>("type");
-        scene_tree->matrixMode = get_input2<std::string>("matrixMode");
-        auto prim = get_input2<PrimitiveObject>("prim");
-        auto bbox = zeno::primBoundingBox2(prim.get());
+        scene_tree->type = zsString2Std(get_input2_string("type"));
+        scene_tree->matrixMode = zsString2Std(get_input2_string("matrixMode"));
+        auto geom = get_input_Geometry("prim");
+        auto bbox = zeno::geomBoundingBox2(geom->m_impl.get());
         if (bbox.has_value()) {
             vec3f bmin = {};
             vec3f bmax = {};
             std::tie(bmax, bmax) = bbox.value();
-            prim->userData().setLiterial("_bboxMin", bmin);
-            prim->userData().setLiterial("_bboxMax", bmax);
+            geom->userData()->set_vec3f("_bboxMin", toAbiVec3f(bmin));
+            geom->userData()->set_vec3f("_bboxMax", toAbiVec3f(bmax));
         }
 
         SceneTreeNode root_node;
         root_node.matrix = scene_tree->root_name + "_m";
         scene_tree->node_to_matrix[root_node.matrix] = {glm::mat4(1)};
-        auto obj_name = prim->userData().get2<std::string>("ObjectName");
-        scene_tree->prim_list[obj_name] = prim;
+        auto obj_name = zsString2Std(geom->userData()->get_string("ObjectName"));
+        scene_tree->geom_list[obj_name] = geom;
         {
             std::string node_name = scene_tree->root_name + '/' + obj_name + "_node";
             SceneTreeNode prim_node;
@@ -1241,23 +1035,23 @@ struct MakeSceneNode : zeno::INode {
         scene_tree->scene_tree[scene_tree->root_name] = root_node;
 
         if (has_input("xforms")) {
-            auto xforms = get_xform_from_prim(get_input2<PrimitiveObject>("xforms"));
+            auto xforms = get_xform_from_prim(get_input_PrimitiveObject("xforms"));
             scene_tree->node_to_matrix[scene_tree->root_name + "_m"] = xforms;
         }
-        auto scene = scene_tree->to_list();
-        set_output2("scene", scene);
+        //auto scene = scene_tree->to_list();
+        set_output("scene", scene_tree);
     }
 };
 ZENDEFNODE( MakeSceneNode, {
     {
-        {"prim"},
+        {gParamType_Geometry, "prim"},
         {"enum static dynamic", "type", "dynamic"},
         {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
-        {"string", "root_name", "/ABC"},
-        {"xforms"},
+        {gParamType_String, "root_name", "/ABC"},
+        {gParamType_Primitive, "xforms"},
     },
     {
-        "scene",
+        {gParamType_Scene, "scene"},
     },
     {
     },

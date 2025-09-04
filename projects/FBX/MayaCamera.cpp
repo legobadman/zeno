@@ -10,6 +10,7 @@
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/types/UserData.h>
@@ -87,7 +88,7 @@ ZENO_DEFNODE(CihouMayaCameraFov)({
     {"FBX"},
 });
 
-std::shared_ptr<zeno::CurveObject> createCurvePoint(std::vector<float> &t, std::vector<float> &y)
+CurveData createCurvePoint(std::vector<float> &t, std::vector<float> &y)
 {
     std::vector<zeno::vec2f> c1;
     std::vector<zeno::vec2f> c2;
@@ -112,62 +113,67 @@ std::shared_ptr<zeno::CurveObject> createCurvePoint(std::vector<float> &t, std::
         float amp = abs(dir[0])>0.0f?l/abs(dir[0]):0.0f;
         c2[i] = zeno::vec2f(t[i], y[i]) + amp * dir;
     }
-    auto curve = std::make_shared<CurveObject>();
+
+    CurveData dat;
     for (auto i = 0; i < N; i++) {
-        curve->addPoint("x", t[i], y[i], zeno::CurveData::PointType::kBezier, c2[i] - zeno::vec2f(t[i],y[i]), c1[i] - zeno::vec2f(t[i],y[i]));
+        dat.addPoint(t[i], y[i], zeno::CurveData::PointType::kBezier, c2[i] - zeno::vec2f(t[i], y[i]), c1[i] - zeno::vec2f(t[i], y[i]), CurveData::HDL_ALIGNED);
     }
-    return curve;
+    return dat;
 }
+
 struct CameraEval: zeno::INode {
 
-    std::shared_ptr<zeno::CurveObject> curve_x = {};
-    std::shared_ptr<zeno::CurveObject> curve_y = {};
-    std::shared_ptr<zeno::CurveObject> curve_z = {};
-    std::shared_ptr<zeno::CurveObject> curve_tx = {};
-    std::shared_ptr<zeno::CurveObject> curve_ty = {};
-    std::shared_ptr<zeno::CurveObject> curve_tz = {};
-    std::shared_ptr<zeno::CurveObject> curve_vx = {};
-    std::shared_ptr<zeno::CurveObject> curve_vy = {};
-    std::shared_ptr<zeno::CurveObject> curve_vz = {};
-    std::shared_ptr<zeno::CurveObject> curve_ux = {};
-    std::shared_ptr<zeno::CurveObject> curve_uy = {};
-    std::shared_ptr<zeno::CurveObject> curve_uz = {};
-    std::shared_ptr<zeno::CurveObject> curve_fov = {};
-    std::shared_ptr<zeno::CurveObject> curve_apertures = {};
-    std::shared_ptr<zeno::CurveObject> curve_fPD = {};
+    CurveData curve_x = {};
+    CurveData curve_y = {};
+    CurveData curve_z = {};
+    CurveData curve_tx = {};
+    CurveData curve_ty = {};
+    CurveData curve_tz = {};
+    CurveData curve_vx = {};
+    CurveData curve_vy = {};
+    CurveData curve_vz = {};
+    CurveData curve_ux = {};
+    CurveData curve_uy = {};
+    CurveData curve_uz = {};
+    CurveData curve_fov = {};
+    CurveData curve_apertures = {};
+    CurveData curve_fPD = {};
 
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
-            frameid = std::lround(get_input2<float>("frameid"));
+            frameid = std::lround(get_input2_float("frameid"));
         } else {
-            frameid = getGlobalState()->frameid;
+            frameid = GetFrameId();
         }
 
-        auto nodelist = get_input<zeno::ListObject>("nodelist")->get<zeno::CameraObject>();
+        std::vector<std::shared_ptr<zeno::CameraObject>> nodelist;
+        for (auto obj : get_input_ListObject("nodelist")->m_impl->m_objects) {
+            nodelist.push_back(safe_dynamic_cast<zeno::CameraObject>(obj));
+        }
 
         std::sort(nodelist.begin(), nodelist.end(), [](const auto &a, const auto &b)-> bool {
-            auto a_frame = a->userData().get2<float>("frame");
-            auto b_frame = b->userData().get2<float>("frame");
+            auto a_frame = a->userData()->get_float("frame");
+            auto b_frame = b->userData()->get_float("frame");
             return a_frame < b_frame;
         });
 
         int target_camera_count = 0;
         for (const auto &cam: nodelist) {
-            target_camera_count += cam->userData().get2<int>("is_target", 0);
+            target_camera_count += cam->userData()->get_int("is_target", 0);
         }
 
         if (nodelist.size() == 1) {
             set_output("camera", nodelist[0]);
         }
-        else if (frameid <= std::lround(nodelist[0]->userData().get2<float>("frame"))) {
+        else if (frameid <= std::lround(nodelist[0]->userData()->get_float("frame"))) {
              set_output("camera", nodelist[0]);
         }
-        else if (frameid >= std::lround(nodelist.back()->userData().get2<float>("frame"))) {
+        else if (frameid >= std::lround(nodelist.back()->userData()->get_float("frame"))) {
             set_output("camera", nodelist.back());
         }
         else {
-            if (curve_x == nullptr) {
+            if (curve_x.cpoints.empty()) {
                 std::vector<float> ts(nodelist.size());
                 std::vector<float> xs(nodelist.size());
                 std::vector<float> ys(nodelist.size());
@@ -187,8 +193,8 @@ struct CameraEval: zeno::INode {
                 if (nodelist.size() == target_camera_count) {
                     for(int i = 0; i < nodelist.size(); i++) {
                         auto const & cur_node = nodelist[i];
-                        auto f = cur_node->userData().get2<float>("frame");
-                        auto target = cur_node->userData().get2<zeno::vec3f>("target");
+                        auto f = cur_node->userData()->get_float("frame");
+                        auto target = cur_node->userData()->get_vec3f("target");
                         auto [x, y, z] = cur_node->pos;
                         auto [ux, uy, uz] = cur_node->up;
                         ts[i] = f;
@@ -232,7 +238,7 @@ struct CameraEval: zeno::INode {
                     std::vector<float> vzs(nodelist.size());
                     for(int i = 0; i < nodelist.size(); i++) {
                         auto const & cur_node = nodelist[i];
-                        auto f = cur_node->userData().get2<float>("frame");
+                        auto f = cur_node->userData()->get_float("frame");
                         auto view = cur_node->view;
                         auto [x, y, z] = cur_node->pos;
                         auto [ux, uy, uz] = normalize(cur_node->up);
@@ -265,31 +271,31 @@ struct CameraEval: zeno::INode {
                 }
             }
             auto camera = std::make_unique<zeno::CameraObject>();
-            camera->pos[0] = curve_x->eval(frameid);
-            camera->pos[1] = curve_y->eval(frameid);
-            camera->pos[2] = curve_z->eval(frameid);
-            camera->fov = curve_fov->eval(frameid);
-            camera->aperture = curve_apertures->eval(frameid);
+            camera->pos[0] = curve_x.eval(frameid);
+            camera->pos[1] = curve_y.eval(frameid);
+            camera->pos[2] = curve_z.eval(frameid);
+            camera->fov = curve_fov.eval(frameid);
+            camera->aperture = curve_apertures.eval(frameid);
             if (nodelist.size() == target_camera_count) {
-                auto refUp = zeno::vec3f(curve_ux->eval(frameid),curve_uy->eval(frameid),curve_uz->eval(frameid));
+                auto refUp = zeno::vec3f(curve_ux.eval(frameid),curve_uy.eval(frameid),curve_uz.eval(frameid));
                 refUp = normalize(refUp);
-                auto tarPos = zeno::vec3f(curve_tx->eval(frameid),curve_ty->eval(frameid),curve_tz->eval(frameid));
+                auto tarPos = zeno::vec3f(curve_tx.eval(frameid),curve_ty.eval(frameid),curve_tz.eval(frameid));
                 camera->view = zeno::normalize(tarPos - camera->pos);
                 auto cur_right = zeno::normalize(zeno::cross(camera->view, refUp));
                 camera->up = zeno::normalize(zeno::cross(cur_right, camera->view));
-                auto af = nodelist[0]->userData().get2<int>("AutoFocus", 1);
+                auto af = nodelist[0]->userData()->get_int("AutoFocus", 1);
                 if (af) {
                     camera->focalPlaneDistance = zeno::distance(camera->pos, tarPos);
                 }
             }
             else {
-                auto refUp = zeno::vec3f(curve_ux->eval(frameid),curve_uy->eval(frameid),curve_uz->eval(frameid)) - camera->pos;
+                auto refUp = zeno::vec3f(curve_ux.eval(frameid),curve_uy.eval(frameid),curve_uz.eval(frameid)) - camera->pos;
                 refUp = normalize(refUp);
-                camera->view = zeno::vec3f(curve_vx->eval(frameid), curve_vy->eval(frameid), curve_vz->eval(frameid));
+                camera->view = zeno::vec3f(curve_vx.eval(frameid), curve_vy.eval(frameid), curve_vz.eval(frameid));
                 camera->view = normalize(camera->view);
                 auto cur_right = zeno::normalize(zeno::cross(camera->view, refUp));
                 camera->up = zeno::normalize(zeno::cross(cur_right, camera->view));
-                camera->focalPlaneDistance = curve_fPD->eval(frameid);
+                camera->focalPlaneDistance = curve_fPD.eval(frameid);
             }
             set_output("camera", std::move(camera));
         }
