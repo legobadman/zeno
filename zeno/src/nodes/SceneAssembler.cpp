@@ -222,7 +222,7 @@ static void get_local_matrix_map(
 }
 }
 
-struct FormSceneTree2 : zeno::INode {
+struct FormSceneTree : zeno::INode {
     void apply() override {
         auto sceneTree = std::make_shared<SceneObject>();
         auto scene_json = ZImpl(get_input2<JsonObject>("Scene Info"));
@@ -235,7 +235,8 @@ struct FormSceneTree2 : zeno::INode {
         }
 
         //如果prim_geom_list的上游节点标记为no-cache,那这里就不应该拿到prim_geom_list.
-        if (prim_geom_list) {
+        //如果geom分支已经不脏的情况下，这里导出sceneTree是不会导出geometry的
+        if (prim_geom_list && !list_updateinfo.empty()) {
             for (auto p : prim_geom_list->get()) {
                 auto geom = std::dynamic_pointer_cast<GeometryObject_Adapter>(p);
                 if (geom) {
@@ -249,9 +250,7 @@ struct FormSceneTree2 : zeno::INode {
 
                 if (geom) {
                     geom->userData()->set_string("ObjectName", stdString2zs(abc_path));
-                    if (!list_updateinfo.empty()) {
-                        sceneTree->geom_list[abc_path] = geom;
-                    }
+                    sceneTree->geom_list[abc_path] = geom;
                 }
             }
         }
@@ -263,13 +262,11 @@ struct FormSceneTree2 : zeno::INode {
         if (get_input2_bool("flattened")) {
             sceneTree->flatten();
         }
-        //auto scene = sceneTree->to_list();
-
-        set_output("scene", sceneTree); //还是整个输出，不转成list
+        set_output("scene", sceneTree);
     }
 };
 
-ZENDEFNODE(FormSceneTree2, {
+ZENDEFNODE(FormSceneTree, {
     {
         {gParamType_JsonObject, "Scene Info"},
         {gParamType_List, "Geometry List"},
@@ -640,7 +637,7 @@ ZENDEFNODE( MergeScene, {
     },
 });
 
-struct SceneRootRename2 : zeno::INode {
+struct SceneRootRename : zeno::INode {
     void apply() override {
         auto scene_tree = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
         auto new_root_name = zsString2Std(get_input2_string("new_root_name"));
@@ -662,7 +659,7 @@ struct SceneRootRename2 : zeno::INode {
     }
 };
 
-ZENDEFNODE( SceneRootRename2, {
+ZENDEFNODE( SceneRootRename, {
     {
         {gParamType_Scene, "scene"},
         {gParamType_String, "new_root_name", "new_scene"},
@@ -998,6 +995,37 @@ ZENDEFNODE( SetSceneXform, {
         "Scene",
     },
 });
+
+struct SetResourceType : zeno::INode {
+    void apply() override {
+        auto obj = get_input("Input");
+        auto ud = obj->userData();
+        if (!ud->has_string("ResourceType")) {
+            ud->set_string("ResourceType", get_input2_string("ResourceType"));
+        }
+        if (!ud->has_string("ObjectName")) {
+            ud->set_string("ObjectName", get_input2_string("ObjectName"));
+        }
+        set_output("Output", std::move(obj));
+    }
+};
+ZENDEFNODE(SetResourceType, {
+    {
+        {gParamType_IObject, "Input"},
+        {"enum Mesh Matrixes SceneDescriptor", "ResourceType", "Mesh"},
+        {gParamType_String, "ObjectName", ""},
+        {gParamType_String, "changeHint", ""}
+    },
+    {
+        {gParamType_IObject, "Output"},
+    },
+    {
+    },
+    {
+        "Scene",
+    },
+    });
+
 struct MakeSceneNode : zeno::INode {
     void apply() override {
         auto scene_tree = std::make_shared<SceneObject>();

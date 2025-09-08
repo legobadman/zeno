@@ -275,7 +275,12 @@ struct CreateVolumeBox : zeno::INode {
         for (auto& transform : transforms) {
         
             auto prim = std::make_shared<zeno::PrimitiveObject>();
-            prim->userData().set2("vol_mat", get_input2<std::string>("vol_mat", ""));
+
+            std::string vol_mat;
+            if (has_input("vol_mat")) {
+                vol_mat = zsString2Std(get_input2_string("vol_mat"));
+            }
+            prim->userData()->set_string("vol_mat", stdString2zs(vol_mat));
 
             float dummy[] = {-0.5f, 0.5f};
 
@@ -331,7 +336,7 @@ ZENDEFNODE(CreateVolumeBox, {
         {gParamType_Vec3f, "rotate", "0, 0, 0"},
         {gParamType_Bool, "greedy", "0"},
         {gParamType_VDBGrid, "vdbGrid" },
-        {"string", "vol_mat", ""},
+        {gParamType_String, "vol_mat", ""},
     },
     {
         {gParamType_Primitive, "prim"}

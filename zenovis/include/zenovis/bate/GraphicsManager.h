@@ -4,6 +4,7 @@
 #include <vector>
 #include <zeno/types/UserData.h>
 #include <zeno/types/ListObject_impl.h>
+#include <zeno/extra/SceneAssembler.h>
 #include <zeno/utils/MapStablizer.h>
 #include <zeno/utils/PolymorphicMap.h>
 #include <zeno/utils/log.h>
@@ -99,15 +100,15 @@ struct GraphicsManager {
         return true;
     }
 
-    bool process_listobj(std::shared_ptr<zeno::ListObject> spList, zeno::container_elem_update_info info) {
+    bool process_listobj(std::shared_ptr<zeno::ListObject> spList, const zeno::container_elem_update_info& info) {
         if (info.container_key != zsString2Std(spList->key())) {
             return false;
         }
         for (auto spObject : spList->m_impl->get()) {
             assert(spObject);
             std::string const& key = zsString2Std(spObject->key());
-            if (info.new_added.find(key) != info.new_added.end() ||
-                info.modified.find(key) != info.modified.end()) {
+            if (info.empty() || /*可能有一些节点不会填这个info，为了避免疏漏，就直接全部送去渲染*/
+                (info.new_added.find(key) != info.new_added.end() || info.modified.find(key) != info.modified.end())) {
                 bool ret = false;
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                     //不支持嵌套，过于麻烦，等场景丰富了再跟进
@@ -213,7 +214,15 @@ struct GraphicsManager {
                 zeno::zany spObject = update.spObject;
                 if (spObject) {
                     //可能是对象没有通过子图的Suboutput连出来
-                    if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+
+                    if (auto sceneObj = std::dynamic_pointer_cast<zeno::SceneObject>(spObject)) {
+                        zeno::container_elem_update_info update_info;
+                        update_info.container_key = zsString2Std(sceneObj->key());
+                        auto _spList = sceneObj->to_structure();
+                        _spList->update_key(sceneObj->key());
+                        process_listobj(_spList, update_info);
+                    }
+                    else if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
 
                         {//可能有和listobj同名但不是list类型的对象存在，需先清除
                             auto& graphics_ = graphics.m_curr.m_curr;

@@ -354,9 +354,10 @@ struct GraphicsManager {
             {
                 // ^^^ Don't wuhui, I mean: Literial Synthetic Lazy internal static Local Shared Pointer
                 auto prim_in = prim_in_lslislSp.get();
+                auto pUserData = static_cast<zeno::UserData*>(prim_in->userData());
 
-                if ( prim_in->userData()->has("ShaderAttributes") ) {
-                    auto attritbutes  = zsString2Std(prim_in->userData()->get_string("ShaderAttributes"));
+                if ( pUserData->has("ShaderAttributes") ) {
+                    auto attritbutes  = zsString2Std(pUserData->get_string("ShaderAttributes"));
 
                     using VarType = zeno::AttrVectorVariant;
 
@@ -397,9 +398,9 @@ struct GraphicsManager {
                     }
                 }
 
-                if (prim_in->userData()->has("curve") && prim_in->verts->size() && prim_in->verts.has_attr("width")) {
+                if (pUserData->has("curve") && prim_in->verts->size() && prim_in->verts.has_attr("width")) {
 
-                    auto ud = prim_in->userData();
+                    auto ud = pUserData;
                     auto mtlid = zsString2Std(ud->get_string("mtlid", "Default"));
                     auto curveTypeIndex = ud->get_int("curve", 0);
                     auto curveTypeEnum = magic_enum::enum_cast<zeno::CurveType>(curveTypeIndex).value_or(zeno::CurveType::LINEAR);
@@ -434,7 +435,7 @@ struct GraphicsManager {
                     }
 
                     auto abcpath = zsString2Std(ud->get_string("abcpath_0", "Default"));
-                    const auto reName = zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(abcpath)));
+                    const auto reName = zsString2Std(pUserData->get_string("ObjectName", zeno::stdString2zs(abcpath)));
                     defaultScene.preloadCurveGroup(points, widths, normals, strands, curveTypeEnum, reName);
                     return;
                 }
@@ -484,7 +485,7 @@ struct GraphicsManager {
                     auto sphere_scale = ud->get_vec3f("sphere_scale");
                     auto uniform_scaling = sphere_scale[0] == sphere_scale[1] && sphere_scale[2] == sphere_scale[0];
                     {
-                        const auto objectName = zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(key)));
+                        const auto objectName = pUserData->get2<std::string>("ObjectName", key);
 
                         //zeno::vec4f row0, row1, row2, row3;
                         auto row0 = toVec4f(ud->get_vec4f("_transform_row0"));
@@ -534,18 +535,18 @@ struct GraphicsManager {
                             return 2;
                     } ();
 
-                    const auto reName = zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(key)));
+                    const auto reName = zsString2Std(pUserData->get_string("ObjectName", zeno::stdString2zs(key)));
                     defaultScene.preloadVolumeBox(reName, mtlid, boundsID, vbox_transform);
                     return;
                 }
 
-                auto isRealTimeObject = prim_in->userData()->get_int("isRealTimeObject", 0);
-                auto isUniformCarrier = prim_in->userData()->has("ShaderUniforms");
+                auto isRealTimeObject = pUserData->get_int("isRealTimeObject", 0);
+                auto isUniformCarrier = pUserData->has("ShaderUniforms");
                 
                 if (isRealTimeObject == 0 && isUniformCarrier == 0)
                 {
                     //first init matidx attr
-                    int matNum = prim_in->userData()->get_int("matNum",0);
+                    int matNum = pUserData->get_int("matNum",0);
                     if(matNum==0)
                     {
                         //assign -1 to "matid" attr
@@ -566,7 +567,7 @@ struct GraphicsManager {
 
 
         det = DetPrimitive{prim_in_lslislSp};
-        if (int subdlevs = prim_in->userData()->get_int("delayedSubdivLevels", 0)) {
+        if (int subdlevs = pUserData->get_int("delayedSubdivLevels", 0)) {
             // todo: zhxx, should comp normal after subd or before????
             zeno::log_trace("computing subdiv {}", subdlevs);
             (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
@@ -578,21 +579,20 @@ struct GraphicsManager {
                 .set2<bool>("hasLoopUVs", true)
                 .set2<bool>("delayTillIpc", false)
                 .call();  // will inplace subdiv prim
-            prim_in->userData()->del("delayedSubdivLevels");
+            pUserData->del("delayedSubdivLevels");
         }
 
-            if (prim_in->userData()->has("ResourceType")) {
-                    
-                const auto reType = prim_in->userData()->get_string("ResourceType", "Mesh");
-                const auto reName = zeno::zsString2Std(prim_in->userData()->get_string("ObjectName", zeno::stdString2zs(key)));
-                
+            if (pUserData->has("ResourceType")) {
+                const auto reType = pUserData->get_string("ResourceType", "Mesh");
+                const auto reName = pUserData->get2<std::string>("ObjectName", key);
+
                 if (reType == "SceneDescriptor") 
                 {
-                    const auto sceneConfig = zeno::zsString2Std(prim_in->userData()->get_string("Scene", ""));
+                    const auto sceneConfig = zeno::zsString2Std(pUserData->get_string("Scene", ""));
                     defaultScene.preload_scene(sceneConfig);
                     return;
                 }
-            
+
                 if (reType == "Matrixes") {
                     auto count = prim_in->verts->size() / 4;
 
@@ -699,13 +699,13 @@ struct GraphicsManager {
                         for(int i=0;i<matNum;i++)
                         {
                             auto matIdx = "Material_" + std::to_string(i);
-                            auto matName = zsString2Std(prim_in->userData()->get_string(zeno::stdString2zs(matIdx), ""));
+                            auto matName = zsString2Std(pUserData->get_string(zeno::stdString2zs(matIdx), ""));
                             matNameList.emplace_back(matName);
                         }
                     }
-                    auto mtlid = zsString2Std(prim_in->userData()->get_string("mtlid", ""));
+                    auto mtlid = zsString2Std(pUserData->get_string("mtlid", ""));
                     if ("" == mtlid) {
-                        mtlid = zsString2Std(prim_in->userData()->get_string("Material_0", ""));
+                        mtlid = zsString2Std(pUserData->get_string("Material_0", ""));
                     }
                     auto& matids = prim_in->tris.attr<int>("matid");
 
@@ -1911,8 +1911,10 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
         for (auto spObject : spList->m_impl->get()) {
             std::string const& key = zsString2Std(spObject->key());
-            if (info.new_added.find(key) != info.new_added.end() ||
-                info.modified.find(key) != info.modified.end()) {
+            if (info.empty() || /*可能有一些节点不会填这个info，为了避免疏漏，就直接全部送去渲染*/
+                info.new_added.find(key) != info.new_added.end() ||
+                info.modified.find(key) != info.modified.end())
+            {
 
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                     //暂不支持嵌套
@@ -1993,7 +1995,14 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 assert(spNode);
                 zeno::zany spObject = update.spObject;
                 if (spObject) {
-                    if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    if (auto sceneObj = std::dynamic_pointer_cast<zeno::SceneObject>(spObject)) {
+                        zeno::container_elem_update_info update_info;
+                        update_info.container_key = zsString2Std(sceneObj->key());
+                        auto _spList = sceneObj->to_structure();
+                        _spList->update_key(sceneObj->key());
+                        process_listobj(_spList, update_info);
+                    }
+                    else if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                         process_listobj(_spList, update.cond_update_info);
                     }
                     else {

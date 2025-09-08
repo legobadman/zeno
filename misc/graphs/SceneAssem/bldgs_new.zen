@@ -1,0 +1,1102 @@
+{
+    "main": {
+        "type": 2,
+        "nodes": {
+            "CameraEval1": {
+                "name": "CameraEval1",
+                "class": "CameraEval",
+                "object_inputs": {
+                    "nodelist": {
+                        "links": [
+                            {
+                                "out-node": "MakeList1",
+                                "out-socket": "list",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "frameid": {
+                        "links": [
+                            {
+                                "out-node": "GetFrameNum1",
+                                "out-socket": "FrameNum",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1495.287353515625,
+                    -607.32958984375
+                ],
+                "status": [
+                    "View"
+                ],
+                "collasped": false
+            },
+            "CameraNode1": {
+                "name": "CameraNode1",
+                "class": "CameraNode",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "pos": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            176.31700134277345,
+                            239.91200256347657,
+                            174.625
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "up": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.4813559949398041,
+                            0.7051349878311157,
+                            -0.5206609964370728
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "view": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.47868698835372927,
+                            -0.7090780138969421,
+                            -0.5177620053291321
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fov": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 45.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "aperture": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focalPlaneDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "other": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "22.1981,-9.72923,23.2818,0,0,330.118,",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 75,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1016.287353515625,
+                    -967.32958984375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "CameraNode2": {
+                "name": "CameraNode2",
+                "class": "CameraNode",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "pos": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -55.30459976196289,
+                            7.090020179748535,
+                            45.29970169067383
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "up": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.47233501076698305,
+                            0.7205359935760498,
+                            "0-0.507669"
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "view": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.4947650134563446,
+                            -0.6934080123901367,
+                            -0.523826003074646
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fov": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 45.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "aperture": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focalPlaneDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "other": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "171.142,234.642,171.668,0,0,345.003,",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 100,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1258.287353515625,
+                    -961.32958984375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "CameraNode3": {
+                "name": "CameraNode3",
+                "class": "CameraNode",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "pos": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -56.52750015258789,
+                            2.764039993286133,
+                            41.559898376464847
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "up": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.18511800467967988,
+                            0.9779930114746094,
+                            0.0962395966053009
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "view": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.8677499890327454,
+                            0.208639994263649,
+                            -0.45110899209976199
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fov": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 45.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "aperture": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focalPlaneDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "other": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "-56.5275,2.76404,41.5599,0,0,0,",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 120,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1501.287353515625,
+                    -965.32958984375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "CameraNode4": {
+                "name": "CameraNode4",
+                "class": "CameraNode",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "pos": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -56.52750015258789,
+                            2.764039993286133,
+                            41.559898376464847
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "up": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.18511800467967988,
+                            0.9779930114746094,
+                            0.0962395966053009
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "view": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.8677499890327454,
+                            0.208639994263649,
+                            -0.45110899209976199
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fov": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 45.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "aperture": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focalPlaneDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "other": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "-56.5275,2.76404,41.5599,0,0,0,",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 240,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1737.287353515625,
+                    -967.32958984375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "CameraNode5": {
+                "name": "CameraNode5",
+                "class": "CameraNode",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "pos": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -64.74610137939453,
+                            5.058599948883057,
+                            41.43450164794922
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "up": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.3379420042037964,
+                            0.9019039869308472,
+                            0.26901501417160036
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "view": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.7056499719619751,
+                            0.4319419860839844,
+                            -0.5616989731788635
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fov": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 45.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "aperture": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focalPlaneDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "other": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "-58.901,3.72613,45.8221,0,0,7.42904,",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 400,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1963.287353515625,
+                    -971.32958984375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "FormSceneTree1": {
+                "name": "FormSceneTree1",
+                "class": "FormSceneTree",
+                "object_inputs": {
+                    "Geometry List": {
+                        "links": [
+                            {
+                                "out-node": "ParseFBX1",
+                                "out-socket": "Geometry List",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Geometry List"
+                            }
+                        ],
+                        "type": "list",
+                        "socket-type": "clone"
+                    },
+                    "Scene Info": {
+                        "links": [
+                            {
+                                "out-node": "NewFBXSceneInfo1",
+                                "out-socket": "json",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Scene Info"
+                            }
+                        ],
+                        "type": "",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "ResourceType": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Mesh",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "Mesh",
+                                "Matrixes",
+                                "SceneDescriptor"
+                            ]
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "type": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "dynamic",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "static",
+                                "dynamic"
+                            ]
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "matrixMode": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "TotalChange",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "UnChanged",
+                                "TotalChange"
+                            ]
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "ABC Path List": {
+                        "links": [
+                            {
+                                "out-node": "NewFBXSceneInfo1",
+                                "out-socket": "ABC Path List",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "ABC Path List"
+                            }
+                        ],
+                        "type": "",
+                        "default-value": null,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": true
+                    },
+                    "flattened": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "scene": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    425.0,
+                    626.5625
+                ],
+                "status": [
+                    "View"
+                ],
+                "collasped": false
+            },
+            "GetFrameNum1": {
+                "name": "GetFrameNum1",
+                "class": "GetFrameNum",
+                "object_inputs": {},
+                "primitive_inputs": {},
+                "primitive_outputs": {
+                    "FrameNum": {
+                        "type": "int",
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    1210.287353515625,
+                    -581.32958984375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "MakeList1": {
+                "name": "MakeList1",
+                "class": "MakeList",
+                "object_inputs": {
+                    "objs": {
+                        "links": [
+                            {
+                                "out-node": "CameraNode1",
+                                "out-socket": "camera",
+                                "out-key": "",
+                                "in-key": "obj0",
+                                "target-socket": ""
+                            },
+                            {
+                                "out-node": "CameraNode2",
+                                "out-socket": "camera",
+                                "out-key": "",
+                                "in-key": "obj1",
+                                "target-socket": ""
+                            },
+                            {
+                                "out-node": "CameraNode3",
+                                "out-socket": "camera",
+                                "out-key": "",
+                                "in-key": "obj2",
+                                "target-socket": ""
+                            },
+                            {
+                                "out-node": "CameraNode4",
+                                "out-socket": "camera",
+                                "out-key": "",
+                                "in-key": "obj3",
+                                "target-socket": ""
+                            },
+                            {
+                                "out-node": "CameraNode5",
+                                "out-socket": "camera",
+                                "out-key": "",
+                                "in-key": "obj4",
+                                "target-socket": ""
+                            }
+                        ],
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {},
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "list": {
+                        "type": "list",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    1513.287353515625,
+                    -749.32958984375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "NewFBXSceneInfo1": {
+                "name": "NewFBXSceneInfo1",
+                "class": "NewFBXSceneInfo",
+                "object_inputs": {
+                    "Json List": {
+                        "links": [
+                            {
+                                "out-node": "ParseFBX1",
+                                "out-socket": "Scene Json List",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Scene Json List"
+                            }
+                        ],
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "ABC Path List": {
+                        "links": [
+                            {
+                                "out-node": "ParseFBX1",
+                                "out-socket": "ABC Path List",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "ABC Path List"
+                            }
+                        ],
+                        "type": "",
+                        "default-value": null,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": true
+                    },
+                    "Start Frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 75,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frameid": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fps": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 25.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "ABC Path List": {
+                        "type": "",
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "object_outputs": {
+                    "json": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    42.0,
+                    457.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "ParseFBX1": {
+                "name": "ParseFBX1",
+                "class": "ParseFBX",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "FBX Path": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "O:/test_scene_tree/擎天柱.fbx",
+                        "control": {
+                            "name": "read path"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "vectors": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "nrm,tang",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "CopyVectorsFromLoopsToVert": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "CopyFacesetToMatid": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "OutputTexEvenMissing": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "SkipInvisibleMesh": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Start Frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 75,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "End Frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 500,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fps": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 25.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "ABC Path List": {
+                        "type": "",
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "object_outputs": {
+                    "Geometry List": {
+                        "type": "list",
+                        "socket-type": "output"
+                    },
+                    "Scene Json List": {
+                        "type": "list",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    252.0,
+                    95.0
+                ],
+                "status": [],
+                "collasped": false
+            }
+        }
+    },
+    "views": {
+        "timeline": {
+            "start-frame": 75,
+            "end-frame": 500,
+            "curr-frame": 485,
+            "always": false,
+            "timeline-fps": 24
+        }
+    },
+    "version": "v3"
+}

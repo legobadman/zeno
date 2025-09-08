@@ -345,7 +345,7 @@ struct SceneObject : IObject {
         return prim;
     }
 
-    std::shared_ptr <zeno::ListObject> to_structure(container_elem_update_info& summary_info) {
+    std::shared_ptr <zeno::ListObject> to_structure() {
         bool use_static = type == "static";
         auto scene = std::make_shared<zeno::ListObject>();
         {
@@ -376,12 +376,9 @@ struct SceneObject : IObject {
                     prim->loops.values = node_to_id[stn.matrix];
                 }
 
-                std::string primkey = summary_info.container_key + "\\" + std::to_string(scene->size());
+                std::string primkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
                 prim->update_key(stdString2zs(primkey));
                 scene->push_back(prim);
-
-                //这些矩阵都是执行到这里新生成的，所以直接加到new_added.
-                summary_info.new_added.insert(primkey);
             }
         }
         {
@@ -391,12 +388,21 @@ struct SceneObject : IObject {
             Json json;
             json["type"] = use_static ? "static" : "dynamic";
             Json BasicRenderInstances = Json();
-            for (const auto &[path, geom]: geom_list) {
-                BasicRenderInstances[path]["Geom"] = path;
-                BasicRenderInstances[path]["Material"] = "Default";
-                auto vol_mat = zsString2Std(geom->userData()->get_string("vol_mat", ""));
-                if (vol_mat.size()) {
-                    BasicRenderInstances[path]["Material"] = vol_mat;
+            if (!geom_list.empty()) {
+                for (const auto& [path, geom] : geom_list) {
+                    BasicRenderInstances[path]["Geom"] = path;
+                    BasicRenderInstances[path]["Material"] = "Default";
+                    //TODO: 后续也要想geom_path一样，缓存这个项，以防geom_list为空的清空
+                    auto vol_mat = zsString2Std(geom->userData()->get_string("vol_mat", ""));
+                    if (vol_mat.size()) {
+                        BasicRenderInstances[path]["Material"] = vol_mat;
+                    }
+                }
+            }
+            else if (!geom_path.empty()) {
+                for (const auto& path : geom_path) {
+                    BasicRenderInstances[path]["Geom"] = path;
+                    BasicRenderInstances[path]["Material"] = "Default";
                 }
             }
             json["BasicRenderInstances"] = BasicRenderInstances;
@@ -421,8 +427,7 @@ struct SceneObject : IObject {
                 json["DynamicRenderGroups"] = RenderGroups;
             }
             ud->set_string("Scene", stdString2zs(std::string(json.dump())));
-            std::string objkey = summary_info.container_key + "\\" + std::to_string(scene->size());
-            summary_info.new_added.insert(objkey);
+            std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
             scene_descriptor->update_key(stdString2zs(objkey));
             scene->push_back(scene_descriptor);
         }
@@ -432,8 +437,7 @@ struct SceneObject : IObject {
             st->userData()->set_string("ResourceType", stdString2zs(std::string("SceneTree")));
             st->userData()->set_string("SceneTreeType", stdString2zs(this->type));
 
-            std::string objkey = summary_info.container_key + "\\" + std::to_string(scene->size());
-            summary_info.new_added.insert(objkey);
+            std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
             st->update_key(stdString2zs(objkey));
             scene->push_back(st);
         }
@@ -506,19 +510,21 @@ struct SceneObject : IObject {
         this->scene_tree = temp_scene_tree;
     }
 
-    std::shared_ptr <zeno::ListObject> to_list(container_elem_update_info& summary_info) {
+    std::shared_ptr <zeno::ListObject> to_list() {
         auto scene = std::make_shared<zeno::ListObject>();
-        for (auto &[abc_path, p]: geom_list) {
+        for (auto& [abc_path, p] : geom_list) {
+            assert(!p->key().empty());
             scene->push_back(p);
         }
 
         auto st = std::make_shared<PrimitiveObject>();
         st->userData()->set_string("json", stdString2zs(to_json()));
         st->userData()->set_string("ResourceType", stdString2zs(std::string("SceneTree")));
-
-        std::string objkey = summary_info.container_key + "\\" + std::to_string(scene->size());
+        std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
         st->update_key(stdString2zs(objkey));
+
         scene->push_back(st);
+        scene->update_key(this->key()); //以后如果想追踪的话就会回到Scene最后所在的节点
         return scene;
     }
 };

@@ -557,7 +557,7 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
     connect(m_worker, &OptixWorker::sig_reloadFinished, this, &ZOptixViewport::sig_reload_finished);
 
     connect(this, &ZOptixViewport::sig_sendOptixMessage, m_worker, &OptixWorker::onSendOptixMessage, Qt::QueuedConnection);
-    //setRenderSeparately(RunALL);    m_thdOptix.start();
+    m_thdOptix.start();
 }
 
 ZOptixViewport::~ZOptixViewport()

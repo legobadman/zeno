@@ -1,4 +1,4 @@
-cmake -B RelDbInfo ^
+cmake -B RelDebInfo ^
 -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
 -DCMAKE_PREFIX_PATH=C:/Qt-Reldbinfo/lib/cmake ^
 -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" ^

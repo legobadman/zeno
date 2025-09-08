@@ -286,6 +286,7 @@ namespace zeno {
         std::set<std::string> new_added;
         std::set<std::string> modified;
         std::set<std::string> removed;
+        bool needUpdateSceneGeoms = false;      //sceneobject在传输过程中是否需要更新Mesh（在SceneAssem机制下，mesh通常只更新一次，后续都是更新matrix)
 
         std::string container_key;  //提交渲染的List或者Dict的objkey
 
