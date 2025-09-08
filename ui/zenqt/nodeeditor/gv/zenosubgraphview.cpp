@@ -1,4 +1,4 @@
-#include "zenosubgraphscene.h"
+﻿#include "zenosubgraphscene.h"
 #include "uicommon.h"
 #include "model/graphsmanager.h"
 #include "zenosubgraphview.h"
@@ -935,7 +935,9 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
             GraphModel* pGraphM = graphsMgr->getGraph(path);
             pScene->initModel(pGraphM);
         }
-        pView->initScene(pScene);
+        QTimer::singleShot(0, this, [pView, pScene]() {
+            pView->initScene(pScene);
+        });
     }
 
     if (path.isEmpty())

@@ -1,4 +1,4 @@
-#include "zenographseditor.h"
+ï»¿#include "zenographseditor.h"
 #include "zenosubgraphview.h"
 #include "widgets/ztoolbutton.h"
 #include "zenoapplication.h"
@@ -814,7 +814,7 @@ void ZenoGraphsEditor::onTreeItemActivated(const QModelIndex& index)
     QModelIndex idx = index;
     QModelIndex realIdx = idx.data(Qt::UserRole + 1).toModelIndex();
     QString treeItemName = realIdx.data(QtRole::ROLE_NODE_NAME).toString();
-    QStringList subgPath;   //µ±Ç°Ê÷½ÚµãËùÔÚµÄ×ÓÍ¼µÄÂ·¾¶£¬Â·¾¶²»°üÀ¨½Úµã
+    QStringList subgPath;   //å½“å‰æ ‘èŠ‚ç‚¹æ‰€åœ¨çš„å­å›¾çš„è·¯å¾„ï¼Œè·¯å¾„ä¸åŒ…æ‹¬èŠ‚ç‚¹
     if (!idx.parent().isValid())
     {
         subgPath.append("main");
