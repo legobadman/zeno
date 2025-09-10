@@ -1,4 +1,4 @@
-#include "uihelper.h"
+﻿#include "uihelper.h"
 #include <zeno/utils/logger.h>
 #include "uicommon.h"
 #include <zeno/core/data.h>
@@ -2671,7 +2671,7 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Node Parameters") || title == "Node Parameters") {
         type = PANEL_NODE_PARAMS;
     }
-    else if (title == QObject::tr("View") || title == "View" || title == QObject::tr("Scene Viewport") || title == "Scene Viewport") {
+    else if (title == QObject::tr("View") || title == "View" || title == QObject::tr("Scene Viewport") || title == "Scene Viewport" || title == QObject::tr("GL Viewport") || title == "GL Viewport") {
         type = PANEL_GL_VIEW;
     }
     else if (title == QObject::tr("Editor") || title == "Editor" || title == QObject::tr("Node Editor") || title == "Node Editor") {
@@ -2706,7 +2706,7 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Image") || title == "Image") {
         type = PANEL_IMAGE;
     }
-    else if (title == QObject::tr("Optix") || title == "Optix") {
+    else if (title == QObject::tr("Optix") || title == "Optix" || title == QObject::tr("Optix Viewport") || title == "Optix Viewport") {
         type = PANEL_OPTIX_VIEW;
     }
     else if (title == QObject::tr("Command Params") || title == "Command Params") {

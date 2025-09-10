@@ -105,7 +105,7 @@ class _ZenoSubGraphView : public QGraphicsView
     Q_OBJECT
     typedef QGraphicsView _base;
 public:
-    _ZenoSubGraphView(ZenoSubGraphView* parent = nullptr);
+    _ZenoSubGraphView(ZenoSubGraphView* parent = nullptr, ZenoSubGraphScene* scene = nullptr);
     void initScene(ZenoSubGraphScene* pScene);
     void setPath(const QString& path);
     qreal scaleFactor() const;
@@ -168,10 +168,10 @@ private:
 #include "zenosubgraphview.moc"
 
 
-_ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent)
+_ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent, ZenoSubGraphScene* scene)
     : QGraphicsView(parent)
     , m_view(parent)
-    , m_scene(nullptr)
+    , m_scene(scene)
     , _modifiers(Qt::ControlModifier)
     , m_factor(1.)
     , m_dragMove(false)
@@ -618,6 +618,11 @@ void _ZenoSubGraphView::resizeEvent(QResizeEvent* event)
         int h = height();
         m_pSearcher->setGeometry(w - sz.width(), 0, sz.width(), sz.height());
     }
+
+    QRectF viewRect = viewport()->rect().adjusted(2, 2, -2, -2);
+    if (!scene() && !viewRect.isEmpty()) {
+        initScene(m_scene);
+    }
 }
 
 void _ZenoSubGraphView::contextMenuEvent(QContextMenuEvent* event)
@@ -920,12 +925,6 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
     }
 
     if (!bFound) {
-        auto pView = new _ZenoSubGraphView(this);
-        connect(pView, SIGNAL(zoomed(qreal)), this, SIGNAL(zoomed(qreal)));
-        m_stackedView->addWidget(pView);
-        m_stackedView->setCurrentWidget(pView);
-        pCurrentView = pView;
-
         auto graphsMgr = zenoApp->graphsManager();
         ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(graphsMgr->gvScene(path));
         if (!pScene)
@@ -935,9 +934,14 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
             GraphModel* pGraphM = graphsMgr->getGraph(path);
             pScene->initModel(pGraphM);
         }
-        QTimer::singleShot(0, this, [pView, pScene]() {
-            pView->initScene(pScene);
-        });
+
+        auto pView = new _ZenoSubGraphView(this, pScene);
+        connect(pView, SIGNAL(zoomed(qreal)), this, SIGNAL(zoomed(qreal)));
+        m_stackedView->addWidget(pView);
+        m_stackedView->setCurrentWidget(pView);
+        pCurrentView = pView;
+
+        //pView->initScene(pScene);
     }
 
     if (path.isEmpty())
