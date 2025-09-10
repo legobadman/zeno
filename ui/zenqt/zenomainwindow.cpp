@@ -490,6 +490,7 @@ void ZenoMainWindow::_resizeDocks(PtrLayoutNode root)
 void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString& name)
 {
     auto pDockElem = new ads::CDockWidget(name);
+    pDockElem->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
 
     PANEL_TYPE type = UiHelper::title2Type(name);
     switch (type)
@@ -550,6 +551,9 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
     }
     case PANEL_OPTIX_VIEW:
     {
+        auto pView = new DockContent_View(false);
+        pView->initUI();
+        pDockElem->setWidget(pView, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
     case PANEL_COMMAND_PARAMS:
