@@ -89,11 +89,11 @@ namespace zenovis::optx {
     }
 
     static void OutputFuckingMatrixInfo(const std::shared_ptr<zeno::ListObject> spList, std::string filename) {
-        std::ofstream outFile(filename);
+
 
         std::string str_scene_desc, str_scene_tree, str_scenetree_type;
         std::map<std::string, zeno::PrimitiveObject*> matprim_infos;
-        std::map<std::string, std::string> shadercode_infos;
+        std::map<std::string, std::vector<char>> shadercode_infos;
         for (int i = 0; i < spList->m_impl->m_objects.size(); i++) {
             zeno::zany spObject = spList->m_impl->m_objects[i];
             if (auto prim = std::dynamic_pointer_cast<zeno::PrimitiveObject>(spObject)) {
@@ -113,27 +113,53 @@ namespace zenovis::optx {
                 }
             }
             else if (auto matObj = std::dynamic_pointer_cast<zeno::MaterialObject>(spObject)) {
-                auto name = zsString2Std(matObj->userData()->get_string("ObjectName"));
-                std::vector<char> vec = matObj->serialize();
-                std::string code;
-                for (auto c : vec)
-                    code += c;
-                shadercode_infos.try_emplace(name, code);
+                auto name = matObj->mtlidkey;
+                if (name.empty()) {
+                    throw;
+                }
+                std::string code = matObj->frag;
+                std::vector<char> wtf = matObj->serialize();
+                shadercode_infos.try_emplace(name, std::move(wtf));
             }
         }
+        if (!shadercode_infos.empty()) {
+            std::ofstream outFile(filename);
+            for (const auto& [name, wtf] : shadercode_infos) {
+                outFile << "matkey: " << name << "\n";
+                for (char c : wtf) {
+                    if (c >= '0' && c <= 'z') {
+                        outFile << c;
+                    }
+                    else {
+                        std::string s = std::to_string(static_cast<int>(c));
+                        outFile << s;
+                    }
+                }
+                outFile << "\n\n";
+            }
+            outFile.close();
+        }
+
+        return;
+
         if (!str_scene_desc.empty()) {
             //outFile << "SceneDescriptor:\n";
+            std::ofstream outFile(filename);
             outFile << str_scene_desc;
+            outFile.close();
         }
         return;
 
         if (!str_scene_tree.empty()) {
+            std::ofstream outFile(filename);
             outFile << "SceneTree json:\n";
             outFile << str_scene_tree << "\n\n";
             outFile << "SceneTree type:\n";
             outFile << str_scenetree_type << "\n";
+            outFile.close();
         }
 
+        std::ofstream outFile(filename);
         for (const auto& [mat_name, prim] : matprim_infos) {
             auto count = prim->verts->size();
             auto pos = prim->verts[0];
@@ -147,6 +173,7 @@ namespace zenovis::optx {
             outFile << r0[2] << " " << r1[2] << " " << r2[2] << " " << pos[2] << "\n";
             outFile << "\n";
         }
+        outFile.close();
         return;
 
 
@@ -2156,17 +2183,19 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
                 assert(spNode);
                 zeno::zany spObject = update.spObject;
+                int frame = zeno::getSession().globalState->getFrameId();
                 if (spObject) {
                     if (auto sceneObj = std::dynamic_pointer_cast<zeno::SceneObject>(spObject)) {
                         zeno::container_elem_update_info update_info;
                         update_info.container_key = zsString2Std(sceneObj->key());
                         auto _spList = sceneObj->to_structure();
                         _spList->update_key(sceneObj->key());
-                        //int frame = zeno::getSession().globalState->getFrameId();
-                        //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".json");
+
+                        //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
                         process_listobj(_spList, update_info);
                     }
                     else if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                        //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
                         process_listobj(_spList, update.cond_update_info);
                     }
                     else {
@@ -2178,9 +2207,11 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 }
             }
 
-            int frame = zeno::getSession().globalState->getFrameId();
-            OutputMaterialInfo(mats, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
-
+            if (!mats.empty())
+            {
+                //int frame = zeno::getSession().globalState->getFrameId();
+                //OutputMaterialInfo(mats, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
+            }
         }
         replace_with_modified_matrix();
     }
