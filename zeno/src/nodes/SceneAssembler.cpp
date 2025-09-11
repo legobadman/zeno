@@ -236,9 +236,9 @@ struct FormSceneTree : zeno::INode {
 
         //如果prim_geom_list的上游节点标记为no-cache,那这里就不应该拿到prim_geom_list.
         //如果geom分支已经不脏的情况下，这里导出sceneTree是不会导出geometry的
-        sceneTree->bNeedUpdateMesh = prim_geom_list && !list_updateinfo.empty();
+        sceneTree->bNeedUpdateDescriptor = prim_geom_list && !list_updateinfo.empty();
 
-        if (sceneTree->bNeedUpdateMesh) {
+        if (sceneTree->bNeedUpdateDescriptor) {
             for (auto p : prim_geom_list->get()) {
                 auto geom = std::dynamic_pointer_cast<GeometryObject_Adapter>(p);
                 if (geom) {
@@ -707,23 +707,13 @@ struct MergeMultiScenes : zeno::INode {
             auto scene_list = get_input_ListObject("Scene List");
             auto list_updateinfo = get_input_container_info("Scene List");
 
-            main_scene->bNeedUpdateMesh = false;
+            main_scene->bNeedUpdateDescriptor = false;
             for (auto i = 0; i < scene_list->size(); i++) {
                 auto second_scene = std::dynamic_pointer_cast<SceneObject>(scene_list->m_impl->m_objects[i]);
                 auto scene_obj_key = zsString2Std(second_scene->key());
 
                 if (!list_updateinfo.is_newadd_or_modify(scene_obj_key)) {
                     continue;   //说明是添加过的场景，没有要变更的部分，先不加到scenetree
-                    //不脏，至少说明不需要更新mesh，也许整个scene都不用合进来，后面试试
-                    second_scene->bNeedUpdateMesh = false;
-                    if (second_scene->geom_path.empty()) {
-                        //只能靠list临时初始化
-                        for (const auto& [path, _] : second_scene->geom_list) {
-                            second_scene->geom_path.push_back(path);
-                        }
-                    }
-                    second_scene->geom_list.clear();    //不脏，说明之前加过的
-                    
                 }
                 else {
                     //上游脏了，但不一定需要更新mesh
@@ -734,7 +724,7 @@ struct MergeMultiScenes : zeno::INode {
                     zeno::log_warn("MergeMultiScenes: root_name {} is duplicate!", sub_root_name);
                 }
                 merge_scene2_into_scene1(main_scene, second_scene, main_scene->root_name);
-                main_scene->bNeedUpdateMesh |= second_scene->bNeedUpdateMesh;
+                main_scene->bNeedUpdateDescriptor |= second_scene->bNeedUpdateDescriptor;
             }
         }
         set_output("scene", main_scene);

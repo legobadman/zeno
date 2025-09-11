@@ -34,11 +34,11 @@ struct SceneObject : IObject {
     std::unordered_map <std::string, std::vector<glm::mat4>> node_to_matrix;
     std::unordered_map <std::string, std::vector<int>> node_to_id;
     std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> geom_list;
-    std::vector<std::string> geom_path;
+    std::vector<std::string> geom_path; //可能部分计算的缘故，geom_list无须再导出，此时可能需要缓存的geom_path导出descripor.
     std::string root_name;
     std::string type = "static";
     std::string matrixMode = "TotalChange";
-    bool bNeedUpdateMesh = true;
+    bool bNeedUpdateDescriptor = true;  //update descriptor目前和updatemesh是等价的。
 
     zeno::SharedPtr<IObject> clone() const override {
         auto newSceneObj = std::make_shared<SceneObject>();
@@ -48,7 +48,7 @@ struct SceneObject : IObject {
         newSceneObj->geom_path = geom_path;
         newSceneObj->type = type;
         newSceneObj->matrixMode = matrixMode;
-        newSceneObj->bNeedUpdateMesh = bNeedUpdateMesh;
+        newSceneObj->bNeedUpdateDescriptor = bNeedUpdateDescriptor;
         for (auto& [key, geom] : geom_list) {
             auto new_geom = std::static_pointer_cast<GeometryObject_Adapter>(geom->clone());
             newSceneObj->geom_list.emplace(key, std::move(new_geom));
@@ -158,7 +158,7 @@ struct SceneObject : IObject {
     std::shared_ptr <SceneObject> root_rename(const std::string& new_root_name, const std::vector<glm::mat4>& root_xform) {
         auto new_scene_obj = std::make_shared<SceneObject>();
         new_scene_obj->type = this->type;
-        new_scene_obj->bNeedUpdateMesh = this->bNeedUpdateMesh;
+        new_scene_obj->bNeedUpdateDescriptor = this->bNeedUpdateDescriptor;
 
         for (auto const &[path, stn]: scene_tree) {
             auto new_key = get_new_root_name(root_name, new_root_name, path);
@@ -385,7 +385,7 @@ struct SceneObject : IObject {
                 scene->push_back(prim);
             }
         }
-        if (bNeedUpdateMesh)
+        if (bNeedUpdateDescriptor)
         {
             auto scene_descriptor = std::make_shared<PrimitiveObject>();
             auto ud = scene_descriptor->userData();

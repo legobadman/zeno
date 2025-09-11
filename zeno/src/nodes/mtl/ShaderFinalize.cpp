@@ -140,9 +140,21 @@ struct ShaderFinalize : INode {
 
         nlohmann::json j;
         if (ZImpl(has_input("opacity"))) {
-            auto opacity = get_input2_float("opacity"); // It's actually transparency not opacity
-            opacity = max(0.0f, 1.0f - opacity);
-            j["opacity"] = opacity;
+            const ShaderData& opa_data = ZImpl(get_input_shader("opacity"));
+            if (opa_data.data.index() == 0) {
+                std::visit([&](auto&& val) {
+                    using T = std::decay_t<decltype(val)>;
+                    if constexpr (std::is_same_v<T, float> || std::is_same_v<T, int>) {
+                        float opacity = val; // It's actually transparency not opacity
+                        opacity = max(0.0f, 1.0f - opacity);
+                        j["opacity"] = opacity;
+                    }
+                    else {
+                        throw makeError<UnimplError>("the type of opacity is not int or float");
+                    }
+                    }, std::get<NumericValue>(opa_data.data));
+            }
+
         }
         mtl->parameters = j.dump();
 

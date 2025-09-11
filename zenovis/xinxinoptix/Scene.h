@@ -69,7 +69,7 @@ private:
     phmap::parallel_flat_hash_map_m<std::string, glm::mat4> geoMatrixMap;
     phmap::parallel_flat_hash_map_m<std::string, glm::mat4> renderObjectMatrixMap;
 
-    nlohmann::json sceneJson;
+    nlohmann::json m_global_scene_json;
     phmap::parallel_flat_hash_map_m<std::string, std::vector<m3r4c>> matrix_map{};
     phmap::parallel_flat_hash_map_m<std::string, std::vector<int>> instance_ids_map{};
 
@@ -129,7 +129,13 @@ public:
 
     inline void preload_scene(const std::string& jsonString) {
         try {
-            sceneJson = nlohmann::json::parse(jsonString);
+            auto single_scene_json = nlohmann::json::parse(jsonString);
+            if (m_global_scene_json.empty()) {
+                m_global_scene_json = single_scene_json;
+            }
+            else {
+                zeno::merge_json(m_global_scene_json, single_scene_json);
+            }
         }
         catch (...) {
             zeno::log_error("Can not parse json in preload_scene");
@@ -142,9 +148,9 @@ public:
 
     void cookGeoMatrix(std::unordered_set<uint>& volmats) {
 
-        if (!sceneJson.contains(brikey)) return;
+        if (!m_global_scene_json.contains(brikey)) return;
 
-        auto& bri = sceneJson[brikey];
+        auto& bri = m_global_scene_json[brikey];
 
         for (auto it = bri.begin(); it != bri.end(); ++it) {
 
@@ -311,7 +317,7 @@ public:
             xinxinoptix::buildIAS(context, instanced, bufferRoot, handleRoot);
         };
 
-        if (cam.x != std::numeric_limits<float>::infinity() || !sceneJson.contains(brikey) ) { 
+        if (cam.x != std::numeric_limits<float>::infinity() || !m_global_scene_json.contains(brikey) ) { 
             gather();
             return;
         }
@@ -350,7 +356,7 @@ public:
 
         std::unordered_map<std::string, Candidate> candidates {};
         
-        const auto& bri = sceneJson[brikey];
+        const auto& bri = m_global_scene_json[brikey];
         for (auto it = bri.begin(); it != bri.end(); ++it) {
             //std::cout << it.key() << " : " << it.value() << "\n";
             const auto candi_name = it.key();
@@ -532,8 +538,8 @@ public:
 
         auto groupTask = [&](std::string key, decltype(nodeCache)& nodeCache, decltype(nodeDepthCache)& nodeDepthCache) -> OptixTraversableHandle 
         {
-            if (!sceneJson.contains(key)) return 0;
-            auto& rg = sceneJson[key];
+            if (!m_global_scene_json.contains(key)) return 0;
+            auto& rg = m_global_scene_json[key];
 
             for (auto& item : rg.items()) {
 
@@ -628,8 +634,8 @@ public:
             cached.insert( ShaderMark::Mesh );
         }
 
-        if (sceneJson.contains(brikey)) {
-            auto& bri = sceneJson[brikey];
+        if (m_global_scene_json.contains(brikey)) {
+            auto& bri = m_global_scene_json[brikey];
 
             for (auto it = bri.begin(); it != bri.end(); ++it) {
 

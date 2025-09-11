@@ -10,6 +10,7 @@
 #include <zeno/core/CoreParam.h>
 #include <zeno/core/reflectdef.h>
 #include <reflect/container/any>
+#include <tinygltf/json.hpp>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -38,6 +39,7 @@ namespace zeno {
     ZENO_API std::string editVariantToStr(const PrimVar& var);
     ZENO_API std::vector<zany> fromZenCache(const std::string& cachedir, int frameid);
     ZENO_API std::wstring s2ws();
+    ZENO_API void merge_json(nlohmann::json& target, const nlohmann::json& source);
     bool isEqual(const zvariant& lhs, const zvariant& rhs, ParamType const type);
     zany strToZAny(std::string const& defl, ParamType const& type);
     EdgeInfo getEdgeInfo(std::shared_ptr<ObjectLink> spLink);

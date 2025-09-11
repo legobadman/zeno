@@ -54,19 +54,53 @@
 static bool recordedSimpleRender = false;
 namespace zenovis::optx {
 
+    static void OutputMaterialInfo(const std::vector<zeno::zany>& mats, std::string filename) {
+        std::ofstream outFile(filename);
+
+        std::map<std::string, std::vector<char>> shadercode_infos;
+        for (auto obj : mats) {
+            if (auto matObj = std::dynamic_pointer_cast<zeno::MaterialObject>(obj)) {
+                auto name = matObj->mtlidkey;
+                if (name.empty()) {
+                    throw;
+                }
+                std::string code = matObj->frag;
+                std::vector<char> wtf = matObj->serialize();
+                shadercode_infos.try_emplace(name, std::move(wtf));
+            }
+        }
+
+        if (!shadercode_infos.empty()) {
+            for (const auto& [name, wtf] : shadercode_infos) {
+                outFile << "matkey: " << name << "\n";
+                for (char c : wtf) {
+                    if (c >= '0' && c <= 'z') {
+                        outFile << c;
+                    }
+                    else {
+                        std::string s = std::to_string(static_cast<int>(c));
+                        outFile << s;
+                    }
+                }
+                outFile << "\n\n";
+            }
+        }
+        outFile.close();
+    }
 
     static void OutputFuckingMatrixInfo(const std::shared_ptr<zeno::ListObject> spList, std::string filename) {
         std::ofstream outFile(filename);
 
         std::string str_scene_desc, str_scene_tree, str_scenetree_type;
         std::map<std::string, zeno::PrimitiveObject*> matprim_infos;
+        std::map<std::string, std::string> shadercode_infos;
         for (int i = 0; i < spList->m_impl->m_objects.size(); i++) {
             zeno::zany spObject = spList->m_impl->m_objects[i];
             if (auto prim = std::dynamic_pointer_cast<zeno::PrimitiveObject>(spObject)) {
                 if (prim->userData()->has("ResourceType")) {
                     const auto reType = prim->userData()->get_string("ResourceType", "Mesh");
+                    auto name = zsString2Std(prim->userData()->get_string("ObjectName"));
                     if (reType == "Matrixes") {
-                        auto name = zsString2Std(prim->userData()->get_string("luzh_debug_name"));
                         matprim_infos.insert(std::make_pair(name, prim.get()));
                     }
                     else if (reType == "SceneDescriptor") {
@@ -77,6 +111,14 @@ namespace zenovis::optx {
                         str_scenetree_type = zsString2Std(prim->userData()->get_string("SceneTreeType"));
                     }
                 }
+            }
+            else if (auto matObj = std::dynamic_pointer_cast<zeno::MaterialObject>(spObject)) {
+                auto name = zsString2Std(matObj->userData()->get_string("ObjectName"));
+                std::vector<char> vec = matObj->serialize();
+                std::string code;
+                for (auto c : vec)
+                    code += c;
+                shadercode_infos.try_emplace(name, code);
             }
         }
         if (!str_scene_desc.empty()) {
@@ -1373,6 +1415,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
     bool meshNeedUpdate = true;
     bool matNeedUpdate = true;
     bool staticNeedUpdate = true;
+    bool hasLoaded = false;     //场景是否运行加载过，一般指第一次运行，如果清理了场景，则标为false
+
     void outlineInit(Json const &in_msg) override {
 //        zeno::log_error("MessageType: {}", in_msg.dump());
         if (in_msg["MessageType"] == "Init") {
@@ -2101,6 +2145,13 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             }
         }
         else if (zeno::Reload_Calculation == info.policy) {
+
+            if (!hasLoaded) {
+                assetLoad();
+                hasLoaded = true;
+            }
+
+            std::vector<zeno::zany> mats;
             for (const zeno::render_update_info& update : info.objs) {
                 auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
                 assert(spNode);
@@ -2120,11 +2171,16 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                     }
                     else {
                         //可能是对象没有通过子图的Suboutput连出来
+                        mats.push_back(spObject);
                         graphicsMan->add_object(spObject);
                         matNeedUpdate = meshNeedUpdate = true;
                     }
                 }
             }
+
+            int frame = zeno::getSession().globalState->getFrameId();
+            OutputMaterialInfo(mats, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
+
         }
         replace_with_modified_matrix();
     }

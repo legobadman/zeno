@@ -130,7 +130,7 @@ void ZenoWelcomePage::initRecentFiles()
     {
         const QString& key = lst[i];
         const QString& path = settings.value(key).toString();
-        if (!path.isEmpty())
+        if (!path.isEmpty() && path.endsWith(".zen"))
         {
             QFileInfo info(path);
             const QString& fn = info.fileName();

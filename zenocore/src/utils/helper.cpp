@@ -298,6 +298,19 @@ namespace zeno {
         return objs;
     }
 
+    void merge_json(nlohmann::json& target, const nlohmann::json& source) {
+        for (auto it = source.begin(); it != source.end(); ++it) {
+            if (target.contains(it.key()) && target[it.key()].is_object() && it.value().is_object()) {
+                // 如果都是 object，递归合并
+                merge_json(target[it.key()], it.value());
+            }
+            else {
+                // 否则直接覆盖
+                target[it.key()] = it.value();
+            }
+        }
+    }
+
     ZENO_API bool convertToEditVar(Any& val, const ParamType type) {
         if (!val.has_value()) return false;
 
