@@ -54,6 +54,117 @@
 static bool recordedSimpleRender = false;
 namespace zenovis::optx {
 
+
+    static void OutputFuckingMatrixInfo(const std::shared_ptr<zeno::ListObject> spList, std::string filename) {
+        std::ofstream outFile(filename);
+
+        std::string str_scene_desc, str_scene_tree, str_scenetree_type;
+        std::map<std::string, zeno::PrimitiveObject*> matprim_infos;
+        for (int i = 0; i < spList->m_impl->m_objects.size(); i++) {
+            zeno::zany spObject = spList->m_impl->m_objects[i];
+            if (auto prim = std::dynamic_pointer_cast<zeno::PrimitiveObject>(spObject)) {
+                if (prim->userData()->has("ResourceType")) {
+                    const auto reType = prim->userData()->get_string("ResourceType", "Mesh");
+                    if (reType == "Matrixes") {
+                        auto name = zsString2Std(prim->userData()->get_string("luzh_debug_name"));
+                        matprim_infos.insert(std::make_pair(name, prim.get()));
+                    }
+                    else if (reType == "SceneDescriptor") {
+                        str_scene_desc = zsString2Std(prim->userData()->get_string("Scene"));
+                    }
+                    else if (reType == "SceneTree") {
+                        str_scene_tree = zsString2Std(prim->userData()->get_string("json"));
+                        str_scenetree_type = zsString2Std(prim->userData()->get_string("SceneTreeType"));
+                    }
+                }
+            }
+        }
+        if (!str_scene_desc.empty()) {
+            //outFile << "SceneDescriptor:\n";
+            outFile << str_scene_desc;
+        }
+        return;
+
+        if (!str_scene_tree.empty()) {
+            outFile << "SceneTree json:\n";
+            outFile << str_scene_tree << "\n\n";
+            outFile << "SceneTree type:\n";
+            outFile << str_scenetree_type << "\n";
+        }
+
+        for (const auto& [mat_name, prim] : matprim_infos) {
+            auto count = prim->verts->size();
+            auto pos = prim->verts[0];
+            auto r0 = prim->verts[1];
+            auto r1 = prim->verts[2];
+            auto r2 = prim->verts[3];
+            outFile << mat_name << "\n";
+            //TODO: userData
+            outFile << r0[0] << " " << r1[0] << " " << r2[0] << " " << pos[0] << "\n";
+            outFile << r0[1] << " " << r1[1] << " " << r2[1] << " " << pos[1] << "\n";
+            outFile << r0[2] << " " << r1[2] << " " << r2[2] << " " << pos[2] << "\n";
+            outFile << "\n";
+        }
+        return;
+
+
+        for (int i = 0; i < spList->m_impl->m_objects.size(); i++) {
+            zeno::zany spObject = spList->m_impl->m_objects[i];
+            if (auto prim = std::dynamic_pointer_cast<zeno::PrimitiveObject>(spObject)) {
+                if (prim->userData()->has("ResourceType")) {
+                    const auto reType = prim->userData()->get_string("ResourceType", "Mesh");
+                    if (reType == "Matrixes") {
+                        auto count = prim->verts->size();
+                        assert(count == 4);
+                        auto pos = prim->verts[0];
+                        auto r0 = prim->verts[1];
+                        auto r1 = prim->verts[2];
+                        auto r2 = prim->verts[3];
+                        outFile << i << " Matrix\n";
+                        //TODO: userData
+                        outFile << r0[0] << " " << r1[0] << " " << r2[0] << " " << pos[0] << "\n";
+                        outFile << r0[1] << " " << r1[1] << " " << r2[1] << " " << pos[1] << "\n";
+                        outFile << r0[2] << " " << r1[2] << " " << r2[2] << " " << pos[2] << "\n";
+                        outFile << "\n";
+                    }
+                    else if (reType == "SceneDescriptor") {
+                        outFile << i << " SceneDescriptor\n";
+                        int j;
+                        j = 0;
+                    }
+                    else if (reType == "Mesh") {
+                        outFile << i << " Todo: Mesh\n";
+                        int j;
+                        j = 0;
+                    }
+                    else {
+                        outFile << i << " unknown issue in Prim\n";
+                        int j;
+                        j = 0;
+                    }
+                }
+                else {
+                    outFile << i << " unknown issue in Prim\n";
+                    int j;
+                    j = 0;
+                }
+            }
+            else if (auto geom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(spObject)) {
+                //outFile << i << " Geometry\n";
+            }
+            else if (auto json = std::dynamic_pointer_cast<zeno::JsonObject>(spObject)) {
+                std::string jsonStr = json->json.dump(4);
+                outFile << i << " json object\n";
+                outFile << jsonStr << "\n\n";
+            }
+            else {
+                //outFile << i << " unknown object\n";
+            }
+        }
+
+        outFile.close();
+    }
+
 struct CppTimer {
     void tick() {
         struct timespec t;
@@ -2000,6 +2111,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                         update_info.container_key = zsString2Std(sceneObj->key());
                         auto _spList = sceneObj->to_structure();
                         _spList->update_key(sceneObj->key());
+                        //int frame = zeno::getSession().globalState->getFrameId();
+                        //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".json");
                         process_listobj(_spList, update_info);
                     }
                     else if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {

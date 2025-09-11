@@ -38,7 +38,7 @@ struct SceneObject : IObject {
     std::string root_name;
     std::string type = "static";
     std::string matrixMode = "TotalChange";
-    std::string json;   //MarkSceneStateª·”√µΩ
+    bool bNeedUpdateMesh = true;
 
     zeno::SharedPtr<IObject> clone() const override {
         auto newSceneObj = std::make_shared<SceneObject>();
@@ -46,6 +46,9 @@ struct SceneObject : IObject {
         newSceneObj->node_to_matrix = node_to_matrix;
         newSceneObj->root_name = root_name;
         newSceneObj->geom_path = geom_path;
+        newSceneObj->type = type;
+        newSceneObj->matrixMode = matrixMode;
+        newSceneObj->bNeedUpdateMesh = bNeedUpdateMesh;
         for (auto& [key, geom] : geom_list) {
             auto new_geom = std::static_pointer_cast<GeometryObject_Adapter>(geom->clone());
             newSceneObj->geom_list.emplace(key, std::move(new_geom));
@@ -152,9 +155,10 @@ struct SceneObject : IObject {
         return new_root_name + path.substr(root_name.size());
     }
 
-    std::shared_ptr <SceneObject> root_rename(std::string new_root_name, std::vector<glm::mat4> root_xform) {
+    std::shared_ptr <SceneObject> root_rename(const std::string& new_root_name, const std::vector<glm::mat4>& root_xform) {
         auto new_scene_obj = std::make_shared<SceneObject>();
         new_scene_obj->type = this->type;
+        new_scene_obj->bNeedUpdateMesh = this->bNeedUpdateMesh;
 
         for (auto const &[path, stn]: scene_tree) {
             auto new_key = get_new_root_name(root_name, new_root_name, path);
@@ -381,6 +385,7 @@ struct SceneObject : IObject {
                 scene->push_back(prim);
             }
         }
+        if (bNeedUpdateMesh)
         {
             auto scene_descriptor = std::make_shared<PrimitiveObject>();
             auto ud = scene_descriptor->userData();

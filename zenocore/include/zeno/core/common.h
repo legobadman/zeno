@@ -293,6 +293,11 @@ namespace zeno {
         bool empty() const {
             return new_added.empty() && modified.empty() && removed.empty();
         }
+
+        bool is_newadd_or_modify(const std::string& key) {
+            return modified.find(key) != modified.end() || new_added.find(key) != new_added.end();
+        }
+
         void clear() {
             new_added.clear();
             modified.clear();

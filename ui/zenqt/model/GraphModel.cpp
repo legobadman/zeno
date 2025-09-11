@@ -2059,14 +2059,14 @@ QStringList GraphModel::pasteNodes(const zeno::NodesData& nodes, const zeno::Lin
     std::map<std::string, std::string> old2new;
     QPointF offset = pos - QPointF(nodes.begin()->second.uipos.first, nodes.begin()->second.uipos.second);
     unRegisterCoreNotify();
-    for (auto [name, node] : nodes) {
+    for (auto [src_name, node] : nodes) {
         bool bAsset = node.asset.has_value();
-        auto spNode = m_impl->m_wpCoreGraph->createNode(node.cls, "", bAsset, { offset.x(), offset.y() });
+        auto spNode = m_impl->m_wpCoreGraph->createNode(node.cls, src_name, bAsset, { offset.x(), offset.y() }, true);
         node.name = spNode->get_name();
         spNode->init(node);
         auto pos = spNode->get_pos();
         spNode->set_pos({ pos.first + offset.x(), pos.second + offset.y()});
-        old2new[name] = node.name;
+        old2new[src_name] = node.name;
         _appendNode(spNode);
         newnode_names.append(QString::fromStdString(node.name));
     }
