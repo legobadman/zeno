@@ -34,10 +34,8 @@ struct SceneObject : IObject {
     std::unordered_map <std::string, std::vector<glm::mat4>> node_to_matrix;
     std::unordered_map <std::string, std::vector<int>> node_to_id;
     std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> geom_list;
-    std::vector<std::string> geom_path; //可能部分计算的缘故，geom_list无须再导出，此时可能需要缓存的geom_path导出descripor.
+
     std::string root_name;
-    std::string type = "static";
-    std::string matrixMode = "TotalChange";
     bool bNeedUpdateDescriptor = true;  //update descriptor目前和updatemesh是等价的。
 
     zeno::SharedPtr<IObject> clone() const override {
@@ -45,9 +43,6 @@ struct SceneObject : IObject {
         newSceneObj->scene_tree = scene_tree;
         newSceneObj->node_to_matrix = node_to_matrix;
         newSceneObj->root_name = root_name;
-        newSceneObj->geom_path = geom_path;
-        newSceneObj->type = type;
-        newSceneObj->matrixMode = matrixMode;
         newSceneObj->bNeedUpdateDescriptor = bNeedUpdateDescriptor;
         for (auto& [key, geom] : geom_list) {
             auto new_geom = std::static_pointer_cast<GeometryObject_Adapter>(geom->clone());
@@ -157,7 +152,6 @@ struct SceneObject : IObject {
 
     std::shared_ptr <SceneObject> root_rename(const std::string& new_root_name, const std::vector<glm::mat4>& root_xform) {
         auto new_scene_obj = std::make_shared<SceneObject>();
-        new_scene_obj->type = this->type;
         new_scene_obj->bNeedUpdateDescriptor = this->bNeedUpdateDescriptor;
 
         for (auto const &[path, stn]: scene_tree) {
@@ -180,10 +174,6 @@ struct SceneObject : IObject {
         for (auto &[k, v]: node_to_matrix) {
             auto new_key = get_new_root_name(root_name, new_root_name, k);
             new_scene_obj->node_to_matrix[new_key] = v;
-        }
-        for (const auto& k : geom_path) {
-            auto new_key = get_new_root_name(root_name, new_root_name, k);
-            new_scene_obj->geom_path.push_back(new_key);
         }
         for (auto &[k, p]: geom_list) {
             auto new_key = get_new_root_name(root_name, new_root_name, k);
@@ -208,8 +198,7 @@ struct SceneObject : IObject {
     std::string to_json() {
         Json json;
         json["root_name"] = root_name;
-        json["type"] = type;
-        json["matrixMode"] = matrixMode;
+        json["type"] = "dynamic";
         {
             Json part;
             for (auto &[path, stn]: scene_tree) {
@@ -261,8 +250,6 @@ struct SceneObject : IObject {
     }
     void from_json(Json const &json) {
         root_name = json["root_name"];
-        type = json["type"];
-        matrixMode = json["matrixMode"];
         {
             node_to_matrix.clear();
             Json const &mat_json = json["node_to_matrix"];
@@ -316,7 +303,7 @@ struct SceneObject : IObject {
         }
     }
 
-    static std::shared_ptr<PrimitiveObject> mats_to_prim(std::string &obj_name, std::vector<glm::mat4> &matrixs, bool use_static, const std::string& matrixMode) {
+    static std::shared_ptr<PrimitiveObject> mats_to_prim(std::string &obj_name, std::vector<glm::mat4> &matrixs) {
         auto prim = std::make_shared<PrimitiveObject>();
         prim->verts.resize(4 * matrixs.size());
         for (auto i = 0; i < matrixs.size(); i++) {
@@ -338,19 +325,12 @@ struct SceneObject : IObject {
             prim->verts[3 + i * 4][1] = r2[2];
             prim->verts[3 + i * 4][2] = t[2];
         }
-
         prim->userData()->set_string("ResourceType", "Matrixes");
-        if (use_static) {
-            prim->userData()->set_string("stamp-change", "UnChanged");
-        } else {
-            prim->userData()->set_string("stamp-change", stdString2zs(matrixMode));
-        }
         prim->userData()->set_string("ObjectName", stdString2zs(obj_name));
         return prim;
     }
 
     std::shared_ptr <zeno::ListObject> to_structure() {
-        bool use_static = type == "static";
         auto scene = std::make_shared<zeno::ListObject>();
         {
             for (auto& [abc_path, p] : geom_list) {
@@ -374,7 +354,7 @@ struct SceneObject : IObject {
                 if (stn.matrix.size()) {
                     object_name = path + "_m";
                 }
-                auto prim = mats_to_prim(object_name, matrixs, use_static, this->matrixMode);
+                auto prim = mats_to_prim(object_name, matrixs);
                 prim->userData()->set_int("MatrixPriority", -1);
                 if (node_to_id.count(stn.matrix) && node_to_id[stn.matrix].size() == matrixs.size()) {
                     prim->loops.values = node_to_id[stn.matrix];
@@ -391,25 +371,18 @@ struct SceneObject : IObject {
             auto ud = scene_descriptor->userData();
             ud->set_string("ResourceType", "SceneDescriptor");
             Json json;
-            json["type"] = use_static ? "static" : "dynamic";
+            json["type"] = "dynamic";
             Json BasicRenderInstances = Json();
-            if (!geom_list.empty()) {
-                for (const auto& [path, geom] : geom_list) {
-                    BasicRenderInstances[path]["Geom"] = path;
-                    BasicRenderInstances[path]["Material"] = "Default";
-                    //TODO: 后续也要想geom_path一样，缓存这个项，以防geom_list为空的清空
-                    auto vol_mat = zsString2Std(geom->userData()->get_string("vol_mat", ""));
-                    if (vol_mat.size()) {
-                        BasicRenderInstances[path]["Material"] = vol_mat;
-                    }
+
+            for (const auto& [path, geom] : geom_list) {
+                BasicRenderInstances[path]["Geom"] = path;
+                BasicRenderInstances[path]["Material"] = "Default";
+                auto vol_mat = zsString2Std(geom->userData()->get_string("vol_mat", ""));
+                if (vol_mat.size()) {
+                    BasicRenderInstances[path]["Material"] = vol_mat;
                 }
             }
-            else if (!geom_path.empty()) {
-                for (const auto& path : geom_path) {
-                    BasicRenderInstances[path]["Geom"] = path;
-                    BasicRenderInstances[path]["Material"] = "Default";
-                }
-            }
+
             json["BasicRenderInstances"] = BasicRenderInstances;
 
             Json RenderGroups = Json::object();
@@ -426,25 +399,15 @@ struct SceneObject : IObject {
                 }
                 RenderGroups[path] = render_group;
             }
-            if (use_static) {
+            /*if (use_static) {
                 json["StaticRenderGroups"] = RenderGroups;
-            } else {
+            } else */ {
                 json["DynamicRenderGroups"] = RenderGroups;
             }
             ud->set_string("Scene", stdString2zs(std::string(json.dump())));
             std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
             scene_descriptor->update_key(stdString2zs(objkey));
             scene->push_back(scene_descriptor);
-        }
-        {
-            auto st = std::make_shared<PrimitiveObject>();
-            st->userData()->set_string("json", stdString2zs(to_json()));
-            st->userData()->set_string("ResourceType", stdString2zs(std::string("SceneTree")));
-            st->userData()->set_string("SceneTreeType", stdString2zs(this->type));
-
-            std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
-            st->update_key(stdString2zs(objkey));
-            scene->push_back(st);
         }
         return scene;
     }
@@ -546,7 +509,6 @@ static std::shared_ptr <SceneObject> get_scene_tree_from_list2(std::shared_ptr <
             auto prim = std::static_pointer_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]);
             auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
             scene_tree->geom_list[object_name] = prim;
-            scene_tree->geom_path.push_back(object_name);
         }
     }
     return scene_tree;

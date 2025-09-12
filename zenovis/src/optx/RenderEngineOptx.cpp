@@ -1524,7 +1524,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             std::vector<glm::mat4> matrixs = {glm::mat4(1)};
             if (defaultScene.dynamic_scene->node_to_matrix.count(mat_name)) {
                 matrixs = defaultScene.dynamic_scene->node_to_matrix[mat_name];
-                auto prim = defaultScene.dynamic_scene->mats_to_prim(mat_name, matrixs, false, "TotalChange");
+                auto prim = defaultScene.dynamic_scene->mats_to_prim(mat_name, matrixs);
                 load_matrix_objects({prim});
             }
             if (defaultScene.cur_node.has_value()) {

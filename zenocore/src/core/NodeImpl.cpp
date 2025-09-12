@@ -1556,6 +1556,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 container_elem_update_info out_updateinfo = out_param->listdict_update;
                 spList = create_ListObject();
                 container_elem_update_info input_container_updateinfo;
+                input_container_updateinfo.upstream_dirty = is_upstream_dirty;
 
                 std::map<std::string, zany> existInputObjs;
                 if (in_param->spObject) {
@@ -1620,6 +1621,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 continue;
             }
             bool is_upstream_dirty = outNode->is_dirty();
+            input_container_updateinfo.upstream_dirty = is_upstream_dirty;
 
             if (is_upstream_dirty) {  //list中的元素是dirty的，重新计算并加入list
                 GraphException::translated([&] {
@@ -1983,6 +1985,11 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                         std::shared_ptr<ObjectLink> spLink = *(in_param->links.begin());
                         ObjectParam* out_param = spLink->fromparam;
                         auto outNode = out_param->m_wpNode;
+
+                        container_elem_update_info info;
+                        info.upstream_dirty = outNode->is_dirty();
+                        in_param->listdict_update = info;       //仅仅记录上游是否脏
+
                         if (outNode->is_takenover()) {
                             //维持原来的参数结果状态，不从上游取（事实上上游的内容已经被删掉了）
                             return true;

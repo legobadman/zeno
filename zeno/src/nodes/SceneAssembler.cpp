@@ -36,7 +36,6 @@ static std::shared_ptr<SceneObject> get_scene_tree_from_list(std::shared_ptr<Lis
         auto prim = std::static_pointer_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]);
         auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
         scene_tree->geom_list[object_name] = prim;
-        scene_tree->geom_path.push_back(object_name);
     }
     return scene_tree;
 }
@@ -256,11 +255,8 @@ struct FormSceneTree : zeno::INode {
                 }
             }
         }
-        sceneTree->geom_path = abc_paths;
         get_local_matrix_map(scene_json->json, "", sceneTree);
 
-        sceneTree->type = zsString2Std(get_input2_string("type"));
-        sceneTree->matrixMode = zsString2Std(get_input2_string("matrixMode"));
         if (get_input2_bool("flattened")) {
             sceneTree->flatten();
         }
@@ -273,8 +269,6 @@ ZENDEFNODE(FormSceneTree, {
         {gParamType_JsonObject, "Scene Info"},
         {gParamType_List, "Geometry List"},
         {"enum Mesh Matrixes SceneDescriptor", "ResourceType", "Mesh"},
-        {"enum static dynamic", "type", "dynamic"},
-        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
         {gParamType_StringList, "ABC Path List", ""},
         {gParamType_Bool, "flattened", "1"}
     },
@@ -569,10 +563,6 @@ void merge_scene2_into_scene1(std::shared_ptr<SceneObject> main_object, std::sha
         main_object->geom_list[insert_path + key] = value;
     }
 
-    if (!second_object->geom_path.empty()) {
-        main_object->geom_path.insert(main_object->geom_path.end(), second_object->geom_path.begin(), second_object->geom_path.end());
-    }
-
     for (const auto& [key, value] : second_object->node_to_matrix) {
         main_object->node_to_matrix[insert_path + key] = value;
     }
@@ -585,6 +575,8 @@ struct MergeScene : zeno::INode {
     void apply() override {
         auto main_scene = std::dynamic_pointer_cast<SceneObject>(get_input("Main Scene"));
         auto namespace1 = zsString2Std(get_input2_string("namespace1"));
+        bool mainscene_dirty = get_input_container_info("Main Scene").upstream_dirty;
+
         if (namespace1.size()) {
             if (!zeno::starts_with(namespace1, "/")) {
                 namespace1 = "/" + namespace1;
@@ -597,29 +589,46 @@ struct MergeScene : zeno::INode {
         }
         if (has_link_input("Second Scene")) {
             auto second_scene = std::dynamic_pointer_cast<SceneObject>(get_input("Second Scene"));
+            auto scene_obj_key = zsString2Std(second_scene->key());
+            auto secondscene_dirty = get_input_container_info("Second Scene").upstream_dirty;
 
-            auto namespace2 = zsString2Std(get_input2_string("namespace2"));
-            if (namespace2.size()) {
-                if (!zeno::starts_with(namespace2, "/")) {
-                    namespace2 = "/" + namespace2;
-                }
-                std::vector<glm::mat4> xform2;
-                if (has_link_input("xform2")) {
-                    xform2 = get_xform_from_prim(get_input_PrimitiveObject("xform2"));
-                }
-                scene_add_prefix_node(namespace2, xform2, second_scene);
+            if (!secondscene_dirty) {
+                //说明是添加过的场景，没有要变更的部分，先不加到scenetree
+                //TODO: 如果更改namespace，估计要重构scenetree，先不讨论这种情况
             }
-            auto insert_path = zsString2Std(get_input2_string("insert_path"));
-            if (insert_path.size()) {
-                if (!zeno::starts_with(insert_path, "/")) {
-                    insert_path = "/" + insert_path;
+            else {
+                //上游是脏的，但second_scene可能是全部都要更新，也有可能部分更新，看bNeedUpdateDescriptor
+                auto namespace2 = zsString2Std(get_input2_string("namespace2"));
+                if (namespace2.size()) {
+                    if (!zeno::starts_with(namespace2, "/")) {
+                        namespace2 = "/" + namespace2;
+                    }
+                    std::vector<glm::mat4> xform2;
+                    if (has_link_input("xform2")) {
+                        xform2 = get_xform_from_prim(get_input_PrimitiveObject("xform2"));
+                    }
+                    scene_add_prefix_node(namespace2, xform2, second_scene);
+                }
+                auto insert_path = zsString2Std(get_input2_string("insert_path"));
+                if (insert_path.size()) {
+                    if (!zeno::starts_with(insert_path, "/")) {
+                        insert_path = "/" + insert_path;
+                    }
+                }
+                if (mainscene_dirty && secondscene_dirty) {
+                    merge_scene2_into_scene1(main_scene, second_scene, namespace1 + insert_path);
+                }
+                else if (!mainscene_dirty && secondscene_dirty) {
+                    //只有secondscene是脏的，但要考虑namespace
+                    if (!second_scene->bNeedUpdateDescriptor) {
+                        main_scene = second_scene;
+                    }
+                    else {
+                        //TODO: 要重构场景的情况
+                    }
                 }
             }
-            merge_scene2_into_scene1(main_scene, second_scene, namespace1 + insert_path);
         }
-        main_scene->type = zsString2Std(get_input2_string("type"));
-        main_scene->matrixMode = zsString2Std(get_input2_string("matrixMode"));
-        //auto scene = main_scene->to_list();
         set_output("scene", main_scene);
     }
 };
@@ -628,8 +637,6 @@ ZENDEFNODE( MergeScene, {
     {
         {gParamType_Scene, "Main Scene"},
         {gParamType_Scene, "Second Scene"},
-        {"enum static dynamic", "type", "static"},
-        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
         {gParamType_String, "insert_path", ""},
         {gParamType_String, "namespace1", ""},
         {gParamType_Primitive, "xform1"},
@@ -686,8 +693,6 @@ struct MergeMultiScenes : zeno::INode {
     void apply() override {
         auto main_scene = std::make_shared<SceneObject>();
         main_scene->root_name = zsString2Std(get_input2_string("root_name"));
-        main_scene->type = zsString2Std(get_input2_string("type"));
-        main_scene->matrixMode = zsString2Std(get_input2_string("matrixMode"));
         if (!main_scene->root_name.empty())
         {
             if (zeno::starts_with(main_scene->root_name, "/") == false) {
@@ -734,8 +739,6 @@ ZENDEFNODE( MergeMultiScenes, {
     {
         {gParamType_List, "Scene List"},
         {gParamType_String, "root_name", "dummyRoot"},
-        {"enum static dynamic", "type", "dynamic"},
-        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
     },
     {
         {gParamType_Scene, "scene"},
@@ -749,9 +752,6 @@ ZENDEFNODE( MergeMultiScenes, {
 struct FlattenSceneTree : zeno::INode {
     void apply() override {
         auto scene = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
-        auto use_static = get_input2_bool("use_static");
-        scene->type = use_static? "static" : "dynamic";
-        scene->matrixMode = zsString2Std(get_input2_string("matrixMode"));
         scene->flatten();
 
         set_output("scene", scene);
@@ -761,8 +761,6 @@ struct FlattenSceneTree : zeno::INode {
 ZENDEFNODE( FlattenSceneTree, {
     {
         {gParamType_Scene, "scene"},
-        {gParamType_Bool, "use_static", "1"},
-        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
     },
     {
         {gParamType_Scene, "scene"}
@@ -1055,8 +1053,7 @@ struct MakeSceneNode : zeno::INode {
         if (!zeno::starts_with(scene_tree->root_name, "/")) {
             scene_tree->root_name = "/" + scene_tree->root_name;
         }
-        scene_tree->type = zsString2Std(get_input2_string("type"));
-        scene_tree->matrixMode = zsString2Std(get_input2_string("matrixMode"));
+
         auto geom = get_input_Geometry("prim");
         auto bbox = zeno::geomBoundingBox2(geom->m_impl.get());
         if (bbox.has_value()) {
@@ -1095,8 +1092,6 @@ struct MakeSceneNode : zeno::INode {
 ZENDEFNODE( MakeSceneNode, {
     {
         {gParamType_Geometry, "prim"},
-        {"enum static dynamic", "type", "dynamic"},
-        {"enum UnChanged TotalChange", "matrixMode", "TotalChange"},
         {gParamType_String, "root_name", "/ABC"},
         {gParamType_Primitive, "xforms"},
     },
