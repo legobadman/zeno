@@ -1,4 +1,4 @@
-#ifndef __ZENO_NODE_NEW_H__
+﻿#ifndef __ZENO_NODE_NEW_H__
 #define __ZENO_NODE_NEW_H__
 
 #include <QtWidgets>
@@ -131,6 +131,7 @@ private:
     QmlNodeRunStatus::Value m_nodeStatus;
 
     QPointF _cache_name_move;
+    QPointF _cache_origin_pos;
 };
 
 #endif

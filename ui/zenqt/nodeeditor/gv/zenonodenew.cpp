@@ -1301,26 +1301,45 @@ bool ZenoNodeNew::eventFilter(QObject* obj, QEvent* event)
         QEvent::Type type = event->type();
         switch (type)
         {
-        case QEvent::GraphicsSceneMousePress: {
-            QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
-            _cache_name_move = mouseEvent->scenePos();
-            ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(this->scene());
-            ZASSERT_EXIT(pScene, false);
-            pScene->select({m_index});
-            break;
-        }
-        case QEvent::GraphicsSceneMouseMove: {
-            QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
-            QPointF mousePos = mouseEvent->scenePos();
-            qreal mx = mousePos.x(), my = mousePos.y();
-            QPointF currPos = this->scenePos();
-            qreal cx = currPos.x(), cy = currPos.y();
-
-            QPointF offset = mousePos - _cache_name_move;
-            setPos(currPos + offset);
-            _cache_name_move = mousePos;
-            break;
-        }
+            case QEvent::GraphicsSceneMousePress: {
+                QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
+                _cache_name_move = mouseEvent->scenePos();
+                _cache_origin_pos = _cache_name_move;
+                if (!isSelected()) {
+                    ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(this->scene());
+                    ZASSERT_EXIT(pScene, false);
+                    pScene->select({ m_index });
+                }
+                break;
+            }
+            case QEvent::GraphicsSceneMouseRelease: {
+                QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
+                QPointF mousePos = mouseEvent->scenePos();
+                ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(this->scene());
+                ZASSERT_EXIT(pScene, false);
+                if (isSelected() &&
+                    pScene->selectedItems().size() > 1 &&
+                    qAbs(mouseEvent->scenePos().x() - _cache_origin_pos.x()) < 3 &&
+                    qAbs(mouseEvent->scenePos().y() - _cache_origin_pos.y()) < 3) {
+                    pScene->select({ m_index });
+                }
+                mouseReleaseEvent(mouseEvent);
+                break;
+            }
+            case QEvent::GraphicsSceneMouseMove: {
+                QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
+                QPointF mousePos = mouseEvent->scenePos();
+                QPointF offset = mousePos - _cache_name_move;
+                auto selectedItems = scene()->selectedItems();
+                for (int i = 0; i < selectedItems.size(); i++) {
+                    auto cur = selectedItems.at(i);
+                    if (ZenoNodeBase* base = qgraphicsitem_cast<ZenoNodeBase*>(cur)) {
+                        cur->setPos(cur->scenePos() + offset);
+                    }
+                }
+                _cache_name_move = mousePos;
+                break;
+            }
         }
     }
     return _base::eventFilter(obj, event);
