@@ -2029,6 +2029,29 @@ namespace zeno
                 const ZfxVariable& var = args[0];
                 return call_unary_numeric_func<float>([](float val)->float {return std::abs(val); }, args[0], filter);
             }
+            if (funcname == "sqrt") {
+                const ZfxVariable& var = args[0];
+                return call_unary_numeric_func<float>([](float val)->float {return std::sqrt(val); }, args[0], filter);
+            }
+            if (funcname == "cross") {
+                auto res = std::visit([&](auto&& v1, auto&& v2)->glm::vec3 {
+                    using T1 = std::decay_t<decltype(v1)>;
+                    using E1 = typename T1::value_type;
+                    using T2 = std::decay_t<decltype(v2)>;
+                    using E2 = typename T2::value_type;
+
+                    if constexpr (std::is_same_v<E1, glm::vec3> && std::is_same_v<E2, glm::vec3>) {
+                        return glm::cross(v1[0], v2[0]);
+                    }
+                    else {
+                        throw makeError<UnimplError>("unsupport type for `cross`");
+                    }
+                    }, args[0].value, args[1].value);
+
+                ZfxVariable var;
+                var.value = std::vector<glm::vec3>{ res };
+                return var;
+            }
             if (funcname == "min") {
                 const ZfxVariable& var = args[0];
                 //TODO: 目前只考虑一个数值的min

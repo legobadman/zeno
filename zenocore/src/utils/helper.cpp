@@ -806,7 +806,7 @@ namespace zeno {
         const std::string& outParam = spOutParam->name;
         const std::string& inNode = spInNode->get_name();
         const std::string& inParam = spInParam->name;
-        edge = { outNode, outParam, "", inNode, inParam, "", spLink->targetParam, false };
+        edge = { outNode, outParam, spLink->fromkey, inNode, inParam, spLink->tokey, spLink->targetParam, false };
         return edge;
     }
 
@@ -1222,6 +1222,9 @@ namespace zeno {
             return true;
         }
         else if (inType == gParamType_AnyNumeric || outType == gParamType_AnyNumeric) {
+            return true;
+        }
+        else if (inType == gParamType_ListOfMat4 || outType == gParamType_Matrix4) {
             return true;
         }
         else if (gParamType_IObject == inType && outGroup == Role_OutputObject) {    //outType的Obj类型可以转IObject
@@ -1903,8 +1906,9 @@ namespace zeno {
             type == gParamType_Heatmap ||
             type == gParamType_Curve ||
             type == gParamType_Shader ||
-            type == gParamType_StringList;
-        //TODO: heatmap type.
+            type == gParamType_StringList ||
+            type == gParamType_Matrix4 ||
+            type == gParamType_ListOfMat4;
     }
 
     zany strToZAny(std::string const& defl, ParamType const& type) {

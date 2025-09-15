@@ -169,7 +169,8 @@ struct GetAlembicPrim : INode {
         if (get_input2_bool("triangulate")) {
             zeno::primTriangulate(prim.get());
         }
-        set_output("prim", std::move(prim));
+        auto geom = create_GeometryObject(prim);
+        set_output("prim", std::move(geom));
     }
 };
 
@@ -183,7 +184,7 @@ ZENDEFNODE(GetAlembicPrim, {
         {gParamType_Bool, "use_name", "0"},
         {gParamType_String, "name", ""},
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"alembic"},
 });

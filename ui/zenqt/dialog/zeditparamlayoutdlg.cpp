@@ -471,6 +471,7 @@ void ZEditParamLayoutDlg::initUI()
     m_ui->listConctrl->setFocusPolicy(Qt::NoFocus);
 
     m_ui->cbObjectType->addItem(tr("Geometry"), (quint64)gParamType_Geometry);
+    m_ui->cbObjectType->addItem(tr("List"), (quint64)gParamType_List);
     m_ui->cbObjectType->addItem(tr("Object"), (quint64)gParamType_IObject);
     m_ui->cbObjectType->hide();
 
@@ -1264,13 +1265,21 @@ void ZEditParamLayoutDlg::onOutputPrimTypeChanged(int idx) {
 
 void ZEditParamLayoutDlg::onObjTypeChanged(int idx)
 {
-    const QModelIndex& currIdx = m_ui->objInputsView->currentIndex();
-    if (!currIdx.isValid())
-        return;
-
-    QStandardItem* pItem = m_paramsLayoutM_objInputs->itemFromIndex(currIdx);
-    auto objtype = m_ui->cbObjectType->itemData(idx);
-    pItem->setData(objtype, QtRole::ROLE_PARAM_TYPE);
+    QModelIndex currIdx = m_ui->objInputsView->currentIndex();
+    if (currIdx.isValid())
+    {
+        QStandardItem* pItem = m_paramsLayoutM_objInputs->itemFromIndex(currIdx);
+        auto objtype = m_ui->cbObjectType->itemData(idx);
+        pItem->setData(objtype, QtRole::ROLE_PARAM_TYPE);
+    }
+    else {
+        currIdx = m_ui->objOutputsView->currentIndex();
+        if (currIdx.isValid()) {
+            QStandardItem* pItem = m_paramsLayoutM_objOutputs->itemFromIndex(currIdx);
+            auto objtype = m_ui->cbObjectType->itemData(idx);
+            pItem->setData(objtype, QtRole::ROLE_PARAM_TYPE);
+        }
+    }
 }
 
 void ZEditParamLayoutDlg::onControlItemChanged(int idx)

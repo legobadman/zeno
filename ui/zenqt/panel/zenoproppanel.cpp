@@ -685,8 +685,6 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
     ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS));
     QPersistentModelIndex idxCoreParam = paramsM->paramIdx(paramName, bInput);
 
-    ZASSERT_EXIT(anyVal.has_value() || type == gParamType_AnyNumeric || type == gParamType_StringList);
-
     zeno::ParamControl ctrl = (zeno::ParamControl)idxCoreParam.data(QtRole::ROLE_PARAM_CONTROL).toInt();
 
     const zeno::reflect::Any& pros = idxCoreParam.data(QtRole::ROLE_PARAM_CTRL_PROPERTIES).value<zeno::reflect::Any>();

@@ -2124,8 +2124,7 @@ ZENDEFNODE(ParseFBX, {
     },
     {
         {gParamType_List, "Geometry List"},
-        {gParamType_List, "Scene Json List"},
-        {gParamType_StringList, "ABC Path List"}
+        {gParamType_List, "Scene Json List"}
     },
     {},
     {"FBXSDK"}
@@ -2155,21 +2154,18 @@ struct NewFBXSceneInfo : INode {
         }
         auto json_obj = json_list->get(idx);
         set_output("json", json_obj);
-        m_pAdapter->set_primitive_output("ABC Path List", m_pAdapter->get_param_result("ABC Path List"));
     }
 };
 
 ZENDEFNODE(NewFBXSceneInfo, {
     {
         {gParamType_List, "Json List"},
-        {gParamType_StringList, "ABC Path List"},
         {gParamType_Int, "Start Frame"},
         {gParamType_Int, "frameid"},
         {gParamType_Float, "fps", "25"},
     },
     {
-        {gParamType_JsonObject, "json"},
-        {gParamType_StringList, "ABC Path List"}
+        {gParamType_JsonObject, "json"}
     },
     {},
     {"FBXSDK"},

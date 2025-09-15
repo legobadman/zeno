@@ -89,11 +89,12 @@ namespace zeno {
             , tooltip(tooltip)
         {
         }
-        CommonParam(std::string name, ParamType type, std::string constrain = "", std::string tooltip = "")
+        CommonParam(std::string name, ParamType type, std::string constrain = "", std::string tooltip = "", bool socketVisible = false)
             : name(name)
             , type(type)
             , constrain(constrain)
             , tooltip(tooltip)
+            , bSocketVisible(socketVisible)
         {
         }
         CommonParam(std::string name, SocketType socketType, SocketProperty sockProp)
@@ -129,8 +130,8 @@ namespace zeno {
             , control(control)
             , ctrlProps(ctrlProps)
         {}
-        ParamPrimitive(std::string name, ParamType type, zeno::reflect::Any defl = zeno::reflect::Any(), ParamControl control = NullControl, zeno::reflect::Any ctrlProps = zeno::reflect::Any(), std::string constrain = "")
-            : CommonParam(name, type, constrain)
+        ParamPrimitive(std::string name, ParamType type, zeno::reflect::Any defl = zeno::reflect::Any(), ParamControl control = NullControl, zeno::reflect::Any ctrlProps = zeno::reflect::Any(), std::string constrain = "", bool socketVisible = false)
+            : CommonParam(name, type, constrain, "", socketVisible)
             , defl(defl)
             , control(control)
             , ctrlProps(ctrlProps)

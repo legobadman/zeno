@@ -228,13 +228,9 @@ struct FormSceneTree : zeno::INode {
         sceneTree->root_name = "/ABC";
         auto prim_geom_list = get_input_ListObject("Geometry List");
         auto list_updateinfo = get_input_container_info("Geometry List");
-        std::vector<std::string> abc_paths;
-        if (has_link_input("ABC Path List")) {
-            abc_paths = zeno::reflect::any_cast<std::vector<std::string>>(ZImpl(get_param_result("ABC Path List")));
-        }
 
         //如果prim_geom_list的上游节点标记为no-cache,那这里就不应该拿到prim_geom_list.
-        //如果geom分支已经不脏的情况下，这里导出sceneTree是不会导出geometry的
+        //或者geom分支已经不脏的情况下，这里导出sceneTree是不会导出geometry的
         sceneTree->bNeedUpdateDescriptor = prim_geom_list && !list_updateinfo.empty();
 
         if (sceneTree->bNeedUpdateDescriptor) {
@@ -268,8 +264,6 @@ ZENDEFNODE(FormSceneTree, {
     {
         {gParamType_JsonObject, "Scene Info"},
         {gParamType_List, "Geometry List"},
-        {"enum Mesh Matrixes SceneDescriptor", "ResourceType", "Mesh"},
-        {gParamType_StringList, "ABC Path List", ""},
         {gParamType_Bool, "flattened", "1"}
     },
     {
@@ -583,7 +577,7 @@ struct MergeScene : zeno::INode {
             }
             std::vector<glm::mat4> xform1;
             if (has_link_input("xform1")) {
-                xform1 = get_xform_from_prim(get_input_PrimitiveObject("xform1"));
+                xform1 = zeno::reflect::any_cast<std::vector<glm::mat4>>(m_pAdapter->get_param_result("xform1"));
             }
             scene_add_prefix_node(namespace1, xform1, main_scene);
         }
@@ -605,7 +599,7 @@ struct MergeScene : zeno::INode {
                     }
                     std::vector<glm::mat4> xform2;
                     if (has_link_input("xform2")) {
-                        xform2 = get_xform_from_prim(get_input_PrimitiveObject("xform2"));
+                        xform2 = zeno::reflect::any_cast<std::vector<glm::mat4>>(m_pAdapter->get_param_result("xform2"));
                     }
                     scene_add_prefix_node(namespace2, xform2, second_scene);
                 }
@@ -639,9 +633,9 @@ ZENDEFNODE( MergeScene, {
         {gParamType_Scene, "Second Scene"},
         {gParamType_String, "insert_path", ""},
         {gParamType_String, "namespace1", ""},
-        {gParamType_Primitive, "xform1"},
+        {gParamType_ListOfMat4, "xform1"},
         {gParamType_String, "namespace2", "namespace2"},
-        {gParamType_Primitive, "xform2"},
+        {gParamType_ListOfMat4, "xform2"},
     },
     {
         {gParamType_Scene, "scene"},
@@ -666,9 +660,10 @@ struct SceneRootRename : zeno::INode {
             new_root_name = "/" + new_root_name;
         }
         std::vector<glm::mat4> root_xform;
-        if (ZImpl(has_input2<PrimitiveObject>("xform"))) {
-            root_xform = get_xform_from_prim(get_input_PrimitiveObject("xform"));
+        if (ZImpl(has_link_input("xform"))) {
+            root_xform = zeno::reflect::any_cast<std::vector<glm::mat4>>(m_pAdapter->get_param_result("xform"));
         }
+
         auto new_scene_tree = scene_tree->root_rename(new_root_name, root_xform);
         set_output("scene", new_scene_tree);
     }
@@ -678,7 +673,7 @@ ZENDEFNODE( SceneRootRename, {
     {
         {gParamType_Scene, "scene"},
         {gParamType_String, "new_root_name", "new_scene"},
-        {gParamType_Primitive, "xform"},
+        {gParamType_ListOfMat4, "xform"}
     },
     {
         {gParamType_Scene, "scene"}
@@ -856,7 +851,7 @@ struct SetNodeXform : zeno::INode {
         auto st = Json::parse(scene->to_json());
         auto &node_to_matrix = st["node_to_matrix"];
         if (has_input("xforms")) {
-            auto xforms = get_xform_from_prim(get_input_PrimitiveObject("xforms"));
+            auto xforms = zeno::reflect::any_cast<std::vector<glm::mat4>>(m_pAdapter->get_param_result("xforms"));
             Json mats = Json::array();
             for (const auto &xform: xforms) {
                 Json matrix = Json::array();
@@ -875,6 +870,8 @@ struct SetNodeXform : zeno::INode {
                 mats.push_back(matrix);
             }
             node_to_matrix[node + "_m"] = mats;
+            //xforms除了变换还把id搞进来？什么鬼
+            /*
             auto ids = get_id_from_prim(get_input_PrimitiveObject("xforms"));
             if (ids.size()) {
                 Json ids_json = Json::array();
@@ -883,6 +880,7 @@ struct SetNodeXform : zeno::INode {
                 }
                 st["node_to_id"][node + "_m"] = ids_json;
             }
+            */
         }
         else {
             auto index = get_input2_int("index");
@@ -922,7 +920,7 @@ ZENDEFNODE( SetNodeXform, {
         {gParamType_Vec3f, "r1", "0, 1, 0"},
         {gParamType_Vec3f, "r2", "0, 0, 1"},
         {gParamType_Vec3f, "t", "0, 0, 0"},
-        {gParamType_Primitive, "xforms"}
+        {gParamType_ListOfMat4, "xforms"}
     },
     {
         {gParamType_Scene, "scene"},
@@ -1081,8 +1079,8 @@ struct MakeSceneNode : zeno::INode {
 
         scene_tree->scene_tree[scene_tree->root_name] = root_node;
 
-        if (has_input("xforms")) {
-            auto xforms = get_xform_from_prim(get_input_PrimitiveObject("xforms"));
+        if (has_link_input("xforms")) {
+            auto xforms = zeno::reflect::any_cast<std::vector<glm::mat4>>(m_pAdapter->get_param_result("xforms"));
             scene_tree->node_to_matrix[scene_tree->root_name + "_m"] = xforms;
         }
         //auto scene = scene_tree->to_list();
@@ -1093,7 +1091,7 @@ ZENDEFNODE( MakeSceneNode, {
     {
         {gParamType_Geometry, "prim"},
         {gParamType_String, "root_name", "/ABC"},
-        {gParamType_Primitive, "xforms"},
+        {gParamType_ListOfMat4, "xforms"},
     },
     {
         {gParamType_Scene, "scene"},

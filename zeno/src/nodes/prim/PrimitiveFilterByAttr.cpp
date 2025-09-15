@@ -1,6 +1,7 @@
 #include "zeno/types/StringObject.h"
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/vec.h>
 #include <cstring>
@@ -82,7 +83,7 @@ static std::variant
 
 struct PrimitiveFilterByAttr : INode {
   virtual void apply() override {
-    auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+    auto prim = get_input_Geometry("prim")->toPrimitiveObject();
     auto attrName = ZImpl(get_param<std::string>("attrName"));
     auto acceptIf = ZImpl(get_param<std::string>("acceptIf"));
     auto vecSelType = ZImpl(get_param<std::string>("vecSelType"));
@@ -235,28 +236,27 @@ struct PrimitiveFilterByAttr : INode {
         }
 
     }
-    
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+
+    auto geom = create_GeometryObject(prim);
+    set_output("prim", geom);
   }
 };
 
-ZENDEFNODE(PrimitiveFilterByAttr,
-    { /* inputs: */ {
-    {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
-    {gParamType_Float, "value", "0"},
-    }, /* outputs: */ {
-{gParamType_Primitive, "prim"},
-}, /* params: */ {
-    {gParamType_String, "attrName", "rad"},
-    {"enum cmpgt cmplt cmpge cmple cmpeq cmpne", "acceptIf", "cmpgt"},
-    {"enum any all", "vecSelType", "all"},
-    {gParamType_Bool, "mockTopos", "1"},
-    }, /* outputs: */ {
-        "prim",
-    }, /* params: */ {
-    }, /* category: */ {
-    "primitive",
-    }});
+ZENDEFNODE(PrimitiveFilterByAttr, {
+    {
+        {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
+        {gParamType_Float, "value", "0"},
+        {gParamType_String, "attrName", "rad"},
+        {"enum cmpgt cmplt cmpge cmple cmpeq cmpne", "acceptIf", "cmpgt"},
+        {"enum any all", "vecSelType", "all"},
+        {gParamType_Bool, "mockTopos", "1"},
+    },
+    {
+        {gParamType_Geometry, "prim"}
+    },
+    {},
+    {"primitive"}
+});
 
 
 

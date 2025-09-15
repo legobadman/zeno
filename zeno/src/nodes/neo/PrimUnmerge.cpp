@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/geo/commonutil.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/StringObject.h>
@@ -316,7 +317,7 @@ namespace {
 
 struct PrimUnmerge : INode {
     virtual void apply() override {
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto tagAttr = ZImpl(get_input<StringObject>("tagAttr"))->get();
         auto method = ZImpl(get_input<StringObject>("method"))->get();
 
@@ -333,7 +334,8 @@ struct PrimUnmerge : INode {
 
         auto listPrim = create_ListObject();
         for (auto &primPtr: primList) {
-            listPrim->m_impl->push_back(std::move(primPtr));
+            auto geom = create_GeometryObject(primPtr);
+            listPrim->m_impl->push_back(std::move(geom));
         }
         ZImpl(set_output("listPrim", std::move(listPrim)));
     }
@@ -341,7 +343,7 @@ struct PrimUnmerge : INode {
 
 ZENDEFNODE(PrimUnmerge, {
     {
-        {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
         {gParamType_String, "tagAttr", "tag"},
         {gParamType_Bool, "preSimplify", "0"},
         {"enum verts faces", "method", "verts"},

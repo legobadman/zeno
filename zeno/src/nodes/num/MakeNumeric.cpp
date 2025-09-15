@@ -276,6 +276,44 @@ ZENDEFNODE(CreateNumericObj, {
     {"numeric"}
 });
 
+struct Matrix4 : INode {
+    void apply() override {
+        auto r0 = get_input2_vec4f("r0");
+        auto r1 = get_input2_vec4f("r1");
+        auto r2 = get_input2_vec4f("r2");
+        auto r3 = get_input2_vec4f("r3");
+
+        glm::mat4 m(r0.x, r0.y, r0.z, r0.w,
+            r1.x, r1.y, r1.z, r1.w,
+            r2.x, r2.y, r2.z, r2.w,
+            r3.x, r3.y, r3.z, r3.w);
+
+        m_pAdapter->set_primitive_output("matrix", m);
+    }
+};
+
+ZENDEFNODE(Matrix4, {
+    {
+        {gParamType_Vec4f, "r0", "0,0,0,0"},
+        {gParamType_Vec4f, "r1", "0,0,0,0"},
+        {gParamType_Vec4f, "r2", "0,0,0,0"},
+        {gParamType_Vec4f, "r3", "0,0,0,0"},
+    },
+    {
+        ParamPrimitive("matrix", gParamType_Matrix4, glm::mat4(1), NullControl, zeno::reflect::Any(), "", true)
+        //{gParamType_Matrix4, "matrix"}
+    },
+    {},
+    {"numeric"}
+});
+
+
+struct CreateListOfMatrix4 : INode {
+    void apply() override {
+
+    }
+};
+
 
 struct TestZVariant : INode {
     virtual void apply() override {

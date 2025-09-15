@@ -1858,6 +1858,18 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     {
         break;
     }
+    case gParamType_ListOfMat4:
+    {
+        if (in_param->links.size() == 1 && in_param->links.front()->toparam->type == gParamType_ListOfMat4) {
+            //TODO
+        }
+        else {
+            for (auto link : in_param->links) {
+                
+            }
+        }
+        break;
+    }
     case gParamType_Shader:
     {
         throw makeError<UnimplError>("no defl value supported on the param with type `gParamType_Shader`, please connect the link by outside");
@@ -2043,7 +2055,7 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                 //旧版本的requireInput指的是是否有连线，如果想兼容旧版本，这里可以返回false，但使用量不多，所以就修改它的定义。
             }
             else {
-                if (in_param->links.size() == 1) {
+                if (in_param->links.size() == 1 && in_param->type != gParamType_ListOfMat4) {
                     std::shared_ptr<PrimitiveLink> spLink = *in_param->links.begin();
                     auto outNode = spLink->fromparam->m_wpNode;
                     if (outNode->is_takenover()) {
@@ -2060,6 +2072,41 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                     in_param->result = outNode->takeOutputPrim(spLink->fromparam, in_param, bAllOutputTaken);
                     if (bAllOutputTaken && outNode->is_nocache()) {
                         outNode->mark_takeover();
+                    }
+                }
+                else if (in_param->type == gParamType_ListOfMat4) {
+
+                    if (in_param->links.size() == 1 && in_param->links.front()->fromparam->type == gParamType_ListOfMat4) {
+                        auto spLink = in_param->links.front();
+                        auto outNode = spLink->fromparam->m_wpNode;
+                        GraphException::translated([&] {
+                            outNode->doApply(pContext);
+                            }, outNode);
+
+                        bool bAllOutputTaken = false;
+                        in_param->result = outNode->takeOutputPrim(spLink->fromparam, in_param, bAllOutputTaken);
+                        if (bAllOutputTaken && outNode->is_nocache()) {
+                            outNode->mark_takeover();
+                        }
+                    }
+                    else {
+                        std::vector<glm::mat4> mats;
+                        for (auto spLink : in_param->links) {
+                            auto outNode = spLink->fromparam->m_wpNode;
+                            GraphException::translated([&] {
+                                outNode->doApply(pContext);
+                                }, outNode);
+
+                            bool bAllOutputTaken = false;
+                            zeno::reflect::Any anyVal = outNode->takeOutputPrim(spLink->fromparam, in_param, bAllOutputTaken);
+                            if (bAllOutputTaken && outNode->is_nocache()) {
+                                outNode->mark_takeover();
+                            }
+
+                            glm::mat4 mat = zeno::reflect::any_cast<glm::mat4>(anyVal);
+                            mats.push_back(mat);
+                        }
+                        in_param->result = mats;
                     }
                 }
             }

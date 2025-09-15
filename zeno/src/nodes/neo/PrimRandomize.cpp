@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/wangsrng.h>
@@ -201,7 +202,7 @@ namespace {
 
 struct PrimRandomize : INode {
     virtual void apply() override {
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto base = ZImpl(get_input2<float>("base"));
         auto scale = ZImpl(get_input2<float>("scale"));
         auto seed = ZImpl(get_input2<int>("seed"));
@@ -210,13 +211,14 @@ struct PrimRandomize : INode {
         auto seedAttr = ZImpl(get_input2<std::string>("seedAttr"));
         auto randType = ZImpl(get_input2<std::string>("randType"));
         primRandomize(prim.get(), attr, dirAttr, seedAttr, randType, base, scale, seed);
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        auto geom = create_GeometryObject(prim);
+        set_output("prim", geom);
     }
 };
 
 ZENDEFNODE(PrimRandomize, {
     {
-    {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
     {gParamType_String, "attr", "tmp"},
     {gParamType_String, "dirAttr", ""},
     {gParamType_String, "seedAttr", ""},
@@ -226,7 +228,7 @@ ZENDEFNODE(PrimRandomize, {
     {"enum scalar01 scalar11 cube01 cube11 plane01 plane11 disk cylinder ball semiball sphere semisphere", "randType", "scalar01"},
     },
     {
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     },
     {
     },

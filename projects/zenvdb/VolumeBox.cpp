@@ -11,7 +11,7 @@
 #include <zeno/geo/commonutil.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/eulerangle.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include <glm/mat4x4.hpp>
 
 struct GreedyVoxel {
@@ -317,7 +317,8 @@ struct CreateVolumeBox : zeno::INode {
             prim->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
             prim->userData()->set_bool("vbox", true);
 
-            list->push_back(prim);        
+            auto geom = create_GeometryObject(prim);
+            list->push_back(geom);
         }
 
         if (list->size()==1) {
@@ -325,6 +326,7 @@ struct CreateVolumeBox : zeno::INode {
             return;
         }
 
+        throw makeError<UnimplError>("unsupport list of prim as output");
         set_output("prim", std::move(list));
     }
 };
@@ -339,7 +341,7 @@ ZENDEFNODE(CreateVolumeBox, {
         {gParamType_String, "vol_mat", ""},
     },
     {
-        {gParamType_Primitive, "prim"}
+        {gParamType_Geometry, "prim"}
     },
     {
         {"enum " + EulerAngle::RotationOrderListString(), "EulerRotationOrder", "XYZ"},

@@ -1464,7 +1464,7 @@ ZENDEFNODE(PrimsFilterInUserdata, {
     {
         {gParamType_List, "list"},
         {gParamType_String, "name", ""},
-        {gParamType_String, "filters"},
+        {gParamType_String, "filters", "", Socket_Primitve, zeno::Multiline},
         {gParamType_Bool, "contain", "1"},
         {gParamType_Bool, "fuzzy", "0"},
     },

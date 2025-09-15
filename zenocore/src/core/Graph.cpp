@@ -1206,7 +1206,44 @@ bool Graph::addLink(const EdgeInfo& edge) {
     bool bConnectWithKey = false;
     adjustEdge.inKey = edge.inKey;
 
-    if (!bInputPrim)
+    if (bInputPrim)
+    {
+        ParamPrimitive inParam = inNode->get_input_prim_param(edge.inParam, &bExist);
+        if (!bExist)
+            return false;
+        ParamPrimitive outParam = outNode->get_output_prim_param(edge.outParam, &bExist);
+        if (!bExist)
+            return false;
+        if (inParam.type == gParamType_ListOfMat4)
+        {
+            if (outParam.type == gParamType_Matrix4)
+            {
+                bConnectWithKey = true;
+                std::vector<EdgeInfo> inParamLinks = inParam.links;
+
+                //要先检查一下已有的边是不是直连，如果是，要删掉
+                if (inParam.links.size() == 1 && inParam.links[0].inKey.empty()) {
+                    removeLinks(inNode->get_name(), true, edge.inParam);
+                    inParam.links.clear();
+                }
+
+                std::set<std::string> ss;
+                for (const EdgeInfo& spLink : inParam.links) {
+                    ss.insert(spLink.inKey);
+                }
+
+                if (adjustEdge.inKey.empty())
+                    adjustEdge.inKey = "obj0";
+
+                int i = 0;
+                while (ss.find(adjustEdge.inKey) != ss.end()) {
+                    i++;
+                    adjustEdge.inKey = "obj" + std::to_string(i);
+                }
+            }
+        }
+    }
+    else
     {
         ParamObject inParam = inNode->get_input_obj_param(edge.inParam);
         ParamObject outParam = outNode->get_output_obj_param(edge.outParam);
@@ -1266,6 +1303,8 @@ bool Graph::addLink(const EdgeInfo& edge) {
     assert(bInputPrim == bOutputPrim);
     if (bInputPrim) {
         std::shared_ptr<PrimitiveLink> spLink = std::make_shared<PrimitiveLink>();
+        spLink->fromkey = adjustEdge.outKey;
+        spLink->tokey = adjustEdge.inKey;
         outNode->init_primitive_link(false, edge.outParam, spLink, edge.targetParam);
         inNode->init_primitive_link(true, edge.inParam, spLink, edge.targetParam);
         adjustEdge.bObjLink = false;
