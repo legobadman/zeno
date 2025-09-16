@@ -506,6 +506,30 @@ QVariant UiHelper::anyToQvar(zeno::reflect::Any var)
         vec.push_back(QString::fromStdString(vec4s[3]));
         return QVariant::fromValue(vec);
     }
+    else if (zeno::reflect::get_type<zeno::vecvar>() == var.type()) {
+        zeno::vecvar v = zeno::reflect::any_cast<zeno::vecvar>(var);
+        if (v.empty()) return QVariant();
+        return std::visit([&](auto&& arg)->QVariant {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                UI_VECTYPE vec_;
+                for (auto var_ : v) {
+                    vec_.push_back(std::get<T>(var_));
+                }
+                return QVariant::fromValue(vec_);
+            }
+            else if constexpr (std::is_same_v<T, std::string>) {
+                UI_VECSTRING vec_;
+                for (auto var_ : v) {
+                    vec_.push_back(QString::fromStdString(std::get<T>(var_)));
+                }
+                return QVariant::fromValue(vec_);
+            }
+            else {
+                return QVariant();
+            }
+            }, v[0]);
+    }
     return QVariant();
 }
 
