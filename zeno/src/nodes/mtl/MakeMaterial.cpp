@@ -145,14 +145,13 @@ struct ExtractMaterialShader : zeno::INode
         if(ZImpl(has_input2<zeno::ListObject>("object"))) {
             auto list = ZImpl(get_input2<zeno::ListObject>("object"));
             for (auto p: list->get()) {
-                auto np = std::dynamic_pointer_cast<PrimitiveObject>(p);
-                np->userData()->set_string("mtlid", stdString2zs(mtlid));
+                p->userData()->set_string("mtlid", stdString2zs(mtlid));
             }
             set_output("object", std::move(list));
             return;
         }
 
-      auto obj = ZImpl(get_input<zeno::PrimitiveObject>("object"));
+      auto obj = get_input_Geometry("object");
       
       auto mtlid2 = ZImpl(get_input2<std::string>("mtlid"));
       int matNum = obj->userData()->get_int("matNum",0);
@@ -164,20 +163,9 @@ struct ExtractMaterialShader : zeno::INode
       obj->userData()->set_int("matNum", 1);
       obj->userData()->set_string("Material_0", stdString2zs(mtlid2));
       obj->userData()->set_string("mtlid", stdString2zs(mtlid));
-      if(obj->tris.size()>0)
-      {
-          obj->tris.add_attr<int>("matid");
-          obj->tris.attr<int>("matid").assign(obj->tris.size(),0);
-      }
-      if(obj->quads.size()>0)
-      {
-          obj->quads.add_attr<int>("matid");
-          obj->quads.attr<int>("matid").assign(obj->quads.size(),0);
-      }
-      if(obj->polys.size()>0)
-      {
-          obj->polys.add_attr<int>("matid");
-          obj->polys.attr<int>("matid").assign(obj->polys.size(),0);
+      if (obj->nfaces() > 0) {
+          int matid = 0;
+          obj->create_face_attr("matid", matid);
       }
       ZImpl(set_output("object", std::move(obj)));
     }
@@ -187,11 +175,11 @@ struct ExtractMaterialShader : zeno::INode
       BindMaterial,
       {
           {
-              {gParamType_Primitive, "object", "", zeno::Socket_ReadOnly, zeno::NullControl},
+              {gParamType_IObject, "object", "", zeno::Socket_ReadOnly, zeno::NullControl},
               {gParamType_String, "mtlid", "Mat1"},
           },
           {
-              {gParamType_Primitive, "object", "", zeno::Socket_Output, zeno::NullControl},
+              {gParamType_IObject, "object", "", zeno::Socket_Output, zeno::NullControl},
           },
           {},
           {

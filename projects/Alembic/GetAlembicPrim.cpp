@@ -153,7 +153,7 @@ struct GetAlembicPrim : INode {
     virtual void apply() override {
         auto abctree = std::dynamic_pointer_cast<ABCTree>(get_input("abctree"));
         int index = get_input2_int("index");
-        int use_xform = get_input2_int("use_xform");
+        bool use_xform = get_input2_bool("use_xform");
         SharedPtr<PrimitiveObject> prim;
         if (get_input2_bool("use_name")) {
             index = get_alembic_prim_index(abctree, std::string(get_input2_string("name").c_str()));

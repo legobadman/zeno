@@ -2052,6 +2052,10 @@ namespace zeno
                 var.value = std::vector<glm::vec3>{ res };
                 return var;
             }
+            if (funcname == "floor") {
+                const ZfxVariable& var = args[0];
+                return call_unary_numeric_func<float>([](float val)->float {return std::floor(val); }, args[0], filter);
+            }
             if (funcname == "min") {
                 const ZfxVariable& var = args[0];
                 //TODO: 目前只考虑一个数值的min

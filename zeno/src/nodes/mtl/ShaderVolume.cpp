@@ -225,7 +225,7 @@ struct ShaderVolumeHomogeneous : INode {
 
 ZENDEFNODE(ShaderVolumeHomogeneous, {
     {
-        {gParamType_Vec3f, "albedo", "1,1,1"},
+        {gParamType_Vec3f, "albedo", "1,1,1", Socket_Primitve, zeno::ColorVec},
         {gParamType_Vec3f, "extinction", "0.01,0.01,0.01"},
         {gParamType_Float, "anisotropy", "0"},
         {gParamType_Float, "albedoAmp", "1.0"},

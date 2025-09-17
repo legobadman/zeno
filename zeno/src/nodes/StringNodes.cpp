@@ -198,28 +198,62 @@ struct StringFormatNumStr : zeno::INode {
     virtual void apply() override {
         auto str = ZImpl(get_input2<std::string>("str"));
         auto num_str = ZImpl(get_input<zeno::IObject>("num_str"));
+        zeno::reflect::Any val = m_pAdapter->get_param_result("num_str");
         std::string output;
 
-        std::shared_ptr<zeno::NumericObject> num = std::dynamic_pointer_cast<zeno::NumericObject>(num_str);
-        if (num) {
-            std::visit([&](const auto &v) {
-                output = zeno::format(str, v);
-            }, num->value);
+        ParamType valType = val.type().hash_code();
+        if (gParamType_Int == valType) {
+            auto v = zeno::reflect::any_cast<int>(val);
+            output = zeno::format(str, v);
         }
-        std::shared_ptr<zeno::StringObject> pStr = std::dynamic_pointer_cast<zeno::StringObject>(num_str);
-        if (pStr) {
-            output = zeno::format(str, pStr->get());
+        else if (gParamType_Float == valType) {
+            auto v = zeno::reflect::any_cast<float>(val);
+            output = zeno::format(str, v);
         }
-        ZImpl(set_output2("str", output));
+        else if (gParamType_String == valType) {
+            auto v = zeno::reflect::any_cast<std::string>(val);
+            output = zeno::format(str, v);
+        }
+        else if (gParamType_Vec2i == valType) {
+            auto v = zeno::reflect::any_cast<zeno::vec2i>(val);
+            output = zeno::format(str, v);
+        }
+        else if (gParamType_Vec2f == valType) {
+            auto v = zeno::reflect::any_cast<zeno::vec2f>(val);
+            output = zeno::format(str, v);
+        }
+        else if (gParamType_Vec3i == valType) {
+            auto v = zeno::reflect::any_cast<zeno::vec3i>(val);
+            output = zeno::format(str, v);
+        }
+        else if (gParamType_Vec3f == valType) {
+            auto v = zeno::reflect::any_cast<zeno::vec3f>(val);
+            output = zeno::format(str, v);
+        }
+        else if (gParamType_Vec4i == valType) {
+            auto v = zeno::reflect::any_cast<zeno::vec4i>(val);
+            output = zeno::format(str, v);
+        }
+        else if (gParamType_Vec4f == valType) {
+            auto v = zeno::reflect::any_cast<zeno::vec3f>(val);
+            output = zeno::format(str, v);
+        }
+        else {
+            throw makeError<UnimplError>("");
+        }
+
+        set_output_string("str", stdString2zs(output));
     }
 };
 
 ZENDEFNODE(StringFormatNumStr, {
     {
         {gParamType_String, "str", "{}"},
-        {"object", "num_str"},
+        {gParamType_AnyNumeric, "num_str"},
     },
-    {{gParamType_String, "str"}},
+    {
+        {gParamType_String, "str"}
+    },
     {},
     {"string"},
 });

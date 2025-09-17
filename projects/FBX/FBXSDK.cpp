@@ -2106,7 +2106,6 @@ struct ParseFBX : INode {
 
         set_output("Scene Json List", scene_info_list);
         set_output("Geometry List", geo_list);
-        m_pAdapter->set_primitive_output("ABC Path List", abc_paths);
     }
 };
 

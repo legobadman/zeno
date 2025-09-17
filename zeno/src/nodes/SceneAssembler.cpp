@@ -841,6 +841,30 @@ ZENDEFNODE( MarkSceneState, {
     },
 });
 
+struct GetNodeIds : zeno::INode {
+    void apply() override {
+        auto geom = get_input_Geometry("Input");
+        std::vector<int> ids;
+        if (geom->has_point_attr("id")) {
+            ids = geom->m_impl->get_attrs<int>(zeno::ATTR_POINT, "id");
+        }
+        m_pAdapter->set_primitive_output("node_ids", ids);
+    }
+};
+
+ZENDEFNODE(GetNodeIds, {
+    {
+        {gParamType_Geometry, "Input"}
+    },
+    {
+        {gParamType_IntList, "node_ids"}
+    },
+    {},
+    {
+        "Scene",
+    },
+});
+
 struct SetNodeXform : zeno::INode {
     void apply() override {
         auto scene = std::dynamic_pointer_cast<SceneObject>(get_input("scene"));
@@ -870,6 +894,16 @@ struct SetNodeXform : zeno::INode {
                 mats.push_back(matrix);
             }
             node_to_matrix[node + "_m"] = mats;
+            if (has_link_input("node_ids")) {
+                auto ids = zeno::reflect::any_cast<std::vector<int>>(m_pAdapter->get_param_result("node_ids"));
+                if (ids.size()) {
+                    Json ids_json = Json::array();
+                    for (auto id : ids) {
+                        ids_json.push_back(id);
+                    }
+                    st["node_to_id"][node + "_m"] = ids_json;
+                }
+            }
             //xforms除了变换还把id搞进来？什么鬼
             /*
             auto ids = get_id_from_prim(get_input_PrimitiveObject("xforms"));
@@ -916,6 +950,7 @@ ZENDEFNODE( SetNodeXform, {
         {gParamType_Scene, "scene"},
         {gParamType_String, "node", ""},
         {gParamType_Int, "index", "0"},
+        {gParamType_IntList, "node_ids"},
         {gParamType_Vec3f, "r0", "1, 0, 0"},
         {gParamType_Vec3f, "r1", "0, 1, 0"},
         {gParamType_Vec3f, "r2", "0, 0, 1"},

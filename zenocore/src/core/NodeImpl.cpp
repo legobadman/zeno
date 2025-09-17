@@ -631,7 +631,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
 
     //debug
 #if 1
-    if (m_name == "FormSceneTree2_1") {
+    if (m_name == "FormSceneTree1") {
         int j;
         j = 0;
     }
@@ -656,7 +656,17 @@ void NodeImpl::preApply_SwitchIf(CalcContext* pContext) {
     preApply_Primitives(pContext);
 
     const zeno::reflect::Any& res = this->get_param_result("Condition");
-    int cond = zeno::reflect::any_cast<int>(res);
+    int cond = 0;
+    if (res.type().hash_code() == gParamType_Int) {
+        cond = zeno::reflect::any_cast<int>(res);
+    }
+    else if (res.type().hash_code() == gParamType_Float) {
+        cond = zeno::reflect::any_cast<float>(res);
+    }
+    else if (res.type().hash_code() == gParamType_Bool) {
+        cond = zeno::reflect::any_cast<bool>(res);
+    }
+
     if (cond != 0) {
         requireInput("If True", pContext);
     }

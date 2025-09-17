@@ -247,7 +247,23 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
     }
     //prim的输入类型变化时，可能需要更新对应subinput节点port端口的类型
     for (auto _pair : params) {
-        if (const auto& pParam = std::get_if<ParamPrimitive>(&_pair.param)) {
+        if (const auto& pParam = std::get_if<ParamObject>(&_pair.param)) {
+            //检测类型是否变化了
+            const ParamObject& param = *pParam;
+            auto subionode = m_subgraph->getNode(param.name);
+            bool bInput = !param.bInput;    //输入参数对应输出参数的port，反之亦然
+            if (subionode) {
+                ParamType old_paramtype;
+                SocketType old_socketype; //DEPRECATED
+                bool _wildcard; //DEPRECATED
+                subionode->getParamTypeAndSocketType("port", false, bInput, old_paramtype, old_socketype, _wildcard);
+                if (old_paramtype != param.type) {
+                    subionode->update_param_type("port", false, bInput, param.type);
+                    //TODO:为了避免连线出问题，删掉所有连线
+                }
+            }
+        }
+        else if (const auto& pParam = std::get_if<ParamPrimitive>(&_pair.param)) {
             const ParamPrimitive& param = *pParam;
             if (param.bInput && 
                 changes.new_inputs.find(param.name) == changes.new_inputs.end() && 
@@ -264,11 +280,9 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
                             if (auto linktonode = m_subgraph->getNode(link.inNode)) {
                                 ParamType paramType;
                                 SocketType socketType;
-                                bool bWildcard = false;
+                                bool bWildcard;
                                 linktonode->getParamTypeAndSocketType(link.inParam, true, true, paramType, socketType, bWildcard);
-                                if (bWildcard) {
-                                    m_subgraph->updateWildCardParamTypeRecursive(m_subgraph.get(), linktonode, link.inParam, true, true, param.type);
-                                } else if (!outParamTypeCanConvertInParamType(param.type, paramType, Role_OutputPrimitive, Role_InputPrimitive)) {
+                                if (!outParamTypeCanConvertInParamType(param.type, paramType, Role_OutputPrimitive, Role_InputPrimitive)) {
                                     m_subgraph->removeLink(link);
                                 }
                             }
@@ -278,11 +292,9 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
                                 if (auto linktonode = spgraph->getNode(link.outNode)) {
                                     ParamType paramType;
                                     SocketType socketType;
-                                    bool bWildcard = false;
+                                    bool bWildcard;
                                     linktonode->getParamTypeAndSocketType(link.outParam, true, false, paramType, socketType, bWildcard);
-                                    if (bWildcard) {
-                                        spgraph->updateWildCardParamTypeRecursive(spgraph, linktonode, link.outParam, true, false, param.type);
-                                    } else if (!outParamTypeCanConvertInParamType(paramType, param.type, Role_OutputPrimitive, Role_InputPrimitive)) {
+                                    if (!outParamTypeCanConvertInParamType(paramType, param.type, Role_OutputPrimitive, Role_InputPrimitive)) {
                                         spgraph->removeLink(link);
                                     }
                                 }

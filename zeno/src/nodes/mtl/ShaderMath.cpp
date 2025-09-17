@@ -150,8 +150,8 @@ struct ShaderBinaryMath : ShaderNodeClone<ShaderBinaryMath> {
 
 ZENDEFNODE(ShaderBinaryMath, {
     {
-        {gParamType_Float, "in1", "0"},
-        {gParamType_Float, "in2", "0"},
+        {gParamType_AnyNumeric, "in1", "0.0"},
+        {gParamType_AnyNumeric, "in2", "0.0"},
         {(std::string)"enum " + binops, "op", "add"},
     },
     {

@@ -27,11 +27,11 @@ namespace zenoio
     {
     }
 
-    bool ZenReader::importNodes(const std::string& fn, zeno::NodesData& nodes, zeno::LinksData& links,
+    bool ZenReader::importNodes(const std::string& strjson, zeno::NodesData& nodes, zeno::LinksData& links,
         zeno::ReferencesData& refs)
     {
         rapidjson::Document doc;
-        doc.Parse(fn.c_str());
+        doc.Parse(strjson.c_str());
 
         if (!doc.IsObject() || !doc.HasMember("nodes"))
             return false;

@@ -170,21 +170,22 @@ struct GraphicsManager {
             //由于对象和节点是一一对应，故切换图层次结构必然导致所有对象被重绘
             graphics.clear();
             std::shared_ptr<zeno::Graph> spGraph = sess.getGraphByPath(info.current_ui_graph);
-            assert(spGraph);
-            if (spGraph->isAssets()) {
-                //资产图不能view，因为没有实例化，不属于运行图的范畴
-                return;
-            }
-            const auto& viewnodes = spGraph->get_viewnodes();
-            //其实是否可以在外面提前准备好对象列表？
-            for (auto viewnode : viewnodes) {
-                auto spNode = spGraph->getNode(viewnode);
-                zeno::zany spObject = spNode->get_default_output_object();
-                if (spObject) {
-                    add_object(spObject);
+            if (spGraph) {
+                if (spGraph->isAssets()) {
+                    //资产图不能view，因为没有实例化，不属于运行图的范畴
+                    return;
                 }
-                else {
+                const auto& viewnodes = spGraph->get_viewnodes();
+                //其实是否可以在外面提前准备好对象列表？
+                for (auto viewnode : viewnodes) {
+                    auto spNode = spGraph->getNode(viewnode);
+                    zeno::zany spObject = spNode->get_default_output_object();
+                    if (spObject) {
+                        add_object(spObject);
+                    }
+                    else {
 
+                    }
                 }
             }
         }

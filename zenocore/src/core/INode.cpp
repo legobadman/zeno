@@ -42,11 +42,33 @@ namespace zeno
     }
 
     int INode::get_input2_int(const zeno::String& param) {
-        return any_cast<int>(m_pAdapter->get_param_result(zsString2Std(param)));
+        const auto& anyVal = m_pAdapter->get_param_result(zsString2Std(param));
+        int res = 0;
+        if (anyVal.type().hash_code() == zeno::types::gParamType_Int) {
+            res = zeno::reflect::any_cast<int>(anyVal);
+        }
+        else if (anyVal.type().hash_code() == zeno::types::gParamType_Float) {
+            res = zeno::reflect::any_cast<float>(anyVal);
+        }
+        else if (anyVal.type().hash_code() == zeno::types::gParamType_Bool) {
+            res = zeno::reflect::any_cast<bool>(anyVal);
+        }
+        return res;
     }
 
     float INode::get_input2_float(const zeno::String& param) {
-        return any_cast<float>(m_pAdapter->get_param_result(zsString2Std(param)));
+        const auto& anyVal = m_pAdapter->get_param_result(zsString2Std(param));
+        float res = 0;
+        if (anyVal.type().hash_code() == zeno::types::gParamType_Int) {
+            res = zeno::reflect::any_cast<int>(anyVal);
+        }
+        else if (anyVal.type().hash_code() == zeno::types::gParamType_Float) {
+            res = zeno::reflect::any_cast<float>(anyVal);
+        }
+        else if (anyVal.type().hash_code() == zeno::types::gParamType_Bool) {
+            res = zeno::reflect::any_cast<bool>(anyVal);
+        }
+        return res;
     }
 
     String INode::get_input2_string(const zeno::String& param) {

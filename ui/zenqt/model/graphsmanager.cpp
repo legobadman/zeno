@@ -596,12 +596,24 @@ QStringList GraphsManager::paste(const QPointF& pos, const QStringList& path_of_
 
     if (pMimeData->hasText() && pTargetModel)
     {
-        zenoio::ZenReader reader;
         const QString& strJson = pMimeData->text();
-        std::pair<zeno::NodesData, zeno::LinksData> datas;
-        zeno::ReferencesData refs;
-        reader.importNodes(strJson.toStdString(), datas.first, datas.second, refs);
-        newnodes_name = pTargetModel->pasteNodes(datas.first, datas.second, pos);
+        rapidjson::Document doc;
+        doc.Parse(strJson.toStdString().c_str());
+        if (doc.HasMember("version"))
+        {
+            std::string ver = doc["version"].GetString();
+            std::pair<zeno::NodesData, zeno::LinksData> datas;
+            zeno::ReferencesData refs;
+            if (ver == "v2") {
+                zenoio::Zsg2Reader reader;
+                reader.importNodes(strJson.toStdString(), datas.first, datas.second, refs);
+            }
+            else {
+                zenoio::ZenReader reader;
+                reader.importNodes(strJson.toStdString(), datas.first, datas.second, refs);
+            }
+            newnodes_name = pTargetModel->pasteNodes(datas.first, datas.second, pos);
+        }
     }
     return newnodes_name;
 }

@@ -42,6 +42,7 @@ struct SceneObject : IObject {
         auto newSceneObj = std::make_shared<SceneObject>();
         newSceneObj->scene_tree = scene_tree;
         newSceneObj->node_to_matrix = node_to_matrix;
+        newSceneObj->node_to_id = node_to_id;
         newSceneObj->root_name = root_name;
         newSceneObj->bNeedUpdateDescriptor = bNeedUpdateDescriptor;
         for (auto& [key, geom] : geom_list) {

@@ -146,12 +146,12 @@ namespace zeno
 
         std::shared_ptr<PrimitiveObject> primTopo = get_primitive_topo(m_spTopology);
         //拷拓扑就行
-        spPrim->lines = primTopo->lines;
-        spPrim->tris = primTopo->tris;
-        spPrim->quads = primTopo->quads;
-        spPrim->loops = primTopo->loops;
-        spPrim->polys = primTopo->polys;
-        spPrim->edges = primTopo->edges;
+        spPrim->lines.values = primTopo->lines.values;
+        spPrim->tris.values = primTopo->tris.values;
+        spPrim->quads.values = primTopo->quads.values;
+        spPrim->loops.values = primTopo->loops.values;
+        spPrim->polys.values = primTopo->polys.values;
+        spPrim->edges.values = primTopo->edges.values;
         return spPrim;
     }
 
@@ -593,11 +593,11 @@ namespace zeno
 
         auto iter = m_face_attrs.find(attr_name);
         if (iter != m_face_attrs.end()) {
+            set_face_attr(attr_name, defl);
             return -1;   //already exist
         }
         int n = m_spTopology->nfaces();
         m_face_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
-
         return 0;
     }
 

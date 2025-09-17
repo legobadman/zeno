@@ -71,11 +71,17 @@ namespace zeno {
             }
         }
         else if (m_fetch_mehod == "Element of Object") {
-            //TODO
-            ZImpl(set_output("Output Object", nullptr));
+            if (auto spList = std::dynamic_pointer_cast<ListObject>(init_object)) {
+                zany elemObj = spList->get(m_current_iteration);
+                set_output("Output Object", elemObj);
+            }
+            else {
+                //TODO
+                set_output("Output Object", nullptr);
+            }
         }
         else {
-            ZImpl(set_output("Output Object", nullptr));
+            set_output("Output Object", nullptr);
         }
     }
 

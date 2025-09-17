@@ -9,6 +9,8 @@ namespace zenoio
     {
     public:
         ZENO_API Zsg2Reader();
+        ZENO_API bool importNodes(const std::string& strjson, zeno::NodesData& nodes, zeno::LinksData& links,
+            zeno::ReferencesData& refs);
 
     protected:
         bool _parseMainGraph(const rapidjson::Document& doc, zeno::GraphData& ret) override;
