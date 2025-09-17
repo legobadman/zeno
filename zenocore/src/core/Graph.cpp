@@ -1,4 +1,4 @@
-#include <zeno/core/Graph.h>
+﻿#include <zeno/core/Graph.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/INodeClass.h>
@@ -1297,8 +1297,19 @@ bool Graph::addLink(const EdgeInfo& edge) {
         }
     }
 
-    if (!bConnectWithKey)
+    if (!bConnectWithKey) {
         removeLinks(inNode->get_name(), true, edge.inParam);
+    } else {
+        std::vector<EdgeInfo> links = inNode->getLinksByParam(true, edge.inParam);
+        for (auto link : links) {
+            if (link.inNode == adjustEdge.inNode && link.outNode == adjustEdge.outNode &&
+                link.inParam == adjustEdge.inParam && link.outParam == adjustEdge.outParam) {
+                adjustEdge.inKey = link.inKey;
+                removeLink(link);
+                break;
+            }
+        }
+    }
 
     assert(bInputPrim == bOutputPrim);
     if (bInputPrim) {

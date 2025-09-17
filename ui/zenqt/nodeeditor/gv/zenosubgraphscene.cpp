@@ -1,4 +1,4 @@
-#include "zenosubgraphscene.h"
+﻿#include "zenosubgraphscene.h"
 #include "zenonodebase.h"
 #include "zenolink.h"
 #include <zeno/io/zsg2reader.h>
@@ -1006,6 +1006,27 @@ void ZenoSubGraphScene::onTempLinkClosed()
                     const QString& outKey = pOutSocket->innerKey();
                     if (!outKey.isEmpty()) {
                         newEdge.outKey = outKey.toStdString();
+                    }
+                }
+            }
+
+            zeno::ParamType outParamType = outSockIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
+            zeno::ParamType inParamType = inSockIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
+            if (inParamType == gParamType_List) {
+                //如果输出是list或者object，要询问作为子元素还是整体
+                if (outParamType == gParamType_List || outParamType == gParamType_IObject) {
+                    QMessageBox msgBox;
+                    msgBox.setWindowFlags(msgBox.windowFlags() & ~Qt::WindowCloseButtonHint);
+                    msgBox.setText(tr("add to list as a child element?"));
+                    QPushButton* asChildBtn = msgBox.addButton(tr("as a child element"), QMessageBox::AcceptRole);
+                    QPushButton* asWholeBtn = msgBox.addButton(tr("as a whole"), QMessageBox::RejectRole);
+                    msgBox.setDefaultButton(asChildBtn);
+
+                    int ret = msgBox.exec();
+                    if (msgBox.clickedButton() == asChildBtn) {
+                        newEdge.inKey = "obj0";
+                    } else if (msgBox.clickedButton() == asWholeBtn) {
+                        newEdge.inKey = "";
                     }
                 }
             }

@@ -3211,6 +3211,18 @@ All Files (*)</source>
         <source>add Link</source>
         <translation>添加连接</translation>
     </message>
+	<message>
+        <source>add to list as a child element?</source>
+        <translation>是否作为子元素加入List？</translation>
+    </message>
+	<message>
+        <source>as a child element</source>
+        <translation>作为子元素</translation>
+    </message>
+	<message>
+        <source>as a whole</source>
+        <translation>作为整体</translation>
+    </message>
 </context>
 <context>
     <name>ZenoViewDockTitle</name>
