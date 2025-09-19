@@ -620,6 +620,14 @@ ZENO_API bool Session::is_interrupted() const {
     return m_bInterrupted;
 }
 
+bool Session::is_async_executing() const {
+    return m_bAsyncExecute;
+}
+
+void Session::set_async_executing(bool bOn) {
+    m_bAsyncExecute = bOn;
+}
+
 ZENO_API unsigned long Session::mainThreadId() const {
     return m_mainThreadId;
 }

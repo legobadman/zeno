@@ -66,6 +66,8 @@ struct Session {
     ZENO_API bool run(const std::string& currgraph, render_reload_info& infos);
     ZENO_API void interrupt();
     ZENO_API bool is_interrupted() const;
+    ZENO_API bool is_async_executing() const;
+    ZENO_API void set_async_executing(bool bOn);
     ZENO_API unsigned long mainThreadId() const;
     ZENO_API void setMainThreadId(unsigned long threadId);
     ZENO_API void set_solver(const std::string& solver);
@@ -112,6 +114,7 @@ private:
     bool m_bInterrupted = false;
     bool m_bDisableRunning = false;
     bool m_bReentrance = false;
+    bool m_bAsyncExecute = false;
     std::string m_current_loading_module;
     std::string m_solver;
     std::wstring m_proj_path;
