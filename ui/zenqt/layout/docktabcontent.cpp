@@ -341,6 +341,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pSettings = new ZToolBarButton(false, ":/icons/toolbar_localSetting_idle.svg", ":/icons/toolbar_localSetting_light.svg");
     pTestApi = new ZToolBarButton(false, ":/icons/timeline-curvemap.svg", ":/icons/timeline-curvemap.svg");
     pCleanProj = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
+    pMultiThreadExecute = new ZToolBarButton(true, ":/icons/multithread.svg", ":/icons/multithread-on.svg");
 
     pAlways = new QCheckBox(tr("Auto"), this);
     pAlways->setChecked(false);
@@ -453,6 +454,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pToolLayout->addWidget(m_btnRun);
     pToolLayout->addWidget(m_btnKill);
     pToolLayout->addWidget(pCleanProj);
+    pToolLayout->addWidget(pMultiThreadExecute);
 
     pToolLayout->addStretch(4);
 
@@ -541,6 +543,10 @@ void DockContent_Editor::initConnections()
         if (m_pEditor->welComPageShowed())
             return;
         ZenoSettingsManager::GetInstance().setValue(zsSnapGrid, bChecked);
+    });
+    connect(pMultiThreadExecute, &ZToolBarButton::toggled, this, [=](bool bChecked) {
+        auto& sess = zeno::getSession();
+        sess.set_async_executing(bChecked);
     });
     connect(pShowGrid, &ZToolBarButton::toggled, this, [=](bool bChecked) {
         if (m_pEditor->welComPageShowed())

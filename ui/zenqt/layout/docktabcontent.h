@@ -121,7 +121,8 @@ private:
     ZToolBarButton *pCustomParam;
     ZToolBarButton *pGroup;
     ZToolBarButton* pTestApi = nullptr;
-    QCheckBox*pAlways;
+    ZToolBarButton* pMultiThreadExecute = nullptr;
+    QCheckBox* pAlways;
     ZToolBarButton *pSearchBtn;
     ZToolBarButton *pSettings;
     ZToolBarButton *pCleanProj;
