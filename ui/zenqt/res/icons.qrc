@@ -266,6 +266,8 @@
     <file>icons/nodeEditor_subnetPanel_unselected.svg</file>
     <file>icons/nodeEditor_nodePara_selected.svg</file>
     <file>icons/nodeEditor_nodePara_unselected.svg</file>
+    <file>icons/multithread.svg</file>
+    <file>icons/multithread-on.svg</file>
     <file>icons/timeline_always_off.svg</file>
     <file>icons/timeline_always_on.svg</file>
     <file>icons/timeline_endFrame_idle.svg</file>

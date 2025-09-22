@@ -1761,6 +1761,34 @@ namespace zeno {
         }
     }
 
+    void add_prefix_key(IObject* pObject, const std::string& prefix) {
+        zeno::String newKey = stdString2zs(prefix) + '\\' + pObject->key();
+        pObject->update_key(newKey);
+        if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
+            for (auto& elemObj : pList->m_impl->m_objects) {
+                add_prefix_key(elemObj.get(), prefix);
+            }
+            std::set<std::string> modify, removed, added;
+            for (auto id : pList->m_impl->m_new_added) {
+                added.insert(prefix + '\\' + id);
+            }
+            for (auto id : pList->m_impl->m_modify) {
+                modify.insert(prefix + '\\' + id);
+            }
+            for (auto id : pList->m_impl->m_new_removed) {
+                removed.insert(prefix + '\\' + id);
+            }
+            pList->m_impl->m_new_added = added;
+            pList->m_impl->m_modify = modify;
+            pList->m_impl->m_new_removed = removed;
+        }
+        else if (DictObject* pDict = dynamic_cast<DictObject*>(pObject)) {
+            for (auto& [key, spObject] : pDict->lut) {
+                add_prefix_key(spObject.get(), prefix);
+            }
+        }
+    }
+
     zany clone_by_key(IObject* pObject, const std::string& prefix) {
         if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
             auto newList = create_ListObject();

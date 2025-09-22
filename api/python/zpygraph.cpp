@@ -45,7 +45,7 @@ Zpy_Object Zpy_Graph::getInputObject(const std::string& node_name, const std::st
     if (!pNodeImpl)
         throw std::runtime_error("no such node called `" + node_name + "`");
     bool bExist = false;
-    zeno::zany spObject = pNodeImpl->get_input_obj(param);
+    zeno::zany spObject = pNodeImpl->get_input(param);
     return Zpy_Object(spObject);
 }
 
