@@ -34,7 +34,7 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type)
         : m_type(type)
     {
-        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
     }
 
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
@@ -58,7 +58,7 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
         : m_type(type)
     {
-        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, faces);
         }
@@ -95,7 +95,7 @@ namespace zeno
         : m_spTopology(rhs.m_spTopology)
         , m_type(rhs.m_type)
     {
-        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
         m_vert_attrs = rhs.m_vert_attrs;
         m_point_attrs = rhs.m_point_attrs;
         m_face_attrs = rhs.m_face_attrs;
@@ -108,7 +108,7 @@ namespace zeno
             int j;
             j = 0;
         }
-        zeno::getSession().m_recorder->m_geom_impls.erase(this);
+        //zeno::getSession().m_recorder->m_geom_impls.erase(this);
     }
 
     void GeometryObject::_temp_code_regist() {

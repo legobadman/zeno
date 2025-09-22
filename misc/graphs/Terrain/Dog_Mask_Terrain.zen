@@ -41,10 +41,7 @@
                     184.0,
                     263.0
                 ],
-                "status": [
-                    "NoCache",
-                    "ClearSubnet"
-                ],
+                "status": [],
                 "collasped": false,
                 "subnet-customUi": {
                     "nickname": "",
@@ -389,7 +386,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -523,7 +520,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -586,7 +583,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Creation",
-                                "path": "HF_Creation.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Creation.zda",
                                 "version": "1.0"
                             }
                         },
@@ -674,7 +671,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Visual_Mask",
-                                "path": "HF_Visual_Mask.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Visual_Mask.zda",
                                 "version": "1.0"
                             }
                         },
@@ -1120,8 +1117,7 @@
                     432.0
                 ],
                 "status": [
-                    "View",
-                    "ClearSubnet"
+                    "View"
                 ],
                 "collasped": false,
                 "subnet-customUi": {
@@ -1775,7 +1771,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -1909,7 +1905,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -2043,7 +2039,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -2177,7 +2173,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -2311,7 +2307,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -2445,7 +2441,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Blur_OpenCV_v3",
-                                "path": "HF_Blur_OpenCV_v3.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Blur_OpenCV_v3.zda",
                                 "version": "1.0"
                             }
                         },
@@ -2532,7 +2528,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Creation",
-                                "path": "HF_Creation.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Creation.zda",
                                 "version": "1.0"
                             }
                         },
@@ -2702,7 +2698,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Distort_by_Noise",
-                                "path": "HF_Distort_by_Noise.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Distort_by_Noise.zda",
                                 "version": "1.0"
                             }
                         },
@@ -2872,7 +2868,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Distort_by_Noise",
-                                "path": "HF_Distort_by_Noise.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Distort_by_Noise.zda",
                                 "version": "1.0"
                             }
                         },
@@ -3143,7 +3139,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Layer_Combine",
-                                "path": "HF_Layer_Combine.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Layer_Combine.zda",
                                 "version": "1.0"
                             }
                         },
@@ -3414,7 +3410,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Layer_Combine",
-                                "path": "HF_Layer_Combine.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Layer_Combine.zda",
                                 "version": "1.0"
                             }
                         },
@@ -3969,7 +3965,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_MaskByFeature",
-                                "path": "HF_MaskByFeature.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_MaskByFeature.zda",
                                 "version": "1.0"
                             }
                         },
@@ -4418,7 +4414,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_MaskByFeature",
-                                "path": "HF_MaskByFeature.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_MaskByFeature.zda",
                                 "version": "1.0"
                             }
                         },
@@ -4604,7 +4600,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Remap_v2",
-                                "path": "HF_Remap_v2.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Remap_v2.zda",
                                 "version": "1.0"
                             }
                         },
@@ -4790,7 +4786,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Remap_v2",
-                                "path": "HF_Remap_v2.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Remap_v2.zda",
                                 "version": "1.0"
                             }
                         },
@@ -4863,7 +4859,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Resample",
-                                "path": "HF_Resample.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Resample.zda",
                                 "version": "1.0"
                             }
                         },
@@ -4936,7 +4932,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Resample",
-                                "path": "HF_Resample.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Resample.zda",
                                 "version": "1.0"
                             }
                         },
@@ -5228,7 +5224,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Terrain_Noise_v2",
-                                "path": "HF_Terrain_Noise_v2.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Terrain_Noise_v2.zda",
                                 "version": "1.0"
                             }
                         },
@@ -5520,7 +5516,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Terrain_Noise_v2",
-                                "path": "HF_Terrain_Noise_v2.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Terrain_Noise_v2.zda",
                                 "version": "1.0"
                             }
                         },
@@ -5812,7 +5808,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Terrain_Noise_v2",
-                                "path": "HF_Terrain_Noise_v2.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Terrain_Noise_v2.zda",
                                 "version": "1.0"
                             }
                         },
@@ -6161,7 +6157,7 @@
                             "asset_locked": true,
                             "asset": {
                                 "name": "HF_Visualize_old",
-                                "path": "HF_Visualize_old.zda",
+                                "path": "C:/zeno-lego/misc/graphs/Terrain\\HF_Visualize_old.zda",
                                 "version": "1.0"
                             }
                         },
