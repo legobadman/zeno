@@ -2073,7 +2073,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 		load_matrix_objects(mat_prims);
 	}
 
-    void process_listobj(std::shared_ptr<zeno::ListObject> spList, zeno::container_elem_update_info info) {
+    void process_listobj(std::shared_ptr<zeno::ListObject> spList, bool bProcessAll = false) {
 #if 0
         std::map<std::string, std::vector<zeno::MaterialObject*>> mats;
         for (auto spObject : spList->m_impl->get()) {
@@ -2093,14 +2093,12 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
         for (auto spObject : spList->m_impl->get()) {
             std::string const& key = zsString2Std(spObject->key());
-            if (info.empty() || /*可能有一些节点不会填这个info，为了避免疏漏，就直接全部送去渲染*/
-                info.new_added.find(key) != info.new_added.end() ||
-                info.modified.find(key) != info.modified.end())
+            if (bProcessAll ||
+                (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
+                    spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end()))
             {
-
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
-                    //暂不支持嵌套
-                    //process_listobj(_spList);
+                    process_listobj(_spList, bProcessAll);
                 }
                 else
                 {
@@ -2110,11 +2108,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             }
         }
 
-        for (auto& key : info.removed) {
-            auto& graphics_ = graphicsMan->graphics.m_curr;
-            auto iter = graphics_.find(key);
-            if (iter == graphics_.end())
-                continue;
+        auto& graphics_ = graphicsMan->graphics.m_curr;
+        for (auto& key : spList->m_impl->m_new_removed) {
             graphics_.erase(key);
         }
     }
@@ -2186,17 +2181,14 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 int frame = zeno::getSession().globalState->getFrameId();
                 if (spObject) {
                     if (auto sceneObj = std::dynamic_pointer_cast<zeno::SceneObject>(spObject)) {
-                        zeno::container_elem_update_info update_info;
-                        update_info.container_key = zsString2Std(sceneObj->key());
                         auto _spList = sceneObj->to_structure();
                         _spList->update_key(sceneObj->key());
-
                         //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
-                        process_listobj(_spList, update_info);
+                        process_listobj(_spList, true);
                     }
                     else if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
                         //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
-                        process_listobj(_spList, update.cond_update_info);
+                        process_listobj(_spList);
                     }
                     else {
                         //可能是对象没有通过子图的Suboutput连出来

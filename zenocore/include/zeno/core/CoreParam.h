@@ -9,6 +9,7 @@
 #include <set>
 #include <map>
 #include <optional>
+#include <future>
 #include <zeno/core/data.h>
 
 
@@ -20,6 +21,8 @@ namespace zeno {
     class CoreParam;
 
     struct ObjectLink {
+        std::future<zany> upstream_task;
+
         ObjectParam* fromparam = nullptr;  //IParam stored as unique ptr in the INode, so we need no smart pointer.
         ObjectParam* toparam = nullptr;
         std::string fromkey;    //for dict/list 对于list来说，keyName好像不合适，不过ILink本来就存在于links里面，已经是列表储存了。
@@ -29,6 +32,8 @@ namespace zeno {
     };
 
     struct PrimitiveLink {
+        std::future<zeno::reflect::Any> upstream_task;
+
         PrimitiveParam* fromparam = nullptr;
         PrimitiveParam* toparam = nullptr;
         std::string fromkey;    //for dict/list 对于list来说，keyName好像不合适，不过ILink本来就存在于links里面，已经是列表储存了。
@@ -52,6 +57,8 @@ namespace zeno {
         std::string constrain;
         std::list<std::shared_ptr<ReferLink>> reflinks;
 
+        container_elem_update_info listdict_update;
+
         ParamType type = Param_Null;
         SocketType socketType = NoSocket;
         bool bInput = true;
@@ -63,7 +70,6 @@ namespace zeno {
 
     struct ObjectParam : CoreParam {
         std::list<std::shared_ptr<ObjectLink>> links;
-        container_elem_update_info listdict_update;
         zany spObject;
 
         ParamObject exportParam() const;

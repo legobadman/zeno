@@ -100,42 +100,36 @@ struct GraphicsManager {
         return true;
     }
 
-    bool process_listobj(std::shared_ptr<zeno::ListObject> spList, const zeno::container_elem_update_info& info) {
-        if (info.container_key != zsString2Std(spList->key())) {
-            return false;
-        }
+    bool process_listobj(std::shared_ptr<zeno::ListObject> spList, bool bProcessAll = false) {
+        //由于现在不再统计容器内移除的对象，因此需要在这里收集旧的信息，然后和新的作对比
+        auto rootkey = zsString2Std(spList->key());
+        //收集list相关的key
+        auto& graphics_ = graphics.m_curr.m_curr;
+
         for (auto spObject : spList->m_impl->get()) {
-            assert(spObject);
             std::string const& key = zsString2Std(spObject->key());
-            if (info.empty() || /*可能有一些节点不会填这个info，为了避免疏漏，就直接全部送去渲染*/
-                (info.new_added.find(key) != info.new_added.end() || info.modified.find(key) != info.modified.end())) {
-                bool ret = false;
+            if (bProcessAll ||
+                (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
+                 spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end()))
+            {
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
-                    //不支持嵌套，过于麻烦，等场景丰富了再跟进
-                    //ret = process_listobj(_spList, info);
-                    ret = false;
+                    process_listobj(_spList, bProcessAll);
                 }
                 else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                    //ret = process_dictobj(_spDict, info);
-                    ret = false;
+                    process_dictobj(_spDict);
                 }
                 else {
-                    ret = add_object(spObject);
+                    add_object(spObject);
                 }
-                //assert(ret);
             }
         }
-        for (auto& key : info.removed) {
-            auto& graphics_ = graphics.m_curr.m_curr;
-            auto iter = graphics_.find(key);
-            if (iter == graphics_.end())
-                continue;
+        for (auto& key : spList->m_impl->m_new_removed) {
             graphics_.erase(key);
         }
         return true;
     }
 
-    bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict, zeno::container_elem_update_info info) {
+    bool process_dictobj(std::shared_ptr<zeno::DictObject> spDict) {
         for (auto& [key, spObject] : spDict->get()) {
             assert(spObject);
             std::string const& skey = zsString2Std(spObject->key());
@@ -143,10 +137,10 @@ struct GraphicsManager {
                 spDict->m_modify.find(skey) != spDict->m_modify.end()) {
                 bool ret = false;
                 if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
-                    ret = process_listobj(_spList, info);
+                    ret = process_listobj(_spList);
                 }
                 else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
-                    ret = process_dictobj(_spDict, info);
+                    ret = process_dictobj(_spDict);
                 }
                 else {
                     ret = add_object(spObject);
@@ -217,11 +211,9 @@ struct GraphicsManager {
                     //可能是对象没有通过子图的Suboutput连出来
 
                     if (auto sceneObj = std::dynamic_pointer_cast<zeno::SceneObject>(spObject)) {
-                        zeno::container_elem_update_info update_info;
-                        update_info.container_key = zsString2Std(sceneObj->key());
                         auto _spList = sceneObj->to_structure();
                         _spList->update_key(sceneObj->key());
-                        process_listobj(_spList, update_info);
+                        process_listobj(_spList, true);
                     }
                     else if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
 
@@ -238,7 +230,7 @@ struct GraphicsManager {
                             }
                         }
 
-                        process_listobj(_spList, update.cond_update_info);
+                        process_listobj(_spList);
                     }
                     else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(spObject)) {
                         {//可能有和dictobj同名但不是dict类型的对象存在，需先清除
@@ -254,7 +246,7 @@ struct GraphicsManager {
                             }
                         }
 
-                        process_dictobj(_spDict, update.cond_update_info);
+                        process_dictobj(_spDict);
                     }
                     else {
                         {//可能有和obj同名但是list类型或dict类型的对象存在，需先清除

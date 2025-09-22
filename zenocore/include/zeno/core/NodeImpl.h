@@ -38,6 +38,15 @@ namespace zeno
     struct SubnetNode;
     struct CalcContext;
 
+    struct ExecuteContext
+    {
+        std::string innode_uuid_path;
+        std::string in_node;
+        std::string in_param;
+        std::string out_param;
+        CalcContext* pContext;
+    };
+
     class ZENO_API NodeImpl
     {
     public:
@@ -45,6 +54,10 @@ namespace zeno
 
         NodeImpl(INode* pNode);
         virtual ~NodeImpl();
+
+        //获取require_output_param指定的结果，如需要则计算（如果不脏则直接取结果）。
+        zany execute_get_object(const ExecuteContext& exec_context);
+        zeno::reflect::Any execute_get_numeric(const ExecuteContext& exec_context);
 
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
@@ -101,7 +114,6 @@ namespace zeno
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
-        zany get_input_obj(std::string const& name) const;
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
         ParamType get_anyparam_type(bool bInput, const std::string& name);
 
@@ -233,7 +245,9 @@ namespace zeno
         void reportStatus(bool bDirty, NodeRunStatus status);
 
         zany takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
+        zany takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
         zeno::reflect::Any takeOutputPrim(PrimitiveParam* out_param, PrimitiveParam* in_param, bool& bAllOutputTaken);
+        zeno::reflect::Any takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
         void mark_takeover();
         bool is_takenover() const;
 
@@ -298,7 +312,7 @@ namespace zeno
     private:
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
         std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
-        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty);
+        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);
         std::string resolve_string(const std::string& fmla, const std::string& defl);
@@ -307,6 +321,7 @@ namespace zeno
         std::set<std::pair<std::string, std::string>> resolveReferSource(const zeno::reflect::Any& param_defl);
         void initReferLinks(PrimitiveParam* target_param);
         bool checkAllOutputLinkTraced();
+        void launch_param_task(const std::string& param);
 
         //preApply是先解决所有输入参数（上游）的求值问题
         void preApply(CalcContext* pContext);
@@ -339,6 +354,8 @@ namespace zeno
         bool m_takenover = false;   //标记为nocache的节点，在计算完毕后，其输出被“移动”到下游节点后，当前节点处于takenover的状态，即，不脏且无法取出数据
 
         zeno::reflect::TypeBase* m_pTypebase = nullptr;
+
+        mutable std::mutex m_mutex;
 
         friend class SubnetNode;
     };
