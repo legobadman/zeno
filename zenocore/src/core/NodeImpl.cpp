@@ -665,6 +665,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 auto& task = spLink->upstream_task;
                 if (task.valid()) {
                     //如果没有边，那么spObject在requireInput就会被清空
+                    task.wait();
                     param.spObject = task.get();
                 }
                 else {
@@ -684,6 +685,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 auto spLink = *param.links.begin();
                 auto& task = spLink->upstream_task;
                 if (task.valid()) {
+                    task.wait();
                     param.result = task.get();
                 }
                 else {
@@ -698,6 +700,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 auto& task = spLink->upstream_task;
                 zeno::reflect::Any res;
                 if (task.valid()) {
+                    task.wait();
                     res = task.get();
                 }
                 else {
@@ -719,6 +722,7 @@ void NodeImpl::launch_param_task(const std::string& param) {
             auto& task = spLink->upstream_task;
             if (task.valid()) {
                 //如果没有边，那么spObject在requireInput就会被清空
+                task.wait();
                 objParam.spObject = task.get();
             }
             else {
@@ -734,6 +738,7 @@ void NodeImpl::launch_param_task(const std::string& param) {
                 auto spLink = *primParam.links.begin();
                 auto& task = spLink->upstream_task;
                 if (task.valid()) {
+                    task.wait();
                     primParam.result = task.get();
                 }
             }
@@ -838,6 +843,7 @@ void NodeImpl::preApply_Primitives(CalcContext* pContext) {
             if (!param.links.empty()) {
                 auto& task = (*param.links.begin())->upstream_task;
                 if (task.valid()) {
+                    task.wait();
                     param.result = task.get();
                 }
             }
@@ -1432,7 +1438,8 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
     //需要用zfxparser直接parse出所有引用信息
     GlobalError err;
     zeno::GraphException::catched([&] {
-        auto& funcMgr = zeno::getSession().funcManager;
+        //auto& funcMgr = zeno::getSession().funcManager;
+        FunctionManager funcMgr;
         ZfxContext ctx;
         ctx.spNode = this;
         for (auto param_text : refSegments)
@@ -1453,7 +1460,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
                 ctx.code = code;
                 std::shared_ptr<ZfxASTNode> astRoot = zfx.getASTResult();
                 std::set<std::pair<std::string, std::string>> paths =
-                    funcMgr->getReferSources(astRoot, &ctx);
+                    funcMgr.getReferSources(astRoot, &ctx);
                 if (!paths.empty()) {
                     refSources.insert(paths.begin(), paths.end());
                 }
@@ -1652,15 +1659,16 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         {
             bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
             if (spLink->upstream_task.valid()) {
+                spLink->upstream_task.wait();
                 auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
                 spList = std::dynamic_pointer_cast<ListObject>(outResult);
             }
             else {
                 assert(!outNode->is_dirty());
                 //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
-                if (in_param->spObject)
-                    spList = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
-                else
+                //if (in_param->spObject)
+                //    spList = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
+                //else
                     spList = std::dynamic_pointer_cast<ListObject>(out_param->spObject->clone());
             }
             if (!spList) {
@@ -1696,6 +1704,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             }
             if (spLink->upstream_task.valid()) {
                 //有任务发起，说明上游新增了或者修改了某一个节点
+                spLink->upstream_task.wait();
                 auto outResult = spLink->upstream_task.get();
                 upstream_obj_key = zsString2Std(out_param->spObject->key());
                 outResult->update_key(stdString2zs(upstream_obj_key));
@@ -2228,7 +2237,7 @@ void NodeImpl::bypass() {
 }
 
 void NodeImpl::doApply(CalcContext* pContext) {
-
+    //std::unique_lock uq(m_mutex);
     if (!m_dirty)
         return;
 

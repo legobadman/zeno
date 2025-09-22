@@ -25,6 +25,7 @@
 #include <cctype>
 #include <zeno/core/GlobalVariable.h>
 #include <zeno/core/typeinfo.h>
+#include <future>
 #include "zeno_types/reflect/reflection.generated.hpp"
 //#include <Python.h>
 //#include <pybind11/pybind11.h>
@@ -84,11 +85,11 @@ Graph *Graph::getSubnetGraph(std::string const & node_name) const {
     return node ? node->get_subgraph() : nullptr;
 }
 
-void Graph::applyNode(std::string const &node_name, render_update_info& info) {
+render_update_info Graph::applyNode(std::string const &node_name) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
     if (!node->is_dirty()) {
-        return;
+        return render_update_info();
     }
 
     CalcContext ctx;
@@ -100,6 +101,7 @@ void Graph::applyNode(std::string const &node_name, render_update_info& info) {
         node->doApply(&ctx);
     }, node);
 
+    render_update_info info;
     if (node->is_view()) {
         info.reason = Update_Reconstruct;
         info.cond_update_info = node->get_default_output_container_info();
@@ -111,13 +113,18 @@ void Graph::applyNode(std::string const &node_name, render_update_info& info) {
             node->mark_takeover();
         }
     }
+    return info;
 }
 
 void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& infos) {
+    auto launch_method = zeno::getSession().is_async_executing() ? std::launch::async : std::launch::deferred;
+
+    std::vector<std::future<render_update_info>> tasks;
     for (auto const& node_name: nodes) {
-        render_update_info info;
-        applyNode(node_name, info);
-        infos.objs.push_back(info);
+        tasks.push_back(std::async(launch_method, &Graph::applyNode, this, node_name));
+    }
+    for (auto& task : tasks) {
+        infos.objs.push_back(task.get());
     }
     infos.policy = Reload_Calculation;
 }
