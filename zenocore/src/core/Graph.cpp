@@ -118,6 +118,7 @@ render_update_info Graph::applyNode(std::string const &node_name) {
 
 void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& infos) {
     auto launch_method = zeno::getSession().is_async_executing() ? std::launch::async : std::launch::deferred;
+    clearContainerUpdateInfo();
 
     std::vector<std::future<render_update_info>> tasks;
     for (auto const& node_name: nodes) {
