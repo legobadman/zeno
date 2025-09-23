@@ -231,7 +231,8 @@ struct FormSceneTree : zeno::INode {
 
         //如果prim_geom_list的上游节点标记为no-cache,那这里就不应该拿到prim_geom_list.
         //或者geom分支已经不脏的情况下，这里导出sceneTree是不会导出geometry的
-        sceneTree->bNeedUpdateDescriptor = prim_geom_list && list_updateinfo.upstream_dirty;
+        sceneTree->bNeedUpdateDescriptor = prim_geom_list && 
+            (!prim_geom_list->m_impl->m_new_added.empty() || !prim_geom_list->m_impl->m_modify.empty());
 
         if (sceneTree->bNeedUpdateDescriptor) {
             for (auto p : prim_geom_list->get()) {

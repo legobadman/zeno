@@ -1624,11 +1624,23 @@ void NodeImpl::clear_container_info() {
         for (auto spLink : param.links) {
             spLink->bTraceAndTaken = false;
         }
+        if (param.type == gParamType_List && param.spObject) {
+            auto spList = std::static_pointer_cast<ListObject>(param.spObject);
+            //spList->m_impl->m_new_added.clear();
+            //spList->m_impl->m_new_removed.clear();
+            //spList->m_impl->m_modify.clear();
+        }
     }
     for (auto& [_, param] : m_outputObjs) {
         param.listdict_update.clear();
         for (auto spLink : param.links) {
             spLink->bTraceAndTaken = false;
+        }
+        if (param.type == gParamType_List && param.spObject) {
+            auto spList = std::static_pointer_cast<ListObject>(param.spObject);
+            //spList->m_impl->m_new_added.clear();
+            //spList->m_impl->m_new_removed.clear();
+            //spList->m_impl->m_modify.clear();
         }
     }
 }
@@ -1666,9 +1678,9 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             else {
                 assert(!outNode->is_dirty());
                 //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
-                //if (in_param->spObject)
-                //    spList = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
-                //else
+                if (in_param->spObject)
+                    spList = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
+                else
                     spList = std::dynamic_pointer_cast<ListObject>(out_param->spObject->clone());
             }
             if (!spList) {
@@ -2252,9 +2264,8 @@ void NodeImpl::doApply(CalcContext* pContext) {
     });
 
 #if 1
-    if (m_nodecls == "GetStringFromList"){//}&& pContext->curr_iter == 1) {
-        int j;
-        j = 0;
+    if (m_name == "FormSceneTree1"){//}&& pContext->curr_iter == 1) {
+        pContext->visited_nodes.insert(uuid_path);
     }
 #endif
 
@@ -3733,7 +3744,7 @@ bool NodeImpl::set_output(std::string const& param, zany obj) {
     //会增加程序体积以及编译时间，待后续生成文件优化后再考虑处理。
     auto iter = m_outputObjs.find(param);
     if (iter != m_outputObjs.end()) {
-            iter->second.spObject = obj;
+        iter->second.spObject = obj;
         return true;
     }
     else {
