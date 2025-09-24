@@ -682,7 +682,7 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
     //}
     mainGraph->runGraph(infos);
     //马上清除不必要的缓存信息
-    mainGraph->clearContainerUpdateInfo();
+    //mainGraph->clearContainerUpdateInfo();
 
     return true;
 }
