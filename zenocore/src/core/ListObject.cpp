@@ -26,6 +26,10 @@ namespace zeno
         m_impl->clear();
     }
 
+    bool ListObject::has_change_info() const {
+        return !m_impl->m_modify.empty() || !m_impl->m_new_added.empty() || !m_impl->m_new_removed.empty();
+    }
+
     void ListObject::update_key(const String& key) {
         if (key.empty()) return;
 
@@ -36,7 +40,7 @@ namespace zeno
                 std::string newkey = zsString2Std(m_key) + "/" + std::to_string(i);
                 obj->update_key(stdString2zs(newkey));
                 //如果是现在才有key，说明是新增的，需要登记到new_added.
-                m_impl->m_new_added.insert(newkey);
+                //m_impl->m_new_added.insert(newkey);
             }
         }
     }

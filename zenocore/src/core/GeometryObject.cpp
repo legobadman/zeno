@@ -40,7 +40,7 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
         : m_type(type)
     {
-        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, nFaces, bInitFaces);
         }

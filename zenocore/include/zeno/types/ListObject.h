@@ -25,7 +25,7 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     void set(const zeno::Vector<zany>& arr);
     void set(size_t index, zany obj);
     void update_key(const String& key) override;
-
+    bool has_change_info() const;
     std::unique_ptr<ListObject_impl> m_impl;
 };
 

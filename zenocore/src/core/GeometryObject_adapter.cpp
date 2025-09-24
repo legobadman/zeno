@@ -18,12 +18,12 @@ namespace zeno
     void GeometryObject_Adapter::Delete() {}
 
     GeometryObject_Adapter::GeometryObject_Adapter() {
-        zeno::getSession().m_recorder->m_geoms.insert(this);
+        //zeno::getSession().m_recorder->m_geoms.insert(this);
     }
 
     GeometryObject_Adapter::~GeometryObject_Adapter() {
         Delete();
-        zeno::getSession().m_recorder->m_geoms.erase(this);
+        //zeno::getSession().m_recorder->m_geoms.erase(this);
     }
 
     void GeometryObject_Adapter::inheritAttributes(
