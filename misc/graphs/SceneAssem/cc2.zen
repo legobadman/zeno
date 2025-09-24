@@ -2978,7 +2978,7 @@
                         "links": null,
                         "type": "vec3f",
                         "default-value": [
-                            0.0,
+                            1.0,
                             0.38999998569488528,
                             0.6600000262260437
                         ],
@@ -3573,7 +3573,7 @@
                     "Main Scene": {
                         "links": [
                             {
-                                "out-node": "SetNodeXform2",
+                                "out-node": "MergeScene3",
                                 "out-socket": "scene",
                                 "out-key": "",
                                 "in-key": "",
@@ -5776,15 +5776,7 @@
                         "socket-type": "clone"
                     },
                     "scene": {
-                        "links": [
-                            {
-                                "out-node": "MergeScene3",
-                                "out-socket": "scene",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": "scene"
-                            }
-                        ],
+                        "links": null,
                         "type": "",
                         "socket-type": "clone"
                     }
@@ -5903,8 +5895,8 @@
                     }
                 },
                 "uipos": [
-                    -1073.0,
-                    905.0
+                    -1245.0,
+                    1004.0
                 ],
                 "status": [],
                 "collasped": false
@@ -32795,6 +32787,40 @@
                             "status": [],
                             "collasped": false
                         },
+                        "ObjectToXforms1": {
+                            "name": "ObjectToXforms1",
+                            "class": "ObjectToXforms",
+                            "object_inputs": {
+                                "IObject": {
+                                    "links": [
+                                        {
+                                            "out-node": "ForEachBegin1",
+                                            "out-socket": "Output Object",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": "Output Object"
+                                        }
+                                    ],
+                                    "type": "iobject",
+                                    "socket-type": "clone"
+                                }
+                            },
+                            "primitive_inputs": {},
+                            "primitive_outputs": {
+                                "xforms": {
+                                    "type": "",
+                                    "socket-type": "clone",
+                                    "visible": true
+                                }
+                            },
+                            "object_outputs": {},
+                            "uipos": [
+                                -442.9305419921875,
+                                2820.56640625
+                            ],
+                            "status": [],
+                            "collasped": false
+                        },
                         "PrimFloatAttrToInt1": {
                             "name": "PrimFloatAttrToInt1",
                             "class": "PrimFloatAttrToInt",
@@ -33544,7 +33570,15 @@
                                     "visible": false
                                 },
                                 "xforms": {
-                                    "links": null,
+                                    "links": [
+                                        {
+                                            "out-node": "ObjectToXforms1",
+                                            "out-socket": "xforms",
+                                            "out-key": "",
+                                            "in-key": "",
+                                            "target-socket": "xforms"
+                                        }
+                                    ],
                                     "type": "",
                                     "default-value": null,
                                     "control": {
@@ -33552,7 +33586,7 @@
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
-                                    "visible": false
+                                    "visible": true
                                 }
                             },
                             "primitive_outputs": {},

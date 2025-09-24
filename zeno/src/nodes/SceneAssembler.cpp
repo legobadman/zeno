@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by zh on 2025/4/14.
 //
 #include <zeno/extra/GlobalComm.h>
@@ -1138,4 +1138,30 @@ ZENDEFNODE( MakeSceneNode, {
         "Scene",
     },
 });
+
+struct ObjectToXforms : zeno::INode {
+    void apply() override {
+        std::vector<glm::mat4> xforms;
+        zany obj = get_input("IObject");
+        if (auto geoObj = std::dynamic_pointer_cast<GeometryObject_Adapter>(obj)) {
+            xforms = get_xform_from_prim(geoObj->toPrimitiveObject());
+        } else if (auto primObj = std::dynamic_pointer_cast<PrimitiveObject>(obj)) {
+            xforms = get_xform_from_prim(primObj);
+        }
+        m_pAdapter->set_primitive_output("xforms", xforms);
+    }
+};
+ZENDEFNODE(ObjectToXforms, {
+    {
+        {gParamType_IObject, "IObject"},
+    },
+    {
+        {gParamType_ListOfMat4, "xforms"},
+    },
+    {
+    },
+    {
+        "Scene",
+    },
+    });
 }
