@@ -1661,6 +1661,18 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         auto out_param = spLink->fromparam;
         NodeImpl* outNode = out_param->m_wpNode;
 
+        auto list_register_all_items = [](ListObject* listobj) {
+            if (!listobj->has_change_info()) {
+                //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
+                for (auto obj : listobj->m_impl->m_objects) {
+                    std::string key = zsString2Std(obj->key());
+                    if (key.empty()) throw makeError<UnimplError>("there is object in list with empty key");
+                    //直接全部收集
+                    listobj->m_impl->m_new_added.insert(key);
+                }
+            }
+        };
+
         if (outNode->is_takenover()) {
             //可能上一次计算被taken了
             return nullptr;
@@ -1674,34 +1686,8 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 spLink->upstream_task.wait();
                 auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
                 spList = std::dynamic_pointer_cast<ListObject>(outResult);
-                if (auto oldList = std::static_pointer_cast<ListObject>(in_param->spObject)) {
-                    //当前已经缓存了一个list，同时上游计算了一个新的list
-                    std::set<std::string> old_items;
-                    for (auto obj : oldList->m_impl->m_objects) {
-                        old_items.insert(zsString2Std(obj->key()));
-            }
-                    if (!spList->has_change_info()) {
-                        //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
-                        std::set<std::string> new_added, modify, new_removed;
-                        for (auto obj : spList->m_impl->m_objects) {
-                            std::string key = zsString2Std(obj->key());
-                            if (key.empty()) throw makeError<UnimplError>("there is object in list with empty key");
-                            //直接全部收集
-                            spList->m_impl->m_new_added.insert(key);
-                        }
-                    }
-                }
-            else {
-                    //直接用spList即可
-                    if (!spList->has_change_info()) {
-                        for (auto obj : spList->m_impl->m_objects) {
-                            std::string key = zsString2Std(obj->key());
-                            if (key.empty()) throw makeError<UnimplError>("there is object in list with empty key");
-                            //直接全部收集
-                            spList->m_impl->m_new_added.insert(key);
-                        }
-                    }
-                }
+                //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
+                list_register_all_items(spList.get());
             }
             else {
                 assert(!outNode->is_dirty());
@@ -1712,14 +1698,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 else {
                     spList = std::dynamic_pointer_cast<ListObject>(out_param->spObject->clone());
                     //新的list，这里全部内容都要登记到new_added.
-                    if (!spList->has_change_info()) {
-                        for (auto obj : spList->m_impl->m_objects) {
-                            std::string key = zsString2Std(obj->key());
-                            if (key.empty()) throw makeError<UnimplError>("there is object in list with empty key");
-                            //直接全部收集
-                            spList->m_impl->m_new_added.insert(key);
-            }
-                    }
+                    list_register_all_items(spList.get());
                 }
             }
             if (!spList) {
@@ -2289,7 +2268,6 @@ void NodeImpl::bypass() {
 }
 
 void NodeImpl::doApply(CalcContext* pContext) {
-    //std::unique_lock uq(m_mutex);
     if (!m_dirty)
         return;
 
@@ -2306,12 +2284,11 @@ void NodeImpl::doApply(CalcContext* pContext) {
     scope_exit spUuidRecord([=] {
         std::lock_guard scope(pContext->mtx);
         pContext->visited_nodes.erase(uuid_path);
-    });
+        });
 
-#if 1
+#if 0
     if (m_name == "FormSceneTree1") {//}&& pContext->curr_iter == 1) {
-        set_name(m_name);
-        //pContext->visited_nodes.insert(uuid_path);
+        //set_name(m_name);
     }
 #endif
 
