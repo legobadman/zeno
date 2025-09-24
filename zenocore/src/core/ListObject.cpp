@@ -39,8 +39,6 @@ namespace zeno
             if (obj->key().empty()) {
                 std::string newkey = zsString2Std(m_key) + "/" + std::to_string(i);
                 obj->update_key(stdString2zs(newkey));
-                //如果是现在才有key，说明是新增的，需要登记到new_added.
-                //m_impl->m_new_added.insert(newkey);
             }
         }
     }
