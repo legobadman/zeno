@@ -2041,6 +2041,9 @@ void ZenoMainWindow::setActionIcon(QAction *action)
 }
 
 bool ZenoMainWindow::saveQuit() {
+    zeno::getSession().setDisableRunning(true);
+    zeno::scope_exit sp([&] { zeno::getSession().setDisableRunning(false); });
+
     auto pGraphsMgm = zenoApp->graphsManager();
     ZASSERT_EXIT(pGraphsMgm, true);
     GraphsTreeModel* pModel = pGraphsMgm->currentModel();
