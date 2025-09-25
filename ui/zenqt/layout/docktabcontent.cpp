@@ -636,9 +636,9 @@ void DockContent_Editor::initConnections()
             return;
         auto& sess = zeno::getSession();
         sess.set_auto_run(checked);
-        if (checked) {
-            zenoApp->calculationMgr()->run();
-        }
+        //if (checked) {
+        //    zenoApp->calculationMgr()->run();
+        //}
     });
     connect(m_pEditor, &ZenoGraphsEditor::zoomed, [=](qreal newFactor) {
         QString percent = QString::number(int(newFactor * 100));
