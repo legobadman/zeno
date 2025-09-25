@@ -681,6 +681,7 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
     //    getGraphByPath(currgraph);
     //}
     mainGraph->runGraph(infos);
+    mainGraph->mark_clean();
     return true;
 }
 

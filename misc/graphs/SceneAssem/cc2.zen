@@ -3665,9 +3665,7 @@
                     -288.0,
                     1425.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "MergeScene3": {
@@ -4075,7 +4073,9 @@
                     146.0,
                     2289.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false
             },
             "NewFBXSceneInfo1": {

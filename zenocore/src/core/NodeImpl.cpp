@@ -530,6 +530,11 @@ void NodeImpl::onInterrupted() {
     mark_previous_ref_dirty();
 }
 
+void NodeImpl::mark_clean() {
+    m_status = Node_Clean;
+    reportStatus(false, m_status);
+}
+
 void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively)
 {
     scope_exit sp([&] {
@@ -677,8 +682,6 @@ void NodeImpl::preApply(CalcContext* pContext) {
     }
 
     for (auto& [name, param] : m_inputPrims) {
-        if (!param.listdict_update.upstream_dirty)
-            continue;
         if (param.type != gParamType_ListOfMat4) {
             //如果不是list类型，只会有一个连接
             if (!param.links.empty()) {
@@ -706,7 +709,16 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 else {
                     res = spLink->fromparam->result;
                 }
-                result.push_back(zeno::reflect::any_cast<glm::mat4>(res));
+                if (res.type().hash_code() == gParamType_ListOfMat4) {
+                    result = zeno::reflect::any_cast<std::vector<glm::mat4>>(res);
+                    break;
+                }
+                else if (res.type().hash_code() == gParamType_Matrix4) {
+                    result.push_back(zeno::reflect::any_cast<glm::mat4>(res));
+                }
+                else {
+                    throw makeError<UnimplError>("");
+                }
             }
             param.result = result;
         }
@@ -836,8 +848,6 @@ void NodeImpl::preApply_Primitives(CalcContext* pContext) {
     }
 
     for (auto& [name, param] : m_inputPrims) {
-        if (!param.listdict_update.upstream_dirty)
-            continue;
         if (param.type != gParamType_ListOfMat4) {
             //如果不是list类型，只会有一个连接
             if (!param.links.empty()) {
@@ -1598,29 +1608,8 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
     return spDict;
 }
 
-container_elem_update_info NodeImpl::get_input_container_info(const std::string& param) {
-    const ObjectParam& objparam = safe_at(m_inputObjs, param, "input obj param");
-    return objparam.listdict_update;
-}
-
-container_elem_update_info NodeImpl::get_output_container_info(const std::string& param) {
-    const ObjectParam& objparam = safe_at(m_outputObjs, param, "output obj param");
-    return objparam.listdict_update;
-}
-
-void NodeImpl::set_input_container_info(const std::string& param, const container_elem_update_info& info) {
-    ObjectParam& objparam = safe_at(m_inputObjs, param, "input obj param");
-    objparam.listdict_update = info;
-}
-
-void NodeImpl::set_output_container_info(const std::string& param, const container_elem_update_info& info) {
-    ObjectParam& objparam = safe_at(m_outputObjs, param, "output obj param");
-    objparam.listdict_update = info;
-}
-
 void NodeImpl::clear_container_info() {
     for (auto& [_, param] : m_inputObjs) {
-        param.listdict_update.clear();
         for (auto spLink : param.links) {
             spLink->bTraceAndTaken = false;
         }
@@ -1632,7 +1621,6 @@ void NodeImpl::clear_container_info() {
         }
     }
     for (auto& [_, param] : m_outputObjs) {
-        param.listdict_update.clear();
         for (auto spLink : param.links) {
             spLink->bTraceAndTaken = false;
         }
@@ -1688,6 +1676,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 spList = std::dynamic_pointer_cast<ListObject>(outResult);
                 //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
                 list_register_all_items(spList.get());
+                spList->update_key(out_param->spObject->key());
             }
             else {
                 assert(!outNode->is_dirty());
@@ -1696,16 +1685,16 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                     spList = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
                 }
                 else {
+                    //outNode已经算好了，直接拿应该不会导致race condition
                     spList = std::dynamic_pointer_cast<ListObject>(out_param->spObject->clone());
                     //新的list，这里全部内容都要登记到new_added.
                     list_register_all_items(spList.get());
+                    spList->update_key(out_param->spObject->key());
                 }
             }
             if (!spList) {
                 throw makeError<UnimplError>("no outResult List from output");
             }
-
-            spList->update_key(out_param->spObject->key());
             bDirectLink = true;
             add_prefix_key(spList.get(), m_uuid);
             return spList;
@@ -1755,8 +1744,6 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 //没有任务发起，但上游可能已经有缓存好的结果，直接加到list即可
                 assert(!outNode->is_dirty());
                 //想知道是不是新增，要与oldList对比
-                //TODO: 临界区
-                auto upstream_obj = out_param->spObject;
                 upstream_obj_key = zsString2Std(out_param->spObject->key());
                 new_obj_key = m_uuid + '\\' + upstream_obj_key;
                 if (old_list.find(new_obj_key) != old_list.end()) {
@@ -1770,7 +1757,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 }
                 else {
                     //上游节点不脏，但边新增到list，这时候需要标脏这个obj，否则渲染端没法认出
-                    auto new_obj = upstream_obj->clone();
+                    auto new_obj = out_param->spObject->clone();
                     new_obj->update_key(stdString2zs(upstream_obj_key));
                     add_prefix_key(new_obj.get(), m_uuid);
                     spList->push_back(new_obj);
@@ -1784,32 +1771,6 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         spList->update_key(stdString2zs(m_uuid));
     }
     return spList;
-}
-
-void NodeImpl::init_output_container_updateinfo() {
-    //如果节点输出了list，但没有设定好update_info，这里就全部加到add里，以便于下游节点能取到
-    for (auto& [name, outparam] : m_outputObjs) {
-        if (!outparam.spObject)
-            continue;
-        outparam.listdict_update.container_key = zsString2Std(outparam.spObject->key());
-        if (!outparam.listdict_update.empty())
-            continue;
-        if (gParamType_List == outparam.type) {
-            //有一些节点输出的list就是输入的list，虽然对象一样，但是可能节点算法会修改其中一些对象
-            //比如往一些对象里加userdata，这时候input的updateinfo就得更新了，
-            //意味着用户要手动在节点算法里调用set_output_container_info，否则无法识别哪些是新修改
-            //只能全部加进去，不然会漏掉。
-            auto listobj = std::static_pointer_cast<ListObject>(outparam.spObject);
-            
-            for (zany spobj : listobj->get()) {
-                auto key = zsString2Std(spobj->key());
-                outparam.listdict_update.new_added.insert(key);
-            }
-        }
-        else if (gParamType_Dict == outparam.type) {
-            //TODO
-        }
-    }
 }
 
 zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
@@ -2047,10 +2008,15 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
     return true;
 }
 
+void NodeImpl::execute(CalcContext* pContext) {
+    std::lock_guard scope(m_mutex);
+    doApply(pContext);
+}
+
 zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
     //锁的粒度可以更精细化，比如没有apply和takeover，在只读的情况下，可以释放锁
     //另一方面，如果多个节点想获取同一个节点的输出，就得排队了
-    std::unique_lock uq(m_mutex);
+    std::lock_guard scope(m_mutex);
 
     GraphException::translated([&] {
         doApply(exec_context.pContext);
@@ -2069,7 +2035,7 @@ zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
 }
 
 zeno::reflect::Any NodeImpl::execute_get_numeric(const ExecuteContext& exec_context) {
-    std::unique_lock uq(m_mutex);
+    std::lock_guard scope(m_mutex);
 
     GraphException::translated([&] {
         doApply(exec_context.pContext);
@@ -2085,7 +2051,8 @@ zeno::reflect::Any NodeImpl::execute_get_numeric(const ExecuteContext& exec_cont
 
 bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
     // 目前假设输入对象和输入数值，不能重名（不难实现，老节点直接改）。
-    auto launch_method = zeno::getSession().is_async_executing() ? std::launch::async : std::launch::deferred;
+    auto launch_method = zeno::getSession().is_async_executing() ? 
+        (std::launch::async | std::launch::deferred) : std::launch::deferred;
 
     if (ds == "path") {
         int j;
@@ -2101,17 +2068,9 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
             in_param->spObject.reset();
         }
         else {
-            container_elem_update_info info;
             if (in_param->links.empty()) {
                 //清空缓存对象
                 in_param->spObject.reset();
-            }
-
-            for (auto spLink : in_param->links) {
-                if (spLink->fromparam->m_wpNode->is_dirty()) {
-                    info.upstream_dirty = true;
-                    break;
-                }
             }
 
             //改为异步计算以后，直接发起task即可，后续再考虑组装的事宜
@@ -2135,7 +2094,6 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                     spLink->upstream_task = std::async(launch_method, &NodeImpl::execute_get_object, outNode, ctx);
                 }
             }
-            in_param->listdict_update = info;
         }
     }
     else {
@@ -2176,13 +2134,6 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
             }
             else {
                 for (auto spLink : in_param->links) {
-                    if (spLink->fromparam->m_wpNode->is_dirty()) {
-                        in_param->listdict_update.upstream_dirty = true;
-                        break;
-                    }
-                }
-
-                for (auto spLink : in_param->links) {
                     auto outNode = spLink->fromparam->m_wpNode;
                     if (outNode->is_takenover()) {
                         continue;
@@ -2221,11 +2172,9 @@ void NodeImpl::clearCalcResults() {
 
     for (auto& [key, param] : m_inputObjs) {
         param.spObject.reset();
-        param.listdict_update.clear();
     }
     for (auto& [key, param] : m_outputObjs) {
         param.spObject.reset();
-        param.listdict_update.clear();
     }
     for (auto& [key, param] : m_inputPrims) {
         param.result.reset();
@@ -2286,9 +2235,9 @@ void NodeImpl::doApply(CalcContext* pContext) {
         pContext->visited_nodes.erase(uuid_path);
         });
 
-#if 0
-    if (m_name == "FormSceneTree1") {//}&& pContext->curr_iter == 1) {
-        //set_name(m_name);
+#if 1
+    if (m_name == "MergeScene1") {//}&& pContext->curr_iter == 1) {
+        set_name(m_name);
     }
 #endif
 
@@ -2338,8 +2287,35 @@ void NodeImpl::doApply(CalcContext* pContext) {
     log_debug("==> leave {}", m_name);
 
     update_out_objs_key();
-    //init_output_container_updateinfo();
     reportStatus(false, Node_RunSucceed);
+}
+
+bool NodeImpl::is_upstream_dirty(const std::string& in_param) const {
+    if (auto iter = m_inputObjs.find(in_param); iter != m_inputObjs.end()) {
+        const auto& param = iter->second;
+        for (auto spLink : param.links) {
+            auto outNode = spLink->fromparam->m_wpNode;
+            NodeRunStatus status = outNode->get_run_status();
+            if (status != Node_Clean) {
+                return true;
+            }
+        }
+        return false;
+    }
+    else if (auto iter = m_inputPrims.find(in_param); iter != m_inputPrims.end()) {
+        const auto& param = iter->second;
+        for (auto spLink : param.links) {
+            auto outNode = spLink->fromparam->m_wpNode;
+            NodeRunStatus status = outNode->get_run_status();
+            if (status != Node_Clean) {
+                return true;
+            }
+        }
+        return false;
+    }
+    else {
+        throw makeError<UnimplError>("the param is not exist");
+    }
 }
 
 CommonParam NodeImpl::get_input_param(std::string const& name, bool* bExist) {
@@ -3831,12 +3807,6 @@ zany NodeImpl::get_default_output_object() {
     if (m_outputObjs.empty())
         return nullptr;
     return m_outputObjs.begin()->second.spObject;
-}
-
-container_elem_update_info NodeImpl::get_default_output_container_info() {
-    if (m_outputObjs.empty())
-        return container_elem_update_info();
-    return m_outputObjs.begin()->second.listdict_update;
 }
 
 zany NodeImpl::get_output_obj(std::string const& param) {

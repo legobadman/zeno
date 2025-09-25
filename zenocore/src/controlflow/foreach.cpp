@@ -181,7 +181,7 @@ namespace zeno {
             if (!initobj && foreachbegin_impl->is_dirty()) {
                 //可能上游还没算，先把上游的依赖解了
                 //foreach_begin->preApply(nullptr);
-                foreachbegin_impl->doApply(pContext);
+                foreachbegin_impl->execute(pContext);
                 initobj = foreachbegin_impl->get_input("Initial Object");
             }
             if (auto spList = std::dynamic_pointer_cast<ListObject>(initobj)) {

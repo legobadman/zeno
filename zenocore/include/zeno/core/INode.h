@@ -34,10 +34,7 @@ namespace zeno
         bool has_input(const zeno::String& param);
         bool has_link_input(const zeno::String& param);
 
-        container_elem_update_info get_input_container_info(const zeno::String& param);
-        container_elem_update_info get_output_container_info(const zeno::String& param);
-        void set_input_container_info(const zeno::String& param, const container_elem_update_info& info);
-        void set_output_container_info(const zeno::String& param, const container_elem_update_info& info);
+        bool is_upstream_dirty(const zeno::String& param) const;
 
         zeno::Vec2i get_input2_vec2i(const zeno::String& param);
         zeno::Vec2f get_input2_vec2f(const zeno::String& param);

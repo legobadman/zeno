@@ -22,6 +22,7 @@ struct ZENO_API SubnetNode : NodeImpl {
     bool isAssetsNode() const;
     bool is_loaded() const override;
     NodeType nodeType() const override;
+    void mark_clean() override;
 
     void cleanInternalCaches();
 

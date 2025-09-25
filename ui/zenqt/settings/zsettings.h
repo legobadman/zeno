@@ -13,6 +13,7 @@ const char *const zsShortCutStyle = "ShortCutStyle";
 const char *const zsLinkLineShape = "LinkLineShape";
 const char* const zsUseChinese = "use_chinese";
 const char* const zsNASLOC = "nas_loc";
+const char* const zsMultithread = "MultiThread";
 const char* const zsCacheEnable = "zencache-enable";
 const char* const zsCacheAutoRemove = "zencache-autoremove";
 const char* const zsCacheDir= "zencachedir";

@@ -98,13 +98,12 @@ render_update_info Graph::applyNode(std::string const &node_name) {
     }
 
     GraphException::translated([&] {
-        node->doApply(&ctx);
+        node->execute(&ctx);
     }, node);
 
     render_update_info info;
     if (node->is_view()) {
         info.reason = Update_Reconstruct;
-        info.cond_update_info = node->get_default_output_container_info();
         info.spObject = node->get_default_output_object();
         info.uuidpath_node_objkey = node->get_uuid_path();
 
@@ -116,8 +115,15 @@ render_update_info Graph::applyNode(std::string const &node_name) {
     return info;
 }
 
+void Graph::mark_clean() {
+    for (auto& [_, node] : m_nodes) {
+        node->mark_clean();
+    }
+}
+
 void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& infos) {
-    auto launch_method = zeno::getSession().is_async_executing() ? std::launch::async : std::launch::deferred;
+    auto launch_method = zeno::getSession().is_async_executing() ? 
+        (std::launch::async | std::launch::deferred) : std::launch::deferred;
     clearContainerUpdateInfo();
 
     std::vector<std::future<render_update_info>> tasks;

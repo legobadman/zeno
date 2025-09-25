@@ -1632,7 +1632,7 @@ namespace zeno
             std::string parampath, _;
             auto spNode = zfx::getNodeAndParamFromRefString(nodepath, pContext, _, parampath);
             CalcContext ctx;
-            spNode->doApply(&ctx);
+            spNode->execute(&ctx);
             auto obj = getObjFromRef(nodepath, pContext);
             int res = 0;
             return initVarFromZvar(res);

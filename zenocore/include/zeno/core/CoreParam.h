@@ -57,8 +57,6 @@ namespace zeno {
         std::string constrain;
         std::list<std::shared_ptr<ReferLink>> reflinks;
 
-        container_elem_update_info listdict_update;
-
         ParamType type = Param_Null;
         SocketType socketType = NoSocket;
         bool bInput = true;

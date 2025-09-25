@@ -2021,6 +2021,7 @@ ZENDEFNODE(FBXSceneInfos, {
     {"FBXSDK"},
 });
 
+std::mutex s_fbx_mutex;
 
 struct ParseFBX : INode {
     void apply() override {
@@ -2029,89 +2030,93 @@ struct ParseFBX : INode {
         int end_frame = std::lround(get_input2_int("End Frame"));
 
         // Initialize the SDK manager. This object handles all our memory management.
-        FbxManager* lSdkManager = FbxManager::Create();
-
-        // Create the IO settings object.
-        FbxIOSettings* ios = FbxIOSettings::Create(lSdkManager, IOSROOT);
-        lSdkManager->SetIOSettings(ios);
-
-        // Create an importer using the SDK manager.
-        FbxImporter* lImporter = FbxImporter::Create(lSdkManager, "");
-
-        // Use the first argument as the filename for the importer.
-        if (!lImporter->Initialize(lFilename.c_str(), -1, lSdkManager->GetIOSettings())) {
-            printf("Call to FbxImporter::Initialize() failed.\n");
-            printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
-            exit(-1);
-        }
-        int major, minor, revision;
-        lImporter->GetFileVersion(major, minor, revision);
-        auto fbx_object = std::make_shared<FBXObject>();
-        fbx_object->lSdkManager = lSdkManager;
-        // Create a new scene so that it can be populated by the imported file.
-        fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
-
-        // Import the contents of the file into the scene.
-        lImporter->Import(fbx_object->lScene);
-        FbxRootNodeUtility::RemoveAllFbxRoots(fbx_object->lScene);
-
-        // The file is imported; so get rid of the importer.
-        lImporter->Destroy();
-        fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
-        fbx_object->userData()->set_string("file_path", stdString2zs(lFilename));
-
-        auto lScene = fbx_object->lScene;
-        // Print the nodes of the scene and their attributes recursively.
-        // Note that we are not printing the root node because it should
-        // not contain any attributes.
-        FbxNode* lRootNode = lScene->GetRootNode();
-        bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
         std::vector<std::shared_ptr<PrimitiveObject>> prims;
-        if (lRootNode) {
-            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
-        }
+        auto scene_info_list = create_ListObject();
+        {
+            std::lock_guard scopeLock(s_fbx_mutex);
+            FbxManager* lSdkManager = FbxManager::Create();
 
-        auto vectors_str = zsString2Std(get_input2_string("vectors"));
-        std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
+            // Create the IO settings object.
+            FbxIOSettings* ios = FbxIOSettings::Create(lSdkManager, IOSROOT);
+            lSdkManager->SetIOSettings(ios);
 
-        for (auto prim : prims) {
-            if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
-                for (auto vector : vectors) {
-                    vector = zeno::trim_string(vector);
-                    if (vector.size() && prim->loops.attr_is<vec3f>(vector)) {
-                        auto& nrm = prim->loops.attr<vec3f>(vector);
-                        auto& vnrm = prim->verts.add_attr<vec3f>(vector);
-                        for (auto i = 0; i < prim->loops.size(); i++) {
-                            vnrm[prim->loops[i]] += nrm[i];
-                        }
-                        for (auto i = 0; i < prim->verts.size(); i++) {
-                            vnrm[i] = normalizeSafe(vnrm[i]);
+            // Create an importer using the SDK manager.
+            FbxImporter* lImporter = FbxImporter::Create(lSdkManager, "");
+
+            // Use the first argument as the filename for the importer.
+            if (!lImporter->Initialize(lFilename.c_str(), -1, lSdkManager->GetIOSettings())) {
+                printf("Call to FbxImporter::Initialize() failed.\n");
+                printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
+                exit(-1);
+            }
+            int major, minor, revision;
+            lImporter->GetFileVersion(major, minor, revision);
+            auto fbx_object = std::make_shared<FBXObject>();
+            fbx_object->lSdkManager = lSdkManager;
+            // Create a new scene so that it can be populated by the imported file.
+            fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
+
+            // Import the contents of the file into the scene.
+            lImporter->Import(fbx_object->lScene);
+            FbxRootNodeUtility::RemoveAllFbxRoots(fbx_object->lScene);
+
+            // The file is imported; so get rid of the importer.
+            lImporter->Destroy();
+            fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
+            fbx_object->userData()->set_string("file_path", stdString2zs(lFilename));
+
+            auto lScene = fbx_object->lScene;
+            // Print the nodes of the scene and their attributes recursively.
+            // Note that we are not printing the root node because it should
+            // not contain any attributes.
+            FbxNode* lRootNode = lScene->GetRootNode();
+            bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
+
+            if (lRootNode) {
+                TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+            }
+
+            auto vectors_str = zsString2Std(get_input2_string("vectors"));
+            std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
+
+            for (auto prim : prims) {
+                if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
+                    for (auto vector : vectors) {
+                        vector = zeno::trim_string(vector);
+                        if (vector.size() && prim->loops.attr_is<vec3f>(vector)) {
+                            auto& nrm = prim->loops.attr<vec3f>(vector);
+                            auto& vnrm = prim->verts.add_attr<vec3f>(vector);
+                            for (auto i = 0; i < prim->loops.size(); i++) {
+                                vnrm[prim->loops[i]] += nrm[i];
+                            }
+                            for (auto i = 0; i < prim->verts.size(); i++) {
+                                vnrm[i] = normalizeSafe(vnrm[i]);
+                            }
                         }
                     }
                 }
+                if (get_input2_bool("CopyFacesetToMatid")) {
+                    prim_copy_faceset_to_matid(prim.get());
+                }
             }
-            if (get_input2_bool("CopyFacesetToMatid")) {
-                prim_copy_faceset_to_matid(prim.get());
+
+            for (int frameid = start_frame; frameid <= end_frame; frameid++) {
+                float fps = get_input2_float("fps");
+                float t = float(frameid) / fps;
+                FbxTime curTime;       // The time for each key in the animation curve(s)
+                curTime.SetSecondDouble(t);   // Starting time
+
+                auto lScene = fbx_object->lScene;
+                FbxNode* lRootNode = lScene->GetRootNode();
+                auto json_obj = std::make_shared<JsonObject>();
+                if (lRootNode != nullptr) {
+                    TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
+                }
+                scene_info_list->push_back(json_obj);
             }
+
+            lSdkManager->Destroy();
         }
-
-        auto scene_info_list = create_ListObject();
-        for (int frameid = start_frame; frameid <= end_frame; frameid++) {
-            float fps = get_input2_float("fps");
-            float t = float(frameid) / fps;
-            FbxTime curTime;       // The time for each key in the animation curve(s)
-            curTime.SetSecondDouble(t);   // Starting time
-
-            auto lScene = fbx_object->lScene;
-            FbxNode* lRootNode = lScene->GetRootNode();
-            auto json_obj = std::make_shared<JsonObject>();
-            if (lRootNode != nullptr) {
-                TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
-            }
-            scene_info_list->push_back(json_obj);
-        }
-
-        lSdkManager->Destroy();
 
         std::vector<std::string> abc_paths;
         abc_paths.reserve(prims.size());
