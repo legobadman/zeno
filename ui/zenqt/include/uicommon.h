@@ -661,11 +661,13 @@ public:
     explicit QmlNodeRunStatus() {}
 
     enum Value {
+        Clean,
         DirtyReadyToRun,
         Pending,
         Running,
         RunError,
-        RunSucceed
+        RunSucceed,
+        ResultTaken
     };
     Q_ENUM(Value)
 };

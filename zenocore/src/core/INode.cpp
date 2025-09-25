@@ -111,20 +111,8 @@ namespace zeno
         return m_pAdapter->has_link_input(zsString2Std(param));
     }
 
-    container_elem_update_info INode::get_input_container_info(const zeno::String& param) {
-        return m_pAdapter->get_input_container_info(zsString2Std(param));
-    }
-
-    container_elem_update_info INode::get_output_container_info(const zeno::String& param) {
-        return m_pAdapter->get_output_container_info(zsString2Std(param));
-    }
-
-    void INode::set_input_container_info(const zeno::String& param, const container_elem_update_info& info) {
-        m_pAdapter->set_input_container_info(zsString2Std(param), info);
-    }
-
-    void INode::set_output_container_info(const zeno::String& param, const container_elem_update_info& info) {
-        m_pAdapter->set_output_container_info(zsString2Std(param), info);
+    bool INode::is_upstream_dirty(const zeno::String& param) const {
+        return m_pAdapter->is_upstream_dirty(zsString2Std(param));
     }
 
     void INode::clearCalcResults() {

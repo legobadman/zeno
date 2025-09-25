@@ -375,26 +375,30 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     m_btnRun->setMargins(ZenoStyle::dpiScaledMargins(QMargins(11, 5, 14, 5)));
     m_btnRun->setBackgroundClr(QColor("#1978E6"), QColor("#599EED"), QColor("#1978E6"), QColor("#1978E6"));
     m_btnRun->setTextClr(QColor("#FFFFFF"), QColor("#FFFFFF"), QColor("#FFFFFF"), QColor("#FFFFFF"));
-    ZenoSettingsManager &settings = ZenoSettingsManager::GetInstance();
-    m_btnRun->setShortcut(settings.getShortCut(ShortCut_Run));
+    ZenoSettingsManager &global_settings = ZenoSettingsManager::GetInstance();
+    m_btnRun->setShortcut(global_settings.getShortCut(ShortCut_Run));
     m_btnRun->setCursor(QCursor(Qt::PointingHandCursor));
 
     //kill
     m_btnKill->setFont(fnt);
-    m_btnKill->setShortcut(settings.getShortCut(ShortCut_Kill));
+    m_btnKill->setShortcut(global_settings.getShortCut(ShortCut_Kill));
     m_btnKill->setVisible(false);
 
     QFontMetrics fontMetrics(fnt);
 
     pListView->setChecked(false);
     pluginView->setChecked(false);
-    pShowGrid->setChecked(ZenoSettingsManager::GetInstance().getValue(zsShowGrid).toBool());
+    pShowGrid->setChecked(global_settings.getValue(zsShowGrid).toBool());
+
+    bool bMultithread = global_settings.getValue(zsMultithread).toBool();
+    pMultiThreadExecute->setChecked(bMultithread);
+    zeno::getSession().set_async_executing(bMultithread);
 
     //必须要等初始化界面后才能让用户点击显示
     pShowThumb->setChecked(false);
-    ZenoSettingsManager::GetInstance().setValue(zsShowThumbnail, false);
+    global_settings.setValue(zsShowThumbnail, false);
 
-    pSnapGrid->setChecked(ZenoSettingsManager::GetInstance().getValue(zsSnapGrid).toBool());
+    pSnapGrid->setChecked(global_settings.getValue(zsSnapGrid).toBool());
     pShowGrid->setToolTip(pShowGrid->isChecked() ? tr("Hide Grid") : tr("Show Grid"));
     pSnapGrid->setToolTip(pSnapGrid->isChecked() ? tr("UnSnap Grid") : tr("Snap Grid"));
 
@@ -547,6 +551,7 @@ void DockContent_Editor::initConnections()
     connect(pMultiThreadExecute, &ZToolBarButton::toggled, this, [=](bool bChecked) {
         auto& sess = zeno::getSession();
         sess.set_async_executing(bChecked);
+        ZenoSettingsManager::GetInstance().setValue(zsMultithread, bChecked);
     });
     connect(pShowGrid, &ZToolBarButton::toggled, this, [=](bool bChecked) {
         if (m_pEditor->welComPageShowed())

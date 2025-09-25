@@ -454,6 +454,7 @@ term: NUMBER            { $$ = driver.makeNewNumberNode($1); }
 
 // Bison expects us to provide implementation - otherwise linker complains
 void zeno::ZfxParser::error(const location &loc , const std::string &message) {
-    cout << "Error: " << message << endl << "Error location: " << driver.location() << endl;
+    //the error information are vert fuzzy...
+    //cout << "Error: " << message << endl << "Error location: " << driver.location() << endl;
 }
 

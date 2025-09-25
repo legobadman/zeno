@@ -2752,10 +2752,18 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
     }
 
     void cleanupScene() override {
+        this->graphicsMan->graphics.clear();
+        this->graphicsMan->objOrder.clear();
+        lightNeedUpdate = true;
+        scene->drawOptions->needRefresh = true;
+        meshNeedUpdate = matNeedUpdate = true;
+        defaultScene = {};
+        cleanupAssets();
+        hasLoaded = false;
     }
 
     void cleanupWhenExit() override {
-
+        cleanupScene();
     }
 };
 

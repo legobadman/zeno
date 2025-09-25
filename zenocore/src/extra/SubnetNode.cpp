@@ -89,6 +89,11 @@ void SubnetNode::initParams(const NodeData& dat)
     }
 }
 
+void SubnetNode::mark_clean() {
+    NodeImpl::mark_clean();
+    m_subgraph->mark_clean();
+}
+
 NodeType SubnetNode::nodeType() const {
     if (isAssetsNode()) {
         if (in_asset_file())

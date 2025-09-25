@@ -109,6 +109,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     void clearNodes();
     void clearContainerUpdateInfo();
     void runGraph(render_reload_info& infos);
+    void mark_clean();
     void applyNodes(std::set<std::string> const &ids, render_reload_info& infos);
     void addNode(std::string const &cls, std::string const &id);
     Graph *addSubnetNode(std::string const &id);

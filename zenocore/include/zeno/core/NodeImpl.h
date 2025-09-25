@@ -56,13 +56,13 @@ namespace zeno
         virtual ~NodeImpl();
 
         //获取require_output_param指定的结果，如需要则计算（如果不脏则直接取结果）。
+        void execute(CalcContext* pContext);
         zany execute_get_object(const ExecuteContext& exec_context);
         zeno::reflect::Any execute_get_numeric(const ExecuteContext& exec_context);
 
-        void doApply(CalcContext* pContext);
-        void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         void doOnlyApply();
         void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
+        virtual void mark_clean();
         virtual void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
         virtual void clearCalcResults();
 
@@ -99,6 +99,7 @@ namespace zeno
         bool is_nocache() const;
 
         bool is_dirty() const { return m_dirty; }
+        bool is_upstream_dirty(const std::string& in_param) const;
         NodeRunStatus get_run_status() const { return m_status; }
 
         CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
@@ -117,11 +118,6 @@ namespace zeno
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
         ParamType get_anyparam_type(bool bInput, const std::string& name);
 
-        /*container_info是记录参数的ListObject的增删改情况，便于作部分加载*/
-        container_elem_update_info get_input_container_info(const std::string& param);
-        container_elem_update_info get_output_container_info(const std::string& param);
-        void set_input_container_info(const std::string& param, const container_elem_update_info& info);
-        void set_output_container_info(const std::string& param, const container_elem_update_info& info);
         void clear_container_info();
 
         std::string get_viewobject_output_param() const;
@@ -241,7 +237,6 @@ namespace zeno
         zany get_output_obj(std::string const& sock_name);
         std::vector<zany> get_output_objs();
         virtual zany get_default_output_object();
-        virtual container_elem_update_info get_default_output_container_info();
         void reportStatus(bool bDirty, NodeRunStatus status);
 
         zany takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
@@ -310,6 +305,8 @@ namespace zeno
         std::map<std::string, ObjectParam> m_outputObjs;
         
     private:
+        void doApply(CalcContext* pContext);
+        void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
         std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
         std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
@@ -335,7 +332,6 @@ namespace zeno
         void preApplyTimeshift(CalcContext* pContext);
         //foreach特供
         void foreachend_apply(CalcContext* pContext);
-        void init_output_container_updateinfo();
 
         std::string m_name;
         std::string m_nodecls;

@@ -75,7 +75,6 @@ void Scene::cleanUpScene()
     RenderEngine* pEngine = renderMan->getEngine();
     if (pEngine) {
         pEngine->cleanupScene();
-        pEngine->cleanupAssets();
     }
 }
 

@@ -164,11 +164,13 @@ namespace zeno {
 
     enum NodeRunStatus
     {
-        Node_DirtyReadyToRun,       //已标脏，但还没执行计算。  （dirty)
+        Node_Clean,                 //上一次计算完毕后所处的状态，在下一次计算由于不脏也不会参与任何计算
+        Node_DirtyReadyToRun,       //已标脏，但还没执行计算，包括一开始打开工程时所有节点的状态。  （dirty)
         Node_Pending,               //已进入计算，但还须等待前序计算依赖。(dirty)
         Node_Running,               //进入apply   (dirty)
         Node_RunError,              //计算错误      (dirty)
-        Node_RunSucceed             //计算成功并完成   (no dirty)
+        Node_RunSucceed,            //计算成功并完成   (no dirty)，待整张图计算完成，便置为Node_Clean
+        Node_ResultTaken,           //计算的结果被提取以后清空了，对应no-cache状态
     };
 
     enum DirtyReason
@@ -279,37 +281,6 @@ namespace zeno {
         Reload_SwitchGraph,     //用户在编辑器上切换当前节点图的层次触发的Load
         Reload_ToggleView,      //用户在编辑器上当前节点图，切换节点间的view触发的load
         Reload_Calculation,     //由于标脏计算引发的load
-    };
-
-    //记录List或者Dict及其元素在计算过程中的更新信息，不考虑容器嵌套容器的情况
-    struct container_elem_update_info {
-        std::set<std::string> new_added;
-        std::set<std::string> modified;
-        std::set<std::string> removed;
-        bool upstream_dirty = false;      //记录上游是否脏，用于给当前节点在apply时参考
-
-        std::string container_key;  //提交渲染的List或者Dict的objkey
-
-        bool empty() const {
-            return new_added.empty() && modified.empty() && removed.empty();
-        }
-
-        bool is_newadd_or_modify(const std::string& key) {
-            return modified.find(key) != modified.end() || new_added.find(key) != new_added.end();
-        }
-
-        void clear() {
-            new_added.clear();
-            modified.clear();
-            removed.clear();
-            container_key.clear();
-        }
-
-        void merge(const container_elem_update_info& rhs) {
-            new_added.insert(rhs.new_added.begin(), rhs.new_added.end());
-            modified.insert(rhs.modified.begin(), rhs.modified.end());
-            removed.insert(rhs.removed.begin(), rhs.removed.end());
-        }
     };
 }
 

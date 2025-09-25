@@ -227,7 +227,6 @@ struct FormSceneTree : zeno::INode {
         auto scene_json = ZImpl(get_input2<JsonObject>("Scene Info"));
         sceneTree->root_name = "/ABC";
         auto prim_geom_list = get_input_ListObject("Geometry List");
-        auto list_updateinfo = get_input_container_info("Geometry List");
 
         //如果prim_geom_list的上游节点标记为no-cache,那这里就不应该拿到prim_geom_list.
         //或者geom分支已经不脏的情况下，这里导出sceneTree是不会导出geometry的
@@ -570,7 +569,7 @@ struct MergeScene : zeno::INode {
     void apply() override {
         auto main_scene = std::dynamic_pointer_cast<SceneObject>(get_input("Main Scene"));
         auto namespace1 = zsString2Std(get_input2_string("namespace1"));
-        bool mainscene_dirty = get_input_container_info("Main Scene").upstream_dirty;
+        bool mainscene_dirty = is_upstream_dirty("Main Scene");
 
         if (namespace1.size()) {
             if (!zeno::starts_with(namespace1, "/")) {
@@ -585,7 +584,7 @@ struct MergeScene : zeno::INode {
         if (has_link_input("Second Scene")) {
             auto second_scene = std::dynamic_pointer_cast<SceneObject>(get_input("Second Scene"));
             auto scene_obj_key = zsString2Std(second_scene->key());
-            auto secondscene_dirty = get_input_container_info("Second Scene").upstream_dirty;
+            auto secondscene_dirty = is_upstream_dirty("Second Scene");
 
             if (!secondscene_dirty) {
                 //说明是添加过的场景，没有要变更的部分，先不加到scenetree
@@ -706,14 +705,14 @@ struct MergeMultiScenes : zeno::INode {
         if (has_input("Scene List")) {
             auto input_scene_list = std::make_shared<ListObject>();
             auto scene_list = get_input_ListObject("Scene List");
-            auto list_updateinfo = get_input_container_info("Scene List");
 
             main_scene->bNeedUpdateDescriptor = false;
             for (auto i = 0; i < scene_list->size(); i++) {
                 auto second_scene = std::dynamic_pointer_cast<SceneObject>(scene_list->m_impl->m_objects[i]);
                 auto scene_obj_key = zsString2Std(second_scene->key());
 
-                if (!list_updateinfo.is_newadd_or_modify(scene_obj_key)) {
+                if (scene_list->m_impl->m_modify.find(scene_obj_key) != scene_list->m_impl->m_modify.end() ||
+                    scene_list->m_impl->m_new_added.find(scene_obj_key) != scene_list->m_impl->m_new_added.end()) {
                     continue;   //说明是添加过的场景，没有要变更的部分，先不加到scenetree
                 }
                 else {
