@@ -2641,11 +2641,11 @@ QStringList UiHelper::findSuccessorNode(GraphModel* pModel, const QString& node)
     return nodes;
 }
 
-QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& node)
+QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& originnode, bool bfindInput, bool bfindOutput)
 {
     std::unordered_set<std::string> nodesName;
-    std::function<void(GraphModel*, std::string, std::unordered_set<std::string>&)> findNodes = [&findNodes](GraphModel* pModel, std::string node, std::unordered_set<std::string>& nodesName) {
-        if (nodesName.count(node) || node.empty()) {
+    std::function<void(GraphModel*, std::string, std::unordered_set<std::string>&, bool)> findNodes = [&findNodes, &originnode](GraphModel* pModel, std::string node, std::unordered_set<std::string>& nodesName, bool bInput) {
+        if (nodesName.count(node) && node != originnode.toStdString() || node.empty()) {
             return;
         } else {
             nodesName.insert(node);
@@ -2658,16 +2658,26 @@ QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& node)
                 PARAM_LINKS links = idx.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
                 for (auto link : links) {
                     zeno::EdgeInfo edge = link.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
-                    if (idx.data(QtRole::ROLE_ISINPUT).toBool()) {
-                        findNodes(pModel, edge.outNode, nodesName);
+                    bool inputParam = idx.data(QtRole::ROLE_ISINPUT).toBool();
+                    if (bInput) {
+                        if (inputParam) {
+                            findNodes(pModel, edge.outNode, nodesName, bInput);
+                        }
                     } else {
-                        findNodes(pModel, edge.inNode, nodesName);
+                        if (!inputParam) {
+                            findNodes(pModel, edge.inNode, nodesName, bInput);
+                        }
                     }
                 }
             }
         }
     };
-    findNodes(pModel, node.toStdString(), nodesName);
+    if (bfindInput) {
+        findNodes(pModel, originnode.toStdString(), nodesName, true);
+    }
+    if (bfindOutput) {
+        findNodes(pModel, originnode.toStdString(), nodesName, false);
+    }
     QStringList list;
     for (auto& i : nodesName) {
         list.append(QString::fromStdString(i));

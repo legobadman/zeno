@@ -1,4 +1,4 @@
-#include "command.h"
+﻿#include "command.h"
 #include "variantptr.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
@@ -118,22 +118,27 @@ void LinkCommand::redo()
     {
         m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
         if (m_model) {
-            QStringList outNodeLinkedNodes = UiHelper::findAllLinkdNodes(m_model, QString::fromStdString(m_link.outNode));
+            QStringList outNodeLinkedNodes = UiHelper::findAllLinkdNodes(m_model, QString::fromStdString(m_link.inNode), false, true);
             bool outNodeChainHasViewNode = false;
+            QString outNodeViewNode;
             for (auto& node : outNodeLinkedNodes) {
                 auto nodeidx = m_model->indexFromName(node);
                 if (nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool()) {
                     outNodeChainHasViewNode = true;
+                    outNodeViewNode = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
                     break;
                 }
             }
-            QStringList intNodeLinkedNodes = UiHelper::findAllLinkdNodes(m_model, QString::fromStdString(m_link.inNode));
-            for (auto& node : intNodeLinkedNodes) {
-                auto nodeidx = m_model->indexFromName(node);
-                if (outNodeChainHasViewNode && nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool()) {
-                    m_lastViewNodeName = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
-                    m_model->_setViewImpl(nodeidx, false);
-                    break;
+            if (outNodeChainHasViewNode)
+            {
+                QStringList intNodeLinkedNodes = UiHelper::findAllLinkdNodes(m_model, QString::fromStdString(m_link.outNode), true, false);
+                for (auto& node : intNodeLinkedNodes) {
+                    auto nodeidx = m_model->indexFromName(node);
+                    if (nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool()) {
+                        m_lastViewNodeName = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
+                        m_model->_setViewImpl(nodeidx, false);
+                        //break;
+                    }
                 }
             }
             m_model->_addLink_apicall(m_link);
@@ -247,13 +252,13 @@ void NodeStatusCommand::redo()
             {
             case zeno::View: {
                 if (m_bOn) {
-                    QStringList linkedNodes = UiHelper::findAllLinkdNodes(m_model, m_nodeName);
+                    QStringList linkedNodes = UiHelper::findAllLinkdNodes(m_model, m_nodeName, true, true);
                     for (auto& node : linkedNodes) {
                         auto nodeidx = m_model->indexFromName(node);
                         if (nodeidx.data(QtRole::ROLE_NODE_ISVIEW).toBool() && nodeidx.data(QtRole::ROLE_NODE_NAME).toString() != m_nodeName) {
                             m_lastViewNodeName = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
                             m_model->_setViewImpl(nodeidx, !m_bOn);
-                            break;
+                            //break;
                         }
                     }
                 }
