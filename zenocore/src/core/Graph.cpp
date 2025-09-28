@@ -97,9 +97,7 @@ render_update_info Graph::applyNode(std::string const &node_name) {
         ctx.isSubnetApply = true;
     }
 
-    GraphException::translated([&] {
-        node->execute(&ctx);
-    }, node);
+    node->execute(&ctx);
 
     render_update_info info;
     if (node->is_view()) {

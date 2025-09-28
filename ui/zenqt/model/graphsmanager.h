@@ -41,11 +41,15 @@ public:
     Q_INVOKABLE QStringList paste(const QPointF& pos, const QStringList& path_of_graphM);
     Q_INVOKABLE QModelIndex getNodeIndexByUuidPath(const QString& objPath);
 
+    //给出节点路径，得到对应节点的索引，如果路径是一个子图节点的路径，就返回子图节点。
+    Q_INVOKABLE QModelIndex getNodeIndexByPath(const QString& path);
+
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath NOTIFY currentPathChanged)
     QString currentGraphPath() const;
     void setCurrentGraphPath(const QString& path);
 
     void createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult);
+    GraphModel* mainModel() const { return m_main; }
     inline GraphsTreeModel* currentModel() const { return m_treemodel; }
     AssetsModel* assetsModel() const;
     PluginsModel* pluginModel() const;

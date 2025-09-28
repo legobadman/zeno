@@ -20,9 +20,9 @@
 CalcWorker::CalcWorker() {
     auto& sess = zeno::getSession();
     if (m_bReportNodeStatus) {
-        sess.registerNodeCallback([=](zeno::ObjPath nodePath, bool bDirty, zeno::NodeRunStatus status) {
+        sess.registerNodeCallback([=](std::string nodePath, bool bDirty, zeno::NodeRunStatus status) {
             QmlNodeRunStatus::Value q_status = static_cast<QmlNodeRunStatus::Value>(status);
-            emit nodeStatusChanged(nodePath, q_status);
+            emit nodeStatusChanged(QString::fromStdString(nodePath), q_status);
             });
     }
 }
@@ -35,16 +35,12 @@ void CalcWorker::run() {
     auto& sess = zeno::getSession();
 
     zeno::render_reload_info render_infos;
-
-    zeno::GraphException::catched([&] {
-        const std::string& currpath = m_current_graph_path.toStdString();
-        sess.run("", render_infos); //如果局部运行子图，可能要考虑subinput的外部前置计算是否要计算
-        }, *sess.globalError);
+    sess.run("", render_infos); //如果局部运行子图，可能要考虑subinput的外部前置计算是否要计算
     sess.globalState->set_working(false);
 
-    if (sess.globalError->failed()) {
-        QString errMsg = QString::fromStdString(sess.globalError->getErrorMsg());
-        zeno::ObjPath path = sess.globalError->getNode();
+    if (render_infos.error.failed()) {
+        QString errMsg = QString::fromStdString(render_infos.error.getErrorMsg());
+        QString path = QString::fromStdString(render_infos.error.getNode());
         emit nodeStatusChanged(path, QmlNodeRunStatus::RunError);
         emit calcFinished(false, path, errMsg, render_infos); //会发送到：DisplayWidget::onCalcFinished
     }
@@ -74,7 +70,7 @@ CalculationMgr::CalculationMgr(QObject* parent)
     });
 }
 
-void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, QmlNodeRunStatus::Value state)
+void CalculationMgr::onNodeStatusReported(QString qsPath, QmlNodeRunStatus::Value state)
 {
     auto graphsMgr = zenoApp->graphsManager();
     GraphsTreeModel* pMainTree = graphsMgr->currentModel();
@@ -82,14 +78,17 @@ void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, QmlNodeRunStat
         if (state == QmlNodeRunStatus::RunError) {
             //为了方便查看错误，整个子图路径的节点都要标红
             GraphModel* pMain = graphsMgr->getGraph({ "main" });
-            QModelIndexList pathNodes;
-            pMain->indiceFromUuidPath(uuidPath, pathNodes);
-            for (auto idx : pathNodes) {
+            QStringList pathList = qsPath.split('/', Qt::SkipEmptyParts);
+            //把节点所在链路的所有子图（如果有）都mark
+            while (pathList.size() > 1) {
+                QString path = pathList.join('/');
+                QModelIndex idx = graphsMgr->getNodeIndexByPath(path);
                 UiHelper::qIndexSetData(idx, QVariant::fromValue(state), QtRole::ROLE_NODE_RUN_STATE);
+                pathList.pop_back();
             }
         }
         else {
-            const QModelIndex targetNode = pMainTree->getIndexByUuidPath(uuidPath);
+            const QModelIndex targetNode = pMainTree->getIndexByUuidPath(qsPath.toStdString());
             if (targetNode.isValid()) {
                 UiHelper::qIndexSetData(targetNode, QVariant::fromValue(state), QtRole::ROLE_NODE_RUN_STATE);
                 if (!m_bMultiThread) {
@@ -101,7 +100,7 @@ void CalculationMgr::onNodeStatusReported(zeno::ObjPath uuidPath, QmlNodeRunStat
     }
 }
 
-void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg, const zeno::render_reload_info& info)
+void CalculationMgr::onCalcFinished(bool bSucceed, QString nodePath, QString msg, const zeno::render_reload_info& info)
 {
     //确保此时计算线程不再跑逻辑，这里暂时是代码上约束，也就是CalcWorker::run()走完就发信号。
     if (m_bMultiThread)
@@ -109,8 +108,11 @@ void CalculationMgr::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, Q
         m_thread.quit();
         m_thread.wait();
     }
+    if (!bSucceed) {
+        zeno::log_error("reportStatus: error in {}, message {}", nodePath.toStdString(), msg.toStdString());
+    }
     setRunStatus(RunStatus::NoRun);
-    emit calcFinished(bSucceed, nodeUuidPath, msg, info);  //会发送到：DisplayWidget::onCalcFinished
+    emit calcFinished(bSucceed, nodePath, msg, info);  //会发送到：DisplayWidget::onCalcFinished
 }
 
 void CalculationMgr::run()
@@ -216,7 +218,6 @@ void CalculationMgr::run_and_clean() {
     //VLDGlobalDisable();
     //VLDGlobalEnable();  // 重新启用，开始新一轮记录
     auto& sess = zeno::getSession();
-    
 
     setRunStatus(RunStatus::Running);
     m_worker->setCurrentGraphPath(zenoApp->graphsManager()->currentGraphPath());

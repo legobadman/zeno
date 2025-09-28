@@ -1052,21 +1052,21 @@ ZTimeline* ZenoMainWindow::timeline() const
     return m_pTimeline;
 }
 
-void ZenoMainWindow::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg)
+void ZenoMainWindow::onCalcFinished(bool bSucceed, QString nodePath, QString msg)
 {
     if (!bSucceed) {
         ZenoGraphsEditor* pEditor = getAnyEditor();
         if (pEditor) {
-            GraphsTreeModel* pTreeM = zenoApp->graphsManager()->currentModel();
-            if (pTreeM) {
-                QModelIndex nodeIdx = pTreeM->getIndexByUuidPath(nodeUuidPath);
-                const QString& nodePath = nodeIdx.data(QtRole::ROLE_OBJPATH).toString();
-                QStringList pathitems = nodePath.split("/", Qt::SkipEmptyParts);
-                ZASSERT_EXIT(!pathitems.isEmpty());
-                QString nodeName = pathitems.back();
-                pathitems.pop_back();
-                pEditor->activateTab(pathitems, nodeName, true);
+            GraphModel* mainM = zenoApp->graphsManager()->mainModel();
+            QStringList pathList = nodePath.split('/', Qt::SkipEmptyParts);
+            if (pathList.empty()) {
+                ZASSERT_EXIT(0);
+                return;
             }
+            GraphModel* targetM = mainM->getGraphByPath(pathList);
+            QString nodename = pathList.last();
+            pathList.pop_back();
+            pEditor->activateTab(pathList, nodename, true);
         }
     }
 }

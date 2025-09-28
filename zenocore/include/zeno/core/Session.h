@@ -6,6 +6,7 @@
 #include <zeno/core/INode.h>
 #include <memory>
 #include <string>
+#include <atomic>
 #include <map>
 #include <zeno/core/common.h>
 #include <zeno/io/iocommon.h>
@@ -65,7 +66,7 @@ struct Session {
     ZENO_API void clearAssets();
     ZENO_API bool run(const std::string& currgraph, render_reload_info& infos);
     ZENO_API void interrupt();
-    ZENO_API bool is_interrupted() const;
+    ZENO_API bool is_interrupted() const { return m_bInterrupted; }
     ZENO_API bool is_async_executing() const;
     ZENO_API void set_async_executing(bool bOn);
     ZENO_API unsigned long mainThreadId() const;
@@ -111,7 +112,6 @@ private:
     int m_apiLevel = 0;
     bool m_bApiLevelEnable = true;
     bool m_bAutoRun = false;
-    bool m_bInterrupted = false;
     bool m_bDisableRunning = false;
     bool m_bReentrance = false;
     bool m_bAsyncExecute = false;
@@ -119,6 +119,7 @@ private:
     std::string m_solver;
     std::wstring m_proj_path;
     unsigned long m_mainThreadId;
+    std::atomic<bool> m_bInterrupted;
 
 #ifdef ZENO_WITH_PYTHON
     std::unique_ptr<PythonEnvWrapper> m_pyWrapper;

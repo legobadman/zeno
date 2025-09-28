@@ -670,7 +670,6 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 auto& task = spLink->upstream_task;
                 if (task.valid()) {
                     //如果没有边，那么spObject在requireInput就会被清空
-                    task.wait();
                     param.spObject = task.get();
                 }
                 else {
@@ -688,7 +687,6 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 auto spLink = *param.links.begin();
                 auto& task = spLink->upstream_task;
                 if (task.valid()) {
-                    task.wait();
                     param.result = task.get();
                 }
                 else {
@@ -703,7 +701,6 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 auto& task = spLink->upstream_task;
                 zeno::reflect::Any res;
                 if (task.valid()) {
-                    task.wait();
                     res = task.get();
                 }
                 else {
@@ -717,7 +714,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
                     result.push_back(zeno::reflect::any_cast<glm::mat4>(res));
                 }
                 else {
-                    throw makeError<UnimplError>("");
+                    throw makeNodeError<UnimplError>(get_path(), "");
                 }
             }
             param.result = result;
@@ -734,7 +731,6 @@ void NodeImpl::launch_param_task(const std::string& param) {
             auto& task = spLink->upstream_task;
             if (task.valid()) {
                 //如果没有边，那么spObject在requireInput就会被清空
-                task.wait();
                 objParam.spObject = task.get();
             }
             else {
@@ -750,7 +746,6 @@ void NodeImpl::launch_param_task(const std::string& param) {
                 auto spLink = *primParam.links.begin();
                 auto& task = spLink->upstream_task;
                 if (task.valid()) {
-                    task.wait();
                     primParam.result = task.get();
                 }
             }
@@ -853,7 +848,6 @@ void NodeImpl::preApply_Primitives(CalcContext* pContext) {
             if (!param.links.empty()) {
                 auto& task = (*param.links.begin())->upstream_task;
                 if (task.valid()) {
-                    task.wait();
                     param.result = task.get();
                 }
             }
@@ -931,10 +925,27 @@ void NodeImpl::foreachend_apply(CalcContext* pContext)
 
 void NodeImpl::apply() {
     if (m_pNode) {
-        m_pNode->apply();
+        try {
+            m_pNode->apply();
+        }
+        catch (ErrorException const& e) {
+            if (e.get_node_info().empty()) {
+                throw ErrorException(get_path(), e.getError());
+            }
+            else {
+                throw e;
+            }
+        }
+        catch (std::exception const& e) {
+            std::string err = e.what();
+            throw makeNodeError<StdError>(get_path(), std::current_exception());
+        }
+        catch (...) {
+            throw makeNodeError<UnimplError>(get_path(), "unknown error");
+        }
     }
     else {
-        throw makeError<UnimplError>("the node has been uninstalled");
+        throw makeNodeError<UnimplError>(get_path(), "the node has been uninstalled");
     }
 }
 
@@ -1448,7 +1459,6 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
     //需要用zfxparser直接parse出所有引用信息
     GlobalError err;
     zeno::GraphException::catched([&] {
-        //auto& funcMgr = zeno::getSession().funcManager;
         FunctionManager funcMgr;
         ZfxContext ctx;
         ctx.spNode = this;
@@ -1547,9 +1557,7 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
             bool is_this_item_dirty = outNode->is_dirty();
 
             if (is_this_item_dirty) {  //list中的元素是dirty的，重新计算并加入list
-                GraphException::translated([&] {
-                    outNode->doApply(pContext);
-                }, outNode);
+                outNode->doApply(pContext);
             }
 
             auto outResult = outNode->get_output_obj(out_param->name);
@@ -1649,12 +1657,12 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         auto out_param = spLink->fromparam;
         NodeImpl* outNode = out_param->m_wpNode;
 
-        auto list_register_all_items = [](ListObject* listobj) {
+        auto list_register_all_items = [&](ListObject* listobj) {
             if (!listobj->has_change_info()) {
                 //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
                 for (auto obj : listobj->m_impl->m_objects) {
                     std::string key = zsString2Std(obj->key());
-                    if (key.empty()) throw makeError<UnimplError>("there is object in list with empty key");
+                    if (key.empty()) throw makeNodeError<UnimplError>(get_path(), "there is object in list with empty key");
                     //直接全部收集
                     listobj->m_impl->m_new_added.insert(key);
                 }
@@ -1671,7 +1679,6 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         {
             bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
             if (spLink->upstream_task.valid()) {
-                spLink->upstream_task.wait();
                 auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
                 spList = std::dynamic_pointer_cast<ListObject>(outResult);
                 //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
@@ -1693,7 +1700,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 }
             }
             if (!spList) {
-                throw makeError<UnimplError>("no outResult List from output");
+                throw makeNodeError<UnimplError>(get_path(), "no outResult List from output");
             }
             bDirectLink = true;
             add_prefix_key(spList.get(), m_uuid);
@@ -1723,7 +1730,6 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             }
             if (spLink->upstream_task.valid()) {
                 //有任务发起，说明上游新增了或者修改了某一个节点
-                spLink->upstream_task.wait();
                 auto outResult = spLink->upstream_task.get();
                 upstream_obj_key = zsString2Std(out_param->spObject->key());
                 outResult->update_key(stdString2zs(upstream_obj_key));
@@ -1813,7 +1819,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(get_path(), "error type with `gParamType_PrimVariant`");
                 }
             }, var);
         }
@@ -1883,7 +1889,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(get_path());
                 }
             }, editvec[i]);
             vec.push_back(res);
@@ -1927,7 +1933,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     }
     case gParamType_Shader:
     {
-        throw makeError<UnimplError>("no defl value supported on the param with type `gParamType_Shader`, please connect the link by outside");
+        throw makeNodeError<UnimplError>(get_path(), "no defl value supported on the param with type `gParamType_Shader`, please connect the link by outside");
 #if 0
         if (editType == gParamType_PrimVariant) {
             zeno::PrimVar var = any_cast<zeno::PrimVar>(defl);
@@ -1946,7 +1952,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(get_path());
                 }
             }, var);
         }
@@ -2018,13 +2024,15 @@ zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
     //另一方面，如果多个节点想获取同一个节点的输出，就得排队了
     std::lock_guard scope(m_mutex);
 
-    GraphException::translated([&] {
-        doApply(exec_context.pContext);
-        }, this);
+    doApply(exec_context.pContext);
 
     //这里先不考虑takeout的情况，因为这使得临界区变得复杂
     bool bAllTaken = false;
-    zany result = this->takeOutputObject(exec_context.out_param, exec_context.in_param, bAllTaken);
+    zany result = takeOutputObject(exec_context.out_param, exec_context.in_param, bAllTaken);
+    if (!result) {
+        throw makeNodeError<UnimplError>(get_path(), "no result");
+    }
+
     if (bAllTaken && is_nocache()) {
         //TODO: 是否要在这里清理outputNode?
         //其实可以，因为这里并不是存粹的数学函数，必然有修改当前节点状态的可能。
@@ -2037,9 +2045,7 @@ zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
 zeno::reflect::Any NodeImpl::execute_get_numeric(const ExecuteContext& exec_context) {
     std::lock_guard scope(m_mutex);
 
-    GraphException::translated([&] {
-        doApply(exec_context.pContext);
-        }, this);
+    doApply(exec_context.pContext);
 
     bool bAllOutputTaken = false;
     auto result = takeOutputPrim(exec_context.out_param, exec_context.in_param, bAllOutputTaken);
@@ -2191,7 +2197,7 @@ void NodeImpl::doApply_Parameter(std::string const& name, CalcContext* pContext)
 
     std::string uuid_path = get_uuid_path() + "/" + name;
     if (pContext->uuid_node_params.find(uuid_path) != pContext->uuid_node_params.end()) {
-        throw makeError<UnimplError>("cycle reference occurs when refer paramters!");
+        throw makeNodeError<UnimplError>(get_path(), "cycle reference occurs when refer paramters!");
     }
 
     scope_exit scope_apply_param([&]() { pContext->uuid_node_params.erase(uuid_path); });
@@ -2206,34 +2212,45 @@ void NodeImpl::bypass() {
     //找到输入和输出的唯一object(如果输入有两个，并且有一个有连线，是否采纳连线这个？）
     //不考虑数值类型的输出
     if (m_outputObjs.empty() || m_inputObjs.empty()) {
-        throw makeError<UnimplError>("there is not matched input and output object when mute button is on");
+        throw makeNodeError<UnimplError>(get_path(), "there is not matched input and output object when mute button is on");
     }
     ObjectParam& input_objparam = m_inputObjs.begin()->second;
     ObjectParam& output_objparam = m_outputObjs.begin()->second;
     if (input_objparam.type != output_objparam.type) {
-        throw makeError<UnimplError>("the input and output type is not matched, when the mute button is on");
+        throw makeNodeError<UnimplError>(get_path(), "the input and output type is not matched, when the mute button is on");
     }
     output_objparam.spObject = input_objparam.spObject;
+}
+
+void NodeImpl::check_break_and_return() {
+    if (zeno::getSession().is_interrupted()) {
+        m_status = Node_DirtyReadyToRun;
+        reportStatus(m_dirty, m_status);
+        throw makeNodeError<InterruputError>(this->get_path(), get_path());
+    }
 }
 
 void NodeImpl::doApply(CalcContext* pContext) {
     if (!m_dirty)
         return;
 
+    check_break_and_return();
+
     assert(pContext);
     std::string uuid_path = get_uuid_path();
 
-    {
-        std::lock_guard scope(pContext->mtx);
-        if (pContext->visited_nodes.find(uuid_path) != pContext->visited_nodes.end()) {
-            throw makeError<UnimplError>("cycle reference occurs!");
-        }
-        pContext->visited_nodes.insert(uuid_path);
-    }
     scope_exit spUuidRecord([=] {
         std::lock_guard scope(pContext->mtx);
         pContext->visited_nodes.erase(uuid_path);
         });
+
+    {
+        std::lock_guard scope(pContext->mtx);
+        if (pContext->visited_nodes.find(uuid_path) != pContext->visited_nodes.end()) {
+            throw makeNodeError<UnimplError>(get_path(), "cycle reference occurs!");
+        }
+        pContext->visited_nodes.insert(uuid_path);
+    }
 
 #if 1
     if (m_name == "MergeScene1") {//}&& pContext->curr_iter == 1) {
@@ -2262,9 +2279,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
         preApply(pContext);
     }
 
-    if (zeno::getSession().is_interrupted()) {
-        throw makeError<InterruputError>(m_uuidPath);
-    }
+    check_break_and_return();
 
     log_debug("==> enter {}", m_name);
     {
@@ -2314,7 +2329,7 @@ bool NodeImpl::is_upstream_dirty(const std::string& in_param) const {
         return false;
     }
     else {
-        throw makeError<UnimplError>("the param is not exist");
+        throw makeNodeError<UnimplError>(get_path(), "the param is not exist");
     }
 }
 
@@ -3170,7 +3185,7 @@ void NodeImpl::update_load_info(bool bDisable) {
         //重新加载，需要拿到INode的定义
         auto iter = zeno::getSession().nodeClasses.find(m_nodecls);
         if (iter == zeno::getSession().nodeClasses.end()) {
-            throw makeError<UnimplError>("cannot load the nodeclass definition");
+            throw makeNodeError<UnimplError>(get_path(), "cannot load the nodeclass definition");
         }
         const std::unique_ptr<INodeClass>& defcls = iter->second;
         m_pNode = defcls->new_coreinst();
@@ -3264,7 +3279,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 }
             }
             else {
-                throw makeError<KeyError>(oldname, "the name does not exist on the node");
+                throw makeNodeError<KeyError>(get_path(), oldname, "the name does not exist on the node");
             }
         }
         else if (const auto& pParam = std::get_if<ParamPrimitive>(&_pair.param))
@@ -3350,7 +3365,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 }
             }
             else {
-                throw makeError<KeyError>(oldname, "the name does not exist on the node");
+                throw makeNodeError<KeyError>(get_path(), oldname, "the name does not exist on the node");
             }
         }
     }
@@ -3511,7 +3526,7 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
     //这个函数其实就是特供ShaderFinalize
     auto iter = m_inputPrims.find(param);
     if (iter == m_inputPrims.end()) {
-        throw makeError<UnimplError>("not valid param");
+        throw makeNodeError<UnimplError>(get_path(), "not valid param");
     }
     ShaderData shader;
 
@@ -3519,7 +3534,7 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
         bool bSucceed = false;
         shader.data = AnyToNumeric(defl, bSucceed);
         if (!bSucceed) {
-            throw makeError<UnimplError>("cannot get NumericValue on defl value");
+            throw makeNodeError<UnimplError>(get_path(), "cannot get NumericValue on defl value");
         }
         return shader;
     }
@@ -3532,7 +3547,7 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
         bool bSucceed = false;
         shader.data = AnyToNumeric(result, bSucceed);
         if (!bSucceed) {
-            throw makeError<UnimplError>("cannot get NumericValue");
+            throw makeNodeError<UnimplError>(get_path(), "cannot get NumericValue");
         }
     }
 
@@ -3606,7 +3621,7 @@ zany NodeImpl::get_input(std::string const &id) const {
     if (iter != m_inputPrims.end()) {
         auto& val = iter->second.result;
         if (!val.has_value()) {
-            throw makeError<UnimplError>("cannot get prim result of " + id + "`");
+            throw makeNodeError<UnimplError>(get_path(), "cannot get prim result of " + id + "`");
         }
         const ParamType paramType = iter->second.type;
         switch (paramType) {
@@ -3684,7 +3699,7 @@ zany NodeImpl::get_input(std::string const &id) const {
             }
             case zeno::types::gParamType_Shader:
             {
-                throw makeError<UnimplError>("ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
+                throw makeNodeError<UnimplError>(get_path(), "ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
             }
             case gParamType_Heatmap:
             {
@@ -3701,7 +3716,7 @@ zany NodeImpl::get_input(std::string const &id) const {
         if (iter2 != m_inputObjs.end()) {
             return iter2->second.spObject;
         }
-        throw makeError<KeyError>(id, "get_input");
+        throw makeNodeError<KeyError>(get_path(), id, "get_input");
     }
     return nullptr;
 }
@@ -3849,7 +3864,8 @@ zeno::reflect::Any NodeImpl::takeOutputPrim(PrimitiveParam* out_param, Primitive
 
 zeno::reflect::Any NodeImpl::takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
     auto iter = m_outputPrims.find(out_param);
-    if (iter == m_outputPrims.end()) throw makeError<KeyError>(out_param, "no such output prim param");
+    if (iter == m_outputPrims.end())
+        throw makeNodeError<KeyError>(get_path(), out_param, "no such output prim param");
 
     auto& outparam = iter->second;
     for (auto link : outparam.links) {
@@ -3886,7 +3902,8 @@ zany NodeImpl::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, b
 
 zany NodeImpl::takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
     auto iter = m_outputObjs.find(out_param);
-    if (iter == m_outputObjs.end()) throw makeError<KeyError>(out_param, "no such output object param");
+    if (iter == m_outputObjs.end())
+        throw makeNodeError<KeyError>(get_path(), out_param, "no such output object param");
     auto& outparam = iter->second;
     for (auto link : outparam.links) {
         if (link->toparam->name == in_param) {
@@ -3941,7 +3958,7 @@ float NodeImpl::resolve(const std::string& expression, const ParamType type) {
         return std::get<float>(res);
     }
     else {
-        throw makeError<UnimplError>("the result of formula is not numeric");
+        throw makeNodeError<UnimplError>(get_path(), "the result of formula is not numeric");
     }
     //TODO: kframe issues
     //k帧太麻烦，现阶段用不上先不处理

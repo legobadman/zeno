@@ -1019,6 +1019,7 @@ QStringList GraphModel::uuidPath2ObjPath(const zeno::ObjPath& uuidPath)
 
 GraphModel* GraphModel::getGraphByPath(const QStringList& objPath)
 {
+    //这个api非常难用，TODO: deprecated!!!
     QStringList items = objPath;
     if (items.empty())
         return this;

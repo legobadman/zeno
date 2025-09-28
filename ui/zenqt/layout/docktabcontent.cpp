@@ -699,7 +699,7 @@ void DockContent_Editor::initConnections()
     });
 
     auto calcMgr = zenoApp->calculationMgr();
-    connect(calcMgr, &CalculationMgr::calcFinished, this, [=](bool bSucceed, zeno::ObjPath, QString) {
+    connect(calcMgr, &CalculationMgr::calcFinished, this, [=](bool bSucceed, QString, QString) {
         m_btnRun->setVisible(true);
         m_btnKill->setVisible(false);
     });

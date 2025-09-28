@@ -15,6 +15,7 @@
 #include <reflect/type.hpp>
 #include <zeno/types/CurveObject.h>
 #include <zeno/core/IObject.h>
+#include <zeno/extra/GlobalError.h>
 
 
 namespace zeno {
@@ -516,6 +517,7 @@ namespace zeno {
         render_reload_policy policy;
         std::string current_ui_graph;   //当前用户在编辑器端的ui图层，以普通路径表达
         std::vector<render_update_info> objs;
+        GlobalError error;
     };
 }
 

@@ -626,6 +626,46 @@ QModelIndex GraphsManager::getNodeIndexByUuidPath(const QString& objPath)
     return m_main->indexFromUuidPath(objPath.toStdString());
 }
 
+static QModelIndex recursive_search(GraphModel* pCurrentGraph, QStringList pathList) {
+    /*pathList是一个相对于当前pCurrentGraph的路径，不是完整的路径*/
+    if (pathList.empty())
+        return QModelIndex();
+
+    if (pathList.size() == 1) {
+        //最后一项必须是节点的名字(name)
+        QString name = pathList[0];
+        return pCurrentGraph->indexFromName(name);
+    }
+    else {
+        QString subnetnode = pathList.front();
+        pathList.pop_front();
+        //观察subnetnode是不是一个子图节点
+        QModelIndex subnetnode_idx = pCurrentGraph->indexFromName(subnetnode);
+        if (!subnetnode_idx.isValid())
+            return QModelIndex();
+
+        GraphModel* pSubgraph = pCurrentGraph->subgraph(subnetnode_idx);
+        if (!pSubgraph)
+            return QModelIndex();
+
+        return recursive_search(pSubgraph, pathList);
+    }
+}
+
+QModelIndex GraphsManager::getNodeIndexByPath(const QString& path) {
+    if (!m_main)
+        return QModelIndex();
+
+    QStringList fullPathList = path.split('/', Qt::SkipEmptyParts);
+    if (fullPathList.first() == "main") {
+        fullPathList.pop_front();
+    }
+    else {
+        //TODO: assets相关
+    }
+    return recursive_search(m_main, fullPathList);
+}
+
 QStringList GraphsManager::recentFiles() const
 {
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);

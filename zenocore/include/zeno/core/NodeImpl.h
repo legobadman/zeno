@@ -245,6 +245,7 @@ namespace zeno
         zeno::reflect::Any takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
         void mark_takeover();
         bool is_takenover() const;
+        void check_break_and_return();
 
         template <class T>
         std::shared_ptr<T> get_input(std::string const& id) const {

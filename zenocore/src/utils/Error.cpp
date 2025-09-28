@@ -18,6 +18,11 @@ ZENO_API ErrorException::ErrorException(std::shared_ptr<Error> &&err) noexcept
 #endif
 }
 
+ZENO_API ErrorException::ErrorException(const std::string& path, std::shared_ptr<Error>&& err) noexcept
+    : node_path_info(path)
+    , err(std::move(err)) {
+}
+
 ZENO_API ErrorException::~ErrorException() noexcept = default;
 
 ZENO_API char const *ErrorException::what() const noexcept {
@@ -26,6 +31,10 @@ ZENO_API char const *ErrorException::what() const noexcept {
 
 ZENO_API std::shared_ptr<Error> ErrorException::getError() const noexcept {
     return err;
+}
+
+std::string ErrorException::get_node_info() const {
+    return node_path_info;
 }
 
 ZENO_API Error::Error(std::string_view message) noexcept
