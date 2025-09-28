@@ -485,7 +485,7 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     submit(infos);
 }
 
-void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString, const zeno::render_reload_info& info) {
+void DisplayWidget::onCalcFinished(bool bSucceed, QString, QString, const zeno::render_reload_info& info) {
     if (bSucceed) {
         submit(info);
     }

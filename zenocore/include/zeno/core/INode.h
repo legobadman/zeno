@@ -35,6 +35,7 @@ namespace zeno
         bool has_link_input(const zeno::String& param);
 
         bool is_upstream_dirty(const zeno::String& param) const;
+        void check_break();
 
         zeno::Vec2i get_input2_vec2i(const zeno::String& param);
         zeno::Vec2f get_input2_vec2f(const zeno::String& param);

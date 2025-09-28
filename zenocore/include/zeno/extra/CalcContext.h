@@ -13,6 +13,11 @@ struct CalcContext {
     bool isSubnetApply = false;
     int curr_iter = -1;     //用于调试
 
+    ~CalcContext() {
+        int j;
+        j = 0;
+    }
+
     std::mutex mtx;
 };
 

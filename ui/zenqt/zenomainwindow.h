@@ -184,7 +184,7 @@ public slots:
     void toggleTimelinePlay(bool bOn);
     void onZenovisFrameUpdate(bool bGLView, int frameid);
     void onCheckUpdate();
-    void onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg);
+    void onCalcFinished(bool bSucceed, QString nodeUuidPath, QString msg);
     void reload_qml();
     void onSetTimelineValue();
     void onComposeVideo();

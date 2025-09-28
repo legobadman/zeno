@@ -616,10 +616,6 @@ ZENO_API void Session::interrupt() {
     m_bInterrupted = true;
 }
 
-ZENO_API bool Session::is_interrupted() const {
-    return m_bInterrupted;
-}
-
 bool Session::is_async_executing() const {
     return m_bAsyncExecute;
 }
@@ -673,15 +669,24 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
 
     zeno::scope_exit sp([&]() { 
         m_bReentrance = false;
+        m_bInterrupted = false;
     });
 
     globalError->clearState();
 
-    //if (!currgraph.empty()) {
-    //    getGraphByPath(currgraph);
-    //}
-    mainGraph->runGraph(infos);
-    mainGraph->mark_clean();
+    try
+    {
+        mainGraph->runGraph(infos);
+    }
+    catch (ErrorException const& e) {
+        infos.error.set_node_info(e.get_node_info());
+        infos.error.set_error(e.getError());
+    }
+    catch (std::exception const& e) {}
+    catch (...) {}
+    if (!infos.error.failed()) {
+        mainGraph->mark_clean();
+    }
     return true;
 }
 
@@ -705,7 +710,8 @@ bool Session::is_frame_node(const std::string& node_cls) {
 
 ZENO_API void Session::markDirtyAndCleanResult()
 {
-    mainGraph->markDirtyAndCleanup();
+    if (mainGraph)
+        mainGraph->markDirtyAndCleanup();
 }
 
 ZENO_API void Session::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {

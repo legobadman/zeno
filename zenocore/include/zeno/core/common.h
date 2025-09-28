@@ -62,6 +62,13 @@ namespace zeno {
         NoVersionNode
     };
 
+    enum RunningStatus {
+        NoRun,
+        Running,
+        RunDone,
+        RunError
+    };
+
     enum SUBGRAPH_TYPE
     {
         SUBGRAPH_NOR = 0,

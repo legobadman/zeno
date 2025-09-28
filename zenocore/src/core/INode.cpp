@@ -115,6 +115,10 @@ namespace zeno
         return m_pAdapter->is_upstream_dirty(zsString2Std(param));
     }
 
+    void INode::check_break() {
+        m_pAdapter->check_break_and_return();
+    }
+
     void INode::clearCalcResults() {
 
     }
