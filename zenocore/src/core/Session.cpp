@@ -674,6 +674,7 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
 
     globalError->clearState();
 
+    bool bFailed = false;
     try
     {
         mainGraph->runGraph(infos);
@@ -682,9 +683,15 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
         infos.error.set_node_info(e.get_node_info());
         infos.error.set_error(e.getError());
     }
-    catch (std::exception const& e) {}
-    catch (...) {}
-    if (!infos.error.failed()) {
+    catch (std::exception const& e) {
+        std::string err = e.what();
+        std::string wtf = e.what();
+        bFailed = true;
+    }
+    catch (...) {
+        bFailed = true;
+    }
+    if (!infos.error.failed() && !bFailed) {
         mainGraph->mark_clean();
     }
     return true;

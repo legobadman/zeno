@@ -656,6 +656,24 @@ void NodeImpl::preApply(CalcContext* pContext) {
             zeno::log_warn("the param {} may not be initialized", name);
     }
 
+    //wait all
+    for (auto& [name, param] : m_inputObjs) {
+        for (auto link : param.links) {
+            auto& task = link->upstream_task;
+            if (task.valid()) {
+                task.wait();
+            }
+        }
+    }
+    for (auto& [name, param] : m_inputPrims) {
+        for (auto link : param.links) {
+            auto& task = link->upstream_task;
+            if (task.valid()) {
+                task.wait();
+            }
+        }
+    }
+
     //resolve all dependencys for input params
     for (auto& [name, param] : m_inputObjs) {
         if (param.type == gParamType_List) {
@@ -669,10 +687,10 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 auto spLink = *param.links.begin();
                 auto& task = spLink->upstream_task;
                 if (task.valid()) {
-                    //如果没有边，那么spObject在requireInput就会被清空
                     param.spObject = task.get();
                 }
                 else {
+                    //task为空，因为之前已经被执行过一次了，上游已经算好了
                     param.spObject = spLink->fromparam->spObject->clone();
                 }
                 param.spObject->update_key(stdString2zs(m_uuid));

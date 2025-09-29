@@ -151,7 +151,7 @@ private:
     void resetWildCardParamsType(bool bWildcard, NodeImpl* node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
     std::shared_ptr<Graph> _getGraphByPath(std::vector<std::string> items);
     bool isLinkValid(const EdgeInfo& edge);
-    render_update_info applyNode(std::string const& node_name);
+    render_update_info applyNode(std::string const& node_name, CalcContext* pContext);
 
     NodeImpl* m_parSubnetNode = nullptr;
     std::map<std::string, std::unique_ptr<NodeImpl>> m_nodes;  //based on uuid.
