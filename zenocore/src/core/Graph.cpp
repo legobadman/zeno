@@ -85,19 +85,14 @@ Graph *Graph::getSubnetGraph(std::string const & node_name) const {
     return node ? node->get_subgraph() : nullptr;
 }
 
-render_update_info Graph::applyNode(std::string const &node_name) {
+render_update_info Graph::applyNode(std::string const &node_name, CalcContext* pContext) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
     if (!node->is_dirty()) {
         return render_update_info();
     }
 
-    CalcContext ctx;
-    if (m_parSubnetNode) {
-        ctx.isSubnetApply = true;
-    }
-
-    node->execute(&ctx);
+    node->execute(pContext);
 
     render_update_info info;
     if (node->is_view()) {
@@ -124,10 +119,17 @@ void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& i
         (std::launch::async | std::launch::deferred) : std::launch::deferred;
     clearContainerUpdateInfo();
 
+    CalcContext ctx;
     std::vector<std::future<render_update_info>> tasks;
     for (auto const& node_name: nodes) {
-        tasks.push_back(std::async(launch_method, &Graph::applyNode, this, node_name));
+        tasks.push_back(std::async(launch_method, &Graph::applyNode, this, node_name, &ctx));
     }
+    for (auto& task : tasks) {
+        if (task.valid()) {
+            task.wait();
+        }
+    }
+
     for (auto& task : tasks) {
         infos.objs.push_back(task.get());
     }
