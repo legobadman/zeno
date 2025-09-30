@@ -232,11 +232,12 @@ namespace zeno
         prim->quads.clear();
     }
 
-    zeno::Vector<SharedPtr<zeno::PrimitiveObject>> get_prims_from_list(SharedPtr<zeno::ListObject> spList) {
-        zeno::Vector<SharedPtr<zeno::PrimitiveObject>> vec;
+    zeno::Vector<std::unique_ptr<zeno::PrimitiveObject>> get_prims_from_list(zeno::ListObject* spList) {
+        zeno::Vector<std::unique_ptr<zeno::PrimitiveObject>> vec;
         for (auto obj : spList->get()) {
-            auto prim = std::dynamic_pointer_cast<zeno::PrimitiveObject>(obj);
-            vec.push_back(prim);
+            auto prim = dynamic_cast<zeno::PrimitiveObject*>(obj);
+            if (prim)
+                vec.push_back(safe_uniqueptr_cast<PrimitiveObject>(prim->clone()));
         }
         return vec;
     }
@@ -570,7 +571,7 @@ namespace zeno
         primKillDeadLoops(prim);
     }
 
-    zeno::Vector<SharedPtr<PrimitiveObject>> PrimUnmergeFaces(PrimitiveObject* prim, String tagAttr) {
+    zeno::Vector<std::unique_ptr<PrimitiveObject>> PrimUnmergeFaces(PrimitiveObject* prim, String tagAttr) {
         if (!prim->verts.size()) return {};
 
         if (prim->tris.size() > 0 && prim->polys.size() > 0) {
@@ -579,7 +580,7 @@ namespace zeno
 
         std::string sTagAttr = zsString2Std(tagAttr);
 
-        Vector<SharedPtr<PrimitiveObject>> list;
+        Vector<std::unique_ptr<PrimitiveObject>> list;
 
         std::map<int, std::vector<int>> mapping;
         if (prim->tris.size() > 0) {
@@ -591,7 +592,7 @@ namespace zeno
                 mapping[attr[i]].push_back(i);
             }
             for (auto& [key, val] : mapping) {
-                auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(prim->clone());
+                auto new_prim = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
                 new_prim->tris.resize(val.size());
                 for (auto i = 0; i < val.size(); i++) {
                     new_prim->tris[i] = prim->tris[val[i]];
@@ -615,7 +616,7 @@ namespace zeno
                 mapping[attr[i]].push_back(i);
             }
             for (auto& [key, val] : mapping) {
-                auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(prim->clone());
+                auto new_prim = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
                 new_prim->polys.resize(val.size());
                 for (auto i = 0; i < val.size(); i++) {
                     new_prim->polys[i] = prim->polys[val[i]];

@@ -3,7 +3,7 @@
 
 namespace zeno
 {
-    IndiceMeshTopology::IndiceMeshTopology(std::shared_ptr<PrimitiveObject> prim)
+    IndiceMeshTopology::IndiceMeshTopology(PrimitiveObject* prim)
         : m_indiceMesh_topo(std::make_unique<PrimitiveObject>(*prim))
         , m_point_size(prim->size())
     {
@@ -57,12 +57,11 @@ namespace zeno
     }
 
     std::shared_ptr<IGeomTopology> IndiceMeshTopology::clone() {
-        auto newtopo = std::make_shared<PrimitiveObject>(*m_indiceMesh_topo);
-        return std::make_shared<IndiceMeshTopology>(newtopo);
+        return std::make_shared<IndiceMeshTopology>(m_indiceMesh_topo.get());
     }
 
-    std::shared_ptr<PrimitiveObject> IndiceMeshTopology::toPrimitiveObject() const {
-        return std::make_shared<PrimitiveObject>(*m_indiceMesh_topo);
+    std::unique_ptr<PrimitiveObject> IndiceMeshTopology::toPrimitiveObject() const {
+        return std::make_unique<PrimitiveObject>(*m_indiceMesh_topo);
     }
 
     std::vector<vec3i> IndiceMeshTopology::tri_indice() const {

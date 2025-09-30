@@ -10,15 +10,15 @@
 namespace zeno {
 
 template <class T>
-inline bool objectIsLiterial(std::shared_ptr<IObject> const &ptr) {
+inline bool objectIsLiterial(IObject* ptr) {
     if constexpr (std::is_base_of_v<IObject, T>) {
-        return dynamic_cast<T *>(ptr.get());
+        return dynamic_cast<T *>(ptr);
     } else if constexpr (std::is_same_v<std::string, T>) {
-        return dynamic_cast<StringObject *>(ptr.get());
+        return dynamic_cast<StringObject *>(ptr);
     } else if constexpr (std::is_same_v<NumericValue, T>) {
-        return dynamic_cast<NumericObject *>(ptr.get());
+        return dynamic_cast<NumericObject *>(ptr);
     } else {
-        auto p = dynamic_cast<NumericObject *>(ptr.get());
+        auto p = dynamic_cast<NumericObject *>(ptr);
         return p && std::visit([&] (auto const &val) -> bool {
             return std::is_constructible_v<T, std::decay_t<decltype(val)>>;
         }, p->value);
@@ -26,15 +26,15 @@ inline bool objectIsLiterial(std::shared_ptr<IObject> const &ptr) {
 }
 
 template <class T>
-inline bool objectIsRawLiterial(std::shared_ptr<IObject> const &ptr) {
+inline bool objectIsRawLiterial(IObject* ptr) {
     if constexpr (std::is_base_of_v<IObject, T>) {
-        return dynamic_cast<T *>(ptr.get());
+        return dynamic_cast<T *>(ptr);
     } else if constexpr (std::is_same_v<std::string, T>) {
-        return dynamic_cast<StringObject *>(ptr.get());
+        return dynamic_cast<StringObject *>(ptr);
     } else if constexpr (std::is_same_v<NumericValue, T>) {
-        return dynamic_cast<NumericObject *>(ptr.get());
+        return dynamic_cast<NumericObject *>(ptr);
     } else {
-        auto p = dynamic_cast<NumericObject *>(ptr.get());
+        auto p = dynamic_cast<NumericObject *>(ptr);
         return p && std::visit([&] (auto const &val) -> bool {
             return std::is_same_v<T, std::decay_t<decltype(val)>>;
         }, p->value);
@@ -42,17 +42,17 @@ inline bool objectIsRawLiterial(std::shared_ptr<IObject> const &ptr) {
 }
 
 template <class T>
-inline auto objectToLiterial(std::shared_ptr<IObject> const &ptr, std::string const &msg = "objectToLiterial") {
+inline auto objectToLiterial(IObject* ptr, std::string const &msg = "objectToLiterial") {
     if constexpr (std::is_base_of_v<IObject, T>) {
         return safe_dynamic_cast<T>(ptr, msg);
     } else if constexpr (std::is_same_v<std::string, T>) {
-        return safe_dynamic_cast<StringObject>(ptr.get(), msg)->get();
+        return safe_dynamic_cast<StringObject>(ptr, msg)->get();
     } else if constexpr (std::is_same_v<NumericValue, T>) {
-        return safe_dynamic_cast<NumericObject>(ptr.get(), msg)->get();
+        return safe_dynamic_cast<NumericObject>(ptr, msg)->get();
     } else if constexpr (std::is_same_v<glm::mat3, T>) {
-        return std::get<glm::mat3>(safe_dynamic_cast<MatrixObject>(ptr.get(), msg)->m);
+        return std::get<glm::mat3>(safe_dynamic_cast<MatrixObject>(ptr, msg)->m);
     } else if constexpr (std::is_same_v<glm::mat4, T>) {
-        return std::get<glm::mat4>(safe_dynamic_cast<MatrixObject>(ptr.get(), msg)->m);
+        return std::get<glm::mat4>(safe_dynamic_cast<MatrixObject>(ptr, msg)->m);
     }
     else {
         return std::visit([&] (auto const &val) -> T {
@@ -62,7 +62,7 @@ inline auto objectToLiterial(std::shared_ptr<IObject> const &ptr, std::string co
             } else {
                 throw makeError<TypeError>(typeid(T), typeid(T1), msg);
             }
-        }, safe_dynamic_cast<NumericObject>(ptr.get(), msg)->get());
+        }, safe_dynamic_cast<NumericObject>(ptr, msg)->get());
     }
 }
 

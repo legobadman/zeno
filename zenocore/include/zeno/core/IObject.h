@@ -62,7 +62,7 @@ namespace zeno {
         IObject(const IObject& rhs);
         IObject& operator=(const IObject& rhs);
         virtual ~IObject();     // don't consider abi problem right now.
-        virtual zeno::SharedPtr<IObject> clone() const = 0; //TODO：abi compatible for shared_ptr
+        virtual std::unique_ptr<zeno::IObject> clone() const = 0; //TODO：abi compatible for shared_ptr
         virtual String key() const;
         virtual void update_key(const String& key);
         IUserData* userData();
@@ -75,8 +75,8 @@ namespace zeno {
     template <class Derived, class CustomBase = IObject>
     struct IObjectClone : CustomBase {
 
-        virtual zeno::SharedPtr<IObject> clone() const override {
-            auto spClonedObj = std::make_shared<Derived>(static_cast<Derived const&>(*this));
+        virtual std::unique_ptr<IObject> clone() const override {
+            auto spClonedObj = std::make_unique<Derived>(static_cast<Derived const&>(*this));
             spClonedObj->m_usrData = std::move(m_usrData->clone());
             return spClonedObj;
         }
@@ -87,5 +87,5 @@ namespace zeno {
         }
     };
 
-    using zany = zeno::SharedPtr<zeno::IObject>;
+    using zany = std::unique_ptr<zeno::IObject>;
 }

@@ -259,14 +259,14 @@ namespace zeno
     }
 
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> mergeObjects(
-        std::shared_ptr<zeno::ListObject> spList,
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> mergeObjects(
+        zeno::ListObject* spList,
         std::string const& tagAttr,
         bool tag_on_vert,
         bool tag_on_face)
     {
         size_t nTotalPts = 0, nTotalFaces = 0, nVertices = 0;
-        const std::vector<zeno::SharedPtr<zeno::GeometryObject_Adapter>>& geoobjs = spList->m_impl->get<zeno::GeometryObject_Adapter>();
+        const std::vector<zeno::GeometryObject_Adapter*>& geoobjs = spList->m_impl->get<zeno::GeometryObject_Adapter>();
         for (auto spObject : geoobjs) {
             nTotalPts += spObject->npoints();
             nTotalFaces += spObject->nfaces();
@@ -304,7 +304,7 @@ namespace zeno
         pt_offset = 0;
         face_offset = 0;
         for (int iGeom = 0; iGeom < geoobjs.size(); iGeom++) {
-            auto elemObj = geoobjs[iGeom].get();
+            auto elemObj = geoobjs[iGeom];
             int nPts = elemObj->npoints();
             int nFaces = elemObj->nfaces();
             mergedObj->inheritAttributes(elemObj, -1, pt_offset, { "pos" }, face_offset, {});
@@ -341,17 +341,17 @@ namespace zeno
 
             int faceset_count = p->userData()->get_int("faceset_count", 0);
             if (faceset_count == 0) {
-                geom_set_faceset(p.get(), "defFS");
+                geom_set_faceset(p, "defFS");
                 faceset_count = 1;
             }
-            set_special_attr_remap(p.get(), "faceset", facesetNameMap);
+            set_special_attr_remap(p, "faceset", facesetNameMap);
 
             int path_count = p->userData()->get_int("abcpath_count", 0);
             if (path_count == 0) {
-                geom_set_abcpath(p.get(), "/ABC/unassigned");
+                geom_set_abcpath(p, "/ABC/unassigned");
                 path_count = 1;
             }
-            set_special_attr_remap(p.get(), "abcpath", abcpathNameMap);
+            set_special_attr_remap(p, "abcpath", abcpathNameMap);
         }
 
         //合并UserData
@@ -670,8 +670,8 @@ namespace zeno
         return true;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> divideObject(
-        std::shared_ptr<zeno::GeometryObject_Adapter> input_object,
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> divideObject(
+        zeno::GeometryObject_Adapter* input_object,
         DivideKeep keep,
         zeno::vec3f center_pos,
         zeno::vec3f direction
@@ -797,8 +797,8 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> scatter(
-        std::shared_ptr<zeno::GeometryObject_Adapter> input,
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> scatter(
+        zeno::GeometryObject_Adapter* input,
         const std::string& sampleRegion,
         const int nPointCount,
         int seed)
@@ -873,7 +873,7 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
         int nPoints = 0, nFaces = faces.size();
         for (auto& facePts : faces) {
             nPoints += facePts.size();
@@ -932,7 +932,7 @@ namespace zeno
         }
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold) {
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold) {
 
         std::vector<vec3f> points = input->m_impl->points_pos();
         _PointCloud cloud{ points };

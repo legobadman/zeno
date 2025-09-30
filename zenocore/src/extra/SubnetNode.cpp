@@ -330,9 +330,9 @@ void SubnetNode::apply() {
                 //要拷贝一下才能赋值到SubInput的port参数
                 zany spObject = iter->second.spObject->clone();
                 spObject->update_key(stdString2zs(subinput->get_uuid_path()));
-                bool ret = subinput->set_output("port", spObject);
+                bool ret = subinput->set_output("port", std::move(spObject));
                 assert(ret);
-                ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
+                ret = subinput->set_output("hasValue", std::make_unique<NumericObject>(true));
                 assert(ret);
             }
         }
@@ -342,12 +342,12 @@ void SubnetNode::apply() {
             if (iter2 != m_inputPrims.end()) {
                 bool ret = subinput->set_primitive_output("port", iter2->second.result);
                 assert(ret);
-                ret = subinput->set_output("hasValue", std::make_shared<NumericObject>(true));
+                ret = subinput->set_output("hasValue", std::make_unique<NumericObject>(true));
                 assert(ret);
             }
             else {
-                subinput->set_output("port", std::make_shared<DummyObject>());
-                subinput->set_output("hasValue", std::make_shared<NumericObject>(false));
+                subinput->set_output("port", std::make_unique<DummyObject>());
+                subinput->set_output("hasValue", std::make_unique<NumericObject>(false));
             }
         }
     }
@@ -368,18 +368,14 @@ void SubnetNode::apply() {
         auto suboutput = m_subgraph->getNode(suboutput_node);
         //suboutput的结果是放在Input的port上面（因为Suboutput放一个输出参数感觉怪怪的）
         bool bPrimoutput = suboutput->get_input_object_params().empty();
-        zany result = suboutput->get_input("port");
-        if (auto numobj = std::dynamic_pointer_cast<NumericObject>(result)) {
-            int j;
-            j = 0;
-        }
+        zany result = suboutput->clone_input("port");
         if (result) {
             bSetOutput = true;
             zany spObject = result->clone();
             if (!bPrimoutput) {
                 spObject->update_key(stdString2zs(get_uuid_path()));
             }
-            bool ret = set_output(suboutput_node, spObject);
+            bool ret = set_output(suboutput_node, std::move(spObject));
             assert(ret);
         }
     }
@@ -457,179 +453,5 @@ void SubnetNode::setCustomUi(const CustomUI& ui)
     m_customUi.uistyle.background = "#1D5F51";
     m_customUi.uistyle.iconResPath = ":/icons/node/subnet.svg";
 }
-
-
-//TODO：整理DopNetWork，现在暂时不可用，只保证编译
-DopNetwork::DopNetwork() 
-    : SubnetNode(nullptr)
-    , m_bEnableCache(true)
-    , m_bAllowCacheToDisk(false)
-    , m_maxCacheMemoryMB(5000)
-    , m_currCacheMemoryMB(5000)
-    , m_totalCacheSizeByte(0)
-{
-}
-
-void DopNetwork::apply()
-{
-    auto& sess = zeno::getSession();
-    int startFrame = sess.globalState->getStartFrame();
-    int currentFarme = sess.globalState->getFrameId();
-    zeno::scope_exit sp([&currentFarme, &sess]() {
-        sess.globalState->updateFrameId(currentFarme);
-    });
-    //重新计算
-    for (int i = startFrame; i <= currentFarme; i++) {
-        if (m_frameCaches.find(i) == m_frameCaches.end()) {
-            sess.globalState->updateFrameId(i);
-            m_subgraph->markDirtyAndCleanup();
-            zeno::SubnetNode::apply();
-
-            const ObjectParams& outputObjs = get_output_object_params();
-            size_t currentFrameCacheSize = 0;
-            for (auto const& objparam : outputObjs) {
-                currentFrameCacheSize += getObjSize(get_output_obj(objparam.name).get());
-            }
-            while (((m_totalCacheSizeByte + currentFrameCacheSize) / 1024 / 1024) > m_currCacheMemoryMB) {
-                if (!m_frameCaches.empty()) {
-                    auto lastIter = --m_frameCaches.end();
-                    if (lastIter->first > currentFarme) {//先从最后一帧删
-
-                        m_totalCacheSizeByte = m_totalCacheSizeByte - m_frameCacheSizes[lastIter->first];
-                        CALLBACK_NOTIFY(dopnetworkFrameRemoved, lastIter->first)
-                        m_frameCaches.erase(lastIter);
-                        m_frameCacheSizes.erase(--m_frameCacheSizes.end());
-                    } else {
-                        m_totalCacheSizeByte = m_totalCacheSizeByte - m_frameCacheSizes.begin()->second;
-                        CALLBACK_NOTIFY(dopnetworkFrameRemoved, m_frameCaches.begin()->first)
-                        m_frameCaches.erase(m_frameCaches.begin());
-                        m_frameCacheSizes.erase(m_frameCacheSizes.begin());
-                    }
-                }
-                else {
-                    break;
-                }
-            }
-            for (auto const& objparam : outputObjs) {
-                m_frameCaches[i].insert({ objparam.name, get_output_obj(objparam.name) });
-            }
-            m_frameCacheSizes[i] = currentFrameCacheSize;
-            m_totalCacheSizeByte += currentFrameCacheSize;
-            CALLBACK_NOTIFY(dopnetworkFrameCached, i)
-        }
-        else {
-            if (i == currentFarme) {
-                for (auto const& [name, obj] : m_frameCaches[i]) {
-                    if (obj) {
-                        bool ret = set_output(name, obj);
-                        assert(ret);
-                    }
-                }
-            }
-        }
-    }
-}
-
-void DopNetwork::setEnableCache(bool enable)
-{
-    m_bEnableCache = enable;
-}
-
-void DopNetwork::setAllowCacheToDisk(bool enable)
-{
-    m_bAllowCacheToDisk = enable;
-}
-
-void DopNetwork::setMaxCacheMemoryMB(int size)
-{
-    m_maxCacheMemoryMB = size;
-}
-
-void DopNetwork::setCurrCacheMemoryMB(int size)
-{
-    m_currCacheMemoryMB = size;
-}
-
-template <class T0>
-size_t getAttrVectorSize(zeno::AttrVector<T0> const& arr) {
-    size_t totalSize = 0;
-    totalSize += sizeof(arr);
-    totalSize += sizeof(T0) * arr.values.size();
-    for (const auto& pair : arr.attrs) {
-        totalSize += sizeof(pair.first) + pair.first.capacity();
-        std::visit([&totalSize](auto& val) {
-            if (!val.empty()) {
-                using T = std::decay_t<decltype(val[0])>;
-                totalSize += sizeof(T) * val.size();
-            }
-        }, pair.second);
-    }
-    return totalSize;
-};
-
-size_t DopNetwork::getObjSize(IObject* obj)
-{
-    size_t totalSize = 0;
-    if (PrimitiveObject* primobj = dynamic_cast<PrimitiveObject*>(obj)) {
-        totalSize += sizeof(*primobj);
-        totalSize += getAttrVectorSize(primobj->verts);
-        totalSize += getAttrVectorSize(primobj->points);
-        totalSize += getAttrVectorSize(primobj->lines);
-        totalSize += getAttrVectorSize(primobj->tris);
-        totalSize += getAttrVectorSize(primobj->quads);
-        totalSize += getAttrVectorSize(primobj->loops);
-        totalSize += getAttrVectorSize(primobj->polys);
-        totalSize += getAttrVectorSize(primobj->edges);
-        totalSize += getAttrVectorSize(primobj->uvs);
-        if (MaterialObject* mtlPtr = primobj->mtl.get()) {
-            totalSize += sizeof(*mtlPtr);
-            totalSize += mtlPtr->serializeSize();
-        }
-        if (InstancingObject* instPtr = primobj->inst.get()) {
-            totalSize += sizeof(*instPtr);
-            totalSize += instPtr->serializeSize();
-        }
-    }
-    else if (CameraObject* camera = dynamic_cast<CameraObject*>(obj)) {
-        totalSize += sizeof(*camera);
-        totalSize += sizeof(CameraData);
-    }
-    else if (LightObject* light = dynamic_cast<LightObject*>(obj)) {
-        totalSize += sizeof(*light);
-        totalSize += sizeof(LightData);
-    }
-    else if (MaterialObject* matobj = dynamic_cast<MaterialObject*>(obj)) {
-        totalSize += sizeof(*matobj);
-        totalSize += matobj->serializeSize();
-    }
-    else if (ListObject* list = dynamic_cast<ListObject*>(obj)) {
-        totalSize += sizeof(*list);
-        totalSize += list->m_impl->dirtyIndiceSize() * sizeof(int);
-        for (int i = 0; i > list->m_impl->size(); i++) {
-            totalSize += getObjSize(list->m_impl->get(i).get());
-        }
-    }
-    else {//dummy obj
-    }
-    return totalSize;
-}
-
-void DopNetwork::resetFrameState()
-{
-    for (auto& [idx, _] : m_frameCaches) {
-        CALLBACK_NOTIFY(dopnetworkFrameRemoved, idx)
-    }
-    m_frameCaches.clear();
-    m_frameCacheSizes.clear();
-}
-
-#if 0 //TODO
-ZENDEFNODE(DopNetwork, {
-    {},
-    {},
-    {},
-    {"dop"},
-});
-#endif
 
 }

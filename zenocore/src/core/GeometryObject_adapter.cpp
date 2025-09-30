@@ -9,7 +9,7 @@
 namespace zeno
 {
     zany GeometryObject_Adapter::clone() const {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = std::make_unique<GeometryObject>(*m_impl);
         newGeom->m_usrData = this->m_usrData->clone();  //TODO:调整写法
         return newGeom;
@@ -320,34 +320,34 @@ namespace zeno
         return m_impl->vertex_info(linear_vertex_id);
     }
 
-    zeno::SharedPtr<PrimitiveObject> GeometryObject_Adapter::toPrimitiveObject() const {
-        zeno::SharedPtr<PrimitiveObject> spPrim = m_impl->toPrimitive();
+    std::unique_ptr<PrimitiveObject> GeometryObject_Adapter::toPrimitiveObject() const {
+        std::unique_ptr<PrimitiveObject> spPrim = m_impl->toPrimitive();
         spPrim->m_usrData = m_usrData->clone();
         return spPrim;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> GeometryObject_Adapter::toIndiceMeshesTopo() const {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> GeometryObject_Adapter::toIndiceMeshesTopo() const {
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = m_impl->toIndiceMeshesTopo();
         newGeom->m_usrData = this->m_usrData->clone();
         return newGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> GeometryObject_Adapter::toHalfEdgeTopo() const {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> GeometryObject_Adapter::toHalfEdgeTopo() const {
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = m_impl->toHalfEdgeTopo();
         newGeom->m_usrData = this->m_usrData->clone();
         return newGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type) {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type) {
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(type);
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(type, bTriangle, nPoints, nFaces, bInitFaces);
         //提前添加pos
         std::vector<vec3f> points(nPoints);
@@ -355,27 +355,27 @@ namespace zeno
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(
         GeomTopoType type,
         bool bTriangle,
         const std::vector<zeno::vec3f>& points,
         const std::vector<std::vector<int>>& faces)
     {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(type, bTriangle, points.size(), faces);
         pGeom->m_impl->create_attr(ATTR_POINT, "pos", points);
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim) {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim) {
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(prim);
         pGeom->m_usrData = prim->m_usrData->clone();
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(zeno::SharedPtr<GeometryObject_Adapter> pGeom) {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> clone_GeometryObject(std::unique_ptr<GeometryObject_Adapter> pGeom) {
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = std::make_unique<GeometryObject>(*pGeom->m_impl);
         newGeom->m_usrData = pGeom->m_usrData->clone();
         return newGeom;

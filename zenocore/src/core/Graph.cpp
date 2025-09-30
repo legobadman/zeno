@@ -48,12 +48,6 @@ Graph::~Graph() {
 
 }
 
-zany Graph::getNodeInput(std::string const& sn, std::string const& ss) const {
-    //todo: deprecated
-    auto node = safe_at(m_nodes, sn, "node name").get();
-    return node->get_input(ss);
-}
-
 void Graph::clearNodes() {
     m_nodes.clear();
 }
@@ -97,7 +91,10 @@ render_update_info Graph::applyNode(std::string const &node_name, CalcContext* p
     render_update_info info;
     if (node->is_view()) {
         info.reason = Update_Reconstruct;
-        info.spObject = node->get_default_output_object();
+        auto pObj = node->get_default_output_object();
+        if (pObj) {
+            info.spObject = pObj->clone();
+        }
         info.uuidpath_node_objkey = node->get_uuid_path();
 
         if (node->is_nocache()) {
@@ -269,38 +266,10 @@ std::map<std::string, zany> Graph::callSubnetNode(std::string const &id,
     return std::map<std::string, zany>();
 }
 
-std::map<std::string, zany> Graph::callTempNode(std::string const &id,
-        std::map<std::string, zany> inputs) {
-
-    //DEPRECARED.
-    return {};
-#if 0
-    auto cl = safe_at(getSession().nodeClasses, id, "node class name").get();
-    const std::string& name = generateUUID();
-    auto se = cl->new_instance(shared_from_this(), name);
-    se->directly_setinputs(inputs);
-    se->doOnlyApply();
-    return se->getoutputs();
-#endif
-}
-
 void Graph::addNodeOutput(std::string const& id, std::string const& par) {
     // add "dynamic" output which is not descriped by core.
     //todo: deprecated.
     //safe_at(nodes, id, "node name")->outputs[par] = nullptr;
-}
-
-void Graph::setNodeParam(std::string const &id, std::string const &par,
-    std::variant<int, float, std::string, zany> const &val) {
-    auto parid = par + ":";
-    std::visit([&] (auto const &val) {
-        using T = std::decay_t<decltype(val)>;
-        if constexpr (std::is_same_v<T, zany>) {
-            setNodeInput(id, parid, val);
-        } else {
-            setNodeInput(id, parid, objectFromLiterial(val));
-        }
-    }, val);
 }
 
 static void initSpecialNode(zeno::NodeImpl* pNodeImpl, const NodeData& node) {

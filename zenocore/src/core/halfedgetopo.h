@@ -40,7 +40,6 @@ namespace zeno
     {
         HalfEdgeTopology() = default;
         HalfEdgeTopology(const HalfEdgeTopology& rhs);
-        HalfEdgeTopology(std::shared_ptr<PrimitiveObject> prim);
         HalfEdgeTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         virtual ~HalfEdgeTopology();
 
@@ -48,8 +47,7 @@ namespace zeno
         std::shared_ptr<IGeomTopology> clone() override;
 
         void initFromPrim(PrimitiveObject* prim);
-        void toPrimitive(std::shared_ptr<PrimitiveObject> spPrim);
-        std::shared_ptr<PrimitiveObject> getPrimTopo() const;
+        void toPrimitive(PrimitiveObject* spPrim);
 
         HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
         std::tuple<HF_Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
@@ -105,7 +103,6 @@ namespace zeno
         void update_linear_vertex();
 
     private:
-        std::shared_ptr<PrimitiveObject> m_indiceMesh_topo;
         std::vector<std::shared_ptr<HF_Point>> m_points;
         std::vector<std::shared_ptr<HF_Face>> m_faces;
         std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;

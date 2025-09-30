@@ -15,8 +15,8 @@ namespace zeno
         m_impl = std::make_unique<ListObject_impl>(*rhs.m_impl);
     }
 
-    zeno::SharedPtr<IObject> ListObject::clone() const {
-        return std::make_shared<ListObject>(*this);
+    zany ListObject::clone() const {
+        return std::make_unique<ListObject>(*this);
     }
 
     void ListObject::Delete() {
@@ -35,7 +35,7 @@ namespace zeno
 
         base::update_key(key);
         for (int i = 0; i < m_impl->m_objects.size(); i++) {
-            zany obj = m_impl->m_objects[i];
+            auto& obj = m_impl->m_objects[i];
             if (obj->key().empty()) {
                 std::string newkey = zsString2Std(m_key) + "/" + std::to_string(i);
                 obj->update_key(stdString2zs(newkey));
@@ -51,13 +51,13 @@ namespace zeno
         return m_impl->size();
     }
 
-    zany ListObject::get(int index) {
+    IObject* ListObject::get(int index) {
         return m_impl->get(index);
     }
 
-    zeno::Vector<zany> ListObject::get() {
-        std::vector<zany> v = m_impl->get();
-        zeno::Vector<zany> vec(v.size());
+    zeno::Vector<IObject*> ListObject::get() {
+        std::vector<IObject*> v = m_impl->get();
+        zeno::Vector<IObject*> vec(v.size());
         for (int i = 0; i < vec.size(); i++) {
             vec[i] = v[i];
         }
@@ -65,20 +65,18 @@ namespace zeno
     }
 
     void ListObject::push_back(zany&& obj) {
-        m_impl->push_back(obj);
+        m_impl->push_back(std::move(obj));
     }
 
-    void ListObject::push_back(const zany& obj) {
-        m_impl->push_back(obj);
+    //void ListObject::set(const zeno::Vector<zany>& arr) {
+    //    m_impl->set(zeVec2stdVec(arr));
+    //}
+
+    void ListObject::set(size_t index, zany&& obj) {
+        m_impl->set(index, std::move(obj));
     }
 
-    void ListObject::set(const zeno::Vector<zany>& arr) {
-        m_impl->set(zeVec2stdVec(arr));
-    }
 
-    void ListObject::set(size_t index, zany obj) {
-        m_impl->set(index, obj);
-    }
 
     ListObject_impl::ListObject_impl(const ListObject_impl& listobj) {
         dirtyIndice = listobj.dirtyIndice;
@@ -92,6 +90,16 @@ namespace zeno
         m_modify = listobj.m_modify;
         m_new_added = listobj.m_new_added;
         m_new_removed = listobj.m_new_removed;
+    }
+
+    ListObject_impl::ListObject_impl(const std::vector<zany>& arrin) {
+        set(arrin);
+    }
+
+    void ListObject_impl::set(const std::vector<zany>& arr) {
+        for (auto& obj : arr) {
+            m_objects.push_back(obj->clone());
+        }
     }
 
     void ListObject_impl::remove_children() {
@@ -116,32 +124,20 @@ namespace zeno
         m_objects.resize(sz);
     }
 
-    void ListObject_impl::append(zany spObj) {
-        m_objects.push_back(spObj);
-        //spObj->set_parent(this);
-        //m_ptr2Index.insert(std::make_pair((uint16_t)spObj.get(), m_objects.size()));
-    }
-
     void ListObject_impl::append(zany&& spObj) {
-        m_objects.push_back(spObj);
-        //spObj->set_parent(this);  //Ŀǰ��ʱ����Ҫparent��ϵ
-        //m_ptr2Index.insert(std::make_pair((uint16_t)spObj.get(), m_objects.size()));
+        m_objects.push_back(std::move(spObj));
     }
 
-    zany ListObject_impl::get(int index) const {
+    IObject* ListObject_impl::get(int index) const {
         if (0 > index || index >= m_objects.size())
             return nullptr;
-        return m_objects[index];
+        return m_objects[index].get();
     }
 
-    void ListObject_impl::set(const std::vector<zany>& arr) {
-        m_objects = arr;
-    }
-
-    void ListObject_impl::set(size_t index, zany obj) {
+    void ListObject_impl::set(size_t index, zany&& obj) {
         if (0 > index || index >= m_objects.size())
             return;
-        m_objects[index] = obj;
+        m_objects[index] = std::move(obj);
     }
 
     void ListObject_impl::mark_dirty(int index) {
@@ -161,15 +157,11 @@ namespace zeno
     }
 
     void ListObject_impl::emplace_back(zany&& obj) {
-        append(obj);
+        append(std::move(obj));
     }
 
     void ListObject_impl::push_back(zany&& obj) {
-        append(obj);
-    }
-
-    void ListObject_impl::push_back(const zany& obj) {
-        append(obj);
+        append(std::move(obj));
     }
 
     void ListObject_impl::clear() {
@@ -179,14 +171,13 @@ namespace zeno
         m_objects.clear();
     }
 
-    ZENO_API zeno::SharedPtr<ListObject> create_ListObject() {
-        zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
-        return pList;
+    std::unique_ptr<ListObject> create_ListObject() {
+        return std::make_unique<ListObject>();
     }
 
-    ZENO_API zeno::SharedPtr<ListObject> create_ListObject(zeno::Vector<zany> arrin) {
-        zeno::SharedPtr<ListObject> pList = std::make_shared<ListObject>();
-        pList->m_impl =std::make_unique<ListObject_impl>(zeVec2stdVec(arrin));
+    std::unique_ptr<ListObject> create_ListObject(std::vector<zany>&& arrin) {
+        auto pList = std::make_unique<ListObject>();
+        pList->m_impl = std::make_unique<ListObject_impl>(arrin);
         return pList;
     }
 }

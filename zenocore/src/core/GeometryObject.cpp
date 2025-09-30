@@ -73,7 +73,7 @@ namespace zeno
         }
     }
 
-    GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim)
+    GeometryObject::GeometryObject(PrimitiveObject* spPrim)
         : m_type(Topo_IndiceMesh)
     {
         m_spTopology = create_indicemesh_topo(spPrim);
@@ -123,8 +123,8 @@ namespace zeno
         return m_type;
     }
 
-    std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
-        std::shared_ptr<PrimitiveObject> spPrim = std::make_shared<PrimitiveObject>();
+    std::unique_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
+        auto spPrim = std::make_unique<PrimitiveObject>();
         std::vector<vec3f> vec_pos = points_pos();
         int nPoints = m_spTopology->npoints();
         assert(nPoints == vec_pos.size());
@@ -137,14 +137,14 @@ namespace zeno
             if (name == "pos") {
                 continue;
             }
-            sp_attr_data.to_prim_attr(spPrim, true, false, name);
+            sp_attr_data.to_prim_attr(spPrim.get(), true, false, name);
         }
 
         for (auto& [name, sp_attr_data] : m_face_attrs) {
-            sp_attr_data.to_prim_attr(spPrim, false, m_spTopology->is_base_triangle(), name);
+            sp_attr_data.to_prim_attr(spPrim.get(), false, m_spTopology->is_base_triangle(), name);
         }
 
-        std::shared_ptr<PrimitiveObject> primTopo = get_primitive_topo(m_spTopology);
+        auto primTopo = get_primitive_topo(m_spTopology);
         //拷拓扑就行
         spPrim->lines.values = primTopo->lines.values;
         spPrim->tris.values = primTopo->tris.values;
@@ -241,7 +241,7 @@ namespace zeno
         }, var_vec);
     }
 
-    void GeometryObject::initFromPrim(std::shared_ptr<PrimitiveObject> prim) {
+    void GeometryObject::initFromPrim(PrimitiveObject* prim) {
         //不考虑points，lines, quads, edges, mtl. inst，遇到再处理
         if (!prim->points->empty() || !prim->lines->empty() || !prim->edges->empty()
             || !prim->quads->empty()) {

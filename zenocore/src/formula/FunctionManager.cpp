@@ -111,7 +111,7 @@ namespace zeno {
     void FunctionManager::executeZfx(std::shared_ptr<ZfxASTNode> root, ZfxContext* pCtx) {
         //printSyntaxTree(root, pCtx->code);
         //检查语法树，观察是否存在几何拓扑的增删改，如有则转为半边结构的拓扑
-        auto spGeom = std::static_pointer_cast<GeometryObject_Adapter>(pCtx->spObject);
+        auto spGeom = static_cast<GeometryObject_Adapter*>(pCtx->spObject.get());
         bool bConvertHalfEdge = false;
         if (spGeom && spGeom->m_impl->type() == zeno::Topo_IndiceMesh) {
             bConvertHalfEdge = hasGeomTopoQueryModify(root);
@@ -122,7 +122,7 @@ namespace zeno {
 
         pCtx->zfxVariableTbl = &m_globalAttrCached;
         if (pCtx->spObject) {
-            int nFilterSize = getElementCount(pCtx->spObject, pCtx->runover);
+            int nFilterSize = getElementCount(pCtx->spObject.get(), pCtx->runover);
             ZfxElemFilter filter(nFilterSize, 1);
             scope_exit sp([&] {m_globalAttrCached.clear(); });
             execute(root, filter, pCtx);

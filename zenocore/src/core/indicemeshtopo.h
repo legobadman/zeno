@@ -9,13 +9,13 @@ namespace zeno
     public:
         IndiceMeshTopology() = default;
         IndiceMeshTopology(const IndiceMeshTopology& rhs) = delete;
-        IndiceMeshTopology(std::shared_ptr<PrimitiveObject> prim);
+        IndiceMeshTopology(PrimitiveObject* prim);
         IndiceMeshTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces);
         IndiceMeshTopology(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
 
         GeomTopoType type() const override;
         std::shared_ptr<IGeomTopology> clone() override;
-        std::shared_ptr<PrimitiveObject> toPrimitiveObject() const;
+        std::unique_ptr<PrimitiveObject> toPrimitiveObject() const;
 
         std::vector<vec3i> tri_indice() const override;
         std::vector<std::vector<int>> face_indice() const override;

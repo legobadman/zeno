@@ -50,29 +50,4 @@ private:
     bool m_bClearSubnet;    //计算后清除子图节点缓存
 };
 
-struct ZENO_API DopNetwork : zeno::SubnetNode {
-
-    DopNetwork();
-    void apply() override;
-
-    void setEnableCache(bool enable);
-    void setAllowCacheToDisk(bool enable);
-    void setMaxCacheMemoryMB(int size);
-    void setCurrCacheMemoryMB(int size);
-    static size_t getObjSize(IObject* obj);
-    void resetFrameState();
-
-    CALLBACK_REGIST(dopnetworkFrameRemoved, void, int)
-    CALLBACK_REGIST(dopnetworkFrameCached, void, int)
-
-    bool m_bEnableCache;
-    bool m_bAllowCacheToDisk;
-    int m_maxCacheMemoryMB;
-    int m_currCacheMemoryMB;
-
-    std::map<int, std::map<std::string, std::shared_ptr<zeno::IObject>>> m_frameCaches;
-    std::map<int, size_t> m_frameCacheSizes;
-    size_t m_totalCacheSizeByte;
-};
-
 }

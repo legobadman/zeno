@@ -41,7 +41,7 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, GlobalComm::ViewObjec
 
         size_t bufsize =0;
         std::string nodeName = key.substr(key.find("-") + 1, key.find(":") - key.find("-") -1);
-        if (cacheLightCameraOnly && (lightCameraNodes.count(nodeName) || obj->userData()->get_int("isL") || std::dynamic_pointer_cast<CameraObject>(obj)))
+        if (cacheLightCameraOnly && (lightCameraNodes.count(nodeName) || obj->userData()->get_int("isL") || dynamic_cast<CameraObject*>(obj.get())))
         {
             bufsize = bufCaches[0].size();
             if (encodeObject(obj.get(), bufCaches[0]))
@@ -51,7 +51,7 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, GlobalComm::ViewObjec
                 poses[0].push_back(bufsize);
             }
         }
-        if (cacheMaterialOnly && (matNodeNames.count(nodeName)>0 || std::dynamic_pointer_cast<MaterialObject>(obj)))
+        if (cacheMaterialOnly && (matNodeNames.count(nodeName)>0 || dynamic_cast<MaterialObject*>(obj.get())))
         {
             bufsize = bufCaches[1].size();
             if (encodeObject(obj.get(), bufCaches[1]))
@@ -63,7 +63,7 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, GlobalComm::ViewObjec
         }
         if (!cacheLightCameraOnly && !cacheMaterialOnly)
         {
-            if (lightCameraNodes.count(nodeName) || obj->userData()->get_int("isL") || std::dynamic_pointer_cast<CameraObject>(obj)) {
+            if (lightCameraNodes.count(nodeName) || obj->userData()->get_int("isL") || dynamic_cast<CameraObject*>(obj.get())) {
                 bufsize = bufCaches[0].size();
                 if (encodeObject(obj.get(), bufCaches[0]))
                 {
@@ -71,7 +71,7 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, GlobalComm::ViewObjec
                     keys[0].append(key);
                     poses[0].push_back(bufsize);
                 }
-            } else if (matNodeNames.count(nodeName)>0 || std::dynamic_pointer_cast<MaterialObject>(obj)) {
+            } else if (matNodeNames.count(nodeName)>0 || dynamic_cast<MaterialObject*>(obj.get())) {
                 bufsize = bufCaches[1].size();
                 if (encodeObject(obj.get(), bufCaches[1]))
                 {
@@ -351,7 +351,7 @@ ZENO_API void GlobalComm::clear_objects(const std::function<void()>& callback)
 
 ZENO_API bool GlobalComm::load_objects(
         const int frameid,
-        const std::function<bool(std::map<std::string, std::shared_ptr<zeno::IObject>> const& objs)>& callback,
+        const std::function<bool(std::map<std::string, zany> const& objs)>& callback,
         bool& isFrameValid)
 {
     if (!callback)

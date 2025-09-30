@@ -14,7 +14,7 @@
 namespace zeno {
 
 struct GlobalComm {
-    using ViewObjects = PolymorphicMap<std::map<std::string, std::shared_ptr<IObject>>>;
+    using ViewObjects = PolymorphicMap<std::map<std::string, zany>>;
 
     enum FRAME_STATE {
         FRAME_UNFINISH,
@@ -52,7 +52,7 @@ struct GlobalComm {
     ZENO_API ViewObjects const *getViewObjects(const int frameid);
     ZENO_API ViewObjects const &getViewObjects();
     ZENO_API bool load_objects(const int frameid, 
-                const std::function<bool(std::map<std::string, std::shared_ptr<zeno::IObject>> const& objs)>& cb,
+                const std::function<bool(std::map<std::string, zany> const& objs)>& cb,
                 bool& isFrameValid);
     ZENO_API void clear_objects(const std::function<void()>& cb);
     ZENO_API bool isFrameCompleted(int frameid) const;

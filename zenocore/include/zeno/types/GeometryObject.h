@@ -29,8 +29,8 @@ namespace zeno
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
         GeometryObject(const GeometryObject& rhs);
-        GeometryObject(std::shared_ptr<PrimitiveObject> spPrim);
-        std::shared_ptr<PrimitiveObject> toPrimitive();
+        GeometryObject(PrimitiveObject* spPrim);
+        std::unique_ptr<PrimitiveObject> toPrimitive();
         GeomTopoType type() const;
         void inheritAttributes(
             GeometryObject* rhs,
@@ -207,7 +207,7 @@ namespace zeno
         void _temp_code_regist();
         void _temp_code_unregist();
 
-        void initFromPrim(std::shared_ptr<PrimitiveObject> prim);
+        void initFromPrim(PrimitiveObject* prim);
         std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
         const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         size_t get_attr_size(GeoAttrGroup grp) const;

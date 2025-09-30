@@ -62,8 +62,7 @@ struct SubOutput : zeno::INode {
     }
 
     ZENO_API zany get_default_output_object() {
-        zany obj = ZImpl(get_input("port"));
-        return obj;
+        return clone_input("port");
     }
 
     CustomUI export_customui() const override {

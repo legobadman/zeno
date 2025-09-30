@@ -252,8 +252,8 @@ namespace zeno {
     }
 
     bool ListHasPrimObj(zeno::ListObject* list) {
-        for (zany elem : list->get()) {
-            if (std::dynamic_pointer_cast<PrimitiveObject>(elem)) {
+        for (auto elem : list->get()) {
+            if (dynamic_cast<PrimitiveObject*>(elem)) {
                 return false;
             }
         }
@@ -262,7 +262,7 @@ namespace zeno {
 
     bool DictHasPrimObj(zeno::DictObject* dict) {
         for (auto& [key, elem] : dict->get()) {
-            if (std::dynamic_pointer_cast<PrimitiveObject>(elem)) {
+            if (dynamic_cast<PrimitiveObject*>(elem)) {
                 return false;
             }
         }
@@ -296,8 +296,8 @@ namespace zeno {
         std::vector<zany> objs;
         GlobalComm::ViewObjects _objs;
         GlobalComm::fromDisk(cachedir, frameid, _objs);
-        for (auto iter : _objs) {
-            objs.push_back(iter.second);
+        for (const auto& iter : _objs) {
+            objs.push_back(iter.second->clone());
         }
         return objs;
     }
@@ -1747,11 +1747,11 @@ namespace zeno {
         mmodify.swap(listobj->m_impl->m_modify);
         mnew.swap(listobj->m_impl->m_new_added);
         mremove.swap(listobj->m_impl->m_new_removed);
-        for (zany obj : listobj->m_impl->get()) {
-            if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
-                update_list_root_key(plist.get(), key);
-            } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
-                update_dict_root_key(pdict.get(), key);
+        for (auto obj : listobj->m_impl->get()) {
+            if (auto plist = dynamic_cast<ListObject*>(obj)) {
+                update_list_root_key(plist, key);
+            } else if (auto pdict = dynamic_cast<DictObject*>(obj)) {
+                update_dict_root_key(pdict, key);
             } else {
                 std::string objkey = zsString2Std(obj->key());
                 auto it = objkey.find_first_of('\\');
@@ -1815,7 +1815,7 @@ namespace zeno {
         }
         else if (DictObject* pDict = dynamic_cast<DictObject*>(pObject)) {
             //不修改自身
-            zeno::SharedPtr<DictObject> newDict = create_DictObject();
+            auto newDict = create_DictObject();
             //DictObject* newDict = create_DictObject();
             newDict->update_key(stdString2zs(prefix) + '\\' + pDict->key());
 
@@ -1846,8 +1846,8 @@ namespace zeno {
     std::vector<std::string> get_obj_paths(IObject* pObject) {
         std::vector<std::string> _paths;
         if (ListObject* lstObj = dynamic_cast<ListObject*>(pObject)) {
-            for (zany spObj : lstObj->get()) {
-                std::vector<std::string> subpaths = get_obj_paths(spObj.get());
+            for (auto spObj : lstObj->get()) {
+                std::vector<std::string> subpaths = get_obj_paths(spObj);
                 for (const std::string& subpath : subpaths) {
                     _paths.push_back(subpath);
                 }
@@ -1884,10 +1884,10 @@ namespace zeno {
         mnew.swap(dictobj->m_new_added);
         mremove.swap(dictobj->m_new_removed);
         for (auto& [str, obj] : dictobj->lut) {
-            if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
-                update_list_root_key(plist.get(), key);
-            } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
-                update_dict_root_key(pdict.get(), key);
+            if (auto plist = dynamic_cast<ListObject*>(obj.get())) {
+                update_list_root_key(plist, key);
+            } else if (auto pdict = dynamic_cast<DictObject*>(obj.get())) {
+                update_dict_root_key(pdict, key);
             } else {
                 std::string objkey = zsString2Std(obj->key());
                 auto it = objkey.find_first_of('\\');
@@ -1960,14 +1960,14 @@ namespace zeno {
     zany strToZAny(std::string const& defl, ParamType const& type) {
         switch (type) {
         case gParamType_String: {
-            zany res = std::make_shared<zeno::StringObject>(defl);
+            zany res = std::make_unique<zeno::StringObject>(defl);
             return res;
         }
         case gParamType_Int: {
-            return std::make_shared<NumericObject>(std::stoi(defl));
+            return std::make_unique<NumericObject>(std::stoi(defl));
         }
         case gParamType_Float: {
-            return std::make_shared<NumericObject>(std::stof(defl));
+            return std::make_unique<NumericObject>(std::stof(defl));
         }
         case gParamType_Vec2i:
         case gParamType_Vec3i:
@@ -1979,13 +1979,13 @@ namespace zeno {
             }
 
             if (gParamType_Vec2i == type) {
-                return std::make_shared<NumericObject>(vec2i(vec[0], vec[1]));
+                return std::make_unique<NumericObject>(vec2i(vec[0], vec[1]));
             }
             else if (gParamType_Vec3i == type) {
-                return std::make_shared<NumericObject>(vec3i(vec[0], vec[1], vec[2]));
+                return std::make_unique<NumericObject>(vec3i(vec[0], vec[1], vec[2]));
             }
             else {
-                return std::make_shared<NumericObject>(vec4i(vec[0], vec[1], vec[2], vec[3]));
+                return std::make_unique<NumericObject>(vec4i(vec[0], vec[1], vec[2], vec[3]));
             }
         }
         case gParamType_Vec2f:
@@ -1998,13 +1998,13 @@ namespace zeno {
             }
 
             if (gParamType_Vec2f == type) {
-                return std::make_shared<NumericObject>(vec2f(vec[0], vec[1]));
+                return std::make_unique<NumericObject>(vec2f(vec[0], vec[1]));
             }
             else if (gParamType_Vec3f == type) {
-                return std::make_shared<NumericObject>(vec3f(vec[0], vec[1], vec[2]));
+                return std::make_unique<NumericObject>(vec3f(vec[0], vec[1], vec[2]));
             }
             else {
-                return std::make_shared<NumericObject>(vec4f(vec[0], vec[1], vec[2], vec[3]));
+                return std::make_unique<NumericObject>(vec4f(vec[0], vec[1], vec[2], vec[3]));
             }
         }
         default:

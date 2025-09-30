@@ -21,12 +21,14 @@ namespace zeno
         virtual ~INode() = default;     //暂时不考虑abi问题
         virtual void clearCalcResults();
 
-        zany get_input(const zeno::String& param);
-        zany get_output(const zeno::String& param);
-        zeno::SharedPtr<PrimitiveObject> get_input_PrimitiveObject(const zeno::String& param);
-        zeno::SharedPtr<GeometryObject_Adapter> get_input_Geometry(const zeno::String& param);
-        zeno::SharedPtr<ListObject> get_input_ListObject(const zeno::String& param);
-        zeno::SharedPtr<DictObject> get_input_DictObject(const zeno::String& param);
+        IObject* get_input(const zeno::String& param);
+        zany clone_input(const zeno::String& param);
+        std::unique_ptr<PrimitiveObject> clone_input_PrimitiveObject(const zeno::String& param);
+        PrimitiveObject* get_input_PrimitiveObject(const zeno::String& param);
+        std::unique_ptr<GeometryObject_Adapter> clone_input_Geometry(const zeno::String& param);
+        GeometryObject_Adapter* get_input_Geometry(const zeno::String& param);
+        ListObject* get_input_ListObject(const zeno::String& param);
+        DictObject* get_input_DictObject(const zeno::String& param);
         int get_input2_int(const zeno::String& param);
         float get_input2_float(const zeno::String& param);
         String get_input2_string(const zeno::String& param);
@@ -49,14 +51,14 @@ namespace zeno
         String get_param_string(const zeno::String& param);
         bool get_param_bool(const zeno::String& param);
 
-        bool set_output(const zeno::String& param, zany pObject);
-        void set_output_int(const zeno::String& param, int val);
-        void set_output_float(const zeno::String& param, float val);
-        void set_output_string(const zeno::String& param, zeno::String val);
-        void set_output_vec2f(const zeno::String& param, Vec2f val);
-        void set_output_vec2i(const zeno::String& param, Vec2i val);
-        void set_output_vec3f(const zeno::String& param, Vec3f val);
-        void set_output_vec3i(const zeno::String& param, Vec3i val);
+        bool set_output(const zeno::String& param, zany&& pObject);
+        bool set_output_int(const zeno::String& param, int val);
+        bool set_output_float(const zeno::String& param, float val);
+        bool set_output_string(const zeno::String& param, zeno::String val);
+        bool set_output_vec2f(const zeno::String& param, Vec2f val);
+        bool set_output_vec2i(const zeno::String& param, Vec2i val);
+        bool set_output_vec3f(const zeno::String& param, Vec3f val);
+        bool set_output_vec3i(const zeno::String& param, Vec3i val);
 
         int GetFrameId() const;
         GlobalState* getGlobalState();

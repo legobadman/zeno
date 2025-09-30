@@ -122,8 +122,7 @@ namespace zeno
 
         std::string get_viewobject_output_param() const;
         virtual NodeData exportInfo() const;
-        void set_result(bool bInput, const std::string& name, zany spObj);
-        bool set_output(std::string const& param, zany obj);
+        bool set_output(std::string const& param, zany&& obj);
 
         bool update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& oldVal);
         bool set_primitive_output(std::string const& id, const zeno::reflect::Any& val);
@@ -233,10 +232,11 @@ namespace zeno
 
         bool has_link_input(std::string const& id) const;
         bool has_input(std::string const& id) const;
-        zany get_input(std::string const& id) const;
-        zany get_output_obj(std::string const& sock_name);
+        zany clone_input(std::string const& id) const;
+        IObject* get_input_obj(std::string const& id) const;
+        IObject* get_output_obj(std::string const& sock_name);
         std::vector<zany> get_output_objs();
-        virtual zany get_default_output_object();
+        virtual IObject* get_default_output_object();
         void reportStatus(bool bDirty, NodeRunStatus status);
 
         zany takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
@@ -248,51 +248,21 @@ namespace zeno
         void check_break_and_return();
 
         template <class T>
-        std::shared_ptr<T> get_input(std::string const& id) const {
-            auto obj = get_input(id);
-            return safe_dynamic_cast<T>(std::move(obj), "input socket `" + id + "` of node `" + m_name + "`");
-        }
-
-        template <class T>
         bool has_input(std::string const& id) const {
             if (!has_input(id)) return false;
             auto obj = get_input(id);
             return !!dynamic_cast<T*>(obj.get());
         }
 
-        template <class T>
-        bool has_input2(std::string const& id) const {
-            if (!has_input(id)) return false;
-            return objectIsLiterial<T>(get_input(id));
-        }
+        //template <class T>
+        //auto get_input2(std::string const& id) const {
+        //    return objectToLiterial<T>(clone_input(id), "input socket `" + id + "` of node `" + m_name + "`");
+        //}
 
-        template <class T>
-        auto get_input2(std::string const& id) const {
-            return objectToLiterial<T>(get_input(id), "input socket `" + id + "` of node `" + m_name + "`");
-        }
-
-        template <class T>
-        void set_output2(std::string const& id, T&& value) {
-            set_output(id, objectFromLiterial(std::forward<T>(value)));
-        }
-
-        template <class T>
-        [[deprecated("use get_input2<T>(id)")]]
-        T get_param(std::string const& id) const {
-            return get_input2<T>(id);
-        }
-
-        template <class T = IObject>
-        std::shared_ptr<T> get_input(std::string const& id, std::shared_ptr<T> const& defl) const {
-            return has_input(id) ? get_input<T>(id) : defl;
-        }
-
-        template <class T>
-        T get_input2(std::string const& id, T const& defl) const {
-            return has_input(id) ? get_input2<T>(id) : defl;
-        }
-
-        TempNodeCaller temp_node(std::string const& id);
+        //template <class T>
+        //T get_input2(std::string const& id, T const& defl) const {
+        //    return has_input(id) ? get_input2<T>(id) : defl;
+        //}
 
     protected:
         virtual void complete();
@@ -309,8 +279,8 @@ namespace zeno
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
-        std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
-        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
+        std::unique_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
+        std::unique_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);
         std::string resolve_string(const std::string& fmla, const std::string& defl);

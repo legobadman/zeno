@@ -40,7 +40,7 @@ bool encodeListObject(ListObject const *obj, std::back_insert_iterator<std::vect
     std::vector<size_t> tab(size * 2);
     size_t base = 0;
     for (size_t i = 0; i < size; i++) {
-        auto elm = obj->m_impl->get(i).get();
+        auto elm = obj->m_impl->get(i);
         if (!encodeObject(elm, buf))
             return false;
         size_t len = buf.size();

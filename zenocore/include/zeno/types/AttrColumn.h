@@ -4,6 +4,7 @@
 #include <zeno/core/IObject.h>
 #include <zeno/core/data.h>
 #include <zeno/utils/Error.h>
+#include <mutex>
 
 
 namespace zeno {
@@ -214,6 +215,14 @@ namespace zeno {
         ZENO_API ~AttrColumn();
         ZENO_API AttrVarOrVec& value() const;
 
+        static std::shared_ptr<AttrColumn> copy_on_write(std::shared_ptr<AttrColumn> pColumn) {
+            std::lock_guard lck(pColumn->m_mutex);
+            if (pColumn.use_count() > 1) {
+                return std::make_shared<AttrColumn>(*pColumn);
+            }
+            return pColumn;
+        }
+
         template<typename T>
         T get(size_t index) const {
             return m_pImpl->get<T>(index);
@@ -251,6 +260,13 @@ namespace zeno {
 
     private:
          std::unique_ptr<AttributeImpl> m_pImpl;
+         //目前的设定里，竞态条件只会在copy_on_write时发生，而不会发生，某线程在读
+         //另一个线程在写的情况，对于后者，必须要copy_on_write出一份新的实例，此时读写已经
+         //不在同一个对象了。
+         //问题是：读线程和copy线程之间是否会发生数据竞争？
+         //copy只是把底层的variant数据拷一下，不会修改数据本身，而读线程也只是取数据，看起来不会有
+         //数据竞争
+         std::mutex m_mutex;
     };
 
 }

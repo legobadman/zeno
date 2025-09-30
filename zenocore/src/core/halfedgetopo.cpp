@@ -21,9 +21,6 @@ namespace zeno
     }
 
     HalfEdgeTopology::~HalfEdgeTopology() {
-        if (m_indiceMesh_topo) {
-            assert(m_indiceMesh_topo.use_count() == 1);
-        }
     }
 
     HalfEdgeTopology::HalfEdgeTopology(const HalfEdgeTopology& rhs) {
@@ -82,22 +79,13 @@ namespace zeno
 #endif
     }
 
-    HalfEdgeTopology::HalfEdgeTopology(std::shared_ptr<PrimitiveObject> prim)
-        : m_indiceMesh_topo(prim)
-    {
-    }
-
     GeomTopoType HalfEdgeTopology::type() const { return Topo_HalfEdge; }
 
     std::shared_ptr<IGeomTopology> HalfEdgeTopology::clone() {
         return std::make_shared<HalfEdgeTopology>(*this);
     }
 
-    std::shared_ptr<PrimitiveObject> HalfEdgeTopology::getPrimTopo() const {
-        return m_indiceMesh_topo;
-    }
-
-    void HalfEdgeTopology::toPrimitive(std::shared_ptr<PrimitiveObject> spPrim) {
+    void HalfEdgeTopology::toPrimitive(PrimitiveObject* spPrim) {
         int startIdx = 0;
         AttrVector<vec2i> lines;
         for (int iFace = 0; iFace < m_faces.size(); iFace++) {
@@ -479,36 +467,14 @@ namespace zeno
     }
 
     int HalfEdgeTopology::npoints() const {
-        if (m_indiceMesh_topo)
-            return m_indiceMesh_topo->size();
         return m_points.size();
     }
 
     int HalfEdgeTopology::nfaces() const {
-        if (m_indiceMesh_topo) {
-            if (m_indiceMesh_topo->tris->size() > 0) {
-                return m_indiceMesh_topo->tris->size();
-            }
-            else {
-                return m_indiceMesh_topo->polys->size();
-            }
-        }
-        else {
-            return m_faces.size();
-        }
+        return m_faces.size();
     }
 
     int HalfEdgeTopology::nvertices() const {
-        if (m_indiceMesh_topo) {
-            if (m_indiceMesh_topo->loops->empty() && !m_indiceMesh_topo->tris->empty()) {
-                return m_indiceMesh_topo->tris->size() * 3;
-            }
-            else {
-                //TODO: 多边形的情况
-                assert(false);
-                return 0;
-            }
-        }
         if (m_faces.empty()) {
             return 0;
         }

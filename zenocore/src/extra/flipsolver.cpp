@@ -98,12 +98,12 @@ namespace zeno {
 #endif
     }
 
-    std::shared_ptr<IObject> FlipSolver::checkCache(std::string cache_path, int frame) {
+    zany FlipSolver::checkCache(std::string cache_path, int frame) {
         //checkResult的作用是：无论解算器处在什么样的状态，检查当前全局的时间帧，如果cache_path有缓存且合法的cache，
         //就作为当前节点的输出。
         std::vector<zany> objs = zeno::fromZenCache(cache_path, frame);
         if (objs.size() > 0) {
-            zany output = *objs.begin();
+            zany output = (*objs.begin())->clone();
             return output;
         }
 
@@ -159,7 +159,7 @@ namespace zeno {
     void FlipSolver::apply() {
         auto init_fluid = get_input_Geometry("Initialize Fluid");
         auto static_collider = get_input_Geometry("Static Collider");
-        zany emission_source = get_input("Emission Source");
+        zany emission_source = clone_input("Emission Source");
         float accuracy = get_input2_float("Accuracy");
         float timestep = get_input2_float("Timestep");
         float max_substep = get_input2_float("Max Substep");
@@ -328,7 +328,7 @@ namespace zeno {
         }
         else {
             //也有一种可能，就是有cache，但解算器只是跑了一部分帧，剩下的需要用户主动触发时间轴更新，然后重新跑
-            set_output("Output", spRes);
+            set_output("Output", std::move(spRes));
             return;
         }
         set_output("Output", nullptr);

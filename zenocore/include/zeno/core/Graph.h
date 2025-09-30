@@ -123,13 +123,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     void setKeyFrame(std::string const &id, std::string const &par, zany const &val);
     void setFormula(std::string const &id, std::string const &par, zany const &val);
     void addNodeOutput(std::string const &id, std::string const &par);
-    zany getNodeInput(std::string const &sn, std::string const &ss) const;
-    void setNodeParam(std::string const &id, std::string const &par,
-        std::variant<int, float, std::string, zany> const &val);  /* to be deprecated */
     std::map<std::string, zany> callSubnetNode(std::string const &id,
             std::map<std::string, zany> inputs) const;
-    std::map<std::string, zany> callTempNode(std::string const &id,
-            std::map<std::string, zany> inputs);
 
     std::set<std::string> getSubInputs();
     std::set<std::string> getSubOutputs();

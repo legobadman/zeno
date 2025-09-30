@@ -12,7 +12,7 @@ namespace zeno
         for (auto& [str, obj] : dictObj.lut) {
             auto cloneobj = obj->clone();
             cloneobj->update_key(obj->key());
-            lut.insert({ str, cloneobj });
+            lut.insert({ str, std::move(cloneobj) });
         }
         m_modify = dictObj.m_modify;
         m_new_added = dictObj.m_new_added;
@@ -38,7 +38,7 @@ namespace zeno
     }
 
 
-    ZENO_API zeno::SharedPtr<DictObject> create_DictObject() {
-        return std::make_shared<DictObject>();
+    std::unique_ptr<DictObject> create_DictObject() {
+        return std::make_unique<DictObject>();
     }
 }

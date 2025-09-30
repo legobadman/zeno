@@ -9,7 +9,6 @@
 #include <zeno/types/StringObject.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/extra/DirtyChecker.h>
-#include <zeno/extra/TempNode.h>
 #include <zeno/extra/foreach.h>
 #include <zeno/utils/Error.h>
 #include <zeno/utils/string.h>
@@ -503,7 +502,7 @@ bool NodeImpl::has_frame_relative_params() const {
 
 bool NodeImpl::isInDopnetwork()
 {
-    Graph* parentGraph = m_pGraph;
+ /*   Graph* parentGraph = m_pGraph;
     while (parentGraph)
     {
         if (auto pSubnetImpl = parentGraph->getParentSubnetNode())
@@ -521,7 +520,7 @@ bool NodeImpl::isInDopnetwork()
             }
         }
         else break;
-    }
+    }*/
     return false;
 }
 
@@ -596,9 +595,9 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
     {
         if (bWholeSubnet)
             pSubnetNode->mark_subnetdirty(bOn);
-        if (DopNetwork* pDop = dynamic_cast<DopNetwork*>(pSubnetNode)) {
-            pDop->resetFrameState();
-    }
+        //if (DopNetwork* pDop = dynamic_cast<DopNetwork*>(pSubnetNode)) {
+        //    pDop->resetFrameState();
+        //}
     }
 
     Graph* spGraph = m_pGraph;
@@ -1508,8 +1507,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
     return refSources;
 }
 
-std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcContext* pContext) {
-    std::shared_ptr<DictObject> spDict;
+std::unique_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcContext* pContext) {
     //连接的元素是list还是list of list的规则，参照Graph::addLink下注释。
     bool bDirecyLink = false;
     const auto& inLinks = in_param->links;
@@ -1555,17 +1553,16 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
 #endif
     if (!bDirecyLink)
     {
-        std::map<std::string, zany> existObjs;
+        std::map<std::string, IObject*> existObjs;
         if (in_param->spObject) {
-            std::shared_ptr<DictObject> spOldDict;
-            spOldDict = std::dynamic_pointer_cast<DictObject>(in_param->spObject);
+            auto spOldDict = dynamic_cast<DictObject*>(in_param->spObject.get());
             for (auto& [key, spobj] : spOldDict->lut) {
                 std::string skey = zsString2Std(spobj->key());
-                existObjs.insert({skey, spobj});
+                existObjs.insert({skey, spobj.get()});
             }
         }
 
-        spDict = std::make_shared<DictObject>();
+        auto spDict = std::make_unique<DictObject>();
         for (const auto& spLink : in_param->links)
         {
             const std::string& keyName = spLink->tokey;
@@ -1582,19 +1579,20 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
             assert(outResult);
             {
                 zany newObj;
-                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(outResult)) {
-                    newObj = clone_by_key(_spList.get(), m_uuid);
+                if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult)) {
+                    newObj = clone_by_key(_spList, m_uuid);
                 }
-                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(outResult)) {
-                    newObj = clone_by_key(_spDict.get(), m_uuid);
+                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult)) {
+                    newObj = clone_by_key(_spDict, m_uuid);
                 }
                 else {
                     zeno::String newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
                     newObj = outResult->clone();
                     newObj->update_key(newkey);
                 }
-                spDict->lut[keyName] = newObj;
+                
                 std::string const& new_key = zsString2Std(newObj->key());
+                spDict->lut[keyName] = std::move(newObj);
 
                 if (is_this_item_dirty) {
                     //需要区分是新的还是旧的，这里先粗暴认为全是新的
@@ -1612,12 +1610,12 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
             }
         }
         //剩下没出现的都认为是移除掉了
-        std::function<void(zany)> flattenDict = [&flattenDict, &spDict](zany obj) {
-            if (auto _spList = std::dynamic_pointer_cast<ListObject>(obj)) {
+        std::function<void(IObject*)> flattenDict = [&flattenDict, &spDict](IObject* obj) {
+            if (auto _spList = dynamic_cast<ListObject*>(obj)) {
                 for (int i = 0; i < _spList->m_impl->size(); ++i) {
                     flattenDict(_spList->m_impl->get(i));
                 }
-            } else if (auto _spDict = std::dynamic_pointer_cast<DictObject>(obj)) {
+            } else if (auto _spDict = dynamic_cast<DictObject*>(obj)) {
                 for (auto& [key, obj] : _spDict->get()) {
                     flattenDict(obj);
                 }
@@ -1630,8 +1628,9 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
         }
 
         spDict->update_key(stdString2zs(m_uuid));
+        return spDict;
     }
-    return spDict;
+    return nullptr;
 }
 
 void NodeImpl::clear_container_info() {
@@ -1640,7 +1639,7 @@ void NodeImpl::clear_container_info() {
             spLink->bTraceAndTaken = false;
         }
         if (param.type == gParamType_List && param.spObject) {
-            auto spList = std::static_pointer_cast<ListObject>(param.spObject);
+            auto spList = static_cast<ListObject*>(param.spObject.get());
             spList->m_impl->m_new_added.clear();
             spList->m_impl->m_new_removed.clear();
             spList->m_impl->m_modify.clear();
@@ -1651,7 +1650,7 @@ void NodeImpl::clear_container_info() {
             spLink->bTraceAndTaken = false;
         }
         if (param.type == gParamType_List && param.spObject) {
-            auto spList = std::static_pointer_cast<ListObject>(param.spObject);
+            auto spList = static_cast<ListObject*>(param.spObject.get());
             spList->m_impl->m_new_added.clear();
             spList->m_impl->m_new_removed.clear();
             spList->m_impl->m_modify.clear();
@@ -1659,9 +1658,9 @@ void NodeImpl::clear_container_info() {
     }
 }
 
-std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
+std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
     assert(gParamType_List == in_param->type);
-    std::shared_ptr<ListObject> spList;
+    
     bool bDirectLink = false;
 
     if (m_nodecls == "FormSceneTree") {
@@ -1678,7 +1677,7 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         auto list_register_all_items = [&](ListObject* listobj) {
             if (!listobj->has_change_info()) {
                 //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
-                for (auto obj : listobj->m_impl->m_objects) {
+                for (const auto& obj : listobj->m_impl->m_objects) {
                     std::string key = zsString2Std(obj->key());
                     if (key.empty()) throw makeNodeError<UnimplError>(get_path(), "there is object in list with empty key");
                     //直接全部收集
@@ -1695,10 +1694,15 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         if ((out_param->type == in_param->type || out_param->type == gParamType_IObject) &&
             spLink->tokey.empty())
         {
+            std::unique_ptr<ListObject> spList;
             bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
             if (spLink->upstream_task.valid()) {
                 auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
-                spList = std::dynamic_pointer_cast<ListObject>(outResult);
+                auto _spList = dynamic_cast<ListObject*>(outResult.get());
+                if (!_spList) {
+                    throw makeNodeError(get_path(), "no list object received");
+                }
+                spList.reset(static_cast<ListObject*>(outResult.release()));
                 //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
                 list_register_all_items(spList.get());
                 spList->update_key(out_param->spObject->key());
@@ -1707,11 +1711,12 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 assert(!outNode->is_dirty());
                 //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
                 if (in_param->spObject) {
-                    spList = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
+                    //相当于转一次又给回外面。。。
+                    spList = safe_uniqueptr_cast<ListObject>(std::move(in_param->spObject));
                 }
                 else {
                     //outNode已经算好了，直接拿应该不会导致race condition
-                    spList = std::dynamic_pointer_cast<ListObject>(out_param->spObject->clone());
+                    spList = safe_uniqueptr_cast<ListObject>(out_param->spObject->clone());
                     //新的list，这里全部内容都要登记到new_added.
                     list_register_all_items(spList.get());
                     spList->update_key(out_param->spObject->key());
@@ -1727,11 +1732,11 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
     }
     if (!bDirectLink)
     {
-        spList = create_ListObject();
-        auto cachedList = std::static_pointer_cast<ListObject>(in_param->spObject);
+        auto spList = create_ListObject();
+        auto cachedList = static_cast<ListObject*>(in_param->spObject.get());
         std::set<std::string> old_list;
         if (cachedList) {
-            for (auto obj : cachedList->m_impl->m_objects) {
+            for (const auto& obj : cachedList->m_impl->m_objects) {
                 old_list.insert(zsString2Std(obj->key()));
             }
         }
@@ -1752,9 +1757,10 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 upstream_obj_key = zsString2Std(out_param->spObject->key());
                 outResult->update_key(stdString2zs(upstream_obj_key));
                 add_prefix_key(outResult.get(), m_uuid);
-                spList->push_back(outResult);
-
                 new_obj_key = zsString2Std(outResult->key());
+
+                spList->push_back(std::move(outResult));
+
                 if (old_list.find(new_obj_key) != old_list.end()) {
                     //旧的列表有这一项，说明是修改的
                     spList->m_impl->m_modify.insert(new_obj_key);
@@ -1772,9 +1778,9 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 new_obj_key = m_uuid + '\\' + upstream_obj_key;
                 if (old_list.find(new_obj_key) != old_list.end()) {
                     //直接从缓存取就行
-                    for (auto obj : cachedList->m_impl->m_objects) {
+                    for (const auto& obj : cachedList->m_impl->m_objects) {
                         if (zsString2Std(obj->key()) == new_obj_key) {
-                            spList->push_back(obj);
+                            spList->push_back(obj->clone());
                             break;
                         }
                     }
@@ -1784,8 +1790,9 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                     auto new_obj = out_param->spObject->clone();
                     new_obj->update_key(stdString2zs(upstream_obj_key));
                     add_prefix_key(new_obj.get(), m_uuid);
-                    spList->push_back(new_obj);
                     spList->m_impl->m_modify.insert(zsString2Std(new_obj->key()));
+
+                    spList->push_back(std::move(new_obj));
                 }
             }
             old_list.erase(new_obj_key);
@@ -1793,8 +1800,9 @@ std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         //从old_list剩下的，就是要被删除的元素
         spList->m_impl->m_new_removed = old_list;
         spList->update_key(stdString2zs(m_uuid));
+        return spList;
     }
-    return spList;
+    return nullptr;
 }
 
 zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
@@ -1999,16 +2007,16 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
 
     bool bCloned = true;
     //如果outputobj是 PrimitiveObject，则不走拷贝，而是move，如果List和Dict含有哪怕只有一个PrimitiveObj，也不走拷贝
-    if (auto prim = std::dynamic_pointer_cast<PrimitiveObject>(out_param->spObject)) {
+    if (auto prim = dynamic_cast<PrimitiveObject*>(out_param->spObject.get())) {
         bCloned = false;
     }
-    else if (auto lst = std::dynamic_pointer_cast<ListObject>(out_param->spObject)) {
-        if (ListHasPrimObj(lst.get())) {
+    else if (auto lst = dynamic_cast<ListObject*>(out_param->spObject.get())) {
+        if (ListHasPrimObj(lst)) {
             bCloned = false;
         }
     }
-    else if (auto dict = std::dynamic_pointer_cast<DictObject>(out_param->spObject)) {
-        if (DictHasPrimObj(dict.get())) {
+    else if (auto dict = dynamic_cast<DictObject*>(out_param->spObject.get())) {
+        if (DictHasPrimObj(dict)) {
             bCloned = false;
         }
     }
@@ -2023,10 +2031,10 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
         outNode->mark_takeover();
     }
 
-    if (auto splist = std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
-        update_list_root_key(splist.get(), m_uuidPath);
-    } else if (auto spdict = std::dynamic_pointer_cast<DictObject>(in_param->spObject)) {
-        update_dict_root_key(spdict.get(), m_uuidPath);
+    if (auto splist = dynamic_cast<ListObject*>(in_param->spObject.get())) {
+        update_list_root_key(splist, m_uuidPath);
+    } else if (auto spdict = dynamic_cast<DictObject*>(in_param->spObject.get())) {
+        update_dict_root_key(spdict, m_uuidPath);
     }
 
     return true;
@@ -2237,7 +2245,7 @@ void NodeImpl::bypass() {
     if (input_objparam.type != output_objparam.type) {
         throw makeNodeError<UnimplError>(get_path(), "the input and output type is not matched, when the mute button is on");
     }
-    output_objparam.spObject = input_objparam.spObject;
+    output_objparam.spObject = input_objparam.spObject->clone();
 }
 
 void NodeImpl::check_break_and_return() {
@@ -2278,7 +2286,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
 
     for (auto const& [name, param] : m_outputObjs) {
         if (param.type == gParamType_List && param.spObject) {
-            auto list = std::static_pointer_cast<ListObject>(param.spObject);
+            auto list = static_cast<ListObject*>(param.spObject.get());
             list->m_impl->m_modify.clear();
             list->m_impl->m_new_added.clear();
             list->m_impl->m_new_removed.clear();
@@ -2612,17 +2620,6 @@ bool NodeImpl::add_output_obj_param(ParamObject param) {
     sparam.wildCardGroup = param.wildCardGroup;
     m_outputObjs.insert(std::make_pair(param.name, std::move(sparam)));
     return true;
-}
-
-void NodeImpl::set_result(bool bInput, const std::string& name, zany spObj) {
-    if (bInput) {
-        auto& param = safe_at(m_inputObjs, name, "");
-        param.spObject = spObj;
-    }
-    else {
-        auto& param = safe_at(m_outputObjs, name, "");
-        param.spObject = spObj;
-    }
 }
 
 void NodeImpl::init_object_link(bool bInput, const std::string& paramname, std::shared_ptr<ObjectLink> spLink, const std::string& targetParam) {
@@ -3634,7 +3631,15 @@ bool NodeImpl::has_input(std::string const &id) const {
     }
 }
 
-zany NodeImpl::get_input(std::string const &id) const {
+IObject* NodeImpl::get_input_obj(std::string const& id) const {
+    auto iter2 = m_inputObjs.find(id);
+    if (iter2 != m_inputObjs.end()) {
+        return iter2->second.spObject.get();
+    }
+    return nullptr;
+}
+
+zany NodeImpl::clone_input(std::string const &id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {
         auto& val = iter->second.result;
@@ -3655,7 +3660,7 @@ zany NodeImpl::get_input(std::string const &id) const {
             case gParamType_AnyNumeric:
             {
                 //依然有很多节点用了NumericObject，为了兼容，需要套一层NumericObject出去。
-                std::shared_ptr<NumericObject> spNum = std::make_shared<NumericObject>();
+                auto spNum = std::make_unique<NumericObject>();
                 const auto& anyType = val.type();
                 if (anyType == zeno::reflect::type_info<int>()) {
                     spNum->set<int>(zeno::reflect::any_cast<int>(val));
@@ -3689,7 +3694,7 @@ zany NodeImpl::get_input(std::string const &id) const {
                      anyType == zeno::reflect::type_info<zeno::String>() ||
                      anyType == zeno::reflect::type_info<std::string>())) {
                     std::string str = zeno::any_cast_to_string(val);
-                    return std::make_shared<StringObject>(str);
+                    return std::make_unique<StringObject>(str);
                 }
                 else
                 {
@@ -3700,20 +3705,20 @@ zany NodeImpl::get_input(std::string const &id) const {
             }
             case zeno::types::gParamType_Matrix3:
             {
-                std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+                auto matrixObj = std::make_unique<MatrixObject>();
                 matrixObj->m = zeno::reflect::any_cast<glm::mat3>(val);
                 return matrixObj;
             }
             case zeno::types::gParamType_Matrix4:
             {
-                std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+                auto matrixObj = std::make_unique<MatrixObject>();
                 matrixObj->m = zeno::reflect::any_cast<glm::mat4>(val);
                 return matrixObj;
             }
             case zeno::types::gParamType_String:
             {
                 std::string str = zeno::any_cast_to_string(val);
-                return std::make_shared<StringObject>(str);
+                return std::make_unique<StringObject>(str);
             }
             case zeno::types::gParamType_Shader:
             {
@@ -3721,7 +3726,7 @@ zany NodeImpl::get_input(std::string const &id) const {
             }
             case gParamType_Heatmap:
             {
-                std::shared_ptr<zeno::HeatmapObject> heatmapObj = std::make_shared<zeno::HeatmapObject>();
+                auto heatmapObj = std::make_unique<zeno::HeatmapObject>();
                 heatmapObj->colors = zeno::reflect::any_cast<zeno::HeatmapData>(val).colors;
                 return heatmapObj;
             }
@@ -3732,7 +3737,7 @@ zany NodeImpl::get_input(std::string const &id) const {
     else {
         auto iter2 = m_inputObjs.find(id);
         if (iter2 != m_inputObjs.end()) {
-            return iter2->second.spObject;
+            return iter2->second.spObject->clone();
         }
         throw makeNodeError<KeyError>(get_path(), id, "get_input");
     }
@@ -3771,19 +3776,19 @@ bool NodeImpl::set_primitive_output(std::string const& id, const zeno::reflect::
     return true;
 }
 
-bool NodeImpl::set_output(std::string const& param, zany obj) {
+bool NodeImpl::set_output(std::string const& param, zany&& obj) {
     //只给旧节点模块使用，如果函数暴露reflect::Any，就会迫使所有使用这个函数的cpp文件include headers
     //会增加程序体积以及编译时间，待后续生成文件优化后再考虑处理。
     auto iter = m_outputObjs.find(param);
     if (iter != m_outputObjs.end()) {
-        iter->second.spObject = obj;
+        iter->second.spObject = std::move(obj);
         return true;
     }
     else {
         auto iter2 = m_outputPrims.find(param);
         if (iter2 != m_outputPrims.end()) {
             //兼容以前NumericObject的情况
-            if (auto numObject = std::dynamic_pointer_cast<NumericObject>(obj)) {
+            if (auto numObject = dynamic_cast<NumericObject*>(obj.get())) {
                 const auto& val = numObject->value;
                 if (std::holds_alternative<int>(val))
                 {
@@ -3823,7 +3828,7 @@ bool NodeImpl::set_output(std::string const& param, zany obj) {
                     //error, throw expection.
                 }
             }
-            else if (auto strObject = std::dynamic_pointer_cast<StringObject>(obj)) {
+            else if (auto strObject = dynamic_cast<StringObject*>(obj.get())) {
                 const auto& val = strObject->value;
                 iter2->second.result = val;
             }
@@ -3833,18 +3838,18 @@ bool NodeImpl::set_output(std::string const& param, zany obj) {
     return false;
 }
 
-zany NodeImpl::get_default_output_object() {
+IObject* NodeImpl::get_default_output_object() {
     if (m_nodecls == "SubOutput") {
-        return get_input("port");
+        return get_input_obj("port");
     }
     if (m_outputObjs.empty())
         return nullptr;
-    return m_outputObjs.begin()->second.spObject;
+    return m_outputObjs.begin()->second.spObject.get();
 }
 
-zany NodeImpl::get_output_obj(std::string const& param) {
+IObject* NodeImpl::get_output_obj(std::string const& param) {
     auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + m_name + "`");
-    return spParam.spObject;
+    return spParam.spObject.get();
 }
 
 bool NodeImpl::checkAllOutputLinkTraced() {
@@ -3915,7 +3920,7 @@ zany NodeImpl::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, b
         }
     }
     bAllOutputTaken = checkAllOutputLinkTraced();
-    return out_param->spObject;
+    return std::move(out_param->spObject);
 }
 
 zany NodeImpl::takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
@@ -3930,22 +3935,15 @@ zany NodeImpl::takeOutputObject(const std::string& out_param, const std::string&
         }
     }
     bAllOutputTaken = checkAllOutputLinkTraced();
-    return outparam.spObject;
+    return std::move(outparam.spObject);
 }
 
 std::vector<zany> NodeImpl::get_output_objs() {
     std::vector<zany> objs;
     for (const auto& [name, objparam] : m_outputObjs) {
-        objs.push_back(objparam.spObject);
+        objs.push_back(objparam.spObject->clone());
     }
     return objs;
-}
-
-TempNodeCaller NodeImpl::temp_node(std::string const &id) {
-    //TODO: deprecated
-    Graph* spGraph = m_pGraph;
-    assert(spGraph);
-    return TempNodeCaller(spGraph, id);
 }
 
 zfxvariant NodeImpl::execute_fmla(const std::string& expression)

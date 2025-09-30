@@ -17,28 +17,48 @@ namespace zeno
         return stdString2zs(m_pAdapter->get_uuid());
     }
 
-    zany INode::get_input(const zeno::String& param) { 
-        return m_pAdapter->get_input(zsString2Std(param));
+    IObject* INode::get_input(const zeno::String& param) {
+        return m_pAdapter->get_input_obj(zsString2Std(param));
     }
 
-    zany INode::get_output(const zeno::String& param) {
-        return m_pAdapter->get_output_obj(zsString2Std(param));
+    zany INode::clone_input(const zeno::String& param) {
+        return m_pAdapter->clone_input(zsString2Std(param));
     }
 
-    zeno::SharedPtr<PrimitiveObject> INode::get_input_PrimitiveObject(const zeno::String& param) { 
-        return std::dynamic_pointer_cast<PrimitiveObject>(get_input(param));
+    std::unique_ptr<PrimitiveObject> INode::clone_input_PrimitiveObject(const zeno::String& param) {
+        auto rawPtr = clone_input(param).release();
+        if (dynamic_cast<PrimitiveObject*>(rawPtr))
+            return std::unique_ptr<PrimitiveObject>(static_cast<PrimitiveObject*>(clone_input(param).release()));
+        return nullptr;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> INode::get_input_Geometry(const zeno::String& param) {
-        return std::dynamic_pointer_cast<GeometryObject_Adapter>(get_input(param));
+    PrimitiveObject* INode::get_input_PrimitiveObject(const zeno::String& param) {
+        auto rawPtr = get_input(param);
+        if (dynamic_cast<PrimitiveObject*>(rawPtr))
+            return static_cast<PrimitiveObject*>(rawPtr);
+        return nullptr;
     }
 
-    zeno::SharedPtr<ListObject> INode::get_input_ListObject(const zeno::String& param) {
-        return std::dynamic_pointer_cast<ListObject>(get_input(param));
+    std::unique_ptr<GeometryObject_Adapter> INode::clone_input_Geometry(const zeno::String& param) {
+        auto rawPtr = clone_input(param).release();
+        if (dynamic_cast<GeometryObject_Adapter*>(rawPtr))
+            return std::unique_ptr<GeometryObject_Adapter>(static_cast<GeometryObject_Adapter*>(clone_input(param).release()));
+        return nullptr;
     }
 
-    zeno::SharedPtr<DictObject> INode::get_input_DictObject(const zeno::String& param) {
-        return std::dynamic_pointer_cast<DictObject>(get_input(param));
+    GeometryObject_Adapter* INode::get_input_Geometry(const zeno::String& param) {
+        auto rawPtr = get_input(param);
+        if (dynamic_cast<GeometryObject_Adapter*>(rawPtr))
+            return static_cast<GeometryObject_Adapter*>(rawPtr);
+        return nullptr;
+    }
+
+    ListObject* INode::get_input_ListObject(const zeno::String& param) {
+        return dynamic_cast<ListObject*>(get_input(param));
+    }
+
+    DictObject* INode::get_input_DictObject(const zeno::String& param) {
+        return dynamic_cast<DictObject*>(get_input(param));
     }
 
     int INode::get_input2_int(const zeno::String& param) {
@@ -123,8 +143,8 @@ namespace zeno
 
     }
 
-    bool INode::set_output(const zeno::String& param, zany pObject) {
-        return m_pAdapter->set_output(zsString2Std(param), pObject);
+    bool INode::set_output(const zeno::String& param, zany&& pObject) {
+        return m_pAdapter->set_output(zsString2Std(param), std::move(pObject));
     }
 
     int INode::get_param_int(const zeno::String& param) {
@@ -143,32 +163,32 @@ namespace zeno
         return get_input2_bool(param);
     }
 
-    void INode::set_output_int(const zeno::String& param, int val) {
-        return m_pAdapter->set_output2(zsString2Std(param), val);
+    bool INode::set_output_int(const zeno::String& param, int val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), val);
     }
 
-    void INode::set_output_float(const zeno::String& param, float val) {
-        return m_pAdapter->set_output2(zsString2Std(param), val);
+    bool INode::set_output_float(const zeno::String& param, float val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), val);
     }
 
-    void INode::set_output_string(const zeno::String& param, zeno::String val) {
-        return m_pAdapter->set_output2(zsString2Std(param), zsString2Std(val));
+    bool INode::set_output_string(const zeno::String& param, zeno::String val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), zsString2Std(val));
     }
 
-    void INode::set_output_vec2f(const zeno::String& param, Vec2f val) {
-        return m_pAdapter->set_output2(zsString2Std(param), toVec2f(val));
+    bool INode::set_output_vec2f(const zeno::String& param, Vec2f val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), toVec2f(val));
     }
 
-    void INode::set_output_vec2i(const zeno::String& param, Vec2i val) {
-        return m_pAdapter->set_output2(zsString2Std(param), toVec2i(val));
+    bool INode::set_output_vec2i(const zeno::String& param, Vec2i val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), toVec2i(val));
     }
 
-    void INode::set_output_vec3f(const zeno::String& param, Vec3f val) {
-        return m_pAdapter->set_output2(zsString2Std(param), toVec3f(val));
+    bool INode::set_output_vec3f(const zeno::String& param, Vec3f val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), toVec3f(val));
     }
 
-    void INode::set_output_vec3i(const zeno::String& param, Vec3i val) {
-        return m_pAdapter->set_output2(zsString2Std(param), toVec3i(val));
+    bool INode::set_output_vec3i(const zeno::String& param, Vec3i val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), toVec3i(val));
     }
 
     int INode::GetFrameId() const {

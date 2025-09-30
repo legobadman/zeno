@@ -34,7 +34,7 @@ namespace zeno
         }
     }
 
-    zany SolverImpl::get_default_output_object() {
+    IObject* SolverImpl::get_default_output_object() {
         if (get_nodecls() == "FlipSolver") {
             FlipSolver* pNode = static_cast<FlipSolver*>(coreNode());
             //这里取到的帧未必就是当前ui的帧，因为用户可能不断滑动时间轴
@@ -47,7 +47,7 @@ namespace zeno
             if (result && result->key().empty()) {
                 result->update_key(stdString2zs(get_uuid()));
             }
-            return result;
+            return result.release();
         }
         return nullptr;
     }

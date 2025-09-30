@@ -2679,9 +2679,9 @@ QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& origi
         findNodes(pModel, originnode.toStdString(), nodesName, false);
     }
     QStringList list;
-    //for (auto& i : nodesName) {
-    //    list.append(QString::fromStdString(i));
-    //}
+    for (auto& i : nodesName) {
+        list.append(QString::fromStdString(i));
+    }
     return list;
 }
 

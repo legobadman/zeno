@@ -126,23 +126,23 @@ namespace zeno
         int vertex_face_index(int linear_vertex_id);
         std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
-        zeno::SharedPtr<PrimitiveObject> toPrimitiveObject() const;
-        zeno::SharedPtr<GeometryObject_Adapter> toIndiceMeshesTopo() const;
-        zeno::SharedPtr<GeometryObject_Adapter> toHalfEdgeTopo() const;
+        std::unique_ptr<PrimitiveObject> toPrimitiveObject() const;
+        std::unique_ptr<GeometryObject_Adapter> toIndiceMeshesTopo() const;
+        std::unique_ptr<GeometryObject_Adapter> toHalfEdgeTopo() const;
 
         std::unique_ptr<GeometryObject> m_impl;
     };
 
     //没有放到外面，是因为用户要直接include当前文件，干脆直接在这里构造
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type);
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(
+    ZENO_API std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type);
+    ZENO_API std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+    ZENO_API std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(
         GeomTopoType type,
         bool bTriangle,
         const std::vector<zeno::vec3f>& points,
         const std::vector<std::vector<int>>& faces);
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim);
-    ZENO_API zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(zeno::SharedPtr<GeometryObject_Adapter> pGeom);
+    ZENO_API std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim);
+    ZENO_API std::unique_ptr<GeometryObject_Adapter> clone_GeometryObject(std::unique_ptr<GeometryObject_Adapter> pGeom);
 }
 
 #endif

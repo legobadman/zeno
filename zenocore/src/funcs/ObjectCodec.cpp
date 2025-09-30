@@ -93,13 +93,13 @@ zany decodeObject(const char *buf, size_t len) {
         auto val = decodeObject(ptr, decolen);
         if (val) {
             UserData* pImpl = dynamic_cast<UserData*>(object->userData());
-            pImpl->set(key, std::move(val));
+            pImpl->set(key, val.get());
         }
 
         ptr = nextptr;
     }
-
-    return object;
+    //TODO:
+    return object->clone();
 }
 
 static bool _encodeObjectImpl(IObject const *object, std::vector<char> &buf) {

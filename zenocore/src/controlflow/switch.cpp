@@ -8,15 +8,15 @@ namespace zeno
     struct Switch : INode
     {
         void apply() override {
-            auto input_objects = ZImpl(get_input2<ListObject>("Input Objects"));
+            auto input_objects = get_input_ListObject("Input Objects");
             if (!input_objects) {
                 throw makeError<UnimplError>("no input objects on Switch");
             }
-            int switch_num = ZImpl(get_input2<int>("Switch Number"));
+            int switch_num = get_input2_int("Switch Number");
             int n = input_objects->m_impl->size();
             int clip_switch = std::min(n - 1, std::max(0, switch_num));
-            zany obj = input_objects->m_impl->get(clip_switch);
-            ZImpl(set_output("Output Object", obj));
+            auto obj = input_objects->m_impl->get(clip_switch);
+            set_output("Output Object", obj->clone());
         }
     };
 
@@ -45,10 +45,10 @@ namespace zeno
         void apply() override {
             int cond = get_input2_int("Condition");
             if (cond != 0) {
-                set_output("Output", get_input("If True"));
+                set_output("Output", clone_input("If True"));
             }
             else {
-                set_output("Output", get_input("If False"));
+                set_output("Output", clone_input("If False"));
             }
         }
     };
@@ -79,49 +79,49 @@ namespace zeno
         void apply() override {
             int cond = get_input2_int("cond1");
             if (cond != 0) {
-                set_output("Output", get_input("b1"));
+                set_output("Output", clone_input("b1"));
                 return;
             }
 
             cond = get_input2_int("cond2");
             if (cond != 0) {
-                set_output("Output", get_input("b2"));
+                set_output("Output", clone_input("b2"));
                 return;
             }
 
             cond = get_input2_int("cond3");
             if (cond != 0) {
-                set_output("Output", get_input("b3"));
+                set_output("Output", clone_input("b3"));
                 return;
             }
 
             cond = get_input2_int("cond4");
             if (cond != 0) {
-                set_output("Output", get_input("b4"));
+                set_output("Output", clone_input("b4"));
                 return;
             }
 
             cond = get_input2_int("cond5");
             if (cond != 0) {
-                set_output("Output", get_input("b5"));
+                set_output("Output", clone_input("b5"));
                 return;
             }
 
             cond = get_input2_int("cond6");
             if (cond != 0) {
-                set_output("Output", get_input("b6"));
+                set_output("Output", clone_input("b6"));
                 return;
             }
 
             cond = get_input2_int("cond7");
             if (cond != 0) {
-                set_output("Output", get_input("b7"));
+                set_output("Output", clone_input("b7"));
                 return;
             }
 
             cond = get_input2_int("cond8");
             if (cond != 0) {
-                set_output("Output", get_input("b8"));
+                set_output("Output", clone_input("b8"));
                 return;
             }
         }
