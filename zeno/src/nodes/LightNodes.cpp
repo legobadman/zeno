@@ -1,5 +1,4 @@
 #include <zeno/zeno.h>
-#include <zeno/extra/TempNode.h>
 #include <zeno/utils/eulerangle.h>
 
 #include <zeno/types/UserData.h>
@@ -22,6 +21,7 @@
 
 namespace zeno {
 
+#if 0
 struct LightNode : INode {
     virtual void apply() override {
         auto isL = true; //ZImpl(get_input2<int>("islight");
@@ -77,7 +77,7 @@ struct LightNode : INode {
             auto mesh = ZImpl(get_input<PrimitiveObject>("prim"));
 
             if (mesh->tris->size() > 0) {
-                prim = mesh;
+                prim = std::move(mesh);
                 shapeEnum = LightShape::TriangleMesh;
                 shapeOrder = magic_enum::enum_integer(shapeEnum);
             }
@@ -458,5 +458,6 @@ ZENO_DEFNODE(LightNode)({
     },
     {"shader"},
 });
+#endif
 
 } // namespace

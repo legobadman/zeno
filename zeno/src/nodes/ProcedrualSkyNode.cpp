@@ -86,7 +86,7 @@ ZENDEFNODE(HDRSky, {
 });
 
 struct DistantLightWrapper : IObject{
-    zeno::SharedPtr<IObject> clone() const {
+    zany clone() const {
         return std::make_unique<DistantLightWrapper>(*this);
     }
 
@@ -124,7 +124,7 @@ struct DistantLight : INode {
         result->data.angle = angleExtent;
         result->data.color = color;
         result->data.intensity = intensity;
-        ZImpl(set_output2("out", std::move(result) ));
+        ZImpl(set_output("out", std::move(result) ));
         ZImpl(set_output2("dir", std::move(dir3) ));
     }
 };
@@ -215,7 +215,7 @@ struct PortalLight : INode {
         color[7] = {0, 0, 1};
         //prim->lines.update();
         prim->userData()->set_int("size", size);
-        ZImpl(set_output2("out", std::move(prim)));
+        ZImpl(set_output("out", std::move(prim)));
     }
 };
 
@@ -305,7 +305,7 @@ struct SkyComposer : INode {
 
         pUserData->set2("SkyComposer", std::move(1));
         pUserData->set2("isRealTimeObject", std::move(1));
-        ZImpl(set_output2("out", std::move(prim)));
+        ZImpl(set_output("out", std::move(prim)));
     }
 };
 

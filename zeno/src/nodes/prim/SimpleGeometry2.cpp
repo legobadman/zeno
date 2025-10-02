@@ -347,7 +347,7 @@ namespace zeno {
             auto geo = create_GeometryObject(Topo_IndiceMesh, !bQuad, points, faces);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
-            set_output("Output", geo);
+            set_output("Output", std::move(geo));
         }
     };
 
@@ -1021,7 +1021,7 @@ namespace zeno {
                     //TODO: 可能要加其他类型
                     auto spgeo = create_GeometryObject(zeno::Topo_IndiceMesh, true, points, {});
                     spgeo->create_attr(ATTR_POINT, "pos", { Center });
-                    ZImpl(set_output("Output", spgeo));
+                    ZImpl(set_output("Output", std::move(spgeo)));
                     return;
                 }
 
@@ -1136,7 +1136,7 @@ namespace zeno {
             if (bCalcPointNormals) {
                 spgeo->create_attr(ATTR_POINT, "nrm", normals);
             }
-            ZImpl(set_output("Output", spgeo));
+            ZImpl(set_output("Output", std::move(spgeo)));
         }
     };
 
@@ -1163,7 +1163,7 @@ namespace zeno {
             zeno::vec3f Position = ZImpl(get_input2<vec3f>("Position"));
             std::vector<zeno::vec3f> pos = { Position };
             auto spPoint = create_GeometryObject(zeno::Topo_IndiceMesh, false, pos, {});
-            ZImpl(set_output("Output", spPoint));
+            ZImpl(set_output("Output", std::move(spPoint)));
         }
     };
 
@@ -1203,7 +1203,7 @@ namespace zeno {
 
             if (npoints == 1) {
                 spgeo->create_attr(ATTR_POINT, "pos", { origin });
-                ZImpl(set_output("Output", spgeo));
+                ZImpl(set_output("Output", std::move(spgeo)));
                 return;
             }
 
@@ -1235,7 +1235,7 @@ namespace zeno {
             //兼容hou，用一个面作为所有线段的面
             spgeo->add_face(stdVec2zeVec(pts), false);
             spgeo->create_attr(ATTR_POINT, "pos", points);
-            ZImpl(set_output("Output", spgeo));
+            ZImpl(set_output("Output", std::move(spgeo)));
 #endif
         }
     };

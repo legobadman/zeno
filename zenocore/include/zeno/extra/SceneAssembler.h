@@ -33,20 +33,20 @@ struct SceneObject : IObject {
     std::unordered_map <std::string, SceneTreeNode> scene_tree;
     std::unordered_map <std::string, std::vector<glm::mat4>> node_to_matrix;
     std::unordered_map <std::string, std::vector<int>> node_to_id;
-    std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> geom_list;
+    std::unordered_map<std::string, std::unique_ptr<GeometryObject_Adapter>> geom_list;
 
     std::string root_name;
     bool bNeedUpdateDescriptor = true;  //update descriptor目前和updatemesh是等价的。
 
-    zeno::SharedPtr<IObject> clone() const override {
-        auto newSceneObj = std::make_shared<SceneObject>();
+    zany clone() const override {
+        auto newSceneObj = std::make_unique<SceneObject>();
         newSceneObj->scene_tree = scene_tree;
         newSceneObj->node_to_matrix = node_to_matrix;
         newSceneObj->node_to_id = node_to_id;
         newSceneObj->root_name = root_name;
         newSceneObj->bNeedUpdateDescriptor = bNeedUpdateDescriptor;
         for (auto& [key, geom] : geom_list) {
-            auto new_geom = std::static_pointer_cast<GeometryObject_Adapter>(geom->clone());
+            auto new_geom = safe_uniqueptr_cast<GeometryObject_Adapter>(geom->clone());
             newSceneObj->geom_list.emplace(key, std::move(new_geom));
         }
         return newSceneObj;
@@ -76,7 +76,7 @@ struct SceneObject : IObject {
             if (geom_list.count(mesh) == 0) {
                 continue;
             }
-            auto geom = geom_list[mesh];
+            auto geom = geom_list[mesh].get();
             if (geom->userData()->has_vec3f("_bboxMin")) {
                 auto bmin_OS = zeno::bit_cast<glm::vec3>(toVec3f(geom->userData()->get_vec3f("_bboxMin")));
                 auto bmax_OS = zeno::bit_cast<glm::vec3>(toVec3f(geom->userData()->get_vec3f("_bboxMax")));
@@ -151,8 +151,8 @@ struct SceneObject : IObject {
         return new_root_name + path.substr(root_name.size());
     }
 
-    std::shared_ptr <SceneObject> root_rename(const std::string& new_root_name, const std::vector<glm::mat4>& root_xform) {
-        auto new_scene_obj = std::make_shared<SceneObject>();
+    std::unique_ptr<SceneObject> root_rename(const std::string& new_root_name, const std::vector<glm::mat4>& root_xform) {
+        auto new_scene_obj = std::make_unique<SceneObject>();
         new_scene_obj->bNeedUpdateDescriptor = this->bNeedUpdateDescriptor;
 
         for (auto const &[path, stn]: scene_tree) {
@@ -178,11 +178,11 @@ struct SceneObject : IObject {
         }
         for (auto &[k, p]: geom_list) {
             auto new_key = get_new_root_name(root_name, new_root_name, k);
-            auto new_geom = std::static_pointer_cast<GeometryObject_Adapter>(p->clone());
+            auto new_geom = safe_uniqueptr_cast<GeometryObject_Adapter>(p->clone());
             new_geom->userData()->set_string("ObjectName", stdString2zs(new_key));
-            new_scene_obj->geom_list[new_key] = new_geom;
             if (!p->key().empty())
                 new_geom->update_key(p->key());
+            new_scene_obj->geom_list[new_key] = std::move(new_geom);
         }
         new_scene_obj->root_name = new_root_name;
         std::string xform_name = new_root_name + "_m";
@@ -304,8 +304,8 @@ struct SceneObject : IObject {
         }
     }
 
-    static std::shared_ptr<PrimitiveObject> mats_to_prim(std::string &obj_name, std::vector<glm::mat4> &matrixs) {
-        auto prim = std::make_shared<PrimitiveObject>();
+    static std::unique_ptr<PrimitiveObject> mats_to_prim(std::string &obj_name, std::vector<glm::mat4> &matrixs) {
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->verts.resize(4 * matrixs.size());
         for (auto i = 0; i < matrixs.size(); i++) {
             auto &matrix = matrixs[i];
@@ -331,11 +331,11 @@ struct SceneObject : IObject {
         return prim;
     }
 
-    std::shared_ptr <zeno::ListObject> to_structure() {
-        auto scene = std::make_shared<zeno::ListObject>();
+    std::unique_ptr<zeno::ListObject> to_structure() {
+        auto scene = std::make_unique<zeno::ListObject>();
         {
             for (auto& [abc_path, p] : geom_list) {
-                scene->push_back(p);
+                scene->push_back(p->clone());
                 //是否需要加到summary_info已经由外面的list参数决定
             }
         }
@@ -363,12 +363,12 @@ struct SceneObject : IObject {
 
                 std::string primkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
                 prim->update_key(stdString2zs(primkey));
-                scene->push_back(prim);
+                scene->push_back(std::move(prim));
             }
         }
         if (bNeedUpdateDescriptor)
         {
-            auto scene_descriptor = std::make_shared<PrimitiveObject>();
+            auto scene_descriptor = std::make_unique<PrimitiveObject>();
             auto ud = scene_descriptor->userData();
             ud->set_string("ResourceType", "SceneDescriptor");
             Json json;
@@ -408,7 +408,7 @@ struct SceneObject : IObject {
             ud->set_string("Scene", stdString2zs(std::string(json.dump())));
             std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
             scene_descriptor->update_key(stdString2zs(objkey));
-            scene->push_back(scene_descriptor);
+            scene->push_back(std::move(scene_descriptor));
         }
         return scene;
     }
@@ -479,27 +479,27 @@ struct SceneObject : IObject {
         this->scene_tree = temp_scene_tree;
     }
 
-    std::shared_ptr <zeno::ListObject> to_list() {
-        auto scene = std::make_shared<zeno::ListObject>();
+    std::unique_ptr<zeno::ListObject> to_list() {
+        auto scene = std::make_unique<zeno::ListObject>();
         for (auto& [abc_path, p] : geom_list) {
             assert(!p->key().empty());
-            scene->push_back(p);
+            scene->push_back(p->clone());
         }
 
-        auto st = std::make_shared<PrimitiveObject>();
+        auto st = std::make_unique<PrimitiveObject>();
         st->userData()->set_string("json", stdString2zs(to_json()));
         st->userData()->set_string("ResourceType", stdString2zs(std::string("SceneTree")));
         std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
         st->update_key(stdString2zs(objkey));
 
-        scene->push_back(st);
+        scene->push_back(std::move(st));
         scene->update_key(this->key()); //以后如果想追踪的话就会回到Scene最后所在的节点
         return scene;
     }
 };
 
-static std::shared_ptr <SceneObject> get_scene_tree_from_list2(std::shared_ptr <ListObject> list_obj) {
-    auto scene_tree = std::make_shared<SceneObject>();
+static std::unique_ptr<SceneObject> get_scene_tree_from_list2(ListObject* list_obj) {
+    auto scene_tree = std::make_unique<SceneObject>();
     for (auto i = 0; i < list_obj->size(); i++) {
         auto ud = list_obj->m_impl->m_objects[i]->userData();
         auto resource_type = ud->get_string("ResourceType", "None");
@@ -507,9 +507,9 @@ static std::shared_ptr <SceneObject> get_scene_tree_from_list2(std::shared_ptr <
             scene_tree->from_json(zsString2Std(ud->get_string("json")));
         }
         else if (resource_type == "Mesh") {
-            auto prim = std::static_pointer_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]);
+            auto prim = safe_uniqueptr_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]->clone());
             auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
-            scene_tree->geom_list[object_name] = prim;
+            scene_tree->geom_list[object_name] = std::move(prim);
         }
     }
     return scene_tree;

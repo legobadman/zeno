@@ -309,7 +309,7 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
         SET_TEX_FILTER(tex, magFilter)
 
     #undef SET_TEX_FILTER
-        em->tex2Ds.push_back(tex);
+        em->tex2Ds.push_back(std::move(tex));
         auto type = zsString2Std(get_input2_string("type"));
         std::string suffix;
         if (type == "R") {

@@ -36,7 +36,7 @@ static void set_special_attr_remap(PrimitiveObject *p, std::string attr_name, st
         }
     }
 }
-ZENO_API std::shared_ptr<zeno::PrimitiveObject> primMergeWithFacesetMatid(std::vector<zeno::PrimitiveObject *> const &primList,
+ZENO_API std::unique_ptr<zeno::PrimitiveObject> primMergeWithFacesetMatid(std::vector<zeno::PrimitiveObject *> const &primList,
                                                           std::string const &tagAttr, bool tag_on_vert, bool tag_on_face) {
     std::vector<std::string> matNameList(0);
     std::unordered_map<std::string, int> facesetNameMap;
@@ -131,7 +131,7 @@ ZENO_API std::shared_ptr<zeno::PrimitiveObject> primMergeWithFacesetMatid(std::v
     }
     return outprim;
 }
-ZENO_API std::shared_ptr<zeno::PrimitiveObject> primMerge(std::vector<zeno::PrimitiveObject *> const &primList,
+ZENO_API std::unique_ptr<zeno::PrimitiveObject> primMerge(std::vector<zeno::PrimitiveObject *> const &primList,
                                                           std::string const &tagAttr, bool tag_on_vert, bool tag_on_face) {
     //zeno::log_critical("asdfjhl {}", primList.size());
     //throw;

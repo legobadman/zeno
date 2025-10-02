@@ -35,7 +35,7 @@ struct ReadJson : zeno::INode {
         std::string native_path = std::filesystem::u8path(path).string();
         auto content = zeno::file_get_content(native_path);
         json->json = Json::parse(content);
-        set_output("json", json);
+        set_output("json", std::move(json));
     }
 };
 ZENDEFNODE(ReadJson, {
@@ -126,7 +126,7 @@ struct FormJson : zeno::INode {
       auto _json = std::make_unique<JsonObject>();
       auto iObject = clone_input("iObject");
       _json->json = iobject_to_json(iObject);
-      set_output("json", _json);
+      set_output("json", std::move(_json));
   }
 };
 ZENDEFNODE(FormJson, {
@@ -195,7 +195,7 @@ struct PrimUserDataToJson : zeno::INode {
             iobject_to_json(_json->json, i->first, i->second);
         }
 
-        set_output("json", _json);
+        set_output("json", std::move(_json));
     }
 };
 ZENDEFNODE(PrimUserDataToJson, {
@@ -256,7 +256,7 @@ struct JsonSetDataSimple : zeno::INode {
         auto value = ZImpl(clone_input("value"));
         *tmp_json = iobject_to_json(value);
 
-        ZImpl(set_output2("json", in_json));
+        ZImpl(set_output2("json", std::move(in_json)));
     }
 };
 
@@ -315,7 +315,7 @@ struct JsonSetData : zeno::INode {
             *tmp_json = iobject_to_json(dict->lut[new_name]);
         }
 
-        ZImpl(set_output2("json", in_json));
+        ZImpl(set_output("json", std::move(in_json)));
     }
 };
 
@@ -339,7 +339,7 @@ struct ReadJsonFromString : zeno::INode {
         auto json = std::make_unique<JsonObject>();
         auto content = ZImpl(get_input2<std::string>("content"));
         json->json = Json::parse(content);
-        set_output("json", json);
+        set_output("json", std::move(json));
     }
 };
 ZENDEFNODE(ReadJsonFromString, {
@@ -378,7 +378,7 @@ struct JsonGetArrayItem : zeno::INode {
         auto json = ZImpl(get_input<JsonObject>("json"));
         auto index = ZImpl(get_input2<int>("index"));
         out_json->json = json->json[index];
-        ZImpl(set_output("json", out_json));
+        ZImpl(set_output("json", std::move(out_json)));
     }
 };
 ZENDEFNODE(JsonGetArrayItem, {
@@ -405,28 +405,28 @@ struct JsonGetChild : zeno::INode {
             if (json->json.contains(name)) {
                 output->json = json->json[name];
             }
-            ZImpl(set_output2("out", output));
+            ZImpl(set_output("out", std::move(output)));
         }
         else if (type == "int") {
             auto output = std::make_unique<NumericObject>();
             if (json->json.contains(name)) {
                 output->set<int>(int(json->json[name]));
             }
-            ZImpl(set_output2("out", output));
+            ZImpl(set_output("out", std::move(output)));
         }
         else if (type == "float") {
             auto output = std::make_unique<NumericObject>();
             if (json->json.contains(name)) {
                 output->set<float>(float(json->json[name]));
             }
-            ZImpl(set_output2("out", output));
+            ZImpl(set_output("out", std::move(output)));
         }
         else if (type == "string") {
             auto output = std::make_unique<StringObject>();
             if (json->json.contains(name)) {
                 output->set(std::string(json->json[name]));
             }
-            ZImpl(set_output2("out", output));
+            ZImpl(set_output("out", std::move(output)));
         }
         else if (type == "vec2f") {
             auto output = std::make_unique<NumericObject>();
@@ -436,7 +436,7 @@ struct JsonGetChild : zeno::INode {
                 vec[1] = float(json->json[name][1]);
                 output->set<vec2f>(vec);
             }
-            ZImpl(set_output2("out", output));
+            ZImpl(set_output("out", std::move(output)));
         }
         else if (type == "vec3f") {
             auto output = std::make_unique<NumericObject>();
@@ -447,7 +447,7 @@ struct JsonGetChild : zeno::INode {
                 vec[2] = float(json->json[name][2]);
                 output->set<vec3f>(vec);
             }
-            ZImpl(set_output2("out", output));
+            ZImpl(set_output("out", std::move(output)));
         }
         else if (type == "vec4f") {
             auto output = std::make_unique<NumericObject>();
@@ -459,7 +459,7 @@ struct JsonGetChild : zeno::INode {
                 vec[3] = float(json->json[name][3]);
                 output->set<vec4f>(vec);
             }
-            ZImpl(set_output2("out", output));
+            ZImpl(set_output("out", std::move(output)));
         }
     }
 };
@@ -563,7 +563,7 @@ struct JsonGetKeys : zeno::INode {
         for (auto& [key, _] : json->json.items()) {
             list->push_back(std::make_unique<zeno::StringObject>(key));
         }
-        ZImpl(set_output2("keys", list));
+        ZImpl(set_output2("keys", std::move(list)));
     }
 };
 ZENDEFNODE(JsonGetKeys, {
@@ -615,7 +615,7 @@ struct JsonData : zeno::INode {
         if (type == "json") {
             auto out_json = std::make_unique<JsonObject>();
             out_json->json = json->json;
-            set_output("out", out_json);
+            set_output("out", std::move(out_json));
         }
         else if (type == "int") {
             set_output2("out", int(json->json));
@@ -855,7 +855,7 @@ struct JsonGetData : zeno::INode {
                 }
             }
         }
-        set_output("outs", dict);
+        set_output("outs", std::move(dict));
     }
 };
 ZENDEFNODE(JsonGetData, {
@@ -876,7 +876,7 @@ ZENDEFNODE(JsonGetData, {
 struct CreateJson : zeno::INode {
   virtual void apply() override {
       auto _json = std::make_unique<JsonObject>();
-      set_output("json", _json);
+      set_output("json", std::move(_json));
   }
 };
 ZENDEFNODE(CreateJson, {
@@ -914,7 +914,7 @@ struct JsonErase : zeno::INode {
 
         access(json->json, names, 0);
 
-        set_output("json", json);
+        set_output("json", std::move(json));
     }
 };
 ZENDEFNODE(JsonErase, {
@@ -955,7 +955,7 @@ struct JsonRenameKey : zeno::INode {
 
         access(json->json, names, 0, new_name);
 
-        set_output("json", json);
+        set_output("json", std::move(json));
     }
 };
 ZENDEFNODE(JsonRenameKey, {
@@ -995,7 +995,7 @@ struct JsonInsertValue : zeno::INode {
 
         access(json->json, names, 0, iObject);
 
-        set_output("json", json);
+        set_output("json", std::move(json));
     }
 };
 ZENDEFNODE(JsonInsertValue, {
@@ -1031,7 +1031,7 @@ struct CreateRenderInstance : zeno::INode {
             {"Material", Material},
         };
         out_json->json["Root"] = instID;
-        set_output("json", out_json);
+        set_output("json", std::move(out_json));
     }
 };
 
@@ -1116,7 +1116,7 @@ struct RenderGroup : zeno::INode {
             }
         }
 
-        set_output("json", out_json);
+        set_output("json", std::move(out_json));
     }
 };
 
@@ -1192,7 +1192,7 @@ with open(output_file_path, 'w', encoding='utf-8') as f:
                     zeno::log_error(output_json);
                     throw std::runtime_error("Failed to parse output JSON: " + std::string(e.what()));
                 }
-                ZImpl(set_output2("out_json", json_obj));
+                ZImpl(set_output2("out_json", std::move(json_obj)));
             }
         }
         fs::remove_all(temp_node_dir);

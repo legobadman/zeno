@@ -118,7 +118,7 @@ namespace zeno
         {
             auto prim = ZImpl(get_input<zeno::PrimitiveObject>("prim"));
             auto inst = ZImpl(get_input<zeno::InstancingObject>("inst"));
-            prim->inst = inst;
+            prim->inst.reset(inst.release());
             ZImpl(set_output("prim", std::move(prim)));
         }
 

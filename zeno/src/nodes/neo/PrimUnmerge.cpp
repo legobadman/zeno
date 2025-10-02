@@ -12,13 +12,13 @@
 
 namespace zeno {
 
-ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeVerts(PrimitiveObject *prim, std::string tagAttr) {
+ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeVerts(PrimitiveObject *prim, std::string tagAttr) {
     if (!prim->verts.size()) return {};
 
     auto const &tagArr = prim->verts.attr<int>(tagAttr);
     int tagMax = parallel_reduce_max(tagArr.begin(), tagArr.end()) + 1;
 
-    std::vector<std::shared_ptr<PrimitiveObject>> primList(tagMax);
+    std::vector<std::unique_ptr<PrimitiveObject>> primList(tagMax);
     for (int tag = 0; tag < tagMax; tag++) {
         primList[tag] = std::make_unique<PrimitiveObject>();
     }
@@ -34,7 +34,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeVerts(Primitiv
       aux_arrays[tagArr[i]].emplace_back(i);
     }
     for (int tag = 0; tag < tagMax; tag++) {
-        *primList[tag] = *prim;
+        primList[tag] = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
         primFilterVerts(primList[tag].get(), tagAttr, tag, false, {}, "verts", aux_arrays[tag].data(), aux_arrays[tag].size(),true);
     }
 
@@ -208,14 +208,14 @@ void remap_attr_on_faces(PrimitiveObject *prim, std::string tagAttr, std::map<in
     }
 }
 
-ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(PrimitiveObject *prim, std::string tagAttr) {
+ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeFaces(PrimitiveObject *prim, std::string tagAttr) {
     if (!prim->verts.size()) return {};
 
     if (prim->tris.size() > 0 && prim->polys.size() > 0) {
         primPolygonate(prim, true);
     }
 
-    std::vector<std::shared_ptr<PrimitiveObject>> list;
+    std::vector<std::unique_ptr<PrimitiveObject>> list;
 
     std::map<int, std::vector<int>> mapping;
     if (prim->tris.size() > 0) {
@@ -227,7 +227,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
             mapping[attr[i]].push_back(i);
         }
         for (auto &[key, val]: mapping) {
-            auto new_prim = dynamic_cast<PrimitiveObject>(prim->clone());
+            auto new_prim = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
             new_prim->tris.resize(val.size());
             for (auto i = 0; i < val.size(); i++) {
                 new_prim->tris[i] = prim->tris[val[i]];
@@ -239,7 +239,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
                     arr[i] = attr[val[i]];
                 }
             });
-            list.push_back(new_prim);
+            list.push_back(std::move(new_prim));
         }
     }
     else if (prim->polys.size() > 0) {
@@ -251,7 +251,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
             mapping[attr[i]].push_back(i);
         }
         for (auto &[key, val]: mapping) {
-            auto new_prim = dynamic_cast<PrimitiveObject>(prim->clone());
+            auto new_prim = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
             new_prim->polys.resize(val.size());
             for (auto i = 0; i < val.size(); i++) {
                 new_prim->polys[i] = prim->polys[val[i]];
@@ -263,7 +263,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
                     arr[i] = attr[val[i]];
                 }
             });
-            list.push_back(new_prim);
+            list.push_back(std::move(new_prim));
         }
     }
     for (auto i = 0; i < list.size(); i++) {
@@ -324,7 +324,7 @@ struct PrimUnmerge : INode {
         if (ZImpl(get_input2<bool>("preSimplify"))) {
             primSimplifyTag(prim.get(), tagAttr);
         }
-        std::vector<std::shared_ptr<PrimitiveObject>> primList;
+        std::vector<std::unique_ptr<PrimitiveObject>> primList;
         if (method == "verts") {
             primList = primUnmergeVerts(prim.get(), tagAttr);
         }
@@ -334,7 +334,7 @@ struct PrimUnmerge : INode {
 
         auto listPrim = create_ListObject();
         for (auto &primPtr: primList) {
-            auto geom = create_GeometryObject(primPtr);
+            auto geom = create_GeometryObject(primPtr.get());
             listPrim->m_impl->push_back(std::move(geom));
         }
         ZImpl(set_output("listPrim", std::move(listPrim)));
@@ -356,7 +356,7 @@ ZENDEFNODE(PrimUnmerge, {
     {"primitive"},
 });
 
-void cleanMesh(std::shared_ptr<zeno::PrimitiveObject> prim,
+void cleanMesh(zeno::PrimitiveObject* prim,
                std::vector<zeno::vec3f> &verts,
                std::vector<zeno::vec3f> &nrm,
                std::vector<zeno::vec3f> &clr,
@@ -600,7 +600,7 @@ struct primClean : INode {
     std::vector<zeno::vec3i> idxBuffer;
     computeTrianglesTangent(prim.get());
     computeVertexTangent(prim.get());
-    cleanMesh(prim, verts, nrm, clr, tang, uv, idxBuffer);
+    cleanMesh(prim.get(), verts, nrm, clr, tang, uv, idxBuffer);
     auto oPrim = std::make_unique<zeno::PrimitiveObject>();
     oPrim->verts.resize(verts.size());
     oPrim->add_attr<zeno::vec3f>("nrm");

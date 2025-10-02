@@ -323,7 +323,7 @@ struct PrimitiveFlipPoly : zeno::INode {
             tri[2] = tri_idx_tmp;
         }
 
-        ZImpl(set_output("primOut",surfIn));
+        ZImpl(set_output("primOut", std::move(surfIn)));
     }
 };
 

@@ -175,7 +175,7 @@ struct GetPerlinNoise : INode{
         float y = perlin(p[1], p[2], p[0]);
         float z = perlin(p[2], p[0], p[1]);
         res->value = zeno::vec3f(x,y,z);
-        ZImpl(set_output("noise", res));
+        ZImpl(set_output("noise", std::move(res)));
     }
 };
 ZENDEFNODE(GetPerlinNoise,

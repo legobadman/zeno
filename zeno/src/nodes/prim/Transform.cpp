@@ -155,17 +155,17 @@ namespace zeno {
 
             auto matrix = pre_mat * local * matTrans * matRotate * matQuat * matScal * matShearZ * matShearY * matShearX * glm::inverse(local) * pre_apply;
 
-            std::function<void(std::shared_ptr<IObject>)> transformListObj = [&](std::shared_ptr<IObject> obj) {
-                if (std::shared_ptr<ListObject> listobj = dynamic_cast<ListObject>(obj)) {
+            std::function<void(IObject*)> transformListObj = [&](IObject* obj) {
+                if (auto listobj = dynamic_cast<ListObject*>(obj)) {
                     for (int i = 0; i < listobj->m_impl->size(); ++i) {
                         transformListObj(listobj->m_impl->get(i));
                     }
-                } else if (std::shared_ptr<DictObject> dictobj = dynamic_cast<DictObject>(obj)) {
+                } else if (auto dictobj = dynamic_cast<DictObject*>(obj)) {
                     for (auto& [key, obj] : dictobj->get()) {
                         transformListObj(obj);
                     }
-                } else if (std::shared_ptr<GeometryObject_Adapter> geoObj = dynamic_cast<GeometryObject_Adapter>(obj)) {
-                    transformObj(geoObj.get(), matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
+                } else if (auto geoObj = dynamic_cast<GeometryObject_Adapter*>(obj)) {
+                    transformObj(geoObj, matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
 
                     auto transform_ptr = glm::value_ptr(matrix);
 
@@ -182,8 +182,8 @@ namespace zeno {
                 }
             };
 
-            transformListObj(input_object);
-            ZImpl(set_output("Output", input_object));
+            transformListObj(input_object.get());
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
 

@@ -83,7 +83,7 @@ struct EvalCurveOnPrimAttr : zeno::INode {
                 });
             }
         });
-        ZImpl(set_output("prim", prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 

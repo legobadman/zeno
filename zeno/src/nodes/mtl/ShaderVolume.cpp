@@ -54,12 +54,12 @@ struct ShaderVolume : INode {
                     throw zeno::makeError("Can not use both way!");
                 }
                 for (const auto& tex: tex2dList) {
-                    em.tex2Ds.push_back(tex);
+                    em.tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
                 }
             }
             if (!em.tex2Ds.empty()) {
                 for (const auto& tex: em.tex2Ds) {
-                    mtl->tex2Ds.push_back(tex);
+                    mtl->tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
                 }
             }
 
@@ -92,8 +92,8 @@ struct ShaderVolume : INode {
 
                 const auto ele = dynamic_cast<zeno::StringObject*>(tex3d);
                 if (ele == nullptr) {
-                    auto texObject = dynamic_cast<zeno::TextureObjectVDB>(tex3d->clone());
-                    mtl->tex3Ds.push_back(texObject); 
+                    auto texObject = safe_uniqueptr_cast<zeno::TextureObjectVDB>(tex3d->clone());
+                    mtl->tex3Ds.push_back(std::shared_ptr<zeno::TextureObjectVDB>(texObject.release())); 
                     continue;
                 }
 

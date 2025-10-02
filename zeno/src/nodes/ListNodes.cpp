@@ -34,7 +34,7 @@ struct ListGetItem : zeno::INode {
             }
             if (index < 0 || index >= dict->lut.size())
                 throw makeError<IndexError>(index, dict->lut.size(), "ListGetItem (for dict)");
-            auto obj = std::next(dict->lut.begin(), index)->second;
+            auto obj = std::next(dict->lut.begin(), index)->second->clone();
             ZImpl(set_output("object", std::move(obj)));
         } else {
             auto list = ZImpl(get_input<zeno::ListObject>("list"));
@@ -43,7 +43,7 @@ struct ListGetItem : zeno::INode {
             }
             if (index < 0 || index >= list->m_impl->size())
                 throw makeError<IndexError>(index, list->m_impl->size(), "ListGetItem");
-            auto obj = list->m_impl->get(index);
+            auto obj = list->m_impl->get(index)->clone();
             ZImpl(set_output("object", std::move(obj)));
         }
     }
@@ -65,7 +65,7 @@ struct ExtractList : zeno::INode {
         for (auto const& key : keys) {
             int index = std::stoi(key);
             if (list->m_impl->size() > index) {
-                auto obj = list->m_impl->get(index);
+                auto obj = list->m_impl->get(index)->clone();
                 ZImpl(set_output(key, std::move(obj)));
             }
         }
@@ -118,7 +118,7 @@ struct ExtendList : zeno::INode {
         auto list1 = ZImpl(get_input<zeno::ListObject>("list1"));
         auto list2 = ZImpl(get_input<zeno::ListObject>("list2"));
         for (auto const &ptr: list2->m_impl->get()) {
-            list1->m_impl->push_back(ptr);
+            list1->m_impl->push_back(ptr->clone());
         }
         ZImpl(set_output("list1", std::move(list1)));
     }
@@ -164,7 +164,7 @@ struct MakeSmallList : zeno::INode {
             if (doConcat && ZImpl(has_input<ListObject>(name))) {
                 auto objlist = ZImpl(get_input<ListObject>(name));
                 for (auto const &obj: objlist->m_impl->get()) {
-                    list->m_impl->push_back(std::move(obj));
+                    list->m_impl->push_back(std::move(obj->clone()));
                 }
             } else {
                 auto obj = ZImpl(clone_input(name));
@@ -209,13 +209,13 @@ struct MergeList : zeno::INode {
         auto list1 = ZImpl(get_input<zeno::ListObject>("list1"));
         auto list2 = ZImpl(get_input<zeno::ListObject>("list2"));
         auto lst = create_ListObject();
-        for (zany inobj : list1->get()) {
-            lst->push_back(inobj);
+        for (const auto& inobj : list1->get()) {
+            lst->push_back(inobj->clone());
         }
-        for (zany inobj : list2->get()) {
-            lst->push_back(inobj);
+        for (const auto& inobj : list2->get()) {
+            lst->push_back(inobj->clone());
         }
-        set_output("list", lst);
+        set_output("list", std::move(lst));
     }
 };
 

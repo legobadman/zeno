@@ -218,7 +218,7 @@ struct LineResample : INode {
             has_schema = true;
         auto attrSchema = std::make_unique<zeno::DictObject>();
         if(has_schema)
-            attrSchema = get_input_DictObject("AttrSchema");
+            attrSchema = safe_uniqueptr_cast<zeno::DictObject>(get_input_DictObject("AttrSchema")->clone());
         if (segments < 1) { segments = 1; }
         std::vector<float> linesLen(prim->lines.size());
         if(!prim->lines.has_attr("parameterization")) {
@@ -305,7 +305,7 @@ struct LineResample : INode {
                         {
                           if(attrSchema->lut.find(key)!=attrSchema->lut.end())
                           {
-                            auto schema = zeno::safe_dynamic_cast<zeno::StringObject>(attrSchema->lut[key])->value;
+                            auto schema = static_cast<zeno::StringObject*>(attrSchema->lut[key].get())->value;
                             if(schema == "Degrees")
                             {
                               if constexpr (std::is_convertible_v<T, zeno::vec4f>)
@@ -1303,7 +1303,7 @@ struct QuatRotBetweenVectors : INode {
         vec4f rot(gl_quat.x, gl_quat.y, gl_quat.z, gl_quat.w);
         auto rotation = std::make_unique<NumericObject>();
         rotation->set<vec4f>(rot);
-        ZImpl(set_output("quat", rotation));
+        ZImpl(set_output("quat", std::move(rotation)));
     }
 };
 ZENDEFNODE(QuatRotBetweenVectors,
@@ -1330,7 +1330,7 @@ struct QuatRotate : INode {
         vec3f vec3_o(gl_vec3_out.x, gl_vec3_out.y, gl_vec3_out.z);
         auto vec3_out = std::make_unique<NumericObject>();
         vec3_out->set<vec3f>(vec3_o);
-        ZImpl(set_output("vec3", vec3_out));
+        ZImpl(set_output("vec3", std::move(vec3_out)));
     }
 };
 ZENDEFNODE(QuatRotate,
@@ -1359,7 +1359,7 @@ struct QuatAngleAxis : INode {
         auto rotation = std::make_unique<NumericObject>();
         rotation->set<vec4f>(rot);
 
-        ZImpl(set_output("quat", rotation));
+        ZImpl(set_output("quat", std::move(rotation)));
     }
 };
 ZENDEFNODE(QuatAngleAxis,
@@ -1384,7 +1384,7 @@ struct QuatGetAngle : INode {
         auto angle = std::make_unique<NumericObject>();
         angle->set<float>(gl_angle);
 
-        ZImpl(set_output("angle(D)", angle));
+        ZImpl(set_output("angle(D)", std::move(angle)));
     }
 };
 ZENDEFNODE(QuatGetAngle,
@@ -1408,7 +1408,7 @@ struct QuatGetAxis : INode {
         vec3f axis_o(gl_axis.x, gl_axis.y, gl_axis.z);
         auto axis = std::make_unique<NumericObject>();
         axis->set<vec3f>(axis_o);
-        ZImpl(set_output("axis", axis));
+        ZImpl(set_output("axis", std::move(axis)));
     }
 };
 ZENDEFNODE(QuatGetAxis,
@@ -1429,7 +1429,7 @@ struct MatTranspose : INode {
         glm::mat transposeMat = glm::transpose(mat);
         auto oMat = std::make_unique<MatrixObject>();
         oMat->m = transposeMat;
-        ZImpl(set_output("transposeMat", oMat));
+        ZImpl(set_output("transposeMat", std::move(oMat)));
     }
 };
 ZENDEFNODE(MatTranspose,
@@ -2037,7 +2037,7 @@ struct PrimHasAttr : INode {
 
         auto hasAttr = std::make_unique<NumericObject>();
         hasAttr->set<bool>(x);
-        ZImpl(set_output("hasAttr", hasAttr));
+        ZImpl(set_output("hasAttr", std::move(hasAttr)));
     }
 };
 ZENDEFNODE(PrimHasAttr,

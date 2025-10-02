@@ -237,8 +237,8 @@ struct PrimitiveFilterByAttr : INode {
 
     }
 
-    auto geom = create_GeometryObject(prim);
-    set_output("prim", geom);
+    auto geom = create_GeometryObject(prim.get());
+    set_output("prim", std::move(geom));
   }
 };
 

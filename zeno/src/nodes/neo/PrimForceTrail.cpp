@@ -5,7 +5,6 @@
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/arrayindex.h>
 #include <zeno/utils/variantswitch.h>
-#include <zeno/extra/TempNode.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/zeno.h>
 #include <limits>

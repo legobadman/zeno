@@ -142,7 +142,7 @@ struct DictUnion : zeno::INode {
         auto dict1 = ZImpl(get_input<zeno::DictObject>("dict1"));
         auto dict2 = ZImpl(get_input<zeno::DictObject>("dict2"));
         auto dict = std::make_unique<zeno::DictObject>();
-        dict->lut = dict1->lut;
+        dict->lut = std::move(dict1->lut);
         dict->lut.merge(dict2->lut);
         ZImpl(set_output("dict", std::move(dict)));
     }

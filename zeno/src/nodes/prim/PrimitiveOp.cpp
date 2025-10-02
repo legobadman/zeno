@@ -168,7 +168,7 @@ struct PrimitiveMix : INode {
     auto primA = ZImpl(get_input<PrimitiveObject>("primA"));
     auto primB = ZImpl(get_input<PrimitiveObject>("primB"));
 
-    std::shared_ptr<zeno::PrimitiveObject> primOut;
+    std::unique_ptr<zeno::PrimitiveObject> primOut;
     if (ZImpl(has_input("primOut"))) {
             primOut = ZImpl(get_input<PrimitiveObject>("primOut"));
     } else {
@@ -194,7 +194,7 @@ struct PrimitiveMix : INode {
                 });
         });
     });
-    ZImpl(set_output("primOut", primOut));
+    ZImpl(set_output("primOut", std::move(primOut)));
   }
 };
 ZENDEFNODE(PrimitiveMix,

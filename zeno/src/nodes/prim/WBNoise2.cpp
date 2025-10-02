@@ -117,7 +117,7 @@ namespace zeno
                 return newpos;
             });
 
-            ZImpl(set_output("Output", input_geo));
+            ZImpl(set_output("Output", std::move(input_geo)));
         }
     };
 
@@ -308,7 +308,7 @@ namespace zeno
                     });
                 }
             }
-            ZImpl(set_output("Output", input_2d_grid_geo));
+            ZImpl(set_output("Output", std::move(input_2d_grid_geo)));
         }
     };
 

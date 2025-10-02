@@ -410,7 +410,7 @@ namespace zeno
         }
     }
 
-    SharedPtr<zeno::PrimitiveObject> primMergeWithFacesetMatid(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face)
+    std::unique_ptr<zeno::PrimitiveObject> primMergeWithFacesetMatid(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face)
     {
         std::vector<std::string> matNameList(0);
         std::unordered_map<std::string, int> facesetNameMap;
@@ -1049,7 +1049,7 @@ namespace zeno
         prim->points.clear_with_attr();
     }
 
-    SharedPtr<zeno::PrimitiveObject> PrimMerge(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face) {
+    std::unique_ptr<zeno::PrimitiveObject> PrimMerge(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face) {
         //zeno::log_critical("asdfjhl {}", primList.size());
     //throw;
         std::string stagAttr = zsString2Std(tagAttr);
@@ -1069,7 +1069,7 @@ namespace zeno
             }
         }
 
-        auto outprim = std::make_shared<PrimitiveObject>();
+        auto outprim = std::make_unique<PrimitiveObject>();
 
         if (primList.size()) {
             std::vector<size_t> bases(primList.size() + 1);
@@ -1566,7 +1566,7 @@ namespace zeno
         return outprim;
     }
 
-    zeno::SharedPtr<PrimitiveObject> readExrFile(zeno::String const& path) {
+    std::unique_ptr<PrimitiveObject> readExrFile(zeno::String const& path) {
         int nx, ny, nc = 4;
         float* rgba;
         const char* err;
@@ -1586,7 +1586,7 @@ namespace zeno
             }
         }
 
-        auto img = std::make_shared<PrimitiveObject>();
+        auto img = std::make_unique<PrimitiveObject>();
         img->verts.resize(nx * ny);
 
         auto& alpha = img->verts.add_attr<float>("alpha");
@@ -1601,7 +1601,7 @@ namespace zeno
         return img;
     }
 
-    zeno::SharedPtr<PrimitiveObject> readImageFile(zeno::String const& path) {
+    std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path) {
         int w, h, n;
         stbi_set_flip_vertically_on_load(true);
         std::string native_path = std::filesystem::u8path(zsString2Std(path)).string();
@@ -1610,7 +1610,7 @@ namespace zeno
             throw zeno::Exception("cannot open image file at path: " + native_path);
         }
         scope_exit delData = [=] { stbi_image_free(data); };
-        auto img = std::make_shared<PrimitiveObject>();
+        auto img = std::make_unique<PrimitiveObject>();
         img->verts.resize(w * h);
         if (n == 3) {
             std::memcpy(img->verts.data(), data, w * h * n * sizeof(float));
@@ -1641,7 +1641,7 @@ namespace zeno
         return img;
     }
 
-    zeno::SharedPtr<PrimitiveObject> readPFMFile(zeno::String const& path) {
+    std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path) {
         int nx = 0;
         int ny = 0;
         std::ifstream file(zsString2Std(path), std::ios::binary);
@@ -1652,7 +1652,7 @@ namespace zeno
         file >> scale;
         file.ignore(1);
 
-        auto img = std::make_shared<PrimitiveObject>();
+        auto img = std::make_unique<PrimitiveObject>();
         int size = nx * ny;
         img->resize(size);
         file.read(reinterpret_cast<char*>(img->verts.data()), sizeof(vec3f) * nx * ny);
@@ -1671,14 +1671,14 @@ namespace zeno
         file_put_binary(data, path);
     }
 
-    void write_pfm(const zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
+    void write_pfm(const zeno::String& path, std::unique_ptr<PrimitiveObject> image) {
         auto ud = image->userData();
         int w = ud->get_int("w");
         int h = ud->get_int("h");
         write_pfm(zsString2Std(path), w, h, image->verts->data());
     }
 
-    void write_jpg(const zeno::String& path, zeno::SharedPtr<PrimitiveObject> image) {
+    void write_jpg(const zeno::String& path, std::unique_ptr<PrimitiveObject> image) {
         int w = image->userData()->get_int("w");
         int h = image->userData()->get_int("h");
         std::vector<uint8_t> colors;

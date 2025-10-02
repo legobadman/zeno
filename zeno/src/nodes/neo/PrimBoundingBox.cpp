@@ -36,7 +36,7 @@ struct PrimBoundingBox : INode {
   virtual void apply() override {
     auto prim = get_input_Geometry("prim");
     auto extraBound = ZImpl(get_input2<float>("extraBound"));
-    auto [bmin, bmax] = geoBoundingBox(prim.get());
+    auto [bmin, bmax] = geoBoundingBox(prim);
     if (extraBound != 0) {
         bmin -= extraBound;
         bmax += extraBound;

@@ -180,7 +180,7 @@ struct MockRunning : zeno::INode {
         }
         std::this_thread::sleep_for(std::chrono::seconds(secs));
         auto geom = zeno::create_GeometryObject(zeno::Topo_IndiceMesh, true, { zeno::vec3f(0,0,0) }, {});
-        set_output("DST", geom);
+        set_output("DST", std::move(geom));
     }
 };
 

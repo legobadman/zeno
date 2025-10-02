@@ -479,7 +479,7 @@ struct CreateCube : zeno::INode {
         }
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim", std::move(geo));
     }
 };
@@ -548,8 +548,8 @@ struct CreateDisk : zeno::INode {
         tris[tris.size()-1] = zeno::vec3i(divisions, 0, 1);
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
-        set_output("prim", geo);
+        auto geo = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -711,8 +711,8 @@ struct CreatePlane : zeno::INode {
         prim->userData()->set_vec3f("rotate", toAbiVec3f(rotate));
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
-        set_output("prim", prim);
+        auto geo = create_GeometryObject(prim.get());
+        set_output("prim", std::move(prim));
     }
 };
 
@@ -954,8 +954,8 @@ struct CreateTube : zeno::INode {
         }
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
-        set_output("prim", geo);
+        auto geo = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -1075,7 +1075,7 @@ struct CreateTorus : zeno::INode {
         if (!get_input2_bool("quads")){
             primTriangulate(prim.get());
         }
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim",std::move(geo));
     }
 };
@@ -1321,7 +1321,7 @@ struct CreateSphere : zeno::INode {
             prim->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
         }
 
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim",std::move(geo));
     }
 };
@@ -1372,7 +1372,7 @@ struct CreateCone : zeno::INode {
             tris.push_back(vec3i(lons, i, (i + 1) % lons));
             tris.push_back(vec3i(i, lons + 1, (i + 1) % lons));
         }
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim", std::move(geo));
     }
 };
@@ -1430,7 +1430,7 @@ struct CreateCylinder : zeno::INode {
             tris.push_back(vec3i(_1, _0, _2));
             tris.push_back(vec3i(_2, _0, _3));
         }
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim", std::move(geo));
     }
 };
@@ -1515,13 +1515,13 @@ ZENDEFNODE(CopyFile, {
 
 struct HEdgeGeoSelfTest : zeno::INode {
     void apply() override {
-        std::shared_ptr<PrimitiveObject> prim;
+        PrimitiveObject* prim = nullptr;
         if (ZImpl(has_input("prim"))) {
             prim = get_input_PrimitiveObject("prim");
         }
         auto spGeom = std::make_unique<GeometryObject>(prim);
         auto spRes = spGeom->toPrimitive();
-        set_output("prim", spRes);
+        set_output("prim", std::move(spRes));
     }
 };
 
@@ -1537,12 +1537,12 @@ ZENDEFNODE(HEdgeGeoSelfTest, {
 
 struct HEdgeBasedPrim : zeno::INode {
     void apply() override {
-        std::shared_ptr<PrimitiveObject> prim;
+        PrimitiveObject* prim = nullptr;
         if (has_input("prim")) {
             prim = get_input_PrimitiveObject("prim");
         }
         auto spGeom = create_GeometryObject(prim);
-        set_output("prim", spGeom);
+        set_output("prim", std::move(spGeom));
     }
 };
 

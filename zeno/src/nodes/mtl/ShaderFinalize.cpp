@@ -167,12 +167,12 @@ struct ShaderFinalize : INode {
                     throw zeno::makeError("Can not use both way!");
                 }
                 for (const auto& tex: tex2dList) {
-                    em.tex2Ds.push_back(tex);
+                    em.tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
                 }
             }
             if (!em.tex2Ds.empty()) {
                 for (const auto& tex: em.tex2Ds) {
-                    mtl->tex2Ds.push_back(tex);
+                    mtl->tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
                 }
                 auto texCode = "uniform sampler2D zenotex[32]; \n";
                 mtl->common.insert(0, texCode);

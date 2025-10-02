@@ -16,7 +16,7 @@ struct MakePointPrimitive :INode{
         prim->resize(1);
         auto &pos = prim->add_attr<zeno::vec3f>("pos");
         pos[0] = p;
-        ZImpl(set_output("prim", prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 ZENDEFNODE(MakePointPrimitive,
@@ -213,7 +213,7 @@ struct Make2DGridPrimitive : INode {
     prim->userData()->set_int("nx", (int)nx);//zhxx
     prim->userData()->set_int("ny", (int)ny);//zhxx
 
-    auto geom = create_GeometryObject(prim);
+    auto geom = create_GeometryObject(prim.get());
     ZImpl(set_output("prim", std::move(geom)));
   }
 };

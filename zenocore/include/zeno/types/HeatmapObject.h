@@ -26,10 +26,10 @@ namespace zeno {
         }
     };
     void primSampleHeatmap(
-            std::shared_ptr<PrimitiveObject> prim,
+            PrimitiveObject* prim,
             const std::string &srcChannel,
             const std::string &dstChannel,
-            std::shared_ptr<HeatmapObject> heatmap,
+            HeatmapObject* heatmap,
             float remapMin,
             float remapMax
     );

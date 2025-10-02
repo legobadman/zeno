@@ -20,7 +20,7 @@
 
 namespace zeno {
 
-ZENO_API std::shared_ptr<PrimitiveObject> primDuplicate(PrimitiveObject *parsPrim, PrimitiveObject *meshPrim, std::string dirAttr, std::string tanAttr, std::string radAttr, std::string onbType, float radius, bool copyParsAttr, bool copyMeshAttr) {
+ZENO_API std::unique_ptr<PrimitiveObject> primDuplicate(PrimitiveObject *parsPrim, PrimitiveObject *meshPrim, std::string dirAttr, std::string tanAttr, std::string radAttr, std::string onbType, float radius, bool copyParsAttr, bool copyMeshAttr) {
     auto prim = std::make_unique<PrimitiveObject>();
     auto hasDirAttr = boolean_variant(!dirAttr.empty());
     auto indOnbType = array_index({"XYZ", "YXZ", "YZX", "ZYX", "ZXY", "XZY"}, onbType);
@@ -182,7 +182,7 @@ struct PrimDuplicate : INode {
         auto prim = primDuplicate(parsPrim.get(), meshPrim.get(),
                                   dirAttr, tanAttr, radAttr, onbType,
                                   radius, copyParsAttr, copyMeshAttr);
-        ZImpl(set_output("prim", prim));
+        ZImpl(set_output("prim", std::move(prim)));
     }
 };
 

@@ -139,8 +139,8 @@ struct PrimitiveCalcNormal : zeno::INode {
         auto nrmAttr = ZImpl(get_input<StringObject>("nrmAttr"))->get();
         auto flip = ZImpl(get_input<NumericObject>("flip"))->get<bool>();
         primCalcNormal(prim.get(), flip ? -1 : 1, nrmAttr);
-        geom = create_GeometryObject(prim);
-        set_output("prim", geom);
+        geom = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geom));
     }
 };
 

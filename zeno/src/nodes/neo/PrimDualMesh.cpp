@@ -129,7 +129,7 @@ struct PrimDualMesh : INode {
                     bounde2f.erase(nbk);
             }
             auto oldpolysize = prim->polys.size();
-            revertoldpolysize = scope_exit<>([prim, oldpolysize] {
+            revertoldpolysize = scope_exit<>([&] {
                 prim->polys.resize(oldpolysize);
             });
             for (auto const &[ev, f]: bounde2f) {

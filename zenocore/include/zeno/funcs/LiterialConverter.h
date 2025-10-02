@@ -104,7 +104,7 @@ inline zany objectFromLiterial(NumericValue const &value) {
     return std::make_unique<NumericObject>(value);
 }
 
-inline zany objectFromLiterial(zany value) {
+inline zany objectFromLiterial(zany&& value) {
     return value->clone();
 }
 

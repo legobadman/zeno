@@ -362,12 +362,14 @@ namespace zeno
         const std::vector<std::vector<int>>& faces)
     {
         auto pGeom = std::make_unique<GeometryObject_Adapter>();
-        pGeom->m_impl = std::make_unique<GeometryObject>(type, bTriangle, points.size(), faces);
+        pGeom->m_impl = std::make_unique<GeometryObject>(type, bTriangle, (int)points.size(), faces);
         pGeom->m_impl->create_attr(ATTR_POINT, "pos", points);
         return pGeom;
     }
 
     std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim) {
+        if (!prim)
+            return nullptr;
         auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(prim);
         pGeom->m_usrData = prim->m_usrData->clone();

@@ -237,7 +237,7 @@ ZENDEFNODE(TestVariantInt, {
 struct CreateNumericObj : INode {
     void apply() override {
         std::string type = m_pAdapter->get_input2<std::string>("Numeric Type");
-        std::shared_ptr<NumericObject> spNum;
+        std::unique_ptr<NumericObject> spNum;
         if (type == "Integer") {
             spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<int>("Integer Value"));
         }
@@ -256,7 +256,7 @@ struct CreateNumericObj : INode {
         else {
             throw;
         }
-        set_output("numericobj", spNum);
+        set_output("numericobj", std::move(spNum));
     }
 };
 

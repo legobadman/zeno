@@ -55,8 +55,8 @@ struct SyncPrimitiveAttributes : zeno::INode {
         // prim1->resize(prim1->size());
         // prim2->resize(prim2->size());
 
-        ZImpl(set_output("prim1",prim1));
-        ZImpl(set_output("prim2",prim2));
+        ZImpl(set_output("prim1", std::move(prim1)));
+        ZImpl(set_output("prim2", std::move(prim2)));
     }
 };
 

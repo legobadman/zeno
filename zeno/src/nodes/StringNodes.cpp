@@ -494,13 +494,13 @@ struct FormatString : zeno::INode {
         std::string output = formatStr;
         for (auto obj : list->m_impl->get())
         {
-            std::shared_ptr<zeno::NumericObject> num = dynamic_cast<zeno::NumericObject>(obj);
+            auto num = dynamic_cast<zeno::NumericObject*>(obj);
             if (num) {
                 std::visit([&](const auto& v) {
                     output = zeno::format(output, v);
                     }, num->value);
             }
-            std::shared_ptr<zeno::StringObject> pStr = dynamic_cast<zeno::StringObject>(obj);
+            auto pStr = dynamic_cast<zeno::StringObject*>(obj);
             if (pStr) {
                 output = zeno::format(output, pStr->get());
             }

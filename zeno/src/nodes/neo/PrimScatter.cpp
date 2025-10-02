@@ -81,7 +81,7 @@ static void primPossionFilter(PrimitiveObject *prim, float minRadius) {
     TOCK(possion);
 }
 
-ZENO_API std::shared_ptr<PrimitiveObject> primScatter(
+ZENO_API std::unique_ptr<PrimitiveObject> primScatter(
     PrimitiveObject *prim, std::string type, std::string denAttr, float density, float minRadius, bool interpAttrs, int seed) {
     auto retprim = std::make_unique<PrimitiveObject>();
 
@@ -218,7 +218,7 @@ struct PrimScatter : INode {
         auto interpAttrs = ZImpl(get_input2<bool>("interpAttrs"));
         auto seed = ZImpl(get_input2<int>("seed"));
         auto retprim = primScatter(prim.get(), type, denAttr, density, minRadius, interpAttrs, seed);
-        ZImpl(set_output("parsPrim", retprim));
+        ZImpl(set_output("parsPrim", std::move(retprim)));
     }
 };
 

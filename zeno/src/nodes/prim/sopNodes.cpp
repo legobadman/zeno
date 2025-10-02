@@ -118,7 +118,7 @@ namespace zeno {
             for (int i = 0; i < pts_offset.size(); i++) {
                 spgeo->inheritAttributes(_input_object.get(), -1, pts_offset[i], {"pos", "nrm"}, faces_offset[i], {});
             }
-            ZImpl(set_output("Output", spgeo));
+            ZImpl(set_output("Output", std::move(spgeo)));
         }
     };
 
@@ -418,8 +418,8 @@ namespace zeno {
         void apply() override
         {
             auto list_object = ZImpl(get_input2<zeno::ListObject>("Input Of Objects"));
-            auto mergedObj = zeno::mergeObjects(list_object);
-            ZImpl(set_output("Output", mergedObj));
+            auto mergedObj = zeno::mergeObjects(list_object.get());
+            ZImpl(set_output("Output", std::move(mergedObj)));
         }
     };
 
@@ -453,17 +453,17 @@ namespace zeno {
             zany output_obj;
             for (int i = 0; i <= nx; i++) {
                 float xi = xmin + i * dx;
-                output_obj = divideObject(input_object, Keep_Both, vec3f(xi, 0, 0), vec3f(1, 0, 0));
+                output_obj = divideObject(input_object.get(), Keep_Both, vec3f(xi, 0, 0), vec3f(1, 0, 0));
             }
             for (int i = 0; i <= ny; i++) {
                 float yi = ymin + i * dy;
-                output_obj = divideObject(input_object, Keep_Both, vec3f(0, yi, 0), vec3f(0, 1, 0));
+                output_obj = divideObject(input_object.get(), Keep_Both, vec3f(0, yi, 0), vec3f(0, 1, 0));
             }
             for (int i = 0; i <= nz; i++) {
                 float zi = zmin + i * dz;
-                output_obj = divideObject(input_object, Keep_Both, vec3f(0, 0, zi), vec3f(0, 0, 1));
+                output_obj = divideObject(input_object.get(), Keep_Both, vec3f(0, 0, zi), vec3f(0, 0, 1));
             }
-            ZImpl(set_output("Output", output_obj));
+            ZImpl(set_output("Output", std::move(output_obj)));
         }
     };
     ZENDEFNODE(Divide,
@@ -488,7 +488,7 @@ namespace zeno {
             float Length = ZImpl(get_input2<float>("Length"));
 
             if (Length == 0) {
-                ZImpl(set_output("Output", input_object));
+                ZImpl(set_output("Output", std::move(input_object)));
                 return;
             }
 
@@ -532,7 +532,7 @@ namespace zeno {
             }
 
             auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), newpos, newfaces);
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Resample,
@@ -563,7 +563,7 @@ namespace zeno {
                 faces.emplace_back(std::move(face_indice));
             }
             auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), pos, faces);
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Reverse,
@@ -600,8 +600,8 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Keep Error");
             }
-            auto spOutput = divideObject(input_object, keep, center_pos, direction);
-            ZImpl(set_output("Output", spOutput));
+            auto spOutput = divideObject(input_object.get(), keep, center_pos, direction);
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Clip,
@@ -634,7 +634,7 @@ namespace zeno {
                 //TODO: impl remove_points
                 input_object->remove_point(*iter);
             }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(RemoveUnusedPoints,
@@ -682,7 +682,7 @@ namespace zeno {
                 input_object->remove_point(*iter);
             }
 
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(RemoveInlinePoints,
@@ -739,7 +739,7 @@ namespace zeno {
                 }
             }
             input_object->create_face_attr(stdString2zs(outputAttrName), measurements);
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(Measure,
@@ -812,7 +812,7 @@ namespace zeno {
             }
 
             auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), new_pos, faces);
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(Mirror,
@@ -861,7 +861,7 @@ namespace zeno {
             bool bScaleToFit = ZImpl(get_input2<bool>("Scale To Fit"));
 
             if (!bTranslate && !bScaleToFit) {
-                ZImpl(set_output("Output", input_object));
+                ZImpl(set_output("Output", std::move(input_object)));
                 return;
             }
 
@@ -934,7 +934,7 @@ namespace zeno {
                     return newnrm;
                     });
             }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(MatchSize,
@@ -975,7 +975,7 @@ namespace zeno {
                 return old_pos + nrm * Distance;
             });
 
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(Peak,
@@ -1000,8 +1000,8 @@ namespace zeno {
             int Seed = ZImpl(get_input2<int>("Random Seed"));
             std::string sampleRegion = ZImpl(get_input2<std::string>("Sample Regin"));
 
-            auto spOutput = zeno::scatter(input_object, sampleRegion, Count, Seed);
-            ZImpl(set_output("Output", spOutput));
+            auto spOutput = zeno::scatter(input_object.get(), sampleRegion, Count, Seed);
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Scatter,
@@ -1054,7 +1054,7 @@ namespace zeno {
                 line_object->m_impl->add_face(line, false);
             }
 
-            ZImpl(set_output("Output", line_object));
+            ZImpl(set_output("Output", std::move(line_object)));
 #endif
         }
     };
@@ -1104,7 +1104,7 @@ namespace zeno {
             if (bPostComputeNormals)
                 spOutput->create_point_attr("nrm", point_normals);
 
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(UniquePoints,
@@ -1186,7 +1186,7 @@ namespace zeno {
                 }
 
                 auto spOutput = create_GeometryObject(Topo_IndiceMesh, false, new_pos, faces);
-                ZImpl(set_output("Output", spOutput));
+                ZImpl(set_output("Output", std::move(spOutput)));
             }
         }
     };
@@ -1287,7 +1287,7 @@ namespace zeno {
             }
             auto spOutput = constructGeom(newFaces);
             auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
-            ZImpl(set_output("Output", spFinal));
+            ZImpl(set_output("Output", std::move(spFinal)));
         }
     };
     ZENDEFNODE(PolyExpand,
@@ -1409,10 +1409,10 @@ namespace zeno {
                 }
                 auto spOutput = constructGeom(newFaces);
                 auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
-                ZImpl(set_output("Output", spFinal));
+                ZImpl(set_output("Output", std::move(spFinal)));
             }
             else {
-                ZImpl(set_output("Output", input_object));
+                ZImpl(set_output("Output", std::move(input_object)));
             }
         }
     };
@@ -1470,13 +1470,13 @@ namespace zeno {
             auto spOutput = input_object->clone();
 
             ctx.spNode = m_pAdapter;
-            ctx.spObject = spOutput;
+            ctx.spObject = std::move(spOutput);
             ctx.code = finalZfx;
 
             zeno::ZfxExecute zfxexe(finalZfx, &ctx);
             zfxexe.execute();
 
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(ctx.spObject)));
         }
 
         zeno::CustomUI export_customui() const override {
@@ -1513,7 +1513,7 @@ namespace zeno {
                 throw makeError<UnimplError>("empty input object.");
             }
             auto spOutput = fuseGeometry(input_object.get(), snapDistance);
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
 

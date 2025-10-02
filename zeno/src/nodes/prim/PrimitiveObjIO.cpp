@@ -133,7 +133,7 @@ ZENDEFNODE(ImportObjPrimitive,
 
 
 static void writeobj(
-        std::shared_ptr<zeno::PrimitiveObject> &prim,
+        zeno::PrimitiveObject* prim,
         const char *path)
 {
     FILE *fp = fopen(path, "w");
@@ -176,7 +176,7 @@ struct WriteObjPrimitive : zeno::INode {
         auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
         auto prim = ZImpl(get_input<zeno::PrimitiveObject>("prim"));
         auto &pos = prim->attr<zeno::vec3f>("pos");
-        writeobj(prim, path.c_str());
+        writeobj(prim.get(), path.c_str());
     }
 };
 
@@ -195,7 +195,7 @@ struct ExportObjPrimitive : WriteObjPrimitive {
         auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
         auto prim = ZImpl(get_input<zeno::PrimitiveObject>("prim"));
         auto &pos = prim->attr<zeno::vec3f>("pos");
-        writeobj(prim, path.c_str());
+        writeobj(prim.get(), path.c_str());
     }
 };
 
@@ -210,7 +210,7 @@ ZENDEFNODE(ExportObjPrimitive,
         }});
 
 //--------------------- dict--------------------------//
-static std::shared_ptr<zeno::DictObject>
+static std::unique_ptr<zeno::DictObject>
 read_obj_file_dict(
         std::vector<zeno::vec3f> &vertices,
         //std::vector<zeno::vec3f> &uvs,
@@ -225,7 +225,7 @@ read_obj_file_dict(
     std::vector<zeno::vec3i> sub_indices;
 
 
-    std::shared_ptr<zeno::DictObject> prims = std::make_unique<zeno::DictObject>();
+    auto prims = std::make_unique<zeno::DictObject>();
 
     size_t vert_offset = 0;
     size_t pre_vert_offset = 0;
@@ -282,7 +282,7 @@ read_obj_file_dict(
                 }
                 sub_prim->verts = std::vector(vertices.begin() + pre_vert_offset,vertices.end()- 0);
                 std::vector<zeno::vec3f>(&vertices[pre_vert_offset],&vertices[vert_offset]);
-                prims->lut[sub_name] = sub_prim;
+                prims->lut[sub_name] = std::move(sub_prim);
             }
             // Update the sub_obj name
             sub_name = items[0];
@@ -308,7 +308,7 @@ read_obj_file_dict(
             sub_prim->tris[i] -= zeno::vec3i(pre_vert_offset);
         }
     }
-    prims->lut[sub_name] = sub_prim;
+    prims->lut[sub_name] = std::move(sub_prim);
     return prims;
 }
 struct ReadObjPrimitiveDict : zeno::INode {

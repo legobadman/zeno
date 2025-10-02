@@ -13,7 +13,6 @@
 #include <tbb/tbb.h>
 #include <functional>
 #include <set>
-#include "zeno/extra/TempNode.h"
 
 namespace zeno {
 struct _EdgeInfo {
@@ -611,8 +610,8 @@ struct PrimInterp : INode{
         auto origin_prim = get_input_Geometry("original_prim")->toPrimitiveObject();
         auto prim = get_input_Geometry("interp_prim")->toPrimitiveObject();
         prim_interp(origin_prim.get(), prim.get());
-        auto geom = create_GeometryObject(prim);
-        set_output("prim", geom);
+        auto geom = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geom));
     }
 };
 
@@ -702,7 +701,7 @@ struct PrimDisplacement : INode {
         });
 
 
-        set_output("out", disp_prim);
+        set_output("out", std::move(disp_prim));
     }
 };
 
@@ -725,9 +724,9 @@ struct PrimDice : INode {
     void apply() override {
         auto origin_prim = get_input_Geometry("prim")->toPrimitiveObject();
         primTriangulateIntoPolys(origin_prim.get());
-        auto prim = dynamic_cast<PrimitiveObject>(origin_prim->clone());
+        auto prim = safe_uniqueptr_cast<PrimitiveObject>(origin_prim->clone());
         primTriangulateIntoPolys(prim.get());
-        auto camera = dynamic_cast<CameraObject>(get_input("camera"));
+        auto camera = safe_uniqueptr_cast<CameraObject>(clone_input("camera"));
         auto width = get_input2_int("width");
         auto height = get_input2_int("height");
         auto maxIterNum = get_input2_int("maxIterNum");
@@ -795,7 +794,7 @@ struct PrimDice : INode {
         });
         prim_interp(origin_prim.get(), prim.get());
 
-        auto geom = create_GeometryObject(prim);
+        auto geom = create_GeometryObject(prim.get());
         set_output("out", std::move(geom));
     }
 };

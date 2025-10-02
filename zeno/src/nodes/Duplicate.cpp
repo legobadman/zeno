@@ -10,9 +10,9 @@ namespace zeno
 
             zany first_clone = input_object->clone();
             if (keepModifyOriginal) {
-                ZImpl(set_output("Original Object", input_object));
+                ZImpl(set_output("Original Object", std::move(input_object)));
             }
-            ZImpl(set_output("Duplicated Object", first_clone));
+            ZImpl(set_output("Duplicated Object", std::move(first_clone)));
         }
     };
 

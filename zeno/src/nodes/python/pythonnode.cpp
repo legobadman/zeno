@@ -15,7 +15,6 @@ struct PythonNode : zeno::INode {
 
     virtual void apply() override {
         auto prim = ZImpl(get_input_prim_param("script"));
-        zany inobj_ = get_input("object");
         std::string script = zeno::reflect::any_cast<std::string>(prim.result);
         auto& sess = zeno::getSession();
         sess.asyncRunPython(script);
@@ -25,8 +24,8 @@ struct PythonNode : zeno::INode {
         ResetEvent(hEventPyReady);
 #else
 #endif
-        zany inobj = get_input("object");
-        set_output("object", inobj);
+        zany inobj = clone_input("object");
+        set_output("object", std::move(inobj));
     }
 };
 

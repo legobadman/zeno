@@ -211,8 +211,8 @@ struct PrimRandomize : INode {
         auto seedAttr = ZImpl(get_input2<std::string>("seedAttr"));
         auto randType = ZImpl(get_input2<std::string>("randType"));
         primRandomize(prim.get(), attr, dirAttr, seedAttr, randType, base, scale, seed);
-        auto geom = create_GeometryObject(prim);
-        set_output("prim", geom);
+        auto geom = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geom));
     }
 };
 

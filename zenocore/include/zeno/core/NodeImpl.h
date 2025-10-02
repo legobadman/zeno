@@ -252,14 +252,14 @@ namespace zeno
         template <class T>
         bool has_input(std::string const& id) const {
             if (!has_input(id)) return false;
-            auto obj = get_input(id);
+            auto obj = clone_input(id);
             return !!dynamic_cast<T*>(obj.get());
         }
 
         template <class T>
         bool has_input2(std::string const& id) const {
             if (!has_input(id)) return false;
-            return objectIsLiterial<T>(get_input(id));
+            return objectIsLiterial<T>(clone_input(id).get());
         }
 
         template <class T>

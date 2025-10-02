@@ -26,7 +26,7 @@ namespace zeno
 
             ZfxContext ctx;
             ctx.spNode = this->m_pAdapter;
-            ctx.spObject = spGeo;
+            ctx.spObject = std::move(spGeo);
             ctx.code = zfxCode;
 
             if (runOver == "Points") ctx.runover = ATTR_POINT;
@@ -36,7 +36,7 @@ namespace zeno
             ZfxExecute zfx(zfxCode, &ctx);
             zfx.execute();
 
-            ZImpl(set_output("Output", ctx.spObject));
+            ZImpl(set_output("Output", std::move(ctx.spObject)));
         }
     };
 

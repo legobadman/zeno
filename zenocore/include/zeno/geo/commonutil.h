@@ -9,7 +9,7 @@ namespace zeno
 {
     ZENO_API void primTriangulate(PrimitiveObject* prim, bool with_uv = true, bool has_lines = true, bool with_attr = true);
     ZENO_API void primTriangulateQuads(PrimitiveObject* prim);
-    ZENO_API SharedPtr<zeno::PrimitiveObject> PrimMerge(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr = "", bool tag_on_vert = true, bool tag_on_face = false);
+    ZENO_API std::unique_ptr<zeno::PrimitiveObject> PrimMerge(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr = "", bool tag_on_vert = true, bool tag_on_face = false);
     ZENO_API void primPolygonate(PrimitiveObject* prim, bool with_uv = true);
     ZENO_API void primFlipFaces(PrimitiveObject* prim, bool only_face = false);
     ZENO_API void primCalcNormal(zeno::PrimitiveObject* prim, float flip = 1.0f, String nrmAttr = "nrm");
@@ -36,13 +36,13 @@ namespace zeno
         float remapMin,
         float remapMax
     );
-    ZENO_API SharedPtr<zeno::PrimitiveObject> primMergeWithFacesetMatid(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr = "", bool tag_on_vert = true, bool tag_on_face = false);
+    ZENO_API std::unique_ptr<zeno::PrimitiveObject> primMergeWithFacesetMatid(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr = "", bool tag_on_vert = true, bool tag_on_face = false);
     ZENO_API void prim_copy_faceset_to_matid(PrimitiveObject* prim);
     ZENO_API void primWireframe(PrimitiveObject* prim, bool removeFaces = false, bool toEdges = false);
-    ZENO_API zeno::SharedPtr<PrimitiveObject> readImageFile(zeno::String const& path);
-    ZENO_API zeno::SharedPtr<PrimitiveObject> readExrFile(zeno::String const& path);
-    ZENO_API zeno::SharedPtr<PrimitiveObject> readImageFile(zeno::String const& path);
-    ZENO_API zeno::SharedPtr<PrimitiveObject> readPFMFile(zeno::String const& path);
-    ZENO_API void write_pfm(const zeno::String& path, zeno::SharedPtr<PrimitiveObject> image);
-    ZENO_API void write_jpg(const zeno::String& path, zeno::SharedPtr<PrimitiveObject> image);
+    ZENO_API std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path);
+    ZENO_API std::unique_ptr<PrimitiveObject> readExrFile(zeno::String const& path);
+    ZENO_API std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path);
+    ZENO_API std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path);
+    ZENO_API void write_pfm(const zeno::String& path, std::unique_ptr<PrimitiveObject> image);
+    ZENO_API void write_jpg(const zeno::String& path, std::unique_ptr<PrimitiveObject> image);
 }

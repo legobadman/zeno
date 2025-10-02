@@ -134,7 +134,7 @@ struct PrimGetTrisSize : INode {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto n = std::make_unique<NumericObject>();
         n->set<int>(int(prim->tris.size()));
-        ZImpl(set_output("TrisSize", n));
+        ZImpl(set_output("TrisSize", std::move(n)));
     }
 };
 ZENDEFNODE(PrimGetTrisSize, {
@@ -170,7 +170,7 @@ struct PrimPointTris : INode {
                 x[2] = ind[2];
                 x[3] = i;
                 num->set<vec4i>(x);
-                list->m_impl->push_back(num);
+                list->m_impl->push_back(num->clone());
             }
         }
         ZImpl(set_output("list", std::move(list)));
@@ -316,6 +316,7 @@ struct number_printer<vec<N, T>> {
     }
 };
 
+#if 0
 struct VisPrimAttrValue_Modify : INode {
     virtual void apply() override {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
@@ -327,7 +328,7 @@ struct VisPrimAttrValue_Modify : INode {
         bool textDecoration = !attrName.empty();
 
         std::vector<PrimitiveObject *> outprim2;
-        std::vector<std::shared_ptr<PrimitiveObject>> outprim;
+        std::vector<std::unique_ptr<PrimitiveObject>> outprim;
 
         if (textDecoration) {
             prim->verts.attr_visit<AttrAcceptAll>(attrName, [&](auto const &attarr) {
@@ -413,6 +414,7 @@ ZENO_DEFNODE(VisPrimAttrValue_Modify)( {
      {},
      {"WBTest"},
     });
+#endif
 
 
 // FDGather.cpp
@@ -446,7 +448,7 @@ struct Grid2DSample_M : zeno::INode {
         auto nx = ZImpl(get_input<zeno::NumericObject>("nx"))->get<int>();
         auto ny = ZImpl(get_input<zeno::NumericObject>("ny"))->get<int>();
         auto bmin = ZImpl(get_input2<zeno::vec3f>("bmin"));
-        auto grid = get_input_Geometry("grid");
+        auto grid = clone_input_Geometry("grid");
         auto grid2 = get_input_Geometry("grid2");
         auto attrT = get_input2_string("attrT");
         auto channel = get_input2_string("channel");
@@ -538,7 +540,7 @@ struct Grid2DSample_M2 : zeno::INode {
         auto nx = get_input2_int("nx");
         auto ny = get_input2_int("ny");
         auto bmin = toVec3f(get_input2_vec3f("bmin"));
-        auto prim = get_input_Geometry("prim");
+        auto prim = clone_input_Geometry("prim");
         auto grid = get_input_Geometry("sampleGrid");
         auto channelList = get_input2_string("channel");
         auto sampleby = get_input2_string("sampleBy");

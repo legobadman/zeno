@@ -153,7 +153,7 @@ struct erode_rand_color : INode {
         {
             auto num = std::make_unique<zeno::NumericObject>();
             num->set<int>(perm[i]);
-            list->m_impl->push_back(num);
+            list->m_impl->push_back(std::move(num));
         }
         ZImpl(set_output("list", std::move(list)));
     }
@@ -203,7 +203,7 @@ struct erode_rand_dir : INode {
         {
             auto num = std::make_unique<zeno::NumericObject>();
             num->set<int>(dirs[i]);
-            list->m_impl->push_back(num);
+            list->m_impl->push_back(std::move(num));
         }
         ZImpl(set_output("list", std::move(list)));
     }
@@ -2344,7 +2344,7 @@ struct HF_maskByFeature : INode {
         ////////////////////////////////////////////////////////////////////////////////////////
 
         // 初始化网格
-        auto terrain = get_input_Geometry("HeightField");
+        auto terrain = clone_input_Geometry("HeightField");
         int nx, nz;
         auto ud = terrain->userData();
         if ((!ud->has("nx")) || (!ud->has("nz")))
@@ -2502,7 +2502,7 @@ struct HF_maskByFeature : INode {
         }
 
         terrain->set_point_attr(maskLayer, mask);
-        set_output("HeightField", terrain);
+        set_output("HeightField", std::move(terrain));
     }
 };
 ZENDEFNODE(HF_maskByFeature,
@@ -2578,7 +2578,7 @@ ZENDEFNODE(HF_rotate_displacement_2d,
 
 struct HF_remap : INode {
     void apply() override {
-        auto terrain = get_input_Geometry("prim");
+        auto terrain = clone_input_Geometry("prim");
         auto remapLayer = get_input2_string("remap layer");
         if (!terrain->has_point_attr(remapLayer)) {
             throw makeError<UnimplError>("Node [HF_remap], no such data layer named '" + zsString2Std(remapLayer) + "'");
@@ -2634,7 +2634,7 @@ struct HF_remap : INode {
             return new_val;
             });
 
-        set_output("prim", terrain);
+        set_output("prim", std::move(terrain));
     }
 };
 ZENDEFNODE(HF_remap,

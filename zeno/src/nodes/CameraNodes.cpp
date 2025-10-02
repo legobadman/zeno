@@ -9,7 +9,6 @@
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include "zeno/extra/TempNode.h"
 #include <regex>
 
 namespace zeno {
@@ -239,7 +238,7 @@ struct ScreenSpaceProjectedGrid : INode {
         return t;
     }
     virtual void apply() override {
-        auto cam = dynamic_cast<CameraObject>(get_input("cam"));
+        auto cam = dynamic_cast<CameraObject*>(get_input("cam"));
         auto prim = std::make_unique<PrimitiveObject>();
         auto raw_width = get_input2_int("width");
         auto raw_height = get_input2_int("height");
@@ -293,7 +292,7 @@ struct ScreenSpaceProjectedGrid : INode {
         }
         prim->tris.values = tris;
 
-        auto geom = create_GeometryObject(prim);
+        auto geom = create_GeometryObject(prim.get());
         set_output("prim", std::move(geom));
     }
 };
@@ -318,7 +317,7 @@ ZENO_DEFNODE(ScreenSpaceProjectedGrid)({
 
 struct CameraFrustum : INode {
     virtual void apply() override {
-        auto cam = dynamic_cast<CameraObject>(get_input("cam"));
+        auto cam = dynamic_cast<CameraObject*>(get_input("cam"));
         auto width = get_input2_int("width");
         auto height = get_input2_int("height");
         auto fov = glm::radians(cam->fov);

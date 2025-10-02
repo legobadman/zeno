@@ -113,8 +113,8 @@ struct ExtractMaterialShader : zeno::INode
     virtual void apply() override
     {
       auto prim = ZImpl(get_input<zeno::PrimitiveObject>("prim"));
-      auto mtl = ZImpl(get_input<zeno::MaterialObject>("mtl"));
-      prim->mtl = mtl;
+      auto mtl = safe_uniqueptr_cast<zeno::MaterialObject>(clone_input("mtl"));
+      prim->mtl.reset(mtl.release());
       ZImpl(set_output("prim", std::move(prim)));
     }
   };
@@ -151,7 +151,7 @@ struct ExtractMaterialShader : zeno::INode
             return;
         }
 
-      auto obj = get_input_Geometry("object");
+      auto obj = clone_input_Geometry("object");
       
       auto mtlid2 = ZImpl(get_input2<std::string>("mtlid"));
       int matNum = obj->userData()->get_int("matNum",0);
@@ -290,7 +290,7 @@ struct ExtractMaterialShader : zeno::INode
 
         virtual void apply() override {
 
-            auto prim = get_input_PrimitiveObject("in");
+            auto prim = clone_input_PrimitiveObject("in");
 
             auto a_value = ZImpl(get_input2<std::string>(aKey(), ""));
             auto b_value = ZImpl(get_input2<std::string>(bKey(), ""));

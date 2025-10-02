@@ -12,7 +12,7 @@
 
 namespace zeno {
 
-ZENO_API std::shared_ptr<PrimitiveObject> primitive_merge(std::shared_ptr<zeno::ListObject> list, std::string tagAttr) {
+ZENO_API std::unique_ptr<PrimitiveObject> primitive_merge(zeno::ListObject* list, std::string tagAttr) {
     auto outprim = std::make_unique<PrimitiveObject>();
 
     size_t len = 0;
@@ -151,13 +151,13 @@ struct PrimitiveMerge : zeno::INode {
   virtual void apply() override {
     auto list = ZImpl(get_input<ListObject>("listPrim"));
     if(!ZImpl(has_input("dst"))){
-        auto outprim = primitive_merge(list);
+        auto outprim = primitive_merge(list.get());
         ZImpl(set_output("prim", std::move(outprim)));
     }
     else
     { // dage, weishenme buyong Assign jiedian ne?
         auto dst = ZImpl(get_input<PrimitiveObject>("dst"));
-        auto outprim = primitive_merge(list);
+        auto outprim = primitive_merge(list.get());
         *dst = *outprim;
         ZImpl(set_output("prim", std::move(dst)));
     }

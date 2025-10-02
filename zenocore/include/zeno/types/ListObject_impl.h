@@ -49,6 +49,21 @@ namespace zeno {
             return res;
         }
 
+        template <class T>
+        std::vector<T> get2() const {
+            std::vector<T> res;
+            for (auto const& val : m_objects) {
+                res.push_back(objectToLiterial<T>(val));
+            }
+            return res;
+        }
+
+        template <class T>
+        [[deprecated("use get2<T>() instead")]]
+        std::vector<T> getLiterial() const {
+            return get2<T>();
+        }
+
         ListObject_impl& operator=(const ListObject_impl&) = delete;
 
         std::set<std::string> m_modify, m_new_added, m_new_removed; //一次计算中发生变化的元素记录。
