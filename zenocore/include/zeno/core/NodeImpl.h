@@ -254,15 +254,26 @@ namespace zeno
             return !!dynamic_cast<T*>(obj.get());
         }
 
-        //template <class T>
-        //auto get_input2(std::string const& id) const {
-        //    return objectToLiterial<T>(clone_input(id), "input socket `" + id + "` of node `" + m_name + "`");
-        //}
+        template <class T>
+        auto get_input2(std::string const& id) const {
+            if (auto iter = m_inputObjs.find(ds); iter != m_inputObjs.end()) {
+                return clone_input(ds);
+            }
+            else if (auto iter = m_inputPrims.find(ds); iter != m_inputPrims.end()) {
+                auto obj = clone_input(ds);
+                auto res = objectToLiterial<T>(obj.get(), "input socket `" + id + "` of node `" + m_name + "`");
+                return res;
+            }
+            else {
+                throw makeNodeError<UnimplError>(get_path(), "no such param " + id);
+            }
+            return objectToLiterial<T>(clone_input(id), "input socket `" + id + "` of node `" + m_name + "`");
+        }
 
-        //template <class T>
-        //T get_input2(std::string const& id, T const& defl) const {
-        //    return has_input(id) ? get_input2<T>(id) : defl;
-        //}
+        template <class T>
+        T get_input2(std::string const& id, T const& defl) const {
+            return has_input(id) ? get_input2<T>(id) : defl;
+        }
 
     protected:
         virtual void complete();

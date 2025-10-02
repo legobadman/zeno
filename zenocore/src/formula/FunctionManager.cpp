@@ -72,14 +72,14 @@ namespace zeno {
         return iter->second;
     }
 
-    static int getElementCount(std::shared_ptr<IObject> spObject, GeoAttrGroup runover) {
+    static int getElementCount(IObject* spObject, GeoAttrGroup runover) {
         switch (runover)
         {
         case ATTR_POINT: {
-            if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(spObject)) {
+            if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObject)) {
                 return spGeo->npoints();
             }
-            else if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
+            else if (auto spPrim = dynamic_cast<PrimitiveObject*>(spObject)) {
                 return spPrim->verts->size();
             }
             else {
@@ -87,10 +87,10 @@ namespace zeno {
             }
         }
         case ATTR_FACE:
-            if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(spObject)) {
+            if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObject)) {
                 return spGeo->nfaces();
             }
-            else if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
+            else if (auto spPrim = dynamic_cast<PrimitiveObject*>(spObject)) {
                 if (spPrim->tris.size() > 0)
                     return spPrim->tris.size();
                 else
@@ -1072,7 +1072,7 @@ namespace zeno {
         assert(!attr_name.empty());
         GeoAttrGroup grp = pContext->runover;
         auto& zfxvec = zfxvar.value;
-        if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject)) {
+        if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
             AttrVar wtf = zeno::zfx::convertToAttrVar(zfxvec);
             std::string attrname;
             if (attr_name[0] == '@')
@@ -1163,7 +1163,7 @@ namespace zeno {
                 }
             }
         }
-        else if (auto spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(spObject)) {
+        else if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObject.get())) {
             if (attr_name == "pos")
             {
                 const auto& P = spGeo->points_pos();
@@ -1369,7 +1369,7 @@ namespace zeno {
                     }
 
                     AttrVar initValue = getInitValueFromVariant(res.value); //拿初值就行
-                    auto spGeom = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
+                    auto spGeom = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
                     if (pContext->runover == ATTR_POINT) {
                         if (!spGeom->m_impl->has_point_attr(attrname)) {
                             spGeom->m_impl->create_point_attr(attrname, initValue);

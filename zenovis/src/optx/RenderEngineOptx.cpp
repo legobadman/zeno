@@ -10,7 +10,7 @@
 #include "zeno/utils/vec.h"
 #include <limits>
 #include <memory>
-#include <tbb/mutex.h>
+//#include <tbb/mutex.h>
 #include "../../xinxinoptix/xinxinoptixapi.h"
 #include "../../xinxinoptix/SDK/sutil/sutil.h"
 #include <zeno/types/PrimitiveObject.h>
@@ -2496,13 +2496,14 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                         requireTriangLight = true;
                 }
 
-                tbb::task_group texture_group;
+                //TODO: std future
+                //tbb::task_group texture_group;
                 for (const auto& key: requiredTexPathSet) {
-                    texture_group.run([&]() {
+                    //texture_group.run([&]() {
                         OptixUtil::addTexture(key.path, key.blockCompression);
-                    });
+                    //});
                     }
-                texture_group.wait();
+                //texture_group.wait();
                 timer.tock("Texture load");
                     }
 

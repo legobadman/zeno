@@ -294,7 +294,7 @@ namespace zeno {
 
     std::vector<zany> fromZenCache(const std::string& cachedir, int frameid) {
         std::vector<zany> objs;
-        GlobalComm::ViewObjects _objs;
+        std::map<std::string, zany> _objs;
         GlobalComm::fromDisk(cachedir, frameid, _objs);
         for (const auto& iter : _objs) {
             objs.push_back(iter.second->clone());
@@ -1809,7 +1809,7 @@ namespace zeno {
 
             for (auto& spObject : pList->m_impl->m_objects) {
                 auto newObj = clone_by_key(spObject.get(), prefix);
-                newList->m_impl->m_objects.push_back(newObj);
+                newList->m_impl->m_objects.push_back(std::move(newObj));
             }
             return newList;
         }
@@ -1831,7 +1831,7 @@ namespace zeno {
             for (auto& [key, spObject] : pDict->lut) {
                 std::string new_key = prefix + '\\' + key;
                 auto newObj = clone_by_key(spObject.get(), prefix);
-                newDict->lut.insert(std::make_pair(key, newObj));
+                newDict->lut.insert(std::make_pair(key, std::move(newObj)));
             }
             return newDict;
         }

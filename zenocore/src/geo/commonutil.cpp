@@ -604,7 +604,7 @@ namespace zeno
                         arr[i] = attr[val[i]];
                     }
                     });
-                list.push_back(new_prim);
+                list.push_back(std::move(new_prim));
             }
         }
         else if (prim->polys.size() > 0) {
@@ -628,7 +628,7 @@ namespace zeno
                         arr[i] = attr[val[i]];
                     }
                     });
-                list.push_back(new_prim);
+                list.push_back(std::move(new_prim));
             }
         }
         for (auto i = 0; i < list.size(); i++) {

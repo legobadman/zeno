@@ -7,8 +7,8 @@ namespace zeno {
     struct TimeShift2 : INode {
 
         void apply() override {
-            auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
-            ZImpl(set_output("prim", std::move(prim)));
+            auto prim = clone_input("prim");
+            set_output("prim", std::move(prim));
         }
     };
 
