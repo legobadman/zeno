@@ -22,7 +22,7 @@ namespace zeno
 	{
 		virtual void apply() override
 		{
-			auto tex = std::make_shared<zeno::Texture2DObject>();
+			auto tex = std::make_unique<zeno::Texture2DObject>();
 
 			tex->path = ZImpl(get_input2<std::string>("path"));
             if (ZImpl(has_input("heatmap"))) {
@@ -136,7 +136,7 @@ namespace zeno
 
 		virtual void apply() override
 		{
-			auto tex = std::make_shared<zeno::TextureObjectVDB>();
+			auto tex = std::make_unique<zeno::TextureObjectVDB>();
 
 			tex->path = ZImpl(get_input2<std::string>("path"));
 			tex->channel = ZImpl(get_input2<std::string>("channel"));

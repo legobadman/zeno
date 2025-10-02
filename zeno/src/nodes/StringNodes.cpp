@@ -308,7 +308,7 @@ struct StringRegexSearch : zeno::INode {
 
         std::regex self_regex(regex_str,flags);
 
-        auto matched_substr_list = std::make_shared<zeno::ListObject>();
+        auto matched_substr_list = std::make_unique<zeno::ListObject>();
 
         // int search_success = std::regex_search(str,res,self_regex);
         int search_success = 0;
@@ -322,7 +322,7 @@ struct StringRegexSearch : zeno::INode {
                     is_first_matched = false;
                     continue;
                 }
-                auto zstr = std::make_shared<zeno::StringObject>();
+                auto zstr = std::make_unique<zeno::StringObject>();
                 zstr->set(w.str());
                 matched_substr_list->m_impl->push_back(std::move(zstr));
             }

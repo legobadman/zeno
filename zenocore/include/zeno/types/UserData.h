@@ -252,7 +252,7 @@ struct UserData : IUserData {
     template <class T>
     T get2(std::string const &name) const {
         const auto& tempobj = get(name);
-        return objectToLiterial<T>(tempobj.get());
+        return objectToLiterial<T>(tempobj);
     }
 
     template <class T>

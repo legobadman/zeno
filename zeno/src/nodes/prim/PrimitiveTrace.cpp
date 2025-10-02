@@ -10,7 +10,7 @@ namespace zeno {
 
 
 struct PrimitiveTraceTrail : zeno::INode {
-    std::shared_ptr<PrimitiveObject> trailPrim = std::make_shared<PrimitiveObject>();
+    std::shared_ptr<PrimitiveObject> trailPrim = std::make_unique<PrimitiveObject>();
 
     virtual void apply() override {
         auto parsPrim = ZImpl(get_input<PrimitiveObject>("parsPrim"));

@@ -25,7 +25,7 @@ struct ShaderCustomFunc : INode {
         auto args = ZImpl(get_input2<std::string>("args"));
         auto rettype = ZImpl(get_input2<std::string>("rettype"));
 
-        auto func = std::make_shared<ShaderCustomFuncObject>();
+        auto func = std::make_unique<ShaderCustomFuncObject>();
 
         static const char *tab[] = {"float", "vec2", "vec3", "vec4"};
         {

@@ -30,7 +30,7 @@ struct JsonObject : IObjectClone<JsonObject> {
 
 struct ReadJson : zeno::INode {
     virtual void apply() override {
-        auto json = std::make_shared<JsonObject>();
+        auto json = std::make_unique<JsonObject>();
         auto path = ZImpl(get_input2<std::string>("path"));
         std::string native_path = std::filesystem::u8path(path).string();
         auto content = zeno::file_get_content(native_path);
@@ -71,60 +71,60 @@ ZENDEFNODE(WriteJson, {
         "json"
     },
 });
-static Json iobject_to_json(std::shared_ptr<IObject> iObject) {
+static Json iobject_to_json(const zany& iObject) {
     Json json;
-    if (objectIsRawLiterial<int>(iObject)) {
+    if (objectIsRawLiterial<int>(iObject.get())) {
         json = objectToLiterial<int>(iObject);
     }
-    else if (objectIsRawLiterial<vec2i>(iObject)) {
+    else if (objectIsRawLiterial<vec2i>(iObject.get())) {
         auto value = objectToLiterial<vec2i>(iObject);
         json = { value[0], value[1]};
     }
-    else if (objectIsRawLiterial<vec3i>(iObject)) {
+    else if (objectIsRawLiterial<vec3i>(iObject.get())) {
         auto value = objectToLiterial<vec3i>(iObject);
         json = { value[0], value[1], value[2]};
     }
-    else if (objectIsRawLiterial<vec4i>(iObject)) {
+    else if (objectIsRawLiterial<vec4i>(iObject.get())) {
         auto value = objectToLiterial<vec4i>(iObject);
         json = { value[0], value[1], value[2], value[3]};
     }
-    else if (objectIsRawLiterial<float>(iObject)) {
+    else if (objectIsRawLiterial<float>(iObject.get())) {
         json = objectToLiterial<float>(iObject);
     }
-    else if (objectIsRawLiterial<vec2f>(iObject)) {
+    else if (objectIsRawLiterial<vec2f>(iObject.get())) {
         auto value = objectToLiterial<vec2f>(iObject);
         json = { value[0], value[1]};
     }
-    else if (objectIsRawLiterial<vec3f>(iObject)) {
+    else if (objectIsRawLiterial<vec3f>(iObject.get())) {
         auto value = objectToLiterial<vec3f>(iObject);
         json = { value[0], value[1], value[2]};
     }
-    else if (objectIsRawLiterial<vec4f>(iObject)) {
+    else if (objectIsRawLiterial<vec4f>(iObject.get())) {
         auto value = objectToLiterial<vec4f>(iObject);
         json = { value[0], value[1], value[2], value[3]};
     }
-    else if (objectIsRawLiterial<std::string>(iObject)) {
+    else if (objectIsRawLiterial<std::string>(iObject.get())) {
         json = objectToLiterial<std::string>(iObject);
     }
-    else if (auto list = dynamic_cast<ListObject>(iObject)) {
+    else if (auto list = dynamic_cast<ListObject*>(iObject.get())) {
         for (auto iObj: list->get()) {
-            json.push_back(iobject_to_json(iObj));
+            json.push_back(iobject_to_json(iObj->clone()));
         }
     }
-    else if (auto dict = dynamic_cast<DictObject>(iObject)) {
-        for (auto [key, iObj]: dict->lut) {
+    else if (auto dict = dynamic_cast<DictObject*>(iObject.get())) {
+        for (const auto& [key, iObj]: dict->lut) {
             json[key] = iobject_to_json(iObj);
         }
     }
-    else if (auto sub_json = dynamic_cast<JsonObject>(iObject)) {
+    else if (auto sub_json = dynamic_cast<JsonObject*>(iObject.get())) {
         json = sub_json->json;
     }
     return std::move(json);
 }
 struct FormJson : zeno::INode {
   virtual void apply() override {
-      auto _json = std::make_shared<JsonObject>();
-      auto iObject = get_input("iObject");
+      auto _json = std::make_unique<JsonObject>();
+      auto iObject = clone_input("iObject");
       _json->json = iobject_to_json(iObject);
       set_output("json", _json);
   }
@@ -143,45 +143,45 @@ ZENDEFNODE(FormJson, {
  });
 
 struct PrimUserDataToJson : zeno::INode {
-    void iobject_to_json(Json &json, std::string key, std::shared_ptr<IObject> iObject) {
-        if (objectIsRawLiterial<int>(iObject)) {
+    void iobject_to_json(Json &json, std::string key, const zany& iObject) {
+        if (objectIsRawLiterial<int>(iObject.get())) {
             json[key] = objectToLiterial<int>(iObject);
         }
-        else if (objectIsRawLiterial<vec2i>(iObject)) {
+        else if (objectIsRawLiterial<vec2i>(iObject.get())) {
             auto value = objectToLiterial<vec2i>(iObject);
             json[key] = { value[0], value[1]};
         }
-        else if (objectIsRawLiterial<vec3i>(iObject)) {
+        else if (objectIsRawLiterial<vec3i>(iObject.get())) {
             auto value = objectToLiterial<vec3i>(iObject);
             json[key] = { value[0], value[1], value[2]};
         }
-        else if (objectIsRawLiterial<vec4i>(iObject)) {
+        else if (objectIsRawLiterial<vec4i>(iObject.get())) {
             auto value = objectToLiterial<vec4i>(iObject);
             json[key] = { value[0], value[1], value[2], value[3]};
         }
-        else if (objectIsRawLiterial<float>(iObject)) {
+        else if (objectIsRawLiterial<float>(iObject.get())) {
             json[key] = objectToLiterial<float>(iObject);
         }
-        else if (objectIsRawLiterial<vec2f>(iObject)) {
+        else if (objectIsRawLiterial<vec2f>(iObject.get())) {
             auto value = objectToLiterial<vec2f>(iObject);
             json[key] = { value[0], value[1]};
         }
-        else if (objectIsRawLiterial<vec3f>(iObject)) {
+        else if (objectIsRawLiterial<vec3f>(iObject.get())) {
             auto value = objectToLiterial<vec3f>(iObject);
             json[key] = { value[0], value[1], value[2]};
         }
-        else if (objectIsRawLiterial<vec4f>(iObject)) {
+        else if (objectIsRawLiterial<vec4f>(iObject.get())) {
             auto value = objectToLiterial<vec4f>(iObject);
             json[key] = { value[0], value[1], value[2], value[3]};
         }
-        else if (objectIsRawLiterial<std::string>(iObject)) {
+        else if (objectIsRawLiterial<std::string>(iObject.get())) {
             json[key] = objectToLiterial<std::string>(iObject);
         }
     }
     void apply() override {
         auto keys_string = ZImpl(get_input2<std::string>("keys"));
         auto output_all = ZImpl(get_input2<bool>("output_all"));
-        auto _json = std::make_shared<JsonObject>();
+        auto _json = std::make_unique<JsonObject>();
         auto iObject = get_input("iObject");
         auto ud = dynamic_cast<UserData*>(iObject->userData());
 
@@ -232,7 +232,7 @@ ZENDEFNODE(JsonToString, {
  });
 struct JsonSetDataSimple : zeno::INode {
     virtual void apply() override {
-        auto in_json = std::make_shared<JsonObject>();
+        auto in_json = std::make_unique<JsonObject>();
         if (ZImpl(has_input<JsonObject>("json"))) {
             in_json = ZImpl(get_input<JsonObject>("json"));
         }
@@ -278,7 +278,7 @@ ZENDEFNODE(JsonSetDataSimple, {
 
 struct JsonSetData : zeno::INode {
     virtual void apply() override {
-        auto in_json = std::make_shared<JsonObject>();
+        auto in_json = std::make_unique<JsonObject>();
         if (ZImpl(has_input<JsonObject>("json"))) {
             in_json = ZImpl(get_input<JsonObject>("json"));
         }
@@ -336,7 +336,7 @@ ZENDEFNODE(JsonSetData, {
 
 struct ReadJsonFromString : zeno::INode {
     virtual void apply() override {
-        auto json = std::make_shared<JsonObject>();
+        auto json = std::make_unique<JsonObject>();
         auto content = ZImpl(get_input2<std::string>("content"));
         json->json = Json::parse(content);
         set_output("json", json);
@@ -357,7 +357,7 @@ ZENDEFNODE(ReadJsonFromString, {
 struct JsonGetArraySize : zeno::INode {
     virtual void apply() override {
         auto json = ZImpl(get_input<JsonObject>("json"));
-        ZImpl(set_output("size", std::make_shared<NumericObject>((int)json->json.size())));
+        ZImpl(set_output("size", std::make_unique<NumericObject>((int)json->json.size())));
     }
 };
 ZENDEFNODE(JsonGetArraySize, {
@@ -374,7 +374,7 @@ ZENDEFNODE(JsonGetArraySize, {
 });
 struct JsonGetArrayItem : zeno::INode {
     virtual void apply() override {
-        auto out_json = std::make_shared<JsonObject>();
+        auto out_json = std::make_unique<JsonObject>();
         auto json = ZImpl(get_input<JsonObject>("json"));
         auto index = ZImpl(get_input2<int>("index"));
         out_json->json = json->json[index];
@@ -401,35 +401,35 @@ struct JsonGetChild : zeno::INode {
         auto name = ZImpl(get_input2<std::string>("name"));
         auto type = ZImpl(get_input2<std::string>("type"));
         if (type == "json") {
-            auto output = std::make_shared<JsonObject>();
+            auto output = std::make_unique<JsonObject>();
             if (json->json.contains(name)) {
                 output->json = json->json[name];
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "int") {
-            auto output = std::make_shared<NumericObject>();
+            auto output = std::make_unique<NumericObject>();
             if (json->json.contains(name)) {
                 output->set<int>(int(json->json[name]));
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "float") {
-            auto output = std::make_shared<NumericObject>();
+            auto output = std::make_unique<NumericObject>();
             if (json->json.contains(name)) {
                 output->set<float>(float(json->json[name]));
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "string") {
-            auto output = std::make_shared<StringObject>();
+            auto output = std::make_unique<StringObject>();
             if (json->json.contains(name)) {
                 output->set(std::string(json->json[name]));
             }
             ZImpl(set_output2("out", output));
         }
         else if (type == "vec2f") {
-            auto output = std::make_shared<NumericObject>();
+            auto output = std::make_unique<NumericObject>();
             if (json->json.contains(name)) {
                 vec2f vec;
                 vec[0] = float(json->json[name][0]);
@@ -439,7 +439,7 @@ struct JsonGetChild : zeno::INode {
             ZImpl(set_output2("out", output));
         }
         else if (type == "vec3f") {
-            auto output = std::make_shared<NumericObject>();
+            auto output = std::make_unique<NumericObject>();
             if (json->json.contains(name)) {
                 vec3f vec;
                 vec[0] = float(json->json[name][0]);
@@ -450,7 +450,7 @@ struct JsonGetChild : zeno::INode {
             ZImpl(set_output2("out", output));
         }
         else if (type == "vec4f") {
-            auto output = std::make_shared<NumericObject>();
+            auto output = std::make_unique<NumericObject>();
             if (json->json.contains(name)) {
                 vec4f vec;
                 vec[0] = float(json->json[name][0]);
@@ -559,9 +559,9 @@ ZENDEFNODE(JsonGetString, {
 struct JsonGetKeys : zeno::INode {
     virtual void apply() override {
         auto json = ZImpl(get_input<JsonObject>("json"));
-        auto list = std::make_shared<ListObject>();
+        auto list = std::make_unique<ListObject>();
         for (auto& [key, _] : json->json.items()) {
-            list->push_back(std::make_shared<zeno::StringObject>(key));
+            list->push_back(std::make_unique<zeno::StringObject>(key));
         }
         ZImpl(set_output2("keys", list));
     }
@@ -613,7 +613,7 @@ struct JsonData : zeno::INode {
 
 
         if (type == "json") {
-            auto out_json = std::make_shared<JsonObject>();
+            auto out_json = std::make_unique<JsonObject>();
             out_json->json = json->json;
             set_output("out", out_json);
         }
@@ -693,9 +693,9 @@ struct JsonGetData : zeno::INode {
             }
         }
 
-        auto dict = std::make_shared<zeno::DictObject>();
+        auto dict = std::make_unique<zeno::DictObject>();
         for (auto &path: paths) {
-            auto json = std::make_shared<JsonObject>();
+            auto json = std::make_unique<JsonObject>();
             json->json = in_json->json;
             auto strings = zeno::split_str(path, ':');
             auto type = strings[1];
@@ -723,63 +723,63 @@ struct JsonGetData : zeno::INode {
             if (missing) {
                 if (ZImpl(get_input2<bool>("useDefaultValueWhenMissing"))) {
                     if (type == "json") {
-                        dict->lut[new_name] = std::make_shared<JsonObject>();
+                        dict->lut[new_name] = std::make_unique<JsonObject>();
                     }
                     else if (type == "int") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(int{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(int{});
                     }
                     else if (type == "float") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(float{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(float{});
                     }
                     else if (type == "string") {
-                        dict->lut[new_name] = std::make_shared<StringObject>(std::string());
+                        dict->lut[new_name] = std::make_unique<StringObject>(std::string());
                     }
                     else if (type == "vec2f") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(vec2f{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(vec2f{});
                     }
                     else if (type == "vec3f") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(vec3f{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(vec3f{});
                     }
                     else if (type == "vec4f") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(vec4f{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(vec4f{});
                     }
                     else if (type == "vec2i") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(vec2i{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(vec2i{});
                     }
                     else if (type == "vec3i") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(vec3i{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(vec3i{});
                     }
                     else if (type == "vec4i") {
-                        dict->lut[new_name] = std::make_shared<NumericObject>(vec4i{});
+                        dict->lut[new_name] = std::make_unique<NumericObject>(vec4i{});
                     }
                     continue;
                 }
             }
 
             if (type == "json") {
-                auto out_json = std::make_shared<JsonObject>();
+                auto out_json = std::make_unique<JsonObject>();
                 out_json->json = json->json;
-                dict->lut[new_name] = out_json;
+                dict->lut[new_name] = std::move(out_json);
             }
             else if (type == "int") {
-                dict->lut[new_name] = std::make_shared<NumericObject>(int(json->json));
+                dict->lut[new_name] = std::make_unique<NumericObject>(int(json->json));
             }
             else if (type == "float") {
-                dict->lut[new_name] = std::make_shared<NumericObject>(float(json->json));
+                dict->lut[new_name] = std::make_unique<NumericObject>(float(json->json));
             }
             else if (type == "string") {
-                dict->lut[new_name] = std::make_shared<StringObject>(std::string(json->json));
+                dict->lut[new_name] = std::make_unique<StringObject>(std::string(json->json));
             }
             else if (type == "vec2f") {
                 if (json->json.is_array()) {
                     float x = float(json->json[0]);
                     float y = float(json->json[1]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec2f(x, y));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec2f(x, y));
                 }
                 else {
                     float x = float(json->json["x"]);
                     float y = float(json->json["y"]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec2f(x, y));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec2f(x, y));
                 }
             }
             else if (type == "vec3f") {
@@ -787,13 +787,13 @@ struct JsonGetData : zeno::INode {
                     float x = float(json->json[0]);
                     float y = float(json->json[1]);
                     float z = float(json->json[2]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec3f(x, y, z));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec3f(x, y, z));
                 }
                 else {
                     float x = float(json->json["x"]);
                     float y = float(json->json["y"]);
                     float z = float(json->json["z"]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec3f(x, y, z));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec3f(x, y, z));
                 }
             }
             else if (type == "vec4f") {
@@ -802,26 +802,26 @@ struct JsonGetData : zeno::INode {
                     float y = float(json->json[1]);
                     float z = float(json->json[2]);
                     float w = float(json->json[3]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec4f(x, y, z, w));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec4f(x, y, z, w));
                 }
                 else {
                     float x = float(json->json["x"]);
                     float y = float(json->json["y"]);
                     float z = float(json->json["z"]);
                     float w = float(json->json["w"]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec4f(x, y, z, w));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec4f(x, y, z, w));
                 }
             }
             else if (type == "vec2i") {
                 if (json->json.is_array()) {
                     auto x = int(json->json[0]);
                     auto y = int(json->json[1]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec2i(x, y));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec2i(x, y));
                 }
                 else {
                     auto x = int(json->json["x"]);
                     auto y = int(json->json["y"]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec2i(x, y));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec2i(x, y));
                 }
             }
             else if (type == "vec3i") {
@@ -829,13 +829,13 @@ struct JsonGetData : zeno::INode {
                     auto x = int(json->json[0]);
                     auto y = int(json->json[1]);
                     auto z = int(json->json[2]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec3i(x, y, z));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec3i(x, y, z));
                 }
                 else {
                     auto x = int(json->json["x"]);
                     auto y = int(json->json["y"]);
                     auto z = int(json->json["z"]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec3i(x, y, z));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec3i(x, y, z));
                 }
             }
             else if (type == "vec4i") {
@@ -844,14 +844,14 @@ struct JsonGetData : zeno::INode {
                     auto y = int(json->json[1]);
                     auto z = int(json->json[2]);
                     auto w = int(json->json[3]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec4i(x, y, z, w));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec4i(x, y, z, w));
                 }
                 else {
                     auto x = int(json->json["x"]);
                     auto y = int(json->json["y"]);
                     auto z = int(json->json["z"]);
                     auto w = int(json->json["w"]);
-                    dict->lut[new_name] = std::make_shared<NumericObject>(vec4i(x, y, z, w));
+                    dict->lut[new_name] = std::make_unique<NumericObject>(vec4i(x, y, z, w));
                 }
             }
         }
@@ -875,7 +875,7 @@ ZENDEFNODE(JsonGetData, {
 
 struct CreateJson : zeno::INode {
   virtual void apply() override {
-      auto _json = std::make_shared<JsonObject>();
+      auto _json = std::make_unique<JsonObject>();
       set_output("json", _json);
   }
 };
@@ -974,7 +974,7 @@ ZENDEFNODE(JsonRenameKey, {
 });
 
 struct JsonInsertValue : zeno::INode {
-    void access(Json &json, std::vector<std::string> &names, int index, std::shared_ptr<IObject> iObject) {
+    void access(Json &json, std::vector<std::string> &names, int index, const zany& iObject) {
         auto name = names[index];
         if (index == names.size() - 1) {
             json[name] = iobject_to_json(iObject);
@@ -990,7 +990,7 @@ struct JsonInsertValue : zeno::INode {
     void apply() override {
         auto json = ZImpl(get_input<JsonObject>("json"));
         auto path = ZImpl(get_input2<std::string>("path"));
-        auto iObject = get_input("iObject");
+        auto iObject = clone_input("iObject");
         auto names = split_str(path, '/');
 
         access(json->json, names, 0, iObject);
@@ -1024,7 +1024,7 @@ struct CreateRenderInstance : zeno::INode {
             throw zeno::makeError(info);
         }
 
-        auto out_json = std::make_shared<JsonObject>();
+        auto out_json = std::make_unique<JsonObject>();
         out_json->json["BasicRenderInstances"][instID] = {
             {"Geom", Geom},
             {"Matrix", Matrix},
@@ -1072,7 +1072,7 @@ struct RenderGroup : zeno::INode {
             node["Matrixes"].push_back(matrix);
         }
 
-        auto out_json = std::make_shared<JsonObject>();
+        auto out_json = std::make_unique<JsonObject>();
         out_json->json["Root"] = RenderGroupID;
 
         for (const auto& item: items) {
@@ -1185,7 +1185,7 @@ with open(output_file_path, 'w', encoding='utf-8') as f:
                 ZImpl(set_output2("out_json", output_json));
             }
             else {
-                auto json_obj = std::make_shared<JsonObject>();
+                auto json_obj = std::make_unique<JsonObject>();
                 try {
                     json_obj->json = Json::parse(output_json);
                 } catch (const std::exception& e) {
@@ -1254,7 +1254,7 @@ struct PyJson: INode {
             ZImpl(set_output2("out_json", out));
         }
         else {
-            auto json_obj = std::make_shared<JsonObject>();
+            auto json_obj = std::make_unique<JsonObject>();
             json_obj->json = Json::parse(out);
             ZImpl(set_output2("out_json", json_obj));
         }

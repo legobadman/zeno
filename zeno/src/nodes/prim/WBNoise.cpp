@@ -878,7 +878,7 @@ struct NoiseImageGen2 : INode {//todo::image shape should same when pixel aspect
         auto amplitude = ZImpl(get_input2<zeno::vec4f>("amplitude"));
         auto pulsenum = ZImpl(get_input2<int>("pulsenum"));
 
-        auto image = std::make_shared<PrimitiveObject>();
+        auto image = std::make_unique<PrimitiveObject>();
         image->verts.resize(image_size[0] * image_size[1]);
         auto &alpha = image->verts.add_attr<float>("alpha");
 
@@ -1042,7 +1042,7 @@ struct NoiseImageGen : INode {
         auto frequency = ZImpl(get_input2<zeno::vec2f>("spatial frequency")) * 0.001f; // tofix: mysterious scale?
         auto amplitude = ZImpl(get_input2<zeno::vec4f>("amplitude"));
 
-        auto image = std::make_shared<PrimitiveObject>();
+        auto image = std::make_unique<PrimitiveObject>();
         image->verts.resize(image_size[0] * image_size[1]);
         auto &alpha = image->verts.add_attr<float>("alpha");
 
@@ -1801,7 +1801,7 @@ float noise_domainWarpingV1(vec3f pos, float H, float frequence, float amplitude
 
 struct erode_domainWarping_v1 : INode {
     void apply() override {
-        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_shared<PrimitiveObject>();
+        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_unique<PrimitiveObject>();
 
         auto H = ZImpl(get_input<NumericObject>("fbmH"))->get<float>();
         auto frequence = ZImpl(get_input<NumericObject>("fbmFrequence"))->get<float>();
@@ -1867,7 +1867,7 @@ struct erode_domainWarping_v2 : INode {
     void apply() override {
         auto prim = ZImpl(has_input("prim")) ?
             ZImpl(get_input<PrimitiveObject>("prim")) :
-            std::make_shared<PrimitiveObject>();
+            std::make_unique<PrimitiveObject>();
 
         auto H = ZImpl(get_input<NumericObject>("fbmH"))->get<float>();
         auto frequence = ZImpl(get_input<NumericObject>("fbmFrequence"))->get<float>();
@@ -1935,8 +1935,8 @@ void noise_Voronoi3(const vec3f pos, const std::vector<vec3f>& points, float& vo
 
 struct erode_voronoi : INode {
     void apply() override {
-        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_shared<PrimitiveObject>();
-        auto featurePrim = ZImpl(has_input("featurePrim")) ? ZImpl(get_input<PrimitiveObject>("featurePrim")) : std::make_shared<PrimitiveObject>();
+        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_unique<PrimitiveObject>();
+        auto featurePrim = ZImpl(has_input("featurePrim")) ? ZImpl(get_input<PrimitiveObject>("featurePrim")) : std::make_unique<PrimitiveObject>();
 
         auto attrName = ZImpl(get_param<std::string>("attrName"));
         if (!prim->has_attr(attrName)) { prim->add_attr<float>(attrName); }

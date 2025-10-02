@@ -22,7 +22,7 @@ struct CameraNode: zeno::INode {
     }
 
     virtual void apply() override {
-        auto camera = std::make_shared<zeno::CameraObject>();
+        auto camera = std::make_unique<zeno::CameraObject>();
 
         camera->pos = ZImpl(get_input2<zeno::vec3f>("pos"));
         camera->up = ZImpl(get_input2<zeno::vec3f>("up"));
@@ -70,7 +70,7 @@ ZENO_DEFNODE(CameraNode)({
 
 struct MakeCamera : INode {
     virtual void apply() override {
-        auto camera = std::make_shared<CameraObject>();
+        auto camera = std::make_unique<CameraObject>();
 
         camera->pos = ZImpl(get_input2<zeno::vec3f>("pos"));
         camera->up = ZImpl(get_input2<zeno::vec3f>("up"));
@@ -146,7 +146,7 @@ ZENO_DEFNODE(SetPhysicalCamera)({
 
 struct TargetCamera : INode {
     virtual void apply() override {
-        auto camera = std::make_shared<CameraObject>();
+        auto camera = std::make_unique<CameraObject>();
 
         auto refUp = zeno::normalize(ZImpl(get_input2<zeno::vec3f>("refUp")));
         auto pos = ZImpl(get_input2<zeno::vec3f>("pos"));
@@ -201,7 +201,7 @@ ZENO_DEFNODE(TargetCamera)({
 
 struct MakeLight : INode {
     virtual void apply() override {
-        auto light = std::make_shared<LightObject>();
+        auto light = std::make_unique<LightObject>();
         light->lightDir = normalize(ZImpl(get_input2<zeno::vec3f>("lightDir")));
         light->intensity = ZImpl(get_input2<float>("intensity"));
         light->shadowTint = ZImpl(get_input2<zeno::vec3f>("shadowTint"));
@@ -240,7 +240,7 @@ struct ScreenSpaceProjectedGrid : INode {
     }
     virtual void apply() override {
         auto cam = dynamic_cast<CameraObject>(get_input("cam"));
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         auto raw_width = get_input2_int("width");
         auto raw_height = get_input2_int("height");
         auto u_padding = get_input2_int("u_padding");
@@ -329,7 +329,7 @@ struct CameraFrustum : INode {
         auto ffar = cam->ffar;
         auto right = zeno::cross(view, up);
         float ratio = float(width) / float(height);
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->verts.resize(8);
         vec3f _near_left_up = pos + fnear * (view - right * std::tan(fov / 2) * ratio + up * std::tan(fov / 2));
         vec3f _near_left_down = pos + fnear * (view - right * std::tan(fov / 2) * ratio - up * std::tan(fov / 2));

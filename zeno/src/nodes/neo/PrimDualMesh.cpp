@@ -94,11 +94,11 @@ struct PrimDualMesh : INode {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         //auto faceType = ZImpl(get_input2<std::string>("faceType"));
         //auto copyFaceAttrs = ZImpl(get_input2<bool>("copyFaceAttrs"));
-        auto outprim = std::make_shared<PrimitiveObject>();
+        auto outprim = std::make_unique<PrimitiveObject>();
         bool keepBounds = ZImpl(get_input2<bool>("keepBounds"));
 
         if (ZImpl(get_input2<bool>("polygonate"))/* && (prim->tris.size() || prim->quads.size())*/) {
-            //prim = std::make_shared<PrimitiveObject>(*prim);
+            //prim = std::make_unique<PrimitiveObject>(*prim);
             //prim->lines.clear();
             primPolygonate(prim.get());
         }

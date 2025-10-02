@@ -239,19 +239,19 @@ struct CreateNumericObj : INode {
         std::string type = m_pAdapter->get_input2<std::string>("Numeric Type");
         std::shared_ptr<NumericObject> spNum;
         if (type == "Integer") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<int>("Integer Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<int>("Integer Value"));
         }
         else if (type == "Float") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<float>("Float Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<float>("Float Value"));
         }
         else if (type == "Vector2") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<vec2f>("Vector2 Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<vec2f>("Vector2 Value"));
         }
         else if (type == "Vector3") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<vec3f>("Vector3 Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<vec3f>("Vector3 Value"));
         }
         else if (type == "Vector4") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<vec4f>("Vector4 Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<vec4f>("Vector4 Value"));
         }
         else {
             throw;

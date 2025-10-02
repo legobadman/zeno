@@ -12,7 +12,7 @@
 namespace zeno {
 struct ProceduralSky : INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto pUserData = dynamic_cast<UserData*>(prim->userData());
         pUserData->set2("isRealTimeObject", std::move(1));
         pUserData->set2("ProceduralSky", std::move(1));
@@ -49,7 +49,7 @@ ZENDEFNODE(ProceduralSky, {
 
 struct HDRSky : INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         std::string path = "";
         if (ZImpl(has_input2<std::string>("path"))) {
              path = ZImpl(get_input2<std::string>("path"));
@@ -87,7 +87,7 @@ ZENDEFNODE(HDRSky, {
 
 struct DistantLightWrapper : IObject{
     zeno::SharedPtr<IObject> clone() const {
-        return std::make_shared<DistantLightWrapper>(*this);
+        return std::make_unique<DistantLightWrapper>(*this);
     }
 
     DistantLightData data;
@@ -119,7 +119,7 @@ struct DistantLight : INode {
         auto intensity = ZImpl(get_input2<float>("intensity"));
         intensity = fmaxf(0.0, intensity);
 
-        auto result = std::make_shared<DistantLightWrapper>();
+        auto result = std::make_unique<DistantLightWrapper>();
         result->data.direction = dir3;
         result->data.angle = angleExtent;
         result->data.color = color;
@@ -172,7 +172,7 @@ struct PortalLight : INode {
         transform = transform * rotation;
         transform = glm::scale(transform, glm::vec3(scale[0], 0.5 * (scale[0] + scale[1]), scale[1]));
 
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         prim->verts->resize(8);
 
         prim->verts[0] = zeno::vec3f(-1, 0, -1);
@@ -239,7 +239,7 @@ ZENDEFNODE(PortalLight, {
 struct SkyComposer : INode {
     virtual void apply() override {
 
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
 
         if (ZImpl(has_input("dlights"))) {
             auto dlights = ZImpl(get_input<ListObject>("dlights"))->m_impl->get<DistantLightWrapper>();

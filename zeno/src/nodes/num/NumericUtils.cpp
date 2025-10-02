@@ -20,10 +20,10 @@ struct UnpackNumericVec : INode {
                 if constexpr (is_vec_n<T> > 3) w = vec[3];
             }
         }, vec);
-        ZImpl(set_output("X", std::make_shared<NumericObject>(x)));
-        ZImpl(set_output("Y", std::make_shared<NumericObject>(y)));
-        ZImpl(set_output("Z", std::make_shared<NumericObject>(z)));
-        ZImpl(set_output("W", std::make_shared<NumericObject>(w)));
+        ZImpl(set_output("X", std::make_unique<NumericObject>(x)));
+        ZImpl(set_output("Y", std::make_unique<NumericObject>(y)));
+        ZImpl(set_output("Z", std::make_unique<NumericObject>(z)));
+        ZImpl(set_output("W", std::make_unique<NumericObject>(w)));
     }
 };
 
@@ -38,7 +38,7 @@ ZENDEFNODE(UnpackNumericVec, {
 
 struct NumericRandom : INode {
     virtual void apply() override {
-        auto value = std::make_shared<NumericObject>();
+        auto value = std::make_unique<NumericObject>();
         auto dim = ZImpl(get_param<int>("dim"));
         auto symmetric = ZImpl(get_param<bool>("symmetric"));
         auto scale = ZImpl(has_input("scale")) ?
@@ -76,7 +76,7 @@ ZENDEFNODE(NumericRandom, {
 
 struct NumericRandomInt : INode {
     virtual void apply() override {
-        auto value = std::make_shared<NumericObject>();
+        auto value = std::make_unique<NumericObject>();
         auto minVal = ZImpl(has_input("min")) ?
             ZImpl(get_input<NumericObject>("min"))->get<int>()
             : 0;
@@ -103,7 +103,7 @@ struct SetRandomSeed : INode {
         if (ZImpl(has_input("routeIn"))) {
             ZImpl(set_output("routeOut", ZImpl(clone_input("routeIn"))));
         } else {
-            ZImpl(set_output("routeOut", std::make_shared<NumericObject>(seed)));
+            ZImpl(set_output("routeOut", std::make_unique<NumericObject>(seed)));
         }
     }
 };
@@ -120,7 +120,7 @@ struct NumericCounter : INode {
     int counter = 0;
 
     virtual void apply() override {
-        auto count = std::make_shared<NumericObject>();
+        auto count = std::make_unique<NumericObject>();
         count->value = counter++;
         ZImpl(set_output("count", std::move(count)));
     }

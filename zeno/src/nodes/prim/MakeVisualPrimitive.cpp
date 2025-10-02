@@ -24,7 +24,7 @@ struct MakeVisualAABBPrimitive : INode {
         
         auto connType = ZImpl(get_param<std::string>("type"));
 
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         auto &pos = prim->add_attr<zeno::vec3f>("pos");
         prim->resize(8);
         pos[0] = vec3f(a[0], a[1], a[2]);

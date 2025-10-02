@@ -404,7 +404,7 @@ std::shared_ptr<PrimitiveObject> readExrFile(std::string const &path) {
         }
     }
 
-    auto img = std::make_shared<PrimitiveObject>();
+    auto img = std::make_unique<PrimitiveObject>();
     img->verts.resize(nx * ny);
 
     auto &alpha = img->verts.add_attr<float>("alpha");
@@ -430,7 +430,7 @@ std::shared_ptr<PrimitiveObject> readPFMFile(std::string const &path) {
     file >> scale;
     file.ignore(1);
 
-    auto img = std::make_shared<PrimitiveObject>();
+    auto img = std::make_unique<PrimitiveObject>();
     int size = nx * ny;
     img->resize(size);
     file.read(reinterpret_cast<char*>(img->verts.data()), sizeof(vec3f) * nx * ny);
@@ -486,7 +486,7 @@ std::shared_ptr<PrimitiveObject> readImageFileRawData(std::string const &path) {
         throw zeno::Exception("cannot open image file at path: " + native_path);
     }
     scope_exit delData = [=] { stbi_image_free(data); };
-    auto img = std::make_shared<PrimitiveObject>();
+    auto img = std::make_unique<PrimitiveObject>();
     img->verts.resize(w * h);
     if (n == 3) {
         for (int i = 0; i < w * h; i++) {
@@ -621,7 +621,7 @@ struct WriteImageFile : INode {
         int w = ud->get_int("w");
         int h = ud->get_int("h");
         int n = 4;
-        auto A = std::make_shared<PrimitiveObject>();
+        auto A = std::make_unique<PrimitiveObject>();
         A->verts.resize(image->size());
         A->verts.add_attr<float>("alpha");
         for(int i = 0;i < w * h;i++){
@@ -724,7 +724,7 @@ struct WriteImageFile_v2 : INode {
         int w = ud->get_int("w");
         int h = ud->get_int("h");
         int n = 4;
-        auto A = std::make_shared<PrimitiveObject>();
+        auto A = std::make_unique<PrimitiveObject>();
         A->verts.resize(image->size());
         A->verts.add_attr<float>("alpha", 1.0);
         std::vector<float> &alpha = A->verts.attr<float>("alpha");
@@ -861,7 +861,7 @@ struct ImageFloatGaussianBlur : INode {
         int w = ud->get_int("w");
         int h = ud->get_int("h");
 
-        auto img_out = std::make_shared<PrimitiveObject>();
+        auto img_out = std::make_unique<PrimitiveObject>();
         img_out->resize(w * h);
         img_out->userData()->set_int("w", w);
         img_out->userData()->set_int("h", h);

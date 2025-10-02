@@ -18,7 +18,7 @@ struct PrimConnectTape : INode {
         auto faceType = ZImpl(get_input2<std::string>("faceType"));
         auto isCloseRing = ZImpl(get_input2<bool>("isCloseRing"));
 
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->verts.resize(prim1->verts.size() + prim2->verts.size());
 
         prim1->verts.forall_attr([&] (auto const &key, auto &arr1) {
@@ -134,7 +134,7 @@ struct PrimConnectSkin : INode {
         auto primList = ZImpl(get_input<ListObject>("primList"))->m_impl->getRaw<PrimitiveObject>();
         auto isCloseRing = ZImpl(get_input2<bool>("isCloseRing"));
         if (primList.size() == 0) {
-            ZImpl(set_output("prim", std::make_shared<PrimitiveObject>()));
+            ZImpl(set_output("prim", std::make_unique<PrimitiveObject>()));
             return;
         }
         auto outprim = primMerge(primList);

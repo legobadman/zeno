@@ -88,7 +88,7 @@ struct PrimitiveGetAttrValue : zeno::INode {
         auto type = ZImpl(get_param<std::string>(("type")));
         auto index = ZImpl(get_input<zeno::NumericObject>("index"))->get<int>();
 
-        auto value = std::make_shared<zeno::NumericObject>();
+        auto value = std::make_unique<zeno::NumericObject>();
 
         if (type == "float") {
             value->set<float>(0);

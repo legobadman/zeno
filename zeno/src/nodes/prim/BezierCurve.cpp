@@ -60,7 +60,7 @@ struct CreateBezierCurve : zeno::INode {
         auto attr = ZImpl(get_param<std::string>("SampleAttr"));
 
         zeno::BCurveObject outCurve;
-        auto outprim = std::make_shared<zeno::PrimitiveObject>();
+        auto outprim = std::make_unique<zeno::PrimitiveObject>();
         std::vector<zeno::vec3f> inputPoint, cPoints;
         std::vector<float> tagList;
        
@@ -143,7 +143,7 @@ struct CreatePoint : zeno::INode {
         auto x = ZImpl(get_param<float>("x"));
         auto y = ZImpl(get_param<float>("y"));
         auto z = ZImpl(get_param<float>("z"));
-        auto outprim = std::make_shared<zeno::PrimitiveObject>();
+        auto outprim = std::make_unique<zeno::PrimitiveObject>();
         outprim->verts.resize(1);
         outprim->verts[0] = zeno::vec3f(x, y, z);
 

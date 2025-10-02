@@ -337,7 +337,7 @@ namespace zeno {
                         //}
                     }
                 }
-                std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(false, newpts.size(), 0);
+                std::shared_ptr<GeometryObject> spgeo = std::make_unique<GeometryObject>(false, newpts.size(), 0);
                 spgeo->create_attr(ATTR_POINT, "pos", newpts);
                 return spgeo;
 #if 0

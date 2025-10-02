@@ -34,7 +34,7 @@ struct ShaderVolume : INode {
         }, {
            
             ZImpl(get_input_shader("depth", (float)999)),
-            //get_input<IObject>("extinction", std::make_shared<NumericObject>(float(1))),
+            //get_input<IObject>("extinction", std::make_unique<NumericObject>(float(1))),
             ZImpl(get_input_shader("albedo", vec3f(0.5))),
             ZImpl(get_input_shader("anisotropy", float(0))),
 
@@ -45,7 +45,7 @@ struct ShaderVolume : INode {
 
         code += "auto extinction = vec3(1.0f); \n";
 
-        auto mtl = std::make_shared<MaterialObject>();
+        auto mtl = std::make_unique<MaterialObject>();
         mtl->frag = std::move(code);
 
             if (ZImpl(has_input("tex2dList"))) {
@@ -116,7 +116,7 @@ struct ShaderVolume : INode {
                     } 
                 }
 
-                auto toVDB = std::make_shared<TextureObjectVDB>();
+                auto toVDB = std::make_unique<TextureObjectVDB>();
                 toVDB->path = path;
                 toVDB->channel = channel_string;
                 toVDB->eleType = TextureObjectVDB::ElementType::Fp32;
@@ -179,7 +179,7 @@ struct ShaderVolumeHomogeneous : INode {
 
     virtual void apply() override {
 
-        auto mtl = std::make_shared<MaterialObject>();
+        auto mtl = std::make_unique<MaterialObject>();
 
         auto extinction = ZImpl(get_input2<zeno::vec3f>("extinction"));
             extinction = clamp(extinction, 1e-10, 1e+5);

@@ -158,7 +158,7 @@ ZENDEFNODE(TriggerException, {
 
 struct TriggerViewportFault : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         prim->tris.resize(1);
         ZImpl(set_output("prim", std::move(prim)));
     }

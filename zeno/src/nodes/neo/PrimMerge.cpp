@@ -150,7 +150,7 @@ ZENO_API std::shared_ptr<zeno::PrimitiveObject> primMerge(std::vector<zeno::Prim
         }
     }
 
-    auto outprim = std::make_shared<PrimitiveObject>();
+    auto outprim = std::make_unique<PrimitiveObject>();
 
     if (primList.size()) {
         std::vector<size_t> bases(primList.size() + 1);
@@ -649,7 +649,7 @@ struct PrimMerge : INode {
 
         auto outprim = primMergeWithFacesetMatid(primList, tagAttr, tag_on_vert, tag_on_face);
 
-        //auto outprim = std::make_shared<PrimitiveObject>(*primList[0]);
+        //auto outprim = std::make_unique<PrimitiveObject>(*primList[0]);
         ZImpl(set_output("prim", std::move(outprim)));
     }
 };

@@ -17,7 +17,7 @@ namespace zeno
       auto frag = ZImpl(get_input<zeno::StringObject>("frag"))->get();
       auto common = ZImpl(get_input<zeno::StringObject>("common"))->get();
       auto extensions = ZImpl(get_input<zeno::StringObject>("extensions"))->get();
-      auto mtl = std::make_shared<zeno::MaterialObject>();
+      auto mtl = std::make_unique<zeno::MaterialObject>();
 
       if (vert.empty()) vert = R"(
 #version 120
@@ -99,7 +99,7 @@ struct ExtractMaterialShader : zeno::INode
 {
     virtual void apply() override {
       auto mtl = ZImpl(get_input<zeno::MaterialObject>("mtl"));
-      auto s = [] (std::string const &s) { auto p = std::make_shared<StringObject>(); p->set(s); return p; };
+      auto s = [] (std::string const &s) { auto p = std::make_unique<StringObject>(); p->set(s); return p; };
       ZImpl(set_output("vert", s(mtl->vert)));
       ZImpl(set_output("frag", s(mtl->frag)));
       ZImpl(set_output("common", s(mtl->common)));

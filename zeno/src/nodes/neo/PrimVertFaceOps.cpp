@@ -245,7 +245,7 @@ struct PrimFacesCenterAsVerts : INode {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto faceType = ZImpl(get_input2<std::string>("faceType"));
         auto copyFaceAttrs = ZImpl(get_input2<bool>("copyFaceAttrs"));
-        auto outprim = std::make_shared<PrimitiveObject>();
+        auto outprim = std::make_unique<PrimitiveObject>();
 
         auto process = [&] (size_t base, auto faceTy) {
             auto &prim_faces = faceTy.from_prim(prim.get());

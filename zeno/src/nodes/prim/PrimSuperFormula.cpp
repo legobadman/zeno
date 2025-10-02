@@ -14,7 +14,7 @@ namespace zeno {
 struct PrimSuperFormula : zeno::INode {
 
     virtual void apply() override {
-        auto outprim = std::make_shared<zeno::PrimitiveObject>();
+        auto outprim = std::make_unique<zeno::PrimitiveObject>();
         auto hasLines = ZImpl(get_input2<bool>("hasLines"));
         auto close = ZImpl(get_input2<bool>("close"));
 

@@ -148,10 +148,10 @@ struct erode_rand_color : INode {
             perm[idx2] = temp;
         }
 
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
         for (int i = 0; i < 8; i++)
         {
-            auto num = std::make_shared<zeno::NumericObject>();
+            auto num = std::make_unique<zeno::NumericObject>();
             num->set<int>(perm[i]);
             list->m_impl->push_back(num);
         }
@@ -198,10 +198,10 @@ struct erode_rand_dir : INode {
             }
         }
 
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
         for (int i = 0; i < 2; i++)
         {
-            auto num = std::make_shared<zeno::NumericObject>();
+            auto num = std::make_unique<zeno::NumericObject>();
             num->set<int>(dirs[i]);
             list->m_impl->push_back(num);
         }

@@ -8,7 +8,7 @@ namespace zeno {
 
 struct MakePrimitive : zeno::INode {
   virtual void apply() override {
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     int size = ZImpl(get_input<NumericObject>("size"))->get<int>();
     if (size == 0) {
         auto points = ZImpl(get_input<StringObject>("points"))->get();
@@ -71,7 +71,7 @@ ZENDEFNODE(PrimitiveResize,
 struct PrimitiveGetSize : zeno::INode {
   virtual void apply() override {
     auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
-    auto size = std::make_shared<NumericObject>();
+    auto size = std::make_unique<NumericObject>();
     size->set<int>(prim->size());
     ZImpl(set_output("size", std::move(size)));
   }
@@ -91,7 +91,7 @@ ZENDEFNODE(PrimitiveGetSize,
 struct PrimitiveGetFaceCount : zeno::INode {
   virtual void apply() override {
     auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
-    auto size = std::make_shared<NumericObject>();
+    auto size = std::make_unique<NumericObject>();
     size->set<int>(prim->tris.size() + prim->quads.size());
     ZImpl(set_output("size", std::move(size)));
   }

@@ -18,7 +18,7 @@ namespace zeno
     {
         virtual void apply() override
         {
-            auto inst = std::make_shared<zeno::InstancingObject>();
+            auto inst = std::make_unique<zeno::InstancingObject>();
 
             auto amount = ZImpl(get_input<zeno::NumericObject>("amount"))->get<int>();
             inst->amount = amount;

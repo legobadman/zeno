@@ -160,7 +160,7 @@ struct PrimitiveRandomAttr : INode {
   virtual void apply() override {
     auto prim = ZImpl(has_input("prim")) ?
         ZImpl(get_input<PrimitiveObject>("prim")) :
-        std::make_shared<PrimitiveObject>();
+        std::make_unique<PrimitiveObject>();
     auto min = ZImpl(get_input<NumericObject>("min"));
     auto max = ZImpl(get_input<NumericObject>("max"));
     auto attrName = ZImpl(get_param<std::string>(("attrName")));

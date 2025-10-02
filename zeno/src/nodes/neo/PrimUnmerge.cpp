@@ -20,7 +20,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeVerts(Primitiv
 
     std::vector<std::shared_ptr<PrimitiveObject>> primList(tagMax);
     for (int tag = 0; tag < tagMax; tag++) {
-        primList[tag] = std::make_shared<PrimitiveObject>();
+        primList[tag] = std::make_unique<PrimitiveObject>();
     }
 
 #if 1
@@ -601,7 +601,7 @@ struct primClean : INode {
     computeTrianglesTangent(prim.get());
     computeVertexTangent(prim.get());
     cleanMesh(prim, verts, nrm, clr, tang, uv, idxBuffer);
-    auto oPrim = std::make_shared<zeno::PrimitiveObject>();
+    auto oPrim = std::make_unique<zeno::PrimitiveObject>();
     oPrim->verts.resize(verts.size());
     oPrim->add_attr<zeno::vec3f>("nrm");
     oPrim->add_attr<zeno::vec3f>("clr");

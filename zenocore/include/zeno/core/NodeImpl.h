@@ -257,25 +257,30 @@ namespace zeno
         }
 
         template <class T>
+        bool has_input2(std::string const& id) const {
+            if (!has_input(id)) return false;
+            return objectIsLiterial<T>(get_input(id));
+        }
+
+        template <class T>
+        void set_output2(std::string const& id, T&& value) {
+            set_output(id, objectFromLiterial(std::forward<T>(value)));
+        }
+
+        template <class T>
+        [[deprecated("use get_input2<T>(id)")]]
+        T get_param(std::string const& id) const {
+            return get_input2<T>(id);
+        }
+
+        template <class T>
         std::unique_ptr<T> get_input(std::string const& id) const {
             auto obj = clone_input(id);
             return safe_uniqueptr_cast<T>(std::move(obj));
-            //return safe_dynamic_cast<T>(std::move(obj), "input socket `" + id + "` of node `" + m_name + "`");
         }
 
         template <class T>
         auto get_input2(std::string const& id) const {
-            if (auto iter = m_inputObjs.find(ds); iter != m_inputObjs.end()) {
-                return clone_input(ds);
-            }
-            else if (auto iter = m_inputPrims.find(ds); iter != m_inputPrims.end()) {
-                auto obj = clone_input(ds);
-                auto res = objectToLiterial<T>(obj.get(), "input socket `" + id + "` of node `" + m_name + "`");
-                return res;
-            }
-            else {
-                throw makeNodeError<UnimplError>(get_path(), "no such param " + id);
-            }
             return objectToLiterial<T>(clone_input(id), "input socket `" + id + "` of node `" + m_name + "`");
         }
 

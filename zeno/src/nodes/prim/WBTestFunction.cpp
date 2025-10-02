@@ -40,7 +40,7 @@ struct testPoly1 : INode {
         polygonDecompose(verts, poly, triangles);
         //printf("x0 = %i, y0 = %i, z0 = %i\n", triangles[0][0], triangles[0][1], triangles[0][2]);
 
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
 
         for (int i = 0; i < verts.size(); i++) {
             prim->verts.push_back(verts[i]);
@@ -132,7 +132,7 @@ ZENDEFNODE(PrimMarkTrisIdx, {
 struct PrimGetTrisSize : INode {
     void apply() override {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
-        auto n = std::make_shared<NumericObject>();
+        auto n = std::make_unique<NumericObject>();
         n->set<int>(int(prim->tris.size()));
         ZImpl(set_output("TrisSize", n));
     }
@@ -163,7 +163,7 @@ struct PrimPointTris : INode {
             auto const &ind = prim->tris[i];
             if (ind[0] == index || ind[1] == index || ind[2] == index)
             {
-                auto num = std::make_shared<NumericObject>();
+                auto num = std::make_unique<NumericObject>();
                 vec4i x;
                 x[0] = ind[0];
                 x[1] = ind[1];
@@ -196,7 +196,7 @@ struct PrimTriPoints : INode {
     void apply() override {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto index = ZImpl(get_input<NumericObject>("trisID"))->get<int>();
-        auto points = std::make_shared<NumericObject>();
+        auto points = std::make_unique<NumericObject>();
         points->set<vec3i>(prim->tris[index]);
         ZImpl(set_output("points", std::move(points)));
     }
@@ -251,7 +251,7 @@ struct str2num : INode {
     virtual void apply() override {
         auto str = ZImpl(get_input2<std::string>("str"));
         auto type = ZImpl(get_input<zeno::StringObject>("type"))->value;
-        auto obj = std::make_shared<zeno::NumericObject>();
+        auto obj = std::make_unique<zeno::NumericObject>();
         std::stringstream strStream(str);
 
         float num_float = 0;
@@ -346,12 +346,12 @@ struct VisPrimAttrValue_Modify : INode {
                       ZImpl(getThisGraph())
                           ->callTempNode("LoadStringPrim",
                                          {
-                                             {"triangulate", std::make_shared<NumericObject>((bool)0)},
-                                             {"decodeUVs", std::make_shared<NumericObject>((bool)0)},
+                                             {"triangulate", std::make_unique<NumericObject>((bool)0)},
+                                             {"decodeUVs", std::make_unique<NumericObject>((bool)0)},
                                              {"str", objectFromLiterial(str)},
                                          })
                           .at("prim"));
-                  //auto numprim = std::make_shared<PrimitiveObject>();
+                  //auto numprim = std::make_unique<PrimitiveObject>();
                   for (int j = 0; j < numprim->verts.size(); j++) {
                       auto &v = numprim->verts[j];
                       // v = (v + vec3f(dotDecoration ? 0.5f : 0.3f, 0.15f, 0.0f)) * scale + pos;
@@ -372,15 +372,15 @@ struct VisPrimAttrValue_Modify : INode {
                 ZImpl(getThisGraph())
                     ->callTempNode("LoadSampleModel",
                                    {
-                                       {"triangulate", std::make_shared<NumericObject>((bool)0)},
-                                       {"decodeUVs", std::make_shared<NumericObject>((bool)0)},
+                                       {"triangulate", std::make_unique<NumericObject>((bool)0)},
+                                       {"decodeUVs", std::make_unique<NumericObject>((bool)0)},
                                        {"name", objectFromLiterial("star")},
                                    })
                     .at("prim"));
 #pragma omp parallel for
             for (int i = 0; i < attarrsize; i++) {
                 auto pos = prim->verts[i];
-                auto offprim = std::make_shared<PrimitiveObject>(*numprim);
+                auto offprim = std::make_unique<PrimitiveObject>(*numprim);
                 for (int j = 0; j < offprim->verts.size(); j++) {
                     auto &v = offprim->verts[j];
                     v = v * (scale * 0.25f) + pos;

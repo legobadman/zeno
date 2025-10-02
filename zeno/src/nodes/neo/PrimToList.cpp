@@ -142,37 +142,37 @@ struct PrimToList : INode {
             if (type == "verts") {
                 lst->m_impl->resize(prim->verts.size());
                 for (size_t i = 0; i < prim->verts.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->verts[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->verts[i]));
                 }
             } else if (type == "points") {
                 lst->m_impl->resize(prim->points.size());
                 for (size_t i = 0; i < prim->points.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->points[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->points[i]));
                 }
             } else if (type == "lines") {
                 lst->m_impl->resize(prim->lines.size());
                 for (size_t i = 0; i < prim->lines.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->lines[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->lines[i]));
                 }
             } else if (type == "tris") {
                 lst->m_impl->resize(prim->tris.size());
                 for (size_t i = 0; i < prim->tris.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->tris[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->tris[i]));
                 }
             } else if (type == "quads") {
                 lst->m_impl->resize(prim->quads.size());
                 for (size_t i = 0; i < prim->quads.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->quads[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->quads[i]));
                 }
             } else if (type == "polys") {
                 lst->m_impl->resize(prim->polys.size());
                 for (size_t i = 0; i < prim->polys.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->polys[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->polys[i]));
                 }
             } else if (type == "loops") {
                 lst->m_impl->resize(prim->loops.size());
                 for (size_t i = 0; i < prim->loops.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->loops[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->loops[i]));
                 }
             } else {
                 throw makeError("invalid type " + type);
@@ -181,7 +181,7 @@ struct PrimToList : INode {
             auto fun = [&] (auto const &arr) {
                 lst->m_impl->resize(arr.size());
                 for (size_t i = 0; i < arr.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(arr[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(arr[i]));
                 }
             };
             if (type == "verts") {

@@ -12,7 +12,7 @@ namespace zeno {
 struct MakePointPrimitive :INode{
     virtual void apply() override {
         auto p = ZImpl(get_input<NumericObject>("vec3"))->get<zeno::vec3f>();
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->resize(1);
         auto &pos = prim->add_attr<zeno::vec3f>("pos");
         pos[0] = p;
@@ -64,7 +64,7 @@ struct Make1DLinePrimitive : INode {
         o -= (ax) / 2;
     ax *= dx;
 
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     prim->resize(nx);
     auto &pos = prim->add_attr<zeno::vec3f>("pos");
 #pragma omp parallel for
@@ -139,7 +139,7 @@ struct Make2DGridPrimitive : INode {
             o -= (ax + ay) / 2;
         ax *= dx; ay *= dy;
 
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->resize(nx * ny);
         auto &pos = prim->add_attr<zeno::vec3f>("pos");
 
@@ -274,7 +274,7 @@ struct Make3DGridPrimitive : INode {
       o -= (ax + ay + az) / 2;
     ax *= dx; ay *= dy; az *= dz;
 
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     prim->resize(nx * ny * nz);
     auto &pos = prim->add_attr<zeno::vec3f>("pos");
     // for (size_t y = 0; y < ny; y++) {
@@ -340,7 +340,7 @@ struct Make3DGridPointsInAABB : INode {//xubenhappy
             bmin += 0.5f * delta;
         }
 
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->resize(nx * ny * nz);
         auto &pos = prim->add_attr<zeno::vec3f>("pos");
 #pragma omp parallel for
@@ -385,7 +385,7 @@ struct MakeCubePrimitive : INode {
         vec3f o = ZImpl(has_input("origin")) ?
             ZImpl(get_input<NumericObject>("origin"))->get<zeno::vec3f>() : vec3f(0);
     
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     prim->resize(nx * ny * nz);
     auto &pos = prim->add_attr<zeno::vec3f>("pos");
 #pragma omp parallel for
@@ -424,7 +424,7 @@ struct MakeBoxPrimitive : INode {
         float size_y = ZImpl(get_input<NumericObject>("size_y"))->get<float>();
         float size_z = ZImpl(get_input<NumericObject>("size_z"))->get<float>();
         vec3f o = ZImpl(get_input<NumericObject>("origin"))->get<zeno::vec3f>();
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->resize(8);
         auto& pos = prim->add_attr<zeno::vec3f>("pos");
 

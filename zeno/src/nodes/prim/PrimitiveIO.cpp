@@ -33,7 +33,7 @@ ZENDEFNODE(ExportZpmPrimitive,
 struct ImportZpmPrimitive : zeno::INode {
   virtual void apply() override {
     auto path = ZImpl(get_input<StringObject>("path"));
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     readzpm(prim.get(), path->get().c_str());
     ZImpl(set_output("prim", std::move(prim)));
   }

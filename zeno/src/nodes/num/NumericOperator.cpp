@@ -149,7 +149,7 @@ struct NumericOperator : zeno::INode {
         auto lhs = ZImpl(get_input<zeno::NumericObject>("lhs"));
         auto rhs = ZImpl(has_input("rhs")) ?
             ZImpl(get_input<zeno::NumericObject>("rhs"))
-            : std::make_shared<zeno::NumericObject>(0);
+            : std::make_unique<zeno::NumericObject>(0);
         
         // todo: no ternary ops..
         std::visit([op, &ret](auto const &lhs, auto const &rhs) {

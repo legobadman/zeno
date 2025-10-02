@@ -49,7 +49,7 @@ struct MakeLocalSys : zeno::INode{
         if (ZImpl(has_input("right")))
             right = ZImpl(get_input<zeno::NumericObject>("right"))->get<zeno::vec3f>();
 
-        auto oMat = std::make_shared<MatrixObject>();
+        auto oMat = std::make_unique<MatrixObject>();
         oMat->m = glm::mat4(glm::mat3(front[0], up[0], right[0],
                             front[1], up[1], right[1],
                             front[2], up[2], right[2]));
@@ -143,7 +143,7 @@ struct TransformPrimitive : zeno::INode {//zhxx happy node
         auto matrix = pre_mat*local*matTrans*matRotate*matQuat*matScal*matShearZ*matShearY*matShearX*glm::translate(glm::vec3(offset[0], offset[1], offset[2]))*glm::inverse(local)*pre_apply;
 
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
-        auto outprim = std::make_shared<PrimitiveObject>(*prim);
+        auto outprim = std::make_unique<PrimitiveObject>(*prim);
 
         if (prim->has_attr("pos")) {
             auto &pos = outprim->attr<zeno::vec3f>("pos");
@@ -170,7 +170,7 @@ struct TransformPrimitive : zeno::INode {//zhxx happy node
         vec4f rotate = {myQuat.x, myQuat.y, myQuat.z, myQuat.w};
         user_data->setLiterial("_rotate", rotate);
         user_data->setLiterial("_scale", scaling);
-        //auto oMat = std::make_shared<MatrixObject>();
+        //auto oMat = std::make_unique<MatrixObject>();
         //oMat->m = matrix;
         ZImpl(set_output("outPrim", std::move(outprim)));
     }

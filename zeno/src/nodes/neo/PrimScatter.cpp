@@ -83,7 +83,7 @@ static void primPossionFilter(PrimitiveObject *prim, float minRadius) {
 
 ZENO_API std::shared_ptr<PrimitiveObject> primScatter(
     PrimitiveObject *prim, std::string type, std::string denAttr, float density, float minRadius, bool interpAttrs, int seed) {
-    auto retprim = std::make_shared<PrimitiveObject>();
+    auto retprim = std::make_unique<PrimitiveObject>();
 
     if (seed == -1) seed = std::random_device{}();
     bool hasDenAttr = !denAttr.empty();

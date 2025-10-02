@@ -101,7 +101,7 @@ struct CacheLastFrameBegin : zeno::INode {
             m_lastFrameCache = (*ZImpl(clone_input("input")).clone();            
         }         
         ZImpl(set_output("lastFrame", std::move(m_lastFrameCache));
-        ZImpl(set_output("linkFrom", std::make_shared<zeno::IObject>());
+        ZImpl(set_output("linkFrom", std::make_unique<zeno::IObject>());
     }
 };
 
@@ -163,7 +163,7 @@ ZENO_DEFNODE(CacheLastFrameEnd)(
 /*struct MakeMutable : zeno::INode {
     virtual void apply() override {
         auto obj = ZImpl(get_input2("anyobj");
-        auto ptr = std::make_shared<MutableObject>();
+        auto ptr = std::make_unique<MutableObject>();
         ptr->set(std::move(obj));
         ZImpl(set_output("mutable", std::move(ptr));
     }

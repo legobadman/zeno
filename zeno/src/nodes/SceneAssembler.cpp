@@ -28,7 +28,7 @@
 
 namespace zeno {
 static std::shared_ptr<SceneObject> get_scene_tree_from_list(std::shared_ptr<ListObject> list_obj) {
-    auto scene_tree = std::make_shared<SceneObject>();
+    auto scene_tree = std::make_unique<SceneObject>();
     auto json_obj = std::static_pointer_cast<PrimitiveObject>(list_obj->m_impl->m_objects.back());
     scene_tree->from_json(zsString2Std(json_obj->userData()->get_string("json")));
     auto prim_list_size = list_obj->m_impl->m_objects.front()->userData()->get_int("prim_count");
@@ -92,7 +92,7 @@ std::shared_ptr<zeno::ListObject> scene_tree_to_structure(SceneObject* sceneSour
         auto r2 = global_matrix[2];
         auto t  = global_matrix[3];
         global_matrices[path] = global_matrix;
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->verts.resize(1);
         prim->verts[0] = {t[0], t[1], t[2]};
         prim->verts.add_attr<vec3f>("r0")[0] = {r0[0], r0[1], r0[2]};
@@ -104,9 +104,9 @@ std::shared_ptr<zeno::ListObject> scene_tree_to_structure(SceneObject* sceneSour
         }
         temp_matrices[zeno_scene_name].push_back(prim);
     }
-    auto scene = std::make_shared<zeno::ListObject>();
+    auto scene = std::make_unique<zeno::ListObject>();
 
-    auto dict = std::make_shared<PrimitiveObject>();
+    auto dict = std::make_unique<PrimitiveObject>();
 
     Json dict_json;
     int index = 0;
@@ -129,7 +129,7 @@ std::shared_ptr<zeno::ListObject> scene_tree_to_structure(SceneObject* sceneSour
 
     scene->insert(scene->arr.begin(), dict);
     {
-        auto scene_descriptor = std::make_shared<PrimitiveObject>();
+        auto scene_descriptor = std::make_unique<PrimitiveObject>();
         auto ud = scene_descriptor->userData();
         ud->set_("ResourceType", std::string("SceneDescriptor"));
         Json json;
@@ -166,7 +166,7 @@ std::shared_ptr<zeno::ListObject> scene_tree_to_structure(SceneObject* sceneSour
     }
     // scene tree prim
     {
-        auto scene_tree = std::make_shared<JsonObject>();
+        auto scene_tree = std::make_unique<JsonObject>();
         scene_tree->json = sceneSource->to_json();
         scene->push_back(scene_tree);
     }
@@ -223,7 +223,7 @@ static void get_local_matrix_map(
 
 struct FormSceneTree : zeno::INode {
     void apply() override {
-        auto sceneTree = std::make_shared<SceneObject>();
+        auto sceneTree = std::make_unique<SceneObject>();
         auto scene_json = ZImpl(get_input2<JsonObject>("Scene Info"));
         sceneTree->root_name = "/ABC";
         auto prim_geom_list = get_input_ListObject("Geometry List");
@@ -686,7 +686,7 @@ ZENDEFNODE( SceneRootRename, {
 
 struct MergeMultiScenes : zeno::INode {
     void apply() override {
-        auto main_scene = std::make_shared<SceneObject>();
+        auto main_scene = std::make_unique<SceneObject>();
         main_scene->root_name = zsString2Std(get_input2_string("root_name"));
         if (!main_scene->root_name.empty())
         {
@@ -703,7 +703,7 @@ struct MergeMultiScenes : zeno::INode {
 
         std::unordered_map<std::string, int> sub_root_names;
         if (has_input("Scene List")) {
-            auto input_scene_list = std::make_shared<ListObject>();
+            auto input_scene_list = std::make_unique<ListObject>();
             auto scene_list = get_input_ListObject("Scene List");
 
             main_scene->bNeedUpdateDescriptor = false;
@@ -786,7 +786,7 @@ struct MakeXform : zeno::INode {
 
         auto mat = matRotate * matScale;
 
-        auto xform = std::make_shared<PrimitiveObject>();
+        auto xform = std::make_unique<PrimitiveObject>();
         xform->resize(1);
         xform->verts[0] = translate;
         xform->verts.add_attr<vec3f>("r0")[0] = {mat[0][0], mat[0][1], mat[0][2]};
@@ -1081,7 +1081,7 @@ ZENDEFNODE(SetResourceType, {
 
 struct MakeSceneNode : zeno::INode {
     void apply() override {
-        auto scene_tree = std::make_shared<SceneObject>();
+        auto scene_tree = std::make_unique<SceneObject>();
         scene_tree->root_name = zsString2Std(get_input2_string("root_name"));
         if (!zeno::starts_with(scene_tree->root_name, "/")) {
             scene_tree->root_name = "/" + scene_tree->root_name;

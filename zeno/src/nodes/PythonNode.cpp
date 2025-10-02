@@ -58,7 +58,7 @@ namespace zeno {
             }
             log_debug("Initialized Python successfully!");
 
-            //getSession().userData().set("subprogram_python", std::make_shared<GenericObject<int(*)(int, char**)>>(subprogram_python_main));
+            //getSession().userData().set("subprogram_python", std::make_unique<GenericObject<int(*)(int, char**)>>(subprogram_python_main));
 #endif
             });
 
@@ -151,7 +151,7 @@ namespace zeno {
 
         static Zeno_Object factoryFunctionObject(void* inObj_) {
             PyObject* tmpFunc = reinterpret_cast<PyObject*>(inObj_);
-            auto funcObj = std::make_shared<FunctionObject>(PythonFunctor(tmpFunc));
+            auto funcObj = std::make_unique<FunctionObject>(PythonFunctor(tmpFunc));
             Zeno_Object funcHandle = capiLoadObjectSharedPtr(funcObj);
             return funcHandle;
         }
@@ -212,7 +212,7 @@ namespace zeno {
                 if (onlyui_gen)
                     return;
 
-                auto args = ZImpl(has_input("args")) ? ZImpl(get_input<DictObject>("args")) : std::make_shared<DictObject>();
+                auto args = ZImpl(has_input("args")) ? ZImpl(get_input<DictObject>("args")) : std::make_unique<DictObject>();
                 auto path = ZImpl(has_input("path")) ? ZImpl(get_input2<std::string>("path")) : "";
                 int ret;
                 PyObject* argsDict = PyDict_New();
@@ -291,7 +291,7 @@ namespace zeno {
                 //    PyErr_Print();
                 //    throw makeError("Python exception occurred, see console for more details");
                 //}
-                auto rets = std::make_shared<DictObject>();
+                auto rets = std::make_unique<DictObject>();
                 {
                     PyObject* key, * value;
                     Py_ssize_t pos = 0;

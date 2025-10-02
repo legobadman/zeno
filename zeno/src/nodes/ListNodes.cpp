@@ -10,7 +10,7 @@ namespace zeno {
 struct ListLength : zeno::INode {
     virtual void apply() override {
         auto list = ZImpl(get_input<zeno::ListObject>("list"));
-        auto ret = std::make_shared<zeno::NumericObject>();
+        auto ret = std::make_unique<zeno::NumericObject>();
         ret->set<int>(list->m_impl->size());
         ZImpl(set_output("length", std::move(ret)));
     }
@@ -81,7 +81,7 @@ ZENDEFNODE(ExtractList, {
 
 struct EmptyList : zeno::INode {
     virtual void apply() override {
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
         ZImpl(set_output("list", std::move(list)));
     }
 };
@@ -154,7 +154,7 @@ ZENDEFNODE(ResizeList, {
 
 struct MakeSmallList : zeno::INode {
     virtual void apply() override {
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
         auto doConcat = ZImpl(get_param<bool>("doConcat"));
         for (int i = 0; i < 6; i++) {
             std::stringstream namess;
@@ -234,12 +234,12 @@ ZENDEFNODE(MergeList, {
 
 struct NumericRangeList : zeno::INode {
     virtual void apply() override {
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
         auto start = ZImpl(get_input2<int>("start"));
         auto end = ZImpl(get_input2<int>("end"));
         auto skip = ZImpl(get_input2<int>("skip"));
         for (int i = start; i < end; i += skip) {
-            list->m_impl->emplace_back(std::make_shared<NumericObject>(i));
+            list->m_impl->emplace_back(std::make_unique<NumericObject>(i));
         }
         ZImpl(set_output("list", std::move(list)));
     }
@@ -254,7 +254,7 @@ ZENDEFNODE(NumericRangeList, {
 
 struct IsList : zeno::INode {
     virtual void apply() override {
-        auto result = std::make_shared<zeno::NumericObject>();
+        auto result = std::make_unique<zeno::NumericObject>();
         result->value = 0;
         if (ZImpl(has_input<zeno::ListObject>("list")))
             result->value = 1;

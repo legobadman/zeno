@@ -54,7 +54,7 @@ PrimitiveObject* parse_obj(const char *binData, std::size_t binSize) {
     char const *it = binData;
     char const *eit = binData + binSize;// - 8;
 
-    // auto prim = std::make_shared<PrimitiveObject>();
+    // auto prim = std::make_unique<PrimitiveObject>();
     auto prim = new PrimitiveObject;
     std::vector<int> loop_uvs;
 

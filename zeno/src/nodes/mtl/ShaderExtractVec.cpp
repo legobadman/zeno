@@ -63,10 +63,10 @@ struct ImplShaderExtractVec : ShaderNodeClone<ImplShaderExtractVec> {
 struct ShaderExtractVec : INode {
     virtual void apply() override {
         for (int i = 0; i < 4; i++) {
-            auto node = std::make_shared<ImplShaderExtractVec>();
+            auto node = std::make_unique<ImplShaderExtractVec>();
             node->inputs["vec"] = get_input("vec");
             node->comp = i;
-            auto shader = std::make_shared<ShaderObject>(node.get());
+            auto shader = std::make_unique<ShaderObject>(node.get());
             ZImpl(set_output(std::string{} + "xyzw"[i], std::move(shader)));
         }
     }

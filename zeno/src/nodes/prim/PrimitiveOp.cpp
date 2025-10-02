@@ -172,7 +172,7 @@ struct PrimitiveMix : INode {
     if (ZImpl(has_input("primOut"))) {
             primOut = ZImpl(get_input<PrimitiveObject>("primOut"));
     } else {
-            primOut = std::make_shared<zeno::PrimitiveObject>(*primA);
+            primOut = std::make_unique<zeno::PrimitiveObject>(*primA);
     }
     auto attrA = ZImpl(get_param<std::string>("attrA"));
     auto attrB = ZImpl(get_param<std::string>("attrB"));

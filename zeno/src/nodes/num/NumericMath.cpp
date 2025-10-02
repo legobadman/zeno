@@ -28,9 +28,9 @@ struct MakeOrthonormalBase : INode {
         bitangent = normalize(bitangent);
         tangent = cross(bitangent, normal);
 
-        ZImpl(set_output("normal", std::make_shared<NumericObject>(normal)));
-        ZImpl(set_output("tangent", std::make_shared<NumericObject>(tangent)));
-        ZImpl(set_output("bitangent", std::make_shared<NumericObject>(bitangent)));
+        ZImpl(set_output("normal", std::make_unique<NumericObject>(normal)));
+        ZImpl(set_output("tangent", std::make_unique<NumericObject>(tangent)));
+        ZImpl(set_output("bitangent", std::make_unique<NumericObject>(bitangent)));
     }
 };
 
@@ -54,9 +54,9 @@ struct OrthonormalBase : INode {
             orb = std::make_unique<orthonormal>(normal);
         }
 
-        ZImpl(set_output("normal", std::make_shared<NumericObject>(orb->normal)));
-        ZImpl(set_output("tangent", std::make_shared<NumericObject>(orb->tangent)));
-        ZImpl(set_output("bitangent", std::make_shared<NumericObject>(orb->bitangent)));
+        ZImpl(set_output("normal", std::make_unique<NumericObject>(orb->normal)));
+        ZImpl(set_output("tangent", std::make_unique<NumericObject>(orb->tangent)));
+        ZImpl(set_output("bitangent", std::make_unique<NumericObject>(orb->bitangent)));
     }
 };
 
@@ -79,9 +79,9 @@ struct PixarOrthonormalBase : INode {
             pixarONB(normal, tangent, bitangent);
         }
 
-        ZImpl(set_output("normal", std::make_shared<NumericObject>(normal)));
-        ZImpl(set_output("tangent", std::make_shared<NumericObject>(tangent)));
-        ZImpl(set_output("bitangent", std::make_shared<NumericObject>(bitangent)));
+        ZImpl(set_output("normal", std::make_unique<NumericObject>(normal)));
+        ZImpl(set_output("tangent", std::make_unique<NumericObject>(tangent)));
+        ZImpl(set_output("bitangent", std::make_unique<NumericObject>(bitangent)));
     }
 };
 
@@ -154,10 +154,10 @@ struct ProjectAndNormalize : INode {
         //log_info("length: {}", length);
         //log_info("direction: {} {} {}", direction[0], direction[1], direction[2]);
 
-        ZImpl(set_output("direction", std::make_shared<NumericObject>(direction)));
-        ZImpl(set_output("length", std::make_shared<NumericObject>(length)));
-        ZImpl(set_output("height", std::make_shared<NumericObject>(height)));
-        ZImpl(set_output("phase", std::make_shared<NumericObject>(phase)));
+        ZImpl(set_output("direction", std::make_unique<NumericObject>(direction)));
+        ZImpl(set_output("length", std::make_unique<NumericObject>(length)));
+        ZImpl(set_output("height", std::make_unique<NumericObject>(height)));
+        ZImpl(set_output("phase", std::make_unique<NumericObject>(phase)));
     }
 };
 
@@ -209,7 +209,7 @@ struct CalcDirectionFromAngle : INode {
         auto orb1v = std::sin(angle) * length;
         auto direction = orb[0] * orb0v + orb[1] * orb1v;
 
-        ZImpl(set_output("direction", std::make_shared<NumericObject>(direction)));
+        ZImpl(set_output("direction", std::make_unique<NumericObject>(direction)));
     }
 };
 

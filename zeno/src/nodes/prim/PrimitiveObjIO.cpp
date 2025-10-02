@@ -94,7 +94,7 @@ void read_obj_file(
 struct ReadObjPrimitive : zeno::INode {
     virtual void apply() override {
         auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto &pos = prim->verts;
         auto &uv = prim->verts.add_attr<zeno::vec3f>("uv");
         auto &norm = prim->verts.add_attr<zeno::vec3f>("nrm");
@@ -225,7 +225,7 @@ read_obj_file_dict(
     std::vector<zeno::vec3i> sub_indices;
 
 
-    std::shared_ptr<zeno::DictObject> prims = std::make_shared<zeno::DictObject>();
+    std::shared_ptr<zeno::DictObject> prims = std::make_unique<zeno::DictObject>();
 
     size_t vert_offset = 0;
     size_t pre_vert_offset = 0;
@@ -275,7 +275,7 @@ read_obj_file_dict(
         } else if (zeno::starts_with(line, "o ")) {
             // if we have already parse the o tag, the subname, vertices and faces data should have already been read
             if(has_read_o_tag){
-                auto sub_prim = std::make_shared<zeno::PrimitiveObject>();
+                auto sub_prim = std::make_unique<zeno::PrimitiveObject>();
                 sub_prim->tris = sub_indices;
                 for(size_t i = 0;i < sub_prim->tris.size();++i){
                     sub_prim->tris[i] -= zeno::vec3i(pre_vert_offset);
@@ -296,7 +296,7 @@ read_obj_file_dict(
         }
     }
     // if there is no sub objects, output the mesh as a whole unameed subobject
-    auto sub_prim = std::make_shared<zeno::PrimitiveObject>();
+    auto sub_prim = std::make_unique<zeno::PrimitiveObject>();
     if(!has_read_o_tag){
         sub_prim->verts = vertices;
         sub_prim->tris = indices;
@@ -314,7 +314,7 @@ read_obj_file_dict(
 struct ReadObjPrimitiveDict : zeno::INode {
     virtual void apply() override {
         auto path = ZImpl(get_input<zeno::StringObject>("path"))->get();
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto &pos = prim->verts;
         //auto &uv = prim->verts.add_attr<zeno::vec3f>("uv");
         //auto &norm = prim->verts.add_attr<zeno::vec3f>("nrm");

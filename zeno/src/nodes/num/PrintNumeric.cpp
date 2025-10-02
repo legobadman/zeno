@@ -52,7 +52,7 @@ ZENDEFNODE(PrintNumeric, {
 
 //struct ToVisualize_NumericObject : PrintNumeric {
     //virtual void apply() override {
-        //inputs["hint:"] = std::make_shared<zeno::StringObject>("VIEW of NumericObject");
+        //inputs["hint:"] = std::make_unique<zeno::StringObject>("VIEW of NumericObject");
         //PrintNumeric::apply();
     //}
 //};

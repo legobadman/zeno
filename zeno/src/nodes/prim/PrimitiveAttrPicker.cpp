@@ -22,7 +22,7 @@ struct PrimitiveAttrPicker : zeno::INode {
                 int i;
                 ss >> i;
                 selected_indices.push_back(i);
-                auto idx = std::make_shared<NumericObject>(i);
+                auto idx = std::make_unique<NumericObject>(i);
                 selected_indices_numeric.push_back(idx);
                 ss.clear();
             };

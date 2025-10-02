@@ -110,7 +110,7 @@ struct PrimitivePerlinNoiseAttr : INode {
   virtual void apply() override {
     auto prim = ZImpl(has_input("prim")) ?
         ZImpl(get_input<PrimitiveObject>("prim")) :
-        std::make_shared<PrimitiveObject>();
+        std::make_unique<PrimitiveObject>();
     
 
     //auto min = ZImpl(get_input<NumericObject>("min"));
@@ -118,7 +118,7 @@ struct PrimitivePerlinNoiseAttr : INode {
     auto offset = zeno::vec3f(frand(), frand(), frand());
     if(ZImpl(has_input("seed")))
         offset = ZImpl(get_input<zeno::NumericObject>("seed"))->get<zeno::vec3f>();
-    auto res = std::make_shared<zeno::NumericObject>();
+    auto res = std::make_unique<zeno::NumericObject>();
     float f = ZImpl(has_input("freq"))? ZImpl(get_input<zeno::NumericObject>("freq"))->get<float>() : 1.0f;
     auto attrName = ZImpl(get_param<std::string>("attrName"));
     auto attrType = ZImpl(get_param<std::string>("attrType"));
@@ -167,7 +167,7 @@ struct GetPerlinNoise : INode{
         auto offset = zeno::vec3f(frand(), frand(), frand());
         if(ZImpl(has_input("seed")))
             offset = ZImpl(get_input<zeno::NumericObject>("seed"))->get<zeno::vec3f>();
-        auto res = std::make_shared<zeno::NumericObject>();
+        auto res = std::make_unique<zeno::NumericObject>();
         float f = ZImpl(has_input("freq"))? ZImpl(get_input<zeno::NumericObject>("freq"))->get<float>() : 1.0f;
         zeno::vec3f p = vec*f + offset;
         p = p;

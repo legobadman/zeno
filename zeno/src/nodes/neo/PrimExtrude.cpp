@@ -29,7 +29,7 @@ struct PrimExtrude : INode {
         auto averagedExtrude = ZImpl(get_input2<bool>("averagedExtrude"));
         auto flipOldFaces = ZImpl(get_input2<bool>("flipOldFaces"));
 
-        auto prim2 = std::make_shared<PrimitiveObject>(*prim);
+        auto prim2 = std::make_unique<PrimitiveObject>(*prim);
 
         if (autoFindEdges && !maskAttr.empty()) {
             //AttrVector<vec2i> oldlines = std::move(prim2->lines);

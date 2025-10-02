@@ -21,7 +21,7 @@ struct CyHair : zeno::INode {
             throw std::string("CyHair file doesn't exist");
         }
 
-        auto out = std::make_shared<zeno::PrimitiveObject>();
+        auto out = std::make_unique<zeno::PrimitiveObject>();
         out->userData()->set_bool("yup", yup);
         out->userData()->set_string("path", stdString2zs(path));
         out->userData()->set_bool("cyhair", true);

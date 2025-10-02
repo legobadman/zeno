@@ -14,7 +14,7 @@ struct PrimQuadsLotSubdivision : zeno::INode {
     virtual void apply() override {
         auto inprim = ZImpl(get_input<zeno::PrimitiveObject>("input_quads_model")); //输入的多边形物体
         size_t num = ZImpl(get_input2<int>("num"));
-        auto outprim = std::make_shared<zeno::PrimitiveObject>(); //新生成的多边形物体
+        auto outprim = std::make_unique<zeno::PrimitiveObject>(); //新生成的多边形物体
         auto roworcolumns = ZImpl(get_input2<bool>("row_or_columns"));     //横着连线or竖着连线
         auto rcrc = ZImpl(get_input2<bool>("rcrc"));
         auto random_rc = ZImpl(get_input2<bool>("random_rc"));

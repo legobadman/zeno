@@ -13,7 +13,7 @@
 namespace zeno {
 
 ZENO_API std::shared_ptr<PrimitiveObject> primitive_merge(std::shared_ptr<zeno::ListObject> list, std::string tagAttr) {
-    auto outprim = std::make_shared<PrimitiveObject>();
+    auto outprim = std::make_unique<PrimitiveObject>();
 
     size_t len = 0;
     size_t poly_len = 0;

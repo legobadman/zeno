@@ -133,7 +133,7 @@ struct CreateCircle : INode {
     {
         auto seg = ZImpl(get_input<NumericObject>("segments"))->get<int>();
         auto r = ZImpl(get_input<NumericObject>("r"))->get<float>();
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
 
         for (int i = 0; i < seg; i++)
         {
@@ -216,7 +216,7 @@ struct LineResample : INode {
         bool has_schema = false;
         if(has_input("AttrSchema"))
             has_schema = true;
-        auto attrSchema = std::make_shared<zeno::DictObject>();
+        auto attrSchema = std::make_unique<zeno::DictObject>();
         if(has_schema)
             attrSchema = get_input_DictObject("AttrSchema");
         if (segments < 1) { segments = 1; }
@@ -246,7 +246,7 @@ struct LineResample : INode {
             }
         }
 
-        auto retprim = std::make_shared<PrimitiveObject>();
+        auto retprim = std::make_unique<PrimitiveObject>();
         if(ZImpl(has_input("PrimSampler"))) {
             retprim = ZImpl(get_input<PrimitiveObject>("PrimSampler"));
             auto sampleByAttr = ZImpl(get_input2<std::string>("SampleBy"));
@@ -531,7 +531,7 @@ struct VisVec3Attribute : INode {
         auto& attr = prim->verts.attr<zeno::vec3f>(name);
         auto& pos = prim->verts;
 
-        auto primVis = std::make_shared<PrimitiveObject>();
+        auto primVis = std::make_unique<PrimitiveObject>();
         primVis->verts.resize(prim->size() * 2);
         primVis->lines.resize(prim->size());
         for (auto key : prim->attr_keys()) {
@@ -1147,7 +1147,7 @@ struct PrimGetAttr : INode {
         auto index = ZImpl(get_input<NumericObject>("index"))->get<int>();
         auto method = ZImpl(get_input<StringObject>("method"))->get();
 
-        auto value = std::make_shared<NumericObject>();
+        auto value = std::make_unique<NumericObject>();
 
         std::visit(
             [&](auto ty) {
@@ -1301,7 +1301,7 @@ struct QuatRotBetweenVectors : INode {
         glm::quat gl_quat = glm::rotation(gl_start, gl_dest);
 
         vec4f rot(gl_quat.x, gl_quat.y, gl_quat.z, gl_quat.w);
-        auto rotation = std::make_shared<NumericObject>();
+        auto rotation = std::make_unique<NumericObject>();
         rotation->set<vec4f>(rot);
         ZImpl(set_output("quat", rotation));
     }
@@ -1328,7 +1328,7 @@ struct QuatRotate : INode {
         glm::vec3 gl_vec3_out = glm::rotate(gl_quat, gl_vec3);
 
         vec3f vec3_o(gl_vec3_out.x, gl_vec3_out.y, gl_vec3_out.z);
-        auto vec3_out = std::make_shared<NumericObject>();
+        auto vec3_out = std::make_unique<NumericObject>();
         vec3_out->set<vec3f>(vec3_o);
         ZImpl(set_output("vec3", vec3_out));
     }
@@ -1356,7 +1356,7 @@ struct QuatAngleAxis : INode {
         glm::quat gl_quat = glm::angleAxis(gl_angle, gl_axis);
 
         vec4f rot(gl_quat.x, gl_quat.y, gl_quat.z, gl_quat.w);
-        auto rotation = std::make_shared<NumericObject>();
+        auto rotation = std::make_unique<NumericObject>();
         rotation->set<vec4f>(rot);
 
         ZImpl(set_output("quat", rotation));
@@ -1381,7 +1381,7 @@ struct QuatGetAngle : INode {
         glm::quat gl_quat(quat[3], quat[0], quat[1], quat[2]);
         float gl_angle = glm::degrees(glm::angle(gl_quat));
 
-        auto angle = std::make_shared<NumericObject>();
+        auto angle = std::make_unique<NumericObject>();
         angle->set<float>(gl_angle);
 
         ZImpl(set_output("angle(D)", angle));
@@ -1406,7 +1406,7 @@ struct QuatGetAxis : INode {
         glm::vec3 gl_axis = glm::axis(gl_quat);
 
         vec3f axis_o(gl_axis.x, gl_axis.y, gl_axis.z);
-        auto axis = std::make_shared<NumericObject>();
+        auto axis = std::make_unique<NumericObject>();
         axis->set<vec3f>(axis_o);
         ZImpl(set_output("axis", axis));
     }
@@ -1427,7 +1427,7 @@ struct MatTranspose : INode {
     {
         glm::mat mat = std::get<glm::mat4>(ZImpl(get_input<MatrixObject>("mat"))->m);
         glm::mat transposeMat = glm::transpose(mat);
-        auto oMat = std::make_shared<MatrixObject>();
+        auto oMat = std::make_unique<MatrixObject>();
         oMat->m = transposeMat;
         ZImpl(set_output("transposeMat", oMat));
     }
@@ -1946,7 +1946,7 @@ static void _CreateBezierCurve(const std::vector<zeno::vec3f> src, std::vector<z
 struct CreatePrimCurve : INode {
     virtual void apply() override {
         auto inPrim = ZImpl(get_input<zeno::PrimitiveObject>("inputPoints")).get();
-        auto outprim = std::make_shared<zeno::PrimitiveObject>();
+        auto outprim = std::make_unique<zeno::PrimitiveObject>();
         auto precision = ZImpl(get_input<zeno::NumericObject>("precision"))->get<float>();
 
         auto tmpPos = inPrim->attr<zeno::vec3f>("pos");
@@ -2035,7 +2035,7 @@ struct PrimHasAttr : INode {
             x = prim->lines.has_attr(attrName);
         }
 
-        auto hasAttr = std::make_shared<NumericObject>();
+        auto hasAttr = std::make_unique<NumericObject>();
         hasAttr->set<bool>(x);
         ZImpl(set_output("hasAttr", hasAttr));
     }

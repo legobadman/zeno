@@ -190,7 +190,7 @@ struct SmartTexture2D : ShaderNodeClone<SmartTexture2D>
 
     virtual void emitCode(EmissionPass *em) override {
         auto texId = em->tex2Ds.size();
-        auto tex = std::make_shared<zeno::Texture2DObject>();
+        auto tex = std::make_unique<zeno::Texture2DObject>();
         auto texture_path = zsString2Std(get_input2_string("path"));
         if (has_input("heatmap")) {
             if (texture_path.empty()) {

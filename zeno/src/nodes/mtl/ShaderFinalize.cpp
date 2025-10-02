@@ -134,7 +134,7 @@ struct ShaderFinalize : INode {
         vec3f mask_value = (vec3f)ZImpl(get_input2<zeno::vec3i>("mask_value")) / 255.0f;
         code += zeno::format("vec3 mask_value = vec3({}, {}, {});\n", mask_value[0], mask_value[1], mask_value[2]);
 
-        auto mtl = std::make_shared<MaterialObject>();
+        auto mtl = std::make_unique<MaterialObject>();
         mtl->mtlidkey = ZImpl(get_input2<std::string>("mtlid"));
         mtl->frag = std::move(code);
 
