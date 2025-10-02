@@ -22,13 +22,13 @@ using VAR_USER_DATA = std::variant<int, float, std::string,
 
 class Zpy_Object {
 public:
-    Zpy_Object(zeno::zany obj);
+    Zpy_Object(zeno::zany&& obj);
     VAR_USER_DATA get_user_data(const std::string& key);
     void set_user_data(const std::string& key, const VAR_USER_DATA& dat);
     std::vector<Zpy_Object> toList() const;
 
 private:
-    std::weak_ptr<zeno::IObject> m_wpObject;
+    zeno::zany m_wpObject;
 };
 
 
@@ -59,7 +59,7 @@ public:
     void setAperture(float aperture);
     float getFocalPlaneDistance() const;
     void setFocalPlaneDistance(float focal);
-    std::shared_ptr<zeno::CameraObject> getCamera() const;
+    std::unique_ptr<zeno::CameraObject> getCamera() const;
 
 private:
     void run();

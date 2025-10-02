@@ -101,7 +101,7 @@ struct SetRandomSeed : INode {
         auto seed = ZImpl(get_input<NumericObject>("seed"))->get<int>();
         sfrand(seed);
         if (ZImpl(has_input("routeIn"))) {
-            ZImpl(set_output("routeOut", ZImpl(get_input("routeIn"))));
+            ZImpl(set_output("routeOut", ZImpl(clone_input("routeIn"))));
         } else {
             ZImpl(set_output("routeOut", std::make_shared<NumericObject>(seed)));
         }

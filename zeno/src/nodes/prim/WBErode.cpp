@@ -2298,7 +2298,7 @@ struct erode_terrainHiMeLo : INode {
         ud->set_float("lo", lo);
         ud->set_float("me", all / attr.size());
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_terrainHiMeLo,
@@ -2562,7 +2562,7 @@ struct HF_rotate_displacement_2d : INode {
             pos[i] -= vec3f(ret.x, ret.y, ret.z);
         }
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(HF_rotate_displacement_2d,
@@ -2820,7 +2820,7 @@ struct HF_maskbyOcclusion : INode {
                 ao[idx] = invert_mask ? 1-total_fov : total_fov;
             }
         }
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(HF_maskbyOcclusion,

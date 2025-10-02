@@ -12,7 +12,7 @@ namespace {
 struct DictSize : zeno::INode {
     virtual void apply() override {
         auto dict = ZImpl(get_input<zeno::DictObject>("dict"));
-        auto ret = std::make_shared<zeno::NumericObject>();
+        auto ret = std::unique_ptr<zeno::NumericObject>();
         ret->set<int>(dict->lut.size());
         ZImpl(set_output("size", std::move(ret)));
     }
@@ -31,10 +31,10 @@ struct DictGetItem : zeno::INode {
         auto dict = ZImpl(get_input<zeno::DictObject>("dict"));
         auto key = ZImpl(get_input<zeno::StringObject>("key"))->get();
         if (ZImpl(has_input("defl") && dict->lut.find(key) == dict->lut.end())) {
-            auto obj = ZImpl(get_input("defl"));
+            auto obj = ZImpl(clone_input("defl"));
             ZImpl(set_output("object", std::move(obj)));
         } else {
-            auto obj = safe_at(dict->lut, key, "DictGetItem");
+            auto obj = safe_at(dict->lut, key, "DictGetItem")->clone();
             ZImpl(set_output("object", std::move(obj)));
         }
     }
@@ -50,7 +50,7 @@ ZENDEFNODE(DictGetItem, {
 
 struct EmptyDict : zeno::INode {
     virtual void apply() override {
-        auto dict = std::make_shared<zeno::DictObject>();
+        auto dict = std::unique_ptr<zeno::DictObject>();
         ZImpl(set_output("dict", std::move(dict)));
     }
 };
@@ -67,7 +67,7 @@ struct DictSetItem : zeno::INode {
     virtual void apply() override {
         auto dict = ZImpl(get_input<zeno::DictObject>("dict"));
         auto key = ZImpl(get_input<zeno::StringObject>("key"))->get();
-        auto obj = ZImpl(get_input("object"));
+        auto obj = ZImpl(clone_input("object"));
         dict->lut[key] = std::move(obj);
         ZImpl(set_output("dict", std::move(dict)));
     }
@@ -110,11 +110,11 @@ ZENDEFNODE(MocDictAsOutput, {
 
 struct MakeSmallDict : zeno::INode {
     virtual void apply() override {
-        auto dict = std::make_shared<zeno::DictObject>();
+        auto dict = std::make_unique<zeno::DictObject>();
         for (int i = 0; i < 6; i++) {
             auto si = std::to_string(i);
             if (!ZImpl(has_input("obj" + si))) break;
-            auto obj = ZImpl(get_input("obj" + si));
+            auto obj = ZImpl(clone_input("obj" + si));
             auto key = ZImpl(get_input2<std::string>("key" + si));
             dict->lut.emplace(std::move(key), std::move(obj));
         }
@@ -137,35 +137,11 @@ ZENDEFNODE(MakeSmallDict, {
 });
 
 
-struct ZipListAsDict : zeno::INode {
-    virtual void apply() override {
-        auto dict = std::make_shared<zeno::DictObject>();
-        auto keys = ZImpl(get_input<ListObject>("values"))->m_impl->get2<std::string>();
-        auto values = ZImpl(get_input<ListObject>("values"))->m_impl->get();
-        for (int i = 0; i < values.size(); i++) {
-            dict->lut.emplace(i < keys.size() ? keys[i] : std::to_string(i),
-                              std::move(values[i]));
-        }
-        ZImpl(set_output("dict", std::move(dict)));
-    }
-};
-
-ZENDEFNODE(ZipListAsDict, {
-    {
-        {gParamType_List, "keys", "", zeno::Socket_ReadOnly},
-        {gParamType_List, "values", "", zeno::Socket_ReadOnly},
-    },
-    {{gParamType_Dict,"dict"}},
-    {},
-    {"dict"},
-});
-
-
 struct DictUnion : zeno::INode {
     virtual void apply() override {
         auto dict1 = ZImpl(get_input<zeno::DictObject>("dict1"));
         auto dict2 = ZImpl(get_input<zeno::DictObject>("dict2"));
-        auto dict = std::make_shared<zeno::DictObject>();
+        auto dict = std::make_unique<zeno::DictObject>();
         dict->lut = dict1->lut;
         dict->lut.merge(dict2->lut);
         ZImpl(set_output("dict", std::move(dict)));
@@ -191,7 +167,7 @@ struct ExtractDict : zeno::INode {
             auto it = dict->lut.find(key);
             if (it == dict->lut.end())
                 continue;
-            auto obj = dict->lut.at(key);
+            auto obj = dict->lut.at(key)->clone();
             ZImpl(set_output(key, std::move(obj)));
         }
     }
@@ -226,9 +202,9 @@ ZENDEFNODE(ExtractLegacyDict, {
 struct DictGetKeyList : zeno::INode {
     virtual void apply() override {
         auto dict = ZImpl(get_input<zeno::DictObject>("dict"));
-        auto keys = std::make_shared<zeno::ListObject>();
+        auto keys = std::make_unique<zeno::ListObject>();
         for (auto const &[k, v]: dict->lut) {
-            auto so = std::make_shared<zeno::StringObject>();
+            auto so = std::make_unique<zeno::StringObject>();
             so->set(k);
             keys->m_impl->push_back(std::move(so));
         }
@@ -243,12 +219,13 @@ ZENDEFNODE(DictGetKeyList, {
     {"dict"},
 });
 
+/*
 struct DictHasKey : zeno::INode {
     virtual void apply() override {
         auto dict = ZImpl(get_input<zeno::DictObject>("dict"));
         auto key = ZImpl(get_input2<std::string>("key"));
         int count = dict->lut.count(key);
-        ZImpl(set_output2("hasKey", bool(count)));
+        ZImpl(set_output("hasKey", bool(count)));
     }
 };
 
@@ -258,6 +235,7 @@ ZENDEFNODE(DictHasKey, {
     {},
     {"dict"},
 });
+*/
 
 }
 }

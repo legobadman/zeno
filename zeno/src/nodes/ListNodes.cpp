@@ -97,9 +97,9 @@ ZENDEFNODE(EmptyList, {
 struct AppendList : zeno::INode {
     virtual void apply() override {
         auto list = ZImpl(get_input<zeno::ListObject>("list"));
-        auto obj = ZImpl(get_input("object"));
+        auto obj = ZImpl(clone_input("object"));
         list->m_impl->push_back(std::move(obj));
-        ZImpl(set_output("list", ZImpl(get_input("list"))));
+        ZImpl(set_output("list", ZImpl(clone_input("list"))));
     }
 };
 
@@ -167,7 +167,7 @@ struct MakeSmallList : zeno::INode {
                     list->m_impl->push_back(std::move(obj));
                 }
             } else {
-                auto obj = ZImpl(get_input(name));
+                auto obj = ZImpl(clone_input(name));
                 list->m_impl->push_back(std::move(obj));
             }
         }

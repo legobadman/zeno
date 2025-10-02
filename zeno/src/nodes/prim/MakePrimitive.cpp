@@ -52,7 +52,7 @@ struct PrimitiveResize : zeno::INode {
     auto size = ZImpl(get_input<NumericObject>("size"))->get<int>();
     prim->resize(size);
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 

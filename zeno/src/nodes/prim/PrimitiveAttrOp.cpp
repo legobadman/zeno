@@ -33,7 +33,7 @@ struct PrimitiveFillAttr : INode {
         }
     }, arr, value);
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -79,7 +79,7 @@ struct PrimitivePrintAttr : INode {
         printf("\n");
     });
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -129,7 +129,7 @@ struct PrimitiveRandomizeAttr : INode {
         }
     });
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -185,7 +185,7 @@ struct PrimitiveRandomAttr : INode {
         }
     });
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 

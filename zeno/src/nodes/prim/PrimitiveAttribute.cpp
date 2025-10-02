@@ -32,7 +32,7 @@ struct PrimitiveAddAttr : zeno::INode {
             throw Exception("Bad attribute type: " + type);
         }
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 
@@ -64,7 +64,7 @@ struct PrimitiveDelAttr : zeno::INode {
         prim->polys.attrs.erase(name);
         prim->loops.attrs.erase(name);
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 

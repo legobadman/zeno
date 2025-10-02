@@ -297,7 +297,7 @@ struct SubLine : INode { // deprecated zhxx-happy-node, FilterByAttr already aut
     }
     prim->lines.resize(i);
     
-    ZImpl(set_output("prim", ZImpl(get_input("line"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("line"))));
   }
 };
 ZENDEFNODE(SubLine,

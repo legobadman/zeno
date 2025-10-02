@@ -12,12 +12,12 @@ if (!spNode) {\
     throw std::runtime_error("the node has been destroyed in core data");\
 }
 
-Zpy_Object::Zpy_Object(zeno::zany obj) : m_wpObject(obj) {
+Zpy_Object::Zpy_Object(zeno::zany&& obj) : m_wpObject(std::move(obj)) {
 
 }
 
 VAR_USER_DATA Zpy_Object::get_user_data(const std::string& key) {
-    auto spObject = m_wpObject.lock();
+    auto spObject = m_wpObject.get();
     if (!spObject) {
         throw std::runtime_error("object has been destroyed");
     }
@@ -26,8 +26,8 @@ VAR_USER_DATA Zpy_Object::get_user_data(const std::string& key) {
     if (iter == pUserData->m_data.end())
         throw std::runtime_error("the key \"" + key + "\" doesn't exist");
 
-    zeno::zany dat = iter->second;
-    if (auto numobj = std::dynamic_pointer_cast<zeno::NumericObject>(dat)) {
+    const zeno::zany& dat = iter->second;
+    if (auto numobj = dynamic_cast<zeno::NumericObject*>(dat.get())) {
         return std::visit([&](auto&& arg)->VAR_USER_DATA {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, int>) {
@@ -56,7 +56,7 @@ VAR_USER_DATA Zpy_Object::get_user_data(const std::string& key) {
             }
             }, numobj->value);
     }
-    else if (auto strobj = std::dynamic_pointer_cast<zeno::StringObject>(dat)) {
+    else if (auto strobj = dynamic_cast<zeno::StringObject*>(dat.get())) {
         return strobj->get();
     }
     else {
@@ -65,7 +65,7 @@ VAR_USER_DATA Zpy_Object::get_user_data(const std::string& key) {
 }
 
 void Zpy_Object::set_user_data(const std::string& key, const VAR_USER_DATA& dat) {
-    auto spObject = m_wpObject.lock();
+    auto spObject = m_wpObject.get();
     if (!spObject) {
         throw std::runtime_error("object has been destroyed");
     }
@@ -105,14 +105,14 @@ void Zpy_Object::set_user_data(const std::string& key, const VAR_USER_DATA& dat)
 }
 
 std::vector<Zpy_Object> Zpy_Object::toList() const {
-    auto spObject = m_wpObject.lock();
+    auto spObject = m_wpObject.get();
     if (!spObject) {
         throw std::runtime_error("object has been destroyed");
     }
-    if (auto spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+    if (auto spList = dynamic_cast<zeno::ListObject*>(spObject)) {
         std::vector<Zpy_Object> vec;
         for (auto spObj : spList->get()) {
-            vec.push_back(Zpy_Object(spObj));
+            vec.push_back(Zpy_Object(spObj->clone()));
         }
         return vec;
     }
@@ -173,10 +173,10 @@ void Zpy_Camera::run() {
     zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
 }
 
-std::shared_ptr<zeno::CameraObject> Zpy_Camera::getCamera() const {
+std::unique_ptr<zeno::CameraObject> Zpy_Camera::getCamera() const {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    zeno::zany spResObj = spNode->get_default_output_object();
-    return std::dynamic_pointer_cast<zeno::CameraObject>(spResObj);
+    zeno::zany spResObj = spNode->get_default_output_object()->clone();
+    return zeno::safe_uniqueptr_cast<zeno::CameraObject>(std::move(spResObj));
 }
 
 py::list Zpy_Camera::getPos() const {
@@ -407,6 +407,6 @@ void Zpy_Light::run() {
 
 std::shared_ptr<zeno::PrimitiveObject> Zpy_Light::getLight() const {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    zeno::zany spResObj = spNode->get_default_output_object();
-    return std::dynamic_pointer_cast<zeno::PrimitiveObject>(spResObj);
+    zeno::zany spResObj = spNode->get_default_output_object()->clone();
+    return zeno::safe_uniqueptr_cast<zeno::PrimitiveObject>(std::move(spResObj));
 }

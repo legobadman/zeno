@@ -76,7 +76,7 @@ struct PrimPerlinNoise : INode {
         auto outType = ZImpl(get_input2<std::string>("outType"));
         primPerlinNoise(prim.get(), inAttr, outAttr, outType, scale,
                         detail, roughness, disortion, offset, average, strength);
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 

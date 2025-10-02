@@ -494,7 +494,7 @@ struct PrimFilter : INode {
     auto isInversed = ZImpl(get_input<NumericObject>("isInversed"))->get<bool>();
     auto method = ZImpl(get_input<StringObject>("method"))->get();
     primFilterVerts(prim.get(), tagAttr, tagValue, isInversed, revampAttrO, method);
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 

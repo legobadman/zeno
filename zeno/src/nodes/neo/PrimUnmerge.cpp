@@ -227,7 +227,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
             mapping[attr[i]].push_back(i);
         }
         for (auto &[key, val]: mapping) {
-            auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(prim->clone());
+            auto new_prim = dynamic_cast<PrimitiveObject>(prim->clone());
             new_prim->tris.resize(val.size());
             for (auto i = 0; i < val.size(); i++) {
                 new_prim->tris[i] = prim->tris[val[i]];
@@ -251,7 +251,7 @@ ZENO_API std::vector<std::shared_ptr<PrimitiveObject>> primUnmergeFaces(Primitiv
             mapping[attr[i]].push_back(i);
         }
         for (auto &[key, val]: mapping) {
-            auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(prim->clone());
+            auto new_prim = dynamic_cast<PrimitiveObject>(prim->clone());
             new_prim->polys.resize(val.size());
             for (auto i = 0; i < val.size(); i++) {
                 new_prim->polys[i] = prim->polys[val[i]];

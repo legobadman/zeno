@@ -109,7 +109,7 @@ namespace zeno {
         }
 
         void apply() override {
-            zany input_object = ZImpl(get_input("Input Geometry"));
+            zany input_object = ZImpl(clone_input("Input Geometry"));
             zeno::vec3f translate = ZImpl(get_input2<vec3f>("Translation"));
             zeno::vec3f eulerXYZ = ZImpl(get_input2<zeno::vec3f>("eulerXYZ"));
             zeno::vec4f rotation = ZImpl(get_input2<zeno::vec4f>("quatRotation"));
@@ -156,15 +156,15 @@ namespace zeno {
             auto matrix = pre_mat * local * matTrans * matRotate * matQuat * matScal * matShearZ * matShearY * matShearX * glm::inverse(local) * pre_apply;
 
             std::function<void(std::shared_ptr<IObject>)> transformListObj = [&](std::shared_ptr<IObject> obj) {
-                if (std::shared_ptr<ListObject> listobj = std::dynamic_pointer_cast<ListObject>(obj)) {
+                if (std::shared_ptr<ListObject> listobj = dynamic_cast<ListObject>(obj)) {
                     for (int i = 0; i < listobj->m_impl->size(); ++i) {
                         transformListObj(listobj->m_impl->get(i));
                     }
-                } else if (std::shared_ptr<DictObject> dictobj = std::dynamic_pointer_cast<DictObject>(obj)) {
+                } else if (std::shared_ptr<DictObject> dictobj = dynamic_cast<DictObject>(obj)) {
                     for (auto& [key, obj] : dictobj->get()) {
                         transformListObj(obj);
                     }
-                } else if (std::shared_ptr<GeometryObject_Adapter> geoObj = std::dynamic_pointer_cast<GeometryObject_Adapter>(obj)) {
+                } else if (std::shared_ptr<GeometryObject_Adapter> geoObj = dynamic_cast<GeometryObject_Adapter>(obj)) {
                     transformObj(geoObj.get(), matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
 
                     auto transform_ptr = glm::value_ptr(matrix);

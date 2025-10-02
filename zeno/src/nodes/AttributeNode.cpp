@@ -40,10 +40,10 @@ namespace zeno {
                 attr_value = ZImpl(get_input2<bool>("Boolean Value"));
             }
 
-            if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
+            if (std::shared_ptr<PrimitiveObject> spPrim = dynamic_cast<PrimitiveObject>(input_object)) {
                 throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
             }
-            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
+            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = dynamic_cast<GeometryObject_Adapter>(input_object)) {
                 if (m_attrgroup == "Point") {
                     spGeo->m_impl->create_attr(ATTR_POINT, attr_name, attr_value);
                 }
@@ -267,10 +267,10 @@ namespace zeno {
                 attr_value = ZImpl(get_input2<bool>("Boolean Value"));
             }
 
-            if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
+            if (std::shared_ptr<PrimitiveObject> spPrim = dynamic_cast<PrimitiveObject>(input_object)) {
                 throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
             }
-            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
+            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = dynamic_cast<GeometryObject_Adapter>(input_object)) {
                 if (m_attrgroup == "Point") {
                     if (!spGeo->m_impl->has_point_attr(attr_name)) {
                         throw makeError<UnimplError>("Input object does not have point attribute: " + attr_name);

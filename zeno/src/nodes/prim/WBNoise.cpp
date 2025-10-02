@@ -1343,7 +1343,7 @@ struct Noise_gabor_2d : INode {
             noise[i] = noise2dV; //直接float？
         }
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 
@@ -1586,7 +1586,7 @@ struct erode_hybridMultifractal_v1 : INode {
             }
             });
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_hybridMultifractal_v1,
@@ -1669,7 +1669,7 @@ struct erode_hybridMultifractal_v2 : INode {
             }
             });
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_hybridMultifractal_v2,
@@ -1751,7 +1751,7 @@ struct erode_hybridMultifractal_v3 : INode {
             }
             });
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_hybridMultifractal_v3,
@@ -1831,7 +1831,7 @@ struct erode_domainWarping_v1 : INode {
             }
             });
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(erode_domainWarping_v1,
@@ -1897,7 +1897,7 @@ struct erode_domainWarping_v2 : INode {
             }
             });
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(erode_domainWarping_v2,
@@ -1952,7 +1952,7 @@ struct erode_voronoi : INode {
             noise_Voronoi3(samplePoints[i], featurePrim->verts, attr_voro[i], attr_mFPP[i]);
         }
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(erode_voronoi,
@@ -2055,7 +2055,7 @@ struct Primcluster : INode {//todo:: just for color ramp now
             prim->verts.add_attr<zeno::vec3f>(outputattr)[i] = old_clusters[i].center;
         }
         
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(Primcluster,

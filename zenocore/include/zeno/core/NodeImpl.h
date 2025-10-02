@@ -233,6 +233,8 @@ namespace zeno
         bool has_link_input(std::string const& id) const;
         bool has_input(std::string const& id) const;
         zany clone_input(std::string const& id) const;
+        //get_input很麻烦，因为数值型的“对象”是新建出来的
+        //IObject* get_input(std::string const& id) const;
         IObject* get_input_obj(std::string const& id) const;
         IObject* get_output_obj(std::string const& sock_name);
         std::vector<zany> get_output_objs();
@@ -252,6 +254,13 @@ namespace zeno
             if (!has_input(id)) return false;
             auto obj = get_input(id);
             return !!dynamic_cast<T*>(obj.get());
+        }
+
+        template <class T>
+        std::unique_ptr<T> get_input(std::string const& id) const {
+            auto obj = clone_input(id);
+            return safe_uniqueptr_cast<T>(std::move(obj));
+            //return safe_dynamic_cast<T>(std::move(obj), "input socket `" + id + "` of node `" + m_name + "`");
         }
 
         template <class T>

@@ -106,17 +106,17 @@ static Json iobject_to_json(std::shared_ptr<IObject> iObject) {
     else if (objectIsRawLiterial<std::string>(iObject)) {
         json = objectToLiterial<std::string>(iObject);
     }
-    else if (auto list = std::dynamic_pointer_cast<ListObject>(iObject)) {
+    else if (auto list = dynamic_cast<ListObject>(iObject)) {
         for (auto iObj: list->get()) {
             json.push_back(iobject_to_json(iObj));
         }
     }
-    else if (auto dict = std::dynamic_pointer_cast<DictObject>(iObject)) {
+    else if (auto dict = dynamic_cast<DictObject>(iObject)) {
         for (auto [key, iObj]: dict->lut) {
             json[key] = iobject_to_json(iObj);
         }
     }
-    else if (auto sub_json = std::dynamic_pointer_cast<JsonObject>(iObject)) {
+    else if (auto sub_json = dynamic_cast<JsonObject>(iObject)) {
         json = sub_json->json;
     }
     return std::move(json);
@@ -253,7 +253,7 @@ struct JsonSetDataSimple : zeno::INode {
                 tmp_json = &tmp_json->operator[](name);
             }
         }
-        auto value = ZImpl(get_input("value"));
+        auto value = ZImpl(clone_input("value"));
         *tmp_json = iobject_to_json(value);
 
         ZImpl(set_output2("json", in_json));

@@ -56,7 +56,7 @@ struct PrimitiveUnaryOp : INode {
         }
     }); });
 
-    ZImpl(set_output("primOut", ZImpl(get_input("primOut"))));
+    ZImpl(set_output("primOut", ZImpl(clone_input("primOut"))));
   }
 };
 
@@ -142,7 +142,7 @@ struct PrimitiveBinaryOp : INode {
         });
     });
 
-    ZImpl(set_output("primOut", ZImpl(get_input("primOut"))));
+    ZImpl(set_output("primOut", ZImpl(clone_input("primOut"))));
   }
 };
 
@@ -281,7 +281,7 @@ struct PrimitiveHalfBinaryOp : INode {
         });
     });
 
-    ZImpl(set_output("primOut", ZImpl(get_input("primOut"))));
+    ZImpl(set_output("primOut", ZImpl(clone_input("primOut"))));
   }
 };
 

@@ -92,7 +92,7 @@ struct ShaderVolume : INode {
 
                 const auto ele = dynamic_cast<zeno::StringObject*>(tex3d);
                 if (ele == nullptr) {
-                    auto texObject = std::dynamic_pointer_cast<zeno::TextureObjectVDB>(tex3d->clone());
+                    auto texObject = dynamic_cast<zeno::TextureObjectVDB>(tex3d->clone());
                     mtl->tex3Ds.push_back(texObject); 
                     continue;
                 }

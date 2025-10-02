@@ -106,7 +106,7 @@ ZENO_DEFNODE(MakeCamera)({
 
 struct SetPhysicalCamera : INode {
     virtual void apply() override {
-        auto camera = ZImpl(get_input("camera"));
+        auto camera = ZImpl(clone_input("camera"));
         auto ud = camera->userData();
         ud->set_float("aperture", ZImpl(get_input2<float>("aperture")));
         ud->set_float("shutter_speed", ZImpl(get_input2<float>("shutter_speed")));
@@ -239,7 +239,7 @@ struct ScreenSpaceProjectedGrid : INode {
         return t;
     }
     virtual void apply() override {
-        auto cam = std::dynamic_pointer_cast<CameraObject>(get_input("cam"));
+        auto cam = dynamic_cast<CameraObject>(get_input("cam"));
         auto prim = std::make_shared<PrimitiveObject>();
         auto raw_width = get_input2_int("width");
         auto raw_height = get_input2_int("height");
@@ -318,7 +318,7 @@ ZENO_DEFNODE(ScreenSpaceProjectedGrid)({
 
 struct CameraFrustum : INode {
     virtual void apply() override {
-        auto cam = std::dynamic_pointer_cast<CameraObject>(get_input("cam"));
+        auto cam = dynamic_cast<CameraObject>(get_input("cam"));
         auto width = get_input2_int("width");
         auto height = get_input2_int("height");
         auto fov = glm::radians(cam->fov);

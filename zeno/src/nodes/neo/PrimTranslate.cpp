@@ -29,7 +29,7 @@ struct PrimTranslate : INode {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto offset = ZImpl(get_input2<zeno::vec3f>("offset"));
         primTranslate(prim.get(), offset);
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 
@@ -50,7 +50,7 @@ struct PrimScale : INode {
         auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
         auto scale = ZImpl(get_input2<zeno::vec3f>("scale"));
         primScale(prim.get(), scale);
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 

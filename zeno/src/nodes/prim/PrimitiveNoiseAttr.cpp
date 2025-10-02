@@ -143,7 +143,7 @@ struct PrimitivePerlinNoiseAttr : INode {
         }
     });
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 

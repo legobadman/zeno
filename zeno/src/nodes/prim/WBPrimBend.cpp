@@ -907,7 +907,7 @@ struct BVHNearestPos : INode {
             bvh_pos[i] = bvh_ws[i][0] * p0 + bvh_ws[i][1] * p1 + bvh_ws[i][2] * p2;
         }
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(BVHNearestPos,
@@ -974,7 +974,7 @@ struct BVHNearestAttr : INode {
         }, enum_variant<std::variant<float, vec3f>>(array_index({"float", "vec3f"}, bvhAttributesType)));
 
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(BVHNearestAttr,
@@ -1269,7 +1269,7 @@ struct PrimitiveDelAttrs : zeno::INode {
             }
         }
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(PrimitiveDelAttrs,
@@ -1886,7 +1886,7 @@ struct PrimCurveFromVerts : INode {
             prim->lines[i] = zeno::vec2i(i, i + 1);
         }
 
-        ZImpl(set_output("primCurve", ZImpl(get_input("primVerts"))));
+        ZImpl(set_output("primCurve", ZImpl(clone_input("primVerts"))));
     }
 };
 ZENDEFNODE(PrimCurveFromVerts,

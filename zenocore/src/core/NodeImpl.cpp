@@ -3639,6 +3639,113 @@ IObject* NodeImpl::get_input_obj(std::string const& id) const {
     return nullptr;
 }
 
+/*
+IObject* NodeImpl::get_input(std::string const& id) const {
+    auto iter = m_inputPrims.find(id);
+    if (iter != m_inputPrims.end()) {
+        auto& val = iter->second.result;
+        if (!val.has_value()) {
+            throw makeNodeError<UnimplError>(get_path(), "cannot get prim result of " + id + "`");
+        }
+        const ParamType paramType = iter->second.type;
+        switch (paramType) {
+        case zeno::types::gParamType_Int:
+        case zeno::types::gParamType_Float:
+        case zeno::types::gParamType_Bool:
+        case zeno::types::gParamType_Vec2f:
+        case zeno::types::gParamType_Vec2i:
+        case zeno::types::gParamType_Vec3f:
+        case zeno::types::gParamType_Vec3i:
+        case zeno::types::gParamType_Vec4f:
+        case zeno::types::gParamType_Vec4i:
+        case gParamType_AnyNumeric:
+        {
+            //依然有很多节点用了NumericObject，为了兼容，需要套一层NumericObject出去。
+            std::shared_ptr<NumericObject> spNum = std::make_shared<NumericObject>();
+            const auto& anyType = val.type();
+            if (anyType == zeno::reflect::type_info<int>()) {
+                spNum->set<int>(zeno::reflect::any_cast<int>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<bool>()) {
+                spNum->set<int>(zeno::reflect::any_cast<bool>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<float>()) {
+                spNum->set<float>(zeno::reflect::any_cast<float>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec2i>()) {
+                spNum->set<vec2i>(zeno::reflect::any_cast<vec2i>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec3i>()) {
+                spNum->set<vec3i>(zeno::reflect::any_cast<vec3i>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec4i>()) {
+                spNum->set<vec4i>(zeno::reflect::any_cast<vec4i>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec2f>()) {
+                spNum->set<vec2f>(zeno::reflect::any_cast<vec2f>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec3f>()) {
+                spNum->set<vec3f>(zeno::reflect::any_cast<vec3f>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec4f>()) {
+                spNum->set<vec4f>(zeno::reflect::any_cast<vec4f>(val));
+            }
+            else if (paramType == gParamType_AnyNumeric &&
+                (anyType == zeno::reflect::type_info<const char*>() ||
+                    anyType == zeno::reflect::type_info<zeno::String>() ||
+                    anyType == zeno::reflect::type_info<std::string>())) {
+                std::string str = zeno::any_cast_to_string(val);
+                return std::make_unique<StringObject>(str);
+            }
+            else
+            {
+                //throw makeError<TypeError>(typeid(T));
+                //error, throw expection.
+            }
+            return spNum;
+        }
+        case zeno::types::gParamType_Matrix3:
+        {
+            std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+            matrixObj->m = zeno::reflect::any_cast<glm::mat3>(val);
+            return matrixObj;
+        }
+        case zeno::types::gParamType_Matrix4:
+        {
+            std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+            matrixObj->m = zeno::reflect::any_cast<glm::mat4>(val);
+            return matrixObj;
+        }
+        case zeno::types::gParamType_String:
+        {
+            std::string str = zeno::any_cast_to_string(val);
+            return std::make_shared<StringObject>(str);
+        }
+        case zeno::types::gParamType_Shader:
+        {
+            throw makeNodeError<UnimplError>(get_path(), "ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
+        }
+        case gParamType_Heatmap:
+        {
+            std::shared_ptr<zeno::HeatmapObject> heatmapObj = std::make_shared<zeno::HeatmapObject>();
+            heatmapObj->colors = zeno::reflect::any_cast<zeno::HeatmapData>(val).colors;
+            return heatmapObj;
+        }
+        default:
+            return nullptr;
+        }
+    }
+    else {
+        auto iter2 = m_inputObjs.find(id);
+        if (iter2 != m_inputObjs.end()) {
+            return iter2->second.spObject;
+        }
+        throw makeNodeError<KeyError>(get_path(), id, "get_input");
+    }
+    return nullptr;
+}
+*/
+
 zany NodeImpl::clone_input(std::string const &id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {

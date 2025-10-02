@@ -27,7 +27,7 @@ namespace zeno {
         ommj["binaryShadowTestDirectRay"] = get_input2_bool("binaryShadowTestDirectRay");
         ommj["binaryShadowTestIndirectRay"] = get_input2_bool("binaryShadowTestIndirectRay");
 
-        auto mtl = std::dynamic_pointer_cast<MaterialObject>(get_input("mtl"));
+        auto mtl = dynamic_cast<MaterialObject>(get_input("mtl"));
         auto json = nlohmann::json::parse(mtl->parameters);
         json["omm"] = std::move(ommj);
         mtl->parameters = json.dump();

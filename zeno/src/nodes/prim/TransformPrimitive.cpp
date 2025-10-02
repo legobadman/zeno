@@ -225,7 +225,7 @@ struct PrimitiveTransform : zeno::INode {
                 continue;
             }
             auto i = std::stoi(idx);
-            if (auto list = std::dynamic_pointer_cast<ListObject>(cur_root)) {
+            if (auto list = dynamic_cast<ListObject>(cur_root)) {
                 if (i >= list->m_impl->size()) {
                     zeno::log_warn("out of range");
                     return std::nullopt;
@@ -250,7 +250,7 @@ struct PrimitiveTransform : zeno::INode {
         , vec4f rotation
         , vec3f scaling
     ) {
-        if (auto prim = std::dynamic_pointer_cast<PrimitiveObject>(iObject)) {
+        if (auto prim = dynamic_cast<PrimitiveObject>(iObject)) {
 
             zeno::vec3f _pivot = {};
             zeno::vec3f lX = { 1, 0, 0 };
@@ -309,7 +309,7 @@ struct PrimitiveTransform : zeno::INode {
             user_data->del("_bboxMin");
             user_data->del("_bboxMax");
         }
-        else if (auto list = std::dynamic_pointer_cast<ListObject>(iObject)) {
+        else if (auto list = dynamic_cast<ListObject>(iObject)) {
             for (auto& item : list->m_impl->get()) {
                 transformObj(item, matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
             }
@@ -384,7 +384,7 @@ struct PrimitiveTransform : zeno::INode {
         std::string pivotType = ZImpl(get_input2<std::string>("pivot"));
         auto pivotPos = ZImpl(get_input2<zeno::vec3f>("pivotPos"));
 
-        if (std::dynamic_pointer_cast<PrimitiveObject>(iObject)) {
+        if (dynamic_cast<PrimitiveObject>(iObject)) {
             //iObject = iObject->clone();
             transformObj(iObject, matrix, pivotType, pivotPos, localX, localY, translate, rotation, scaling);
         }

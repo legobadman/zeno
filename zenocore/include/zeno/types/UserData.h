@@ -214,8 +214,8 @@ struct UserData : IUserData {
         return objectIsLiterial<T>(it->second.get());
     }
 
-    IObject* const &get(std::string const &name) const {
-        return safe_at(m_data, name, "user data").get();
+    zany get(std::string const &name) const {
+        return safe_at(m_data, name, "user data")->clone();
     }
 
     template <class T>
@@ -223,8 +223,8 @@ struct UserData : IUserData {
         return !!dynamic_cast<T *>(get(name).get());
     }
 
-    IObject* get(std::string const &name, IObject* defl) const {
-        return has(name) ? get(name) : defl;
+    zany get(std::string const &name, IObject* defl) const {
+        return has(name) ? get(name)->clone() : defl->clone();
     }
 
     template <class T>
@@ -251,7 +251,8 @@ struct UserData : IUserData {
 
     template <class T>
     T get2(std::string const &name) const {
-        return objectToLiterial<T>(get(name));
+        const auto& tempobj = get(name);
+        return objectToLiterial<T>(tempobj.get());
     }
 
     template <class T>
@@ -259,7 +260,7 @@ struct UserData : IUserData {
         return has(name) ? getLiterial<T>(name) : defl;
     }
 
-    void set(std::string const &name, IObject* value) {
+    void set(std::string const &name, zany&& value) {
         m_data[name] = value->clone();
     }
 

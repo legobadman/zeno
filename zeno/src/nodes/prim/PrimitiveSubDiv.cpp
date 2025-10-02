@@ -725,9 +725,9 @@ struct PrimDice : INode {
     void apply() override {
         auto origin_prim = get_input_Geometry("prim")->toPrimitiveObject();
         primTriangulateIntoPolys(origin_prim.get());
-        auto prim = std::dynamic_pointer_cast<PrimitiveObject>(origin_prim->clone());
+        auto prim = dynamic_cast<PrimitiveObject>(origin_prim->clone());
         primTriangulateIntoPolys(prim.get());
-        auto camera = std::dynamic_pointer_cast<CameraObject>(get_input("camera"));
+        auto camera = dynamic_cast<CameraObject>(get_input("camera"));
         auto width = get_input2_int("width");
         auto height = get_input2_int("height");
         auto maxIterNum = get_input2_int("maxIterNum");

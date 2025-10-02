@@ -19,7 +19,7 @@ struct PrimitiveSimplePoints : zeno::INode {
       prim->points[i] = i;
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -47,7 +47,7 @@ struct PrimitiveSimpleLines : zeno::INode {
       prim->lines[i] = zeno::vec2i(2 * i, 2 * i + 1);
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -72,7 +72,7 @@ struct PrimitiveFarSimpleLines : zeno::INode {
       prim->lines[i] = zeno::vec2i(i, i + lines_count);
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -98,7 +98,7 @@ struct PrimitiveNearSimpleLines : zeno::INode {
       prim->lines[i] = zeno::vec2i(i, i + 1);
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -125,7 +125,7 @@ struct PrimitiveSimpleTris : zeno::INode {
       prim->tris[i] = zeno::vec3i(3 * i, 3 * i + 1, 3 * i + 2);
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -153,7 +153,7 @@ struct PrimitiveSimpleQuads : zeno::INode {
       prim->quads[i] = zeno::vec4i(4 * i, 4 * i + 1, 4 * i + 2, 4 * i + 3);
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -191,7 +191,7 @@ struct PrimitiveClearConnect : zeno::INode {
       prim->loops.clear();
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -258,7 +258,7 @@ struct PrimitiveSplitEdges : zeno::INode { // TODO: use PrimSplitFaces to replac
         prim->tris[i] = zeno::vec3i(i * 3 + 0, i * 3 + 1, i * 3 + 2);
     }
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -293,7 +293,7 @@ struct PrimitiveFaceToEdges : zeno::INode {
     if (ZImpl(get_param<bool>("clearFaces"))) {
         prim->tris.clear();
     }
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 

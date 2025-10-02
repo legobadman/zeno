@@ -269,7 +269,7 @@ namespace zeno {
             if (ZImpl(has_input("distance")))
                 distance = ZImpl(get_input<zeno::NumericObject>("distance"))->get<float>();
             if (lengthSquared(direction) < 0.000001f) {
-                ZImpl(set_output("outPrim", ZImpl(get_input("prim"))));
+                ZImpl(set_output("outPrim", ZImpl(clone_input("prim"))));
                 return;
             }
             direction = reverse ? -normalize(direction) : normalize(direction);
