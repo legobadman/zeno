@@ -28,7 +28,6 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 #include "DualQuaternion.h"
-#include "zeno/extra/TempNode.h"
 #include "magic_enum.hpp"
 #include <tinygltf/json.hpp>
 using Json = nlohmann::json;
@@ -47,10 +46,10 @@ namespace FBX{
     }
 
     template<class T>
-    static std::vector<T*> ListGetRaw(zeno::SharedPtr<zeno::ListObject> lstobj) {
+    static std::vector<T*> ListGetRaw(zeno::ListObject* lstobj) {
         std::vector<T*> vec;
         for (auto spobj : lstobj->get()) {
-            vec.push_back(zeno::safe_dynamic_cast<T>(spobj).get());
+            vec.push_back(zeno::safe_dynamic_cast<T>(spobj));
         }
         return vec;
     }
@@ -106,7 +105,7 @@ namespace FBX{
     void EvalInheritVisibilityCurve(int startFrame,
                                     int endFrame,
                                     FbxAnimCurve* visCurve,
-                                    std::shared_ptr<zeno::DictObject> dictObj,
+                                    zeno::DictObject* dictObj,
                                     std::string full_path,
                                     FbxTime::EMode eFrame){
         // Visibility animation curve found, process the keyframes
@@ -116,19 +115,19 @@ namespace FBX{
         // Eval Visibility
         //FbxTime::EMode timeMode = FbxTime::eFrames24;
         FbxTime::EMode timeMode = eFrame;
-        auto vis = std::make_shared<zeno::ListObject>();
+        auto vis = std::make_unique<zeno::ListObject>();
         for(int frameNumber=startFrame; frameNumber<=endFrame; frameNumber++) {
             double frameRate = FbxTime::GetFrameRate(timeMode);
             double frameTime = static_cast<double>(frameNumber) / frameRate;
             FbxTime time;
             time.SetSecondDouble(frameTime);
             bool visibility = visCurve->Evaluate(time);
-            auto no_vis = std::make_shared<zeno::NumericObject>();
+            auto no_vis = std::make_unique<zeno::NumericObject>();
             no_vis->set(visibility);
             //std::cout << "visibility: " << visibility << " time: " << frameNumber << "\n";
-            vis->push_back(no_vis);
+            vis->push_back(std::move(no_vis));
         }
-        dictObj->lut[full_path] = vis;
+        dictObj->lut[full_path] = std::move(vis);
 
         // Get Visibility
         int numKeys = visCurve->KeyGetCount();
@@ -151,8 +150,8 @@ struct FBXSDKVisibility : zeno::INode {
     virtual void apply() override {
         auto path = get_input2_string("path");
         auto inheritVisibility = get_input2_bool("inherit");
-        auto vis_dict = std::make_shared<zeno::DictObject>();
-        auto inherit_dict = std::make_shared<zeno::DictObject>();
+        auto vis_dict = std::make_unique<zeno::DictObject>();
+        auto inherit_dict = std::make_unique<zeno::DictObject>();
         auto fps = zsString2Std(get_param_string("fps"));
         FbxTime::EMode eFrame = FbxTime::eFrames30;
         fps == "e30" ? eFrame = FbxTime::eFrames30 : eFrame = FbxTime::eFrames24;
@@ -244,34 +243,34 @@ struct FBXSDKVisibility : zeno::INode {
                     if(visCurve){
                         //std::cout << " Node VisCurve " << full_path << "\n";
                         checkInherit.emplace_back(full_path);
-                        FBX::EvalInheritVisibilityCurve(startFrame, endFrame, visCurve, inherit_dict, full_path, eFrame);
+                        FBX::EvalInheritVisibilityCurve(startFrame, endFrame, visCurve, inherit_dict.get(), full_path, eFrame);
                     }
 
                     // 1. Show Property, The Highest priority
                     if(! showValue){
-                        auto vis = std::make_shared<zeno::ListObject>();
+                        auto vis = std::make_unique<zeno::ListObject>();
                         for(int frameNumber=startFrame; frameNumber<=endFrame; frameNumber++) {
-                            auto no_vis = std::make_shared<zeno::NumericObject>();
+                            auto no_vis = std::make_unique<zeno::NumericObject>();
                             no_vis->set(showValue);
-                            vis->push_back(no_vis);
+                            vis->push_back(std::move(no_vis));
                         }
-                        vis_dict->lut[full_path] = vis;
+                        vis_dict->lut[full_path] = std::move(vis);
                     }
                     // 2. Visibility Key Frame
                     else if (visCurve)
                     {
-                        FBX::EvalInheritVisibilityCurve(startFrame, endFrame, visCurve, vis_dict, full_path, eFrame);
+                        FBX::EvalInheritVisibilityCurve(startFrame, endFrame, visCurve, vis_dict.get(), full_path, eFrame);
                     }
                     // 3. Node Visibility
                     else
                     {
-                        auto vis = std::make_shared<zeno::ListObject>();
+                        auto vis = std::make_unique<zeno::ListObject>();
                         for(int frameNumber=startFrame; frameNumber<=endFrame; frameNumber++) {
-                            auto no_vis = std::make_shared<zeno::NumericObject>();
+                            auto no_vis = std::make_unique<zeno::NumericObject>();
                             no_vis->set(visNode);
-                            vis->push_back(no_vis);
+                            vis->push_back(std::move(no_vis));
                         }
-                        vis_dict->lut[full_path] = vis;
+                        vis_dict->lut[full_path] = std::move(vis);
                     }
                     break;
                 }
@@ -291,7 +290,7 @@ struct FBXSDKVisibility : zeno::INode {
                     //std::cout << " Check " << path << " Inherit " << inherit << "\n";
                     if (inherit) {
                         //std::cout << "  Find: " << find_path << "\n";
-                        vis_dict->lut[path] = inherit_dict->lut[find_path];
+                        vis_dict->lut[path] = inherit_dict->lut[find_path]->clone();
                     }
                 }
             }
@@ -330,13 +329,13 @@ struct FBXObject : IObjectClone<FBXObject> {
 };
 
 struct ReadFBXFile: INode {
-    std::shared_ptr<FBXObject> _inner_fbx_object;
+    std::unique_ptr<FBXObject> _inner_fbx_object;
     std::string usedPath;
     virtual void apply() override {
         // Change the following filename to a suitable filename value.
         auto lFilename = zsString2Std(get_input2_string("path"));
         if (lFilename == usedPath && _inner_fbx_object != nullptr) {
-            set_output("fbx_object", _inner_fbx_object);
+            set_output("fbx_object", std::move(_inner_fbx_object));
             return;
         }
 
@@ -358,7 +357,7 @@ struct ReadFBXFile: INode {
         }
         int major, minor, revision;
         lImporter->GetFileVersion(major, minor, revision);
-        auto fbx_object = std::make_shared<FBXObject>();
+        auto fbx_object = std::make_unique<FBXObject>();
         fbx_object->lSdkManager = lSdkManager;
         // Create a new scene so that it can be populated by the imported file.
         fbx_object->lScene = FbxScene::Create(lSdkManager,"myScene");
@@ -371,7 +370,7 @@ struct ReadFBXFile: INode {
         lImporter->Destroy();
         fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
         usedPath = lFilename;
-        _inner_fbx_object = fbx_object;
+        _inner_fbx_object = safe_uniqueptr_cast<FBXObject>(fbx_object->clone());
         fbx_object->userData()->set_string("file_path", stdString2zs(usedPath));
 
         set_output("fbx_object", std::move(fbx_object));
@@ -456,7 +455,7 @@ void PrintAttribute(FbxNodeAttribute* pAttribute) {
 //}
 
 template<typename T>
-void getAttr(T* arr, std::string name, std::shared_ptr<PrimitiveObject> prim) {
+void getAttr(T* arr, std::string name, PrimitiveObject* prim) {
     if (arr->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint) {
 //        zeno::log_info("{}, eByControlPoint", name);
         auto &attr = prim->verts.add_attr<vec3f>(name);
@@ -486,7 +485,7 @@ void getAttr(T* arr, std::string name, std::shared_ptr<PrimitiveObject> prim) {
     }
 }
 
-static std::shared_ptr<PrimitiveObject> GetMesh(
+static std::unique_ptr<PrimitiveObject> GetMesh(
         FbxNode* pNode
         , bool output_tex_even_missing
         , std::string fbx_path
@@ -499,7 +498,7 @@ static std::shared_ptr<PrimitiveObject> GetMesh(
     if (nodeName == "RootNode") {
         nodeName = "ABC";
     }
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     prim->userData()->set_string("RootName", stdString2zs(nodeName));
     prim->userData()->set_string("_abc_name", stdString2zs(nodeName));
     prim->userData()->set_string("fbx_path", stdString2zs(fbx_path));
@@ -647,13 +646,13 @@ static std::shared_ptr<PrimitiveObject> GetMesh(
     }
     if (pMesh->GetElementVertexColorCount()>0)
     {
-        getAttr(pMesh->GetElementVertexColor(0),"clr",prim);
+        getAttr(pMesh->GetElementVertexColor(0),"clr",prim.get());
     }
     if (pMesh->GetElementNormalCount() > 0) {
-        getAttr(pMesh->GetElementNormal(0), "nrm", prim);
+        getAttr(pMesh->GetElementNormal(0), "nrm", prim.get());
     }
     if (pMesh->GetElementTangentCount() > 0) {
-        getAttr(pMesh->GetElementTangent(0), "tang", prim);
+        getAttr(pMesh->GetElementTangent(0), "tang", prim.get());
     }
     auto &faceset = prim->polys.add_attr<int>("faceset");
     std::fill(faceset.begin(), faceset.end(), -1);
@@ -879,7 +878,7 @@ static std::shared_ptr<PrimitiveObject> GetMesh(
     return prim;
 }
 
-static std::shared_ptr<PrimitiveObject> GetSkeleton(FbxNode* pNode) {
+static std::unique_ptr<PrimitiveObject> GetSkeleton(FbxNode* pNode) {
     FbxMesh* pMesh = pNode->GetMesh();
     if (!pMesh) return nullptr;
     std::vector<std::string> bone_names;
@@ -928,7 +927,7 @@ static std::shared_ptr<PrimitiveObject> GetSkeleton(FbxNode* pNode) {
     if (nodeName == "RootNode") {
         nodeName = "ABC";
     }
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     prim->userData()->set_string("RootName", stdString2zs(nodeName));
     prim->verts.resize(bone_names.size());
     prim->verts.values = poss;
@@ -1024,7 +1023,7 @@ static void TraverseNodesToGetJson(FbxNode* pNode, Json &json, FbxTime curTime) 
 static void TraverseNodesToGetPrim(
     FbxNode* pNode
     , std::string target_name
-    , std::shared_ptr<PrimitiveObject> &prim
+    , std::unique_ptr<PrimitiveObject>& prim
     , bool output_tex_even_missing
     , std::string fbx_path
     , bool apply_transform
@@ -1042,7 +1041,7 @@ static void TraverseNodesToGetPrim(
         if (target_name == name) {
             auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform);
             if (sub_prim) {
-                prim = sub_prim;
+                prim = std::move(sub_prim);
         }
             return;
         }
@@ -1053,7 +1052,7 @@ static void TraverseNodesToGetPrim(
     }
 }
 static void TraverseNodesToGetPrims(
-    FbxNode* pNode, std::vector<std::shared_ptr<PrimitiveObject>> &prims
+    FbxNode* pNode, std::vector<std::unique_ptr<PrimitiveObject>>& prims
     , bool output_tex_even_missing
     , std::string fbx_path
     , bool apply_transform
@@ -1069,7 +1068,7 @@ static void TraverseNodesToGetPrims(
     if (mesh) {
         auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform);
         if (sub_prim) {
-            prims.push_back(sub_prim);
+            prims.push_back(std::move(sub_prim));
         }
     }
 
@@ -1086,7 +1085,7 @@ struct NewFBXImportSkin : INode {
         // Print the nodes of the scene and their attributes recursively.
         // Note that we are not printing the root node because it should
         // not contain any attributes.
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         FbxNode* lRootNode = lScene->GetRootNode();
         std::vector<std::string> availableRootNames;
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
@@ -1094,17 +1093,17 @@ struct NewFBXImportSkin : INode {
             TraverseNodesToGetNames(lRootNode, availableRootNames);
             auto rootName = zsString2Std(get_input2_string("rootName"));
             if (rootName.empty()) {
-                std::vector<std::shared_ptr<PrimitiveObject>> prims;
+                std::vector<std::unique_ptr<PrimitiveObject>> prims;
                 TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", true);
 
                 std::map<std::string, int> nameMappingGlobal;
 
                 zeno::Vector<zeno::PrimitiveObject *> prims_ptr;
                 int maxnum_boneWeight = 0;
-                for (auto prim: prims) {
+                for (auto& prim: prims) {
                     maxnum_boneWeight = zeno::max(maxnum_boneWeight, prim->userData()->get_int("maxnum_boneWeight", 0));
                 }
-                for (auto prim: prims) {
+                for (auto& prim: prims) {
                     prims_ptr.push_back(prim.get());
                     std::vector<int> nameMapping;
                     auto boneName_count = prim->userData()->get_int("boneName_count", 0);
@@ -1180,8 +1179,7 @@ struct NewFBXImportSkin : INode {
         }
         if (get_input2_bool("CopyFacesetToMatid")) {
             prim_copy_faceset_to_matid(prim.get());
-        }
-        set_output("prim", prim);
+        }set_output("prim", std::move(prim));
     }
 };
 
@@ -1251,7 +1249,7 @@ struct NewFBXResolveTexPath : INode {
         return false;
     }
     void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
 
         std::string hint_directory = zsString2Std(get_input2_string("HintDirectory"));
 
@@ -1286,8 +1284,7 @@ struct NewFBXResolveTexPath : INode {
             }
             ud->set_string(mat_name, stdString2zs(mat_json.dump()));
         }
-
-        set_output("prim", prim);
+        set_output("prim", std::move(prim));
     }
 };
 
@@ -1403,7 +1400,7 @@ ZENDEFNODE(ResolveTexPath, {
     {"FBXSDK"},
 });
 
-static int GetSkeletonFromBindPose(FbxManager* lSdkManager, FbxScene* lScene, std::shared_ptr<PrimitiveObject>& prim) {
+static int GetSkeletonFromBindPose(FbxManager* lSdkManager, FbxScene* lScene, PrimitiveObject* prim) {
         auto pose_count = lScene->GetPoseCount();
         bool found_bind_pose = false;
         for (auto i = 0; i < pose_count; i++) {
@@ -1535,8 +1532,8 @@ static void TraverseNodesToGetSkeleton(FbxNode* pNode, std::vector<std::string> 
         TraverseNodesToGetSkeleton(pNode->GetChild(i), bone_names, transforms, parent_mapping);
     }
 }
-std::shared_ptr<PrimitiveObject> GetSkeletonFromMesh(FbxScene* lScene) {
-    auto prim = std::make_shared<PrimitiveObject>();
+std::unique_ptr<PrimitiveObject> GetSkeletonFromMesh(FbxScene* lScene) {
+    auto prim = std::make_unique<PrimitiveObject>();
 
     FbxNode* lRootNode = lScene->GetRootNode();
     if (lRootNode) {
@@ -1602,9 +1599,9 @@ struct NewFBXImportSkeleton : INode {
         // Print the nodes of the scene and their attributes recursively.
         // Note that we are not printing the root node because it should
         // not contain any attributes.
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
 
-        auto pose_count = GetSkeletonFromBindPose(lSdkManager, lScene, prim);
+        auto pose_count = GetSkeletonFromBindPose(lSdkManager, lScene, prim.get());
         if (pose_count == 0 || get_input2_bool("ForceFromMesh")) {
             prim = GetSkeletonFromMesh(lScene);
         }
@@ -1621,8 +1618,7 @@ struct NewFBXImportSkeleton : INode {
                 transform_r1[i] *= 0.01;
                 transform_r2[i] *= 0.01;
         }
-        }
-        set_output("prim", prim);
+        }set_output("prim", std::move(prim));
     }
 };
 
@@ -1659,7 +1655,7 @@ struct NewFBXImportAnimation : INode {
         // Print the nodes of the scene and their attributes recursively.
         // Note that we are not printing the root node because it should
         // not contain any attributes.
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         auto ud = prim->userData();
 
         FbxArray<FbxString*> animationStackNames;
@@ -1782,8 +1778,7 @@ struct NewFBXImportAnimation : INode {
                 transform_r1[i] *= 0.01;
                 transform_r2[i] *= 0.01;
         }
-        }
-        set_output("prim", prim);
+        }set_output("prim", std::move(prim));
     }
 };
 
@@ -1821,7 +1816,7 @@ struct NewFBXImportCamera : INode {
         // Print the nodes of the scene and their attributes recursively.
         // Note that we are not printing the root node because it should
         // not contain any attributes.
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         auto ud = prim->userData();
 
         FbxArray<FbxString*> animationStackNames;
@@ -1973,7 +1968,7 @@ struct FBXSceneInfos : INode {
         }
         int major, minor, revision;
         lImporter->GetFileVersion(major, minor, revision);
-        auto fbx_object = std::make_shared<FBXObject>();
+        auto fbx_object = std::make_unique<FBXObject>();
         fbx_object->lSdkManager = lSdkManager;
         // Create a new scene so that it can be populated by the imported file.
         fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
@@ -1996,14 +1991,14 @@ struct FBXSceneInfos : INode {
 
             auto lScene = fbx_object->lScene;
             FbxNode* lRootNode = lScene->GetRootNode();
-            auto json_obj = std::make_shared<JsonObject>();
+            auto json_obj = std::make_unique<JsonObject>();
             if (lRootNode != nullptr) {
                 TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
             }
-            lst->push_back(json_obj);
+            lst->push_back(std::move(json_obj));
         }
         lSdkManager->Destroy();
-        set_output("list_json", lst);
+        set_output("list_json", std::move(lst));
     }
 };
 
@@ -2030,7 +2025,7 @@ struct ParseFBX : INode {
         int end_frame = std::lround(get_input2_int("End Frame"));
 
         // Initialize the SDK manager. This object handles all our memory management.
-        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        std::vector<std::unique_ptr<PrimitiveObject>> prims;
         auto scene_info_list = create_ListObject();
         {
             std::lock_guard scopeLock(s_fbx_mutex);
@@ -2051,7 +2046,7 @@ struct ParseFBX : INode {
             }
             int major, minor, revision;
             lImporter->GetFileVersion(major, minor, revision);
-            auto fbx_object = std::make_shared<FBXObject>();
+            auto fbx_object = std::make_unique<FBXObject>();
             fbx_object->lSdkManager = lSdkManager;
             // Create a new scene so that it can be populated by the imported file.
             fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
@@ -2079,7 +2074,7 @@ struct ParseFBX : INode {
             auto vectors_str = zsString2Std(get_input2_string("vectors"));
             std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
 
-            for (auto prim : prims) {
+            for (auto& prim : prims) {
                 if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
                     for (auto vector : vectors) {
                         vector = zeno::trim_string(vector);
@@ -2108,11 +2103,11 @@ struct ParseFBX : INode {
 
                 auto lScene = fbx_object->lScene;
                 FbxNode* lRootNode = lScene->GetRootNode();
-                auto json_obj = std::make_shared<JsonObject>();
+                auto json_obj = std::make_unique<JsonObject>();
                 if (lRootNode != nullptr) {
                     TraverseNodesToGetJson(lRootNode, json_obj->json, curTime);
                 }
-                scene_info_list->push_back(json_obj);
+                scene_info_list->push_back(std::move(json_obj));
             }
 
             lSdkManager->Destroy();
@@ -2121,17 +2116,16 @@ struct ParseFBX : INode {
         std::vector<std::string> abc_paths;
         abc_paths.reserve(prims.size());
 
-        auto geo_list = std::make_shared<zeno::ListObject>();
-        for (auto prim : prims) {
-            zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject(prim);
-            geo_list->push_back(spGeom);
+        auto geo_list = std::make_unique<zeno::ListObject>();
+        for (auto& prim : prims) {
+            auto spGeom = create_GeometryObject(prim.get());
+            geo_list->push_back(std::move(spGeom));
 
             auto abc_path = zsString2Std(spGeom->userData()->get_string("abcpath_0"));
             abc_paths.push_back(abc_path);
         }
-
-        set_output("Scene Json List", scene_info_list);
-        set_output("Geometry List", geo_list);
+        set_output("Scene Json List", std::move(scene_info_list));
+        set_output("Geometry List", std::move(geo_list));
     }
 };
 
@@ -2178,7 +2172,7 @@ struct NewFBXSceneInfo : INode {
             throw makeError<IndexError>(idx, json_list->size(), "ListGetItem (for list)");
         }
         auto json_obj = json_list->get(idx);
-        set_output("json", json_obj);
+        set_output("json", json_obj->clone());
     }
 };
 
@@ -2248,7 +2242,7 @@ struct NewFBXGeometryList : INode {
         return { p.x, p.y, p.z };
     }
     virtual void apply() override {
-        auto fbx_object = std::dynamic_pointer_cast<FBXObject>(get_input("fbx_object"));
+        auto fbx_object = zeno::safe_uniqueptr_cast<FBXObject>(clone_input("fbx_object"));
         auto lScene = fbx_object->lScene;
 
         // Print the nodes of the scene and their attributes recursively.
@@ -2256,7 +2250,7 @@ struct NewFBXGeometryList : INode {
         // not contain any attributes.
         FbxNode* lRootNode = lScene->GetRootNode();
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
-        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        std::vector<std::unique_ptr<PrimitiveObject>> prims;
         if (lRootNode) {
             TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
         }
@@ -2264,22 +2258,22 @@ struct NewFBXGeometryList : INode {
         auto vectors_str = zsString2Std(get_input2_string("vectors"));
         std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
         if (has_input("scene_info")) {
-            auto json = std::dynamic_pointer_cast<JsonObject>(get_input("scene_info"));
-            std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
-            for (auto prim : prims) {
+            auto json = dynamic_cast<JsonObject*>(get_input("scene_info"));
+            std::vector<std::unique_ptr<PrimitiveObject>> new_prims;
+            for (auto& prim : prims) {
                 auto ud = prim->userData();
                 auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
                 if (get_input2_bool("SkipInvisibleMesh")) {
                     if (get_visibility_from_json(json->json, fbx_path)) {
-                        new_prims.push_back(prim);
+                        new_prims.push_back(std::move(prim));
                     }
                 }
                 else {
-                    new_prims.push_back(prim);
+                    new_prims.push_back(std::move(prim));
                 }
             }
-            prims = new_prims;
-            for (auto prim : prims) {
+            prims = std::move(new_prims);
+            for (auto& prim : prims) {
                 auto ud = prim->userData();
                 auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
                 glm::mat4 xform = get_xfrom_from_json(json->json, fbx_path);
@@ -2303,7 +2297,7 @@ struct NewFBXGeometryList : INode {
             }
         }
 
-        for (auto prim : prims) {
+        for (auto& prim : prims) {
             if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
                 for (auto vector : vectors) {
                     vector = zeno::trim_string(vector);
@@ -2323,12 +2317,12 @@ struct NewFBXGeometryList : INode {
                 prim_copy_faceset_to_matid(prim.get());
             }
         }
-        auto geo_list = std::make_shared<zeno::ListObject>();
-        for (auto prim : prims) {
-            zeno::SharedPtr<GeometryObject_Adapter> spGeom = create_GeometryObject(prim);
-            geo_list->push_back(spGeom);
+        auto geo_list = std::make_unique<zeno::ListObject>();
+        for (auto& prim : prims) {
+            auto spGeom = create_GeometryObject(prim.get());
+            geo_list->push_back(std::move(spGeom));
         }
-        set_output("Geometry List", geo_list);
+        set_output("Geometry List", std::move(geo_list));
     }
 };
 ZENDEFNODE(NewFBXGeometryList, {
@@ -2380,7 +2374,7 @@ struct ParseFBXPrimList : INode {
         }
         int major, minor, revision;
         lImporter->GetFileVersion(major, minor, revision);
-        auto fbx_object = std::make_shared<FBXObject>();
+        auto fbx_object = std::make_unique<FBXObject>();
         fbx_object->lSdkManager = lSdkManager;
         // Create a new scene so that it can be populated by the imported file.
         fbx_object->lScene = FbxScene::Create(lSdkManager, "myScene");
@@ -2401,7 +2395,7 @@ struct ParseFBXPrimList : INode {
         // not contain any attributes.
         FbxNode* lRootNode = lScene->GetRootNode();
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
-        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        std::vector<std::unique_ptr<PrimitiveObject>> prims;
         if (lRootNode) {
             TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
         }
@@ -2409,22 +2403,22 @@ struct ParseFBXPrimList : INode {
         auto vectors_str = zsString2Std(get_input2_string("vectors"));
         std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
         if (has_input("scene_info")) {
-            auto json = std::dynamic_pointer_cast<JsonObject>(get_input("scene_info"));
-            std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
-            for (auto prim : prims) {
+            auto json = dynamic_cast<JsonObject*>(get_input("scene_info"));
+            std::vector<std::unique_ptr<PrimitiveObject>> new_prims;
+            for (auto& prim : prims) {
                 auto ud = prim->userData();
                 auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
                 if (get_input2_bool("SkipInvisibleMesh")) {
                     if (get_visibility_from_json(json->json, fbx_path)) {
-                        new_prims.push_back(prim);
+                        new_prims.push_back(std::move(prim));
                     }
                 }
                 else {
-                    new_prims.push_back(prim);
+                    new_prims.push_back(std::move(prim));
                 }
             }
-            prims = new_prims;
-            for (auto prim : prims) {
+            prims = std::move(new_prims);
+            for (auto& prim : prims) {
                 auto ud = prim->userData();
                 auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
                 glm::mat4 xform = get_xfrom_from_json(json->json, fbx_path);
@@ -2448,7 +2442,7 @@ struct ParseFBXPrimList : INode {
             }
         }
 
-        for (auto prim : prims) {
+        for (auto& prim : prims) {
             if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
                 for (auto vector : vectors) {
                     vector = zeno::trim_string(vector);
@@ -2468,14 +2462,13 @@ struct ParseFBXPrimList : INode {
                 prim_copy_faceset_to_matid(prim.get());
             }
         }
-        auto prim_list = std::make_shared<zeno::ListObject>();
-        for (auto prim : prims) {
-            prim_list->push_back(prim);
+        auto prim_list = std::make_unique<zeno::ListObject>();
+        for (auto& prim : prims) {
+            prim_list->push_back(std::move(prim));
         }
 
         lSdkManager->Destroy();
-
-        set_output("prims", prim_list);
+        set_output("prims", std::move(prim_list));
     }
 };
 
@@ -2508,7 +2501,7 @@ struct NewFBXPrimList : INode {
         return {p.x, p.y, p.z};
     }
     virtual void apply() override {
-        auto fbx_object = std::dynamic_pointer_cast<FBXObject>(get_input("fbx_object"));
+        auto fbx_object = zeno::safe_dynamic_cast<FBXObject>(get_input("fbx_object"));
         auto lScene = fbx_object->lScene;
 
         // Print the nodes of the scene and their attributes recursively.
@@ -2516,7 +2509,7 @@ struct NewFBXPrimList : INode {
         // not contain any attributes.
         FbxNode* lRootNode = lScene->GetRootNode();
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
-        std::vector<std::shared_ptr<PrimitiveObject>> prims;
+        std::vector<std::unique_ptr<PrimitiveObject>> prims;
         if(lRootNode) {
             TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
         }
@@ -2525,22 +2518,22 @@ struct NewFBXPrimList : INode {
         auto vectors_str = zsString2Std(get_input2_string("vectors"));
         std::vector<std::string> vectors = zeno::split_str(vectors_str, ',');
         if (has_input("scene_info")) {
-            auto json = std::dynamic_pointer_cast<JsonObject>(get_input("scene_info"));
-            std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
-            for (auto prim: prims) {
+            auto json = safe_uniqueptr_cast<JsonObject>(clone_input("scene_info"));
+            std::vector<std::unique_ptr<PrimitiveObject>> new_prims;
+            for (auto& prim: prims) {
                 auto ud = prim->userData();
                 auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
                 if (get_input2_bool("SkipInvisibleMesh")) {
                     if (get_visibility_from_json(json->json, fbx_path)) {
-                        new_prims.push_back(prim);
+                        new_prims.push_back(std::move(prim));
                     }
                 }
                 else {
-                    new_prims.push_back(prim);
+                    new_prims.push_back(std::move(prim));
                 }
             }
-            prims = new_prims;
-            for (auto prim: prims) {
+            prims = std::move(new_prims);
+            for (auto& prim: prims) {
                 auto ud = prim->userData();
                 auto fbx_path = zsString2Std(ud->get_string("fbx_path"));
                 glm::mat4 xform = get_xfrom_from_json(json->json, fbx_path);
@@ -2580,7 +2573,7 @@ struct NewFBXPrimList : INode {
             }
         }
 
-        for (auto prim: prims) {
+        for (auto& prim: prims) {
             if (get_input2_bool("CopyVectorsFromLoopsToVert")) {
                 for (auto vector: vectors) {
                     vector = zeno::trim_string(vector);
@@ -2600,11 +2593,11 @@ struct NewFBXPrimList : INode {
                 prim_copy_faceset_to_matid(prim.get());
             }
         }
-        auto prim_list = std::make_shared<zeno::ListObject>();
-        for (auto prim: prims) {
-            prim_list->push_back(prim);
+        auto prim_list = std::make_unique<zeno::ListObject>();
+        for (auto& prim: prims) {
+            prim_list->push_back(std::move(prim));
         }
-        set_output("prims", prim_list);
+        set_output("prims", std::move(prim_list));
     }
 };
 
@@ -2637,7 +2630,7 @@ struct RigPoseItemObject : PrimitiveObject {
 };
 struct NewFBXRigPoseItem : INode {
     virtual void apply() override {
-        auto item = std::make_shared<RigPoseItemObject>();
+        auto item = std::make_unique<RigPoseItemObject>();
         item->boneName  = zsString2Std(get_input2_string("boneName"));
         item->translate = toVec3f(get_input2_vec3f("translate"));
         item->rotate    = toVec3f(get_input2_vec3f("rotate"));
@@ -2762,10 +2755,10 @@ struct BoneGetAttr : INode {
         auto attr = zsString2Std(get_input2_string("attr"));
         auto type = zsString2Std(get_input2_string("type"));
         auto boneName = zsString2Std(get_input2_string("boneName"));
-        auto boneNameMapping = getBoneNameMapping(prim.get());
+        auto boneNameMapping = getBoneNameMapping(prim);
         auto index = boneNameMapping[boneName];
 
-        auto value = std::make_shared<NumericObject>();
+        auto value = std::make_unique<NumericObject>();
 
         std::visit(
             [&](auto ty) {
@@ -2827,7 +2820,7 @@ static std::vector<int> TopologicalSorting(std::map<int, int> bone_connects, zen
 }
 struct NewFBXRigPose : INode {
     virtual void apply() override {
-        auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(get_input_PrimitiveObject("skeleton")->clone());
+        auto skeleton = safe_uniqueptr_cast<PrimitiveObject>(clone_input_PrimitiveObject("skeleton"));
         auto nodelist = FBX::ListGetRaw<RigPoseItemObject>(get_input_ListObject("Transformations"));
         std::map<int, RigPoseItemObject*> Transformations;
         {
@@ -2916,15 +2909,15 @@ struct NewFBXBoneDeform : INode {
     virtual void apply() override {
         auto usingDualQuaternion = get_input2_string("SkinningMethod") == "DualQuaternion";
         auto geometryToDeform = get_input_PrimitiveObject("GeometryToDeform");
-        auto geometryToDeformBoneNames = getBoneNames(geometryToDeform.get());
+        auto geometryToDeformBoneNames = getBoneNames(geometryToDeform);
         auto restPointTransformsPrim = get_input_PrimitiveObject("RestPointTransforms");
-        auto restPointTransformsBoneNames = getBoneNames(restPointTransformsPrim.get());
+        auto restPointTransformsBoneNames = getBoneNames(restPointTransformsPrim);
         auto restPointTransformsBoneMapping = getBoneMapping(geometryToDeformBoneNames, restPointTransformsBoneNames);
-        auto restPointTransformsInv = getInvertedBoneMatrix(restPointTransformsPrim.get());
+        auto restPointTransformsInv = getInvertedBoneMatrix(restPointTransformsPrim);
         auto deformPointTransformsPrim = get_input_PrimitiveObject("DeformPointTransforms");
-        auto deformPointTransformsBoneNames = getBoneNames(deformPointTransformsPrim.get());
+        auto deformPointTransformsBoneNames = getBoneNames(deformPointTransformsPrim);
         auto deformPointTransformsBoneMapping = getBoneMapping(geometryToDeformBoneNames, deformPointTransformsBoneNames);
-        auto deformPointTransforms = getBoneMatrix(deformPointTransformsPrim.get());
+        auto deformPointTransforms = getBoneMatrix(deformPointTransformsPrim);
 
         std::vector<glm::mat4> matrixs;
         matrixs.reserve(geometryToDeformBoneNames.size());
@@ -2942,7 +2935,7 @@ struct NewFBXBoneDeform : INode {
             dqs.push_back(mat4ToDualQuat2(matrix));
         }
 
-        auto prim = std::dynamic_pointer_cast<PrimitiveObject>(geometryToDeform->clone());
+        auto prim = zeno::safe_uniqueptr_cast<PrimitiveObject>(geometryToDeform->clone());
 
         int maxnum_boneWeight = prim->userData()->get_int("maxnum_boneWeight");
         std::vector<std::vector<int>*> bi;
@@ -3058,8 +3051,7 @@ struct NewFBXBoneDeform : INode {
                 }
             }
         }
-
-        set_output("prim", prim);
+        set_output("prim", std::move(prim));
     }
 };
 
@@ -3091,16 +3083,16 @@ struct NewFBXExtractKeyframe : INode {
     }
     virtual void apply() override {
         auto restPointTransformsPrim = get_input_PrimitiveObject("RestPointTransforms");
-        auto restBoneNameMapping = getBoneNameMapping(restPointTransformsPrim.get());
-        auto restPointTransforms = getBoneMatrix(restPointTransformsPrim.get());
-        auto restPointTransformsInv = getInvertedBoneMatrix(restPointTransformsPrim.get());
+        auto restBoneNameMapping = getBoneNameMapping(restPointTransformsPrim);
+        auto restPointTransforms = getBoneMatrix(restPointTransformsPrim);
+        auto restPointTransformsInv = getInvertedBoneMatrix(restPointTransformsPrim);
         auto deformPointTransformsPrim = get_input_PrimitiveObject("DeformPointTransforms");
-        auto deformBoneNameMapping = getBoneNameMapping(deformPointTransformsPrim.get());
-        auto deformPointTransforms = getBoneMatrix(deformPointTransformsPrim.get());
-        auto deformPointTransformsInv = getInvertedBoneMatrix(deformPointTransformsPrim.get());
+        auto deformBoneNameMapping = getBoneNameMapping(deformPointTransformsPrim);
+        auto deformPointTransforms = getBoneMatrix(deformPointTransformsPrim);
+        auto deformPointTransformsInv = getInvertedBoneMatrix(deformPointTransformsPrim);
         std::vector<std::string> keyframe_boneName;
         std::vector<glm::mat4> keyframe_bone_matrix;
-        auto parent_names = get_parent_name(deformPointTransformsPrim.get());
+        auto parent_names = get_parent_name(deformPointTransformsPrim);
         auto boneName_count = deformPointTransformsPrim->userData()->get_int("boneName_count");
         for (auto i = 0; i < boneName_count; i++) {
             auto boneName = zsString2Std(deformPointTransformsPrim->userData()->get_string(stdString2zs(format("boneName_{}", i))));
@@ -3122,7 +3114,7 @@ struct NewFBXExtractKeyframe : INode {
             keyframe_bone_matrix.emplace_back(keyframeTransform);
         }
 
-        auto keyframe = std::make_shared<zeno::PrimitiveObject>();
+        auto keyframe = std::make_unique<zeno::PrimitiveObject>();
         keyframe->userData()->set_int("boneName_count", int(keyframe_boneName.size()));
         for (auto i = 0; i < keyframe_boneName.size(); i++) {
             keyframe->userData()->set_string(stdString2zs(format("boneName_{}", i)), stdString2zs(keyframe_boneName[i]));
@@ -3141,7 +3133,7 @@ struct NewFBXExtractKeyframe : INode {
         }
         auto &boneNames = keyframe->verts.add_attr<int>("boneName");
         std::iota(boneNames.begin(), boneNames.end(), 0);
-        set_output("keyframe", keyframe);
+        set_output("keyframe", std::move(keyframe));
     }
 };
 
@@ -3163,14 +3155,14 @@ struct NewFBXGenerateAnimation : INode {
         auto keyframe = get_input_PrimitiveObject("keyframe");
         std::map<std::string, glm::mat4> Transformations;
         {
-            auto keyframe_matrix = getBoneMatrix(keyframe.get());
-            auto boneNames = getBoneNames(keyframe.get());
+            auto keyframe_matrix = getBoneMatrix(keyframe);
+            auto boneNames = getBoneNames(keyframe);
             for (auto i = 0; i < boneNames.size(); i++) {
                 Transformations[boneNames[i]] = keyframe_matrix[i];
             }
         }
 
-        auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(get_input_PrimitiveObject("skeleton")->clone());
+        auto skeleton = zeno::safe_uniqueptr_cast<PrimitiveObject>(clone_input_PrimitiveObject("skeleton")->clone());
         std::map<int, int> bone_connects;
         for (auto i = 0; i < skeleton->polys.size(); i++) {
             bone_connects[skeleton->loops[i * 2 + 1]] = skeleton->loops[i * 2];
@@ -3199,8 +3191,7 @@ struct NewFBXGenerateAnimation : INode {
             transform_r1[bi] = transform_nrm(transform, transform_r1[bi]);
             transform_r2[bi] = transform_nrm(transform, transform_r2[bi]);
         }
-
-        set_output("DeformPointTransforms", skeleton);
+        set_output("DeformPointTransforms", std::move(skeleton));
     }
 };
 
@@ -3222,7 +3213,7 @@ struct NormalView : INode {
         auto prim = get_input_PrimitiveObject("prim");
         auto &nrms = prim->verts.attr<vec3f>("nrm");
         auto scale = get_input2_float("scale");
-        auto normals = std::make_shared<zeno::PrimitiveObject>();
+        auto normals = std::make_unique<zeno::PrimitiveObject>();
         normals->verts.resize(prim->verts.size() * 2);
         for (auto i = 0; i < prim->verts.size(); i++) {
             normals->verts[i] = prim->verts[i];
@@ -3232,7 +3223,7 @@ struct NormalView : INode {
         for (auto i = 0; i < prim->verts.size(); i++) {
             normals->lines[i] = vec2i(i, i + prim->verts.size());
         }
-        set_output("normals", normals);
+        set_output("normals", std::move(normals));
     }
 };
 
@@ -3251,7 +3242,7 @@ ZENDEFNODE(NormalView, {
 struct BoneTransformView : INode {
     virtual void apply() override {
         auto bones = get_input_PrimitiveObject("bones");
-        auto view = std::make_shared<zeno::PrimitiveObject>();
+        auto view = std::make_unique<zeno::PrimitiveObject>();
         auto scale = get_input2_float("scale");
         auto index = get_input2_int("index");
         view->verts.resize(bones->verts.size() * 6);
@@ -3279,7 +3270,7 @@ struct BoneTransformView : INode {
         for (auto i = 0; i < bones->verts.size() * 3; i++) {
             view->polys[i] = {i * 2, 2};
         }
-        set_output("view", view);
+        set_output("view", std::move(view));
     }
 };
 
@@ -3311,14 +3302,13 @@ struct PrimAttrFlat : INode {
             }
         }
 
-        auto output = std::make_shared<zeno::PrimitiveObject>();
+        auto output = std::make_unique<zeno::PrimitiveObject>();
         output->resize(values.size());
         auto &value = output->add_attr<float>("value");
         for (auto i = 0; i < values.size(); i++) {
             value[i] = values[i];
         }
-
-        set_output("output", output);
+        set_output("output", std::move(output));
     }
 };
 
@@ -3346,7 +3336,7 @@ struct IKChainsItemObject : PrimitiveObject {
 };
 struct IKChainsItem : INode {
     virtual void apply() override {
-        auto item = std::make_shared<IKChainsItemObject>();
+        auto item = std::make_unique<IKChainsItemObject>();
         item->RootName  = zsString2Std(get_input2_string("RootName"));
         item->MidName  = zsString2Std(get_input2_string("MidName"));
         item->TipName  = zsString2Std(get_input2_string("TipName"));
@@ -3421,8 +3411,8 @@ std::pair<vec3f, vec3f> twoBoneIK(
 
 struct IKChains : INode {
     virtual void apply() override {
-        auto skeleton = get_input_PrimitiveObject("Skeleton");
-        auto ikDrivers = get_input_PrimitiveObject("IK Drivers");
+        auto skeleton = clone_input_PrimitiveObject("Skeleton");
+        auto ikDrivers = clone_input_PrimitiveObject("IK Drivers");
         auto items = FBX::ListGetRaw<IKChainsItemObject>(get_input_ListObject("items"));
         auto skeletonBoneNameMapping = getBoneNameMapping(skeleton.get());
         auto ikDriversBoneNameMapping = getBoneNameMapping(ikDrivers.get());
@@ -3481,8 +3471,7 @@ struct IKChains : INode {
                 }
             }
         }
-
-        set_output("Skeleton", skeleton);
+        set_output("Skeleton", std::move(skeleton));
     }
 };
 
@@ -3591,9 +3580,9 @@ void computeJTJ(std::vector<vec3f> &J, std::vector<std::vector<float>> &JTJ, flo
             JTJ[i][i] = glm::sign(JTJ[i][i]) * row_sum;
     }
 }
-std::shared_ptr<PrimitiveObject> FK(
+std::unique_ptr<PrimitiveObject> FK(
     std::vector<float> theta
-    , std::shared_ptr<PrimitiveObject> skel_ptr
+    , PrimitiveObject* skel_ptr
 ) {
         std::vector<glm::mat4> Transformations;
         for (auto i = 0; i < skel_ptr->verts.size(); i++) {
@@ -3604,7 +3593,7 @@ std::shared_ptr<PrimitiveObject> FK(
             Transformations.push_back(Transformation);
         }
 
-        auto skeleton = std::dynamic_pointer_cast<PrimitiveObject>(skel_ptr->clone());
+        auto skeleton = zeno::safe_uniqueptr_cast<PrimitiveObject>(skel_ptr->clone());
         std::map<int, int> bone_connects;
         for (auto i = 0; i < skeleton->polys.size(); i++) {
             bone_connects[skeleton->loops[i * 2 + 1]] = skeleton->loops[i * 2];
@@ -3635,7 +3624,7 @@ std::shared_ptr<PrimitiveObject> FK(
 }
 void solveJointUpdate(int id,
                       vec3f tarPos,
-                      std::shared_ptr<PrimitiveObject> skel_ptr,
+                      PrimitiveObject* skel_ptr,
                       std::vector<int> &index,
                       std::vector<float> &dtheta,
                       std::vector<float> &theta,
@@ -3645,7 +3634,7 @@ void solveJointUpdate(int id,
     dtheta.resize(theta.size());
     dtheta.assign(dtheta.size(), 0);
 //    zeno::log_error("{} FK.....", id);
-    std::shared_ptr<PrimitiveObject> skeleton = FK(theta, skel_ptr);
+    std::unique_ptr<PrimitiveObject> skeleton = FK(theta, skel_ptr);
 //    zeno::log_error("{} FK----------", id);
     vec3f e_curr = getJointPos(id, skeleton.get());
     vec3f de = tarPos - e_curr;
@@ -3664,10 +3653,10 @@ void solveJointUpdate(int id,
         }
     }
     std::vector<vec3f> J;
-    computeJointJacobian(index, J, r, skel_ptr.get(), e_curr);
+    computeJointJacobian(index, J, r, skel_ptr, e_curr);
     if (0) {
         // log
-        auto boneNames = getBoneNames(skel_ptr.get());
+        auto boneNames = getBoneNames(skel_ptr);
         for (auto i = 0; i < index.size(); i++) {
             auto idx = index[i];
             std::cout << boneNames[idx] << " : ";
@@ -3725,14 +3714,14 @@ std::vector<int> getIds(int endId, int depth, PrimitiveObject* skeletonPtr) {
     return result;
 }
 
-float computeError(int id, std::shared_ptr<PrimitiveObject> skeletion, vec3f targetPos
+float computeError(int id, PrimitiveObject* skeletion, vec3f targetPos
                  , std::vector<float> & theta) {
     auto curPose = FK(theta, skeletion);
     auto curJointPos = getJointPos(id, curPose.get());
     return zeno::distance(curJointPos, targetPos);
 }
 
-float proposeTheta(std::vector<int> &ids, std::shared_ptr<PrimitiveObject> skeletion, std::vector<vec3f> &targetPoss
+float proposeTheta(std::vector<int> &ids, PrimitiveObject* skeletion, std::vector<vec3f> &targetPoss
                   , std::vector<float> & new_theta, std::vector<float> & theta, std::vector<float> & dtheta, std::vector<float> & total_theta
                   , std::vector<vec2f> &limit, float alpha, std::vector<float> w) {
 
@@ -3749,7 +3738,7 @@ float proposeTheta(std::vector<int> &ids, std::shared_ptr<PrimitiveObject> skele
 }
 
 
-void line_search(std::vector<int> &ids, std::shared_ptr<PrimitiveObject> skeletion, std::vector<vec3f> &targetPoss
+void line_search(std::vector<int> &ids, PrimitiveObject* skeletion, std::vector<vec3f> &targetPoss
                  , std::vector<float> & theta, std::vector<float> & dtheta, std::vector<float> & total_theta
                   , std::vector<vec2f> &limit, float damp, std::vector<float> &w, float prev_err) {
     std::vector<float> new_theta = theta;
@@ -3772,7 +3761,7 @@ void line_search(std::vector<int> &ids, std::shared_ptr<PrimitiveObject> skeleti
     }
 }
 
-void SolveIKConstrained(std::shared_ptr<PrimitiveObject> skeletonPtr,
+void SolveIKConstrained(PrimitiveObject* skeletonPtr,
                         std::vector<float> & theta,
                         std::vector<float> & total_theta,
                         std::vector<vec2f> & theta_constraints,
@@ -3793,7 +3782,7 @@ void SolveIKConstrained(std::shared_ptr<PrimitiveObject> skeletonPtr,
         for (int i = 0; i < endEffectorIDs.size(); i++) {
             auto endId = endEffectorIDs[i];
             auto depth = depths[i];
-            std::vector<int> index = getIds(endId, depth, skeletonPtr.get());
+            std::vector<int> index = getIds(endId, depth, skeletonPtr);
             auto tarPos = targets[i];
             float e_i;
             solveJointUpdate(endId, tarPos, skeletonPtr, index, dtheta[i], theta, e_i, 1);
@@ -3808,7 +3797,7 @@ void SolveIKConstrained(std::shared_ptr<PrimitiveObject> skeletonPtr,
 //            zeno::log_error("i: {}", i);
             auto endId = endEffectorIDs[i];
             auto depth = depths[i];
-            std::vector<int> index = getIds(endId, depth, skeletonPtr.get());
+            std::vector<int> index = getIds(endId, depth, skeletonPtr);
             auto tarPos = targets[i];
             float e_i;
             solveJointUpdate(endId, tarPos, skeletonPtr, index, dtheta[i], theta, e_i, scale);
@@ -3836,7 +3825,7 @@ void SolveIKConstrained(std::shared_ptr<PrimitiveObject> skeletonPtr,
                   , theta_constraints, damp, w, prev_err);
         if (0) {
             // log
-            auto boneNames = getBoneNames(skeletonPtr.get());
+            auto boneNames = getBoneNames(skeletonPtr);
             for (auto i = 0; i < skeletonPtr->verts.size(); i++) {
                 std::cout << boneNames[i] << " : ";
                 std::cout << total_dtheta[i * 3 + 0] << ", ";
@@ -3864,7 +3853,7 @@ struct IkChainsItemObject : PrimitiveObject {
 
 struct IkChainsItem : INode {
     virtual void apply() override {
-        auto item = std::make_shared<IkChainsItemObject>();
+        auto item = std::make_unique<IkChainsItemObject>();
         item->depth = get_input2_int("depth");
         item->endEffectorName = zsString2Std(get_input2_string("endEffectorName"));
         item->targetPos = toVec3f(get_input2_vec3f("targetPos"));
@@ -3896,7 +3885,7 @@ struct JointLimitObject : PrimitiveObject {
 
 struct JointLimitItem : INode {
     virtual void apply() override {
-        auto item = std::make_shared<JointLimitObject>();
+        auto item = std::make_unique<JointLimitObject>();
         item->boneName = zsString2Std(get_input2_string("boneName"));
         item->enableLimit = {
             get_input2_int("enableXLimit"),
@@ -3931,7 +3920,7 @@ ZENDEFNODE(JointLimitItem, {
 struct IkSolver : INode {
     void apply() override {
         auto skeleton = get_input_PrimitiveObject("Skeleton");
-        auto boneNameMapping = getBoneNameMapping(skeleton.get());
+        auto boneNameMapping = getBoneNameMapping(skeleton);
         int iter_max = get_input2_int("iterCount");
         auto &enableXYZLimit = skeleton->add_attr<vec3i>("enableXYZLimit");
         auto &xLimit = skeleton->add_attr<vec2f>("xLimit");
@@ -3995,7 +3984,7 @@ struct IkSolver : INode {
             depths,
             iter_max
             );
-        std::shared_ptr<PrimitiveObject> out_skeleton = FK(theta, skeleton);
+        std::unique_ptr<PrimitiveObject> out_skeleton = FK(theta, skeleton);
         {
             auto &total_theta = out_skeleton->verts.attr<vec3f>("TotalTheta");
             for (auto i = 0; i < out_skeleton->verts.size(); i++) {
@@ -4004,7 +3993,7 @@ struct IkSolver : INode {
                 total_theta[i][2] += theta[i * 3 + 2];
             }
         }
-        set_output("Skeleton", out_skeleton);
+        set_output("Skeleton", std::move(out_skeleton));
     }
 };
 ZENDEFNODE(IkSolver, {
@@ -4024,7 +4013,7 @@ ZENDEFNODE(IkSolver, {
 struct IkJointConstraints : INode {
     void apply() override {
         auto skeleton = get_input_PrimitiveObject("Skeleton");
-        auto boneNameMapping = getBoneNameMapping(skeleton.get());
+        auto boneNameMapping = getBoneNameMapping(skeleton);
         auto rest_skeleton = get_input_PrimitiveObject("RestSkeleton");
         std::vector<vec3i> enableXYZLimit(skeleton->verts.size());
         std::vector<vec2f> xLimit(skeleton->verts.size());
@@ -4062,8 +4051,8 @@ struct IkJointConstraints : INode {
             total_theta.push_back(total_theta_3[i][2]);
 
         }
-        std::shared_ptr<PrimitiveObject> out_skeleton = FK(total_theta, skeleton);
-        set_output("Skeleton", out_skeleton);
+        auto out_skeleton = FK(total_theta, skeleton);
+        set_output("Skeleton", std::move(out_skeleton));
     }
 };
 ZENDEFNODE(IkJointConstraints, {
@@ -4081,14 +4070,14 @@ ZENDEFNODE(IkJointConstraints, {
 
 struct PrimBindOneBone : INode {
     void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         prim->userData()->set_int("boneName_count", 1);
         prim->userData()->set_string("boneName_0", get_input2_string("boneName"));
         auto &boneName_0 = prim->add_attr<int>("boneName_0");
         std::fill(boneName_0.begin(), boneName_0.end(), 0);
         auto &boneWeight_0 = prim->add_attr<float>("boneWeight_0");
         std::fill(boneWeight_0.begin(), boneWeight_0.end(), 1.0f);
-        set_output("prim", prim);
+        set_output("prim", std::move(prim));
     }
 };
 ZENDEFNODE(PrimBindOneBone, {
@@ -4103,6 +4092,7 @@ ZENDEFNODE(PrimBindOneBone, {
     {"FBXSDK"},
 });
 
+#if 0
 struct PrimDeformByOneBone : INode {
     void apply() override {
         auto prim = get_input_PrimitiveObject("prim");
@@ -4149,8 +4139,7 @@ struct PrimDeformByOneBone : INode {
                     nrms[i] = transform_nrm(transform, nrms[i]);
                 }
             }
-        }
-        set_output("prim", prim);
+        }set_output("prim", std::move(prim));
     }
 };
 ZENDEFNODE(PrimDeformByOneBone, {
@@ -4169,5 +4158,6 @@ ZENDEFNODE(PrimDeformByOneBone, {
     {},
     {"FBXSDK"},
 });
+#endif
 
 }

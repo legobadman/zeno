@@ -25,7 +25,7 @@ struct ZENO_API DictObject : IObjectClone<DictObject> {
         return res;
     }
 
-    DictObject& operator=(const DictObject&) = delete;
+    DictObject& operator=(const DictObject&);
 
     //TODO: 目前还没有自开发的map和set，所以这里没法保证abi兼容
     std::map<std::string, zany> lut;     //TMD全暴露出去了，想改都不好改

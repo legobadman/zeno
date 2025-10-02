@@ -50,7 +50,7 @@ struct ExportFBX : zeno::INode {
 
         int er = std::system(cmd.c_str());
 
-        auto result = std::make_shared<zeno::NumericObject>();
+        auto result = std::make_unique<zeno::NumericObject>();
         result->set(er);
 
         zeno::log_info("----- CMD {}", cmd);

@@ -147,9 +147,9 @@ struct CameraEval: zeno::INode {
             frameid = GetFrameId();
         }
 
-        std::vector<std::shared_ptr<zeno::CameraObject>> nodelist;
-        for (auto obj : get_input_ListObject("nodelist")->m_impl->m_objects) {
-            nodelist.push_back(safe_dynamic_cast<zeno::CameraObject>(obj));
+        std::vector<std::unique_ptr<zeno::CameraObject>> nodelist;
+        for (auto& obj : get_input_ListObject("nodelist")->m_impl->m_objects) {
+            nodelist.push_back(safe_uniqueptr_cast<zeno::CameraObject>(obj->clone()));
         }
 
         std::sort(nodelist.begin(), nodelist.end(), [](const auto &a, const auto &b)-> bool {
@@ -164,13 +164,13 @@ struct CameraEval: zeno::INode {
         }
 
         if (nodelist.size() == 1) {
-            set_output("camera", nodelist[0]);
+            set_output("camera", std::move(nodelist[0]));
         }
         else if (frameid <= std::lround(nodelist[0]->userData()->get_float("frame"))) {
-             set_output("camera", nodelist[0]);
+             set_output("camera", std::move(nodelist[0]));
         }
         else if (frameid >= std::lround(nodelist.back()->userData()->get_float("frame"))) {
-            set_output("camera", nodelist.back());
+            set_output("camera", std::move(nodelist.back()));
         }
         else {
             if (curve_x.cpoints.empty()) {
@@ -321,12 +321,12 @@ struct ExtractCamera: zeno::INode {
     virtual void apply() override {
         auto cam = zeno::safe_dynamic_cast<zeno::CameraObject>(get_input("camobject"));
 
-        auto pos = std::make_shared<zeno::NumericObject>();
-        auto up = std::make_shared<zeno::NumericObject>();
-        auto view = std::make_shared<zeno::NumericObject>();
-        auto fov = std::make_shared<zeno::NumericObject>();
-        auto aperture = std::make_shared<zeno::NumericObject>();
-        auto focalPlaneDistance = std::make_shared<zeno::NumericObject>();
+        auto pos = std::make_unique<zeno::NumericObject>();
+        auto up = std::make_unique<zeno::NumericObject>();
+        auto view = std::make_unique<zeno::NumericObject>();
+        auto fov = std::make_unique<zeno::NumericObject>();
+        auto aperture = std::make_unique<zeno::NumericObject>();
+        auto focalPlaneDistance = std::make_unique<zeno::NumericObject>();
 
         pos->set<zeno::vec3f>(cam->pos);
         up->set<zeno::vec3f>(cam->up);
@@ -389,7 +389,7 @@ struct DirtyTBN : INode {
         }
         
         if (has_input("prim")) {
-            auto prim = get_input_PrimitiveObject("prim");
+            auto prim = clone_input_PrimitiveObject("prim");
 
             auto pos = toVec3f(prim->userData()->get_vec3f("pos", Vec3f()));
             auto scale = toVec3f(prim->userData()->get_vec3f("scale", Vec3f(1,1,1)));
@@ -435,7 +435,7 @@ struct LiveMeshNode : INode {
         VERTEX_LIST vertexList;
     };
 
-    void GeneratePrimitiveObject(PrimIngredient& ingredient, std::shared_ptr<zeno::PrimitiveObject> primObject){
+    void GeneratePrimitiveObject(PrimIngredient& ingredient, zeno::PrimitiveObject* primObject){
         auto& vert = primObject->verts;
         auto& loops = primObject->loops;
         auto& polys = primObject->polys;
@@ -468,8 +468,8 @@ struct LiveMeshNode : INode {
 
     virtual void apply() override {
         auto outDict = get_input2_bool("outDict");
-        auto prims_list = std::make_shared<zeno::ListObject>();
-        auto prims_dict = std::make_shared<zeno::DictObject>();
+        auto prims_list = std::make_unique<zeno::ListObject>();
+        auto prims_dict = std::make_unique<zeno::DictObject>();
         auto vertSrc = zsString2Std(get_input2_string("vertSrc"));
 
         int frameid;
@@ -599,12 +599,12 @@ struct LiveMeshNode : INode {
                     ingredient.vertices = _vv;
                     ingredient.vertexCount = _vc;
                     ingredient.vertexList = _vi;
-                    auto prim = std::make_shared<zeno::PrimitiveObject>();
-                    GeneratePrimitiveObject(ingredient, prim);
+                    auto prim = std::make_unique<zeno::PrimitiveObject>();
+                    GeneratePrimitiveObject(ingredient, prim.get());
                     if(outDict) {
-                        prims_dict->lut[key] = prim;
+                        prims_dict->lut[key] = std::move(prim);
                     }else{
-                        prims_list->push_back(prim);
+                        prims_list->push_back(std::move(prim));
                     }
                 }
             }else{
@@ -641,7 +641,7 @@ struct LiveCameraNode : INode{
     };
 
     virtual void apply() override {
-        auto camera = std::make_shared<zeno::CameraObject>();
+        auto camera = std::make_unique<zeno::CameraObject>();
         auto camSrc = zsString2Std(get_input2_string("camSrc"));
 
         if(! camSrc.empty()){
