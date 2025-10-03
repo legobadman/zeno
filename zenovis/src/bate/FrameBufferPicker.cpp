@@ -284,15 +284,15 @@ struct FrameBufferPicker : IPicker {
 
         // construct prim set
         // use focus_prim if focus_prim_name is not empty else all prims
-        vector<std::pair<string, zeno::zany>> prims, prims_shared;
-        std::map<std::string, zeno::zany> tmp;
+        vector<std::pair<string, zeno::IObject*>> prims, prims_shared;
+        std::map<std::string, zeno::IObject*> tmp;
         //TODO: get all view objs
         //zeno::getSession().objsMan->export_all_view_objs(tmp);
-        for (auto& [key, obj]:tmp)
+        for (auto& [key, obj] : tmp)
             scene->convertListObjs(obj, prims_shared);
 
         if (!focus_prim_name.empty()) {
-            std::shared_ptr<zeno::IObject> focus_prim;
+            zeno::IObject* focus_prim = nullptr;
             for (const auto& [k, v] : prims_shared) {
                 if (focus_prim_name == k)
                     focus_prim = v;
@@ -305,7 +305,7 @@ struct FrameBufferPicker : IPicker {
         // shading primitive objects
         for (unsigned int id = 0; id < prims.size(); id++) {
             auto it = prims.begin() + id;
-            auto prim = dynamic_cast<PrimitiveObject*>(it->second.get());
+            auto prim = dynamic_cast<PrimitiveObject*>(it->second);
             if (prim && prim->has_attr("pos")) {
                 // prepare vertices data
                 auto const &pos = prim->attr<zeno::vec3f>("pos");
@@ -503,7 +503,7 @@ struct FrameBufferPicker : IPicker {
                 id_table[id + 1] = it->first;
             }
 
-            auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(it->second.get());
+            auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(it->second);
             if (geo) {
                 const std::vector<vec3f>& pos = geo->m_impl->points_pos();
                 vao->bind();

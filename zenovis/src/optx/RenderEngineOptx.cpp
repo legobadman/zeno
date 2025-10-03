@@ -22,7 +22,6 @@
 #include <zeno/types/CameraObject.h>
 #include <zeno/types/MatrixObject.h>
 #include <zeno/utils/UserData.h>
-#include <zeno/extra/TempNode.h>
 #include <zeno/utils/fileio.h>
 #include <zeno/geo/commonutil.h>
 #include <zenovis/Scene.h>
@@ -54,12 +53,12 @@
 static bool recordedSimpleRender = false;
 namespace zenovis::optx {
 
-    static void OutputMaterialInfo(const std::vector<zeno::zany>& mats, std::string filename) {
+    static void OutputMaterialInfo(const std::vector<zeno::IObject*>& mats, std::string filename) {
         std::ofstream outFile(filename);
 
         std::map<std::string, std::vector<char>> shadercode_infos;
         for (auto obj : mats) {
-            if (auto matObj = std::dynamic_pointer_cast<zeno::MaterialObject>(obj)) {
+            if (auto matObj = zeno::safe_dynamic_cast<zeno::MaterialObject>(obj)) {
                 auto name = matObj->mtlidkey;
                 if (name.empty()) {
                     throw;
@@ -88,20 +87,19 @@ namespace zenovis::optx {
         outFile.close();
     }
 
-    static void OutputFuckingMatrixInfo(const std::shared_ptr<zeno::ListObject> spList, std::string filename) {
-
+    static void OutputFuckingMatrixInfo(const zeno::ListObject* spList, std::string filename) {
 
         std::string str_scene_desc, str_scene_tree, str_scenetree_type;
         std::map<std::string, zeno::PrimitiveObject*> matprim_infos;
         std::map<std::string, std::vector<char>> shadercode_infos;
         for (int i = 0; i < spList->m_impl->m_objects.size(); i++) {
-            zeno::zany spObject = spList->m_impl->m_objects[i];
-            if (auto prim = std::dynamic_pointer_cast<zeno::PrimitiveObject>(spObject)) {
+            auto spObject = spList->m_impl->m_objects[i].get();
+            if (auto prim = zeno::safe_dynamic_cast<zeno::PrimitiveObject>(spObject)) {
                 if (prim->userData()->has("ResourceType")) {
                     const auto reType = prim->userData()->get_string("ResourceType", "Mesh");
                     auto name = zsString2Std(prim->userData()->get_string("ObjectName"));
                     if (reType == "Matrixes") {
-                        matprim_infos.insert(std::make_pair(name, prim.get()));
+                        matprim_infos.insert(std::make_pair(name, prim));
                     }
                     else if (reType == "SceneDescriptor") {
                         str_scene_desc = zsString2Std(prim->userData()->get_string("Scene"));
@@ -112,7 +110,7 @@ namespace zenovis::optx {
                     }
                 }
             }
-            else if (auto matObj = std::dynamic_pointer_cast<zeno::MaterialObject>(spObject)) {
+            else if (auto matObj = zeno::safe_dynamic_cast<zeno::MaterialObject>(spObject)) {
                 auto name = matObj->mtlidkey;
                 if (name.empty()) {
                     throw;
@@ -178,8 +176,8 @@ namespace zenovis::optx {
 
 
         for (int i = 0; i < spList->m_impl->m_objects.size(); i++) {
-            zeno::zany spObject = spList->m_impl->m_objects[i];
-            if (auto prim = std::dynamic_pointer_cast<zeno::PrimitiveObject>(spObject)) {
+            auto spObject = spList->m_impl->m_objects[i].get();
+            if (auto prim = zeno::safe_dynamic_cast<zeno::PrimitiveObject>(spObject)) {
                 if (prim->userData()->has("ResourceType")) {
                     const auto reType = prim->userData()->get_string("ResourceType", "Mesh");
                     if (reType == "Matrixes") {
@@ -218,10 +216,10 @@ namespace zenovis::optx {
                     j = 0;
                 }
             }
-            else if (auto geom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(spObject)) {
+            else if (auto geom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(spObject)) {
                 //outFile << i << " Geometry\n";
             }
-            else if (auto json = std::dynamic_pointer_cast<zeno::JsonObject>(spObject)) {
+            else if (auto json = zeno::safe_dynamic_cast<zeno::JsonObject>(spObject)) {
                 std::string jsonStr = json->json.dump(4);
                 outFile << i << " json object\n";
                 outFile << jsonStr << "\n\n";
@@ -527,7 +525,7 @@ struct GraphicsManager {
             }
             else if (auto const* prim_in0 = dynamic_cast<zeno::PrimitiveObject*>(obj)) {
                 // vvv deepcopy to cihou following inplace ops vvv
-                prim_in_lslislSp = std::make_shared<zeno::PrimitiveObject>(*prim_in0);
+                prim_in_lslislSp = std::make_unique<zeno::PrimitiveObject>(*prim_in0);
             }
 
             if (prim_in_lslislSp)
@@ -749,6 +747,8 @@ struct GraphicsManager {
         det = DetPrimitive{prim_in_lslislSp};
         if (int subdlevs = pUserData->get_int("delayedSubdivLevels", 0)) {
             // todo: zhxx, should comp normal after subd or before????
+            zeno::log_error("no support subdiv right now");
+#if 0
             zeno::log_trace("computing subdiv {}", subdlevs);
             (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
                 .set("prim", prim_in_lslislSp)
@@ -760,6 +760,7 @@ struct GraphicsManager {
                 .set2<bool>("delayTillIpc", false)
                 .call();  // will inplace subdiv prim
             pUserData->del("delayedSubdivLevels");
+#endif
         }
 
             if (pUserData->has("ResourceType")) {
@@ -846,7 +847,7 @@ struct GraphicsManager {
                     std::vector<zeno::vec3f> uv;
                     std::vector<zeno::vec3i> idxBuffer;
                     cleanMesh(prim_in, verts, nrm, clr, tang, uv, idxBuffer);
-                    auto oPrim = std::make_shared<zeno::PrimitiveObject>();
+                    auto oPrim = std::make_unique<zeno::PrimitiveObject>();
                     oPrim->verts.resize(verts.size());
                     oPrim->add_attr<zeno::vec3f>("nrm");
                     if (!clr.empty()) {
@@ -926,7 +927,7 @@ struct GraphicsManager {
     explicit GraphicsManager(Scene *scene) : scene(scene) {
     }
 
-    bool load_shader_uniforms(std::vector<std::pair<std::string, std::shared_ptr<zeno::IObject>>> const &objs)
+    bool load_shader_uniforms(std::vector<std::pair<std::string, zeno::zany>> const &objs)
     {
         std::vector<float4> shaderUniforms;
         shaderUniforms.resize(0);
@@ -1277,12 +1278,12 @@ struct GraphicsManager {
         return changed;
     }
 
-    void add_object(std::shared_ptr<zeno::IObject> obj) {
+    void add_object(zeno::IObject* obj) {
         std::string objKey = zsString2Std(obj->key());
         if (objKey.empty())
             return;
         if (!scene->drawOptions->updateMatlOnly) {
-            if (auto cam = std::dynamic_pointer_cast<zeno::CameraObject>(obj)) {
+            if (auto cam = zeno::safe_dynamic_cast<zeno::CameraObject>(obj)) {
                 scene->camera->setCamera(cam->get()); // pyb fix
                 auto ud = cam->userData();
                 if (ud->has("aces")) {
@@ -1304,12 +1305,12 @@ struct GraphicsManager {
         auto& objs = graphics.m_curr;
         auto it = objs.find(objKey);
         if (it == objs.end()) {
-            auto ig = std::make_unique<ZxxGraphic>(objKey, obj.get());
+            auto ig = std::make_unique<ZxxGraphic>(objKey, obj);
             graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));
         }
         else {
             objs.erase(objKey);
-            auto ig = std::make_unique<ZxxGraphic>(objKey, obj.get());
+            auto ig = std::make_unique<ZxxGraphic>(objKey, obj);
             graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));  //先erase再添加，通过it->second = std::move(ig)方式添加会失效
             //if (!ig)
             //    return;
@@ -1325,8 +1326,8 @@ struct GraphicsManager {
         wtf.erase(key);
     }
 
-    void load_matrix_objects(std::vector<std::shared_ptr<zeno::IObject>> matrixs) {
-        std::unordered_map<std::string, std::shared_ptr<zeno::IObject>> map;
+    void load_matrix_objects(const std::vector<zeno::zany>& matrixs) {
+        std::unordered_map<std::string, zeno::zany> map;
         for (auto i = 0; i < matrixs.size(); i++) {
             if (zsString2Std(matrixs[i]->userData()->get_string("ResourceType", "")) != "Matrixes") {
                 continue;
@@ -1335,13 +1336,13 @@ struct GraphicsManager {
             if (obj_name == "") {
                 continue;
             }
-            if (auto mat = std::dynamic_pointer_cast<zeno::PrimitiveObject>(matrixs[i])) {
+            if (auto mat = dynamic_cast<zeno::PrimitiveObject*>(matrixs[i].get())) {
                 auto count = mat->verts->size() / 4;
                 std::vector<m3r4c> matrix_list(count);
                 std::copy_n((float*)mat->verts.data(), count * 12, (float*)matrix_list.data());
                 defaultScene.load_matrix_list(obj_name, matrix_list, {});
             }
-            map[obj_name] = matrixs[i];
+            map[obj_name] = matrixs[i]->clone();
         }
         for (auto& [k, v] : graphics.m_curr) {
             if (auto* ptr = std::get_if<DetPrimitive>(&v->det)) {
@@ -1353,7 +1354,7 @@ struct GraphicsManager {
                 }
                 auto obj_name = zsString2Std(ptr->primSp->userData()->get_string("ObjectName", ""));
                 if (map.count(obj_name)) {
-                    auto prim_ptr = std::dynamic_pointer_cast<zeno::PrimitiveObject>(map[obj_name]);
+                    auto prim_ptr = zeno::safe_dynamic_cast<zeno::PrimitiveObject>(map[obj_name].get());
                     if (ptr->primSp->verts.size() == prim_ptr->verts.size()) {
                         ptr->primSp->verts = prim_ptr->verts;
                     }
@@ -1525,7 +1526,10 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             if (defaultScene.dynamic_scene->node_to_matrix.count(mat_name)) {
                 matrixs = defaultScene.dynamic_scene->node_to_matrix[mat_name];
                 auto prim = defaultScene.dynamic_scene->mats_to_prim(mat_name, matrixs);
-                load_matrix_objects({prim});
+                zeno::zany wtf = std::move(prim);
+                std::vector<zeno::zany> _prims;
+                _prims.push_back(std::move(prim));
+                load_matrix_objects(_prims);
             }
             if (defaultScene.cur_node.has_value()) {
                 auto &[name, lmat, pmat] = defaultScene.cur_node.value();
@@ -1854,7 +1858,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 std::string name = result.value().first;
                 glm::mat4 n_mat = result.value().second;
                 defaultScene.modified_xfroms[name] = n_mat;
-                auto mat_prim = std::make_shared<zeno::PrimitiveObject>();
+                auto mat_prim = std::make_unique<zeno::PrimitiveObject>();
                 mat_prim->verts.resize(4);
                 mat_prim->verts[0][0] = n_mat[0][0];
                 mat_prim->verts[0][1] = n_mat[1][0];
@@ -1871,7 +1875,9 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
                 mat_prim->userData()->set_string("ResourceType","Matrixes");
                 mat_prim->userData()->set_string("ObjectName", zeno::stdString2zs(name+"_m"));
-                load_matrix_objects({mat_prim});
+                std::vector<zeno::zany> matobjs;
+                matobjs.push_back(std::move(mat_prim));
+                load_matrix_objects(matobjs);
                 {
                     Json xform_json;
                     xform_json["MessageType"] = "SetNodeXform";
@@ -1987,7 +1993,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
         char *argv[] = {nullptr};
         xinxinoptix::optixinit(std::size(argv), argv);
     }
-    void load_matrix_objects(std::vector<std::shared_ptr<zeno::IObject>> matrixs) override {
+    void load_matrix_objects(const std::vector<zeno::zany>& matrixs) override {
         if (matrixs.empty()) {
             return;
         }
@@ -2049,9 +2055,9 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 		if (defaultScene.modified_xfroms.empty()) {
 			return;
 		}
-		std::vector<std::shared_ptr<zeno::IObject>> mat_prims;
+		std::vector<zeno::zany> mat_prims;
 		for (auto const& [name, n_mat] : defaultScene.modified_xfroms) {
-			auto mat_prim = std::make_shared<zeno::PrimitiveObject>();
+			auto mat_prim = std::make_unique<zeno::PrimitiveObject>();
 			mat_prim->verts.resize(4);
 			mat_prim->verts[0][0] = n_mat[0][0];
 			mat_prim->verts[0][1] = n_mat[1][0];
@@ -2068,12 +2074,12 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
 			mat_prim->userData()->set_string("ResourceType", zeno::String("Matrixes"));
 			mat_prim->userData()->set_string("ObjectName", zeno::stdString2zs(name + "_m"));
-			mat_prims.push_back(mat_prim);
+			mat_prims.push_back(std::move(mat_prim));
 		}
 		load_matrix_objects(mat_prims);
 	}
 
-    void process_listobj(std::shared_ptr<zeno::ListObject> spList, bool bProcessAll = false) {
+    void process_listobj(zeno::ListObject* spList, bool bProcessAll = false) {
 #if 0
         std::map<std::string, std::vector<zeno::MaterialObject*>> mats;
         for (auto spObject : spList->m_impl->get()) {
@@ -2097,7 +2103,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
                     spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end()))
             {
-                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                if (auto _spList = zeno::safe_dynamic_cast<zeno::ListObject>(spObject)) {
                     process_listobj(_spList, bProcessAll);
                 }
                 else
@@ -2131,7 +2137,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             //其实是否可以在外面提前准备好对象列表？
             for (auto viewnode : viewnodes) {
                 auto spNode = spGraph->getNode(viewnode);
-                zeno::zany spObject = spNode->get_default_output_object();
+                auto spObject = spNode->get_default_output_object();
                 if (spObject) {
                     graphicsMan->add_object(spObject);
                 }
@@ -2148,7 +2154,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             if (update.reason == zeno::Update_View) {
                 auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
                 assert(spNode);
-                zeno::zany spObject = update.spObject;
+                auto spObject = update.spObject.get();
                 if (spObject) {
                     auto it = wtf.find(update.uuidpath_node_objkey);
                     if (it == wtf.end()) {
@@ -2173,20 +2179,20 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 hasLoaded = true;
             }
 
-            std::vector<zeno::zany> mats;
+            std::vector<zeno::IObject*> mats;
             for (const zeno::render_update_info& update : info.objs) {
                 auto spNode = sess.getNodeByUuidPath(update.uuidpath_node_objkey);
                 assert(spNode);
-                zeno::zany spObject = update.spObject;
+                auto spObject = update.spObject.get();
                 int frame = zeno::getSession().globalState->getFrameId();
                 if (spObject) {
-                    if (auto sceneObj = std::dynamic_pointer_cast<zeno::SceneObject>(spObject)) {
+                    if (auto sceneObj = zeno::safe_dynamic_cast<zeno::SceneObject>(spObject)) {
                         auto _spList = sceneObj->to_structure();
                         _spList->update_key(sceneObj->key());
                         //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
-                        process_listobj(_spList, true);
+                        process_listobj(_spList.get(), true);
                     }
-                    else if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(spObject)) {
+                    else if (auto _spList = zeno::safe_dynamic_cast<zeno::ListObject>(spObject)) {
                         //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
                         process_listobj(_spList);
                     }

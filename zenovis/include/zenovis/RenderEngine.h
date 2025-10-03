@@ -28,7 +28,7 @@ struct RenderEngine {
     virtual ~RenderEngine() = default;
     virtual std::optional<glm::vec3> getClickedPos(float x, float y) { return {}; }
     virtual std::optional<std::tuple<std::string, std::string, uint32_t>> getClickedId(float x, float y) { return {}; }
-    virtual void load_matrix_objects(std::vector<std::shared_ptr<zeno::IObject>> matrixs) {};
+    virtual void load_matrix_objects(const std::vector<zeno::zany>& matrixs) {};
     virtual void outlineInit(Json const &msg) {};
 
     virtual void showBackground(bool bShow) {};

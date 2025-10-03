@@ -52,10 +52,10 @@ struct Scene : zeno::disable_copy {
     static void loadGLAPI(void *procaddr);
     void* getOptixImg(int &w, int &h);
 
-    void convertListObjs(zeno::zany objToBeConvert,           //仅展平对象
-        std::vector<std::pair<std::string, zeno::zany>>& allListItems);
-    void convertListObjs(zeno::zany objToBeConvert,           //仅展平对象
-        std::map<std::string, zeno::zany>& allListItems);
+    void convertListObjs(zeno::IObject* objToBeConvert,           //仅展平对象
+        std::vector<std::pair<std::string, zeno::IObject*>>& allListItems);
+    void convertListObjs(zeno::IObject* objToBeConvert,           //仅展平对象
+        std::map<std::string, zeno::IObject*>& allListItems);
     void set_select_mode(PICK_MODE _select_mode);
     PICK_MODE get_select_mode();
 private:

@@ -59,7 +59,6 @@
 #include <tinygltf/json.hpp>
 
 #include "zeno/utils/fileio.h"
-#include "zeno/extra/TempNode.h"
 #include "zeno/types/PrimitiveObject.h"
 //#include <zeno/geo/commonutil.h>
 #include "ChiefDesignerEXR.h"

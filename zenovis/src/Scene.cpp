@@ -91,9 +91,9 @@ void* Scene::getOptixImg(int& w, int& h)
 #endif
 }
 
-void Scene::convertListObjs(zeno::zany objToBeConvert, std::map<std::string, zeno::zany>& allListItems)
+void Scene::convertListObjs(zeno::IObject* objToBeConvert, std::map<std::string, zeno::IObject*>& allListItems)
 {
-    if (std::shared_ptr<zeno::ListObject> lst = std::dynamic_pointer_cast<zeno::ListObject>(objToBeConvert)) {
+    if (auto lst = zeno::safe_dynamic_cast<zeno::ListObject>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
             convertListObjs(lst->get(i), allListItems);
         return;
@@ -106,9 +106,9 @@ void Scene::convertListObjs(zeno::zany objToBeConvert, std::map<std::string, zen
     }
 }
 
-void zenovis::Scene::convertListObjs(zeno::zany objToBeConvert, std::vector<std::pair<std::string, zeno::zany>>& allListItems)
+void zenovis::Scene::convertListObjs(zeno::IObject* objToBeConvert, std::vector<std::pair<std::string, zeno::IObject*>>& allListItems)
 {
-    if (std::shared_ptr<zeno::ListObject> lst = std::dynamic_pointer_cast<zeno::ListObject>(objToBeConvert)) {
+    if (auto lst = zeno::safe_dynamic_cast<zeno::ListObject>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
             convertListObjs(lst->get(i), allListItems);
         return;
