@@ -18,7 +18,6 @@
 #include "zeno/types/ListObject.h"
 #include "zeno/utils/log.h"
 #include "zeno/utils/fileio.h"
-#include "zeno/extra/TempNode.h"
 #include <numeric>
 #include <filesystem>
 
@@ -29,14 +28,14 @@ namespace zeno {
 namespace {
 
 template<typename T>
-void write_velocity(std::shared_ptr<PrimitiveObject> prim, T& mesh_samp) {
+void write_velocity(PrimitiveObject* prim, T& mesh_samp) {
     if (prim->verts.has_attr("v")) {
         auto &vel = prim->verts.attr<vec3f>("v");
         mesh_samp.setVelocities(V3fArraySample( ( const V3f * )vel.data(), vel.size() ));
     }
 }
 
-static void write_normal(std::shared_ptr<PrimitiveObject> prim, OPolyMeshSchema::Sample& mesh_samp) {
+static void write_normal(PrimitiveObject* prim, OPolyMeshSchema::Sample& mesh_samp) {
     if (prim->verts.has_attr("nrm")) {
         auto &nrm = (std::vector<N3f>&)prim->verts.attr<vec3f>("nrm");
         ON3fGeomParam::Sample oNormalsSample(nrm, kVaryingScope);
@@ -63,7 +62,7 @@ struct WriteAlembic : INode {
             archive.addTimeSampling(TimeSampling(1.0/24, frame_start / 24.0));
             meshyObj = OPolyMesh( OObject( archive, 1 ), "mesh" );
         }
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         if (frame_start <= frameid && frameid <= frame_end) {
             // Create a PolyMesh class.
             OPolyMeshSchema &mesh = meshyObj.getSchema();
@@ -194,7 +193,7 @@ void write_attrs(
         , std::map<std::string, std::any> &loops_attrs
         , std::map<std::string, std::any> &polys_attrs
         , std::string path
-        , std::shared_ptr<PrimitiveObject> prim
+        , PrimitiveObject* prim
         , T1& schema
         , int frameid
         , int real_frame_start
@@ -378,7 +377,7 @@ void write_attrs(
 void write_user_data(
         std::map<std::string, std::any> &user_attrs
         , std::string path
-        , std::shared_ptr<PrimitiveObject> prim
+        , PrimitiveObject* prim
         , OCompoundProperty& user
         , int frameid
         , int real_frame_start
@@ -497,7 +496,7 @@ void write_user_data(
 }
 
 static void write_faceset(
-        std::shared_ptr<PrimitiveObject> prim
+        PrimitiveObject* prim
         , OPolyMeshSchema &mesh
         , std::map<std::string, OFaceSet> &o_faceset
         , std::map<std::string, OFaceSetSchema> &o_faceset_schema
@@ -564,7 +563,7 @@ struct WriteAlembic2 : INode {
     int real_frame_start = -1;
 
     virtual void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         bool flipFrontBack = get_input2_int("flipFrontBack");
         float fps = get_input2_float("fps");
         int frameid;
@@ -617,10 +616,10 @@ struct WriteAlembic2 : INode {
             prim_to_poly_if_only_vertex(prim.get());
             // Create a PolyMesh class.
             OPolyMeshSchema &mesh = meshyObj.getSchema();
-            write_faceset(prim, mesh, o_faceset, o_faceset_schema);
+            write_faceset(prim.get(), mesh, o_faceset, o_faceset_schema);
 
             OCompoundProperty user = mesh.getUserProperties();
-            write_user_data(user_attrs, "", prim, user, frameid, real_frame_start);
+            write_user_data(user_attrs, "", prim.get(), user, frameid, real_frame_start);
 
             mesh.setTimeSampling(1);
 
@@ -677,10 +676,10 @@ struct WriteAlembic2 : INode {
                             Int32ArraySample( vertex_index_per_face.data(), vertex_index_per_face.size() ),
                             Int32ArraySample( vertex_count_per_face.data(), vertex_count_per_face.size() ),
                             uvsamp);
-                    write_velocity(prim, mesh_samp);
-                    write_normal(prim, mesh_samp);
+                    write_velocity(prim.get(), mesh_samp);
+                    write_normal(prim.get(), mesh_samp);
                     if (get_input2_bool("outputToMaya") == false) {
-                        write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim, mesh, frameid, real_frame_start, prim_size_per_frame);
+                        write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim.get(), mesh, frameid, real_frame_start, prim_size_per_frame);
                     }
                     mesh.set( mesh_samp );
                 }
@@ -689,10 +688,10 @@ struct WriteAlembic2 : INode {
                     V3fArraySample( ( const V3f * )prim->verts.data(), prim->verts.size() ),
                             Int32ArraySample( vertex_index_per_face.data(), vertex_index_per_face.size() ),
                             Int32ArraySample( vertex_count_per_face.data(), vertex_count_per_face.size() ));
-                    write_velocity(prim, mesh_samp);
-                    write_normal(prim, mesh_samp);
+                    write_velocity(prim.get(), mesh_samp);
+                    write_normal(prim.get(), mesh_samp);
                     if (get_input2_bool("outputToMaya") == false) {
-                        write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim, mesh, frameid, real_frame_start, prim_size_per_frame);
+                        write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim.get(), mesh, frameid, real_frame_start, prim_size_per_frame);
                     }
                     mesh.set( mesh_samp );
                 }
@@ -701,7 +700,7 @@ struct WriteAlembic2 : INode {
         else {
             OPointsSchema &points = pointsObj.getSchema();
             OCompoundProperty user = points.getUserProperties();
-            write_user_data(user_attrs, "", prim, user, frameid, real_frame_start);
+            write_user_data(user_attrs, "", prim.get(), user, frameid, real_frame_start);
             points.setTimeSampling(1);
             OPointsSchema::Sample samp(V3fArraySample( ( const V3f * )prim->verts.data(), prim->verts.size() ));
             std::vector<uint64_t> ids(prim->verts.size());
@@ -715,9 +714,9 @@ struct WriteAlembic2 : INode {
                 std::iota(ids.begin(), ids.end(), 0);
             }
             samp.setIds(Alembic::Abc::UInt64ArraySample(ids.data(), ids.size()));
-            write_velocity(prim, samp);
+            write_velocity(prim.get(), samp);
             if (get_input2_bool("outputToMaya") == false) {
-                write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim, points, frameid, real_frame_start, prim_size_per_frame);
+                write_attrs(verts_attrs, loops_attrs, polys_attrs, "", prim.get(), points, frameid, real_frame_start, prim_size_per_frame);
             }
             points.set( samp );
         }
@@ -756,11 +755,11 @@ struct WriteAlembicPrims : INode {
     int real_frame_start = -1;
 
     virtual void apply() override {
-        Vector<SharedPtr<PrimitiveObject>> prims;
+        Vector<std::unique_ptr<PrimitiveObject>> prims;
 
         if (has_input("prim")) {
             auto prim = get_input_PrimitiveObject("prim");
-            prims = PrimUnmergeFaces(prim.get(), "abcpath");
+            prims = PrimUnmergeFaces(prim, "abcpath");
         }
         else {
             auto _lstobj = get_input_ListObject("prims");
@@ -779,13 +778,13 @@ struct WriteAlembicPrims : INode {
         std::string path = zsString2Std(get_input2_string("path"));
         path = create_directories_when_write_file(path);
 
-        std::vector<std::shared_ptr<PrimitiveObject>> new_prims;
+        std::vector<std::unique_ptr<PrimitiveObject>> new_prims;
 
         {
             // unmerged prim when abcpath_count of a prim in list more than 1
-            zeno::Vector<SharedPtr<PrimitiveObject>> temp_prims;
+            zeno::Vector<std::unique_ptr<PrimitiveObject>> temp_prims;
             int counter = 0;
-            for (auto prim: prims) {
+            for (auto& prim: prims) {
                 counter += 1;
                 prim_to_poly_if_only_vertex(prim.get());
                 if (prim->userData()->get_int("abcpath_count", 0) == 0) {
@@ -795,15 +794,15 @@ struct WriteAlembicPrims : INode {
                     if (prim->userData()->get_int("faceset_count", 0) == 0) {
                         prim_set_faceset(prim.get(), "defFS");
                     }
-                    temp_prims.push_back(prim);
+                    temp_prims.push_back(std::move(prim));
                 }
                 else {
                     auto unmerged_prims = PrimUnmergeFaces(prim.get(), "abcpath");
-                    for (const auto& unmerged_prim: unmerged_prims) {
+                    for (auto& unmerged_prim: unmerged_prims) {
                         if (unmerged_prim->userData()->get_int("faceset_count", 0) == 0) {
                             prim_set_faceset(unmerged_prim.get(), "defFS");
                         }
-                        temp_prims.push_back(unmerged_prim);
+                        temp_prims.push_back(std::move(unmerged_prim));
                     }
                 }
             }
@@ -811,27 +810,27 @@ struct WriteAlembicPrims : INode {
 
             // merge by abcpath
             std::vector<std::string> paths;
-            std::map<std::string, std::vector<std::shared_ptr<PrimitiveObject>>> path_to_prims;
+            std::map<std::string, std::vector<std::unique_ptr<PrimitiveObject>>> path_to_prims;
 
-            for (auto prim: prims) {
+            for (auto& prim: prims) {
                 auto path = zsString2Std(prim->userData()->get_string("abcpath_0"));
                 if (path_to_prims.count(path) == 0) {
                     paths.push_back(path);
-                    path_to_prims[path] = {};
+                    path_to_prims[path] = std::vector<std::unique_ptr<PrimitiveObject>>();
                 }
-                path_to_prims[path].push_back(prim);
+                path_to_prims[path].push_back(std::move(prim));
             }
             for (auto path : paths) {
                 if (path_to_prims[path].size() > 1) {
                     Vector<zeno::PrimitiveObject *> primList;
-                    for (auto prim: path_to_prims[path]) {
+                    for (auto& prim: path_to_prims[path]) {
                         primList.push_back(prim.get());
                     }
                     auto prim = primMergeWithFacesetMatid(primList);
-                    new_prims.push_back(prim);
+                    new_prims.push_back(std::move(prim));
                 }
                 else {
-                    new_prims.push_back(path_to_prims[path][0]);
+                    new_prims.push_back(std::move(path_to_prims[path][0]));
                 }
             }
         }
@@ -853,7 +852,7 @@ struct WriteAlembicPrims : INode {
             o_faceset_schema.clear();
             prim_size_per_frame.clear();
             real_frame_start = -1;
-            for (auto prim: new_prims) {
+            for (auto& prim: new_prims) {
                 auto path = zsString2Std(prim->userData()->get_string("abcpath_0"));
                 if (!starts_with(path, "/ABC/")) {
                     log_error("abcpath_0 must start with /ABC/");
@@ -883,7 +882,7 @@ struct WriteAlembicPrims : INode {
         if (archive.valid() == false) {
             zeno::makeError("Not init. Check whether in correct correct frame range.");
         }
-        for (auto prim: new_prims) {
+        for (auto& prim: new_prims) {
             if (flipFrontBack) {
                 primFlipFaces(prim.get());
             }
@@ -895,10 +894,10 @@ struct WriteAlembicPrims : INode {
                 auto ud = prim->userData();
                 std::vector<std::string> faceSetNames;
                 std::vector<std::vector<int>> faceset_idxs;
-                write_faceset(prim, mesh, o_faceset[path], o_faceset_schema[path]);
+                write_faceset(prim.get(), mesh, o_faceset[path], o_faceset_schema[path]);
 
                 OCompoundProperty user = mesh.getUserProperties();
-                write_user_data(user_attrs, path, prim, user, frameid, real_frame_start);
+                write_user_data(user_attrs, path, prim.get(), user, frameid, real_frame_start);
 
                 mesh.setTimeSampling(1);
 
@@ -955,10 +954,10 @@ struct WriteAlembicPrims : INode {
                                 Int32ArraySample( vertex_index_per_face.data(), vertex_index_per_face.size() ),
                                 Int32ArraySample( vertex_count_per_face.data(), vertex_count_per_face.size() ),
                                 uvsamp);
-                        write_velocity(prim, mesh_samp);
-                        write_normal(prim, mesh_samp);
+                        write_velocity(prim.get(), mesh_samp);
+                        write_normal(prim.get(), mesh_samp);
                         if (get_input2_bool("outputToMaya") == false) {
-                            write_attrs(verts_attrs, loops_attrs, polys_attrs, path, prim, mesh, frameid, real_frame_start, prim_size_per_frame[path]);
+                            write_attrs(verts_attrs, loops_attrs, polys_attrs, path, prim.get(), mesh, frameid, real_frame_start, prim_size_per_frame[path]);
                         }
                         mesh.set( mesh_samp );
                     }
@@ -967,10 +966,10 @@ struct WriteAlembicPrims : INode {
                         V3fArraySample( ( const V3f * )prim->verts.data(), prim->verts.size() ),
                                 Int32ArraySample( vertex_index_per_face.data(), vertex_index_per_face.size() ),
                                 Int32ArraySample( vertex_count_per_face.data(), vertex_count_per_face.size() ));
-                        write_velocity(prim, mesh_samp);
-                        write_normal(prim, mesh_samp);
+                        write_velocity(prim.get(), mesh_samp);
+                        write_normal(prim.get(), mesh_samp);
                         if (get_input2_bool("outputToMaya") == false) {
-                            write_attrs(verts_attrs, loops_attrs, polys_attrs, path, prim, mesh, frameid, real_frame_start, prim_size_per_frame[path]);
+                            write_attrs(verts_attrs, loops_attrs, polys_attrs, path, prim.get(), mesh, frameid, real_frame_start, prim_size_per_frame[path]);
                         }
                         mesh.set( mesh_samp );
                     }
