@@ -728,7 +728,7 @@ struct OSDPrimSubdiv : INode {
         if (levels)
             osdPrimSubdiv(prim.get(), levels, edgeCreaseAttr, triangulate, asQuadFaces, hasLoopUVs, copyFaceAttrs);
 
-        auto geom = create_GeometryObject(prim);
+        auto geom = create_GeometryObject(prim.get());
         set_output("prim", std::move(geom));
     }
 };
