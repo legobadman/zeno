@@ -18,7 +18,7 @@ namespace zeno {
     struct  VDBRenormalizeSDF : zeno::INode {
   virtual void apply() override {
 
-    auto inoutSDF = safe_dynamic_cast<VDBFloatGrid>(get_input("inoutSDF"));
+    auto inoutSDF = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("inoutSDF"));
     int normIter = get_param_int("iterations");
     int dilateIter = get_param_int("dilateIters");
     auto lstracker = openvdb::tools::LevelSetTracker<openvdb::FloatGrid>(*(inoutSDF->m_grid));
@@ -34,7 +34,7 @@ namespace zeno {
     //openvdb::tools::changeBackground(inoutSDF->m_grid->tree(), ((float)normIter)*(inoutSDF->m_grid->transformPtr()->voxelSize()[0]));
     //openvdb::tools::signedFloodFill(inoutSDF->m_grid->tree());
 
-    set_output("inoutSDF", get_input("inoutSDF"));
+    set_output("inoutSDF", std::move(inoutSDF));
   }
 };
 
@@ -64,7 +64,7 @@ struct VDBSmooth : zeno::INode {
         }
 
         if (inoutVDBtype == "FloatGrid") {
-            auto inoutVDB = safe_dynamic_cast<VDBFloatGrid>(get_input("inoutVDB"));
+            auto inoutVDB = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("inoutVDB"));
             auto lsf = openvdb::tools::Filter<openvdb::FloatGrid>(*(inoutVDB->m_grid));
             lsf.setGrainSize(1);
             if(type == "Gaussian")
@@ -74,10 +74,10 @@ struct VDBSmooth : zeno::INode {
             else if(type == "Median")
               lsf.median(width, iterations, mask.get());
             //openvdb::tools::ttls_internal::smoothLevelSet(*inoutSDF->m_grid, normIter, halfWidth);
-            set_output("inoutVDB", get_input("inoutVDB"));
+            set_output("inoutVDB", std::move(inoutVDB));
         }
         else if (inoutVDBtype == "Vec3fGrid") {
-            auto inoutVDB = safe_dynamic_cast<VDBFloat3Grid>(get_input("inoutVDB"));
+            auto inoutVDB = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("inoutVDB"));
             auto lsf = openvdb::tools::Filter<openvdb::Vec3fGrid>(*(inoutVDB->m_grid));
             lsf.setGrainSize(1);
             if(type == "Gaussian")
@@ -86,7 +86,7 @@ struct VDBSmooth : zeno::INode {
               lsf.mean(width, iterations, mask.get());
             else if(type == "Median")
               lsf.median(width, iterations, mask.get());
-            set_output("inoutVDB", get_input("inoutVDB"));
+            set_output("inoutVDB", std::move(inoutVDB));
         }
     }
 };
@@ -108,14 +108,14 @@ ZENO_DEFNODE(VDBSmooth)(
 struct  VDBSmoothSDF : zeno::INode { /* cihou old graph */
   virtual void apply() override {
 
-    auto inoutSDF = safe_dynamic_cast<VDBFloatGrid>(get_input("inoutSDF"));
+    auto inoutSDF = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("inoutSDF"));
     int width = get_param_int("width");
     int iterations = get_param_int("iterations");
     auto lsf = openvdb::tools::Filter<openvdb::FloatGrid>(*(inoutSDF->m_grid));
     lsf.setGrainSize(1);
     lsf.gaussian(width, iterations, nullptr);
     //openvdb::tools::ttls_internal::smoothLevelSet(*inoutSDF->m_grid, normIter, halfWidth);
-    set_output("inoutSDF", get_input("inoutSDF"));
+    set_output("inoutSDF", std::move(inoutSDF));
   }
 };
 
@@ -135,7 +135,7 @@ static int defVDBSmoothSDF = zeno::defNodeClass<VDBSmoothSDF>("VDBSmoothSDF",
 struct  VDBDilateTopo : zeno::INode {
   virtual void apply() override {
 
-    auto inoutSDF = safe_dynamic_cast<zeno::VDBGrid>(get_input("inField"));
+    auto inoutSDF = safe_uniqueptr_cast<zeno::VDBGrid>(clone_input("inField"));
     auto layers = get_input2_int("layers");
 
     inoutSDF->dilateTopo(layers);
@@ -156,7 +156,7 @@ static int defVDBDilateTopo = zeno::defNodeClass<VDBDilateTopo>("VDBDilateTopo",
 
 struct VDBErodeSDF : zeno::INode {
   virtual void apply() override {
-    auto inoutSDF = safe_dynamic_cast<VDBFloatGrid>(get_input("inoutSDF"));
+    auto inoutSDF = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("inoutSDF"));
     auto grid = inoutSDF->m_grid;
     auto depth = get_input2_float("depth");
     auto wrangler = [&](auto &leaf, openvdb::Index leafpos) {
@@ -168,7 +168,7 @@ struct VDBErodeSDF : zeno::INode {
     };
     auto velman = openvdb::tree::LeafManager<std::decay_t<decltype(grid->tree())>>(grid->tree());
     velman.foreach(wrangler);
-    set_output("inoutSDF", get_input("inoutSDF"));
+    set_output("inoutSDF", std::move(inoutSDF));
   }
 };
 

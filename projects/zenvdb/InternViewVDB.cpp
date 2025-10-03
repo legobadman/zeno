@@ -63,7 +63,7 @@ struct SDFScatterPoints : INode {
             {"Particles", data},
             {"ShapeSDF", sdf},
         }).at("Particles");
-        set_output("Points", points);
+        set_output("Points", std::move(points));
     }
 };
 

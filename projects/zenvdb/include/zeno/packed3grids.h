@@ -12,7 +12,7 @@ struct packed_FloatGrid3 : zeno::IObject {
 		m_transform = openvdb::math::Transform::createLinearTransform(1.0f);
 		m_gridclass = openvdb::GridClass::GRID_STAGGERED;
 	}
-	zeno::SharedPtr<IObject> clone() const override {
+	zeno::zany clone() const override {
 		return nullptr;
 	}
 	~packed_FloatGrid3() = default;

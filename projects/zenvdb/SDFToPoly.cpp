@@ -46,7 +46,7 @@ struct SDFToGeometry : zeno::INode {
                 mesh->set_face(i, indice);
             }
             mesh->create_point_attr("pos", pos);
-            set_output("Mesh", mesh);
+            set_output("Mesh", std::move(mesh));
         }
         else {
             throw makeError<UnimplError>("don't support trianglize when convert to mesh");
@@ -71,7 +71,7 @@ static int defSDFToGeom = zeno::defNodeClass<SDFToGeometry>("SDFToGeometry",
 struct SDFToPoly : zeno::INode{
     virtual void apply() override {
     auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
-    auto mesh = std::make_shared<PrimitiveObject>();
+    auto mesh = std::make_unique<PrimitiveObject>();
     auto adaptivity = get_param_float("adaptivity");
     auto isoValue = get_param_float("isoValue");
     auto allowQuads = get_param_bool("allowQuads");
@@ -113,8 +113,7 @@ struct SDFToPoly : zeno::INode{
             mesh->tris[i*2+1+tris.size()] = zeno::vec3i(quads[i][2],quads[i][3],quads[i][0]);
         }
     }
-
-    set_output("Mesh", mesh);
+    set_output("Mesh", std::move(mesh));
   }
 };
 
@@ -131,7 +130,7 @@ static int defSDFToPoly = zeno::defNodeClass<SDFToPoly>("SDFToPoly",
     "deprecated",
     }});
 
-
+#if 0
 struct SDFToPrimitive : SDFToPoly {
     virtual void apply() override {
         SDFToPoly::apply();
@@ -151,7 +150,7 @@ static int defSDFToPrimitive = zeno::defNodeClass<SDFToPrimitive>("SDFToPrimitiv
     }, /* category: */ {
     "deprecated",
     }});
-
+#endif
 
 #if 0
 struct ConvertTo_VDBFloatGrid_PrimitiveObject : SDFToPoly {
@@ -171,14 +170,14 @@ ZENO_DEFOVERLOADNODE(ConvertTo, _VDBFloatGrid_PrimitiveObject, typeid(VDBFloatGr
 // TODO: ToVisualize is deprecated in zeno2, please impl this directly in the zenovis module later...
 struct ToVisualize_VDBFloatGrid : SDFToPoly {
     virtual void apply() override {
-        this->inputs["isoValue:"] = std::make_shared<NumericObject>(0.0f);
-        this->inputs["adaptivity:"] = std::make_shared<NumericObject>(0.0f);
-        this->inputs["allowQuads:"] = std::make_shared<NumericObject>(false);
+        this->inputs["isoValue:"] = std::make_unique<NumericObject>(0.0f);
+        this->inputs["adaptivity:"] = std::make_unique<NumericObject>(0.0f);
+        this->inputs["allowQuads:"] = std::make_unique<NumericObject>(false);
         SDFToPoly::apply();
         auto path = get_param_string("path");
         auto prim = std::move(smart_any_cast<std::shared_ptr<IObject>>(outputs.at("Mesh")));
         if (auto node = graph->getOverloadNode("ToVisualize", {std::move(prim)}); node) {
-            node->inputs["path:"] = std::make_shared<StringObject>(path);
+            node->inputs["path:"] = std::make_unique<StringObject>(path);
             node->doApply();
         }
     }
@@ -195,7 +194,7 @@ ZENO_DEFOVERLOADNODE(ToVisualize, _VDBFloatGrid, typeid(VDBFloatGrid).name())({
 struct SDFToPrim : zeno::INode{
     virtual void apply() override {
         auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
-        auto mesh = std::make_shared<PrimitiveObject>();
+        auto mesh = std::make_unique<PrimitiveObject>();
         auto adaptivity = get_input2_float(("adaptivity"));
         auto isoValue = get_input2_float(("isoValue"));
         auto allowQuads = get_input2_bool("allowQuads");

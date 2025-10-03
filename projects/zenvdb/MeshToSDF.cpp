@@ -25,7 +25,7 @@ struct MeshToSDF : zeno::INode{
         h = get_input2_float("Dx");
     }
     auto mesh = safe_dynamic_cast<MeshObject>(get_input("mesh"));
-    auto result = std::make_shared<VDBFloatGrid>();
+    auto result = std::make_unique<VDBFloatGrid>();
     std::vector<openvdb::Vec3s> points;
     std::vector<openvdb::Vec3I> triangles;
     std::vector<openvdb::Vec4I> quads;
@@ -49,7 +49,7 @@ struct MeshToSDF : zeno::INode{
     }
     result->m_grid = openvdb::tools::meshToSignedDistanceField<openvdb::FloatGrid>(*vdbtransform,points, triangles, quads, 4, 4);
     openvdb::tools::signedFloodFill(result->m_grid->tree());
-    set_output("sdf", result);
+    set_output("sdf", std::move(result));
   }
 };
 
@@ -70,7 +70,7 @@ struct GeometryToSDF : zeno::INode {
     virtual void apply() override {
         auto h = get_input2_float("Dx");
         auto mesh = safe_dynamic_cast<GeometryObject_Adapter>(get_input("Mesh"));
-        auto result = std::make_shared<VDBFloatGrid>();
+        auto result = std::make_unique<VDBFloatGrid>();
         int nfaces = mesh->nfaces();
         const auto& pos = mesh->points_pos();
         std::vector<openvdb::Vec3s> points(mesh->npoints());
@@ -102,7 +102,7 @@ struct GeometryToSDF : zeno::INode {
         }
         result->m_grid = openvdb::tools::meshToSignedDistanceField<openvdb::FloatGrid>(*vdbtransform, points, triangles, quads, 4, 4);
         openvdb::tools::signedFloodFill(result->m_grid->tree());
-        set_output("sdf", result);
+        set_output("sdf", std::move(result));
     }
 };
 
@@ -132,12 +132,12 @@ struct PrimitiveToSDF : zeno::INode{
     //}
     auto h = get_input2_float("Dx");
     //auto h = get_input2_float("Dx")();
-    if (auto p = dynamic_cast<VDBFloatGrid *>(get_input("PrimitiveMesh").get())) {
-        set_output("sdf", get_input("PrimitiveMesh"));
+    if (auto p = dynamic_cast<VDBFloatGrid *>(get_input("PrimitiveMesh"))) {
+        set_output("sdf", clone_input("PrimitiveMesh"));
         return;
     }
     auto mesh = safe_dynamic_cast<PrimitiveObject>(get_input("PrimitiveMesh"));
-    auto result = std::make_shared<VDBFloatGrid>();
+    auto result = std::make_unique<VDBFloatGrid>();
     std::vector<openvdb::Vec3s> points;
     std::vector<openvdb::Vec3I> triangles;
     std::vector<openvdb::Vec4I> quads;
@@ -166,7 +166,7 @@ struct PrimitiveToSDF : zeno::INode{
     }
     result->m_grid = openvdb::tools::meshToSignedDistanceField<openvdb::FloatGrid>(*vdbtransform,points, triangles, quads, 4, 4);
     openvdb::tools::signedFloodFill(result->m_grid->tree());
-    set_output("sdf", result);
+    set_output("sdf", std::move(result));
   }
 };
 
@@ -186,9 +186,9 @@ static int defPrimitiveToSDF = zeno::defNodeClass<PrimitiveToSDF>("PrimitiveToSD
 struct SDFToFog : INode 
 {
     virtual void apply() override {
-        auto sdf = safe_dynamic_cast<VDBFloatGrid>(get_input("SDF"));
+        auto sdf = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("SDF"));
         if (!has_input("inplace") || !get_input2_bool("inplace")) {
-            sdf = std::make_shared<VDBFloatGrid>(sdf->m_grid->deepCopy());
+            sdf = std::make_unique<VDBFloatGrid>(sdf->m_grid->deepCopy());
         }
         //auto dx = sdf->m_grid->voxelSize()[0];
         openvdb::tools::sdfToFogVolume(*(sdf->m_grid));

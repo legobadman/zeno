@@ -20,7 +20,7 @@ struct GetVDBPoints : zeno::INode {
 
     auto transform = grid->transformPtr();
 
-    auto ret = std::make_shared<ParticlesObject>();
+    auto ret = std::make_unique<ParticlesObject>();
 
     for (auto const &leaf: leafs) {
       //attributes
@@ -48,7 +48,7 @@ struct GetVDBPoints : zeno::INode {
         ret->vel.push_back(glm::vec3(v[0], v[1], v[2]));
       }
     }
-    set_output("pars", ret);
+    set_output("pars", std::move(ret));
   }
 };
 
@@ -68,7 +68,7 @@ struct GetVDBPointsLeafCount : zeno::INode {
     auto grid = safe_dynamic_cast<VDBPointsGrid>(get_input("grid"))->m_grid;
     std::vector<openvdb::points::PointDataTree::LeafNodeType*> leafs;
     grid->tree().getNodes(leafs);
-    auto ret = std::make_shared<zeno::NumericObject>();
+    auto ret = std::make_unique<zeno::NumericObject>();
     ret->set((int)leafs.size());
     set_output("leafCount", std::move(ret));
   }
@@ -84,7 +84,7 @@ struct VDBPointsToPrimitive : zeno::INode {
     zeno::log_info("VDBPointsToPrimitive: particle leaf nodes: {}\n", leafs.size());
     auto transform = grid->transformPtr();
 
-    auto ret = std::make_shared<zeno::PrimitiveObject>();
+    auto ret = std::make_unique<zeno::PrimitiveObject>();
     size_t count = openvdb::points::pointCount(grid->tree());
     zeno::log_info("VDBPointsToPrimitive: particles: {}\n", count);
     ret->resize(count);
@@ -253,7 +253,7 @@ struct VDBPointsToPrimitive : zeno::INode {
     }
 
     zeno::log_info("VDBPointsToPrimitive: complete\n");
-    set_output("prim", ret);
+    set_output("prim", std::move(ret));
   }
 };
 
@@ -281,7 +281,7 @@ struct GetVDBPointsDroplets : zeno::INode {
 
     auto transform = grid->transformPtr();
 
-    auto ret = std::make_shared<zeno::PrimitiveObject>();
+    auto ret = std::make_unique<zeno::PrimitiveObject>();
     auto &retpos = ret->add_attr<zeno::vec3f>("pos");
     auto &retvel = ret->add_attr<zeno::vec3f>("vel");
 
@@ -326,7 +326,7 @@ struct GetVDBPointsDroplets : zeno::INode {
       retpos[index] = std::get<0>(data[index]);
       retvel[index] = std::get<1>(data[index]);
     });
-    set_output("prim", ret);
+    set_output("prim", std::move(ret));
   }
 };
 

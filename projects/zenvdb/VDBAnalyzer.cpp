@@ -16,15 +16,15 @@ struct ScalarFieldAnalyzer : zeno::INode {
         auto grid = inSDF->m_grid;
         auto OpType = zsString2Std(get_param_string("Operator"));
         if (OpType == "Gradient") {
-            auto result = std::make_shared<VDBFloat3Grid>(openvdb::tools::gradient(*grid));
+            auto result = std::make_unique<VDBFloat3Grid>(openvdb::tools::gradient(*grid));
             set_output("OutVDB", std::move(result));
         }
         else if (OpType == "Curvature") {
-            auto result = std::make_shared<VDBFloatGrid>(openvdb::tools::meanCurvature(*grid));
+            auto result = std::make_unique<VDBFloatGrid>(openvdb::tools::meanCurvature(*grid));
             set_output("OutVDB", std::move(result));
         }
         else if (OpType == "Laplacian") {
-            auto result = std::make_shared<VDBFloatGrid>(openvdb::tools::laplacian(*grid));
+            auto result = std::make_unique<VDBFloatGrid>(openvdb::tools::laplacian(*grid));
             set_output("OutVDB", std::move(result));
         }
         else if (OpType == "ClosestPoint") {
@@ -43,7 +43,7 @@ struct ScalarFieldAnalyzer : zeno::INode {
             }
             openvdb::Vec3fGrid::Ptr resultGrid(new openvdb::Vec3fGrid(resultTree));
             resultGrid->setTransform(transform.copy());
-            auto result = std::make_shared<VDBFloat3Grid>(std::move(resultGrid));
+            auto result = std::make_unique<VDBFloat3Grid>(std::move(resultGrid));
             set_output("OutVDB", std::move(result));
         }
         else {
@@ -70,19 +70,19 @@ struct VectorFieldAnalyzer : zeno::INode {
         auto grid = inSDF->m_grid;
         auto OpType = zsString2Std(get_param_string("Operator"));
         if (OpType == "Divergence") {
-            auto result = std::make_shared<VDBFloatGrid>(openvdb::tools::divergence(*grid));
+            auto result = std::make_unique<VDBFloatGrid>(openvdb::tools::divergence(*grid));
             set_output("OutVDB", std::move(result));
         }
         else if (OpType == "Curl") {
-            auto result = std::make_shared<VDBFloat3Grid>(openvdb::tools::curl(*grid));
+            auto result = std::make_unique<VDBFloat3Grid>(openvdb::tools::curl(*grid));
             set_output("OutVDB", std::move(result));
         }
         else if (OpType == "Magnitude") {
-            auto result = std::make_shared<VDBFloatGrid>(openvdb::tools::magnitude(*grid));
+            auto result = std::make_unique<VDBFloatGrid>(openvdb::tools::magnitude(*grid));
             set_output("OutVDB", std::move(result));
         }
         else if (OpType == "Normalize") {
-            auto result = std::make_shared<VDBFloat3Grid>(openvdb::tools::normalize(*grid));
+            auto result = std::make_unique<VDBFloat3Grid>(openvdb::tools::normalize(*grid));
             set_output("OutVDB", std::move(result));
         }
         else {

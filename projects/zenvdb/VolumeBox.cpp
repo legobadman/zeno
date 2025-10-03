@@ -165,9 +165,9 @@ struct CreateVolumeBox : zeno::INode {
 
         if (has_input("vdbGrid")) {
 
-            auto grid = std::dynamic_pointer_cast<VDBGrid>(get_input("vdbGrid"));
+            auto grid = zeno::safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
 		   
-            auto float_grid = std::dynamic_pointer_cast<VDBFloatGrid>(grid);
+            auto float_grid = zeno::safe_dynamic_cast<VDBFloatGrid>(grid);
             auto root = float_grid->m_grid->tree().root();
 
             using GridType = openvdb::FloatGrid;
@@ -270,11 +270,11 @@ struct CreateVolumeBox : zeno::INode {
             transforms.push_back(transform);
         }
 
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
 
         for (auto& transform : transforms) {
         
-            auto prim = std::make_shared<zeno::PrimitiveObject>();
+            auto prim = std::make_unique<zeno::PrimitiveObject>();
 
             std::string vol_mat;
             if (has_input("vol_mat")) {
@@ -317,12 +317,12 @@ struct CreateVolumeBox : zeno::INode {
             prim->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
             prim->userData()->set_bool("vbox", true);
 
-            auto geom = create_GeometryObject(prim);
-            list->push_back(geom);
+            auto geom = create_GeometryObject(prim.get());
+            list->push_back(std::move(geom));
         }
 
         if (list->size()==1) {
-            set_output("prim", std::move(list->get(0)));
+            set_output("prim", std::move(list->get(0)->clone()));
             return;
         }
 

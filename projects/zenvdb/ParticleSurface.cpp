@@ -145,7 +145,7 @@ struct ParticleToLevelSet : zeno::INode{
         auto radius = get_input2_float("Radius");
         float dx = radius/2.0f;
         if(has_input("Dx")) dx = get_input2_float("Dx");
-        auto result = std::make_shared<VDBFloatGrid>();
+        auto result = std::make_unique<VDBFloatGrid>();
         std::vector<float> pr;
         pr.resize(par->attr<zeno::vec3f>("pos").size());
 		std::string s_rname = zsString2Std(get_input2_string("rname"));
@@ -165,7 +165,7 @@ struct ParticleToLevelSet : zeno::INode{
               };
         }
         result->m_grid = particleToLevelset(par->attr<zeno::vec3f>("pos"), pr, dx);
-        set_output("SurfaceSDF", result);
+		set_output("SurfaceSDF", std::move(result));
     }
 };
 ZENDEFNODE(ParticleToLevelSet, {
