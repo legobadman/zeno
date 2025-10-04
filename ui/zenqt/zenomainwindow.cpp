@@ -2296,7 +2296,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
                     auto pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::IObject*>();
-                    auto spGeom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(pObject);
+                    auto spGeom = dynamic_cast<zeno::GeometryObject_Adapter*>(pObject);
                     panel->setGeometry(subgraph, idx, spGeom);
                 }
             }

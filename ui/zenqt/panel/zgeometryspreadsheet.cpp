@@ -372,7 +372,7 @@ void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const Q
                 clearModel();
             } else if (currStatus == zeno::Node_RunSucceed) {
                 zeno::IObject* pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::IObject*>();
-                if (auto spGeom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(pObject)) {
+                if (auto spGeom = dynamic_cast<zeno::GeometryObject_Adapter*>(pObject)) {
                     setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom);
                 }
             }

@@ -93,7 +93,7 @@ void* Scene::getOptixImg(int& w, int& h)
 
 void Scene::convertListObjs(zeno::IObject* objToBeConvert, std::map<std::string, zeno::IObject*>& allListItems)
 {
-    if (auto lst = zeno::safe_dynamic_cast<zeno::ListObject>(objToBeConvert)) {
+    if (auto lst = dynamic_cast<zeno::ListObject*>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
             convertListObjs(lst->get(i), allListItems);
         return;
@@ -108,7 +108,7 @@ void Scene::convertListObjs(zeno::IObject* objToBeConvert, std::map<std::string,
 
 void zenovis::Scene::convertListObjs(zeno::IObject* objToBeConvert, std::vector<std::pair<std::string, zeno::IObject*>>& allListItems)
 {
-    if (auto lst = zeno::safe_dynamic_cast<zeno::ListObject>(objToBeConvert)) {
+    if (auto lst = dynamic_cast<zeno::ListObject*>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
             convertListObjs(lst->get(i), allListItems);
         return;

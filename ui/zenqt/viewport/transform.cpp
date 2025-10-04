@@ -655,7 +655,7 @@ namespace zeno {
         //auto& objsMan = zeno::getSession().objsMan;
         //m_objnodeinfo = objsMan->getObjectAndViewNode(name);
 
-        auto transObj = zeno::safe_dynamic_cast<GeometryObject_Adapter>(m_objnodeinfo.transformingObj);
+        auto transObj = dynamic_cast<GeometryObject_Adapter*>(m_objnodeinfo.transformingObj);
         if (!transObj) {
             //todo: maybe the transforming obj is a memeber of list object.
             return;
@@ -672,7 +672,7 @@ namespace zeno {
 
         GeometryObject_Adapter* object = nullptr;
         if (nodecls != "Transform") {
-            object = zeno::safe_dynamic_cast<GeometryObject_Adapter>(transObj);
+            object = dynamic_cast<GeometryObject_Adapter*>(transObj);
             trans_name = zsString2Std(object->key());
         }
         else {

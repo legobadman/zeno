@@ -45,7 +45,7 @@ void ZenoImagePanel::reload(const zeno::render_reload_info& info) {
                 if (ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
                     return;
                 }
-                if (auto geom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(spObject)) {
+                if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(spObject)) {
                     auto obj = geom->toPrimitiveObject();
                     int width = ud->get_int("w");
                     int height = ud->get_int("h");
@@ -198,7 +198,7 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
             return;
         }
         found = true;
-        if (auto geom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(spObject)) {
+        if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(spObject)) {
             auto obj = geom->toPrimitiveObject();
             int width = ud->get_int("w");
             int height = ud->get_int("h");
