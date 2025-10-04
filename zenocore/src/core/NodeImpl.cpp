@@ -689,6 +689,8 @@ void NodeImpl::preApply(CalcContext* pContext) {
                     param.spObject = task.get();
                 }
                 else {
+                    if (!spLink->fromparam->spObject)
+                        throw makeNodeError<UnimplError>(get_path(), "cannot get object from upstream");
                     //task为空，因为之前已经被执行过一次了，上游已经算好了
                     param.spObject = spLink->fromparam->spObject->clone();
                 }
@@ -2054,7 +2056,8 @@ zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
 
     //这里先不考虑takeout的情况，因为这使得临界区变得复杂
     bool bAllTaken = false;
-    zany result = takeOutputObject(exec_context.out_param, exec_context.in_param, bAllTaken);
+    auto result = get_output_obj(exec_context.out_param);
+    //zany result = takeOutputObject(exec_context.out_param, exec_context.in_param, bAllTaken);
     if (!result) {
         throw makeNodeError<UnimplError>(get_path(), "no result");
     }
@@ -2279,6 +2282,10 @@ void NodeImpl::doApply(CalcContext* pContext) {
     }
 
 #if 1
+    if (m_bypass) {
+        int j;
+        j = 0;
+    }
     if (m_name == "MergeScene1") {//}&& pContext->curr_iter == 1) {
         set_name(m_name);
     }
@@ -2312,7 +2319,8 @@ void NodeImpl::doApply(CalcContext* pContext) {
 #ifdef ZENO_BENCHMARKING
         //Timer _(m_name);
 #endif
-        if (m_bypass) {
+        //暂时废弃bypass，先作为一个debug节点
+        if (false && m_bypass) {
             bypass();
         }
         else {

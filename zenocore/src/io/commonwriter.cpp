@@ -153,7 +153,7 @@ namespace zenoio
             std::filesystem::path asset_dir = assetpath.parent_path();
 
             if (proj_dir == asset_dir) {
-                auto fn = projpath.filename().u8string();
+                auto fn = assetpath.filename().u8string();
                 writer.String(fn.c_str());
             }
             else {
