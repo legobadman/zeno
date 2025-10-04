@@ -264,17 +264,17 @@ bool OptixWorker::recordFrame_impl(VideoRecInfo recInfo, int frame)
     auto [x, y] = m_zenoVis->getSession()->get_window_size();
 
     auto &globalComm = zeno::getSession().globalComm;
-    int numOfFrames = globalComm->numOfFinishedFrame();
+    int numOfFrames = 0;// globalComm->numOfFinishedFrame();
     if (numOfFrames == 0)
         return false;
 
-    std::pair<int, int> frameRg = globalComm->frameRange();
+    std::pair<int, int> frameRg = { 0,0 };// globalComm->frameRange();
     int beginFrame = frameRg.first;
     int endFrame = frameRg.first + numOfFrames - 1;
     if (frame < beginFrame || frame > endFrame)
         return false;
 
-    if (globalComm->isFrameBroken(frame))
+    if (false)//globalComm->isFrameBroken(frame))
     {
         /*
         QImage img(QSize((int)recInfo.res.x(), (int)recInfo.res.y()), QImage::Format_RGBA8888);
@@ -293,8 +293,9 @@ bool OptixWorker::recordFrame_impl(VideoRecInfo recInfo, int frame)
 
     int actualFrame = m_zenoVis->setCurrentFrameId(frame);
     //m_zenoVis->doFrameUpdate();
-    if (recInfo.bAutoRemoveCache)
-        zeno::getSession().globalComm->removeCache(frame);
+    if (recInfo.bAutoRemoveCache) {
+        //zeno::getSession().globalComm->removeCache(frame);
+    }
 
     m_zenoVis->getSession()->set_window_size((int)recInfo.res.x(), (int)recInfo.res.y());
     m_zenoVis->getSession()->do_screenshot(record_file, extname, true);

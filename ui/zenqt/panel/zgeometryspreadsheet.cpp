@@ -273,7 +273,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
 void ZGeometrySpreadsheet::setGeometry(
         GraphModel* subgraph,
         QModelIndex nodeidx,
-        std::shared_ptr<zeno::GeometryObject_Adapter> spObject
+        zeno::GeometryObject_Adapter* spObject
 ) {
     if (nodeidx.isValid()) {
         QString nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
@@ -371,8 +371,8 @@ void ZGeometrySpreadsheet::onNodeDataChanged(const QModelIndex& topLeft, const Q
             if (currStatus == zeno::Node_Running) {
                 clearModel();
             } else if (currStatus == zeno::Node_RunSucceed) {
-                zeno::zany pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                if (auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pObject)) {
+                zeno::IObject* pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::IObject*>();
+                if (auto spGeom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(pObject)) {
                     setGeometry(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom);
                 }
             }

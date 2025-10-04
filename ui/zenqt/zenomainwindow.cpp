@@ -1242,7 +1242,7 @@ void ZenoMainWindow::updateViewport(const QString& action)
         if (action == "finishFrame")
         {
             bool bPlayed = m_pTimeline->isPlayToggled();
-            int endFrame = zeno::getSession().globalComm->maxPlayFrames() - 1;
+            int endFrame = 0;// zeno::getSession().globalComm->maxPlayFrames() - 1;
             m_pTimeline->updateCachedFrame();
             if (!bPlayed)
             {
@@ -1279,7 +1279,7 @@ void ZenoMainWindow::updateViewport(const QString& action)
             }
         }
         if (action == "newFrame") {
-            int endFrame = zeno::getSession().globalComm->maxPlayFrames();
+            int endFrame = 0;// zeno::getSession().globalComm->maxPlayFrames();
             int beginframe = m_pTimeline->fromTo().first;
             if (endFrame == beginframe) {   //run的时候起始帧计算完成后，将timeline重置为起始帧
 #if 0
@@ -2063,7 +2063,7 @@ bool ZenoMainWindow::saveQuit() {
 
     //cleanup
     if (pModel) {
-        zeno::getSession().globalComm->clearFrameState();
+        //zeno::getSession().globalComm->clearFrameState();
         auto views = viewports();
         for (auto view : views)
         {
@@ -2295,8 +2295,8 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                 {
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
-                    zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                    auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pObject);
+                    auto pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::IObject*>();
+                    auto spGeom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(pObject);
                     panel->setGeometry(subgraph, idx, spGeom);
                 }
             }

@@ -500,8 +500,8 @@ namespace zeno {
     struct NodeImpl;
 
     struct ObjectNodeInfo {
-        std::optional<zany> rootObj;        //list/dict case.
-        zany transformingObj;
+        std::optional<IObject*> rootObj;        //list/dict case.
+        IObject* transformingObj;
         NodeImpl* spViewNode;
     };
 
@@ -511,6 +511,24 @@ namespace zeno {
         std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
         zany spObject;  //对象所属权可藉此传送到渲染端
         std::vector<std::string> remove_objs;
+
+        render_update_info() {}
+        render_update_info(const render_update_info& rhs) {
+            reason = rhs.reason;
+            uuidpath_node_objkey = rhs.uuidpath_node_objkey;
+            if (rhs.spObject)
+                spObject = rhs.spObject->clone();
+            remove_objs = rhs.remove_objs;
+        }
+
+        render_update_info& operator=(const render_update_info& rhs) {
+            reason = rhs.reason;
+            uuidpath_node_objkey = rhs.uuidpath_node_objkey;
+            if (rhs.spObject)
+                spObject = rhs.spObject->clone();
+            remove_objs = rhs.remove_objs;
+            return *this;
+        }
     };
 
     struct render_reload_info {

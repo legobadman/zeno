@@ -479,7 +479,7 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath.toStdString());
     assert(spNode);
     if (spNode) {
-        info.spObject = spNode->get_default_output_object();
+        info.spObject = spNode->get_default_output_object()->clone();
     }
     infos.emplace_back(std::move(info));
     submit(infos);
@@ -521,7 +521,7 @@ void DisplayWidget::updateFrame(const QString &action) // cihou optix
             //restore the timer, because it will be stopped by signal of new frame.
             m_pTimer->start(m_sliderFeq);
         }
-        int frame = zeno::getSession().globalComm->maxPlayFrames() - 1;
+        int frame = 0;// zeno::getSession().globalComm->maxPlayFrames() - 1;
         frame = std::max(frame, 0);
         emit frameRunFinished(frame);
     }

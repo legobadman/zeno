@@ -38,14 +38,14 @@ void ZenoImagePanel::reload(const zeno::render_reload_info& info) {
     else {
         auto spNode = zeno::getSession().getNodeByUuidPath(update.uuidpath_node_objkey);
         assert(spNode);
-        zeno::zany spObject = spNode->get_default_output_object();
+        auto spObject = spNode->get_default_output_object();
         if (spObject) {
             if (update.reason == zeno::Update_View) {
                 auto ud = spObject->userData();
                 if (ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
                     return;
                 }
-                if (auto geom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(spObject)) {
+                if (auto geom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(spObject)) {
                     auto obj = geom->toPrimitiveObject();
                     int width = ud->get_int("w");
                     int height = ud->get_int("h");
@@ -190,7 +190,7 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
         const auto& update = m_info.objs[0];
         auto spNode = zeno::getSession().getNodeByUuidPath(update.uuidpath_node_objkey);
         assert(spNode);
-        zeno::zany spObject = spNode->get_default_output_object();
+        auto spObject = spNode->get_default_output_object();
         if (!spObject) return;
 
         auto ud = spObject->userData();
@@ -198,7 +198,7 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
             return;
         }
         found = true;
-        if (auto geom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(spObject)) {
+        if (auto geom = zeno::safe_dynamic_cast<zeno::GeometryObject_Adapter>(spObject)) {
             auto obj = geom->toPrimitiveObject();
             int width = ud->get_int("w");
             int height = ud->get_int("h");

@@ -650,12 +650,12 @@ namespace zeno {
         if (name.empty())
             return;
 
-        std::shared_ptr<GeometryObject_Adapter> transformObj;
+        GeometryObject_Adapter* transformObj = nullptr;
 
         //auto& objsMan = zeno::getSession().objsMan;
         //m_objnodeinfo = objsMan->getObjectAndViewNode(name);
 
-        std::shared_ptr<GeometryObject_Adapter> transObj = std::dynamic_pointer_cast<GeometryObject_Adapter>(m_objnodeinfo.transformingObj);
+        auto transObj = zeno::safe_dynamic_cast<GeometryObject_Adapter>(m_objnodeinfo.transformingObj);
         if (!transObj) {
             //todo: maybe the transforming obj is a memeber of list object.
             return;
@@ -670,9 +670,9 @@ namespace zeno {
 
         std::string trans_name;
 
-        std::shared_ptr<GeometryObject_Adapter> object;
+        GeometryObject_Adapter* object = nullptr;
         if (nodecls != "Transform") {
-            object = std::dynamic_pointer_cast<GeometryObject_Adapter>(transObj->clone());
+            object = zeno::safe_dynamic_cast<GeometryObject_Adapter>(transObj);
             trans_name = zsString2Std(object->key());
         }
         else {
@@ -793,7 +793,7 @@ namespace zeno {
             spOriNode->set_view(false);
             transNode->set_view(true);
 
-            zany originalObj = m_objnodeinfo.transformingObj;
+            auto originalObj = m_objnodeinfo.transformingObj;
             //原始的对象要隐藏
             //auto& objectsMan = zeno::getSession().objsMan;
             //只是为了标记一下view隐藏
@@ -801,7 +801,7 @@ namespace zeno {
 
             //把obj设置到新的transform节点的output端。
             std::string outputparam = transNode->get_viewobject_output_param();
-            transNode->set_output(outputparam, spObj);
+            transNode->set_output(outputparam, spObj->clone());
         }
 
         {

@@ -134,7 +134,7 @@ void Zenovis::startPlay(bool bPlaying)
     m_playing = bPlaying;
     if (m_playing) {
         int currentid = getCurrentFrameId();
-        if (currentid != zeno::getSession().globalComm->frameRange().second)
+        //if (currentid != zeno::getSession().globalComm->frameRange().second)
         {
             setCurrentFrameId(currentid + 1);
 }
@@ -157,8 +157,8 @@ int Zenovis::setCurrentFrameId(int frameid)
         frameid = 0;
 
     auto &globalComm = zeno::getSession().globalComm;
-    std::pair<int, int> frameRg = globalComm->frameRange();
-    int numOfFrames = globalComm->numOfFinishedFrame();
+    std::pair<int, int> frameRg = { 0, 0 };// globalComm->frameRange();
+    int numOfFrames = 0;//globalComm->numOfFinishedFrame();
     if (numOfFrames > 0)
     {
         int endFrame = frameRg.first + numOfFrames - 1;

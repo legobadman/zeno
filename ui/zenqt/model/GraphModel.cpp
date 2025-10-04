@@ -40,7 +40,7 @@ static void triggerView(const QString& nodepath, bool bView) {
     update.reason = bView ? zeno::Update_View : zeno::Update_Remove;
     update.uuidpath_node_objkey = nodepath.toStdString();
     if (spNode) {
-        update.spObject = spNode->get_default_output_object();
+        update.spObject = spNode->get_default_output_object()->clone();
     }
     if (update.reason == zeno::Update_Remove)
     {
@@ -145,6 +145,7 @@ void NodeItem::unregister()
         }
 
         //DopNetwork
+        /*
         if (auto subnetnode = dynamic_cast<zeno::DopNetwork*>(spNode))
         {
             bool ret = subnetnode->unregister_dopnetworkFrameRemoved(m_cbFrameRemoved);
@@ -152,6 +153,7 @@ void NodeItem::unregister()
             ret = subnetnode->unregister_dopnetworkFrameCached(m_cbFrameCached);
             ZASSERT_EXIT(ret);
         }
+        */
     }
     m_cbSetPos = "";
     m_cbSetView = "";
@@ -232,6 +234,7 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
     }
 
     //DopNetwork
+    /*
     if (auto subnetnode = dynamic_cast<zeno::DopNetwork*>(spNode))
     {
         m_cbFrameRemoved = subnetnode->register_dopnetworkFrameRemoved([](int frame) {
@@ -249,6 +252,7 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
             timeline->updateDopnetworkFrameCached(frame);
         });
     }
+    */
 }
 
 void NodeItem::init_subgraph(GraphModel* parentGraphM) {
@@ -676,7 +680,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         {
             auto spNode = item->m_wpNode;
             ZASSERT_EXIT(spNode, QVariant());
-            zeno::zany spOutObj = spNode->get_default_output_object();
+            auto spOutObj = spNode->get_default_output_object();
             //如果有多个，只取第一个。
             if (spOutObj) {
                 return QVariant::fromValue(spOutObj);
@@ -771,32 +775,36 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         }
         //Dopnetwork
         case QtRole::ROLE_DOPNETWORK_ENABLECACHE: {
-            if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    return spDop->m_bEnableCache;
-                }
-            }
+            //if (auto spNode = item->m_wpNode) {
+            //    if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+            //        return spDop->m_bEnableCache;
+            //    }
+            //}
+            return QVariant();
         }
         case QtRole::ROLE_DOPNETWORK_CACHETODISK: {
             if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    return spDop->m_bAllowCacheToDisk;
-                }
+                //if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+                //    return spDop->m_bAllowCacheToDisk;
+                //}
             }
+            return QVariant();
         }
         case QtRole::ROLE_DOPNETWORK_MAXMEM: {
-            if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    return spDop->m_maxCacheMemoryMB;
-                }
-            }
+            //if (auto spNode = item->m_wpNode) {
+            //    if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+            //        return spDop->m_maxCacheMemoryMB;
+            //    }
+            //}
+            return QVariant();
         }
         case QtRole::ROLE_DOPNETWORK_MEM: {
-            if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    return spDop->m_currCacheMemoryMB;
-                }
-            }
+            //if (auto spNode = item->m_wpNode) {
+            //    if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+            //        return spDop->m_currCacheMemoryMB;
+            //    }
+            //}
+            return QVariant();
         }
         default:
             return QVariant();
@@ -887,32 +895,36 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
         }
         //Dopnetwork
         case QtRole::ROLE_DOPNETWORK_ENABLECACHE: {
-            if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    spDop->setEnableCache(value.toBool());
-                }
-            }
+            //if (auto spNode = item->m_wpNode) {
+            //    if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+            //        spDop->setEnableCache(value.toBool());
+            //    }
+            //}
+            return true;
         }
         case QtRole::ROLE_DOPNETWORK_CACHETODISK: {
-            if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    spDop->setAllowCacheToDisk(value.toBool());
-                }
-            }
+            //if (auto spNode = item->m_wpNode) {
+            //    if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+            //        spDop->setAllowCacheToDisk(value.toBool());
+            //    }
+            //}
+            return true;
         }
         case QtRole::ROLE_DOPNETWORK_MAXMEM: {
-            if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    spDop->setMaxCacheMemoryMB(value.toInt());
-                }
-            }
+            //if (auto spNode = item->m_wpNode) {
+            //    if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+            //        spDop->setMaxCacheMemoryMB(value.toInt());
+            //    }
+            //}
+            return true;
         }
         case QtRole::ROLE_DOPNETWORK_MEM: {
-            if (auto spNode = item->m_wpNode) {
-                if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
-                    spDop->setCurrCacheMemoryMB(value.toInt());
-                }
-            }
+            //if (auto spNode = item->m_wpNode) {
+            //    if (auto spDop = dynamic_cast<zeno::DopNetwork*>(spNode)) {
+            //        spDop->setCurrCacheMemoryMB(value.toInt());
+            //    }
+            //}
+            return true;
         }
     }
     return false;

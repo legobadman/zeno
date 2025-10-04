@@ -43,6 +43,6 @@ namespace zeno
     ZENO_API std::unique_ptr<PrimitiveObject> readExrFile(zeno::String const& path);
     ZENO_API std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path);
     ZENO_API std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path);
-    ZENO_API void write_pfm(const zeno::String& path, std::unique_ptr<PrimitiveObject> image);
-    ZENO_API void write_jpg(const zeno::String& path, std::unique_ptr<PrimitiveObject> image);
+    ZENO_API void write_pfm(const zeno::String& path, PrimitiveObject* image);
+    ZENO_API void write_jpg(const zeno::String& path, PrimitiveObject* image);
 }

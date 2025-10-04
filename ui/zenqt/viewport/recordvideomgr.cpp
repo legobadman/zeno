@@ -130,7 +130,7 @@ REC_RETURN_CODE RecordVideoMgr::endRecToExportVideo()
             // jpg to pfm
             {
                 auto image = zeno::readImageFile(zeno::stdString2zs(jpg_path));
-                write_pfm(zeno::stdString2zs(pfm_path), image);
+                write_pfm(zeno::stdString2zs(pfm_path), image.get());
             }
 
             const auto albedo_pfm_path = jpg_path + ".albedo.pfm";
@@ -168,7 +168,7 @@ REC_RETURN_CODE RecordVideoMgr::endRecToExportVideo()
                     auto image = zeno::readPFMFile(zeno::stdString2zs(native_pfm_dn_path));
                     {
                         std::string native_jpg_path = std::filesystem::u8path(jpg_path).string();
-                        write_jpg(zeno::stdString2zs(native_jpg_path), image);
+                        write_jpg(zeno::stdString2zs(native_jpg_path), image.get());
                     }
                 }
                 for (auto& task : auxiliaryTasks) {
@@ -251,7 +251,7 @@ void RecordVideoMgr::onFrameDrawn(int currFrame)
     auto& pGlobalComm = zeno::getSession().globalComm;
     ZASSERT_EXIT(pGlobalComm);
 
-    bool bFrameCompleted = pGlobalComm->isFrameCompleted(currFrame);
+    bool bFrameCompleted = false;// pGlobalComm->isFrameCompleted(currFrame);
     bool bFrameRecorded = m_recordInfo.m_bFrameFinished[currFrame];
 
     Zenovis* pVis = getZenovis();
@@ -290,8 +290,9 @@ void RecordVideoMgr::onFrameDrawn(int currFrame)
             m_recordInfo.m_bFrameFinished[currFrame] = true;
             emit frameFinished(currFrame);
 
-            if (m_recordInfo.bAutoRemoveCache)
-                zeno::getSession().globalComm->removeCache(currFrame);
+            if (m_recordInfo.bAutoRemoveCache) {
+                //zeno::getSession().globalComm->removeCache(currFrame);
+            }
         }
 
         if (currFrame == m_recordInfo.frameRange.second)
@@ -307,7 +308,7 @@ void RecordVideoMgr::onFrameDrawn(int currFrame)
             m_recordInfo = VideoRecInfo();
         }
     }
-    else if (pGlobalComm->isFrameBroken(currFrame) && !bFrameRecorded)
+    else if (/*pGlobalComm->isFrameBroken(currFrame) && */!bFrameRecorded)
     {
         //recordErrorImg(currFrame);
         zeno::log_warn("The zencache of frame {} has been removed.", currFrame);

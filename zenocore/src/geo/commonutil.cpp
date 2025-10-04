@@ -1671,14 +1671,14 @@ namespace zeno
         file_put_binary(data, path);
     }
 
-    void write_pfm(const zeno::String& path, std::unique_ptr<PrimitiveObject> image) {
+    void write_pfm(const zeno::String& path, PrimitiveObject* image) {
         auto ud = image->userData();
         int w = ud->get_int("w");
         int h = ud->get_int("h");
         write_pfm(zsString2Std(path), w, h, image->verts->data());
     }
 
-    void write_jpg(const zeno::String& path, std::unique_ptr<PrimitiveObject> image) {
+    void write_jpg(const zeno::String& path, PrimitiveObject* image) {
         int w = image->userData()->get_int("w");
         int h = image->userData()->get_int("h");
         std::vector<uint8_t> colors;

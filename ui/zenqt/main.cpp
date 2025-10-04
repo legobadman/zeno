@@ -91,11 +91,6 @@ int main(int argc, char *argv[])
     return a.exec();
 #endif
 
-    if (argc >= 3 && !strcmp(argv[1], "-invoke")) {
-        extern int invoke_main(int argc, char *argv[]);
-        return invoke_main(argc - 2, argv + 2);
-    }
-
     QTranslator t;
     QTranslator qtTran;
     QSettings settings(zsCompanyName, zsEditor);
