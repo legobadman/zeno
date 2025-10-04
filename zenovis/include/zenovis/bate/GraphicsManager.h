@@ -25,14 +25,14 @@ struct GraphicsManager {
     }
 
     bool add_object(zeno::IObject* obj) {
-        if (auto spList = zeno::safe_dynamic_cast<zeno::ListObject>(obj)) {
+        if (auto spList = dynamic_cast<zeno::ListObject*>(obj)) {
             for (auto elemObj : spList->m_impl->get()) {
                 bool ret = add_object(elemObj);
                 //assert(ret);  //有一些是JsonObject，不应该进来
             }
             return true;
         }
-        if (auto spDict = zeno::safe_dynamic_cast<zeno::DictObject>(obj)) {
+        if (auto spDict = dynamic_cast<zeno::DictObject*>(obj)) {
             for (auto& [key, spObject] : spDict->get()) {
                 bool ret = add_object(spObject);
                 assert(ret);
@@ -76,14 +76,14 @@ struct GraphicsManager {
     }
 
     bool remove_object(zeno::IObject* spObj) {
-        if (auto spList = zeno::safe_dynamic_cast<zeno::ListObject>(spObj)) {
+        if (auto spList = dynamic_cast<zeno::ListObject*>(spObj)) {
             for (auto obj : spList->m_impl->get()) {
                 bool ret = remove_object(obj);
                 assert(ret);
             }
             return true;
         }
-        if (auto spDict = zeno::safe_dynamic_cast<zeno::DictObject>(spObj)) {
+        if (auto spDict = dynamic_cast<zeno::DictObject*>(spObj)) {
             for (auto& [key, spObject] : spDict->get()) {
                 bool ret = remove_object(spObject);
                 assert(ret);
@@ -112,10 +112,10 @@ struct GraphicsManager {
                 (spList->m_impl->m_new_added.find(key) != spList->m_impl->m_new_added.end() ||
                  spList->m_impl->m_modify.find(key) != spList->m_impl->m_modify.end()))
             {
-                if (auto _spList = zeno::safe_dynamic_cast<zeno::ListObject>(spObject)) {
+                if (auto _spList = dynamic_cast<zeno::ListObject*>(spObject)) {
                     process_listobj(_spList, bProcessAll);
                 }
-                else if (auto _spDict = zeno::safe_dynamic_cast<zeno::DictObject>(spObject)) {
+                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(spObject)) {
                     process_dictobj(_spDict);
                 }
                 else {
@@ -136,10 +136,10 @@ struct GraphicsManager {
             if (spDict->m_new_added.find(skey) != spDict->m_new_added.end() ||
                 spDict->m_modify.find(skey) != spDict->m_modify.end()) {
                 bool ret = false;
-                if (auto _spList = zeno::safe_dynamic_cast<zeno::ListObject>(spObject)) {
+                if (auto _spList = dynamic_cast<zeno::ListObject*>(spObject)) {
                     ret = process_listobj(_spList);
                 }
-                else if (auto _spDict = zeno::safe_dynamic_cast<zeno::DictObject>(spObject)) {
+                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(spObject)) {
                     ret = process_dictobj(_spDict);
                 }
                 else {
@@ -210,12 +210,12 @@ struct GraphicsManager {
                 if (spObject) {
                     //可能是对象没有通过子图的Suboutput连出来
 
-                    if (auto sceneObj = zeno::safe_dynamic_cast<zeno::SceneObject>(spObject)) {
+                    if (auto sceneObj = dynamic_cast<zeno::SceneObject*>(spObject)) {
                         auto _spList = sceneObj->to_structure();
                         _spList->update_key(sceneObj->key());
                         process_listobj(_spList.get(), true);
                     }
-                    else if (auto _spList = zeno::safe_dynamic_cast<zeno::ListObject>(spObject)) {
+                    else if (auto _spList = dynamic_cast<zeno::ListObject*>(spObject)) {
 
                         {//可能有和listobj同名但不是list类型的对象存在，需先清除
                             auto& graphics_ = graphics.m_curr.m_curr;
@@ -232,7 +232,7 @@ struct GraphicsManager {
 
                         process_listobj(_spList);
                     }
-                    else if (auto _spDict = zeno::safe_dynamic_cast<zeno::DictObject>(spObject)) {
+                    else if (auto _spDict = dynamic_cast<zeno::DictObject*>(spObject)) {
                         {//可能有和dictobj同名但不是dict类型的对象存在，需先清除
                             auto& graphics_ = graphics.m_curr.m_curr;
                             std::string dictkey = zsString2Std(_spDict->key());

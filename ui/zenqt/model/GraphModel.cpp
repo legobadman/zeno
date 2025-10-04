@@ -40,7 +40,10 @@ static void triggerView(const QString& nodepath, bool bView) {
     update.reason = bView ? zeno::Update_View : zeno::Update_Remove;
     update.uuidpath_node_objkey = nodepath.toStdString();
     if (spNode) {
-        update.spObject = spNode->get_default_output_object()->clone();
+        auto pObject = spNode->get_default_output_object();
+        if (pObject) {
+            update.spObject = pObject->clone();
+        }
     }
     if (update.reason == zeno::Update_Remove)
     {

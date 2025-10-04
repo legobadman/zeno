@@ -407,6 +407,11 @@ void Zpy_Light::run() {
 
 std::shared_ptr<zeno::PrimitiveObject> Zpy_Light::getLight() const {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    zeno::zany spResObj = spNode->get_default_output_object()->clone();
-    return zeno::safe_uniqueptr_cast<zeno::PrimitiveObject>(std::move(spResObj));
+
+    auto pObject = spNode->get_default_output_object();
+    if (pObject) {
+        zeno::zany spResObj = pObject->clone();
+        return zeno::safe_uniqueptr_cast<zeno::PrimitiveObject>(std::move(spResObj));
+    }
+    return nullptr;
 }

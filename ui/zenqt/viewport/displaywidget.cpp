@@ -479,7 +479,10 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath.toStdString());
     assert(spNode);
     if (spNode) {
-        info.spObject = spNode->get_default_output_object()->clone();
+        auto pObject = spNode->get_default_output_object();
+        if (pObject) {
+            info.spObject = pObject->clone();
+        }
     }
     infos.emplace_back(std::move(info));
     submit(infos);

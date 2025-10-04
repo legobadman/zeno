@@ -12,6 +12,7 @@ namespace zeno
         auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = std::make_unique<GeometryObject>(*m_impl);
         newGeom->m_usrData = this->m_usrData->clone();  //TODO:调整写法
+        newGeom->m_key = this->m_key;
         return newGeom;
     }
 

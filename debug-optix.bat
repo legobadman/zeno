@@ -24,4 +24,4 @@ cmake -B Debug ^
 -DZENO_WITH_PYTHON=ON ^
 -DZENO_FBXSDK=ON ^
 -DZENO_WITH_ImgCV=ON ^
--DFBX_SDK_DIR="C:\zeno-lego\projects\FBX\FBXSDK" ^
+-DFBX_SDK_DIR="C:\zeno\projects\FBX\FBXSDK" ^

@@ -1167,7 +1167,10 @@ void DockContent_View::initConnections()
             auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath);
             assert(spNode);
             if (spNode) {
-                update.spObject = spNode->get_default_output_object()->clone();
+                auto pObject = spNode->get_default_output_object();
+                if (pObject) {
+                    update.spObject = pObject->clone();
+                }
             }
             info.objs.push_back(update);
         }
