@@ -143,12 +143,31 @@ namespace zenoio
             JsonObjScope scope(writer);
             writer.Key("name");
             writer.String(asset.name.c_str());
+
             writer.Key("path");
-            writer.String(asset.path.c_str());
+
+            std::filesystem::path projpath = m_proj_path;
+            std::filesystem::path proj_dir = projpath.parent_path();
+
+            std::filesystem::path assetpath = asset.path;
+            std::filesystem::path asset_dir = assetpath.parent_path();
+
+            if (proj_dir == asset_dir) {
+                auto fn = projpath.filename().u8string();
+                writer.String(fn.c_str());
+            }
+            else {
+                writer.String(asset.path.c_str());
+            }
+
             writer.Key("version");
             std::string version = std::to_string(asset.majorVer) + "." + std::to_string(asset.minorVer);
             writer.String(version.c_str());
         }
+    }
+
+    void CommonWriter::set_proj_path(const std::string& path) {
+        m_proj_path = path;
     }
 
     void CommonWriter::dumpCustomUI(zeno::CustomUI customUi, RAPIDJSON_WRITER& writer)

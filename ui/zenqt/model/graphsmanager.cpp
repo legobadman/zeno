@@ -229,6 +229,7 @@ bool GraphsManager::saveFile(const QString& filePath, APP_SETTINGS)
     zeno::GraphData graph = zeno::getSession().mainGraph->exportGraph();
 
     zenoio::ZenWriter writer;
+    writer.set_proj_path(filePath.toStdString());
     std::string strContent = writer.dumpProgramStr(graph, settings);
     QFile f(filePath);
     zeno::log_debug("saving {} chars to file [{}]", strContent.size(), filePath.toStdString());
