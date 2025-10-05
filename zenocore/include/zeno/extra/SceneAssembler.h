@@ -40,6 +40,7 @@ struct SceneObject : IObject {
 
     zany clone() const override {
         auto newSceneObj = std::make_unique<SceneObject>();
+        newSceneObj->m_key = m_key;
         newSceneObj->scene_tree = scene_tree;
         newSceneObj->node_to_matrix = node_to_matrix;
         newSceneObj->node_to_id = node_to_id;

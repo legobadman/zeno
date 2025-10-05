@@ -2119,10 +2119,10 @@ struct ParseFBX : INode {
         auto geo_list = std::make_unique<zeno::ListObject>();
         for (auto& prim : prims) {
             auto spGeom = create_GeometryObject(prim.get());
-            geo_list->push_back(std::move(spGeom));
 
             auto abc_path = zsString2Std(spGeom->userData()->get_string("abcpath_0"));
             abc_paths.push_back(abc_path);
+            geo_list->push_back(std::move(spGeom));
         }
         set_output("Scene Json List", std::move(scene_info_list));
         set_output("Geometry List", std::move(geo_list));

@@ -308,7 +308,7 @@ struct AlembicPrimList : INode {
                 it = arr.erase(it);
             }
         }
-        new_prims->clear();
+        auto new_prims2 = create_ListObject();
         for (auto& prim : arr) {
             auto _prim = safe_dynamic_cast<PrimitiveObject>(prim.get());
             if (get_input2_bool("flipFrontBack")) {
@@ -323,11 +323,11 @@ struct AlembicPrimList : INode {
             auto abcpath_0 = zsString2Std(_prim->userData()->get_string("abcpath_0"));
             abcpath_0 += "/mesh";
             _prim->userData()->set_string("abcpath_0", stdString2zs(abcpath_0));
-            new_prims->push_back(prim->clone());
+            new_prims2->push_back(prim->clone());
         }
 
         auto new_geoms = create_ListObject();
-        for (auto obj : new_prims->get()) {
+        for (auto obj : new_prims2->get()) {
             auto prim = static_cast<PrimitiveObject*>(obj);
             new_geoms->push_back(create_GeometryObject(prim));
         }

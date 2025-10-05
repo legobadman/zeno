@@ -2283,8 +2283,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
 
 #if 1
     if (m_bypass) {
-        int j;
-        j = 0;
+        set_name(m_name);
     }
     if (m_name == "MergeScene1") {//}&& pContext->curr_iter == 1) {
         set_name(m_name);
