@@ -215,7 +215,9 @@ namespace zeno {
         ZENO_API ~AttrColumn();
         ZENO_API AttrVarOrVec& value() const;
 
-        static std::shared_ptr<AttrColumn> copy_on_write(std::shared_ptr<AttrColumn> pColumn) {
+        static std::shared_ptr<AttrColumn> copy_on_write(
+            const std::shared_ptr<AttrColumn>& pColumn)
+        {
             std::lock_guard lck(pColumn->m_mutex);
             if (pColumn.use_count() > 1) {
                 return std::make_shared<AttrColumn>(*pColumn);
