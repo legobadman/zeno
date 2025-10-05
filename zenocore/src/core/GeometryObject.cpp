@@ -18,6 +18,8 @@
 
 namespace zeno
 {
+    //#define TEST_GEOMETRY_LEAK
+
     template <class T>
     static T get_zfxvar(zfxvariant value) {
         return std::visit([](auto const& val) -> T {
@@ -34,13 +36,17 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type)
         : m_type(type)
     {
-        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
     }
 
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
         : m_type(type)
     {
-        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, nFaces, bInitFaces);
         }
@@ -58,7 +64,9 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
         : m_type(type)
     {
-        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, faces);
         }
@@ -76,6 +84,9 @@ namespace zeno
     GeometryObject::GeometryObject(PrimitiveObject* spPrim)
         : m_type(Topo_IndiceMesh)
     {
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
         m_spTopology = create_indicemesh_topo(spPrim);
         //提取出prim所有的属性
         create_attr(ATTR_POINT, "pos", spPrim->verts.values);
@@ -95,7 +106,9 @@ namespace zeno
         : m_spTopology(rhs.m_spTopology)
         , m_type(rhs.m_type)
     {
-        //zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
         m_vert_attrs = rhs.m_vert_attrs;
         m_point_attrs = rhs.m_point_attrs;
         m_face_attrs = rhs.m_face_attrs;
@@ -108,7 +121,9 @@ namespace zeno
             int j;
             j = 0;
         }
-        //zeno::getSession().m_recorder->m_geom_impls.erase(this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.erase(this);
+#endif
     }
 
     void GeometryObject::_temp_code_regist() {

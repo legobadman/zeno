@@ -26,9 +26,10 @@ namespace zeno
     }
 
     std::unique_ptr<PrimitiveObject> INode::clone_input_PrimitiveObject(const zeno::String& param) {
-        auto rawPtr = clone_input(param).release();
-        if (dynamic_cast<PrimitiveObject*>(rawPtr))
+        auto rawPtr = m_pAdapter->get_input_obj(zsString2Std(param));
+        if (dynamic_cast<PrimitiveObject*>(rawPtr)) {
             return std::unique_ptr<PrimitiveObject>(static_cast<PrimitiveObject*>(clone_input(param).release()));
+        }
         return nullptr;
     }
 
@@ -40,7 +41,7 @@ namespace zeno
     }
 
     std::unique_ptr<GeometryObject_Adapter> INode::clone_input_Geometry(const zeno::String& param) {
-        auto rawPtr = clone_input(param).release();
+        auto rawPtr = m_pAdapter->get_input_obj(zsString2Std(param));
         if (dynamic_cast<GeometryObject_Adapter*>(rawPtr))
             return std::unique_ptr<GeometryObject_Adapter>(static_cast<GeometryObject_Adapter*>(clone_input(param).release()));
         return nullptr;

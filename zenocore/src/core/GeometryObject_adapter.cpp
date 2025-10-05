@@ -8,6 +8,8 @@
 
 namespace zeno
 {
+//#define TEST_GEOMETRY_LEAK
+
     zany GeometryObject_Adapter::clone() const {
         auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = std::make_unique<GeometryObject>(*m_impl);
@@ -19,12 +21,16 @@ namespace zeno
     void GeometryObject_Adapter::Delete() {}
 
     GeometryObject_Adapter::GeometryObject_Adapter() {
-        //zeno::getSession().m_recorder->m_geoms.insert(this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geoms.insert(this);
+#endif
     }
 
     GeometryObject_Adapter::~GeometryObject_Adapter() {
         Delete();
-        //zeno::getSession().m_recorder->m_geoms.erase(this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geoms.erase(this);
+#endif
     }
 
     void GeometryObject_Adapter::inheritAttributes(
