@@ -78,6 +78,7 @@ ZenoMainWindow::ZenoMainWindow(QWidget *parent, Qt::WindowFlags flags, PANEL_TYP
     , m_bOnlyOptix(false)
     , m_pDockManager(nullptr)
     , m_qml_gl(nullptr)
+    , m_status_progressbar(nullptr)
 {
     init(onlyView);
     setContextMenuPolicy(Qt::NoContextMenu);
@@ -124,6 +125,27 @@ void ZenoMainWindow::init(PANEL_TYPE onlyView)
         PythonAIDialog dialog(this);
         dialog.exec();
     });
+
+    initStatusBar();
+}
+
+void ZenoMainWindow::initStatusBar() {
+    m_status_progressbar = new QProgressBar(this);
+    m_status_progressbar->setRange(0, 100);
+    m_status_progressbar->setValue(0);
+    m_status_progressbar->setFixedWidth(128);
+    m_status_progressbar->setTextVisible(false);
+    m_status_progressbar->setStyleSheet("QProgressBar { background:white; }");
+    m_status_progressbar->hide();
+    m_ui->statusbar->addPermanentWidget(m_status_progressbar);
+}
+
+void ZenoMainWindow::updateStatusTip(bool showProgress, const QString& text, float progress) {
+    m_status_progressbar->setVisible(showProgress);
+    m_ui->statusbar->showMessage(text);
+    if (showProgress) {
+        m_status_progressbar->setValue(progress * 100);
+    }
 }
 
 void ZenoMainWindow::initWindowProperty()

@@ -58,6 +58,7 @@ public:
     void statusbarShowMessage(const std::string& text, int timeout = 0) const;
 
     bool propPanelIsFloating(ZenoPropPanel* panel);
+    void updateStatusTip(bool showProgress, const QString& text, float progress = 0.f);
 
     QLineEdit* selected = nullptr;
 
@@ -203,6 +204,7 @@ protected:
 private:
     void init(PANEL_TYPE onlyView);
     void initMenu();
+    void initStatusBar();
     void initDocks(PANEL_TYPE onlyView);
     void initAllDockWidgets();
     void initWindowProperty();
@@ -239,6 +241,8 @@ private:
     int m_nResizeTimes;
     bool m_bOnlyOptix;          //isolate optix window.
     QScopedPointer<Ui::MainWindow> m_ui;
+
+    QProgressBar* m_status_progressbar;
 
     std::unique_ptr<QLocalSocket> optixClientSocket;
     bool m_bOptixProcRecording = false;

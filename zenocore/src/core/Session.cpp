@@ -670,9 +670,12 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
     zeno::scope_exit sp([&]() { 
         m_bReentrance = false;
         m_bInterrupted = false;
+        globalState->clearState();
     });
 
     globalError->clearState();
+    float total_time = mainGraph->statistic_cpu_used();
+    globalState->init_total_runtime(total_time);
 
     bool bFailed = false;
     try

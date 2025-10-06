@@ -411,7 +411,11 @@ bool NodeImpl::is_nocache() const {
 void NodeImpl::reportStatus(bool bDirty, NodeRunStatus status) {
     m_status = status;
     m_dirty = bDirty;
-    zeno::getSession().reportNodeStatus(m_uuidPath, bDirty, status);
+    auto& sess = zeno::getSession();
+    if (status == Node_RunSucceed) {
+        sess.globalState->update_consume_time(this->time());
+    }
+    sess.reportNodeStatus(m_uuidPath, bDirty, status);
 }
 
 void NodeImpl::mark_previous_ref_dirty() {
@@ -2199,6 +2203,11 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
 
 void NodeImpl::doOnlyApply() {
     apply();
+}
+
+float NodeImpl::time() const {
+    if (m_pNode) return m_pNode->time();
+    return 0;
 }
 
 void NodeImpl::clearCalcResults() {

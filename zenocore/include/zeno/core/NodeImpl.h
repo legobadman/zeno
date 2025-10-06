@@ -65,6 +65,7 @@ namespace zeno
         virtual void mark_clean();
         virtual void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
         virtual void clearCalcResults();
+        virtual float time() const;
 
         //BEGIN new api
         void init(const NodeData& dat);

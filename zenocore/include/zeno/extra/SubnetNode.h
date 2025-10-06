@@ -14,6 +14,7 @@ struct ZENO_API SubnetNode : NodeImpl {
     ~SubnetNode();
 
     void apply() override;
+    float time() const;
 
     void initParams(const NodeData& dat) override;
     params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false) override;

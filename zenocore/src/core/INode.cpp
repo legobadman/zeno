@@ -144,6 +144,10 @@ namespace zeno
 
     }
 
+    float INode::time() const {
+        return 1.0f;
+    }
+
     bool INode::set_output(const zeno::String& param, zany&& pObject) {
         return m_pAdapter->set_output(zsString2Std(param), std::move(pObject));
     }

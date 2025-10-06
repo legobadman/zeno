@@ -98,6 +98,22 @@ void CalculationMgr::onNodeStatusReported(QString qsPath, QmlNodeRunStatus::Valu
             }
         }
     }
+    if (state == QmlNodeRunStatus::RunSucceed) {
+        auto pNode = zeno::getSession().getNodeByUuidPath(qsPath.toStdString());
+        ZASSERT_EXIT(pNode);
+        const QString& nodePath = QString::fromStdString(pNode->get_path());
+        auto& pGlobalState = zeno::getSession().globalState;
+        float total = pGlobalState->get_total_runtime();
+        float consumed = pGlobalState->get_consume_time();
+        if (total > 0) {
+            if (consumed < total) {
+                zenoApp->getMainWindow()->updateStatusTip(true, nodePath, consumed / total);
+            }
+            else if (consumed == total) {
+                zenoApp->getMainWindow()->updateStatusTip(false, "Calcation Finish");
+            }
+        }
+    }
 }
 
 void CalculationMgr::onCalcFinished(bool bSucceed, QString nodePath, QString msg, const zeno::render_reload_info& info)
@@ -112,6 +128,10 @@ void CalculationMgr::onCalcFinished(bool bSucceed, QString nodePath, QString msg
         zeno::log_error("reportStatus: error in {}, message {}", nodePath.toStdString(), msg.toStdString());
     }
     setRunStatus(RunStatus::NoRun);
+    if (bSucceed)
+        zenoApp->getMainWindow()->updateStatusTip(false, "Calcation Finish");
+    else
+        zenoApp->getMainWindow()->updateStatusTip(false, "Calcation Fail");
     emit calcFinished(bSucceed, nodePath, msg, info);  //会发送到：DisplayWidget::onCalcFinished
 }
 

@@ -1038,6 +1038,19 @@ std::map<std::string, NodeImpl*> Graph::getNodes() const {
     return nodes;
 }
 
+float Graph::statistic_cpu_used() const {
+    float total_time = 0;
+    for (auto& [uuid, node] : m_nodes) {
+        //dirty, foreach的情况
+        NodeRunStatus status = node->get_run_status();
+        if (status == Node_DirtyReadyToRun) {
+            float time = node->time();
+            total_time += time;
+        }
+    }
+    return total_time;
+}
+
 std::set<std::string> Graph::get_viewnodes() const {
     return m_viewnodes;
 }

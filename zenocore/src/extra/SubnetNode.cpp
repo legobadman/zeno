@@ -320,6 +320,13 @@ void SubnetNode::mark_subnetdirty(bool bOn)
     }
 }
 
+float SubnetNode::time() const {
+    if (m_subgraph)
+        return m_subgraph->statistic_cpu_used();
+    else
+        return 0;
+}
+
 void SubnetNode::apply() {
     for (auto const &subinput_node: m_subgraph->getSubInputs()) {
         auto subinput = m_subgraph->getNode(subinput_node);

@@ -51,6 +51,8 @@ ZENO_API void GlobalState::clearState() {
     has_frame_completed = false;
     has_substep_executed = false;
     time_step_integrated = false;
+    total_time = 0.f;
+    time_consumed = 0.f;
     sessionid++;
     log_debug("entering session id={}", sessionid);
 }
@@ -85,6 +87,25 @@ ZENO_API int GlobalState::getEndFrame() const
 ZENO_API bool GlobalState::is_working() const {
     std::lock_guard lk(mtx);
     return m_working;
+}
+
+void GlobalState::init_total_runtime(float t) {
+    total_time = t;
+}
+
+void GlobalState::update_consume_time(float t) {
+    std::lock_guard lk(mtx);
+    time_consumed += t;
+}
+
+float GlobalState::get_total_runtime() const {
+    std::lock_guard lk(mtx);
+    return total_time;
+}
+
+float GlobalState::get_consume_time() const {
+    std::lock_guard lk(mtx);
+    return time_consumed;
 }
 
 ZENO_API void GlobalState::set_working(bool working) {

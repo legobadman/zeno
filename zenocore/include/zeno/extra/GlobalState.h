@@ -65,11 +65,17 @@ struct GlobalState {
     ZENO_API void setCalcObjStatus(CalcObjStatus status);
     ZENO_API void set_working(bool working);
     ZENO_API bool is_working() const;
+    ZENO_API void init_total_runtime(float total_time);
+    ZENO_API void update_consume_time(float t);
+    ZENO_API float get_total_runtime() const;
+    ZENO_API float get_consume_time() const;
 
 private:
     int frameid = 0;
     bool m_working = false;
     CalcObjStatus m_status = Finished;
+    float total_time = 0.f;
+    float time_consumed = 0.f;
     mutable std::mutex mtx;
 };
 

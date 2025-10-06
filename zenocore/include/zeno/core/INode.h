@@ -20,6 +20,7 @@ namespace zeno
         virtual zeno::String uuid() const;
         virtual ~INode() = default;     //暂时不考虑abi问题
         virtual void clearCalcResults();
+        virtual float time() const;
 
         IObject* get_input(const zeno::String& param);
         zany clone_input(const zeno::String& param);
