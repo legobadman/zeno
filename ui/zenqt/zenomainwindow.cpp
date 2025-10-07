@@ -146,7 +146,7 @@ void ZenoMainWindow::updateStatusTip(bool showProgress, const QString& text, flo
     if (showProgress) {
         m_status_progressbar->setValue(progress * 100);
     }
-    zenoApp->processEvents(QEventLoop::AllEvents);
+    //zenoApp->processEvents(QEventLoop::AllEvents);
 }
 
 void ZenoMainWindow::initWindowProperty()

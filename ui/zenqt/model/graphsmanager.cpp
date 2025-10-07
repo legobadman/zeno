@@ -193,7 +193,8 @@ GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE&
 
     zenoApp->getMainWindow()->updateStatusTip(false, "parse finish, now importing");
 
-    zeno::getSession().registerIOCallback([&](const std::string& info, int inc) {
+    if (false) {
+        zeno::getSession().registerIOCallback([&](const std::string& info, int inc) {
         auto& gState = zeno::getSession().globalState;
         gState->inc_io_processed(inc);
         int io_processed = gState->get_io_processed();
@@ -211,6 +212,7 @@ GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE&
         }
         zenoApp->getMainWindow()->updateStatusTip(bShowProgress, text, value);
     });
+    }
 
     m_timerInfo = result.timeline;
     createGraphs(result);
