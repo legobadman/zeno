@@ -99,6 +99,7 @@ struct Session {
     ZENO_API void updateFrameRange(int start, int end);
     ZENO_API void registerRunTrigger(std::function<void()> func);
     ZENO_API void registerNodeCallback(F_NodeStatus func);
+    ZENO_API void registerIOCallback(F_IOProgress func);
     ZENO_API std::shared_ptr<Graph> getGraphByPath(const std::string& path);
     ZENO_API void registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip);
     ZENO_API bool getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip);
@@ -107,6 +108,7 @@ struct Session {
     ZENO_API void asyncRunPython(const std::string& code);
     ZENO_API void* hEventOfPyFinish();
     void reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status);
+    void reportIOProgress(const std::string& info, int inc);
 
 private:
     int m_apiLevel = 0;
@@ -131,6 +133,7 @@ private:
 
     std::function<void()> m_callbackRunTrigger;
     F_NodeStatus m_funcNodeStatus;
+    F_IOProgress m_funcIOCallback;
 };
 
 ZENO_API Session &getSession();

@@ -282,6 +282,7 @@ namespace zeno {
     using ObjPath = std::string;
 
     typedef std::function<void(ObjPath, bool, NodeRunStatus)> F_NodeStatus;
+    typedef std::function<void(std::string, int)> F_IOProgress;
 
     enum render_reload_policy {
         Reload_Invalidate,      //无效的同步

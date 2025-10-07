@@ -59,6 +59,9 @@ namespace zenoio
 
         zeno::CustomUI _parseCustomUI(const std::string& id, const rapidjson::Value& customuiObj, zeno::LinksData& links);
         zeno::CustomUI _parseCustomUI(const rapidjson::Value& customuiObj);
+
+    private:
+        void _static_nodes(const rapidjson::Document& doc);
     };
 }
 

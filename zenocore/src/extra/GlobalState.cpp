@@ -53,6 +53,7 @@ ZENO_API void GlobalState::clearState() {
     time_step_integrated = false;
     total_time = 0.f;
     time_consumed = 0.f;
+    processed_io_units = 0.f;
     sessionid++;
     log_debug("entering session id={}", sessionid);
 }
@@ -106,6 +107,15 @@ float GlobalState::get_total_runtime() const {
 float GlobalState::get_consume_time() const {
     std::lock_guard lk(mtx);
     return time_consumed;
+}
+
+
+void GlobalState::inc_io_processed(int inc) {
+    processed_io_units += inc;
+}
+
+int GlobalState::get_io_processed() const {
+    return processed_io_units;
 }
 
 ZENO_API void GlobalState::set_working(bool working) {

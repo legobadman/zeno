@@ -570,6 +570,10 @@ ZENO_API void Session::registerNodeCallback(F_NodeStatus func)
     m_funcNodeStatus = func;
 }
 
+void Session::registerIOCallback(F_IOProgress func) {
+    m_funcIOCallback = func;
+}
+
 ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path) {
     //对于assets
     //可能的形式包括： /ABC/subnet1/subnet2   ABC   /ABC
@@ -586,6 +590,12 @@ ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path)
         return spGraph->getGraphByPath(path);
     }
     return nullptr;
+}
+
+void Session::reportIOProgress(const std::string& info, int inc) {
+    if (m_funcIOCallback) {
+        m_funcIOCallback(info, inc);
+    }
 }
 
 void Session::reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status)

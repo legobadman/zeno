@@ -163,18 +163,20 @@ GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE&
     zenoio::ZSG_PARSE_RESULT result;
 
     result.path = fn.toStdWString();
+    zeno::getSession().globalState->clearState();
     zeno::getSession().init_project_path(result.path);
     zeno::ZSG_VERSION ver = zenoio::getVersion(fn.toStdWString());
 
     m_bIniting = true;
     zeno::scope_exit sp([=] { m_bIniting = false; });
-    if (ver == zeno::VER_2_5) {
+    /*if (ver == zeno::VER_2_5) {
         zenoio::Zsg2Reader reader;
         result = reader.openFile(result.path);
     }
-    else if (ver == zeno::VER_3) {
+    else */if (ver == zeno::VER_3) {
         zenoio::ZenReader reader;
         result = reader.openFile(result.path);
+        result.num_of_nodes = reader.numOfNodes();
     }
     else {
         m_version = zeno::UNKNOWN_VER;
@@ -188,6 +190,27 @@ GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE&
     }
 
     m_version = ver;
+
+    zenoApp->getMainWindow()->updateStatusTip(false, "parse finish, now importing");
+
+    zeno::getSession().registerIOCallback([&](const std::string& info, int inc) {
+        auto& gState = zeno::getSession().globalState;
+        gState->inc_io_processed(inc);
+        int io_processed = gState->get_io_processed();
+        float value = 0;
+        bool bShowProgress = false;
+        QString text;
+        if (io_processed >= result.num_of_nodes) {
+            value = 1.0;
+            text = "Open Project Finish";
+        }
+        else {
+            value = (float)io_processed / result.num_of_nodes;
+            text = QString::fromStdString(info);
+            bShowProgress = true;
+        }
+        zenoApp->getMainWindow()->updateStatusTip(bShowProgress, text, value);
+    });
 
     m_timerInfo = result.timeline;
     createGraphs(result);

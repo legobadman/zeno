@@ -50,12 +50,28 @@ namespace zenoio
         return true;
     }
 
+    static int _static_graph(const rapidjson::Value& graph) {
+        const auto& nodes = graph["nodes"];
+        int count = 0;
+        for (const auto& node : nodes.GetObject()) {
+            const rapidjson::Value& nodeObj = node.value;
+            count++;
+        }
+        return count;
+    }
+
+    void ZenReader::_static_nodes(const rapidjson::Document& doc) {
+        m_num_of_nodes = _static_graph(doc["main"]);
+
+    }
+
     bool ZenReader::_parseMainGraph(const rapidjson::Document& doc, zeno::GraphData& ret)
     {
         zeno::AssetsData assets;        //todo
         if (doc.HasMember("main"))
         {
             const rapidjson::Value& mainGraph = doc["main"];
+            //m_num_of_nodes = _static_graph(mainGraph);
             if (_parseGraph(mainGraph, assets, ret))
             {
                 ret.name = "main";
@@ -93,6 +109,8 @@ namespace zenoio
         zeno::ReferencesData& refs)
     {
         zeno::NodeData retNode;
+
+        m_num_of_nodes++;
 
         if (nodeid == "selfinc") {
             int j;
@@ -275,6 +293,7 @@ namespace zenoio
                         zeno::ZenoAsset zasset = reader.getParsedAsset();
                         zasset.info.path = zdaPath;
                         assets->createAsset(zasset);
+                        m_num_of_nodes += reader.numOfNodes();
                     }
                 }
             }

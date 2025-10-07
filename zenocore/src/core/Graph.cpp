@@ -313,6 +313,7 @@ void Graph::init(const GraphData& graph) {
         auto spNode = createNode(node.cls, name, bAssets, node.uipos, true, bAssets ? &bAssetLock : nullptr);
         spNode->init(node);
         initSpecialNode(spNode, node);
+        sess.reportIOProgress(name, 1);
     }
     //import edges
     for (const auto& link : graph.links) {
