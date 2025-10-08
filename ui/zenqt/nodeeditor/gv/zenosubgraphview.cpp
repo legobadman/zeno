@@ -723,6 +723,9 @@ void LayerPathWidget::setPath(const QStringList& path)
     if (m_path == path)
         return;
 
+    auto graphsMgr = zenoApp->graphsManager();
+    graphsMgr->setCurrentGraphPath(path.join('/'));
+
     m_path = path;
     QHBoxLayout* pLayout = qobject_cast<QHBoxLayout*>(this->layout());
     while (pLayout->count() > 0)

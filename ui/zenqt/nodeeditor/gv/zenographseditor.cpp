@@ -691,6 +691,8 @@ void ZenoGraphsEditor::activateTab(const QStringList& subgpath, const QString& f
     int idx = tabIndexOfName(showName);
     auto graphsMgm = zenoApp->graphsManager();
     GraphModel* pGraphM = graphsMgm->getGraph(subgpath);
+    if (!pGraphM)
+        return;
 
     QString resPath;
     if (showName != "main") {

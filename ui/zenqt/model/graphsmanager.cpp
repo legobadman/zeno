@@ -132,6 +132,7 @@ GraphModel* GraphsManager::getGraph(const QStringList& objPath) const
     if (objPath[0] == "main") {
         QStringList _path = objPath;
         _path.removeFirst();
+        if (!m_main) return nullptr;
         return m_main->getGraphByPath(_path);
     }
     else {
@@ -287,6 +288,8 @@ GraphsTreeModel* GraphsManager::newFile()
     }
     m_main = new GraphModel("/main", false, m_treemodel, nullptr, this);
     m_treemodel->init(m_main);
+
+    m_graphPath = "/main";
 
     //TODO: assets may be kept.
     initRootObjects();
