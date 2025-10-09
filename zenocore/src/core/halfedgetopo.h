@@ -4,35 +4,25 @@
 
 namespace zeno
 {
-    struct HEdge;
+    struct HF_Edge;
     struct HF_Face;
     struct HF_Point;
 
-    struct HEdge {
-        std::string id;
-        HEdge* pair = 0, * next = 0;
-        size_t point = -1;
-        size_t point_from = -1;
-        size_t face = -1;
-
-        size_t find_from() {
-            if (point_from != -1) return point_from;
-            if (pair) return pair->point;
-            HEdge* h = this;
-            while (h->next != this) {
-                h = h->next;
-            }
-            return h->point;
-        }
+    struct HF_Edge {
+        //std::string id;
+        HF_Edge* pair = 0, *next = 0;
+        //size_t point = -1;
+        HF_Point* point_from = 0;
+        HF_Face* face = 0;
     };
 
     struct HF_Face {
-        int start_linearIdx;  //the vertex index of start vertex.
-        HEdge* h = 0;      //应该是起始边
+        //int start_linearIdx;  //the vertex index of start vertex.
+        HF_Edge* h = 0;      //one h-edge from this face
     };
 
     struct HF_Point {
-        std::set<HEdge*> edges;    //all h-edge starting from this point.
+        HF_Edge* edge_from_thispt;    //one h-edge starting from this point.
     };
 
 
@@ -46,13 +36,15 @@ namespace zeno
         GeomTopoType type() const override;
         std::shared_ptr<IGeomTopology> clone() override;
 
+        void build_indice();
+
         void initFromPrim(PrimitiveObject* prim);
         void toPrimitive(PrimitiveObject* spPrim);
 
-        HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
-        std::tuple<HF_Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
+        HF_Edge* checkHEdge(size_t fromPoint, size_t toPoint);
+        std::tuple<HF_Point*, HF_Edge*, HF_Edge*> getPrev(HF_Edge* outEdge);
         size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
-        size_t getPointTo(HEdge* hedge) const;
+        size_t getPointTo(HF_Edge* hedge) const;
 
         std::vector<vec3i> tri_indice() const override;
         std::vector<std::vector<int>> face_indice() const override;
@@ -103,9 +95,39 @@ namespace zeno
         void update_linear_vertex();
 
     private:
-        std::vector<std::shared_ptr<HF_Point>> m_points;
-        std::vector<std::shared_ptr<HF_Face>> m_faces;
-        std::unordered_map<std::string, std::shared_ptr<HEdge>> m_hEdges;
+        std::vector<HF_Edge*> find_alledges_from(int fromPoint);
+        void clear_indice_cache() {
+            m_temp_cache_point2idx.clear();
+            m_temp_cache_edge2idx.clear();
+            m_temp_cache_face2idx.clear();
+        }
+
+        int idx_of_point(HF_Point* point) const {
+            if (!m_temp_cache_point2idx.empty())
+                return m_temp_cache_point2idx.at(point);
+            return std::find(m_points.begin(), m_points.end(), point) - m_points.begin();
+        }
+
+        int idx_of_face(HF_Face* face) const {
+            if (!m_temp_cache_face2idx.empty())
+                return m_temp_cache_face2idx.at(face);
+            return std::find(m_faces.begin(), m_faces.end(), face) - m_faces.begin();
+        }
+
+        int idx_of_edge(HF_Edge* edge) const {
+            if (!m_temp_cache_edge2idx.empty())
+                return m_temp_cache_edge2idx.at(edge);
+            return std::find(m_hEdges.begin(), m_hEdges.end(), edge) - m_hEdges.begin();
+        }
+
+        std::vector<HF_Point*> m_points;
+        std::vector<HF_Face*> m_faces;
+        std::vector<HF_Edge*> m_hEdges;
         bool m_bTriangle = true;    //所有面都是三角面
+
+        //临时缓存索引，在修改拓扑以后自动失效（清空）
+        std::map<HF_Point*, int> m_temp_cache_point2idx;
+        std::map<HF_Edge*, int>  m_temp_cache_edge2idx;
+        std::map<HF_Face*, int>  m_temp_cache_face2idx;
     };
 }
