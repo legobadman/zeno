@@ -117,6 +117,7 @@ namespace zeno {
             bConvertHalfEdge = hasGeomTopoQueryModify(root);
             if (bConvertHalfEdge) {
                 pCtx->spObject = spGeom->toHalfEdgeTopo();
+                spGeom = static_cast<GeometryObject_Adapter*>(pCtx->spObject.get());
             }
         }
 

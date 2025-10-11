@@ -306,7 +306,7 @@ namespace zeno
         zeno::GeomTopoType type = m_spTopology->type();
         if (zeno::Topo_IndiceMesh == type) {
             auto pGeom = std::make_unique<GeometryObject>(Topo_HalfEdge);
-            pGeom->m_spTopology = create_halfedge_by_indicemesh(m_spTopology);
+            pGeom->m_spTopology = create_halfedge_by_indicemesh(npoints(), m_spTopology);
             pGeom->m_point_attrs = m_point_attrs;
             pGeom->m_vert_attrs = m_vert_attrs;
             pGeom->m_face_attrs = m_face_attrs;
