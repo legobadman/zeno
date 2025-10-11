@@ -128,7 +128,10 @@ void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& i
     }
 
     for (auto& task : tasks) {
-        infos.objs.push_back(task.get());
+        const zeno::render_update_info& info = task.get();
+        if (!info.uuidpath_node_objkey.empty()) {
+            infos.objs.push_back(info);
+        }
     }
     infos.policy = Reload_Calculation;
 }

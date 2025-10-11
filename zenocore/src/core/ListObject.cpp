@@ -13,6 +13,7 @@ namespace zeno
 
     ListObject::ListObject(const ListObject& rhs) {
         m_impl = std::make_unique<ListObject_impl>(*rhs.m_impl);
+        update_key(rhs.key());
     }
 
     zany ListObject::clone() const {

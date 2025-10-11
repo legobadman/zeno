@@ -1139,6 +1139,26 @@ ZENDEFNODE( MakeSceneNode, {
     },
 });
 
+
+struct TestSceneNodeCopy : zeno::INode {
+    void apply() override {
+        set_output("scene", clone_input("scene"));
+    }
+};
+
+ZENDEFNODE(TestSceneNodeCopy, {
+    {
+        {gParamType_Scene, "scene"}
+    },
+    {
+        {gParamType_Scene, "scene"}
+    },
+    {},
+    {
+        "Scene",
+    },
+});
+
 struct ObjectToXforms : zeno::INode {
     void apply() override {
         std::vector<glm::mat4> xforms;
