@@ -1,4 +1,4 @@
-#include <zeno/core/Session.h>
+﻿#include <zeno/core/Session.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/core/Assets.h>
@@ -509,6 +509,11 @@ ZENO_API std::shared_ptr<Graph> Session::createGraph(const std::string& name) {
 
 ZENO_API NodeImpl* Session::getNodeByUuidPath(std::string const& uuid_path) {
     return mainGraph->getNodeByUuidPath(uuid_path);
+}
+
+ZENO_API NodeImpl* Session::getNodeByPath(std::string const& uuid_path)
+{
+    return mainGraph->getNodeByPath(uuid_path);
 }
 
 ZENO_API void Session::resetMainGraph() {

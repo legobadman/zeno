@@ -1,4 +1,4 @@
-#include "GraphModel.h"
+﻿#include "GraphModel.h"
 #include "uicommon.h"
 #include "zassert.h"
 #include "variantptr.h"
@@ -691,6 +691,16 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
             else {
                 return QVariant();
             }
+        }
+        case QtRole::ROLE_OUTPUT_VIEWOBJ:
+        {
+            auto spNode = item->m_wpNode;
+            ZASSERT_EXIT(spNode, QVariant());
+            auto cloneObj = spNode->clone_default_output_object();
+            if (cloneObj) {
+                return QVariant::fromValue(cloneObj.release());
+            }
+            return QVariant();
         }
         case QtRole::ROLE_NODE_ISVIEW:
         {

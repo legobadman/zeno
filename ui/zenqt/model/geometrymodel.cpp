@@ -1,5 +1,6 @@
-#include "geometrymodel.h"
+﻿#include "geometrymodel.h"
 #include <zeno/types/GeometryObject.h>
+#include <zeno/extra/SceneAssembler.h>
 
 
 void addCol(zeno::GeometryObject* pObject, zeno::GeoAttrGroup group, QMap<int, AttributeInfo>& colMapping, std::string name, int& nCol) {
@@ -488,17 +489,18 @@ QVariant GeomUserDataModel::data(const QModelIndex& index, int role) const {
 
     if (role == Qt::DisplayRole) {
         auto it = std::next(pUserData->begin(), index.row());
-        auto currentData = userDataToString(it->second);
-        if (currentData.isValid()) {
-            return currentData;
-        }
-        else {
-            return QString("Invalid data");
+        if (index.column() == 0) {
+            return QString::fromStdString(it->first);
+        } else if (index.column() == 1) {
+            auto currentData = userDataToString(it->second);
+            if (currentData.isValid()) {
+                return currentData;
+            } else {
+                return QString("Invalid data");
+            }
         }
     }
-    else {
-        return QVariant();
-    }
+    return QVariant();
 }
 
 int GeomUserDataModel::rowCount(const QModelIndex& parent) const
@@ -509,7 +511,7 @@ int GeomUserDataModel::rowCount(const QModelIndex& parent) const
 }
 
 int GeomUserDataModel::columnCount(const QModelIndex& parent) const {
-    return 1;
+    return 2;
 }
 
 zeno::UserData* GeomUserDataModel::userData() const {
@@ -564,18 +566,13 @@ QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const {
 QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (role == Qt::DisplayRole) {
         if (orientation == Qt::Horizontal) {
-            return "Value";
-        }
-        else {
-            auto pUserData = userData();
-            if (pUserData && pUserData->size() != 0)
-            {
-                auto it = std::next(pUserData->begin(), section);
-                if (it == pUserData->end()) {
-                    return QVariant();
-                }
-                return QString::fromStdString(it->first);
+            if (section == 0) {
+                return "Key";
+            } else if (section == 1) {
+                return "Value";
             }
+        } else {
+            return QString::number(section);
         }
     }
     return QAbstractTableModel::headerData(section, orientation, role);
@@ -584,5 +581,222 @@ QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation,
 void GeomUserDataModel::setGeoObject(zeno::GeometryObject_Adapter* pObject) {
     beginResetModel();
     m_object = pObject;
+    endResetModel();
+}
+
+// SceneObjectListModel实现
+SceneObjectListModel::SceneObjectListModel(DataType type, QObject* parent)
+    : QAbstractListModel(parent)
+    , m_type(type)
+{
+}
+
+QVariant SceneObjectListModel::data(const QModelIndex& index, int role) const
+{
+    if (!index.isValid() || !m_object) {
+        return QVariant();
+    }
+
+    int row = index.row();
+
+    if (role == Qt::DisplayRole) {
+        if (row >= 0 && row < m_keys.size()) {
+            QString key = QString::fromStdString(m_keys[row]);
+
+            if (m_type == SceneTree) {
+                // 显示场景树节点信息
+                auto it = m_object->scene_tree.find(m_keys[row]);
+                if (it != m_object->scene_tree.end()) {
+                    const auto& node = it->second;
+                    QString info = QString("%1: %2 (meshes: %3, children: %4)")
+                        .arg(row)
+                        .arg(key)
+                        .arg(node.meshes.size())
+                        .arg(node.children.size());
+                    return info;
+                }
+            } else if (m_type == GeometryList) {
+                // 显示几何对象信息
+                auto it = m_object->geom_list.find(m_keys[row]);
+                if (it != m_object->geom_list.end()) {
+                    const auto& geom = it->second;
+                    return QString("%1: %2").arg(row).arg(key);
+                }
+            } else if (m_type == NodeToMatrix) {
+                // 显示节点名称和矩阵大小
+                auto it = m_object->node_to_matrix.find(m_keys[row]);
+                if (it != m_object->node_to_matrix.end()) {
+                    const auto& matrices = it->second;
+                    QString info = QString("%1: %2 (matrix: %3)")
+                        .arg(row)
+                        .arg(key)
+                        .arg(matrices.size());
+                    return info;
+                }
+            }
+        }
+    }
+
+    return QVariant();
+}
+
+int SceneObjectListModel::rowCount(const QModelIndex& parent) const
+{
+    if (parent.isValid() || !m_object) {
+        return 0;
+    }
+
+    return m_keys.size();
+}
+
+QVariant SceneObjectListModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
+        if (m_type == SceneTree) {
+            return "Scene Tree Nodes";
+        } else if (m_type == GeometryList) {
+            return "Geometry Objects";
+        } else if (m_type == NodeToMatrix) {
+            return "Node To Matrix Keys";
+        }
+    }
+    return QVariant();
+}
+
+void SceneObjectListModel::setSceneObject(zeno::SceneObject* pObject)
+{
+    beginResetModel();
+    m_object = pObject;
+    m_keys.clear();
+
+    if (pObject) {
+        if (m_type == SceneTree) {
+            for (const auto& pair : pObject->scene_tree) {
+                m_keys.push_back(pair.first);
+            }
+        } else if (m_type == GeometryList) {
+            for (const auto& pair : pObject->geom_list) {
+                m_keys.push_back(pair.first);
+            }
+        } else if (m_type == NodeToMatrix) {
+            for (const auto& pair : pObject->node_to_matrix) {
+                m_keys.push_back(pair.first);
+            }
+        }
+    }
+
+    endResetModel();
+}
+
+std::string SceneObjectListModel::getKeyAt(int index) const
+{
+    if (index >= 0 && index < m_keys.size()) {
+        return m_keys[index];
+    }
+    return "";
+}
+
+zeno::SceneTreeNode SceneObjectListModel::getTreeNodeAt(int index) const
+{
+    if (m_object && index >= 0 && index < m_keys.size()) {
+        auto it = m_object->scene_tree.find(m_keys[index]);
+        if (it != m_object->scene_tree.end()) {
+            return it->second;
+        }
+    }
+    return zeno::SceneTreeNode();
+}
+
+zeno::SceneObject* SceneObjectListModel::getSceneObject()
+{
+    return m_object;
+}
+
+// SceneObjectTableModel实现
+SceneObjectTableModel::SceneObjectTableModel(DataType type, QObject* parent)
+    : QAbstractTableModel(parent)
+    , m_type(type)
+{
+}
+
+QVariant SceneObjectTableModel::data(const QModelIndex& index, int role) const
+{
+    if (!index.isValid() || !m_object) {
+        return QVariant();
+    }
+
+    int row = index.row();
+    int col = index.column();
+
+    if (role == Qt::DisplayRole) {
+        if (row >= 0 && row < m_keys.size()) {
+            QString key = QString::fromStdString(m_keys[row]);
+
+            if (m_type == NodeToId) {
+                auto it = m_object->node_to_id.find(m_keys[row]);
+                if (it != m_object->node_to_id.end()) {
+                    const auto& ids = it->second;
+                    if (col == 0) {
+                        // 第一列：节点名称
+                        return key;
+                    } else if (col == 1) {
+                        // 第二列：将std::vector<int>拼接为string
+                        QStringList idStrings;
+                        for (int id : ids) {
+                            idStrings.append(QString::number(id));
+                        }
+                        return idStrings.join(", ");
+                    }
+                }
+            }
+        }
+    }
+
+    return QVariant();
+}
+
+int SceneObjectTableModel::rowCount(const QModelIndex& parent) const
+{
+    if (parent.isValid() || !m_object) {
+        return 0;
+    }
+
+    return m_keys.size();
+}
+
+int SceneObjectTableModel::columnCount(const QModelIndex& parent) const
+{
+    if (parent.isValid()) {
+        return 0;
+    }
+
+    return 2; // 节点名称、ID列表
+}
+
+QVariant SceneObjectTableModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
+        switch (section) {
+        case 0: return "Node Name";
+        case 1: return "ID List";
+        }
+    }
+    return QVariant();
+}
+
+void SceneObjectTableModel::setSceneObject(zeno::SceneObject* pObject)
+{
+    beginResetModel();
+    m_object = pObject;
+    m_keys.clear();
+
+    if (pObject) {
+        if (m_type == NodeToId) {
+            for (const auto& pair : pObject->node_to_id) {
+                m_keys.push_back(pair.first);
+            }
+        }
+    }
+
     endResetModel();
 }

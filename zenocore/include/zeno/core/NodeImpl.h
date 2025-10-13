@@ -239,7 +239,8 @@ namespace zeno
         IObject* get_input_obj(std::string const& id) const;
         IObject* get_output_obj(std::string const& sock_name);
         std::vector<zany> get_output_objs();
-        virtual IObject* get_default_output_object();
+        virtual IObject* get_default_output_object();   //thread unsafe
+        zany clone_default_output_object();
         void reportStatus(bool bDirty, NodeRunStatus status);
 
         zany takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);

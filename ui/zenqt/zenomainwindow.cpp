@@ -1339,6 +1339,23 @@ ZenoGraphsEditor* ZenoMainWindow::getAnyEditor() const
     return pEditor;
 }
 
+QVector<ZGeometrySpreadsheet*> ZenoMainWindow::getGeoSpreadSheet() const
+{
+    QVector<ZGeometrySpreadsheet*> spreadsheets;
+    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
+    {
+        if (dock->isVisible())
+        {
+            QWidget* wid = dock->widget();
+            if (ZGeometrySpreadsheet* spreadsheet = qobject_cast<ZGeometrySpreadsheet*>(wid))
+            {
+                spreadsheets.append(spreadsheet);
+            }
+        }
+    }
+    return spreadsheets;
+}
+
 void ZenoMainWindow::onRunFinished()
 {
 #if 0
@@ -2318,9 +2335,10 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                 {
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
-                    auto pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::IObject*>();
-                    auto spGeom = dynamic_cast<zeno::GeometryObject_Adapter*>(pObject);
-                    panel->setGeometry(subgraph, idx, spGeom);
+                    std::string objPath = idx.data(QtRole::ROLE_OBJPATH).toString().toStdString();
+                    if (auto spNode = zeno::getSession().getNodeByPath(objPath)) {
+                        panel->setGeometry(subgraph, idx, spNode->clone_default_output_object().release());
+                    }
                 }
             }
             else if (DockContent_Editor* editor = qobject_cast<DockContent_Editor*>(wid)) {

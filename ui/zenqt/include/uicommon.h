@@ -238,6 +238,7 @@ public:
         ROLE_NODE_RUN_STATE,
         ROLE_NODEDATA,
         ROLE_OUTPUT_OBJS,
+        ROLE_OUTPUT_VIEWOBJ,
 
         ROLE_NODEIDX,
         ROLE_LINK_FROM_IDX,

@@ -3970,6 +3970,14 @@ IObject* NodeImpl::get_default_output_object() {
     return m_outputObjs.begin()->second.spObject.get();
 }
 
+zany NodeImpl::clone_default_output_object() {
+    std::lock_guard lock(m_mutex);
+    if (IObject* default_output_obj = get_default_output_object()) {
+        return default_output_obj->clone();
+    }
+    return nullptr;
+}
+
 IObject* NodeImpl::get_output_obj(std::string const& param) {
     auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + m_name + "`");
     return spParam.spObject.get();

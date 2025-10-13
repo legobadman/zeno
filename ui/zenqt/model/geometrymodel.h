@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __GEOMETRY_MODEL_H__
 #define __GEOMETRY_MODEL_H__
@@ -9,7 +9,13 @@
 #include <vector>
 #include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
+#include <QAbstractListModel>
+#include <unordered_map>
 
+namespace zeno {
+    struct SceneTreeNode;
+    struct SceneObject;
+}
 
 struct VertexInfo {
     int face;
@@ -121,6 +127,53 @@ private:
     zeno::UserData* userData() const;
 
     zeno::GeometryObject_Adapter* m_object;
+};
+
+// SceneObject相关的通用模型类
+class SceneObjectListModel : public QAbstractListModel
+{
+    Q_OBJECT
+public:
+    enum DataType {
+        SceneTree,
+        GeometryList,
+        NodeToMatrix  // 添加NodeToMatrix类型
+    };
+
+    SceneObjectListModel(DataType type, QObject* parent = nullptr);
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    void setSceneObject(zeno::SceneObject* pObject);
+    std::string getKeyAt(int index) const;
+    zeno::SceneTreeNode getTreeNodeAt(int index) const;
+
+    zeno::SceneObject* getSceneObject();
+private:
+    DataType m_type;
+    zeno::SceneObject* m_object;
+    std::vector<std::string> m_keys;
+};
+
+class SceneObjectTableModel : public QAbstractTableModel
+{
+    Q_OBJECT
+public:
+    enum DataType {
+        NodeToId  // 只保留NodeToId类型
+    };
+
+    SceneObjectTableModel(DataType type, QObject* parent = nullptr);
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    void setSceneObject(zeno::SceneObject* pObject);
+
+private:
+    DataType m_type;
+    zeno::SceneObject* m_object;
+    std::vector<std::string> m_keys;
 };
 
 #endif

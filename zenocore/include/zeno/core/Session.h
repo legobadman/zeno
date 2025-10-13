@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <zeno/utils/api.h>
 #include <zeno/core/Descriptor.h>
@@ -61,6 +61,7 @@ struct Session {
     ZENO_API UserData &userData() const;
     ZENO_API std::shared_ptr<Graph> createGraph(const std::string& name);
     ZENO_API NodeImpl* getNodeByUuidPath(std::string const& uuid_path);
+    ZENO_API NodeImpl* getNodeByPath(std::string const& uuid_path);
     ZENO_API void resetMainGraph();
     ZENO_API void clearMainGraph();
     ZENO_API void clearAssets();

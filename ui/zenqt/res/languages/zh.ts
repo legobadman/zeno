@@ -3198,6 +3198,25 @@ All Files (*)</source>
     </message>
 </context>
 <context>
+    <name>BaseAttributeView</name>
+    <message>
+        <source>vertex</source>
+        <translation>顶点</translation>
+    </message>
+	    <message>
+        <source>point</source>
+        <translation>点</translation>
+    </message>
+	    <message>
+        <source>face</source>
+        <translation>面</translation>
+    </message>
+	    <message>
+        <source>geo</source>
+        <translation>几何</translation>
+    </message>
+</context>
+<context>
     <name>ZenoSubGraphScene</name>
     <message>
         <source>Error</source>

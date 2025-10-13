@@ -7,6 +7,7 @@
 #include "panel/zenoproppanel.h"
 #include "panel/zlogpanel.h"
 #include "panel/zenoimagepanel.h"
+#include "panel/zgeometryspreadsheet.h"
 #include "nodeeditor/gv/zenographseditor.h"
 #include "nodeeditor/gv/zenosubgraphview.h"
 #include "viewport/displaywidget.h"
@@ -709,6 +710,12 @@ void DockContent_Editor::initConnections()
     });
 
     connect(pCleanProj, &ZToolBarButton::clicked, this, [=]() {
+        if (ZenoMainWindow* pMainWin = zenoApp->getMainWindow()) {
+            QVector<ZGeometrySpreadsheet*> spreadsheets = pMainWin->getGeoSpreadSheet();
+            for (ZGeometrySpreadsheet* spreadsheet : spreadsheets) {
+                spreadsheet->clearModel();
+            }
+        }
         zenoApp->calculationMgr()->clear();
     });
 
