@@ -49,7 +49,7 @@ signals:
     void sig_reload_finished();
 
 public slots:
-    void reload_objects(zeno::render_reload_info info);
+    void reload_objects(const zeno::render_reload_info& info);
     void onMouseEvent(ViewMouseInfo event_info);
     void resize(int nx, int ny);
     void setSafeFrames(bool bLock, int nx, int ny);

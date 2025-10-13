@@ -50,7 +50,7 @@ public:
     void setViewWidgetInfo(DockContentWidgetInfo& info);
 
 signals:
-    void sig_Reload(zeno::render_reload_info);
+    void sig_Reload(const zeno::render_reload_info&);
     void sig_render_reload_finished();
     void sig_MouseEvent(ViewMouseInfo);
     void sig_Resize(int, int);
