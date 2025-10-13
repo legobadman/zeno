@@ -120,11 +120,11 @@ namespace zeno
         if (lines.size() > 0) {
             spPrim->lines = lines;
         }
+        spPrim->verts.resize(m_points.size());//只是给一个大小，不需要填值
     }
 
-    void HalfEdgeTopology::initFromPrim(PrimitiveObject* prim) {
-        int n = prim->verts->size();
-        m_points.resize(n);
+    void HalfEdgeTopology::initFromPrim(int n_points, PrimitiveObject* prim) {
+        m_points.resize(n_points);
         for (int i = 0; i < m_points.size(); i++) {
             m_points[i] = std::make_shared<HF_Point>();
         }
@@ -222,7 +222,7 @@ namespace zeno
         //update_linear_vertex();
     }
 
-    HEdge* HalfEdgeTopology::checkHEdge(size_t fromPoint, size_t toPoint) {
+    HEdge* HalfEdgeTopology::checkHEdge(int fromPoint, int toPoint) {
         assert(fromPoint < m_points.size() && toPoint < m_points.size() &&
             fromPoint >= 0 && toPoint >= 0);
         for (auto hedge : m_points[fromPoint]->edges) {
@@ -244,11 +244,11 @@ namespace zeno
         return { point, h, prev };
     }
 
-    size_t HalfEdgeTopology::getNextOutEdge(size_t fromPoint, size_t currentOutEdge) {
+    int HalfEdgeTopology::getNextOutEdge(int fromPoint, int currentOutEdge) {
         return -1;
     }
 
-    size_t HalfEdgeTopology::getPointTo(HEdge* hedge) const {
+    int HalfEdgeTopology::getPointTo(HEdge* hedge) const {
         return hedge->point;
     }
 

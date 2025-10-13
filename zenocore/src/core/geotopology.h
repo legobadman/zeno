@@ -66,7 +66,7 @@ namespace zeno
     std::shared_ptr<IGeomTopology> create_indicemesh_topo(bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
     std::shared_ptr<IGeomTopology> create_indicemesh_topo(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
     std::shared_ptr<IGeomTopology> create_indicemesh_by_halfedge(std::shared_ptr<IGeomTopology> halfedge);
-    std::shared_ptr<IGeomTopology> create_halfedge_by_indicemesh(std::shared_ptr<IGeomTopology> indicemesh);
+    std::shared_ptr<IGeomTopology> create_halfedge_by_indicemesh(int n_points, std::shared_ptr<IGeomTopology> indicemesh);
     std::shared_ptr<IGeomTopology> clone_topology(std::shared_ptr<IGeomTopology> topology);
 
     //从拓扑中获得PrimitiveObject的表达，如果topo是indiceMesh，直接返回内建的prim，如果是halfedge，就构造一个新的返回

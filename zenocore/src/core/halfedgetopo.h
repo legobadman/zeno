@@ -11,11 +11,11 @@ namespace zeno
     struct HEdge {
         std::string id;
         HEdge* pair = 0, * next = 0;
-        size_t point = -1;
-        size_t point_from = -1;
-        size_t face = -1;
+        int point = -1;
+        int point_from = -1;
+        int face = -1;
 
-        size_t find_from() {
+        int find_from() {
             if (point_from != -1) return point_from;
             if (pair) return pair->point;
             HEdge* h = this;
@@ -46,13 +46,13 @@ namespace zeno
         GeomTopoType type() const override;
         std::shared_ptr<IGeomTopology> clone() override;
 
-        void initFromPrim(PrimitiveObject* prim);
+        void initFromPrim(int n_points, PrimitiveObject* prim);
         void toPrimitive(PrimitiveObject* spPrim);
 
-        HEdge* checkHEdge(size_t fromPoint, size_t toPoint);
+        HEdge* checkHEdge(int fromPoint, int toPoint);
         std::tuple<HF_Point*, HEdge*, HEdge*> getPrev(HEdge* outEdge);
-        size_t getNextOutEdge(size_t fromPoint, size_t currentOutEdge);
-        size_t getPointTo(HEdge* hedge) const;
+        int getNextOutEdge(int fromPoint, int currentOutEdge);
+        int getPointTo(HEdge* hedge) const;
 
         std::vector<vec3i> tri_indice() const override;
         std::vector<std::vector<int>> face_indice() const override;

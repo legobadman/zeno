@@ -42,12 +42,12 @@ namespace zeno
         return create_indicemesh_topo(spPrim.get());
     }
 
-    std::shared_ptr<IGeomTopology> create_halfedge_by_indicemesh(std::shared_ptr<IGeomTopology> indicemesh) {
+    std::shared_ptr<IGeomTopology> create_halfedge_by_indicemesh(int n_points, std::shared_ptr<IGeomTopology> indicemesh) {
         if (indicemesh->type() != Topo_IndiceMesh) return nullptr;
 
         std::shared_ptr<IndiceMeshTopology> indice_topo = std::static_pointer_cast<IndiceMeshTopology>(indicemesh);
         std::shared_ptr<HalfEdgeTopology> halfedge_topo = std::make_shared<HalfEdgeTopology>();
-        halfedge_topo->initFromPrim(indice_topo->toPrimitiveObject().get());
+        halfedge_topo->initFromPrim(n_points, indice_topo->toPrimitiveObject().get());
         return halfedge_topo;
     }
 
