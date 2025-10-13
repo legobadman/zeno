@@ -1303,18 +1303,17 @@ void ListObjView::onItemClicked(const QModelIndex& index)
             }
         } else {
             zeno::GeometryObject_Adapter* curObj;
-            bool isprim = false;
             if (auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(currentObj)) {
                 curObj = geoObj;
+                if (m_baseAttributeView) {
+                    m_baseAttributeView->setGeometryObject(m_model, QModelIndex(), curObj, item->text());
+                    showObjectDialog(this, m_baseAttributeView, "Geometry Object Details");
+                }
             } else if (auto primitiveObj = dynamic_cast<zeno::PrimitiveObject*>(currentObj)) {
-                curObj = create_GeometryObject(primitiveObj).release();
-                isprim = true;
-            }
-            if (m_baseAttributeView) {
-                m_baseAttributeView->setGeometryObject(m_model, QModelIndex(), curObj, item->text());
-                showObjectDialog(this, m_baseAttributeView, "Geometry Object Details");
-                if (isprim) {
-                    delete curObj;
+                auto curObj = create_GeometryObject(primitiveObj);
+                if (m_baseAttributeView) {
+                    m_baseAttributeView->setGeometryObject(m_model, QModelIndex(), curObj.get(), item->text());
+                    showObjectDialog(this, m_baseAttributeView, "Geometry Object Details");
                 }
             }
         }
@@ -1350,13 +1349,9 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
 void ZGeometrySpreadsheet::setGeometry(
         GraphModel* subgraph,
         QModelIndex nodeidx,
-        zeno::IObject* pObject
+        std::unique_ptr<zeno::IObject>&& pObject
 ) {
-    if (m_clone_obj) {
-        delete m_clone_obj;
-        m_clone_obj = nullptr;
-    }
-    m_clone_obj = pObject;
+    m_clone_obj = std::move(pObject);
 
     if (!m_clone_obj) {
         //unavailable page
@@ -1368,31 +1363,30 @@ void ZGeometrySpreadsheet::setGeometry(
         return;
     }
 
-    if (auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj)) {
+    if (auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get())) {
         if (auto baseAttrView = qobject_cast<BaseAttributeView*>(m_views->widget(2))) {
             baseAttrView->setGeometryObject(subgraph, nodeidx, geoObj, nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
         }
         m_views->setCurrentIndex(2);
-    } else if (auto primObj = dynamic_cast<zeno::PrimitiveObject*>(m_clone_obj)) {
-        if (auto convertedObj = create_GeometryObject(primObj).release()) {
-            delete m_clone_obj;
-            m_clone_obj = convertedObj;
+    } else if (auto primObj = dynamic_cast<zeno::PrimitiveObject*>(m_clone_obj.get())) {
+        if (auto convertedObj = create_GeometryObject(primObj)) {
+            m_clone_obj = std::move(convertedObj);
             if (auto baseAttrView = qobject_cast<BaseAttributeView*>(m_views->widget(2))) {
-                baseAttrView->setGeometryObject(subgraph, nodeidx, static_cast<zeno::GeometryObject_Adapter*>(m_clone_obj), nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
+                baseAttrView->setGeometryObject(subgraph, nodeidx, static_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get()), nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
             }
             m_views->setCurrentIndex(2);
         }
-    } else if (auto sceneObj = dynamic_cast<zeno::SceneObject*>(m_clone_obj)) {
+    } else if (auto sceneObj = dynamic_cast<zeno::SceneObject*>(m_clone_obj.get())) {
         if (auto sceneObjView = qobject_cast<SceneObjView*>(m_views->widget(3))) {
             sceneObjView->setSceneObject(subgraph, nodeidx, sceneObj, nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
         }
         m_views->setCurrentIndex(3);
-    } else if (auto listObj = dynamic_cast<zeno::ListObject*>(m_clone_obj)) {
+    } else if (auto listObj = dynamic_cast<zeno::ListObject*>(m_clone_obj.get())) {
         if (auto listObjView = qobject_cast<ListObjView*>(m_views->widget(4))) {
             listObjView->setListObject(subgraph, nodeidx, listObj);
         }
         m_views->setCurrentIndex(4);
-    } else if (auto materialObj = dynamic_cast<zeno::MaterialObject*>(m_clone_obj)) {
+    } else if (auto materialObj = dynamic_cast<zeno::MaterialObject*>(m_clone_obj.get())) {
         if (auto materialObjView = qobject_cast<MaterialObjView*>(m_views->widget(5))) {
             materialObjView->setMaterialObject(subgraph, nodeidx, materialObj, nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
         }
@@ -1415,6 +1409,4 @@ void ZGeometrySpreadsheet::clearModel()
             view->clearModel();
         }
     }
-    delete m_clone_obj;
-    m_clone_obj = nullptr;
 }
