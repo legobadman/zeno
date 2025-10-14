@@ -344,7 +344,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(Topo_IndiceMesh, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
             set_output("Output", std::move(geo));
@@ -488,7 +488,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(zeno::Topo_IndiceMesh, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
 
@@ -704,7 +704,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(zeno::Topo_IndiceMesh, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
             if (bCalcPointNormals)
                 geo->create_attr(ATTR_POINT, "nrm", normals);
 
@@ -922,7 +922,7 @@ namespace zeno {
                 //todo: normal.
             }
 
-            auto geo = create_GeometryObject(Topo_IndiceMesh, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
             ZImpl(set_output("Output", std::move(geo)));
         }
     };
@@ -1019,7 +1019,7 @@ namespace zeno {
                 if (segments == 1) {
                     points.push_back(Center);
                     //TODO: 可能要加其他类型
-                    auto spgeo = create_GeometryObject(zeno::Topo_IndiceMesh, true, points, {});
+                    auto spgeo = create_GeometryObject(Topo_HalfEdge, true, points, {});
                     spgeo->create_attr(ATTR_POINT, "pos", { Center });
                     ZImpl(set_output("Output", std::move(spgeo)));
                     return;
@@ -1131,7 +1131,7 @@ namespace zeno {
                 }
             }
 
-            auto spgeo = create_GeometryObject(zeno::Topo_IndiceMesh, true, pointNumber, faceNumber);
+            auto spgeo = create_GeometryObject(Topo_HalfEdge, true, pointNumber, faceNumber);
             spgeo->create_attr(ATTR_POINT, "pos", points);
             if (bCalcPointNormals) {
                 spgeo->create_attr(ATTR_POINT, "nrm", normals);
@@ -1158,16 +1158,16 @@ namespace zeno {
         {"create"},
     });
 
-    struct PointCreate : INode {
+    struct Point : INode {
         void apply() override {
             zeno::vec3f Position = ZImpl(get_input2<vec3f>("Position"));
             std::vector<zeno::vec3f> pos = { Position };
-            auto spPoint = create_GeometryObject(zeno::Topo_IndiceMesh, false, pos, {});
+            auto spPoint = create_GeometryObject(Topo_HalfEdge, false, pos, {});
             ZImpl(set_output("Output", std::move(spPoint)));
         }
     };
 
-    ZENDEFNODE(PointCreate, {
+    ZENDEFNODE(Point, {
         {
             ParamPrimitive("Position", gParamType_Vec3f, zeno::vec3f({0,0,0}))
         },

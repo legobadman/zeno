@@ -110,9 +110,11 @@ namespace zeno {
 
     void FunctionManager::executeZfx(std::shared_ptr<ZfxASTNode> root, ZfxContext* pCtx) {
         //printSyntaxTree(root, pCtx->code);
-        //检查语法树，观察是否存在几何拓扑的增删改，如有则转为半边结构的拓扑
         auto spGeom = static_cast<GeometryObject_Adapter*>(pCtx->spObject.get());
         bool bConvertHalfEdge = false;
+        //不需要转换了，后续IndiceMeshes也得实现同样的几何api，会出现两者混用的情况
+        /*
+        * //检查语法树，观察是否存在几何拓扑的增删改，如有则转为半边结构的拓扑
         if (spGeom && spGeom->m_impl->type() == zeno::Topo_IndiceMesh) {
             bConvertHalfEdge = hasGeomTopoQueryModify(root);
             if (bConvertHalfEdge) {
@@ -120,6 +122,7 @@ namespace zeno {
                 spGeom = static_cast<GeometryObject_Adapter*>(pCtx->spObject.get());
             }
         }
+        */
 
         pCtx->zfxVariableTbl = &m_globalAttrCached;
         if (pCtx->spObject) {

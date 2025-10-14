@@ -375,7 +375,7 @@ namespace zeno
     }
 
     std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim) {
-        if (!prim)
+        if (!prim || prim->verts->empty())
             return nullptr;
         auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(prim);
