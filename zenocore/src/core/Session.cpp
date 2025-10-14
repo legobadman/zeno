@@ -242,6 +242,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
                     std::string str = zeno::reflect::any_cast<const char*>(newparam.defl);
                     newparam.defl = str;
                 }
+                convertToEditVar(newparam.defl, newparam.type);
                 default_group.params.push_back(newparam);
             }
         }
@@ -381,7 +382,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
 }
 
 ZENO_API void Session::defNodeClass(INode* (*ctor)(), std::string const &clsname, Descriptor const &desc) {
-    if (clsname == "FormSceneTree2") {
+    if (clsname == "Line") {
         int j;
         j = 0;
     }

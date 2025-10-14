@@ -1820,6 +1820,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
 
     int frame = getGlobalState()->getFrameId();
 
+    const std::string& name = in_param->name;
     const ParamType type = in_param->type;
     const auto& defl = in_param->defl;
     if (type == gParamType_Heatmap && !defl.has_value()) {

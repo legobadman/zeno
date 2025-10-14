@@ -53,9 +53,6 @@ namespace zeno
         else if (Topo_HalfEdge == type) {
             m_spTopology = create_halfedge_topo(bTriangle, nPoints, nFaces, bInitFaces);
         }
-        else if (Topo_Line == type) {
-            throw makeError<UnimplError>("TODO: construct Line");
-        }
         else {
             throw makeError<UnimplError>("unknown type of Geometry Topology");
         }
@@ -72,9 +69,6 @@ namespace zeno
         }
         else if (Topo_HalfEdge == type) {
             m_spTopology = create_halfedge_topo(bTriangle, nPoints, faces);
-        }
-        else if (Topo_Line == type) {
-            throw makeError<UnimplError>("TODO: construct Line");
         }
         else {
             throw makeError<UnimplError>("unknown type of Geometry Topology");
@@ -1038,7 +1032,8 @@ namespace zeno
 
     int GeometryObject::isLineFace(int faceid)
     {
-        return m_spTopology->type() == Topo_Line;
+        //DEPRECATED
+        return 0;
     }
 
     int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {

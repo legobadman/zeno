@@ -81,25 +81,25 @@ namespace zeno
         int nvertices(int face_id) const override;
 
         /* 点相关 */
-        std::vector<int> point_faces(int point_id) override;
-        int point_vertex(int point_id) override;
-        std::vector<int> point_vertices(int point_id) override;
+        std::vector<int> point_faces(int point_id) const override;
+        int point_vertex(int point_id) const override;
+        std::vector<int> point_vertices(int point_id) const override;
 
         /* 面相关 */
         int face_point(int face_id, int vert_id) const override;
         std::vector<int> face_points(int face_id) const override;
-        int face_vertex(int face_id, int vert_id) override;
-        int face_vertex_count(int face_id) override;
-        std::vector<int> face_vertices(int face_id) override;
+        int face_vertex(int face_id, int vert_id) const override;
+        int face_vertex_count(int face_id) const override;
+        std::vector<int> face_vertices(int face_id) const override;
 
         /* Vertex相关 */
-        int vertex_index(int face_id, int vertex_id) override;
-        int vertex_next(int linear_vertex_id) override;
-        int vertex_prev(int linear_vertex_id) override;
-        std::tuple<int, int, int>  vertex_info(int linear_vertex_id) override;
-        int vertex_point(int linear_vertex_id) override;
-        int vertex_face(int linear_vertex_id) override;
-        int vertex_face_index(int linear_vertex_id) override;
+        int vertex_index(int face_id, int vertex_id) const override;
+        int vertex_next(int linear_vertex_id) const override;
+        int vertex_prev(int linear_vertex_id) const override;
+        std::tuple<int, int, int>  vertex_info(int linear_vertex_id) const override;
+        int vertex_point(int linear_vertex_id) const override;
+        int vertex_face(int linear_vertex_id) const override;
+        int vertex_face_index(int linear_vertex_id) const override;
         void update_linear_vertex();
 
     private:

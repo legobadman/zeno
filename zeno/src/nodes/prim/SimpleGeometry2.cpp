@@ -1181,8 +1181,6 @@ namespace zeno {
 
     struct Line : INode {
         void apply() override {
-            //TODO: REFACTOR
-#if 0
             int npoints = ZImpl(get_input2<int>("npoints"));
             zeno::vec3f direction = ZImpl(get_input2<zeno::vec3f>("direction"));
             zeno::vec3f origin = ZImpl(get_input2<zeno::vec3f>("origin"));
@@ -1199,14 +1197,6 @@ namespace zeno {
                 throw makeError<UnimplError>("the direction should not be {0,0,0}");
             }
 
-            auto spgeo = create_GeometryObject(true, npoints, 0);
-
-            if (npoints == 1) {
-                spgeo->create_attr(ATTR_POINT, "pos", { origin });
-                ZImpl(set_output("Output", std::move(spgeo)));
-                return;
-            }
-
             float scale = length / glm::sqrt(glm::pow(direction[0], 2) + glm::pow(direction[1], 2) + glm::pow(direction[2], 2)) / (npoints - 1);
             zeno::vec3f ax = direction * scale;
             if (isCentered) {
@@ -1215,34 +1205,29 @@ namespace zeno {
 
             std::vector<vec3f> points;
             std::vector<int> pts;
+            std::vector<std::vector<int>> faces;
+
             pts.resize(npoints);
             points.resize(npoints);
+            faces.resize(npoints - 1);
             //#pragma omp parallel for
             for (int pt = 0; pt < npoints; pt++) {
                 vec3f p = origin + pt * ax;
                 points[pt] = p;
                 pts[pt] = pt;
-                /*
-                if (hasLines) {
-                    spgeo->initLineNextPoint(pt);
-                    if (pt == npoints - 1) {
-                        spgeo->setLineNextPt(pt, pt);
-                    }
+                if (pt > 0) {
+                    faces[pt - 1] = { pt - 1,pt };
                 }
-                */
             }
 
-            //兼容hou，用一个面作为所有线段的面
-            spgeo->add_face(stdVec2zeVec(pts), false);
-            spgeo->create_attr(ATTR_POINT, "pos", points);
+            auto spgeo = create_GeometryObject(Topo_HalfEdge, false, points, faces);
             ZImpl(set_output("Output", std::move(spgeo)));
-#endif
         }
     };
 
     ZENDEFNODE(Line, {
         {
-            ParamPrimitive("direction", gParamType_Vec3f, zeno::vec3f({0,0,0})),
+            ParamPrimitive("direction", gParamType_Vec3f, zeno::vec3f({0,1,0})),
             ParamPrimitive("origin", gParamType_Vec3f, zeno::vec3f({0,0,0})),
             ParamPrimitive("npoints", gParamType_Int, 2),
             ParamPrimitive("length", gParamType_Float, 1.0),

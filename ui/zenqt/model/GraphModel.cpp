@@ -725,7 +725,7 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         }
         case QtRole::ROLE_NODE_DIRTY:
         {
-            return item->runStatus != QmlNodeRunStatus::RunSucceed;
+            return item->runStatus != QmlNodeRunStatus::RunSucceed && item->runStatus != QmlNodeRunStatus::Clean;
         }
         case QtRole::ROLE_NODETYPE:
         {

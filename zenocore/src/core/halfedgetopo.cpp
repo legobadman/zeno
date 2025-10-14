@@ -103,7 +103,11 @@ namespace zeno
                 h = h->next;
             } while (firsth != h);
 
-            if (m_bTriangle) {
+            if (points.size() == 2) {
+                //边
+                lines.push_back({ points[0], points[1] });
+            }
+            else if (m_bTriangle) {
                 vec3i tri = { points[0],points[1], points[2] };
                 spPrim->tris.push_back(std::move(tri));
             }
@@ -407,7 +411,7 @@ namespace zeno
         return pts;
     }
 
-    std::vector<int> HalfEdgeTopology::face_vertices(int face_id) {
+    std::vector<int> HalfEdgeTopology::face_vertices(int face_id) const {
         if (face_id < 0 || face_id >= m_faces.size())
             return std::vector<int>();
 
@@ -420,7 +424,7 @@ namespace zeno
         return vertices;
     }
 
-    std::vector<int> HalfEdgeTopology::point_faces(int point_id) {
+    std::vector<int> HalfEdgeTopology::point_faces(int point_id) const {
         std::vector<int> faces;
         if (point_id < 0 || point_id >= m_points.size())
             return faces;
@@ -431,14 +435,14 @@ namespace zeno
         return faces;
     }
 
-    int HalfEdgeTopology::point_vertex(int point_id) {
+    int HalfEdgeTopology::point_vertex(int point_id) const {
         std::vector<int> vertices = point_vertices(point_id);
         if (vertices.empty())
             return -1;
         return vertices[0];
     }
 
-    std::vector<int> HalfEdgeTopology::point_vertices(int point_id) {
+    std::vector<int> HalfEdgeTopology::point_vertices(int point_id) const {
         std::vector<int> vertices;
         if (point_id < 0 || point_id >= m_points.size())
             return vertices;
@@ -491,25 +495,25 @@ namespace zeno
         return npoints_in_face(m_faces[face_id].get());
     }
 
-    int HalfEdgeTopology::face_vertex(int face_id, int vert_id) {
+    int HalfEdgeTopology::face_vertex(int face_id, int vert_id) const {
         if (face_id < 0 || face_id >= m_faces.size() || vert_id < 0 || vert_id >= nvertices(face_id)) {
             return -1;
         }
         return m_faces[face_id]->start_linearIdx + vert_id;
     }
 
-    int HalfEdgeTopology::face_vertex_count(int face_id) {
+    int HalfEdgeTopology::face_vertex_count(int face_id) const {
         return nvertices(face_id);
     }
 
-    int HalfEdgeTopology::vertex_index(int face_id, int vertex_id) {
+    int HalfEdgeTopology::vertex_index(int face_id, int vertex_id) const {
         return face_vertex(face_id, vertex_id);
     }
 
     /*
      * 与linear_vertex_id共享一个point的下一个vertex的linear_vertex_id;
      */
-    int HalfEdgeTopology::vertex_next(int linear_vertex_id) {
+    int HalfEdgeTopology::vertex_next(int linear_vertex_id) const {
         int pointid = vertex_point(linear_vertex_id);
         if (pointid == -1) {
             return -1;
@@ -527,7 +531,7 @@ namespace zeno
         }
     }
 
-    int HalfEdgeTopology::vertex_prev(int linear_vertex_id) {
+    int HalfEdgeTopology::vertex_prev(int linear_vertex_id) const {
         int pointid = vertex_point(linear_vertex_id);
         if (pointid == -1) {
             return -1;
@@ -545,11 +549,11 @@ namespace zeno
         }
     }
 
-    int HalfEdgeTopology::vertex_point(int linear_vertex_id) {
+    int HalfEdgeTopology::vertex_point(int linear_vertex_id) const {
         return std::get<2>(vertex_info(linear_vertex_id));
     }
 
-    std::tuple<int, int, int> HalfEdgeTopology::vertex_info(int linear_vertex_id) {
+    std::tuple<int, int, int> HalfEdgeTopology::vertex_info(int linear_vertex_id) const {
         int faceid = vertex_face(linear_vertex_id);
         if (faceid == -1)
             return { -1,-1,-1 };
@@ -575,7 +579,7 @@ namespace zeno
     /*
      * 与linear_vertex_id关联的face的id;
      */
-    int HalfEdgeTopology::vertex_face(int linear_vertex_id) {
+    int HalfEdgeTopology::vertex_face(int linear_vertex_id) const {
         int n = m_faces.size();
         if (n == 0)
             return -1;
@@ -608,7 +612,7 @@ namespace zeno
     /*
      * 将linear_vertex_id转为它所在的那个面上的idx（就是2:3里面的3);
      */
-    int HalfEdgeTopology::vertex_face_index(int linear_vertex_id) {
+    int HalfEdgeTopology::vertex_face_index(int linear_vertex_id) const {
         int idxFace = vertex_face(linear_vertex_id);
         if (idxFace == -1)
             return -1;
@@ -1166,11 +1170,11 @@ namespace zeno
     int HalfEdgeTopology::add_face(const std::vector<int>& points, bool bClose) {
         //points要按照逆时针方向
         std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
-        size_t face_id = m_faces.size();
+        int face_id = m_faces.size();
 
         std::vector<HEdge*> edges;
-        for (size_t i = 0; i < points.size(); i++) {
-            size_t from_point = -1, to_point = -1;
+        for (int i = 0; i < points.size(); i++) {
+            int from_point = -1, to_point = -1;
             if (i == points.size() - 1) {
                 if (!bClose)
                     continue;   //line
@@ -1230,7 +1234,7 @@ namespace zeno
             edges.push_back(hedge.get());
         }
 
-        for (size_t i = 0; i < edges.size(); i++) {
+        for (int i = 0; i < edges.size(); i++) {
             if (i == edges.size() - 1) {
                 if (bClose) {
                     edges[i]->next = edges[0];

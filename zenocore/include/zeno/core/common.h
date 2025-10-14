@@ -199,8 +199,6 @@ namespace zeno {
     {
         Topo_IndiceMesh,
         Topo_HalfEdge,
-        Topo_Line,
-        Topo_Points,    //只有点
     };
 
     //几何属性类型

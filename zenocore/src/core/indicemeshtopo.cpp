@@ -153,15 +153,15 @@ namespace zeno
     }
 
     /* 点相关 */
-    std::vector<int> IndiceMeshTopology::point_faces(int point_id) {
+    std::vector<int> IndiceMeshTopology::point_faces(int point_id) const {
         throw makeError<UnimplError>("");
     }
 
-    int IndiceMeshTopology::point_vertex(int point_id) {
+    int IndiceMeshTopology::point_vertex(int point_id) const {
         throw makeError<UnimplError>("");
     }
 
-    std::vector<int> IndiceMeshTopology::point_vertices(int point_id) {
+    std::vector<int> IndiceMeshTopology::point_vertices(int point_id) const {
         throw makeError<UnimplError>("");
     }
 
@@ -181,47 +181,47 @@ namespace zeno
         return face;
     }
 
-    int IndiceMeshTopology::face_vertex(int face_id, int vert_id) {
+    int IndiceMeshTopology::face_vertex(int face_id, int vert_id) const {
         throw makeError<UnimplError>("");
     }
 
-    int IndiceMeshTopology::face_vertex_count(int face_id) {
+    int IndiceMeshTopology::face_vertex_count(int face_id) const {
         throw makeError<UnimplError>("");
     }
 
-    std::vector<int> IndiceMeshTopology::face_vertices(int face_id) {
+    std::vector<int> IndiceMeshTopology::face_vertices(int face_id) const {
         throw makeError<UnimplError>("");
     }
 
     /* Vertex相关 */
-    int IndiceMeshTopology::vertex_index(int face_id, int vertex_id) {
+    int IndiceMeshTopology::vertex_index(int face_id, int vertex_id) const {
         throw makeError<UnimplError>("");
     }
 
-    int IndiceMeshTopology::vertex_next(int linear_vertex_id) {
+    int IndiceMeshTopology::vertex_next(int linear_vertex_id) const {
         throw makeError<UnimplError>("");
     }
 
-    int IndiceMeshTopology::vertex_prev(int linear_vertex_id) {
+    int IndiceMeshTopology::vertex_prev(int linear_vertex_id) const {
         throw makeError<UnimplError>("");
     }
 
-    std::tuple<int, int, int> IndiceMeshTopology::vertex_info(int linear_vertex_id) {
+    std::tuple<int, int, int> IndiceMeshTopology::vertex_info(int linear_vertex_id) const {
         //throw makeError<UnimplError>("");
         return { -1,-1,-1 };
     }
 
-    int IndiceMeshTopology::vertex_point(int linear_vertex_id) {
+    int IndiceMeshTopology::vertex_point(int linear_vertex_id) const {
         //throw makeError<UnimplError>("");
         return -1;
     }
 
-    int IndiceMeshTopology::vertex_face(int linear_vertex_id) {
+    int IndiceMeshTopology::vertex_face(int linear_vertex_id) const {
         //throw makeError<UnimplError>("");
         return -1;
     }
 
-    int IndiceMeshTopology::vertex_face_index(int linear_vertex_id) {
+    int IndiceMeshTopology::vertex_face_index(int linear_vertex_id) const {
         //throw makeError<UnimplError>("");
         return -1;
     }
