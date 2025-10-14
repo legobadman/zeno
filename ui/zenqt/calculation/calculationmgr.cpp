@@ -231,6 +231,10 @@ void CalculationMgr::clear() {
     zeno::getSession().markDirtyAndCleanResult();
     for (auto view : zenoApp->getMainWindow()->viewports())
         view->cleanUpScene();
+
+    //还需要重设当前frame
+    auto info = zenoApp->getMainWindow()->timelineInfo();
+    zeno::getSession().globalState->updateFrameId(info.currFrame);
 }
 
 void CalculationMgr::run_and_clean() {

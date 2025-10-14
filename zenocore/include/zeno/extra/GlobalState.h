@@ -76,12 +76,15 @@ struct GlobalState {
 
 private:
     int frameid = 0;
+    int frame_start = 0;
+    int frame_end = 0;
     bool m_working = false;
     CalcObjStatus m_status = Finished;
     float total_time = 0.f;
     float time_consumed = 0.f;
     float total_io_units = 0.f;
     float processed_io_units = 0.f;
+
     mutable std::mutex mtx;
 };
 

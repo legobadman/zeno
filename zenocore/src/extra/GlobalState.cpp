@@ -44,7 +44,6 @@ ZENO_API void GlobalState::frameEnd() {
 
 ZENO_API void GlobalState::clearState() {
     m_working = false;
-    frameid = 0;
     substepid = 0;
     frame_time = 1.f / 60.f;
     frame_time_elapsed = 0;
@@ -71,6 +70,8 @@ ZENO_API void GlobalState::updateFrameRange(int start, int end)
 {
     getSession().globalVariableManager->updateVariable(GVariable("startFarme", zeno::reflect::make_any<int>(start)));
     getSession().globalVariableManager->updateVariable(GVariable("endFrame", zeno::reflect::make_any<int>(end)));
+    frame_start = start;
+    frame_end = end;
 }
 
 ZENO_API int GlobalState::getStartFrame() const
