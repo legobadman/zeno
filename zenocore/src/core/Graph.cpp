@@ -107,7 +107,9 @@ render_update_info Graph::applyNode(std::string const &node_name, CalcContext* p
 
 void Graph::mark_clean() {
     for (auto& [_, node] : m_nodes) {
-        node->mark_clean();
+        if (node->get_run_status() == Node_RunSucceed) {
+            node->mark_clean();
+        }
     }
 }
 
