@@ -16,6 +16,7 @@
 #include "variantptr.h"
 #include "zassert.h"
 #include "zspinboxslider.h"
+#include "floatslider.h"
 #include "zdicttableview.h"
 #include "nodeeditor/gv/zitemfactory.h"
 #include "widgets/zpathedit.h"
@@ -303,18 +304,46 @@ namespace zenoui
             }
             case zeno::Slider:
             {
-                int intVal = 0;
+                SLIDER_INFO sliderInfo;
+                if (controlProps.has_value()) {
+                    size_t ctrlPropsType = controlProps.type().hash_code();
+                    if (zeno::types::gParamType_IntList == ctrlPropsType) {
+                        const auto& vec = zeno::reflect::any_cast<std::vector<int>>(controlProps);
+                        ZASSERT_EXIT(vec.size() == 3, nullptr);
+                        sliderInfo.min = vec[0];
+                        sliderInfo.max = vec[1];
+                        sliderInfo.step = vec[2];
+                    }
+                    else if (zeno::types::gParamType_FloatList == ctrlPropsType) {
+                        const auto& vec = zeno::reflect::any_cast<std::vector<float>>(controlProps);
+                        ZASSERT_EXIT(vec.size() == 3, nullptr);
+                        sliderInfo.min = vec[0];
+                        sliderInfo.max = vec[1];
+                        sliderInfo.step = vec[2];
+                    }
+                }
+
+                bool isIntType = false;
+                qreal currVal = 0;
                 if (actualType == gParamType_PrimVariant) {
                     const zeno::PrimVar& var = any_cast<zeno::PrimVar>(value);
                     if (std::holds_alternative<int>(var)) {
-                        intVal = std::get<int>(var);
+                        currVal = std::get<int>(var);
+                        isIntType = true;
+                    }
+                    else if (std::holds_alternative<float>(var)) {
+                        currVal = std::get<float>(var);
                     }
                 }
                 else if (actualType == gParamType_Int) {
-                    intVal = any_cast<int>(value);
+                    currVal = any_cast<int>(value);
+                    isIntType = true;
+                }
+                else if (actualType == gParamType_Float) {
+                    currVal = any_cast<float>(value);
                 }
 
-                QSlider* pSlider = new QSlider(Qt::Horizontal);
+                FloatSlider* pSlider = new FloatSlider(isIntType);
                 pSlider->setStyleSheet(ZenoStyle::dpiScaleSheet("\
                     QSlider::groove:horizontal {\
                         height: 4px;\
@@ -334,48 +363,14 @@ namespace zenoui
                         background: #707D9C;\
                     }\
                 "));
-                pSlider->setValue(intVal);
-
-                SLIDER_INFO sliderInfo;
                 
-                if (controlProps.has_value()) {
-                    size_t ctrlPropsType = controlProps.type().hash_code();
-                    if (zeno::types::gParamType_IntList == ctrlPropsType) {
-                        const auto& vec = zeno::reflect::any_cast<std::vector<int>>(controlProps);
-                        ZASSERT_EXIT(vec.size() == 3, nullptr);
-                        sliderInfo.min = vec[0];
-                        sliderInfo.max = vec[1];
-                        sliderInfo.step = vec[2];
-                    }
-                    else if (zeno::types::gParamType_FloatList == ctrlPropsType) {
-                        const auto& vec = zeno::reflect::any_cast<std::vector<float>>(controlProps);
-                        ZASSERT_EXIT(vec.size() == 3, nullptr);
-                        sliderInfo.min = vec[0];
-                        sliderInfo.max = vec[1];
-                        sliderInfo.step = vec[2];
-                    }
-                }
-                pSlider->setSingleStep(sliderInfo.step);
-                pSlider->setRange(sliderInfo.min, sliderInfo.max);
+                pSlider->setFloatMinimum(sliderInfo.min);
+                pSlider->setFloatMaximum(sliderInfo.max);
+                pSlider->setFloatStep(sliderInfo.step);
+                pSlider->setFloatValue(currVal);
 
-                QObject::connect(pSlider, &QSlider::valueChanged, [=](int newVal) {
+                QObject::connect(pSlider, &FloatSlider::floatValueChanged, [=](float newVal) {
                     cbSet.cbEditFinished(newVal);
-                });
-
-                QObject::connect(pSlider, &QSlider::sliderPressed, [=]() {
-                    QRect rc = pSlider->rect();
-                    QPoint br = pSlider->mapToGlobal(rc.bottomRight());
-                    QPoint pos = QCursor::pos();
-                    pos.setY(br.y());
-                    QToolTip::showText(pos, QString("%1").arg(pSlider->value()), nullptr);
-                });
-
-                QObject::connect(pSlider, &QSlider::sliderMoved, [=](int value) {
-                    QRect rc = pSlider->rect();
-                    QPoint br = pSlider->mapToGlobal(rc.bottomRight());
-                    QPoint pos = QCursor::pos();
-                    pos.setY(br.y());
-                    QToolTip::showText(pos, QString("%1").arg(value), nullptr);
                 });
                 return pSlider;
             }

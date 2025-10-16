@@ -722,7 +722,7 @@ namespace zeno {
             ParamPrimitive("Height", gParamType_Float, 2.f),
             ParamPrimitive("Rows", gParamType_Int, 2, Slider, std::vector<int>{1,100,1}),
             ParamPrimitive("Columns", gParamType_Int, 12, Slider, std::vector<int>{1,100,1}),
-            ParamPrimitive("Direction", gParamType_String, "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"}),
+            ParamPrimitive("Direction", gParamType_String, "Y Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"}),
             ParamPrimitive("Face Type", gParamType_String, "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"}),
             ParamPrimitive("Point Normals", gParamType_Bool, false, Checkbox),
             ParamPrimitive("End Caps", gParamType_Bool, true, Checkbox),
@@ -756,7 +756,10 @@ namespace zeno {
             bool bQuad = face_type == "Quadrilaterals";
 
             if (Rows < 3) {
-                throw;
+                throw makeError<UnimplError>("Rows must be greater than 2");
+            }
+            if (Columns < 2) {
+                throw makeError<UnimplError>("Rows must be greater than 1");
             }
 
             int nPoints = 2 + (Rows - 2) * Columns;
@@ -933,9 +936,9 @@ namespace zeno {
             ParamPrimitive("Rotate", gParamType_Vec3f, zeno::vec3f({0,0,0})),
             ParamPrimitive("Radius", gParamType_Vec3f, zeno::vec3f({1,1,1})),
             ParamPrimitive("Uniform Scale", gParamType_Float, 1.f),
-            ParamPrimitive("Direction", gParamType_String, "X Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"}),
-            ParamPrimitive("Rows", gParamType_Int, 13, Slider, std::vector<int>{1,100,1}),
-            ParamPrimitive("Columns", gParamType_Int, 24, Slider, std::vector<int>{1,100,1}),
+            ParamPrimitive("Direction", gParamType_String, "Y Axis", Combobox, std::vector<std::string>{"X Axis", "Y Axis", "Z Axis"}),
+            ParamPrimitive("Rows", gParamType_Int, 13, Slider, std::vector<int>{3,100,1}),
+            ParamPrimitive("Columns", gParamType_Int, 24, Slider, std::vector<int>{2,100,1}),
             ParamPrimitive("Face Type", gParamType_String, "Quadrilaterals", Combobox, std::vector<std::string>{"Triangles", "Quadrilaterals"}),
         },
         {/*outputs:*/

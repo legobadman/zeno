@@ -328,11 +328,11 @@ namespace zeno {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
-            else if (anyType == gParamType_Float) {
-                val = (int)any_cast<float>(val);
+            else if (anyType == gParamType_Float || anyType == gParamType_Double) {
+                val = PrimVar((int)any_cast<float>(val));
             }
             else if (anyType == gParamType_Double) {
-                val = (int)any_cast<double>(val);
+                val = PrimVar((int)any_cast<double>(val));
             }
             else {
                 val = PrimVar(any_cast<int>(val));
@@ -345,10 +345,10 @@ namespace zeno {
                 return true;
             }
             else if (anyType == gParamType_Int) {
-                val = (float)any_cast<int>(val);
+                val = PrimVar((float)any_cast<int>(val));
             }
             else if (anyType == gParamType_Double) {
-                val = (float)any_cast<double>(val);
+                val = PrimVar((float)any_cast<double>(val));
             }
             else {
                 val = PrimVar(any_cast<float>(val));

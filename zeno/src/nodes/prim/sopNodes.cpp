@@ -1420,8 +1420,8 @@ namespace zeno {
     {
         {
             ParamObject("Input", gParamType_Geometry),
-            ParamPrimitive("Distance", gParamType_Float, 0.f),//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
-            ParamPrimitive("Inset", gParamType_Float, 0.f),//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
+            ParamPrimitive("Distance", gParamType_Float, 0.f, Slider, std::vector<float>{0.0, 1.0, 0.01}),
+            ParamPrimitive("Inset", gParamType_Float, 0.f, Slider, std::vector<float>{0.0, 1.0, 0.01}),
             ParamPrimitive("Output Front Attribute", gParamType_Bool, false, Checkbox),
             ParamPrimitive("Front Attribute", gParamType_String, "extrudeFront", Lineedit, zeno::reflect::Any(), "enable = parameter('Output Front Attribute').value == 1;"),
             ParamPrimitive("Output Back Attribute", gParamType_Bool, false, Checkbox),

@@ -2896,7 +2896,7 @@ bool NodeImpl::update_param(const std::string& param, zeno::reflect::Any new_val
     zeno::reflect::Any old_value;
     bool ret = update_param_impl(param, new_value, old_value);
     if (ret) {
-        CALLBACK_NOTIFY(update_param, param, old_value, new_value)
+        CALLBACK_NOTIFY(update_param, param, old_value, m_inputPrims[param].defl)
         mark_dirty(true);
     }
     return ret;
