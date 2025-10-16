@@ -27,6 +27,8 @@ FloatSlider::FloatSlider(bool bIntegerMode, QWidget* parent)
     connect(m_slider, &QSlider::valueChanged, this, &FloatSlider::onSliderChanged);
     connect(m_edit, &QLineEdit::editingFinished, this, &FloatSlider::onEditFinished);
 
+    m_slider->installEventFilter(this);
+
     updateInternalRange();
     setFloatValue(0.0f);
 }
@@ -49,6 +51,13 @@ float FloatSlider::floatValue() const {
     if (ok)
         return val;
     return m_min; // fallback
+}
+
+bool FloatSlider::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_slider && event->type() == QEvent::Wheel) {
+        return true;
+    }
+    return QWidget::eventFilter(watched, event);
 }
 
 void FloatSlider::setFloatValue(float val) {

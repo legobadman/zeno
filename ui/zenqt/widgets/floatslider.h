@@ -1,6 +1,7 @@
 #pragma once
 #include <QWidget>
 #include <QSlider>
+#include <QWheelEvent>
 
 class ZLineEdit;
 
@@ -31,6 +32,9 @@ public:
     bool allowOutOfRange() const { return m_allowOutOfRange; }
     void setAllowOutOfRange(bool allow) { m_allowOutOfRange = allow; }
 
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override;
+
 signals:
     void floatValueChanged(float value);
 
@@ -54,5 +58,5 @@ private:
     const bool m_bInteger;
 
     bool m_syncing = false;
-    bool m_freeMode = false; // 非对齐模式
+    bool m_freeMode = false;
 };
