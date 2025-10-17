@@ -76,9 +76,9 @@ void ZenoSubGraphScene::initModel(GraphModel* pGraphM)
         connect(pNode, &ZenoNodeBase::socketClicked, this, &ZenoSubGraphScene::onSocketClicked);
         connect(pNode, &ZenoNodeBase::nodePosChangedSignal, this, &ZenoSubGraphScene::onNodePosChanged);
         addItem(pNode);
-        pNode->initUI(idx);
-        const QString& nodeid = pNode->nodeId();
+        const QString& nodeid = idx.data(QtRole::ROLE_NODE_NAME).toString();
         m_nodes[nodeid] = pNode;
+        pNode->initUI(idx);
         if (pNode->nodeClass() == "Group") 
         {
             blackboardVect << pNode;
@@ -1193,13 +1193,14 @@ void ZenoSubGraphScene::onRowsInserted(const QModelIndex& parent, int first, int
 {
     //right click goes here
     QModelIndex idx = m_model->index(first, 0, parent);
-    ZenoNodeBase*pNode = createNode(idx, m_nodeParams);
+    ZenoNodeBase* pNode = createNode(idx, m_nodeParams);
+    const QString& nodeid = idx.data(QtRole::ROLE_NODE_NAME).toString();
+    m_nodes[nodeid] = pNode;
+
     connect(pNode, &ZenoNodeBase::socketClicked, this, &ZenoSubGraphScene::onSocketClicked);
     connect(pNode, &ZenoNodeBase::nodePosChangedSignal, this, &ZenoSubGraphScene::onNodePosChanged);
     addItem(pNode);
     pNode->initUI(idx);
-    QString id = pNode->nodeId();
-    m_nodes[id] = pNode;
 
     if (dynamic_cast<GroupNode *>(pNode)) 
     {

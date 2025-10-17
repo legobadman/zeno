@@ -34,6 +34,7 @@
 #include <zeno/core/typeinfo.h>
 #include "declmetatype.h"
 #include "model/customuimodel.h"
+#include "calculation/calculationmgr.h"
 
 
 using namespace zeno::reflect;
@@ -70,10 +71,24 @@ ZenoPropPanel::ZenoPropPanel(QWidget* parent)
     pVLayout->setContentsMargins(QMargins(0, 0, 0, 0));
     setLayout(pVLayout);
     setFocusPolicy(Qt::ClickFocus);
+
+    auto calcMgr = zenoApp->calculationMgr();
+    connect(calcMgr, &CalculationMgr::runStatus_changed, this, &ZenoPropPanel::onRunStatusChanged);
 }
 
 ZenoPropPanel::~ZenoPropPanel()
 {
+    auto calcMgr = zenoApp->calculationMgr();
+    disconnect(calcMgr, &CalculationMgr::runStatus_changed, this, &ZenoPropPanel::onRunStatusChanged);
+}
+
+void ZenoPropPanel::onRunStatusChanged() {
+    auto calcMgr = zenoApp->calculationMgr();
+    RunStatus::Value status = calcMgr->getRunStatus();
+    if (status == RunStatus::Running)
+        setEnabled(false);
+    else
+        setEnabled(true);
 }
 
 QSize ZenoPropPanel::sizeHint() const
