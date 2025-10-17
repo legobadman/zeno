@@ -213,7 +213,11 @@ struct Group : zeno::INode {
 };
 
 ZENDEFNODE(Group, {
-    {{gParamType_String, "title", "title"},{gParamType_String, "items"},{gParamType_Vec3f, "background", "0, 0.39, 0.66"},{gParamType_Vec2f, "size", "500,500"}},
+    {
+        {gParamType_String, "title", "title"},
+        {gParamType_String, "items"},
+        {gParamType_Vec3f, "background", "0, 0.39, 0.66"},
+        {gParamType_Vec2f, "size", "500,500"}},
     {},
     {},
     {"layout"},

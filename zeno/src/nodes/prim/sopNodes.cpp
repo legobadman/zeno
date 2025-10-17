@@ -1408,8 +1408,9 @@ namespace zeno {
                     newFaces.push_back(front_pts);  //todo: 需要传一个front的字段标记为front面。
                 }
                 auto spOutput = constructGeom(newFaces);
-                auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
-                ZImpl(set_output("Output", std::move(spFinal)));
+                //拓扑出问题，先不fuse
+                //auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
+                ZImpl(set_output("Output", std::move(spOutput)));
             }
             else {
                 ZImpl(set_output("Output", std::move(input_object)));
