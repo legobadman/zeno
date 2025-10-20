@@ -93,8 +93,7 @@ namespace zeno {
     void ForEachBegin::update_iteration(int new_iteration) {
         //m_current_iteration = new_iteration;
         //不能引发事务重新执行，执行权必须由外部Graph发起
-        zeno::reflect::Any oldvalue;
-        m_pAdapter->update_param_impl("Current Iteration", new_iteration, oldvalue);
+        m_pAdapter->update_param_impl("Current Iteration", new_iteration);
         ZImpl(set_primitive_output("Index", new_iteration));
     }
 

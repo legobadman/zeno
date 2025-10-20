@@ -143,7 +143,7 @@ void Graph::runGraph(render_reload_info& infos) {
     return applyNodes(m_viewnodes, infos);
 }
 
-void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
+void Graph::onNodeParamUpdated(PrimitiveParam* spParam, const zeno::reflect::Any&, const zeno::reflect::Any&) {
     auto spNode = spParam->m_wpNode;
     assert(spNode);
     const std::string& uuid = spNode->get_uuid();

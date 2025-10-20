@@ -2895,10 +2895,12 @@ NodeData NodeImpl::exportInfo() const
     return node;
 }
 
-bool NodeImpl::update_param(const std::string& param, zeno::reflect::Any new_value) {
+bool NodeImpl::update_param(const std::string& param, const zeno::reflect::Any& new_value) {
     CORE_API_BATCH
-    zeno::reflect::Any old_value;
-    bool ret = update_param_impl(param, new_value, old_value);
+    
+    auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
+    zeno::reflect::Any old_value = spParam.defl;
+    bool ret = update_param_impl(param, new_value);
     if (ret) {
         CALLBACK_NOTIFY(update_param, param, old_value, m_inputPrims[param].defl)
         mark_dirty(true);
@@ -2906,18 +2908,19 @@ bool NodeImpl::update_param(const std::string& param, zeno::reflect::Any new_val
     return ret;
 }
 
-bool NodeImpl::update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& old_value)
+bool NodeImpl::update_param_impl(const std::string& param, const zeno::reflect::Any& new_value)
 {
     auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
-    bool isvalid = convertToEditVar(new_value, spParam.type);
+    auto edit_new_value = new_value;
+    bool isvalid = convertToEditVar(edit_new_value, spParam.type);
     if (!isvalid) {
         zeno::log_error("cannot convert to edit variable");
         return false;
     }
-    if (spParam.defl != new_value)
+    if (spParam.defl != edit_new_value)
     {
-        old_value = spParam.defl;
-        spParam.defl = new_value;
+        zeno::reflect::Any old_value = spParam.defl;
+        spParam.defl = edit_new_value;
 
         Graph* spGraph = m_pGraph;
         assert(spGraph);

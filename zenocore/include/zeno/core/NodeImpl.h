@@ -125,7 +125,7 @@ namespace zeno
         virtual NodeData exportInfo() const;
         bool set_output(std::string const& param, zany&& obj);
 
-        bool update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& oldVal);
+        bool update_param_impl(const std::string& param, const zeno::reflect::Any& new_value);
         bool set_primitive_output(std::string const& id, const zeno::reflect::Any& val);
         bool set_primitive_input(std::string const& id, const zeno::reflect::Any& val);
 
@@ -135,7 +135,7 @@ namespace zeno
             return zeno::reflect::any_cast<T>(prim.defl);
         }
 
-        bool update_param(const std::string& name, zeno::reflect::Any new_value);
+        bool update_param(const std::string& name, const zeno::reflect::Any& new_value);
         CALLBACK_REGIST(update_param, void, const std::string&, zeno::reflect::Any, zeno::reflect::Any)
 
         bool update_param_socket_type(const std::string& name, SocketType type);
