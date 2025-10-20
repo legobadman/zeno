@@ -598,9 +598,11 @@ void GraphsManager::loadAssetDialog()
 void GraphsManager::addPlugin()
 {
     ZenoMainWindow* mainWin = zenoApp->getMainWindow();
-    QString filePath = QFileDialog::getOpenFileName(mainWin, "File to Open", "", "Zeno Module (*.dll)");
-    if (!filePath.isEmpty()) {
-        m_plugins->addPlugin(filePath);
+    QStringList filePaths = QFileDialog::getOpenFileNames(mainWin, "File to Open", "", "Zeno Module (*.dll)");
+    for (QString filePath : filePaths) {
+        if (!filePath.isEmpty()) {
+            m_plugins->addPlugin(filePath);
+        }
     }
 }
 

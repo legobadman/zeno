@@ -60,7 +60,11 @@ NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
 }
 
 NodeType NodeImpl::nodeType() const {
-    return m_pNode->type();
+    if (m_pNode) {
+        return m_pNode->type();
+    } else {
+        return NoVersionNode;
+    }
 }
 
 bool NodeImpl::is_locked() const {

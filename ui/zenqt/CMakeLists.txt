@@ -100,3 +100,14 @@ add_custom_command(TARGET zeno PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy_direct
 if (ZENO_WITH_PYTHON)
     target_compile_definitions(zeno PRIVATE -DZENO_WITH_PYTHON)
 endif()
+
+if(WIN32)
+    add_custom_command(TARGET zeno POST_BUILD
+        COMMAND "${_qt5Core_install_prefix}/bin/windeployqt.exe"
+                --no-compiler-runtime
+                --no-translations
+                --no-opengl-sw
+                \"$<TARGET_FILE:zeno>\"
+        COMMENT "Running windeployqt to copy Qt DLLs..."
+    )
+endif()

@@ -788,7 +788,7 @@ namespace zeno
         }
 
         //todo: 考虑线
-        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, false, new_pos, newFaces);
+        auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, false, new_pos, newFaces);
 
         //去除被排除的部分
         for (auto iter = rem_points.rbegin(); iter != rem_points.rend(); iter++) {
@@ -803,7 +803,7 @@ namespace zeno
         const int nPointCount,
         int seed)
     {
-        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, input->is_base_triangle(), nPointCount, 0);
+        auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, input->is_base_triangle(), nPointCount, 0);
         if (seed == -1) seed = std::random_device{}();
 
         const int nFaces = input->m_impl->nfaces();

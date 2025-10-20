@@ -235,6 +235,10 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
             emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_CLEARSUBNET });
             });
     }
+    else if (nodetype == zeno::NoVersionNode) {
+        int j;
+        j = 0;
+    }
 
     //DopNetwork
     /*
