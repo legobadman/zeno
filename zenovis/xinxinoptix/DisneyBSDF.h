@@ -748,8 +748,8 @@ namespace DisneyBSDF{
         Cspec0 = 0.04f * mat.specular * rho_specular;
         vec3 specular_color = mix(0.04f * mat.specular * rho_specular, mat.basecolor, mat.metallic);
 
-
-        float diffPr = dielectricWt * (1.0f - RgbToY(SpecularColor(wo*vec3(-1,-1,1), wo, specular_color,  mat.ior)));
+        //dielectricWt *= (1.0f - mat.specular>0?RgbToY(SpecularColor(wo*vec3(-1,-1,1), wo, specular_color,  mat.ior)):0.0f);
+        float diffPr = dielectricWt;
         float metalPr = metalWt  * RgbToY(SpecularColor(wo*vec3(-1,-1,1), wo, specular_color,  mat.ior));
         float glassPr = glassWt;
         float ccPr= ccWt  * RgbToY(SpecularColor(wo*vec3(-1,-1,1), wo, vec3(1.0f), mat.clearcoatIOR));
@@ -795,7 +795,6 @@ namespace DisneyBSDF{
         if(reflect){
             wm = normalize(wi + wo);
           if(diffPr > 0.0f){
-
             //vec3 d = EvaluateDiffuse(thin? mat.basecolor : mix(mat.basecolor,mat.sssColor,mat.subsurface), mat.subsurface, mat.roughness, mat.sheen,Csheen, wo, wi, wm, tmpPdf) * dielectricWt;
             vec3 d = BRDFBasics::EvalDisneyDiffuse(mat.basecolor, mat.subsurface, mat.roughness, mat.sheen,Csheen, wo, wi, wm, tmpPdf);
             d = d * (1.0f - sssp) * dielectricWt;
@@ -1027,7 +1026,7 @@ namespace DisneyBSDF{
         float F2 = BRDFBasics::DielectricFresnel(abs(dot(woo, wm2)), mat.clearcoatIOR);
         float psss = mat.subsurface;
         float sssPortion = psss / (1.0f + psss);
-        //dielectricWt *= 1.0f - psub;
+
 
         //event probability
         float clearCtPr = 0.25f * mat.clearcoat * F2;
@@ -1297,8 +1296,8 @@ namespace DisneyBSDF{
         vec3 specular_color = mix(0.04f * mat.specular * rho_specular, mat.basecolor, mat.metallic);
 
 
-
-        float diffPr = dielectricWt * (1.0f - RgbToY(SpecularColor(woo*vec3(-1,-1,1), woo, specular_color,  mat.ior)));
+        //dielectricWt *= (1.0f - mat.specular>0?RgbToY(SpecularColor(woo*vec3(-1,-1,1), woo, specular_color,  mat.ior)):0.0f);
+        float diffPr = dielectricWt;
         float metalPr = metalWt  * RgbToY(SpecularColor(woo*vec3(-1,-1,1), woo, specular_color,  mat.ior));
         float glassPr = glassWt;
         float ccPr= ccWt  * RgbToY(SpecularColor(woo*vec3(-1,-1,1), woo, vec3(1.0f), mat.clearcoatIOR));
@@ -1318,7 +1317,13 @@ namespace DisneyBSDF{
         //and offset is the "index" to "take" the random number from van der corput
         //as a result, for i'th ray in a pixel, its offset shall be subframe_index, and scrumble seed shall change between
         //events
-        float r3 = vdcrnd(prd->offset, prd->vdcseed);
+        auto perm = prd->vdcseed;
+        unsigned int perm0 = perm;
+        rnd(perm);rnd(perm);rnd(perm);
+        unsigned int  perm1 = perm;
+        rnd(perm);rnd(perm);rnd(perm);
+        unsigned int  perm2 = perm;
+        float r3 = vdcrnd(prd->offset, perm0);
         Onb  tbn = Onb(N);
         tbn.m_tangent = T;
         tbn.m_binormal = B;
@@ -1387,7 +1392,7 @@ namespace DisneyBSDF{
             float F = mix(BRDFBasics::SchlickWeight(abs(dot(wm, woo))), 1.0f, 0.06f);
             float sss_wt = (1.0f - mat.subsurface);
             float diffp = mix(1.0f, 0.0f, mat.subsurface);
-            if(rnd(prd->seed)<diffp || prd->fromDiff==true)
+            if(vdcrnd(prd->offset, perm1)<diffp || prd->fromDiff==true)
             {
               prd->fromDiff = true;
               wi = BRDFBasics::CosineSampleHemisphere(r1, r2);
@@ -1477,7 +1482,7 @@ namespace DisneyBSDF{
 
           float F = BRDFBasics::DielectricFresnel(abs(dot(wm, woo)), entering?mat.ior:1.0f/mat.ior);
 
-          if(rnd(prd->seed)<F)//reflection
+          if(vdcrnd(prd->offset, perm2)<F)//reflection
           {
             wi = normalize(reflect(-normalize(woo),wm));
           }else //refraction
