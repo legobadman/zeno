@@ -1,4 +1,4 @@
-#include "halfedgetopo.h"
+ï»¿#include "halfedgetopo.h"
 #include <zeno/utils/format.h>
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>
@@ -104,7 +104,7 @@ namespace zeno
             } while (firsth != h);
 
             if (points.size() == 2) {
-                //±ß
+                //è¾¹
                 lines.push_back({ points[0], points[1] });
             }
             else if (m_bTriangle) {
@@ -124,7 +124,7 @@ namespace zeno
         if (lines.size() > 0) {
             spPrim->lines = lines;
         }
-        spPrim->verts.resize(m_points.size());//Ö»ÊÇ¸øÒ»¸ö´óĞ¡£¬²»ĞèÒªÌîÖµ
+        spPrim->verts.resize(m_points.size());//åªæ˜¯ç»™ä¸€ä¸ªå¤§å°ï¼Œä¸éœ€è¦å¡«å€¼
     }
 
     void HalfEdgeTopology::initFromPrim(int n_points, PrimitiveObject* prim) {
@@ -142,7 +142,7 @@ namespace zeno
         else {
             assert(!prim->loops->empty() && !prim->polys->empty());
             nFace = prim->polys->size();
-            //Ò»°ãÊÇËÄ±ßĞÎ
+            //ä¸€èˆ¬æ˜¯å››è¾¹å½¢
             m_hEdges.reserve(nFace * 4);
         }
         m_faces.resize(nFace);
@@ -189,7 +189,7 @@ namespace zeno
                 if (lastHedge) {
                     lastHedge->next = hedge.get();
                 }
-                //TODO: Èç¹ûÖ»ÓĞÒ»Ìõ±ß»áÔõÃ´Ñù£¿
+                //TODO: å¦‚æœåªæœ‰ä¸€æ¡è¾¹ä¼šæ€ä¹ˆæ ·ï¼Ÿ
                 if (i == points.size() - 1) {
                     hedge->next = firstHedge;
                 }
@@ -217,7 +217,7 @@ namespace zeno
                 //pFace->h = hedge.get();
                 lastHedge = hedge.get();
             }
-            //Í³Ò»È¡µÚÒ»Ìõ°ë±ß×÷ÎªfaceµÄ¡°Æğµã±ß¡±
+            //ç»Ÿä¸€å–ç¬¬ä¸€æ¡åŠè¾¹ä½œä¸ºfaceçš„â€œèµ·ç‚¹è¾¹â€
             pFace->h = firstHedge;
 
             m_faces[face] = std::move(pFace);
@@ -296,7 +296,7 @@ namespace zeno
     }
 
     bool HalfEdgeTopology::is_line() const {
-        //¿ÉÄÜÊÇÏßºÍÃæ»ìÓÃ£¬ËùÒÔÕâ¸öapiµÄÒâÒåÊÇÊ²Ã´£¿
+        //å¯èƒ½æ˜¯çº¿å’Œé¢æ··ç”¨ï¼Œæ‰€ä»¥è¿™ä¸ªapiçš„æ„ä¹‰æ˜¯ä»€ä¹ˆï¼Ÿ
         return false;
         //return !m_linesPt.empty();
     }
@@ -329,7 +329,7 @@ namespace zeno
                     }
                 });
             std::vector<int> mapping;
-            int tribase = 0;        //TODO: ¼´Ê¹ÊÇËÄ±ßĞÎ¹¹³ÉµÄ½áºÏÌå£¬Ò²ÓĞ¿ÉÄÜÓĞÒ»Ğ©Èı½ÇĞÎµÄÃæ´æÔÚ£¬ÕâĞ©Èı½ÇĞÎĞèÒª»º´æÆğÀ´
+            int tribase = 0;        //TODO: å³ä½¿æ˜¯å››è¾¹å½¢æ„æˆçš„ç»“åˆä½“ï¼Œä¹Ÿæœ‰å¯èƒ½æœ‰ä¸€äº›ä¸‰è§’å½¢çš„é¢å­˜åœ¨ï¼Œè¿™äº›ä¸‰è§’å½¢éœ€è¦ç¼“å­˜èµ·æ¥
             int linebase = 0;
             if constexpr (has_lines.value) {
                 info.tris.resize(tribase + redsum[0]);
@@ -511,7 +511,7 @@ namespace zeno
     }
 
     /*
-     * Óëlinear_vertex_id¹²ÏíÒ»¸öpointµÄÏÂÒ»¸övertexµÄlinear_vertex_id;
+     * ä¸linear_vertex_idå…±äº«ä¸€ä¸ªpointçš„ä¸‹ä¸€ä¸ªvertexçš„linear_vertex_id;
      */
     int HalfEdgeTopology::vertex_next(int linear_vertex_id) const {
         int pointid = vertex_point(linear_vertex_id);
@@ -577,7 +577,7 @@ namespace zeno
     }
 
     /*
-     * Óëlinear_vertex_id¹ØÁªµÄfaceµÄid;
+     * ä¸linear_vertex_idå…³è”çš„faceçš„id;
      */
     int HalfEdgeTopology::vertex_face(int linear_vertex_id) const {
         int n = m_faces.size();
@@ -610,7 +610,7 @@ namespace zeno
     }
 
     /*
-     * ½«linear_vertex_id×ªÎªËüËùÔÚµÄÄÇ¸öÃæÉÏµÄidx£¨¾ÍÊÇ2:3ÀïÃæµÄ3);
+     * å°†linear_vertex_idè½¬ä¸ºå®ƒæ‰€åœ¨çš„é‚£ä¸ªé¢ä¸Šçš„idxï¼ˆå°±æ˜¯2:3é‡Œé¢çš„3);
      */
     int HalfEdgeTopology::vertex_face_index(int linear_vertex_id) const {
         int idxFace = vertex_face(linear_vertex_id);
@@ -626,7 +626,7 @@ namespace zeno
 
     void HalfEdgeTopology::update_linear_vertex()
     {
-        //¸üĞÂlinearIdx
+        //æ›´æ–°linearIdx
         if (!m_faces.empty()) {
             m_faces[0]->start_linearIdx = 0;
             for (int i = 1; i < m_faces.size(); ++i) {
@@ -642,85 +642,17 @@ namespace zeno
         std::set<int> remFaces;
         std::set<std::string> remHEdges;
 
-        if (m_points[ptnum]->edges.empty()) {//line
-            for (auto& [_, e] : m_hEdges) {
-                if (e->next && e->next->point == ptnum) {
-                    remHEdges.insert(e->next->id);
-                    m_points[e->point]->edges.erase(e->next);
-                    e->next = nullptr;
-                    break;
-                }
-                else if (!e->next && e->point == ptnum) {
-                    remHEdges.insert(e->id);
-                    m_points[e->point_from]->edges.erase(e.get());
-                    remFaces.insert(e->face);
-                }
-            }
-        }
-
         for (auto outEdge : m_points[ptnum]->edges) {
             assert(outEdge);
 
             HEdge* firstEdge = outEdge;
 
-            bool isline = false;//line
-            do
-            {
-                firstEdge = firstEdge->next;
-                if (!firstEdge) {
-                    isline = true;
-                    break;
-                }
-            } while (firstEdge != outEdge);
-            if (isline) {
-                if (m_hEdges.size() == 1) {//one edge line case
-                    remHEdges.insert(outEdge->id);
-                    remFaces.insert(outEdge->face);
-                    m_points[ptnum]->edges.erase(outEdge);
-                }
-                else {
-                    HF_Point* prevPoint = nullptr;
-                    HEdge* prevEdge = nullptr, * pprevEdge = nullptr;
-                    for (auto& [_, e] : m_hEdges) {
-                        if (e->next && e->next == outEdge) {
-                            prevEdge = e.get();
-                            prevPoint = m_points[prevEdge->point_from].get();
-                        }
-                        else if (e->next && e->next->next && e->next->next == outEdge) {
-                            pprevEdge = e.get();
-                        }
-                    }
-                    if (prevEdge) {
-                        remHEdges.insert(outEdge->id);
-                        remHEdges.insert(prevEdge->id);
-
-                        auto newEdge = std::make_shared<HEdge>();
-
-                        std::string id = generateUUID();
-                        newEdge->id = id;
-                        m_hEdges.insert(std::make_pair(id, newEdge));
-
-                        //connect between outEdge->point and prevPoint.
-                        newEdge->point = outEdge->point;
-                        newEdge->point_from = prevEdge->point_from;
-                        newEdge->pair = nullptr;
-                        newEdge->next = outEdge->next;
-                        newEdge->face = outEdge->face;
-                        if (pprevEdge) {
-                            pprevEdge->next = newEdge.get();
-                        }
-                        else {
-                            m_faces[newEdge->face]->h = newEdge.get();
-                        }
-                        prevPoint->edges.erase(prevEdge);
-                        prevPoint->edges.insert(newEdge.get());
-                    }
-                    else {
-                        m_faces[outEdge->face]->h = outEdge->next;
-                        remHEdges.insert(outEdge->id);
-                    }
-                }
-                break;
+            if (firstEdge->next && firstEdge->next->next && firstEdge->next->next == outEdge) { //line
+                remHEdges.insert(outEdge->id);
+                remHEdges.insert(firstEdge->next->id);
+                remFaces.insert(outEdge->face);
+                m_points[firstEdge->point]->edges.erase(firstEdge->next);
+                continue;
             }
 
             HEdge* nextEdge = firstEdge->next;
@@ -731,23 +663,23 @@ namespace zeno
             auto [prevPoint, prevEdge, pprevEdge] = getPrev(outEdge);
             assert(prevEdge && pprevEdge);
             if (nextEdge && nnextEdge == prevEdge) {
-                //triangle£¬Õû¸öÃæºÍËùÓĞÁ¥ÊôÕâ¸öÃæµÄ°ë±ß¶¼ÒªÒÆ³ı
+                //triangleï¼Œæ•´ä¸ªé¢å’Œæ‰€æœ‰éš¶å±è¿™ä¸ªé¢çš„åŠè¾¹éƒ½è¦ç§»é™¤
                 remFaces.insert(outEdge->face);
 
                 HEdge* h = outEdge;
                 HEdge* prev = nullptr;
                 do {
                     remHEdges.insert(h->id);
-                    //¶ÔÃæÏÈÖÃ¿Õ×Ô¼º
+                    //å¯¹é¢å…ˆç½®ç©ºè‡ªå·±
                     if (h->pair)
                         h->pair->pair = nullptr;
                     if (prev) {
-                        //µ±Ç°±ßµÄÆğµãµÄedgesÒ²ĞèÒªÇå³ı×Ô¼º£¬µÚÒ»Ìõ±ßµÄ¶¥µã³ıÍâ£¨±¾Éí¾ÍÊÇÒª±»É¾³ıµÄµã£©
+                        //å½“å‰è¾¹çš„èµ·ç‚¹çš„edgesä¹Ÿéœ€è¦æ¸…é™¤è‡ªå·±ï¼Œç¬¬ä¸€æ¡è¾¹çš„é¡¶ç‚¹é™¤å¤–ï¼ˆæœ¬èº«å°±æ˜¯è¦è¢«åˆ é™¤çš„ç‚¹ï¼‰
                         m_points[prev->point]->edges.erase(h);
                     }
                     prev = h;
                     h = h->next;
-                    //TODO: Ïß¶ÎµÄÇé¿ö»á²»»áNullptr
+                    //TODO: çº¿æ®µçš„æƒ…å†µä¼šä¸ä¼šNullptr
                 } while (h != outEdge);
             }
             else {
@@ -839,75 +771,16 @@ namespace zeno
 
         bool isline = false;//line
         first = vertEdge;
-        do
-        {
-            if (first)
-                first = first->next;
-            if (!first) {
-                isline = true;
-                break;
-            }
-        } while (vertEdge != first);
+        if (first && first->next && first->next->next && first->next->next == vertEdge) {   //line
+            isline = true;
+        }
         if (isline) {
-            if (m_hEdges.size() == 1) {//one edge line case
-                HEdge* e = m_hEdges.begin()->second.get();
-                m_points[e->point_from]->edges.erase(e);
-                m_faces.erase(m_faces.begin() + e->face);
-                m_hEdges.clear();
-            }
-            else {
-                m_points[m_points.size() - 2]->edges.erase(vertEdge);
+            m_points[first->point_from]->edges.erase(first);
+            m_points[first->point]->edges.erase(first->next);
 
-                HF_Point* prevPoint = nullptr;
-                HEdge* prevEdge = nullptr, * pprevEdge = nullptr;
-                for (auto& [_, e] : m_hEdges) {
-                    if (e->next == vertEdge) {
-                        prevEdge = e.get();
-                        prevPoint = m_points[prevEdge->point_from].get();
-                    }
-                    else if (e->next && e->next->next == vertEdge) {
-                        pprevEdge = e.get();
-                    }
-                }
-                if (!vertEdge) {//rm last vertex
-                    prevPoint->edges.erase(prevEdge);
-                    if (pprevEdge) {
-                        pprevEdge->next = nullptr;
-                    }
-                    if (prevEdge) {
-                        m_hEdges.erase(prevEdge->id);
-                    }
-                }
-                else {
-                    if (prevEdge) {
-                        std::shared_ptr<HEdge> newedge = std::make_shared<HEdge>();
-                        newedge->id = generateUUID();
-                        newedge->pair = nullptr;
-                        newedge->next = vertEdge->next;
-                        newedge->point = vertEdge->point;
-                        newedge->point_from = prevEdge->point_from;
-                        newedge->face = vertEdge->face;
-
-                        m_points[prevEdge->point]->edges.erase(vertEdge);
-                        prevPoint->edges.erase(prevEdge);
-                        prevPoint->edges.insert(newedge.get());
-                        if (pprevEdge) {
-                            pprevEdge->next = newedge.get();
-                        }
-                        else {
-                            m_faces[newedge->face]->h = newedge.get();
-                        }
-                        m_hEdges.erase(vertEdge->id);
-                        m_hEdges.erase(prevEdge->id);
-                        m_hEdges.insert({ newedge->id, newedge });
-                    }
-                    else {
-                        m_faces[vertEdge->face]->h = vertEdge->next;
-                        m_points[vertEdge->point_from]->edges.erase(vertEdge);
-                        m_hEdges.erase(vertEdge->id);
-                    }
-                }
-            }
+            m_hEdges.erase(first->next->id);
+            m_hEdges.erase(first->id);
+            m_faces.erase(m_faces.begin() + face_id);
         }
         else {
             auto [prepoint, prevedge, pprevedge] = getPrev(vertEdge);
@@ -980,7 +853,7 @@ namespace zeno
                 auto& spPoint = m_points[h->point];
                 spPoint->edges.erase(h->next);
                 if (includePoints) {
-                    //¿¼²ìfaceÉÏËùÓĞµÄµã£¬ÊÇ·ñÓĞµãĞèÒª±»É¾³ı
+                    //è€ƒå¯Ÿfaceä¸Šæ‰€æœ‰çš„ç‚¹ï¼Œæ˜¯å¦æœ‰ç‚¹éœ€è¦è¢«åˆ é™¤
                     if (spPoint->edges.empty()) {
                         remPoints.insert(h->point);
                         remPtrPoints.insert(spPoint.get());
@@ -988,12 +861,12 @@ namespace zeno
                     }
                 }
                 if (h->pair) {
-                    //¶ÔÃæÖÃ¿Õ×Ô¼º
+                    //å¯¹é¢ç½®ç©ºè‡ªå·±
                     h->pair->pair = nullptr;
                 }
                 h->pair = nullptr;
                 auto nexth = h->next;
-                //hµÄÒÀÀµ¶¼½â³ıÁË£¬ÏÖÔÚ¾Í¿ÉÒÔÉ¾³ıÁË¡£
+                //hçš„ä¾èµ–éƒ½è§£é™¤äº†ï¼Œç°åœ¨å°±å¯ä»¥åˆ é™¤äº†ã€‚
                 m_hEdges.erase(h->id);
                 h = nexth;
                 if (!h)
@@ -1003,11 +876,11 @@ namespace zeno
 
         std::sort(removedPtnum.begin(), removedPtnum.end());
 
-        //±ß¶¼ÒÑ¾­É¾³ıÁË£¬ÏÖÔÚÖ»ÒªÉ¾³ıµãºÍÃæ¼´¿É¡£
+        //è¾¹éƒ½å·²ç»åˆ é™¤äº†ï¼Œç°åœ¨åªè¦åˆ é™¤ç‚¹å’Œé¢å³å¯ã€‚
         removeElements(m_points, remPoints);
         removeElements(m_faces, faces);
 
-        //ÒòÎªµã±»É¾³ıÁË£¬¹ÊĞèÒªµ÷ÕûËùÓĞÎ´±»É¾³ıµÄ±ß£¨Ö»Òªµ÷ÕûpointºÍfaceµÄË÷Òı£©£¬ÖÁÓÚfaceÔò²»ĞèÒªµ÷Õû£¬ÒòÎªÉ¾³ıµÄ¾ÍÊÇface£¬Ö±½ÓÉ¾ÁËÍêÊÂ
+        //å› ä¸ºç‚¹è¢«åˆ é™¤äº†ï¼Œæ•…éœ€è¦è°ƒæ•´æ‰€æœ‰æœªè¢«åˆ é™¤çš„è¾¹ï¼ˆåªè¦è°ƒæ•´pointå’Œfaceçš„ç´¢å¼•ï¼‰ï¼Œè‡³äºfaceåˆ™ä¸éœ€è¦è°ƒæ•´ï¼Œå› ä¸ºåˆ é™¤çš„å°±æ˜¯faceï¼Œç›´æ¥åˆ äº†å®Œäº‹
         for (auto& [_, hedge] : m_hEdges) {
             int nStep = 0;
             for (auto remPointId : remPoints) {
@@ -1073,8 +946,8 @@ namespace zeno
             prevEdge->next = newedge.get();
             prevEdge->point = point_id;
             m_hEdges.insert(std::make_pair(newedge->id, newedge));
-            spPoint->edges.insert(newedge.get());   //ĞèÒª½«newedge¼ÓÈënewedgeµÄedgesÖĞ£¿
-            m_bTriangle = false;    //ÓĞÔö¼ÓÒâÎ¶×Å²»ÄÜµ±×÷Èı½ÇĞÎ´¦ÀíÁË
+            spPoint->edges.insert(newedge.get());   //éœ€è¦å°†newedgeåŠ å…¥newedgeçš„edgesä¸­ï¼Ÿ
+            m_bTriangle = false;    //æœ‰å¢åŠ æ„å‘³ç€ä¸èƒ½å½“ä½œä¸‰è§’å½¢å¤„ç†äº†
 
             update_linear_vertex();
 
@@ -1086,7 +959,7 @@ namespace zeno
     }
 
     void HalfEdgeTopology::set_face(int idx, const std::vector<int>& points, bool bClose) {
-        //pointsÒª°´ÕÕÄæÊ±Õë·½Ïò
+        //pointsè¦æŒ‰ç…§é€†æ—¶é’ˆæ–¹å‘
         std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
         size_t face_id = idx;
 
@@ -1168,7 +1041,7 @@ namespace zeno
     }
 
     int HalfEdgeTopology::add_face(const std::vector<int>& points, bool bClose) {
-        //pointsÒª°´ÕÕÄæÊ±Õë·½Ïò
+        //pointsè¦æŒ‰ç…§é€†æ—¶é’ˆæ–¹å‘
         std::shared_ptr<HF_Face> spFace = std::make_shared<HF_Face>();
         int face_id = m_faces.size();
 
