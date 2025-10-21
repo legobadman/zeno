@@ -1,4 +1,4 @@
-﻿#include "indicemeshtopo.h"
+#include "indicemeshtopo.h"
 #include <zeno/para/parallel_reduce.h>
 
 namespace zeno
@@ -122,7 +122,7 @@ namespace zeno
 
     int IndiceMeshTopology::nfaces() const {
         if (is_base_triangle()) {
-            return m_point_size;
+            return m_indiceMesh_topo->tris->size();
         }
         else {
             return m_indiceMesh_topo->polys->size();

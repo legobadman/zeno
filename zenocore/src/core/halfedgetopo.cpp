@@ -1,4 +1,4 @@
-﻿#include "halfedgetopo.h"
+#include "halfedgetopo.h"
 #include <zeno/utils/format.h>
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>

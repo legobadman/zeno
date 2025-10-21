@@ -1,4 +1,4 @@
-#include <zeno/zeno.h>
+﻿#include <zeno/zeno.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/GeometryObject.h>
@@ -712,7 +712,7 @@ struct CreatePlane : zeno::INode {
 
         NORMUV_CIHOU
         auto geo = create_GeometryObject(prim.get());
-        set_output("prim", std::move(prim));
+        set_output("prim", std::move(geo));
     }
 };
 
