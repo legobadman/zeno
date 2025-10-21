@@ -23,36 +23,36 @@ namespace zeno
         bool is_base_triangle() const override;
         bool is_line() const override;
 
-        /* Ìí¼ÓÔªËØ */
+        /* æ·»åŠ å…ƒç´  */
         int add_face(const std::vector<int>& points, bool bClose) override;
         void set_face(int idx, const std::vector<int>& points, bool bClose) override;
         int add_point() override;
         int add_vertex(int face_id, int point_id) override;
 
-        /* ÒÆ³ıÔªËØÏà¹Ø */
+        /* ç§»é™¤å…ƒç´ ç›¸å…³ */
         bool remove_faces(const std::set<int>& faces, bool includePoints, std::vector<int>& removedPtnum) override;
         bool remove_point(int ptnum) override;
         bool remove_vertex(int face_id, int vert_id) override;
 
-        /* ·µ»ØÔªËØ¸öÊı */
+        /* è¿”å›å…ƒç´ ä¸ªæ•° */
         int npoints() const override;
         int nfaces() const override;
         int nvertices() const override;
         int nvertices(int face_id) const override;
 
-        /* µãÏà¹Ø */
+        /* ç‚¹ç›¸å…³ */
         std::vector<int> point_faces(int point_id) const  override;
         int point_vertex(int point_id) const override;
         std::vector<int> point_vertices(int point_id) const override;
 
-        /* ÃæÏà¹Ø */
+        /* é¢ç›¸å…³ */
         int face_point(int face_id, int vert_id) const override;
         std::vector<int> face_points(int face_id) const override;
         int face_vertex(int face_id, int vert_id) const override;
         int face_vertex_count(int face_id) const override;
         std::vector<int> face_vertices(int face_id) const override;
 
-        /* VertexÏà¹Ø */
+        /* Vertexç›¸å…³ */
         int vertex_index(int face_id, int vertex_id) const override;
         int vertex_next(int linear_vertex_id) const override;
         int vertex_prev(int linear_vertex_id) const override;
