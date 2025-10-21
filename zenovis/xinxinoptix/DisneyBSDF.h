@@ -1317,13 +1317,13 @@ namespace DisneyBSDF{
         //and offset is the "index" to "take" the random number from van der corput
         //as a result, for i'th ray in a pixel, its offset shall be subframe_index, and scrumble seed shall change between
         //events
-        auto perm = prd->vdcseed;
-        unsigned int perm0 = perm;
-        rnd(perm);rnd(perm);rnd(perm);
-        unsigned int  perm1 = perm;
-        rnd(perm);rnd(perm);rnd(perm);
-        unsigned int  perm2 = perm;
+        unsigned int depth_offset = tea<4>( prd->depth, 0);
+        unsigned int perm0 = prd->vdcseed + depth_offset;
+        unsigned int perm1 = getScrumble(perm0);
+        unsigned int perm2 = getScrumble(perm1);
         float r3 = vdcrnd(prd->offset, perm0);
+        float r4 = prd->depth<1?vdcrnd(prd->offset, perm1):rnd(prd->seed);
+        float r5 = prd->depth<1?vdcrnd(prd->offset, perm2):rnd(prd->seed);
         Onb  tbn = Onb(N);
         tbn.m_tangent = T;
         tbn.m_binormal = B;
@@ -1392,7 +1392,7 @@ namespace DisneyBSDF{
             float F = mix(BRDFBasics::SchlickWeight(abs(dot(wm, woo))), 1.0f, 0.06f);
             float sss_wt = (1.0f - mat.subsurface);
             float diffp = mix(1.0f, 0.0f, mat.subsurface);
-            if(vdcrnd(prd->offset, perm1)<diffp || prd->fromDiff==true)
+            if(r4<diffp || prd->fromDiff==true)
             {
               prd->fromDiff = true;
               wi = BRDFBasics::CosineSampleHemisphere(r1, r2);
@@ -1482,7 +1482,7 @@ namespace DisneyBSDF{
 
           float F = BRDFBasics::DielectricFresnel(abs(dot(wm, woo)), entering?mat.ior:1.0f/mat.ior);
 
-          if(vdcrnd(prd->offset, perm2)<F)//reflection
+          if(r5<F)//reflection
           {
             wi = normalize(reflect(-normalize(woo),wm));
           }else //refraction
