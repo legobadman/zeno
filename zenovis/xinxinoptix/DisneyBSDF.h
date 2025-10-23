@@ -704,7 +704,8 @@ namespace DisneyBSDF{
             bool reflection_fromCC = false)
 
     {
-        //mat.roughness = reflectance==false?max(0.011f, mat.roughness):mat.roughness;
+        mat.roughness = reflectance==false?max(0.011f, mat.roughness):mat.roughness;
+        mat.clearcoatRoughness  = reflectance==false?max(0.011f, mat.clearcoatRoughness):mat.clearcoatRoughness;
         //bool sameside = (dot(wo, N)*dot(wo, N2))>0.0f;
 //        if(reflectance == true)
 //        {
@@ -847,10 +848,11 @@ namespace DisneyBSDF{
 
               vec3 wm = normalize(wi + wo);
               float F = BRDFBasics::DielectricFresnel(abs(dot(wm, wo)), entering?mat.ior:1.0f/mat.ior);
+              float Fp = mix(mat.F0,1.0,F);
               vec3 s = BRDFBasics::EvalMicrofacetReflection(ax, ay, wo, wi, wm,
-                                                            mix(mix(Cspec0, mat.diffractColor, mat.diffraction), vec3(1.0f), F) * mat.specular,
+                                                            mix(mix(vec3(mat.F0), mat.diffractColor, mat.diffraction), vec3(1.0f), F) * mat.specular,
                                             tmpPdf) * glassWt;
-              tmpPdf *= (mat.roughness<=0.01 && reflectance==false)? 0.0f:F;
+              tmpPdf *= (mat.roughness<=0.01 && reflectance==false)? 0.0f:Fp;
               s = s * (tmpPdf>0.0f? 1.0f:0.0f);
               sterm = sterm + s;
               f = f + s;
@@ -868,15 +870,17 @@ namespace DisneyBSDF{
               }else {
                 vec3 wm = entering?-normalize(wo + mat.ior * wi) : normalize(wo + 1.0f/mat.ior * wi);
                 float F = BRDFBasics::DielectricFresnel(abs(dot(wm, wo)), entering?mat.ior:1.0f/mat.ior);
+                float Fp = mix(mat.F0,1.0,F);
                 float tmpPdf;
                 vec3 brdf = BRDFBasics::EvalMicrofacetRefraction(mix(sqrt(mat.transColor), mat.diffractColor, mat.diffraction),
                                                                  ax, ay,
                                                                  entering? mat.ior:1.0f/mat.ior,
                                                                  wo, wi, wm,
-                                                                 vec3(F), tmpPdf);
+                                                                 mix(mix(vec3(mat.F0), mat.diffractColor, mat.diffraction), vec3(1.0f), F) * mat.specular,
+                                                                 tmpPdf);
 
                 vec3 t = brdf * glassWt;
-                tmpPdf *= (mat.roughness<=0.01 && reflectance==false)? 0.0f:(1.0f - F);
+                tmpPdf *= (mat.roughness<=0.01 && reflectance==false)? 0.0f:(1.0f - Fp);
                 t = t * (tmpPdf>0.0f? 1.0f:0.0f);
                 tterm = tterm + t;
                 f = f + t;
@@ -1481,8 +1485,9 @@ namespace DisneyBSDF{
           wm = entering?wm:-wm;
 
           float F = BRDFBasics::DielectricFresnel(abs(dot(wm, woo)), entering?mat.ior:1.0f/mat.ior);
+          float Fp = mix(mat.F0,1.0,F);
 
-          if(r5<F)//reflection
+          if(r5<Fp)//reflection
           {
             wi = normalize(reflect(-normalize(woo),wm));
           }else //refraction
