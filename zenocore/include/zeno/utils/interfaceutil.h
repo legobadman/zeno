@@ -24,7 +24,13 @@ namespace zeno
         return vec;
     }
 
-    inline std::string zsString2Std(const zeno::String& zs) { return std::string(zs.c_str()); }
+    inline std::string zsString2Std(const zeno::String& zs) { 
+        if (auto ptr = zs.c_str()) {
+            return std::string(ptr);
+        } else {
+            return "";
+        }
+    }
     inline zeno::String stdString2zs(const std::string& ss) { return zeno::String(ss.c_str()); }
 
     inline zeno::vec2f toVec2f(const zeno::Vec2f& rhs) { return zeno::vec2f(rhs.x, rhs.y); }
