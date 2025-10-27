@@ -26,9 +26,40 @@ find_package(Eigen3 REQUIRED)
 set(WHEREAMI_BUILD_SHARED_LIBS ON)
 add_subdirectory(zpc)
 
+add_library(zcuda SHARED 
+  iw_query/Query.cpp
+  #test1.cu
+  test.cu
+  test.cpp
+  # vktest.cpp
+
+  pyzfx/pyzfx.cpp
+  wrangle/PW.cu
+  wrangle/P2W.cu
+  wrangle/PNW.cu
+  wrangle/PNBVHW.cu
+  wrangle/PPW.cu
+  wrangle/TVW.cu
+  wrangle/VW.cu
+
+  Structures.cu
+  utils/Conversion.cpp
+  utils/Primitives.cpp
+  utils/IndexBuckets.cu
+  utils/Primitives.cu
+  utils/TopoUtils.cu
+  utils/Tracing.cu
+  utils/Noise.cu
+  utils/Groom.cpp
+
+  graph/BasicTask.cpp
+)
+
 if (ZS_PYTHON_FOUND)
-  target_link_libraries(zeno PRIVATE zpc_jit_py)
+  target_link_libraries(zcuda PRIVATE zpc_jit_py)
 endif(ZS_PYTHON_FOUND)
+
+target_link_libraries(zcuda PRIVATE zenocore)
 
 if (ZS_PYTHON_FOUND AND ZENO_WITH_PyZpc)
 
@@ -40,9 +71,9 @@ if (ZS_PYTHON_FOUND AND ZENO_WITH_PyZpc)
     set(RESOURCE_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
   endif()
 
-  get_target_property(ZPC_BIN_DIR zeno RUNTIME_OUTPUT_DIRECTORY)
+  get_target_property(ZPC_BIN_DIR zcuda RUNTIME_OUTPUT_DIRECTORY)
   add_custom_target(copy_py)
-  add_dependencies(zeno copy_py)
+  add_dependencies(zcuda copy_py)
   add_dependencies(copy_py zpc_jit_py)
   # message(STATUS "retrieved python impl: ${Python3_INTERPRETER_ID}")
   message(STATUS "python3 libraries: ${ZS_OVERWRITE_PYTHON_LIBRARIES}")
@@ -76,9 +107,9 @@ if (ZS_PYTHON_FOUND AND ZENO_WITH_PyZpc)
     message(FATAL_ERROR "unknown system to determine shared library suffix")
   endif()
 
-  target_compile_definitions(zeno PRIVATE -DZENO_OUTPUT_BINARY_CAPIS="${PREFIX}zpc_py_interop${SUFFIX}")
-  target_compile_definitions(zeno PRIVATE -DZENO_OUTPUT_BINARY_NVRTC="${PREFIX}zpc_jit_nvrtc${SUFFIX}")
-  target_compile_definitions(zeno PRIVATE -DZENO_OUTPUT_BINARY_CLANG="${PREFIX}zpc_jit_clang${SUFFIX}")
+  target_compile_definitions(zcuda PRIVATE -DZENO_OUTPUT_BINARY_CAPIS="${PREFIX}zpc_py_interop${SUFFIX}")
+  target_compile_definitions(zcuda PRIVATE -DZENO_OUTPUT_BINARY_NVRTC="${PREFIX}zpc_jit_nvrtc${SUFFIX}")
+  target_compile_definitions(zcuda PRIVATE -DZENO_OUTPUT_BINARY_CLANG="${PREFIX}zpc_jit_clang${SUFFIX}")
   add_custom_command(
     TARGET copy_py
     POST_BUILD
@@ -184,65 +215,24 @@ target_include_directories(zshelper INTERFACE
 target_link_libraries(zshelper INTERFACE zensim ZFX)
 target_compile_features(zshelper INTERFACE cuda_std_17)
 
-target_link_options(zeno
+target_link_options(zcuda
   PRIVATE $<DEVICE_LINK:-dlto>
 )
-target_link_libraries(zeno PRIVATE Eigen3::Eigen)
-target_link_libraries(zeno PRIVATE zshelper)
+target_link_libraries(zcuda PRIVATE Eigen3::Eigen)
+target_link_libraries(zcuda PRIVATE zshelper)
 
-target_sources(zeno PRIVATE
-  iw_query/Query.cpp
-)
-
-target_sources(zeno PRIVATE
-  #test1.cu
-  test.cu
-  test.cpp
-  # vktest.cpp
-)
-# target_link_libraries(zeno PRIVATE vulkan shaderc_shared SPIRV)
-# target_link_libraries(zeno PRIVATE Vulkan::Vulkan ${Vulkan_LIBRARY})
+# target_link_libraries(zcuda PRIVATE vulkan shaderc_shared SPIRV)
+# target_link_libraries(zcuda PRIVATE Vulkan::Vulkan ${Vulkan_LIBRARY})
 #[=[
 #]=]
-set_target_properties(zeno
+set_target_properties(zcuda
   PROPERTIES
   CUDA_SEPARABLE_COMPILATION ON
   CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
 
-#
-target_sources(zeno PRIVATE
-  pyzfx/pyzfx.cpp
-)
-
-# wrangler
-target_sources(zeno PRIVATE
-  wrangle/PW.cu
-  wrangle/P2W.cu
-  wrangle/PNW.cu
-  wrangle/PNBVHW.cu
-  wrangle/PPW.cu
-  wrangle/TVW.cu
-  wrangle/VW.cu
-)
-
-# utils
-target_sources(zeno PRIVATE
-  Structures.cu
-  utils/Conversion.cpp
-  utils/Primitives.cpp
-  utils/IndexBuckets.cu
-  utils/Primitives.cu
-  utils/TopoUtils.cu
-  utils/Tracing.cu
-  utils/Noise.cu
-  utils/Groom.cpp
-
-  graph/BasicTask.cpp
-)
-
 if (ZS_PYTHON_FOUND)
-target_sources(zeno PRIVATE
+target_sources(zcuda PRIVATE
   graph/Task.cpp
 )
 endif(ZS_PYTHON_FOUND)

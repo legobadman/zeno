@@ -1,3 +1,4 @@
+#if 0
 #include "Task.hpp"
 #include "zensim/omp/execution/ExecutionPolicy.hpp"
 #include <queue>
@@ -188,7 +189,7 @@ struct WriteTaskDependencyGraph : INode {
   }
   void apply() override {
     std::vector<WorkNode *> nodes;
-    auto jobs = get_input("job");
+    auto jobs = clone_input("job");
     if (auto ptr = std::dynamic_pointer_cast<WorkNode>(jobs); ptr)
       nodes.push_back(ptr.get());
     else if (auto list = std::dynamic_pointer_cast<ListObject>(jobs); list) {
@@ -223,12 +224,12 @@ struct WriteTaskDependencyGraph : INode {
 ZENO_DEFNODE(WriteTaskDependencyGraph)
 ({/* inputs: */
   {
-      {gParamType_List, "job"},
-      {"writepath", "json_file_path", ""},
+      {gParamType_IObject, "job"},
+      {gParamType_String, "json_file_path", "", zeno::Socket_Primitve, zeno::WritePathEdit},
   },
   /* outputs: */
   {
-      {"job"},
+      {gParamType_IObject, "job"},
   },
   /* params: */
   {},
@@ -321,3 +322,4 @@ ZENO_DEFNODE(SetWorkDependencies)
   }});
 
 } // namespace zeno
+#endif

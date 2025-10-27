@@ -6,7 +6,6 @@
 #include "zensim/zpc_tpls/fmt/format.h"
 
 // from projects/ZenoFX/p2w.cpp : ParticlesTwoWrangle
-#include "dbg_printf.h"
 #include <cassert>
 #include <cuda.h>
 #include <zeno/core/Graph.h>

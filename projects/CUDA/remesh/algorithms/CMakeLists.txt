@@ -1,4 +1,4 @@
-target_sources(zeno PRIVATE 
+target_sources(zcuda PRIVATE 
     SurfaceCurvature.cpp
     SurfaceNormals.cpp
     SurfaceRemeshing.cpp

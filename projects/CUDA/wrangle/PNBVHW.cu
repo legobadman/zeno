@@ -6,7 +6,6 @@
 #include "zensim/zpc_tpls/fmt/format.h"
 
 // from projects/ZenoFX/pnbvhw.cpp : ParticlesNeighborWrangle
-#include "dbg_printf.h"
 #include <cassert>
 #include <cuda.h>
 #include <zeno/core/Graph.h>

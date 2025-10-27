@@ -5,7 +5,6 @@
 #include "zensim/zpc_tpls/fmt/color.h"
 #include "zensim/zpc_tpls/fmt/format.h"
 
-#include "dbg_printf.h"
 #include <cassert>
 #include <cuda.h>
 #include <zeno/core/Graph.h>
