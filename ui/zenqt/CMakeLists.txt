@@ -101,7 +101,8 @@ if (ZENO_WITH_PYTHON)
     target_compile_definitions(zeno PRIVATE -DZENO_WITH_PYTHON)
 endif()
 
-if(WIN32)
+#拷的好像不是reldbinfo的qt，先不用
+if(0)
     add_custom_command(TARGET zeno POST_BUILD
         COMMAND "${_qt5Core_install_prefix}/bin/windeployqt.exe"
                 --no-compiler-runtime

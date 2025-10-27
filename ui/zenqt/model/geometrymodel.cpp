@@ -1,7 +1,22 @@
 ﻿#include "geometrymodel.h"
-#include <zeno/types/GeometryObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/extra/SceneAssembler.h>
+#include "panel/zgeometryspreadsheet.h"
 
+
+template<class T>
+T* getGeoObject(const QAbstractItemModel* pModel) {
+    QObject* p = pModel->parent();
+    while (p) {
+        if (auto pWid = qobject_cast<ZGeometrySpreadsheet*>(p)) {
+            zeno::IObject* obj = pWid->getObject();
+            return dynamic_cast<T*>(obj);
+        } else {
+            p = p->parent();
+        }
+    }
+    return nullptr;
+}
 
 void addCol(zeno::GeometryObject* pObject, zeno::GeoAttrGroup group, QMap<int, AttributeInfo>& colMapping, std::string name, int& nCol) {
     QString qName = QString::fromStdString(name);
@@ -62,7 +77,7 @@ static QMap<int, AttributeInfo> initColMapping(zeno::GeometryObject* pObject, ze
 /// </summary>
 /// <param name="pObject"></param>
 VertexModel::VertexModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) 
-    : m_object(spObject)
+    : QAbstractTableModel(parent)
     , m_nvertices(spObject->nvertices())
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
@@ -116,7 +131,7 @@ VertexModel::VertexModel(zeno::GeometryObject_Adapter* spObject, QObject* parent
 }
 
 QVariant VertexModel::data(const QModelIndex& index, int role) const {
-    auto spObject = m_object;
+    auto spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
     if (!spObject) {
         return QVariant();
     }
@@ -176,7 +191,6 @@ QVariant VertexModel::headerData(int section, Qt::Orientation orientation, int r
 void VertexModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
 {
     beginResetModel();
-    m_object = spObject;
     m_nvertices = spObject->nvertices();
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
     endResetModel();
@@ -190,7 +204,10 @@ bool VertexModel::removeRows(int row, int count, const QModelIndex& parent) {
 ///
 /// </summary>
 /// <param name="pObject"></param>
-PointModel::PointModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) : m_object(spObject), m_npoints(spObject->npoints()) {
+PointModel::PointModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
+    : QAbstractTableModel(parent)
+    , m_npoints(spObject->npoints())
+{
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
     spObject->m_impl->register_add_point([this](int ptnum) {
         if (ptnum != -1) {
@@ -237,8 +254,10 @@ PointModel::PointModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) 
     //});
 }
 
+
+
 QVariant PointModel::data(const QModelIndex& index, int role) const {
-    auto spObject = m_object;
+    zeno::GeometryObject_Adapter* spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
     if (!spObject)
         return QVariant();
     int row = index.row(), col = index.column();
@@ -284,7 +303,6 @@ QVariant PointModel::headerData(int section, Qt::Orientation orientation, int ro
 void PointModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
 {
     beginResetModel();
-    m_object = spObject;
     m_npoints = spObject->npoints();
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
     endResetModel();
@@ -306,7 +324,10 @@ bool PointModel::removeRows(int row, int count, const QModelIndex& parent) {
 /// </summary>
 /// <param name="pObject"></param>
 
-FaceModel::FaceModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) : m_object(spObject), m_nfaces(spObject->nfaces()) {
+FaceModel::FaceModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
+    : QAbstractTableModel(parent)
+    , m_nfaces(spObject->nfaces())
+{
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     spObject->m_impl->register_add_face([this](int faceid) {
         if (faceid != -1) {
@@ -324,7 +345,7 @@ FaceModel::FaceModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) : 
     });
     spObject->m_impl->register_reset_faces([this]() {
         beginResetModel();
-        auto _spObject = m_object;
+        auto _spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
         m_nfaces = _spObject->nfaces();
         endResetModel();
     });
@@ -360,7 +381,7 @@ FaceModel::FaceModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) : 
 }
 
 QVariant FaceModel::data(const QModelIndex& index, int role) const {
-    auto spObject = m_object;
+    auto spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
     if (!spObject) {
         return QVariant();
     }
@@ -414,7 +435,6 @@ void FaceModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
         return;
     }
     beginResetModel();
-    m_object = spObject;
     m_nfaces = spObject->nfaces();
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     endResetModel();
@@ -423,14 +443,13 @@ void FaceModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
 
 GeomDetailModel::GeomDetailModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
     : QAbstractTableModel(parent)
-    , m_object(spObject)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
 }
 
 QVariant GeomDetailModel::data(const QModelIndex& index, int role) const
 {
-    auto spObject = m_object;
+    auto spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
     if (!spObject)
         return QVariant();
 
@@ -471,7 +490,6 @@ QVariant GeomDetailModel::headerData(int section, Qt::Orientation orientation, i
 
 void GeomDetailModel::setGeoObject(zeno::GeometryObject_Adapter* spObject) {
     beginResetModel();
-    m_object = spObject;
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
     endResetModel();
 }
@@ -479,7 +497,6 @@ void GeomDetailModel::setGeoObject(zeno::GeometryObject_Adapter* spObject) {
 
 GeomUserDataModel::GeomUserDataModel(zeno::GeometryObject_Adapter* pObject, QObject* parent)
     : QAbstractTableModel(parent)
-    , m_object(pObject)
 {
 }
 
@@ -515,7 +532,7 @@ int GeomUserDataModel::columnCount(const QModelIndex& parent) const {
 }
 
 zeno::UserData* GeomUserDataModel::userData() const {
-    if (auto spObject = m_object) {
+    if (auto spObject = getGeoObject<zeno::GeometryObject_Adapter>(this)) {
         return static_cast<zeno::UserData*>(spObject->userData());
     }
     else {
@@ -580,7 +597,6 @@ QVariant GeomUserDataModel::headerData(int section, Qt::Orientation orientation,
 
 void GeomUserDataModel::setGeoObject(zeno::GeometryObject_Adapter* pObject) {
     beginResetModel();
-    m_object = pObject;
     endResetModel();
 }
 
@@ -593,7 +609,8 @@ SceneObjectListModel::SceneObjectListModel(DataType type, QObject* parent)
 
 QVariant SceneObjectListModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || !m_object) {
+    auto sceneObj = getGeoObject<zeno::SceneObject>(this);
+    if (!index.isValid() || !sceneObj) {
         return QVariant();
     }
 
@@ -605,8 +622,8 @@ QVariant SceneObjectListModel::data(const QModelIndex& index, int role) const
 
             if (m_type == SceneTree) {
                 // 显示场景树节点信息
-                auto it = m_object->scene_tree.find(m_keys[row]);
-                if (it != m_object->scene_tree.end()) {
+                auto it = sceneObj->scene_tree.find(m_keys[row]);
+                if (it != sceneObj->scene_tree.end()) {
                     const auto& node = it->second;
                     QString info = QString("%1: %2 (meshes: %3, children: %4)")
                         .arg(row)
@@ -617,15 +634,15 @@ QVariant SceneObjectListModel::data(const QModelIndex& index, int role) const
                 }
             } else if (m_type == GeometryList) {
                 // 显示几何对象信息
-                auto it = m_object->geom_list.find(m_keys[row]);
-                if (it != m_object->geom_list.end()) {
+                auto it = sceneObj->geom_list.find(m_keys[row]);
+                if (it != sceneObj->geom_list.end()) {
                     const auto& geom = it->second;
                     return QString("%1: %2").arg(row).arg(key);
                 }
             } else if (m_type == NodeToMatrix) {
                 // 显示节点名称和矩阵大小
-                auto it = m_object->node_to_matrix.find(m_keys[row]);
-                if (it != m_object->node_to_matrix.end()) {
+                auto it = sceneObj->node_to_matrix.find(m_keys[row]);
+                if (it != sceneObj->node_to_matrix.end()) {
                     const auto& matrices = it->second;
                     QString info = QString("%1: %2 (matrix: %3)")
                         .arg(row)
@@ -642,7 +659,8 @@ QVariant SceneObjectListModel::data(const QModelIndex& index, int role) const
 
 int SceneObjectListModel::rowCount(const QModelIndex& parent) const
 {
-    if (parent.isValid() || !m_object) {
+    auto sceneObj = getGeoObject<zeno::SceneObject>(this);
+    if (parent.isValid() || !sceneObj) {
         return 0;
     }
 
@@ -666,7 +684,6 @@ QVariant SceneObjectListModel::headerData(int section, Qt::Orientation orientati
 void SceneObjectListModel::setSceneObject(zeno::SceneObject* pObject)
 {
     beginResetModel();
-    m_object = pObject;
     m_keys.clear();
 
     if (pObject) {
@@ -698,9 +715,10 @@ std::string SceneObjectListModel::getKeyAt(int index) const
 
 zeno::SceneTreeNode SceneObjectListModel::getTreeNodeAt(int index) const
 {
-    if (m_object && index >= 0 && index < m_keys.size()) {
-        auto it = m_object->scene_tree.find(m_keys[index]);
-        if (it != m_object->scene_tree.end()) {
+    auto sceneObj = getGeoObject<zeno::SceneObject>(this);
+    if (sceneObj && index >= 0 && index < m_keys.size()) {
+        auto it = sceneObj->scene_tree.find(m_keys[index]);
+        if (it != sceneObj->scene_tree.end()) {
             return it->second;
         }
     }
@@ -709,7 +727,8 @@ zeno::SceneTreeNode SceneObjectListModel::getTreeNodeAt(int index) const
 
 zeno::SceneObject* SceneObjectListModel::getSceneObject()
 {
-    return m_object;
+    auto sceneObj = getGeoObject<zeno::SceneObject>(this);
+    return sceneObj;
 }
 
 // SceneObjectTableModel实现
@@ -721,7 +740,8 @@ SceneObjectTableModel::SceneObjectTableModel(DataType type, QObject* parent)
 
 QVariant SceneObjectTableModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid() || !m_object) {
+    auto sceneObj = getGeoObject<zeno::SceneObject>(this);
+    if (!index.isValid() || !sceneObj) {
         return QVariant();
     }
 
@@ -733,8 +753,8 @@ QVariant SceneObjectTableModel::data(const QModelIndex& index, int role) const
             QString key = QString::fromStdString(m_keys[row]);
 
             if (m_type == NodeToId) {
-                auto it = m_object->node_to_id.find(m_keys[row]);
-                if (it != m_object->node_to_id.end()) {
+                auto it = sceneObj->node_to_id.find(m_keys[row]);
+                if (it != sceneObj->node_to_id.end()) {
                     const auto& ids = it->second;
                     if (col == 0) {
                         // 第一列：节点名称
@@ -757,7 +777,8 @@ QVariant SceneObjectTableModel::data(const QModelIndex& index, int role) const
 
 int SceneObjectTableModel::rowCount(const QModelIndex& parent) const
 {
-    if (parent.isValid() || !m_object) {
+    auto sceneObj = getGeoObject<zeno::SceneObject>(this);
+    if (parent.isValid() || !sceneObj) {
         return 0;
     }
 
@@ -787,7 +808,6 @@ QVariant SceneObjectTableModel::headerData(int section, Qt::Orientation orientat
 void SceneObjectTableModel::setSceneObject(zeno::SceneObject* pObject)
 {
     beginResetModel();
-    m_object = pObject;
     m_keys.clear();
 
     if (pObject) {

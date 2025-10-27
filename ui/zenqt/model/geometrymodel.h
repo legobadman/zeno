@@ -51,7 +51,6 @@ public:
 
 private:
     QMap<int, AttributeInfo> m_colMap;
-    zeno::GeometryObject_Adapter* m_object;
     int m_nvertices;
 };
 
@@ -66,12 +65,10 @@ public:
     int columnCount(const QModelIndex& parent) const override;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-
     void setGeoObject(zeno::GeometryObject_Adapter* pObject);
 
 private:
     QMap<int, AttributeInfo> m_colMap;
-    zeno::GeometryObject_Adapter* m_object;
     int m_npoints;
 };
 
@@ -90,7 +87,6 @@ public:
 
 private:
     QMap<int, AttributeInfo> m_colMap;
-    zeno::GeometryObject_Adapter* m_object;
 
     int m_nfaces;
 };
@@ -108,7 +104,6 @@ public:
 
 private:
     QMap<int, AttributeInfo> m_colMap;
-    zeno::GeometryObject_Adapter* m_object;
 };
 
 class GeomUserDataModel : public QAbstractTableModel
@@ -125,8 +120,6 @@ public:
 private:
     QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const;
     zeno::UserData* userData() const;
-
-    zeno::GeometryObject_Adapter* m_object;
 };
 
 // SceneObject相关的通用模型类
@@ -151,7 +144,6 @@ public:
     zeno::SceneObject* getSceneObject();
 private:
     DataType m_type;
-    zeno::SceneObject* m_object;
     std::vector<std::string> m_keys;
 };
 
@@ -172,7 +164,6 @@ public:
 
 private:
     DataType m_type;
-    zeno::SceneObject* m_object;
     std::vector<std::string> m_keys;
 };
 

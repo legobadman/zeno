@@ -466,7 +466,7 @@ void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex node
     if (VertexModel* model = qobject_cast<VertexModel*>(view->model())) {
         model->setGeoObject(object);
     } else {
-        view->setModel(new VertexModel(object));
+        view->setModel(new VertexModel(object, this));
     }
 
     view = qobject_cast<QTableView*>(m_stackViews->widget(1));
@@ -474,7 +474,7 @@ void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex node
         model->setGeoObject(object);
     }
     else {
-        view->setModel(new PointModel(object));
+        view->setModel(new PointModel(object, this));
     }
 
     view = qobject_cast<QTableView*>(m_stackViews->widget(2));
@@ -482,7 +482,7 @@ void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex node
         model->setGeoObject(object);
     }
     else {
-        view->setModel(new FaceModel(object));
+        view->setModel(new FaceModel(object, this));
     }
 
     view = qobject_cast<QTableView*>(m_stackViews->widget(3));
@@ -490,7 +490,7 @@ void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex node
         model->setGeoObject(object);
     }
     else {
-        view->setModel(new GeomDetailModel(object));
+        view->setModel(new GeomDetailModel(object, this));
     }
 
     view = qobject_cast<QTableView*>(m_stackViews->widget(4));
@@ -498,7 +498,7 @@ void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex node
         udmodel->setGeoObject(object);
     }
     else {
-        view->setModel(new GeomUserDataModel(object));
+        view->setModel(new GeomUserDataModel(object, this));
     }
 }
 
@@ -693,9 +693,9 @@ SceneObjView::SceneObjView(QWidget* parent)
     , m_radioNodeToId(new QRadioButton("node_to_id"))  // 修改：改为QRadioButton
     , m_radioGeomList(new QRadioButton("geom_list"))  // 修改：改为QRadioButton
     , m_stackViews(new QStackedWidget(this))
-    , m_sceneTreeNodeWidget(new SceneTreeNodeWidget(nullptr))
-    , m_matrixWidget(new MatrixWidget(nullptr))
-    , m_baseAttributeView(new BaseAttributeView(nullptr))  // 修改：直接使用BaseAttributeView替换GeometryWidget
+    , m_sceneTreeNodeWidget(new SceneTreeNodeWidget(this))
+    , m_matrixWidget(new MatrixWidget(this))
+    , m_baseAttributeView(new BaseAttributeView(this))  // 修改：直接使用BaseAttributeView替换GeometryWidget
 {
     // 创建自定义委托实例
     UnderlineItemDelegate* underlineDelegate = new UnderlineItemDelegate(this);
@@ -1089,9 +1089,9 @@ ListObjView::ListObjView(QWidget* parent)
     , m_underlineDelegate(new ListObjItemDelegate(this))
     , m_model(nullptr)
     , m_currentListObject(nullptr)
-    , m_baseAttributeView(new BaseAttributeView(nullptr))
-    , m_sceneObjView(new SceneObjView(nullptr))
-    , m_materialObjView(new MaterialObjView(nullptr))
+    , m_baseAttributeView(new BaseAttributeView(this))
+    , m_sceneObjView(new SceneObjView(this))
+    , m_materialObjView(new MaterialObjView(this))
 {
     // 设置节点标签样式
     QPalette palette = m_lblNode->palette();
@@ -1344,6 +1344,11 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     connect(zenoApp->graphsManager(), &GraphsManager::fileClosed, this, [this]() {
         clearModel();
         });
+}
+
+ZGeometrySpreadsheet::~ZGeometrySpreadsheet() {
+    int j;
+    j = 0;
 }
 
 void ZGeometrySpreadsheet::setGeometry(
