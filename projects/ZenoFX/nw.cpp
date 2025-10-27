@@ -41,7 +41,7 @@ struct NumericWrangle : zeno::INode {
         opts.detect_new_symbols = true;
 
         auto params = has_input("params") ?
-            get_input_DictObject("params") :
+            safe_uniqueptr_cast<DictObject>(clone_input("params")) :
             create_DictObject();
         {
         // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
@@ -134,7 +134,7 @@ struct NumericWrangle : zeno::INode {
         auto prog = compiler.compile(code, opts);
         auto exec = assembler.assemble(prog->assembly);
 
-        auto result = std::make_shared<zeno::DictObject>();
+        auto result = std::make_unique<zeno::DictObject>();
         for (auto const &[name, dim]: prog->newsyms) {
             dbg_printf("output numeric value: %s with dim %d\n",
                     name.c_str(), dim);
@@ -152,7 +152,7 @@ struct NumericWrangle : zeno::INode {
             } else {
                 err_printf("ERROR: bad output dimension for numeric: %d\n", dim);
             }
-            result->lut[key] = std::make_shared<zeno::NumericObject>(value);
+            result->lut[key] = std::make_unique<zeno::NumericObject>(value);
         }
 
         for (int i = 0; i < prog->params.size(); i++) {
@@ -182,7 +182,7 @@ struct NumericWrangle : zeno::INode {
             auto key = name.substr(1);
             std::visit([dimid = dimid, value] (auto &res) {
                     dimid[(float *)(void *)&res] = value;
-            }, zeno::safe_dynamic_cast<zeno::NumericObject>(result->lut[key])->value);
+            }, dynamic_cast<zeno::NumericObject*>(result->lut[key].get())->value);
         }
 
         set_output("result", std::move(result));

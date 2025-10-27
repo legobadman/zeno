@@ -1098,7 +1098,7 @@ struct NewFBXImportSkin : INode {
 
                 std::map<std::string, int> nameMappingGlobal;
 
-                zeno::Vector<zeno::PrimitiveObject *> prims_ptr;
+                zeno::ZsVector<zeno::PrimitiveObject *> prims_ptr;
                 int maxnum_boneWeight = 0;
                 for (auto& prim: prims) {
                     maxnum_boneWeight = zeno::max(maxnum_boneWeight, prim->userData()->get_int("maxnum_boneWeight", 0));

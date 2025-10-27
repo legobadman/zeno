@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/ParticlesObject.h>
 #include <zeno/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/VDBGrid.h>
 #include <zeno/utils/log.h>
 #include <tbb/parallel_for.h>
@@ -253,7 +254,8 @@ struct VDBPointsToPrimitive : zeno::INode {
     }
 
     zeno::log_info("VDBPointsToPrimitive: complete\n");
-    set_output("prim", std::move(ret));
+    auto res = create_GeometryObject(ret.get());
+    set_output("prim", std::move(res));
   }
 };
 
@@ -261,7 +263,7 @@ static int defVDBPointsToPrimitive = zeno::defNodeClass<VDBPointsToPrimitive>("V
     { /* inputs: */ {
         {gParamType_VDBGrid,"grid", "", zeno::Socket_ReadOnly},
     }, /* outputs: */ {
-{gParamType_Primitive, "prim"},
+{gParamType_Geometry, "prim"},
 }, /* params: */ {
     }, /* category: */ {
       "openvdb",

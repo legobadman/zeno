@@ -215,7 +215,7 @@ struct AlembicToSoftBodyVAT: public INode {
                     });
                 }
 
-                Vector<zeno::PrimitiveObject*> primlst;
+                ZsVector<zeno::PrimitiveObject*> primlst;
                 for (auto spobj : prims->get()) {
                     primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj));
                 }
@@ -419,7 +419,7 @@ struct AlembicToDynamicRemeshVAT : public INode {
           });
         }
 
-        Vector<zeno::PrimitiveObject*> primlst;
+        ZsVector<zeno::PrimitiveObject*> primlst;
         for (auto spobj : prims->get()) {
             primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj));
         }

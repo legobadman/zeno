@@ -87,7 +87,7 @@ struct GeometryToSDF : zeno::INode {
         else {
             quads.resize(nfaces);
             for (int iFace = 0; iFace < nfaces; iFace++) {
-                const zeno::Vector<int>& indice = mesh->face_points(iFace);
+                const zeno::ZsVector<int>& indice = mesh->face_points(iFace);
                 if (indice.size() != 4) {
                     throw makeError<UnimplError>("there is a face which is a not a Quadrilateral");
                 }
@@ -136,7 +136,8 @@ struct PrimitiveToSDF : zeno::INode{
         set_output("sdf", clone_input("PrimitiveMesh"));
         return;
     }
-    auto mesh = safe_dynamic_cast<PrimitiveObject>(get_input("PrimitiveMesh"));
+    auto geom = get_input_Geometry("PrimitiveMesh");
+    auto mesh = geom->toPrimitiveObject();
     auto result = std::make_unique<VDBFloatGrid>();
     std::vector<openvdb::Vec3s> points;
     std::vector<openvdb::Vec3I> triangles;
@@ -172,7 +173,7 @@ struct PrimitiveToSDF : zeno::INode{
 
 static int defPrimitiveToSDF = zeno::defNodeClass<PrimitiveToSDF>("PrimitiveToSDF",
     { /* inputs: */ {
-        {gParamType_Primitive, "PrimitiveMesh", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "PrimitiveMesh", "", zeno::Socket_ReadOnly},
         {gParamType_Float,"Dx","0.08"},
     }, /* outputs: */ {
         {gParamType_VDBGrid, "sdf"},

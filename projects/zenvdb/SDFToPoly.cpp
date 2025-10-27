@@ -32,8 +32,15 @@ struct SDFToGeometry : zeno::INode {
         }
 
         if (!quads.empty()) {
-            auto mesh = create_GeometryObject(zeno::Topo_IndiceMesh, false, points.size(), quads.size(), true);
-//#pragma omp parallel for
+            std::vector<std::vector<int>> faces;
+            faces.resize(quads.size());
+            //#pragma omp parallel for
+            for (int i = 0; i < quads.size(); i++) {
+                faces[i] = { (int)quads[i][3], (int)quads[i][2], (int)quads[i][1], (int)quads[i][0] };
+            }
+
+            auto mesh = create_GeometryObject(zeno::Topo_IndiceMesh, false, pos, faces);
+            /*
             for (int i = 0; i < quads.size(); i++)
             {
                 //TODO: 确实会溢出，后续要更改gemtopo内部的数值
@@ -46,6 +53,7 @@ struct SDFToGeometry : zeno::INode {
                 mesh->set_face(i, indice);
             }
             mesh->create_point_attr("pos", pos);
+            */
             set_output("Mesh", std::move(mesh));
         }
         else {

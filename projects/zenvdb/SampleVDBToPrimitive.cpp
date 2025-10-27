@@ -2,6 +2,7 @@
 #include <zeno/PrimitiveObject.h>
 #include <zeno/StringObject.h>
 #include <zeno/types/HeatmapObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/VDBGrid.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/UserData.h>
@@ -174,20 +175,21 @@ static void primSampleVDB(
 
 struct PrimSample3D : zeno::INode {
     virtual void apply() override {
-        auto prim = clone_input_PrimitiveObject("prim");
+        auto geom = get_input_Geometry("prim");
         auto grid = safe_uniqueptr_cast<VDBGrid>(clone_input("vdbGrid"));
         auto dstChannel = zsString2Std(get_input2_string("dstChannel"));
         auto srcChannel = zsString2Std(get_input2_string("srcChannel"));
         auto remapMin = get_input2_float("remapMin");
         auto remapMax = get_input2_float("remapMax");
-
+        auto prim = geom->toPrimitiveObject();
         primSampleVDB(prim.get(), srcChannel, dstChannel, grid.get(), remapMin, remapMax);
-        set_output("outPrim", std::move(prim));
+        auto ret = create_GeometryObject(prim.get());
+        set_output("outPrim", std::move(ret));
     }
 };
 ZENDEFNODE(PrimSample3D, {
     {
-        {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
         {gParamType_VDBGrid,"vdbGrid", "", zeno::Socket_ReadOnly},
         {gParamType_String, "srcChannel", "pos"},
         {gParamType_String, "dstChannel", "clr"},
@@ -195,7 +197,7 @@ ZENDEFNODE(PrimSample3D, {
         {gParamType_Float, "remapMax", "1"},
     },
     {
-        {gParamType_Primitive, "outPrim"}
+        {gParamType_Geometry, "outPrim"}
     },
     {},
     {"primitive"},

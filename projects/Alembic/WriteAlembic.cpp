@@ -384,7 +384,7 @@ void write_user_data(
 ) {
     //要直接拿userdata，打破二进制边界
     auto ud = prim->userData();
-    Vector<String> keys = ud->keys();
+    ZsVector<String> keys = ud->keys();
     for (const auto& key : keys) {
         std::string skey = zsString2Std(key);
         std::string full_key = path + '/' + skey;
@@ -755,7 +755,7 @@ struct WriteAlembicPrims : INode {
     int real_frame_start = -1;
 
     virtual void apply() override {
-        Vector<std::unique_ptr<PrimitiveObject>> prims;
+        ZsVector<std::unique_ptr<PrimitiveObject>> prims;
 
         if (has_input("prim")) {
             auto prim = get_input_PrimitiveObject("prim");
@@ -782,7 +782,7 @@ struct WriteAlembicPrims : INode {
 
         {
             // unmerged prim when abcpath_count of a prim in list more than 1
-            zeno::Vector<std::unique_ptr<PrimitiveObject>> temp_prims;
+            zeno::ZsVector<std::unique_ptr<PrimitiveObject>> temp_prims;
             int counter = 0;
             for (auto& prim: prims) {
                 counter += 1;
@@ -822,7 +822,7 @@ struct WriteAlembicPrims : INode {
             }
             for (auto path : paths) {
                 if (path_to_prims[path].size() > 1) {
-                    Vector<zeno::PrimitiveObject *> primList;
+                    ZsVector<zeno::PrimitiveObject *> primList;
                     for (auto& prim: path_to_prims[path]) {
                         primList.push_back(prim.get());
                     }
