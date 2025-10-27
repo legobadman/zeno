@@ -52,13 +52,17 @@ namespace zeno
         return m_impl->size();
     }
 
+    void ListObject::resize(size_t sz) {
+        m_impl->resize(sz);
+    }
+
     IObject* ListObject::get(int index) {
         return m_impl->get(index);
     }
 
-    zeno::Vector<IObject*> ListObject::get() {
+    zeno::ZsVector<IObject*> ListObject::get() {
         std::vector<IObject*> v = m_impl->get();
-        zeno::Vector<IObject*> vec(v.size());
+        zeno::ZsVector<IObject*> vec(v.size());
         for (int i = 0; i < vec.size(); i++) {
             vec[i] = v[i];
         }

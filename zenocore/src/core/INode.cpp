@@ -176,6 +176,10 @@ namespace zeno
         return m_pAdapter->set_primitive_output(zsString2Std(param), val);
     }
 
+    bool INode::set_output_bool(const zeno::String& param, bool val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), val);
+    }
+
     bool INode::set_output_string(const zeno::String& param, zeno::String val) {
         return m_pAdapter->set_primitive_output(zsString2Std(param), zsString2Std(val));
     }

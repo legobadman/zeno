@@ -185,12 +185,20 @@ struct UserData : IUserData {
         set2(skey, toVec4i(vec));
     }
 
-    Vector<String> keys() const override {
-        Vector<String> vec;
+    ZsVector<String> keys() const override {
+        ZsVector<String> vec;
         for (const auto& [key, value] : m_data) {
             vec.push_back(stdString2zs(key));
         }
         return vec;
+    }
+
+    zany get(const String& key) const override {
+        return get(zsString2Std(key), nullptr);
+    }
+
+    void set(const String& key, zany&& val) override {
+        set(zsString2Std(key), std::move(val));
     }
 
     void del(String const& name) override {

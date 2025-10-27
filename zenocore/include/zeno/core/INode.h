@@ -55,6 +55,7 @@ namespace zeno
         bool set_output(const zeno::String& param, zany&& pObject);
         bool set_output_int(const zeno::String& param, int val);
         bool set_output_float(const zeno::String& param, float val);
+        bool set_output_bool(const zeno::String& param, bool val);
         bool set_output_string(const zeno::String& param, zeno::String val);
         bool set_output_vec2f(const zeno::String& param, Vec2f val);
         bool set_output_vec2i(const zeno::String& param, Vec2i val);

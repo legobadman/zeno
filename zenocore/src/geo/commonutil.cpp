@@ -232,8 +232,8 @@ namespace zeno
         prim->quads.clear();
     }
 
-    zeno::Vector<std::unique_ptr<zeno::PrimitiveObject>> get_prims_from_list(zeno::ListObject* spList) {
-        zeno::Vector<std::unique_ptr<zeno::PrimitiveObject>> vec;
+    zeno::ZsVector<std::unique_ptr<zeno::PrimitiveObject>> get_prims_from_list(zeno::ListObject* spList) {
+        zeno::ZsVector<std::unique_ptr<zeno::PrimitiveObject>> vec;
         for (auto obj : spList->get()) {
             auto prim = dynamic_cast<zeno::PrimitiveObject*>(obj);
             if (prim)
@@ -410,7 +410,7 @@ namespace zeno
         }
     }
 
-    std::unique_ptr<zeno::PrimitiveObject> primMergeWithFacesetMatid(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face)
+    std::unique_ptr<zeno::PrimitiveObject> primMergeWithFacesetMatid(ZsVector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face)
     {
         std::vector<std::string> matNameList(0);
         std::unordered_map<std::string, int> facesetNameMap;
@@ -571,7 +571,7 @@ namespace zeno
         primKillDeadLoops(prim);
     }
 
-    zeno::Vector<std::unique_ptr<PrimitiveObject>> PrimUnmergeFaces(PrimitiveObject* prim, String tagAttr) {
+    zeno::ZsVector<std::unique_ptr<PrimitiveObject>> PrimUnmergeFaces(PrimitiveObject* prim, String tagAttr) {
         if (!prim->verts.size()) return {};
 
         if (prim->tris.size() > 0 && prim->polys.size() > 0) {
@@ -580,7 +580,7 @@ namespace zeno
 
         std::string sTagAttr = zsString2Std(tagAttr);
 
-        Vector<std::unique_ptr<PrimitiveObject>> list;
+        ZsVector<std::unique_ptr<PrimitiveObject>> list;
 
         std::map<int, std::vector<int>> mapping;
         if (prim->tris.size() > 0) {
@@ -1049,7 +1049,7 @@ namespace zeno
         prim->points.clear_with_attr();
     }
 
-    std::unique_ptr<zeno::PrimitiveObject> PrimMerge(Vector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face) {
+    std::unique_ptr<zeno::PrimitiveObject> PrimMerge(ZsVector<zeno::PrimitiveObject*> const& primList, String const& tagAttr, bool tag_on_vert, bool tag_on_face) {
         //zeno::log_critical("asdfjhl {}", primList.size());
     //throw;
         std::string stagAttr = zsString2Std(tagAttr);

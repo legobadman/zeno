@@ -9,12 +9,12 @@ namespace zeno
 {
 
 template <class T>
-class Vector
+class ZsVector
 {
 public:
-    Vector() : m_size(0), m_data(0), m_capability(0) {}
+    ZsVector() : m_size(0), m_data(0), m_capability(0) {}
 
-    Vector(const Vector& rhs) noexcept {
+    ZsVector(const ZsVector& rhs) noexcept {
         m_capability = rhs.m_capability;
         m_size = rhs.m_size;
         size_t nBytes = m_capability * sizeof(T);
@@ -22,14 +22,14 @@ public:
         memcpy(m_data, rhs.m_data, nBytes);
     }
 
-    Vector(Vector&& rhs) noexcept {
+    ZsVector(ZsVector&& rhs) noexcept {
         m_data = rhs.m_data;
         m_capability = rhs.m_capability;
         m_size = rhs.m_size;
         _init_reset(rhs);
     }
 
-    Vector(size_t size, T&& val) noexcept
+    ZsVector(size_t size, T&& val) noexcept
        : m_size(0), m_data(0), m_capability(0) {
         reallocate(size);
         m_size = size;
@@ -38,7 +38,7 @@ public:
         }
     }
 
-    Vector(size_t size, const T& val = T()) noexcept 
+    ZsVector(size_t size, const T& val = T()) noexcept 
         : m_size(0), m_data(0), m_capability(0) {
         reallocate(size);
         m_size = size;
@@ -47,7 +47,7 @@ public:
         }
     }
 
-    ~Vector() noexcept {
+    ~ZsVector() noexcept {
         for (size_t i = 0; i < m_size; i++) {
             T* ptr = locate(i);
             ptr->~T();
@@ -108,7 +108,7 @@ public:
         return *(static_cast<T*>(m_data) + idx);
     }
 
-    Vector& operator=(const Vector& rhs) noexcept {
+    ZsVector& operator=(const ZsVector& rhs) noexcept {
         m_capability = rhs.m_capability;
         m_size = rhs.m_size;
         size_t nBytes = m_capability * sizeof(T);
@@ -122,7 +122,7 @@ private:
         return static_cast<T*>(m_data) + idx;
     }
 
-    void _init_reset(Vector& rhs) {
+    void _init_reset(ZsVector& rhs) {
         rhs.m_data = nullptr;
         rhs.m_capability = rhs.m_size = 0;
     }

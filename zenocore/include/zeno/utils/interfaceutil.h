@@ -7,7 +7,7 @@
 namespace zeno
 {
     template<class T>
-    std::vector<T> zeVec2stdVec(const zeno::Vector<T>& rhs) {
+    std::vector<T> zeVec2stdVec(const zeno::ZsVector<T>& rhs) {
         std::vector<T> vec(rhs.size());
         for (int i = 0; i < rhs.size(); i++) {
             vec[i] = rhs[i];
@@ -16,8 +16,8 @@ namespace zeno
     }
 
     template<class T>
-    zeno::Vector<T> stdVec2zeVec(const std::vector<T>& rhs) {
-        zeno::Vector<T> vec(rhs.size());
+    zeno::ZsVector<T> stdVec2zeVec(const std::vector<T>& rhs) {
+        zeno::ZsVector<T> vec(rhs.size());
         for (int i = 0; i < rhs.size(); i++) {
             vec[i] = rhs[i];
         }

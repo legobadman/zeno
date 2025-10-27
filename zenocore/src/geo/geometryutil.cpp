@@ -884,7 +884,7 @@ namespace zeno
         int nInitPoints = 0;
         for (int iFace = 0; iFace < faces.size(); iFace++) {
             const std::vector<zeno::vec3f>& facePts = faces[iFace];
-            zeno::Vector<int> ptIndice;
+            zeno::ZsVector<int> ptIndice;
             for (int iPt = 0; iPt < facePts.size(); iPt++) {
                 int currIdx = nInitPoints + iPt;
                 points[currIdx] = facePts[iPt];
@@ -1004,7 +1004,7 @@ namespace zeno
         auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, false, new_points.size(), newFaces.size());
         for (int iFace = 0; iFace < newFaces.size(); iFace++) {
             const std::vector<int>& facePts = newFaces[iFace];
-            const zeno::Vector<int>& _facePts = stdVec2zeVec(facePts);
+            const zeno::ZsVector<int>& _facePts = stdVec2zeVec(facePts);
             spOutput->add_face(_facePts);
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);

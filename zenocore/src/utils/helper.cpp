@@ -1633,20 +1633,20 @@ namespace zeno {
         else if (code == gParamType_IntList) {
             return zeno::reflect::any_cast<std::vector<int>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<int>>().hash_code()) {
-            return zeVec2stdVec(any_cast<zeno::Vector<int>>(anyval));
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<int>>().hash_code()) {
+            return zeVec2stdVec(any_cast<zeno::ZsVector<int>>(anyval));
         }
         else if (code == gParamType_FloatList) {
             return zeno::reflect::any_cast<std::vector<float>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<float>>().hash_code()) {
-            return zeVec2stdVec(any_cast<zeno::Vector<float>>(anyval));
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<float>>().hash_code()) {
+            return zeVec2stdVec(any_cast<zeno::ZsVector<float>>(anyval));
         }
         else if (code == gParamType_StringList) {
             return zeno::reflect::any_cast<std::vector<std::string>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::String>>().hash_code()) {
-            auto zvec = any_cast<zeno::Vector<zeno::String>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::String>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::String>>(anyval);
             std::vector<std::string> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = zsString2Std(zvec[i]);
@@ -1656,8 +1656,8 @@ namespace zeno {
         else if (code == gParamType_Vec3iList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec3i>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3i>>().hash_code()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec3i>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec3i>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec3i>>(anyval);
             std::vector<zeno::vec3i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec3i(zvec[i]);
@@ -1667,8 +1667,8 @@ namespace zeno {
         else if (code == gParamType_Vec3fList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec3f>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3f>>().hash_code()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec3f>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec3f>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec3f>>(anyval);
             std::vector<zeno::vec3f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec3f(zvec[i]);
@@ -1678,8 +1678,8 @@ namespace zeno {
         else if (code == gParamType_Vec2iList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec2i>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2i>>().hash_code()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec2i>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec2i>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec2i>>(anyval);
             std::vector<zeno::vec2i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec2i(zvec[i]);
@@ -1689,8 +1689,8 @@ namespace zeno {
         else if (code == gParamType_Vec2fList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec2f>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2f>>().hash_code()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec2f>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec2f>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec2f>>(anyval);
             std::vector<zeno::vec2f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec2f(zvec[i]);
@@ -1700,8 +1700,8 @@ namespace zeno {
         else if (code == gParamType_Vec4fList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec4f>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4f>>().hash_code()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec4f>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec4f>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec4f>>(anyval);
             std::vector<zeno::vec4f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec4f(zvec[i]);
@@ -1711,8 +1711,8 @@ namespace zeno {
         else if (code == gParamType_Vec4iList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec4i>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4i>>().hash_code()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec4i>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec4i>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec4i>>(anyval);
             std::vector<zeno::vec4i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec4i(zvec[i]);

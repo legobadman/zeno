@@ -55,16 +55,16 @@ namespace zeno
         return m_impl->points_pos();
     }
 
-    Vector<Vec3i> GeometryObject_Adapter::tri_indice() const {
+    ZsVector<Vec3i> GeometryObject_Adapter::tri_indice() const {
         const std::vector<vec3f>& vec = m_impl->points_pos();
-        Vector<Vec3i> _vec(vec.size());
+        ZsVector<Vec3i> _vec(vec.size());
         for (size_t i = 0; i < vec.size(); i++) {
             _vec[i] = toAbiVec3i(vec[i]);
         }
         return _vec;
     }
 
-    Vector<int> GeometryObject_Adapter::edge_list() const {
+    ZsVector<int> GeometryObject_Adapter::edge_list() const {
         return stdVec2zeVec(m_impl->edge_list());
     }
 
@@ -88,9 +88,9 @@ namespace zeno
         return m_impl->get_attr_type(grp, zsString2Std(name));
     }
 
-    zeno::Vector<zeno::String> GeometryObject_Adapter::get_attr_names(GeoAttrGroup grp) {
+    zeno::ZsVector<zeno::String> GeometryObject_Adapter::get_attr_names(GeoAttrGroup grp) {
         const std::vector<std::string>& vec = m_impl->get_attr_names(grp);
-        Vector<zeno::String> _vec(vec.size());
+        ZsVector<zeno::String> _vec(vec.size());
         for (int i = 0; i < vec.size(); i++) {
             _vec[i] = stdString2zs(vec[i]);
         }
@@ -223,11 +223,11 @@ namespace zeno
         return m_impl->add_point(toVec3f(pos));
     }
 
-    int GeometryObject_Adapter::add_face(const zeno::Vector<int>& points, bool bClose) {
+    int GeometryObject_Adapter::add_face(const zeno::ZsVector<int>& points, bool bClose) {
         return m_impl->add_face(zeVec2stdVec(points), bClose);
     }
 
-    void GeometryObject_Adapter::set_face(int idx, const zeno::Vector<int>& points, bool bClose) {
+    void GeometryObject_Adapter::set_face(int idx, const zeno::ZsVector<int>& points, bool bClose) {
         return m_impl->set_face(idx, zeVec2stdVec(points), bClose);
     }
 
@@ -263,7 +263,7 @@ namespace zeno
         return m_impl->nattributes(grp);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::point_faces(int point_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::point_faces(int point_id) {
         return stdVec2zeVec(m_impl->point_faces(point_id));
     }
 
@@ -271,7 +271,7 @@ namespace zeno
         return m_impl->point_vertex(point_id);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::point_vertices(int point_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::point_vertices(int point_id) {
         return stdVec2zeVec(m_impl->point_vertices(point_id));
     }
 
@@ -279,7 +279,7 @@ namespace zeno
         return m_impl->face_point(face_id, vert_id);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::face_points(int face_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::face_points(int face_id) {
         return stdVec2zeVec(m_impl->face_points(face_id));
     }
 
@@ -291,7 +291,7 @@ namespace zeno
         return m_impl->face_vertex_count(face_id);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::face_vertices(int face_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::face_vertices(int face_id) {
         return stdVec2zeVec(m_impl->face_vertices(face_id));
     }
 

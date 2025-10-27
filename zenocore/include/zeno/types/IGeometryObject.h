@@ -35,8 +35,8 @@ namespace zeno
         );
 
         std::vector<zeno::vec3f> points_pos();
-        Vector<Vec3i> tri_indice() const;
-        Vector<int> edge_list() const;
+        ZsVector<Vec3i> tri_indice() const;
+        ZsVector<int> edge_list() const;
         void set_pos(int i, zeno::vec3f pos);
         //zeno::vec3f pos(int index) const;
 
@@ -44,7 +44,7 @@ namespace zeno
         bool is_Line() const;
         int get_group_count(GeoAttrGroup grp) const;
         GeoAttrType get_attr_type(GeoAttrGroup grp, const zeno::String& name);
-        zeno::Vector<zeno::String> get_attr_names(GeoAttrGroup grp);
+        zeno::ZsVector<zeno::String> get_attr_names(GeoAttrGroup grp);
         //void geomTriangulate(zeno::TriangulateInfo& info);
 
         //创建属性
@@ -89,8 +89,8 @@ namespace zeno
         /* 添加元素 */
         int add_vertex(int face_id, int point_id);
         int add_point(Vec3f pos);
-        int add_face(const zeno::Vector<int>& points, bool bClose = true);
-        void set_face(int idx, const zeno::Vector<int>& points, bool bClose = true);
+        int add_face(const zeno::ZsVector<int>& points, bool bClose = true);
+        void set_face(int idx, const zeno::ZsVector<int>& points, bool bClose = true);
 
         /* 移除元素相关 */
         bool remove_faces(const std::set<int>& faces, bool includePoints);
@@ -105,16 +105,16 @@ namespace zeno
         int nattributes(GeoAttrGroup grp) const;
 
         /* 点相关 */
-        zeno::Vector<int> point_faces(int point_id);
+        zeno::ZsVector<int> point_faces(int point_id);
         int point_vertex(int point_id);
-        zeno::Vector<int> point_vertices(int point_id);
+        zeno::ZsVector<int> point_vertices(int point_id);
 
         /* 面相关 */
         int face_point(int face_id, int vert_id) const;
-        zeno::Vector<int> face_points(int face_id);
+        zeno::ZsVector<int> face_points(int face_id);
         int face_vertex(int face_id, int vert_id);
         int face_vertex_count(int face_id);
-        zeno::Vector<int> face_vertices(int face_id);
+        zeno::ZsVector<int> face_vertices(int face_id);
         zeno::Vec3f face_normal(int face_id);
 
         /* Vertex相关 */

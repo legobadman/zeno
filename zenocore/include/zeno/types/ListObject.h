@@ -17,9 +17,10 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     std::unique_ptr<IObject> clone() const override;
     void Delete() override;
     size_t size();
+    void resize(size_t sz);
     void clear();
     IObject* get(int index);
-    zeno::Vector<IObject*> get();
+    zeno::ZsVector<IObject*> get();
     void push_back(zany&& obj);
     //void set(const zeno::Vector<zany>& arr);
     void set(size_t index, zany&& obj);
