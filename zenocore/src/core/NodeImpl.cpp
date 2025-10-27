@@ -4129,6 +4129,18 @@ std::string NodeImpl::resolve_string(const std::string& fmla, const std::string&
     }
     catch(...)
     {
+        //再检查一下有没有$F
+        if (fmla.find("{$F}") != std::string::npos) {
+            int frame = zeno::getSession().globalState->getFrameId();
+            std::string res = fmla;
+            size_t pos = 0;
+            std::string framestr = std::to_string(frame);
+            while ((pos = res.find("{$F}", pos)) != std::string::npos) {
+                res.replace(pos, 4, framestr);
+                pos += framestr.length();  // 防止死循环
+            }
+            return res;
+        }
     }
     return defl;
 }
