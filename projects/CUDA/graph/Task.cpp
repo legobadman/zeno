@@ -70,19 +70,21 @@ std::string python_evaluate(const std::string &fmtStr,
   return std::string(result_cstr);
 }
 
-std::string python_evaluate(const std::string &script,
-                            const std::shared_ptr<ListObject> &args) {
+std::string python_evaluate(const std::string &script, ListObject* args) {
 
   Py_Initialize();
 
   // pass arguments
   std::vector<wchar_t *> as;
   bool invalid = false;
-  for (auto &&arg : args->get())
-    if (auto ptr = dynamic_cast<StringObject *>(arg.get()); ptr != nullptr)
-      as.push_back(Py_DecodeLocale(ptr->get().c_str(), NULL));
-    else
-      invalid = true;
+  if (args && args->m_impl) {
+      for (auto&& arg : args->get())
+          if (auto ptr = dynamic_cast<StringObject*>(arg); ptr != nullptr)
+              as.push_back(Py_DecodeLocale(ptr->get().c_str(), NULL));
+          else
+              invalid = true;
+  }
+
   // throw std::runtime_error(
   //     "there exists an argument not of StringObject type!");
   PyObject *pyargs = PyList_New(as.size());
@@ -125,17 +127,17 @@ std::string python_evaluate(const std::string &script,
 
 struct CommandGenerator : INode {
   void apply() override {
-    auto tag = get_input2<std::string>("name_tag");
+    auto tag = zsString2Std(get_input2_string("name_tag"));
     if (tag.empty())
       throw std::runtime_error("work name must not be empty!");
 
-    bool verbose = get_input2<bool>("verbose");
-    auto cmdFmtStr = get_input2<std::string>("cmd_fmt_string");
+    bool verbose = get_input2_bool("verbose");
+    auto cmdFmtStr = zsString2Std(get_input2_string("cmd_fmt_string"));
 
     ///
     GenericWorkAttribute range;
     auto inputRange = get_input("range");
-    if (auto ptr = dynamic_cast<NumericObject *>(inputRange.get());
+    if (auto ptr = dynamic_cast<NumericObject *>(inputRange);
         ptr != nullptr) {
       zs::tuple<int, int, int> r;
       if (ptr->is<int>()) {
@@ -165,11 +167,11 @@ struct CommandGenerator : INode {
         })(ptr->value);
       //
       range = r;
-    } else if (auto ptr = dynamic_cast<ListObject *>(inputRange.get());
+    } else if (auto ptr = dynamic_cast<ListObject *>(inputRange);
                ptr != nullptr) {
       std::vector<int> r;
       for (auto &&arg : ptr->get())
-        if (auto ptr = dynamic_cast<NumericObject *>(arg.get()); ptr != nullptr)
+        if (auto ptr = dynamic_cast<NumericObject *>(arg); ptr != nullptr)
           if (ptr->is<int>())
             r.push_back(ptr->get<int>());
       //
@@ -180,21 +182,27 @@ struct CommandGenerator : INode {
 
     ///
     std::string optionStr = "";
-    auto options = has_input("options") ? get_input<DictObject>("options")
-                                        : std::make_shared<DictObject>();
-    for (auto const &[k, v] : options->lut) {
-      if (auto ptr = dynamic_cast<StringObject *>(v.get()); ptr != nullptr)
-        optionStr += " " + k + " " + ptr->get();
+    auto options = has_input("options") ? get_input_DictObject("options")
+                                        : nullptr;
+    if (options) {
+        for (auto const& [k, v] : options->lut) {
+            if (auto ptr = dynamic_cast<StringObject*>(v.get()); ptr != nullptr)
+                optionStr += " " + k + " " + ptr->get();
+        }
     }
+
     if (verbose)
       fmt::print("option str: {}\n", optionStr);
 
-    auto args = has_input("arguments") ? get_input<ListObject>("arguments")
-                                       : std::make_shared<ListObject>();
+    auto args = has_input("arguments") ? get_input_ListObject("arguments")
+                                       : nullptr;
     std::vector<const char *> as;
-    for (auto &&arg : args->get())
-      if (auto ptr = dynamic_cast<StringObject *>(arg.get()); ptr != nullptr)
-        as.push_back(ptr->get().c_str());
+    if (args && args->m_impl) {
+        for (auto&& arg : args->m_impl->get())
+            if (auto ptr = dynamic_cast<StringObject*>(arg); ptr != nullptr)
+                as.push_back(ptr->get().c_str());
+    }
+
 
     ///
     auto cmdScripts = detail::python_evaluate(cmdFmtStr, range, as, optionStr);
@@ -202,26 +210,29 @@ struct CommandGenerator : INode {
       fmt::print("Captured python evaluation: [\n{}\n]\n", cmdScripts);
 
     ///
-    auto deps = has_input("dependencies")
-                    ? get_input<ListObject>("dependencies")
-                    : std::make_shared<ListObject>();
+    auto deps = get_input_ListObject("dependencies");
 
     /// store in descriptor
-    auto ret = std::make_shared<WorkNode>();
+    auto ret = std::make_unique<WorkNode>();
     ret->tag = tag;
     std::istringstream iss(cmdScripts);
     std::string line;
     while (std::getline(iss, line))
       ret->workItems.push_back(line);
-    for (auto &&arg : deps->get())
-      if (auto ptr = std::dynamic_pointer_cast<WorkNode>(arg); ptr)
-        ret->deps[ptr->tag] = ptr;
 
-    auto cmds = std::make_shared<ListObject>();
+    for (int i = 0; i < deps->size(); i++) {
+        auto arg = deps->get(i);
+        if (auto ptr = dynamic_cast<WorkNode*>(arg); ptr) {
+            auto pNode = dynamic_cast<WorkNode*>(ptr->clone().release());
+            ret->deps[ptr->tag] = std::shared_ptr<WorkNode>(pNode);
+        }
+    }
+
+    auto cmds = std::make_unique<ListObject>();
     for (auto &&item : ret->workItems)
-      cmds->push_back(std::make_shared<StringObject>(item));
-    set_output("cmd_scripts", cmds);
-    set_output("job", ret);
+      cmds->push_back(std::make_unique<StringObject>(item));
+    set_output("cmd_scripts", std::move(cmds));
+    set_output("job", std::move(ret));
   }
 };
 
@@ -243,7 +254,7 @@ ZENO_DEFNODE(CommandGenerator)
   /* outputs: */
   {
       {gParamType_List, "cmd_scripts"},
-      {"WorkNode", "job"},
+      {gParamType_IObject, "job"},
   },
   /* params: */
   {},
@@ -254,15 +265,14 @@ ZENO_DEFNODE(CommandGenerator)
 
 struct CapturePyScriptOutput : INode {
   void apply() override {
-    auto script = get_input2<std::string>("script");
+    auto script = zsString2Std(get_input2_string("script"));
 
-    auto args = has_input("arguments") ? get_input<ListObject>("arguments")
-                                       : std::make_shared<ListObject>();
+    auto args = has_input("arguments") ? get_input_ListObject("arguments")
+                                       : nullptr;
 
     ///
     auto cmdScripts = detail::python_evaluate(script, args);
-
-    set_output("output", std::make_shared<StringObject>(cmdScripts));
+    set_output_string("output", stdString2zs(cmdScripts));
   }
 };
 

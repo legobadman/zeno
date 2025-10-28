@@ -13,6 +13,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
@@ -31,9 +32,11 @@ struct ZSVolumeWrangler : zeno::INode {
     }
     void apply() override {
         using namespace zs;
-        auto code = get_input<StringObject>("zfxCode")->get();
+        auto code = zsString2Std(get_input2_string("zfxCode"));
 
-        auto spgPtrs = RETRIEVE_OBJECT_PTRS(ZenoSparseGrid, "ZSGrid");
+        //auto spgPtrs = RETRIEVE_OBJECT_PTRS(ZenoSparseGrid, "ZSGrid");
+        //目前只支持一个
+        auto spgPtr = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("ZSGrid"));
 
         zfx::Options opts(zfx::Options::for_cuda);
         opts.detect_new_symbols = true;
@@ -42,7 +45,7 @@ struct ZSVolumeWrangler : zeno::INode {
 
         /// params
         auto params =
-            has_input("params") ? get_input<zeno::DictObject>("params") : std::make_shared<zeno::DictObject>();
+            has_input("params") ? safe_uniqueptr_cast<DictObject>(clone_input("params")) : std::make_unique<zeno::DictObject>();
         {
             // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
             auto const &gs = *this->getGlobalState();
@@ -51,6 +54,7 @@ struct ZSVolumeWrangler : zeno::INode {
             params->lut["DT"] = objectFromLiterial(gs.frame_time);
             params->lut["T"] = objectFromLiterial(gs.frame_time * gs.getFrameId() + gs.frame_time_elapsed);
             // END心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
+#if 0
             // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动引用portal做参数
             for (auto const &[key, ref] : getThisGraph()->portalIns) {
                 if (auto i = code.find('$' + key); i != std::string::npos) {
@@ -58,7 +62,7 @@ struct ZSVolumeWrangler : zeno::INode {
                     if (code.size() <= i || !std::isalnum(code[i])) {
                         if (params->lut.count(key))
                             continue;
-                        dbg_printf("ref portal %s\n", key.c_str());
+                        printf("ref portal %s\n", key.c_str());
                         auto res =
                             getThisGraph()->callTempNode("PortalOut", {{"name:", objectFromLiterial(key)}}).at("port");
                         params->lut[key] = std::move(res);
@@ -66,6 +70,7 @@ struct ZSVolumeWrangler : zeno::INode {
                 }
             }
             // END心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动引用portal做参数
+#endif
             // BEGIN伺候心欣伺候懒得extract出变量了
             std::vector<std::string> keys;
             for (auto const &[key, val] : params->lut) {
@@ -73,7 +78,7 @@ struct ZSVolumeWrangler : zeno::INode {
             }
             for (auto const &key : keys) {
                 if (!dynamic_cast<zeno::NumericObject *>(params->lut.at(key).get())) {
-                    dbg_printf("ignored non-numeric %s\n", key.c_str());
+                    printf("ignored non-numeric %s\n", key.c_str());
                     params->lut.erase(key);
                 }
             }
@@ -81,7 +86,8 @@ struct ZSVolumeWrangler : zeno::INode {
         }
         std::vector<float> parvals;
         std::vector<std::pair<std::string, int>> parnames;
-        for (auto const &[key_, par] : params->getLiterial<zeno::NumericValue>()) {
+        for (auto const &[key_, obj] : params->lut) {
+            auto par = zeno::objectToLiterial<zeno::NumericValue>(obj);
             auto key = '$' + key_;
             auto dim = std::visit(
                 [&](auto const &v) {
@@ -110,7 +116,7 @@ struct ZSVolumeWrangler : zeno::INode {
                     }
                 },
                 par);
-            //dbg_printf("define param: %s dim %d\n", key.c_str(), dim);
+            //printf("define param: %s dim %d\n", key.c_str(), dim);
             opts.define_param(key, dim);
             //auto par = zeno::safe_any_cast<zeno::NumericValue>(obj);
         }
@@ -138,7 +144,8 @@ struct ZSVolumeWrangler : zeno::INode {
             }
         };
 
-        for (auto &&spgPtr : spgPtrs) {
+        //for (auto &&spgPtr : spgPtrs)
+        {
             // auto &pars = spgPtr->getParticles();
             auto &spg = spgPtr->getSparseGrid();
             typename ZenoSparseGrid::spg_t::grid_storage_type *tvPtr = &spg._grid;
@@ -294,18 +301,21 @@ struct ZSVolumeWrangler : zeno::INode {
             cuCtxSynchronize();
         }
 
-        set_output("ZSGrid", get_input("ZSGrid"));
+        set_output("ZSGrid", std::move(spgPtr));
     }
 
   private:
     void *_cuModule{nullptr};
 };
 
-ZENDEFNODE(ZSVolumeWrangler, {
-                                 {"ZSGrid", {gParamType_String, "zfxCode"}, {"DictObject:NumericObject", "params"}},
-                                 {"ZSGrid"},
-                                 {},
-                                 {"zswrangle"},
+ZENDEFNODE(ZSVolumeWrangler, {{
+                                 {gParamType_VDBGrid, "ZSGrid"},
+                                 {gParamType_String, "zfxCode"},
+                                 {gParamType_Dict, "params"}
+                              },
+                              {{gParamType_VDBGrid, "ZSGrid"}},
+                              {},
+                              {"zswrangle"},
                              });
 
 } // namespace zeno

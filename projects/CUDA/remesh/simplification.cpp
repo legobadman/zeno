@@ -4,7 +4,7 @@
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
 #include <mutex>
-
+#include <zeno/types/IGeometryObject.h>
 #include "zensim/container/Bht.hpp"
 #include "zensim/omp/execution/ExecutionPolicy.hpp"
 
@@ -12,7 +12,7 @@ namespace zeno {
 
 struct PolyReduceLite : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
@@ -51,7 +51,7 @@ struct PolyReduceLite : INode {
             });
         }
 
-        int nIters = get_input2<int>("iterations");
+        int nIters = get_input2_int("iterations");
 
         auto updateTriNormal = [&tris, &pos, &triNorms](int triNo, const auto &tri) {
             triNorms[triNo] = normalize(cross(pos[tri[1]] - pos[tri[0]], pos[tri[2]] - pos[tri[0]]));
@@ -218,14 +218,14 @@ struct PolyReduceLite : INode {
             prim->tris = std::move(newTris);
         }
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PolyReduceLite, {
-                               {{gParamType_Primitive, "prim"}, {gParamType_Int, "iterations", "100"}},
+                               {{gParamType_Geometry, "prim"}, {gParamType_Int, "iterations", "100"}},
                                {
-                                   {gParamType_Primitive, "prim"},
+                                   {gParamType_Geometry, "prim"},
                                },
                                {},
                                {"zs_geom"},

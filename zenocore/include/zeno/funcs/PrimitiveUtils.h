@@ -37,13 +37,9 @@ ZENO_API void primLineDistance(PrimitiveObject *prim, std::string resAttr, int s
 //ZENO_API void prim_set_faceset(PrimitiveObject* prim, std::string faceset_name);
 //ZENO_API void prim_copy_faceset_to_matid(PrimitiveObject* prim);
 
-ZENO_API void primFilterVerts(PrimitiveObject *prim, std::string tagAttr, int tagValue, bool isInversed = false, std::string revampAttrO = {}, std::string method = "verts", int* aux = nullptr, int aux_size = 0, bool use_aux = false);
-
 ZENO_API void primMarkIsland(PrimitiveObject *prim, std::string tagAttr);
-ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeVerts(PrimitiveObject *prim, std::string tagAttr);
-ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeFaces(PrimitiveObject *prim, std::string tagAttr);
 
-ZENO_API void primSimplifyTag(PrimitiveObject *prim, std::string tagAttr);
+ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeFaces(PrimitiveObject *prim, std::string tagAttr);
 ZENO_API void primColorByTag(PrimitiveObject *prim, std::string tagAttr, std::string clrAttr, int seed = -1);
 
 ZENO_API void primTranslate(PrimitiveObject *prim, vec3f const &offset);

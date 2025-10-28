@@ -7,7 +7,7 @@
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include "./BoundingBox.h"
 #include "./SurfaceMesh.h"
 #include "./algorithms/SurfaceRemeshing.h"
@@ -19,7 +19,7 @@
 
 namespace zeno {
 
-void splitNonManifoldEdges(std::shared_ptr<PrimitiveObject> prim,
+void splitNonManifoldEdges(PrimitiveObject* prim,
                            std::map<std::pair<int, int>, int>& lines_map,
                            std::set<std::pair<int, int>>& marked_lines,
                            std::vector<int>& efeature) {
@@ -90,7 +90,7 @@ void splitNonManifoldEdges(std::shared_ptr<PrimitiveObject> prim,
         }
 }
 
-void splitNonManifoldVertices(std::shared_ptr<PrimitiveObject> prim,
+void splitNonManifoldVertices(PrimitiveObject* prim,
                               std::map<std::pair<int, int>, int>& lines_map) {
     // handle non-manifold vertices
     auto &lines = prim->lines;
@@ -189,7 +189,7 @@ void splitNonManifoldVertices(std::shared_ptr<PrimitiveObject> prim,
     }
 }
 
-void returnNonManifold(std::shared_ptr<PrimitiveObject> prim) {
+void returnNonManifold(PrimitiveObject* prim) {
     // delete duplicate vertices
     auto& pos = prim->attr<vec3f>("pos");
     auto &vduplicate = prim->verts.attr<int>("v_duplicate");
@@ -258,13 +258,13 @@ void returnNonManifold(std::shared_ptr<PrimitiveObject> prim) {
 
 struct UniformRemeshing : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto iterations = get_input2<int>("iterations");
-        float edge_length = get_input2<float>("edge_length");
-        int vert_num = get_input2<int>("vert_num");
-        int face_num = get_input2<int>("face_num");
-        bool use_min_length = get_input2<bool>("use_min_length");
-        auto line_pick_tag = get_input<zeno::StringObject>("line_pick_tag")->get();
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto iterations = get_input2_int("iterations");
+        float edge_length = get_input2_float("edge_length");
+        int vert_num = get_input2_int("vert_num");
+        int face_num = get_input2_int("face_num");
+        bool use_min_length = get_input2_bool("use_min_length");
+        auto line_pick_tag = zsString2Std(get_input2_string("line_pick_tag"));
         auto &pos = prim->attr<vec3f>("pos");
         zeno::log_info("before remeshing: verts num = {}, face num = {}", prim->verts.size(), prim->tris.size());
 
@@ -274,7 +274,7 @@ struct UniformRemeshing : INode {
         scale_constraints += vert_num > 0 ? 1 : 0;
         if (scale_constraints > 1) {
             zeno::log_error("Only one of the \"edge_length(/use_min_length)\", \"vert_num\" and \"face_num\" parameters can be used at once.");
-            set_output("prim", std::move(prim));
+            set_output("prim", create_GeometryObject(prim.get()));
             return;
         }
 
@@ -295,7 +295,7 @@ struct UniformRemeshing : INode {
         std::set<std::pair<int, int>> marked_lines{};
 #if 1
         if (has_input("marked_lines")) {
-            const auto &markedLines = get_input<PrimitiveObject>("marked_lines")->lines.values;
+            const auto &markedLines = get_input_Geometry("marked_lines")->toPrimitiveObject()->lines.values;
             for (vec2i line : markedLines) {
                 marked_lines.insert(std::make_pair(line[0], line[1]));
             }
@@ -346,10 +346,10 @@ struct UniformRemeshing : INode {
         }
 #endif
         std::map<std::pair<int, int>, int> lines_map{};
-        splitNonManifoldEdges(prim, lines_map, marked_lines, efeature);
-        splitNonManifoldVertices(prim, lines_map);
+        splitNonManifoldEdges(prim.get(), lines_map, marked_lines, efeature);
+        splitNonManifoldVertices(prim.get(), lines_map);
 
-        auto mesh = new zeno::pmp::SurfaceMesh(prim, line_pick_tag);
+        auto mesh = new zeno::pmp::SurfaceMesh(std::make_shared<PrimitiveObject>(*prim), line_pick_tag);
 
         if (vert_num > 0) {
             face_num = vert_num * 2;
@@ -385,7 +385,7 @@ struct UniformRemeshing : INode {
         }
         zeno::pmp::SurfaceRemeshing(mesh, line_pick_tag, "v_sizing").uniform_remeshing(edge_length, iterations);
 
-        returnNonManifold(prim);
+        returnNonManifold(prim.get());
 
         // delete v_duplicate at last
         prim->verts.erase_attr("v_duplicate");
@@ -400,34 +400,34 @@ struct UniformRemeshing : INode {
         prim->lines.clear();
         zeno::log_info("after remeshing: verts num = {}, face num = {}", prim->verts.size(), prim->tris.size());
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENO_DEFNODE(UniformRemeshing)
 ({
-    {{gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"},
      {gParamType_Int, "iterations", "10"},
      {gParamType_Float, "edge_length", "0"},
      {gParamType_Int, "vert_num", "0"},
      {gParamType_Int, "face_num", "0"},
      {gParamType_Bool, "use_min_length", "0"},
      {gParamType_String, "line_pick_tag", "line_selected"},
-     {"marked_lines"}},
-    {gParamType_Primitive, "prim"},
+     {gParamType_Geometry, "marked_lines"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"primitive"},
 });
 
 struct AdaptiveRemeshing : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto iterations = get_input2<int>("iterations");
-        float max_length = get_input2<float>("max_length");
-        float min_length = get_input2<float>("min_length");
-        float approximation_tolerance = get_input2<float>("approximation_tolerance");
-        auto line_pick_tag = get_input<zeno::StringObject>("line_pick_tag")->get();
-        auto length_tag = get_input<zeno::StringObject>("length_tag")->get();
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto iterations = get_input2_int("iterations");
+        float max_length = get_input2_float("max_length");
+        float min_length = get_input2_float("min_length");
+        float approximation_tolerance = get_input2_float("approximation_tolerance");
+        auto line_pick_tag = zsString2Std(get_input2_string("line_pick_tag"));
+        auto length_tag = zsString2Std(get_input2_string("length_tag"));
         auto &pos = prim->attr<vec3f>("pos");
         zeno::log_info("before remeshing: verts num = {}, face num = {}", prim->verts.size(), prim->tris.size());
 
@@ -449,7 +449,7 @@ struct AdaptiveRemeshing : INode {
         std::set<std::pair<int, int>> marked_lines{};
 #if 1
         if (has_input("marked_lines")) {
-            const auto &markedLines = get_input<PrimitiveObject>("marked_lines")->lines.values;
+            const auto &markedLines = get_input_Geometry("marked_lines")->toPrimitiveObject()->lines.values;
             for (vec2i line : markedLines) {
                 marked_lines.insert(std::make_pair(line[0], line[1]));
             }
@@ -476,14 +476,14 @@ struct AdaptiveRemeshing : INode {
         timer.tick();
 #endif
         std::map<std::pair<int, int>, int> lines_map{};
-        splitNonManifoldEdges(prim, lines_map, marked_lines, efeature);
-        splitNonManifoldVertices(prim, lines_map);
+        splitNonManifoldEdges(prim.get(), lines_map, marked_lines, efeature);
+        splitNonManifoldVertices(prim.get(), lines_map);
 
 #if PMP_ENABLE_PROFILE
         timer.tock("handle non-manifold edges");
 #endif
 
-        auto mesh = new zeno::pmp::SurfaceMesh(prim, line_pick_tag);
+        auto mesh = new zeno::pmp::SurfaceMesh(std::make_shared<PrimitiveObject>(*prim), line_pick_tag);
         auto bb = mesh->bounds().size();
         if (max_length < 1e-10) {
             max_length = 0.0500 * bb;
@@ -500,7 +500,7 @@ struct AdaptiveRemeshing : INode {
         zeno::pmp::SurfaceRemeshing(mesh, line_pick_tag, length_tag)
             .adaptive_remeshing(min_length, max_length, approximation_tolerance, iterations);
 
-        returnNonManifold(prim);
+        returnNonManifold(prim.get());
 
         prim->verts.erase_attr("v_duplicate");
         prim->verts.erase_attr("v_normal");
@@ -514,34 +514,34 @@ struct AdaptiveRemeshing : INode {
         prim->lines.clear();
         zeno::log_info("after remeshing: verts num = {}, face num = {}", prim->verts.size(), prim->tris.size());
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENO_DEFNODE(AdaptiveRemeshing)
 ({
-    {{gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"},
      {gParamType_Int, "iterations", "10"},
      {gParamType_Float, "max_length", "0"},
      {gParamType_Float, "min_length", "0"},
      {gParamType_Float, "approximation_tolerance", "0"},
      {gParamType_String, "line_pick_tag", "line_selected"},
      {gParamType_String, "length_tag", "length"},
-     {"marked_lines"}},
-    {gParamType_Primitive, "prim"},
+     {gParamType_Geometry, "marked_lines"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"primitive"},
 });
 
 struct RepairDegenerateTriangle : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto iterations = get_input2<int>("iterations");
-        float edge_length = get_input2<float>("min_edge_length");
-        float area = get_input2<float>("min_area");
-        float angle = get_input2<float>("max_angle");
-        auto degenerate_tag = get_input<zeno::StringObject>("degenerate_tag")->get();
-        bool color = get_input2<float>("color");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto iterations = get_input2_int("iterations");
+        float edge_length = get_input2_float("min_edge_length");
+        float area = get_input2_float("min_area");
+        float angle = get_input2_float("max_angle");
+        auto degenerate_tag = zsString2Std(get_input2_string("degenerate_tag"));
+        bool color = get_input2_float("color");
         auto &pos = prim->attr<vec3f>("pos");
         auto &efeature = prim->lines.add_attr<int>("e_feature");
 
@@ -558,15 +558,15 @@ struct RepairDegenerateTriangle : INode {
 
         std::set<std::pair<int, int>> marked_lines{};
         std::map<std::pair<int, int>, int> lines_map{};
-        splitNonManifoldEdges(prim, lines_map, marked_lines, efeature);
-        splitNonManifoldVertices(prim, lines_map);
+        splitNonManifoldEdges(prim.get(), lines_map, marked_lines, efeature);
+        splitNonManifoldVertices(prim.get(), lines_map);
 
-        auto mesh = new pmp::SurfaceMesh(prim, "e_feature");
+        auto mesh = new pmp::SurfaceMesh(std::make_shared<PrimitiveObject>(*prim), "e_feature");
 
         pmp::SurfaceRemeshing(mesh, "e_feature", "v_sizing")
             .remove_degenerate_triangles(edge_length, area, angle, degenerate_tag, iterations, color);
 
-        returnNonManifold(prim);
+        returnNonManifold(prim.get());
 
         // delete v_duplicate at last
         prim->verts.erase_attr("v_duplicate");
@@ -577,30 +577,30 @@ struct RepairDegenerateTriangle : INode {
         prim->verts.update();
         lines.clear();
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENO_DEFNODE(RepairDegenerateTriangle)
 ({
-    {{gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"},
     {gParamType_Int, "iterations", "10"},
     {gParamType_Float, "min_edge_length", "0.001"},
     {gParamType_Float, "min_area", "0.000001"},
     {gParamType_Float, "max_angle", "170"},
     {gParamType_String, "degenerate_tag", "degenerate"},
     {gParamType_Bool, "color", "0"}},
-    {gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"primitive"},
 });
 
 struct CalcCurvature : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto min_curv_tag = get_input<zeno::StringObject>("min_curv_tag")->get();
-        auto max_curv_tag = get_input<zeno::StringObject>("max_curv_tag")->get();
-        auto gaussian_curv_tag = get_input<zeno::StringObject>("gaussian_curv_tag")->get();
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto min_curv_tag = zsString2Std(get_input2_string("min_curv_tag"));
+        auto max_curv_tag = zsString2Std(get_input2_string("max_curv_tag"));
+        auto gaussian_curv_tag = zsString2Std(get_input2_string("gaussian_curv_tag"));
         auto &pos = prim->attr<vec3f>("pos");
         auto &efeature = prim->lines.add_attr<int>("e_feature", 0);
         auto &vfeature = prim->verts.add_attr<int>("v_feature", 0);
@@ -619,10 +619,10 @@ struct CalcCurvature : INode {
         efeature.clear();
 
         std::map<std::pair<int, int>, int> lines_map{};
-        splitNonManifoldEdges(prim, lines_map, marked_lines, efeature);
-        splitNonManifoldVertices(prim, lines_map);
+        splitNonManifoldEdges(prim.get(), lines_map, marked_lines, efeature);
+        splitNonManifoldVertices(prim.get(), lines_map);
 
-        auto mesh = new zeno::pmp::SurfaceMesh(prim, "e_feature");
+        auto mesh = new zeno::pmp::SurfaceMesh(std::make_shared<PrimitiveObject>(*prim), "e_feature");
         zeno::pmp::SurfaceCurvature curv(mesh, min_curv_tag, max_curv_tag, gaussian_curv_tag);
         curv.analyze_tensor(1);
 
@@ -637,7 +637,7 @@ struct CalcCurvature : INode {
             }
         }
 
-        returnNonManifold(prim);
+        returnNonManifold(prim.get());
 
         // delete v_duplicate at last
         prim->verts.erase_attr("v_duplicate");
@@ -647,28 +647,28 @@ struct CalcCurvature : INode {
         prim->tris.erase_attr("f_deleted");
         prim->verts.update();
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENO_DEFNODE(CalcCurvature)
 ({
-    {{gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"},
      {gParamType_String, "min_curv_tag", "curv_min"},
      {gParamType_String, "max_curv_tag", "curv_max"},
      {gParamType_String, "gaussian_curv_tag", "curv_gaussian"}},
-    {gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"primitive"},
 });
 
 struct MarkBoundary : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto &pos = prim->attr<vec3f>("pos");
         auto &efeature = prim->lines.add_attr<int>("e_feature");
-        auto vert_boundary_tag = get_input<zeno::StringObject>("vert_boundary_tag")->get();
-        auto edge_boundary_tag = get_input<zeno::StringObject>("edge_boundary_tag")->get();
+        auto vert_boundary_tag = zsString2Std(get_input2_string("vert_boundary_tag"));
+        auto edge_boundary_tag = zsString2Std(get_input2_string("edge_boundary_tag"));
 
         // init v_duplicate attribute
         auto &vduplicate = prim->verts.add_attr<int>("v_duplicate", 0);
@@ -684,10 +684,10 @@ struct MarkBoundary : INode {
         efeature.clear();
 
         std::map<std::pair<int, int>, int> lines_map{};
-        splitNonManifoldEdges(prim, lines_map, marked_lines, efeature);
-        splitNonManifoldVertices(prim, lines_map);
+        splitNonManifoldEdges(prim.get(), lines_map, marked_lines, efeature);
+        splitNonManifoldVertices(prim.get(), lines_map);
 
-        auto mesh = new zeno::pmp::SurfaceMesh(prim, "e_feature");
+        auto mesh = new zeno::pmp::SurfaceMesh(std::make_shared<PrimitiveObject>(*prim), "e_feature");
         auto &vboundary = prim->verts.add_attr<int>(vert_boundary_tag, 0);
         for (int line_size = lines.size(), e = 0; e < line_size; ++e) {
             if (mesh->is_boundary_e(e)) {
@@ -701,7 +701,7 @@ struct MarkBoundary : INode {
             }
         }
 
-        returnNonManifold(prim);
+        returnNonManifold(prim.get());
         
         auto &eboundary = prim->lines.add_attr<int>(edge_boundary_tag, 0);
         for (int line_size = lines.size(), e = 0; e < line_size; ++e) {
@@ -716,16 +716,16 @@ struct MarkBoundary : INode {
         prim->tris.erase_attr("f_deleted");
         prim->verts.update();
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENO_DEFNODE(MarkBoundary)
 ({
-    {{gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"},
      {gParamType_String, "vert_boundary_tag", "v_boundary"},
      {gParamType_String, "edge_boundary_tag", "e_boundary"}},
-    {gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"primitive"},
 });
@@ -946,9 +946,9 @@ bool faceFaceIntersection(const vec3i& f0, const vec3i& f1, const std::vector<ve
 
 struct SelectIntersectingFaces : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto intersect_tag = get_input<zeno::StringObject>("intersecting_tag")->get();
-        bool color = get_input2<float>("color");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto intersect_tag = zsString2Std(get_input2_string("intersecting_tag"));
+        bool color = get_input2_float("color");
         auto &verts = prim->verts;
         auto &faces = prim->tris;
         auto &referred = prim->tris.add_attr<int>("referred", 0);
@@ -981,16 +981,16 @@ struct SelectIntersectingFaces : INode {
             }
         }
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENO_DEFNODE(SelectIntersectingFaces)
 ({
-    {{gParamType_Primitive, "prim"},
+    {{gParamType_Geometry, "prim"},
     {gParamType_String, "intersecting_tag", "intersecting"},
     {gParamType_Bool, "color", "0"}},
-    {("prim")},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"primitive"},
 });

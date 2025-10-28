@@ -4,6 +4,7 @@
 #include <zeno/utils/variantswitch.h>
 #include <zeno/utils/fileio.h>
 #include <zeno/para/parallel_scan.h>
+#include <zeno/para/parallel_reduce.h>
 #include <zeno/types/UserData.h>
 #include <stdexcept>
 #include <filesystem>
@@ -1695,4 +1696,508 @@ namespace zeno
         stbi_write_jpg(path.c_str(), w, h, 3, colors.data(), 100);
     }
 
+    static void primRevampVerts(PrimitiveObject* prim, std::vector<int> const& revamp) {
+        prim->foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+            revamp_vector(arr, revamp);
+            });
+        auto old_prim_size = prim->size();
+        prim->resize(revamp.size());
+
+        if ((0
+            || prim->tris.size()
+            || prim->quads.size()
+            || prim->lines.size()
+            || prim->edges.size()
+            || prim->polys.size()
+            || prim->points.size()
+            )) {
+
+            std::vector<int> unrevamp(old_prim_size, -1);
+            for (int i = 0; i < revamp.size(); i++) {
+                unrevamp[revamp[i]] = i;
+            }
+
+            auto mock = [&](int& x) -> bool {
+                int loc = unrevamp[x];
+                if (loc == -1)
+                    return false;
+                x = loc;
+                return true;
+                };
+
+            if (prim->tris.size()) {
+                std::vector<int> trisrevamp;
+                trisrevamp.reserve(prim->tris.size());
+                for (int i = 0; i < prim->tris.size(); i++) {
+                    auto& tri = prim->tris[i];
+                    //ZENO_P(tri);
+                    //ZENO_P(unrevamp[tri[0]]);
+                    //ZENO_P(unrevamp[tri[1]]);
+                    //ZENO_P(unrevamp[tri[2]]);
+                    if (mock(tri[0]) && mock(tri[1]) && mock(tri[2]))
+                        trisrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < trisrevamp.size(); i++) {
+                    prim->tris[i] = prim->tris[trisrevamp[i]];
+                }
+                prim->tris.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, trisrevamp);
+                    });
+                prim->tris.resize(trisrevamp.size());
+            }
+
+            if (prim->quads.size()) {
+                std::vector<int> quadsrevamp;
+                quadsrevamp.reserve(prim->quads.size());
+                for (int i = 0; i < prim->quads.size(); i++) {
+                    auto& quad = prim->quads[i];
+                    if (mock(quad[0]) && mock(quad[1]) && mock(quad[2]) && mock(quad[3]))
+                        quadsrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < quadsrevamp.size(); i++) {
+                    prim->quads[i] = prim->quads[quadsrevamp[i]];
+                }
+                prim->quads.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, quadsrevamp);
+                    });
+                prim->quads.resize(quadsrevamp.size());
+            }
+
+            if (prim->lines.size()) {
+                std::vector<int> linesrevamp;
+                linesrevamp.reserve(prim->lines.size());
+                for (int i = 0; i < prim->lines.size(); i++) {
+                    auto& line = prim->lines[i];
+                    if (mock(line[0]) && mock(line[1]))
+                        linesrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < linesrevamp.size(); i++) {
+                    prim->lines[i] = prim->lines[linesrevamp[i]];
+                }
+                prim->lines.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, linesrevamp);
+                    });
+                prim->lines.resize(linesrevamp.size());
+            }
+
+            if (prim->edges.size()) {
+                std::vector<int> edgesrevamp;
+                edgesrevamp.reserve(prim->edges.size());
+                for (int i = 0; i < prim->edges.size(); i++) {
+                    auto& edge = prim->edges[i];
+                    if (mock(edge[0]) && mock(edge[1]))
+                        edgesrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < edgesrevamp.size(); i++) {
+                    prim->edges[i] = prim->edges[edgesrevamp[i]];
+                }
+                prim->edges.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, edgesrevamp);
+                    });
+                prim->edges.resize(edgesrevamp.size());
+            }
+
+            if (prim->polys.size()) {
+                std::vector<int> polysrevamp;
+                polysrevamp.reserve(prim->polys.size());
+                for (int i = 0; i < prim->polys.size(); i++) {
+                    auto& poly = prim->polys[i];
+                    bool succ = [&] {
+                        for (int p = poly[0]; p < poly[0] + poly[1]; p++)
+                            if (!mock(prim->loops[p]))
+                                return false;
+                        return true;
+                        }();
+                    if (succ)
+                        polysrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < polysrevamp.size(); i++) {
+                    prim->polys[i] = prim->polys[polysrevamp[i]];
+                }
+                prim->polys.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, polysrevamp);
+                    });
+                prim->polys.resize(polysrevamp.size());
+            }
+
+            if (prim->points.size()) {
+                std::vector<int> pointsrevamp;
+                pointsrevamp.reserve(prim->points.size());
+                for (int i = 0; i < prim->points.size(); i++) {
+                    auto& point = prim->points[i];
+                    if (mock(point))
+                        pointsrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < pointsrevamp.size(); i++) {
+                    prim->points[i] = prim->points[pointsrevamp[i]];
+                }
+                prim->points.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, pointsrevamp);
+                    });
+                prim->points.resize(pointsrevamp.size());
+            }
+
+        }
+    }
+    static void primRevampFaces(PrimitiveObject* prim, std::vector<uint8_t> const& unrevamp) {
+        if ((0
+            || prim->tris.size()
+            || prim->quads.size()
+            || prim->lines.size()
+            || prim->edges.size()
+            || prim->polys.size()
+            || prim->points.size()
+            )) {
+
+            auto mock = [&](int const& x) -> bool {
+                return unrevamp[x];
+                };
+
+            if (prim->tris.size()) {
+                std::vector<int> trisrevamp;
+                trisrevamp.reserve(prim->tris.size());
+                for (int i = 0; i < prim->tris.size(); i++) {
+                    auto& tri = prim->tris[i];
+                    //ZENO_P(tri);
+                    //ZENO_P(unrevamp[tri[0]]);
+                    //ZENO_P(unrevamp[tri[1]]);
+                    //ZENO_P(unrevamp[tri[2]]);
+                    if (mock(tri[0]) || mock(tri[1]) || mock(tri[2]))
+                        trisrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < trisrevamp.size(); i++) {
+                    prim->tris[i] = prim->tris[trisrevamp[i]];
+                }
+                prim->tris.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, trisrevamp);
+                    });
+                prim->tris.resize(trisrevamp.size());
+            }
+
+            if (prim->quads.size()) {
+                std::vector<int> quadsrevamp;
+                quadsrevamp.reserve(prim->quads.size());
+                for (int i = 0; i < prim->quads.size(); i++) {
+                    auto& quad = prim->quads[i];
+                    if (mock(quad[0]) || mock(quad[1]) || mock(quad[2]) || mock(quad[3]))
+                        quadsrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < quadsrevamp.size(); i++) {
+                    prim->quads[i] = prim->quads[quadsrevamp[i]];
+                }
+                prim->quads.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, quadsrevamp);
+                    });
+                prim->quads.resize(quadsrevamp.size());
+            }
+
+            if (prim->lines.size()) {
+                std::vector<int> linesrevamp;
+                linesrevamp.reserve(prim->lines.size());
+                for (int i = 0; i < prim->lines.size(); i++) {
+                    auto& line = prim->lines[i];
+                    if (mock(line[0]) || mock(line[1]))
+                        linesrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < linesrevamp.size(); i++) {
+                    prim->lines[i] = prim->lines[linesrevamp[i]];
+                }
+                prim->lines.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, linesrevamp);
+                    });
+                prim->lines.resize(linesrevamp.size());
+            }
+
+            if (prim->edges.size()) {
+                std::vector<int> edgesrevamp;
+                edgesrevamp.reserve(prim->edges.size());
+                for (int i = 0; i < prim->edges.size(); i++) {
+                    auto& edge = prim->edges[i];
+                    if (mock(edge[0]) || mock(edge[1]))
+                        edgesrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < edgesrevamp.size(); i++) {
+                    prim->edges[i] = prim->edges[edgesrevamp[i]];
+                }
+                prim->edges.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, edgesrevamp);
+                    });
+                prim->edges.resize(edgesrevamp.size());
+            }
+
+            if (prim->polys.size()) {
+                std::vector<int> polysrevamp;
+                polysrevamp.reserve(prim->polys.size());
+                for (int i = 0; i < prim->polys.size(); i++) {
+                    auto& poly = prim->polys[i];
+                    bool succ = [&] {
+                        for (int p = poly[0]; p < poly[0] + poly[1]; p++)
+                            if (mock(prim->loops[p]))
+                                return true;
+                        return false;
+                        }();
+                    if (succ)
+                        polysrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < polysrevamp.size(); i++) {
+                    prim->polys[i] = prim->polys[polysrevamp[i]];
+                }
+                prim->polys.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, polysrevamp);
+                    });
+                prim->polys.resize(polysrevamp.size());
+            }
+
+            if (prim->points.size()) {
+                std::vector<int> pointsrevamp;
+                pointsrevamp.reserve(prim->points.size());
+                for (int i = 0; i < prim->points.size(); i++) {
+                    auto& point = prim->points[i];
+                    if (mock(point))
+                        pointsrevamp.emplace_back(i);
+                }
+                for (int i = 0; i < pointsrevamp.size(); i++) {
+                    prim->points[i] = prim->points[pointsrevamp[i]];
+                }
+                prim->points.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    revamp_vector(arr, pointsrevamp);
+                    });
+                prim->points.resize(pointsrevamp.size());
+            }
+
+        }
+    }
+
+    ZENO_API void primFilterVerts(PrimitiveObject* prim,
+        std::string tagAttr,
+        int tagValue,
+        bool isInversed,
+        std::string revampAttrO,
+        std::string method,
+        int* aux, int aux_size,
+        bool use_aux) {
+        if (method == "faces") {
+            std::vector<uint8_t> unrevamp(prim->size());
+            auto const& tagArr = prim->verts.attr<int>(tagAttr);
+            if (!isInversed) {
+                for (int i = 0; i < prim->size(); i++) {
+                    unrevamp[i] = tagArr[i] == tagValue;
+                }
+            } else {
+                for (int i = 0; i < prim->size(); i++) {
+                    unrevamp[i] = tagArr[i] != tagValue;
+                }
+            }
+            primRevampFaces(prim, unrevamp);
+            if (!revampAttrO.empty()) {
+                auto& revamp = prim->add_attr<int>(revampAttrO);
+                if (!isInversed) {
+                    for (int i = 0; i < prim->size(); i++) {
+                        revamp[i] = tagArr[i] == tagValue ? i : -1;
+                    }
+                } else {
+                    for (int i = 0; i < prim->size(); i++) {
+                        revamp[i] = tagArr[i] != tagValue ? i : -1;
+                    }
+                }
+            }
+        } else {
+            std::vector<int> revamp;
+            if (aux_size == 0 && use_aux == false) {
+                revamp.reserve(prim->size());
+                auto const& tagArr = prim->verts.attr<int>(tagAttr);
+                if (!isInversed) {
+                    for (int i = 0; i < prim->size(); i++) {
+                        if (tagArr[i] == tagValue)
+                            revamp.emplace_back(i);
+                    }
+                } else {
+                    for (int i = 0; i < prim->size(); i++) {
+                        if (tagArr[i] != tagValue)
+                            revamp.emplace_back(i);
+                    }
+                }
+            } else {
+                revamp.resize(aux_size);
+                for (int i = 0; i < aux_size; i++) {
+                    revamp[i] = aux[i];
+                }
+            }
+            primRevampVerts(prim, revamp);
+            if (!revampAttrO.empty()) {
+                prim->add_attr<int>(revampAttrO) = std::move(revamp);
+            }
+        }
+    }
+
+    ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeVerts(PrimitiveObject* prim, std::string tagAttr) {
+        if (!prim->verts.size()) return {};
+
+        auto const& tagArr = prim->verts.attr<int>(tagAttr);
+        int tagMax = parallel_reduce_max(tagArr.begin(), tagArr.end()) + 1;
+
+        std::vector<std::unique_ptr<PrimitiveObject>> primList(tagMax);
+        for (int tag = 0; tag < tagMax; tag++) {
+            primList[tag] = std::make_unique<PrimitiveObject>();
+        }
+
+#if 1
+        std::vector<std::vector<int>> aux_arrays;
+        aux_arrays.resize(tagMax);
+        for (int tag = 0; tag < tagMax; tag++) {
+            aux_arrays[tag].resize(0);
+        }
+        //auto const &tagArr = prim->verts.attr<int>(tagAttr);
+        for (int i = 0; i < prim->size(); i++) {
+            aux_arrays[tagArr[i]].emplace_back(i);
+        }
+        for (int tag = 0; tag < tagMax; tag++) {
+            primList[tag] = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
+            primFilterVerts(primList[tag].get(), tagAttr, tag, false, {}, "verts", aux_arrays[tag].data(), aux_arrays[tag].size(), true);
+        }
+
+#else
+        std::vector<std::vector<int>> vert_revamp(tagMax);
+        std::vector<int> vert_unrevamp(prim->verts.size());
+
+        for (size_t i = 0; i < prim->verts.size(); i++) {
+            int tag = tagArr[i];
+            vert_revamp[tag].push_back(i);
+            vert_unrevamp[i] = tag;
+        }
+
+        for (int tag = 0; tag < tagMax; tag++) {
+            auto& revamp = vert_revamp[tag];
+            auto const& outprim = primList[tag];
+
+            outprim->verts.resize(revamp.size());
+            parallel_for((size_t)0, revamp.size(), [&](size_t i) {
+                outprim->verts[i] = prim->verts[revamp[i]];
+                });
+            prim->verts.foreach_attr([&](auto const& key, auto const& inarr) {
+                using T = std::decay_t<decltype(inarr[0])>;
+                auto& outarr = outprim->verts.add_attr<T>(key);
+                parallel_for((size_t)0, revamp.size(), [&](size_t i) {
+                    outarr[i] = inarr[revamp[i]];
+                    });
+                });
+        }
+
+        std::vector<std::vector<int>> face_revamp;
+
+        auto mock = [&](auto getter) {
+            auto& prim_tris = getter(prim);
+            if (prim_tris.size()) {
+                face_revamp.clear();
+                face_revamp.resize(tagMax);
+                using T = std::decay_t<decltype(prim_tris[0])>;
+
+                for (size_t i = 0; i < prim_tris.size(); i++) {
+                    auto ind = reinterpret_cast<decay_vec_t<T> const*>(&prim_tris[i]);
+                    int tag = vert_unrevamp[ind[0]];
+                    bool bad = false;
+                    for (int j = 1; j < is_vec_n<T>; j++) {
+                        int new_tag = vert_unrevamp[ind[j]];
+                        if (tag != new_tag) {
+                            bad = true;
+                            break;
+                        }
+                    }
+                    if (!bad) face_revamp[tag].push_back(i);
+                }
+
+                for (int tag = 0; tag < tagMax; tag++) {
+                    auto& revamp = face_revamp[tag];
+                    auto& v_revamp = vert_revamp[tag];
+                    auto* outprim = primList[tag].get();
+                    auto& outprim_tris = getter(outprim);
+
+                    outprim_tris.resize(revamp.size());
+                    parallel_for((size_t)0, revamp.size(), [&](size_t i) {
+                        auto ind = reinterpret_cast<decay_vec_t<T> const*>(&prim_tris[revamp[i]]);
+                        auto outind = reinterpret_cast<decay_vec_t<T> *>(&outprim_tris[i]);
+                        for (int j = 0; j < is_vec_n<T>; j++) {
+                            outind[j] = v_revamp[ind[j]];
+                        }
+                        });
+
+                    prim_tris.foreach_attr([&](auto const& key, auto const& inarr) {
+                        using T = std::decay_t<decltype(inarr[0])>;
+                        auto& outarr = outprim_tris.template add_attr<T>(key);
+                        parallel_for((size_t)0, revamp.size(), [&](size_t i) {
+                            outarr[i] = inarr[revamp[i]];
+                            });
+                        });
+                }
+            }
+            };
+        mock([](auto&& p) -> auto& { return p->points; });
+        mock([](auto&& p) -> auto& { return p->lines; });
+        mock([](auto&& p) -> auto& { return p->tris; });
+        mock([](auto&& p) -> auto& { return p->quads; });
+
+        if (prim->polys.size()) {
+            face_revamp.clear();
+            face_revamp.resize(tagMax);
+
+            for (size_t i = 0; i < prim->polys.size(); i++) {
+                auto& [base, len] = prim->polys[i];
+                if (len <= 0) continue;
+                int tag = vert_unrevamp[prim->loops[base]];
+                bool bad = false;
+                for (int j = base + 1; j < base + len; i++) {
+                    int new_tag = vert_unrevamp[prim->loops[j]];
+                    if (tag != new_tag) {
+                        bad = true;
+                        break;
+                    }
+                }
+                if (!bad) face_revamp[tag].push_back(i);
+            }
+
+            for (int tag = 0; tag < tagMax; tag++) {
+                auto& revamp = face_revamp[tag];
+                auto& v_revamp = vert_revamp[tag];
+                auto* outprim = primList[tag].get();
+
+                outprim->polys.resize(revamp.size());
+                for (size_t i = 0; i < revamp.size(); i++) {
+                    auto const& [base, len] = prim->polys[revamp[i]];
+                    int new_base = outprim->loops.size();
+                    for (int j = base; j < base + len; j++) {
+                        outprim->loops.push_back(prim->loops[j]);
+                    }
+                    outprim->polys[i] = { new_base, len };
+                }
+
+                prim->polys.foreach_attr([&](auto const& key, auto const& inarr) {
+                    using T = std::decay_t<decltype(inarr[0])>;
+                    auto& outarr = outprim->polys.add_attr<T>(key);
+                    parallel_for((size_t)0, revamp.size(), [&](size_t i) {
+                        outarr[i] = inarr[revamp[i]];
+                        });
+                    });
+            }
+        }
+#endif
+
+        return primList;
+    }
+
+    ZENO_API void primSimplifyTag(PrimitiveObject* prim, std::string tagAttr) {
+        auto& tag = prim->verts.attr<int>(tagAttr);
+        std::unordered_map<int, int> lut;
+        int top = 0;
+        for (int i = 0; i < tag.size(); i++) {
+            auto k = tag[i];
+            auto it = lut.find(k);
+            if (it != lut.end()) {
+                tag[i] = it->second;
+            } else {
+                int c = top++;
+                lut.emplace(k, c);
+                tag[i] = c;
+            }
+        }
+    }
 }

@@ -14,6 +14,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/zeno.h>
 namespace zeno {
@@ -172,7 +173,7 @@ ZENDEFNODE(ZSCUShowActiveContext, {
 struct ZSCUSetActiveDevice : INode {
   void apply() override {
     using namespace zs;
-    auto did = get_input2<int>("device_no");
+    auto did = get_input2_int("device_no");
     bool success = Cuda::set_default_device(did);
     // Cuda::context(did).setContext();
     fmt::print("====================================\n");

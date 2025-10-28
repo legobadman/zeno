@@ -45,4 +45,7 @@ namespace zeno
     ZENO_API std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path);
     ZENO_API void write_pfm(const zeno::String& path, PrimitiveObject* image);
     ZENO_API void write_jpg(const zeno::String& path, PrimitiveObject* image);
+    ZENO_API void primFilterVerts(PrimitiveObject* prim, std::string tagAttr, int tagValue, bool isInversed = false, std::string revampAttrO = {}, std::string method = "verts", int* aux = nullptr, int aux_size = 0, bool use_aux = false);
+    ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeVerts(PrimitiveObject* prim, std::string tagAttr);
+    ZENO_API void primSimplifyTag(PrimitiveObject* prim, std::string tagAttr);
 }

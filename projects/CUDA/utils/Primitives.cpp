@@ -183,7 +183,7 @@ struct PrimitiveConnectedComponents : INode {
         fmt::print("=================\n\n");
 #endif
 
-        set_output("prim", std::move(outPrim));
+        set_output("prim", create_GeometryObject(outPrim.get()));
     }
 };
 
@@ -596,8 +596,7 @@ struct PrimitiveMarkIslands : INode {
         if (isTris) {
             primTriangulate(prim.get(), true, false);
         }
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -777,8 +776,7 @@ struct PrimitiveReorder : INode {
             }
         }
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -1033,8 +1031,7 @@ struct PrimitiveFuse : INode {
         /// @brief update verts
         verts = newVerts;
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -1303,8 +1300,7 @@ struct PrimitiveFuse2 : INode {
         /// @brief update verts
         verts = newVerts;
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -1544,8 +1540,7 @@ struct PointFuse : INode {
 
         /// @brief update verts
         verts = newVerts;
-        auto geom = create_GeometryObject(prim.get());
-        set_output("points", std::move(geom));
+        set_output("points", create_GeometryObject(prim.get()));
     }
 };
 
@@ -1827,8 +1822,7 @@ struct PrimitiveFuse : INode {
 
         /// @brief update verts
         verts = newVerts;
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -2443,8 +2437,7 @@ struct PrimAttributePromote : INode {
             }
         }
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -2672,8 +2665,7 @@ struct PrimitiveUnfuse : INode {
             }
             set_output("partitioned_prim", std::move(listPrim));
         } else {
-            auto geom = create_GeometryObject(resPrim.get());
-            set_output("partitioned_prim", std::move(geom));
+            set_output("partitioned_prim", create_GeometryObject(resPrim.get()));
         }
     }
 };
@@ -2740,8 +2732,7 @@ struct GatherPrimIds : INode {
         auto pol = omp_exec();
         pol(range(prim->size()), [&](int vi) { attr[vi] = refAttr[targetIndices[vi]]; });
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -2775,8 +2766,7 @@ struct MarkSelectedVerts : INode {
             tags[line[0]] = 1.f;
             tags[line[1]] = 1.f;
         });
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(MarkSelectedVerts, {
@@ -2858,8 +2848,7 @@ struct ComputeAverageEdgeLength : INode {
         zs::reduce(pol, std::begin(els), std::end(els), std::begin(maxEl), zs::detail::deduce_numeric_min<float>(),
                    zs::getmax<float>{});
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
         set_output_float("average_edge_length", sum[0] / els.size());
         set_output_float("minimum_edge_length", minEl[0]);
         set_output_float("maximum_edge_length", maxEl[0]);
@@ -2908,8 +2897,7 @@ struct PrimitiveHasUV : INode {
                 }
             }
         }
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
         set_output_bool("has_uv", ret);
     }
 };
@@ -2967,8 +2955,7 @@ struct SurfacePointsInterpolation : INode {
             // auto &dstAttr = prim->attr(attrTag);
             match(doWork, [](...) {})(refPrim->attr(refAttrTag));
         }
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -3080,8 +3067,7 @@ struct ParticleCluster : zeno::INode {
         fmt::print("{} clusters in total.\n", numClusters);
 
         set_output_int("num_clusters", (int)numClusters);
-        auto geom = create_GeometryObject(pars.get());
-        set_output("pars", std::move(geom));
+        set_output("pars", create_GeometryObject(pars.get()));
     }
 };
 
@@ -3298,7 +3284,7 @@ struct ParticleSegmentation : zeno::INode {
 #endif
 
         set_output_int("num_segments", (int)clusterNo);
-        set_output("pars", std::move(pars));
+        set_output("pars", create_GeometryObject(pars.get()));
     }
 };
 
@@ -3647,8 +3633,7 @@ struct PrimitiveColoring : INode {
         }
 #endif
         fmt::print("{} colors in total.\n", iter);
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -3760,8 +3745,7 @@ struct PrimitiveProject : INode {
                 pos[i] = (ro + dist * rd).to_array();
             dists[i] = dist;
         });
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -3898,9 +3882,9 @@ struct QueryClosestPrimitive : zeno::INode {
                  dist, bvhId, lbvh->getNumLeaves(), pid, prim->size());
 #endif
         }
-        /* ÊÇ²»ÊÇÓĞÃ«²¡£¿¶¨ÒåÁËprim¾ÓÈ»´«Numeric? ÄÇ¸É´à²»Òª½ÚµãÏµÍ³ÁË£¬Ö±½ÓÊÖĞ´´úÂëµÃÁË
+        /* Ç²Ã«primÈ»Numeric? Ç¸É´à²»ÒªÚµÏµÍ³Ë£Ö±Ğ´
         else if (has_input<NumericObject>("prim")) {
-            auto p = get_input<NumericObject>("prim")->get<zeno::vec3f>();
+            auto p = get_input2_vec3f("prim");
             using vec3 = zs::vec<float, 3>;
             auto pi = vec3::from_array(p);
             auto lbvhv = zs::proxy<zs::execspace_e::host>(lbvh);
@@ -3942,8 +3926,7 @@ struct QueryClosestPrimitive : zeno::INode {
         set_output_int("bvh_primid", bvhId);
         set_output_float("dist", dist);
         // set_output("bvh_prim", lbvh->retrievePrimitive(bvhId));
-        auto linegeom = create_GeometryObject(line.get());
-        set_output("segment", std::move(linegeom));
+        set_output("segment", create_GeometryObject(line.get()));
     }
 };
 
@@ -3983,8 +3966,7 @@ struct FollowUpReferencePrimitive : INode {
             auto tri = refTris[triNo];
             pos[i] = w[0] * refPos[tri[0]] + w[1] * refPos[tri[1]] + w[2] * refPos[tri[2]];
         });
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(FollowUpReferencePrimitive, {
@@ -4115,8 +4097,7 @@ struct ComputeParticlesCenter : INode {
         calcCenter(1);
         calcCenter(2);
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
         set_output_vec3f("center", toAbiVec3f(trans));
     }
 };
@@ -4206,8 +4187,7 @@ struct ComputeParticlesDirection : INode {
         fmt::print(fg(fmt::color::green), "trans: {}, {}, {}. direction: {}, {}, {}.\n", trans[0], trans[1], trans[2],
                    U(0, 0), U(1, 0), U(2, 0));
 #endif
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
 
         auto ret = Vec3f(U(0, 0), U(1, 0), U(2, 0));
         set_output_vec3f("principal_direction", std::move(ret));
@@ -4270,8 +4250,7 @@ struct AssociateParticles : INode {
                 }
             });
         }
-        auto geom = create_GeometryObject(srcPrim.get());
-        set_output("srcPrim", std::move(geom));
+        set_output("srcPrim", create_GeometryObject(srcPrim.get()));
     }
 };
 ZENDEFNODE(AssociateParticles, {
@@ -4460,7 +4439,7 @@ struct SetupParticleTransition : INode {
             }
         });
 #endif
-        set_output("anim_particles", std::move(prim));
+        set_output("anim_particles", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(SetupParticleTransition, {
@@ -4557,8 +4536,7 @@ struct SetupParticleTransitionDirect : INode {
                 clrTrans[i] = onColor / numTransFrames; // towards full on (green)
             }
         });
-        auto geom = create_GeometryObject(prim.get());
-        set_output("anim_particles", std::move(geom));
+        set_output("anim_particles", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(SetupParticleTransitionDirect, {
@@ -4621,8 +4599,7 @@ struct AssociateParticlesFast : INode {
             dstIndices[srcId] = dstId;
             dstPos[srcId] = dst[dstId];
         });
-        auto geom = create_GeometryObject(srcPrim.get());
-        set_output("srcPrim", std::move(geom));
+        set_output("srcPrim", create_GeometryObject(srcPrim.get()));
     }
 };
 ZENDEFNODE(AssociateParticlesFast, {
@@ -4708,8 +4685,7 @@ struct PrimAssignRefAttrib : INode {
             })(points->verts.attr(tag), prim->verts.attr(tag));
         }
 
-        auto geom = create_GeometryObject(points.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(points.get()));
     }
 };
 
@@ -4750,8 +4726,7 @@ struct RemovePrimitiveTopo : INode {
         if (empty || topoStrs.find("uvs") != topoStrs.end())
             removeAttr(prim->uvs);
 
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(RemovePrimitiveTopo, {
@@ -4789,8 +4764,7 @@ struct ShuffleParticles : INode {
                     [](...) {})(srcArr);
             }
         }
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(ShuffleParticles, {
@@ -4843,8 +4817,7 @@ struct EmbedPrimitiveBvh : zeno::INode {
             bvh_t &bvh = zsbvh->get();
             bvh.refit(pol, bvs);
         }
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -4900,8 +4873,7 @@ struct EmbedPrimitiveSpatialHash : zeno::INode {
             sh_t &sh = zssh->get();
             sh.build(pol, sideLength, bvs);
         }
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 

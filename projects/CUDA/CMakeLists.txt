@@ -59,7 +59,9 @@ if (ZS_PYTHON_FOUND)
   target_link_libraries(zcuda PRIVATE zpc_jit_py)
 endif(ZS_PYTHON_FOUND)
 
-target_link_libraries(zcuda PRIVATE zenocore)
+target_link_libraries(zcuda PRIVATE zenocore openvdb)
+target_include_directories(zcuda PRIVATE ../zenvdb/openvdb)
+target_include_directories(zcuda PRIVATE ../zenvdb/include)
 
 if (ZS_PYTHON_FOUND AND ZENO_WITH_PyZpc)
 

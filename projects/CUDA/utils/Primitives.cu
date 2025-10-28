@@ -230,7 +230,7 @@ ZENDEFNODE(ZSPrimitiveReduction, {/* inputs: */ {
 struct ZSGetUserData : zeno::INode {
     virtual void apply() override {
         auto object = get_input<ZenoParticles>("object");
-        auto key = get_param<std::string>("key");
+        auto key = get_input2_string("key");
         auto hasValue = object->zsUserData().has(key);
         auto data = hasValue ? object->zsUserData().get(key) : std::make_shared<DummyObject>();
         set_output2("hasValue", hasValue);
@@ -293,12 +293,12 @@ struct ColoringSelected : INode {
         auto cudaPol = zs::cuda_exec().sync(true);
 
         auto zsls = get_input<ZenoLevelSet>("ZSLevelSet");
-        bool boundaryWise = get_input2<bool>("boundary_wise");
+        bool boundaryWise = get_input2_bool("boundary_wise");
         auto &vtemp = zsprim->getParticles();
         if (boundaryWise || vtemp.hasProperty("on_boundary"))
             markBoundaryVerts(cudaPol, zsprim.get());
 
-        auto tag = get_input2<std::string>("markTag");
+        auto tag = zsString2Std(get_input2_string("markTag"));
         vtemp.append_channels(cudaPol, std::vector<zs::PropertyTag>{{tag, 1}});
         cudaPol(range(vtemp, tag), [] ZS_LAMBDA(auto &mark) mutable { mark = 0; });
 
@@ -336,7 +336,7 @@ ZENDEFNODE(ColoringSelected, {{
                                   {gParamType_Bool, "boundary_wise", "0"},
                                   {gParamType_String, "markTag", "selected"},
                               },
-                              {"ZSParticles"},
+                              {{gParamType_Particles, "ZSParticles"}},
                               {},
                               {"geom"}});
 #endif

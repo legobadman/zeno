@@ -91,11 +91,11 @@ struct ParticleClustering : INode {
         std::vector<vec3f> center{};
         if (knum <= 0 && dmax <= 0) {
             zeno::log_warn("please enter either \"cluster_number\" or \"diameter\"");
-            set_output("pars", std::move(pars));
+            set_output("pars", create_GeometryObject(pars.get()));
             return;
         } else if (knum > 0 && dmax > 0) {
             zeno::log_warn("please enter only one of \"cluster_number\" and \"diameter\"");
-            set_output("pars", std::move(pars));
+            set_output("pars", create_GeometryObject(pars.get()));
             return;
         } else if (knum > 0) {
             center.resize(knum);

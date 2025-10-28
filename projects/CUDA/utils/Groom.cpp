@@ -20,6 +20,7 @@
 #include <zeno/VDBGrid.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
@@ -28,10 +29,10 @@ namespace zeno {
 
 struct SpawnGuidelines : INode {
     virtual void apply() override {
-        auto points = get_input<PrimitiveObject>("points");
-        auto nrmAttr = get_input2<std::string>("normalTag");
-        auto length = get_input2<float>("length");
-        auto numSegments = get_input2<int>("segments");
+        auto points = get_input_Geometry("points")->toPrimitiveObject();
+        auto nrmAttr = zsString2Std(get_input2_string("normalTag"));
+        auto length = get_input2_float("length");
+        auto numSegments = get_input2_int("segments");
 
         if (numSegments < 1) {
             throw std::runtime_error("the number of segments must be positive");
@@ -52,9 +53,9 @@ struct SpawnGuidelines : INode {
 
         auto &pos = prim->attr<vec3f>("pos");
         if (has_input("vdb_collider")) {
-            auto collider = get_input2<zeno::VDBFloatGrid>("vdb_collider");
-            auto sep_dist = get_input2<float>("sep_dist");
-            auto maxIters = get_input2<int>("max_iter");
+            auto collider = dynamic_cast<zeno::VDBFloatGrid*>(get_input("vdb_collider"));
+            auto sep_dist = get_input2_float("sep_dist");
+            auto maxIters = get_input2_int("max_iter");
             auto grid = collider->m_grid;
             grid->tree().voxelizeActiveTiles();
             auto dx = collider->getVoxelSize()[0];
@@ -162,22 +163,22 @@ struct SpawnGuidelines : INode {
             }
         });
 
-        set_output("guide_lines", std::move(prim));
+        set_output("guide_lines", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(SpawnGuidelines, {
                                 {
-                                    {gParamType_Primitive, "points"},
+                                    {gParamType_Geometry, "points"},
                                     {gParamType_String, "normalTag", "nrm"},
                                     {gParamType_Float, "length", "0.5"},
                                     {gParamType_Int, "segments", "5"},
-                                    {"vdb_collider"},
+                                    {gParamType_VDBGrid, "vdb_collider"},
                                     {gParamType_Float, "sep_dist", "0"},
                                     {gParamType_Int, "max_iter", "100"},
                                 },
                                 {
-                                    {gParamType_Primitive, "guide_lines"},
+                                    {gParamType_Geometry, "guide_lines"},
                                 },
                                 {},
                                 {"zs_hair"},
@@ -190,8 +191,8 @@ struct StepGuidelines : INode {
         auto pol = omp_exec();
         constexpr auto space = execspace_e::openmp;
 
-        auto gls = get_input<PrimitiveObject>("guide_lines");
-        auto dt = get_input2<float>("dt");
+        auto gls = get_input_Geometry("guide_lines")->toPrimitiveObject();
+        auto dt = get_input2_float("dt");
         auto &pos = gls->attr<vec3f>("pos");
         auto &vel = gls->attr<vec3f>("vel");
         const auto &polys = gls->polys;
@@ -200,11 +201,11 @@ struct StepGuidelines : INode {
         auto numLines = polys.size();
 
         {
-            auto weightTag = get_input2<std::string>("weightTag");
-            auto idTag = get_input2<std::string>("idTag");
+            auto weightTag = zsString2Std(get_input2_string("weightTag"));
+            auto idTag = zsString2Std(get_input2_string("idTag"));
             auto &ws = gls->attr<vec3f>(weightTag);
             auto &ids = gls->attr<float>(idTag); // ref: pnbvhw.cpp
-            const auto boundaryPrim = get_input<PrimitiveObject>("boundary_prim");
+            const auto boundaryPrim = get_input_Geometry("boundary_prim")->toPrimitiveObject();
             const auto &boundaryPos = boundaryPrim->attr<vec3f>("pos");
             const auto &boundaryTris = boundaryPrim->tris.values;
             /// move guideline roots
@@ -249,7 +250,7 @@ struct StepGuidelines : INode {
         std::function<void()> resolveCollision;
         bool hasCollider = has_input("vdb_collider");
         if (hasCollider) {
-            auto collider = get_input2<zeno::VDBFloatGrid>("vdb_collider");
+            auto collider = dynamic_cast<zeno::VDBFloatGrid*>(get_input("vdb_collider"));
             grid = collider->m_grid;
             grid->tree().voxelizeActiveTiles();
             gridGrad = openvdb::tools::gradient(*grid);
@@ -261,8 +262,8 @@ struct StepGuidelines : INode {
             return openvdb::tools::BoxSampler::sample(gridGrad->getConstUnsafeAccessor(), gridGrad->worldToIndex(p));
         };
         if (hasCollider) {
-            auto sep_dist = get_input2<float>("sep_dist");
-            auto maxIters = get_input2<int>("collision_iters");
+            auto sep_dist = get_input2_float("sep_dist");
+            auto maxIters = get_input2_int("collision_iters");
 
             resolveCollision = [&pol, &loops, &grid, &gridGrad, &getSdf, &getGrad, &vtemp, dx = grid->voxelSize()[0],
                                 sep_dist, maxIters, mass, space_c = wrapv<space>{}]() {
@@ -350,7 +351,7 @@ struct StepGuidelines : INode {
             reduce(pol, temp.begin(), temp.end() - 1, temp.end() - 1);
             return temp.getVal(vtemp.size());
         };
-        auto maxIters = get_input2<int>("num_substeps");
+        auto maxIters = get_input2_int("num_substeps");
         /// substeps
         for (int subi = 0; subi != maxIters; ++subi) {
             /// @brief newton krylov
@@ -568,24 +569,24 @@ struct StepGuidelines : INode {
 
         /// resolve collision
 
-        set_output("guide_lines", std::move(gls));
+        set_output("guide_lines", create_GeometryObject(gls.get()));
     }
 };
 
 ZENDEFNODE(StepGuidelines, {
                                {
-                                   {gParamType_Primitive, "guide_lines"},
-                                   {gParamType_Primitive, "boundary_prim"},
+                                   {gParamType_Geometry, "guide_lines"},
+                                   {gParamType_Geometry, "boundary_prim"},
                                    {gParamType_String, "weightTag", "bvh_ws"},
                                    {gParamType_String, "idTag", "bvh_id"},
                                    {gParamType_Float, "dt", "0.05"},
                                    {gParamType_Int, "num_substeps", "1"},
-                                   {"vdb_collider"},
+                                   {gParamType_VDBGrid, "vdb_collider"},
                                    {gParamType_Float, "sep_dist", "0"},
                                    {gParamType_Int, "collision_iters", "5"},
                                },
                                {
-                                   {gParamType_Primitive, "guide_lines"},
+                                   {gParamType_Geometry, "guide_lines"},
                                },
                                {},
                                {"zs_hair"},
@@ -597,9 +598,9 @@ struct GenerateHairs : INode {
         using bvh_t = zs::LBvh<3, int, float>;
         using bv_t = typename bvh_t::Box;
 
-        auto points = get_input<PrimitiveObject>("points");
-        auto guideLines = get_input<PrimitiveObject>("guide_lines");
-        bool interpAttrs = get_input2<bool>("interpAttrs");
+        auto points = get_input_Geometry("points")->toPrimitiveObject();
+        auto guideLines = get_input_Geometry("guide_lines")->toPrimitiveObject();
+        bool interpAttrs = get_input2_bool("interpAttrs");
 
         using namespace zs;
         auto pol = omp_exec();
@@ -673,7 +674,7 @@ struct GenerateHairs : INode {
         pol(enumerate(prim->loops.values), [](int vi, int &loopid) { loopid = vi; });
 
         /// @note override guideline attribs to hairs
-        if (get_input2<bool>("interpAttrs")) {
+        if (get_input2_bool("interpAttrs")) {
             for (auto &[key, srcArr] : guideLines->polys.attrs) {
                 auto const &k = key;
                 match(
@@ -699,15 +700,15 @@ struct GenerateHairs : INode {
             });
         }
 
-        set_output("prim", prim);
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(GenerateHairs,
            {
-               {{gParamType_Primitive, "points"}, {gParamType_Primitive, "guide_lines"}, {gParamType_Bool, "interpAttrs", "1"}},
+               {{gParamType_Geometry, "points"}, {gParamType_Geometry, "guide_lines"}, {gParamType_Bool, "interpAttrs", "1"}},
                {
-                   {gParamType_Primitive, "prim"},
+                   {gParamType_Geometry, "prim"},
                },
                {},
                {"zs_hair"},
@@ -717,10 +718,10 @@ ZENDEFNODE(GenerateHairs,
 
 struct RepelPoints : zeno::INode {
     virtual void apply() override {
-        auto points = get_input<zeno::PrimitiveObject>("points");
-        auto collider = get_input2<zeno::VDBFloatGrid>("vdb_collider");
-        auto sep_dist = get_input2<float>("sep_dist");
-        auto maxIters = get_input2<int>("max_iter");
+        auto points = get_input_Geometry("points")->toPrimitiveObject();
+        auto collider = dynamic_cast<zeno::VDBFloatGrid*>(get_input("vdb_collider"));
+        auto sep_dist = get_input2_float("sep_dist");
+        auto maxIters = get_input2_int("max_iter");
         auto grid = collider->m_grid;
         grid->tree().voxelizeActiveTiles();
         auto dx = collider->getVoxelSize()[0];
@@ -752,19 +753,19 @@ struct RepelPoints : zeno::INode {
             }
             pos[vi] = zeno::other_to_vec<3>(p);
         });
-        set_output("prim", points);
+        set_output("prim", create_GeometryObject(points.get()));
     }
 };
 
 ZENDEFNODE(RepelPoints, {
                             {
-                                {gParamType_Primitive, "points"},
-                                {"vdb_collider"},
+                                {gParamType_Geometry, "points"},
+                                {gParamType_VDBGrid, "vdb_collider"},
                                 {gParamType_Float, "sep_dist", "0"},
                                 {gParamType_Int, "max_iter", "100"},
                             },
                             {
-                                {gParamType_Primitive, "prim"},
+                                {gParamType_Geometry, "prim"},
                             },
                             {},
                             {"zs_hair"},

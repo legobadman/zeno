@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/zeno_p.h>
@@ -12,10 +13,10 @@ namespace zeno {
 
 struct TrianglePrimSubdiv : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        int niters = get_input2<int>("iters");
-        auto faceInherentTag = get_input2<std::string>("face_inherit");
-        auto faceAvgEdgeTag = get_input2<std::string>("face_avg_edge");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        int niters = get_input2_int("iters");
+        auto faceInherentTag = zsString2Std(get_input2_string("face_inherit"));
+        auto faceAvgEdgeTag = zsString2Std(get_input2_string("face_avg_edge"));
 
         std::set<std::string> faceInherentPropTags, faceAvgEdgePropTags;
         auto processTags = [](std::string tags, std::set<std::string> &res) {
@@ -161,20 +162,20 @@ struct TrianglePrimSubdiv : INode {
                 });
             });
         }
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENO_DEFNODE(TrianglePrimSubdiv)
 ({
     {
-        "prim",
+        {gParamType_Geometry, "prim"},
         {gParamType_Int, "iters", "2"},
         {gParamType_String, "face_inherit", ""},
         {gParamType_String, "face_avg_edge", ""},
     },
     {
-{gParamType_Primitive, "prim"},
-},
+        {gParamType_Geometry, "prim"},
+    },
     {},
     {"primitive"},
 });

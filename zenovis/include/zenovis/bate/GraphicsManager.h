@@ -32,7 +32,7 @@ struct GraphicsManager {
             }
             return true;
         }
-        if (auto spDict = dynamic_cast<zeno::DictObject*>(obj)) {
+        else if (auto spDict = dynamic_cast<zeno::DictObject*>(obj)) {
             for (auto& [key, spObject] : spDict->get()) {
                 bool ret = add_object(spObject);
                 assert(ret);
@@ -251,18 +251,21 @@ struct GraphicsManager {
                         process_dictobj(_spDict);
                     }
                     else {
-                        {//可能有和obj同名但是list类型或dict类型的对象存在，需先清除
-                            auto& graphics_ = graphics.m_curr.m_curr;
-                            std::string objkey = zsString2Std(spObject->key());
-                            for (auto it = graphics_.begin(); it != graphics_.end(); ) {
-                                if (it->first.find(objkey + '\\') != std::string::npos) {
-                                    it = graphics_.erase(it);
-                                }
-                                else
-                                    ++it;
+                        //可能有和obj同名但是list类型或dict类型的对象存在，需先清除
+                        auto& graphics_ = graphics.m_curr.m_curr;
+                        std::string objkey = zsString2Std(spObject->key());
+                        if (objkey.empty()) {
+                            zeno::log_warn("the key of object is empty");
+                            return;
+                        }
+                        for (auto it = graphics_.begin(); it != graphics_.end(); ) {
+                            if (it->first.find(objkey + '\\') != std::string::npos) {
+                                it = graphics_.erase(it);
+                            }
+                            else {
+                                ++it;
                             }
                         }
-
                         add_object(spObject);
                     }
                 }

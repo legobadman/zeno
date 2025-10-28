@@ -44,5 +44,6 @@ registerObjectTypeHash(InstancingObject, Instance)
 #define gParamType_FBXObject        239
 #define gParamType_Scene            240
 #define gParamType_ABCTree          242
+#define gParamType_IndexBuckets     243
 
 #endif
