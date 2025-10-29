@@ -23,6 +23,10 @@ struct TriangleShape {
     inline float areaPDF() {
         return 1.0f / area;
     }
+
+    inline float3 center() {
+        return p0/3.0f + p1/3.0f + p2/3.0f;
+    }
     
     float Area() const {
         return 0.5f * length(cross(p1 - p0, p2 - p0));
@@ -614,6 +618,10 @@ struct RectShape {
 
     inline float PDF() {
         return 1.0f / Area();
+    }
+
+    float3 center() const {
+        return v + axisX * 0.5f * lenX + axisY * 0.5f * lenY;
     }
 
     inline bool EvalAfterHit(LightSampleRecord* lsr, const float3& dir, const float& dist, const float3& shadingP) {

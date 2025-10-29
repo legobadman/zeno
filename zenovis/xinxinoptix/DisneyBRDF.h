@@ -12,6 +12,13 @@ float PowerHeuristic(float a, float b, float beta = 2.0f)
     return t / (t2 + t + 1e-6f);
   
 }
+
+static __inline__ __device__
+float BalanceHeuristic(float a, float b)
+{
+    return a / (a + b);
+}
+
 static __inline__ __device__  float fresnel(float cosT){
     float v = clamp(1-cosT,0.0f,1.0f);
     float v2 = v *v;
