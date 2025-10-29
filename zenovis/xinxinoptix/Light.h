@@ -167,7 +167,6 @@ static __inline__ __device__ void sampleSphereIES(LightSampleRecord& lsr, const 
     lsr.p = center;
     if (radius > 0) {
         lsr.p += radius * lsr.n;
-        lsr.p = rtgems::offset_ray(lsr.p, lsr.n);
         lsr.dist = length(lsr.p - shadingP);
     }
 
@@ -395,7 +394,6 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
         }
 
         lsr.p -= params.cam.eye;
-        //lsr.p = rtgems::offset_ray(lsr.p, lsr.n);
         lsr.dist = length(lsr.p - shadowPRD.origin);
 
         if (!cihouMaxDistanceContinue(lsr, light)) { return; }

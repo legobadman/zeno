@@ -178,11 +178,6 @@ struct TriangleShape {
             lsr->p = bary3.x * p0 + bary3.y * p1 + bary3.z * p2;
             lsr->n = faceNormal;
 
-            lsr->dir = (lsr->p - shadingP);
-            //lsr->dir = normalize(lsr->dir);
-            auto sign = copysignf(1.0f, dot(lsr->n, -lsr->dir));
-
-            lsr->p = rtgems::offset_ray(lsr->p, lsr->n * sign);
             lsr->dir = lsr->p - shadingP;
             lsr->dist = length(lsr->dir);
 
@@ -248,11 +243,6 @@ struct TriangleShape {
         lsr->p = p;
         lsr->n = n;
 
-        lsr->dir = (lsr->p - shadingP);
-        //lsr->dir = normalize(lsr->dir);
-        auto sign = copysignf(1.0f, dot(lsr->n, -lsr->dir));
-
-        lsr->p = rtgems::offset_ray(lsr->p, lsr->n * sign);
         lsr->dir = lsr->p - shadingP;
         lsr->dist = length(lsr->dir);
         lsr->dir = lsr->dir / lsr->dist;
@@ -507,10 +497,10 @@ __device__ inline void SphericalRectInit(SphericalRect& srect,
 static inline float2 SphericalRectSample(SphericalRect& srect, float u, float v) {
     // 1. compute ’cu’
     float au = u * srect.S + srect.k;
-    if(abs(sinf(au))<1e-5)
-    {
-      return {0, 0};
-    }
+    // if(abs(sinf(au))<1e-5)
+    // {
+    //   return {0, 0};
+    // }
     float fu = (cosf(au) * srect.b0 - srect.b1) / sinf(au) ;
     float cu = (fu>0 ? +1.f:-1.f) /sqrtf(fu*fu + srect.b0sq);
     cu = clamp(cu, -1.0f, 1.0f); // avoid NaNs
@@ -678,11 +668,6 @@ struct RectShape {
 
         lsr->uv = uv;
 
-        lsr->dir = (lsr->p - shadingP);
-        //lsr->dir = normalize(lsr->dir);
-        auto sign = copysignf(1.0f, dot(lsr->n, -lsr->dir));
-        
-        lsr->p = rtgems::offset_ray(lsr->p, lsr->n * sign);
         lsr->dir = lsr->p - shadingP;
         lsr->dist = length(lsr->dir);
         lsr->dir = lsr->dir / lsr->dist;
@@ -734,8 +719,6 @@ struct RectShape {
         lsr->PDF = 1.0f;
         lsr->n = normal;
         lsr->NoL = denom;
-
-        lsr->p = rtgems::offset_ray(lsr->p, lsr->n);
 
         lsr->dir = ray_dir;
         lsr->dist = length(lsr->p - ray_orig);
@@ -874,7 +857,6 @@ struct SphereShape {
             lsr->p = ray_origin + ray_dir * lsr->dist;
             lsr->n = normalize(lsr->p - center);
             lsr->p = center + radius * lsr->n;
-            lsr->p = rtgems::offset_ray(lsr->p, lsr->n);
             lsr->dist = length(lsr->p - ray_origin);
             return true;
 
