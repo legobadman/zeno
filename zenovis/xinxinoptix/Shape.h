@@ -557,9 +557,11 @@ __device__ inline bool SpreadClampRect(float3& v,
     auto maxV = fminf(posV+spread_radius, lenY);
 
     if (minU > maxU || minV > maxV) return false;
+    minU = fminf(minU, maxU);
+    minV = fminf(minV, maxV);
 
-    auto lenU = maxU - minU;
-    auto lenV = maxV - minV;
+    auto lenU = fmaxf(0.0f, maxU - minU);
+    auto lenV = fmaxf(0.0f, maxV - minV);
 
     uvScale  = {lenU/lenX, lenV/lenY};
     uvOffset = {minU/lenX, minV/lenY};

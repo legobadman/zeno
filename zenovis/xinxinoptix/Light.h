@@ -177,21 +177,18 @@ static __inline__ __device__ void sampleSphereIES(LightSampleRecord& lsr, const 
 }
 
 static __inline__ __device__ float light_spread_attenuation(
-                                            const float3& ray_dir,
-                                            const float3& normal,
+                                            const float NdotL,
                                             const float spread,
-                                            const float tan_void,
                                             const float spreadNormalize)
 {
-    const float cos_a = -dot(ray_dir, normal);
-    auto angle_a = acosf(fabsf(cos_a));
+    const float cos_a = NdotL;
+    auto angle_a = acosf(fabsf(NdotL));
     auto angle_b = spread * 0.5f * M_PIf;
+    
+    auto angle_v = fmaxf(0.5f * M_PIf - angle_b, 0.0f);
 
-    if (angle_a > angle_b) {
-        return 0.0f;
-    }
-    angle_a = clamp(angle_a, 0.0f, 1.52367f);
     const float tan_a = tanf(angle_a);
+    const float tan_void = tanf(angle_v);
     return fmaxf((1.0f - tan_void * tan_a) * spreadNormalize, 0.0f);
 }
 
@@ -380,14 +377,11 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
                 default: break;
             }
 
-            if (light.spreadMajor < 1.0f) {
-                
-                auto void_angle = 0.5f * (1.0f - light.spreadMajor) * M_PIf;
+            if (light.spreadMajor < 1.0f && light.spreadNormalize != 0.0f) {
+
                 auto atten = light_spread_attenuation(
-                                        lsr.dir,
-                                        lsr.n,
+                                        lsr.NoL,
                                         light.spreadMajor,
-                                        tanf(void_angle),
                                         light.spreadNormalize);
                 lsr.intensity *= atten;
             }
