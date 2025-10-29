@@ -1,5 +1,6 @@
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/zeno.h>
 //-------attached some cuda library for FFT-----------------
 
@@ -148,6 +149,80 @@ struct OceanFFT : zeno::IObject {
             free(g_hDx2);
             free(g_hDz2);
         }
+    }
+
+    std::unique_ptr<zeno::IObject> clone() const override {
+        auto cuOceanObj = std::make_unique<OceanFFT>();
+        cuOceanObj->amplitude = amplitude;
+        cuOceanObj->WaveExponent = WaveExponent;
+        cuOceanObj->choppyness = choppyness;
+        cuOceanObj->meshSize = meshSize;
+        cuOceanObj->spectrumH = spectrumH;
+        cuOceanObj->spectrumW = spectrumW;
+        cuOceanObj->spectrumSize = spectrumSize;
+        cuOceanObj->L_scale = L_scale;
+        cuOceanObj->g = g;
+        cuOceanObj->patchSize = patchSize;
+        cuOceanObj->windDir = windDir;
+        cuOceanObj->timeScale = timeScale;
+        cuOceanObj->timeShift = timeShift;
+        cuOceanObj->speed = speed;
+        cuOceanObj->depth = depth;
+        cuOceanObj->A = A;
+        cuOceanObj->prevHf = prevHf;
+        cuOceanObj->curHf = curHf;
+
+        //how to copy from rhs.
+        cufftPlan2d(&(cuOceanObj->fftPlan), cuOceanObj->meshSize, cuOceanObj->meshSize, CUFFT_C2C);
+
+        cuOceanObj->d_h0 = d_h0;
+        cuOceanObj->d_ht = d_ht;
+
+        auto sz = sizeof(float2) * cuOceanObj->meshSize * cuOceanObj->meshSize;
+
+        cuOceanObj->g_hhptr = (float2*)malloc(sz);
+        memcpy(cuOceanObj->g_hhptr, g_hhptr, sz);
+
+        cuOceanObj->g_hhptr2 = (float2*)malloc(sz);
+        memcpy(cuOceanObj->g_hhptr2, g_hhptr2, sz);
+
+        cuOceanObj->Dx = Dx;
+        cuOceanObj->Dz = Dz;
+
+        cuOceanObj->g_hDz = (float2*)malloc(sz);
+        memcpy(cuOceanObj->g_hDz, g_hDz, sz);
+
+        cuOceanObj->g_hDx = (float2*)malloc(sz);
+        memcpy(cuOceanObj->g_hDx, g_hDx, sz);
+
+        cuOceanObj->g_hDz2 = (float2*)malloc(sz);
+        memcpy(cuOceanObj->g_hDz2, g_hDz2, sz);
+
+        cuOceanObj->g_hDx2 = (float2*)malloc(sz);
+        memcpy(cuOceanObj->g_hDx2, g_hDx2, sz);
+
+        cuOceanObj->prevDx = prevDx;
+        cuOceanObj->curDx = curDx;
+        cuOceanObj->prevDz = prevDz;
+        cuOceanObj->curDz = curDz;
+
+        // for ->primObj conversion
+        cuOceanObj->d_inpos = d_inpos;
+        cuOceanObj->d_pos = d_pos;
+        cuOceanObj->d_vel = d_vel;
+        cuOceanObj->d_fftpos = d_fftpos;
+        cuOceanObj->d_Dpos = d_Dpos;
+        cuOceanObj->d_mapx = d_mapx;
+        cuOceanObj->d_repos = d_repos;
+        cuOceanObj->d_revel = d_revel;
+
+        cuOceanObj->h_h0 = (float2*)malloc(sizeof(float2) * cuOceanObj->spectrumSize);
+        memcpy(cuOceanObj->h_h0, h_h0, sizeof(float2) * cuOceanObj->spectrumSize);
+
+        //cpu to gpu
+        copy(zs::mem_device, (void*)cuOceanObj->d_h0.data(), (void*)cuOceanObj->h_h0,
+            sizeof(float2) * cuOceanObj->spectrumSize);
+        return cuOceanObj;
     }
 
     // FFT data
@@ -312,7 +387,7 @@ float phillips(float Kx, float Ky, float Vdir, float V, float A, float dir_depen
     return phil;
 }
 
-void generate_h0(std::shared_ptr<OceanFFT> OceanObj) {
+void generate_h0(OceanFFT* OceanObj) {
     for (unsigned int y = 0; y <= OceanObj->meshSize; y++) {
         for (unsigned int x = 0; x <= OceanObj->meshSize; x++) {
             float kx = (-(int)OceanObj->meshSize / 2.0f + x) * (2.0f * CUDART_PI_F / OceanObj->patchSize);
@@ -345,13 +420,12 @@ void generate_h0(std::shared_ptr<OceanFFT> OceanObj) {
 struct UpdateDx : zeno::INode {
     virtual void apply() override {
         printf("UpdateDxKernel::apply() called!\n");
-
-        auto real_ocean = get_input<OceanFFT>("real_ocean");
+        auto real_ocean = safe_uniqueptr_cast<OceanFFT>(clone_input("real_ocean"));
         //have some questions need to ask for details.
         UpdateDxKernel(real_ocean->Dx.data(), real_ocean->Dz.data(), real_ocean->width, real_ocean->height);
     }
 };
-ZENDEFNODE(UpdateDx, {/* inputs:  */ {"real_ocean"},
+ZENDEFNODE(UpdateDx, {/* inputs:  */ {{gParamType_OceanFFT, "real_ocean"}},
                       /* outputs: */ {},
                       /* params: */ {},
                       /* category: */
@@ -363,14 +437,14 @@ struct GenerateSpectrum : zeno::INode {
     virtual void apply() override {
         printf("GenerateSpectrumKernel::apply() called!\n");
 
-        auto real_ocean = get_input<OceanFFT>("real_ocean");
+        auto real_ocean = safe_uniqueptr_cast<OceanFFT>(clone_input("real_ocean"));
 
         GenerateSpectrumKernel(real_ocean->d_h0.data(), real_ocean->d_ht.data(), real_ocean->Dx.data(),
                                real_ocean->Dz.data(), real_ocean->g, 0, real_ocean->in_width, real_ocean->out_width,
                                real_ocean->out_height, real_ocean->animTime, real_ocean->patchSize);
     }
 };
-ZENDEFNODE(GenerateSpectrum, {/* inputs: */ {"real_ocean"},
+ZENDEFNODE(GenerateSpectrum, {/* inputs: */ {{gParamType_OceanFFT, "real_ocean"}},
                               /* outputs: */ {},
                               /* params: */ {},
                               /* category: */
@@ -381,14 +455,13 @@ ZENDEFNODE(GenerateSpectrum, {/* inputs: */ {"real_ocean"},
 struct UpdateHeightmap : zeno::INode {
     virtual void apply() override {
         printf("UpdateHeightmapKernel::apply() called!\n");
-
-        auto real_ocean = get_input<OceanFFT>("real_ocean");
+        auto real_ocean = safe_uniqueptr_cast<OceanFFT>(clone_input("real_ocean"));
 
         UpdateHeightmapKernel(real_ocean->d_ht.data(), real_ocean->d_ht.data(), real_ocean->width, real_ocean->height);
     }
 };
 
-ZENDEFNODE(UpdateHeightmap, {/* inputs: */ {"real_ocean"},
+ZENDEFNODE(UpdateHeightmap, {/* inputs: */ {{gParamType_OceanFFT, "real_ocean"}},
                              /* outputs: */ {},
                              /* params: */ {},
                              /* category: */
@@ -399,12 +472,12 @@ ZENDEFNODE(UpdateHeightmap, {/* inputs: */ {"real_ocean"},
 struct MakeCuOcean : zeno::INode {
     void apply() override {
 
-        auto cuOceanObj = std::make_shared<OceanFFT>();
+        auto cuOceanObj = std::make_unique<OceanFFT>();
 
         //other parameters
-        cuOceanObj->amplitude = get_input<zeno::NumericObject>("amp")->get<float>();
-        cuOceanObj->WaveExponent = get_input<zeno::NumericObject>("WaveExponent")->get<int>();
-        cuOceanObj->choppyness = get_input<zeno::NumericObject>("chop")->get<float>();
+        cuOceanObj->amplitude = get_input2_float("amp");
+        cuOceanObj->WaveExponent = get_input2_int("WaveExponent");
+        cuOceanObj->choppyness = get_input2_float("chop");
 
         //meshSize = 2^waveExponent
         cuOceanObj->meshSize = 1 << cuOceanObj->WaveExponent;
@@ -414,20 +487,20 @@ struct MakeCuOcean : zeno::INode {
         cuOceanObj->spectrumW = cuOceanObj->meshSize + 4;
 
         cuOceanObj->spectrumSize = cuOceanObj->spectrumH * cuOceanObj->spectrumW;
-        cuOceanObj->L_scale = get_input<zeno::NumericObject>("patchSize")->get<float>() / 100.0;
+        cuOceanObj->L_scale = get_input2_float("patchSize") / 100.0;
         //gravity=
-        cuOceanObj->g = get_input<zeno::NumericObject>("gravity")->get<float>() / cuOceanObj->L_scale;
+        cuOceanObj->g = get_input2_float("gravity") / cuOceanObj->L_scale;
         //patchSize =
         cuOceanObj->patchSize = 100;
         //dir =
-        cuOceanObj->windDir = get_input<zeno::NumericObject>("windDir")->get<float>() / 360.0 * 2.0 * CUDART_PI_F;
+        cuOceanObj->windDir = get_input2_float("windDir") / 360.0 * 2.0 * CUDART_PI_F;
         //timeScale
         //timeshift
-        cuOceanObj->timeScale = get_input<zeno::NumericObject>("timeScale")->get<float>();
-        cuOceanObj->timeShift = get_input<zeno::NumericObject>("timeshift")->get<float>();
+        cuOceanObj->timeScale = get_input2_float("timeScale");
+        cuOceanObj->timeShift = get_input2_float("timeshift");
         //speed =
-        cuOceanObj->speed = get_input<zeno::NumericObject>("speed")->get<float>() / cuOceanObj->L_scale;
-        cuOceanObj->depth = get_input<zeno::NumericObject>("depth")->get<float>();
+        cuOceanObj->speed = get_input2_float("speed") / cuOceanObj->L_scale;
+        cuOceanObj->depth = get_input2_float("depth");
         cuOceanObj->A *= cuOceanObj->amplitude;
 
         // begin patch
@@ -476,15 +549,15 @@ struct MakeCuOcean : zeno::INode {
         // end patch
 
         cuOceanObj->h_h0 = (float2 *)malloc(sizeof(float2) * cuOceanObj->spectrumSize);
-        unsigned int  seed = get_input<zeno::NumericObject>("seed")->get<int>();
+        unsigned int  seed = get_input2_int("seed");
         srand(seed);
-        generate_h0(cuOceanObj);
+        generate_h0(cuOceanObj.get());
         //cpu to gpu
         copy(zs::mem_device, (void *)cuOceanObj->d_h0.data(), (void *)cuOceanObj->h_h0,
              sizeof(float2) * cuOceanObj->spectrumSize);
         // cudaMemcpy((void*)cuOceanObj->d_h0.data(), (void*)cuOceanObj->h_h0, sizeof(float2)*cuOceanObj->spectrumSize, cudaMemcpyHostToDevice);
 
-        set_output("gpuOcean", cuOceanObj);
+        set_output("gpuOcean", std::move(cuOceanObj));
     }
 };
 
@@ -501,7 +574,7 @@ ZENDEFNODE(MakeCuOcean, {/* inputs:  */ {{gParamType_Int, "WaveExponent", "8"},
                                          {gParamType_Int,"seed", "0" }},
                          /* outputs: */
                          {
-                             "gpuOcean",
+                             {gParamType_OceanFFT, "gpuOcean"},
                          },
                          /* params: */ {},
                          /* category: */
@@ -577,14 +650,14 @@ struct OceanCompute : zeno::INode {
         // execute inverse FFT to convert to spatial domain
         // update heightmap values
         //-----------------------------------------------------------------------------------
-        auto CalOcean = get_input<OceanFFT>("ocean_FFT");
-        auto depth = get_input<zeno::NumericObject>("depth")->get<float>();
-        auto ingrid = get_input<zeno::PrimitiveObject>("grid");
-        auto t = CalOcean->timeScale * get_input<zeno::NumericObject>("time")->get<float>();
+        auto CalOcean = safe_uniqueptr_cast<OceanFFT>(clone_input("ocean_FFT"));
+        auto depth = get_input2_float("depth");
+        auto ingrid = get_input_Geometry("grid")->toPrimitiveObject();
+        auto t = CalOcean->timeScale * get_input2_float("time");
         auto t2 = t;
         float dt_inv = 0;
         if (has_input("dt")) {
-            auto dt = CalOcean->timeScale * get_input<zeno::NumericObject>("dt")->get<float>();
+            auto dt = CalOcean->timeScale * get_input2_float("dt");
             t2 = t + dt;
             dt_inv = 1.0 / dt;
         }
@@ -675,21 +748,21 @@ struct OceanCompute : zeno::INode {
                        zeno::vec3f(-CalOcean->choppyness * dxdt2, dhdt2, -CalOcean->choppyness * dzdt2) * dt_inv;
         }
 
-        grid->userData().set("dt", std::make_shared<NumericObject>((float)(t2 - t)));
-        set_output("OceanData", grid);
+        grid->userData()->set_float("dt", (float)(t2 - t));
+        set_output("OceanData", create_GeometryObject(grid.get()));
     }
 };
 
 ZENDEFNODE(OceanCompute, {/* inputs:  */ {
-                              "grid",
+                              {gParamType_Geometry, "grid"},
                               {gParamType_Float, "time", "0"},
                               {gParamType_Float, "depth", "0"},
                               {gParamType_Float, "dt", "0.04"},
-                              "ocean_FFT",
+                              {gParamType_OceanFFT, "ocean_FFT"},
                           },
                           /* outputs: */
                           {
-                              "OceanData",
+                              {gParamType_Geometry, "OceanData"},
                           },
                           /* params: */ {},
                           /* category: */
@@ -708,14 +781,14 @@ struct OceanCuCompute : zeno::INode {
         // execute inverse FFT to convert to spatial domain
         // update heightmap values
         //-----------------------------------------------------------------------------------
-        auto CalOcean = get_input<OceanFFT>("ocean_FFT");
-        auto depth = get_input<zeno::NumericObject>("depth")->get<float>();
-        auto ingrid = get_input<zeno::PrimitiveObject>("grid");
-        auto t = CalOcean->timeScale * get_input<zeno::NumericObject>("time")->get<float>();
+        auto CalOcean = safe_uniqueptr_cast<OceanFFT>(clone_input("ocean_FFT"));
+        auto depth = get_input2_float("depth");
+        auto ingrid = get_input_Geometry("grid")->toPrimitiveObject();
+        auto t = CalOcean->timeScale * get_input2_float("time");
         auto t2 = t;
         float dt_inv = 0;
         if (has_input("dt")) {
-            auto dt = CalOcean->timeScale * get_input<zeno::NumericObject>("dt")->get<float>();
+            auto dt = CalOcean->timeScale * get_input2_float("dt");
             t2 = t + dt;
             dt_inv = 1.0 / dt;
         }
@@ -861,21 +934,21 @@ struct OceanCuCompute : zeno::INode {
         write_back(mapx, CalOcean->d_mapx);
         write_back(repos, CalOcean->d_repos);
         write_back(revel, CalOcean->d_revel);
-        grid->userData().set("dt", std::make_shared<NumericObject>((float)(t2 - t)));
-        set_output("OceanData", grid);
+        grid->userData()->set_float("dt", (float)(t2 - t));
+        set_output("OceanData", create_GeometryObject(grid.get()));
     }
 };
 
 ZENDEFNODE(OceanCuCompute, {/* inputs:  */ {
-                                "grid",
+                                {gParamType_Geometry, "grid"},
                                 {gParamType_Float, "time", "0"},
                                 {gParamType_Float, "depth", "0"},
                                 {gParamType_Float, "dt", "0.04"},
-                                "ocean_FFT",
+                                {gParamType_OceanFFT, "ocean_FFT"},
                             },
                             /* outputs: */
                             {
-                                "OceanData",
+                                {gParamType_Geometry, "OceanData"},
                             },
                             /* params: */ {},
                             /* category: */

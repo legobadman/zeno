@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/omp/execution/ExecutionPolicy.hpp"
@@ -18,20 +19,20 @@ namespace zeno {
 
 struct ZSGridPerlinNoise : INode {
     virtual void apply() override {
-        auto zsSPG = get_input<ZenoSparseGrid>("SparseGrid");
-        auto attrTag = get_input2<std::string>("GridAttribute");
-        auto opType = get_input2<std::string>("OpType");
-        auto frequency = get_input2<zeno::vec3f>("Frequency");
-        auto offset = get_input2<zeno::vec3f>("Offset");
-        auto roughness = get_input2<float>("Roughness");
-        auto turbulence = get_input2<int>("Turbulence");
-        auto amplitude = get_input2<float>("Amplitude");
-        auto attenuation = get_input2<float>("Attenuation");
-        auto mean = get_input2<zeno::vec3f>("MeanNoise");
+        auto zsSPG = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto attrTag = zsString2Std(get_input2_string("GridAttribute"));
+        auto opType = zsString2Std(get_input2_string("OpType"));
+        auto frequency = toVec3f(get_input2_vec3f("Frequency"));
+        auto offset = toVec3f(get_input2_vec3f("Offset"));
+        auto roughness = get_input2_float("Roughness");
+        auto turbulence = get_input2_int("Turbulence");
+        auto amplitude = get_input2_float("Amplitude");
+        auto attenuation = get_input2_float("Attenuation");
+        auto mean = toVec3f(get_input2_vec3f("MeanNoise"));
 
         bool isAccumulate = opType == "accumulate" ? true : false;
 
-        auto tag = src_tag(zsSPG, attrTag);
+        auto tag = src_tag(zsSPG.get(), attrTag);
 
         auto &spg = zsSPG->spg;
         auto block_cnt = spg.numBlocks();
@@ -87,12 +88,12 @@ struct ZSGridPerlinNoise : INode {
                 }
             });
 
-        set_output("SparseGrid", zsSPG);
+        set_output("SparseGrid", std::move(zsSPG));
     }
 };
 
 ZENDEFNODE(ZSGridPerlinNoise, {/* inputs: */
-                               {"SparseGrid",
+                               {{gParamType_SparseGrid, "SparseGrid"},
                                 {gParamType_String, "GridAttribute", "v"},
                                 {"enum replace accumulate", "OpType", "accumulate"},
                                 {gParamType_Vec3f, "Frequency", "1, 1, 1"},
@@ -103,7 +104,7 @@ ZENDEFNODE(ZSGridPerlinNoise, {/* inputs: */
                                 {gParamType_Float, "Attenuation", "1.0"},
                                 {gParamType_Vec3f, "MeanNoise", "0, 0, 0"}},
                                /* outputs: */
-                               {"SparseGrid"},
+                               {{gParamType_SparseGrid, "SparseGrid"}},
                                /* params: */
                                {},
                                /* category: */
@@ -111,20 +112,20 @@ ZENDEFNODE(ZSGridPerlinNoise, {/* inputs: */
 
 struct ZSGridCurlNoise : INode {
     virtual void apply() override {
-        auto zsSPG = get_input<ZenoSparseGrid>("SparseGrid");
-        auto attrTag = get_input2<std::string>("GridAttribute");
-        bool isStaggered = get_input2<bool>("staggered");
-        auto opType = get_input2<std::string>("OpType");
-        auto frequency = get_input2<zeno::vec3f>("Frequency");
-        auto offset = get_input2<zeno::vec3f>("Offset");
-        auto roughness = get_input2<float>("Roughness");
-        auto turbulence = get_input2<int>("Turbulence");
-        auto amplitude = get_input2<float>("Amplitude");
-        auto mean = get_input2<zeno::vec3f>("MeanNoise");
+        auto zsSPG = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto attrTag = zsString2Std(get_input2_string("GridAttribute"));
+        bool isStaggered = get_input2_bool("staggered");
+        auto opType = zsString2Std(get_input2_string("OpType"));
+        auto frequency = toVec3f(get_input2_vec3f("Frequency"));
+        auto offset = toVec3f(get_input2_vec3f("Offset"));
+        auto roughness = get_input2_float("Roughness");
+        auto turbulence = get_input2_int("Turbulence");
+        auto amplitude = get_input2_float("Amplitude");
+        auto mean = toVec3f(get_input2_vec3f("MeanNoise"));
 
         bool isAccumulate = opType == "accumulate" ? true : false;
 
-        auto tag = src_tag(zsSPG, attrTag);
+        auto tag = src_tag(zsSPG.get(), attrTag);
 
         auto &spg = zsSPG->spg;
         auto block_cnt = spg.numBlocks();
@@ -239,12 +240,12 @@ struct ZSGridCurlNoise : INode {
                 });
         }
 
-        set_output("SparseGrid", zsSPG);
+        set_output("SparseGrid", std::move(zsSPG));
     }
 };
 
 ZENDEFNODE(ZSGridCurlNoise, {/* inputs: */
-                             {"SparseGrid",
+                             {{gParamType_SparseGrid, "SparseGrid"},
                               {gParamType_String, "GridAttribute", "v"},
                               {gParamType_Bool, "staggered", "1"},
                               {"enum replace accumulate", "OpType", "accumulate"},
@@ -255,10 +256,11 @@ ZENDEFNODE(ZSGridCurlNoise, {/* inputs: */
                               {gParamType_Float, "Amplitude", "1.0"},
                               {gParamType_Vec3f, "MeanNoise", "0, 0, 0"}},
                              /* outputs: */
-                             {"SparseGrid"},
+                             {{gParamType_SparseGrid, "SparseGrid"}},
                              /* params: */
                              {},
                              /* category: */
                              {"Eulerian"}});
 
 } // namespace zeno
+#endif

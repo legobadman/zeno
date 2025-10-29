@@ -57,7 +57,7 @@ struct ZSParticleToZSLevelSet : INode {
         fmt::print(fg(fmt::color::green), "begin executing ZSParticleToZSLevelSet\n");
 
         auto parObjPtrs = RETRIEVE_OBJECT_PTRS(ZenoParticles, "ZSParticles");
-        auto zslevelset = get_input<ZenoLevelSet>("ZSLevelSet");
+        auto zslevelset = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSLevelSet"));
         auto &field = zslevelset->getBasicLevelSet()._ls;
 
         using namespace zs;
@@ -81,7 +81,7 @@ struct ZSParticleToZSLevelSet : INode {
 };
 
 ZENDEFNODE(ZSParticleToZSLevelSet, {
-                                       {"ZSParticles", "ZSLevelSet"},
+                                       {{gParamType_Particles, "ZSParticles"}, "ZSLevelSet"},
                                        {"ZSLevelSet"},
                                        {},
                                        {"Volume"},
@@ -142,7 +142,7 @@ struct PrimitiveToZSLevelSet : INode {
         fmt::print(fg(fmt::color::green), "begin executing PrimitiveToZSLevelSet\n");
 
         // primitive
-        auto inParticles = get_input<PrimitiveObject>("prim");
+        auto inParticles = get_input_Geometry("prim")->toPrimitiveObject();
         const auto &pos = inParticles->attr<vec3f>("pos");
 
         std::size_t numEles = 0;
@@ -157,7 +157,7 @@ struct PrimitiveToZSLevelSet : INode {
             numEles = lines.size();
 
         using namespace zs;
-        const auto dx = get_input2<float>("dx");
+        const auto dx = get_input2_float("dx");
         Vector<TV> xs{pos.size(), memsrc_e::device}, elePos{numEles, memsrc_e::device};
         copy(zs::mem_device, (void *)xs.data(), (void *)pos.data(), sizeof(zeno::vec3f) * pos.size());
         auto cudaPol = cuda_exec();
@@ -193,7 +193,7 @@ struct PrimitiveToZSLevelSet : INode {
         }
 
         // 3 ^ (0.3f)
-        const float thickness = get_input2<float>("thickness");
+        const float thickness = get_input2_float("thickness");
         const int nvoxels = (int)std::ceil(thickness * 1.45f / dx);
         auto zsspls = std::make_shared<ZenoLevelSet>();
         zsspls->getLevelSet() = ZenoLevelSet::basic_ls_t{std::make_shared<SpLsT>(dx, memsrc_e::device)};

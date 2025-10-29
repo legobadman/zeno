@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/LevelSetUtils.tpp"
@@ -1375,13 +1376,13 @@ struct ZSNSPressureProject : INode {
     }
 
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto SolidSDF = get_input<ZenoSparseGrid>("SolidSDF");
-        auto rho = get_input2<float>("Density");
-        auto dt = get_input2<float>("dt");
-        auto tolerance = get_input2<float>("Tolerance");
-        auto maxIter = get_input2<int>("MaxIterations");
-        auto hasDiv = get_input2<bool>("hasDivergence");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto SolidSDF = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SolidSDF"));
+        auto rho = get_input2_float("Density");
+        auto dt = get_input2_float("dt");
+        auto tolerance = get_input2_float("Tolerance");
+        auto maxIter = get_input2_int("MaxIterations");
+        auto hasDiv = get_input2_bool("hasDivergence");
 
         auto pol = zs::cuda_exec();
 #if 1
@@ -1617,3 +1618,4 @@ ZENDEFNODE(ZSNSPressureProject, {/* inputs: */
                                  {"Eulerian"}});
 
 } // namespace zeno
+#endif

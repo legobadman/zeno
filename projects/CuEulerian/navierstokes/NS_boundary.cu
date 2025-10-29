@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "Utils.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
@@ -19,7 +20,7 @@ namespace zeno {
 
 struct ZSNSNaiveSolidWall : INode {
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
         auto SolidSDFPtrs = RETRIEVE_OBJECT_PTRS(ZenoSparseGrid, "SolidSDF");
         auto SolidVelPtrs = RETRIEVE_OBJECT_PTRS(ZenoSparseGrid, "SolidVel");
 
@@ -70,8 +71,8 @@ ZENDEFNODE(ZSNSNaiveSolidWall, {/* inputs: */
 
 struct ZSNSCutCellWeight : INode {
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto SolidSDF = get_input<ZenoSparseGrid>("SolidSDF");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto SolidSDF = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SolidSDF"));
 
         auto &sdf = SolidSDF->spg;
         auto &spg = NSGrid->spg;
@@ -123,3 +124,4 @@ ZENDEFNODE(ZSNSCutCellWeight, {/* inputs: */
                                {"Eulerian"}});
 
 } // namespace zeno
+#endif

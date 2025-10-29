@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/LevelSetUtils.tpp"
@@ -20,11 +21,11 @@ namespace zeno {
 
 struct ZSMakeSparseGrid : INode {
     void apply() override {
-        auto attr = get_input2<std::string>("Attribute");
-        auto dx = get_input2<float>("Dx");
-        auto bg = get_input2<float>("background");
-        auto type = get_input2<std::string>("type");
-        auto structure = get_input2<std::string>("structure");
+        auto attr = zsString2Std(get_input2_string("Attribute"));
+        auto dx = get_input2_float("Dx");
+        auto bg = get_input2_float("background");
+        auto type = zsString2Std(get_input2_string("type"));
+        auto structure = zsString2Std(get_input2_string("structure"));
 
         auto zsSPG = std::make_shared<ZenoSparseGrid>();
         auto &spg = zsSPG->spg;
@@ -65,8 +66,8 @@ ZENDEFNODE(ZSMakeSparseGrid, {/* inputs: */
 
 struct ZSGridTopoCopy : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("Grid");
-        auto zs_topo = get_input<ZenoSparseGrid>("TopologyGrid");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("Grid"));
+        auto zs_topo = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("TopologyGrid"));
 
         auto &grid = zs_grid->spg;
         auto &topo = zs_topo->spg;
@@ -76,7 +77,7 @@ struct ZSGridTopoCopy : INode {
         grid._transform = topo._transform;
         grid._grid.resize(topo.numBlocks() * topo.block_size);
 
-        if (get_input2<bool>("multigrid")) {
+        if (get_input2_bool("multigrid")) {
             auto pol = zs::cuda_exec();
             constexpr auto space = zs::execspace_e::cuda;
 
@@ -138,10 +139,10 @@ ZENDEFNODE(ZSGridTopoCopy, {/* inputs: */
 
 struct ZSSparseGridToVDB : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("SparseGrid");
-        auto attr = get_input2<std::string>("Attribute");
-        auto VDBGridClass = get_input2<std::string>("VDBGridClass");
-        auto VDBGridName = get_input2<std::string>("VDBGridName");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto attr = zsString2Std(get_input2_string("Attribute"));
+        auto VDBGridClass = zsString2Std(get_input2_string("VDBGridClass"));
+        auto VDBGridName = zsString2Std(get_input2_string("VDBGridName"));
 
         if (attr.empty())
             attr = "sdf";
@@ -193,13 +194,13 @@ ZENDEFNODE(ZSSparseGridToVDB, {/* inputs: */
 
 struct ZSVDBToSparseGrid : INode {
     void apply() override {
-        auto vdb = get_input<VDBGrid>("VDB");
-        auto attr = get_input2<std::string>("Attribute");
+        auto vdb = safe_uniqueptr_cast<VDBGrid>(clone_input("VDB"));
+        auto attr = zsString2Std(get_input2_string("Attribute"));
         if (attr.empty())
             attr = "sdf";
 
         if (has_input("SparseGrid")) {
-            auto zs_grid = get_input<ZenoSparseGrid>("SparseGrid");
+            auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
             auto &spg = zs_grid->spg;
 
             int num_ch;
@@ -263,7 +264,7 @@ ZENDEFNODE(ZSVDBToSparseGrid, {/* inputs: */
 
 struct ZSGridVoxelSize : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("SparseGrid");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
 
         float dx = zs_grid->getSparseGrid().voxelSize()[0];
 
@@ -282,9 +283,9 @@ ZENDEFNODE(ZSGridVoxelSize, {/* inputs: */
 
 struct ZSGridAppendAttribute : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("SparseGrid");
-        auto attrTag = get_input2<std::string>("Attribute");
-        auto nchns = get_input2<int>("ChannelNumber");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto attrTag = zsString2Std(get_input2_string("Attribute"));
+        auto nchns = get_input2_int("ChannelNumber");
 
         auto &spg = zs_grid->spg;
         auto pol = zs::cuda_exec();
@@ -313,9 +314,9 @@ ZENDEFNODE(ZSGridAppendAttribute, {/* inputs: */
 
 struct ZSMultiGridAppendAttribute : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("SparseGrid");
-        auto attrTag = get_input2<std::string>("Attribute");
-        auto nchns = get_input2<int>("ChannelNumber");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto attrTag = zsString2Std(get_input2_string("Attribute"));
+        auto nchns = get_input2_int("ChannelNumber");
 
         auto &spg1 = zs_grid->spg1;
         auto &spg2 = zs_grid->spg2;
@@ -377,10 +378,10 @@ struct ZSCombineSparseGrid : INode {
     }
 
     void apply() override {
-        auto GridA = get_input<ZenoSparseGrid>("GridA");
-        auto GridB = get_input<ZenoSparseGrid>("GridB");
-        auto tag = get_input2<std::string>("SDFAttribute");
-        auto op = get_input2<std::string>("OpType");
+        auto GridA = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("GridA"));
+        auto GridB = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("GridB"));
+        auto tag = zsString2Std(get_input2_string("SDFAttribute"));
+        auto op = zsString2Std(get_input2_string("OpType"));
 
         auto &spgA = GridA->getSparseGrid();
         auto &spgB = GridB->getSparseGrid();
@@ -388,7 +389,7 @@ struct ZSCombineSparseGrid : INode {
         auto pol = zs::cuda_exec();
         constexpr auto space = zs::execspace_e::cuda;
 
-        if (get_input2<bool>("WriteBack")) {
+        if (get_input2_bool("WriteBack")) {
             auto &sdf = spgA;
             auto &smaller = spgB;
 
@@ -480,8 +481,8 @@ ZENDEFNODE(ZSCombineSparseGrid, {/* inputs: */
 
 struct ZSGridTopoUnion : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("Grid");
-        auto zs_topo = get_input<ZenoSparseGrid>("TopologyGrid");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("Grid"));
+        auto zs_topo = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("TopologyGrid"));
 
         auto &spgA = zs_grid->spg;
         auto &spgB = zs_topo->spg;
@@ -505,7 +506,7 @@ struct ZSGridTopoUnion : INode {
         zs::memset(zs::mem_device, (void *)spgA._grid.tileOffset(prevNumBlocks), 0,
                    (std::size_t)newNbs * spgA._grid.tileBytes());
 
-        if (get_input2<bool>("multigrid")) {
+        if (get_input2_bool("multigrid")) {
             /// @brief adjust multigrid accordingly
             // grid
             auto &spg1 = zs_grid->spg1;
@@ -562,9 +563,9 @@ ZENDEFNODE(ZSGridTopoUnion, {/* inputs: */
 
 struct ZSGridReduction : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("SparseGrid");
-        auto attrTag = get_input2<std::string>("Attribute");
-        auto op = get_input2<std::string>("Operation");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto attrTag = zsString2Std(get_input2_string("Attribute"));
+        auto op = zsString2Std(get_input2_string("Operation"));
 
         auto &spg = zs_grid->spg;
         auto block_cnt = spg.numBlocks();
@@ -628,8 +629,8 @@ ZENDEFNODE(ZSGridReduction, {/* inputs: */
 
 struct ZSGridVoxelPos : INode {
     void apply() override {
-        auto zs_grid = get_input<ZenoSparseGrid>("SparseGrid");
-        auto attrTag = get_input2<std::string>("PosAttr");
+        auto zs_grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto attrTag = zsString2Std(get_input2_string("PosAttr"));
 
         auto &spg = zs_grid->getSparseGrid();
         auto pol = zs::cuda_exec();
@@ -665,10 +666,10 @@ ZENDEFNODE(ZSGridVoxelPos, {/* inputs: */
 
 struct ZSMakeDenseSDF : INode {
     void apply() override {
-        float dx = get_input2<float>("dx");
-        int nx = get_input2<int>("nx");
-        int ny = get_input2<int>("ny");
-        int nz = get_input2<int>("nz");
+        float dx = get_input2_float("dx");
+        int nx = get_input2_int("nx");
+        int ny = get_input2_int("ny");
+        int nz = get_input2_int("nz");
 
         int nbx = float(nx + 7) / 8.f;
         int nby = float(ny + 7) / 8.f;
@@ -742,3 +743,4 @@ ZENDEFNODE(ZSMakeDenseSDF, {/* inputs: */
                             {"deprecated"}});
 
 } // namespace zeno
+#endif

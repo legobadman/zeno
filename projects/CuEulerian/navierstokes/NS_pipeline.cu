@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/LevelSetUtils.tpp"
@@ -24,7 +25,7 @@ struct ZSVDBToNavierStokesGrid : INode {
     using grid_t = typename ZenoSparseGrid::template grid_t<level>;
 
     void apply() override {
-        auto vdbgrid = get_input<VDBFloatGrid>("VDB");
+        auto vdbgrid = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("VDB"));
 
         auto spg = zs::convert_floatgrid_to_sparse_grid(vdbgrid->m_grid, zs::MemoryProperty{zs::memsrc_e::device, -1});
         spg.append_channels(zs::cuda_exec(), {
@@ -109,10 +110,10 @@ ZENDEFNODE(ZSVDBToNavierStokesGrid, {/* inputs: */
 
 struct ZSGridAssignAttribute : INode {
     void apply() override {
-        auto ZSGrid = get_input<ZenoSparseGrid>("Grid");
-        auto SrcGrid = get_input<ZenoSparseGrid>("SourceGrid");
-        auto attrTag = get_input2<std::string>("Attribute");
-        auto isStaggered = get_input2<bool>("Staggered");
+        auto ZSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("Grid"));
+        auto SrcGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SourceGrid"));
+        auto attrTag = zsString2Std(get_input2_string("Attribute"));
+        auto isStaggered = get_input2_bool("Staggered");
 
         auto &spg = ZSGrid->spg;
         auto &src = SrcGrid->spg;
@@ -162,9 +163,9 @@ ZENDEFNODE(ZSGridAssignAttribute, {/* inputs: */
 
 struct ZSNavierStokesDt : INode {
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto rho = get_input2<float>("Density");
-        auto mu = get_input2<float>("Viscosity");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto rho = get_input2_float("Density");
+        auto mu = get_input2_float("Viscosity");
 
         auto &spg = NSGrid->spg;
         auto block_cnt = spg.numBlocks();
@@ -221,7 +222,7 @@ ZENDEFNODE(ZSNavierStokesDt, {/* inputs: */
 
 struct ZSAdvectionScheme : INode {
     void apply() override {
-        auto scheme = get_input2<std::string>("Scheme");
+        auto scheme = zsString2Std(get_input2_string("Scheme"));
         set_output("Scheme", std::make_shared<StringObject>(scheme));
     }
 };
@@ -237,12 +238,12 @@ ZENDEFNODE(ZSAdvectionScheme, {/* inputs: */
 
 struct ZSNSAdvectDiffuse : INode {
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto rho = get_input2<float>("Density");
-        auto mu = get_input2<float>("Viscosity");
-        auto dt = get_input2<float>("dt");
-        auto scheme = get_input2<std::string>("Scheme");
-        auto isReflection = get_input2<bool>("Reflection");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto rho = get_input2_float("Density");
+        auto mu = get_input2_float("Viscosity");
+        auto dt = get_input2_float("dt");
+        auto scheme = zsString2Std(get_input2_string("Scheme"));
+        auto isReflection = get_input2_bool("Reflection");
         auto wind = get_input2<zeno::vec3f>("WindVelocity");
 
         auto &spg = NSGrid->spg;
@@ -645,9 +646,9 @@ ZENDEFNODE(ZSNSAdvectDiffuse, {/* inputs: */
 
 struct ZSNSExternalForce : INode {
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto dt = get_input2<float>("dt");
-        auto forceTag = get_input2<std::string>("ForceAttribute");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto dt = get_input2_float("dt");
+        auto forceTag = zsString2Std(get_input2_string("ForceAttribute"));
         auto gravity = get_input2<zeno::vec3f>("Gravity");
 
         auto &spg = NSGrid->spg;
@@ -681,3 +682,4 @@ ZENDEFNODE(ZSNSExternalForce, {/* inputs: */
                                {"Eulerian"}});
 
 } // namespace zeno
+#endif

@@ -28,11 +28,11 @@ namespace zeno {
 struct WriteZSLevelSetToVDBGrid : INode {
     void apply() override {
         fmt::print(fg(fmt::color::green), "begin executing WriteZSLevelSetToVDBGrid\n");
-        auto vdb = get_input<VDBFloatGrid>("vdbGrid");
+        auto vdb = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("vdbGrid"));
 
         // openvdb::FloatGrid::Ptr gp;
         if (has_input<ZenoLevelSet>("ZSLevelSet")) {
-            auto ls = get_input<ZenoLevelSet>("ZSLevelSet");
+            auto ls = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSLevelSet"));
             if (ls->holdsBasicLevelSet()) {
                 zs::match(
                     [&vdb](auto &lsPtr) -> std::enable_if_t<zs::is_spls_v<typename RM_CVREF_T(lsPtr)::element_type>> {

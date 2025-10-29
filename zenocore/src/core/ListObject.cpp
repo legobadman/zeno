@@ -31,6 +31,18 @@ namespace zeno
         return !m_impl->m_modify.empty() || !m_impl->m_new_added.empty() || !m_impl->m_new_removed.empty();
     }
 
+    std::vector<int> ListObject::get2_int() const {
+        return m_impl->get2<int>();
+    }
+
+    std::vector<float> ListObject::get2_float() const {
+        return m_impl->get2<float>();
+    }
+
+    std::vector<std::string> ListObject::get2_string() const {
+        return m_impl->get2<std::string>();
+    }
+
     void ListObject::update_key(const String& key) {
         if (key.empty()) return;
 

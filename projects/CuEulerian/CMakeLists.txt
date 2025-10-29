@@ -10,7 +10,7 @@ add_library(z_cueulerian SHARED
   oceanfft/Ocean.cu
 )
 
-target_link_libraries(z_cueulerian PRIVATE zshelper CUDA::cufft)
+target_link_libraries(z_cueulerian PRIVATE zenocore zshelper CUDA::cufft)
 
 #[[ fluid
 target_sources(z_cueulerian PRIVATE

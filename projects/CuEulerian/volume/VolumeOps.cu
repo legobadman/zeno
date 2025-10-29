@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/SparseGrid.hpp"
@@ -19,21 +20,21 @@ namespace zeno {
 struct ZSSParseGridDifference : INode {
   void apply() override {
     using namespace zs;
-    auto grid = get_input<ZenoSparseGrid>("ZSGrid");
+    auto grid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("ZSGrid"));
 
-    auto attrTag = get_input2<std::string>("attrName");
-    auto chnOffset = get_input2<int>("channelOffset");
+    auto attrTag = zsString2Std(get_input2_string("attrName"));
+    auto chnOffset = get_input2_int("channelOffset");
 
-    auto outputAttrTag = get_input2<std::string>("outputAttrName");
+    auto outputAttrTag = zsString2Std(get_input2_string("outputAttrName"));
     if (outputAttrTag.empty())
       throw std::runtime_error(
           "[outputAttrName] should not be an empty string.");
 
-    auto orientationStr = get_input2<std::string>("orientation");
+    auto orientationStr = zsString2Std(get_input2_string("orientation"));
     int orientation =
         orientationStr == "ddx" ? 0 : (orientationStr == "ddy" ? 1 : 2);
 
-    auto boundaryStr = get_input2<std::string>("boundary_type");
+    auto boundaryStr = zsString2Std(get_input2_string("boundary_type"));
     int boundaryType = boundaryStr == "neumann" ? 0 : /*dirichlet*/ 1;
 
     auto &spg = grid->spg;
@@ -87,10 +88,10 @@ ZENDEFNODE(ZSSParseGridDifference,
            {/* inputs: */
             {
                 "ZSGrid",
-                {"string", "attrName", "sdf"},
-                {"int", "channelOffset", "0"},
+                {gParamType_String, "attrName", "sdf"},
+                {gParamType_Int, "channelOffset", "0"},
                 {"enum ddx ddy ddz", "orientation", "ddx"},
-                {"string", "outputAttrName", ""},
+                {gParamType_String, "outputAttrName", ""},
                 {"enum neumann dirichlet", "boundary_type", "neumann"},
             },
             /* outputs: */
@@ -101,3 +102,4 @@ ZENDEFNODE(ZSSParseGridDifference,
             {"Eulerian"}});
 
 } // namespace zeno
+#endif

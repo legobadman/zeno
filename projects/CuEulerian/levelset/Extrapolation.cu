@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/omp/execution/ExecutionPolicy.hpp"
@@ -18,12 +19,12 @@ namespace zeno {
 
 struct ZSGridExtrapolateAttr : INode {
     void apply() override {
-        auto zsGrid = get_input<ZenoSparseGrid>("Grid");
-        auto attrTag = get_input2<std::string>("Attribute");
-        auto isStaggered = get_input2<bool>("Staggered");
-        auto sdfTag = get_input2<std::string>("SDFAttrName");
-        auto direction = get_input2<std::string>("Direction");
-        auto maxIter = get_input2<int>("Iterations");
+        auto zsGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("Grid"));
+        auto attrTag = zsString2Std(get_input2_string("Attribute"));
+        auto isStaggered = get_input2_bool("Staggered");
+        auto sdfTag = zsString2Std(get_input2_string("SDFAttrName"));
+        auto direction = zsString2Std(get_input2_string("Direction"));
+        auto maxIter = get_input2_int("Iterations");
 
         auto &spg = zsGrid->spg;
         auto block_cnt = spg.numBlocks();
@@ -484,3 +485,4 @@ ZENDEFNODE(ZSGridExtrapolateAttr, {/* inputs: */
                                    {"Eulerian"}});
 
 } // namespace zeno
+#endif

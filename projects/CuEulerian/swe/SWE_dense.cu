@@ -1,3 +1,4 @@
+#if 0
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -106,7 +107,7 @@ struct ZSSolveShallowWaterHeight : INode {
     }
 
     void apply() override {
-        auto grid = get_input<ZenoParticles>("SWGrid");
+        auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("SWGrid"));
         auto &ud = static_cast<IObject *>(grid.get())->userData();
         if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")) || (!ud.has<int>("halo")) || (!ud.has<float>("dx")))
             zeno::log_error("no such UserData named '{}', '{}', '{}' or '{}'.", "nx", "nz", "halo", "dx");
@@ -115,13 +116,13 @@ struct ZSSolveShallowWaterHeight : INode {
         int nz = ud.get2<int>("nz");
         int halo = ud.get2<int>("halo");
         float dx = ud.get2<float>("dx");
-        auto dt = get_input2<float>("dt");
+        auto dt = get_input2_float("dt");
 
         const unsigned int nc = (nx + halo) * (nz + halo);
 
-        auto height_attr = get_input2<std::string>("height_attr");
-        auto u_attr = get_input2<std::string>("u_attr");
-        auto w_attr = get_input2<std::string>("w_attr");
+        auto height_attr = zsString2Std(get_input2_string("height_attr"));
+        auto u_attr = zsString2Std(get_input2_string("u_attr"));
+        auto w_attr = zsString2Std(get_input2_string("w_attr"));
 
         auto &pars = grid->getParticles();
 
@@ -250,7 +251,7 @@ struct SolveShallowWaterHeight : INode {
     }
 
     void apply() override {
-        auto grid = get_input<PrimitiveObject>("SWGrid");
+        auto grid = get_input_Geometry("SWGrid")->toPrimitiveObject();
         auto &ud = grid->userData();
         if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")) || (!ud.has<int>("halo")) || (!ud.has<float>("dx")))
             zeno::log_error("no such UserData named '{}', '{}', '{}' or '{}'.", "nx", "nz", "halo", "dx");
@@ -258,13 +259,13 @@ struct SolveShallowWaterHeight : INode {
         int nz = ud.get2<int>("nz");
         int halo = ud.get2<int>("halo");
         float dx = ud.get2<float>("dx");
-        auto dt = get_input2<float>("dt");
+        auto dt = get_input2_float("dt");
 
         const unsigned int nc = (nx + halo) * (nz + halo);
 
-        auto height_attr = get_input2<std::string>("height_attr");
-        auto u_attr = get_input2<std::string>("u_attr");
-        auto w_attr = get_input2<std::string>("w_attr");
+        auto height_attr = zsString2Std(get_input2_string("height_attr"));
+        auto u_attr = zsString2Std(get_input2_string("u_attr"));
+        auto w_attr = zsString2Std(get_input2_string("w_attr"));
 
         auto &h_old = grid->verts.attr<float>(height_attr);
         auto &u = grid->verts.attr<float>(u_attr);
@@ -450,7 +451,7 @@ struct ZSSolveShallowWaterMomentum : INode {
     };
 
     void apply() override {
-        auto grid = get_input<ZenoParticles>("SWGrid");
+        auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("SWGrid"));
         auto &ud = static_cast<IObject *>(grid.get())->userData();
         if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")) || (!ud.has<int>("halo")) || (!ud.has<float>("dx")))
             zeno::log_error("no such UserData named '{}', '{}', '{}' or '{}'.", "nx", "nz", "halo", "dx");
@@ -458,15 +459,15 @@ struct ZSSolveShallowWaterMomentum : INode {
         int nz = ud.get2<int>("nz");
         int halo = ud.get2<int>("halo");
         float dx = ud.get2<float>("dx");
-        auto dt = get_input2<float>("dt");
-        auto gravity = get_input2<float>("gravity");
+        auto dt = get_input2_float("dt");
+        auto gravity = get_input2_float("gravity");
 
         const unsigned int nc = (nx + halo) * (nz + halo);
 
-        auto terrain_attr = get_input2<std::string>("terrain_attr");
-        auto height_attr = get_input2<std::string>("height_attr");
-        auto u_attr = get_input2<std::string>("u_attr");
-        auto w_attr = get_input2<std::string>("w_attr");
+        auto terrain_attr = zsString2Std(get_input2_string("terrain_attr"));
+        auto height_attr = zsString2Std(get_input2_string("height_attr"));
+        auto u_attr = zsString2Std(get_input2_string("u_attr"));
+        auto w_attr = zsString2Std(get_input2_string("w_attr"));
 
         auto &pars = grid->getParticles();
 
@@ -647,7 +648,7 @@ struct SolveShallowWaterMomentum : INode {
     };
 
     void apply() override {
-        auto grid = get_input<PrimitiveObject>("SWGrid");
+        auto grid = get_input_Geometry("SWGrid")->toPrimitiveObject();
         auto &ud = grid->userData();
         if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")) || (!ud.has<int>("halo")) || (!ud.has<float>("dx")))
             zeno::log_error("no such UserData named '{}', '{}', '{}' or '{}'.", "nx", "nz", "halo", "dx");
@@ -655,15 +656,15 @@ struct SolveShallowWaterMomentum : INode {
         int nz = ud.get2<int>("nz");
         int halo = ud.get2<int>("halo");
         float dx = ud.get2<float>("dx");
-        auto dt = get_input2<float>("dt");
-        auto gravity = get_input2<float>("gravity");
+        auto dt = get_input2_float("dt");
+        auto gravity = get_input2_float("gravity");
 
         const unsigned int nc = (nx + halo) * (nz + halo);
 
-        auto terrain_attr = get_input2<std::string>("terrain_attr");
-        auto height_attr = get_input2<std::string>("height_attr");
-        auto u_attr = get_input2<std::string>("u_attr");
-        auto w_attr = get_input2<std::string>("w_attr");
+        auto terrain_attr = zsString2Std(get_input2_string("terrain_attr"));
+        auto height_attr = zsString2Std(get_input2_string("height_attr"));
+        auto u_attr = zsString2Std(get_input2_string("u_attr"));
+        auto w_attr = zsString2Std(get_input2_string("w_attr"));
 
         auto &B = grid->verts.attr<float>(terrain_attr);
         auto &h = grid->verts.attr<float>(height_attr);
@@ -714,3 +715,4 @@ ZENDEFNODE(SolveShallowWaterMomentum, {/* inputs: */
                                        {"Eulerian"}});
 
 } // namespace zeno
+#endif

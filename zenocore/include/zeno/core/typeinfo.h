@@ -45,5 +45,7 @@ registerObjectTypeHash(InstancingObject, Instance)
 #define gParamType_Scene            240
 #define gParamType_ABCTree          242
 #define gParamType_IndexBuckets     243
+#define gParamType_OceanFFT         244
+#define gParamType_SparseGrid       245
 
 #endif

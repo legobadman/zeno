@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "Utils.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
@@ -95,14 +96,14 @@ struct ZSSparseGridToPrimitive : INode {
     }
 
     void apply() override {
-        auto zsSPG = get_input<ZenoSparseGrid>("SparseGrid");
+        auto zsSPG = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
         auto &spg = zsSPG->getSparseGrid();
         auto parObjPtrs = RETRIEVE_OBJECT_PTRS(ZenoParticles, "ZSParticles");
-        auto attrTag = get_input2<std::string>("GridAttribute");
-        auto parTag = get_input2<std::string>("ParticleAttribute");
-        auto opType = get_input2<std::string>("OpType");
-        auto kernel = get_input2<std::string>("Kernel");
-        bool isStaggered = get_input2<bool>("staggered");
+        auto attrTag = zsString2Std(get_input2_string("GridAttribute"));
+        auto parTag = zsString2Std(get_input2_string("ParticleAttribute"));
+        auto opType = zsString2Std(get_input2_string("OpType"));
+        auto kernel = zsString2Std(get_input2_string("Kernel"));
+        bool isStaggered = get_input2_bool("staggered");
 
         bool isAccumulate = false;
         if (opType == "accumulate")
@@ -169,14 +170,14 @@ struct ZSSparseGridToPrimitive : INode {
 
 ZENDEFNODE(ZSSparseGridToPrimitive, {/* inputs: */
                                      {"SparseGrid",
-                                      "ZSParticles",
+                                      {gParamType_Particles, "ZSParticles"},
                                       {gParamType_String, "GridAttribute"},
                                       {gParamType_String, "ParticleAttribute", ""},
                                       {"enum replace accumulate", "OpType", "replace"},
                                       {"enum linear quadratic cubic delta2 delta3 delta4", "Kernel", "quadratic"},
                                       {gParamType_Bool, "staggered", "0"}},
                                      /* outputs: */
-                                     {"ZSParticles"},
+                                     {{gParamType_Particles, "ZSParticles"}},
                                      /* params: */
                                      {},
                                      /* category: */
@@ -202,7 +203,7 @@ struct ZSSparseGridAsParticles : INode {
     }
 
     void apply() override {
-        auto zsSPG = get_input<ZenoSparseGrid>("SparseGrid");
+        auto zsSPG = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
         auto &spg = zsSPG->getSparseGrid();
 
         using namespace zs;
@@ -236,3 +237,4 @@ ZENDEFNODE(ZSSparseGridAsParticles, {/* inputs: */
 
 
 } // namespace zeno
+#endif

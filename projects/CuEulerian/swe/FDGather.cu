@@ -5,6 +5,7 @@
 #include "zensim/types/Property.h"
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 
 namespace zeno {
@@ -206,12 +207,12 @@ void cornerLoopSum(typename ZenoParticles::particles_t &prim, int nx, int ny, co
 }
 struct ZSGather2DFiniteDifference : zeno::INode {
     virtual void apply() override {
-        auto nx = get_input2<int>("nx");
-        auto ny = get_input2<int>("ny");
-        auto grid = get_input<ZenoParticles>("grid");
-        auto attrT = get_input2<std::string>("attrT");
-        auto type = get_input2<std::string>("OpType");
-        auto channel = get_input2<std::string>("channel");
+        auto nx = get_input2_int("nx");
+        auto ny = get_input2_int("ny");
+        auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("grid"));
+        auto attrT = zsString2Std(get_input2_string("attrT"));
+        auto type = zsString2Std(get_input2_string("OpType"));
+        auto channel = zsString2Std(get_input2_string("channel"));
 
         if (auto &verts = grid->getParticles(); verts.hasProperty(channel)) {
             if (type == "FIVE_STENCIL" || type == "NINE_STENCIL") {
@@ -237,26 +238,26 @@ struct ZSGather2DFiniteDifference : zeno::INode {
 };
 
 ZENDEFNODE(ZSGather2DFiniteDifference, {
-                                           {{"ZSParticles", "grid"},
+                                           {{gParamType_Particles, "grid"},
                                             {gParamType_Int, "nx", "1"},
                                             {gParamType_Int, "ny", "1"},
                                             {gParamType_String, "channel", "pos"},
                                             {"enum vec3 float", "attrT", "float"},
                                             {"enum FIVE_STENCIL NINE_STENCIL", "OpType", "FIVE_STENCIL"}},
-                                           {{"ZSParticles", "prim"}},
+                                           {{gParamType_Particles, "prim"}},
                                            {},
                                            {"zenofx"},
                                        });
 
 struct ZSCheckGather2DFiniteDifference : zeno::INode {
     virtual void apply() override {
-        auto nx = get_input2<int>("nx");
-        auto ny = get_input2<int>("ny");
-        auto grid = get_input<ZenoParticles>("ZSParticles");
-        auto gridRef = get_input<PrimitiveObject>("grid");
-        auto attrT = get_input2<std::string>("attrT");
-        auto type = get_input2<std::string>("OpType");
-        auto channel = get_input2<std::string>("channel");
+        auto nx = get_input2_int("nx");
+        auto ny = get_input2_int("ny");
+        auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("ZSParticles"));
+        auto gridRef = get_input_Geometry("grid")->toPrimitiveObject();
+        auto attrT = zsString2Std(get_input2_string("attrT"));
+        auto type = zsString2Std(get_input2_string("OpType"));
+        auto channel = zsString2Std(get_input2_string("channel"));
 
         if (auto &verts_ = grid->getParticles(); verts_.hasProperty(channel)) {
             auto verts = verts_.clone({zs::memsrc_e::host, -1});
@@ -288,25 +289,25 @@ struct ZSCheckGather2DFiniteDifference : zeno::INode {
 
 ZENDEFNODE(ZSCheckGather2DFiniteDifference, {
                                                 {{gParamType_Primitive, "grid"},
-                                                 {"ZSParticles", "ZSParticles"},
+                                                 {gParamType_Particles, "ZSParticles"},
                                                  {gParamType_Int, "nx", "1"},
                                                  {gParamType_Int, "ny", "1"},
                                                  {gParamType_String, "channel", "pos"},
                                                  {"enum vec3 float", "attrT", "float"},
                                                  {"enum FIVE_STENCIL NINE_STENCIL", "OpType", "FIVE_STENCIL"}},
-                                                {{"ZSParticles", "prim"}},
+                                                {{gParamType_Particles, "prim"}},
                                                 {},
                                                 {"zenofx"},
                                             });
 
 struct ZSCheckPrimAttribs : zeno::INode {
     virtual void apply() override {
-        auto grid = get_input<ZenoParticles>("ZSParticles");
-        auto gridRef = get_input<PrimitiveObject>("grid");
-        auto attribs = get_input<zeno::ListObject>("attribs");
+        auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("ZSParticles"));
+        auto gridRef = get_input_Geometry("grid")->toPrimitiveObject();
+        auto attribs = get_input_ListObject("attribs");
 
         const auto &verts = grid->getParticles();
-        for (auto &attrib_ : attribs->get2<std::string>()) {
+        for (auto &attrib_ : attribs->get2_string()) {
             auto attrib = attrib_;
             auto attribAct = attrib_;
             if (attribAct == "pos")
@@ -360,21 +361,23 @@ struct ZSCheckPrimAttribs : zeno::INode {
 
 ZENDEFNODE(ZSCheckPrimAttribs,
            {
-               {{gParamType_Primitive, "grid"}, {"ZSParticles", "ZSParticles"}, {"ListObject", "attribs"}},
-               {{"ZSParticles", "prim"}},
+               {{gParamType_Primitive, "grid"},
+                {gParamType_Particles, "ZSParticles"},
+                {gParamType_List, "attribs"}},
+               {{gParamType_Particles, "prim"}},
                {},
                {"zenofx"},
            });
 
 struct ZSMomentumTransfer2DFiniteDifference : zeno::INode {
     void apply() override {
-        auto nx = get_input2<int>("nx");
-        auto ny = get_input2<int>("ny");
-        auto grid = get_input<ZenoParticles>("grid");
-        auto attrT = get_input2<std::string>("attrT");
-        auto type = get_input2<std::string>("OpType");
-        auto channel = get_input2<std::string>("channel");
-        auto addChannel = get_input2<std::string>("add_channel");
+        auto nx = get_input2_int("nx");
+        auto ny = get_input2_int("ny");
+        auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("grid"));
+        auto attrT = zsString2Std(get_input2_string("attrT"));
+        auto type = zsString2Std(get_input2_string("OpType"));
+        auto channel = zsString2Std(get_input2_string("channel"));
+        auto addChannel = zsString2Std(get_input2_string("add_channel"));
 
         auto &verts = grid->getParticles();
         auto pol = zs::cuda_exec();
@@ -409,14 +412,14 @@ struct ZSMomentumTransfer2DFiniteDifference : zeno::INode {
 };
 
 ZENDEFNODE(ZSMomentumTransfer2DFiniteDifference, {
-                                                     {{"ZenoParticles", "grid"},
+                                                     {{gParamType_Particles, "grid"},
                                                       {gParamType_Int, "nx", "1"},
                                                       {gParamType_Int, "ny", "1"},
                                                       {gParamType_String, "channel", "d"},
                                                       {gParamType_String, "add_channel", "d"},
                                                       {"enum vec3 float", "attrT", "float"},
                                                       {"enum FIVE_STENCIL NINE_STENCIL", "OpType", "FIVE_STENCIL"}},
-                                                     {{"ZenoParticles", "prim"}},
+                                                     {{gParamType_Particles, "prim"}},
                                                      {},
                                                      {"zenofx"},
                                                  });
@@ -460,14 +463,14 @@ void sample2D(typename ZenoParticles::particles_t &prim, const zs::SmallString &
 struct ZSGrid2DSample : zeno::INode {
     virtual void apply() override {
         using vec3f = zs::vec<float, 3>;
-        auto nx = get_input2<int>("nx");
-        auto ny = get_input2<int>("ny");
-        auto bmin = get_input2<zeno::vec3f>("bmin");
-        auto grid = get_input<ZenoParticles>("grid");
-        auto attrT = get_input2<std::string>("attrT");
-        auto channel = get_input2<std::string>("channel");
-        auto sampleby = get_input2<std::string>("sampleBy");
-        auto h = get_input2<float>("h");
+        auto nx = get_input2_int("nx");
+        auto ny = get_input2_int("ny");
+        auto bmin = toVec3f(get_input2_vec3f("bmin"));
+        auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("grid"));
+        auto attrT = zsString2Std(get_input2_string("attrT"));
+        auto channel = zsString2Std(get_input2_string("channel"));
+        auto sampleby = zsString2Std(get_input2_string("sampleBy"));
+        auto h = get_input2_float("h");
 
         auto &pars = grid->getParticles();
         if (pars.hasProperty(channel) && pars.hasProperty(sampleby)) {
@@ -482,7 +485,7 @@ struct ZSGrid2DSample : zeno::INode {
     }
 };
 ZENDEFNODE(ZSGrid2DSample, {
-                               {{"ZenoParticles", "grid"},
+                               {{gParamType_Particles, "grid"},
                                 {gParamType_Int, "nx", "1"},
                                 {gParamType_Int, "ny", "1"},
                                 {gParamType_Float, "h", "1"},
@@ -490,7 +493,7 @@ ZENDEFNODE(ZSGrid2DSample, {
                                 {gParamType_String, "channel", "pos"},
                                 {gParamType_String, "sampleBy", "pos"},
                                 {"enum vec3 float", "attrT", "float"}},
-                               {{"ZenoParticles", "prim"}},
+                               {{gParamType_Particles, "prim"}},
                                {},
                                {"zenofx"},
                            });
@@ -600,16 +603,16 @@ void assignToField2D(CoordsT coord, FieldT field, PrimAttrT primAttr, int nx, in
 struct ZSGrid2DSample2 : zeno::INode {
   virtual void apply() override {
     using vec3f = zs::vec<float, 3>;
-    auto nx = get_input2<int>("nx");
-    auto ny = get_input2<int>("ny");
-    auto bmin = get_input2<zeno::vec3f>("bmin");
-    auto prim = get_input<ZenoParticles>("prim");
-    auto grid = get_input<ZenoParticles>("sampleGrid");
-    auto channelList = get_input2<std::string>("channel");
-    auto sampleby = get_input2<std::string>("sampleBy");
-    auto isPeriodic = get_input2<std::string>("sampleType") == "Periodic";
-    auto isSampleFromGrid = get_input2<std::string>("sampleDirection") == "SampleFromGrid";
-    auto h = get_input2<float>("h");
+    auto nx = get_input2_int("nx");
+    auto ny = get_input2_int("ny");
+    auto bmin = toVec3f(get_input2_vec3f("bmin"));
+    auto prim = safe_uniqueptr_cast<ZenoParticles>(clone_input("prim"));
+    auto grid = safe_uniqueptr_cast<ZenoParticles>(clone_input("sampleGrid"));
+    auto channelList = zsString2Std(get_input2_string("channel"));
+    auto sampleby = zsString2Std(get_input2_string("sampleBy"));
+    auto isPeriodic = zsString2Std(get_input2_string("sampleType")) == "Periodic";
+    auto isSampleFromGrid = zsString2Std(get_input2_string("sampleDirection")) == "SampleFromGrid";
+    auto h = get_input2_float("h");
 
     std::vector<zs::PropertyTag> channels;
     std::istringstream iss(channelList);
@@ -685,17 +688,17 @@ struct ZSGrid2DSample2 : zeno::INode {
 };
 ZENDEFNODE(ZSGrid2DSample2,
            {
-               {{"ZenoParticles", "prim"},
-                {"ZenoParticles", "sampleGrid"},
-                {"int", "nx", "1"},
-                {"int", "ny", "1"},
-                {"float", "h", "1"},
-                {"vec3f", "bmin", "0,0,0"},
-                {"string", "channel", "*"},
-                {"string", "sampleBy", "pos"},
+               {{gParamType_Particles, "prim"},
+                {gParamType_Particles, "sampleGrid"},
+                {gParamType_Int, "nx", "1"},
+                {gParamType_Int, "ny", "1"},
+                {gParamType_Float, "h", "1"},
+                {gParamType_Vec3f, "bmin", "0,0,0"},
+                {gParamType_String, "channel", "*"},
+                {gParamType_String, "sampleBy", "pos"},
                 {"enum SampleFromGrid AssignToGrid", "sampleDirection", "SampleFromGrid"},
                 {"enum Clamp Periodic", "sampleType", "Clamp"}},
-               {{"ZenoParticles", "prim"}},
+               {{gParamType_Particles, "prim"}},
                {},
                {"zenofx"},
            });

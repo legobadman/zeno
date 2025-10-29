@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "Utils.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
@@ -211,17 +212,17 @@ struct ZSPrimitiveToSparseGrid : INode {
 
     void apply() override {
         auto parObjPtrs = RETRIEVE_OBJECT_PTRS(ZenoParticles, "ZSParticles");
-        auto zsSPG = get_input<ZenoSparseGrid>("SparseGrid");
+        auto zsSPG = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
         auto &spg = zsSPG->getSparseGrid();
-        auto parTag = get_input2<std::string>("ParticleAttribute");
-        auto attrTag = get_input2<std::string>("GridAttribute");
-        auto opType = get_input2<std::string>("OpType");
-        auto kernel = get_input2<std::string>("Kernel");
-        bool isStaggered = get_input2<bool>("staggered");
-        bool needInit = get_input2<bool>("initialize");
-        bool needNormalize = get_input2<bool>("normalize");
-        bool needActivate = get_input2<bool>("activateBlock");
-        bool multigrid = get_input2<bool>("activateMultiGrid");
+        auto parTag = zsString2Std(get_input2_string("ParticleAttribute"));
+        auto attrTag = zsString2Std(get_input2_string("GridAttribute"));
+        auto opType = zsString2Std(get_input2_string("OpType"));
+        auto kernel = zsString2Std(get_input2_string("Kernel"));
+        bool isStaggered = get_input2_bool("staggered");
+        bool needInit = get_input2_bool("initialize");
+        bool needNormalize = get_input2_bool("normalize");
+        bool needActivate = get_input2_bool("activateBlock");
+        bool multigrid = get_input2_bool("activateMultiGrid");
 
         auto tag = src_tag(zsSPG, attrTag);
 
@@ -386,3 +387,4 @@ ZENDEFNODE(ZSPrimitiveToSparseGrid, {
                                     });
 
 } // namespace zeno
+#endif
