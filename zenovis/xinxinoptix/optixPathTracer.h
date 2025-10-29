@@ -79,7 +79,7 @@ struct GenericLight
         switch (this->shape) {
         case zeno::LightShape::Plane:
         case zeno::LightShape::Ellipse:
-            return this->rect.BoundAsLight(Phi, doubleSided);
+            return this->rect.BoundAsLight(Phi, spreadMajor, doubleSided);
         case zeno::LightShape::Sphere:
             return this->sphere.BoundAsLight(Phi, false);
         case zeno::LightShape::Point:
@@ -91,12 +91,16 @@ struct GenericLight
         return pbrt::LightBounds();
     }
 
-    void setConeData(const float3& p, const float3& dir, float range, float spreadAngle, float falloffAngle=0.0f) {
+    void setConeData(const float3& p, const float3& dir, float range, float spreadAngle, float innerAngle=1e-2f) {
         this->cone.p = p;
         this->cone.range = range;
 
+        if(innerAngle >= spreadAngle) {
+            innerAngle = 0.99f * spreadAngle;
+        }
+
         this->cone.dir = dir;
-        this->cone.cosFalloffStart = cosf(spreadAngle - falloffAngle);
+        this->cone.cosFalloffStart = cosf(innerAngle);
         this->cone.cosFalloffEnd = cosf(spreadAngle);
     }
 

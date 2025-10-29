@@ -79,7 +79,8 @@ struct CompactLightBounds {
         this->meta = {
             QuantizeCos(lb.cosTheta_o),
             QuantizeCos(lb.cosTheta_e),
-            lb.doubleSided
+            lb.doubleSided,
+            lb.isLeaf
         };
         // Quantize bounding box into _qb_
         for (int c = 0; c < 3; ++c) {
@@ -91,6 +92,7 @@ struct CompactLightBounds {
     }
 
     bool isDoubleSided() const { return meta.doubleSided; }
+    bool isLeaf() const { return meta.isLeaf; }
     
     float CosTheta_o() const { return 2 * (meta.qCosTheta_o / 32767.f) - 1; }
     float CosTheta_e() const { return 2 * (meta.qCosTheta_e / 32767.f) - 1; }
@@ -193,6 +195,7 @@ struct CompactLightBounds {
         unsigned int qCosTheta_o:15;
         unsigned int qCosTheta_e:15;
         bool doubleSided:1;
+        bool isLeaf:1;
     } meta;
     uint16_t qb[2][3];
 };

@@ -53,7 +53,7 @@ struct TriangleShape {
         auto dc = pbrt::DirectionCone(nnn);
 
         return pbrt::LightBounds(bounds(), nnn, phi * area, 
-                dc.cosTheta, fmaxf(cosf(M_PIf / 2.0f), 0.0f), doubleSided);   
+                dc.cosTheta, fmaxf(cosf(M_PIf / 2.0f), 0.0f), doubleSided, true);   
     }
 
     // Sampling Function Definitions
@@ -430,7 +430,7 @@ struct PointShape {
         auto bounds = pbrt::Bounds3f{tmp, tmp};
         
         return pbrt::LightBounds(bounds, Vector3f(0, 0, 1), 
-            Phi, cosf(M_PIf), cosf(M_PIf / 2), false);
+            Phi, cosf(M_PIf), cosf(M_PIf / 2), false, true);
     }
 };
 
@@ -749,13 +749,15 @@ struct RectShape {
         return result;
     }
 
-    pbrt::LightBounds BoundAsLight(float phi, bool doubleSided) {
+    pbrt::LightBounds BoundAsLight(float phi, float spread, bool doubleSided) {
 
         auto& nnn = reinterpret_cast<Vector3f&>(normal);
         auto dc = pbrt::DirectionCone(nnn);
+        auto cosTheta_e = cosf(spread * M_PIf / 2.0f);
+        cosTheta_e = clamp(cosTheta_e, 0.f, 1.f);
 
         return pbrt::LightBounds(bounds(), nnn, phi * area, 
-                dc.cosTheta, fmaxf(cosf(M_PIf / 2.0f), 0.0f), doubleSided);   
+                1, cosTheta_e, false, true);   
     }
 };
 
@@ -796,6 +798,8 @@ struct ConeShape {
         float cosTheta_e = cosf(acosf(cosFalloffEnd) - acosf(cosFalloffStart));
         // Allow a little slop here to deal with fp round-off error in the computation of
         // cosTheta_p in the importance function.
+        assert(cosFalloffEnd <= cosFalloffStart);
+
         if (cosTheta_e == 1 && cosFalloffEnd != cosFalloffStart)
             cosTheta_e = 0.999f;
 
@@ -803,7 +807,7 @@ struct ConeShape {
         auto& tmp = reinterpret_cast<Vector3f&>(p);
         auto bounds = pbrt::Bounds3f{tmp, tmp};
 
-        return pbrt::LightBounds(bounds, w, Phi, cosFalloffStart, cosTheta_e, false);
+        return pbrt::LightBounds(bounds, w, Phi, cosFalloffStart, cosTheta_e, false, true);
     }
 };
 
@@ -1003,6 +1007,6 @@ struct SphereShape {
         auto dc = pbrt::DirectionCone::EntireSphere();
 
         return pbrt::LightBounds(bounds(), dc.w, phi * area, 
-            dc.cosTheta, fmaxf(cos(M_PIf / 2.0f), 0.0f), doubleSided);   
+            dc.cosTheta, fmaxf(cos(M_PIf / 2.0f), 0.0f), doubleSided, true);   
     }
 };
