@@ -224,12 +224,12 @@ extern "C" __global__ void __closesthit__radiance()
     }
 
     if (!cihouMaxDistanceContinue(lsr, light)) { return; }
-    float3 emission = cihouLightEmission(lsr, light, prd->depth);
+    const auto rgba = cihouLightEmission(lsr, light, prd->depth);
+    const float3& emission = *(float3*)&rgba;
 
     if (light.config & zeno::LightConfigDoubleside) {
         lsr.NoL = abs(lsr.NoL);
     }
-
     if (light.falloffExponent != 2.0f) {
         lsr.intensity *= powf(lsr.dist, 2.0f-light.falloffExponent);
     }

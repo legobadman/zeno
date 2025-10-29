@@ -70,21 +70,21 @@ static __inline__ __device__ bool cihouMaxDistanceContinue(LightSampleRecord &ls
     return true;
 }
 
-static __inline__ __device__ vec3 cihouLightEmission(LightSampleRecord &lsr, GenericLight &light, uint32_t depth) {
+static __inline__ __device__ vec4 cihouLightEmission(LightSampleRecord &lsr, GenericLight &light, uint32_t depth) {
 
     auto intensity = (depth == 0 && light.vIntensity >= 0.0f) ? light.vIntensity : light.intensity;
+    vec3 emission = light.color * intensity;
 
     if (light.tex != 0u) {
-        float3 color = (vec3)texture2D(light.tex, lsr.uv);
+        vec4 rgba = texture2D(light.tex, lsr.uv);
+        vec3 color = *(vec3*)&rgba;
         if (light.texGamma != 1.0f) {
             color = pow(color, light.texGamma);
         }
-        color = color * light.color;
-        color = color * intensity;
-        return color;
+        color *= rgba.w;
+        return vec4(color * emission, rgba.w);
     }
-    
-    return light.color * intensity;
+    return vec4(emission, 1.0f);
 }
 
 static __inline__ __device__ float sampleIES(const float* iesProfile, float h_angle, float v_angle) {
@@ -392,17 +392,18 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
 
         if (!cihouMaxDistanceContinue(lsr, light)) { return; }
         
-        float3 emission = cihouLightEmission(lsr, light, prd->depth);
-
+        const auto rgba = cihouLightEmission(lsr, light, max(prd->depth, 1));
+        float3 emission = *(float3*)&rgba;
         lsr.PDF *= lightPickProb;
 
         if (light.config & zeno::LightConfigDoubleside) {
             lsr.NoL = abs(lsr.NoL);
         }
-
         if (light.falloffExponent != 2.0f) {
             lsr.intensity *= powf(lsr.dist, 2.0f-light.falloffExponent);
         }
+        emission *= lsr.intensity;
+        if (sum(emission)==0) return;
 
         if (lsr.NoL > _FLT_EPL_ && lsr.PDF > 1e-2) {
 
@@ -414,7 +415,6 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
 
             if (nullptr==RadianceWithoutShadow && lengthSquared(light_attenuation) == 0.0f) return;
 
-            emission *= lsr.intensity;
             auto bxdf_value = evalBxDF(lsr.dir, wo, scatterPDF);
             auto misWeight = 1.0f;
 
