@@ -192,6 +192,37 @@ static __inline__ __device__ float light_spread_attenuation(
     return fmaxf((1.0f - tan_void * tan_a) * spreadNormalize, 0.0f);
 }
 
+//tacken from sjb
+static void sampleEquiAngular( vec3 ray_ori, vec3 ray_dir, float tmin, float tmax, float xi,
+                               vec3 lightPos, float& dt, float& pdf)
+{
+    // get coord of closest point to light along (infinite) ray
+    float delta = dot(lightPos - ray_ori, ray_dir);
+    //if (delta<=0) return;
+    
+    // get distance this point is from light
+    float D = length(ray_ori + delta * ray_dir - lightPos);
+
+    // get angle of endpoints
+    float thetaA = atan2f(tmin - delta, D);
+    float thetaB = atan2f(tmax - delta, D);
+    if (thetaB < thetaA) swap(thetaA, thetaB);
+
+    float dTheta = thetaB - thetaA;
+    if (fabs(dTheta) < 1e-3f) {
+        // fallback: uniform in [tmin, tmax]
+        dt  = mix(tmin, tmax, xi);
+        pdf = 1.0f / fmaxf(tmax - tmin, 1e-5f);
+        return;
+    }
+    
+    // take sample
+    float theta = mix(thetaA, thetaB, xi);
+    float t = D * tanf(theta);
+    dt = delta + t;
+    pdf = D/(dTheta * (D*D + t*t));
+};
+
 namespace detail {
     template <typename T> struct is_void {
         static constexpr bool value = false;
@@ -203,7 +234,7 @@ namespace detail {
 
 template<bool _MIS_, typename TypeEvalBxDF, typename TypeAux = void>
 static __forceinline__ __device__
-void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& ray_dir, 
+void DirectLighting(ShadowPRD& shadowPRD, float3 shadingP, const float3& ray_dir, 
                     TypeEvalBxDF& evalBxDF, TypeAux* taskAux=nullptr, float3* RadianceWithoutShadow=nullptr) {
 
     const float3 wo = normalize(-ray_dir);
@@ -227,7 +258,7 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
         const Vector3f& SP = reinterpret_cast<const Vector3f&>(shadingP);
         const Vector3f& SN = reinterpret_cast<const Vector3f&>(shadowPRD.ShadowNormal);
 
-        auto pick = lightTree->sample(UF, SP, SN);
+        auto pick = lightTree->sample(UF, SP, SN, shadowPRD.fog_tmax);
         if (pick.prob <= 0.0f) { return; }
 
         uint lighIdx = min(pick.lightIdx, params.num_lights-1);
@@ -238,6 +269,131 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
 
         lightPickProb *= pick.prob;
         LightSampleRecord lsr;
+
+        float line_dt = 0.0f;
+        float line_pdf = 1.0f;
+
+        if (shadowPRD.fog_tmax > 0) {
+
+            float t0 = 0;
+            float t1 = shadowPRD.fog_tmax;
+
+            float3 lightPos;
+
+            if (zeno::LightShape::Point == light.shape) 
+            {
+                lightPos = light.point.p; 
+                lightPos -= params.cam.eye;
+
+                if (zeno::LightType::Spot == light.type) {
+
+                    Interval I = intersectCone(shadowPRD.origin, ray_dir, lightPos, light.cone.dir, light.cone.cosFalloffEnd);
+                    if (!I.hit) return;
+                    
+                    t0 = max(I.t_in, 0.0f);
+                    t1 = min(I.t_out, shadowPRD.fog_tmax);
+
+                    if (t0 >= t1) return;
+
+                } else if (zeno::LightType::Projector == light.type) {
+
+                    auto spreadU = clamp(light.spreadMajor, 0.001f, 0.999f);
+                    auto spreadV = clamp(light.spreadMinor, 0.000f, 0.999f);
+                    if (spreadV <= 0) { spreadV = spreadU; }
+
+                    auto angleU = (spreadU * 0.5f * M_PIf);
+                    auto angleV = (spreadV * 0.5f * M_PIf);
+
+                    Interval I = intersectPyramid(shadowPRD.origin, ray_dir, lightPos, light.N, light.T, light.B, angleU, angleV);
+                    if (!I.hit) return;
+
+                    t0 = max(I.t_in, 0.0f);
+                    t1 = min(I.t_out, shadowPRD.fog_tmax);
+                }
+            }
+            else if (zeno::LightShape::Sphere == light.shape) 
+            {
+                lightPos = light.sphere.center - params.cam.eye;
+            }
+            else if (zeno::LightShape::Plane == light.shape || zeno::LightShape::Ellipse == light.shape) 
+            {
+                if (should_print) {
+                    printf("arelight weight = %f \n", pick.prob);
+                }
+                const auto& rect = light.rect;
+                
+                if (light.spreadMajor < 1.0f) {
+                    auto angle = light.spreadMajor * 0.5f * M_PIf;
+                    Interval I = intersectRayFrustum(shadowPRD.origin, ray_dir, rect.v-params.cam.eye, rect.axisX, rect.lenX, rect.axisY, rect.lenY, angle, angle);
+                    if (!I.hit) return;
+
+                    t0 = fmaxf(I.t_in, 0.0f);
+                    t1 = fminf(I.t_out, shadowPRD.fog_tmax);
+                } else {
+                    auto diff = shadowPRD.origin - (rect.v-params.cam.eye);
+                    auto vlen = dot(diff, rect.normal);
+                    auto step = dot(ray_dir, rect.normal);
+                    auto tt = fabs(vlen / step);
+
+                    if (vlen > 0) { // under light
+                        if (isfinite(tt) && step<0) // look up
+                            t1 = fminf(t1, tt);
+                    } else {        // above light
+                        if (isfinite(tt) && step>0) // look down
+                            t0 = fmaxf(t0, tt);
+                        else
+                            return;
+                    }
+                }
+
+                let center = rect.center() - params.cam.eye;
+                let& axisX = rect.axisX;
+                let& axisY = rect.axisY;
+                let& lenX = rect.lenX;
+                let& lenY = rect.lenY;
+
+                float3 pp[2]; 
+                auto& p0 = pp[0];
+                auto& p1 = pp[1];
+                p0 = shadowPRD.origin + ray_dir * t0;
+                p1 = shadowPRD.origin + ray_dir * t1;
+
+                #pragma unroll
+                for (char i=0; i<2; ++i)
+                {
+                    auto& p = pp[i];
+                    auto delta = (p - center);
+                    auto deltaX = dot(delta, axisX); 
+                    auto deltaY = dot(delta, axisY);
+
+                    auto tx = (rect.lenX * 0.5f) / deltaX;
+                    auto ty = (rect.lenY * 0.5f) / deltaY;
+
+                    if (!isfinite(tx)) tx = 1e20f;
+                    if (!isfinite(ty)) ty = 1e20f;
+                    
+                    auto tt = fminf(abs(tx), abs(ty));
+                    p = center + tt * deltaX * axisX + tt * deltaY * axisY;
+                }
+
+                auto scale = fmaxf(lenX, lenY) * 0.5f;
+                lightPos = mix(p0, p1, prd->rndf());
+                lightPos -= light.rect.normal * scale;
+            } 
+            else if (zeno::LightShape::TriangleMesh == light.shape) {
+                lightPos = light.triangle.center() - params.cam.eye;
+            }
+
+            sampleEquiAngular(shadowPRD.origin, ray_dir, t0, t1, shadowPRD.rndf(), lightPos, line_dt, line_pdf);
+
+            shadingP         += ray_dir * line_dt; // wolrd space
+            shadowPRD.origin += ray_dir * line_dt; // camera space
+
+            if (!isfinite(line_pdf)) { return; }
+
+            lightPickProb *= line_pdf;
+            shadowPRD.fog_dt = line_dt;
+        }
 
         const float* iesProfile = reinterpret_cast<const float*>(light.ies);
 
@@ -404,8 +560,9 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
         }
         emission *= lsr.intensity;
         if (sum(emission)==0) return;
+        if (!isfinite(lsr.PDF)) return;
 
-        if (lsr.NoL > _FLT_EPL_ && lsr.PDF > 1e-2) {
+        if (lsr.NoL > _FLT_EPL_ && lsr.PDF > 1e-6f) {
 
             shadowPRD.lightIdx = lighIdx;
             shadowPRD.maxDistance = lsr.dist;
@@ -423,7 +580,7 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
                     misWeight = BRDFBasics::PowerHeuristic(lsr.PDF, scatterPDF);
                 }
             }
-                misWeight = misWeight / (lsr.PDF + 1e-4f);
+                misWeight = misWeight / lsr.PDF;
 
                 float3 radianceNoShadow = emission * bxdf_value;
                 radianceNoShadow *= misWeight;
@@ -441,6 +598,11 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
         } 
     
     } else {
+
+        if (shadowPRD.fog_tmax > 0) {
+            shadingP         += ray_dir * shadowPRD.fog_dt; // wolrd space
+            shadowPRD.origin += ray_dir * shadowPRD.fog_dt; // camera space
+        }
 
         auto shadeTask = [&](float3 sampleDir, float samplePDF, float3 illum, const bool mis) {
 

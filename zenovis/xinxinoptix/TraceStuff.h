@@ -69,6 +69,9 @@ struct ShadowPRD : CommonPRD {
     float3 origin;
     float3 radiance;
     float3 attanuation;
+
+    float fog_dt;
+    float fog_tmax;
     
     uint8_t depth;
     uint8_t nonThinTransHit;
