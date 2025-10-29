@@ -836,17 +836,17 @@ struct SphereShape {
     inline float PDF(const float3& shadingP, float dist2, float NoL) {
 
         if (dist2 < radius * radius) {
-            return dist2 / fabsf(NoL);
+            return 0.25f / M_PIf;
         }
 
-        float sinThetaMax2 = clamp( radius * radius / dist2, 0.0, 1.0);
+        float dist = sqrtf(dist2);
+        float sinThetaMax = radius / dist;
+        float cosThetaMax = sqrtf(fmaxf(0.0f, 1.0f - sinThetaMax * sinThetaMax));
+        //if (cosTheta < cosThetaMax) return 0.0f; // outside the cone
 
-        if (sinThetaMax2 <= __FLT_EPSILON__) {
-            return 1.0f; // point light
-        }
-
-        float cosThetaMax = sqrtf( 1.0 - sinThetaMax2 );
-        return 1.0f / ( 2.0f * M_PIf * (1.0 - cosThetaMax) );
+        // Stable computation: 1 - cosThetaMax
+        float one_minus_cosThetaMax = (sinThetaMax * sinThetaMax) / (1.0f + cosThetaMax);
+        return 1.0f / ( 2.0f * M_PIf * one_minus_cosThetaMax );
     }
 
     inline bool hitAsLight(LightSampleRecord* lsr, const float3& ray_origin, const float3& ray_dir) {
@@ -905,7 +905,7 @@ struct SphereShape {
         lsr->dist = distance;
     }
 
-    inline void SampleAsLight(LightSampleRecord* lsr, const float2& uu, const float3& shadingP) {
+    inline void SampleAsLight(LightSampleRecord* lsr,  float2& uu, const float3& shadingP, float spread) {
 
         float3 vector = center - shadingP;
         float  dist2 = dot(vector, vector);
@@ -915,8 +915,6 @@ struct SphereShape {
         float radius2 = radius * radius;
 
         if (dist2 <= radius2) { // inside sphere
-            lsr->PDF = 0.0f;
-            return;
             
             auto localP = pbrt::UniformSampleSphere(uu);
             auto worldP = center + localP * radius;
@@ -924,7 +922,7 @@ struct SphereShape {
             auto localN = -localP; //facing center
             auto worldN =  localN; 
 
-            lsr->p = rtgems::offset_ray(worldP, worldN);
+            lsr->p = worldP;
             lsr->n = worldN;
 
             vector = lsr->p - shadingP;
@@ -940,8 +938,8 @@ struct SphereShape {
             lsr->dist = dist;
             lsr->dir  = dir;
 
-            lsr->NoL = dot(-dir, worldN);
-            lsr->PDF = lsr->dist * lsr->dist / lsr->NoL;
+            lsr->NoL = fmaxf(dot(-dir, worldN), 0.0f);
+            lsr->PDF = 0.25f / M_PIf;
             return;       
         }
 
@@ -949,32 +947,23 @@ struct SphereShape {
         float invDc = 1.0f / dist;
         float3& wc = dir; float3 wcX, wcY;
         pbrt::CoordinateSystem(wc, wcX, wcY);
-
         // Compute $\theta$ and $\phi$ values for sample in cone
         float sinThetaMax = radius * invDc;
+
+        // if (spread < 1.0f) {
+        //     float littleCone = spread * 0.5f * M_PIf;
+        //     float angle_a = M_PIf - littleCone;
+        //     float length_a = dist;
+
+        //     float sin_b = radius * (sinf(angle_a) / length_a);
+        //     sinThetaMax = sin_b;
+        // }
+
+        uu.x = uu.x * spread;
+
         const float sinThetaMax2 = sinThetaMax * sinThetaMax;
         float invSinThetaMax = 1.0f / sinThetaMax;
-
-        assert(sinThetaMax2 > 0);
-        const float cosThetaMax = sqrtf(1.0f - clamp(sinThetaMax2, 0.0f, 1.0f));
-
-        auto epsilon = 2e-3f;
-
-        if (sinThetaMax < epsilon) {
-            
-            lsr->p = center - dir * radius;
-            lsr->p = rtgems::offset_ray(lsr->p, -dir);
-
-            lsr->n = -dir;
-            lsr->dir = dir;
-            lsr->dist = length(lsr->p - shadingP);
-
-            lsr->PDF = 1.0f;
-            lsr->NoL = 1.0f;
-            lsr->intensity = M_PIf * radius2 / (lsr->dist * lsr->dist);
-            lsr->isDelta = true;
-            return;
-        } // point light
+        const float cosThetaMax = sqrtf(fmaxf(1.0f - sinThetaMax2, 0.0f));
 
         float cosTheta  = (cosThetaMax - 1) * uu.x + 1;
         float sinTheta2 = 1 - cosTheta * cosTheta;
@@ -996,7 +985,7 @@ struct SphereShape {
         float3 nWorld = pbrt::SphericalDirection(sinAlpha, cosAlpha, phi, -wcX, -wcY, -wc);
         float3 pWorld = center + radius * nWorld;
 
-        lsr->p = rtgems::offset_ray(pWorld, nWorld);
+        lsr->p = pWorld;
         lsr->n = nWorld;
 
         vector = lsr->p - shadingP;
@@ -1006,9 +995,13 @@ struct SphereShape {
 
         lsr->dist = dist;
         lsr->dir  = dir;
+
+        // stable: avoid 1 - cosThetaMax cancellation
+        // note: (1 + cosThetaMax) >= 1 here because cosThetaMax in [0,1]
+        float one_minus_cosThetaMax = sinThetaMax2 / (1.0f + cosThetaMax);
         
-        lsr->PDF = 1.0f / (2.0f * M_PIf * (1.0f - cosThetaMax)); // Uniform cone PDF.
-        lsr->NoL = dot(-lsr->dir, lsr->n); 
+        lsr->PDF = 1.0f / (2.0f * M_PIf * one_minus_cosThetaMax); // Uniform cone PDF.
+        lsr->NoL = dot(-lsr->dir, lsr->n);
     }
 
     pbrt::Bounds3f bounds() {

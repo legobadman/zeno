@@ -369,7 +369,7 @@ void DirectLighting(ShadowPRD& shadowPRD, const float3& shadingP, const float3& 
                     break;
                 }   
                 case zeno::LightShape::Sphere: {
-                    light.sphere.SampleAsLight(&lsr, uu, shadingP); 
+                    light.sphere.SampleAsLight(&lsr, uu, shadingP, light.spreadMajor); 
                     cihouSphereLightUV(lsr, light);
                     break; 
                 }   
