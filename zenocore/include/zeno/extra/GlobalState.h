@@ -56,7 +56,7 @@ struct GlobalState {
     ZENO_API void frameBegin();
     ZENO_API void frameEnd();
     ZENO_API void clearState();
-    ZENO_API float getFrameId() const;
+    ZENO_API int getFrameId() const;
     ZENO_API void updateFrameId(float frameid);
     ZENO_API void updateFrameRange(int start, int end);
     ZENO_API int getStartFrame() const;

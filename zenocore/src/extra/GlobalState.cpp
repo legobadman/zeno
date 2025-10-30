@@ -57,7 +57,7 @@ ZENO_API void GlobalState::clearState() {
     log_debug("entering session id={}", sessionid);
 }
 
-ZENO_API float GlobalState::getFrameId() const {
+ZENO_API int GlobalState::getFrameId() const {
     return frameid;
 }
 

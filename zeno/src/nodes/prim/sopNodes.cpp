@@ -432,7 +432,7 @@ namespace zeno {
             {gParamType_Geometry, "Output"},
         },
         {},
-        {"deprecated"},
+        {"prim"},
     });
 
 

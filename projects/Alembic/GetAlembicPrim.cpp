@@ -209,7 +209,7 @@ struct AllAlembicPrim : INode {
         if (get_input2_int("triangulate") == 1) {
             zeno::primTriangulate(outprim.get());
         }
-        set_output("prim", std::move(outprim));
+        set_output("prim", create_GeometryObject(outprim.get()));
     }
 };
 
@@ -220,7 +220,7 @@ ZENDEFNODE(AllAlembicPrim, {
         {gParamType_Bool, "use_xform", "0"},
         {gParamType_Bool, "triangulate", "0"},
     },
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"alembic"},
 });
@@ -431,7 +431,7 @@ struct GetAlembicCamera : INode {
 
 ZENDEFNODE(GetAlembicCamera, {
     {
-        {"ABCTree", "abctree"},
+        {gParamType_ABCTree, "abctree"},
         {gParamType_Int, "nx", "1920"},
         {gParamType_Int, "ny", "1080"},
     },

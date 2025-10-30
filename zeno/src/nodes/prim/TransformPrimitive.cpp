@@ -12,6 +12,7 @@
 #include <zeno/types/MatrixObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/zeno.h>
 #include <zeno/utils/eulerangle.h>
 #include <zeno/utils/string.h>
@@ -142,7 +143,7 @@ struct TransformPrimitive : zeno::INode {//zhxx happy node
 
         auto matrix = pre_mat*local*matTrans*matRotate*matQuat*matScal*matShearZ*matShearY*matShearX*glm::translate(glm::vec3(offset[0], offset[1], offset[2]))*glm::inverse(local)*pre_apply;
 
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto outprim = std::make_unique<PrimitiveObject>(*prim);
 
         if (prim->has_attr("pos")) {
@@ -172,13 +173,13 @@ struct TransformPrimitive : zeno::INode {//zhxx happy node
         user_data->setLiterial("_scale", scaling);
         //auto oMat = std::make_unique<MatrixObject>();
         //oMat->m = matrix;
-        ZImpl(set_output("outPrim", std::move(outprim)));
+        set_output("outPrim", create_GeometryObject(outprim.get()));
     }
 };
 
 ZENDEFNODE(TransformPrimitive, {
     {
-    {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
     {gParamType_Vec3f, "translation", "0,0,0"},
     {gParamType_Vec3f, "eulerXYZ", "0,0,0"},
     {gParamType_Vec4f, "quatRotation", "0,0,0,1"},
@@ -189,7 +190,7 @@ ZENDEFNODE(TransformPrimitive, {
     {gParamType_Matrix4, "local"},
     },
     {
-    {gParamType_Primitive, "outPrim"}
+    {gParamType_Geometry, "outPrim"}
     },
     {
         {"enum " + EulerAngle::RotationOrderListString(), "EulerRotationOrder", "ZYX"},
