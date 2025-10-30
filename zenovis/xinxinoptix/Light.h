@@ -324,7 +324,7 @@ void DirectLighting(ShadowPRD& shadowPRD, float3 shadingP, const float3& ray_dir
                 
                 if (light.spreadMajor < 1.0f) {
                     auto angle = light.spreadMajor * 0.5f * M_PIf;
-                    Interval I = intersectRayFrustum(shadowPRD.origin, ray_dir, rect.v-params.cam.eye, rect.axisX, rect.lenX, rect.axisY, rect.lenY, angle, angle);
+                    Interval I = intersectFrustum(shadowPRD.origin, ray_dir, rect.v-params.cam.eye, rect.axisX, rect.lenX, rect.axisY, rect.lenY, angle, angle);
                     if (!I.hit) return;
 
                     t0 = fmaxf(I.t_in, 0.0f);

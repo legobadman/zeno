@@ -1020,3 +1020,208 @@ struct SphereShape {
             dc.cosTheta, fmaxf(cos(M_PIf / 2.0f), 0.0f), doubleSided, true);   
     }
 };
+
+struct Interval {
+    bool hit;
+    float t_in;
+    float t_out; // may be +INFINITY when no forward exit
+};
+
+static Interval intersectCone(
+    const float3& O, const float3& D,     // ray origin, dir
+    const float3& C, const float3& A,     // apex, unit axis
+    float cosTheta)
+{
+    Interval H = {0, 0.0f, 0.0f};
+    const float EPS = 1e-6f;
+    const float INF_F = 1e30f;
+    float cos2 = cosTheta * cosTheta;
+
+    float3 v = O - C;
+    float dv = dot(D, A);
+    float vv = dot(v, A);
+    float dd = dot(D, D);
+    float vd = dot(v, D);
+    float vvlen = dot(v, v);
+
+    float a = dv*dv - cos2*dd;
+    float b = 2.0f*(dv*vv - cos2*vd);
+    float c = vv*vv - cos2*vvlen;
+
+    // check if origin inside front cone
+    int originInside = 0;
+    if (vv > 0.0f) {
+        float len = sqrtf(fmaxf(vvlen, EPS));
+        if (vv / len >= cosTheta - EPS) originInside = 1;
+    }
+
+    float disc = b*b - 4*a*c;
+    if (fabsf(a) < EPS) {
+        if (fabsf(b) < EPS) {
+            if (originInside) { H.hit=1; H.t_in=0.0f; H.t_out=INF_F; }
+            return H;
+        }
+        float t = -c / b;
+        if (t >= 0.0f && dot((O+ t*D) - C, A) >= 0.0f) {
+            H.hit=1;
+            if (originInside) { H.t_in=0.0f; H.t_out=t; }
+            else { H.t_in=t; H.t_out=INF_F; }
+        }
+        return H;
+    }
+    if (disc < 0.0f) {
+        if (originInside) { H.hit=1; H.t_in=0.0f; H.t_out=INF_F; }
+        return H;
+    }
+
+    float s = sqrtf(disc);
+    float t0 = (-b - s) / (2*a);
+    float t1 = (-b + s) / (2*a);
+    if (t0 > t1) { float tmp=t0; t0=t1; t1=tmp; }
+
+    int ok0 = (t0 >= 0.0f && dot((O+t0*D)-C, A) >= 0.0f);
+    int ok1 = (t1 >= 0.0f && dot((O+t1*D)-C, A) >= 0.0f);
+
+    if (!ok0 && !ok1) {
+        if (originInside) { H.hit=1; H.t_in=0.0f; H.t_out=INF_F; }
+        return H;
+    }
+    H.hit=1;
+    if (originInside) {
+        if (ok0) { H.t_in=0.0f; H.t_out=t0; }
+        else if (ok1) { H.t_in=0.0f; H.t_out=t1; }
+        else { H.t_in=0.0f; H.t_out=INF_F; }
+    } else {
+        if (ok0 && ok1) { H.t_in=t0; H.t_out=t1; }
+        else if (ok0) { H.t_in=t0; H.t_out=INF_F; }
+        else { H.t_in=t1; H.t_out=INF_F; }
+    }
+    return H;
+}
+
+static Interval intersectFrustum(
+    const float3& ray_o, const float3& ray_d,
+    const float3& corner,
+    const float3& axisX, const float& lenX,
+    const float3& axisY, const float& lenY,
+    float theta_x, float theta_y)
+{
+    auto DX = lenX * 0.5f;
+    auto DY = lenY * 0.5f;
+
+    auto axisZ = cross(axisY, axisX);
+    auto DZ_X = tanf(fmaxf(0.5f * M_PIf - theta_x, 0.0f)) * DX;
+    auto DZ_Y = tanf(fmaxf(0.5f * M_PIf - theta_y, 0.0f)) * DY;
+
+    float tmin = 0.0f;
+    float tmax = __FLT_MAX__;
+
+    // f(t) = num + t*den ; we want f(t) <= 0 (inside the half-space)
+    auto clip = [&](float num, float den) -> bool {
+        const float EPS = __FLT_EPSILON__;
+        if (fabs(den) < EPS) {
+            // ray direction parallel to plane normal: f is constant
+            return (num <= 0.0f); // if f(0) <= 0, ray is in that half-space for all t
+        }
+        float t = -num / den; // root where f(t) = 0
+        if (!isfinite(t)) return false;
+        if (den > 0.0f) {
+            // f increases with t → solution is t <= root → constrain tmax
+            if (t < tmax) tmax = t;
+        } else {
+            // den < 0: f decreases → solution is t >= root → raise tmin
+            if (t > tmin) tmin = t;
+        }
+        return tmax > tmin;
+    };
+
+    // --- Clamp with near plane ---
+    {
+        float3 n = -axisZ;                 // plane normal
+        float3 p = corner;               // point on near plane
+        float num = dot(ray_o - p, n);
+        float den = dot(ray_d, n);
+        if (!clip(num, den)) return {};
+    }
+
+    float tanx = tanf(theta_x);
+    {
+        auto apex = corner + axisX * DX + axisY * DY - axisZ * DZ_X;
+        // local basis coords
+        float3 o = ray_o - apex;
+        float ox = dot(o, axisX), oy = dot(o, axisY), oz = dot(o, axisZ);
+        float dx = dot(ray_d, axisX), dy = dot(ray_d, axisY), dz = dot(ray_d, axisZ);
+
+        if (!clip( ox - oz * tanx,  dx - dz * tanx)) return {};
+        if (!clip(-ox - oz * tanx, -dx - dz * tanx)) return {};
+    }
+
+    float tany = tanf(theta_y);
+    {
+        auto apex = corner + axisX * DX + axisY * DY - axisZ * DZ_Y;
+        // local basis coords
+        float3 o = ray_o - apex;
+        float ox = dot(o, axisX), oy = dot(o, axisY), oz = dot(o, axisZ);
+        float dx = dot(ray_d, axisX), dy = dot(ray_d, axisY), dz = dot(ray_d, axisZ);
+
+        if (!clip( oy - oz * tany,  dy - dz * tany)) return {};
+        if (!clip(-oy - oz * tany, -dy - dz * tany)) return {};
+    }
+    
+    return Interval {
+        (tmax > tmin && tmax > 0.0f),
+        tmin, tmax
+    };
+}
+
+static Interval intersectPyramid(
+    const float3& ray_o, const float3& ray_d,
+    const float3& apex, const float3& axis_z, 
+    const float3& axis_x, const float3& axis_y,
+    float theta_x, float theta_y)
+{
+    // local basis coords
+    float3 o = ray_o - apex;
+    float ox = dot(o, axis_x), oy = dot(o, axis_y), oz = dot(o, axis_z);
+    float dx = dot(ray_d, axis_x), dy = dot(ray_d, axis_y), dz = dot(ray_d, axis_z);
+
+    float tanx = tanf(theta_x);
+    float tany = tanf(theta_y);
+
+    float tmin = 0.0f;
+    float tmax = __FLT_MAX__;
+
+    // f(t) = num + t*den ; we want f(t) <= 0 (inside the half-space)
+    auto clip = [&](float num, float den) -> bool {
+        const float EPS = __FLT_EPSILON__;
+        if (fabs(den) < EPS) {
+            // ray direction parallel to plane normal: f is constant
+            return (num <= 0.0f); // if f(0) <= 0, ray is in that half-space for all t
+        }
+        float t = -num / den; // root where f(t) = 0
+        if (!isfinite(t)) return false;
+        if (den > 0.0f) {
+            // f increases with t → solution is t <= root → constrain tmax
+            if (t < tmax) tmax = t;
+        } else {
+            // den < 0: f decreases → solution is t >= root → raise tmin
+            if (t > tmin) tmin = t;
+        }
+        return tmax > tmin;
+    };
+
+    // Ensure point has positive w (pyramid opens in +w direction)
+    if (!clip(-oz, -dz)) return {};
+
+    // Four side planes:
+    // u - w*tanx <= 0  and  -u - w*tanx <= 0   (same idea for v)
+    if (!clip( ox - oz * tanx,  dx - dz * tanx)) return {};
+    if (!clip(-ox - oz * tanx, -dx - dz * tanx)) return {};
+    if (!clip( oy - oz * tany,  dy - dz * tany)) return {};
+    if (!clip(-oy - oz * tany, -dy - dz * tany)) return {};
+
+    return Interval {
+        (tmax > tmin && tmax > 0.0f),
+        tmin, tmax
+    };
+}
