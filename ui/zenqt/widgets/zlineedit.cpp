@@ -445,7 +445,26 @@ ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType target
     connect(this, &ZLineEdit::editingFinished, this, [=]() {
         QString newText = this->text();
         zeno::PrimVar old_var = m_var;
-        if (m_targetType == ui_gParamType_Int) {
+        if (m_targetType == gParamType_AnyNumeric) {
+            if (newText.isEmpty()) {
+                return;
+            }
+            bool bConvert = false;
+            int ival = newText.toInt(&bConvert);
+            if (bConvert) {
+                m_var = ival;
+            } else {
+                //可以尝试一下转float
+                float fval = newText.toFloat(&bConvert);
+                if (bConvert) {
+                    m_var = fval;
+                } else {
+                    //可能是别的表达式了，这时候直接套字符串进去就行
+                    m_var = newText.toStdString();
+                }
+            }
+        }
+        else if (m_targetType == ui_gParamType_Int) {
             if (newText.isEmpty()) {
                 return;
             }

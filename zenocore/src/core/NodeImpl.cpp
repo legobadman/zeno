@@ -1838,6 +1838,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     switch (type) {
     case gParamType_Int:
     case gParamType_Float:
+    case gParamType_AnyNumeric: //暂时不考虑默认值是向量的情况
     {
         if (editType == gParamType_PrimVariant) {
             zeno::PrimVar var = any_cast<zeno::PrimVar>(defl);

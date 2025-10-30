@@ -146,11 +146,14 @@ struct NumericOperator : zeno::INode {
     virtual void apply() override {
         auto op = ZImpl(get_param<std::string>("op_type"));
         zeno::reflect::Any ret;
-        auto lhs = ZImpl(get_input<zeno::NumericObject>("lhs"));
-        auto rhs = ZImpl(has_input("rhs")) ?
-            ZImpl(get_input<zeno::NumericObject>("rhs"))
-            : std::make_unique<zeno::NumericObject>(0);
-        
+        zeno::reflect::Any lhs_val = m_pAdapter->get_param_result("lhs");
+        zeno::reflect::Any rhs_val = m_pAdapter->get_param_result("rhs");
+
+        zeno::NumericValue lhs, rhs;
+        bool bSucceed = false;
+        lhs = zeno::AnyToNumeric(lhs_val, bSucceed);
+        rhs = zeno::AnyToNumeric(rhs_val, bSucceed);
+
         // todo: no ternary ops..
         std::visit([op, &ret](auto const &lhs, auto const &rhs) {
 
@@ -211,15 +214,16 @@ _PER_OP(distance)
             else throw zeno::Exception("Bad op name: " + op);
 #undef _PER_OP
 
-        }, lhs->value, rhs->value);
+        }, lhs, rhs);
 
         ZImpl(set_primitive_output("ret", ret));
     }
 };
 
 ZENO_DEFNODE(NumericOperator)({
-    {{gParamType_Float, "lhs", ""}, {gParamType_Float, "rhs", ""}},
-    {{gParamType_Float, "ret", ""}},
+    {{gParamType_AnyNumeric, "lhs", "0", zeno::Socket_Primitve, zeno::Lineedit},
+     {gParamType_AnyNumeric, "rhs", "0", zeno::Socket_Primitve, zeno::Lineedit}},
+    {{gParamType_AnyNumeric, "ret", ""}},
     {{"enum"
 #define _PER_FN(x) " " #x
     _PER_FN(add)
