@@ -60,6 +60,7 @@ namespace zeno
                     }
                     else if constexpr (std::is_same_v<T, zeno::vec3f> && (std::is_same_v<E, zfxfloatarr> || std::is_same_v<E, zfxintarr>)) {
                         return zeno::vec3f(val[0], val[1], val[2]);
+
                     }
                     else if constexpr (std::is_same_v<T, zeno::vec3i> && (std::is_same_v<E, zfxfloatarr> || std::is_same_v<E, zfxintarr>)) {
                         return zeno::vec3i(val[0], val[1], val[2]);
@@ -224,7 +225,7 @@ namespace zeno
             }
         }
 
-        static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
+        static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext, bool bInput) {
             ParamPrimitive paramData;
             std::vector<std::string> items;
 
@@ -238,7 +239,11 @@ namespace zeno
                     throw makeError<UnimplError>("cannot locate parent subnetnode, when refering params");
                 }
                 bool bExisted = false;
-                paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
+                if (bInput) {
+                    paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
+                } else {
+                    paramData = parSbnNode->get_output_prim_param(paramname, &bExisted);
+                }
                 if (!bExisted) {
                     throw makeError<UnimplError>("there is no param `" + paramname + "` in subnetnode");
                 }
@@ -250,13 +255,13 @@ namespace zeno
                 std::string paramname = items[0];
 
                 bool bExist = false;
-                paramData = spNode->get_input_prim_param(paramname, &bExist);
-                if (!bExist) {
-                    //试一下拿prim_output，有些情况，比如获取SubInput的port，是需要拿Output的
+                if (bInput) {
+                    paramData = spNode->get_input_prim_param(paramname, &bExist);
+                } else {
                     paramData = spNode->get_output_prim_param(paramname, &bExist);
-                    if (!bExist) {
-                        throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
-                    }
+                }
+                if (!bExist) {
+                    throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
                 }
             }
 
@@ -423,7 +428,7 @@ namespace zeno
             return spNode->get_output_obj(paramname);
         }
 
-        static ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext, bool bInput) {
             if (args.size() != 1)
                 throw makeError<UnimplError>("only support non-attr value when using ref");
 
@@ -434,7 +439,7 @@ namespace zeno
                 using E = typename T::value_type;
                 if constexpr (std::is_same_v<E, std::string>) {
                     const std::string& ref = vec[0];
-                    return getParamValueFromRef(ref, pContext);
+                    return getParamValueFromRef(ref, pContext, bInput);
                 }
                 else {
                     throw makeError<UnimplError>("not support type when call `callRef`");
@@ -732,6 +737,13 @@ namespace zeno
                     throw makeError<UnimplError>("not support type in `pow`");
                 }
                 }, args[0].value, args[1].value);
+        }
+
+        static ZfxVariable normalize(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeError<UnimplError>();
+            const auto& arg = args[0];
+            return ZfxVariable();
         }
 
         static ZfxVariable add_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -1641,7 +1653,10 @@ namespace zeno
         ZfxVariable callFunction(const std::string& funcname, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext)
         {
             if (funcname == "ref") {
-                return zeno::zfx::callRef(args, filter, pContext);
+                return zeno::zfx::callRef(args, filter, pContext, true);
+            }
+            if (funcname == "refout") {
+                return zeno::zfx::callRef(args, filter, pContext, false);
             }
             if (funcname == "param" || funcname == "parameter") {
                 return parameter(args, filter, pContext);
@@ -1669,6 +1684,9 @@ namespace zeno
             }
             if (funcname == "pow") {
                 return pow(args, filter, pContext);
+            }
+            if (funcname == "normalize") {
+                return normalize(args, filter, pContext);
             }
             if (funcname == "create_attr") {
                 return create_attr(args, filter, pContext);

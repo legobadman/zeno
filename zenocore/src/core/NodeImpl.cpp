@@ -1,4 +1,4 @@
-﻿#include <zeno/core/NodeImpl.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Session.h>
@@ -1451,7 +1451,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::any_cast_to_string(param_defl);
-        if (param_text.find("ref") != std::string::npos) {
+        if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
             refSegments.push_back(param_text);
         }
     }
@@ -1461,7 +1461,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (param_text.find("ref") != std::string::npos) {
+        if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
             refSegments.push_back(param_text);
         }
     }
@@ -1472,7 +1472,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (param_text.find("ref") != std::string::npos) {
+            if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
                 refSegments.push_back(param_text);
             }
         }

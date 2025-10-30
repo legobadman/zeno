@@ -2183,7 +2183,7 @@ namespace zeno {
         else
         {
             const std::string& funcname = std::get<std::string>(root->value);
-            if (funcname == "ref") {
+            if (funcname == "ref" || funcname == "refout") {
                 if (root->children.size() != 1) {
                     //可能只是编辑时候无意输入，没必要抛异常
                     return {};
