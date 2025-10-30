@@ -136,7 +136,7 @@ namespace zeno {
             execute(root, filter, pCtx);
         }
         else {
-            throw makeError<UnimplError>("no object or param constrain when executing zfx");
+            throw makeNodeError<UnimplError>(pCtx->spNode->get_path(), "no object or param constrain when executing zfx");
         }
 
         if (bConvertHalfEdge && spGeom) {
@@ -315,14 +315,14 @@ namespace zeno {
 
 
     template<typename Operator>
-    ZfxVariable calc_exp(const ZfxVariable& lhs, const ZfxVariable& rhs, const ZfxElemFilter& filter, Operator method) {
+    ZfxVariable calc_exp(const ZfxVariable& lhs, const ZfxVariable& rhs, const ZfxElemFilter& filter, Operator method, ZfxContext* pContext) {
         int N1 = lhs.size();
         int N2 = rhs.size();
         int minsize = min(N1, N2);
         int maxsize = max(N1, N2);
         if (N1 != N2) {
             if (minsize != 1)
-                throw makeError<UnimplError>("size invalidation on calc_exp");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "size invalidation on calc_exp");
         }
 
         ZfxVariable res;
@@ -349,7 +349,7 @@ namespace zeno {
                         result[i] = method(lval, rval);
                     }
                     else {
-                        throw makeError<UnimplError>("error type for mudulus");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error type for mudulus");
                     }
                 }
                 res.value = result;
@@ -372,7 +372,7 @@ namespace zeno {
                     res.value = result;
                 }
                 else {
-                    throw makeError<UnimplError>("error type for glmdot");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error type for glmdot");
                 }
             }
             else if constexpr (
@@ -418,7 +418,7 @@ namespace zeno {
                     std::is_same_v<Op, std::equal_to<>> ||
                     std::is_same_v<Op, std::not_equal_to<>>)
                 {
-                    throw makeError<UnimplError>("not support boolean exp for glm::vec");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support boolean exp for glm::vec");
                 }
                 else
                 {
@@ -446,7 +446,7 @@ namespace zeno {
                     std::is_same_v<Op, std::logical_and<>> ||
                     std::is_same_v<Op, std::equal_to<>> ||
                     std::is_same_v<Op, std::not_equal_to<>>) {
-                    throw makeError<UnimplError>("");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "");
                 }
                 else
                 {
@@ -474,7 +474,7 @@ namespace zeno {
                     std::is_same_v<Op, std::logical_and<>> ||
                     std::is_same_v<Op, std::equal_to<>> ||
                     std::is_same_v<Op, std::not_equal_to<>>) {
-                    throw makeError<UnimplError>("");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "");
                 }
                 else
                 {
@@ -503,7 +503,7 @@ namespace zeno {
                     std::is_same_v<Op, std::logical_and<>> ||
                     std::is_same_v<Op, std::equal_to<>> ||
                     std::is_same_v<Op, std::not_equal_to<>>) {
-                    throw makeError<UnimplError>("");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "");
                 }
                 else if constexpr (std::is_same_v<Op, std::multiplies<>>)
                 {
@@ -545,7 +545,7 @@ namespace zeno {
                 res.value = result;
             }
             else {
-                throw makeError<UnimplError>("unknown op or data type when executing `call_exp`");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unknown op or data type when executing `call_exp`");
             }
             }, lhs.value, rhs.value);
         return res;
@@ -573,7 +573,7 @@ namespace zeno {
         //glm::mat3 mm2 = glm::dot(mat1, mat2);
     }
 
-    static void set_array_element(ZfxVariable& zfxarr, ZfxVariable idxarr, const ZfxVariable& zfxvalue) {
+    static void set_array_element(ZfxVariable& zfxarr, ZfxVariable idxarr, const ZfxVariable& zfxvalue, ZfxContext* pContext) {
         std::visit([&](auto& target_vec, const auto& idx_vec, const auto& value_vec) {
             using T = std::decay_t<decltype(target_vec)>;
             using T_ElementType = typename T::value_type;
@@ -616,16 +616,16 @@ namespace zeno {
                     }
                 }
                 else {
-                    throw makeError<UnimplError>("unsupport type to call `set_array_element`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unsupport type to call `set_array_element`");
                 }
             }
             else {
-                throw makeError<UnimplError>("[zfx::set_array_element]idx type should be `int` or `float`");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "[zfx::set_array_element]idx type should be `int` or `float`");
             }
         }, zfxarr.value, idxarr.value, zfxvalue.value);
     }
 
-    static ZfxVariable get_array_element(const ZfxVariable& arr, const ZfxVariable& varidx) {
+    static ZfxVariable get_array_element(const ZfxVariable& arr, const ZfxVariable& varidx, ZfxContext* pContext) {
         //取的元素是指一个数据的分量，而不是某一个位元（点线面）的数据
         return std::visit([&](const auto& vec, const auto& idxvec)->ZfxVariable {
             using T = std::decay_t<decltype(vec)>;
@@ -657,16 +657,16 @@ namespace zeno {
                     return res;
                 }
                 else {
-                    throw makeError<UnimplError>("no support type to call `get_array_element`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "no support type to call `get_array_element`");
                 }
             }
             else {
-                throw makeError<UnimplError>("[zfx::get_array_element]idx type should be `int` or `float`");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "[zfx::get_array_element]idx type should be `int` or `float`");
             }
             }, arr.value, varidx.value);
     }
 
-    static ZfxVariable get_element_by_name(const ZfxVariable& arr, const std::string& name) {
+    static ZfxVariable get_element_by_name(const ZfxVariable& arr, const std::string& name, ZfxContext* pContext) {
         int idx = -1;
         if (name == "x") idx = 0;
         else if (name == "y") idx = 1;
@@ -674,26 +674,26 @@ namespace zeno {
         else if (name == "w") idx = 3;
         else
         {
-            throw makeError<UnimplError>("Indexing Exceed");
+            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Indexing Exceed");
         }
         ZfxVariable varidx;
         varidx.value = std::vector{ idx };
-        return get_array_element(arr, varidx);
+        return get_array_element(arr, varidx, pContext);
     }
 
-    static void set_element_by_name(ZfxVariable& arr, const std::string& name, const ZfxVariable& value) {
+    static void set_element_by_name(ZfxVariable& arr, const std::string& name, const ZfxVariable& value, ZfxContext* pContext) {
         int idx = -1;
         if (name == "x") idx = 0;
         else if (name == "y") idx = 1;
         else if (name == "z") idx = 2;
         else if (name == "w") idx = 3;
-        else throw makeError<UnimplError>("index error.");
+        else throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "index error.");
         ZfxVariable varidx;
         varidx.value = std::vector{ idx };
-        set_array_element(arr, varidx, value);
+        set_array_element(arr, varidx, value, pContext);
     }
 
-    static void selfIncOrDec(ZfxVariable& var, bool bInc) {
+    static void selfIncOrDec(ZfxVariable& var, bool bInc, ZfxContext* pContext) {
         std::visit([&](auto& vec) {
             using T = std::decay_t<decltype(vec)>;
             using E = typename T::value_type;
@@ -703,7 +703,7 @@ namespace zeno {
                 }
             }
             else {
-                throw makeError<UnimplError>("only support `int` and `float` to self inc or dec");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "only support `int` and `float` to self inc or dec");
             }
             }, var.value);
     }
@@ -736,7 +736,8 @@ namespace zeno {
                 }
             }
         }
-        throw makeError<KeyError>(name, "variable `" + name + "` not founded");
+        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "variable `" + name + "` not founded");
+        //throw makeError<KeyError>(name, "variable `" + name + "` not founded");
     }
 
     bool FunctionManager::declareVariable(const std::string& name) {
@@ -762,7 +763,7 @@ namespace zeno {
         return true;
     }
 
-    void FunctionManager::validateVar(operatorVals vartype, ZfxVariable& vars) {
+    void FunctionManager::validateVar(operatorVals vartype, ZfxVariable& vars, ZfxContext* pContext) {
         std::visit([&](auto& vec) {
             using T = std::decay_t<decltype(vec)>;
             using E = typename T::value_type;
@@ -778,7 +779,7 @@ namespace zeno {
                 }
                 case TYPE_FLOAT: break;
                 default: {
-                    throw makeError<UnimplError>("type dismatch `float`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch `float`");
                 }
                 }
             }
@@ -793,7 +794,7 @@ namespace zeno {
                 }
                 case TYPE_INT: break;
                 default: {
-                    throw makeError<UnimplError>("type dismatch `int`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch `int`");
                 }
                 }
             }
@@ -811,7 +812,7 @@ namespace zeno {
                     break;
                 }
                 case TYPE_INT_ARR: break;
-                default: throw makeError<UnimplError>("type dismatch `zfxintarr`");
+                default: throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch `zfxintarr`");
                 }
             }
             else if constexpr (std::is_same_v<E, zfxfloatarr>) {
@@ -830,7 +831,7 @@ namespace zeno {
                 case TYPE_VECTOR2: {
                     std::vector<glm::vec2> newvars(vec.size());
                     for (int i = 0; i < vec.size(); i++) {
-                        if (vec[i].size() != 2) throw makeError<UnimplError>("num of elements of arr dismatch");
+                        if (vec[i].size() != 2) throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "num of elements of arr dismatch");
                         newvars[i] = { vec[i][0], vec[i][1] };
                     }
                     break;
@@ -838,7 +839,7 @@ namespace zeno {
                 case TYPE_VECTOR3: {
                     std::vector<glm::vec3> newvars(vec.size());
                     for (int i = 0; i < vec.size(); i++) {
-                        if (vec[i].size() != 3) throw makeError<UnimplError>("num of elements of arr dismatch");
+                        if (vec[i].size() != 3) throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "num of elements of arr dismatch");
                         newvars[i] = { vec[i][0], vec[i][1], vec[i][2] };
                     }
                     break;
@@ -846,53 +847,53 @@ namespace zeno {
                 case TYPE_VECTOR4: {
                     std::vector<glm::vec4> newvars(vec.size());
                     for (int i = 0; i < vec.size(); i++) {
-                        if (vec[i].size() != 4) throw makeError<UnimplError>("num of elements of arr dismatch");
+                        if (vec[i].size() != 4) throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "num of elements of arr dismatch");
                         newvars[i] = { vec[i][0], vec[i][1], vec[i][2], vec[i][3] };
                     }
                     break;
                 }
                 case TYPE_FLOAT_ARR: break;
-                default: throw makeError<UnimplError>("type dismatch `zfxfloatarr`");
+                default: throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch `zfxfloatarr`");
                 }
             }
             else if constexpr (std::is_same_v<E, std::string>) {
                 if (vartype != TYPE_STRING) {
-                    throw makeError<UnimplError>("type dismatch TYPE_STRING");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_STRING");
                 }
             }
             else if constexpr (std::is_same_v<E, zfxstringarr>) {
                 if (vartype != TYPE_STRING_ARR) {
-                    throw makeError<UnimplError>("type dismatch TYPE_STRING_ARR");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_STRING_ARR");
                 }
             }
             else if constexpr (std::is_same_v<E, glm::vec2>) {
                 if (vartype != TYPE_VECTOR2) {
-                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR2");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_VECTOR2");
                 }
             }
             else if constexpr (std::is_same_v<E, glm::vec3>) {
                 if (vartype != TYPE_VECTOR3) {
-                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR3");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_VECTOR3");
                 }
             }
             else if constexpr (std::is_same_v<E, glm::vec4>) {
                 if (vartype != TYPE_VECTOR4) {
-                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR4");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_VECTOR4");
                 }
             }
             else if constexpr (std::is_same_v<E, glm::mat2>) {
                 if (vartype != TYPE_MATRIX2) {
-                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR2");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_VECTOR2");
                 }
             }
             else if constexpr (std::is_same_v<E, glm::mat3>) {
                 if (vartype != TYPE_MATRIX3) {
-                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR3");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_VECTOR3");
                 }
             }
             else if constexpr (std::is_same_v<E, glm::mat4>) {
                 if (vartype != TYPE_MATRIX4) {
-                    throw makeError<UnimplError>("type dismatch TYPE_VECTOR4");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "type dismatch TYPE_VECTOR4");
                 }
             }
             }, vars.value);
@@ -923,19 +924,19 @@ namespace zeno {
                 using E = typename T::value_type;
                 if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
                     if (dataType != TYPE_FLOAT_ARR && dataType != UNDEFINE_OP)
-                        throw makeError<UnimplError>("data type inconsistent `float`");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "data type inconsistent `float`");
                     dataType = TYPE_FLOAT_ARR;
                     floatarr.push_back(vec[0]);
                 }
                 else if constexpr (std::is_same_v<E, std::string>) {
                     if (dataType != TYPE_STRING_ARR && dataType != UNDEFINE_OP)
-                        throw makeError<UnimplError>("data type inconsistent `string`");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "data type inconsistent `string`");
                     dataType = TYPE_STRING_ARR;
                     strarr.push_back(vec[0]);
                 }
                 else if constexpr (std::is_same_v<E, zfxfloatarr>) {
                     if (dataType != UNDEFINE_OP && dataType != TYPE_MATRIX2 && dataType != TYPE_MATRIX3 && dataType != TYPE_MATRIX4) {
-                        throw makeError<UnimplError>("data type inconsistent");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "data type inconsistent");
                     }
 
                     auto& arr = vec[0];
@@ -970,15 +971,15 @@ namespace zeno {
                         m4[idx][3] = arr[3];
                     }
                     else {
-                        throw makeError<UnimplError>("mat element dims inconsistent");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "mat element dims inconsistent");
                     }
                 }
                 else if constexpr (std::is_same_v<T, zfxintarr>) {
                     //不考虑intarr，因为glm的vector/matrix都是储存float
-                    throw makeError<UnimplError>("unsupported type to construct array");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unsupported type to construct array");
                 }
                 else {
-                    throw makeError<UnimplError>("unsupported type to construct array");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unsupported type to construct array");
                 }
             }, arg.value);
         }
@@ -1040,7 +1041,7 @@ namespace zeno {
         return false;
     }
 
-    bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const {
+    bool FunctionManager::hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter, ZfxContext* pContext) const {
         return std::visit([&](auto& vec)->bool {
             using T = std::decay_t<decltype(vec)>;
             using E = typename T::value_type;
@@ -1067,7 +1068,7 @@ namespace zeno {
                 return bret;
             }
             else {
-                throw makeError<UnimplError>("not support type");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type");
             }
         }, cond.value);
     }
@@ -1089,7 +1090,7 @@ namespace zeno {
             }
         }
         else {
-            throw makeError<UnimplError>("only support Geometry when setting attributes");
+            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "only support Geometry when setting attributes");
         }
     }
 
@@ -1099,7 +1100,7 @@ namespace zeno {
                 commitToObject(pContext, val, "pos", filter);
             }
             else if (attrname == "@ptnum") {
-                throw makeError<UnimplError>("");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "");
             }
             else if (attrname == "@N") {
                 commitToObject(pContext, val, "nrm", filter);
@@ -1121,7 +1122,7 @@ namespace zeno {
         }
     }
 
-    static ZfxVariable getAttrValue_impl(std::shared_ptr<IObject> spObject, const std::string& attr_name) {
+    static ZfxVariable getAttrValue_impl(std::shared_ptr<IObject> spObject, const std::string& attr_name, ZfxContext* pContext) {
         if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
             if (attr_name == "pos")
             {
@@ -1163,7 +1164,7 @@ namespace zeno {
                     return res;
                 }
                 else {
-                    throw makeError<UnimplError>("the prim has no attr about normal, you can check whether the option `hasNormal` is on");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the prim has no attr about normal, you can check whether the option `hasNormal` is on");
                 }
             }
         }
@@ -1197,7 +1198,7 @@ namespace zeno {
                 //    return res;
                 //}
                 //else {
-                //    throw makeError<UnimplError>("the prim has no attr about normal, you can check whether the option `hasNormal` is on");
+                //    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the prim has no attr about normal, you can check whether the option `hasNormal` is on");
                 //}
             }
         }
@@ -1241,7 +1242,7 @@ namespace zeno {
 
     ZfxVariable FunctionManager::execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext) {
         if (!root) {
-            throw makeError<UnimplError>("Indexing Error.");
+            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Indexing Error.");
         }
         switch (root->type)
         {
@@ -1262,7 +1263,7 @@ namespace zeno {
 #endif
                 if (root->bAttr && root->opVal == COMPVISIT) {
                     if (root->children.size() != 1) {
-                        throw makeError<UnimplError>("Indexing Error on NameVisit");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Indexing Error on NameVisit");
                     }
                     std::string component = get_zfxvar<std::string>(root->children[0]->value);
                     char channel = 0;
@@ -1280,6 +1281,15 @@ namespace zeno {
                 else if (root->opVal == Indexing) {
 
                 }
+                else if (root->opVal == BulitInVar) {
+                    ZfxVariable res;
+                    if (varname == "$F") {
+                        res.value = std::vector<int>{ zeno::getSession().globalState->getFrameId() };
+                        return res;
+                    } else {
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unimpl build-in variable `" + varname + "`");
+                    }
+                }
 
                 if (root->bAttr && root->opVal == UNDEFINE_OP) {
                     ZfxVariable var = getAttrValue(varname, pContext);
@@ -1291,16 +1301,16 @@ namespace zeno {
                 switch (root->opVal) {
                 case Indexing: {
                     if (root->children.size() != 1) {
-                        throw makeError<UnimplError>("Indexing Error.");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Indexing Error.");
                     }
                     const ZfxVariable& idx = execute(root->children[0], filter, pContext);
-                    ZfxVariable elemvar = get_array_element(var, idx);
+                    ZfxVariable elemvar = get_array_element(var, idx, pContext);
                     return elemvar;
                 }
                 case BulitInVar: {
                     std::string attrname = get_zfxvar<std::string>(root->value);
                     if (attrname.size() < 2 || attrname[0] != '$') {
-                        throw makeError<UnimplError>("build in var");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "build in var");
                     }
                     attrname = attrname.substr(1);
                     if (attrname == "F") {
@@ -1314,13 +1324,13 @@ namespace zeno {
                     }
                 }
                 case AutoIncreaseFirst: {
-                    selfIncOrDec(var, true);
+                    selfIncOrDec(var, true, pContext);
                     if (root->bAttr)
                         var.bAttrUpdated = true;
                     return var;
                 }
                 case AutoDecreaseFirst: {
-                    selfIncOrDec(var, false);
+                    selfIncOrDec(var, false, pContext);
                     if (root->bAttr)
                         var.bAttrUpdated = true;
                     return var;
@@ -1328,7 +1338,7 @@ namespace zeno {
                 case AutoIncreaseLast:
                 case AutoDecreaseLast:   //在外面再自增/减
                 {
-                    selfIncOrDec(var, AutoIncreaseLast == root->opVal);
+                    selfIncOrDec(var, AutoIncreaseLast == root->opVal, pContext);
                     if (root->bAttr)
                         var.bAttrUpdated = true;
                     return var;
@@ -1341,7 +1351,7 @@ namespace zeno {
             case ASSIGNMENT: {
                 //赋值
                 if (root->children.size() != 2) {
-                    throw makeError<UnimplError>("assign variable failed.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "assign variable failed.");
                 }
 
                 std::shared_ptr<ZfxASTNode> valNode = root->children[1];
@@ -1369,7 +1379,7 @@ namespace zeno {
                     }
                     else if (zenvarNode->opVal == Indexing) {
                         //todo
-                        throw makeError<UnimplError>("Not support indexing for internal attributes");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Not support indexing for internal attributes");
                     }
 
                     AttrVar initValue = getInitValueFromVariant(res.value); //拿初值就行
@@ -1402,19 +1412,19 @@ namespace zeno {
 
                 if (root->opVal == AddAssign) {
                     ZfxVariable varres = execute(zenvarNode, filter, pContext);
-                    res = calc_exp(varres, res, filter, std::plus());
+                    res = calc_exp(varres, res, filter, std::plus(), pContext);
                 }
                 else if (root->opVal == MulAssign) {
                     ZfxVariable varres = execute(zenvarNode, filter, pContext);
-                    res = calc_exp(varres, res, filter, std::multiplies());
+                    res = calc_exp(varres, res, filter, std::multiplies(), pContext);
                 }
                 else if (root->opVal == SubAssign) {
                     ZfxVariable varres = execute(zenvarNode, filter, pContext);
-                    res = calc_exp(varres, res, filter, std::minus());
+                    res = calc_exp(varres, res, filter, std::minus(), pContext);
                 }
                 else if (root->opVal == DivAssign) {
                     ZfxVariable varres = execute(zenvarNode, filter, pContext);
-                    res = calc_exp(varres, res, filter, std::divides());
+                    res = calc_exp(varres, res, filter, std::divides(), pContext);
                 }
 
                 {
@@ -1437,7 +1447,7 @@ namespace zeno {
                                 }
                             }
                             else {
-                                throw makeError<UnimplError>("not support type when switch `ASSIGNMENT`");
+                                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type when switch `ASSIGNMENT`");
                             }
                             }, res.value);
                         return ZfxVariable();
@@ -1459,24 +1469,24 @@ namespace zeno {
                     switch (zenvarNode->opVal) {
                     case Indexing: {
                         if (zenvarNode->children.size() != 1) {
-                            throw makeError<UnimplError>("Indexing Error.");
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Indexing Error.");
                         }
                         const ZfxVariable& idx = execute(zenvarNode->children[0], filter, pContext);
-                        set_array_element(var, idx, res);
+                        set_array_element(var, idx, res, pContext);
                         return ZfxVariable();  //无需返回什么具体的值
                     }
                     case COMPVISIT: {
                         if (zenvarNode->children.size() != 1) {
-                            throw makeError<UnimplError>("Indexing Error on NameVisit");
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Indexing Error on NameVisit");
                         }
                         std::string component = get_zfxvar<std::string>(zenvarNode->children[0]->value);
-                        set_element_by_name(var, component, res);
+                        set_element_by_name(var, component, res, pContext);
                         return ZfxVariable();
                     }
                     case BulitInVar: {
                         //TODO: 什么情况下需要修改这种变量
                         //$F $T这些貌似不能通过脚本去改，houdini也是这样，不知道有没有例外
-                        throw makeError<UnimplError>("Read-only variable cannot be modified.");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "Read-only variable cannot be modified.");
                     }
                     case AutoDecreaseFirst:
                     case AutoIncreaseFirst:
@@ -1508,7 +1518,7 @@ namespace zeno {
                                     }
                                 }
                                 else {
-                                    throw makeError<UnimplError>("cannot assign when the type is not convertiable");
+                                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "cannot assign when the type is not convertiable");
                                 }
                                 }, res.value, var.value);
                             return ZfxVariable();
@@ -1526,7 +1536,7 @@ namespace zeno {
                 //变量定义
                 int nChildren = root->children.size();
                 if (nChildren != 2 && nChildren != 3) {
-                    throw makeError<UnimplError>("args of DECLARE");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "args of DECLARE");
                 }
                 std::shared_ptr<ZfxASTNode> typeNode = root->children[0];
                 std::shared_ptr<ZfxASTNode> nameNode = root->children[1];
@@ -1595,14 +1605,14 @@ namespace zeno {
                 //暂时不考虑自定义结构体
                 bool bret = declareVariable(varname);
                 if (!bret) {
-                    throw makeError<UnimplError>("assign variable failed.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "assign variable failed.");
                 }
 
-                validateVar(vartype, newvar);
+                validateVar(vartype, newvar, pContext);
 
                 bret = assignVariable(varname, newvar, pContext);
                 if (!bret) {
-                    throw makeError<UnimplError>("assign variable failed.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "assign variable failed.");
                 }
                 break;
             }
@@ -1611,7 +1621,7 @@ namespace zeno {
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 const std::string& funcname = get_zfxvar<std::string>(root->value);
                 if (funcname == "dot") {
-                    return calc_exp(args[0], args[1], filter, glmdot());
+                    return calc_exp(args[0], args[1], filter, glmdot(), pContext);
                 }
                 ZfxVariable result = eval(funcname, args, filter, pContext);
                 return result;
@@ -1619,10 +1629,10 @@ namespace zeno {
             case UNARY_EXP: {
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 if (args.size() != 1) {
-                    throw makeError<UnimplError>("num args of unary op should be 1");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "num args of unary op should be 1");
                 }
                 if (root->opVal != NOT) {
-                    throw makeError<UnimplError>("unknown unary op.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unknown unary op.");
                 }
 
                 const ZfxVariable& arg = args[0];
@@ -1649,7 +1659,7 @@ namespace zeno {
                     }
                     else {
                         //TODO: vectype
-                        throw makeError<UnimplError>("not support of nor operator for other types.");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support of nor operator for other types.");
                     }
                 }, arg.value);
 
@@ -1659,23 +1669,23 @@ namespace zeno {
                 //四则运算+ - * / %
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 if (args.size() != 2) {
-                    throw makeError<UnimplError>("op args");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "op args");
                 }
                 switch (root->opVal) {
-                case PLUS:  return calc_exp(args[0], args[1], filter, std::plus());
-                case MINUS: return calc_exp(args[0], args[1], filter, std::minus());
-                case MUL:   return calc_exp(args[0], args[1], filter, std::multiplies());
-                case DIV:   return calc_exp(args[0], args[1], filter, std::divides());
-                case MOD:   return calc_exp(args[0], args[1], filter, std::modulus());
-                case AND:   return calc_exp(args[0], args[1], filter, std::logical_and());
-                case OR:    return calc_exp(args[0], args[1], filter, std::logical_or());
+                case PLUS:  return calc_exp(args[0], args[1], filter, std::plus(), pContext);
+                case MINUS: return calc_exp(args[0], args[1], filter, std::minus(), pContext);
+                case MUL:   return calc_exp(args[0], args[1], filter, std::multiplies(), pContext);
+                case DIV:   return calc_exp(args[0], args[1], filter, std::divides(), pContext);
+                case MOD:   return calc_exp(args[0], args[1], filter, std::modulus(), pContext);
+                case AND:   return calc_exp(args[0], args[1], filter, std::logical_and(), pContext);
+                case OR:    return calc_exp(args[0], args[1], filter, std::logical_or(), pContext);
                 default:
-                    throw makeError<UnimplError>("op error");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "op error");
                 }
             }
             case NEGATIVE: {
                 if (root->children.size() != 1) {
-                    throw makeError<UnimplError>("NEGATIVE number is missing");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "NEGATIVE number is missing");
                 }
 
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
@@ -1716,14 +1726,14 @@ namespace zeno {
                         result.value = std::move(newvec);
                     }
                     else {
-                        throw makeError<UnimplError>("not support type in `NEGATIVE`");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type in `NEGATIVE`");
                     }
                     }, arg.value);
                 return result;
             }
             case ATTR_VISIT: {
                 if (root->children.size() != 2) {
-                    throw makeError<UnimplError>("op args at attr visit");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "op args at attr visit");
                 }
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
 
@@ -1761,7 +1771,7 @@ namespace zeno {
                                     }
                                     else {
                                         //unknown attr
-                                        throw makeError<UnimplError>("unknown attr when visit nodeparam");
+                                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unknown attr when visit nodeparam");
                                     }
                                 }
                                 else if constexpr (std::is_same_v<E3, ParamObject>) {
@@ -1769,7 +1779,7 @@ namespace zeno {
                                         return std::vector<int>{ !nodeparam.links.empty() };
                                     }
                                     else {
-                                        throw makeError<UnimplError>("unknown attr when visit nodeparam");
+                                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unknown attr when visit nodeparam");
                                     }
                                 }
                                 }, vec[0].var);
@@ -1793,11 +1803,11 @@ namespace zeno {
                             return ret;
                         }
                         else {
-                            throw makeError<UnimplError>("not support type in scope `ATTR_VISIT`");
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type in scope `ATTR_VISIT`");
                         }
                     }
                     else {
-                        throw makeError<UnimplError>("visit attr should be `string` type");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "visit attr should be `string` type");
                     }
                     }, args[0].value, args[1].value);
             }
@@ -1805,17 +1815,17 @@ namespace zeno {
                 //操作符
                 std::vector<ZfxVariable> args = process_args(root, filter, pContext);
                 if (args.size() != 2) {
-                    throw makeError<UnimplError>("compare op args");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "compare op args");
                 }
                 switch (root->opVal) {
-                case Less:          return calc_exp(args[0], args[1], filter, std::less());
-                case LessEqual:     return calc_exp(args[0], args[1], filter, std::less_equal());
-                case Greater:       return calc_exp(args[0], args[1], filter, std::greater());
-                case GreaterEqual:  return calc_exp(args[0], args[1], filter, std::greater_equal());
-                case Equal:         return calc_exp(args[0], args[1], filter, std::equal_to());
-                case NotEqual:      return calc_exp(args[0], args[1], filter, std::not_equal_to());
+                case Less:          return calc_exp(args[0], args[1], filter, std::less(), pContext);
+                case LessEqual:     return calc_exp(args[0], args[1], filter, std::less_equal(), pContext);
+                case Greater:       return calc_exp(args[0], args[1], filter, std::greater(), pContext);
+                case GreaterEqual:  return calc_exp(args[0], args[1], filter, std::greater_equal(), pContext);
+                case Equal:         return calc_exp(args[0], args[1], filter, std::equal_to(), pContext);
+                case NotEqual:      return calc_exp(args[0], args[1], filter, std::not_equal_to(), pContext);
                 default:
-                    throw makeError<UnimplError>("compare op error");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "compare op error");
                 }
             }
             case ARRAY:{
@@ -1827,14 +1837,14 @@ namespace zeno {
             case CONDEXP: {
                 //条件表达式
                 if (root->children.size() != 3) {
-                    throw makeError<UnimplError>("cond exp args");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "cond exp args");
                 }
                 auto pCondExp = root->children[0];
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
                 if (cond.size() == 1) {
                     //单值，不是向量
                     ZfxElemFilter newFilter, elseFilter;
-                    if (hasTrue(cond, filter, newFilter, elseFilter)) {
+                    if (hasTrue(cond, filter, newFilter, elseFilter, pContext)) {
                         auto pCodesExp = root->children[1];
                         return execute(pCodesExp, newFilter, pContext);
                     }
@@ -1847,7 +1857,7 @@ namespace zeno {
                     //向量的情况，每个分支都要执行，然后合并
                     ZfxElemFilter ifFilter, elseFilter;
                     ZfxVariable switch1, switch2, ret;
-                    hasTrue(cond, filter, ifFilter, elseFilter);
+                    hasTrue(cond, filter, ifFilter, elseFilter, pContext);
   
                     auto pifExp = root->children[1];
                     switch1 = execute(pifExp, ifFilter, pContext);
@@ -1872,24 +1882,24 @@ namespace zeno {
                             ret.value = std::move(result);
                         }
                         else {
-                            throw makeError<UnimplError>("different type in `CONDEXP`");
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "different type in `CONDEXP`");
                         }
                         }, switch1.value, switch2.value);
 
                     return ret;
                 }
-                throw makeError<UnimplError>("error condition on condexp");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error condition on condexp");
             }
             case IF:{
                 if (root->children.size() != 2 && root->children.size() != 3) {
-                    throw makeError<UnimplError>("if cond failed.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "if cond failed.");
                 }
                 auto pCondExp = root->children[0];
                 //todo: self inc
                 const ZfxVariable& cond = execute(pCondExp, filter, pContext);
                 if (cond.size() == 1) {//不是向量的情况
                     ZfxElemFilter newFilter, elseFilter;
-                    if (hasTrue(cond, filter, newFilter, elseFilter)) {
+                    if (hasTrue(cond, filter, newFilter, elseFilter, pContext)) {
                         auto pCodesExp = root->children[1];
                         execute(pCodesExp, newFilter, pContext);
                     } else if (root->children.size() == 3) {
@@ -1898,7 +1908,7 @@ namespace zeno {
                     }
                 } else {//向量的情况，每个分支都要执行
                     ZfxElemFilter ifFilter, elseFilter;
-                    if (hasTrue(cond, filter, ifFilter, elseFilter)) {
+                    if (hasTrue(cond, filter, ifFilter, elseFilter, pContext)) {
                         auto pCodesExp = root->children[1];
                         execute(pCodesExp, ifFilter, pContext);
                     }
@@ -1912,7 +1922,7 @@ namespace zeno {
             }
             case FOR:{
                 if (root->children.size() != 4) {
-                    throw makeError<UnimplError>("for failed.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "for failed.");
                 }
                 auto forBegin = root->children[0];
                 auto forCond = root->children[1];
@@ -1945,7 +1955,7 @@ namespace zeno {
 
                 ZfxVariable cond = execute(forCond, filter, pContext);
                 ZfxElemFilter ifFilter, elseFilter;
-                while (hasTrue(cond, filter, ifFilter, elseFilter)) {
+                while (hasTrue(cond, filter, ifFilter, elseFilter, pContext)) {
                     //TODO: check the passed element and mark in the newFilter.
                     execute(loopContent, ifFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
 
@@ -1972,7 +1982,7 @@ namespace zeno {
                     auto arrNode = nChild == 3 ? root->children[1] : root->children[2];
                     auto codeSeg = nChild == 3 ? root->children[2] : root->children[3];
                     if (!varNode || !arrNode || !codeSeg)
-                        throw makeError<UnimplError>("elements on foreach error.");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "elements on foreach error.");
 
                     const ZfxVariable& arr = execute(arrNode, filter, pContext);
 
@@ -2052,20 +2062,20 @@ namespace zeno {
                             }
                         }
                         else {
-                            throw makeError<UnimplError>("not support type in `FOREACH`");
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type in `FOREACH`");
                         }
                         }, arr.value);
 
                     return ZfxVariable();
                 }
                 else {
-                    throw makeError<UnimplError>("foreach error.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "foreach error.");
                 }
                 break;
             }
             case WHILE:{
                 if (root->children.size() != 2) {
-                    throw makeError<UnimplError>("while failed.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "while failed.");
                 }
    
                 auto forCond = root->children[0];
@@ -2077,7 +2087,7 @@ namespace zeno {
 
                 auto cond = execute(forCond, filter, pContext);
                 ZfxElemFilter newFilter, elseFilter;
-                while (hasTrue(cond, filter, newFilter, elseFilter)) {
+                while (hasTrue(cond, filter, newFilter, elseFilter, pContext)) {
                     execute(loopContent, newFilter, pContext);     //CodeBlock里面可能会多压栈一次，没关系，变量都是看得到的
 
                     if (pContext->jumpFlag == JUMP_BREAK)
@@ -2093,7 +2103,7 @@ namespace zeno {
             }
             case DOWHILE:{
                 if (root->children.size() != 2) {
-                    throw makeError<UnimplError>("while failed.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "while failed.");
                 }
 
                 auto forCond = root->children[1];
@@ -2118,7 +2128,7 @@ namespace zeno {
                     if (pContext->jumpFlag == JUMP_RETURN)
                         return ZfxVariable();
                     cond = execute(forCond, newFilter, pContext);
-                } while (hasTrue(cond, newFilter, newFilter2, elsefilter));
+                } while (hasTrue(cond, newFilter, newFilter2, elsefilter, pContext));
 
                 break;
             }
@@ -2238,7 +2248,7 @@ namespace zeno {
             {
                 if (root->children.size() != 2)
                 {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "FOUROPERATIONS");
                 }
                 zfxvariant lhs = calc(root->children[0], pContext);
                 zfxvariant rhs = calc(root->children[1], pContext);
@@ -2256,7 +2266,7 @@ namespace zeno {
                 }
                 else if (var == "/") {
                     if (std::get<float>(rhs) == 0)
-                        throw makeError<UnimplError>();
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "div zero.");
                     return std::get<float>(lhs) / std::get<float>(rhs);
                 }
                 else {
@@ -2267,7 +2277,7 @@ namespace zeno {
             {
                 if (root->children.size() != 1)
                 {
-                    throw makeError<UnimplError>("NEGATIVE number is missing");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "NEGATIVE number is missing");
                 }
                 zfxvariant val = calc(root->children[0], pContext);
                 val = std::visit([&](auto& arg) -> zfxvariant {
@@ -2288,7 +2298,7 @@ namespace zeno {
                         return glm::vec4{ -1 * arg[0], -1 * arg[1], -1 * arg[2], -1 * arg[3] };
                     }
                     else {
-                        throw makeError<UnimplError>("NEGATIVE number type is invalid");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "NEGATIVE number type is invalid");
                     }
                 }, val);
                 return val;

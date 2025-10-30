@@ -44,13 +44,13 @@ namespace zeno {
         ZfxVariable eval(const std::string& func, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext);
         void pushStack();
         void popStack();
-        bool hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter) const;
+        bool hasTrue(const ZfxVariable& cond, const ZfxElemFilter& filter, ZfxElemFilter& ifFilter, ZfxElemFilter& elseFilter, ZfxContext* pContext) const;
         bool hasGeomTopoQueryModify(std::shared_ptr<ZfxASTNode> pNode) const;
 
         ZfxVariable& getVariableRef(const std::string& name, ZfxContext* pContext);
         bool declareVariable(const std::string& name);
         bool assignVariable(const std::string& name, ZfxVariable var, ZfxContext* pContext);
-        void validateVar(operatorVals varType, ZfxVariable& newvar);
+        void validateVar(operatorVals varType, ZfxVariable& newvar, ZfxContext* pContext);
         ZfxVariable parseArray(std::shared_ptr<ZfxASTNode> pNode, ZfxElemFilter& filter, ZfxContext* pContext);
 
         std::vector<ZfxVariable> process_args(std::shared_ptr<ZfxASTNode> parent, ZfxElemFilter& filter, ZfxContext* pContext);
