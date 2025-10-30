@@ -25,6 +25,10 @@ namespace zeno
         return m_pAdapter->clone_input(zsString2Std(param));
     }
 
+    zany INode::move_input(const zeno::String& param) {
+        return m_pAdapter->move_input(zsString2Std(param));
+    }
+
     std::unique_ptr<PrimitiveObject> INode::clone_input_PrimitiveObject(const zeno::String& param) {
         auto rawPtr = m_pAdapter->get_input_obj(zsString2Std(param));
         if (dynamic_cast<PrimitiveObject*>(rawPtr)) {

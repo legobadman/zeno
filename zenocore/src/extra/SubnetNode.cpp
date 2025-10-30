@@ -375,15 +375,23 @@ void SubnetNode::apply() {
         auto suboutput = m_subgraph->getNode(suboutput_node);
         //suboutput的结果是放在Input的port上面（因为Suboutput放一个输出参数感觉怪怪的）
         bool bPrimoutput = suboutput->get_input_object_params().empty();
-        zany result = suboutput->clone_input("port");
-        if (result) {
-            bSetOutput = true;
-            zany spObject = result->clone();
-            if (!bPrimoutput) {
-                spObject->update_key(stdString2zs(get_uuid_path()));
+        if (!bPrimoutput && suboutput->is_nocache()) {
+            zany result = suboutput->move_input("port");
+            suboutput->mark_takeover();
+            result->update_key(stdString2zs(get_uuid_path()));
+            set_output(suboutput_node, std::move(result));
+        }
+        else {
+            zany result = suboutput->clone_input("port");
+            if (result) {
+                bSetOutput = true;
+                zany spObject = result->clone();
+                if (!bPrimoutput) {
+                    spObject->update_key(stdString2zs(get_uuid_path()));
+                }
+                bool ret = set_output(suboutput_node, std::move(spObject));
+                assert(ret);
             }
-            bool ret = set_output(suboutput_node, std::move(spObject));
-            assert(ret);
         }
     }
 

@@ -234,6 +234,8 @@ namespace zeno
         bool has_link_input(std::string const& id) const;
         bool has_input(std::string const& id) const;
         zany clone_input(std::string const& id) const;
+        zany move_input(std::string const& id);
+        zany move_output(std::string const& id);
         //get_input很麻烦，因为数值型的“对象”是新建出来的
         //IObject* get_input(std::string const& id) const;
         IObject* get_input_obj(std::string const& id) const;

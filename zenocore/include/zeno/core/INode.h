@@ -24,6 +24,7 @@ namespace zeno
 
         IObject* get_input(const zeno::String& param);
         zany clone_input(const zeno::String& param);
+        zany move_input(const zeno::String& param);
         std::unique_ptr<PrimitiveObject> clone_input_PrimitiveObject(const zeno::String& param);
         PrimitiveObject* get_input_PrimitiveObject(const zeno::String& param);
         std::unique_ptr<GeometryObject_Adapter> clone_input_Geometry(const zeno::String& param);

@@ -996,6 +996,11 @@ void ZenoNodeNew::markNodeStatus(QmlNodeRunStatus::Value status)
         ZASSERT_EXIT(m_dirtyMarker);
         m_dirtyMarker->setColors(false, clrMarker);
     }
+    else if (m_nodeStatus == QmlNodeRunStatus::ResultTaken) {
+        QColor clrMarker(240, 194, 248);
+        ZASSERT_EXIT(m_dirtyMarker);
+        m_dirtyMarker->setColors(false, clrMarker);
+    }
     else {
         if (m_errorTip)
             m_errorTip->hide();

@@ -2064,21 +2064,22 @@ zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
 
     doApply(exec_context.pContext);
 
-    //这里先不考虑takeout的情况，因为这使得临界区变得复杂
-    bool bAllTaken = false;
-    auto result = get_output_obj(exec_context.out_param);
-    //zany result = takeOutputObject(exec_context.out_param, exec_context.in_param, bAllTaken);
-    if (!result) {
-        throw makeNodeError<UnimplError>(get_path(), "no result");
-    }
-
-    if (bAllTaken && is_nocache()) {
+    zany res;
+    //TODO: take over要设计成只限制一对一连接，否则遇到没法clone的对象，就没法move给两个下游了
+    if (is_nocache()) {
         //TODO: 是否要在这里清理outputNode?
         //其实可以，因为这里并不是存粹的数学函数，必然有修改当前节点状态的可能。
+        res = move_output(exec_context.out_param);
         mark_takeover();
     }
-    auto spRes = result->clone();
-    return spRes;
+    else {
+        auto result = get_output_obj(exec_context.out_param);
+        if (!result) {
+            throw makeNodeError<UnimplError>(get_path(), "no result");
+        }
+        res = result->clone();
+    }
+    return res;
 }
 
 zeno::reflect::Any NodeImpl::execute_get_numeric(const ExecuteContext& exec_context) {
@@ -3771,6 +3772,22 @@ IObject* NodeImpl::get_input(std::string const& id) const {
 }
 */
 
+zany NodeImpl::move_input(std::string const& id) {
+    auto iter = m_inputObjs.find(id);
+    if (iter == m_inputObjs.end()) {
+        throw makeNodeError<KeyError>(get_path(), id, "move_input");
+    }
+    return std::move(iter->second.spObject);
+}
+
+zany NodeImpl::move_output(std::string const& id) {
+    auto iter = m_outputObjs.find(id);
+    if (iter == m_outputObjs.end()) {
+        throw makeNodeError<KeyError>(get_path(), id, "move_input");
+    }
+    return std::move(iter->second.spObject);
+}
+
 zany NodeImpl::clone_input(std::string const &id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {
@@ -4045,7 +4062,7 @@ void NodeImpl::mark_takeover() {
     m_takenover = true;
     clearCalcResults();
     mark_dirty(false);
-    reportStatus(false, Node_RunSucceed);
+    reportStatus(false, Node_ResultTaken);
 }
 
 bool NodeImpl::is_takenover() const {
