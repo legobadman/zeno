@@ -655,44 +655,37 @@ struct RectShape {
 
     inline void SampleAsLight(LightSampleRecord* lsr, const float2& uu, const float3& shadingP) {  
 
-        auto uv = uu; 
-        auto _PDF_ = 0.0f;
+        auto uv = uu;
+        auto solidAngle = 0.0f;
 
-        if (isEllipse) {
+        SphericalRect squad;
+        SphericalRectInit(squad, shadingP, v, axisX, lenX, axisY, lenY);
+        bool SphericalSample = isfinite(squad.S) && squad.S > MinSphericalSampleArea;
 
-            auto tt = pbrt::SampleUniformDiskConcentric(uu);
-            tt = tt * 0.5f + 0.5f;
-            uv = tt;
-            _PDF_ = PDF();
-
-        } else {
-
-            SphericalRect squad;
-            SphericalRectInit(squad, shadingP, v, axisX, lenX, axisY, lenY); 
+        if (SphericalSample) {
+            solidAngle = squad.S;
             uv = SphericalRectSample(squad, uu.x, uu.y);
-            _PDF_ = squad.S;
         }
-
+        
         lsr->n = normalize(normal);
         lsr->p = v + axisX * lenX * uv.x + axisY * lenY * uv.y;
 
         lsr->uv = uv;
 
         lsr->dir = lsr->p - shadingP;
-        lsr->dist = length(lsr->dir);
+        auto lensqr = dot(lsr->dir, lsr->dir);
+        lsr->dist = sqrtf(lensqr);
         lsr->dir = lsr->dir / lsr->dist;
-
         lsr->NoL = dot(-lsr->dir, lsr->n);
-        lsr->PDF = 0.0f;
 
-        if (_PDF_ > __FLT_EPSILON__ && fabsf(lsr->NoL) > __FLT_EPSILON__) 
-        {
-            if (isEllipse) {
-                lsr->PDF = lsr->dist * lsr->dist * _PDF_ / fabsf(lsr->NoL);
-            } else {
-                lsr->PDF = 1.0f / _PDF_;
-            }
+        if (!SphericalSample) {
+            solidAngle = fabsf(lsr->NoL) * Area() / lensqr;
         }
+        
+        if (solidAngle > __FLT_EPSILON__ && fabsf(lsr->NoL) > __FLT_EPSILON__) 
+            lsr->PDF = 1.0f / solidAngle;
+        else
+            lsr->PDF = 0.0f;
     }
 
     inline bool hitAsLight(LightSampleRecord* lsr, const float3& ray_orig, const float3& ray_dir) {
