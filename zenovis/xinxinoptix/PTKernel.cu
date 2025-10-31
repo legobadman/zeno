@@ -45,31 +45,27 @@ vec3 ACESFilm(vec3 x)
   float e = 0.14f;
   return clamp((x*(a*x+b))/(x*(c*x+d)+e), vec3(0), vec3(1));
 }
+// Function to apply creative color adjustments
 static __inline__ __device__
-vec3 ACESFitted(vec3 color, float gamma)
+vec3 applyLook(vec3 color) {
+    return color * vec3(1.1,1.05,0.9);
+}
+static __inline__ __device__
+vec3 ACESFitted(vec3 color, float gamma=1.0f)
 {
-//    const mat3x3 ACESInputMat = mat3x3
-//        (
-//            0.59719, 0.35458, 0.04823,
-//            0.07600, 0.90834, 0.01566,
-//            0.02840, 0.13383, 0.83777
-//        );
-//    mat3x3 ACESOutputMat = mat3x3
-//    (
-//        1.60475, -0.53108, -0.07367,
-//        -0.10208,  1.10813, -0.00605,
-//        -0.00327, -0.07276,  1.07602
-//    );
-    vec3 v1 = vec3(0.59719, 0.35458, 0.04823);
-    vec3 v2 = vec3(0.07600, 0.90834, 0.01566);
-    vec3 v3 = vec3(0.02840, 0.13383, 0.83777);
+
+    vec3 v1 = vec3(0.5975,  0.3546,  0.0479);
+    vec3 v2 = vec3(0.0761,  0.9009,  0.0230);
+    vec3 v3 = vec3(0.0001,  0.0292,  0.9707);
     color = vec3(dot(color, v1), dot(color, v2), dot(color, v3));
     // Apply RRT and ODT
-    color = RRTAndODTFit(color);
+    //color = clamp(RRTAndODTFit(color), vec3(0), vec3(1));
+    //color = applyLook(color);
+    color = ACESFilm(color);
 
-    v1 = vec3(1.60475, -0.53108, -0.07367);
-    v2 = vec3(-0.10208,  1.10813, -0.00605);
-    v3 = vec3(-0.00327, -0.07276,  1.07602);
+    v1 = vec3(1.6047, -0.5310, -0.0737);
+    v2 = vec3(-0.1020,  1.1081, -0.0061);
+    v3 = vec3(-0.0082, -0.0861,  1.0943);
     color = vec3(dot(color, v1), dot(color, v2), dot(color, v3));
 
     // Clamp to [0, 1]
@@ -92,7 +88,7 @@ vec3 PhysicalCamera(vec3 in,
   vec3 mapped;
   float exposure = middleGrey / ( (1000.0f / 65.0f) * aperture * aperture / (iso * shutterSpeed) );
   mapped = in * exposure;
-  return  enableExposure? (enableACES? ACESFilm(mapped):mapped ) : (enableACES? ACESFilm(in) : in);
+  return  enableExposure? (enableACES? ACESFitted(mapped):mapped ) : (enableACES? ACESFitted(in) : in);
 }
 __inline__ __device__ bool isBadVector(const float3 & vector) {
 
@@ -100,7 +96,7 @@ __inline__ __device__ bool isBadVector(const float3 & vector) {
     return bad? true : lengthSquared(vector) == 0.0f;
 }
 
-void homoVolumeLight(const RadiancePRD& prd, float _tmax_, float3 ray_origin, float3 ray_dir, float3& result, float3& _attenuation) {
+void homoVolumeLight(const RadiancePRD& prd, float _tmax_, float3 ray_origin, float3 ray_dir, float3& result, float3& attenuation) {
     
     const auto& vol = prd.vol;
     // if (vol.homo_t1 <= vol.homo_t0) return;
@@ -164,9 +160,10 @@ void homoVolumeLight(const RadiancePRD& prd, float _tmax_, float3 ray_origin, fl
     };
 
     DirectLighting<true>(shadowPRD, new_orig+params.cam.eye, ray_dir, evalBxDF);
-    
-    result += _attenuation * shadowPRD.radiance * exp(-extinction * dt);
-    _attenuation *= transmittance;
+    shadowPRD.radiance *= weight;
+
+    result = shadowPRD.radiance * expf(-extinction * dt);
+    attenuation = expf(-extinction * tmax);
 };
 
 extern "C" __global__ void __raygen__rg()
@@ -332,6 +329,7 @@ extern "C" __global__ void __raygen__rg()
         }
 
         RadiancePRD prd;
+        prd.print_info = params.click_dirty && params.click_coord.x==idx.x && params.click_coord.y==idx.y;
         prd.vdcseed = vdcseed;
         prd.offset = seed1;
         prd.offset2 = seed1;
@@ -355,6 +353,7 @@ extern "C" __global__ void __raygen__rg()
 
         prd.depth = 0;
         prd.diffDepth = 0;
+        prd.alphaDepth = 0;
         prd.isSS = false;
         prd.curMatIdx = 0;
         prd.test_distance = false;
@@ -371,6 +370,10 @@ extern "C" __global__ void __raygen__rg()
     #if DENOISE 
         prd.denoise = true;
     #endif
+        rnd(prd.seed);
+        vdcrnd(prd.offset, prd.vdcseed);
+        vdcrnd(prd.offset, prd.vdcseed);
+        vdcrnd(prd.offset, prd.vdcseed);
 
         // Primary Ray
         auto _attenuation = prd.attenuation;
@@ -378,7 +381,7 @@ extern "C" __global__ void __raygen__rg()
             prd.alphaHit = false;
             traceRadiance(params.handle, ray_origin, ray_direction, prd._tmin_, prd.maxDistance, &prd, _mask_);
         } while (prd.alphaHit); // skip alpha
-        
+
         if ( params.click_dirty && params.click_coord.x==idx.x && params.click_coord.y==idx.y )
         {
             float3 click_pos {0,0,0};
@@ -419,11 +422,19 @@ extern "C" __global__ void __raygen__rg()
             _tmin_ = prd._tmin_;
             _mask_ = prd._mask_;
 
-            if (prd.vol.homo_t1 > prd.vol.homo_t0 && prd._tmax_ > prd.vol.homo_t0)
-                homoVolumeLight(prd, prd._tmax_, ray_origin, ray_direction, result, _attenuation);
+
+            if (prd.vol.homo_t1 > prd.vol.homo_t0 && prd._tmax_ > prd.vol.homo_t0) {
+                float3 vol_lighting;
+                float3 vol_attenuation;
+                homoVolumeLight(prd, prd._tmax_, ray_origin, ray_direction, vol_lighting, vol_attenuation);
+                result += vol_lighting * _attenuation;
+
+                _attenuation *= vol_attenuation;
+                prd.attenuation *= vol_attenuation;
+            }
             
             prd.vol = {};
-            prd._tmin_ = 0;
+            prd._tmin_ = _tmin_;
             prd._tmax_ = FLT_MAX;
             prd._mask_ = EverythingMask;
 
@@ -434,7 +445,7 @@ extern "C" __global__ void __raygen__rg()
                 auto temp_radiance = prd.radiance * _attenuation;
 
                 float upperBound = prd.fromDiff?10.0f:1000.0f;
-                float3 clampped = clamp(vec3(temp_radiance), vec3(0), vec3(10));
+                float3 clampped = clamp(vec3(temp_radiance), vec3(0), vec3(10.0f));
 
                 result += prd.depth>1?clampped:temp_radiance;
             #if __AOV__
@@ -456,18 +467,24 @@ extern "C" __global__ void __raygen__rg()
 
             if(prd.depth > 1){
                 float RRprob = max(max(prd.attenuation.x, prd.attenuation.y), prd.attenuation.z);
-                RRprob = min(RRprob, 0.99f);
+                RRprob = min(RRprob, 1.0f);
+                
                 if(rnd(prd.seed) > RRprob) {
                     break;
                 } else {
-                    prd.attenuation = prd.attenuation / ( RRprob + 0.0001);
+                    prd.attenuation = prd.attenuation / RRprob;
                 }
             }
 
-            _attenuation = prd.attenuation;
-            if(prd.diffDepth > 0)
-                _mask_ &= ~VolumeMaskAnalytics;
-            traceRadiance(params.handle, ray_origin, ray_direction, _tmin_, prd.maxDistance, &prd, _mask_);
+
+//            if(prd.diffDepth > 1)
+//                _mask_ &= ~VolumeMaskAnalytics;
+            prd._tmin_ = _tmin_;
+            do {
+                _attenuation = prd.attenuation;
+                prd.alphaHit = false;
+                traceRadiance(params.handle, ray_origin, ray_direction, prd._tmin_, prd.maxDistance, &prd, _mask_);
+            }while(prd.alphaHit);
         }
         seed = prd.seed;
 //        seed1 = prd.offset;
@@ -554,7 +571,7 @@ extern "C" __global__ void __raygen__rg()
 
     dither = (dither-0.5f);
     if (need_tone_mapping) {
-        accum_color = ACESFilm(accum_color);
+        accum_color = ACESFitted(accum_color);
     }
     auto& pixel = params.frame_buffer[image_index];
     pixel = makeSRGB( accum_color, 2.2f, dither);
@@ -574,7 +591,7 @@ extern "C" __global__ void __miss__radiance()
     MissData* rt_data  = reinterpret_cast<MissData*>( optixGetSbtDataPointer() );
     RadiancePRD* prd = getPRD();
     prd->countEmitted = false;
-    
+    prd->radiance *= 0;
     if(prd->medium != DisneyBSDF::PhaseFunctions::isotropic){
         float upperBound = 100.0f;
         float envPdf = 0.0f;
@@ -596,14 +613,14 @@ extern "C" __global__ void __miss__radiance()
 
         envPdf *= params.skyLightProbablity();
 
-        float misWeight = BRDFBasics::PowerHeuristic(prd->samplePdf,envPdf, 2.0f);
+        float misWeight = BRDFBasics::PowerHeuristic(prd->samplePdf,envPdf,1.0f);
 
         misWeight = misWeight>0.0f?misWeight:0.0f;
         misWeight = envPdf>0.0f?misWeight:1.0f;
         misWeight = prd->depth>=1?misWeight:1.0f;
         misWeight = prd->samplePdf>0.0f?misWeight:1.0f;
         
-        prd->radiance = misWeight * skysample;
+        prd->radiance = skysample*misWeight;
 
         if (params.show_background == false) {
             prd->radiance = prd->depth>=1?prd->radiance:make_float3(0,0,0);
@@ -622,13 +639,17 @@ extern "C" __global__ void __miss__radiance()
     vec3 transmittance;
     if (ss_alpha.x < 0.0f) { // is inside Glass
         transmittance = DisneyBSDF::Transmission(sigma_t, optixGetRayTmax());
+
     } else {
         transmittance = DisneyBSDF::Transmission2(sigma_t * ss_alpha, sigma_t, prd->channelPDF, optixGetRayTmax(), false);
     }
 
     prd->attenuation *= transmittance;//DisneyBSDF::Transmission(prd->extinction,optixGetRayTmax());
-    prd->origin += prd->direction * optixGetRayTmax();
+
+    prd->origin += prd->direction * ( optixGetRayTmax());
+    prd->_tmin_ = 0.0f;
     prd->direction = DisneyBSDF::SampleScatterDirection(prd->seed);
+
 
     vec3 channelPDF = vec3(1.0f/3.0f);
     prd->channelPDF = channelPDF;
@@ -636,8 +657,9 @@ extern "C" __global__ void __miss__radiance()
         prd->maxDistance = DisneyBSDF::SampleDistance(prd->seed, prd->scatterDistance);
     } else
     {
-        prd->maxDistance =
-            DisneyBSDF::SampleDistance2(prd->seed, vec3(prd->attenuation) * ss_alpha, sigma_t, channelPDF);
+//        prd->maxDistance =
+//            DisneyBSDF::SampleDistance2(prd->seed, vec3(prd->attenuation/prd->sssAttenBegin) * ss_alpha, sigma_t, channelPDF);
+        prd->maxDistance = DisneyBSDF::sample_scatter_distance(prd->attenuation/prd->sssAttenBegin,sigma_t*ss_alpha,sigma_t,prd->seed,channelPDF);
         prd->channelPDF = channelPDF;
     }
 

@@ -58,6 +58,7 @@ glm::quat CameraControl::getRotation() {
     return scene->camera->m_rotation;
 }
 void CameraControl::setRotation(glm::quat value) {
+    value = glm::normalize(value);
     auto *scene = m_zenovis->getSession()->get_scene();
     scene->camera->m_rotation = value;
 }
@@ -344,17 +345,27 @@ void CameraControl::fakeMouseMoveEvent(QMouseEvent *event)
         } else if ((rotateKey == modifiers) && (event->buttons() & rotateButton)) {
             float step = 4.0f;
             dx *= step;
-            if (getUpDir().y < 0) {
-                dx *= -1;
-            }
+//            if (getUpDir().y < 0) {
+//                dx *= -1;
+//            }
             dy *= step;
             // rot yaw pitch
             setOrthoMode(false);
             {
                 auto rot = getRotation();
                 auto beforeMat = glm::toMat3(rot);
-                rot = glm::angleAxis(-dx, glm::vec3(0, 1, 0)) * rot;
-                rot = rot * glm::angleAxis(-dy, glm::vec3(1, 0, 0));
+//                if (glm::abs(getRightDir().y) < 0.001) {
+//                    rot = glm::angleAxis(-dx, glm::vec3(0, 1, 0)) * rot;
+//                    rot = rot * glm::angleAxis(-dy, glm::vec3(1, 0, 0));
+//                }
+//                else {
+//                    auto ref_z = glm::normalize(glm::cross(getRightDir(), glm::vec3(0, 1, 0)));
+//                    auto ref_y = glm::normalize(glm::cross(ref_z, getRightDir()));
+//                    rot = glm::angleAxis(-dy, getRightDir()) * rot;
+//                    rot = glm::angleAxis(-dx, ref_y) * rot;
+//                }
+                rot = glm::angleAxis(-dy, getRightDir()) * rot;
+                rot = glm::angleAxis(-dx, getUpDir()) * rot;
                 setRotation(rot);
                 auto afterMat = glm::toMat3(rot);
                 if (zeno::getSession().userData().get2<bool>("viewport-FPN-navigation", false)) {
@@ -568,33 +579,70 @@ void CameraControl::fakeMouseDoubleClickEvent(QMouseEvent *event)
 		if (ids.has_value()) {
 			auto [obj_id, mat_id, prim_id] = ids.value();
             ZASSERT_EXIT(!mat_id.empty());
+            ZenoMainWindow* pWin = zenoApp->getMainWindow();
+            ZASSERT_EXIT(pWin);
+            ZenoGraphsEditor* pEditor = pWin->getAnyEditor();
+            ZASSERT_EXIT(pEditor);
 			if (IGraphsModel* pGraphsModel = zenoApp->graphsManagment()->currentModel())
 			{
-				for (const auto& subgIdx : pGraphsModel->subgraphsIndice(SUBGRAPH_METERIAL))
-				{
-                    auto s = subgIdx.data(ROLE_OBJNAME).toString();
-					if (subgIdx.data(ROLE_MTLID).toString() == QString::fromStdString(mat_id))
-					{
-						if (ZenoMainWindow* pWin = zenoApp->getMainWindow()) {
-                            if (ZenoGraphsEditor* pEditor = pWin->getAnyEditor()) {
-								pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", "");
+                auto& const checkNodesInSubg = [pGraphsModel, pEditor, &mat_id](auto subgIdx) {
+                    for (int i = 0; i < pGraphsModel->itemCount(subgIdx); i++) {
+                        auto nodeidx = pGraphsModel->index(i, subgIdx);
+                        if (pGraphsModel->IsSubGraphNode(nodeidx)) {
+                            if (nodeidx.data(ROLE_CUSTOM_OBJNAME).toString() == QString::fromStdString(mat_id)) {
+                                pEditor->activateTab(nodeidx.data(ROLE_OBJNAME).toString(), "", "");
                                 return;
                             }
-						}
-					}
+                            INPUT_SOCKETS inputs = nodeidx.data(ROLE_INPUTS).value<INPUT_SOCKETS>();
+                            for (auto& input : inputs) {
+                                if (input.first.toLower() == QString("matname") &&
+                                    input.second.info.defaultValue.toString() == QString::fromStdString(mat_id)) {
+                                    pEditor->activateTab(nodeidx.data(ROLE_OBJNAME).toString(), "", "");
+                                    return;
+                                }
+                            }
+                        }
+                        else if (nodeidx.data(ROLE_OBJNAME).toString() == "SubInput") {
+                            PARAMS_INFO params = nodeidx.data(ROLE_PARAMETERS).value<PARAMS_INFO>();
+                            if (params["name"].value.toString().toLower() == QString("matname") &&
+                                params["defl"].value.toString() == QString::fromStdString(mat_id)) {
+                                pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", nodeidx.data(ROLE_OBJID).toString(), false, false);
+                                return;
+                            }
+                        }
+                    }
+                };
+                QVector<QPersistentModelIndex> subgExceptMat;
+				for (int i = 0; i < pGraphsModel->rowCount(); i++)
+				{
+                    auto subgIdx = pGraphsModel->index(i, 0);
+                    if (subgIdx.data(ROLE_SUBGRAPH_TYPE).toInt() == SUBGRAPH_TYPE::SUBGRAPH_METERIAL) {
+                        if (subgIdx.data(ROLE_MTLID).toString() == QString::fromStdString(mat_id)) {
+                            pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", "");
+                            return;
+                        }
+                        checkNodesInSubg(subgIdx);
+                    }
+                    else {
+                        subgExceptMat.push_back(subgIdx);
+                    }
 				}
+                for (const auto& subgIdx : subgExceptMat) {
+                    if (subgIdx.data(ROLE_OBJNAME).toString() == QString::fromStdString(mat_id)) {
+                        pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", "");
+                        return;
+                    }
+                    checkNodesInSubg(subgIdx);
+                }
+
                 QList<SEARCH_RESULT> resLst = pGraphsModel->search("ShaderFinalize", SEARCH_NODECLS, SEARCH_MATCH_EXACTLY, {});
                 for (auto item : resLst)
                 {
 					INPUT_SOCKETS inputs = item.targetIdx.data(ROLE_INPUTS).value<INPUT_SOCKETS>();
 					if (inputs.find("mtlid") != inputs.end()) {
 						if (inputs["mtlid"].info.defaultValue.toString() == QString::fromStdString(mat_id)) {
-							if (ZenoMainWindow* pWin = zenoApp->getMainWindow()) {
-								if (ZenoGraphsEditor* pEditor = pWin->getAnyEditor()) {
-									pEditor->activateTab(item.subgIdx.data(ROLE_OBJNAME).toString(), "", item.targetIdx.data(ROLE_OBJID).toString(), false, false);
-									return;
-								}
-							}
+                            pEditor->activateTab(item.subgIdx.data(ROLE_OBJNAME).toString(), "", item.targetIdx.data(ROLE_OBJID).toString(), false, false);
+                            return;
 						}
 					}
                 }
