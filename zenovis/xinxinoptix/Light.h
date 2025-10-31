@@ -317,9 +317,6 @@ void DirectLighting(ShadowPRD& shadowPRD, float3 shadingP, const float3& ray_dir
             }
             else if (zeno::LightShape::Plane == light.shape || zeno::LightShape::Ellipse == light.shape) 
             {
-                if (should_print) {
-                    printf("arelight weight = %f \n", pick.prob);
-                }
                 const auto& rect = light.rect;
                 
                 if (light.spreadMajor < 1.0f) {

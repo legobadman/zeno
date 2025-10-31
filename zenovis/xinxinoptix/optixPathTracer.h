@@ -215,8 +215,7 @@ struct Params
         if (sky_texture == 0llu || skycdf == nullptr) 
             return -0.0f;
 
-        static const float DefaultSkyLightProbablity = 0.5f;
-        return this->num_lights>0? DefaultSkyLightProbablity * sky_strength : 1.0f;
+        return this->num_lights>0? fminf(0.5f, sky_strength) : 1.0f;
     }
 
     OptixTraversableHandle handle;
