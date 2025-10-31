@@ -107,19 +107,19 @@ void homoVolumeLight(const RadiancePRD& prd, float _tmax_, float3 ray_origin, fl
     VolumeOut fog_out;
     optixDirectCall<void, void*, VolumeOut&>( prd.vol.homo_matid, nullptr, fog_out);
 
-    const vec3& extinction = fog_out.extinction;
+    const vec3& sigma_t = fog_out.extinction;
     auto seed = prd.seed;
 
-    auto sum = dot(extinction, vec3(1.0f));
-    auto weight = (sum > 1e-6f)? extinction/sum : vec3(1.f/3.f);
+    auto sum = dot(sigma_t, vec3(1.0f));
+    auto weight = (sum > 1e-6f)? sigma_t/sum : vec3(1.f/3.f);
 
-    const auto transmittance = exp(-extinction * tmax);
+    const auto transmittance = exp(-sigma_t * tmax);
     const auto cdf = 1.0f - transmittance;
 
     auto Xi = rnd(seed);
     int K = (Xi < weight[0]) ? 0 : (Xi < weight[0] + weight[1]) ? 1 : 2;
 
-    const float& sig_K = extinction[K];
+    const float& sig_K = sigma_t[K];
     const float& cdf_K = cdf[K];
 
     float sa = 1.0 - rnd(seed) * cdf_K; //Sample of the survival CDF
@@ -141,29 +141,31 @@ void homoVolumeLight(const RadiancePRD& prd, float _tmax_, float3 ray_origin, fl
     auto evalBxDF = [&](const float3& _wi_, const float3& _wo_, float& thisPDF) -> float3 {
 
         auto dt = shadowPRD.fog_dt;
-        auto va = extinction * dt;
-        auto pdf = vec3(1.0f);
+        vec3 va = sigma_t * dt;
+        vec3 tr = vec3(1.0f);
         #pragma unroll
         for (char i=0; i<3; ++i) {
-            auto s = va[i];
+            auto& s = va[i];
             // Use second-order Taylor expansion: exp(-s) ≈ 1 - s + s^2/2
             if (s < 1e-4f)
-                pdf[i] = extinction[i] * (1.0f - s + 0.5f * s * s);
+                tr[i] = (1.0f - s + 0.5f * s * s);
             else
-                pdf[i] = extinction[i] * expf(-s);
+                tr[i] = expf(-s);
         }
+        vec3 pdf = sigma_t * tr;
         pdf = pdf / cdf; // bounded pdf
 
         thisPDF = dot(pdf, weight);
+        float3 sigma_s = fog_out.albedo * sigma_t; // cancel sigma_t in pdf
+
         pbrt::HenyeyGreenstein hg(fog_out.anisotropy);
-        return fog_out.albedo * hg.p(_wo_, _wi_) * fog_out.albedoAmp;
+        return sigma_s * tr * hg.p(_wo_, _wi_);
     };
-
+    
     DirectLighting<true>(shadowPRD, new_orig+params.cam.eye, ray_dir, evalBxDF);
-    shadowPRD.radiance *= weight;
 
-    result = shadowPRD.radiance * expf(-extinction * dt);
-    attenuation = expf(-extinction * tmax);
+    result = shadowPRD.radiance * fog_out.albedoAmp;
+    attenuation = transmittance;
 };
 
 extern "C" __global__ void __raygen__rg()
