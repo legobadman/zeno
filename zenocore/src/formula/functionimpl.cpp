@@ -739,11 +739,69 @@ namespace zeno
                 }, args[0].value, args[1].value);
         }
 
+        //模长归一化
         static ZfxVariable normalize(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
                 throw makeError<UnimplError>();
             const auto& arg = args[0];
-            return ZfxVariable();
+            return std::visit([&](const auto& arg_vec)->ZfxVariable {
+                using T = std::decay_t<decltype(arg_vec)>;
+                using E = typename T::value_type;
+
+                ZfxVariable res;
+                if constexpr (std::is_same_v<E, zfxintarr> || std::is_same_v < E, zfxfloatarr>) {
+                    using V = typename E::value_type;
+                    zfxfloatarr resArr(0, arg_vec[0].size());
+                    auto& arr = arg_vec[0];
+
+                    float l2_norm = 0.0f;
+                    for (const auto& elem : arr) {
+                        l2_norm += elem * elem;
+                    }
+                    l2_norm = std::sqrt(l2_norm);
+
+                    if (l2_norm != 0.0f) {
+                        for (const auto& elem : arr) {
+                            resArr.push_back(elem / l2_norm);
+                        }
+                    }
+                    res.value = std::vector<zfxfloatarr>{ resArr };
+                    return res;
+                } else if constexpr (std::is_same_v<E, zfxvec2arr> || std::is_same_v<E, zfxvec3arr> || std::is_same_v<E, zfxvec4arr>) {
+                    auto arr = arg_vec[0];
+                    for (auto& vec : arr) {
+                        vec = glm::normalize(vec);
+                    }
+                    res.value = std::vector<E>{ arr };
+                    return res;
+                } else if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                    zfxfloatarr resArr(0, arg_vec.size());
+                    auto& arr = arg_vec;
+
+                    float l2_norm = 0.0f;
+                    for (const auto& elem : arr) {
+                        l2_norm += elem * elem;
+                    }
+                    l2_norm = std::sqrt(l2_norm);
+
+                    if (l2_norm != 0.0f) {
+                        for (const auto& elem : arr) {
+                            resArr.push_back(elem / l2_norm);
+                        }
+                    }
+                    res.value = resArr;
+                    return res;
+                } else if constexpr (std::is_same_v<E, glm::vec2> || std::is_same_v<E, glm::vec3> || std::is_same_v<E, glm::vec4>) {
+                    auto arr = arg_vec;
+                    for (auto& vec : arr) {
+                        vec = glm::normalize(vec);
+                    }
+                    res.value = arr;
+                    return res;
+                } else {
+                    throw makeError<UnimplError>("not support type in `normalize`");
+                }
+            }, arg.value);
         }
 
         static ZfxVariable add_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
