@@ -476,9 +476,9 @@ extern "C" __global__ void __raygen__rg()
                 }
             }
 
+            if(prd.diffDepth > 0)
+                _mask_ &= ~VolumeMaskAnalytics;
 
-//            if(prd.diffDepth > 1)
-//                _mask_ &= ~VolumeMaskAnalytics;
             prd._tmin_ = _tmin_;
             do {
                 _attenuation = prd.attenuation;
