@@ -700,7 +700,9 @@ void NodeImpl::preApply(CalcContext* pContext) {
                     if (!spLink->fromparam->spObject)
                         throw makeNodeError<UnimplError>(get_path(), "cannot get object from upstream");
                     //task为空，因为之前已经被执行过一次了，上游已经算好了
-                    param.spObject = spLink->fromparam->spObject->clone();
+                    //没有task，说明上游不需要计算，如果param.spObject已经缓存了，就不需要再到上游克隆
+                    if (!param.spObject)
+                        param.spObject = spLink->fromparam->spObject->clone();
                 }
                 param.spObject->update_key(stdString2zs(m_uuid));
             }
@@ -1519,49 +1521,70 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
 
 std::unique_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcContext* pContext) {
     //连接的元素是list还是list of list的规则，参照Graph::addLink下注释。
-    bool bDirecyLink = false;
+    bool bDirectLink = false;
     const auto& inLinks = in_param->links;
-#if 0
+#if 1
     if (inLinks.size() == 1)
     {
+        auto dict_register_all_items = [&](DictObject* dictobj) {
+            if (!dictobj->has_change_info()) {
+                //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
+                for (const auto& [dictkey, obj] : dictobj->lut) {
+                    std::string key = zsString2Std(obj->key());
+                    if (key.empty())
+                        continue;
+                    //直接全部收集
+                    dictobj->m_new_added.insert(key);
+                }
+            }
+            };
+
         std::shared_ptr<ObjectLink> spLink = inLinks.front();
         auto out_param = spLink->fromparam;
-        std::shared_ptr<INode> outNode = out_param->m_wpNode;
+        auto outNode = out_param->m_wpNode;
         assert(outNode);
 
         if (out_param->type == in_param->type && spLink->tokey.empty()) //根据Graph::addLink规则，类型相同且无key视为直连
         {
-            bDirecyLink = true;
-            if (outNode->is_dirty()) {
-                GraphException::translated([&] {
-                    outNode->doApply(pContext);
-                    }, outNode.get());
-            }
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-            assert(out_param->type == gParamType_Dict);
+            std::unique_ptr<DictObject> spDict;
+            bDirectLink = true;
 
-            //规则如普通节点，都是直接拷贝
-#if 0
-            if (in_param->socketType == Socket_Owning) {
-                spDict = std::dynamic_pointer_cast<DictObject>(outResult->move_clone());
+            if (spLink->upstream_task.valid()) {
+                auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
+                auto _spDict = dynamic_cast<DictObject*>(outResult.get());
+                if (!_spDict) {
+                    throw makeNodeError(get_path(), "no list object received");
+                }
+                spDict.reset(static_cast<DictObject*>(outResult.release()));
+                //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
+                dict_register_all_items(spDict.get());
+                spDict->update_key(out_param->spObject->key());
             }
-            else if (in_param->socketType == Socket_ReadOnly) {
-                spDict = std::dynamic_pointer_cast<DictObject>(outResult);
+            else {
+                assert(!outNode->is_dirty());
+                //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
+                if (in_param->spObject) {
+                    //相当于转一次又给回外面。。。
+                    spDict = safe_uniqueptr_cast<DictObject>(std::move(in_param->spObject));
+                }
+                else {
+                    //outNode已经算好了，直接拿应该不会导致race condition
+                    spDict = safe_uniqueptr_cast<DictObject>(out_param->spObject->clone());
+                    //新的list，这里全部内容都要登记到new_added.
+                    dict_register_all_items(spDict.get());
+                    spDict->update_key(out_param->spObject->key());
+                }
             }
-            else if (in_param->socketType == Socket_Clone)
-#endif
-            {
-                //里面的元素也要clone
-                std::shared_ptr<DictObject> outDict = std::dynamic_pointer_cast<DictObject>(outResult);
-                spDict = std::dynamic_pointer_cast<DictObject>(outDict->clone_by_key(m_uuid));
+            if (!spDict) {
+                throw makeNodeError<UnimplError>(get_path(), "no outResult List from output");
             }
-            spDict->update_key(m_uuid);
+            bDirectLink = true;
+            add_prefix_key(spDict.get(), m_uuid);
             return spDict;
         }
     }
 #endif
-    if (!bDirecyLink)
+    if (!bDirectLink)
     {
         std::map<std::string, IObject*> existObjs;
         if (in_param->spObject) {
@@ -2301,7 +2324,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
     if (m_bypass) {
         set_name(m_name);
     }
-    if (m_name == "MergeScene1") {//}&& pContext->curr_iter == 1) {
+    if (m_name == "ForEachEnd1") {//}&& pContext->curr_iter == 1) {
         set_name(m_name);
     }
 #endif
@@ -3311,7 +3334,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     obj_outputs_old.erase(oldname);
 
                 auto& spParam = self_obj_params[newname];
-                spParam.type = param.type;
+                if (param.type != spParam.type) {
+                    update_param_type(spParam.name, false, param.bInput, param.type);
+                }
                 spParam.name = newname;
                 spParam.bWildcard = param.bWildcard;
                 if (param.bInput)
@@ -3384,7 +3409,10 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
 
                 auto& spParam = self_prim_params[newname];
                 spParam.defl = param.defl;
+                bool bChangeType = false;
                 if (param.type != spParam.type) {
+                    bChangeType = true;
+                    update_param_type(spParam.name, true, param.bInput, param.type);
                     spParam.defl = initAnyDeflValue(spParam.type);
                 }
                 convertToEditVar(spParam.defl, spParam.type);
@@ -3392,15 +3420,8 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 spParam.name = newname;
                 spParam.socketType = Socket_Primitve;
                 spParam.bWildcard = param.bWildcard;
-                if (param.bInput)
+                if (param.bInput && bChangeType)
                 {
-                    if (param.type != spParam.type)
-                    {
-                        update_param_type(spParam.name, true, param.bInput, param.type);
-                        //update_param_type(spParam->name, param.type);
-                        //if (auto spNode = subgraph->getNode(oldname))
-                        //    spNode->update_param_type("port", param.type);
-                    }
                     update_param_control(spParam.name, param.control);
                     update_param_control_prop(spParam.name, param.ctrlProps);
                 }
@@ -3474,7 +3495,7 @@ void NodeImpl::init(const NodeData& dat)
     if (!dat.name.empty())
         m_name = dat.name;
 
-    if (m_name == "FormSceneTree2_2") {
+    if (m_name == "RigidRecenterPrim") {
         int j;
         j = -0;
     }
@@ -3886,6 +3907,8 @@ zany NodeImpl::clone_input(std::string const &id) const {
     else {
         auto iter2 = m_inputObjs.find(id);
         if (iter2 != m_inputObjs.end()) {
+            if (!iter2->second.spObject)
+                return nullptr;
             return iter2->second.spObject->clone();
         }
         throw makeNodeError<KeyError>(get_path(), id, "get_input");
