@@ -1259,9 +1259,14 @@ void ZEditParamLayoutDlg::onOutputPrimTypeChanged(int idx) {
     const QModelIndex& currIdx = m_ui->outputsView->currentIndex();
     if (!currIdx.isValid())
         return;
+
     QStandardItem* pItem = m_paramsLayoutM_outputs->itemFromIndex(currIdx);
-    auto type = m_ui->cbOutputPrim->itemData(idx);
+    QVariant varType = m_ui->cbOutputPrim->itemData(idx);
+    zeno::ParamType type = varType.toULongLong();
     pItem->setData(type, QtRole::ROLE_PARAM_TYPE);
+
+    zeno::reflect::Any anyVal = zeno::initAnyDeflValue(type);
+    pItem->setData(QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
 }
 
 void ZEditParamLayoutDlg::onObjTypeChanged(int idx)
@@ -1322,6 +1327,7 @@ void ZEditParamLayoutDlg::onControlItemChanged(int idx)
         switchStackProperties(ctrl, pItem);
         pItem->setData(getIcon(pItem), Qt::DecorationRole);
         pItem->setData(QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
+
     }
 }
 
