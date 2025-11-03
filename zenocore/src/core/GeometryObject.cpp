@@ -94,6 +94,7 @@ namespace zeno
         for (auto& [attr_name, var_vec] : spPrim->tris.attrs) {
             create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
         }
+        m_uvs = spPrim->uvs;
     }
 
     GeometryObject::GeometryObject(const GeometryObject& rhs)
@@ -161,6 +162,7 @@ namespace zeno
         spPrim->loops.values = primTopo->loops.values;
         spPrim->polys.values = primTopo->polys.values;
         spPrim->edges.values = primTopo->edges.values;
+        spPrim->uvs = m_uvs;
         return spPrim;
     }
 

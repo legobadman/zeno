@@ -222,6 +222,8 @@ namespace zeno
         std::map<std::string, AttributeVector> m_geo_attrs;
         std::map<std::string, AttributeVector> m_vert_attrs;
 
+        AttrVector<vec2f> m_uvs;  //不清楚uvs是否挂在点线面，所以先放在这里中转
+
         const GeomTopoType m_type;
     };
 

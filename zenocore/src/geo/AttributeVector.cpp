@@ -209,9 +209,12 @@ namespace zeno {
                     throw makeError<UnimplError>("type dismatch, cannot change type of attrvector");
                 std::vector<float> xvec(m_size);
                 std::vector<float> yvec(m_size);
-                for (size_t i = 0; i < m_size; i++) {
-                    xvec[i] = val[i][0];
-                    yvec[i] = val[i][1];
+                //有些属性就是没有数据，只能留空
+                if (val.size() > 0) {
+                    for (size_t i = 0; i < m_size; i++) {
+                        xvec[i] = val[i][0];
+                        yvec[i] = val[i][1];
+                    }
                 }
                 x_comp = std::make_shared<AttrColumn>(xvec, m_size);
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
@@ -223,10 +226,13 @@ namespace zeno {
                 std::vector<float> xvec(m_size);
                 std::vector<float> yvec(m_size);
                 std::vector<float> zvec(m_size);
-                for (size_t i = 0; i < m_size; i++) {
-                    xvec[i] = val[i][0];
-                    yvec[i] = val[i][1];
-                    zvec[i] = val[i][2];
+                //有些属性就是没有数据，只能留空
+                if (val.size() > 0) {
+                    for (size_t i = 0; i < m_size; i++) {
+                        xvec[i] = val[i][0];
+                        yvec[i] = val[i][1];
+                        zvec[i] = val[i][2];
+                    }
                 }
                 x_comp = std::make_shared<AttrColumn>(xvec, m_size);
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
@@ -240,11 +246,14 @@ namespace zeno {
                 std::vector<float> yvec(m_size);
                 std::vector<float> zvec(m_size);
                 std::vector<float> wvec(m_size);
-                for (size_t i = 0; i < m_size; i++) {
-                    xvec[i] = val[i][0];
-                    yvec[i] = val[i][1];
-                    zvec[i] = val[i][2];
-                    wvec[i] = val[i][3];
+                //有些属性就是没有数据，只能留空
+                if (val.size() > 0) {
+                    for (size_t i = 0; i < m_size; i++) {
+                        xvec[i] = val[i][0];
+                        yvec[i] = val[i][1];
+                        zvec[i] = val[i][2];
+                        wvec[i] = val[i][3];
+                    }
                 }
                 x_comp = std::make_shared<AttrColumn>(xvec, m_size);
                 y_comp = std::make_shared<AttrColumn>(yvec, m_size);
