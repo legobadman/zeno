@@ -383,8 +383,8 @@ namespace zenoio
         zeno::ReferencesData& refs)
     {
         //debug:
-#if 0
-        if (nodename == "Seed") {
+#if 1
+        if (nodename == "RigidRecenterPrim") {
             int j;
             j = 0;
         }
@@ -427,7 +427,7 @@ namespace zenoio
         }
 
         assert(sockObj.HasMember("type"));
-        if (bSubnetNode || bObjectParam || nodeCls == "SubInput" || nodeCls == "SubOutput") {
+        if (bSubnetNode || bObjectParam || nodeCls == "SubInput" || nodeCls == "SubOutput" || nodeCls == "Subnet") {
             paramType = zeno::convertToType(sockObj["type"].GetString());
         }
         else {

@@ -1150,6 +1150,25 @@ namespace zenoio
                     writer.Int(vec[3]);
                     writer.EndArray();
                 }
+                else if (anyType == gParamType_PrimVariant) {
+                    const auto& primvar = any_cast<zeno::PrimVar>(any);
+                    std::visit([&](auto&& _val) {
+                        using T = std::decay_t<decltype(_val)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            writer.Int(_val);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            writer.Double(_val);
+                        }
+                        else if constexpr (std::is_same_v<T, std::string>) {
+                            writer.String(_val.c_str());
+                        }
+                        else {
+                            assert(false);
+                            writer.Null();
+                        }
+                        }, primvar);
+                }
                 else {
                     assert(false);
                     writer.Null();
