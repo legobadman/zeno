@@ -21,6 +21,7 @@ namespace zeno {
         void resize(const size_t sz);
         void append(zany&& spObj);
         IObject* get(int index) const;
+        zany move(int index);
         void set(const std::vector<zany>& arr);
         void set(size_t index, zany&& obj);
         void mark_dirty(int index);

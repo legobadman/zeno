@@ -20,6 +20,7 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     void resize(size_t sz);
     void clear();
     IObject* get(int index);
+    zany move(int index);
     zeno::ZsVector<IObject*> get();
     void push_back(zany&& obj);
     //void set(const zeno::Vector<zany>& arr);
@@ -30,6 +31,18 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     std::vector<int> get2_int() const;
     std::vector<float> get2_float() const;
     std::vector<std::string> get2_string() const;
+
+    template <class T>
+    std::vector<T*> getRaw() {
+        const zeno::ZsVector<IObject*>& _vecList = get();
+        std::vector<T*> resList;
+        for (int i = 0; i < _vecList.size(); i++) {
+            if (auto _obj = dynamic_cast<T*>(_vecList[i])) {
+                resList.push_back(_obj);
+            }
+        }
+        return resList;
+    }
 
     std::unique_ptr<ListObject_impl> m_impl;
 };

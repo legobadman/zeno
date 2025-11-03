@@ -72,6 +72,10 @@ namespace zeno
         return m_impl->get(index);
     }
 
+    zany ListObject::move(int index) {
+        return m_impl->move(index);
+    }
+
     zeno::ZsVector<IObject*> ListObject::get() {
         std::vector<IObject*> v = m_impl->get();
         zeno::ZsVector<IObject*> vec(v.size());
@@ -149,6 +153,10 @@ namespace zeno
         if (0 > index || index >= m_objects.size())
             return nullptr;
         return m_objects[index].get();
+    }
+
+    zany ListObject_impl::move(int index) {
+        return std::move(m_objects[index]);
     }
 
     void ListObject_impl::set(size_t index, zany&& obj) {

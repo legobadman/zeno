@@ -25,6 +25,8 @@ struct ZENO_API DictObject : IObjectClone<DictObject> {
         return res;
     }
 
+    bool has_change_info() const;
+
     DictObject& operator=(const DictObject&);
 
     //TODO: 目前还没有自开发的map和set，所以这里没法保证abi兼容
