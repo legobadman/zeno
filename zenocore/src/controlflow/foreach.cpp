@@ -13,7 +13,7 @@ namespace zeno {
     }
 
     void ForEachBegin::apply() {
-        zany init_object = clone_input("Initial Object");
+        IObject* init_object = get_input("Initial Object");
         std::string m_fetch_mehod = zsString2Std(get_input2_string("Fetch Method"));
         std::string m_foreach_end_path = zsString2Std(get_input2_string("ForEachEnd Path"));
         int m_current_iteration = get_input2_int("Current Iteration");
@@ -27,12 +27,12 @@ namespace zeno {
             //看foreachend是迭代object还是container,如果是container，就得取element元素
             auto itemethod = foreach_end->get_input2_string("Iterate Method");
             if (itemethod == "By Count") {
-                set_output("Output Object", std::move(init_object));
+                set_output("Output Object", init_object->clone());
                 return;
             }
             else if (itemethod == "By Container") {
                 //TODO: 目前只支持list，后续可支持dict
-                if (auto spList = dynamic_cast<ListObject*>(init_object.get())) {
+                if (auto spList = dynamic_cast<ListObject*>(init_object)) {
                     int n = spList->m_impl->size();
                     if (m_current_iteration >= 0 && m_current_iteration < n) {
                         auto elemObj = spList->m_impl->get(m_current_iteration);
@@ -55,7 +55,7 @@ namespace zeno {
         else if (m_fetch_mehod == "From Last Feedback") {
             int startValue = foreach_end->get_input2_int("Start Value");
             if (startValue == m_current_iteration) {
-                set_output("Output Object", std::move(init_object));
+                set_output("Output Object", init_object->clone());
                 return;
             }
             else {
@@ -64,14 +64,14 @@ namespace zeno {
                     set_output("Output Object", outputObj->clone());
                 }
                 else {
-                    set_output("Output Object", std::move(init_object));
+                    set_output("Output Object", init_object->clone());
                 }
                 //outputObj of last iteration as a feedback to next procedure.
                 return;
             }
         }
         else if (m_fetch_mehod == "Element of Object") {
-            if (auto spList = dynamic_cast<ListObject*>(init_object.get())) {
+            if (auto spList = dynamic_cast<ListObject*>(init_object)) {
                 zany elemObj = spList->get(m_current_iteration)->clone();
                 set_output("Output Object", std::move(elemObj));
             }
@@ -176,14 +176,14 @@ namespace zeno {
         }
         else if (iter_method == "By Container") {
             auto foreachbegin_impl = foreach_begin->m_pAdapter;
-            zany initobj = foreachbegin_impl->clone_input("Initial Object");
+            IObject* initobj = foreachbegin_impl->get_input_obj("Initial Object");
             if (!initobj && foreachbegin_impl->is_dirty()) {
                 //可能上游还没算，先把上游的依赖解了
                 //foreach_begin->preApply(nullptr);
                 foreachbegin_impl->execute(pContext);
-                initobj = foreachbegin_impl->clone_input("Initial Object");
+                initobj = foreachbegin_impl->get_input_obj("Initial Object");
             }
-            if (auto spList = dynamic_cast<ListObject*>(initobj.get())) {
+            if (auto spList = dynamic_cast<ListObject*>(initobj)) {
                 int n = spList->m_impl->size();
                 if (current_iter >= 0 && current_iter < n) {
                     return true;
