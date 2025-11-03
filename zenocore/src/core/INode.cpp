@@ -204,6 +204,14 @@ namespace zeno
         return m_pAdapter->set_primitive_output(zsString2Std(param), toVec3i(val));
     }
 
+    bool INode::set_output_vec4f(const zeno::String& param, Vec4f val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), toVec4f(val));
+    }
+
+    bool INode::set_output_vec4i(const zeno::String& param, Vec4i val) {
+        return m_pAdapter->set_primitive_output(zsString2Std(param), toVec4i(val));
+    }
+
     int INode::GetFrameId() const {
         return m_pAdapter->getGlobalState()->getFrameId();
     }

@@ -1801,8 +1801,11 @@ namespace zeno {
     }
 
     void add_prefix_key(IObject* pObject, const std::string& prefix) {
-        zeno::String newKey = stdString2zs(prefix) + '\\' + pObject->key();
-        pObject->update_key(newKey);
+        auto objKey = pObject->key();
+        if (!objKey.empty()) {
+            zeno::String newKey = stdString2zs(prefix) + '\\' + objKey;
+            pObject->update_key(newKey);
+        }
         if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
             for (auto& elemObj : pList->m_impl->m_objects) {
                 add_prefix_key(elemObj.get(), prefix);

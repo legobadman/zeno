@@ -50,6 +50,9 @@ namespace zeno
     void DictObject::Delete() {
     }
 
+    bool DictObject::has_change_info() const {
+        return !m_modify.empty() || !m_new_added.empty() || !m_new_removed.empty();
+    }
 
     std::unique_ptr<DictObject> create_DictObject() {
         return std::make_unique<DictObject>();

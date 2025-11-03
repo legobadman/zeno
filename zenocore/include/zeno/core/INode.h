@@ -62,6 +62,8 @@ namespace zeno
         bool set_output_vec2i(const zeno::String& param, Vec2i val);
         bool set_output_vec3f(const zeno::String& param, Vec3f val);
         bool set_output_vec3i(const zeno::String& param, Vec3i val);
+        bool set_output_vec4f(const zeno::String& param, Vec4f val);
+        bool set_output_vec4i(const zeno::String& param, Vec4i val);
 
         int GetFrameId() const;
         GlobalState* getGlobalState();
