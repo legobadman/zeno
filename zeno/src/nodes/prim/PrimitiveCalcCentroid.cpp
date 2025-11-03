@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/parallel_reduce.h>
 
@@ -12,7 +13,7 @@ namespace zeno {
 struct PrimitiveCalcCentroid : zeno::INode {
     virtual void apply() override {
         auto method = ZImpl(get_param<std::string>("method"));
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto &pos = prim->attr<zeno::vec3f>("pos");
 
         vec4f acc;
@@ -54,7 +55,7 @@ struct PrimitiveCalcCentroid : zeno::INode {
 
 ZENDEFNODE(PrimitiveCalcCentroid, {
     {
-    {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
     },
     {
     {gParamType_Vec3f, "centroid"},

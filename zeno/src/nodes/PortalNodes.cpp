@@ -239,7 +239,8 @@ struct GetUserData3 : zeno::INode {
         auto object = ZImpl(clone_input("object"));
         auto key = zsString2Std(get_input2_string("key"));
         UserData* pUsrData = static_cast<UserData*>(object->userData());
-        if (pUsrData->has(key)) {
+        bool hasValue = pUsrData->has(key);
+        if (hasValue) {
             auto data = pUsrData->get(key);
             if (auto numericObj = dynamic_cast<NumericObject*>(data.get())) {
                 std::visit([&](auto&& val) {
@@ -277,9 +278,7 @@ struct GetUserData3 : zeno::INode {
                 throw makeError<UnimplError>("ObjectToBasetype expect not numericObject or stringObject");
             }
         }
-        else {
-            throw makeError<UnimplError>("only support numeric or string");
-        }
+        ZImpl(set_primitive_output("hasValue", hasValue));
     }
 };
 
@@ -290,6 +289,7 @@ ZENDEFNODE(GetUserData3, {
     },
     {
         {gParamType_AnyNumeric, "data"},
+        {gParamType_Bool, "hasValue"}
     },
     {},
     {"lifecycle"},
@@ -376,7 +376,7 @@ ZENDEFNODE(ObjectToPrimString, {
 
 struct ObjectToBasetype : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(clone_input("Object"));
+        auto object = ZImpl(clone_input("object"));
         auto type = zsString2Std(get_input2_string("Output type"));
         if (auto numericObj = dynamic_cast<NumericObject*>(object.get())) {
             std::visit([&type](auto&& val) {

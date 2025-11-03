@@ -94,7 +94,7 @@ ZENDEFNODE(PrimReduction,{
 //                          });
 struct PrimitiveBoundingBox : zeno::INode {
     virtual void apply() override{
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto &pos = prim->attr<zeno::vec3f>("pos");
 
         auto bmin = pos.size() ? pos[0] : vec3f(0);
@@ -118,7 +118,7 @@ struct PrimitiveBoundingBox : zeno::INode {
 
 ZENDEFNODE(PrimitiveBoundingBox,
     { /* inputs: */ {
-    {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
     {gParamType_Float, "exWidth", "0"},
     }, /* outputs: */ {
     {gParamType_Vec3f, "bmin"}, {gParamType_Vec3f, "bmax"},

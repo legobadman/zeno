@@ -33,6 +33,41 @@ namespace zeno
         {"reflect"}
     });
 
+    struct NumericIf : INode
+    {
+        CustomUI export_customui() const override {
+            CustomUI ui = INode::export_customui();
+            ui.uistyle.iconResPath = ":/icons/node/switchif.svg";
+            ui.uistyle.background = "#CEFFB3";
+            return ui;
+        }
+
+        void apply() override {
+            int cond = get_input2_int("Condition");
+            if (cond != 0) {
+                m_pAdapter->set_primitive_output("Output", m_pAdapter->get_param_result("If True"));
+            }
+            else {
+                m_pAdapter->set_primitive_output("Output", m_pAdapter->get_param_result("If False"));
+            }
+        }
+    };
+
+    ZENDEFNODE(NumericIf,
+    {
+        {
+            {gParamType_AnyNumeric, "If False"},
+            {gParamType_AnyNumeric, "If True"},
+            {gParamType_Int, "Condition"}
+        },
+        {
+            {gParamType_AnyNumeric, "Output"}
+        },
+        {},
+        {"flow"}
+    });
+
+
     struct SwitchIf : INode
     {
         CustomUI export_customui() const override {

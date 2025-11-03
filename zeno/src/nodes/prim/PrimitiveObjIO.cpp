@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/PrimitiveTools.h>
@@ -103,7 +104,7 @@ struct ReadObjPrimitive : zeno::INode {
         //auto &trinorm = prim->tris.add_attr<zeno::vec3i>("nrm");
         read_obj_file(pos, uv, norm, tris, /*triuv, trinorm,*/ path.c_str());
         prim->resize(pos.size());
-        ZImpl(set_output("prim", std::move(prim)));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -111,10 +112,10 @@ ZENDEFNODE(ReadObjPrimitive,
         { /* inputs: */ {
         {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
         }, /* outputs: */ {
-{gParamType_Primitive, "prim"},
-}, /* params: */ {
+        {gParamType_Geometry, "prim"},
+        }, /* params: */ {
         }, /* category: */ {
-        "deprecated",
+        "prim",
         }});
 
 struct ImportObjPrimitive : ReadObjPrimitive {
@@ -124,10 +125,10 @@ ZENDEFNODE(ImportObjPrimitive,
         { /* inputs: */ {
         {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
         }, /* outputs: */ {
-{gParamType_Primitive, "prim"},
-}, /* params: */ {
+        {gParamType_Geometry, "prim"},
+        }, /* params: */ {
         }, /* category: */ {
-        "deprecated",
+        "prim",
         }});
 
 
