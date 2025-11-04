@@ -344,7 +344,7 @@ extern "C" __global__ void __closesthit__radiance()
     float  segmentU   = optixGetCurveParameter();
     float2 strand_u = aux.strand_u[primIdx];
     float u = strand_u.x + segmentU * strand_u.y;
-    //attrs.uv = {u, (float)strandIndex/ aux.strand_info.count, 0};
+    attrs.barys2 = {u, (float)strandIndex/ aux.strand_info.count};
 
 #elif (_P_TYPE_==1)
 
