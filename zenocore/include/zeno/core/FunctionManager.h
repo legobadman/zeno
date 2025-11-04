@@ -32,7 +32,7 @@ namespace zeno {
         ZfxVariable execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext);
 
         //得到所有的引用源信息，每一项是 < 节点uuid-path, 参数名 >
-        std::set<std::pair<std::string, std::string>>
+        std::set<std::pair<std::string, std::tuple<std::string, std::string>>>
             getReferSources(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext);
 
         ZENO_API void testExp();

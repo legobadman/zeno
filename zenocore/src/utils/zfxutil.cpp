@@ -661,6 +661,7 @@ namespace zeno
         {
             if (ref.empty()) {
                 zeno::log_warn("ref empty");
+                return nullptr;
             }
 
             if (zeno::starts_with(ref, "..")) {

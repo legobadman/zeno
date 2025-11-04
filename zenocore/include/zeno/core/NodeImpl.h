@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <zeno/utils/api.h>
 #include <zeno/core/IObject.h>
@@ -220,6 +220,7 @@ namespace zeno
         void on_node_about_to_remove();
         void on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded); //参数名包括对象输入和数值输入，不可重名
         void checkParamsConstrain();
+        std::vector<std::tuple<zeno::EdgeInfo, bool>> getReflinkInfo(bool bOnlySearchByDestNode = true);
 
         CALLBACK_REGIST(update_visable_enable, void, zeno::NodeImpl*, std::set<std::string>, std::set<std::string>)
 
@@ -313,7 +314,7 @@ namespace zeno
         std::string resolve_string(const std::string& fmla, const std::string& defl);
         zfxvariant execute_fmla(const std::string& expression);
         template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
-        std::set<std::pair<std::string, std::string>> resolveReferSource(const zeno::reflect::Any& param_defl);
+        std::set<std::pair<std::string, std::tuple<std::string, std::string>>> resolveReferSource(const zeno::reflect::Any& param_defl);
         void initReferLinks(PrimitiveParam* target_param);
         bool checkAllOutputLinkTraced();
         void launch_param_task(const std::string& param);

@@ -439,6 +439,9 @@ namespace zeno
                 using E = typename T::value_type;
                 if constexpr (std::is_same_v<E, std::string>) {
                     const std::string& ref = vec[0];
+                    if (ref.empty()) {
+                        throw makeError<UnimplError>("empty ref content");
+                    }
                     return getParamValueFromRef(ref, pContext, bInput);
                 }
                 else {

@@ -1,4 +1,4 @@
-﻿#include "uihelper.h"
+#include "uihelper.h"
 #include <zeno/utils/logger.h>
 #include "uicommon.h"
 #include <zeno/core/data.h>
@@ -2645,7 +2645,7 @@ QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& origi
 {
     std::unordered_set<std::string> nodesName;
     std::function<void(GraphModel*, std::string, std::unordered_set<std::string>&, bool)> findNodes = [&findNodes, &originnode](GraphModel* pModel, std::string node, std::unordered_set<std::string>& nodesName, bool bInput) {
-        if (nodesName.count(node) && node != originnode.toStdString() || node.empty()) {
+        if (nodesName.count(node) || node.empty()) {
             return;
         } else {
             nodesName.insert(node);
@@ -2675,6 +2675,7 @@ QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& origi
     if (bfindInput) {
         findNodes(pModel, originnode.toStdString(), nodesName, true);
     }
+    nodesName.erase(originnode.toStdString());
     if (bfindOutput) {
         findNodes(pModel, originnode.toStdString(), nodesName, false);
     }

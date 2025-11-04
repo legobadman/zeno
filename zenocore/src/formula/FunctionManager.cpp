@@ -2162,19 +2162,19 @@ namespace zeno {
         return ZfxVariable();
     }
 
-    std::set<std::pair<std::string, std::string>>
+    std::set<std::pair<std::string, std::tuple<std::string, std::string>>>
         FunctionManager::getReferSources(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext)
     {
         if (!root) {
             return {};
         }
 
-        std::set<std::pair<std::string, std::string>> paths;
+        std::set<std::pair<std::string, std::tuple<std::string, std::string>>> paths;
         if (nodeType::FUNC != root->type)
         {
             for (auto _childNode : root->children)
             {
-                std::set<std::pair<std::string, std::string>> _paths = getReferSources(_childNode, pContext);
+                std::set<std::pair<std::string, std::tuple<std::string, std::string>>> _paths = getReferSources(_childNode, pContext);
                 if (!_paths.empty()) {
                     paths.insert(_paths.begin(), _paths.end());
                 }
@@ -2194,13 +2194,13 @@ namespace zeno {
                 std::string paramname, _;
                 auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                 if (spNode)
-                    paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
+                    paths.insert({spNode->get_uuid_path(), {paramname, funcname}});
             }
             else {
                 //函数参数也可能调用引用：
                 for (auto paramNode : root->children)
                 {
-                    std::set<std::pair<std::string, std::string>> _paths;
+                    std::set<std::pair<std::string, std::tuple<std::string, std::string>>> _paths;
                     if (paramNode->type ==  nodeType::STRING) {
                         const zeno::zfxvariant& res = calc(paramNode, pContext);
                         const std::string ref = std::holds_alternative<std::string>(res) ? std::get<std::string>(res) : "";
@@ -2208,7 +2208,7 @@ namespace zeno {
                             std::string paramname, _;
                             auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                             if (spNode)
-                                paths.insert(std::make_pair(spNode->get_uuid_path(), paramname));
+                                paths.insert({spNode->get_uuid_path(), {paramname, funcname}});
                         }
                     } else {
                         _paths = getReferSources(paramNode, pContext);

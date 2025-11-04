@@ -142,8 +142,8 @@ private:
     void unRegisterCoreNotify();
     void _appendNode(void* spNode);
     void _initLink();
-    void _addLink_callback(const zeno::EdgeInfo link);
-    bool _removeLink(const zeno::EdgeInfo& edge);
+    void _addLink_callback(const zeno::EdgeInfo link, bool outParamIsOutput = true);//outParamIsOutput：有referlink之后outparam可能不只是output也可能是input
+    bool _removeLink(const zeno::EdgeInfo& edge, bool outParamIsOutput = true);
     void _updateName(const QString& oldName, const QString& newName);
     void _clear();
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
@@ -158,8 +158,8 @@ private:
     std::string m_cbCreateNode;
     std::string m_cbRemoveNode;
     std::string m_cbRenameNode;
-    std::string m_cbAddLink;
-    std::string m_cbRemoveLink;
+    std::string m_cbAddLink, m_cbAddRefLink;
+    std::string m_cbRemoveLink, m_cbRemoveRefLink;
     std::string m_cbClearGraph;
 
     GraphsTreeModel* m_pTree;
