@@ -285,9 +285,9 @@ namespace zeno {
                     m_collect_objs->m_impl->m_new_added.insert(currIterKey);
                 }
 
-                //先兼容Houdini，直接以merge的方式返回，如果日后有需求，再提供选项返回list
+                //应该要在最后一步合并吧
                 if (output_list) {
-                    set_output("Output Object", m_collect_objs->clone());
+                    //set_output("Output Object", m_collect_objs->clone());
                 }
                 else {
                     if (m_collect_objs->size() != 0) {
@@ -348,6 +348,12 @@ namespace zeno {
         }
         m_last_collect_objs.clear();
         m_last_collect_objs = m_collect_objs->m_impl->get();
+
+        bool output_list = get_input2_bool("Output List");
+        if (output_list) {
+            set_output("Output Object", m_collect_objs->clone());
+        }
+
         if (get_input2_bool("Clear Cache In ForEach Begin")) {
             ForEachBegin* foreach_begin = get_foreach_begin();
             foreach_begin->m_pAdapter->mark_takeover();
