@@ -4,6 +4,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/CameraObject.h>
@@ -609,7 +610,7 @@ struct EvalFBXAnim : zeno::INode {
                     dnrmAttr.emplace_back(dnrm.x, dnrm.y, dnrm.z);
                 }
 
-                bsPrimsOrigin->push_back(std::move(bsprim));
+                bsPrimsOrigin->push_back(create_GeometryObject(bsprim.get()));
             }
         }
 //        TIMER_END(BlendShapeCreate)
@@ -682,7 +683,7 @@ struct EvalFBXAnim : zeno::INode {
                         }
                     }
 
-                    bsPrims->push_back(std::move(bsprim));
+                    bsPrims->push_back(create_GeometryObject(bsprim.get()));
                 }
             }else{
                 std::cout << "BlendShape NotFound MorphKey " << meshName << "\n";
@@ -694,7 +695,7 @@ struct EvalFBXAnim : zeno::INode {
         auto data2write = std::make_unique<SFBXData>();
         *data2write = anim.m_FbxData;
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
         set_output("bsPrims", std::move(bsPrims));
         set_output("bsPrimsOrigin", std::move(bsPrimsOrigin));
         set_output("camera", std::move(iCamera));
@@ -714,15 +715,15 @@ ZENDEFNODE(EvalFBXAnim,
                {
                     {gParamType_Int, "frameid"},
                    //{gParamType_Float, "fps", "24.0"},
-                    {gParamType_Unknown, "data"},
-                    {gParamType_Unknown, "animinfo"},
-                    {gParamType_Unknown, "nodetree"},
-                    {gParamType_Unknown, "bonetree"},
+                    {gParamType_IObject, "data"},
+                    {gParamType_IObject, "animinfo"},
+                    {gParamType_IObject, "nodetree"},
+                    {gParamType_IObject, "bonetree"},
                },  /* outputs: */
                {
-                   {gParamType_Primitive, "prim"},
-                   {gParamType_Unknown, "camera"},
-                   {gParamType_Unknown, "light"},
+                   {gParamType_Geometry, "prim"},
+                   {gParamType_IObject, "camera"},
+                   {gParamType_IObject, "light"},
                    {gParamType_String,"matName"},
                    {gParamType_String, "meshName"},
                    {gParamType_String,"pathName"},
@@ -731,7 +732,7 @@ ZENDEFNODE(EvalFBXAnim,
                    {gParamType_Dict, "transDict"},
                    {gParamType_Dict, "quatDict"},
                    {gParamType_Dict, "scaleDict"},
-                   {gParamType_Unknown, "writeData"},
+                   {gParamType_IObject, "writeData"},
                    {gParamType_Bool, "visibility"}
                },  /* params: */
                {

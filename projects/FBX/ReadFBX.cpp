@@ -758,13 +758,14 @@ struct Mesh{
 
     void processTrans(std::unordered_map<std::string, std::vector<SKeyMorph>>& morph,
                       std::unordered_map<std::string, SAnimBone>& bones,
-                      zeno::DictObject* datas,
+                      zeno::ListObject* datas,
                       zeno::DictObject* mats,
                       NodeTree* nodeTree,
                       BoneTree* boneTree,
                       AnimInfo* animInfo)
     {
         auto current = 0;
+        std::map<std::string, FBXData*> lut;
         for(auto& iter: m_VerticesSlice) {
             std::cout << "curr: " << current << " total " << m_VerticesSlice.size() << "\n";
             std::string meshName = iter.first;
@@ -837,8 +838,11 @@ struct Mesh{
             sub_data->boneTree = zeno::safe_uniqueptr_cast<BoneTree>(boneTree->clone());
             sub_data->nodeTree = zeno::safe_uniqueptr_cast<NodeTree>(nodeTree->clone());
             sub_data->animInfo = zeno::safe_uniqueptr_cast<AnimInfo>(animInfo->clone());
+            sub_data->m_fbxkey = meshName;
 
-            datas->lut[meshName] = std::move(sub_data);
+            lut.insert(std::make_pair(meshName, sub_data.get()));
+
+            datas->push_back(std::move(sub_data));
 
             ++current;
         }
@@ -848,7 +852,7 @@ struct Mesh{
 
             mat_data->sMaterial = v;
             for(auto l: m_MatMeshNames[k]){
-                auto fbx_data = zeno::safe_uniqueptr_cast<FBXData>(datas->lut[l]->clone());
+                auto fbx_data = zeno::safe_uniqueptr_cast<FBXData>(lut[l]->clone());
                 mat_data->iFbxData.value[l] = std::move(fbx_data);
             }
             mats->lut[k] = std::move(mat_data);
@@ -1032,7 +1036,7 @@ struct Anim{
 };
 
 void readFBXFile(
-        zeno::DictObject* datas,
+        zeno::ListObject* datas,
         NodeTree* nodeTree,
         FBXData* data,
         BoneTree* boneTree,
@@ -1140,7 +1144,7 @@ struct ReadFBXPrim : zeno::INode {
     virtual void apply() override {
         auto path = zsString2Std(get_input2_string("path"));
         auto hintPath = zsString2Std(get_input2_string("hintPath"));
-        auto datas = std::make_unique<zeno::DictObject>();
+        auto datas = std::make_unique<zeno::ListObject>();
         auto nodeTree = std::make_shared<NodeTree>();
         auto animInfo = std::make_shared<AnimInfo>();
         auto data = std::make_unique<FBXData>();
@@ -1214,8 +1218,8 @@ struct ReadFBXPrim : zeno::INode {
         }
 
         data->iVisibility = *visibility;
-        for(auto& [key, value]: datas->lut){
-            auto data = dynamic_cast<FBXData*>(value.get());
+        for(auto pObj : datas->get()) {
+            auto data = dynamic_cast<FBXData*>(pObj);
             data->iVisibility = *visibility;
         }
 
@@ -1240,12 +1244,12 @@ ZENDEFNODE(ReadFBXPrim,
                },  /* outputs: */
                {
                     {gParamType_Primitive, "prim"},
-                    {gParamType_Unknown, "data"},
-                    {gParamType_Dict, "datas", ""},
+                    {gParamType_IObject, "data"},
+                    {gParamType_List, "datas", ""},
                     {gParamType_Dict, "mats", ""},
-                    {gParamType_Unknown, "animinfo"},
-                    {gParamType_Unknown, "nodetree"},
-                    {gParamType_Unknown, "bonetree"},
+                    {gParamType_IObject, "animinfo"},
+                    {gParamType_IObject, "nodetree"},
+                    {gParamType_IObject, "bonetree"},
                },  /* params: */
                {
                 {"enum ENABLE DISABLE", "udim", "DISABLE"},

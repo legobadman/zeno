@@ -657,6 +657,7 @@ struct FBXData : zeno::IObjectClone<FBXData>{
         iMaterial = rhs.iMaterial;
         iCamera = rhs.iCamera;
         iLight = rhs.iLight;
+        m_fbxkey = rhs.m_fbxkey;
 
         iVisibility = rhs.iVisibility;
         boneTree = zeno::safe_uniqueptr_cast<BoneTree>(rhs.boneTree->clone());
@@ -665,6 +666,7 @@ struct FBXData : zeno::IObjectClone<FBXData>{
     }
 
     FBXData& operator=(const FBXData& rhs) {
+        m_fbxkey = rhs.m_fbxkey;
         iMeshName = rhs.iMeshName;
         iPathName = rhs.iPathName;
         iMeshInfo = rhs.iMeshInfo;
@@ -685,6 +687,7 @@ struct FBXData : zeno::IObjectClone<FBXData>{
     }
 
 
+    std::string m_fbxkey;   //meshName
     std::unique_ptr<BoneTree> boneTree;
     std::unique_ptr<NodeTree> nodeTree;
     std::unique_ptr<AnimInfo> animInfo;
