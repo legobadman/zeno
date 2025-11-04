@@ -454,12 +454,16 @@ ZENDEFNODE(ObjectToBasetype, {
     {"ObjectToBasetype"},
     });
 
-#if 0
 struct CopyAllUserData : zeno::INode {
     virtual void apply() override {
         auto src = ZImpl(clone_input("src"));
         auto dst = ZImpl(clone_input("dst"));
-        dst->userData() = src->userData();
+        auto pSrcUd = static_cast<UserData*>(src->userData());
+        auto pDstUd = static_cast<UserData*>(dst->userData());
+        pDstUd->m_data.clear();
+        for (const auto& [key, data] : pSrcUd->m_data) {
+            pDstUd->m_data.insert(std::make_pair(key, data->clone()));
+        }
         ZImpl(set_output("dst", std::move(dst)));
     }
 };
@@ -473,7 +477,6 @@ ZENDEFNODE(CopyAllUserData, {
     {},
     {"lifecycle"},
 });
-#endif
 
 }
 

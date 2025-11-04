@@ -667,6 +667,22 @@ namespace zenoio
                 defl = val.GetBool();
             }
         }
+        case gParamType_AnyNumeric: {
+            if (val.IsInt()) {
+                defl = val.GetInt();
+            }
+            else if (val.IsFloat()) {
+                defl = val.GetFloat();
+            }
+            else if (val.IsDouble()) {
+                defl = val.GetFloat();
+            }
+            else if (val.IsBool()) {
+                defl = val.GetBool();
+            }
+            //TODO: AnyNumeric类型的defl目前还不支持vec的情况
+            break;
+        }
         }
         if (zeno::isPrimVarType(type)) {
             if (type == gParamType_Int || type == gParamType_Float) {

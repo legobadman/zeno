@@ -55,7 +55,7 @@ ZENO_API int ZfxExecute::execute() {
 zfxvariant ZfxExecute::execute_fmla() {
     int ret = parse();
     if (ret != 0) {
-        throw makeError<ZfxParseError>();
+        throw makeNodeError<ZfxParseError>(m_context->spNode->get_path());
     }
     //只支持单值计算
     ZfxElemFilter filter(1, 1);

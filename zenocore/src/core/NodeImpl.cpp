@@ -4163,6 +4163,13 @@ float NodeImpl::resolve(const std::string& expression, const ParamType type) {
 std::string NodeImpl::resolve_string(const std::string& fmla, const std::string& defl) {
     try
     {
+        //TODO: 要长远解决这类问题，就要拆分“普通编辑框”，单独把公式编辑器拎出来，既可以处理向量的情况，又可以区分字符串是否需要编译
+
+        //要豁免一些情况，避免什么都去解析（比如不带参数化的路径）
+        if (defl.find_first_of("+-*()$={}") == std::string::npos) {
+            return defl;
+        }
+
         const zfxvariant& res = execute_fmla(fmla);
         if (std::holds_alternative<std::string>(res)) {
             return std::get<std::string>(res);

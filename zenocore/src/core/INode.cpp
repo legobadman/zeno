@@ -172,6 +172,10 @@ namespace zeno
         return get_input2_bool(param);
     }
 
+    zeno::reflect::Any INode::get_param_result(const zeno::String& param) {
+        return m_pAdapter->get_param_result(zsString2Std(param));
+    }
+
     bool INode::set_output_int(const zeno::String& param, int val) {
         return m_pAdapter->set_primitive_output(zsString2Std(param), val);
     }
