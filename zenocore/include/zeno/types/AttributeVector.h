@@ -37,6 +37,9 @@ namespace zeno {
 #endif
 
         void to_prim_attr(PrimitiveObject* spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {
+            if (attr_name.empty()) {
+                return;
+            }
             if (self) {
                 auto& valvar = self->value();
 

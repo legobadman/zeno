@@ -1316,6 +1316,41 @@ void ListObjView::onItemClicked(const QModelIndex& index)
                     showObjectDialog(this, m_baseAttributeView, "Geometry Object Details");
                 }
             }
+            else {
+                auto qsJson = QString::fromStdString(currentObj->serialize_json());
+                if (qsJson.isEmpty()) {
+                    
+                }
+                else {
+                    QPlainTextEdit* textedit = new QPlainTextEdit;
+                    textedit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+                    // 黑底灰字配柔和光标（仅作用于此控件）
+                    textedit->setStyleSheet(R"(
+                        QPlainTextEdit {
+                            background-color: #1E1E1E;   /* Visual Studio 深灰底 */
+                            color: #D4D4D4;              /* 微亮灰白字 */
+                            selection-background-color: #264F78;
+                            selection-color: #FFFFFF;
+                            border: 1px solid #3C3C3C;
+                        }
+                        QScrollBar:vertical {
+                            background: #252526;
+                            width: 10px;
+                            margin: 0px;
+                        }
+                        QScrollBar::handle:vertical {
+                            background: #4E4E4E;
+                            min-height: 20px;
+                            border-radius: 3px;
+                        }
+                        QScrollBar::handle:vertical:hover {
+                            background: #707070;
+                        }
+                    )");
+                    textedit->setPlainText(qsJson);
+                    showObjectDialog(this, textedit, "Geometry Object Details");
+                }
+            }
         }
     }
 }
@@ -1324,7 +1359,6 @@ void ListObjView::onItemClicked(const QModelIndex& index)
 ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     : QWidget(parent)
     , m_views(new QStackedWidget(this))
-    , m_clone_obj(nullptr)
 {
     QLabel* pImgBlank = new QLabel("Current Object Is an image, please watch it in image panel");
     m_views->addWidget(pImgBlank);
@@ -1334,6 +1368,34 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_views->addWidget(new SceneObjView);  // 添加SceneObjView组件
     m_views->addWidget(new ListObjView);   // 添加ListObjView组件
     m_views->addWidget(new MaterialObjView); // 添加MaterialObjView组件
+
+    QPlainTextEdit* jsonView = new QPlainTextEdit;
+    jsonView->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    // 黑底灰字配柔和光标（仅作用于此控件）
+    jsonView->setStyleSheet(R"(
+        QPlainTextEdit {
+            background-color: #1E1E1E;   /* Visual Studio 深灰底 */
+            color: #D4D4D4;              /* 微亮灰白字 */
+            selection-background-color: #264F78;
+            selection-color: #FFFFFF;
+            border: 1px solid #3C3C3C;
+        }
+        QScrollBar:vertical {
+            background: #252526;
+            width: 10px;
+            margin: 0px;
+        }
+        QScrollBar::handle:vertical {
+            background: #4E4E4E;
+            min-height: 20px;
+            border-radius: 3px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background: #707070;
+        }
+    )");
+
+    m_views->addWidget(jsonView);
 
     QVBoxLayout* pMainLayout = new QVBoxLayout;
     pMainLayout->setContentsMargins(1, 1, 1, 1);  // 去掉主布局边距
@@ -1354,15 +1416,16 @@ ZGeometrySpreadsheet::~ZGeometrySpreadsheet() {
 void ZGeometrySpreadsheet::setGeometry(
         GraphModel* subgraph,
         QModelIndex nodeidx,
-        std::unique_ptr<zeno::IObject>&& pObject
+        zeno::zany pObject
 ) {
-    m_clone_obj = std::move(pObject);
-
-    if (!m_clone_obj) {
+    if (!pObject) {
         //unavailable page
         m_views->setCurrentIndex(1);
         return;
     }
+
+    m_clone_obj = std::move(pObject);
+
     if (m_clone_obj->userData()->has("isImage")) {
         m_views->setCurrentIndex(0);  // 调整索引
         return;
@@ -1397,7 +1460,20 @@ void ZGeometrySpreadsheet::setGeometry(
         }
         m_views->setCurrentIndex(5);
     } else {
-        m_views->setCurrentIndex(1);
+        const auto& jsonStr = m_clone_obj->serialize_json();
+        auto qsJson = QString::fromStdString(jsonStr);
+        if (qsJson.isEmpty()) {
+            m_views->setCurrentIndex(1);
+        }
+        else {
+            if (auto textedit = qobject_cast<QPlainTextEdit*>(m_views->widget(6))) {
+                textedit->setPlainText(qsJson);
+                m_views->setCurrentIndex(6);
+            }
+            else {
+                m_views->setCurrentIndex(1);
+            }
+        }
     }
 }
 

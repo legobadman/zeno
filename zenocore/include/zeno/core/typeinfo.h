@@ -47,5 +47,11 @@ registerObjectTypeHash(InstancingObject, Instance)
 #define gParamType_IndexBuckets     243
 #define gParamType_OceanFFT         244
 #define gParamType_SparseGrid       245
+#define gParamType_BulletTransform  246
+#define gParamType_BulletTriangleMesh  247
+#define gParamType_BulletCollisionShape  248
+#define gParamType_BulletWorld      249
+#define gParamType_BulletObject     250
+#define gParamType_BulletConstraint 251
 
 #endif

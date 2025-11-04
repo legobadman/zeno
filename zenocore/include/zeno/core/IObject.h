@@ -16,6 +16,7 @@ namespace zeno {
         virtual std::unique_ptr<zeno::IObject> clone() const = 0; //TODO：abi compatible for shared_ptr
         virtual String key() const;
         virtual void update_key(const String& key);
+        virtual std::string serialize_json() const;
         IUserData* userData();
         virtual void Delete();  //TODO: for abi compatiblity when dtor cann't be mark virutal.
 

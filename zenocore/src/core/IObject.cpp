@@ -30,6 +30,10 @@ namespace zeno {
         m_key = key;
     }
 
+    std::string IObject::serialize_json() const {
+        return "";
+    }
+
     IUserData* IObject::userData() {
         return m_usrData.get();
     }

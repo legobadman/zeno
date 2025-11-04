@@ -22,6 +22,8 @@ struct ZENO_API NumericObject : IObjectClone<NumericObject> {
         return value;
     }
 
+    std::string serialize_json() const override;
+
     NumericValue const &get() const {
         return value;
     }

@@ -4014,8 +4014,9 @@ IObject* NodeImpl::get_default_output_object() {
     if (m_nodecls == "SubOutput") {
         return get_input_obj("port");
     }
-    if (m_outputObjs.empty())
+    if (m_outputObjs.empty()) {
         return nullptr;
+    }
     return m_outputObjs.begin()->second.spObject.get();
 }
 
@@ -4023,6 +4024,15 @@ zany NodeImpl::clone_default_output_object() {
     std::lock_guard lock(m_mutex);
     if (IObject* default_output_obj = get_default_output_object()) {
         return default_output_obj->clone();
+    }
+    else {
+        if (!m_outputPrims.empty()) {
+            bool bSucceed = false;
+            NumericValue val = AnyToNumeric(m_outputPrims.begin()->second.result, bSucceed);
+            auto numobj = std::make_unique<NumericObject>();
+            numobj->value = val;
+            return numobj;
+        }
     }
     return nullptr;
 }

@@ -182,12 +182,12 @@ class ZGeometrySpreadsheet : public QWidget
 public:
     ZGeometrySpreadsheet(QWidget* parent = nullptr);
     ~ZGeometrySpreadsheet();
-    void setGeometry(GraphModel* subgraph, QModelIndex nodeidx, std::unique_ptr<zeno::IObject>&& pObject);
+    void setGeometry(GraphModel* subgraph, QModelIndex nodeidx, zeno::zany pObject);
     void clearModel();
     zeno::IObject* getObject() const { return m_clone_obj.get(); }
 
 private:
-    std::unique_ptr<zeno::IObject> m_clone_obj;
+    zeno::zany m_clone_obj;
     QStackedWidget* m_views;
 };
 
