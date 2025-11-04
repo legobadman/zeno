@@ -35,24 +35,39 @@
 
 using namespace zeno;
 
-struct BulletTransform : zeno::IObject {
+struct BulletTransform : zeno::IObjectClone<BulletTransform> {
+    std::string serialize_json() const override;
+
     btTransform trans;
 };
 
-struct BulletTriangleMesh : zeno::IObject {
+struct BulletTriangleMesh : zeno::IObjectClone<BulletTriangleMesh> {
+    std::string serialize_json() const override;
+
     btTriangleMesh mesh;
+};
+
+#define BULLET_CONSTRUCT_PROXY(BulletClass) \
+struct BulletClass##Proxy : zeno::IObjectClone<BulletClass##Proxy> {\
+    std::shared_ptr<BulletClass> m_pHost;\
 };
 
 struct BulletMultiBodyLinkCollider : zeno::IObject {
     // it is a child class of btCollisionObject.
     std::unique_ptr<btMultiBodyLinkCollider> linkCollider;
 
+    zany clone() const override {
+        throw makeError<UnimplError>("clone is not support");
+    }
+
     BulletMultiBodyLinkCollider(btMultiBody *multiBody, int link) {
         linkCollider = std::make_unique<btMultiBodyLinkCollider>(multiBody, link);
     }
 };
 
-struct BulletCollisionShape : zeno::IObject {
+BULLET_CONSTRUCT_PROXY(BulletMultiBodyLinkCollider);
+
+struct BulletCollisionShape {
     std::unique_ptr<btCollisionShape> shape;
 
     bool isCompound() const noexcept {
@@ -64,6 +79,12 @@ struct BulletCollisionShape : zeno::IObject {
     BulletCollisionShape(std::unique_ptr<btCollisionShape> &&shape) : shape(std::move(shape)) {
     }
 };
+struct BulletCollisionShapeProxy : zeno::IObjectClone<BulletCollisionShapeProxy> {
+    std::string serialize_json() const override;
+
+    std::shared_ptr<BulletCollisionShape> m_pHost;
+};
+
 
 struct BulletCompoundShape : BulletCollisionShape {
     std::vector<std::shared_ptr<BulletCollisionShape>> children;
@@ -77,7 +98,7 @@ struct BulletCompoundShape : BulletCollisionShape {
     }
 };
 
-struct BulletObject : zeno::IObject {
+struct BulletObject {
     // TODO: when btRigidBody get destroyed, should remove ref constraints first.
     std::unique_ptr<btDefaultMotionState> myMotionState;
     std::unique_ptr<btRigidBody> body;
@@ -162,7 +183,14 @@ struct BulletObject : zeno::IObject {
     }
 };
 
-struct BulletGlueCompoundShape : IObject {
+struct BulletObjectProxy : zeno::IObjectClone<BulletObjectProxy>{
+    std::string serialize_json() const override;
+
+    std::shared_ptr<BulletObject> m_pHost;
+};
+
+
+struct BulletGlueCompoundShape {
     struct ChildData {
         float mass;
         btTransform trans;
@@ -260,7 +288,10 @@ struct BulletGlueCompoundShape : IObject {
     }
 };
 
-struct BulletConstraintRelationship : zeno::IObject {
+BULLET_CONSTRUCT_PROXY(BulletGlueCompoundShape);
+
+
+struct BulletConstraintRelationship {
     std::string constraintName{}; // "Glue", "Hard", "Soft"...
     std::string constraintType{}; // "position", "rotation", "all"
     BulletObject *rb0{nullptr}, *rb1{nullptr};
@@ -291,8 +322,10 @@ struct BulletConstraintRelationship : zeno::IObject {
         return constraintType;
     }
 };
+BULLET_CONSTRUCT_PROXY(BulletConstraintRelationship);
 
-struct BulletConstraint : zeno::IObject {
+
+struct BulletConstraint {
     std::unique_ptr<btTypedConstraint> constraint;
 
     btRigidBody *obj1;
@@ -421,13 +454,15 @@ struct BulletConstraint : zeno::IObject {
             constraint = std::make_unique<btSliderConstraint>(*obj1, frame1, true);
         }
     }
+
     void setBreakingThreshold(float breakingThreshold) {
         auto totalMass = obj1->getMass() + obj2->getMass();
         constraint->setBreakingImpulseThreshold(breakingThreshold * totalMass);
     }
 };
+BULLET_CONSTRUCT_PROXY(BulletConstraint);
 
-struct BulletWorld : zeno::IObject {
+struct BulletWorld {
 #ifdef ZENO_RIGID_MULTITHREADING
     // mt bullet not working for now
     std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration;
@@ -601,8 +636,9 @@ struct BulletWorld : zeno::IObject {
         }*/
     }
 };
+BULLET_CONSTRUCT_PROXY(BulletWorld);
 
-struct MultiBodyJointFeedback : zeno::IObject {
+struct MultiBodyJointFeedback : zeno::IObjectClone<MultiBodyJointFeedback> {
     btMultiBodyJointFeedback jointFeedback;
 };
 
@@ -626,8 +662,10 @@ struct BulletMultiBodyObject : zeno::IObject {
         multibody->setBaseWorldTransform(btTransform::getIdentity());
     }
 };
+BULLET_CONSTRUCT_PROXY(BulletMultiBodyObject);
 
-struct BulletMultiBodyWorld : zeno::IObject {
+
+struct BulletMultiBodyWorld {
     std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration;
     std::unique_ptr<btCollisionDispatcher> dispatcher;
     std::unique_ptr<btBroadphaseInterface> broadphase;
@@ -659,8 +697,10 @@ struct BulletMultiBodyWorld : zeno::IObject {
         zeno::log_debug("creating bullet multibody dynamics world {}", (void *)this);
     }
 };
+BULLET_CONSTRUCT_PROXY(BulletMultiBodyWorld);
 
-struct BulletMultiBodyConstraint : zeno::IObject {
+
+struct BulletMultiBodyConstraint {
     std::unique_ptr<btMultiBodyConstraint> constraint;
     btMultiBody *bodyA;
     btMultiBody *bodyB;
@@ -716,8 +756,10 @@ struct BulletMultiBodyConstraint : zeno::IObject {
         }
     }
 };
+BULLET_CONSTRUCT_PROXY(BulletMultiBodyConstraint);
 
-struct BulletMultiBodyJointMotor : zeno::IObject {
+
+struct BulletMultiBodyJointMotor {
     std::unique_ptr<btMultiBodyJointMotor> jointMotor;
 
     BulletMultiBodyJointMotor(btMultiBody *mb, int linkIndex, int linkDof, btScalar desiredVelocity,
@@ -725,5 +767,6 @@ struct BulletMultiBodyJointMotor : zeno::IObject {
         jointMotor = std::make_unique<btMultiBodyJointMotor>(mb, linkIndex, linkDof, desiredVelocity, maxMotorImpulse);
     }
 };
+BULLET_CONSTRUCT_PROXY(BulletMultiBodyJointMotor);
 
 #endif //ZENO_RIGIDTEST_H

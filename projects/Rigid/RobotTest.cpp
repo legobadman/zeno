@@ -1,3 +1,4 @@
+#if 0
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -35,27 +36,27 @@ using namespace zeno;
 // URDFLinkContactInfo to BulletLinkCollider
 struct BulletSetContactParameters : zeno::INode {
     virtual void apply() override {
-        auto col = get_input<BulletMultiBodyLinkCollider>("collider");
+        auto col = safe_uniqueptr_cast<BulletMultiBodyLinkCollider>(move_input("collider"));
         if(has_input("lateralFriction")){
-            auto lateralFriction = get_input2<float>("lateralFriction");
+            auto lateralFriction = get_input2_float("lateralFriction");
             col->linkCollider->setFriction(lateralFriction);
         }
         if(has_input("restitution")){
-            auto restitution = get_input2<float>("restitution");
+            auto restitution = get_input2_float("restitution");
             col->linkCollider->setRestitution(restitution);
         }
         if(has_input("rollingFriction")){
-            auto rollingFriction = get_input2<float>("rollingFriction");
+            auto rollingFriction = get_input2_float("rollingFriction");
             col->linkCollider->setRollingFriction(rollingFriction);
         }
         if(has_input("spinningFriction")){
-            auto spinningFriction = get_input2<float>("spinningFriction");
+            auto spinningFriction = get_input2_float("spinningFriction");
             col->linkCollider->setSpinningFriction(spinningFriction);
         }
         if(has_input("stiffness")){
-            auto stiffness = get_input2<float>("stiffness");
+            auto stiffness = get_input2_float("stiffness");
             if(has_input("damping")) {
-                auto damping = get_input2<float>("damping");
+                auto damping = get_input2_float("damping");
                 col->linkCollider->setContactStiffnessAndDamping(stiffness, damping);
             }
             else{
@@ -63,11 +64,11 @@ struct BulletSetContactParameters : zeno::INode {
             }
         }else{
             if(has_input("damping")) {
-                auto damping = get_input2<float>("damping");
+                auto damping = get_input2_float("damping");
                 col->linkCollider->setContactStiffnessAndDamping(0, damping);
             }
         }
-        if(get_param<std::string>("frictionAnchor")=="true"){
+        if(zsString2Std(get_input2_string("frictionAnchor"))=="true"){
             col->linkCollider->setCollisionFlags(col->linkCollider->getCollisionFlags() | btCollisionObject::CF_HAS_FRICTION_ANCHOR);
         }
         set_output("collider", std::move(col));
@@ -88,10 +89,10 @@ bool supportsJointMotor (btMultiBody* mb, int mbLinkIndex){
 
 struct RobotLoadURDF : zeno::INode {
     virtual void apply() override {
-        auto path = get_input<zeno::StringObject>("path")->get();
-        auto globalScaling = get_input2<float>("globalScaling");
-        auto world = get_input<BulletMultiBodyWorld>("world");
-        auto fixedBase = (get_param<std::string>("fixedBase") == "true");
+        auto path = zsString2Std(get_input2_string("path"));
+        auto globalScaling = get_input2_float("globalScaling");
+        auto world = safe_uniqueptr_cast<BulletMultiBodyWorld>(move_input("world"));
+        auto fixedBase = (zsString2Std(get_input2_string("fixedBase")) == "true");
 
         // load URDF by BulletURDFImporter
         int flags = 0; // TODO: make it configurable later
@@ -183,8 +184,8 @@ ZENDEFNODE(RobotLoadURDF, {
 
 struct RobotGetLinkName : zeno::INode{
     virtual void apply() override {
-        auto index = get_input2<int>("linkIndex");
-        auto mb = get_input<BulletMultiBodyObject>("object");
+        auto index = get_input2_int("linkIndex");
+        auto mb = safe_uniqueptr_cast<BulletMultiBodyObject>(move_input("object"));
         std::cout<<"Name for Link # " << index << " is " << mb->multibody->getLink(index).m_linkName << std::endl;
     }
 };
@@ -198,8 +199,8 @@ ZENDEFNODE(RobotGetLinkName, {
 
 struct RobotGetJointName : zeno::INode{
     virtual void apply() override {
-        auto index = get_input2<int>("linkIndex");
-        auto mb = get_input<BulletMultiBodyObject>("object");
+        auto index = get_input2_int("linkIndex");
+        auto mb = safe_uniqueptr_cast<BulletMultiBodyObject>(move_input("object"));
         std::cout<<"Name for Joint # " << index << " is " << mb->multibody->getLink(index).m_jointName << std::endl;
     }
 };
@@ -213,13 +214,12 @@ ZENDEFNODE(RobotGetJointName, {
 
 struct RobotSetJointPoses : zeno::INode {
     virtual void apply() override {
-        auto object = get_input<BulletMultiBodyObject>("object");
+        auto object = safe_uniqueptr_cast<BulletMultiBodyObject>(move_input("object"));
         btAlignedObjectArray<btScalar> qDesiredArray;
 
         if (has_input("qDesiredList")){
             {
-                auto numericObjs = get_input<zeno::ListObject>(
-                    "qDesiredList")->get<std::decay_t<NumericObject>>();
+                auto numericObjs = get_input_ListObject("qDesiredList")->get<std::decay_t<NumericObject>>();
                 for (auto &&no: numericObjs)
                     qDesiredArray.push_back(no->get<float>());
             }
@@ -243,3 +243,4 @@ ZENDEFNODE(RobotSetJointPoses, {
     {"Robot"}
 });
 };
+#endif
