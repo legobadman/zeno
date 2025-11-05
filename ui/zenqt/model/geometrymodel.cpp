@@ -79,6 +79,7 @@ static QMap<int, AttributeInfo> initColMapping(zeno::GeometryObject* pObject, ze
 VertexModel::VertexModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) 
     : QAbstractTableModel(parent)
     , m_nvertices(spObject->nvertices())
+    , m_geomery(nullptr)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
     spObject->m_impl->register_add_vertex([this](int vertext_linearIdx) {
@@ -131,7 +132,7 @@ VertexModel::VertexModel(zeno::GeometryObject_Adapter* spObject, QObject* parent
 }
 
 QVariant VertexModel::data(const QModelIndex& index, int role) const {
-    auto spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
+    auto spObject = m_geomery;
     if (!spObject) {
         return QVariant();
     }
@@ -191,6 +192,7 @@ QVariant VertexModel::headerData(int section, Qt::Orientation orientation, int r
 void VertexModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
 {
     beginResetModel();
+    m_geomery = spObject;
     m_nvertices = spObject->nvertices();
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
     endResetModel();
@@ -207,6 +209,7 @@ bool VertexModel::removeRows(int row, int count, const QModelIndex& parent) {
 PointModel::PointModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
     : QAbstractTableModel(parent)
     , m_npoints(spObject->npoints())
+    , m_geomery(nullptr)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
     spObject->m_impl->register_add_point([this](int ptnum) {
@@ -257,7 +260,7 @@ PointModel::PointModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
 
 
 QVariant PointModel::data(const QModelIndex& index, int role) const {
-    zeno::GeometryObject_Adapter* spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
+    zeno::GeometryObject_Adapter* spObject = m_geomery;
     if (!spObject)
         return QVariant();
     int row = index.row(), col = index.column();
@@ -303,6 +306,7 @@ QVariant PointModel::headerData(int section, Qt::Orientation orientation, int ro
 void PointModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
 {
     beginResetModel();
+    m_geomery = spObject;
     m_npoints = spObject->npoints();
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
     endResetModel();
@@ -327,6 +331,7 @@ bool PointModel::removeRows(int row, int count, const QModelIndex& parent) {
 FaceModel::FaceModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
     : QAbstractTableModel(parent)
     , m_nfaces(spObject->nfaces())
+    , m_geomery(nullptr)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     spObject->m_impl->register_add_face([this](int faceid) {
@@ -381,7 +386,7 @@ FaceModel::FaceModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
 }
 
 QVariant FaceModel::data(const QModelIndex& index, int role) const {
-    auto spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
+    auto spObject = m_geomery;
     if (!spObject) {
         return QVariant();
     }
@@ -435,6 +440,7 @@ void FaceModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
         return;
     }
     beginResetModel();
+    m_geomery = spObject;
     m_nfaces = spObject->nfaces();
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     endResetModel();
@@ -443,13 +449,14 @@ void FaceModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
 
 GeomDetailModel::GeomDetailModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
     : QAbstractTableModel(parent)
+    , m_geomery(nullptr)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
 }
 
 QVariant GeomDetailModel::data(const QModelIndex& index, int role) const
 {
-    auto spObject = getGeoObject<zeno::GeometryObject_Adapter>(this);
+    auto spObject = m_geomery;
     if (!spObject)
         return QVariant();
 
@@ -490,6 +497,7 @@ QVariant GeomDetailModel::headerData(int section, Qt::Orientation orientation, i
 
 void GeomDetailModel::setGeoObject(zeno::GeometryObject_Adapter* spObject) {
     beginResetModel();
+    m_geomery = spObject;
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
     endResetModel();
 }

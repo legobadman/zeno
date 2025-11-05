@@ -52,6 +52,7 @@ public:
 private:
     QMap<int, AttributeInfo> m_colMap;
     int m_nvertices;
+    zeno::GeometryObject_Adapter* m_geomery;
 };
 
 class PointModel : public QAbstractTableModel
@@ -70,6 +71,7 @@ public:
 private:
     QMap<int, AttributeInfo> m_colMap;
     int m_npoints;
+    zeno::GeometryObject_Adapter* m_geomery;
 };
 
 class FaceModel : public QAbstractTableModel
@@ -87,8 +89,8 @@ public:
 
 private:
     QMap<int, AttributeInfo> m_colMap;
-
     int m_nfaces;
+    zeno::GeometryObject_Adapter* m_geomery;
 };
 
 class GeomDetailModel : public QAbstractTableModel
@@ -104,6 +106,7 @@ public:
 
 private:
     QMap<int, AttributeInfo> m_colMap;
+    zeno::GeometryObject_Adapter* m_geomery;
 };
 
 class GeomUserDataModel : public QAbstractTableModel

@@ -61,6 +61,7 @@ private:
     QPersistentModelIndex m_nodeIdx;
 
     QStackedWidget* m_stackViews;
+    zeno::GeometryObject_Adapter* m_geometry;
 };
 
 // 三个浮动widget类的声明

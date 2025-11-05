@@ -263,6 +263,7 @@ BaseAttributeView::BaseAttributeView(QWidget* parent)
     , m_geom(new ZToolBarButton(true, ":/icons/geomsheet_geometry_idle.svg", ":/icons/geomsheet_geometry_on.svg"))
     , m_ud(new ZToolBarButton(true, ":/icons/geo_userdata-idle.svg", ":/icons/geo_userdata-on.svg"))
     , m_stackViews(new QStackedWidget(this))
+    , m_geometry(nullptr)
 {
     auto vertextTable = new QTableView;
     tableViewResizeColumns(vertextTable);
@@ -435,6 +436,7 @@ BaseAttributeView::BaseAttributeView(QWidget* parent)
 
 void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject_Adapter* object, QString nodeName)
 {
+    m_geometry = object;
     if (nodeidx.isValid()) {
         m_nodeIdx = nodeidx;
     }

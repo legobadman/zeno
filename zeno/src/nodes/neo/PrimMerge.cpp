@@ -3,6 +3,7 @@
 #include <zeno/para/parallel_for.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
@@ -630,7 +631,17 @@ namespace {
 
 struct PrimMerge : INode {
     virtual void apply() override {
-        auto primList = ZImpl(get_input<ListObject>("listPrim"))->m_impl->getRaw<PrimitiveObject>();
+        auto lst = get_input_ListObject("listPrim");
+        std::vector<zeno::PrimitiveObject*> primList;
+        std::vector<std::unique_ptr<PrimitiveObject>> spPrims;
+        for (const auto& obj : lst->m_impl->m_objects) {
+            if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(obj.get())) {
+                auto spPrim = geom->toPrimitiveObject();
+                primList.push_back(spPrim.get());
+                spPrims.push_back(std::move(spPrim));
+            }
+        }
+
         auto tagAttr = ZImpl(get_input<StringObject>("tagAttr"))->get();
         //initialize
         bool tag_on_vert = false;
@@ -650,7 +661,7 @@ struct PrimMerge : INode {
         auto outprim = primMergeWithFacesetMatid(primList, tagAttr, tag_on_vert, tag_on_face);
 
         //auto outprim = std::make_unique<PrimitiveObject>(*primList[0]);
-        ZImpl(set_output("prim", std::move(outprim)));
+        set_output("prim", create_GeometryObject(outprim.get()));
     }
 };
 
@@ -661,7 +672,7 @@ ZENDEFNODE(PrimMerge, {
       {"enum vert face vert_face", "tag_scope", "vert"},
   },
   {
-      {gParamType_Primitive, "prim"},
+      {gParamType_Geometry, "prim"},
   },
   {},
   {"primitive"},
