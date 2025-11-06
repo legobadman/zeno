@@ -1365,6 +1365,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     QLabel* pImgBlank = new QLabel("Current Object Is an image, please watch it in image panel");
     m_views->addWidget(pImgBlank);
     QLabel* pLblBlank = new QLabel("No object available, may be not apply or result is null");
+    pLblBlank->setStyleSheet("color: \"#FFFFFF\"");
     m_views->addWidget(pLblBlank);    //blank
     m_views->addWidget(new BaseAttributeView);
     m_views->addWidget(new SceneObjView);  // 添加SceneObjView组件
@@ -1451,9 +1452,27 @@ void ZGeometrySpreadsheet::setGeometry(
             sceneObjView->setSceneObject(subgraph, nodeidx, sceneObj, nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
         }
         m_views->setCurrentIndex(3);
+
     } else if (auto listObj = dynamic_cast<zeno::ListObject*>(m_clone_obj.get())) {
-        if (auto listObjView = qobject_cast<ListObjView*>(m_views->widget(4))) {
-            listObjView->setListObject(subgraph, nodeidx, listObj);
+        //还要检查一下是不是数值
+        if (listObj->size() > 0) {
+            if (dynamic_cast<zeno::NumericObject*>(listObj->get(0))) {
+                QString outputInfos;
+                for (auto pNumObj : listObj->get()) {
+                    const auto& jsonStr = pNumObj->serialize_json();
+                    auto qsJson = QString::fromStdString(jsonStr);
+                    outputInfos += QString::fromStdString(zsString2Std(pNumObj->key())) + ":" + qsJson;
+                    outputInfos += "\n";
+                }
+                if (auto textedit = qobject_cast<QPlainTextEdit*>(m_views->widget(6))) {
+                    textedit->setPlainText(outputInfos);
+                    m_views->setCurrentIndex(6);
+                    return;
+                }
+            }
+            else if(auto listObjView = qobject_cast<ListObjView*>(m_views->widget(4))) {
+                listObjView->setListObject(subgraph, nodeidx, listObj);
+            }
         }
         m_views->setCurrentIndex(4);
     } else if (auto materialObj = dynamic_cast<zeno::MaterialObject*>(m_clone_obj.get())) {
