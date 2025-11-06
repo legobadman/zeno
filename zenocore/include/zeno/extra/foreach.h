@@ -40,6 +40,6 @@ namespace zeno
 
         zany m_iterate_object;
         std::unique_ptr<ListObject> m_collect_objs;     //TODO: 如果foreach的对象是Dict，但这里收集的结果将会以list返回出去，以后再支持Dict的收集
-        std::vector<IObject*> m_last_collect_objs;
+        //std::vector<IObject*> m_last_collect_objs;    //直接储存raw pointer危险
     };
 }

@@ -312,7 +312,7 @@ namespace zeno {
     }
 
     void ForEachEnd::clearCalcResults() {
-        m_last_collect_objs.clear();
+        //m_last_collect_objs.clear();
         m_collect_objs->clear();
         m_iterate_object.reset();
     }
@@ -333,6 +333,7 @@ namespace zeno {
                 m_collect_objs->m_impl->m_new_removed.insert(zsString2Std(obj->key()));
             }
         };
+#if 0
         for (auto it = m_last_collect_objs.begin(); it != m_last_collect_objs.end();) {
             zeno::String _key = (*it)->key();
             std::string _skey = zsString2Std(_key);
@@ -348,6 +349,7 @@ namespace zeno {
         }
         m_last_collect_objs.clear();
         m_last_collect_objs = m_collect_objs->m_impl->get();
+#endif
 
         bool output_list = get_input2_bool("Output List");
         if (output_list) {
