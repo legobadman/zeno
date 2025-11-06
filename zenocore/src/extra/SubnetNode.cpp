@@ -334,7 +334,8 @@ float SubnetNode::time() const {
 }
 
 void SubnetNode::apply() {
-    for (auto const &subinput_node: m_subgraph->getSubInputs()) {
+    for (const std::string& subinput_node: m_subgraph->getSubInputs()) {
+        std::string param = subinput_node;
         auto subinput = m_subgraph->getNode(subinput_node);
         auto iter = m_inputObjs.find(subinput_node);
         if (iter != m_inputObjs.end()) {
@@ -345,7 +346,10 @@ void SubnetNode::apply() {
                 spObject->update_key(stdString2zs(subinput->get_uuid_path()));
                 bool ret = subinput->set_output("port", std::move(spObject));
                 assert(ret);
-                ret = subinput->set_output("hasValue", std::make_unique<NumericObject>(true));
+
+                //要查看外部子图节点param是否已经连线，从而决定hasValue
+                bool has_link = has_link_input(param);
+                ret = subinput->set_primitive_output("hasValue", has_link);
                 assert(ret);
             }
         }
@@ -355,7 +359,8 @@ void SubnetNode::apply() {
             if (iter2 != m_inputPrims.end()) {
                 bool ret = subinput->set_primitive_output("port", iter2->second.result);
                 assert(ret);
-                ret = subinput->set_output("hasValue", std::make_unique<NumericObject>(true));
+                bool has_link = has_link_input(param);
+                ret = subinput->set_primitive_output("hasValue", has_link);
                 assert(ret);
             }
             else {
