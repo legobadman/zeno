@@ -765,7 +765,7 @@ struct Mesh{
                       AnimInfo* animInfo)
     {
         auto current = 0;
-        std::map<std::string, FBXData*> lut;
+        std::map<std::string, std::unique_ptr<FBXData>> lut;
         for(auto& iter: m_VerticesSlice) {
             std::cout << "curr: " << current << " total " << m_VerticesSlice.size() << "\n";
             std::string meshName = iter.first;
@@ -840,11 +840,12 @@ struct Mesh{
             sub_data->animInfo = zeno::safe_uniqueptr_cast<AnimInfo>(animInfo->clone());
             sub_data->m_fbxkey = meshName;
 
-            lut.insert(std::make_pair(meshName, sub_data.get()));
-
-            datas->push_back(std::move(sub_data));
-
+            lut.insert(std::make_pair(meshName, std::move(sub_data)));
             ++current;
+        }
+
+        for (auto& [meshName, sp_fbxdata] : lut) {
+            datas->push_back(sp_fbxdata->clone());
         }
 
         for(auto [k, v]:m_loadedMat){
@@ -857,7 +858,7 @@ struct Mesh{
             }
             mats->lut[k] = std::move(mat_data);
         }
-
+        lut.clear();
     }
 
     void processPrim(zeno::PrimitiveObject* prim){
