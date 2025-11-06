@@ -577,6 +577,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
                 assert(link->dest_inparam);
                 auto destNode = link->dest_inparam->m_wpNode;
                 destNode->mark_dirty(true);
+                destNode->clear_input_cacheobj(link->dest_inparam->name);
             }
             for (auto link : param.links) {
                 auto inParam = link->toparam;
@@ -585,6 +586,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
                     auto inNode = inParam->m_wpNode;
                     assert(inNode);
                     inNode->mark_dirty(true);
+                    inNode->clear_input_cacheobj(inParam->name);
                 }
             }
         }
@@ -701,8 +703,10 @@ void NodeImpl::preApply(CalcContext* pContext) {
                 else {
                     if (!spLink->fromparam->spObject)
                         throw makeNodeError<UnimplError>(get_path(), "cannot get object from upstream");
+
                     //task为空，因为之前已经被执行过一次了，上游已经算好了
-                    //没有task，说明上游不需要计算，如果param.spObject已经缓存了，就不需要再到上游克隆
+                    //没有task，说明上游不需要计算，但对于多支路的下游来说，就不一定知道上游是否经历了计算
+                    //因此，在传递脏位的时候，要顺带把param.spObject情况，然而再到 上游拷一次
                     if (!param.spObject)
                         param.spObject = spLink->fromparam->spObject->clone();
                 }
@@ -2326,7 +2330,7 @@ void NodeImpl::doApply(CalcContext* pContext) {
     if (m_bypass) {
         set_name(m_name);
     }
-    if (m_name == "ForEachEnd1") {//}&& pContext->curr_iter == 1) {
+    if (m_name == "ForEachEnd6") {//}&& pContext->curr_iter == 1) {
         set_name(m_name);
     }
 #endif
@@ -2652,6 +2656,13 @@ bool NodeImpl::add_output_prim_param(ParamPrimitive param) {
     sparam.constrain = param.constrain;
     m_outputPrims.insert(std::make_pair(param.name, std::move(sparam)));
     return true;
+}
+
+void NodeImpl::clear_input_cacheobj(const std::string& param) {
+    auto iter = m_inputObjs.find(param);
+    if (iter != m_inputObjs.end()) {
+        iter->second.spObject.reset();
+    }
 }
 
 bool NodeImpl::add_output_obj_param(ParamObject param) {

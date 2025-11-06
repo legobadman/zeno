@@ -61,7 +61,12 @@ namespace zeno
         zeno::reflect::Any execute_get_numeric(const ExecuteContext& exec_context);
 
         void doOnlyApply();
-        void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
+        void mark_dirty(
+            bool bOn,
+            DirtyReason reason = zeno::Dirty_All,
+            bool bWholeSubnet = true,
+            bool bRecursively = true
+        );
         virtual void mark_clean();
         virtual void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
         virtual void clearCalcResults();
@@ -204,6 +209,7 @@ namespace zeno
         bool add_input_obj_param(ParamObject param);
         bool add_output_prim_param(ParamPrimitive param);
         bool add_output_obj_param(ParamObject param);
+
         void init_object_link(bool bInput, const std::string& paramname, std::shared_ptr<ObjectLink> spLink, const std::string& targetParam);
         void init_primitive_link(bool bInput, const std::string& paramname, std::shared_ptr<PrimitiveLink> spLink, const std::string& targetParam);
         bool isPrimitiveType(bool bInput, const std::string& param_name, bool& bExist);
@@ -332,6 +338,8 @@ namespace zeno
         void preApplyTimeshift(CalcContext* pContext);
         //foreach特供
         void foreachend_apply(CalcContext* pContext);
+        void clear_input_cacheobj(const std::string& param);
+
 
         std::string m_name;
         std::string m_nodecls;
