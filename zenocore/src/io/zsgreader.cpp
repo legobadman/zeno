@@ -23,6 +23,7 @@ namespace zenoio {
     {
         ZSG_PARSE_RESULT result;
         result.code = PARSE_ERROR;
+        result.path = fn;
 
         std::filesystem::path filePath(fn);
         if (!std::filesystem::exists(filePath)) {

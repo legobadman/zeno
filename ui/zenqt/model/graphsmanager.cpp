@@ -159,14 +159,14 @@ void GraphsManager::setCurrentGraphPath(const QString& path)
     emit currentPathChanged(m_graphPath);
 }
 
-GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE& code)
+GraphsTreeModel* GraphsManager::openZsgFile(const QString& fullPath, zenoio::ERR_CODE& code)
 {
     zenoio::ZSG_PARSE_RESULT result;
 
-    result.path = fn.toStdWString();
+    result.path = fullPath.toStdWString();
     zeno::getSession().globalState->clearState();
     zeno::getSession().init_project_path(result.path);
-    zeno::ZSG_VERSION ver = zenoio::getVersion(fn.toStdWString());
+    zeno::ZSG_VERSION ver = zenoio::getVersion(fullPath.toStdWString());
 
     m_bIniting = true;
     zeno::scope_exit sp([=] { m_bIniting = false; });
@@ -219,9 +219,9 @@ GraphsTreeModel* GraphsManager::openZsgFile(const QString& fn, zenoio::ERR_CODE&
     createGraphs(result);
     //reset model.
     newFile();
-    m_filePath = fn;
+    m_filePath = fullPath;
 
-    emit fileOpened(fn);
+    emit fileOpened(fullPath);
     m_treemodel->markDirty(false);
     return m_treemodel;
 }

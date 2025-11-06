@@ -33,6 +33,7 @@
 #include <reflect/type.hpp>
 #include <reflect/container/arraylist>
 #include <reflect/metadata.hpp>
+#include <zeno/types/ListObject.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/MeshObject.h>
 #include <zeno/types/MatrixObject.h>
@@ -40,6 +41,7 @@
 #include <zeno/core/reflectdef.h>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/extra/CalcContext.h>
+#include <filesystem>
 #include <zeno/extra/SubnetNode.h>
 #include <zeno/utils/interfaceutil.h>
 //#include <Python.h>
@@ -4028,10 +4030,16 @@ zany NodeImpl::clone_default_output_object() {
     else {
         if (!m_outputPrims.empty()) {
             bool bSucceed = false;
-            NumericValue val = AnyToNumeric(m_outputPrims.begin()->second.result, bSucceed);
-            auto numobj = std::make_unique<NumericObject>();
-            numobj->value = val;
-            return numobj;
+            //输出所有numeric
+            auto lst = create_ListObject();
+            for (const auto& [_, outparam] : m_outputPrims) {
+                NumericValue val = AnyToNumeric(outparam.result, bSucceed);
+                auto numobj = std::make_unique<NumericObject>();
+                numobj->value = val;
+                numobj->update_key(stdString2zs(outparam.name));
+                lst->push_back(std::move(numobj));
+            }
+            return lst;
         }
     }
     return nullptr;
@@ -4170,19 +4178,55 @@ float NodeImpl::resolve(const std::string& expression, const ParamType type) {
     //k帧太麻烦，现阶段用不上先不处理
 }
 
+static std::string ws2s(std::wstring const& wstr) {
+    std::setlocale(LC_ALL, "");  // 设置为系统默认 locale
+    size_t len = std::wcstombs(nullptr, wstr.c_str(), 0);
+    std::string str(len, '\0');
+    std::wcstombs(&str[0], wstr.c_str(), len);
+    return str;
+}
+
+static std::string replaceTokens(const std::string& input,
+    const std::unordered_map<std::string, std::string>& replacements)
+{
+    std::string result = input;
+    for (const auto& [key, value] : replacements) {
+        size_t pos = 0;
+        while ((pos = result.find(key, pos)) != std::string::npos) {
+            result.replace(pos, key.length(), value);
+            pos += value.length(); // 跳过已替换的部分
+        }
+    }
+    return result;
+}
+
 std::string NodeImpl::resolve_string(const std::string& fmla, const std::string& defl) {
     try
     {
         //TODO: 要长远解决这类问题，就要拆分“普通编辑框”，单独把公式编辑器拎出来，既可以处理向量的情况，又可以区分字符串是否需要编译
+        std::string fmla = defl;
+        //先替换掉常见的$F，$ZSG
+        if (fmla.find('$') != std::string::npos) {
+            auto& sess = zeno::getSession();
+            std::filesystem::path pathObj(ws2s(sess.get_project_path()));
+            std::filesystem::path dir = pathObj.parent_path();  // 获取上一级目录
 
-        //要豁免一些情况，避免什么都去解析（比如不带参数化的路径）
-        if (defl.find_first_of("+-*()$={}") == std::string::npos) {
-            return defl;
+            std::unordered_map<std::string, std::string> replacements = {
+                {"$F",   std::to_string(sess.globalState->getFrameId()) },
+                {"$ZSG", dir.string()}
+            };
+            fmla = replaceTokens(fmla, replacements);
         }
 
-        const zfxvariant& res = execute_fmla(fmla);
-        if (std::holds_alternative<std::string>(res)) {
-            return std::get<std::string>(res);
+        //只有遇到函数的情况才能解析，目前先不上语法树
+        if (fmla.find_first_of("()") != std::string::npos) {
+            const zfxvariant& res = execute_fmla(fmla);
+            if (std::holds_alternative<std::string>(res)) {
+                return std::get<std::string>(res);
+            }
+        }
+        else {
+            return fmla;
         }
     }
     catch(...)

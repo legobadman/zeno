@@ -55,7 +55,7 @@ public:
     PluginsModel* pluginModel() const;
     QStandardItemModel* logModel() const;
     GraphModel* getGraph(const QStringList& objPath) const;
-    GraphsTreeModel* openZsgFile(const QString &fn, zenoio::ERR_CODE& code);
+    GraphsTreeModel* openZsgFile(const QString &fullPath, zenoio::ERR_CODE& code);
     bool saveFile(const QString& filePath, APP_SETTINGS settings);
     bool isInitializing() const;
     bool isImporting() const;
