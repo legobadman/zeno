@@ -66,14 +66,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     bool addLink(const EdgeInfo& edge);
     CALLBACK_REGIST(addLink, bool, EdgeInfo)
 
-    bool addRefLink(const EdgeInfo& edge, bool outParamIsOutput);
-    CALLBACK_REGIST(addRefLink, bool, EdgeInfo, bool outParamIsOutput)
-
     bool removeLink(const EdgeInfo& edge);
     CALLBACK_REGIST(removeLink, bool, EdgeInfo)
-
-    bool removeRefLink(const EdgeInfo& edge, bool outParamIsOutput);
-    CALLBACK_REGIST(removeRefLink, bool, EdgeInfo, bool outParamIsOutput)
 
     bool removeLinks(const std::string nodename, bool bInput, const std::string paramname);
     CALLBACK_REGIST(removeLinks, bool, std::string, bool, std::string)

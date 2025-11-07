@@ -1349,25 +1349,6 @@ bool Graph::addLink(const EdgeInfo& edge) {
     return true;
 }
 
-bool Graph::addRefLink(const EdgeInfo& edge, bool outParamIsOutput)
-{
-    CORE_API_BATCH
-
-    //如果边已存在，删除这条边再添加引用边
-    if (outParamIsOutput) {
-        NodeImpl* spNode = getNode(edge.outNode);
-        std::vector<EdgeInfo> links = spNode->getLinksByParam(false, edge.outParam);
-        for (auto link : links) {
-            if (link == edge) {
-                removeLink(edge);
-            }
-        }
-    }
-
-    CALLBACK_NOTIFY(addRefLink, edge, outParamIsOutput)
-    return true;
-}
-
 void Graph::update_load_info(const std::string& nodecls, bool bDisable) {
     auto iter = node_set.find(nodecls);
     if (iter != node_set.end()) {
@@ -1443,13 +1424,6 @@ bool Graph::removeLink(const EdgeInfo& edge) {
     inNode->on_link_added_removed(true, edge.inParam, false);
     outNode->on_link_added_removed(false, edge.outParam, false);
 
-    return true;
-}
-
-bool Graph::removeRefLink(const EdgeInfo& edge, bool outParamIsOutput)
-{
-    CORE_API_BATCH
-    CALLBACK_NOTIFY(removeRefLink, edge, outParamIsOutput)
     return true;
 }
 

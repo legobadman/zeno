@@ -37,6 +37,7 @@ namespace zeno
     struct PrimitiveLink;
     struct SubnetNode;
     struct CalcContext;
+    struct RefSourceInfo;
 
     struct ExecuteContext
     {
@@ -45,6 +46,12 @@ namespace zeno
         std::string in_param;
         std::string out_param;
         CalcContext* pContext;
+    };
+
+    struct RefLinkInfo
+    {
+        EdgeInfo reflink;
+        bool bOutParamIsOutput;//reflink的source可能是一个output也可能是一个input，true表示reflink引用了一个output参数
     };
 
     class ZENO_API NodeImpl
@@ -220,9 +227,11 @@ namespace zeno
         void on_node_about_to_remove();
         void on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded); //参数名包括对象输入和数值输入，不可重名
         void checkParamsConstrain();
-        std::vector<std::tuple<zeno::EdgeInfo, bool>> getReflinkInfo(bool bOnlySearchByDestNode = true);
+        std::vector<RefLinkInfo> getReflinkInfo(bool bOnlySearchByDestNode = true);
 
         CALLBACK_REGIST(update_visable_enable, void, zeno::NodeImpl*, std::set<std::string>, std::set<std::string>)
+        CALLBACK_REGIST(addRefLink, void, EdgeInfo, bool outParamIsOutput)
+        CALLBACK_REGIST(removeRefLink, void, EdgeInfo, bool outParamIsOutput)
 
     public:
         //为名为ds的输入参数，求得这个参数在依赖边的求值下的值，或者没有依赖边下的默认值。
@@ -304,6 +313,9 @@ namespace zeno
         std::map<std::string, ObjectParam> m_outputObjs;
         
     private:
+        bool addRefLink(const EdgeInfo& edge, bool outParamIsOutput);
+        bool removeRefLink(const EdgeInfo& edge, bool outParamIsOutput);
+
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
@@ -314,7 +326,7 @@ namespace zeno
         std::string resolve_string(const std::string& fmla, const std::string& defl);
         zfxvariant execute_fmla(const std::string& expression);
         template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
-        std::set<std::pair<std::string, std::tuple<std::string, std::string>>> resolveReferSource(const zeno::reflect::Any& param_defl);
+        std::set<RefSourceInfo> resolveReferSource(const zeno::reflect::Any& param_defl);
         void initReferLinks(PrimitiveParam* target_param);
         bool checkAllOutputLinkTraced();
         void launch_param_task(const std::string& param);

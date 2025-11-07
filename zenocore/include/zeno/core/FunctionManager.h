@@ -19,6 +19,21 @@ namespace zeno {
         size_t indexToCurrentElem = 0;
     };
 
+    struct RefSourceInfo
+    {
+        std::string uuidPath;   //引用的source节点的uuid-path
+        std::string paramName;  //引用的source param
+        std::string funcName;   //通过哪种函数引用 ref/refout/npoints...
+
+        bool operator<(const RefSourceInfo& other) const noexcept {
+            if (uuidPath != other.uuidPath)
+                return uuidPath < other.uuidPath;
+            if (paramName != other.paramName)
+                return paramName < other.paramName;
+            return funcName < other.funcName;
+        }
+    };
+
     class FunctionManager
     {
     public:
@@ -32,8 +47,7 @@ namespace zeno {
         ZfxVariable execute(std::shared_ptr<ZfxASTNode> root, ZfxElemFilter& filter, ZfxContext* pContext);
 
         //得到所有的引用源信息，每一项是 < 节点uuid-path, 参数名 >
-        std::set<std::pair<std::string, std::tuple<std::string, std::string>>>
-            getReferSources(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext);
+        std::set<RefSourceInfo> getReferSources(std::shared_ptr<ZfxASTNode> root, ZfxContext* pContext);
 
         ZENO_API void testExp();
 

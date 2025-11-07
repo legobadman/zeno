@@ -1185,22 +1185,19 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
     //resetCustomParamModel();
 
     //重建referlink
-    for (auto& reflinkTuple : spNode->getReflinkInfo(false)) {
-        auto& link = std::get<0>(reflinkTuple);
-        bool outParamIsOutput = std::get<1>(reflinkTuple);
-
+    for (const auto& [edgeinfo, outParamIsOutput] : spNode->getReflinkInfo(false)) {
         GraphModel* pGraphM = parentGraph();
-        QModelIndex fromNodeIdx = pGraphM->indexFromName(QString::fromStdString(link.outNode));
-        QModelIndex toNodeIdx = pGraphM->indexFromName(QString::fromStdString(link.inNode));
+        QModelIndex fromNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.outNode));
+        QModelIndex toNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.inNode));
         ZASSERT_EXIT(fromNodeIdx.isValid() && toNodeIdx.isValid());
         ParamsModel* fromParams = QVariantPtr<ParamsModel>::asPtr(fromNodeIdx.data(QtRole::ROLE_PARAMS));
         ParamsModel* toParams = QVariantPtr<ParamsModel>::asPtr(toNodeIdx.data(QtRole::ROLE_PARAMS));
         ZASSERT_EXIT(fromParams&& toParams);
-        QModelIndex from = fromParams->paramIdx(QString::fromStdString(link.outParam), !outParamIsOutput);
-        QModelIndex to = toParams->paramIdx(QString::fromStdString(link.inParam), true);
+        QModelIndex from = fromParams->paramIdx(QString::fromStdString(edgeinfo.outParam), !outParamIsOutput);
+        QModelIndex to = toParams->paramIdx(QString::fromStdString(edgeinfo.inParam), true);
         if (from.isValid() && to.isValid()) {
             if (LinkModel* lnkModel = pGraphM->getLinkModel()) {
-                QModelIndex linkIdx = lnkModel->addLink(from, QString::fromStdString(link.outKey), to, QString::fromStdString(link.inKey), link.bObjLink);
+                QModelIndex linkIdx = lnkModel->addLink(from, QString::fromStdString(edgeinfo.outKey), to, QString::fromStdString(edgeinfo.inKey), edgeinfo.bObjLink);
                 fromParams->addLink(from, linkIdx);
                 toParams->addLink(to, linkIdx);
             }

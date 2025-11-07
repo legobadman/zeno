@@ -158,8 +158,8 @@ private:
     std::string m_cbCreateNode;
     std::string m_cbRemoveNode;
     std::string m_cbRenameNode;
-    std::string m_cbAddLink, m_cbAddRefLink;
-    std::string m_cbRemoveLink, m_cbRemoveRefLink;
+    std::string m_cbAddLink;
+    std::string m_cbRemoveLink;
     std::string m_cbClearGraph;
 
     GraphsTreeModel* m_pTree;

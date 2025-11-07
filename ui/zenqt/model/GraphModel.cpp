@@ -90,6 +90,9 @@ public:
     std::string m_cbFrameRemoved;
     std::string m_cbLockChanged;
 
+    std::string m_cbAddRefLink;
+    std::string m_cbRemoveRefLink;
+
     zeno::NodeImpl* m_wpNode = nullptr;
     ParamsModel* params = nullptr;
     bool bView = false;
@@ -136,6 +139,10 @@ void NodeItem::unregister()
         ret = spNode->unregister_set_bypass(m_cbSetByPass);
         ZASSERT_EXIT(ret);
         ret = spNode->unregister_set_nocache(m_cbSetNoCache);
+        ZASSERT_EXIT(ret);
+        ret = spNode->unregister_addRefLink(m_cbAddRefLink);
+        ZASSERT_EXIT(ret);
+        ret = spNode->unregister_removeRefLink(m_cbRemoveRefLink);
         ZASSERT_EXIT(ret);
 
         zeno::NodeType nodetype = spNode->nodeType();
@@ -203,6 +210,46 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
         this->bLoaded = !bDisable;
         QModelIndex idx = pGraphM->indexFromName(this->name);
         emit pGraphM->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_IS_LOADED });
+    });
+
+    m_cbAddRefLink = spNode->register_addRefLink([=](const zeno::EdgeInfo& edgeinfo, bool outParamIsOutput) {
+        QModelIndex fromNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.outNode));
+        QModelIndex toNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.inNode));
+        ZASSERT_EXIT(fromNodeIdx.isValid() && toNodeIdx.isValid());
+        ParamsModel* fromParams = QVariantPtr<ParamsModel>::asPtr(fromNodeIdx.data(QtRole::ROLE_PARAMS));
+        ParamsModel* toParams = QVariantPtr<ParamsModel>::asPtr(toNodeIdx.data(QtRole::ROLE_PARAMS));
+        ZASSERT_EXIT(fromParams && toParams);
+        QModelIndex from = fromParams->paramIdx(QString::fromStdString(edgeinfo.outParam), !outParamIsOutput);
+        QModelIndex to = toParams->paramIdx(QString::fromStdString(edgeinfo.inParam), true);
+        if (from.isValid() && to.isValid()) {
+            if (LinkModel* lnkModel = pGraphM->getLinkModel()) {
+                QModelIndex linkIdx = lnkModel->addLink(from, QString::fromStdString(edgeinfo.outKey), to, QString::fromStdString(edgeinfo.inKey), edgeinfo.bObjLink);
+                fromParams->addLink(from, linkIdx);
+                toParams->addLink(to, linkIdx);
+            }
+        }
+    });
+
+    m_cbRemoveRefLink = spNode->register_removeRefLink([=](const zeno::EdgeInfo& edgeinfo, bool outParamIsOutput) {
+        QModelIndex fromNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.outNode));
+        QModelIndex toNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.inNode));
+        ZASSERT_EXIT(fromNodeIdx.isValid() && toNodeIdx.isValid());
+        ParamsModel* fromParams = QVariantPtr<ParamsModel>::asPtr(fromNodeIdx.data(QtRole::ROLE_PARAMS));
+        ParamsModel* toParams = QVariantPtr<ParamsModel>::asPtr(toNodeIdx.data(QtRole::ROLE_PARAMS));
+        ZASSERT_EXIT(fromParams && toParams);
+        QModelIndex from = fromParams->paramIdx(QString::fromStdString(edgeinfo.outParam), !outParamIsOutput);
+        QModelIndex to = toParams->paramIdx(QString::fromStdString(edgeinfo.inParam), true);
+        if (from.isValid() && to.isValid())
+        {
+            if (LinkModel* lnkModel = pGraphM->getLinkModel()) {
+                emit toParams->linkAboutToBeRemoved(edgeinfo);
+                QModelIndex linkIdx = fromParams->removeOneLink(from, edgeinfo);
+                ZASSERT_EXIT(linkIdx.isValid());
+                bool ret = toParams->removeSpecificLink(to, linkIdx);//reflink时需以fromparam对应的linkIdx为准
+                ZASSERT_EXIT(ret);
+                lnkModel->removeRow(linkIdx.row());
+            }
+        }
     });
 
     this->params = new ParamsModel(spNode, this);
@@ -368,11 +415,6 @@ void GraphModel::registerCoreNotify()
         return true;
     });
 
-    m_cbAddRefLink = coreGraph->register_addRefLink([&](zeno::EdgeInfo edge, bool outParamIsOutput) -> bool {
-        _addLink_callback(edge, outParamIsOutput);
-        return true;
-    });
-
     m_cbRenameNode = coreGraph->register_updateNodeName([&](std::string oldname, std::string newname) {
         const QString& oldName = QString::fromStdString(oldname);
         const QString& newName = QString::fromStdString(newname);
@@ -381,9 +423,6 @@ void GraphModel::registerCoreNotify()
 
     m_cbRemoveLink = coreGraph->register_removeLink([&](zeno::EdgeInfo edge) -> bool {
         return _removeLink(edge);
-    });
-    m_cbRemoveRefLink = coreGraph->register_removeRefLink([&](zeno::EdgeInfo edge, bool outParamIsOutput) -> bool {
-        return _removeLink(edge, outParamIsOutput);
     });
 
     m_cbClearGraph = coreGraph->register_clear([&]() {
@@ -402,11 +441,7 @@ void GraphModel::unRegisterCoreNotify()
         ZASSERT_EXIT(ret);
         ret = coreGraph->unregister_addLink(m_cbAddLink);
         ZASSERT_EXIT(ret);
-        ret = coreGraph->unregister_addRefLink(m_cbAddRefLink);
-        ZASSERT_EXIT(ret);
         ret = coreGraph->unregister_removeLink(m_cbRemoveLink);
-        ZASSERT_EXIT(ret);
-        ret = coreGraph->unregister_removeRefLink(m_cbRemoveRefLink);
         ZASSERT_EXIT(ret);
         ret = coreGraph->unregister_updateNodeName(m_cbRenameNode);
         ZASSERT_EXIT(ret);
@@ -579,9 +614,9 @@ void GraphModel::addLink(const zeno::EdgeInfo& link)
     QString inNode = QString::fromStdString(link.inNode);
     ZASSERT_EXIT(m_name2uuid.find(inNode) != m_name2uuid.end());
     if (auto nodeItem = m_nodes[m_name2uuid[inNode]]) {
-        for (auto& refLinkInfoTuple : nodeItem->m_wpNode->getReflinkInfo()) {
-            if (std::get<1>(refLinkInfoTuple)) {
-                if (link == std::get<0>(refLinkInfoTuple)) {
+        for (const auto& [edgeinfo, outParamIsOutput] : nodeItem->m_wpNode->getReflinkInfo()) {
+            if (outParamIsOutput) {
+                if (link == edgeinfo) {
                     return;
                 }
             }
@@ -1207,8 +1242,8 @@ void GraphModel::_initLink()
             }
         }
         //添加referLink
-        for (auto& reflinkTuple : spNode->getReflinkInfo()) {
-            _addLink_callback(std::get<0>(reflinkTuple), std::get<1>(reflinkTuple));
+        for (const auto& [edgeinfo, outParamIsOutput] : spNode->getReflinkInfo()) {
+            _addLink_callback(edgeinfo, outParamIsOutput);
         }
     }
 }
@@ -1291,18 +1326,18 @@ void GraphModel::removeLink(const QModelIndex& linkIdx)
     QString outNode = QString::fromStdString(edge.outNode);
     ZASSERT_EXIT(m_name2uuid.find(outNode) != m_name2uuid.end());
     if (auto nodeItem = m_nodes[m_name2uuid[outNode]]) {
-        for (auto& refLinkInfoTuple : nodeItem->m_wpNode->getReflinkInfo(false)) {
-            if (edge == std::get<0>(refLinkInfoTuple)) {
+        for (const auto& [edgeinfo, outParamIsOutput] : nodeItem->m_wpNode->getReflinkInfo(false)) {
+            if (edge == edgeinfo) {
                 QString outParam = QString::fromStdString(edge.outParam);
                 QModelIndex from;
-                ParamsModel* fromParams = m_nodes[m_name2uuid[outNode]]->params;
-                if (std::get<1>(refLinkInfoTuple)) {
+                ParamsModel* fromParams = nodeItem->params;
+                if (outParamIsOutput) {
                     from = fromParams->paramIdx(outParam, false);
                 } else {
                     from = fromParams->paramIdx(outParam, true);
                 }
                 PARAM_LINKS links = from.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
-                for (auto& lnk : links) {
+                for (const auto& lnk : links) {
                     if (linkIdx == lnk) {
                         return;
                     }
@@ -1567,9 +1602,9 @@ bool GraphModel::_removeNodeImpl(const QString& name, bool endTransaction)
         if (item)
         {
             //先移除referLink
-            std::vector<std::tuple<zeno::EdgeInfo, bool>> remRefLinksTuple = item->m_wpNode->getReflinkInfo(false);
-            for (auto& edgeTuple : remRefLinksTuple) {
-                _removeLink(std::get<0>(edgeTuple), std::get<1>(edgeTuple));
+            std::vector<zeno::RefLinkInfo> remRefLinksTuple = item->m_wpNode->getReflinkInfo(false);
+            for (const auto& [edgeinfo, outParamIsOutput]: remRefLinksTuple) {
+                _removeLink(edgeinfo, outParamIsOutput);
             }
 
             PARAMS_INFO ioParams = item->params->getInputs();

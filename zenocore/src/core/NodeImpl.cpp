@@ -1359,7 +1359,7 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         //资产图不会执行，无须构造引用关系
         return;
     }
-    std::set<std::pair<std::string, std::tuple<std::string, std::string>>> refSources = resolveReferSource(target_param->defl);
+    std::set<RefSourceInfo> refSources = resolveReferSource(target_param->defl);
     auto newAdded = refSources;
 
     for (auto iter = target_param->reflinks.begin(); iter != target_param->reflinks.end(); )
@@ -1374,15 +1374,15 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         }
 
         //查看当前link在新的集合里是否还存在。
-        for (const auto& [source_node_uuidpath, tup] : refSources)
+        for (const auto& refSrcInfo : refSources)
         {
             auto spSrcNode = remote_source->m_wpNode;
-            if (spSrcNode->get_uuid_path() == source_node_uuidpath &&
-                remote_source->name == std::get<0>(tup) &&
-                remote_source->bInput == (std::get<1>(tup) == "ref")) {
+            if (spSrcNode->get_uuid_path() == refSrcInfo.uuidPath &&
+                remote_source->name == refSrcInfo.paramName &&
+                remote_source->bInput == (refSrcInfo.funcName == "ref")) {
                 //已经有了
                 bExist = true;
-                newAdded.erase({ source_node_uuidpath, tup });
+                newAdded.erase(refSrcInfo);
                 break;
             }
         }
@@ -1396,25 +1396,25 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
             other_links.erase(std::remove(other_links.begin(), other_links.end(), spRefLink));
 
             EdgeInfo refLink{ remote_source->m_wpNode->get_name(), remote_source->name, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false };
-            m_pGraph->removeRefLink(refLink, !remote_source->bInput);
+            removeRefLink(refLink, !remote_source->bInput);
         }
     }
 
-    for (const auto& [source_node_uuidpath, tup] : newAdded)
+    for (const auto& refSrcInfo : newAdded)
     {
         //目前引用功能只支持本图引用，不能跨图引用
         std::string sourcenode_uuid;
-        if (source_node_uuidpath.find('/') != std::string::npos) {
-            sourcenode_uuid = source_node_uuidpath.substr(source_node_uuidpath.find_last_of('/') + 1);
+        if (refSrcInfo.uuidPath.find('/') != std::string::npos) {
+            sourcenode_uuid = refSrcInfo.uuidPath.substr(refSrcInfo.uuidPath.find_last_of('/') + 1);
         }
         else {
-            sourcenode_uuid = source_node_uuidpath;
+            sourcenode_uuid = refSrcInfo.uuidPath;
         }
 
         NodeImpl* srcNode = getGraph()->getNodeByUuidPath(sourcenode_uuid);
 
-        if (std::get<1>(tup) != "refout") {
-            auto iterSrcParam = srcNode->m_inputPrims.find(std::get<0>(tup));
+        if (refSrcInfo.funcName != "refout") {
+            auto iterSrcParam = srcNode->m_inputPrims.find(refSrcInfo.paramName);
             if (iterSrcParam != srcNode->m_inputPrims.end()) {
                 PrimitiveParam& srcparam = iterSrcParam->second;
                 if (&srcparam != target_param)  //排除直接引用自己的情况
@@ -1426,12 +1426,12 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                     target_param->reflinks.push_back(reflink);
                     srcparam.reflinks.push_back(reflink);
 
-                    m_pGraph->addRefLink(EdgeInfo({ srcNode->get_name(), std::get<0>(tup), "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), false);
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), false);
                 }
             }
         }
-        if (std::get<1>(tup) != "ref") {
-            auto iterSrcObj = srcNode->m_outputObjs.find(std::get<0>(tup));
+        if (refSrcInfo.funcName != "ref") {
+            auto iterSrcObj = srcNode->m_outputObjs.find(refSrcInfo.paramName);
             if (iterSrcObj != srcNode->m_outputObjs.end()) {
                 ObjectParam& srcObj = iterSrcObj->second;
                 //构造reflink
@@ -1441,10 +1441,10 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                 target_param->reflinks.push_back(reflink);
                 srcObj.reflinks.push_back(reflink);
 
-                m_pGraph->addRefLink(EdgeInfo({ srcNode->get_name(), std::get<0>(tup), "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), true);
+                addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), true);
             }
             else {
-                auto iterOutPrim = srcNode->m_outputPrims.find(std::get<0>(tup));
+                auto iterOutPrim = srcNode->m_outputPrims.find(refSrcInfo.paramName);
                 if (iterOutPrim != srcNode->m_outputPrims.end()) {
                     PrimitiveParam& srcparam = iterOutPrim->second;
                     //构造reflink
@@ -1454,16 +1454,16 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                     target_param->reflinks.push_back(reflink);
                     srcparam.reflinks.push_back(reflink);
 
-                    m_pGraph->addRefLink(EdgeInfo({ srcNode->get_name(), std::get<0>(tup), "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), true);
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), true);
                 }
             }
         }
     }
 }
 
-std::set<std::pair<std::string, std::tuple<std::string, std::string>>> NodeImpl::resolveReferSource(const Any& param_defl) {
+std::set<RefSourceInfo> NodeImpl::resolveReferSource(const Any& param_defl) {
 
-    std::set<std::pair<std::string, std::tuple<std::string, std::string>>> refSources;
+    std::set<RefSourceInfo> refSources;
     std::vector<std::string> refSegments;
 
     ParamType deflType = param_defl.type().hash_code();
@@ -1524,7 +1524,7 @@ std::set<std::pair<std::string, std::tuple<std::string, std::string>>> NodeImpl:
             {
                 ctx.code = code;
                 std::shared_ptr<ZfxASTNode> astRoot = zfx.getASTResult();
-                std::set<std::pair<std::string, std::tuple<std::string, std::string>>> paths =
+                std::set<RefSourceInfo> paths =
                     funcMgr.getReferSources(astRoot, &ctx);
                 if (!paths.empty()) {
                     refSources.insert(paths.begin(), paths.end());
@@ -2290,6 +2290,32 @@ void NodeImpl::check_break_and_return() {
         reportStatus(m_dirty, m_status);
         throw makeNodeError<InterruputError>(this->get_path(), get_path());
     }
+}
+
+bool NodeImpl::addRefLink(const EdgeInfo& edge, bool outParamIsOutput)
+{
+    CORE_API_BATCH
+    //如果边已存在，删除这条边再添加引用边
+    if (outParamIsOutput) {
+        if (auto outnode = m_pGraph->getNode(edge.outNode)) {
+            std::vector<EdgeInfo> links = outnode->getLinksByParam(false, edge.outParam);
+            for (auto link : links) {
+                if (link == edge) {
+                    m_pGraph->removeLink(edge);
+                }
+            }
+        }
+    }
+
+    CALLBACK_NOTIFY(addRefLink, edge, outParamIsOutput)
+    return true;
+}
+
+bool NodeImpl::removeRefLink(const EdgeInfo& edge, bool outParamIsOutput)
+{
+    CORE_API_BATCH
+    CALLBACK_NOTIFY(removeRefLink, edge, outParamIsOutput)
+    return true;
 }
 
 void NodeImpl::doApply(CalcContext* pContext) {
@@ -3154,9 +3180,9 @@ void NodeImpl::checkParamsConstrain() {
     }
 }
 
-std::vector<std::tuple<zeno::EdgeInfo, bool>> NodeImpl::getReflinkInfo(bool bOnlySearchByDestNode)
+std::vector<RefLinkInfo> NodeImpl::getReflinkInfo(bool bOnlySearchByDestNode)
 {
-    std::vector<std::tuple<zeno::EdgeInfo, bool>> refLinksInfo;
+    std::vector<RefLinkInfo> refLinksInfo;
     for (auto& [name, param] : m_inputPrims) {
         for (auto link : param.reflinks) {
             if (link->source_inparam && link->dest_inparam) {
