@@ -3332,225 +3332,6 @@
                 "status": [],
                 "collasped": false
             },
-            "PrintNumeric1": {
-                "name": "PrintNumeric1",
-                "class": "PrintNumeric",
-                "object_inputs": {},
-                "primitive_inputs": {
-                    "value": {
-                        "links": [
-                            {
-                                "out-node": "BulletExtractTransform1",
-                                "out-socket": "origin",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": "value"
-                            }
-                        ],
-                        "type": "numeric",
-                        "default-value": 0.0,
-                        "control": {
-                            "name": ""
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": true
-                    },
-                    "write path": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\bullet_origin_zeno3.txt",
-                        "control": {
-                            "name": "write path"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "write append": {
-                        "links": null,
-                        "type": "bool",
-                        "default-value": true,
-                        "control": {
-                            "name": "Boolean"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "hint": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "",
-                        "control": {
-                            "name": "String"
-                        },
-                        "controlProps": null,
-                        "socket-type": "none",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {
-                    "value": {
-                        "type": "numeric",
-                        "socket-type": "clone",
-                        "visible": true
-                    }
-                },
-                "object_outputs": {},
-                "uipos": [
-                    1936.0,
-                    3837.0
-                ],
-                "status": [],
-                "collasped": false
-            },
-            "PrintNumeric2": {
-                "name": "PrintNumeric2",
-                "class": "PrintNumeric",
-                "object_inputs": {},
-                "primitive_inputs": {
-                    "value": {
-                        "links": [
-                            {
-                                "out-node": "BulletExtractTransform1",
-                                "out-socket": "rotation",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": "value"
-                            }
-                        ],
-                        "type": "numeric",
-                        "default-value": 0.0,
-                        "control": {
-                            "name": ""
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": true
-                    },
-                    "write path": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\bullet_rotation_zeno3.txt",
-                        "control": {
-                            "name": "write path"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "write append": {
-                        "links": null,
-                        "type": "bool",
-                        "default-value": true,
-                        "control": {
-                            "name": "Boolean"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "hint": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "",
-                        "control": {
-                            "name": "String"
-                        },
-                        "controlProps": null,
-                        "socket-type": "none",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {
-                    "value": {
-                        "type": "numeric",
-                        "socket-type": "clone",
-                        "visible": true
-                    }
-                },
-                "object_outputs": {},
-                "uipos": [
-                    1936.0,
-                    4030.0
-                ],
-                "status": [],
-                "collasped": false
-            },
-            "PrintNumeric3": {
-                "name": "PrintNumeric3",
-                "class": "PrintNumeric",
-                "object_inputs": {},
-                "primitive_inputs": {
-                    "value": {
-                        "links": [
-                            {
-                                "out-node": "RigidRecenterPrim",
-                                "out-socket": "origin",
-                                "out-key": "",
-                                "in-key": "",
-                                "target-socket": "value"
-                            }
-                        ],
-                        "type": "numeric",
-                        "default-value": 0.0,
-                        "control": {
-                            "name": ""
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": true
-                    },
-                    "write path": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\RecenterPrim_origin_zeno3.txt",
-                        "control": {
-                            "name": "write path"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "write append": {
-                        "links": null,
-                        "type": "bool",
-                        "default-value": true,
-                        "control": {
-                            "name": "Boolean"
-                        },
-                        "controlProps": null,
-                        "socket-type": "clone",
-                        "visible": false
-                    },
-                    "hint": {
-                        "links": null,
-                        "type": "string",
-                        "default-value": "",
-                        "control": {
-                            "name": "String"
-                        },
-                        "controlProps": null,
-                        "socket-type": "none",
-                        "visible": false
-                    }
-                },
-                "primitive_outputs": {
-                    "value": {
-                        "type": "numeric",
-                        "socket-type": "clone",
-                        "visible": true
-                    }
-                },
-                "object_outputs": {},
-                "uipos": [
-                    358.0,
-                    2229.0
-                ],
-                "status": [],
-                "collasped": false
-            },
             "ReadFBXPrim1": {
                 "name": "ReadFBXPrim1",
                 "class": "ReadFBXPrim",
@@ -8797,8 +8578,8 @@
                     "origin": {
                         "links": [
                             {
-                                "out-node": "PrintNumeric3",
-                                "out-socket": "value",
+                                "out-node": "RigidRecenterPrim",
+                                "out-socket": "origin",
                                 "out-key": "",
                                 "in-key": "",
                                 "target-socket": "origin"
@@ -8913,8 +8694,8 @@
                                 "origin": {
                                     "links": [
                                         {
-                                            "out-node": "PrintNumeric3",
-                                            "out-socket": "value",
+                                            "out-node": "RigidRecenterPrim",
+                                            "out-socket": "origin",
                                             "out-key": "",
                                             "in-key": "",
                                             "target-socket": "origin"
@@ -9042,8 +8823,8 @@
                                 "translate": {
                                     "links": [
                                         {
-                                            "out-node": "PrintNumeric1",
-                                            "out-socket": "value",
+                                            "out-node": "num-add",
+                                            "out-socket": "ret",
                                             "out-key": "",
                                             "in-key": "",
                                             "target-socket": "translate"
@@ -9478,79 +9259,6 @@
                             "uipos": [
                                 -1602.0,
                                 816.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "PrintNumeric1": {
-                            "name": "PrintNumeric1",
-                            "class": "PrintNumeric",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "value": {
-                                    "links": [
-                                        {
-                                            "out-node": "num-add",
-                                            "out-socket": "ret",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": "value"
-                                        }
-                                    ],
-                                    "type": "numeric",
-                                    "default-value": 0.0,
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "write path": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\MakeObject_translate_zeno3.txt",
-                                    "control": {
-                                        "name": "write path"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "write append": {
-                                    "links": null,
-                                    "type": "bool",
-                                    "default-value": true,
-                                    "control": {
-                                        "name": "Boolean"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "hint": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "none",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "value": {
-                                    "type": "numeric",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                -10.0,
-                                356.0
                             ],
                             "status": [],
                             "collasped": false
@@ -10250,8 +9958,8 @@
                                 "translate": {
                                     "links": [
                                         {
-                                            "out-node": "PrintNumeric1",
-                                            "out-socket": "value",
+                                            "out-node": "num-add",
+                                            "out-socket": "ret",
                                             "out-key": "",
                                             "in-key": "",
                                             "target-socket": "translate"
@@ -10686,79 +10394,6 @@
                             "uipos": [
                                 -1602.0,
                                 816.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "PrintNumeric1": {
-                            "name": "PrintNumeric1",
-                            "class": "PrintNumeric",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "value": {
-                                    "links": [
-                                        {
-                                            "out-node": "num-add",
-                                            "out-socket": "ret",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": "value"
-                                        }
-                                    ],
-                                    "type": "numeric",
-                                    "default-value": 0.0,
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "write path": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\MakeObject_translate_zeno3.txt",
-                                    "control": {
-                                        "name": "write path"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "write append": {
-                                    "links": null,
-                                    "type": "bool",
-                                    "default-value": true,
-                                    "control": {
-                                        "name": "Boolean"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "hint": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "none",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "value": {
-                                    "type": "numeric",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                -10.0,
-                                356.0
                             ],
                             "status": [],
                             "collasped": false
@@ -11458,8 +11093,8 @@
                                 "translate": {
                                     "links": [
                                         {
-                                            "out-node": "PrintNumeric1",
-                                            "out-socket": "value",
+                                            "out-node": "num-add",
+                                            "out-socket": "ret",
                                             "out-key": "",
                                             "in-key": "",
                                             "target-socket": "translate"
@@ -11894,79 +11529,6 @@
                             "uipos": [
                                 -1602.0,
                                 816.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "PrintNumeric1": {
-                            "name": "PrintNumeric1",
-                            "class": "PrintNumeric",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "value": {
-                                    "links": [
-                                        {
-                                            "out-node": "num-add",
-                                            "out-socket": "ret",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": "value"
-                                        }
-                                    ],
-                                    "type": "numeric",
-                                    "default-value": 0.0,
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "write path": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\MakeObject_translate_zeno3.txt",
-                                    "control": {
-                                        "name": "write path"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "write append": {
-                                    "links": null,
-                                    "type": "bool",
-                                    "default-value": true,
-                                    "control": {
-                                        "name": "Boolean"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "hint": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "none",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "value": {
-                                    "type": "numeric",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                -10.0,
-                                356.0
                             ],
                             "status": [],
                             "collasped": false
@@ -12589,8 +12151,8 @@
                     }
                 },
                 "uipos": [
-                    728.0,
-                    1979.0
+                    722.0,
+                    2046.0
                 ],
                 "status": [],
                 "collasped": false,
@@ -12893,8 +12455,8 @@
                                 "lhs": {
                                     "links": [
                                         {
-                                            "out-node": "PrintNumeric1",
-                                            "out-socket": "value",
+                                            "out-node": "PrimitiveCalcCentroid2",
+                                            "out-socket": "centroid",
                                             "out-key": "",
                                             "in-key": "",
                                             "target-socket": "lhs"
@@ -13009,8 +12571,8 @@
                                 "lhs": {
                                     "links": [
                                         {
-                                            "out-node": "PrintNumeric2",
-                                            "out-socket": "value",
+                                            "out-node": "PrimitiveCalcCentroid1",
+                                            "out-socket": "totalArea",
                                             "out-key": "",
                                             "in-key": "",
                                             "target-socket": "lhs"
@@ -13227,152 +12789,6 @@
                             "uipos": [
                                 -600.0,
                                 306.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "PrintNumeric1": {
-                            "name": "PrintNumeric1",
-                            "class": "PrintNumeric",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "value": {
-                                    "links": [
-                                        {
-                                            "out-node": "PrimitiveCalcCentroid2",
-                                            "out-socket": "centroid",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": "value"
-                                        }
-                                    ],
-                                    "type": "numeric",
-                                    "default-value": 0.0,
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "write path": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\RecenterPrim_centroid_zeno3.txt",
-                                    "control": {
-                                        "name": "write path"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "write append": {
-                                    "links": null,
-                                    "type": "bool",
-                                    "default-value": true,
-                                    "control": {
-                                        "name": "Boolean"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "hint": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "none",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "value": {
-                                    "type": "numeric",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                -228.0,
-                                312.0
-                            ],
-                            "status": [],
-                            "collasped": false
-                        },
-                        "PrintNumeric2": {
-                            "name": "PrintNumeric2",
-                            "class": "PrintNumeric",
-                            "object_inputs": {},
-                            "primitive_inputs": {
-                                "value": {
-                                    "links": [
-                                        {
-                                            "out-node": "PrimitiveCalcCentroid1",
-                                            "out-socket": "totalArea",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": "value"
-                                        }
-                                    ],
-                                    "type": "numeric",
-                                    "default-value": 0.0,
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": true
-                                },
-                                "write path": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\RecenterPrim_totalArea_zeno3.txt",
-                                    "control": {
-                                        "name": "write path"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "write append": {
-                                    "links": null,
-                                    "type": "bool",
-                                    "default-value": true,
-                                    "control": {
-                                        "name": "Boolean"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "hint": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "none",
-                                    "visible": false
-                                }
-                            },
-                            "primitive_outputs": {
-                                "value": {
-                                    "type": "numeric",
-                                    "socket-type": "clone",
-                                    "visible": true
-                                }
-                            },
-                            "object_outputs": {},
-                            "uipos": [
-                                -658.0,
-                                607.0
                             ],
                             "status": [],
                             "collasped": false
@@ -15117,8 +14533,8 @@
                     "translation": {
                         "links": [
                             {
-                                "out-node": "PrintNumeric1",
-                                "out-socket": "value",
+                                "out-node": "BulletExtractTransform1",
+                                "out-socket": "origin",
                                 "out-key": "",
                                 "in-key": "",
                                 "target-socket": "translation"
@@ -15155,8 +14571,8 @@
                     "quatRotation": {
                         "links": [
                             {
-                                "out-node": "PrintNumeric2",
-                                "out-socket": "value",
+                                "out-node": "BulletExtractTransform1",
+                                "out-socket": "rotation",
                                 "out-key": "",
                                 "in-key": "",
                                 "target-socket": "quatRotation"
@@ -15433,7 +14849,7 @@
         "timeline": {
             "start-frame": 0,
             "end-frame": 100,
-            "curr-frame": 21,
+            "curr-frame": 0,
             "always": false,
             "timeline-fps": 24
         }

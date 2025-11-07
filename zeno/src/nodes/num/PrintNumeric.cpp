@@ -37,27 +37,30 @@ struct PrintNumeric : zeno::INode {
             throw makeError<UnimplError>("AnyToNumeric");
         auto hint = ZImpl(get_param<std::string>("hint"));
         auto path = ZImpl(get_param<std::string>("write path"));
-        if (path.empty()) {
-            zeno::log_critical("{}: ", hint);
-            std::clog << hint << ": ";
-            std::visit([](auto const& val) {
-                using T = std::decay_t<decltype(val)>;
-                std::clog << (std::string)typeid(T).name() + " :";
-                do_print _(std::clog, val);
-                }, objvalue);
-            std::clog << std::endl;
-        }
-        else {
-            bool bAppend = get_input2_bool("write append");
-            std::ofstream out(path, bAppend ? std::ios::app : std::ios::out);
-            out << hint << ": ";
-            std::visit([&](auto const& val) {
-                using T = std::decay_t<decltype(val)>;
-                out << (std::string)typeid(T).name() + " :";
-                do_print _(out, val);
-                }, objvalue);
-            out << std::endl;
-            out.close();
+        bool bEnable = get_input2_bool("Enable");
+        if (bEnable) {
+            if (path.empty()) {
+                zeno::log_critical("{}: ", hint);
+                std::clog << hint << ": ";
+                std::visit([](auto const& val) {
+                    using T = std::decay_t<decltype(val)>;
+                    std::clog << (std::string)typeid(T).name() + " :";
+                    do_print _(std::clog, val);
+                    }, objvalue);
+                std::clog << std::endl;
+            }
+            else {
+                bool bAppend = get_input2_bool("write append");
+                std::ofstream out(path, bAppend ? std::ios::app : std::ios::out);
+                out << hint << ": ";
+                std::visit([&](auto const& val) {
+                    using T = std::decay_t<decltype(val)>;
+                    out << (std::string)typeid(T).name() + " :";
+                    do_print _(out, val);
+                    }, objvalue);
+                out << std::endl;
+                out.close();
+            }
         }
         ZImpl(set_primitive_output("value", num));
     }
@@ -67,7 +70,8 @@ ZENDEFNODE(PrintNumeric, {
     {
         {gParamType_AnyNumeric, "value", "0"},
         {gParamType_String, "write path", "", Socket_Primitve, zeno::WritePathEdit},
-        {gParamType_Bool, "write append"}
+        {gParamType_Bool, "write append"},
+        {gParamType_Bool, "Enable", "1"}
     },
     {{gParamType_AnyNumeric, "value"}},
     {{gParamType_String, "hint", "PrintNumeric"}},
