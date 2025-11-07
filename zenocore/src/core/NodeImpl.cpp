@@ -1414,8 +1414,10 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         NodeImpl* srcNode = getGraph()->getNodeByUuidPath(sourcenode_uuid);
 
         if (refSrcInfo.funcName != "refout") {
-            auto iterSrcParam = srcNode->m_inputPrims.find(refSrcInfo.paramName);
-            if (iterSrcParam != srcNode->m_inputPrims.end()) {
+            bool isSubInput = sourcenode_uuid.find("SubInput") != std::string::npos;
+            auto& inoutPrims = isSubInput ? srcNode->m_outputPrims : srcNode->m_inputPrims;
+            auto iterSrcParam = inoutPrims.find(refSrcInfo.paramName);
+            if (iterSrcParam != inoutPrims.end()) {
                 PrimitiveParam& srcparam = iterSrcParam->second;
                 if (&srcparam != target_param)  //排除直接引用自己的情况
                 {
@@ -1426,13 +1428,17 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                     target_param->reflinks.push_back(reflink);
                     srcparam.reflinks.push_back(reflink);
 
-                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), false);
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), isSubInput);
                 }
             }
         }
         if (refSrcInfo.funcName != "ref") {
-            auto iterSrcObj = srcNode->m_outputObjs.find(refSrcInfo.paramName);
-            if (iterSrcObj != srcNode->m_outputObjs.end()) {
+            bool isSubOutput = sourcenode_uuid.find("SubOutput") != std::string::npos;
+            auto& inoutPrims = isSubOutput ? srcNode->m_inputPrims : srcNode->m_outputPrims;
+            auto& inoutObjs = isSubOutput ? srcNode->m_inputObjs : srcNode->m_outputObjs;
+
+            auto iterSrcObj = inoutObjs.find(refSrcInfo.paramName);
+            if (iterSrcObj != inoutObjs.end()) {
                 ObjectParam& srcObj = iterSrcObj->second;
                 //构造reflink
                 std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
@@ -1441,11 +1447,11 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                 target_param->reflinks.push_back(reflink);
                 srcObj.reflinks.push_back(reflink);
 
-                addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), true);
+                addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), !isSubOutput);
             }
             else {
-                auto iterOutPrim = srcNode->m_outputPrims.find(refSrcInfo.paramName);
-                if (iterOutPrim != srcNode->m_outputPrims.end()) {
+                auto iterOutPrim = inoutPrims.find(refSrcInfo.paramName);
+                if (iterOutPrim != inoutPrims.end()) {
                     PrimitiveParam& srcparam = iterOutPrim->second;
                     //构造reflink
                     std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
@@ -1454,7 +1460,7 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                     target_param->reflinks.push_back(reflink);
                     srcparam.reflinks.push_back(reflink);
 
-                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), true);
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), !isSubOutput);
                 }
             }
         }

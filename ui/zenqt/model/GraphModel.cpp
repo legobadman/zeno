@@ -226,6 +226,7 @@ void NodeItem::init(GraphModel* pGraphM, zeno::NodeImpl* spNode)
                 QModelIndex linkIdx = lnkModel->addLink(from, QString::fromStdString(edgeinfo.outKey), to, QString::fromStdString(edgeinfo.inKey), edgeinfo.bObjLink);
                 fromParams->addLink(from, linkIdx);
                 toParams->addLink(to, linkIdx);
+                lnkModel->setData(linkIdx, true, QtRole::ROLE_IS_REFLINK);
             }
         }
     });
@@ -1243,12 +1244,12 @@ void GraphModel::_initLink()
         }
         //添加referLink
         for (const auto& [edgeinfo, outParamIsOutput] : spNode->getReflinkInfo()) {
-            _addLink_callback(edgeinfo, outParamIsOutput);
+            _addLink_callback(edgeinfo, outParamIsOutput, true);
         }
     }
 }
 
-void GraphModel::_addLink_callback(const zeno::EdgeInfo link, bool outParamIsOutput)
+void GraphModel::_addLink_callback(const zeno::EdgeInfo link, bool outParamIsOutput, bool isReflink)
 {
     QModelIndex from, to;
 
@@ -1286,6 +1287,10 @@ void GraphModel::_addLink_callback(const zeno::EdgeInfo link, bool outParamIsOut
         QModelIndex linkIdx = m_linkModel->addLink(from, outKey, to, inKey, link.bObjLink);
         fromParams->addLink(from, linkIdx);
         toParams->addLink(to, linkIdx);
+
+        if (isReflink) {
+            m_linkModel->setData(linkIdx, true, QtRole::ROLE_IS_REFLINK);
+        }
     }
 
     zenoApp->graphsManager()->currentModel()->markDirty(true);

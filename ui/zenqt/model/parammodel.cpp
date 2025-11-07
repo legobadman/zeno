@@ -1200,6 +1200,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
                 QModelIndex linkIdx = lnkModel->addLink(from, QString::fromStdString(edgeinfo.outKey), to, QString::fromStdString(edgeinfo.inKey), edgeinfo.bObjLink);
                 fromParams->addLink(from, linkIdx);
                 toParams->addLink(to, linkIdx);
+                lnkModel->setData(linkIdx, true, QtRole::ROLE_IS_REFLINK);
             }
         }
     }

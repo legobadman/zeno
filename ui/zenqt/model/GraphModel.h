@@ -142,7 +142,7 @@ private:
     void unRegisterCoreNotify();
     void _appendNode(void* spNode);
     void _initLink();
-    void _addLink_callback(const zeno::EdgeInfo link, bool outParamIsOutput = true);//outParamIsOutput：有referlink之后outparam可能不只是output也可能是input
+    void _addLink_callback(const zeno::EdgeInfo link, bool outParamIsOutput = true, bool isReflink = false);//outParamIsOutput：有referlink之后outparam可能不只是output也可能是input
     bool _removeLink(const zeno::EdgeInfo& edge, bool outParamIsOutput = true);
     void _updateName(const QString& oldName, const QString& newName);
     void _clear();

@@ -243,6 +243,13 @@ namespace zeno
                     paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
                 } else {
                     paramData = parSbnNode->get_output_prim_param(paramname, &bExisted);
+
+                    //可能引用了一个Subnet的输出，若不存在，取SubOutput的默认值
+                    if (!paramData.result.has_value() && parSbnNode->get_uuid().find("Subnet") != std::string::npos) {
+                        if (auto SbnNodeSuboutputNode = pContext->spNode->getGraph()->getNode(paramname)) {
+                            paramData = SbnNodeSuboutputNode->get_input_prim_param("port", &bExisted);
+                        }
+                    }
                 }
                 if (!bExisted) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "there is no param `" + paramname + "` in subnetnode");
@@ -251,6 +258,9 @@ namespace zeno
             else {
                 std::string parampath, _;
                 auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
+                if (!spNode) {
+                    throw makeError<UnimplError>("the refer node doesn't exist");
+                }
                 items = split_str(parampath, '.');
                 std::string paramname = items[0];
 
@@ -422,10 +432,14 @@ namespace zeno
 
         static IObject* getObjFromRef(const std::string& ref, ZfxContext* pContext) {
             std::string parampath, _;
-            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
-            auto items = split_str(parampath, '.');
-            std::string paramname = items[0];
-            return spNode->get_output_obj(paramname);
+            if (auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath)) {
+                auto items = split_str(parampath, '.');
+                if (!items.empty()) {
+                    std::string paramname = items[0];
+                    return spNode->get_output_obj(paramname);
+                }
+            }
+            return nullptr;
         }
 
         static ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext, bool bInput) {

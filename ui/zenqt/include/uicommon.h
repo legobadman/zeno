@@ -1,4 +1,4 @@
-﻿#ifndef __ZENO_UI_COMMON_H__
+#ifndef __ZENO_UI_COMMON_H__
 #define __ZENO_UI_COMMON_H__
 
 #include <zeno/core/typeinfo.h>
@@ -250,6 +250,7 @@ public:
         ROLE_LINK_INFO,
         ROLE_INSOCK_IDX,
         ROLE_OUTSOCK_IDX,
+        ROLE_IS_REFLINK,
         ROLE_NODE_IDX,
         ROLE_MTLID,
         ROLE_KEYFRAMES,
