@@ -60,6 +60,7 @@ public:
     static QStringList getCoreTypeList();
     static bool parseVecType(const QString& type, int& dim, bool& bFloat);
     static QString anyToString(const zeno::reflect::Any& any);
+    static QString floatToString(float val);
     static QString variantToString(const QVariant& var);
     static QString editVariantToQString(const zeno::PrimVar& var);
     static QVariant primvarToQVariant(const zeno::PrimVar& var);

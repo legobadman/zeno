@@ -1,4 +1,5 @@
 #include "zeno/types/PrimitiveObject.h"
+#include <zeno/types/IGeometryObject.h>
 #include "zeno/types/StringObject.h"
 #include <openvdb/Types.h>
 #include <thread>
@@ -474,13 +475,13 @@ struct VDBLeafAsParticles : INode {
         else 
             throw std::runtime_error("VDB type not found.");
 
-        set_output("primPars", std::move(prim));
+        set_output("primPars", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(VDBLeafAsParticles, {
                             {{gParamType_VDBGrid, "vdbGrid", "", zeno::Socket_ReadOnly}},
-                            {{gParamType_Primitive, "primPars"}},
+                            {{gParamType_Geometry, "primPars"}},
                             {},
                             {"visualize"},
                         });

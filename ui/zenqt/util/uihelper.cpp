@@ -1210,6 +1210,13 @@ QString UiHelper::getSockSubgraph(const QString& sockPath)
     return "";
 }
 
+QString UiHelper::floatToString(float val) {
+    QString s = QString::number(val, 'f', 6); // 保留最多6位小数
+    s = s.remove(QRegExp("0+$"));             // 去掉多余的尾随0
+    if (s.endsWith('.')) s.append('0');       // 如果最后是小数点，则补上一个0
+    return s;
+}
+
 QString UiHelper::anyToString(const zeno::reflect::Any& any)
 {
     if (!any.has_value()) {
@@ -1223,18 +1230,7 @@ QString UiHelper::anyToString(const zeno::reflect::Any& any)
     }
     else if (gParamType_PrimVariant == any.type().hash_code()) {
         zeno::PrimVar var = zeno::reflect::any_cast<zeno::PrimVar>(any);
-        return std::visit([](auto&& val)->QString {
-            using T = std::decay_t<decltype(val)>;
-            if constexpr (std::is_same_v<int, T> || std::is_same_v<float, T>) {
-                return QString::number(val);
-            }
-            else if constexpr (std::is_same_v<std::string, T>) {
-                return QString::fromStdString(val);
-            }
-            else {
-                return "";
-            }
-        }, var);
+        return editVariantToQString(var);
     }
     else if (zeno::reflect::get_type<std::string>() == any.type()) {
         return QString::fromStdString(zeno::any_cast_to_string(any));
@@ -1423,15 +1419,18 @@ QString UiHelper::editVariantToQString(const zeno::PrimVar& var)
 {
     return std::visit([](auto&& val) -> QString {
         using T = std::decay_t<decltype(val)>;
-    if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
-        return QString::number(val);
-    }
-    else if constexpr (std::is_same_v<T, std::string>) {
-        return QString::fromStdString(val);
-    }
-    else {
-        return "";
-    }
+        if constexpr (std::is_same_v<T, int>) {
+            return QString::number(val);
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            return floatToString(val);
+        }
+        else if constexpr (std::is_same_v<T, std::string>) {
+            return QString::fromStdString(val);
+        }
+        else {
+            return "";
+        }
         }, var);
 }
 

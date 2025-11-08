@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/vec.h>
 #include <cstring>
@@ -97,7 +98,7 @@ struct MakeVisualAABBPrimitive : INode {
             prim->quads[4] = vec4i(0, 1, 2, 3);
         }
 
-        ZImpl(set_output("prim", std::move(prim)));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -105,8 +106,8 @@ ZENDEFNODE(MakeVisualAABBPrimitive,
         { /* inputs: */ {
         {gParamType_Float, "dx", "1"}, {gParamType_Vec3f,"boundMin","-0.5,-0.5,-0.5"}, {gParamType_Vec3f,"boundMax","0.5,0.5,0.5"}, {gParamType_Int, "OpenTop", "0"},
         }, /* outputs: */ {
-{gParamType_Primitive, "prim"},
-}, /* params: */ {
+        {gParamType_Geometry, "prim"},
+        }, /* params: */ {
         {{"enum points edges trifaces quadfaces", "type", "edges"}},
         }, /* category: */ {
         "visualize",

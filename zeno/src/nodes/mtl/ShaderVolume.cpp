@@ -66,7 +66,7 @@ struct ShaderVolume : INode {
         int vol_depth = (int)ZImpl(get_input2<float>("depth"));
         float vol_extinction = ZImpl(get_input2<float>("extinction"));
 
-        auto EmissionScale = ZImpl(get_input2<std::string>("EmissionScale:"));
+        auto EmissionScale = ZImpl(get_input2<std::string>("EmissionScale"));
         em.commonCode += "#define VolumeEmissionScale VolumeEmissionScaleType::" + EmissionScale + "\n";
 
         vol_depth = clamp(vol_depth, 9, 9999);
@@ -86,7 +86,7 @@ struct ShaderVolume : INode {
 
         if (ZImpl(has_input("tex3dList")))
         {
-            auto tex3dList = ZImpl(get_input<ListObject>("tex3dList"))->m_impl->getRaw(); //get<zeno::StringObject>();
+            auto tex3dList = get_input_ListObject("tex3dList")->m_impl->getRaw(); //get<zeno::StringObject>();
 
             for (const auto& tex3d : tex3dList) {
 
@@ -163,7 +163,7 @@ ZENDEFNODE(ShaderVolume, {
         {gParamType_Float, "extinction", "1"},
         {gParamType_Float, "anisotropy", "0"},
 
-        {gParamType_Vec3f, "albedo", "0.5,0.5,0.5"},
+        {gParamType_Vec3f, "albedo", "0.5,0.5,0.5", Socket_Primitve, zeno::ColorVec},
         {gParamType_Float, "density", "0"},
         {gParamType_Vec3f, "emission", "0.0,0.0,0.0"}
     },

@@ -730,7 +730,9 @@ bool Session::is_frame_node(const std::string& node_cls) {
         "GetFrameNum",
         "CameraNode",
         "FlipSolver",
-        "NewFBXSceneInfo"
+        "NewFBXSceneInfo",
+        "GetAlembicCamera",
+        "ReadAlembic"
     };
     return frame_node_cls.find(node_cls) != frame_node_cls.end();
 }

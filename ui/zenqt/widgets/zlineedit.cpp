@@ -437,7 +437,7 @@ void NotEmptyValidator::fixup(QString& input) const {
 
 
 ZCoreParamLineEdit::ZCoreParamLineEdit(zeno::PrimVar var, zeno::ParamType targetType, QWidget* parent)
-    : ZLineEdit(QString::fromStdString(zeno::editVariantToStr(var)), parent)
+    : ZLineEdit(UiHelper::editVariantToQString(var), parent)
     , m_var(var)
     , m_targetType(targetType)
 {

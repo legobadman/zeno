@@ -1183,7 +1183,7 @@ struct ReadAlembic : INode {
     virtual void apply() override {
         bool use_instance = get_input2_bool("use_instance");
         int frameid;
-        if (has_input("frameid")) {
+        if (has_link_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
         } else {
             frameid = GetFrameId();

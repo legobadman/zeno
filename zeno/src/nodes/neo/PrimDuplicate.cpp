@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/wangsrng.h>
@@ -170,8 +171,8 @@ namespace {
 
 struct PrimDuplicate : INode {
     virtual void apply() override {
-        auto parsPrim = ZImpl(get_input<PrimitiveObject>("parsPrim"));
-        auto meshPrim = ZImpl(get_input<PrimitiveObject>("meshPrim"));
+        auto parsPrim = get_input_Geometry("parsPrim")->toPrimitiveObject();
+        auto meshPrim = get_input_Geometry("meshPrim")->toPrimitiveObject();
         auto tanAttr = ZImpl(get_input2<std::string>("tanAttr"));
         auto dirAttr = ZImpl(get_input2<std::string>("dirAttr"));
         auto radAttr = ZImpl(get_input2<std::string>("radAttr"));
@@ -182,14 +183,14 @@ struct PrimDuplicate : INode {
         auto prim = primDuplicate(parsPrim.get(), meshPrim.get(),
                                   dirAttr, tanAttr, radAttr, onbType,
                                   radius, copyParsAttr, copyMeshAttr);
-        ZImpl(set_output("prim", std::move(prim)));
+        ZImpl(set_output("prim", create_GeometryObject(prim.get())));
     }
 };
 
 ZENDEFNODE(PrimDuplicate, {
     {
-    {gParamType_Primitive, "parsPrim", "", zeno::Socket_ReadOnly},
-    {gParamType_Primitive, "meshPrim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "parsPrim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "meshPrim", "", zeno::Socket_ReadOnly},
     {gParamType_String, "dirAttr", ""},
     {gParamType_String, "tanAttr", ""},
     {gParamType_String, "radAttr", ""},
@@ -199,7 +200,7 @@ ZENDEFNODE(PrimDuplicate, {
     {gParamType_Bool, "copyMeshAttr", "1"},
     },
     {
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     },
     {
     },

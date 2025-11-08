@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/fileio.h>
 #include <zeno/types/ListObject_impl.h>
@@ -40,7 +41,7 @@ ZENDEFNODE(ProceduralSky, {
                 {gParamType_Float, "timeSpeed", "0.1"},
         },
         {
-                {gParamType_Primitive, "ProceduralSky"},
+                {gParamType_Geometry, "ProceduralSky"},
         },
         {
         },
@@ -65,7 +66,7 @@ struct HDRSky : INode {
         pUserData->set2("evnTex3DRotation", std::move(ZImpl(get_input2<zeno::vec3f>("rotation3d"))));
         pUserData->set2("evnTexStrength", std::move(ZImpl(get_input2<float>("strength"))));
         pUserData->set2("enable", std::move(ZImpl(get_input2<bool>("enable"))));
-        ZImpl(set_output("HDRSky", std::move(prim)));
+        set_output("HDRSky", create_GeometryObject(prim.get()));
     }
 };
 
@@ -78,7 +79,7 @@ ZENDEFNODE(HDRSky, {
         {gParamType_Float, "strength", "1"},
     },
     {
-        {gParamType_Primitive, "HDRSky"},
+        {gParamType_Geometry, "HDRSky"},
     },
     {
     },

@@ -143,9 +143,9 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
 
 ZENDEFNODE(ShaderTexture3D, {
     {
-        {"int", "texId", "0"},
-        {"vec3f", "coord", "0,0,0"},
-        {"bool", "cihou", "0"},
+        {gParamType_Int, "texId", "0"},
+        {gParamType_Vec3f, "coord", "0,0,0"},
+        {gParamType_Bool, "cihou", "0"},
         {"enum World Local", "space", "World"},
         {"enum vec2", "type", "vec2"},
         

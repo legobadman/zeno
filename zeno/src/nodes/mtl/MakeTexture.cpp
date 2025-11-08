@@ -158,7 +158,7 @@ namespace zeno
 				{"enum " + MakeTextureVDB::dataTypeListString(), MakeTextureVDB::dataTypeKey, MakeTextureVDB::dataTypeDefaultString()},
 			},
 			{
-				{gParamType_String, "tex"},
+				{gParamType_TextureObjectVDB, "tex"},
 			},
 			{},
 			{

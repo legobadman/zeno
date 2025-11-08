@@ -53,5 +53,6 @@ registerObjectTypeHash(InstancingObject, Instance)
 #define gParamType_BulletWorld      249
 #define gParamType_BulletObject     250
 #define gParamType_BulletConstraint 251
+#define gParamType_TextureObjectVDB 252
 
 #endif
