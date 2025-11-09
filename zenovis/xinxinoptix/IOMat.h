@@ -53,10 +53,12 @@ struct MatOutput {
     float shadowTerminatorOffset;
     float emissionOnly;
     float isHair;
+    float hair_rough2;
     vec3  mask_value;
 
     vec3 nrm;
     vec3 emission;
+    float hair_h = 0;
 };
 
 __forceinline__ float3 transformPoint(float3 p, const float4* matrix) {
