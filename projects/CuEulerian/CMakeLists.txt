@@ -6,33 +6,33 @@ if(NOT ZENO_WITH_CUDA)
 endif()
 
 # pbd
-add_library(z_cueulerian SHARED 
+add_library(zs_cueulerian SHARED 
   oceanfft/Ocean.cu
 )
 
-target_link_libraries(z_cueulerian PRIVATE zenocore zshelper CUDA::cufft)
+target_link_libraries(zs_cueulerian PRIVATE zenocore zshelper CUDA::cufft)
 
 #[[ fluid
-target_sources(z_cueulerian PRIVATE
+target_sources(zs_cueulerian PRIVATE
   volume/VolumeTopology.cu
   volume/VolumeOperator.cu
   volume/Transfer.cu
   volume/Conversion.cu
 )
 ]]
-target_sources(z_cueulerian PRIVATE
+target_sources(zs_cueulerian PRIVATE
   volume/VolumeOps.cu
 )
 
 # shallow water & terrain
-target_sources(z_cueulerian PRIVATE
+target_sources(zs_cueulerian PRIVATE
   swe/FDGather.cu
   swe/Erode.cu
   swe/SWE_dense.cu
 )
 
 # level set function
-target_sources(z_cueulerian PRIVATE
+target_sources(zs_cueulerian PRIVATE
   levelset/Grid_creator.cu
   levelset/Grid_creator_adaptive.cu
   levelset/Reinitialization.cu
@@ -40,7 +40,7 @@ target_sources(z_cueulerian PRIVATE
 )
 
 # navier stokes
-target_sources(z_cueulerian PRIVATE
+target_sources(zs_cueulerian PRIVATE
   navierstokes/NS_pipeline.cu
   navierstokes/NS_boundary.cu
   navierstokes/NS_linearsolver.cu
@@ -50,7 +50,7 @@ target_sources(z_cueulerian PRIVATE
 )
 
 # hybrid
-target_sources(z_cueulerian PRIVATE
+target_sources(zs_cueulerian PRIVATE
   hybrid/P2G.cu
   hybrid/G2P.cu
 )

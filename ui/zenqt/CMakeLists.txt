@@ -63,7 +63,7 @@ if (WIN32)
     target_link_libraries(zeno PRIVATE ws2_32.lib winmm.lib wldap32.lib Advapi32.lib Crypt32.lib)
 endif()
 
-target_link_libraries(zeno PRIVATE zenobase zenovis)
+target_link_libraries(zeno PRIVATE zenocore zenovis)
 
 if (ZENO_WITH_PYTHON)
     find_package(Python3 COMPONENTS Development REQUIRED)
@@ -101,7 +101,7 @@ if (ZENO_WITH_PYTHON)
     target_compile_definitions(zeno PRIVATE -DZENO_WITH_PYTHON)
 endif()
 
-#拷的好像不是reldbinfo的qt，先不用
+#鎷风殑濂藉儚涓嶆槸reldbinfo鐨剄t锛屽厛涓嶇敤
 if(0)
     add_custom_command(TARGET zeno POST_BUILD
         COMMAND "${_qt5Core_install_prefix}/bin/windeployqt.exe"

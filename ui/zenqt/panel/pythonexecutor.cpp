@@ -1,6 +1,6 @@
 ﻿#include "pythonexecutor.h"
 #include "layout/docktabcontent.h"
-#include <zeno/include/zenoutil.h>
+#include <zeno/utils/zenoutil.h>
 #include <zenoapplication.h>
 #include "zassert.h"
 #include "model/graphsmanager.h"

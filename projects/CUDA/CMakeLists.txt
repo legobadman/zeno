@@ -26,7 +26,7 @@ find_package(Eigen3 REQUIRED)
 set(WHEREAMI_BUILD_SHARED_LIBS ON)
 add_subdirectory(zpc)
 
-add_library(zcuda SHARED 
+add_library(zs_cuda SHARED 
   iw_query/Query.cpp
   #test1.cu
   test.cu
@@ -56,12 +56,12 @@ add_library(zcuda SHARED
 )
 
 if (ZS_PYTHON_FOUND)
-  target_link_libraries(zcuda PRIVATE zpc_jit_py)
+  target_link_libraries(zs_cuda PRIVATE zpc_jit_py)
 endif(ZS_PYTHON_FOUND)
 
-target_link_libraries(zcuda PRIVATE zenocore openvdb)
-target_include_directories(zcuda PRIVATE ../zenvdb/openvdb)
-target_include_directories(zcuda PRIVATE ../zenvdb/include)
+target_link_libraries(zs_cuda PRIVATE zenocore openvdb)
+target_include_directories(zs_cuda PRIVATE ../zenvdb/openvdb)
+target_include_directories(zs_cuda PRIVATE ../zenvdb/include)
 
 if (ZS_PYTHON_FOUND AND ZENO_WITH_PyZpc)
 
@@ -73,9 +73,9 @@ if (ZS_PYTHON_FOUND AND ZENO_WITH_PyZpc)
     set(RESOURCE_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
   endif()
 
-  get_target_property(ZPC_BIN_DIR zcuda RUNTIME_OUTPUT_DIRECTORY)
+  get_target_property(ZPC_BIN_DIR zs_cuda RUNTIME_OUTPUT_DIRECTORY)
   add_custom_target(copy_py)
-  add_dependencies(zcuda copy_py)
+  add_dependencies(zs_cuda copy_py)
   add_dependencies(copy_py zpc_jit_py)
   # message(STATUS "retrieved python impl: ${Python3_INTERPRETER_ID}")
   message(STATUS "python3 libraries: ${ZS_OVERWRITE_PYTHON_LIBRARIES}")
@@ -109,9 +109,9 @@ if (ZS_PYTHON_FOUND AND ZENO_WITH_PyZpc)
     message(FATAL_ERROR "unknown system to determine shared library suffix")
   endif()
 
-  target_compile_definitions(zcuda PRIVATE -DZENO_OUTPUT_BINARY_CAPIS="${PREFIX}zpc_py_interop${SUFFIX}")
-  target_compile_definitions(zcuda PRIVATE -DZENO_OUTPUT_BINARY_NVRTC="${PREFIX}zpc_jit_nvrtc${SUFFIX}")
-  target_compile_definitions(zcuda PRIVATE -DZENO_OUTPUT_BINARY_CLANG="${PREFIX}zpc_jit_clang${SUFFIX}")
+  target_compile_definitions(zs_cuda PRIVATE -DZENO_OUTPUT_BINARY_CAPIS="${PREFIX}zpc_py_interop${SUFFIX}")
+  target_compile_definitions(zs_cuda PRIVATE -DZENO_OUTPUT_BINARY_NVRTC="${PREFIX}zpc_jit_nvrtc${SUFFIX}")
+  target_compile_definitions(zs_cuda PRIVATE -DZENO_OUTPUT_BINARY_CLANG="${PREFIX}zpc_jit_clang${SUFFIX}")
   add_custom_command(
     TARGET copy_py
     POST_BUILD
@@ -217,24 +217,24 @@ target_include_directories(zshelper INTERFACE
 target_link_libraries(zshelper INTERFACE zensim ZFX)
 target_compile_features(zshelper INTERFACE cuda_std_17)
 
-target_link_options(zcuda
+target_link_options(zs_cuda
   PRIVATE $<DEVICE_LINK:-dlto>
 )
-target_link_libraries(zcuda PRIVATE Eigen3::Eigen)
-target_link_libraries(zcuda PRIVATE zshelper)
+target_link_libraries(zs_cuda PRIVATE Eigen3::Eigen)
+target_link_libraries(zs_cuda PRIVATE zshelper)
 
-# target_link_libraries(zcuda PRIVATE vulkan shaderc_shared SPIRV)
-# target_link_libraries(zcuda PRIVATE Vulkan::Vulkan ${Vulkan_LIBRARY})
+# target_link_libraries(zs_cuda PRIVATE vulkan shaderc_shared SPIRV)
+# target_link_libraries(zs_cuda PRIVATE Vulkan::Vulkan ${Vulkan_LIBRARY})
 #[=[
 #]=]
-set_target_properties(zcuda
+set_target_properties(zs_cuda
   PROPERTIES
   CUDA_SEPARABLE_COMPILATION ON
   CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
 
 if (ZS_PYTHON_FOUND)
-target_sources(zcuda PRIVATE
+target_sources(zs_cuda PRIVATE
   graph/Task.cpp
 )
 endif(ZS_PYTHON_FOUND)

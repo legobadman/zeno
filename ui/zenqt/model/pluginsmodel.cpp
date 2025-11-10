@@ -34,8 +34,8 @@ PluginsModel::PluginsModel(QObject* parent)
 #else
 
 #endif
+            m_items.append(_item);
         }
-        m_items.append(_item);
     }
 }
 
