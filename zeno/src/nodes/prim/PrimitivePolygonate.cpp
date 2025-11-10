@@ -5,7 +5,7 @@
 
 namespace zeno {
 
-ZENO_API void primPolygonate(PrimitiveObject *prim, bool with_uv) {
+static void primPolygonate(PrimitiveObject *prim, bool with_uv) {
     prim->loops.reserve(prim->loops.size() + prim->tris.size() * 3 +
                         prim->quads.size() * 4 + prim->lines.size() * 2 +
                         prim->points.size());

@@ -54,7 +54,7 @@ void remap_attr_on_faces(PrimitiveObject *prim, std::string tagAttr, std::map<in
     }
 }
 
-ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeFaces(PrimitiveObject *prim, std::string tagAttr) {
+static std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeFaces(PrimitiveObject *prim, std::string tagAttr) {
     if (!prim->verts.size()) return {};
 
     if (prim->tris.size() > 0 && prim->polys.size() > 0) {

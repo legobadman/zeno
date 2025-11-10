@@ -45,20 +45,6 @@ bool ptInTriangle(zeno::vec3f p, zeno::vec3f p0, zeno::vec3f p1,
   return true;
 }
 
-// to do where to put this func??
-template <class T>
-T baryCentricInterpolation(T &v1, T &v2, T &v3, zeno::vec3f &p,
-                           zeno::vec3f &vert1, zeno::vec3f &vert2,
-                           zeno::vec3f &vert3) {
-  float a1 = area(p, vert2, vert3);
-  float a2 = area(p, vert1, vert3);
-  float a = area(vert1, vert2, vert3);
-  float w1 = a1 / a;
-  float w2 = a2 / a;
-  float w3 = 1 - w1 - w2;
-  return w1 * v1 + w2 * v2 + w3 * v3;
-}
-
 struct PrimSprayParticles : zeno::INode {
   virtual void apply() override {
     auto dx = get_input2_float("Dx");

@@ -10,7 +10,7 @@
 namespace zeno {
 
 
-ZENO_API void primColorByTag(PrimitiveObject *prim, std::string tagAttr, std::string clrAttr, int seed) {
+static void primColorByTag(PrimitiveObject *prim, std::string tagAttr, std::string clrAttr, int seed) {
     auto const &tag = prim->verts.attr<int>(tagAttr);
     auto &clr = prim->verts.add_attr<zeno::vec3f>(clrAttr);
     std::unordered_map<int, vec3f> lut;

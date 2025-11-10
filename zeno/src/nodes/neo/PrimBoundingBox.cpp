@@ -1,3 +1,4 @@
+#include <zeno/utils/api.h>
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/IGeometryObject.h>
@@ -10,18 +11,6 @@
 #include <cstdlib>
 
 namespace zeno {
-
-ZENO_API std::pair<vec3f, vec3f> primBoundingBox(PrimitiveObject *prim) {
-    if (!prim->verts.size())
-        return {{0, 0, 0}, {0, 0, 0}};
-    return parallel_reduce_minmax(prim->verts.begin(), prim->verts.end());
-}
-
-ZENO_API std::optional<std::pair<vec3f, vec3f>> primBoundingBox2(PrimitiveObject *prim) {
-    if (!prim->verts.size())
-        return std::nullopt;
-    return parallel_reduce_minmax(prim->verts.begin(), prim->verts.end());
-}
 
 static std::pair<vec3f, vec3f> geoBoundingBox(GeometryObject_Adapter* prim) {
     const std::vector<zeno::vec3f>& pts = prim->points_pos();

@@ -10,26 +10,7 @@
 
 namespace zeno {
 
-// 'smart loop_uvs' to 'qianqiang loop.attr(uv)'
-ZENO_API void primDecodeUVs(PrimitiveObject *prim) {
-}
 
-// 'smart loop_uvs' to 'veryqianqiang vert.attr(uv)'
-ZENO_API void primLoopUVsToVerts(PrimitiveObject *prim) {
-    if (prim->loops.size() && prim->has_attr("uvs")) {
-        auto &loop_uvs = prim->loops.attr<int>("uvs");
-        auto &vert_uv = prim->verts.add_attr<zeno::vec3f>("uv"); // todo: support vec2f in attr...
-        /*attr_uv.resize(prim->loop_uvs.size());*/
-        for (size_t i = 0; i < loop_uvs.size(); i++) {
-            auto uv = prim->uvs[loop_uvs[i]];
-            int vertid = prim->loops[i];
-            vert_uv[vertid] = {uv[0], uv[1], 0};
-            // uv may overlap and conflict at edges, but doesn't matter
-            // this node is veryqianqiang after all, just to serve ZFX pw
-        }
-        prim->loops.erase_attr("uvs");
-    }
-}
 
 namespace {
 

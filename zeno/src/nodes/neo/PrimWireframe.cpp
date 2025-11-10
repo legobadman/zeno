@@ -10,7 +10,7 @@
 
 namespace zeno {
 
-ZENO_API void primEdgeBound(PrimitiveObject *prim, bool removeFaces, bool toEdges) {
+static void primEdgeBound(PrimitiveObject *prim, bool removeFaces, bool toEdges) {
     struct segment_less {
         bool operator()(vec2i const &a, vec2i const &b) const {
             return std::make_pair(std::min(a[0], a[1]), std::max(a[0], a[1]))

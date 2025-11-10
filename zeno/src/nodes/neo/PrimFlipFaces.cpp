@@ -10,7 +10,7 @@
 
 namespace zeno {
 
-ZENO_API void primFlipFaces(PrimitiveObject *prim, bool only_face) {
+static void primFlipFaces(PrimitiveObject *prim, bool only_face) {
     if (!only_face && prim->lines.size())
         parallel_for_each(prim->lines.begin(), prim->lines.end(), [&] (auto &line) {
             std::swap(line[1], line[0]);

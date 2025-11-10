@@ -165,7 +165,7 @@ static std::string_view lutRandTypes[] = {
 
 }
 
-ZENO_API void primRandomize(PrimitiveObject *prim, std::string attr, std::string dirAttr, std::string seedAttr, std::string randType, float base, float scale, int seed) {
+static void primRandomize(PrimitiveObject *prim, std::string attr, std::string dirAttr, std::string seedAttr, std::string randType, float base, float scale, int seed) {
     auto randty = enum_variant<RandTypes>(array_index_safe(lutRandTypes, randType, "randType"));
     auto seedSel = functor_variant(seedAttr.empty() ? 0 : 1, [&] {
         return [] (int i) {

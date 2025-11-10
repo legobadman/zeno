@@ -20,7 +20,7 @@
 
 namespace zeno {
 
-ZENO_API void primSubdiv(PrimitiveObject *prim, std::string type, std::string method, int iterations, bool interpAttrs) {
+static void primSubdiv(PrimitiveObject *prim, std::string type, std::string method, int iterations, bool interpAttrs) {
     if (iterations <= 0) return;
 
     auto sorted = [] (int i, int j) {

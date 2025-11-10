@@ -60,7 +60,7 @@ namespace zeno {
     static std::map<size_t, _ObjUIInfo> s_objsUIInfo;
 
 #ifdef ZENO_WITH_PYTHON
-    PyMODINIT_FUNC PyInit_zen(void);
+    //PyMODINIT_FUNC PyInit_zen(void);
 
     void initPythonEnv(const char* progName)
     {
@@ -731,8 +731,7 @@ bool Session::is_frame_node(const std::string& node_cls) {
         "CameraNode",
         "FlipSolver",
         "NewFBXSceneInfo",
-        "GetAlembicCamera",
-        "ReadAlembic"
+        "GetAlembicCamera"
     };
     return frame_node_cls.find(node_cls) != frame_node_cls.end();
 }

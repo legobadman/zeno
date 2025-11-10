@@ -27,7 +27,7 @@ template <typename DstT, typename SrcT> constexpr auto reinterpret_bits(SrcT &&v
     std::memcpy(&dst, const_cast<const Src *>(&val), sizeof(Dst));
     return dst;
   }
-ZENO_API void primCalcNormal(zeno::PrimitiveObject* prim, float flip, std::string nrmAttr)
+static void primCalcNormal(zeno::PrimitiveObject* prim, float flip, std::string nrmAttr)
 {
     auto &nrm = prim->add_attr<zeno::vec3f>(nrmAttr);
     auto &pos = prim->verts.values;
@@ -203,7 +203,7 @@ ZENDEFNODE(PrimitiveOrderVertexByNormal, {
                                     {},
                                     {"primitive"},
 });
-//ZENO_API void primCalcInsetDir(zeno::PrimitiveObject* prim, float flip, std::string insetAttr)
+//static void primCalcInsetDir(zeno::PrimitiveObject* prim, float flip, std::string insetAttr)
 //{
     //auto &out = prim->verts.add_attr<zeno::vec3f>(insetAttr);
     //for (size_t i = 0; i < prim->tris.size(); i++) {
