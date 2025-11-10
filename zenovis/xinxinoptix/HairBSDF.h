@@ -38,17 +38,17 @@ namespace HairBSDF{
     {
         float x2 = x*x;
         float x4 = x2*x2;
-        return 5.969
-                - 0.215 * x
-                + 2.532 * x2
-                - 10.73 * x2 * x
-                + 5.574 * x4
-                + 0.245 * x4 * x;
+        return 5.969f
+                - 0.215f * x
+                + 2.532f * x2
+                - 10.73f * x2 * x
+                + 5.574f * x4
+                + 0.245f * x4 * x;
     }
     static __inline__ __device__ float
     sinh(float x)
     {
-        return (exp(x) - exp(-x)) * 0.5;
+        return (expf(x) - expf(-x)) * 0.5f;
     }
     static __inline__ __device__ float
     csch(float x)
@@ -91,10 +91,10 @@ namespace HairBSDF{
         float a = cosTheta_i * cosTheta_o / v;
         float b = sinTheta_i * sinTheta_o / v;
         if(v < 0.1f){
-            return exp(logI_0(a) - b - 1 / v + 0.6931f + log(1 / (2 * v)));
+            return expf(logI_0(a) - b - 1 / v + 0.6931f + logf(1 / (2 * v)));
         }
         float term1 = sinh(1/v) * (2*v);
-        float term2 = exp(-b);
+        float term2 = expf(-b);
         float term3 = I0(a);
         return term2 * term3 / term1;
     }
@@ -102,12 +102,12 @@ namespace HairBSDF{
     static __inline__ __device__ float
     Logistic(float x, float s) {
         x = abs(x);
-        return exp(-x / s) / (s * pbrt::Sqr(1 + exp(-x / s)));
+        return expf(-x / s) / (s * pbrt::Sqr(1 + expf(-x / s)));
     }
     static __inline__ __device__ float 
     LogisticCDF(float x,float s)
     {
-        float temp = exp(-x/s);
+        float temp = expf(-x/s);
         if(temp>88.0f)
             return 0;
         return 1 / (1+temp);
@@ -151,7 +151,7 @@ namespace HairBSDF{
         float cosTheta = abs(cosTheta_o) * safesqrt(1-h*h);
         float f = BRDFBasics::DielectricFresnel(cosTheta,ior);
         float f2 = BRDFBasics::DielectricFresnel(abs(cosTheta_o),ior);
-        vec3 tmp = pbrt::Sqr(1.0 - f) * color;
+        vec3 tmp = pbrt::Sqr(1.0f - f) * color;
         ap[0] = vec3(f);
         ap[1] = tmp;
         ap[2] = ap[1] * color * f;
@@ -172,7 +172,7 @@ namespace HairBSDF{
     {
         float cosTheta = abs(cosTheta_o) * safesqrt(1-h*h);
         float f = BRDFBasics::DielectricFresnel(cosTheta,ior);
-        vec3 tmp = pow(1.0f-f,2.0f) * color;
+        vec3 tmp = powf(1.0f-f,2.0f) * color;
         if(p==0){
             return vec3(f);
         }else if(p==1){
@@ -187,7 +187,7 @@ namespace HairBSDF{
     static __inline__ __device__ float
     SampleTrimmedLogistic(float u, float s, float a, float b) {
         float k = LogisticCDF(b, s) - LogisticCDF(a, s);
-        float x = -s * log(1 / (u * k + LogisticCDF(a, s)) - 1);
+        float x = -s * logf(1 / (u * k + LogisticCDF(a, s)) - 1);
         return clamp(x, a, b);
     }
     static __inline__ __device__ vec3
@@ -209,11 +209,11 @@ namespace HairBSDF{
     {
         float sinTheta_o = wo.x;
         float cosTheta_o = safesqrt(1 - pbrt::Sqr(sinTheta_o));
-        float phiO = atan2(wo.z, wo.y);
+        float phiO = atan2f(wo.z, wo.y);
 
         float sinTheta_i = wi.x;
         float cosTheta_i = safesqrt(1 - pbrt::Sqr(sinTheta_i));
-        float phiI = atan2(wi.z, wi.y);
+        float phiI = atan2f(wi.z, wi.y);
         float Phi = phiI - phiO;
 
 
@@ -224,8 +224,8 @@ namespace HairBSDF{
         float cosGammaT = safesqrt(1-sinGammaT * sinGammaT);
         float sinTheta_t = sinTheta_o/ior;
         float cosTheta_t = safesqrt(1-sinTheta_t * sinTheta_t);
-        float gammaT = asin(sinGammaT);
-        float gammaO = asin(h);
+        float gammaT = asinf(sinGammaT);
+        float gammaO = asinf(h);
 
         vec3 sigma = pbrt::Sqr(log(pow(basecolor,1.0)) / poly5(beta_n));
         //sigma = sigma * sigma;
@@ -235,13 +235,13 @@ namespace HairBSDF{
 
         float v[4];
         v[0]= pbrt::Sqr(0.726f * beta_m + 0.812f * pbrt::Sqr(beta_m) + 3.7f * pow20(beta_m));
-        v[1] = 0.25*v[0];
+        v[1] = 0.25f*v[0];
         v[2] = 4 * v[0];
         v[3] = v[2];
 
         float sin2kAlpha[3];
         float cos2kAlpha[3];
-        sin2kAlpha[0] = sin(alpha/180.0f*M_PIf);
+        sin2kAlpha[0] = sinf(alpha/180.0f*M_PIf);
         cos2kAlpha[0] = safesqrt(1 - pbrt::Sqr(sin2kAlpha[0]));
         for (int i = 1; i < 3; ++i) {
             sin2kAlpha[i] = 2 * cos2kAlpha[i - 1] * sin2kAlpha[i - 1];
@@ -290,7 +290,7 @@ namespace HairBSDF{
     {
         float sinTheta_o = wo.x;
         float cosTheta_o = safesqrt(1 - pbrt::Sqr(sinTheta_o));
-        float phiO = atan2(wo.z, wo.y);
+        float phiO = atan2f(wo.z, wo.y);
 
 
         float s = 0.626657069f * (0.265f*beta_n + 1.194f*pbrt::Sqr(beta_n) + 5.372f*pow22(beta_n));
@@ -323,17 +323,17 @@ namespace HairBSDF{
 
         float v[4];
         v[0]= pbrt::Sqr(0.726f * beta_m + 0.812f * pbrt::Sqr(beta_m) + 3.7f * pow20(beta_m));
-        v[1] = 0.25*v[0];
+        v[1] = 0.25f*v[0];
         v[2] = 4 * v[0];
         v[3] = v[2];
         rand.z = max(rand.z, 1e-5f);
-        float cosTheta = 1 + v[p] * log(rand.z + (1 - rand.z) * exp(-2 / v[p]));
+        float cosTheta = 1 + v[p] * logf(rand.z + (1 - rand.z) * expf(-2 / v[p]));
         float sinTheta = safesqrt(1 - pbrt::Sqr(cosTheta));
-        float cosPhi = cos(2 * M_PIf * rand.y);
+        float cosPhi = cosf(2.0f * M_PIf * rand.y);
         float sinTheta_i = -cosTheta * sinTheta_o + sinTheta * cosPhi * cosTheta_o;
         float cosTheta_i = safesqrt(1 - pbrt::Sqr(sinTheta_i));
-        float gammaT = asin(sinGammaT);
-        float gammaO = asin(h);
+        float gammaT = asinf(sinGammaT);
+        float gammaO = asinf(h);
         float dphi;
         if (p < 3)
             dphi =
@@ -342,12 +342,12 @@ namespace HairBSDF{
             dphi = 2 * M_PIf * rand.x;
 
         float phiI = phiO + dphi;
-        wi = vec3(sinTheta_i, cosTheta_i * cos(phiI),
-                   cosTheta_i * sin(phiI));
+        wi = vec3(sinTheta_i, cosTheta_i * cosf(phiI),
+                   cosTheta_i * sinf(phiI));
 
         float sin2kAlpha[3];
         float cos2kAlpha[3];
-        sin2kAlpha[0] = sin(alpha/180.0f*M_PIf);
+        sin2kAlpha[0] = sinf(alpha/180.0f*M_PIf);
         cos2kAlpha[0] = safesqrt(1 - pbrt::Sqr(sin2kAlpha[0]));
         for (int i = 1; i < 3; ++i) {
             sin2kAlpha[i] = 2 * cos2kAlpha[i - 1] * sin2kAlpha[i - 1];
