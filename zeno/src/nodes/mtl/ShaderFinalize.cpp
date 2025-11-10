@@ -72,7 +72,8 @@ struct ShaderFinalize : INode {
             {1, "mat_opacity"},
             {1, "mat_thickness"},
             {1, "mat_isHair"},
-            {1, "mat_HairRough2"}
+            {1, "mat_HairRough2"},
+            {1, "mat_FurCoat"}
 
         }, {
             get_input<IObject>("base", std::make_shared<NumericObject>(float(1.0f))),
@@ -127,6 +128,7 @@ struct ShaderFinalize : INode {
             get_input<IObject>("thickness", std::make_shared<NumericObject>(float(0.0f))),
             get_input<IObject>("isHair", std::make_shared<NumericObject>(float(0.0f))),
             get_input<IObject>("HairRough2", std::make_shared<NumericObject>(float(1.0f))),
+            get_input<IObject>("FurCoat", std::make_shared<NumericObject>(float(0.0f)))
         });
         auto commonCode = em.getCommonCode();
 
@@ -234,6 +236,7 @@ ZENDEFNODE(ShaderFinalize, {
         {"float", "thickness", "0.0"},
         {"float", "isHair", "0.0"},
         {"float", "HairRough2", "1.0"},
+        {"float", "FurCoat", "0.0"},
         {"string", "commonCode"},
         {"string", "extensionsCode"},
         {"string", "mtlid", "Mat1"},

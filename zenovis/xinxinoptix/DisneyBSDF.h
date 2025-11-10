@@ -784,13 +784,13 @@ namespace DisneyBSDF{
           float Phi = acos(dot(wo_t, wi_t));
           float cos_gamma = clamp(wo_t.z,-1.0f,1.0f);
           float absh = safesqrt(1 - cos_gamma * cos_gamma);
-          float h = -sign(wo_t.y) * absh;
+          float h = sign(wo_t.y) * absh;
 
           float Pdf;
           vec3 H = HairBSDF::EvaluteHair2(wo, wi,
                                            h,mat.ior,
                                            mat.basecolor,
-                                           mat.roughness,mat.hair_rough2,2.0f, Pdf);
+                                           mat.roughness,mat.hair_rough2,mat.m0_rough,2.0f, Pdf);
 
           fPdf += Pdf;
           dterm = dterm + H;
@@ -1348,14 +1348,12 @@ namespace DisneyBSDF{
 
           float cos_gamma = clamp(wo_t.z,-1.0f,1.0f);
           float absh = safesqrt(1 - cos_gamma * cos_gamma);
-          float h = -sign(wo_t.y) * absh;
-          if(prd->print_info&&prd->depth==0)
-              printf("h:%f\n",h);
+          float h = sign(wo_t.y) * absh;
           float pdf;
           reflectance = HairBSDF::SampleHair2(woo, wi,prd->seed,
                                                h,mat.ior,
                                                mat.basecolor,
-                                               mat.roughness,1.0,2.0f, pdf);
+                                               mat.roughness,1.0,mat.m0_rough,2.0f, pdf);
 
           isSS = false;
           tbn.inverse_transform(wi);

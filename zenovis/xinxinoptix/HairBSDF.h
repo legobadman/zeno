@@ -148,11 +148,7 @@ namespace HairBSDF{
 
         //return 1;
         float dphi = Phi - GetPhi(p, gammaO, gammaT);
-//        dphi = my_fmod(dphi, 2.0f*M_PIf);
-//        dphi -= dphi>M_PIf? 2.0f*M_PIf : 0.0f;
-    // Remap _dphi_ to $[-\pi,\pi]$
-//        while (dphi > M_PIf) dphi -= 2 * M_PIf;
-//        while (dphi < -M_PIf) dphi += 2 * M_PIf;
+
         return TrimmedLogistic(wrap_angle(dphi), s, -M_PIf, M_PIf);
 
     }
@@ -216,8 +212,9 @@ namespace HairBSDF{
     EvaluteHair2(vec3 wo,vec3 wi,
                  float h,float ior,
                  vec3 basecolor,
-                float beta_m, float beta_n, float alpha, float &pdf)
+                float beta_m, float beta_n, float m0_rough, float alpha, float &pdf)
     {
+
         float sinTheta_o = wo.x;
         float cosTheta_o = safesqrt(1 - pbrt::Sqr(sinTheta_o));
         float phiO = atan2(wo.z, wo.y);
@@ -242,12 +239,14 @@ namespace HairBSDF{
         //sigma = sigma * sigma;
         vec3 T = exp(-sigma * (2 * cosGammaT / cosTheta_t));//pow(basecolor,  (2*cosGammaT/cosTheta_t));
 
-
-
+        m0_rough = m0_rough * beta_m;
+        m0_rough = clamp(m0_rough,0.001f,1.0f);
+        beta_m = clamp(beta_m,0.001f,1.0f);
+        float v1 = pbrt::Sqr(0.726f * beta_m + 0.812f * pbrt::Sqr(beta_m) + 3.7f * pow20(beta_m));
         float v[4];
-        v[0]= pbrt::Sqr(0.726f * beta_m + 0.812f * pbrt::Sqr(beta_m) + 3.7f * pow20(beta_m));
-        v[1] = 0.25*v[0];
-        v[2] = 4 * v[0];
+        v[0]= pbrt::Sqr(0.726f * m0_rough + 0.812f * pbrt::Sqr(m0_rough) + 3.7f * pow20(m0_rough));
+        v[1] = 0.25*v1;
+        v[2] = 4 * v1;
         v[3] = v[2];
 
         float sin2kAlpha[3];
@@ -285,7 +284,7 @@ namespace HairBSDF{
             }
             cosThetaOp = abs(cosThetaOp);
             float Mp = M_p_Weta(sinTheta_i,cosTheta_i,sinThetaOp,cosThetaOp, v[i]);
-            float Np = N_p(Phi,i,s,gammaO,gammaT);
+            float Np = N_p(Phi,i,i==1?s:4.28,gammaO,gammaT);
             sum += Mp * ap[i] * Np;
             pdf += Mp * apPdf[i] * Np;
         }
@@ -297,7 +296,7 @@ namespace HairBSDF{
     SampleHair2(vec3 wo,vec3 &wi, unsigned int &seed,
                  float h,float ior,
                  vec3 basecolor,
-                float beta_m, float beta_n, float alpha, float &pdf)
+                float beta_m, float beta_n, float m0_rough, float alpha, float &pdf)
     {
         float sinTheta_o = wo.x;
         float cosTheta_o = safesqrt(1 - pbrt::Sqr(sinTheta_o));
@@ -332,10 +331,14 @@ namespace HairBSDF{
         rand.z /= apPdf[p];
 
 
+        m0_rough = m0_rough * beta_m;
+        m0_rough = clamp(m0_rough,0.001f,1.0f);
+        beta_m = clamp(beta_m,0.001f,1.0f);
+        float v1 = pbrt::Sqr(0.726f * beta_m + 0.812f * pbrt::Sqr(beta_m) + 3.7f * pow20(beta_m));
         float v[4];
-        v[0]= pbrt::Sqr(0.726f * beta_m + 0.812f * pbrt::Sqr(beta_m) + 3.7f * pow20(beta_m));
-        v[1] = 0.25*v[0];
-        v[2] = 4 * v[0];
+        v[0]= pbrt::Sqr(0.726f * m0_rough + 0.812f * pbrt::Sqr(m0_rough) + 3.7f * pow20(m0_rough));
+        v[1] = 0.25*v1;
+        v[2] = 4 * v1;
         v[3] = v[2];
         rand.z = max(rand.z, 1e-5f);
         float cosTheta = 1 + v[p] * log(rand.z + (1 - rand.z) * exp(-2 / v[p]));

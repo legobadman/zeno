@@ -54,6 +54,7 @@ struct MatOutput {
     float emissionOnly;
     float isHair;
     float hair_rough2;
+    float m0_rough;
     vec3  mask_value;
 
     vec3 nrm;
