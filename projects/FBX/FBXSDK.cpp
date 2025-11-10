@@ -654,12 +654,12 @@ static std::shared_ptr<PrimitiveObject> GetMesh(
                 }
                 else if (arr->GetMappingMode() == FbxLayerElement::EMappingMode::eByPolygonVertex) {
                     if (arr->GetReferenceMode() == FbxLayerElement::EReferenceMode::eDirect) {
-                        auto &uvs = prim->loops.add_attr<int>(format("uvs_{}", j));
+                        auto &uvs = prim->loops.add_attr<int>(format("uv{}s", j));
                         std::iota(uvs.begin(), uvs.end(), 0);
                         prim->append_uvs[j-1].resize(prim->loops.size());
                     }
                     else if (arr->GetReferenceMode() == FbxLayerElement::EReferenceMode::eIndexToDirect) {
-                        auto &uvs = prim->loops.add_attr<int>(format("uvs_{}", j));
+                        auto &uvs = prim->loops.add_attr<int>(format("uv{}s", j));
                         for (auto i = 0; i < prim->loops.size(); i++) {
                             uvs[i] = arr->GetIndexArray().GetAt(i);
                         }
