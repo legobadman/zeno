@@ -194,7 +194,8 @@ struct CompactLightBounds {
         // Compute clamped squared distance to reference point
         Vector3f pc = bounds.center();
         float d2 = lengthSquared(p - pc);
-        d2 = fmaxf(d2, length(bounds.diagonal()) * 0.5f);
+        float r2 = lengthSquared(bounds.diagonal() * 0.5f);
+        d2 = fmaxf(d2, r2);
 
         // Define cosine and sine clamped subtraction lambdas
         auto cosSubClamped = [](float sinTheta_a, float cosTheta_a, float sinTheta_b, float cosTheta_b) -> float {
