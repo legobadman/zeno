@@ -39,6 +39,10 @@ struct vec4{
     {
         x = _x; y = _x; z = _x; w = _x;
     }
+    __forceinline__ __device__ vec4(float3 xyz, float _w)
+    {
+        x = xyz.x; y = xyz.y; z = xyz.z; w = _w;
+    }
     explicit __forceinline__ __device__ operator float() const {
         return x;
     }
@@ -919,6 +923,18 @@ __forceinline__ __device__ vec4 fract(vec4 a)
 //////////////end of common math///////////////////////////////////////////////////
 
 /////////////begin of geometry math///////////////////////////////////////////////
+__forceinline__ __device__ float sum(vec2 a)
+{
+    return a.x + a.y;
+}
+__forceinline__ __device__ float sum(vec3 a)
+{
+    return a.x + a.y + a.z;
+}
+__forceinline__ __device__ float sum(vec4 a)
+{
+    return a.x + a.y + a.z + a.w;
+}
 __forceinline__ __device__ float dot(vec2 a, vec2 b)
 {
     return a.x*b.x + a.y*b.y ;

@@ -79,7 +79,8 @@ struct CompactLightBounds {
         this->meta = {
             QuantizeCos(lb.cosTheta_o),
             QuantizeCos(lb.cosTheta_e),
-            lb.doubleSided
+            lb.doubleSided,
+            lb.isLeaf
         };
         // Quantize bounding box into _qb_
         for (int c = 0; c < 3; ++c) {
@@ -91,6 +92,7 @@ struct CompactLightBounds {
     }
 
     bool isDoubleSided() const { return meta.doubleSided; }
+    bool isLeaf() const { return meta.isLeaf; }
     
     float CosTheta_o() const { return 2 * (meta.qCosTheta_o / 32767.f) - 1; }
     float CosTheta_e() const { return 2 * (meta.qCosTheta_e / 32767.f) - 1; }
@@ -112,14 +114,87 @@ struct CompactLightBounds {
                             lerp(qb[1][2] / 65535.f, pMin.z, pMax.z))};
     }
 
-    float Importance(Vector3f p, Vector3f n, const Bounds3f &allb) const {
+    float ImportanceVolume(const Vector3f& p, const Vector3f& d, const Bounds3f &allb, float tmax) const {
+        Bounds3f bounds = Bounds(allb);
+        Vector3f center = bounds.center();
+
+        auto& centroid = reinterpret_cast<const float3&>(center);
+        // --- Geometric factor: shortest distance from ray to cluster center ---
+        auto& ro = reinterpret_cast<const float3&>(p);
+        auto& rd = reinterpret_cast<const float3&>(d);
+        
+        float3 v = centroid - ro;
+        float tClosest = dot(v, rd);
+        float3 pClosest = ro + tClosest * rd;
+
+        float radius = length(bounds.diagonal() * 0.5f);  // bounding sphere
+        float dmin = length(centroid - pClosest);
+        dmin = fmaxf(radius, dmin);
+        dmin = fmaxf(1e-6f, dmin);
+        
+        // --- Orientation factor: find theta_min ---
+        // Compute v0, v1 = vectors from segment endpoints to cluster
+        const auto v0 = normalize(ro - centroid);
+        const auto v1 = normalize(ro + rd * tmax - centroid);
+
+        // Build orthonormal basis from v0, v1
+        const auto o0 = v0; //normalize(v0);
+        const auto o1 = normalize(v1 - dot(v1, o0) * o0);
+
+        const float cosTheta_o = CosTheta_o();
+        const float cosTheta_e = CosTheta_e();
+        const float theta_o = acosf(cosTheta_o);
+        const float theta_e = acosf(cosTheta_e);
+
+        // Axis direction of cluster
+        const Vector3f a = Vector3f(w);
+        const auto& axis = reinterpret_cast<const float3&>(a);
+        const float cosTheta0 = dot(o0, axis);
+        const float cosTheta1 = dot(o1, axis);
+
+        // Candidate max at derivative
+        float denom = sqrtf(Sqr(cosTheta0) + Sqr(cosTheta1));
+        const float cosPhi0 = cosTheta0 / denom;
+        const float sinPhi0 = cosTheta1 / denom;
+
+        float cosThetaCandidate = denom > 0 ? dot(normalize(o0 * cosPhi0 + o1 * sinPhi0), axis) : -1;
+        float bmax = fmaxf(dot(v0, axis), dot(v1, axis));
+        // Pick final cos(theta_min)
+        float cosThetaMin;
+        if (dot(o1, axis) < 0 || dot(v0, v1) > cosPhi0)
+            cosThetaMin = bmax;
+        else
+            cosThetaMin = cosThetaCandidate;
+        //cosThetaMin = fmaxf(cosThetaCandidate, bmax);
+        float theta_u = asinf(fminf(radius / dmin, 1.0f));
+
+        // --- Apply angular bounds ---
+        float thetaMin = acosf(clamp(cosThetaMin, -1.f, 1.f));
+        float thetaVal = thetaMin - theta_o - theta_u;
+        if (thetaVal > theta_e) return 0.f;
+
+        float cosTerm = cosf(fmaxf(thetaVal, 0.f));
+        if (isLeaf()) {
+            if (radius==0 && (theta_o+theta_e)<M_PI_2f) // spot light
+                cosTerm = smoothstep(cosf(theta_o+theta_e), cosTheta_o, cosThetaMin);
+            else if (radius>0 && theta_o==0 && bmax<0) // area light back
+                cosTerm = 0.f;
+        }
+        // --- Final importance ---
+        float importance = phi * cosTerm / dmin;
+        //if (!isfinite(importance)) return 0;
+        return fmaxf(0.f, importance);
+    }
+
+    float Importance(const Vector3f& p, const Vector3f& n, const Bounds3f &allb) const {
+        
         Bounds3f bounds = Bounds(allb);
         float cosTheta_o = CosTheta_o(), cosTheta_e = CosTheta_e();
         // Return importance for light bounds at reference point
         // Compute clamped squared distance to reference point
-        Vector3f pc = (bounds.pMin + bounds.pMax) / 2;
+        Vector3f pc = bounds.center();
         float d2 = lengthSquared(p - pc);
-        d2 = fmaxf(d2, length(bounds.diagonal()) / 2);
+        d2 = fmaxf(d2, length(bounds.diagonal()) * 0.5f);
 
         // Define cosine and sine clamped subtraction lambdas
         auto cosSubClamped = [](float sinTheta_a, float cosTheta_a, float sinTheta_b, float cosTheta_b) -> float {
@@ -154,10 +229,7 @@ struct CompactLightBounds {
             return 0;
 
         // Return final importance at reference point
-        //float importance = phi * cosThetap / d2;
-        float r2 = 1.0f; float d = sqrtf(d2);
-        float importance = phi * cosThetap * 2.0f / ( d  * sqrtf(d2 + r2) + d2 + r2 );
-
+        float importance = phi * cosThetap / d2;
         DCHECK(importance >= -1e-3f);
 
         if (n[0]!=0 && n[1]!=0 && n[2]!=0) {
@@ -170,6 +242,13 @@ struct CompactLightBounds {
 
         importance = fmaxf(importance, 0);
         return importance;
+    }
+    
+    inline float Weight(const Vector3f& p, const Vector3f& n, const Bounds3f &allb, float t=0) const {
+        if (t <= 0)
+            return Importance(p, n, allb);
+        else
+            return ImportanceVolume(p, n, allb, t);
     }
 
   private:
@@ -193,6 +272,7 @@ struct CompactLightBounds {
         unsigned int qCosTheta_o:15;
         unsigned int qCosTheta_e:15;
         bool doubleSided:1;
+        bool isLeaf:1;
     } meta;
     uint16_t qb[2][3];
 };
@@ -253,7 +333,7 @@ struct LightTreeSampler {
 
     inline Bounds3f bounds() { return rootBounds; }
 
-    inline SelectedLight sample(float u, const Vector3f& p, const Vector3f& n) 
+    inline SelectedLight sample(float u, const Vector3f& p, const Vector3f& n, float t=0) 
     {
         // Traverse light BVH to sample light
         #ifndef __CUDACC_RTC__
@@ -274,8 +354,8 @@ struct LightTreeSampler {
                 const LightTreeNode *child1 = &nodes[node.meta.childOrLightIndex];
                 
                 float ci[3] = { 0.0f,
-                    child0->lightBounds.Importance(p, n, rootBounds),
-                    child1->lightBounds.Importance(p, n, rootBounds) };
+                    child0->lightBounds.Weight(p, n, rootBounds, t),
+                    child1->lightBounds.Weight(p, n, rootBounds, t) };
 
                 DCHECK(ci[1] >= 0 && ci[2] >= 0);
                 
@@ -303,7 +383,7 @@ struct LightTreeSampler {
 
             } else {
                 // Confirm light has nonzero importance before returning light sample
-                if (nodeIndex >= 0 && node.lightBounds.Importance(p, n, rootBounds) > 0) {
+                if (nodeIndex >= 0 && node.lightBounds.Weight(p, n, rootBounds, t) > 0) {
                     return SelectedLight{ node.meta.childOrLightIndex, pmf};
                 }
                 

@@ -1158,9 +1158,6 @@ void buildLightTree() {
         light.spreadMajor = clamp(dat.spreadMajor, 0.0f, 1.0f);
         light.spreadMinor = clamp(dat.spreadMinor, 0.0f, 1.0f);
 
-        auto void_angle = 0.5f * (1.0f - light.spreadMajor) * M_PIf;
-        light.spreadNormalize = 2.f / (2.f + (2.f * void_angle - M_PIf) * tanf(void_angle));
-
         light.mask = dat.mask;
         light.intensity  = dat.intensity;
         light.vIntensity = dat.vIntensity;
@@ -1182,9 +1179,16 @@ void buildLightTree() {
         light.type  = magic_enum::enum_cast<zeno::LightType>(dat.type).value_or(zeno::LightType::Diffuse);
         light.shape = magic_enum::enum_cast<zeno::LightShape>(dat.shape).value_or(zeno::LightShape::Plane);
 
-        if (light.spreadMajor < 0.005f) {
-            light.type = zeno::LightType::Direction;
+        if (light.shape == zeno::LightShape::Plane || light.shape == zeno::LightShape::Ellipse) {
+            auto void_angle = 0.5f * (1.0f - light.spreadMajor) * M_PIf;
+            light.spreadNormalize = 2.f / (2.f + (2.f * void_angle - M_PIf) * tanf(void_angle));
+        } else {
+            light.spreadNormalize = 0.0f;
         }
+
+        // if (light.spreadMajor < 0.005f) {
+        //     light.type = zeno::LightType::Direction;
+        // }
 
         if (light.shape == zeno::LightShape::Plane || light.shape == zeno::LightShape::Ellipse) {
 
@@ -1232,14 +1236,21 @@ void buildLightTree() {
 
             auto major_angle = spread_major * 0.5f * M_PIf;
             major_angle = fmaxf(major_angle, 2 * FLT_EPSILON);
-
             auto inner_angle = spread_inner * major_angle;
-            auto falloff_angle = major_angle - inner_angle;
 
-            light.setConeData(center, light.N, 0.0f, major_angle, falloff_angle);
+            light.setConeData(center, light.N, 0.0f, major_angle, inner_angle);
         }
         if (light.type == zeno::LightType::Projector) {
-            light.point = {center};
+            
+            auto spread_major = clamp(light.spreadMajor, 0.01, 1.00);
+            auto spread_minor = clamp(light.spreadMinor, 0.01, 0.99);
+
+            auto major_angle = spread_major * 0.5f * M_PIf;
+            major_angle = fmaxf(major_angle, 2 * FLT_EPSILON);
+            auto minor_angle = spread_minor * 0.5f * M_PIf;
+            minor_angle = fmaxf(minor_angle, 2 * FLT_EPSILON);
+
+            light.setConeData(center, light.N, 0.0f, fmaxf(major_angle, minor_angle), 0.1);
         }
 
         if ( OptixUtil::g_ies.count(dat.profileKey) > 0 ) {
@@ -1248,7 +1259,7 @@ void buildLightTree() {
             light.ies = val.ptr.handle;
             light.type = zeno::LightType::IES;
             //light.shape = zeno::LightShape::Point;
-            light.setConeData(center, light.N, radius, val.coneAngle, FLT_EPSILON);
+            light.setConeData(center, light.N, radius, val.coneAngle, val.coneAngle-FLT_EPSILON);
 
             if (dat.fluxFixed > 0) {
                 auto scale = val.coneAngle / M_PIf;
