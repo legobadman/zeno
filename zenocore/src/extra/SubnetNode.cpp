@@ -1,4 +1,4 @@
-﻿#include <zeno/core/NodeImpl.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/INodeClass.h>
@@ -200,9 +200,21 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
             newNode->update_layout(changes);
         }
         for (const auto& [old_name, new_name] : changes.rename_inputs) {
+            //调整refelink
+            if (auto subinputNode = m_subgraph->getNode(old_name)) {
+                bool ret = subinputNode->removeRefLinkDesParamIndx(false, true, "port", true);
+                if (ret)
+                    subinputNode->m_outputPrims["port"].reflinks.clear();
+            }
             m_subgraph->updateNodeName(old_name, new_name);
         }
         for (auto name : changes.remove_inputs) {
+            //调整refelink
+            if (auto subinputNode = m_subgraph->getNode(name)) {
+                bool ret = subinputNode->removeRefLinkDesParamIndx(false, true, "port", true);
+                if (ret)
+                    subinputNode->m_outputPrims["port"].reflinks.clear();
+            }
             m_subgraph->removeNode(name);
         }
 
@@ -244,9 +256,23 @@ params_change_info SubnetNode::update_editparams(const ParamsUpdateInfo& params,
             newNode->update_layout(changes);
         }
         for (const auto& [old_name, new_name] : changes.rename_outputs) {
+            //调整refelink
+            if (auto subOutputNode = m_subgraph->getNode(old_name)) {
+                bool ret = subOutputNode->removeRefLinkDesParamIndx(true, true, "port", true);
+                if (ret)
+                    subOutputNode->m_inputPrims["port"].reflinks.clear();
+            }
+
             m_subgraph->updateNodeName(old_name, new_name);
         }
         for (auto name : changes.remove_outputs) {
+            //调整refelink
+            if (auto subOutputNode = m_subgraph->getNode(name)) {
+                bool ret = subOutputNode->removeRefLinkDesParamIndx(true, true, "port", true);
+                if (ret)
+                    subOutputNode->m_inputPrims["port"].reflinks.clear();
+            }
+
             m_subgraph->removeNode(name);
         }
     }

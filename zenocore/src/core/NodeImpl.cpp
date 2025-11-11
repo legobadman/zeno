@@ -2324,6 +2324,50 @@ bool NodeImpl::removeRefLink(const EdgeInfo& edge, bool outParamIsOutput)
     return true;
 }
 
+bool NodeImpl::removeRefLinkDesParamIndx(bool bInput, bool bPrimitivParam, const std::string& paramName, bool bUiNeedRemoveReflink)
+{
+    if (bPrimitivParam) {
+        auto& self_prim_params = bInput ? m_inputPrims : m_outputPrims;
+        auto it = self_prim_params.find(paramName);
+        if (it != self_prim_params.end()) {
+            for (auto reflinkIt : it->second.reflinks) {
+                for (auto iter = reflinkIt->dest_inparam->reflinks.begin(); iter != reflinkIt->dest_inparam->reflinks.end(); ) {
+                    if ((*iter)->source_inparam == reflinkIt->source_inparam && (*iter)->dest_inparam == reflinkIt->dest_inparam) {
+                        iter = reflinkIt->dest_inparam->reflinks.erase(iter);
+                    } else {
+                        iter++;
+                    }
+                }
+                if (bUiNeedRemoveReflink) {
+                    EdgeInfo refLink{ reflinkIt->source_inparam->m_wpNode->get_name(), paramName, "", reflinkIt->dest_inparam->m_wpNode->get_name(), reflinkIt->dest_inparam->name, "", "", false };
+                    removeRefLink(refLink, !bInput);
+                }
+            }
+            return true;
+        }
+    } else {
+        auto& self_obj_params = bInput ? m_inputObjs : m_outputObjs;
+        auto it = self_obj_params.find(paramName);
+        if (it != self_obj_params.end()) {
+            for (auto reflinkIt : it->second.reflinks) {
+                for (auto iter = reflinkIt->dest_inparam->reflinks.begin(); iter != reflinkIt->dest_inparam->reflinks.end(); ) {
+                    if ((*iter)->source_inparam == reflinkIt->source_inparam && (*iter)->dest_inparam == reflinkIt->dest_inparam) {
+                        iter = reflinkIt->dest_inparam->reflinks.erase(iter);
+                    } else {
+                        iter++;
+                    }
+                }
+                if (bUiNeedRemoveReflink) {
+                    EdgeInfo refLink{ reflinkIt->source_inparam->m_wpNode->get_name(), paramName, "", reflinkIt->dest_inparam->m_wpNode->get_name(), reflinkIt->dest_inparam->name, "", "", false };
+                    removeRefLink(refLink, !bInput);
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
 void NodeImpl::doApply(CalcContext* pContext) {
     if (!m_dirty)
         return;
@@ -3372,6 +3416,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             if (oldname.empty()) {
                 //new added name.
                 if (self_obj_params.find(newname) != self_obj_params.end()) {
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, false, newname);
+                    self_obj_params[newname].reflinks.clear();
                     // the new name happen to have the same name with the old name, but they are not the same param.
                     self_obj_params.erase(newname);
                     if (param.bInput)
@@ -3402,6 +3449,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     //exist name changed.
                     self_obj_params[newname] = std::move(self_obj_params[oldname]);
                     self_obj_params.erase(oldname);
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, false, newname);
+                    self_obj_params[newname].reflinks.clear();
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -3441,6 +3491,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             if (oldname.empty()) {
                 //new added name.
                 if (self_prim_params.find(newname) != self_prim_params.end()) {
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, true, newname);
+                    self_prim_params[newname].reflinks.clear();
                     // the new name happen to have the same name with the old name, but they are not the same param.
                     self_prim_params.erase(newname);
                     if (param.bInput)
@@ -3474,6 +3527,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     //exist name changed.
                     self_prim_params[newname] = std::move(self_prim_params[oldname]);
                     self_prim_params.erase(oldname);
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, true, newname);
+                    self_prim_params[newname].reflinks.clear();
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -3521,6 +3577,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : inputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), true, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(true, true, rem_name);
+        m_inputPrims[rem_name].reflinks.clear();
+
         m_inputPrims.erase(rem_name);
         changes.remove_inputs.insert(rem_name);
     }
@@ -3528,6 +3589,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : outputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), false, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(false, true, rem_name);
+        m_outputPrims[rem_name].reflinks.clear();
+
         m_outputPrims.erase(rem_name);
         changes.remove_outputs.insert(rem_name);
     }
@@ -3535,6 +3601,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : obj_inputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), true, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(true, false, rem_name);
+        m_inputObjs[rem_name].reflinks.clear();
+
         m_inputObjs.erase(rem_name);
         changes.remove_inputs.insert(rem_name);
     }
@@ -3542,6 +3613,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : obj_outputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), false, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(false, false, rem_name);
+        m_outputObjs[rem_name].reflinks.clear();
+
         m_outputObjs.erase(rem_name);
         changes.remove_outputs.insert(rem_name);
     }

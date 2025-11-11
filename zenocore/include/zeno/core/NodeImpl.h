@@ -315,6 +315,7 @@ namespace zeno
     private:
         bool addRefLink(const EdgeInfo& edge, bool outParamIsOutput);
         bool removeRefLink(const EdgeInfo& edge, bool outParamIsOutput);
+        bool removeRefLinkDesParamIndx(bool bInput, bool bPrimitivParam, const std::string& paramName, bool bUiNeedRemoveReflink = false);//移除一个reflink在其destParam中的索引
 
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
