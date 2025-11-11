@@ -254,16 +254,32 @@ void CameraControl::fakeMousePressEvent(QMouseEvent *event, ZOptixViewport* view
     if (event->button() == Qt::MiddleButton) {
         middle_button_pressed = true;
         if (zeno::getSession().userData().get2<bool>("viewport-depth-aware-navigation", true)) {
-            if (viewport) {
-                emit viewport->sig_send_clickinfo_to_optix(clickInfo);
+            if (qobject_cast<ViewportWidget*>(m_zenovis->parent())) {
+                m_hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)event->x()/(float)cam->m_nx, (float)event->y()/(float)cam->m_ny);
+                if (m_hit_posWS.has_value()) {
+                    scene->camera->setPivot(m_hit_posWS.value());
+                }
+            }
+            else {
+                if (viewport) {
+                    emit viewport->sig_send_clickinfo_to_optix(clickInfo);
+                }
             }
         }
     }
     else if (event->button() == Qt::RightButton) {
         if (zeno::getSession().userData().get2<bool>("viewport-depth-aware-navigation", true)) {
             if (!m_hit_posWS.has_value()) {
-                if (viewport) {
-                    emit viewport->sig_send_clickinfo_to_optix(clickInfo);
+                if (qobject_cast<ViewportWidget*>(m_zenovis->parent())) {
+                    m_hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)event->x()/(float)cam->m_nx, (float)event->y()/(float)cam->m_ny);
+                    if (m_hit_posWS.has_value()) {
+                        scene->camera->setPivot(m_hit_posWS.value());
+                    }
+                }
+                else {
+                    if (viewport) {
+                        emit viewport->sig_send_clickinfo_to_optix(clickInfo);
+                    }
                 }
             }
         }
@@ -610,16 +626,47 @@ void CameraControl::fakeWheelEvent(QWheelEvent *event, ZOptixViewport* viewport)
                 auto session = m_zenovis->getSession();
                 auto scene = session->get_scene();
                 auto &cam = scene->camera;
-
-                if (viewport) {
-                    ClickPosInfo clickInfo;
-                    clickInfo.eventCamx = (float)event->x() / (float)cam->m_nx;
-                    clickInfo.eventCamy = (float)event->y() / (float)cam->m_ny;
-                    clickInfo.eventResx = event->x() / res().x();
-                    clickInfo.eventResy = event->y() / res().y();
-                    clickInfo.scale = scale;
-                    clickInfo.eventType = event->type();
-                    viewport->sig_send_clickinfo_to_optix(clickInfo);
+                if (qobject_cast<ViewportWidget*>(m_zenovis->parent())) {
+                    auto hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)event->x()/(float)cam->m_nx, (float)event->y()/(float)cam->m_ny);
+                    if (hit_posWS.has_value()) {
+                        auto pivot = hit_posWS.value();
+                        setPivot(pivot);
+                        auto new_pos = (pos - pivot) * scale + pivot;
+                        setPos(new_pos);
+                    }
+                    else {
+                        auto posOnFloorWS = screenHitOnFloorWS(event->x() / res().x(), event->y() / res().y());
+                        auto pivot = posOnFloorWS;
+                        if (dot((pivot - pos), getViewDir()) > 0) {
+                            auto translate = (pivot - pos) * (1 - scale);
+                            if (glm::length(translate) < 0.01) {
+                                translate = glm::normalize(translate) * 0.01f;
+                            }
+                            auto new_pos = translate + pos;
+                            setPos(new_pos);
+                        } else {
+                            auto translate =
+                                    screenPosToRayWS(event->x() / res().x(), event->y() / res().y()) * getPos().y *
+                                    (1 - scale);
+                            if (getPos().y < 0) {
+                                translate *= -1;
+                            }
+                            auto new_pos = translate + pos;
+                            setPos(new_pos);
+                        }
+                    }
+                }
+                else {
+                    if (viewport) {
+                        ClickPosInfo clickInfo;
+                        clickInfo.eventCamx = (float)event->x() / (float)cam->m_nx;
+                        clickInfo.eventCamy = (float)event->y() / (float)cam->m_ny;
+                        clickInfo.eventResx = event->x() / res().x();
+                        clickInfo.eventResy = event->y() / res().y();
+                        clickInfo.scale = scale;
+                        clickInfo.eventType = event->type();
+                        viewport->sig_send_clickinfo_to_optix(clickInfo);
+                    }
                 }
             }
             else {
