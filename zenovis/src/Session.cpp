@@ -84,7 +84,7 @@ void Session::set_uv_mode(bool enable) {
 }
 
 void Session::set_num_samples(int num_samples) {
-    // TODO
+    impl->scene->drawOptions->num_samples = num_samples;
 }
 
 void Session::set_viewport_point_size_scale(double scale) {

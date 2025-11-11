@@ -199,6 +199,7 @@ if (ZENO_WITH_REFLECTOR)
 endif()
 add_subdirectory(zenocore)
 add_subdirectory(zeno)
+add_subdirectory(zenobatch)
 add_subdirectory(api/python)
 
 ## --- begin cihou perf-geeks
