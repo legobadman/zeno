@@ -78,6 +78,11 @@ QVariant LinkModel::data(const QModelIndex& index, int role) const
             const auto& info = m_items[index.row()];
             return info.bObjLink;
         }
+        case QtRole::ROLE_IS_REFLINK:
+        {
+            const auto& info = m_items[index.row()];
+            return info.bIsRef;
+        }
     }
     return QVariant();
 }
@@ -102,6 +107,13 @@ bool LinkModel::setData(const QModelIndex& index, const QVariant& value, int rol
         {
             auto& info = m_items[index.row()];
             info.m_bCollasped = value.toBool();
+            emit dataChanged(index, index, { role });
+            return true;
+        }
+        case QtRole::ROLE_IS_REFLINK:
+        {
+            auto& info = m_items[index.row()];
+            info.bIsRef = value.toBool();
             emit dataChanged(index, index, { role });
             return true;
         }

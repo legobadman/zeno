@@ -60,6 +60,7 @@ namespace zeno
                     }
                     else if constexpr (std::is_same_v<T, zeno::vec3f> && (std::is_same_v<E, zfxfloatarr> || std::is_same_v<E, zfxintarr>)) {
                         return zeno::vec3f(val[0], val[1], val[2]);
+
                     }
                     else if constexpr (std::is_same_v<T, zeno::vec3i> && (std::is_same_v<E, zfxfloatarr> || std::is_same_v<E, zfxintarr>)) {
                         return zeno::vec3i(val[0], val[1], val[2]);
@@ -224,7 +225,7 @@ namespace zeno
             }
         }
 
-        static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext) {
+        static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext, bool bInput) {
             ParamPrimitive paramData;
             std::vector<std::string> items;
 
@@ -235,28 +236,42 @@ namespace zeno
                 std::string paramname = items[0];
                 NodeImpl* parSbnNode = pContext->spNode->getGraph()->getParentSubnetNode();
                 if (!parSbnNode) {
-                    throw makeError<UnimplError>("cannot locate parent subnetnode, when refering params");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "cannot locate parent subnetnode, when refering params");
                 }
                 bool bExisted = false;
-                paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
+                if (bInput) {
+                    paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
+                } else {
+                    paramData = parSbnNode->get_output_prim_param(paramname, &bExisted);
+
+                    //可能引用了一个Subnet的输出，若不存在，取SubOutput的默认值
+                    if (!paramData.result.has_value() && parSbnNode->get_uuid().find("Subnet") != std::string::npos) {
+                        if (auto SbnNodeSuboutputNode = pContext->spNode->getGraph()->getNode(paramname)) {
+                            paramData = SbnNodeSuboutputNode->get_input_prim_param("port", &bExisted);
+                        }
+                    }
+                }
                 if (!bExisted) {
-                    throw makeError<UnimplError>("there is no param `" + paramname + "` in subnetnode");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "there is no param `" + paramname + "` in subnetnode");
                 }
             }
             else {
                 std::string parampath, _;
                 auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
+                if (!spNode) {
+                    throw makeError<UnimplError>("the refer node doesn't exist");
+                }
                 items = split_str(parampath, '.');
                 std::string paramname = items[0];
 
                 bool bExist = false;
-                paramData = spNode->get_input_prim_param(paramname, &bExist);
-                if (!bExist) {
-                    //试一下拿prim_output，有些情况，比如获取SubInput的port，是需要拿Output的
+                if (bInput) {
+                    paramData = spNode->get_input_prim_param(paramname, &bExist);
+                } else {
                     paramData = spNode->get_output_prim_param(paramname, &bExist);
-                    if (!bExist) {
-                        throw makeError<UnimplError>("the refer param doesn't exist, may be deleted before");
-                    }
+                }
+                if (!bExist) {
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the refer param doesn't exist, may be deleted before");
                 }
             }
 
@@ -273,7 +288,7 @@ namespace zeno
             if (items.size() == 1) {
 #ifdef REF_DEPEND_APPLY
                 if (!paramData.result.has_value()) {
-                    throw makeError<UnimplError>("there is no result on refer source, should calc the source first.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "there is no result on refer source, should calc the source first.");
                 }
 
                 size_t primtype = paramData.result.type().hash_code();
@@ -296,10 +311,10 @@ namespace zeno
                     return varres;
                 }
                 else if (primtype == zeno::types::gParamType_Vec2f) {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
                 else if (primtype == zeno::types::gParamType_Vec2i) {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
                 else if (primtype == zeno::types::gParamType_Vec3f) {
                     vec3f vec = zeno::reflect::any_cast<vec3f>(paramData.result);
@@ -314,18 +329,18 @@ namespace zeno
                     return varres;
                 }
                 else if (primtype == zeno::types::gParamType_Vec4f) {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
                 else if (primtype == zeno::types::gParamType_Vec4i) {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
 #else
                 auto refVal = paramData.defl;
                 if (!refVal.has_value()) {
-                    throw makeError<UnimplError>("there is no result on refer source, should calc the source first.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "there is no result on refer source, should calc the source first.");
                 }
 
                 size_t primtype = refVal.type().hash_code();
@@ -344,19 +359,19 @@ namespace zeno
                         }
                         else if constexpr (std::is_same_v<T, std::string>) {
                             if (arg.find("ref(") != std::string::npos) {
-                                throw makeError<UnimplError>("don't support recursive ref in this version");
+                                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "don't support recursive ref in this version");
                             }
                             else {
-                                throw makeError<UnimplError>("don't support string right now.");
+                                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "don't support string right now.");
                             }
                         }
                         else {
-                            throw makeError<UnimplError>("error param type from primvar");
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error param type from primvar");
                         }
                     }, refvar);
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
 #endif
             }
@@ -366,7 +381,7 @@ namespace zeno
                     paramData.type == zeno::types::gParamType_Vec4f || paramData.type == zeno::types::gParamType_Vec4i))
             {
                 if (items[1].size() != 1)
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
 
                 int idx = -1;
                 switch (items[1][0])
@@ -376,7 +391,7 @@ namespace zeno
                 case 'z': idx = 2; break;
                 case 'w': idx = 3; break;
                 default:
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
                 if (paramData.type == zeno::types::gParamType_Vec2f || paramData.type == zeno::types::gParamType_Vec2i) {
                     if (idx < 2) {
@@ -384,7 +399,7 @@ namespace zeno
                             any_cast<vec2i>(paramData.result)[idx];
                     }
                     else {
-                        throw makeError<UnimplError>();
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                 }
                 if (paramData.type == zeno::types::gParamType_Vec3f || paramData.type == zeno::types::gParamType_Vec3i) {
@@ -393,7 +408,7 @@ namespace zeno
                             any_cast<vec3i>(paramData.result)[idx];
                     }
                     else {
-                        throw makeError<UnimplError>();
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                 }
                 if (paramData.type == zeno::types::gParamType_Vec4f || paramData.type == zeno::types::gParamType_Vec4i) {
@@ -402,12 +417,12 @@ namespace zeno
                             any_cast<vec4i>(paramData.result)[idx];
                     }
                     else {
-                        throw makeError<UnimplError>();
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                 }
             }
             else {
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path());
             }
 
             ZfxVariable varres;
@@ -417,15 +432,19 @@ namespace zeno
 
         static IObject* getObjFromRef(const std::string& ref, ZfxContext* pContext) {
             std::string parampath, _;
-            auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
-            auto items = split_str(parampath, '.');
-            std::string paramname = items[0];
-            return spNode->get_output_obj(paramname);
+            if (auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath)) {
+                auto items = split_str(parampath, '.');
+                if (!items.empty()) {
+                    std::string paramname = items[0];
+                    return spNode->get_output_obj(paramname);
+                }
+            }
+            return nullptr;
         }
 
-        static ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+        static ZfxVariable callRef(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext, bool bInput) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("only support non-attr value when using ref");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "only support non-attr value when using ref");
 
             //TODO: vec type.
             //TODO: resolve with zeno::reflect::any
@@ -434,20 +453,23 @@ namespace zeno
                 using E = typename T::value_type;
                 if constexpr (std::is_same_v<E, std::string>) {
                     const std::string& ref = vec[0];
-                    return getParamValueFromRef(ref, pContext);
+                    if (ref.empty()) {
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "empty ref content");
+                    }
+                    return getParamValueFromRef(ref, pContext, bInput);
                 }
                 else {
-                    throw makeError<UnimplError>("not support type when call `callRef`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type when call `callRef`");
                 }
                 }, args[0].value);
         }
 
         static ZfxVariable parameter(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1) {
-                throw makeError<UnimplError>("error number of args on param(...)");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error number of args on param(...)");
             }
             if (pContext->param_constrain.constrain_param.empty()) {
-                throw makeError<UnimplError>("only support indexing param for param constrain");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "only support indexing param for param constrain");
             }
             return std::visit([&](auto& vec)->ZfxVariable {
                 using T = std::decay_t<decltype(vec)>;
@@ -472,17 +494,17 @@ namespace zeno
                             return res;
                         }
                     }
-                    throw makeError<UnimplError>("the param does not exist when calling param(...)");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the param does not exist when calling param(...)");
                 }
                 else {
-                    throw makeError<UnimplError>("not support type when call `callRef`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type when call `callRef`");
                 }
                 }, args[0].value);
         }
 
         static ZfxVariable log(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.empty()) {
-                throw makeError<UnimplError>("empty args on log");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "empty args on log");
             }
             const auto& formatStr = args[0];
             assert(formatStr.size() == 1);
@@ -546,7 +568,7 @@ namespace zeno
 
         static ZfxVariable vec3(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3)
-                throw makeError<UnimplError>("the number of elements isn't 3");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of elements isn't 3");
             const ZfxVariable& xvar = args[0], & yvar = args[1], & zvar = args[2];
             int nx = xvar.size(), ny = yvar.size(), nz = zvar.size();
             int N = std::max(nx, std::max(ny, nz));
@@ -579,7 +601,7 @@ namespace zeno
                     res.value = resvec;
                 }
                 else {
-                    throw makeError<UnimplError>("incorrect type to construct vec3");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "incorrect type to construct vec3");
                 }
                 }, xvar.value, yvar.value, zvar.value);
 
@@ -603,14 +625,14 @@ namespace zeno
                     return res;
                 }
                 else {
-                    throw makeError<UnimplError>("not support type in `sin`");
+                    throw makeNodeError<UnimplError>("not support type in `sin`");
                 }
                 }, arg.value);
         }
 
         static ZfxVariable sin(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for sin function");
             const auto& arg = args[0];
 
             ZfxVariable res = call_unary_numeric_func<float>([](float x)->float { return std::sin(x); }, arg, filter);
@@ -619,7 +641,7 @@ namespace zeno
 
         static ZfxVariable cos(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for cos function");
             const auto& arg = args[0];
             ZfxVariable res = call_unary_numeric_func<float>([](float x)->float { return std::cos(x); }, arg, filter);
             return res;
@@ -627,7 +649,7 @@ namespace zeno
 
         static ZfxVariable sinh(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for sinh function");
             const auto& arg = args[0];
             ZfxVariable res = call_unary_numeric_func<float>([](float x)->float { return std::sinh(x); }, arg, filter);
             return res;
@@ -635,14 +657,14 @@ namespace zeno
 
         static ZfxVariable cosh(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for cosh function");
             const auto& arg = args[0];
             ZfxVariable res = call_unary_numeric_func<float>([](float x)->float { return std::cosh(x); }, arg, filter);
             return res;
         }
 
         static ZfxVariable fit01(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() != 3) throw makeError<UnimplError>();
+            if (args.size() != 3) throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for fit01 function");
 
             //只考虑单值的情况: fit01(.3,5,20)=9.5
             float value = get_zfxvec_front_elem<float>(args[0].value);
@@ -652,10 +674,10 @@ namespace zeno
             float nmax = get_zfxvec_front_elem<float>(args[2].value);
 
             if (nmin == nmax) {
-                throw makeError<UnimplError>("the omin == omax or nmin == nmax");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the omin == omax or nmin == nmax");
             }
             if (value < omin || value >omax) {
-                throw makeError<UnimplError>("the value is not between 0 and 1, when calling `fit01`");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the value is not between 0 and 1, when calling `fit01`");
             }
             float mp_value = ((value - omin) / (omax - omin)) * (nmax - nmin) + nmin;
             ZfxVariable ret;
@@ -664,7 +686,7 @@ namespace zeno
         }
 
         static ZfxVariable fit(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() != 5) throw makeError<UnimplError>();
+            if (args.size() != 5) throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for fit function");
 
             //只考虑单值的情况: fit(.3, 0, 1, 10, 20) == 13
             float value = get_zfxvec_front_elem<float>(args[0].value);
@@ -674,10 +696,10 @@ namespace zeno
             float nmax = get_zfxvec_front_elem<float>(args[4].value);
 
             if (omin == omax || nmin == nmax) {
-                throw makeError<UnimplError>("the omin == omax or nmin == nmax");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the omin == omax or nmin == nmax");
             }
             if (value < omin || value >omax) {
-                throw makeError<UnimplError>("the value is not between omin and omax, when calling `fit`");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the value is not between omin and omax, when calling `fit`");
             }
             float mp_value = ((value - omin) / (omax - omin)) * (nmax - nmin) + nmin;
             ZfxVariable ret;
@@ -686,7 +708,7 @@ namespace zeno
         }
 
         static ZfxVariable rand(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() > 1) throw makeError<UnimplError>();
+            if (args.size() > 1) throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for rand function");
             int N = 1;
             ZfxVariable res;
             if (args.size() == 1) {
@@ -707,7 +729,7 @@ namespace zeno
 
         static ZfxVariable pow(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for pow function");
             const auto& arg = args[0];
             const auto& idx = args[1];
 
@@ -729,9 +751,74 @@ namespace zeno
                     return res;
                 }
                 else {
-                    throw makeError<UnimplError>("not support type in `pow`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type in `pow`");
                 }
                 }, args[0].value, args[1].value);
+        }
+
+        //模长归一化
+        static ZfxVariable normalize(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() != 1)
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path());
+            const auto& arg = args[0];
+            return std::visit([&](const auto& arg_vec)->ZfxVariable {
+                using T = std::decay_t<decltype(arg_vec)>;
+                using E = typename T::value_type;
+
+                ZfxVariable res;
+                if constexpr (std::is_same_v<E, zfxintarr> || std::is_same_v < E, zfxfloatarr>) {
+                    using V = typename E::value_type;
+                    zfxfloatarr resArr(0, arg_vec[0].size());
+                    auto& arr = arg_vec[0];
+
+                    float l2_norm = 0.0f;
+                    for (const auto& elem : arr) {
+                        l2_norm += elem * elem;
+                    }
+                    l2_norm = std::sqrt(l2_norm);
+
+                    if (l2_norm != 0.0f) {
+                        for (const auto& elem : arr) {
+                            resArr.push_back(elem / l2_norm);
+                        }
+                    }
+                    res.value = std::vector<zfxfloatarr>{ resArr };
+                    return res;
+                } else if constexpr (std::is_same_v<E, zfxvec2arr> || std::is_same_v<E, zfxvec3arr> || std::is_same_v<E, zfxvec4arr>) {
+                    auto arr = arg_vec[0];
+                    for (auto& vec : arr) {
+                        vec = glm::normalize(vec);
+                    }
+                    res.value = std::vector<E>{ arr };
+                    return res;
+                } else if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
+                    zfxfloatarr resArr(0, arg_vec.size());
+                    auto& arr = arg_vec;
+
+                    float l2_norm = 0.0f;
+                    for (const auto& elem : arr) {
+                        l2_norm += elem * elem;
+                    }
+                    l2_norm = std::sqrt(l2_norm);
+
+                    if (l2_norm != 0.0f) {
+                        for (const auto& elem : arr) {
+                            resArr.push_back(elem / l2_norm);
+                        }
+                    }
+                    res.value = resArr;
+                    return res;
+                } else if constexpr (std::is_same_v<E, glm::vec2> || std::is_same_v<E, glm::vec3> || std::is_same_v<E, glm::vec4>) {
+                    auto arr = arg_vec;
+                    for (auto& vec : arr) {
+                        vec = glm::normalize(vec);
+                    }
+                    res.value = arr;
+                    return res;
+                } else {
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"not support type in `normalize`");
+                }
+            }, arg.value);
         }
 
         static ZfxVariable add_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -751,10 +838,10 @@ namespace zeno
                             if (val.size() == 3) {
                                 ptnum = spGeo->m_impl->add_point(zeno::vec3f(val[0], val[1], val[2]));
                             } else {
-                                throw makeError<UnimplError>("the number of arguments of add_point is not matched.");
+                                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of add_point is not matched.");
                             }
                         } else {
-                            throw makeError<UnimplError>("the type of arguments of add_point is not matched.");
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the type of arguments of add_point is not matched.");
                         }
                         }, arg.value);
                     ZfxVariable res;
@@ -762,7 +849,7 @@ namespace zeno
                     return res;
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid object for add_point");
                 }
             }
             else if (args.empty()) {
@@ -774,17 +861,17 @@ namespace zeno
                     return res;
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid object for add_point");
                 }
             }
             else {
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for add_point");
             }
         }
 
         static ZfxVariable add_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2) {
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for add_vertex");
             }
             if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
                 int faceid = get_zfxvec_front_elem<int>(args[0].value);
@@ -795,13 +882,13 @@ namespace zeno
                 return res;
             }
             else {
-                throw makeError<UnimplError>();
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid object for add_vertex");
             }
         }
 
         static ZfxVariable remove_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of remove_vertex is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of remove_vertex is not matched.");
 
             const auto& arg = args[0];
             int N = arg.size();
@@ -827,7 +914,7 @@ namespace zeno
 
                 if (bSucceed) {
                 } else {
-                    throw makeError<UnimplError>("error on removeVertex");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error on removeVertex");
                 }
 #if 0
                 if (bSucceed) {
@@ -848,9 +935,8 @@ namespace zeno
                             attrvalues.erase(attrvalues.begin() + currrem);
                         }
                     }
-                }
-                else {
-                    throw makeError<UnimplError>("error on removePoint");
+                } else {
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error on removePoint");
                 }
 #endif
             }
@@ -902,9 +988,8 @@ namespace zeno
                     for (auto iter = remPoints.begin(); iter != remPoints.end(); iter++) {
                         *iter -= 1;
                     }
-                }
-                else {
-                    throw makeError<UnimplError>("error on removePoint");
+                } else {
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error on removePoint");
                 }
             }
             return bSucceed;
@@ -912,7 +997,7 @@ namespace zeno
 
         static ZfxVariable remove_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of remove_point is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of remove_point is not matched.");
 
             ZfxVariable arg = args[0];
             int N = arg.size();
@@ -979,7 +1064,7 @@ namespace zeno
                     }
                 }
                 else {
-                    throw makeError<UnimplError>("error on removePoint");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"error on removePoint");
                 }
             }
             else {
@@ -997,7 +1082,7 @@ namespace zeno
                         }
                     }
                     else {
-                        throw makeError<UnimplError>("not support type");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type");
                     }
                     }, arg.value);
 
@@ -1008,7 +1093,7 @@ namespace zeno
 
         static ZfxVariable add_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of add_face is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of add_face is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             const auto& points = get_zfxvec_front_elem<std::vector<int>>(args[0].value);
@@ -1018,7 +1103,7 @@ namespace zeno
 
         static ZfxVariable remove_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 2 || args.empty())
-                throw makeError<UnimplError>("the number of arguments of remove_face is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of remove_face is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             const auto& arg = args[0];
@@ -1084,14 +1169,14 @@ namespace zeno
                 }
             }
             else {
-                throw makeError<UnimplError>("error on removeface");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "error on removeface");
             }
             return initVarFromZvar(bSucceed);
         }
 
         static ZfxVariable create_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3)
-                throw makeError<UnimplError>("the number of arguments of create_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of create_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
 
@@ -1111,7 +1196,7 @@ namespace zeno
 
         static ZfxVariable create_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of create_face_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of create_face_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1122,7 +1207,7 @@ namespace zeno
 
         static ZfxVariable create_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of create_point_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of create_point_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1133,7 +1218,7 @@ namespace zeno
 
         static ZfxVariable create_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of create_vertex_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of create_vertex_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1144,7 +1229,7 @@ namespace zeno
 
         static ZfxVariable create_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of create_geometry_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of create_geometry_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1155,7 +1240,7 @@ namespace zeno
 
         static ZfxVariable set_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 3)
-                throw makeError<UnimplError>("the number of arguments of set_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
 
@@ -1175,7 +1260,7 @@ namespace zeno
 
         static ZfxVariable set_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of set_vertex_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_vertex_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1186,7 +1271,7 @@ namespace zeno
 
         static ZfxVariable set_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of set_point_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_point_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1197,7 +1282,7 @@ namespace zeno
 
         static ZfxVariable set_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of set_face_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_face_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1208,7 +1293,7 @@ namespace zeno
 
         static ZfxVariable set_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of set_geometry_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_geometry_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1219,7 +1304,7 @@ namespace zeno
 
         static ZfxVariable has_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of has_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of has_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string group = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1237,7 +1322,7 @@ namespace zeno
 
         static ZfxVariable has_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of has_vertex_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of has_vertex_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1247,7 +1332,7 @@ namespace zeno
 
         static ZfxVariable has_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of has_point_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of has_point_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1257,7 +1342,7 @@ namespace zeno
 
         static ZfxVariable has_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of has_vertex_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of has_face_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1267,7 +1352,7 @@ namespace zeno
 
         static ZfxVariable has_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of has_geometry_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of has_geometry_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1277,7 +1362,7 @@ namespace zeno
 
         static ZfxVariable delete_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of delete_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of delete_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string group = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1295,7 +1380,7 @@ namespace zeno
 
         static ZfxVariable delete_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of delete_vertex_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of delete_vertex_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1305,7 +1390,7 @@ namespace zeno
 
         static ZfxVariable delete_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of delete_point_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of delete_point_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1315,7 +1400,7 @@ namespace zeno
 
         static ZfxVariable delete_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of delete_face_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of delete_face_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1325,7 +1410,7 @@ namespace zeno
 
         static ZfxVariable delete_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of delete_geometry_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of delete_geometry_attr is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
@@ -1335,7 +1420,7 @@ namespace zeno
 
         static ZfxVariable npoints(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 1) {
-                throw makeError<UnimplError>("the number of arguments of npoints is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of npoints is not matched.");
             } else if (args.size() == 1) {
                 std::string ref = get_zfxvec_front_elem<std::string>(args[0].value);
                 if (std::regex_search(ref, FunctionManager::refPattern)) {
@@ -1343,10 +1428,10 @@ namespace zeno
                     if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObj)) {
                         return initVarFromZvar(spGeo->m_impl->npoints());
                     } else {
-                        throw makeError<UnimplError>("npoints function refers an empty output object.");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "npoints function refers an empty output object.");
                     }
                 } else {
-                    throw makeError<UnimplError>("npoints can not resolve ref.");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "npoints can not resolve ref.");
                 }
             } else {
                 auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
@@ -1357,7 +1442,7 @@ namespace zeno
 
         static ZfxVariable nfaces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 0)
-                throw makeError<UnimplError>("the number of arguments of nfaces is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of nfaces is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int ret = spGeo->m_impl->nfaces();
@@ -1366,7 +1451,7 @@ namespace zeno
 
         static ZfxVariable nvertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 0)
-                throw makeError<UnimplError>("the number of arguments of nvertices is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of nvertices is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int ret = spGeo->m_impl->nvertices();
@@ -1376,7 +1461,7 @@ namespace zeno
         /* 点相关 */
         static ZfxVariable point_faces(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of point_faces is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of point_faces is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int pointid = get_zfxvec_front_elem<int>(args[0].value);
@@ -1386,7 +1471,7 @@ namespace zeno
 
         static ZfxVariable point_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of point_vertex is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of point_vertex is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int pointid = get_zfxvec_front_elem<int>(args[0].value);
@@ -1396,7 +1481,7 @@ namespace zeno
 
         static ZfxVariable point_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of point_vertices is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of point_vertices is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int pointid = get_zfxvec_front_elem<int>(args[0].value);
@@ -1407,7 +1492,7 @@ namespace zeno
         /* 面相关 */
         static ZfxVariable face_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of face_point is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of face_point is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
@@ -1418,7 +1503,7 @@ namespace zeno
 
         static ZfxVariable face_points(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of face_points is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of face_points is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             return call_unary_numeric_func<std::vector<int>>([&](int faceid)->std::vector<int> {
@@ -1428,7 +1513,7 @@ namespace zeno
 
         static ZfxVariable face_vertex(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of face_vertex is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of face_vertex is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
@@ -1439,7 +1524,7 @@ namespace zeno
 
         static ZfxVariable face_vertex_count(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of face_vertex_count is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of face_vertex_count is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
@@ -1449,7 +1534,7 @@ namespace zeno
 
         static ZfxVariable face_vertices(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of face_vertices is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of face_vertices is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int face_id = get_zfxvec_front_elem<int>(args[0].value);
@@ -1460,7 +1545,7 @@ namespace zeno
         /* Vertex相关 */
         static ZfxVariable vertex_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of vertex_index is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of vertex_index is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
@@ -1471,7 +1556,7 @@ namespace zeno
 
         static ZfxVariable vertex_next(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of vertex_next is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of vertex_next is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
@@ -1481,7 +1566,7 @@ namespace zeno
 
         static ZfxVariable vertex_prev(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of vertex_prev is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of vertex_prev is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
@@ -1491,7 +1576,7 @@ namespace zeno
 
         static ZfxVariable vertex_point(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of vertex_point is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of vertex_point is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
@@ -1501,7 +1586,7 @@ namespace zeno
 
         static ZfxVariable vertex_face(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of vertex_face is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of vertex_face is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
@@ -1511,7 +1596,7 @@ namespace zeno
 
         static ZfxVariable vertex_face_index(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of vertex_face_index is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of vertex_face_index is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
@@ -1521,7 +1606,7 @@ namespace zeno
 
         static ZfxVariable get_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of get_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of get_attr is not matched.");
 
             std::string group = get_zfxvec_front_elem<std::string>(args[0].value);
             std::string name = get_zfxvec_front_elem<std::string>(args[1].value);
@@ -1541,7 +1626,7 @@ namespace zeno
 
         static ZfxVariable get_vertex_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of get_vertex_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of get_vertex_attr is not matched.");
 
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
@@ -1553,7 +1638,7 @@ namespace zeno
 
         static ZfxVariable get_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() > 2)
-                throw makeError<UnimplError>("the number of arguments of get_point_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of get_point_attr is not matched.");
 
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
@@ -1571,7 +1656,7 @@ namespace zeno
                     using E2 = typename T2::value_type;
 
                     if (idx_vec.size() > vec.size()) {
-                        throw makeError<UnimplError>("the attr size doesn't match");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the attr size doesn't match");
                     }
 
                     if constexpr (std::is_same_v<E2, int> || std::is_same_v<E2, float>) {
@@ -1584,7 +1669,7 @@ namespace zeno
                         ret.value = std::move(ret_vec);
                     }
                     else {
-                        throw makeError<UnimplError>("not support type");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"not support type");
                     }
                     }, attrs, args[1].value);
             }
@@ -1596,14 +1681,14 @@ namespace zeno
 
         static ZfxVariable get_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of get_face_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of get_face_attr is not matched.");
 
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             ZfxVariable var;
             if (args.size() == 2) {
                 //TODO:
-                throw makeError<UnimplError>("unimpl case in `get_face_attr`");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unimpl case in `get_face_attr`");
             }
             else {
                 var.value = getAttrs(spGeo->m_impl.get(), ATTR_FACE, name);
@@ -1613,7 +1698,7 @@ namespace zeno
 
         static ZfxVariable get_geometry_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 1)
-                throw makeError<UnimplError>("the number of arguments of get_geometry_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of get_geometry_attr is not matched.");
 
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
@@ -1624,7 +1709,7 @@ namespace zeno
 
         static ZfxVariable bbox(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
-                throw makeError<UnimplError>("the number of arguments of get_geometry_attr is not matched.");
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the number of arguments of get_geometry_attr is not matched.");
 
             std::string nodepath = get_zfxvec_front_elem<std::string>(args[0].value);
             std::string type = get_zfxvec_front_elem<std::string>(args[1].value);
@@ -1641,7 +1726,10 @@ namespace zeno
         ZfxVariable callFunction(const std::string& funcname, const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext)
         {
             if (funcname == "ref") {
-                return zeno::zfx::callRef(args, filter, pContext);
+                return zeno::zfx::callRef(args, filter, pContext, true);
+            }
+            if (funcname == "refout") {
+                return zeno::zfx::callRef(args, filter, pContext, false);
             }
             if (funcname == "param" || funcname == "parameter") {
                 return parameter(args, filter, pContext);
@@ -1669,6 +1757,9 @@ namespace zeno
             }
             if (funcname == "pow") {
                 return pow(args, filter, pContext);
+            }
+            if (funcname == "normalize") {
+                return normalize(args, filter, pContext);
             }
             if (funcname == "create_attr") {
                 return create_attr(args, filter, pContext);
@@ -1833,7 +1924,7 @@ namespace zeno
                 const ZfxVariable& elem_var = args[1];
                 const int N = arr_var.size();
                 if (N != elem_var.size()) {
-                    throw makeError<UnimplError>("the size of array and element doesn't match, when calling `append`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"the size of array and element doesn't match, when calling `append`");
                 }
 
                 ZfxVariable ret;    //引用机制实现有点麻烦，又得回填到局部变量表，目前先拷贝返回
@@ -1861,7 +1952,7 @@ namespace zeno
                         }
                     }
                     else {
-                        throw makeError<UnimplError>("only support array to append");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"only support array to append");
                     }
                     }, ret.value, elem_var.value);
 
@@ -1889,7 +1980,7 @@ namespace zeno
                         return ret;
                     }
                     else {
-                        throw makeError<UnimplError>("only support array to append");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"only support array to append");
                     }
                     }, args[0].value);
             }
@@ -1904,11 +1995,11 @@ namespace zeno
                 const std::string& nodename = get_zfxvec_front_elem<std::string>(args[0].value);
                 NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
                 if (!pObjNode) {
-                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown node `" + nodename + "`");
                 }
                 auto targetObj = pObjNode->get_default_output_object();
                 if (!targetObj) {
-                    throw makeError<UnimplError>("get nullptr obj from default output when `prim_has_attr` is called");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get nullptr obj from default output when `prim_has_attr` is called");
                 }
 
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(targetObj)) {
@@ -1917,7 +2008,7 @@ namespace zeno
                     return initVarFromZvar(bmin);
                 }
                 else {
-                    throw makeError<UnimplError>("get not geometry obj when calling `prim_has_attr`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get not geometry obj when calling `prim_has_attr`");
                 }
             }
             if (funcname == "get_bboxmax") {
@@ -1933,7 +2024,7 @@ namespace zeno
                 float radius = get_zfxvec_front_elem<float>(args[3].value);
                 int maxpoints = get_zfxvec_front_elem<int>(args[4].value);
                 if (attrname != "P") {
-                    throw makeError<UnimplError>("only support Pos as the base attribute of point clound");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"only support Pos as the base attribute of point clound");
                 }
 
                 std::vector<vec3f> points;
@@ -1963,7 +2054,7 @@ namespace zeno
                         }
                     }
                     else {
-                        throw makeError<UnimplError>("not support type");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"not support type");
                     }
                     }, args[3].value);
 
@@ -1974,7 +2065,7 @@ namespace zeno
             if (funcname == "pcnumfound") {
                 int handle = get_zfxvec_front_elem<int>(args[0].value);
                 if (handle < 0 || handle >= pContext->pchandles.size()) {
-                    throw makeError<UnimplError>("invalid pchandle");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"invalid pchandle");
                 }
                 else {
                     PointCloud& pc = pContext->pchandles[handle];
@@ -2005,7 +2096,7 @@ namespace zeno
                     result = prim_reduce(attrData, op);
                 }
                 else {
-                    throw makeError<UnimplError>("attr type unknown when calling primreduce");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"attr type unknown when calling primreduce");
                 }
                 ZfxVariable ret;
                 std::visit([&](auto&& arg) {
@@ -2020,7 +2111,7 @@ namespace zeno
                         ret = initVarFromZvar(glm::vec3(arg[0], arg[1], arg[2]));
                     }
                     else {
-                        throw makeError<UnimplError>("unknown type");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown type");
                     }
                 }, result);
                 return ret;
@@ -2044,7 +2135,7 @@ namespace zeno
                         return glm::cross(v1[0], v2[0]);
                     }
                     else {
-                        throw makeError<UnimplError>("unsupport type for `cross`");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unsupport type for `cross`");
                     }
                     }, args[0].value, args[1].value);
 
@@ -2098,7 +2189,7 @@ namespace zeno
                         ret.value = std::move(retvec);
                     }
                     else {
-                        throw makeError<UnimplError>("not support type");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"not support type");
                     }
                     }, left.value, right.value);
 
@@ -2138,7 +2229,7 @@ namespace zeno
                         ud->set_vec3f(key, Vec3f(vec[0][0], vec[0][1], vec[0][2]));
                     }
                     else {
-                        throw makeError<UnimplError>("not support type");
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"not support type");
                     }
                     }, args[1].value);
 
@@ -2151,18 +2242,18 @@ namespace zeno
 
                 NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
                 if (!pObjNode) {
-                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown node `" + nodename + "`");
                 }
                 auto targetObj = pObjNode->get_default_output_object();
                 if (!targetObj)
-                    throw makeError<UnimplError>("get nullptr obj from default output when `prim_has_attr` is called");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get nullptr obj from default output when `prim_has_attr` is called");
 
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(targetObj)) {
                     zfxvariant ret = (int)spGeo->has_point_attr(stdString2zs(attrname));
                     return initVarFromZvar(ret);
                 }
                 else {
-                    throw makeError<UnimplError>("get not geometry obj when calling `prim_has_attr`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get not geometry obj when calling `prim_has_attr`");
                 }
             }
             if (funcname == "getud") {
@@ -2172,11 +2263,11 @@ namespace zeno
 
                 NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
                 if (!pObjNode) {
-                    throw makeError<UnimplError>("unknown node `" + nodename + "`");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown node `" + nodename + "`");
                 }
                 auto targetObj = pObjNode->get_output_obj(objparam);
                 if (!targetObj)
-                    throw makeError<UnimplError>("get nullptr obj from `" + objparam + "` when `getud` is called");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get nullptr obj from `" + objparam + "` when `getud` is called");
 
                 auto ud = targetObj->userData();
                 zeno::UserData* pUserData = static_cast<zeno::UserData*>(ud);
@@ -2217,11 +2308,11 @@ namespace zeno
                         }, val);
                 }
                 else {
-                    throw makeError<UnimplError>("unknown type from userdata");
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown type from userdata");
                 }
                 return ret;
             }
-            throw makeError<UnimplError>("unknown function call `" + funcname + "`");
+            throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown function call `" + funcname + "`");
         }
     }
 }

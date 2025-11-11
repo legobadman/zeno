@@ -32,7 +32,14 @@ namespace zeno
             },
             {"ref",
                 {"ref",
-                "Return the value of reference param of node.\n"\
+                "Return the value of reference input param of node.\n"\
+                "path-to-param:\n    Reference path of parameter.",
+                "float",
+                { {"path-to-param", "string"}}}
+            },
+            {"refout",
+                {"refout",
+                "Return the value of reference output param of node.\n"\
                 "path-to-param:\n    Reference path of parameter.",
                 "float",
                 { {"path-to-param", "string"}}}
@@ -46,6 +53,11 @@ namespace zeno
                 {"pow",
                 "Find first param raised to the second param power.",
                 "float", {{"number", "float"}, {"exponent", "float"}}}
+            },
+            {"normalize",
+                {"normalize",
+                "Returns a normalized vector.",
+                "vector", {{"numbers", "vector<float>"}}}
             },
             {"param",
                 {"param",

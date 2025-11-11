@@ -1,4 +1,4 @@
-﻿#include "zenolink.h"
+#include "zenolink.h"
 #include "zenonodebase.h"
 #include "zenosubgraphscene.h"
 #include "nodeeditor/gv/nodesys_common.h"
@@ -470,7 +470,11 @@ void ZenoFullLink::paint(QPainter* painter, QStyleOptionGraphicsItem const* styl
         else {
             painter->save();
             QPen pen;
-            pen.setColor(isSelected() ? QColor(0xFA6400) : QColor("#4B9EF4"));
+            if (m_index.data(QtRole::ROLE_IS_REFLINK).toBool()) {
+                pen.setColor(QColor("#96a48b"));
+            } else {
+                pen.setColor(isSelected() ? QColor(0xFA6400) : QColor("#4B9EF4"));
+            }
             pen.setWidthF(ZenoStyle::scaleWidth(1));
             pen.setStyle(Qt::DashLine);
             painter->setRenderHint(QPainter::Antialiasing);

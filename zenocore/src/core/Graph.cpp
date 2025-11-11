@@ -1,4 +1,4 @@
-﻿#include <zeno/core/Graph.h>
+#include <zeno/core/Graph.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/IObject.h>
 #include <zeno/core/INodeClass.h>

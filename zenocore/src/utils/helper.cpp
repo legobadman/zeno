@@ -986,7 +986,7 @@ namespace zeno {
             }, val);
     }
 
-    formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& node_part)
+    formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& node_part, std::string funcName)
     {
         formula_tip_info ret;
         ret.type = FMLA_NO_MATCH;
@@ -1020,7 +1020,16 @@ namespace zeno {
         }
 
         //node_part like `Cube1.position.x`
-        std::vector<std::string> node_items = split_str(node_part, '.');
+        std::vector<std::string> node_items;
+        if (funcName != "ref" && funcName != "refout") {
+            if (zeno::starts_with(node_part, "./")) {
+                auto normalFuncArgPart = node_part.substr(node_part.find_first_of('/') + 1);
+                node_items = split_str(normalFuncArgPart, '.');
+            }
+        } else {
+            node_items = split_str(node_part, '.');
+        }
+
         bool bEndsWithDot = !node_part.empty() && node_part.back() == '.';
         const std::string& node_name = !node_items.empty() ? node_items[0] : "";
         const std::string& param_part = node_items.size() >= 2 ? node_items[1] : "";
@@ -1030,12 +1039,11 @@ namespace zeno {
         for (auto& [name, spNode] : nodes) {
             if (name.find(node_name) != std::string::npos) {
                 if (!param_part.empty() || (param_part.empty() && bEndsWithDot)) {
-                    PrimitiveParams params = spNode->get_input_primitive_params();
-                    for (auto param : params) {
-                        if (param.name.find(param_part) != std::string::npos) {
+                    auto& findCondidate = [&ret, &param_part, &param_component, &bEndsWithDot](ParamType paramType, std::string paramName, bool& bExist) {
+                        if (paramName.find(param_part) != std::string::npos) {
                             if (!param_part.empty() && (!param_component.empty() || bEndsWithDot)) {
-                                if (param.name == param_part) {
-                                    switch (param.type) {
+                                if (paramName == param_part) {
+                                    switch (paramType) {
                                     case gParamType_Vec2f:
                                     case gParamType_Vec2i:
                                     {
@@ -1050,9 +1058,8 @@ namespace zeno {
                                         }
                                         else
                                         {
-                                            ret.ref_candidates.clear();
-                                            ret.type = FMLA_NO_MATCH;
-                                            return ret;
+                                            bExist = false;
+                                            return;
                                         }
                                         break;
                                     }
@@ -1070,9 +1077,8 @@ namespace zeno {
                                         }
                                         else
                                         {
-                                            ret.ref_candidates.clear();
-                                            ret.type = FMLA_NO_MATCH;
-                                            return ret;
+                                            bExist = false;
+                                            return;
                                         }
                                         break;
                                     }
@@ -1090,31 +1096,75 @@ namespace zeno {
                                         }
                                         else
                                         {
-                                            ret.ref_candidates.clear();
-                                            ret.type = FMLA_NO_MATCH;
-                                            return ret;
+                                            bExist = false;
+                                            return;
                                         }
                                         break;
                                     }
                                     default:
                                     {
-                                        ret.ref_candidates.clear();
-                                        ret.type = FMLA_NO_MATCH;
-                                        return ret;
+                                        bExist = false;
+                                        return;
                                     }
                                     }
                                 }
                                 else {
-                                    ret.ref_candidates.clear();
-                                    ret.type = FMLA_NO_MATCH;
-                                    return ret;
+                                    bExist = false;
+                                    return;
                                 }
                             }
                             else {
                                 ret.type = FMLA_TIP_REFERENCE;
                                 ret.prefix = param_part;
-                                ret.ref_candidates.push_back({ param.name, "" /*icon*/ });
+                                ret.ref_candidates.push_back({ paramName, "" /*icon*/ });
                             }
+                        }
+                    };
+                    bool bExist = true;
+                    if (funcName == "ref") {
+                        PrimitiveParams params = spNode->get_input_primitive_params();
+                        for (auto param : params) {
+                            findCondidate(param.type, param.name, bExist);
+                            if (!bExist) {
+                                ret.ref_candidates.clear();
+                                ret.type = FMLA_NO_MATCH;
+                                return ret;
+                            }
+                        }
+                    }
+                    else if (funcName == "refout") {
+                        PrimitiveParams params = spNode->get_output_primitive_params();
+                        for (auto param : params) {
+                            findCondidate(param.type, param.name, bExist);
+                        }
+                        if (!bExist) {
+                            ret.ref_candidates.clear();
+                            ret.type = FMLA_NO_MATCH;
+                            return ret;
+                        }
+                    }
+                    else {
+                        PrimitiveParams paramsPrim = spNode->get_input_primitive_params();
+                        PrimitiveParams paramsOutPrim = spNode->get_output_primitive_params();
+                        paramsPrim.insert(paramsPrim.end(), paramsOutPrim.begin(), paramsOutPrim.end());
+                        for (auto param : paramsPrim) {
+                            findCondidate(param.type, param.name, bExist);
+                        }
+                        if (!bExist) {
+                            ret.ref_candidates.clear();
+                            ret.type = FMLA_NO_MATCH;
+                            return ret;
+                        }
+                        ObjectParams params = spNode->get_input_object_params();
+                        ObjectParams paramsOut = spNode->get_output_object_params();
+                        params.insert(params.end(), paramsOut.begin(), paramsOut.end());
+                        for (auto param : params) {
+                            findCondidate(param.type, param.name, bExist);
+                        }
+                        if (!bExist) {
+                            ret.ref_candidates.clear();
+                            ret.type = FMLA_NO_MATCH;
+                            return ret;
                         }
                     }
                 }

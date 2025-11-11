@@ -1,4 +1,4 @@
-﻿#include <zeno/core/NodeImpl.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Session.h>
@@ -1182,63 +1182,67 @@ void NodeImpl::on_link_added_removed(bool bInput, const std::string& paramname, 
 
 void NodeImpl::on_node_about_to_remove() {
     //移除所有引用边的依赖关系
-    for (auto& [_, input_param] : m_inputPrims)
-    {
-        for (const std::shared_ptr<ReferLink>& reflink : input_param.reflinks) {
-            if (reflink->source_inparam == &input_param) {
-                //当前参数是引用源
-                auto& otherLinks = reflink->dest_inparam->reflinks;
-                otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
-                //参数值也改掉吧，把ref(...)改为 inv_ref(...)
-                auto otherNode = reflink->dest_inparam->m_wpNode;
-                assert(otherNode);
+    auto& primsRemoveReferLink = [](std::map<std::string, PrimitiveParam>& prims) {
+        for (auto& [_, input_param] : prims)
+        {
+            for (const std::shared_ptr<ReferLink>& reflink : input_param.reflinks) {
+                if (reflink->source_inparam == &input_param) {
+                    //当前参数是引用源
+                    auto& otherLinks = reflink->dest_inparam->reflinks;
+                    otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+                    //参数值也改掉吧，把ref(...)改为 inv_ref(...)
+                    auto otherNode = reflink->dest_inparam->m_wpNode;
+                    assert(otherNode);
 
-                auto defl = reflink->dest_inparam->defl;
-                assert(defl.has_value());
-                ParamType type = defl.type().hash_code();
-                if (type == gParamType_PrimVariant) {
-                    PrimVar var = any_cast<PrimVar>(defl);
-                    std::visit([&](auto& arg) {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, std::string>) {
-                            auto iter = arg.find("ref(");
-                            if (iter != std::string::npos) {
-                                arg.replace(arg.find("ref("), 4, "ref_not_exist(");
-                            }
-                        }
-                    }, var);
-                    otherNode->update_param(reflink->dest_inparam->name, var);
-                }
-                else if (type == gParamType_VecEdit) {
-                    vecvar vec = any_cast<vecvar>(defl);
-                    for (auto& elem : vec) {
+                    auto defl = reflink->dest_inparam->defl;
+                    assert(defl.has_value());
+                    ParamType type = defl.type().hash_code();
+                    if (type == gParamType_PrimVariant) {
+                        PrimVar var = any_cast<PrimVar>(defl);
                         std::visit([&](auto& arg) {
                             using T = std::decay_t<decltype(arg)>;
                             if constexpr (std::is_same_v<T, std::string>) {
                                 auto iter = arg.find("ref(");
                                 if (iter != std::string::npos) {
-                                    arg.replace(iter, 4, "ref_not_exist(");
+                                    arg.replace(arg.find("ref("), 4, "ref_not_exist(");
                                 }
                             }
-                        }, elem);
+                        }, var);
+                        otherNode->update_param(reflink->dest_inparam->name, var);
                     }
-                    otherNode->update_param(reflink->dest_inparam->name, vec);
-                }
+                    else if (type == gParamType_VecEdit) {
+                        vecvar vec = any_cast<vecvar>(defl);
+                        for (auto& elem : vec) {
+                            std::visit([&](auto& arg) {
+                                using T = std::decay_t<decltype(arg)>;
+                                if constexpr (std::is_same_v<T, std::string>) {
+                                    auto iter = arg.find("ref(");
+                                    if (iter != std::string::npos) {
+                                        arg.replace(iter, 4, "ref_not_exist(");
+                                    }
+                                }
+                            }, elem);
+                        }
+                        otherNode->update_param(reflink->dest_inparam->name, vec);
+                    }
 
-                if (otherNode)
-                    otherNode->mark_dirty(true);
+                    if (otherNode)
+                        otherNode->mark_dirty(true);
+                }
+                else {
+                    //当前参数引用了别的节点参数
+                    auto& otherLinks = reflink->source_inparam->reflinks;
+                    otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+                    auto otherNode = reflink->source_inparam->m_wpNode;
+                    if (otherNode)
+                        otherNode->mark_dirty(true);
+                }
             }
-            else {
-                //当前参数引用了别的节点参数
-                auto& otherLinks = reflink->source_inparam->reflinks;
-                otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
-                auto otherNode = reflink->source_inparam->m_wpNode;
-                if (otherNode)
-                    otherNode->mark_dirty(true);
-            }
+            input_param.reflinks.clear();
         }
-        input_param.reflinks.clear();
-    }
+    };
+    primsRemoveReferLink(m_inputPrims);
+    primsRemoveReferLink(m_outputPrims);
     for (auto& [_, output_obj] : m_outputObjs)
     {
         for (const std::shared_ptr<ReferLink>& reflink : output_obj.reflinks) {
@@ -1363,7 +1367,7 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         //资产图不会执行，无须构造引用关系
         return;
     }
-    std::set<std::pair<std::string, std::string>> refSources = resolveReferSource(target_param->defl);
+    std::set<RefSourceInfo> refSources = resolveReferSource(target_param->defl);
     auto newAdded = refSources;
 
     for (auto iter = target_param->reflinks.begin(); iter != target_param->reflinks.end(); )
@@ -1378,14 +1382,15 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         }
 
         //查看当前link在新的集合里是否还存在。
-        for (const auto& [source_node_uuidpath, source_param] : refSources)
+        for (const auto& refSrcInfo : refSources)
         {
             auto spSrcNode = remote_source->m_wpNode;
-            if (spSrcNode->get_uuid_path() == source_node_uuidpath &&
-                remote_source->name == source_param) {
+            if (spSrcNode->get_uuid_path() == refSrcInfo.uuidPath &&
+                remote_source->name == refSrcInfo.paramName &&
+                remote_source->bInput == (refSrcInfo.funcName == "ref")) {
                 //已经有了
                 bExist = true;
-                newAdded.erase({ source_node_uuidpath, source_param });
+                newAdded.erase(refSrcInfo);
                 break;
             }
         }
@@ -1397,36 +1402,51 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
             iter = target_param->reflinks.erase(iter);
             auto& other_links = remote_source->reflinks;
             other_links.erase(std::remove(other_links.begin(), other_links.end(), spRefLink));
+
+            EdgeInfo refLink{ remote_source->m_wpNode->get_name(), remote_source->name, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false };
+            removeRefLink(refLink, !remote_source->bInput);
         }
     }
 
-    for (const auto& [source_node_uuidpath, source_param] : newAdded)
+    for (const auto& refSrcInfo : newAdded)
     {
         //目前引用功能只支持本图引用，不能跨图引用
         std::string sourcenode_uuid;
-        if (source_node_uuidpath.find('/') != std::string::npos) {
-            sourcenode_uuid = source_node_uuidpath.substr(source_node_uuidpath.find_last_of('/') + 1);
+        if (refSrcInfo.uuidPath.find('/') != std::string::npos) {
+            sourcenode_uuid = refSrcInfo.uuidPath.substr(refSrcInfo.uuidPath.find_last_of('/') + 1);
         }
         else {
-            sourcenode_uuid = source_node_uuidpath;
+            sourcenode_uuid = refSrcInfo.uuidPath;
         }
 
         NodeImpl* srcNode = getGraph()->getNodeByUuidPath(sourcenode_uuid);
-        auto iterSrcParam = srcNode->m_inputPrims.find(source_param);
-        if (iterSrcParam != srcNode->m_inputPrims.end()) {
-            PrimitiveParam& srcparam = iterSrcParam->second;
-            if (&srcparam != target_param)  //排除直接引用自己的情况
-            {
-                //构造reflink
-                std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
-                reflink->source_inparam = &srcparam;
-                reflink->dest_inparam = target_param;
-                target_param->reflinks.push_back(reflink);
-                srcparam.reflinks.push_back(reflink);
+
+        if (refSrcInfo.funcName != "refout") {
+            bool isSubInput = sourcenode_uuid.find("SubInput") != std::string::npos;
+            auto& inoutPrims = isSubInput ? srcNode->m_outputPrims : srcNode->m_inputPrims;
+            auto iterSrcParam = inoutPrims.find(refSrcInfo.paramName);
+            if (iterSrcParam != inoutPrims.end()) {
+                PrimitiveParam& srcparam = iterSrcParam->second;
+                if (&srcparam != target_param)  //排除直接引用自己的情况
+                {
+                    //构造reflink
+                    std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
+                    reflink->source_inparam = &srcparam;
+                    reflink->dest_inparam = target_param;
+                    target_param->reflinks.push_back(reflink);
+                    srcparam.reflinks.push_back(reflink);
+
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), isSubInput);
+                }
             }
-        } else {
-            auto iterSrcObj = srcNode->m_outputObjs.find(source_param);
-            if (iterSrcObj != srcNode->m_outputObjs.end()) {
+        }
+        if (refSrcInfo.funcName != "ref") {
+            bool isSubOutput = sourcenode_uuid.find("SubOutput") != std::string::npos;
+            auto& inoutPrims = isSubOutput ? srcNode->m_inputPrims : srcNode->m_outputPrims;
+            auto& inoutObjs = isSubOutput ? srcNode->m_inputObjs : srcNode->m_outputObjs;
+
+            auto iterSrcObj = inoutObjs.find(refSrcInfo.paramName);
+            if (iterSrcObj != inoutObjs.end()) {
                 ObjectParam& srcObj = iterSrcObj->second;
                 //构造reflink
                 std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
@@ -1434,10 +1454,12 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                 reflink->dest_inparam = target_param;
                 target_param->reflinks.push_back(reflink);
                 srcObj.reflinks.push_back(reflink);
+
+                addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), !isSubOutput);
             }
             else {
-                auto iterOutPrim = srcNode->m_outputPrims.find(source_param);
-                if (iterOutPrim != srcNode->m_outputPrims.end()) {
+                auto iterOutPrim = inoutPrims.find(refSrcInfo.paramName);
+                if (iterOutPrim != inoutPrims.end()) {
                     PrimitiveParam& srcparam = iterOutPrim->second;
                     //构造reflink
                     std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
@@ -1445,21 +1467,23 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                     reflink->dest_inparam = target_param;
                     target_param->reflinks.push_back(reflink);
                     srcparam.reflinks.push_back(reflink);
+
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), !isSubOutput);
                 }
             }
         }
     }
 }
 
-std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const Any& param_defl) {
+std::set<RefSourceInfo> NodeImpl::resolveReferSource(const Any& param_defl) {
 
-    std::set<std::pair<std::string, std::string>> refSources;
+    std::set<RefSourceInfo> refSources;
     std::vector<std::string> refSegments;
 
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::any_cast_to_string(param_defl);
-        if (param_text.find("ref") != std::string::npos) {
+        if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
             refSegments.push_back(param_text);
         }
     }
@@ -1469,7 +1493,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (param_text.find("ref") != std::string::npos) {
+        if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
             refSegments.push_back(param_text);
         }
     }
@@ -1480,7 +1504,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (param_text.find("ref") != std::string::npos) {
+            if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
                 refSegments.push_back(param_text);
             }
         }
@@ -1514,7 +1538,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
             {
                 ctx.code = code;
                 std::shared_ptr<ZfxASTNode> astRoot = zfx.getASTResult();
-                std::set<std::pair<std::string, std::string>> paths =
+                std::set<RefSourceInfo> paths =
                     funcMgr.getReferSources(astRoot, &ctx);
                 if (!paths.empty()) {
                     refSources.insert(paths.begin(), paths.end());
@@ -2302,6 +2326,76 @@ void NodeImpl::check_break_and_return() {
         reportStatus(m_dirty, m_status);
         throw makeNodeError<InterruputError>(this->get_path(), get_path());
     }
+}
+
+bool NodeImpl::addRefLink(const EdgeInfo& edge, bool outParamIsOutput)
+{
+    CORE_API_BATCH
+    //如果边已存在，删除这条边再添加引用边
+    if (outParamIsOutput) {
+        if (auto outnode = m_pGraph->getNode(edge.outNode)) {
+            std::vector<EdgeInfo> links = outnode->getLinksByParam(false, edge.outParam);
+            for (auto link : links) {
+                if (link == edge) {
+                    m_pGraph->removeLink(edge);
+                }
+            }
+        }
+    }
+
+    CALLBACK_NOTIFY(addRefLink, edge, outParamIsOutput)
+    return true;
+}
+
+bool NodeImpl::removeRefLink(const EdgeInfo& edge, bool outParamIsOutput)
+{
+    CORE_API_BATCH
+    CALLBACK_NOTIFY(removeRefLink, edge, outParamIsOutput)
+    return true;
+}
+
+bool NodeImpl::removeRefLinkDesParamIndx(bool bInput, bool bPrimitivParam, const std::string& paramName, bool bUiNeedRemoveReflink)
+{
+    if (bPrimitivParam) {
+        auto& self_prim_params = bInput ? m_inputPrims : m_outputPrims;
+        auto it = self_prim_params.find(paramName);
+        if (it != self_prim_params.end()) {
+            for (auto reflinkIt : it->second.reflinks) {
+                for (auto iter = reflinkIt->dest_inparam->reflinks.begin(); iter != reflinkIt->dest_inparam->reflinks.end(); ) {
+                    if ((*iter)->source_inparam == reflinkIt->source_inparam && (*iter)->dest_inparam == reflinkIt->dest_inparam) {
+                        iter = reflinkIt->dest_inparam->reflinks.erase(iter);
+                    } else {
+                        iter++;
+                    }
+                }
+                if (bUiNeedRemoveReflink) {
+                    EdgeInfo refLink{ reflinkIt->source_inparam->m_wpNode->get_name(), paramName, "", reflinkIt->dest_inparam->m_wpNode->get_name(), reflinkIt->dest_inparam->name, "", "", false };
+                    removeRefLink(refLink, !bInput);
+                }
+            }
+            return true;
+        }
+    } else {
+        auto& self_obj_params = bInput ? m_inputObjs : m_outputObjs;
+        auto it = self_obj_params.find(paramName);
+        if (it != self_obj_params.end()) {
+            for (auto reflinkIt : it->second.reflinks) {
+                for (auto iter = reflinkIt->dest_inparam->reflinks.begin(); iter != reflinkIt->dest_inparam->reflinks.end(); ) {
+                    if ((*iter)->source_inparam == reflinkIt->source_inparam && (*iter)->dest_inparam == reflinkIt->dest_inparam) {
+                        iter = reflinkIt->dest_inparam->reflinks.erase(iter);
+                    } else {
+                        iter++;
+                    }
+                }
+                if (bUiNeedRemoveReflink) {
+                    EdgeInfo refLink{ reflinkIt->source_inparam->m_wpNode->get_name(), paramName, "", reflinkIt->dest_inparam->m_wpNode->get_name(), reflinkIt->dest_inparam->name, "", "", false };
+                    removeRefLink(refLink, !bInput);
+                }
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 void NodeImpl::doApply(CalcContext* pContext) {
@@ -3173,6 +3267,61 @@ void NodeImpl::checkParamsConstrain() {
     }
 }
 
+std::vector<RefLinkInfo> NodeImpl::getReflinkInfo(bool bOnlySearchByDestNode)
+{
+    std::vector<RefLinkInfo> refLinksInfo;
+    for (auto& [name, param] : m_inputPrims) {
+        for (auto link : param.reflinks) {
+            if (link->source_inparam && link->dest_inparam) {
+                if (bOnlySearchByDestNode) {
+                    if (link->source_inparam == &param) {
+                        continue;
+                    }
+                }
+                if (link->source_inparam->m_wpNode && link->dest_inparam->m_wpNode) {
+                    EdgeInfo refLink{
+                        link->source_inparam->m_wpNode->get_name(),
+                        link->source_inparam->name, "",
+                        link->dest_inparam->m_wpNode->get_name(),
+                        link->dest_inparam->name, "", "", false};
+                    refLinksInfo.push_back({refLink, !link->source_inparam->bInput });
+                }
+            }
+        }
+    }
+    if (!bOnlySearchByDestNode) {
+        for (auto& [name, param] : m_outputPrims) {
+            for (auto link : param.reflinks) {
+                if (link->source_inparam && link->dest_inparam) {
+                    if (link->source_inparam->m_wpNode && link->dest_inparam->m_wpNode) {
+                        EdgeInfo refLink{
+                            link->source_inparam->m_wpNode->get_name(),
+                            link->source_inparam->name, "",
+                            link->dest_inparam->m_wpNode->get_name(),
+                            link->dest_inparam->name, "", "", false };
+                        refLinksInfo.push_back({refLink, !link->source_inparam->bInput });
+                    }
+                }
+            }
+        }
+        for (auto& [name, param] : m_outputObjs) {
+            for (auto link : param.reflinks) {
+                if (link->source_inparam && link->dest_inparam) {
+                    if (link->source_inparam->m_wpNode && link->dest_inparam->m_wpNode) {
+                        EdgeInfo refLink{
+                            link->source_inparam->m_wpNode->get_name(),
+                            link->source_inparam->name, "",
+                            link->dest_inparam->m_wpNode->get_name(),
+                            link->dest_inparam->name, "", "", false };
+                        refLinksInfo.push_back({ refLink, !link->source_inparam->bInput });
+                    }
+                }
+            }
+        }
+    }
+    return refLinksInfo;
+}
+
 bool NodeImpl::update_param_enable(const std::string& name, bool bOn, bool bInput) {
     if (bInput) {
         if (auto iter = m_inputObjs.find(name); iter != m_inputObjs.end()) {
@@ -3304,6 +3453,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             if (oldname.empty()) {
                 //new added name.
                 if (self_obj_params.find(newname) != self_obj_params.end()) {
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, false, newname);
+                    self_obj_params[newname].reflinks.clear();
                     // the new name happen to have the same name with the old name, but they are not the same param.
                     self_obj_params.erase(newname);
                     if (param.bInput)
@@ -3334,6 +3486,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     //exist name changed.
                     self_obj_params[newname] = std::move(self_obj_params[oldname]);
                     self_obj_params.erase(oldname);
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, false, newname);
+                    self_obj_params[newname].reflinks.clear();
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -3375,6 +3530,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             if (oldname.empty()) {
                 //new added name.
                 if (self_prim_params.find(newname) != self_prim_params.end()) {
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, true, newname);
+                    self_prim_params[newname].reflinks.clear();
                     // the new name happen to have the same name with the old name, but they are not the same param.
                     self_prim_params.erase(newname);
                     if (param.bInput)
@@ -3408,6 +3566,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     //exist name changed.
                     self_prim_params[newname] = std::move(self_prim_params[oldname]);
                     self_prim_params.erase(oldname);
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, true, newname);
+                    self_prim_params[newname].reflinks.clear();
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -3451,6 +3612,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : inputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), true, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(true, true, rem_name);
+        m_inputPrims[rem_name].reflinks.clear();
+
         m_inputPrims.erase(rem_name);
         changes.remove_inputs.insert(rem_name);
     }
@@ -3458,6 +3624,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : outputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), false, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(false, true, rem_name);
+        m_outputPrims[rem_name].reflinks.clear();
+
         m_outputPrims.erase(rem_name);
         changes.remove_outputs.insert(rem_name);
     }
@@ -3465,6 +3636,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : obj_inputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), true, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(true, false, rem_name);
+        m_inputObjs[rem_name].reflinks.clear();
+
         m_inputObjs.erase(rem_name);
         changes.remove_inputs.insert(rem_name);
     }
@@ -3472,6 +3648,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : obj_outputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), false, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(false, false, rem_name);
+        m_outputObjs[rem_name].reflinks.clear();
+
         m_outputObjs.erase(rem_name);
         changes.remove_outputs.insert(rem_name);
     }

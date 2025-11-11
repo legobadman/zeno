@@ -19,6 +19,7 @@ class LinkModel : public QAbstractListModel
         QUuid uuid;
         bool bObjLink = true;
         bool m_bCollasped = false;
+        bool bIsRef = false;
     };
 
     typedef QVector<_linkItem> LINKS_ITEM;

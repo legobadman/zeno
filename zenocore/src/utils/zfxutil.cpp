@@ -661,30 +661,25 @@ namespace zeno
         {
             if (ref.empty()) {
                 zeno::log_warn("ref empty");
+                return nullptr;
             }
 
             if (zeno::starts_with(ref, "..")) {
                 //子图直接获取参数
                 if (zeno::starts_with(ref, "../")) {
-                    return nullptr; //根本无须确立引用关系，直接取上层子图的参数就可以了
-#if 0
                     auto thisNode = pContext->spNode;
                     auto thisGraph = thisNode->getGraph();
                     paramPath = ref.substr(3);
                     auto paramPathItems = split_str(paramPath, '.');
-                    paramName = paramPathItems.empty() ? paramPath : paramPathItems[0];
-
+                    if (paramPathItems.size() != 1) {
+                        zeno::log_warn("unknow ref");
+                        return nullptr;
+                    }
+                    paramName = paramPathItems[0];
                     //找出参数对应的SubInput节点
                     NodeImpl* pSubInput = thisGraph->getNode(paramName);
                     paramName = "port";
-                    if (paramPathItems.size() == 2) {
-                        paramPath = paramName + "." + paramPathItems[1];
-                    }
-                    else {
-                        paramPath = "port";
-                    }
                     return pSubInput;
-#endif
                 }
                 return nullptr;
             }
