@@ -10,7 +10,7 @@
                     "Input Image": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:/zeno/misc/graphs/Terrain/Panda.png",
+                        "default-value": "$ZSG/Panda.png",
                         "control": {
                             "name": "read path"
                         },
@@ -54,7 +54,7 @@
                                 "Input Image": {
                                     "links": null,
                                     "type": "string",
-                                    "default-value": "C:/zeno/misc/graphs/Terrain/Panda.png",
+                                    "default-value": "$ZSG/Panda.png",
                                     "control": {
                                         "name": "read path"
                                     },

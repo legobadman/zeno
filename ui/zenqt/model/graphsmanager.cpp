@@ -170,11 +170,7 @@ GraphsTreeModel* GraphsManager::openZsgFile(const QString& fullPath, zenoio::ERR
 
     m_bIniting = true;
     zeno::scope_exit sp([=] { m_bIniting = false; });
-    /*if (ver == zeno::VER_2_5) {
-        zenoio::Zsg2Reader reader;
-        result = reader.openFile(result.path);
-    }
-    else */if (ver == zeno::VER_3) {
+    if (ver == zeno::VER_3) {
         zenoio::ZenReader reader;
         result = reader.openFile(result.path);
         result.num_of_nodes = reader.numOfNodes();
@@ -350,18 +346,16 @@ void GraphsManager::clear()
 void GraphsManager::onRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
     //TODO: deprecated.
-    /*
-    const QModelIndex& idx = m_model->index(first, 0);
-    if (idx.isValid())
-    {
-        const QString& subgName = idx.data(QtRole::ROLE_CLASS_NAME).toString();
-        if (m_scenes.find(subgName) != m_scenes.end())
-        {
-            delete m_scenes[subgName];
-            m_scenes.remove(subgName);
-        }
-    }
-    */
+    //const QModelIndex& idx = m_model->index(first, 0);
+    //if (idx.isValid())
+    //{
+    //    const QString& subgName = idx.data(QtRole::ROLE_CLASS_NAME).toString();
+    //    if (m_scenes.find(subgName) != m_scenes.end())
+    //    {
+    //        delete m_scenes[subgName];
+    //        m_scenes.remove(subgName);
+    //    }
+    //}
 }
 
 void GraphsManager::onModelDataChanged(const QModelIndex& subGpIdx, const QModelIndex& idx, int role)
@@ -398,16 +392,6 @@ QGraphicsScene* GraphsManager::gvScene(const QStringList& graphPath) const
 QGraphicsScene* GraphsManager::gvScene(const QModelIndex& subgIdx) const
 {
     return nullptr;
-    /*
-    if (!subgIdx.isValid())
-        return nullptr;
-
-    const QString& subgName = subgIdx.data(QtRole::ROLE_CLASS_NAME).toString();
-    if (m_scenes.find(subgName) == m_scenes.end())
-        return nullptr;
-
-    return m_scenes[subgName];
-    */
 }
 
 QMap<QStringList, QGraphicsScene*> GraphsManager::gvSubScenes(const QStringList& graphName) const
@@ -427,12 +411,6 @@ QMap<QStringList, QGraphicsScene*> GraphsManager::gvSubScenes(const QStringList&
 void GraphsManager::addScene(const QModelIndex& subgIdx, ZenoSubGraphScene* scene)
 {
     //TODO: deprecated
-    /*
-    const QString& subgName = subgIdx.data(QtRole::ROLE_CLASS_NAME).toString();
-    if (m_scenes.find(subgName) != m_scenes.end() || !scene)
-        return;
-    m_scenes.insert(subgName, scene);
-    */
 }
 
 void GraphsManager::addScene(const QStringList& graphPath, ZenoSubGraphScene* scene)
@@ -658,7 +636,7 @@ QModelIndex GraphsManager::getNodeIndexByUuidPath(const QString& objPath)
 }
 
 static QModelIndex recursive_search(GraphModel* pCurrentGraph, QStringList pathList) {
-    /*pathList是一个相对于当前pCurrentGraph的路径，不是完整的路径*/
+    //pathList是一个相对于当前pCurrentGraph的路径，不是完整的路径
     if (pathList.empty())
         return QModelIndex();
 

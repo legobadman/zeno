@@ -19,6 +19,7 @@
 #include <pybind11/pybind11.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
 namespace py = pybind11;
 
 PyMODINIT_FUNC PyInit_zen(void);
@@ -70,21 +71,21 @@ static void init_plugins(char* argv0) {
 inline std::wstring s2ws(const std::string& str)
 {
 #if defined(_WIN32)
-    // Windows Æ½Ì¨£ºÊ¹ÓÃ MultiByteToWideChar
+    // Windows å¹³å°ï¼šä½¿ç”¨ MultiByteToWideChar
     int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
     std::wstring wstr(size_needed, 0);
     MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wstr[0], size_needed);
-    wstr.pop_back(); // È¥µô¶àÓàµÄ '\0'
+    wstr.pop_back(); // å»æ‰å¤šä½™çš„ '\0'
     return wstr;
 #else
-    // Linux / macOS Æ½Ì¨£ºÊ¹ÓÃ std::wstring_convert
+    // Linux / macOS å¹³å°ï¼šä½¿ç”¨ std::wstring_convert
     std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
     return conv.from_bytes(str);
 #endif
 }
 
 
-// ³õÊ¼»¯²ÎÊı±í
+// åˆå§‹åŒ–å‚æ•°è¡¨
 static const std::vector<ArgDef> gArgDefs = {
     {"file",       "string", "Full path of project (.zen)",          "",     true},
     {"frame",      "int2",   "Frame range of the scene",             "",     false},
@@ -124,6 +125,19 @@ static bool parseBool(const std::string& s) {
     std::string v = s;
     std::transform(v.begin(), v.end(), v.begin(), ::tolower);
     return (v == "1" || v == "true" || v == "yes" || v == "on");
+}
+
+static int runFFmpeg(const std::string& exe, const std::string& args) {
+#ifdef _WIN32
+    std::ostringstream cmd;
+    char drive = std::toupper(exe[0]);
+    cmd << drive << ": && \"" << exe << "\" " << args;
+    return std::system(cmd.str().c_str());
+#else
+    std::ostringstream cmd;
+    cmd << "\"" << exe << "\" " << args;
+    return std::system(cmd.str().c_str());
+#endif
 }
 
 static void printHelp() {
@@ -268,8 +282,6 @@ int main(int argc, char* argv[]) {
     zeno::getSession().init_project_path(ioresult.path);
     zeno::ZSG_VERSION ver = zenoio::getVersion(ioresult.path);
 
-    //m_bIniting = true;
-    //zeno::scope_exit sp([=] { m_bIniting = false; });
     if (ver == zeno::VER_3) {
         zenoio::ZenReader reader;
         ioresult = reader.openFile(ioresult.path);
@@ -283,7 +295,7 @@ int main(int argc, char* argv[]) {
     {
         return -1;
     }
-    //TODO: ¿ÉÒÔÖ§³ÖÓÃÎÄ¼şµÄÖ¡·¶Î§
+
     if (args.useFrameInProj) {
         args.frame.resize(2);
         args.frame[0] = ioresult.timeline.beginFrame;
@@ -309,19 +321,19 @@ int main(int argc, char* argv[]) {
     else {
         visSess.set_render_engine("bate");
 
-        // ³õÊ¼»¯ GLFW
+        // åˆå§‹åŒ– GLFW
         if (!glfwInit()) {
             std::cerr << "Failed to init GLFW\n";
             return -1;
         }
 
-        // ²»ÏÔÊ¾´°¿Ú£¨ÕæÕıµÄÀëÆÁäÖÈ¾£©
+        // ä¸æ˜¾ç¤ºçª—å£ï¼ˆçœŸæ­£çš„ç¦»å±æ¸²æŸ“ï¼‰
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-        // ´´½¨Ò»¸öÒş²Ø´°¿Ú£¨Ö»ÎªÁË´´½¨ OpenGL ÉÏÏÂÎÄ£©
+        // åˆ›å»ºä¸€ä¸ªéšè—çª—å£ï¼ˆåªä¸ºäº†åˆ›å»º OpenGL ä¸Šä¸‹æ–‡ï¼‰
         GLFWwindow* window = glfwCreateWindow(args.size[0], args.size[1], "Offscreen", nullptr, nullptr);
         if (!window) {
             std::cerr << "Failed to create GLFW window\n";
@@ -330,7 +342,7 @@ int main(int argc, char* argv[]) {
         }
         glfwMakeContextCurrent(window);
 
-        // ³õÊ¼»¯ GLAD
+        // åˆå§‹åŒ– GLAD
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
             std::cerr << "Failed to initialize GLAD\n";
             return -1;
@@ -343,12 +355,22 @@ int main(int argc, char* argv[]) {
     zenovis::Scene* pScene = visSess.get_scene();
     zenovis::RenderEngine* pEngine = pScene->renderMan->getEngine();
 
+    fs::path recordDir = args.path;
+    if (!fs::exists(recordDir)) {
+        std::cerr << "Error: the directory of record " << recordDir << " does not exist\n";
+        return 1;
+    }
+    fs::path imgDir = recordDir / "P";
+    if (!fs::exists(imgDir)) {
+        fs::create_directory(imgDir);
+    }
+
     for (int frame = args.frame[0]; frame <= args.frame[1]; frame++) {
         zeno::render_reload_info render_infos;
         render_infos.policy = zeno::Reload_Calculation;
 
         sess.switchToFrame(frame);
-        sess.run("", render_infos); //Èç¹û¾Ö²¿ÔËĞĞ×ÓÍ¼£¬¿ÉÄÜÒª¿¼ÂÇsubinputµÄÍâ²¿Ç°ÖÃ¼ÆËãÊÇ·ñÒª¼ÆËã
+        sess.run("", render_infos); //å¦‚æœå±€éƒ¨è¿è¡Œå­å›¾ï¼Œå¯èƒ½è¦è€ƒè™‘subinputçš„å¤–éƒ¨å‰ç½®è®¡ç®—æ˜¯å¦è¦è®¡ç®—
 
         if (render_infos.error.failed()) {
             std::cerr << render_infos.error.getErrorMsg();
@@ -361,10 +383,43 @@ int main(int argc, char* argv[]) {
         visSess.do_screenshot(record_file, "jpg", args.optix);
     }
 
-    //if (args.video)
-    //{
-    //    recordMgr.endRecToExportVideo();
-    //}
+    if (args.video)
+    {
+        fs::path exePath = fs::absolute(argv[0]);
+        fs::path exeDir = exePath.parent_path();
+        fs::path ffmpegPath = exeDir / "ffmpeg";
+
+#ifdef _WIN32
+        ffmpegPath += ".exe";
+#endif
+
+        if (!fs::exists(ffmpegPath)) {
+            std::cerr << "Error: ffmpeg not found at " << ffmpegPath << "\n";
+            return 1;
+        }
+
+        std::string inputPattern = args.path + "/P/%07d.jpg";
+        std::string outputFile = args.path + "/" + args.videoname;
+
+        std::ostringstream cmd;
+        cmd << " -y"
+            << " -start_number " << args.frame[0]
+            << " -r " << args.fps
+            << " -i \"" << inputPattern << '"'
+            << " -b:v " << args.bitrate << "k"
+            << " -c:v mpeg4"
+            << " \"" << outputFile << '"';
+
+        std::string argscmd = cmd.str();
+        int ret = runFFmpeg(ffmpegPath.string(), argscmd);
+        if (ret == 0) {
+            std::cout << "ffmpeg executed successfully.\n";
+        }
+        else {
+            std::cerr << "ffmpeg execution failed! (exit code = " << ret << ")\n";
+            std::cerr << "Please check if ffmpeg exists and the parameters are correct.\n";
+        }
+    }
 
     return 0;
 }
