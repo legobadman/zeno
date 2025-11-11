@@ -443,7 +443,16 @@ extern "C" __global__ void __anyhit__occlusion_volume()
         EvalVolume(prd->seed, m16, sigma_t, test_point, homo_out);
         hg = pbrt::HenyeyGreenstein(homo_out.anisotropy);
 
-        transmittance = expf(-homo_out.extinction * t_max);
+        vec3& trans = *(vec3*)&transmittance;
+        vec3 sa = homo_out.extinction * t_max;
+        #pragma unroll
+        for (char i=0; i<3; ++i) {
+            auto& s = sa[i];
+            if (s < 1e-4f)
+                trans[i] = (1.0f - s + 0.5f * s * s);
+            else
+                trans[i] = expf(-s);
+        }
         prd->attanuation *= transmittance;
 
         //transmittance *= vol_out.albedo * hg.p(-ray_dir, ray_dir);

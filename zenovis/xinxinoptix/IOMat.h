@@ -106,7 +106,6 @@ struct MatInput {
     float2 barys2;
     float3* vertices;
     uint3 vertex_idx;
-    float* World2ObjectMat;
 
     float4 objectToWorld[3];
     float4 worldToObject[3];

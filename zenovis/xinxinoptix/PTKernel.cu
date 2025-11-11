@@ -104,46 +104,68 @@ void homoVolumeLight(const RadiancePRD& prd, float _tmax_, float3 ray_origin, fl
     
     float tmax = fminf(_tmax_, vol.homo_t1) - vol.homo_t0;
 
-    VolumeOut homo_out;
-    optixDirectCall<void, void*, VolumeOut&>( prd.vol.homo_matid, nullptr, homo_out);
+    VolumeOut fog_out;
+    optixDirectCall<void, void*, VolumeOut&>( prd.vol.homo_matid, nullptr, fog_out);
 
-    const auto& extinction = homo_out.extinction;
+    const vec3& sigma_t = fog_out.extinction;
     auto seed = prd.seed;
 
-    auto total_transmittance = expf(-extinction * tmax);
-    float x = 1.0 - rnd(seed) * (1.0 - average(total_transmittance));
-    float dt = -logf(x) / average(extinction);
-    auto cdf = 1.0f - total_transmittance;
-    auto pdf = expf(-extinction * dt) * extinction;
-    auto weight = cdf / pdf;
+    auto sum = dot(sigma_t, vec3(1.0f));
+    auto weight = (sum > 1e-6f)? sigma_t/sum : vec3(1.f/3.f);
 
-    const auto& e = extinction;
-    weight.x = e.x>1e-4? weight.x : (tmax * expf(-e.x * tmax))/(-dt*expf(-e.x*dt)*e.x + expf(-e.x*dt));
-    weight.y = e.y>1e-4? weight.y : (tmax * expf(-e.y * tmax))/(-dt*expf(-e.y*dt)*e.y + expf(-e.y*dt));
-    weight.z = e.z>1e-4? weight.z : (tmax * expf(-e.z * tmax))/(-dt*expf(-e.z*dt)*e.z + expf(-e.z*dt));
+    const auto transmittance = exp(-sigma_t * tmax);
+    const auto cdf = 1.0f - transmittance;
 
-    weight *= extinction;
+    auto Xi = rnd(seed);
+    int K = (Xi < weight[0]) ? 0 : (Xi < weight[0] + weight[1]) ? 1 : 2;
 
-    let new_orig = ray_origin + (prd.vol.homo_t0 + dt) * ray_dir;
+    const float& sig_K = sigma_t[K];
+    const float& cdf_K = cdf[K];
 
+    float sa = 1.0 - rnd(seed) * cdf_K; //Sample of the survival CDF
+    float dt = -logf(sa) / sig_K;
+
+    let new_orig = ray_origin + (prd.vol.homo_t0) * ray_dir;
+    //let new_orig = ray_origin + (prd.vol.homo_t0 + dt) * ray_dir;
+    
     ShadowPRD shadowPRD {};
     shadowPRD.seed = seed ^ 0x9e3779b9u;
     
+    shadowPRD.fog_dt = dt;
+    shadowPRD.fog_tmax = tmax;
+    shadowPRD.ShadowNormal = ray_dir;
     shadowPRD.depth = prd.depth;
     shadowPRD.origin = new_orig;
     shadowPRD.attanuation = vec3(1.0f);
 
     auto evalBxDF = [&](const float3& _wi_, const float3& _wo_, float& thisPDF) -> float3 {
-        pbrt::HenyeyGreenstein hg(homo_out.anisotropy);
-        thisPDF = hg.p(_wo_, _wi_);
-        return homo_out.albedo * thisPDF * homo_out.albedoAmp;
+
+        auto dt = shadowPRD.fog_dt;
+        vec3 va = sigma_t * dt;
+        vec3 tr = vec3(1.0f);
+        #pragma unroll
+        for (char i=0; i<3; ++i) {
+            auto& s = va[i];
+            // Use second-order Taylor expansion: exp(-s) ≈ 1 - s + s^2/2
+            if (s < 1e-4f)
+                tr[i] = (1.0f - s + 0.5f * s * s);
+            else
+                tr[i] = expf(-s);
+        }
+        vec3 pdf = sigma_t * tr;
+        pdf = pdf / cdf; // bounded pdf
+
+        thisPDF = dot(pdf, weight);
+        float3 sigma_s = fog_out.albedo * sigma_t; // cancel sigma_t in pdf
+
+        pbrt::HenyeyGreenstein hg(fog_out.anisotropy);
+        return sigma_s * tr * hg.p(_wo_, _wi_);
     };
-
+    
     DirectLighting<true>(shadowPRD, new_orig+params.cam.eye, ray_dir, evalBxDF);
-    shadowPRD.radiance *= weight;
 
-    result = shadowPRD.radiance * expf(-extinction * dt);
-    attenuation = expf(-extinction * tmax);
+    result = shadowPRD.radiance * fog_out.albedoAmp;
+    attenuation = transmittance;
 };
 
 extern "C" __global__ void __raygen__rg()
@@ -377,7 +399,6 @@ extern "C" __global__ void __raygen__rg()
         if(params.pause) return;
         
         prd._tmin_ = 0;
-        //prd._tmax_ = FLT_MAX;
         prd.maxDistance = FLT_MAX;
         
         float3 m = prd.mask_value;
@@ -458,9 +479,9 @@ extern "C" __global__ void __raygen__rg()
                 }
             }
 
+            if(prd.diffDepth > 0)
+                _mask_ &= ~VolumeMaskAnalytics;
 
-//            if(prd.diffDepth > 1)
-//                _mask_ &= ~VolumeMaskAnalytics;
             prd._tmin_ = _tmin_;
             do {
                 _attenuation = prd.attenuation;

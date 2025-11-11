@@ -134,10 +134,6 @@ extern "C" __global__ void __anyhit__shadow_cutout()
 #endif
 
     attrs.isShadowRay = true;
-    mat4 World2Object(0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0);
-    attrs.World2ObjectMat = (float*)&World2Object;
-    optixGetWorldToObjectTransformMatrix(attrs.World2ObjectMat);
-    attrs.World2ObjectMat[15] = 1.0f;
     MatOutput mats = optixDirectCall<MatOutput, cudaTextureObject_t[], MatInput&>( dc_index, rt_data->textures, attrs );
     shadingNorm = mats.nrm;
     shadingNorm = faceforward( shadingNorm, -ray_dir, shadingNorm );
@@ -425,10 +421,6 @@ extern "C" __global__ void __closesthit__radiance()
 
     attrs.V = -(ray_dir);
     attrs.isShadowRay = false;
-    mat4 World2Object(0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0);
-    attrs.World2ObjectMat = (float*)&World2Object;
-    optixGetWorldToObjectTransformMatrix(attrs.World2ObjectMat);
-    attrs.World2ObjectMat[15] = 1.0f;
     MatOutput mats = optixDirectCall<MatOutput, cudaTextureObject_t[], MatInput&>(rt_data->dc_index , rt_data->textures, attrs );
     prd->mask_value = mats.mask_value;
     prd->geometryNormal = attrs.wldNorm;
