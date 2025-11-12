@@ -89,7 +89,7 @@ namespace zeno
 #undef SET_TEX_FILTER
 
 			tex->blockCompression = ZImpl(get_input2<bool>("blockCompression"));
-			ZImpl(set_output("tex", std::move(tex)));
+			set_output("tex", std::move(tex));
 		}
 	};
 
@@ -103,10 +103,10 @@ namespace zeno
 				{(std::string) "enum " + texWrapping, "wrapT", "REPEAT"},
 				{(std::string) "enum " + texFiltering, "minFilter", "LINEAR"},
 				{(std::string) "enum " + texFiltering, "magFilter", "LINEAR"},
-				{"bool", "blockCompression", "false"}
+				{gParamType_Bool, "blockCompression", "false"}
 			},
 			{
-				{gParamType_String, "tex"},
+				{gParamType_Texture2DObject, "tex"},
 			},
 			{},
 			{

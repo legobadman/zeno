@@ -1,4 +1,5 @@
 #include <zeno/zeno.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/geo/commonutil.h>
@@ -138,7 +139,7 @@ struct ReadObjPrim : INode {
         if (ZImpl(get_param<bool>("triangulate"))) {
             primTriangulate(prim.get());
         }
-        ZImpl(set_output("prim", std::move(prim)));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
@@ -146,7 +147,7 @@ ZENDEFNODE(ReadObjPrim,
         { /* inputs: */ {
         {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
         }, /* outputs: */ {
-        {gParamType_Primitive, "prim"},
+        {gParamType_Geometry, "prim"},
         }, /* params: */ {
         {gParamType_Bool, "triangulate", "1"},
         }, /* category: */ {

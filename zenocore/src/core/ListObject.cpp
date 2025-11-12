@@ -31,6 +31,10 @@ namespace zeno
         return !m_impl->m_modify.empty() || !m_impl->m_new_added.empty() || !m_impl->m_new_removed.empty();
     }
 
+    bool ListObject::empty() const {
+        return m_impl->m_objects.empty();
+    }
+
     std::vector<int> ListObject::get2_int() const {
         return m_impl->get2<int>();
     }
