@@ -2065,6 +2065,7 @@ struct NewFBXPrimList : INode {
     }
     virtual void apply() override {
         auto fbx_object = get_input2<FBXObject>("fbx_object");
+        auto file_path = fbx_object->userData().get2<std::string>("file_path");
         auto lScene = fbx_object->lScene;
 
         // Print the nodes of the scene and their attributes recursively.
@@ -2158,6 +2159,7 @@ struct NewFBXPrimList : INode {
         }
         auto prim_list = std::make_shared<zeno::ListObject>();
         for (auto prim: prims) {
+            prim->userData().set2("file_path", file_path);
             prim_list->arr.push_back(prim);
         }
         set_output("prims", prim_list);
