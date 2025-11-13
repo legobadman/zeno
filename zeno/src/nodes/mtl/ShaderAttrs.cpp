@@ -4,6 +4,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/string.h>
 #include <magic_enum.hpp>
@@ -152,9 +153,9 @@ ZENDEFNODE(ShaderUniformAttr, {
 
 struct SHParamToUniform : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         if (has_input("SHPrim")) {
-            auto prim_in = get_input<zeno::PrimitiveObject>("SHPrim");
+            auto prim_in = get_input_Geometry("SHPrim")->toPrimitiveObject();
             auto& databuffer = prim->add_attr<zeno::vec4f>("buffer");
             size_t sh_verts_count = prim_in->verts.size();
             prim->verts.resize(sh_verts_count*14);
@@ -180,33 +181,33 @@ struct SHParamToUniform : zeno::INode {
             }
 
 
-            prim->userData().set2("ShaderUniforms", 2);
+            prim->userData()->set_int("ShaderUniforms", 2);
         }
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(SHParamToUniform, {
     {
-        {"SHPrim"},
+        {gParamType_Geometry, "SHPrim"},
     },
     {
-        {"prim"},
+        {gParamType_Geometry, "prim"},
     },
     {},
     {"shader"},
 });
 struct EvalSHColor : ShaderNodeClone<EvalSHColor> {
     virtual int determineType(EmissionPass *em) override {
-        em->determineType(get_input("idx").get());
-        em->determineType(get_input("dir").get());
+        em->determineType(ZImpl(get_input_shader("idx")));
+        em->determineType(ZImpl(get_input_shader("dir")));
         return TypeHint.at("vec3");
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        std::string idx = em->determineExpr(get_input("idx").get());
-        std::string dir = em->determineExpr(get_input("dir").get());
-        int level = get_input2<int>("SH-Level");
+        std::string idx = em->determineExpr(ZImpl(get_input_shader("idx")));
+        std::string dir = em->determineExpr(ZImpl(get_input_shader("dir")));
+        int level = get_input2_int("SH-Level");
         std::string code=std::string("(") + "GS::EvalSH(uniforms,"+ idx +","+std::to_string(level) +","+ "vec3(params.cam.eye)" + ",(float*)attrs.worldToObject"+")"+")";
 
         return em->emitCode(code);
@@ -215,12 +216,12 @@ struct EvalSHColor : ShaderNodeClone<EvalSHColor> {
 
 ZENDEFNODE(EvalSHColor, {
                                 {
-                                    {"int", "idx", "0"},
-                                    {"int", "SH-Level", "0"},
-                                    {"vec3", "dir", "0,0,0"}
+                                    {gParamType_Int, "idx", "0"},
+                                    {gParamType_Int, "SH-Level", "0"},
+                                    {gParamType_Vec3f, "dir", "0,0,0"}
                                 },
                                 {
-                                    {"vec3", "out"},
+                                    {gParamType_Vec3f, "out"},
                                 },
                                 {},
                                 {"shader"},
@@ -228,15 +229,15 @@ ZENDEFNODE(EvalSHColor, {
 
 struct EvalGSOpacity : ShaderNodeClone<EvalGSOpacity> {
     virtual int determineType(EmissionPass *em) override {
-        em->determineType(get_input("idx").get());
-        em->determineType(get_input("pos").get());
+        em->determineType(ZImpl(get_input_shader("idx")));
+        em->determineType(ZImpl(get_input_shader("pos")));
         return TypeHint.at("float");
     }
 
     virtual void emitCode(EmissionPass *em) override {
-        std::string idx = em->determineExpr(get_input("idx").get());
-        std::string pos = em->determineExpr(get_input("pos").get());
-        float clamp = get_input2<float>("clamp_radius");
+        std::string idx = em->determineExpr(ZImpl(get_input_shader("idx")));
+        std::string pos = em->determineExpr(ZImpl(get_input_shader("pos")));
+        float clamp = get_input2_float("clamp_radius");
         std::string code=std::string("(float)(") +"GS::EvalGSOpacity("+"uniforms," +idx+","+std::to_string(clamp)+","+pos+ ","+"(float*)attrs.worldToObject" + "))" ;
 
         return em->emitCode(code);
@@ -245,12 +246,12 @@ struct EvalGSOpacity : ShaderNodeClone<EvalGSOpacity> {
 
 ZENDEFNODE(EvalGSOpacity, {
                                 {
-                                    {"int", "idx", "0"},
-                                    {"vec3", "pos", "0,0,0"},
-                                    {"float", "clamp_radius", "4"}
+                                    {gParamType_Int, "idx", "0"},
+                                    {gParamType_Vec3f, "pos", "0,0,0"},
+                                    {gParamType_Float, "clamp_radius", "4"}
                                 },
                                 {
-                                    {"vec3", "out"},
+                                    {gParamType_Vec3f, "out"},
                                 },
                                 {},
                                 {"shader"},

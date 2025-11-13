@@ -32,7 +32,7 @@ namespace
 {
 struct PrimDecompose : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         if (prim->polys->empty()) {
             set_output("prim", std::move(prim));
         }
@@ -89,17 +89,17 @@ struct PrimDecompose : INode {
         });
         prim->polys = new_polys;
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(PrimDecompose, {
     /* inputs: */
     {
-        "prim",
+        {gParamType_Geometry, "prim"},
     },
     /* outputs: */
     {
-        "prim",
+        {gParamType_Geometry, "prim"},
     },
     /* params: */
     {
@@ -107,7 +107,8 @@ ZENDEFNODE(PrimDecompose, {
     /* category: */
     {
         "WBTest",
-    }});
+    }
+});
 
 
 struct PrimMarkTrisIdx : INode {

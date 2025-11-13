@@ -1132,7 +1132,7 @@ struct NewFBXImportSkin : INode {
         FbxNode* lRootNode = lScene->GetRootNode();
         std::vector<std::string> availableRootNames;
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
-        bool geometryTransformUsePivot = get_input2<bool>("GeometryTransformUsePivot");
+        bool geometryTransformUsePivot = get_input2_bool("GeometryTransformUsePivot");
         if(lRootNode) {
             TraverseNodesToGetNames(lRootNode, availableRootNames);
             auto rootName = zsString2Std(get_input2_string("rootName"));
@@ -1236,7 +1236,7 @@ ZENDEFNODE(NewFBXImportSkin, {
         {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
         {gParamType_Bool, "CopyFacesetToMatid", "1"},
         {gParamType_Bool, "OutputTexEvenMissing", "0"},
-        {"bool", "GeometryTransformUsePivot", "0"},
+        {gParamType_Bool, "GeometryTransformUsePivot", "0"},
     },
     {
         {gParamType_Primitive, "prim"},
@@ -2113,7 +2113,7 @@ struct ParseFBX : INode {
             bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
 
             if (lRootNode) {
-                TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+                TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false, get_input2_bool("GeometryTransformUsePivot"));
             }
 
             auto vectors_str = zsString2Std(get_input2_string("vectors"));
@@ -2182,6 +2182,7 @@ ZENDEFNODE(ParseFBX, {
         {gParamType_Bool, "CopyFacesetToMatid", "1"},
         {gParamType_Bool, "OutputTexEvenMissing", "0"},
         {gParamType_Bool, "SkipInvisibleMesh", "0"},
+        {gParamType_Bool, "GeometryTransformUsePivot", "0"},
         {gParamType_Int, "Start Frame"},
         {gParamType_Int, "End Frame"},
         {gParamType_Float, "fps", "25"}
@@ -2297,7 +2298,7 @@ struct NewFBXGeometryList : INode {
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
         std::vector<std::unique_ptr<PrimitiveObject>> prims;
         if (lRootNode) {
-            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false, get_input2_bool("GeometryTransformUsePivot"));
         }
 
         auto vectors_str = zsString2Std(get_input2_string("vectors"));
@@ -2379,6 +2380,7 @@ ZENDEFNODE(NewFBXGeometryList, {
         {gParamType_Bool, "CopyFacesetToMatid", "1"},
         {gParamType_Bool, "OutputTexEvenMissing", "0"},
         {gParamType_Bool, "SkipInvisibleMesh", "0"},
+        {gParamType_Bool, "GeometryTransformUsePivot", "0"}
     },
     {
         {gParamType_List, "Geometry List"},
@@ -2442,7 +2444,7 @@ struct ParseFBXPrimList : INode {
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
         std::vector<std::unique_ptr<PrimitiveObject>> prims;
         if (lRootNode) {
-            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false, get_input2_bool("GeometryTransformUsePivot"));
         }
 
         auto vectors_str = zsString2Std(get_input2_string("vectors"));
@@ -2526,6 +2528,7 @@ ZENDEFNODE(ParseFBXPrimList, {
         {gParamType_Bool, "CopyFacesetToMatid", "1"},
         {gParamType_Bool, "OutputTexEvenMissing", "0"},
         {gParamType_Bool, "SkipInvisibleMesh", "0"},
+        {gParamType_Bool, "GeometryTransformUsePivot", "0"}
     },
     {
         {gParamType_List, "prims"},
@@ -2547,7 +2550,7 @@ struct NewFBXPrimList : INode {
     }
     virtual void apply() override {
         auto fbx_object = zeno::safe_dynamic_cast<FBXObject>(get_input("fbx_object"));
-        auto file_path = fbx_object->userData().get2<std::string>("file_path");
+        auto file_path = zsString2Std(fbx_object->userData()->get_string("file_path"));
         auto lScene = fbx_object->lScene;
 
         // Print the nodes of the scene and their attributes recursively.
@@ -2557,7 +2560,7 @@ struct NewFBXPrimList : INode {
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
         std::vector<std::unique_ptr<PrimitiveObject>> prims;
         if(lRootNode) {
-            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false, get_input2<bool>("GeometryTransformUsePivot"));
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false, get_input2_bool("GeometryTransformUsePivot"));
         }
 
 
@@ -2641,7 +2644,7 @@ struct NewFBXPrimList : INode {
         }
         auto prim_list = std::make_unique<zeno::ListObject>();
         for (auto& prim: prims) {
-            prim->userData()->set_string("file_path", file_path);
+            prim->userData()->set_string("file_path", stdString2zs(file_path));
             prim_list->push_back(std::move(prim));
         }
         set_output("prims", std::move(prim_list));

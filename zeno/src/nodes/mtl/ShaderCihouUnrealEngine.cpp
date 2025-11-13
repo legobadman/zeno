@@ -8,10 +8,10 @@
 namespace zeno {
 struct ShaderCodePrint : INode {
     virtual void apply() override {
-        auto mtl = get_input<MaterialObject>("mtl");
+        auto mtl = ZImpl(get_input<MaterialObject>("mtl"));
         std::string code = "common code:\n" + mtl->common + "\nfrag code:\n" + mtl->frag;
         printf("%s\n",code.c_str());
-        set_output2("code", std::move(code));
+        set_output_string("code", stdString2zs(code));
     }
 };
 ZENDEFNODE(ShaderCodePrint, {
@@ -19,7 +19,7 @@ ZENDEFNODE(ShaderCodePrint, {
         {"MaterialObject", "mtl"},
     },
     {
-        {"string", "code"},
+        {gParamType_String, "code"},
     },
     {
     },

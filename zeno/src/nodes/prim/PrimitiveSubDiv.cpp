@@ -820,19 +820,19 @@ ZENDEFNODE(PrimDisplacement,
 
 struct PrimEdgeCrease : INode {
     void apply() override {
-        auto origin_prim = get_input2<PrimitiveObject>("prim");
+        auto origin_prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto &polys = origin_prim->polys;
         auto &loops = origin_prim->loops;
-        auto attr_name = get_input2<std::string>("face_attr_name");
-        auto out_attr = get_input2<std::string>("out_attr_name");
-        std::unordered_map<std::pair<int,int>,EdgeInfo, PairHash> edges;
+        auto attr_name = zsString2Std(get_input2_string("face_attr_name"));
+        auto out_attr = zsString2Std(get_input2_string("out_attr_name"));
+        std::unordered_map<std::pair<int,int>,_EdgeInfo, PairHash> edges;
         int num_lines = 0;
         auto &face_n = polys.add_attr<zeno::vec3f>("face_N");
         auto empty = std::vector<int>();
         auto &face_attr = polys.has_attr(attr_name)?polys.attr<int>(attr_name):empty;
 
-        auto sharp_thres = get_input2<float>("sharp_threshold");
-        auto corner_thres = get_input2<float>("corner_threshold");
+        auto sharp_thres = get_input2_float("sharp_threshold");
+        auto corner_thres = get_input2_float("corner_threshold");
         corner_thres = max(corner_thres,0.001);
         auto &verts = origin_prim->verts;
         auto &verts_e1 = origin_prim->verts.add_attr<vec3f>("e1");
@@ -854,7 +854,7 @@ struct PrimEdgeCrease : INode {
                     edges[e].face_idx1 = i;
                 }else{
                     num_lines++;
-                    EdgeInfo ei;
+                    _EdgeInfo ei;
                     ei.face_idx0 = i;
                     edges[e] = ei;
                 }
@@ -922,27 +922,27 @@ struct PrimEdgeCrease : INode {
             }
 
         }
-        set_output("oPrim", origin_prim);
+        set_output("oPrim", create_GeometryObject(origin_prim.get()));
     }
 };
 ZENDEFNODE(PrimEdgeCrease,
 { /* inputs: */ {
-    "prim",
-    {"float","sharp_threshold","0.6"},
-    {"string","face_attr_name",""},
-    {"string","out_attr_name",""},
-    {"float","corner_threshold","0.1"},
+    {gParamType_Geometry, "prim"},
+    {gParamType_Float,"sharp_threshold","0.6"},
+    {gParamType_String,"face_attr_name",""},
+    {gParamType_String,"out_attr_name",""},
+    {gParamType_Float,"corner_threshold","0.1"},
 }, /* outputs: */ {
-    "oPrim",
+    {gParamType_Geometry, "oPrim"},
 }, /* params: */ {
 }, /* category: */ {
     "primitive",
 }});
 struct EdgeInstance : INode {
     void apply() override {
-        auto prim_in = get_input2<PrimitiveObject>("prim");
+        auto prim_in = get_input_Geometry("prim")->toPrimitiveObject();
         auto prim_out = std::make_shared<PrimitiveObject>();
-        auto edge_mark_name = get_input2<std::string>("edge_mark");
+        auto edge_mark_name = zsString2Std(get_input2_string("edge_mark"));
         auto &lines = prim_in->lines;
         auto &line_mark = prim_in->lines.attr<float>(edge_mark_name);
         std::vector<zeno::vec3f> pos;
@@ -962,15 +962,15 @@ struct EdgeInstance : INode {
         prim_out->verts.add_attr<zeno::vec3f>("pos2");
         prim_out->verts.values = pos;
         prim_out->verts.attr<zeno::vec3f>("pos2") = pos2;
-        set_output("oPrim", std::move(prim_out));
+        set_output("oPrim", create_GeometryObject(prim_out.get()));
     }
 };
 ZENDEFNODE(EdgeInstance,
 { /* inputs: */ {
-    "prim",
-    {"string","edge_mark",""},
+    {gParamType_Geometry, "prim"},
+    {gParamType_String, "edge_mark", ""},
 }, /* outputs: */ {
-    "oPrim",
+    {gParamType_Geometry, "oPrim"},
 }, /* params: */ {
 }, /* category: */ {
     "primitive",

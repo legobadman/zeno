@@ -9,6 +9,7 @@
 #include "widgets/zcomboboxitemdelegate.h"
 #include <QSvgRenderer>
 #include <zeno/extra/assetDir.h>
+#include <zeno/types/UserData.h>
 #include "widgets/zlineedit.h"
 
 

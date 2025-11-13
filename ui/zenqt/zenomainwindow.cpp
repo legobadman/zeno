@@ -231,7 +231,7 @@ void ZenoMainWindow::initMenu()
     QJsonObject obj = readDefaultLayout();
     QStringList lst = obj.keys();
     initCustomLayoutAction(lst, true);
-    connect(m_ui->menuRun_script, &QMenu::aboutToShow, this, &ZenoMainWindow::initRunScriptAction);
+    //connect(m_ui->menuRun_script, &QMenu::aboutToShow, this, &ZenoMainWindow::initRunScriptAction);
     //check user saved layout.
     loadSavedLayout();
     //init recent files
@@ -748,6 +748,7 @@ void ZenoMainWindow::initCustomLayoutAction(const QStringList &list, bool isDefa
 
 void ZenoMainWindow::initRunScriptAction()
 {
+#if 0
     m_ui->menuRun_script->clear();
     QDir dir(QCoreApplication::applicationDirPath());
     QString scriptDirPath = dir.absoluteFilePath("run_script");
@@ -797,6 +798,7 @@ void ZenoMainWindow::initRunScriptAction()
         connect(process, SIGNAL(readyRead()), this, SLOT(onPyProcReady()));
         m_ui->menuRun_script->addAction(scriptAction);
     }
+#endif
 }
 
 
@@ -1411,6 +1413,7 @@ QVector<ZGeometrySpreadsheet*> ZenoMainWindow::getGeoSpreadSheet() const
     return spreadsheets;
 }
 
+#if 0
 zenoBenchmark* ZenoMainWindow::getAnyBenchmark() const
 {
     for (auto dock : findChildren<ZTabDockWidget*>(QString(), Qt::FindDirectChildrenOnly))
@@ -1427,6 +1430,7 @@ zenoBenchmark* ZenoMainWindow::getAnyBenchmark() const
     }
     return nullptr;
 }
+#endif
 
 void ZenoMainWindow::onRunFinished()
 {

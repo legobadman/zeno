@@ -341,7 +341,7 @@ struct LightNode : INode {
 
         auto ud = prim->userData();
 
-        ud->set_bool("isRealTimeObject", std::move(isL));
+        ud->set_int("isRealTimeObject", std::move(isL));
 
         ud->set_bool("isL", isL);
         ud->set_int("ivD", invertdir);

@@ -126,7 +126,7 @@ struct ShaderFinalize : INode {
             ZImpl(get_input_shader("reflectance", vec3f(1))),
             ZImpl(get_input_shader("opacity", float(0.0))),
             ZImpl(get_input_shader("thickness", float(0.0f))),
-            ZImpl(get_input_shader("isHair", float(0.0f)))
+            ZImpl(get_input_shader("isHair", float(0.0f))),
             ZImpl(get_input_shader("isHair", float(0.0f))),
             ZImpl(get_input_shader("HairRough2", float(1.0))),
             ZImpl(get_input_shader("FurCoat", float(0.0f)))
@@ -250,13 +250,13 @@ ZENDEFNODE(ShaderFinalize, {
         {gParamType_Float, "opacity", "0"},
         {gParamType_Float, "thickness", "0.0"},
         {gParamType_Float, "isHair", "0.0"},
-        {"float", "HairRough2", "1.0"},
-        {"float", "FurCoat", "0.0"},
+        {gParamType_Float, "HairRough2", "1.0"},
+        {gParamType_Float, "FurCoat", "0.0"},
         {gParamType_String, "commonCode"},
         {gParamType_String, "extensionsCode"},
         {gParamType_String, "mtlid", "Mat1"},
         {gParamType_List, "tex2dList"},//TODO: bate's asset manager
-        {gParamType_Vec3i, "mask_value", "0,0,0"},
+        {gParamType_Vec3i, "mask_value", "0,0,0"}
     },
     {
         {gParamType_Material, "mtl"},

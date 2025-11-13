@@ -436,6 +436,7 @@ void OptixWorker::on_send_clickinfo_to_optix(ClickPosInfo posinfo)
 }
 
 static void modify_hdrsky_value(const std::string &node_uuid, glm::vec3 rot_value) {
+#if 0
     if (node_uuid.empty()) {
         return;
     }
@@ -469,6 +470,7 @@ static void modify_hdrsky_value(const std::string &node_uuid, glm::vec3 rot_valu
     info.oldValue = rotation3d.info.defaultValue;
     info.newValue = QVariant::fromValue(vec);
     pModel->updateSocketDefl(QString::fromStdString(node_uuid), info, subgIdx, true);
+#endif
 }
 
 void OptixWorker::onSetData(
@@ -643,7 +645,7 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
     connect(m_worker, &OptixWorker::sig_sendClickId, this, &ZOptixViewport::on_sendClickId_received, Qt::QueuedConnection);
     connect(m_worker, &OptixWorker::sig_sendClickPos, this, &ZOptixViewport::on_sendClickPos_received, Qt::QueuedConnection);
 
-    setRenderSeparately(RunALL);
+    //setRenderSeparately(RunALL);
     m_thdOptix.start();
 }
 
@@ -880,7 +882,8 @@ void ZOptixViewport::mousePressEvent(QMouseEvent* event)
         setSimpleRenderOption();
     }
     _base::mousePressEvent(event);
-    m_camera->fakeMousePressEvent(event, this);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+    m_camera->fakeMousePressEvent(info, this);
     update();
 }
 
@@ -960,7 +963,8 @@ void ZOptixViewport::mouseMoveEvent(QMouseEvent* event)
 void ZOptixViewport::mouseDoubleClickEvent(QMouseEvent* event)
 {
     _base::mouseReleaseEvent(event);
-    m_camera->fakeMouseDoubleClickEvent(event, this);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
+    m_camera->fakeMouseDoubleClickEvent(info, this);
     update();
 }
 
@@ -971,7 +975,8 @@ void ZOptixViewport::wheelEvent(QWheelEvent* event)
     setSimpleRenderOption();
 
     _base::wheelEvent(event);
-    m_camera->fakeWheelEvent(event, this);
+    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos(), event->angleDelta() };
+    m_camera->fakeWheelEvent(info, this);
     update();
 }
 

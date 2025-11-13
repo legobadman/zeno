@@ -61,10 +61,10 @@ struct HDRSky : INode {
         }
         auto pUserData = dynamic_cast<UserData*>(prim->userData());
         pUserData->set2("isRealTimeObject", 1);
-        prim->userData().set2("evnTex3DRotation", ZImpl(get_input2<zeno::vec3f>("rotation3d")));
-        prim->userData().set2("evnTexStrength", ZImpl(get_input2<float>("strength")));
-        prim->userData().set2("enable", 1);
-        set_output("HDRSky", prim);
+        prim->userData()->set_vec3f("evnTex3DRotation", get_input2_vec3f("rotation3d"));
+        prim->userData()->set_float("evnTexStrength", get_input2_float("strength"));
+        prim->userData()->set_int("enable", 1);
+        set_output("HDRSky", create_GeometryObject(prim.get()));
     }
 };
 
