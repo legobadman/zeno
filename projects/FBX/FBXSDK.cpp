@@ -490,6 +490,7 @@ static std::unique_ptr<PrimitiveObject> GetMesh(
         , bool output_tex_even_missing
         , std::string fbx_path
         , bool apply_transform
+        , bool geometryTransformUsePivot
     ) {
     FbxMesh* pMesh = pNode->GetMesh();
     if (!pMesh) return nullptr;
@@ -510,7 +511,8 @@ static std::unique_ptr<PrimitiveObject> GetMesh(
 //    zeno::log_info("t {} {} {}", t[0], t[1], t[2]);
 
     FbxAMatrix Geometry;
-    {
+    Geometry.SetIdentity();
+    if (geometryTransformUsePivot) {
         FbxVector4 Translation, Rotation, Scaling;
         Translation = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
         Rotation = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
@@ -534,12 +536,12 @@ static std::unique_ptr<PrimitiveObject> GetMesh(
 
     for (int i = 0; i < numVertices; ++i) {
         if (apply_transform) {
-            auto pos = Geometry.MultT(FbxVector4(vertices[i][0], vertices[i][1], vertices[i][2], 1.0));
+            auto pos = Geometry.MultT( FbxVector4(vertices[i][0], vertices[i][1], vertices[i][2], 1.0));
             pos = bindMatrix.MultT(pos);
             prim->verts[i] = vec3f(pos[0], pos[1], pos[2]);
         }
         else {
-            auto pos = Geometry.MultT(FbxVector4(vertices[i][0], vertices[i][1], vertices[i][2], 1.0));
+            auto pos = Geometry.MultT( FbxVector4(vertices[i][0], vertices[i][1], vertices[i][2], 1.0));
             prim->verts[i] = vec3f(pos[0], pos[1], pos[2]);
         }
     }
@@ -641,6 +643,45 @@ static std::unique_ptr<PrimitiveObject> GetMesh(
                 auto x = arr->GetDirectArray().GetAt(i)[0];
                 auto y = arr->GetDirectArray().GetAt(i)[1];
                 prim->uvs[i] = vec2f(x, y);
+            }
+        }
+        if (pMesh->GetElementUVCount() > 1) {
+            prim->append_uvs.resize(pMesh->GetElementUVCount() - 1);
+            for (auto j = 1; j < pMesh->GetElementUVCount(); j++) {
+                auto* arr = pMesh->GetElementUV(j);
+                if (arr->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint) {
+                    std::string name = format("uv_{}", j);
+                    auto &attr = prim->verts.add_attr<vec3f>(name);
+                    for (auto i = 0; i < prim->verts.size(); i++) {
+                        int pIndex = i;
+                        if (arr->GetReferenceMode() == FbxLayerElement::EReferenceMode::eIndexToDirect) {
+                            pIndex = arr->GetIndexArray().GetAt(i);
+                        }
+                        auto x = arr->GetDirectArray().GetAt(pIndex)[0];
+                        auto y = arr->GetDirectArray().GetAt(pIndex)[1];
+                        attr[i] = vec3f(x, y, 0);
+                    }
+                }
+                else if (arr->GetMappingMode() == FbxLayerElement::EMappingMode::eByPolygonVertex) {
+                    if (arr->GetReferenceMode() == FbxLayerElement::EReferenceMode::eDirect) {
+                        auto &uvs = prim->loops.add_attr<int>(format("uv{}s", j));
+                        std::iota(uvs.begin(), uvs.end(), 0);
+                        prim->append_uvs[j-1].resize(prim->loops.size());
+                    }
+                    else if (arr->GetReferenceMode() == FbxLayerElement::EReferenceMode::eIndexToDirect) {
+                        auto &uvs = prim->loops.add_attr<int>(format("uv{}s", j));
+                        for (auto i = 0; i < prim->loops.size(); i++) {
+                            uvs[i] = arr->GetIndexArray().GetAt(i);
+                        }
+                        int count = arr->GetDirectArray().GetCount();
+                        prim->append_uvs[j-1].resize(count);
+                    }
+                    for (auto i = 0; i < prim->append_uvs[j-1].size(); i++) {
+                        auto x = arr->GetDirectArray().GetAt(i)[0];
+                        auto y = arr->GetDirectArray().GetAt(i)[1];
+                        prim->append_uvs[j-1][i] = vec2f(x, y);
+                    }
+                }
             }
         }
     }
@@ -1027,6 +1068,7 @@ static void TraverseNodesToGetPrim(
     , bool output_tex_even_missing
     , std::string fbx_path
     , bool apply_transform
+    , bool geometryTransformUsePivot
 ) {
     if (!pNode) return;
     std::string nodeName = pNode->GetName();
@@ -1039,7 +1081,7 @@ static void TraverseNodesToGetPrim(
     if (mesh) {
         auto name = pNode->GetName();
         if (target_name == name) {
-            auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform);
+            auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform, geometryTransformUsePivot);
             if (sub_prim) {
                 prim = std::move(sub_prim);
         }
@@ -1048,7 +1090,7 @@ static void TraverseNodesToGetPrim(
     }
 
     for (int i = 0; i < pNode->GetChildCount(); i++) {
-        TraverseNodesToGetPrim(pNode->GetChild(i), target_name, prim, output_tex_even_missing, fbx_path, apply_transform);
+        TraverseNodesToGetPrim(pNode->GetChild(i), target_name, prim, output_tex_even_missing, fbx_path, apply_transform, geometryTransformUsePivot);
     }
 }
 static void TraverseNodesToGetPrims(
@@ -1056,6 +1098,7 @@ static void TraverseNodesToGetPrims(
     , bool output_tex_even_missing
     , std::string fbx_path
     , bool apply_transform
+    , bool geometryTransformUsePivot
 ) {
     if (!pNode) return;
     std::string nodeName = pNode->GetName();
@@ -1066,14 +1109,14 @@ static void TraverseNodesToGetPrims(
 
     FbxMesh* mesh = pNode->GetMesh();
     if (mesh) {
-        auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform);
+        auto sub_prim = GetMesh(pNode, output_tex_even_missing, fbx_path, apply_transform, geometryTransformUsePivot);
         if (sub_prim) {
             prims.push_back(std::move(sub_prim));
         }
     }
 
     for (int i = 0; i < pNode->GetChildCount(); i++) {
-        TraverseNodesToGetPrims(pNode->GetChild(i), prims, output_tex_even_missing, fbx_path, apply_transform);
+        TraverseNodesToGetPrims(pNode->GetChild(i), prims, output_tex_even_missing, fbx_path, apply_transform, geometryTransformUsePivot);
     }
 }
 
@@ -1089,12 +1132,13 @@ struct NewFBXImportSkin : INode {
         FbxNode* lRootNode = lScene->GetRootNode();
         std::vector<std::string> availableRootNames;
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
+        bool geometryTransformUsePivot = get_input2<bool>("GeometryTransformUsePivot");
         if(lRootNode) {
             TraverseNodesToGetNames(lRootNode, availableRootNames);
             auto rootName = zsString2Std(get_input2_string("rootName"));
             if (rootName.empty()) {
                 std::vector<std::unique_ptr<PrimitiveObject>> prims;
-                TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", true);
+                TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", true, geometryTransformUsePivot);
 
                 std::map<std::string, int> nameMappingGlobal;
 
@@ -1145,7 +1189,7 @@ struct NewFBXImportSkin : INode {
                 }
             }
             else {
-                TraverseNodesToGetPrim(lRootNode, rootName, prim, output_tex_even_missing, "", true);
+                TraverseNodesToGetPrim(lRootNode, rootName, prim, output_tex_even_missing, "", true, geometryTransformUsePivot);
             }
         }
         if (get_input2_bool("ConvertUnits")) {
@@ -1192,6 +1236,7 @@ ZENDEFNODE(NewFBXImportSkin, {
         {gParamType_Bool, "CopyVectorsFromLoopsToVert", "1"},
         {gParamType_Bool, "CopyFacesetToMatid", "1"},
         {gParamType_Bool, "OutputTexEvenMissing", "0"},
+        {"bool", "GeometryTransformUsePivot", "0"},
     },
     {
         {gParamType_Primitive, "prim"},
@@ -1677,7 +1722,7 @@ struct NewFBXImportAnimation : INode {
 
         int stack_index = int(std::find(clip_names.begin(), clip_names.end(), clip_name) - clip_names.begin());
         if (stack_index == clip_names.size()) {
-            zeno::log_info("FBX: Can not find default clip name, use first");
+//            zeno::log_info("FBX: Can not find default clip name, use first");
             stack_index = 0;
         }
 //        zeno::log_info("stack_index: {}", stack_index);
@@ -1762,7 +1807,7 @@ struct NewFBXImportAnimation : INode {
             ud->set_int("boneName_count", int(bone_names.size()));
             for (auto i = 0; i < bone_names.size(); i++) {
                 ud->set_string(stdString2zs(zeno::format("boneName_{}", i)), stdString2zs(bone_names[i]));
-                zeno::log_debug("boneName: {}", bone_names[i]);
+//                zeno::log_info("boneName: {}", bone_names[i]);
             }
         }
 
@@ -2502,6 +2547,7 @@ struct NewFBXPrimList : INode {
     }
     virtual void apply() override {
         auto fbx_object = zeno::safe_dynamic_cast<FBXObject>(get_input("fbx_object"));
+        auto file_path = fbx_object->userData().get2<std::string>("file_path");
         auto lScene = fbx_object->lScene;
 
         // Print the nodes of the scene and their attributes recursively.
@@ -2511,7 +2557,7 @@ struct NewFBXPrimList : INode {
         bool output_tex_even_missing = get_input2_bool("OutputTexEvenMissing");
         std::vector<std::unique_ptr<PrimitiveObject>> prims;
         if(lRootNode) {
-            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false);
+            TraverseNodesToGetPrims(lRootNode, prims, output_tex_even_missing, "", false, get_input2<bool>("GeometryTransformUsePivot"));
         }
 
 
@@ -2595,6 +2641,7 @@ struct NewFBXPrimList : INode {
         }
         auto prim_list = std::make_unique<zeno::ListObject>();
         for (auto& prim: prims) {
+            prim->userData()->set_string("file_path", file_path);
             prim_list->push_back(std::move(prim));
         }
         set_output("prims", std::move(prim_list));
@@ -2610,6 +2657,7 @@ ZENDEFNODE(NewFBXPrimList, {
         {gParamType_Bool, "CopyFacesetToMatid", "1"},
         {gParamType_Bool, "OutputTexEvenMissing", "0"},
         {gParamType_Bool, "SkipInvisibleMesh", "0"},
+        {gParamType_Bool, "GeometryTransformUsePivot", "0"},
     },
     {
         {gParamType_List, "prims"},
@@ -2813,7 +2861,7 @@ static std::vector<int> TopologicalSorting(std::map<int, int> bone_connects, zen
         for (auto i = 0; i < ordering.size(); i++) {
             auto bi = ordering[i];
             auto bone_name = zsString2Std(skeleton->userData()->get_string(stdString2zs(format("boneName_{}", bi))));
-            zeno::log_info("{}: {}: {}", i, bi, bone_name);
+//            zeno::log_info("{}: {}: {}", i, bi, bone_name);
         }
     }
     return ordering;
@@ -2830,7 +2878,7 @@ struct NewFBXRigPose : INode {
                     Transformations[boneNameMapping[n->boneName]] = n;
                 }
                 else {
-                    zeno::log_warn("{} missing", n->boneName);
+//                    zeno::log_warn("{} missing", n->boneName);
                 }
             }
         }
@@ -2900,7 +2948,7 @@ struct NewFBXBoneDeform : INode {
             auto index = std::find(_new.begin(), _new.end(), old[i]) - _new.begin();
             if (index == _new.size()) {
                 index = -1;
-                zeno::log_info("connot find bone: {}, {}", i, old[i]);
+//                zeno::log_info("connot find bone: {}, {}", i, old[i]);
             }
             mapping.push_back(index);
         }
@@ -3386,18 +3434,15 @@ std::pair<vec3f, vec3f> twoBoneIK(
         auto lower_limb_length = zeno::length(joint - end);
         auto desired_length = zeno::length(root_to_effect);
         if (desired_length < abs(upper_limb_length - lower_limb_length)) {
-            zeno::log_info("A");
             output_joint = root + normalize(root_to_effect) * abs(upper_limb_length - lower_limb_length);
             output_end = root + normalize(root_to_effect) * upper_limb_length;
         }
         else if (desired_length > upper_limb_length + lower_limb_length) {
-            zeno::log_info("B");
 
             output_joint = root + normalize(root_to_effect) * upper_limb_length;
             output_end = root + normalize(root_to_effect) * (upper_limb_length + lower_limb_length);
         }
         else {
-            zeno::log_info("C");
 
             vec3f to_pole = normalize(cross(cross(root_to_effect, root_to_jointTarget), root_to_effect));
             float cos_theta = (sqr(upper_limb_length) + sqr(desired_length) - sqr(lower_limb_length)) / (2.0f * upper_limb_length * desired_length);
@@ -3937,7 +3982,7 @@ struct IkSolver : INode {
                     zLimit[index] = item->zLimit;
                 }
                 else {
-                    zeno::log_warn("joint limit: joint {} missing", item->boneName);
+//                    zeno::log_warn("joint limit: joint {} missing", item->boneName);
                 }
             }
         }
@@ -3958,7 +4003,7 @@ struct IkSolver : INode {
             auto items = FBX::ListGetRaw<IkChainsItemObject>(get_input_ListObject("IkChains"));
             for (auto &item: items) {
                 if (boneNameMapping.count(item->endEffectorName) == 0) {
-                    log_warn("Not find ik endEffector: {}", item->endEffectorName);
+//                    log_warn("Not find ik endEffector: {}", item->endEffectorName);
                     continue;
                 }
                 endEffectorIDs.push_back(boneNameMapping[item->endEffectorName]);

@@ -1,4 +1,4 @@
-﻿#include <zenovis/RenderEngine.h>
+#include <zenovis/RenderEngine.h>
 #include "cameracontrol.h"
 #include "zenovis.h"
 //#include <zenovis/Camera.h>
@@ -9,6 +9,7 @@
 #include "glm/gtx/quaternion.hpp"
 #include "zeno/core/Session.h"
 #include <cmath>
+#include "viewport/optixviewport.h"
 
 
 using std::string;
@@ -57,6 +58,7 @@ glm::quat CameraControl::getRotation() {
     return scene->camera->m_rotation;
 }
 void CameraControl::setRotation(glm::quat value) {
+    value = glm::normalize(value);
     auto *scene = m_zenovis->getSession()->get_scene();
     scene->camera->m_rotation = value;
 }
@@ -100,17 +102,152 @@ void CameraControl::setDisPlane(float disPlane) {
     scene->camera->focalPlaneDistance = disPlane;
 }
 
-void CameraControl::fakeMousePressEvent(ViewMouseInfo info)
+void CameraControl::click_id_prim_selected(std::optional<std::tuple<std::string, std::string, uint32_t>> ids) {
+    if (ids.has_value()) {
+        auto [obj_id, mat_id, prim_id] = ids.value();
+        ZenoMainWindow* mainWin = zenoApp->getMainWindow();
+
+        mainWin->onPrimitiveSelected({ obj_id }, mat_id, true);
+    }
+}
+
+void CameraControl::click_id_activate_matnode(std::optional<std::tuple<std::string, std::string, uint32_t>> ids)
+{
+    if (ids.has_value()) {
+        auto [obj_id, mat_id, prim_id] = ids.value();
+        ZASSERT_EXIT(!mat_id.empty());
+        ZenoMainWindow* pWin = zenoApp->getMainWindow();
+        ZASSERT_EXIT(pWin);
+        ZenoGraphsEditor* pEditor = pWin->getAnyEditor();
+        ZASSERT_EXIT(pEditor);
+        if (IGraphsModel* pGraphsModel = zenoApp->graphsManagment()->currentModel())
+        {
+            auto& const checkNodesInSubg = [pGraphsModel, pEditor, &mat_id](auto subgIdx) {
+                for (int i = 0; i < pGraphsModel->itemCount(subgIdx); i++) {
+                    auto nodeidx = pGraphsModel->index(i, subgIdx);
+                    if (pGraphsModel->IsSubGraphNode(nodeidx)) {
+                        if (nodeidx.data(ROLE_CUSTOM_OBJNAME).toString() == QString::fromStdString(mat_id)) {
+                            pEditor->activateTab(nodeidx.data(ROLE_OBJNAME).toString(), "", "");
+                            return;
+                        }
+                        INPUT_SOCKETS inputs = nodeidx.data(ROLE_INPUTS).value<INPUT_SOCKETS>();
+                        for (auto& input : inputs) {
+                            if (input.first.toLower() == QString("matname") &&
+                                input.second.info.defaultValue.toString() == QString::fromStdString(mat_id)) {
+                                pEditor->activateTab(nodeidx.data(ROLE_OBJNAME).toString(), "", "");
+                                return;
+                            }
+                        }
+                    }
+                    else if (nodeidx.data(ROLE_OBJNAME).toString() == "SubInput") {
+                        PARAMS_INFO params = nodeidx.data(ROLE_PARAMETERS).value<PARAMS_INFO>();
+                        if (params["name"].value.toString().toLower() == QString("matname") &&
+                            params["defl"].value.toString() == QString::fromStdString(mat_id)) {
+                            pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", nodeidx.data(ROLE_OBJID).toString(), false, false);
+                            return;
+                        }
+                    }
+                }
+                };
+            QVector<QPersistentModelIndex> subgExceptMat;
+            for (int i = 0; i < pGraphsModel->rowCount(); i++)
+            {
+                auto subgIdx = pGraphsModel->index(i, 0);
+                if (subgIdx.data(ROLE_SUBGRAPH_TYPE).toInt() == SUBGRAPH_TYPE::SUBGRAPH_METERIAL) {
+                    if (subgIdx.data(ROLE_MTLID).toString() == QString::fromStdString(mat_id)) {
+                        pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", "");
+                        return;
+                    }
+                    checkNodesInSubg(subgIdx);
+                }
+                else {
+                    subgExceptMat.push_back(subgIdx);
+                }
+            }
+            for (const auto& subgIdx : subgExceptMat) {
+                if (subgIdx.data(ROLE_OBJNAME).toString() == QString::fromStdString(mat_id)) {
+                    pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", "");
+                    return;
+                }
+                checkNodesInSubg(subgIdx);
+            }
+
+            QList<SEARCH_RESULT> resLst = pGraphsModel->search("ShaderFinalize", SEARCH_NODECLS, SEARCH_MATCH_EXACTLY, {});
+            for (auto item : resLst)
+            {
+                INPUT_SOCKETS inputs = item.targetIdx.data(ROLE_INPUTS).value<INPUT_SOCKETS>();
+                if (inputs.find("mtlid") != inputs.end()) {
+                    if (inputs["mtlid"].info.defaultValue.toString() == QString::fromStdString(mat_id)) {
+                        pEditor->activateTab(item.subgIdx.data(ROLE_OBJNAME).toString(), "", item.targetIdx.data(ROLE_OBJID).toString(), false, false);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void CameraControl::click_pos_set_pivot(std::optional<glm::vec3> hit_posWS)
+{
+    m_hit_posWS = hit_posWS;
+    if (m_hit_posWS.has_value()) {
+        auto scene = m_zenovis->getSession()->get_scene();
+        scene->camera->setPivot(m_hit_posWS.value());
+    }
+}
+
+void CameraControl::click_pos_wheel(std::optional<glm::vec3> hit_posWS, ClickPosInfo posinfo)
+{
+    auto pos = getPos();
+    if (hit_posWS.has_value()) {
+        auto pivot = hit_posWS.value();
+        setPivot(pivot);
+        auto new_pos = (pos - pivot) * posinfo.scale + pivot;
+        setPos(new_pos);
+    }
+    else {
+        auto posOnFloorWS = screenHitOnFloorWS(posinfo.eventResx, posinfo.eventResy);
+        auto pivot = posOnFloorWS;
+        if (dot((pivot - pos), getViewDir()) > 0) {
+            auto translate = (pivot - pos) * (1 - posinfo.scale);
+            if (glm::length(translate) < 0.01) {
+                translate = glm::normalize(translate) * 0.01f;
+            }
+            auto new_pos = translate + pos;
+            setPos(new_pos);
+        }
+        else {
+            auto translate = screenPosToRayWS(posinfo.eventResx, posinfo.eventResy) * getPos().y * (1 - posinfo.scale);
+            if (getPos().y < 0) {
+                translate *= -1;
+            }
+            auto new_pos = translate + pos;
+            setPos(new_pos);
+        }
+    }
+    updatePerspective();
+    if (zenoApp->getMainWindow()->lightPanel != nullptr) {
+        zenoApp->getMainWindow()->lightPanel->camApertureEdit->setText(QString::number(getAperture()));
+        zenoApp->getMainWindow()->lightPanel->camDisPlaneEdit->setText(QString::number(getDisPlane()));
+    }
+}
+
+void CameraControl::fakeMousePressEvent(QMouseEvent *event, ZOptixViewport* viewport)
 {
     ZASSERT_EXIT(m_zenovis);
     auto scene = m_zenovis->getSession()->get_scene();
-    if (info.buttons == Qt::LeftButton) {
-        auto &cam = scene->camera;
-        auto ids = scene->renderMan->getEngine()->getClickedId((float)info.pos.x()/(float)cam->m_nx, (float)info.pos.y()/(float)cam->m_ny);
-        if (ids.has_value()) {
-            auto [obj_id, mat_id, prim_id] = ids.value();
-            ZenoMainWindow *mainWin = zenoApp->getMainWindow();
-            mainWin->onPrimitiveSelected({obj_id}, mat_id, true);
+    auto& cam = scene->camera;
+    ClickPosInfo clickInfo;
+    clickInfo.eventCamx = (float)event->x() / (float)cam->m_nx;
+    clickInfo.eventCamy = (float)event->y() / (float)cam->m_ny;
+    clickInfo.eventResx = event->x() / res().x();
+    clickInfo.eventResy = event->y() / res().y();
+    clickInfo.eventType = event->type();
+    clickInfo.eventButtons = event->buttons();
+    clickInfo.eventPos = event->pos();
+    if (event->button() == Qt::LeftButton) {
+        if (viewport) {
+            emit viewport->sig_send_clickinfo_to_optix(clickInfo);
         }
     }
 
@@ -118,20 +255,32 @@ void CameraControl::fakeMousePressEvent(ViewMouseInfo info)
     if (info.buttons == Qt::MiddleButton) {
         middle_button_pressed = true;
         if (zeno::getSession().userData().get2<bool>("viewport-depth-aware-navigation", true)) {
-            auto &cam = scene->camera;
-            m_hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)x/(float)cam->m_nx, (float)info.pos.y()/(float)cam->m_ny);
-            if (m_hit_posWS.has_value()) {
-                scene->camera->setPivot(m_hit_posWS.value());
+            if (qobject_cast<ViewportWidget*>(m_zenovis->parent())) {
+                m_hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)event->x()/(float)cam->m_nx, (float)event->y()/(float)cam->m_ny);
+                if (m_hit_posWS.has_value()) {
+                    scene->camera->setPivot(m_hit_posWS.value());
+                }
+            }
+            else {
+                if (viewport) {
+                    emit viewport->sig_send_clickinfo_to_optix(clickInfo);
+                }
             }
         }
     }
     else if (info.buttons == Qt::RightButton) {
         if (zeno::getSession().userData().get2<bool>("viewport-depth-aware-navigation", true)) {
             if (!m_hit_posWS.has_value()) {
-                auto &cam = scene->camera;
-                m_hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)x/(float)cam->m_nx, (float)y/(float)cam->m_ny);
-                if (m_hit_posWS.has_value()) {
-                    scene->camera->setPivot(m_hit_posWS.value());
+                if (qobject_cast<ViewportWidget*>(m_zenovis->parent())) {
+                    m_hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)event->x()/(float)cam->m_nx, (float)event->y()/(float)cam->m_ny);
+                    if (m_hit_posWS.has_value()) {
+                        scene->camera->setPivot(m_hit_posWS.value());
+                    }
+                }
+                else {
+                    if (viewport) {
+                        emit viewport->sig_send_clickinfo_to_optix(clickInfo);
+                    }
                 }
             }
         }
@@ -347,17 +496,27 @@ void CameraControl::fakeMouseMoveEvent(ViewMouseInfo info)
         } else if ((rotateKey == modifiers) && (info.buttons & rotateButton)) {
             float step = 4.0f;
             dx *= step;
-            if (getUpDir().y < 0) {
-                dx *= -1;
-            }
+//            if (getUpDir().y < 0) {
+//                dx *= -1;
+//            }
             dy *= step;
             // rot yaw pitch
             setOrthoMode(false);
             {
                 auto rot = getRotation();
                 auto beforeMat = glm::toMat3(rot);
-                rot = glm::angleAxis(-dx, glm::vec3(0, 1, 0)) * rot;
-                rot = rot * glm::angleAxis(-dy, glm::vec3(1, 0, 0));
+//                if (glm::abs(getRightDir().y) < 0.001) {
+//                    rot = glm::angleAxis(-dx, glm::vec3(0, 1, 0)) * rot;
+//                    rot = rot * glm::angleAxis(-dy, glm::vec3(1, 0, 0));
+//                }
+//                else {
+//                    auto ref_z = glm::normalize(glm::cross(getRightDir(), glm::vec3(0, 1, 0)));
+//                    auto ref_y = glm::normalize(glm::cross(ref_z, getRightDir()));
+//                    rot = glm::angleAxis(-dy, getRightDir()) * rot;
+//                    rot = glm::angleAxis(-dx, ref_y) * rot;
+//                }
+                rot = glm::angleAxis(-dy, getRightDir()) * rot;
+                rot = glm::angleAxis(-dx, getUpDir()) * rot;
                 setRotation(rot);
                 auto afterMat = glm::toMat3(rot);
                 if (zeno::getSession().userData().get2<bool>("viewport-FPN-navigation", false)) {
@@ -419,7 +578,7 @@ void CameraControl::updatePerspective() {
     m_zenovis->updatePerspective(m_res);
 }
 
-void CameraControl::fakeWheelEvent(ViewMouseInfo info) {
+void CameraControl::fakeWheelEvent(QWheelEvent *event, ZOptixViewport* viewport) {
     auto &ud = zeno::getSession().userData();
     if (ud.get2<bool>("viewport-optix-pause", false)) {
         return;
@@ -471,31 +630,46 @@ void CameraControl::fakeWheelEvent(ViewMouseInfo info) {
                 auto session = m_zenovis->getSession();
                 auto scene = session->get_scene();
                 auto &cam = scene->camera;
-                auto hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)x/(float)cam->m_nx, (float)y/(float)cam->m_ny);
-                if (hit_posWS.has_value()) {
-                    auto pivot = hit_posWS.value();
-                    setPivot(pivot);
-                    auto new_pos = (pos - pivot) * scale + pivot;
-                    setPos(new_pos);
-                }
-                else {
-                    auto posOnFloorWS = screenHitOnFloorWS(x / res().x(), y / res().y());
-                    auto pivot = posOnFloorWS;
-                    if (dot((pivot - pos), getViewDir()) > 0) {
-                        auto translate = (pivot - pos) * (1 - scale);
-                        if (glm::length(translate) < 0.01) {
-                            translate = glm::normalize(translate) * 0.01f;
-                        }
-                        auto new_pos = translate + pos;
+                if (qobject_cast<ViewportWidget*>(m_zenovis->parent())) {
+                    auto hit_posWS = scene->renderMan->getEngine()->getClickedPos((float)event->x()/(float)cam->m_nx, (float)event->y()/(float)cam->m_ny);
+                    if (hit_posWS.has_value()) {
+                        auto pivot = hit_posWS.value();
+                        setPivot(pivot);
+                        auto new_pos = (pos - pivot) * scale + pivot;
                         setPos(new_pos);
                     }
                     else {
-                        auto translate = screenPosToRayWS(x / res().x(), y / res().y()) * getPos().y * (1 - scale);
-                        if (getPos().y < 0) {
-                            translate *= -1;
+                        auto posOnFloorWS = screenHitOnFloorWS(event->x() / res().x(), event->y() / res().y());
+                        auto pivot = posOnFloorWS;
+                        if (dot((pivot - pos), getViewDir()) > 0) {
+                            auto translate = (pivot - pos) * (1 - scale);
+                            if (glm::length(translate) < 0.01) {
+                                translate = glm::normalize(translate) * 0.01f;
+                            }
+                            auto new_pos = translate + pos;
+                            setPos(new_pos);
+                        } else {
+                            auto translate =
+                                    screenPosToRayWS(event->x() / res().x(), event->y() / res().y()) * getPos().y *
+                                    (1 - scale);
+                            if (getPos().y < 0) {
+                                translate *= -1;
+                            }
+                            auto new_pos = translate + pos;
+                            setPos(new_pos);
                         }
-                        auto new_pos = translate + pos;
-                        setPos(new_pos);
+                    }
+                }
+                else {
+                    if (viewport) {
+                        ClickPosInfo clickInfo;
+                        clickInfo.eventCamx = (float)event->x() / (float)cam->m_nx;
+                        clickInfo.eventCamy = (float)event->y() / (float)cam->m_ny;
+                        clickInfo.eventResx = event->x() / res().x();
+                        clickInfo.eventResy = event->y() / res().y();
+                        clickInfo.scale = scale;
+                        clickInfo.eventType = event->type();
+                        viewport->sig_send_clickinfo_to_optix(clickInfo);
                     }
                 }
             }
@@ -509,7 +683,7 @@ void CameraControl::fakeWheelEvent(ViewMouseInfo info) {
     updatePerspective();
 }
 
-void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
+void CameraControl::fakeMouseDoubleClickEvent(QMouseEvent *event, ZOptixViewport* viewport)
 {
     auto pos = info.pos;
     auto m_picker = this->m_picker.lock();
@@ -553,56 +727,24 @@ void CameraControl::fakeMouseDoubleClickEvent(ViewMouseInfo info)
             obj_node_name = obj_node_location->node.data(QtRole::ROLE_NODE_NAME).toString();
         }
 
-        ZenoMainWindow *pWin = zenoApp->getMainWindow();
-        if (pWin) {
-            ZenoGraphsEditor *pEditor = pWin->getAnyEditor();
-            if (pEditor)
-                pEditor->activateTab(subgraph_name, "", obj_node_name);
+			ZenoMainWindow *pWin = zenoApp->getMainWindow();
+			if (pWin) {
+				ZenoGraphsEditor *pEditor = pWin->getAnyEditor();
+				if (pEditor)
+					pEditor->activateTab(subgraph_name, "", obj_node_name);
+			}
+		}
+    }else{//光追窗口
+		auto scene = m_zenovis->getSession()->get_scene();
+		auto& cam = scene->camera;
+
+        if (viewport) {
+            ClickPosInfo clickInfo;
+            clickInfo.eventCamx = (float)event->x() / (float)cam->m_nx;
+            clickInfo.eventCamy = (float)event->y() / (float)cam->m_ny;
+            clickInfo.eventType = event->type();
+            viewport->sig_send_clickinfo_to_optix(clickInfo);
         }
-        */
-    }
-    else {//TODO：双击光追窗口需跳转到节点编辑器对应材质子图或shaderfinalize节点
-        auto scene = m_zenovis->getSession()->get_scene();
-        auto& cam = scene->camera;
-        auto ids = scene->renderMan->getEngine()->getClickedId((float)pos.x() / (float)cam->m_nx, (float)pos.y() / (float)cam->m_ny);
-        
-        /*
-        if (ids.has_value()) {
-            auto [obj_id, mat_id, prim_id] = ids.value();
-            ZASSERT_EXIT(!mat_id.empty());
-            if (IGraphsModel* pGraphsModel = zenoApp->graphsManagment()->currentModel())
-            {
-                for (const auto& subgIdx : pGraphsModel->subgraphsIndice(SUBGRAPH_METERIAL))
-                {
-                    auto s = subgIdx.data(ROLE_OBJNAME).toString();
-                    if (subgIdx.data(ROLE_MTLID).toString() == QString::fromStdString(mat_id))
-                    {
-                        if (ZenoMainWindow* pWin = zenoApp->getMainWindow()) {
-                            if (ZenoGraphsEditor* pEditor = pWin->getAnyEditor()) {
-                                pEditor->activateTab(subgIdx.data(ROLE_OBJNAME).toString(), "", "");
-                                return;
-                            }
-                        }
-                    }
-                }
-                QList<SEARCH_RESULT> resLst = pGraphsModel->search("ShaderFinalize", SEARCH_NODECLS, SEARCH_MATCH_EXACTLY, {});
-                for (auto item : resLst)
-                {
-                    INPUT_SOCKETS inputs = item.targetIdx.data(ROLE_INPUTS).value<INPUT_SOCKETS>();
-                    if (inputs.find("mtlid") != inputs.end()) {
-                        if (inputs["mtlid"].info.defaultValue.toString() == QString::fromStdString(mat_id)) {
-                            if (ZenoMainWindow* pWin = zenoApp->getMainWindow()) {
-                                if (ZenoGraphsEditor* pEditor = pWin->getAnyEditor()) {
-                                    pEditor->activateTab(item.subgIdx.data(ROLE_OBJNAME).toString(), "", item.targetIdx.data(ROLE_OBJID).toString(), false, false);
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        */
     }
 }
 

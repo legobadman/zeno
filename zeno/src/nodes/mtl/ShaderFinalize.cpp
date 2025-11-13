@@ -46,6 +46,7 @@ struct ShaderFinalize : INode {
             {1, "mat_clearcoatIOR"},
 
             {1, "mat_specTrans"},
+            {1, "mat_F0"},
             {3, "mat_transColor"},
             {3, "mat_transTint"},
             {1, "mat_transTintDepth"},
@@ -66,10 +67,13 @@ struct ShaderFinalize : INode {
             {1, "mat_smoothness"},
             {1, "mat_emissionIntensity"},
             {3, "mat_emission"},
+            {1, "mat_emissionOnly"},
             {3, "mat_reflectance"}, 
             {1, "mat_opacity"},
             {1, "mat_thickness"},
-            {1, "mat_isHair"}
+            {1, "mat_isHair"},
+            {1, "mat_HairRough2"},
+            {1, "mat_FurCoat"}
 
         }, {
             ZImpl(get_input_shader("base", float(1.0f))),
@@ -77,7 +81,7 @@ struct ShaderFinalize : INode {
             ZImpl(get_input_shader("roughness", float(0.4f))),
             ZImpl(get_input_shader("metallic", float(0.0f))),
             ZImpl(get_input_shader("metalColor", vec3f(1.0f))),
-            ZImpl(get_input_shader("specular", float(1.0f))),
+            ZImpl(get_input_shader("specular", float(1.0f))),//for disney principled model specular shall be 0.5
             ZImpl(get_input_shader("specularTint", float(0.0f))),
             ZImpl(get_input_shader("anisotropic", float(0.0f))),
             ZImpl(get_input_shader("anisoRotation", float(0.0f))),
@@ -97,6 +101,7 @@ struct ShaderFinalize : INode {
             ZImpl(get_input_shader("clearcoatIOR", float(1.5f))),
 
             ZImpl(get_input_shader("specTrans", float(0.0f))),
+            ZImpl(get_input_shader("specF0", float(0.04f))),
             ZImpl(get_input_shader("transColor", vec3f(1.0f))),
             ZImpl(get_input_shader("transTint", vec3f(1.0f))),
             ZImpl(get_input_shader("transTintDepth", float(10000.0f))),
@@ -117,10 +122,14 @@ struct ShaderFinalize : INode {
             ZImpl(get_input_shader("smoothness", float(1.0f))),
             ZImpl(get_input_shader("emissionIntensity", float(1))),
             ZImpl(get_input_shader("emission", vec3f(0))),
+            ZImpl(get_input_shader("emission_only", float(1))),
             ZImpl(get_input_shader("reflectance", vec3f(1))),
             ZImpl(get_input_shader("opacity", float(0.0))),
             ZImpl(get_input_shader("thickness", float(0.0f))),
             ZImpl(get_input_shader("isHair", float(0.0f)))
+            ZImpl(get_input_shader("isHair", float(0.0f))),
+            ZImpl(get_input_shader("HairRough2", float(1.0))),
+            ZImpl(get_input_shader("FurCoat", float(0.0f)))
         });
         auto commonCode = em.getCommonCode();
 
@@ -215,6 +224,7 @@ ZENDEFNODE(ShaderFinalize, {
         {gParamType_Float, "clearcoatIOR", "1.5"},
 
         {gParamType_Float, "specTrans", "0.0"},
+        {gParamType_Float, "specF0", "0.04"},
         {gParamType_Vec3f, "transColor", "1.0,1.0,1.0"},
         {gParamType_Vec3f, "transTint", "1.0,1.0,1.0"},
         {gParamType_Float, "transTintDepth", "10000.0"},
@@ -234,12 +244,14 @@ ZENDEFNODE(ShaderFinalize, {
         {gParamType_Float, "displacement", "0"},
         {gParamType_Float, "smoothness", "1.0"},
         {gParamType_Float, "emissionIntensity", "1"},
+        {gParamType_Float, "emission_only", "0"},
         {gParamType_Vec3f, "emission", "0,0,0"},
         {gParamType_Vec3f, "reflectance", "1,1,1"},
         {gParamType_Float, "opacity", "0"},
         {gParamType_Float, "thickness", "0.0"},
         {gParamType_Float, "isHair", "0.0"},
-
+        {"float", "HairRough2", "1.0"},
+        {"float", "FurCoat", "0.0"},
         {gParamType_String, "commonCode"},
         {gParamType_String, "extensionsCode"},
         {gParamType_String, "mtlid", "Mat1"},

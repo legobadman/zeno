@@ -23,7 +23,12 @@ OutlineItemModel::~OutlineItemModel()
 
 void OutlineItemModel::set_child_node(Json const&json, OutlineItemModel::OutlineItem *item, std::string name) {
     auto sub_node = item->addChild(QString::fromStdString(name));
+    std::vector<std::string> children;
     for (auto &value: json[name]["children"]) {
+        children.emplace_back(std::string(value));
+    }
+    std::sort(children.begin(), children.end());
+    for (auto &value: children) {
         set_child_node(json, sub_node, std::string(value));
     }
 };
@@ -33,6 +38,7 @@ void OutlineItemModel::setupModelDataFromMessage(Json const& content)
     beginResetModel();
 
     rootItem = std::make_unique<OutlineItem>();  // 重置rootItem
+    auto* lights = rootItem->addChild("Lights");
     auto* staticSceneItem = rootItem->addChild("StaticScene");
     auto* dynamicSceneItem = rootItem->addChild("DynamicScene");
 
@@ -43,6 +49,16 @@ void OutlineItemModel::setupModelDataFromMessage(Json const& content)
     if (content.contains("DynamicSceneTree")) {
         std::string root_name = content["DynamicSceneTree"]["root_name"];
         set_child_node(content["DynamicSceneTree"]["scene_tree"], dynamicSceneItem, root_name);
+    }
+    if (content.contains("Lights")) {
+        std::vector<std::string> children;
+        for (auto &value: content["Lights"]) {
+            children.emplace_back(std::string(value));
+        }
+        std::sort(children.begin(), children.end());
+        for (auto &value: children) {
+            lights->addChild(QString::fromStdString(value));
+        }
     }
 
     endResetModel();
@@ -152,7 +168,9 @@ bool zenooutline::eventFilter(QObject *watched, QEvent *event) {
             if (event->type() == QEvent::KeyPress) {
                 if (auto *keyEvent = dynamic_cast<QKeyEvent *>(event)) {
                     if (keyEvent->key() == Qt::Key_F) {
-                        changed = true;
+                        Json msg;
+                        msg["MessageType"] = "Focus";
+                        sendOptixMessage(msg);
                     }
                 }
             }
@@ -213,6 +231,27 @@ void zenooutline::setupTreeView()
                 msg["Content"] = link;
 
                 sendOptixMessage(msg);
+                if (auto main = zenoApp->getMainWindow()) {
+                    for (DisplayWidget* view : main->viewports()) {
+                        if (ZOptixViewport* optxview = view->optixViewport()) {
+                            optxview->selected_item = link.back();
+                        }
+                    }
+                }
+            }
+            else if (zeno::str_contains(link.back(), "HDRSky")) {
+                Json msg;
+                msg["MessageType"] = "HDRSky2";
+                msg["Content"] = link.back();
+                sendOptixMessage(msg);
+                if (auto main = zenoApp->getMainWindow()) {
+                    for (DisplayWidget* view : main->viewports()) {
+                        if (ZOptixViewport* optxview = view->optixViewport()) {
+                            optxview->hdr_sky_2 = link.back();
+                            optxview->selected_item = link.back();
+                        }
+                    }
+                }
             }
         }
 

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <zenovis/Camera.h>
 #include <zenovis/Scene.h>
@@ -27,7 +27,8 @@ struct RenderEngine {
     virtual void optxShowBackground(bool showbg) {};
     virtual ~RenderEngine() = default;
     virtual std::optional<glm::vec3> getClickedPos(float x, float y) { return {}; }
-    virtual std::optional<std::tuple<std::string, std::string, uint32_t>> getClickedId(float x, float y) { return {}; }
+    virtual void getClickedPos(float x, float y, std::function<void(glm::vec3)> cbClickPosSig) {}
+    virtual void getClickedId(float x, float y, std::function<void(std::tuple<std::string, std::string, uint32_t>)> cbClickIdSig) {}
     virtual void load_matrix_objects(const std::vector<zeno::zany>& matrixs) {};
     virtual void outlineInit(Json const &msg) {};
 

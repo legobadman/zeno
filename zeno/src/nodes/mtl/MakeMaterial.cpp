@@ -135,8 +135,7 @@ struct ExtractMaterialShader : zeno::INode
           },
       });
 
-  struct BindMaterial
-      : zeno::INode
+  struct BindMaterial : zeno::INode
   {
     virtual void apply() override
     {
@@ -301,6 +300,7 @@ struct ExtractMaterialShader : zeno::INode
 
                 while(std::getline(test, segment, ','))
                 {
+                    segment.erase(std::remove(segment.begin(), segment.end(), ' '), segment.end());
                     result.push_back(segment);
                 }
                 return result;

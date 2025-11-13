@@ -60,7 +60,7 @@ struct ShaderBufferRead : ShaderNodeClone<ShaderBufferRead> {
     virtual int determineType(EmissionPass *em) override {
 
         em->determineType(ZImpl(get_input_shader("buffer")));
-
+        em->determineType(get_input("offset").get());
         auto type = ZImpl(get_input2<std::string>("type"));
         return TypeHint.at(type);
     }
@@ -71,9 +71,9 @@ struct ShaderBufferRead : ShaderNodeClone<ShaderBufferRead> {
 
         auto in = em->determineExpr(buffer);
         auto type = ZImpl(get_input2<std::string>("type"));
-        auto offset = ZImpl(get_input2<int>("offset"));
+        auto offset = em->determineExpr(get_input("offset").get());
+        em->emitCode("buffer_read<" + type + ">("+ in + "," + offset + ")" );
 
-        em->emitCode("buffer_read<" + type + ">("+ in + "," + std::to_string(offset) + ")" );
     }
 };
 

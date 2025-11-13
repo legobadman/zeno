@@ -76,7 +76,7 @@ struct Bounds3f {
     }
 
     Vec3 center() const {
-        return (pMin + pMax) / 2;
+        return pMin * 0.5f + pMax *0.5f;
     }
 
     Vec3 offset(Vec3 p) const {
@@ -179,14 +179,16 @@ struct LightBounds {
 
     float cosTheta_o{}, cosTheta_e{};
     float phi = 0.0f; bool doubleSided = false;
+    bool isLeaf = false;
 
     LightBounds() = default;
-    LightBounds(const Bounds3f &b, Vector3f w, float phi, float cosTheta_o, float cosTheta_e, bool doubleSided) {
+    LightBounds(const Bounds3f &b, Vector3f w, float phi, float cosTheta_o, float cosTheta_e, bool doubleSided, bool isLeaf=false) {
         this->bounds = b;
         this->w = normalize(w); this->phi = phi;
         this->cosTheta_o = cosTheta_o;
         this->cosTheta_e = cosTheta_e;
         this->doubleSided = doubleSided;
+        this->isLeaf = isLeaf;
     } 
 
     Vector3f centroid() const { return (bounds.pMin + bounds.pMax) / 2.0f; }
@@ -247,7 +249,7 @@ static DirectionCone Union(const DirectionCone &a, const DirectionCone &b) {
         return DirectionCone::EntireSphere(); 
     //Vector3f w = Rotate(Degrees(theta_r), wr)(a.w);
 
-    glm::mat4 rotate = glm::rotate(Degrees(theta_r), *(glm::vec3*)wr.data());
+    glm::mat4 rotate = glm::rotate(theta_r, *(glm::vec3*)wr.data());
     glm::vec4 tmp = glm::vec4(a.w[0], a.w[1], a.w[2], 0.0f); 
     tmp = rotate * tmp;
 

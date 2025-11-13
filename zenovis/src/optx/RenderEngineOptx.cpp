@@ -1,4 +1,4 @@
-Ôªø#include <tuple>
+#include <tuple>
 #include <unordered_map>
 #include <vcruntime_string.h>
 
@@ -537,7 +537,18 @@ struct GraphicsManager {
                 if ( pUserData->has("ShaderAttributes") ) {
                     auto attritbutes  = zsString2Std(pUserData->get_string("ShaderAttributes"));
 
-                    using VarType = zeno::AttrVectorVariant;
+                if (prim_in0->userData().get2<std::string>("ObjectName", "").size()) {
+                    auto obj_name = prim_in0->userData().get2<std::string>("ObjectName");
+                    auto &ud = prim_in0->userData();
+                    if (ud.has<zeno::vec3f>("_bboxMin") && ud.has<zeno::vec3f>("_bboxMax")) {
+                        defaultScene.mesh_bbox[obj_name] = {
+                                zeno::bit_cast<glm::vec3>(ud.get2<zeno::vec3f>("_bboxMin")),
+                                zeno::bit_cast<glm::vec3>(ud.get2<zeno::vec3f>("_bboxMax")),
+                        };
+                    }
+                }
+                if ( prim_in->userData().has("ShaderAttributes") ) {
+                    auto attritbutes  = prim_in->userData().get2<std::string>("ShaderAttributes");
 
                     auto json = nlohmann::json::parse(attritbutes);
 
@@ -611,6 +622,8 @@ struct GraphicsManager {
                             strands.push_back(this_segment[begin]);
                         }
                     }
+                    auto last = prim_in->lines->back();
+                    strands.push_back(last[end]+1);  // ending tip
 
                     auto abcpath = zsString2Std(ud->get_string("abcpath_0", "Default"));
                     const auto reName = zsString2Std(pUserData->get_string("ObjectName", zeno::stdString2zs(abcpath)));
@@ -783,6 +796,7 @@ struct GraphicsManager {
 
                     std::vector<int> instance_ids = prim_in->loops.values;
                     defaultScene.load_matrix_list(reName, matrix_list, instance_ids);
+                    defaultScene.load_matrix_list_to_glm(reName, prim_in);
                     return;
                 }
 
@@ -941,6 +955,14 @@ struct GraphicsManager {
                     {
                         shaderUniforms[i] = make_float4(prim_in->verts[i][0],prim_in->verts[i][1],prim_in->verts[i][2],0);
                     }
+                }else if(prim_in->userData().get2<int>("ShaderUniforms", 0)==2 ){
+                    std::vector<zeno::vec4f> &databuffer = prim_in->attr<zeno::vec4f>("buffer");
+                    shaderUniforms.resize(databuffer.size());
+                    for(int i=0;i<databuffer.size();i++)
+                    {
+                        shaderUniforms[i] = make_float4(databuffer[i][0],databuffer[i][1],databuffer[i][2],databuffer[i][3]);
+                    }
+
                 }
             }
         }
@@ -1097,12 +1119,18 @@ struct GraphicsManager {
                 xinxinoptix::update_procedural_sky(sunLightDir, sunLightSoftness, windDir, timeStart, timeSpeed,
                                                    sunLightIntensity, colorTemperatureMix, colorTemperature);
             }
-            else if (prim_in->userData()->has_string("HDRSky")) {
-                auto path = zsString2Std(prim_in->userData()->get_string("HDRSky"));
-                float evnTexRotation = prim_in->userData()->get_float("evnTexRotation");
-                zeno::vec3f evnTex3DRotation = toVec3f(prim_in->userData()->get_vec3f("evnTex3DRotation"));
-                float evnTexStrength = prim_in->userData()->get_float("evnTexStrength");
-                bool enableHdr = prim_in->userData()->get_bool("enable");
+            else if (prim_in->userData().has<std::string>("HDRSky")) {
+                auto path = prim_in->userData().get2<std::string>("HDRSky");
+                zeno::vec3f evnTex3DRotation = prim_in->userData().get2<zeno::vec3f>("evnTex3DRotation");
+                float evnTexStrength = prim_in->userData().get2<float>("evnTexStrength");
+                if (prim_in->userData().has("evnTexRotation")) {
+                    float evnTexRotation = prim_in->userData().get2<float>("evnTexRotation");
+                    xinxinoptix::update_hdr_sky(evnTexRotation, evnTex3DRotation, evnTexStrength);
+                }
+                else {
+                    xinxinoptix::update_hdr_sky(evnTex3DRotation, evnTexStrength);
+                }
+                bool enableHdr = prim_in->userData().get2<bool>("enable");
                 if (!path.empty()) {
                     OptixUtil::sky_tex = path;
                 } else {
@@ -1110,7 +1138,6 @@ struct GraphicsManager {
                 }
                 OptixUtil::setSkyTexture(OptixUtil::sky_tex.value());
 
-                xinxinoptix::update_hdr_sky(evnTexRotation, evnTex3DRotation, evnTexStrength);
                 xinxinoptix::using_hdr_sky(enableHdr);
 
                 if (OptixUtil::portal_delayed.has_value()) {
@@ -1210,13 +1237,23 @@ struct GraphicsManager {
 
         return changelight;
     }
-    bool load_light_objects(std::map<std::string, std::shared_ptr<zeno::IObject>> objs){
+    std::vector<std::string> load_light_objects(std::map<std::string, std::shared_ptr<zeno::IObject>> objs){
+        std::vector<std::string> light_names;
         xinxinoptix::unload_light();
         bool sky_found = false;
 
         for (auto const &[key, obj] : objs) {
             if(load_lights(key, obj.get())) {
                 sky_found = true;
+            }
+            if (
+                    obj
+                    || obj->userData().get2<int>("isL", 0) == 1
+                    || obj->userData().get2<int>("ProceduralSky", 0) == 1
+                    || obj->userData().get2<int>("HDRSky", 0) == 1
+                    || obj->userData().get2<int>("SkyComposer", 0) == 1
+            ) {
+                light_names.emplace_back(key.substr(0, key.find(':')));
             }
         }
 //        zeno::log_info("sky_found : {}", sky_found);
@@ -1237,7 +1274,7 @@ struct GraphicsManager {
             }
         }
 
-        return true;
+        return light_names;
     }
 
     bool load_static_objects(std::vector<std::pair<std::string, zeno::IObject *>> const &objs) {
@@ -1311,7 +1348,7 @@ struct GraphicsManager {
         else {
             objs.erase(objKey);
             auto ig = std::make_unique<ZxxGraphic>(objKey, obj);
-            graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));  //ÂÖàeraseÂÜçÊ∑ªÂä†ÔºåÈÄöËøáit->second = std::move(ig)ÊñπÂºèÊ∑ªÂä†‰ºöÂ§±Êïà
+            graphics.m_curr.insert(std::make_pair(objKey, std::move(ig)));  //œ»erase‘ŸÃÌº”£¨Õ®π˝it->second = std::move(ig)∑Ω ΩÃÌº”ª· ß–ß
             //if (!ig)
             //    return;
             //ig->key = objKey;
@@ -1341,6 +1378,7 @@ struct GraphicsManager {
                 std::vector<m3r4c> matrix_list(count);
                 std::copy_n((float*)mat->verts.data(), count * 12, (float*)matrix_list.data());
                 defaultScene.load_matrix_list(obj_name, matrix_list, {});
+                defaultScene.load_matrix_list_to_glm(obj_name, mat.get());
             }
             map[obj_name] = matrixs[i]->clone();
         }
@@ -1443,7 +1481,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
     bool meshNeedUpdate = true;
     bool matNeedUpdate = true;
     bool staticNeedUpdate = true;
-    bool hasLoaded = false;     //Âú∫ÊôØÊòØÂê¶ËøêË°åÂä†ËΩΩËøáÔºå‰∏ÄËà¨ÊåáÁ¨¨‰∏ÄÊ¨°ËøêË°åÔºåÂ¶ÇÊûúÊ∏ÖÁêÜ‰∫ÜÂú∫ÊôØÔºåÂàôÊ†á‰∏∫false
+    bool hasLoaded = false;     //≥°æ∞ «∑Ò‘À––º”‘ÿπ˝£¨“ª∞„÷∏µ⁄“ª¥Œ‘À––£¨»Áπ˚«Â¿Ì¡À≥°æ∞£¨‘Ú±ÍŒ™false
 
     void outlineInit(Json const &in_msg) override {
 //        zeno::log_error("MessageType: {}", in_msg.dump());
@@ -1462,6 +1500,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 scene_tree["scene_tree"] = defaultScene.dynamic_scene_tree["scene_tree"];
                 message["DynamicSceneTree"] = scene_tree;
             }
+            message["Lights"] = defaultScene.lights_name;
 
             if (message.is_null()) {
                 return;
@@ -1469,6 +1508,29 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
             message["MessageType"] = "SceneTree";
             fun(message.dump());
+        }
+        else if (in_msg["MessageType"] == "Focus") {
+            auto const & link = defaultScene.cur_link;
+            if (link.size() <= 1 || link[0] != "DynamicScene" || defaultScene.dynamic_scene == nullptr) {
+                return;
+            }
+            std::vector<std::string> path = link;
+            path.erase(path.begin());
+
+            std::unordered_map<std::string, std::pair<glm::vec3, glm::vec3>> mesh_bbox;
+            for (const auto &[key, value]: defaultScene.mesh_bbox) {
+                mesh_bbox[key] = value;
+            }
+            std::unordered_map<std::string, std::vector<glm::mat4>> node_2_matrix;
+            for (const auto &[key, value]: defaultScene.glm_matrix_map) {
+                node_2_matrix[key] = value;
+            }
+            auto res = defaultScene.dynamic_scene->get_node_bbox(path, mesh_bbox, node_2_matrix);
+            if (res.has_value()) {
+                auto dist = glm::distance(res.value().first, res.value().second) * 2;
+                auto center = (res.value().first + res.value().second) * 0.5f;
+                scene->camera->focusCamera(center.x, center.y, center.z, dist);
+            }
         }
         else if (in_msg["MessageType"] == "Select") {
             auto &link = in_msg["Content"];
@@ -1480,6 +1542,12 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 }
                 else {
                     json = &defaultScene.dynamic_scene_tree;
+                }
+                {
+                    defaultScene.cur_link.clear();
+                    for (auto i = 0; i < link.size(); i++) {
+                        defaultScene.cur_link.emplace_back(link[i]);
+                    }
                 }
                 Json &scene_tree = json->operator[]("scene_tree");
                 Json &node_to_matrix = json->operator[]("node_to_matrix");
@@ -1550,6 +1618,72 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             }
         }
         else if (in_msg["MessageType"] == "Xform") {
+            std::string mode = in_msg["Mode"];
+            if (mode == "SkyRot") {
+                auto selected_plane_dir_mapping = std::map<std::string, glm::vec3> {
+                    {"X", {1, 0, 0}},
+                    {"Y", {0, 1, 0}},
+                    {"Z", {0, 0, 1}},
+                };
+                std::string axis = in_msg["Axis"];
+                if (axis == "X" || axis == "Y" || axis == "Z") {
+                    auto pivot = scene->camera->getPos() + scene->camera->get_lodfront() * 5.0f;
+                    auto plane_dir = selected_plane_dir_mapping[axis];
+                    auto rot_start = get_proj_pos_on_plane(
+                        in_msg
+                        , float(in_msg["LastPos"][0])
+                        , float(in_msg["LastPos"][1])
+                        , scene->camera.get()
+                        , pivot
+                        , plane_dir
+                    );
+                    if (!rot_start.has_value()) {
+                        return;
+                    }
+                    auto rot_end = get_proj_pos_on_plane(
+                        in_msg
+                        , float(in_msg["CurPos"][0])
+                        , float(in_msg["CurPos"][1])
+                        , scene->camera.get()
+                        , pivot
+                        , plane_dir
+                    );
+                    if (!rot_end.has_value()) {
+                        return;
+                    }
+                    auto start_vec = rot_start.value() - pivot;
+                    auto end_vec = rot_end.value() - pivot;
+                    auto rot_quat = rotate(start_vec, end_vec, plane_dir);
+                    if (!rot_quat.has_value()) {
+                        return;
+                    }
+                    glm::mat4 xform = glm::toMat4(rot_quat.value());
+                    auto angle_degrees = 2.0f * std::acos(rot_quat.value().w);
+                    glm::vec3 angle_vec = glm::vec3(0);
+                    if (axis == "X") {
+                        angle_vec[0] = angle_degrees * glm::sign(rot_quat.value().x) * (-1);
+                    }
+                    if (axis == "Y") {
+                        angle_vec[1] = angle_degrees * glm::sign(rot_quat.value().y) * (-1);
+                    }
+                    if (axis == "Z") {
+                        angle_vec[2] = angle_degrees * glm::sign(rot_quat.value().z) * (-1);
+                    }
+                    auto euler_angles = xinxinoptix::realtime_rotate_sky(angle_vec);
+                    euler_angles = glm::degrees(euler_angles);
+                    Json message;
+                    message["MessageType"] = "SetHDRSky2";
+                    message["Content"] = {
+                        euler_angles[0],
+                        euler_angles[1],
+                        euler_angles[2],
+                    };
+                    fun(message.dump());
+
+                    scene->drawOptions->needRefresh = true;
+                    return;
+                }
+            }
 
 //            zeno::log_info("Axis: {}", in_msg["Axis"]);
             if (!defaultScene.cur_node.has_value()) {
@@ -1566,7 +1700,6 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             const auto y_axis = glm::vec3(0, 1, 0);
             const auto z_axis = glm::vec3(0, 0, 1);
 
-            std::string mode = in_msg["Mode"];
             bool is_local_space = in_msg["LocalSpace"];
             std::map<std::string, glm::vec3> axis_mapping = {
                 {"X", {1, 0, 0}},
@@ -1944,30 +2077,11 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 	void showBackground(bool bShow) override {
 		xinxinoptix::show_background(bShow);
 	}
-    std::optional<glm::vec3> getClickedPos(float x, float y) override {
-        glm::vec3 posWS = xinxinoptix::get_click_pos(x, y);
-        if (posWS == glm::vec3()) {
-            return {};
-        }
-        auto const &cam = *scene->camera;
-        posWS += cam.m_pos;
-        return posWS;
+    void getClickedPos(float x, float y, std::function<void(glm::vec3)> cbClickPosSig) override {
+        xinxinoptix::get_click_pos(x, y, cbClickPosSig);
     }
-    std::optional<std::tuple<std::string, std::string, uint32_t>> getClickedId(float x, float y) override {
-        auto ids = xinxinoptix::get_click_id(x, y);
-        if (ids == glm::uvec4()) {
-            return {};
-        }
-        uint64_t obj_id = *reinterpret_cast<uint64_t *>(&ids);
-        if (defaultScene.gas_to_obj_id.count(obj_id)) {
-            auto name = defaultScene.gas_to_obj_id.at(obj_id);
-            auto mat_name = std::string();
-            if (defaultScene.dc_index_to_mat.count(ids[2])) {
-                mat_name = defaultScene.dc_index_to_mat[ids[2]];
-            }
-            return std::tuple<std::string, std::string, uint32_t>(name, mat_name, ids[3]);
-        }
-        return {};
+    void getClickedId(float x, float y, std::function<void(std::tuple<std::string, std::string, uint32_t>)> cbClickIdSig) override {
+        xinxinoptix::get_click_id(x, y, cbClickIdSig);
     }
 
     auto setupState() {
@@ -2033,22 +2147,16 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 					scene_tree["node_key"] = defaultScene.dynamic_scene_tree["node_key"];
 					message["DynamicSceneTree"] = scene_tree;
 
-					defaultScene.dynamic_scene->from_json(defaultScene.dynamic_scene_tree);
-				}
-				else {
-					continue;
-				}
-				auto msg_str = message.dump();
-				fun(std::move(msg_str));
-			}
-		}
-		{
-			Json message;
-			message["MessageType"] = "XformPanelInitFeedback";
-			message["Matrixs"] = Json::object();
-			fun(message.dump());
-		}
-	}
+                    defaultScene.dynamic_scene->from_json(defaultScene.dynamic_scene_tree);
+                }
+                else {
+                    continue;
+                }
+                auto msg_str = message.dump();
+//                fun(std::move(msg_str));
+            }
+        }
+    }
 
 
 	void replace_with_modified_matrix() {
@@ -2121,20 +2229,20 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
     }
 
     void reload(const zeno::render_reload_info& info) override {
-        //update_json(scene->objectsMan->pairs());  //TODO:Êî∂ÈõÜÂØπË±°‰ø°ÊÅØ‰º†ÈÄíÁªôÈù¢ÊùøÔºåÂèØ‰ª•ÁßªÂà∞ÂÖ∂‰ªñÂú∞Êñπ
+        //update_json(scene->objectsMan->pairs());  //TODO: ’ºØ∂‘œÛ–≈œ¢¥´µ›∏¯√Ê∞Â£¨ø…“‘“∆µΩ∆‰À˚µÿ∑Ω
 
         auto& sess = zeno::getSession();
         if (zeno::Reload_SwitchGraph == info.policy) {
-            //Áî±‰∫éÂØπË±°ÂíåËäÇÁÇπÊòØ‰∏Ä‰∏ÄÂØπÂ∫îÔºåÊïÖÂàáÊç¢ÂõæÂ±ÇÊ¨°ÁªìÊûÑÂøÖÁÑ∂ÂØºËá¥ÊâÄÊúâÂØπË±°Ë¢´ÈáçÁªò
+            //”…”⁄∂‘œÛ∫ÕΩ⁄µ„ «“ª“ª∂‘”¶£¨π «–ªªÕº≤„¥ŒΩ·ππ±ÿ»ªµº÷¬À˘”–∂‘œÛ±ª÷ÿªÊ
             graphicsMan->graphics.clear();
 
             std::shared_ptr<zeno::Graph> spGraph = sess.getGraphByPath(info.current_ui_graph);
             if (!spGraph) {
                 return;
             }
-            //TODO: Ë¶ÅËÄÉËôëassetÁöÑÊÉÖÂÜµ
+            //TODO: “™øº¬«assetµƒ«Èøˆ
             const auto& viewnodes = spGraph->get_viewnodes();
-            //ÂÖ∂ÂÆûÊòØÂê¶ÂèØ‰ª•Âú®Â§ñÈù¢ÊèêÂâçÂáÜÂ§áÂ•ΩÂØπË±°ÂàóË°®Ôºü
+            //∆‰ µ «∑Òø…“‘‘⁄Õ‚√ÊÃ·«∞◊º±∏∫√∂‘œÛ¡–±Ì£ø
             for (auto viewnode : viewnodes) {
                 auto spNode = spGraph->getNode(viewnode);
                 auto spObject = spNode->get_default_output_object();
@@ -2164,7 +2272,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 }
             }
             else if (update.reason == zeno::Update_Remove) {
-                //ËäÇÁÇπË¢´ÁßªÈô§ÂêéÔºåÂØπË±°Â∑≤Áªè‰∏çÂ≠òÂú®‰∫ÜÔºåËøôÈáåÊãøkeyÁõ¥Êé•Âà†Â∞±Ë°å
+                //Ω⁄µ„±ª“∆≥˝∫Û£¨∂‘œÛ“—æ≠≤ª¥Ê‘⁄¡À£¨’‚¿Ôƒ√key÷±Ω”…ææÕ––
                 auto it = wtf.find(update.uuidpath_node_objkey);
                 if (it != wtf.end()) {
                     graphicsMan->remove_object(update.uuidpath_node_objkey);
@@ -2197,7 +2305,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                         process_listobj(_spList);
                     }
                     else {
-                        //ÂèØËÉΩÊòØÂØπË±°Ê≤°ÊúâÈÄöËøáÂ≠êÂõæÁöÑSuboutputËøûÂá∫Êù•
+                        //ø…ƒ‹ «∂‘œÛ√ª”–Õ®π˝◊”ÕºµƒSuboutput¡¨≥ˆ¿¥
                         mats.push_back(spObject);
                         graphicsMan->add_object(spObject);
                         matNeedUpdate = meshNeedUpdate = true;
@@ -2380,7 +2488,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             for (auto const &[key, obj]: graphicsMan->graphics){
                 if (auto mtldet = std::get_if<GraphicsManager::DetMaterial>(&obj->det)) {
                     auto matkey = mtldet->mtlidkey;
-                    if(matMap.find(matkey)!=matMap.end())
+                    if(matMap.count(matkey))
                     {
                         auto idx = order[matkey];
                         auto curr_idx = graphicsMan->objOrder[key];
@@ -2402,8 +2510,13 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 auto default_shader = std::make_shared<ShaderPrepared>();
                 default_shader->mark = mark;
                 default_shader->matid = "";
-                default_shader->filename = _default_shader_template.name;
-                default_shader->callable = _default_callable_template.shadtmpl;
+                if (mark==ShaderMark::Volume) {
+                    default_shader->filename = _volume_shader_template.name;
+                    default_shader->callable = _volume_callable_template.shadtmpl;
+                } else {
+                    default_shader->filename = _default_shader_template.name;
+                    default_shader->callable = _default_callable_template.shadtmpl;
+                }
                 return default_shader;
             };
 
@@ -2422,6 +2535,9 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
             };
             
             if ( matNeedUpdate ) {
+                if (lightNeedUpdate) {
+                    ShaderDirty = true;
+                }
                 required_shader_names = defaultScene.prepareShaderSet();
 
                 dirtyShaderNames.clear();
@@ -2726,6 +2842,8 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
 
         defaultScene = {};
         cached_shaders = {};
+        globalShaderBufferGroup.reset();
+        
         OptixUtil::rtMaterialShaders.clear();
         {
             Json message;

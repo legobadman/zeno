@@ -68,7 +68,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "LightBounds.h"
@@ -159,7 +159,6 @@ struct PathTracerState
 
     raii<CUstream>                       stream;
     raii<CUdeviceptr> accum_buffer_p;
-    //raii<CUdeviceptr> seed_buffer_p;
     raii<CUdeviceptr> albedo_buffer_p;
     raii<CUdeviceptr> normal_buffer_p;
 
@@ -264,9 +263,6 @@ static void initLaunchParams( PathTracerState& state )
 
     state.accum_buffer_p.resize(byte_size);
     params.accum_buffer = (float3*)(CUdeviceptr)state.accum_buffer_p;
-
-    //state.seed_buffer_p.resize(byte_size);
-    //params.seed_buffer = (uint3*)(CUdeviceptr)state.seed_buffer_p;
     
     state.params.frame_buffer = nullptr;  // Will be set when output buffer is mapped
     //state.params.samples_per_launch = samples_per_launch;
@@ -302,7 +298,6 @@ static void handleResize( sutil::CUDAOutputBuffer<uchar4>& output_buffer, Params
 
     auto count = params.width * params.height;
     state.accum_buffer_p.resize( sizeof(float3) * count );
-    //state.seed_buffer_p.resize(sizeof(uint3)*count);
 
     if (!enable_aov) { count = 0; }
 
@@ -316,7 +311,6 @@ static void handleResize( sutil::CUDAOutputBuffer<uchar4>& output_buffer, Params
     state.pick_buffer.resize(sizeof(PickInfo));
 
     state.params.accum_buffer = (float3*)(CUdeviceptr)state.accum_buffer_p;
-    //state.params.seed_buffer = (uint3*)(CUdeviceptr)state.seed_buffer_p;
     state.params.accum_buffer_D = (float3*)(CUdeviceptr)state.accum_buffer_d;
     state.params.accum_buffer_S = (float3*)(CUdeviceptr)state.accum_buffer_s;
     state.params.accum_buffer_T = (float3*)(CUdeviceptr)state.accum_buffer_t;
@@ -350,8 +344,7 @@ static void launchSubframe( uchar4* result_buffer_data, PathTracerState& state, 
                     &state.params, sizeof( Params ),
                     cudaMemcpyHostToDevice
                     ) );
-                    
-        //timer.tick();
+
                 optixLaunch(
                     OptixUtil::pipeline,
                     0,
@@ -361,8 +354,6 @@ static void launchSubframe( uchar4* result_buffer_data, PathTracerState& state, 
                     state.params.width,
                     state.params.height,
                     1);
-        //timer.tock("frame time");
-        //output_buffer.unmap();
 }
 
 
@@ -792,6 +783,45 @@ void update_hdr_sky(float sky_rot, zeno::vec3f sky_rot3d, float sky_strength) {
     ptr = glm::value_ptr(tmp);
     memcpy(state.params.sky_onitator, ptr, sizeof(float)*12);
 }
+void update_hdr_sky(zeno::vec3f sky_rot3d, float sky_strength) {
+
+    state.params.sky_strength = sky_strength;
+    auto glm_sky_rot3d = zeno::bit_cast<glm::vec3>(sky_rot3d);
+    glm_sky_rot3d = glm::radians(glm_sky_rot3d);
+
+    auto q = glm::quat(glm_sky_rot3d);
+    glm::mat4 rotation = glm::toMat4(q);
+
+    auto tmp = glm::transpose(rotation);
+    auto ptr = glm::value_ptr(tmp);
+    memcpy(state.params.sky_rotation, ptr, sizeof(float)*12);
+
+    tmp = glm::transpose(glm::inverse(rotation));
+    ptr = glm::value_ptr(tmp);
+    memcpy(state.params.sky_onitator, ptr, sizeof(float)*12);
+}
+
+glm::vec3 realtime_rotate_sky(glm::vec3 rot_value) {
+    glm::mat4 tmp(1.0f);
+    auto ptr = glm::value_ptr(tmp);
+    memcpy(ptr, state.params.sky_rotation, sizeof(float)*12);
+    auto rotation = glm::transpose(tmp);
+    rotation = glm::rotate(rotation, rot_value[0], {1, 0, 0});
+    rotation = glm::rotate(rotation, rot_value[1], {0, 1, 0});
+    rotation = glm::rotate(rotation, rot_value[2], {0, 0, 1});
+    glm::quat q2 = glm::quat_cast(rotation);
+    glm::vec3 euler2 = glm::eulerAngles(q2);
+    {
+        auto tmp = glm::transpose(rotation);
+        auto ptr = glm::value_ptr(tmp);
+        memcpy(state.params.sky_rotation, ptr, sizeof(float)*12);
+
+        tmp = glm::transpose(glm::inverse(rotation));
+        ptr = glm::value_ptr(tmp);
+        memcpy(state.params.sky_onitator, ptr, sizeof(float)*12);
+    }
+    return euler2;
+}
 
 void using_hdr_sky(bool enable) {
     state.params.usingHdrSky = enable;
@@ -917,10 +947,13 @@ static void addLightSphere(float3 center, float radius)
 static int uniformBufferInitialized = false;
 // void optixUpdateUniforms(std::vector<float4> & inConstants) 
 void optixUpdateUniforms(void *inConstants, std::size_t size) {
+    if (uniformBufferInitialized) {
+        return;
+    }
 
-    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>( &state.d_uniforms.reset() ), sizeof(float4)*512));
+    CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>( &state.d_uniforms.reset() ), sizeof(float4)*size));
 
-    CUDA_CHECK(cudaMemset(reinterpret_cast<char *>((CUdeviceptr &)state.d_uniforms), 0, sizeof(float4)*512));
+    CUDA_CHECK(cudaMemset(reinterpret_cast<char *>((CUdeviceptr &)state.d_uniforms), 0, sizeof(float4)*size));
     CUDA_CHECK(cudaMemcpy(reinterpret_cast<void *>((CUdeviceptr)state.d_uniforms), (float4*)inConstants,
                           sizeof(float4)*size, cudaMemcpyHostToDevice));
     
@@ -1127,9 +1160,6 @@ void buildLightTree() {
         light.spreadMajor = clamp(dat.spreadMajor, 0.0f, 1.0f);
         light.spreadMinor = clamp(dat.spreadMinor, 0.0f, 1.0f);
 
-        auto void_angle = 0.5f * (1.0f - light.spreadMajor) * M_PIf;
-        light.spreadNormalize = 2.f / (2.f + (2.f * void_angle - M_PIf) * tanf(void_angle));
-
         light.mask = dat.mask;
         light.intensity  = dat.intensity;
         light.vIntensity = dat.vIntensity;
@@ -1151,9 +1181,16 @@ void buildLightTree() {
         light.type  = magic_enum::enum_cast<zeno::LightType>(dat.type).value_or(zeno::LightType::Diffuse);
         light.shape = magic_enum::enum_cast<zeno::LightShape>(dat.shape).value_or(zeno::LightShape::Plane);
 
-        if (light.spreadMajor < 0.005f) {
-            light.type = zeno::LightType::Direction;
+        if (light.shape == zeno::LightShape::Plane || light.shape == zeno::LightShape::Ellipse) {
+            auto void_angle = 0.5f * (1.0f - light.spreadMajor) * M_PIf;
+            light.spreadNormalize = 2.f / (2.f + (2.f * void_angle - M_PIf) * tanf(void_angle));
+        } else {
+            light.spreadNormalize = 0.0f;
         }
+
+        // if (light.spreadMajor < 0.005f) {
+        //     light.type = zeno::LightType::Direction;
+        // }
 
         if (light.shape == zeno::LightShape::Plane || light.shape == zeno::LightShape::Ellipse) {
 
@@ -1201,14 +1238,21 @@ void buildLightTree() {
 
             auto major_angle = spread_major * 0.5f * M_PIf;
             major_angle = fmaxf(major_angle, 2 * FLT_EPSILON);
-
             auto inner_angle = spread_inner * major_angle;
-            auto falloff_angle = major_angle - inner_angle;
 
-            light.setConeData(center, light.N, 0.0f, major_angle, falloff_angle);
+            light.setConeData(center, light.N, 0.0f, major_angle, inner_angle);
         }
         if (light.type == zeno::LightType::Projector) {
-            light.point = {center};
+            
+            auto spread_major = clamp(light.spreadMajor, 0.01, 1.00);
+            auto spread_minor = clamp(light.spreadMinor, 0.01, 0.99);
+
+            auto major_angle = spread_major * 0.5f * M_PIf;
+            major_angle = fmaxf(major_angle, 2 * FLT_EPSILON);
+            auto minor_angle = spread_minor * 0.5f * M_PIf;
+            minor_angle = fmaxf(minor_angle, 2 * FLT_EPSILON);
+
+            light.setConeData(center, light.N, 0.0f, fmaxf(major_angle, minor_angle), 0.1);
         }
 
         if ( OptixUtil::g_ies.count(dat.profileKey) > 0 ) {
@@ -1217,7 +1261,7 @@ void buildLightTree() {
             light.ies = val.ptr.handle;
             light.type = zeno::LightType::IES;
             //light.shape = zeno::LightShape::Point;
-            light.setConeData(center, light.N, radius, val.coneAngle, FLT_EPSILON);
+            light.setConeData(center, light.N, radius, val.coneAngle, val.coneAngle-FLT_EPSILON);
 
             if (dat.fluxFixed > 0) {
                 auto scale = val.coneAngle / M_PIf;
@@ -1411,19 +1455,8 @@ void updateShaders(std::vector<std::shared_ptr<ShaderPrepared>> &shaders,
 
 OptixUtil::_compile_group.run([&shaders, i] () {
 
-        auto marker = std::string("//PLACEHOLDER");
-        auto marker_length = marker.length();
-
         auto& callable_string = shaders[i]->callable;
-        auto start_marker = callable_string.find(marker);
-
-        if (start_marker != std::string::npos) {
-            auto end_marker = callable_string.find(marker, start_marker + marker_length);
-
-            callable_string.replace(start_marker, marker_length, "/*PLACEHOLDER");
-            callable_string.replace(end_marker, marker_length, "PLACEHOLDER*/");
-        }
-
+        
         std::shared_ptr<OptixUtil::OptixShaderCore> shaderCore = nullptr;
         auto key = std::tuple{shaders[i]->filename, shaders[i]->mark};
 
@@ -1745,47 +1778,33 @@ std::vector<Imath::half> optixgetimg_extra3(std::string name, int w, int h) {
 #include <mutex>
 #include <condition_variable>
 
-std::mutex click_mutex;
-std::condition_variable click_cv;
-
-glm::vec3 get_click_pos(float xf, float yf) {
+bool isPosClick = false;
+std::function<void(glm::vec3)> clickPosCallback;
+void get_click_pos(float xf, float yf, std::function<void(glm::vec3)> cbClickPosSig) {
     int w = state.params.width;
     int h = state.params.height;
     int x = xf * w;
     int y = yf * h;
 
-    std::unique_lock<std::mutex> lock(click_mutex);
-    state.params.click_dirty = true;
     state.params.click_coord = make_uint2(x, h - 1 - y);
+    state.params.click_dirty = true;
 
-    click_cv.wait(lock, []{
-        return !state.params.click_dirty; 
-    });
-
-    float3 click_result;
-    auto ptr = (char*)state.params.pick_buffer + offsetof(PickInfo, pos);
-    cudaMemcpy(&click_result, (void*)ptr, sizeof(float3), cudaMemcpyDeviceToHost);
-    return glm::vec3(click_result.x, click_result.y, click_result.z);
+    clickPosCallback = std::move(cbClickPosSig);
+    isPosClick = true;
 }
 
-glm::uvec4 get_click_id(float xf, float yf) {
+std::function<void(std::tuple<std::string, std::string, uint32_t>)> clickIdCallback;
+void get_click_id(float xf, float yf, std::function<void(std::tuple<std::string, std::string, uint32_t>)> cbClickIdSig) {
     int w = state.params.width;
     int h = state.params.height;
     int x = xf * w;
     int y = yf * h;
     
-    std::unique_lock<std::mutex> lock(click_mutex);
-    state.params.click_dirty = true;
     state.params.click_coord = make_uint2(x, h - 1 - y);
+    state.params.click_dirty = true;
 
-    click_cv.wait(lock, []{
-        return !state.params.click_dirty; 
-    });
-
-    uint4 click_meta;
-    auto ptr = (char*)state.params.pick_buffer + offsetof(PickInfo, meta);
-    cudaMemcpy(&click_meta, (void*)ptr, sizeof(uint4), cudaMemcpyDeviceToHost);
-    return glm::uvec4(click_meta.x, click_meta.y, click_meta.z, click_meta.w);
+    clickIdCallback = std::move(cbClickIdSig);
+    isPosClick = false;
 }
 
 static void save_exr(float3* ptr, int w, int h, std::string path) {
@@ -1855,6 +1874,9 @@ void optixrender(int fbo, int samples, bool denoise, bool simpleRender) {
 #endif
     
     bool enable_output_aov = zeno::getSession().userData().get2<bool>("output_aov", false);
+    if (state.params.needAOV != enable_output_aov) {
+        resize_dirty = true;
+    }
     state.params.needAOV = enable_output_aov;
     updateRayGen(enable_output_aov, denoise);
     updateState( *output_buffer_o, state.params, enable_output_aov );
@@ -1878,28 +1900,56 @@ void optixrender(int fbo, int samples, bool denoise, bool simpleRender) {
     const int max_samples_once = 1;
     uchar4* result_buffer_data = output_buffer_o->map();
 
-    bool should_notify = false;
-    {
-        std::lock_guard<std::mutex> lock(click_mutex);
-        should_notify = state.params.click_dirty;
+    if (pause) {
+        return;
     }
 
-    if (pause && !should_notify) {
-        return;
+    if (ud.has("optix_image_path")) {
+        state.params.frame_time = 0;
     }
     state.params.pause = pause;
 
+    timer.tick();
     for (int f = 0; f < samples; f += max_samples_once) { // 张心欣不要改这里
 
         state.params.samples_per_launch = std::min(samples - f, max_samples_once);
         launchSubframe( result_buffer_data, state, denoise);
         state.params.subframe_index++;
     }
+    //cudaStreamSynchronize(0);
     output_buffer_o->unmap();
+    timer.tock();
+    state.params.frame_time = timer.elapsed();
 
-    if (should_notify) {
+    if (state.params.click_dirty)
+    {
+        if (isPosClick)
+        {
+            float3 click_result;
+            auto ptr = (char*)state.params.pick_buffer + offsetof(PickInfo, pos);
+            cudaMemcpy(&click_result, (void*)ptr, sizeof(float3), cudaMemcpyDeviceToHost);
+            auto posWS = glm::vec3(click_result.x, click_result.y, click_result.z);
+            clickPosCallback(posWS);
+        } else {
+            uint4 click_meta;
+            auto ptr = (char*)state.params.pick_buffer + offsetof(PickInfo, meta);
+            cudaMemcpy(&click_meta, (void*)ptr, sizeof(uint4), cudaMemcpyDeviceToHost);
+
+            auto ids = glm::uvec4(click_meta.x, click_meta.y, click_meta.z, click_meta.w);
+            if (ids != glm::uvec4())
+            {
+                uint64_t obj_id = *reinterpret_cast<uint64_t*>(&ids);
+                if (defaultScene.gas_to_obj_id.count(obj_id)) {
+                    auto name = defaultScene.gas_to_obj_id.at(obj_id);
+                    auto mat_name = std::string();
+                    if (defaultScene.dc_index_to_mat.count(ids[2])) {
+                        mat_name = defaultScene.dc_index_to_mat[ids[2]];
+                    }
+                    clickIdCallback(std::tuple<std::string, std::string, uint32_t>(name, mat_name, ids[3]));
+                }
+            }
+        }
         state.params.click_dirty = false;
-        click_cv.notify_all();
     }
 
 #ifdef OPTIX_BASE_GL

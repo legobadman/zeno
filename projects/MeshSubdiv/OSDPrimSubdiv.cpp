@@ -131,8 +131,9 @@ static vec3f v2to3(vec2f const &v) {
 } // namespace
 
 //------------------------------------------------------------------------------
-static void osdPrimSubdiv(PrimitiveObject *prim, int levels, std::string edgeCreaseAttr = {}, bool triangulate = false,
-                          bool asQuadFaces = false, bool hasLoopUVs = true, bool copyFaceAttrs = true) {
+static void osdPrimSubdiv(PrimitiveObject *prim, int levels, std::string edgeCreaseAttr = {}, std::string cornerAttr = {}, bool triangulate = false,
+                          bool asQuadFaces = false, bool hasLoopUVs = true, bool copyFaceAttrs = true,
+                          std::string vtx_boundary_type="ALL", std::string fvar_boundary_type="CORNER2") {
     const int maxlevel = levels;
     if (maxlevel <= 0 || !prim->verts.size())
         return;
@@ -186,11 +187,27 @@ static void osdPrimSubdiv(PrimitiveObject *prim, int levels, std::string edgeCre
     desc.numFaces = polysLen.size();
     desc.numVertsPerFace = polysLen.data();
     desc.vertIndicesPerFace = polysInd.data();
+    std::vector<int> corner_index(prim->verts.size());
+    for(int i=0;i<prim->verts.size();i++)
+    {
+        corner_index[i] = i;
+    }
     if (edgeCreaseAttr.size()) {
-        auto const &crease = prim->lines.attr<float>(edgeCreaseAttr);
-        desc.numCreases = crease.size();
-        desc.creaseVertexIndexPairs = reinterpret_cast<int const *>(prim->lines.data());
-        desc.creaseWeights = crease.data();
+        if(prim->lines.has_attr(edgeCreaseAttr)) {
+            auto const &crease = prim->lines.attr<float>(edgeCreaseAttr);
+            desc.numCreases = crease.size();
+            desc.creaseVertexIndexPairs = reinterpret_cast<int const *>(prim->lines.data());
+            desc.creaseWeights = crease.data();
+
+        }
+    }
+    if(cornerAttr.size()){
+        if(prim->verts.has_attr(cornerAttr)) {
+            auto const &corner = prim->verts.attr<float>(cornerAttr);
+            desc.numCorners = prim->verts.size();
+            desc.cornerVertexIndices = corner_index.data();
+            desc.cornerWeights = corner.data();
+        }
     }
 
     std::vector<Far::TopologyDescriptor::FVarChannel> channels;
@@ -315,7 +332,32 @@ static void osdPrimSubdiv(PrimitiveObject *prim, int levels, std::string edgeCre
 
     Sdc::SchemeType refinetfactype = OpenSubdiv::Sdc::SCHEME_CATMARK;
     Sdc::Options refineofactptions;
-    refineofactptions.SetVtxBoundaryInterpolation(Sdc::Options::VTX_BOUNDARY_EDGE_ONLY);
+    if(vtx_boundary_type=="NONE"){
+        refineofactptions.SetVtxBoundaryInterpolation(Sdc::Options::VTX_BOUNDARY_NONE);
+    }
+    if(vtx_boundary_type=="EDGE")
+    {
+        refineofactptions.SetVtxBoundaryInterpolation(Sdc::Options::VTX_BOUNDARY_EDGE_ONLY);
+    }
+    if(vtx_boundary_type=="ALL") {
+        refineofactptions.SetVtxBoundaryInterpolation(Sdc::Options::VTX_BOUNDARY_EDGE_AND_CORNER);
+    }
+    if(fvar_boundary_type=="NONE") {
+        refineofactptions.SetFVarLinearInterpolation(Sdc::Options::FVAR_LINEAR_NONE);
+    }
+    if(fvar_boundary_type=="CORNER") {
+        refineofactptions.SetFVarLinearInterpolation(Sdc::Options::FVAR_LINEAR_CORNERS_ONLY);
+    }
+    if(fvar_boundary_type=="CORNER1") {
+        refineofactptions.SetFVarLinearInterpolation(Sdc::Options::FVAR_LINEAR_CORNERS_PLUS1);
+    }
+    if(fvar_boundary_type=="CORNER2") {
+        refineofactptions.SetFVarLinearInterpolation(Sdc::Options::FVAR_LINEAR_CORNERS_PLUS2);
+    }
+    if(fvar_boundary_type=="LINEAR") {
+        refineofactptions.SetFVarLinearInterpolation(Sdc::Options::FVAR_LINEAR_BOUNDARIES);
+    }
+
     // Instantiate a Far::TopologyRefiner from the descriptor
     using Factory = Far::TopologyRefinerFactory<Far::TopologyDescriptor>;
     std::unique_ptr<Far::TopologyRefiner> refiner(
@@ -720,13 +762,17 @@ struct OSDPrimSubdiv : INode {
             set_output("prim", std::move(prim));
             return;
         }
+        auto vtx_boundary_type = zsString2Std(get_input2_string("vtx_boundary_type"));
+        auto fvar_boundary_type = zsString2Std(get_input2_string("fvar_boundary_type"));
+
         auto edgeCreaseAttr = zsString2Std(get_input2_string("edgeCreaseAttr"));
+        auto cornerAttr = zsString2Std(get_input2_string("cornerAttr"));
         bool triangulate = get_input2_bool("triangulate");
         bool asQuadFaces = get_input2_bool("asQuadFaces");
         bool hasLoopUVs = get_input2_bool("hasLoopUVs");
         bool copyFaceAttrs = get_input2_bool("copyFaceAttrs");
         if (levels)
-            osdPrimSubdiv(prim.get(), levels, edgeCreaseAttr, triangulate, asQuadFaces, hasLoopUVs, copyFaceAttrs);
+            osdPrimSubdiv(prim.get(), levels, edgeCreaseAttr, cornerAttr,triangulate, asQuadFaces, hasLoopUVs, copyFaceAttrs, vtx_boundary_type, fvar_boundary_type);
 
         auto geom = create_GeometryObject(prim.get());
         set_output("prim", std::move(geom));
@@ -737,7 +783,8 @@ ZENO_DEFNODE(OSDPrimSubdiv)
     {
         {gParamType_Geometry, "prim"},
         {gParamType_Int, "levels", "2"},
-        {gParamType_String, "edgeCreaseAttr", ""},
+        {gParamType_String, "edgeCreaseAttr", "edge_crease_weight"},
+        {gParamType_String,"cornerAttr","vert_crease_weight"},
         {gParamType_Bool, "triangulate", "1"},
         {gParamType_Bool, "asQuadFaces", "1"},
         {gParamType_Bool, "hasLoopUVs", "1"},
@@ -747,7 +794,10 @@ ZENO_DEFNODE(OSDPrimSubdiv)
     {
         {gParamType_Geometry, "prim"},
     },
-    {},
+    {
+        {"enum NONE EDGE ALL","vtx_boundary_type","ALL"},
+        {"enum NONE CORNER CORNER1 CORNER2 LINEAR","fvar_boundary_type","CORNER2"},
+    },
     {"primitive"},
 });
 

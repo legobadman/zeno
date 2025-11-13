@@ -1,4 +1,4 @@
-#ifndef __ZSUBNET_LISTITEM_DELEGATE_H__
+﻿#ifndef __ZSUBNET_LISTITEM_DELEGATE_H__
 #define __ZSUBNET_LISTITEM_DELEGATE_H__
 
 #include <QtWidgets>

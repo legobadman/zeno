@@ -49,7 +49,7 @@ ZENDEFNODE(ProceduralSky, {
 });
 
 struct HDRSky : INode {
-    virtual void apply() override {
+    void apply() override {
         auto prim = std::make_unique<zeno::PrimitiveObject>();
         std::string path = "";
         if (ZImpl(has_input2<std::string>("path"))) {
@@ -60,13 +60,11 @@ struct HDRSky : INode {
              }
         }
         auto pUserData = dynamic_cast<UserData*>(prim->userData());
-        pUserData->set2("isRealTimeObject", std::move(1));
-        pUserData->set2("HDRSky", std::move(path));
-        pUserData->set2("evnTexRotation", std::move(ZImpl(get_input2<float>("rotation"))));
-        pUserData->set2("evnTex3DRotation", std::move(ZImpl(get_input2<zeno::vec3f>("rotation3d"))));
-        pUserData->set2("evnTexStrength", std::move(ZImpl(get_input2<float>("strength"))));
-        pUserData->set2("enable", std::move(ZImpl(get_input2<bool>("enable"))));
-        set_output("HDRSky", create_GeometryObject(prim.get()));
+        pUserData->set2("isRealTimeObject", 1);
+        prim->userData().set2("evnTex3DRotation", ZImpl(get_input2<zeno::vec3f>("rotation3d")));
+        prim->userData().set2("evnTexStrength", ZImpl(get_input2<float>("strength")));
+        prim->userData().set2("enable", 1);
+        set_output("HDRSky", prim);
     }
 };
 
@@ -74,7 +72,6 @@ ZENDEFNODE(HDRSky, {
     {
         {gParamType_Bool, "enable", "1"},
         {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
-        {gParamType_Float, "rotation", "0"},
         {gParamType_Vec3f, "rotation3d", "0,0,0"},
         {gParamType_Float, "strength", "1"},
     },

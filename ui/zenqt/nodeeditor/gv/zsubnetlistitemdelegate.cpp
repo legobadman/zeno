@@ -1,4 +1,4 @@
-#include "zsubnetlistitemdelegate.h"
+﻿#include "zsubnetlistitemdelegate.h"
 #include "style/zenostyle.h"
 #include "zenosubnetlistview.h"
 #include "model/graphsmanager.h"

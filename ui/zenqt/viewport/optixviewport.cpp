@@ -1,4 +1,4 @@
-﻿#include "optixviewport.h"
+#include "optixviewport.h"
 #include "zenovis.h"
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
@@ -59,6 +59,9 @@ OptixWorker::OptixWorker(const QString& graph_path, Zenovis *pzenoVis)
             emit sig_sendToOutline(QString::fromStdString(content));
         }
         else if (json["MessageType"] == "SetGizmoAxis") {
+            emit sig_sendToOptixViewport(QString::fromStdString(content));
+        }
+        else if (json["MessageType"] == "SetHDRSky2") {
             emit sig_sendToOptixViewport(QString::fromStdString(content));
         }
         else {
@@ -404,6 +407,70 @@ void OptixWorker::onSendOptixMessage(QString msg_str) {
     }
 }
 
+void OptixWorker::on_send_clickinfo_to_optix(ClickPosInfo posinfo)
+{
+    ZASSERT_EXIT(m_zenoVis);
+    auto session = m_zenoVis->getSession();
+    ZASSERT_EXIT(session);
+    auto scene = session->get_scene();
+    ZASSERT_EXIT(scene);
+    if (auto engine = scene->renderMan->getEngine("optx")) {
+        if (posinfo.eventType == QEvent::MouseButtonDblClick || posinfo.eventType == QEvent::MouseButtonPress && posinfo.eventButtons & Qt::LeftButton)
+        {
+            engine->getClickedId(posinfo.eventCamx, posinfo.eventCamy, [this, scene, posinfo](std::tuple<std::string, std::string, uint32_t> ids) {
+                emit sig_sendClickId(ids, posinfo);
+            });
+        }
+        else {
+            engine->getClickedPos(posinfo.eventCamx, posinfo.eventCamy, [this, scene, posinfo](glm::vec3 posWS) {
+                auto const& cam = *scene->camera;
+                if (posWS == glm::vec3()) {
+                    emit sig_sendClickPos({}, posinfo);
+                } else {
+                    posWS += cam.m_pos;
+                    emit sig_sendClickPos(posWS, posinfo);
+                }
+            });
+        }
+    }
+}
+
+static void modify_hdrsky_value(const std::string &node_uuid, glm::vec3 rot_value) {
+    if (node_uuid.empty()) {
+        return;
+    }
+    auto main = zenoApp->getMainWindow();
+    ZASSERT_EXIT(main);
+    auto editor = main->getAnyEditor();
+    ZASSERT_EXIT(editor);
+    auto view = editor->getCurrentSubGraphView();
+    ZASSERT_EXIT(view);
+    auto scene = view->scene();
+    ZASSERT_EXIT(scene);
+
+    IGraphsModel* pModel = GraphsManagment::instance().currentModel();
+    ZASSERT_EXIT(pModel);
+    QModelIndex subgIdx = scene->subGraphIndex();
+    ZASSERT_EXIT(subgIdx.isValid());
+    QModelIndex multilinestrIdx = pModel->index(QString::fromStdString(node_uuid), subgIdx);
+    if (!multilinestrIdx.isValid()) {
+        return;
+    }
+    zeno::scope_exit scope([=]() { pModel->endTransaction(); });
+    INPUT_SOCKETS inputs = multilinestrIdx.data(ROLE_INPUTS).value<INPUT_SOCKETS>();
+    PARAM_UPDATE_INFO info;
+    UI_VECTYPE vec({
+       rot_value[0]
+       , rot_value[1]
+       , rot_value[2]
+    });
+    INPUT_SOCKET rotation3d = inputs["rotation3d"];
+    info.name = "rotation3d";
+    info.oldValue = rotation3d.info.defaultValue;
+    info.newValue = QVariant::fromValue(vec);
+    pModel->updateSocketDefl(QString::fromStdString(node_uuid), info, subgIdx, true);
+}
+
 void OptixWorker::onSetData(
     float aperture,
     float shutter_speed,
@@ -512,12 +579,25 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
             mat[3] = { t[0],  t[1],  t[2], 1.0f};
             this->axis_coord = mat;
         }
+        else if (message["MessageType"] == "HDRSky2") {
+            this->hdr_sky_2 = message["Content"];
+        }
+        else if (message["MessageType"] == "SetHDRSky2") {
+            auto x = float(message["Content"][0]);
+            auto y = float(message["Content"][1]);
+            auto z = float(message["Content"][2]);
+            if (hdr_sky_2.size()) {
+                modify_hdrsky_value(hdr_sky_2, {x, y, z});
+            }
+        }
         else if (message["MessageType"] == "CleanupAssets") {
             this->mode = "";
             this->axis = "";
             this->try_axis = "";
+            this->hdr_sky_2 = "";
             this->local_space = true;
             this->axis_coord = std::nullopt;
+            this->selected_item = "";
         }
     });
 
@@ -558,6 +638,12 @@ ZOptixViewport::ZOptixViewport(QWidget* parent)
     connect(m_worker, &OptixWorker::sig_reloadFinished, this, &ZOptixViewport::sig_reload_finished);
 
     connect(this, &ZOptixViewport::sig_sendOptixMessage, m_worker, &OptixWorker::onSendOptixMessage, Qt::QueuedConnection);
+
+    connect(this, &ZOptixViewport::sig_send_clickinfo_to_optix, m_worker, &OptixWorker::on_send_clickinfo_to_optix, Qt::QueuedConnection);
+    connect(m_worker, &OptixWorker::sig_sendClickId, this, &ZOptixViewport::on_sendClickId_received, Qt::QueuedConnection);
+    connect(m_worker, &OptixWorker::sig_sendClickPos, this, &ZOptixViewport::on_sendClickPos_received, Qt::QueuedConnection);
+
+    setRenderSeparately(RunALL);
     m_thdOptix.start();
 }
 
@@ -666,12 +752,12 @@ void ZOptixViewport::recordVideo(VideoRecInfo recInfo)
 void ZOptixViewport::screenshoot(QString path, QString type, int resx, int resy)
 {
     std::string sType = type.toStdString();
-    bool ret = m_renderImage.save(path, sType.c_str());
-    if (!ret)
-    {
+    // bool ret = m_renderImage.save(path, sType.c_str());
+    // if (!ret)
+    // {
         //meet some unsupported type by QImage.
         emit sigscreenshoot(path, type, resx, resy);
-    }
+    // }
 }
 
 void ZOptixViewport::cancelRecording(VideoRecInfo recInfo)
@@ -682,6 +768,28 @@ void ZOptixViewport::cancelRecording(VideoRecInfo recInfo)
 void ZOptixViewport::onFrameRunFinished(int frame)
 {
     emit sig_frameRunFinished(frame);
+}
+
+void ZOptixViewport::on_sendClickId_received(const OPTIX_CLICKID& ids, ClickPosInfo posinfo)
+{
+    if (QEvent::MouseButtonPress && posinfo.eventButtons & Qt::LeftButton) {
+        m_camera->click_id_prim_selected(ids);
+    }
+    else if (posinfo.eventType == QEvent::MouseButtonDblClick) {
+        m_camera->click_id_activate_matnode(ids);
+    }
+}
+
+void ZOptixViewport::on_sendClickPos_received(const std::optional<glm::vec3>& pos, ClickPosInfo posinfo)
+{
+    if (posinfo.eventType == QEvent::Wheel)
+    {
+        m_camera->click_pos_wheel(pos, posinfo);
+    }
+    else if (QEvent::MouseButtonPress && ((posinfo.eventButtons & Qt::LeftButton) == 0))
+    {
+        m_camera->click_pos_set_pivot(pos);
+    }
 }
 
 void ZOptixViewport::updateCameraProp(float aperture, float disPlane, UI_VECTYPE skipParam)
@@ -772,8 +880,7 @@ void ZOptixViewport::mousePressEvent(QMouseEvent* event)
         setSimpleRenderOption();
     }
     _base::mousePressEvent(event);
-    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
-    m_camera->fakeMousePressEvent(info);
+    m_camera->fakeMousePressEvent(event, this);
     update();
 }
 
@@ -853,8 +960,7 @@ void ZOptixViewport::mouseMoveEvent(QMouseEvent* event)
 void ZOptixViewport::mouseDoubleClickEvent(QMouseEvent* event)
 {
     _base::mouseReleaseEvent(event);
-    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos() };
-    m_camera->fakeMouseDoubleClickEvent(info);
+    m_camera->fakeMouseDoubleClickEvent(event, this);
     update();
 }
 
@@ -865,8 +971,7 @@ void ZOptixViewport::wheelEvent(QWheelEvent* event)
     setSimpleRenderOption();
 
     _base::wheelEvent(event);
-    ViewMouseInfo info = { event->type(), event->modifiers(), event->buttons(), event->pos(), event->angleDelta() };
-    m_camera->fakeWheelEvent(info);
+    m_camera->fakeWheelEvent(event, this);
     update();
 }
 
@@ -946,10 +1051,18 @@ void ZOptixViewport::keyPressEvent(QKeyEvent* event)
             mode = (mode != "EasyScale")? "EasyScale": "Scale";
         }
         else if(uKey == Qt::Key_R) {
-            mode = (mode == "Rotate")? "RotateScreen": "Rotate";
+            if (selected_item.find("HDRSky") != std::string::npos) {
+                mode = "SkyRot";
+            }
+            else {
+                mode = (mode == "Rotate")? "RotateScreen": "Rotate";
+            }
         }
         else if(uKey == Qt::Key_T) {
             mode = "Translate";
+        }
+        else if (uKey == Qt::Key_H) {
+            mode = "SkyRot";
         }
 //        zeno::log_info("{} -> {}", old_mode, mode);
     }
@@ -1206,44 +1319,55 @@ void ZOptixViewport::drawAxis(QImage &img) {
     gizmo_id_buffer = QImage(img.size(), img.format());
     gizmo_id_buffer.fill(Qt::black);
 
-    if (!axis_coord.has_value()) {
-        return;
-    }
-
-    auto center_WS = glm::vec3(axis_coord.value()[3]);
     float axis_len = 1.0f / 10.0f;
-    auto scale_factor = glm::distance(m_camera->getPos(), center_WS);
-    auto x_axis_dir = glm::normalize(glm::vec3(axis_coord.value()[0]));
-    auto y_axis_dir = glm::normalize(glm::vec3(axis_coord.value()[1]));
-    auto z_axis_dir = glm::normalize(glm::vec3(axis_coord.value()[2]));
     auto res = m_camera->res();
     auto resolution = glm::vec2(res.x(), res.y());
     auto scene = m_zenovis->getSession()->get_scene();
     auto vp_mat = scene->camera->get_proj_matrix() * scene->camera->get_view_matrix();
 
-    QPainter painter(&img);
+    if (hdr_sky_2.size() && mode == "SkyRot") {
+        auto center_WS = m_camera->getPos() + m_camera->getViewDir() * 5.0f;
+        auto scale_factor = glm::distance(m_camera->getPos(), center_WS);
+        QPainter painter(&img);
+        QPainter painter2(&gizmo_id_buffer);
+        draw_rotation_axis(painter, painter2, resolution, vp_mat, center_WS, {1,0,0}, {0,1,0}, {0,0,1}, scale_factor * axis_len, try_axis);
+        painter.end();
+        painter2.end();
+        return;
+    }
+    if (axis_coord.has_value()) {
+        auto center_WS = glm::vec3(axis_coord.value()[3]);
+        auto scale_factor = glm::distance(m_camera->getPos(), center_WS);
+        auto x_axis_dir = glm::normalize(glm::vec3(axis_coord.value()[0]));
+        auto y_axis_dir = glm::normalize(glm::vec3(axis_coord.value()[1]));
+        auto z_axis_dir = glm::normalize(glm::vec3(axis_coord.value()[2]));
 
-    QPainter painter2(&gizmo_id_buffer);
+        QPainter painter(&img);
 
-    if (mode=="") {
-        //draw_display_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len);
-    }
-    else if (mode == "Rotate") {
-        draw_rotation_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis);
-    }
-    else if (mode == "RotateScreen") {
-        draw_rotation_screen_axis(painter, painter2, resolution, vp_mat, center_WS, try_axis);
-    }
-    else if (mode == "Translate") {
-        draw_translate_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis);
-    }
-    else if (mode == "Scale") {
-        draw_scale_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis, false);
-    }
-    else if (mode == "EasyScale") {
-        draw_scale_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis, true);
+        QPainter painter2(&gizmo_id_buffer);
+
+        if (mode=="") {
+            //draw_display_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len);
+        }
+        else if (mode == "Rotate") {
+            draw_rotation_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis);
+        }
+        else if (mode == "RotateScreen") {
+            draw_rotation_screen_axis(painter, painter2, resolution, vp_mat, center_WS, try_axis);
+        }
+        else if (mode == "Translate") {
+            draw_translate_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis);
+        }
+        else if (mode == "Scale") {
+            draw_scale_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis, false);
+        }
+        else if (mode == "EasyScale") {
+            draw_scale_axis(painter, painter2, resolution, vp_mat, center_WS, x_axis_dir, y_axis_dir, z_axis_dir, scale_factor * axis_len, try_axis, true);
+        }
+
+        painter.end();
+        painter2.end();
+
     }
 
-    painter.end();
-    painter2.end();
 }

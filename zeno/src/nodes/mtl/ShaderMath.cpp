@@ -31,6 +31,8 @@ struct ShaderTernaryMath : ShaderNodeClone<ShaderTernaryMath> {
         auto t1 = em->determineType(in1);
         auto t2 = em->determineType(in2);
         auto t3 = em->determineType(in3);
+        if(op == "clamp")
+            return t1;
 
         if (t1 == 1 && t2 == t3) {
             return t2;
@@ -116,7 +118,7 @@ struct ShaderBinaryMath : ShaderNodeClone<ShaderBinaryMath> {
             else if (t1 == 1)
                 throw zeno::Exception("distance only work for vectors");
             else
-                return t1;
+                return 1;
 
         } else if (t1 == 1) {
             return t2;

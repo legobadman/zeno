@@ -234,7 +234,7 @@ struct AlembicToSoftBodyVAT: public INode {
             auto bbox = parallel_reduce_minmax(temp_bboxs.begin(), temp_bboxs.end());
             read_done = true;
             for (int32_t idx = frameStart; idx < frameEnd; ++idx) {
-                zeno::log_info("Processing frame {} / {} ...", idx + 1, frameEnd);
+//                zeno::log_info("Processing frame {} / {} ...", idx + 1, frameEnd);
                 const int32_t frameIndex = idx - frameStart;
                 auto mergedPrim = safe_dynamic_cast<zeno::PrimitiveObject>(frameList->get(frameIndex));
                 // Save first frame mesh to obj
@@ -447,7 +447,7 @@ struct AlembicToDynamicRemeshVAT : public INode {
       size_t spaceToAlign = -1;
 
       for (int32_t idx = frameStart; idx < frameEnd; ++idx) {
-        zeno::log_info("Processing frame {} / {} ...", idx + 1, frameEnd);
+//        zeno::log_info("Processing frame {} / {} ...", idx + 1, frameEnd);
         const int32_t frameIndex = idx - frameStart;
         auto mergedPrim = safe_dynamic_cast<zeno::PrimitiveObject>(frameList->get(frameIndex));
         spaceToAlign = vatWidth * rowsPerFrame - mergedPrim->tris.size() * 3;

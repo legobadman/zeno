@@ -1,4 +1,4 @@
-﻿#ifndef __ZENO_MAINWINDOW_H__
+#ifndef __ZENO_MAINWINDOW_H__
 #define __ZENO_MAINWINDOW_H__
 
 #include <unordered_set>
@@ -10,6 +10,7 @@
 
 class ZenoDockWidget;
 class DisplayWidget;
+class zenoBenchmark;
 class ZTimeline;
 class LiveTcpServer;
 class LiveHttpServer;
@@ -223,6 +224,7 @@ private:
     void screenShoot();
     void setActionIcon(QAction* action);
     void initCustomLayoutAction(const QStringList& list, bool isDefault = false);
+    void initRunScriptAction();
     void loadDockLayout(QString name, bool isDefault = false);
     QJsonObject readDefaultLayout();
     void manageCustomLayout();
