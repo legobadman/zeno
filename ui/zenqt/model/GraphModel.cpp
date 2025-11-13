@@ -1609,7 +1609,11 @@ bool GraphModel::_removeNodeImpl(const QString& name, bool endTransaction)
             //先移除referLink
             std::vector<zeno::RefLinkInfo> remRefLinksTuple = item->m_wpNode->getReflinkInfo(false);
             for (const auto& [edgeinfo, outParamIsOutput]: remRefLinksTuple) {
-                _removeLink(edgeinfo, outParamIsOutput);
+                //_removeLink(edgeinfo, outParamIsOutput);
+                auto currtPath = currentPath();
+                RemoveNodeUpdateRefLinkCommand* pCmd = new RemoveNodeUpdateRefLinkCommand(false, edgeinfo, currentPath(), outParamIsOutput);
+                if (auto topLevelGraph = getTopLevelGraph(currtPath))
+                    topLevelGraph->pushToplevelStack(pCmd);
             }
 
             PARAMS_INFO ioParams = item->params->getInputs();
@@ -1775,6 +1779,15 @@ void GraphModel::_setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endT
         ZASSERT_EXIT(spCoreNode);
         zeno::SubnetNode* subnetnode = static_cast<zeno::SubnetNode*>(spCoreNode);
         subnetnode->set_clearsubnet(bOn);
+    }
+}
+
+void GraphModel::_RemoveNodeUpdateRefLink(const QModelIndex& fromNodeIdx, const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput)
+{
+    if (NodeItem* item = m_nodes[m_row2uuid[fromNodeIdx.row()]]) {
+        if (zeno::NodeImpl* fromnode = item->m_wpNode) {
+            fromnode->removeNodeUpdateRefLink(link, bAddRef, bOutParamIsOutput);
+        }
     }
 }
 

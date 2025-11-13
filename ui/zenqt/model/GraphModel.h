@@ -122,6 +122,7 @@ public:
     void _setByPassImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
     void _setNoCacheImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
     void _setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _RemoveNodeUpdateRefLink(const QModelIndex& fromNodeIdx, const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput);
 
     //unrevertable:
     void clearNodeObjs(const QModelIndex& nodeIdx);

@@ -1,4 +1,4 @@
-﻿#include "command.h"
+#include "command.h"
 #include "variantptr.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
@@ -6,6 +6,8 @@
 #include "model/parammodel.h"
 #include "util/uihelper.h"
 #include "zenoapplication.h"
+#include "LinkModel.h"
+#include "declmetatype.h"
 
 
 AddNodeCommand::AddNodeCommand(const QString& cate, zeno::NodeData& nodedata, const QStringList& graphPath)
@@ -168,6 +170,38 @@ void LinkCommand::undo()
         m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
         if (m_model)
             m_model->_addLink_apicall(m_link);
+    }
+}
+
+RemoveNodeUpdateRefLinkCommand::RemoveNodeUpdateRefLinkCommand(bool bAddLink, const zeno::EdgeInfo& link, const QStringList& graphPath, bool outParamIsOutput)
+    : QUndoCommand()
+    , m_bAdd(bAddLink)
+    , m_link(link)
+    , m_model(zenoApp->graphsManager()->getGraph(graphPath))
+    , m_graphPath(graphPath)
+    , m_bOutParamIsOutput(outParamIsOutput)
+{
+}
+
+void RemoveNodeUpdateRefLinkCommand::redo()
+{
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
+    if (m_model) {
+        QModelIndex fromNodeIdx = m_model->indexFromName(QString::fromStdString(m_link.outNode));
+        if (fromNodeIdx.isValid()) {
+            m_model->_RemoveNodeUpdateRefLink(fromNodeIdx, m_link, m_bAdd, m_bOutParamIsOutput);
+        }
+    }
+}
+
+void RemoveNodeUpdateRefLinkCommand::undo()
+{
+    m_model = zenoApp->graphsManager()->getGraph(m_graphPath);
+    if (m_model) {
+        QModelIndex fromNodeIdx = m_model->indexFromName(QString::fromStdString(m_link.outNode));
+        if (fromNodeIdx.isValid()) {
+            m_model->_RemoveNodeUpdateRefLink(fromNodeIdx, m_link, !m_bAdd, m_bOutParamIsOutput);
+        }
     }
 }
 

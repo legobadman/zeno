@@ -1,4 +1,4 @@
-﻿#include "zenosubgraphscene.h"
+#include "zenosubgraphscene.h"
 #include "uicommon.h"
 #include "model/graphsmanager.h"
 #include "zenosubgraphview.h"
@@ -188,17 +188,17 @@ _ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent, ZenoSubGraphScene
     setMouseTracking(true);
     setContextMenuPolicy(Qt::DefaultContextMenu);
 
-    //QAction* ctrlz = new QAction("Undo", this);
- //   ctrlz->setShortcut(QKeySequence::Undo);
-    //ctrlz->setShortcutContext(Qt::WidgetShortcut);
- //   connect(ctrlz, SIGNAL(triggered()), this, SLOT(undo()));
- //   addAction(ctrlz);
+    QAction* ctrlz = new QAction("Undo", this);
+    ctrlz->setShortcut(QKeySequence::Undo);
+    ctrlz->setShortcutContext(Qt::WidgetShortcut);
+    connect(ctrlz, SIGNAL(triggered()), this, SLOT(undo()));
+    addAction(ctrlz);
 
- //   QAction* ctrly = new QAction("Redo", this);
- //   ctrly->setShortcut(QKeySequence::Redo);
-    //ctrly->setShortcutContext(Qt::WidgetShortcut);
- //   connect(ctrly, SIGNAL(triggered()), this, SLOT(redo()));
- //   addAction(ctrly);
+    QAction* ctrly = new QAction("Redo", this);
+    ctrly->setShortcut(QKeySequence::Redo);
+    ctrly->setShortcutContext(Qt::WidgetShortcut);
+    connect(ctrly, SIGNAL(triggered()), this, SLOT(redo()));
+    addAction(ctrly);
 
     QAction* pActSave = new QAction("Save", this);
     pActSave->setShortcut(QKeySequence::Save);
