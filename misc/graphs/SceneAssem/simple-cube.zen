@@ -11,7 +11,7 @@
                         "links": null,
                         "type": "vec3f",
                         "default-value": [
-                            0.0,
+                            "$F",
                             0.0,
                             0.0
                         ],
@@ -601,12 +601,10 @@
                     }
                 },
                 "uipos": [
-                    992.0,
-                    35.0
+                    1201.0,
+                    43.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "MakeSceneNode1": {
@@ -730,9 +728,7 @@
                     689.0,
                     403.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "SetResourceType1": {
@@ -802,8 +798,8 @@
                     }
                 },
                 "uipos": [
-                    398.0,
-                    123.0
+                    311.0,
+                    190.0
                 ],
                 "status": [],
                 "collasped": false
@@ -815,7 +811,7 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "Cube2",
+                                "out-node": "Tube1",
                                 "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
@@ -877,6 +873,185 @@
                 "uipos": [
                     649.0,
                     203.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "Tube1": {
+                "name": "Tube1",
+                "class": "Tube",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "Center": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            2.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Rotate": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Up Radius": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Down Radius": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Uniform Scale": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Height": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Rows": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 2,
+                        "control": {
+                            "name": "Slider"
+                        },
+                        "controlProps": {
+                            "min": 1,
+                            "max": 100,
+                            "step": 1
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Columns": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 12,
+                        "control": {
+                            "name": "Slider"
+                        },
+                        "controlProps": {
+                            "min": 1,
+                            "max": 100,
+                            "step": 1
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Direction": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Y Axis",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "X Axis",
+                                "Y Axis",
+                                "Z Axis"
+                            ]
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Face Type": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Quadrilaterals",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "Triangles",
+                                "Quadrilaterals"
+                            ]
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Point Normals": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "End Caps": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    905.6425170898438,
+                    45.995853424072269
                 ],
                 "status": [],
                 "collasped": false
