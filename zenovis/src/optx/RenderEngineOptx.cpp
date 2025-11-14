@@ -2187,6 +2187,9 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                 int frame = zeno::getSession().globalState->getFrameId();
                 if (spObject) {
                     if (auto sceneObj = dynamic_cast<zeno::SceneObject*>(spObject)) {
+                        if (sceneObj->bResetOptixScene) {
+                            cleanupScene();
+                        }
                         auto _spList = sceneObj->to_structure();
                         _spList->update_key(sceneObj->key());
                         //OutputFuckingMatrixInfo(_spList, "C:/Users/Ada51/Desktop/debug_matrix/lego_" + std::to_string(frame) + ".txt");
@@ -2202,6 +2205,7 @@ struct RenderEngineOptx : RenderEngine, zeno::disable_copy {
                         graphicsMan->add_object(spObject);
                         matNeedUpdate = meshNeedUpdate = true;
                     }
+                    matNeedUpdate = meshNeedUpdate = staticNeedUpdate = true;
                 }
             }
 
