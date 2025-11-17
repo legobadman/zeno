@@ -138,8 +138,8 @@
                     }
                 },
                 "uipos": [
-                    2971.0,
-                    4914.0
+                    3711.0,
+                    5060.0
                 ],
                 "status": [],
                 "collasped": false
@@ -791,9 +791,7 @@
                     4253.0,
                     4426.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "2a1d6f27-CreateSphere": {
@@ -1025,7 +1023,7 @@
                 },
                 "uipos": [
                     1983.0,
-                    5364.0
+                    5365.0
                 ],
                 "status": [],
                 "collasped": false
@@ -1661,8 +1659,8 @@
                 },
                 "object_outputs": {},
                 "uipos": [
-                    2709.0,
-                    4377.0
+                    2975.0,
+                    4367.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2117,8 +2115,8 @@
                     }
                 },
                 "uipos": [
-                    4576.0,
-                    4914.0
+                    5316.0,
+                    5060.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2130,8 +2128,8 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "BindMaterial1",
-                                "out-socket": "object",
+                                "out-node": "PrimMerge1",
+                                "out-socket": "prim",
                                 "out-key": "",
                                 "in-key": "",
                                 "target-socket": "Input"
@@ -2179,8 +2177,8 @@
                     }
                 },
                 "uipos": [
-                    2261.0,
-                    4916.0
+                    2263.0,
+                    4809.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2241,8 +2239,8 @@
                     }
                 },
                 "uipos": [
-                    3049.0,
-                    5051.0
+                    3789.0,
+                    5197.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2303,8 +2301,8 @@
                     }
                 },
                 "uipos": [
-                    3517.0,
-                    5069.0
+                    4257.0,
+                    5215.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2365,8 +2363,8 @@
                     }
                 },
                 "uipos": [
-                    4051.0,
-                    5075.0
+                    4791.0,
+                    5221.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2427,8 +2425,8 @@
                     }
                 },
                 "uipos": [
-                    4646.0,
-                    5054.0
+                    5401.0,
+                    5208.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2483,8 +2481,8 @@
                     }
                 },
                 "uipos": [
-                    2758.0,
-                    5238.0
+                    3498.0,
+                    5384.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2539,8 +2537,8 @@
                     }
                 },
                 "uipos": [
-                    3268.0,
-                    5239.0
+                    4008.0,
+                    5385.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2595,8 +2593,8 @@
                     }
                 },
                 "uipos": [
-                    3794.0,
-                    5233.0
+                    4534.0,
+                    5379.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2651,8 +2649,8 @@
                     }
                 },
                 "uipos": [
-                    4390.0,
-                    5225.0
+                    5130.0,
+                    5371.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2696,8 +2694,8 @@
                     }
                 },
                 "uipos": [
-                    2219.0,
-                    4643.0
+                    2492.0,
+                    4649.0
                 ],
                 "status": [],
                 "collasped": false
@@ -4775,12 +4773,10 @@
                     }
                 },
                 "uipos": [
-                    3014.0,
-                    5231.0
+                    3754.0,
+                    5377.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "LightNode2": {
@@ -5118,12 +5114,10 @@
                     }
                 },
                 "uipos": [
-                    3487.0,
-                    5237.0
+                    4227.0,
+                    5383.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "LightNode3": {
@@ -5461,12 +5455,10 @@
                     }
                 },
                 "uipos": [
-                    4024.0,
-                    5233.0
+                    4764.0,
+                    5379.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "LightNode4": {
@@ -5804,12 +5796,10 @@
                     }
                 },
                 "uipos": [
-                    4621.0,
-                    5228.0
+                    5378.0,
+                    5374.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "MakeSceneNode1": {
@@ -5852,6 +5842,17 @@
                         "controlProps": null,
                         "socket-type": "clone",
                         "visible": false
+                    },
+                    "Reset Optix Scene": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
                     }
                 },
                 "primitive_outputs": {},
@@ -5862,8 +5863,8 @@
                     }
                 },
                 "uipos": [
-                    1994.0,
-                    5707.0
+                    2595.0,
+                    5216.0
                 ],
                 "status": [
                     "View"
@@ -6322,8 +6323,8 @@
                 },
                 "object_outputs": {},
                 "uipos": [
-                    2089.0,
-                    3671.0
+                    2148.0,
+                    3697.0
                 ],
                 "status": [],
                 "collasped": false
@@ -6698,6 +6699,48 @@
                 "uipos": [
                     1600.0,
                     4817.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "ReadObjPrim2": {
+                "name": "ReadObjPrim2",
+                "class": "ReadObjPrim",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "path": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "C:\\Users\\ASUS\\Desktop\\Dominocache\\$F.obj",
+                        "control": {
+                            "name": "read path"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "triangulate": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "prim": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    650.0,
+                    5409.0
                 ],
                 "status": [],
                 "collasped": false
@@ -16233,7 +16276,9 @@
                     1237.0,
                     4633.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false,
                 "subnet-customUi": {
                     "nickname": "",
@@ -16729,7 +16774,7 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "3671e56f-BindMaterial",
+                                "out-node": "BindMaterial1",
                                 "out-socket": "object",
                                 "out-key": "",
                                 "in-key": "",
@@ -16789,8 +16834,8 @@
                     }
                 },
                 "uipos": [
-                    1989.0,
-                    5523.0
+                    2568.0,
+                    5017.0
                 ],
                 "status": [],
                 "collasped": false
@@ -17066,6 +17111,632 @@
                 "status": [],
                 "collasped": false
             },
+            "ShaderFinalize1": {
+                "name": "ShaderFinalize1",
+                "class": "ShaderFinalize",
+                "object_inputs": {
+                    "tex2dList": {
+                        "links": null,
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "base": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "basecolor": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Color Vec3f"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "roughness": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.4000000059604645,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "metallic": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "metalColor": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Color Vec3f"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "specular": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "specularTint": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "anisotropic": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "anisoRotation": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "subsurface": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "sssRadius": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Fixed",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "Fixed",
+                                "Adaptive"
+                            ]
+                        },
+                        "socket-type": "primitive",
+                        "visible": false
+                    },
+                    "sssParam": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "sssColor": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Color Vec3f"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "scatterDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 10000.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "scatterStep": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "sheen": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "sheenTint": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "clearcoat": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "clearcoatColor": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "clearcoatRoughness": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "clearcoatIOR": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.5,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "specTrans": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "transColor": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "transTint": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "transTintDepth": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 10000.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "transDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 10.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "transScatterColor": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "ior": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.2999999523162842,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "diffraction": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "diffractColor": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "flatness": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "shadowReceiver": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "shadowTerminatorOffset": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "thin": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "doubleSide": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "normal": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.0,
+                            0.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "displacement": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "smoothness": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "emissionIntensity": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "emission": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "reflectance": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "opacity": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "thickness": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "isHair": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "commonCode": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "extensionsCode": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "mtlid": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Mat1_bullet",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "mask_value": {
+                        "links": null,
+                        "type": "vec3i",
+                        "default-value": [
+                            0,
+                            0,
+                            0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "backend": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "CUDA",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "CUDA"
+                            ]
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "mtl": {
+                        "type": "Material",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    2909.0,
+                    4965.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "ShaderTexture2D1": {
                 "name": "ShaderTexture2D1",
                 "class": "ShaderTexture2D",
@@ -17143,8 +17814,8 @@
                 },
                 "object_outputs": {},
                 "uipos": [
-                    3116.0,
-                    4364.0
+                    3212.0,
+                    4360.0
                 ],
                 "status": [],
                 "collasped": false
@@ -17295,8 +17966,8 @@
                     }
                 },
                 "uipos": [
-                    2486.0,
-                    4695.0
+                    3870.0,
+                    4829.0
                 ],
                 "status": [],
                 "collasped": false
@@ -18544,8 +19215,8 @@
                     }
                 },
                 "uipos": [
-                    3979.0,
-                    4938.0
+                    4719.0,
+                    5084.0
                 ],
                 "status": [],
                 "collasped": false
@@ -18790,8 +19461,8 @@
                     }
                 },
                 "uipos": [
-                    3443.0,
-                    4924.0
+                    4183.0,
+                    5070.0
                 ],
                 "status": [],
                 "collasped": false
