@@ -10,6 +10,8 @@
 #include "widgets/zcomboboxitemdelegate.h"
 #include <iostream>
 #include <zeno/core/Session.h>
+#include <zeno/extra/GlobalState.h>
+#include "calculation/calculationmgr.h"
 #include "zassert.h"
 
 
@@ -61,6 +63,7 @@ void ZTimeline::initSignals()
     connect(m_ui->editFrom, SIGNAL(editingFinished()), this, SLOT(onFrameEditted()));
     connect(m_ui->editTo, SIGNAL(editingFinished()), this, SLOT(onFrameEditted()));
     connect(m_ui->timeliner, SIGNAL(sliderValueChange(int)), this, SIGNAL(sliderValueChanged(int)));
+    connect(this, &ZTimeline::playForward, this, &ZTimeline::onPlayToggled);
     connect(m_ui->btnStopSolver, SIGNAL(clicked()), this, SLOT(stopSolver()));
 
 //merge from master.
@@ -281,7 +284,7 @@ void ZTimeline::onTimelineUpdate(int frameid)
     bool blocked = m_ui->timeliner->signalsBlocked();
     BlockSignalScope scope(m_ui->timeliner);
     BlockSignalScope scope2(m_ui->editFrame);
-    m_ui->timeliner->setSliderValue(frameid);
+    m_ui->timeliner->onlyUpdateSliderValue(frameid);
     m_ui->editFrame->setText(QString::number(frameid));
 }
 
@@ -370,6 +373,32 @@ void ZTimeline::updateCachedFrame()
 void ZTimeline::stopSolver()
 {
     zeno::getSession().terminate_solve();
+}
+
+void ZTimeline::onPlayToggled() {
+    auto& sess = zeno::getSession();
+    if (sess.is_auto_run()) {
+        //在auto模式下，点击播放会主动触发运行
+        auto pCalcMgr = zenoApp->calculationMgr();
+        pCalcMgr->run();
+    }
+    else {
+        //没有开自动运行，那只能停在这里
+    }
+}
+
+void ZTimeline::onRenderObjectLoaded() {
+    if (isPlayToggled()) {
+        //在播放的逻辑下，只有接到上一帧的数据，才会播放下一帧，不再采用之前的定时器模式
+        int currFrame = zeno::getSession().globalState->getFrameId();
+        const auto& [from, to] = fromTo();
+        int nextFrame = currFrame + 1;
+        if (nextFrame >= from && nextFrame <= to) {
+            auto& sess = zeno::getSession();
+            sess.switchToFrame(nextFrame);
+            onTimelineUpdate(nextFrame);
+        }
+    }
 }
 
 void ZTimeline::onSolverUpdate(zeno::SOLVER_MSG msg, int startFrame, int EndFrame)

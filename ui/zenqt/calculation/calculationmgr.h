@@ -56,6 +56,7 @@ public:
 signals:
     void calcFinished(bool, QString, QString, const zeno::render_reload_info&);
     void renderRequest(QString);
+    void renderLoadFinished();
     void nodeStatusChanged(QString, QmlNodeRunStatus::Value);
     void runStatus_changed();
     void autorun_changed();

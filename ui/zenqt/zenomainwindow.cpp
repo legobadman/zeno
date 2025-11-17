@@ -1061,13 +1061,12 @@ void ZenoMainWindow::initTimeline()
 {
     //master版本改动过大，而且都是cache相关，因此先不合并，维持3的设定
     auto pCalcMgr = zenoApp->calculationMgr();
-    connect(m_pTimeline, &ZTimeline::playForward, pCalcMgr, &CalculationMgr::onPlayTriggered);
-    connect(m_pTimeline, &ZTimeline::playForward, this, &ZenoMainWindow::reload_qml);
     connect(m_pTimeline, &ZTimeline::sliderValueChanged, pCalcMgr, &CalculationMgr::onFrameSwitched);
     connect(m_pTimeline, &ZTimeline::sliderRangeChanged, [](int start, int end) {
         auto& sess = zeno::getSession();
         sess.updateFrameRange(start, end);
     });
+    connect(pCalcMgr, &CalculationMgr::renderLoadFinished, m_pTimeline, &ZTimeline::onRenderObjectLoaded);
 }
 
 ZTimeline* ZenoMainWindow::timeline() const

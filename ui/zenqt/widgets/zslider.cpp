@@ -49,6 +49,12 @@ static void drawText(QPainter* painter, qreal x, qreal y, Qt::Alignment flags,
     painter->drawText(rect, flags, text, boundingRect);
 }
 
+void ZSlider::onlyUpdateSliderValue(int newVal)
+{
+    m_value = newVal;
+    update();
+}
+
 void ZSlider::setSliderValue(int value)
 {
     RunStatus::Value val = zenoApp->calculationMgr()->getRunStatus();

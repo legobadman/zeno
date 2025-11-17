@@ -434,6 +434,10 @@ void DisplayWidget::submit(const zeno::render_reload_info& info) {
         }
         updateFrame();
     }
+    else {
+        //still emit the signal even no obj to be rendered.
+        emit render_reload_finished();
+    }
 }
 
 void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {

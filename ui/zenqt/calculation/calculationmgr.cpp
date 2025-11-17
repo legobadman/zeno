@@ -138,6 +138,7 @@ void CalculationMgr::onCalcFinished(bool bSucceed, QString nodePath, QString msg
 void CalculationMgr::run()
 {
     setRunStatus(RunStatus::Running);
+    m_loadedRender.clear();
     m_worker->setCurrentGraphPath(zenoApp->graphsManager()->currentGraphPath());
     if (m_bMultiThread) {
         m_thread.start();
@@ -169,6 +170,7 @@ void CalculationMgr::onPlayReady() {
 }
 
 void CalculationMgr::onPlayTriggered(bool bToggled) {
+#if 0
     if (m_playTimer) {
         if (bToggled) {
             m_playTimer->start();
@@ -186,6 +188,7 @@ void CalculationMgr::onPlayTriggered(bool bToggled) {
             }
         }
     }
+#endif
 }
 
 void CalculationMgr::onFrameSwitched(int frame) {
@@ -258,7 +261,7 @@ void CalculationMgr::run_and_clean() {
     }
 #endif
 
-    Sleep(5000);
+    //Sleep(5000);
     //VLDReportLeaks();  // 会立即报告这个泄漏
 }
 
@@ -332,6 +335,12 @@ void CalculationMgr::on_render_objects_loaded()
     DisplayWidget* pWid = qobject_cast<DisplayWidget*>(sender());
     ZASSERT_EXIT(pWid);
     m_loadedRender.insert(pWid);
+
+    const auto& viewports = zenoApp->getMainWindow()->viewports();
+    if (m_loadedRender.size() == viewports.size()) {
+        emit renderLoadFinished();
+    }
+
     if (m_loadedRender.size() == m_registerRenders.size())
     {
         int j;
