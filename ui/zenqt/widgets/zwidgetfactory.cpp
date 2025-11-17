@@ -11,6 +11,7 @@
 #include "widgets/ColorEditor.h"
 #include "model/graphsmanager.h"
 #include "model/curvemodel.h"
+#include "model/parammodel.h"
 #include "widgets/zveceditor.h"
 #include "widgets/zcomboboxitemdelegate.h"
 #include "variantptr.h"
@@ -27,6 +28,7 @@
 #include <zeno/core/typeinfo.h>
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
+#include "viewport/displaywidget.h"
 #include "declmetatype.h"
 
 
@@ -36,6 +38,7 @@ namespace zenoui
 {
     QWidget* createWidget(
         const QModelIndex& nodeIdx,
+        const QString& param_name,
         const Any& value,                   //编辑值，里面的类型未必是参数真正的类型，比如公式的编辑值
         zeno::ParamControl ctrl,
         const zeno::ParamType paramType,    //参数真正的类型
@@ -476,6 +479,70 @@ namespace zenoui
                     cbSet.cbEditFinished(newText.toStdString());
                 });
                 return pCodeEditor;
+            }
+            case zeno::PushButton: {
+                QPushButton* pBtn = new QPushButton("Click Me");
+                if ("CameraNode" == nodeIdx.data(QtRole::ROLE_CLASS_NAME).toString()) {
+                    //因为控件需要从viewport上拿数据，所以整个回调过程不适合定义在ZENDEFINE，
+                    //因为节点本身的环境无法拿ui的数据，考虑到不是很常见，目前先放到这里
+                    QObject::connect(pBtn, &QPushButton::clicked, [=]() {
+                        auto pWin = zenoApp->getMainWindow();
+                        auto views = pWin->viewports();
+                        for (auto pDisplay : views) {
+                            if (pDisplay->isGLViewport()) {
+                                //TODO: 后续可以支持用光追，但要解决焦点问题
+                                Zenovis* pVis = pDisplay->getZenoVis();
+                                ZASSERT_EXIT(pVis, nullptr);
+                                zenovis::Session* sess = pVis->getSession();
+                                ZASSERT_EXIT(sess, nullptr);
+                                zenovis::Scene* scene = sess->get_scene();
+                                ZASSERT_EXIT(scene, nullptr);
+
+                                auto paramsM = QVariantPtr<ParamsModel>::asPtr(nodeIdx.data(QtRole::ROLE_PARAMS));
+
+                                if (param_name == "sync") {
+                                    auto paramIdx = paramsM->index(paramsM->indexFromName(param_name, true), 0);
+                                    auto camera = *(scene->camera.get());
+                                    zeno::vec3f pos = { camera.m_pos[0], camera.m_pos[1], camera.m_pos[2] };
+
+                                    auto m_lodup = camera.get_lodup();
+                                    zeno::vec3f up = { m_lodup[0], m_lodup[1], m_lodup[2] };
+
+                                    auto m_lodfront = camera.get_lodfront();
+                                    zeno::vec3f view = { m_lodfront[0], m_lodfront[1], m_lodfront[2] };
+
+                                    float fov = camera.m_fov;
+                                    float aperture = camera.m_aperture;
+                                    float focalPlaneDistance = camera.focalPlaneDistance;
+
+                                    int frame = zeno::getSession().get_frame_id();
+
+                                    std::string other_prop;
+                                    auto center = camera.m_pivot;
+                                    other_prop += zeno::format("{},{},{},", center[0], center[1], center[2]);
+                                    other_prop += zeno::format("{},", 0);
+                                    other_prop += zeno::format("{},", 0);
+                                    other_prop += zeno::format("{},", camera.get_radius());
+
+                                    paramsM->updateParamValue("pos", QVariant::fromValue(pos));
+                                    paramsM->updateParamValue("up", QVariant::fromValue(up));
+                                    paramsM->updateParamValue("view", QVariant::fromValue(view));
+                                    paramsM->updateParamValue("fov", fov);
+                                    paramsM->updateParamValue("aperture", aperture);
+                                    
+                                    paramsM->updateParamValue("frame", frame);
+                                    paramsM->updateParamValue("other", QString::fromStdString(other_prop));
+                                }
+                                else if (param_name == "focal") {
+                                    auto camera = *(scene->camera.get());
+                                    float focalPlaneDistance = camera.focalPlaneDistance;
+                                    paramsM->updateParamValue("focalPlaneDistance", focalPlaneDistance);
+                                }
+                            }
+                        }
+                        });
+                }
+                return pBtn;
             }
             default:
                 return nullptr;

@@ -58,6 +58,8 @@ ZENO_DEFNODE(CameraNode)({
          {gParamType_Float, "focalPlaneDistance", "2.0"},
          {gParamType_String, "other", ""},
          {gParamType_Int, "frame", "0"},
+         {gParamType_AnyNumeric, "sync", "", zeno::Socket_Primitve, zeno::PushButton},
+         {gParamType_AnyNumeric, "focal", "", zeno::Socket_Primitve, zeno::PushButton}
      },
      {
          {gParamType_Camera, "camera"},
