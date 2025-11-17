@@ -57,7 +57,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
         bool bAssets = false,
         std::pair<float, float> pos = {},
         bool isIOInit = false,
-        bool* pbAssetLock = nullptr);
+        bool* pbAssetLock = nullptr,
+        CustomUI customUi = CustomUI());
     CALLBACK_REGIST(createNode, void, const std::string&, zeno::NodeImpl*)
 
     bool removeNode(std::string const& name);

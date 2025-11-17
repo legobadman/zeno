@@ -3609,6 +3609,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 sparam.bWildcard = param.bWildcard;
                 sparam.m_wpNode = this;
                 sparam.bSocketVisible = param.bSocketVisible;
+                sparam.bInput = param.bInput;
                 self_prim_params[newname] = std::move(sparam);
 
                 new_params.insert(newname);

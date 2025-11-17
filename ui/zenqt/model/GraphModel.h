@@ -91,7 +91,7 @@ public:
     void clear();
     void undo();
     void redo();
-    void pushToplevelStack(QUndoCommand* cmd);
+    void pushUndoRedoStack(QUndoCommand* cmd);
     void beginMacro(const QString& name);
     void endMacro();
 
