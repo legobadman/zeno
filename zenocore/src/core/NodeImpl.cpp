@@ -1483,7 +1483,7 @@ std::set<RefSourceInfo> NodeImpl::resolveReferSource(const Any& param_defl) {
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::any_cast_to_string(param_defl);
-        if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
+        if (!param_text.empty()) {//不限制为ref/refout，可能是npoints("./Cube1.Output")之类的
             refSegments.push_back(param_text);
         }
     }
@@ -1493,7 +1493,7 @@ std::set<RefSourceInfo> NodeImpl::resolveReferSource(const Any& param_defl) {
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
+        if (!param_text.empty()) {
             refSegments.push_back(param_text);
         }
     }
@@ -1504,7 +1504,7 @@ std::set<RefSourceInfo> NodeImpl::resolveReferSource(const Any& param_defl) {
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (param_text.find("ref") != std::string::npos || param_text.find("refout") != std::string::npos) {
+            if (!param_text.empty()) {
                 refSegments.push_back(param_text);
             }
         }
@@ -3322,6 +3322,58 @@ std::vector<RefLinkInfo> NodeImpl::getReflinkInfo(bool bOnlySearchByDestNode)
     return refLinksInfo;
 }
 
+void NodeImpl::removeNodeUpdateRefLink(const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput)
+{
+    auto outnode = m_pGraph->getNode(link.outNode);
+    auto innode = m_pGraph->getNode(link.inNode);
+    if (outnode && innode) {
+        CoreParam* outCoreParam = nullptr;
+        auto& outPrims = bOutParamIsOutput ? outnode->m_outputPrims : outnode->m_inputPrims;
+        auto outPrimParamIt = outPrims.find(link.outParam);
+        if (outPrimParamIt == outPrims.end()) {
+            auto outObjParamIt = outnode->m_outputObjs.find(link.outParam);
+            if (outObjParamIt == outnode->m_outputObjs.end()) {
+                return;
+            }
+            outCoreParam = &outObjParamIt->second;
+        } else {
+            outCoreParam = &outPrimParamIt->second;
+        }
+        auto inParamIt = innode->m_inputPrims.find(link.inParam);
+        if (inParamIt == innode->m_inputPrims.end()) {
+            return;
+        }
+        if (bAddRef) {
+            for (auto iter = outCoreParam->reflinks.begin(); iter != outCoreParam->reflinks.end(); iter++) {
+                auto spReflink = *iter;
+                if (spReflink->source_inparam->name == link.outParam &&
+                    spReflink->dest_inparam->name == link.inParam &&
+                    spReflink->dest_inparam->m_wpNode->get_name() == link.inNode)
+                    return;
+            }
+            std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
+            reflink->source_inparam = outCoreParam;
+            reflink->dest_inparam = &inParamIt->second;
+            outCoreParam->reflinks.push_back(reflink);
+            inParamIt->second.reflinks.push_back(reflink);
+            addRefLink(link, bOutParamIsOutput);
+        } else {
+            for (auto iter = outCoreParam->reflinks.begin(); iter != outCoreParam->reflinks.end(); ) {
+                auto spReflink = *iter;
+                if (spReflink->source_inparam->name == link.outParam &&
+                    spReflink->dest_inparam->name == link.inParam &&
+                    spReflink->dest_inparam->m_wpNode->get_name() == link.inNode) {
+                    inParamIt->second.reflinks.erase(std::remove(inParamIt->second.reflinks.begin(), inParamIt->second.reflinks.end(), spReflink));
+                    outCoreParam->reflinks.erase(iter);
+                    removeRefLink(link, bOutParamIsOutput);
+                    break;
+                }
+                iter++;
+            }
+        }
+    }
+}
+
 bool NodeImpl::update_param_enable(const std::string& name, bool bOn, bool bInput) {
     if (bInput) {
         if (auto iter = m_inputObjs.find(name); iter != m_inputObjs.end()) {
@@ -3557,6 +3609,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 sparam.bWildcard = param.bWildcard;
                 sparam.m_wpNode = this;
                 sparam.bSocketVisible = param.bSocketVisible;
+                sparam.bInput = param.bInput;
                 self_prim_params[newname] = std::move(sparam);
 
                 new_params.insert(newname);

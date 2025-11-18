@@ -1,4 +1,4 @@
-﻿#include "zenoproppanel.h"
+#include "zenoproppanel.h"
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
 #include "model/curvemodel.h"
@@ -427,7 +427,8 @@ bool ZenoPropPanel::syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout
         */
         ParamsModel* paramsModel = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS));
         const QModelIndex& idx = paramsModel->paramIdx(perIdx.data(QtRole::ROLE_PARAM_NAME).toString(), true);
-        UiHelper::qIndexSetData(idx, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        //UiHelper::qIndexSetData(idx, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        m_model->setModelData(idx, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
     };
     cbSet.cbSwitch = [=](bool bOn) {
         zenoApp->getMainWindow()->setInDlgEventLoop(bOn);   //deal with ubuntu dialog slow problem when update viewport.
@@ -708,8 +709,9 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
 
     bool bFloat = UiHelper::isFloatType(type);
     cbSet.cbEditFinished = [=](zeno::reflect::Any newValue) {
-        paramsM->setData(idxCoreParam, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        //paramsM->setData(idxCoreParam, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
         //paramItem->setData(QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        m_model->setModelData(idxCoreParam, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
     };
     cbSet.cbSwitch = [=](bool bOn) {
         zenoApp->getMainWindow()->setInDlgEventLoop(bOn);   //deal with ubuntu dialog slow problem when update viewport.

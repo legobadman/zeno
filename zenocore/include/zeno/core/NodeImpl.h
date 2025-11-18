@@ -233,7 +233,10 @@ namespace zeno
         void on_node_about_to_remove();
         void on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded); //参数名包括对象输入和数值输入，不可重名
         void checkParamsConstrain();
+
+        //referLink相关
         std::vector<RefLinkInfo> getReflinkInfo(bool bOnlySearchByDestNode = true);
+        void removeNodeUpdateRefLink(const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput);//前端删除节点时undo/redo相关param的reflink
 
         CALLBACK_REGIST(update_visable_enable, void, zeno::NodeImpl*, std::set<std::string>, std::set<std::string>)
         CALLBACK_REGIST(addRefLink, void, EdgeInfo, bool outParamIsOutput)

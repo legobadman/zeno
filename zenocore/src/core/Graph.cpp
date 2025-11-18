@@ -811,8 +811,9 @@ NodeImpl* Graph::createNode(
     bool bAssets,
     std::pair<float, float> pos,
     bool isIOInit,
-    bool* pbAssetLock
-    )
+    bool* pbAssetLock,
+    CustomUI customUi
+)
 {
     CORE_API_BATCH
     const std::string& name = generateNewName(cls, orgin_name, bAssets);
@@ -859,7 +860,16 @@ NodeImpl* Graph::createNode(
         subnet_nodes.insert(uuid);
         if (!isIOInit) {
             zeno::ParamsUpdateInfo updateInfo;
-            zeno::parseUpdateInfo(pNode->get_customui(), updateInfo);
+            if (customUi.inputPrims.empty() && customUi.outputPrims.empty() && customUi.inputObjs.empty() && customUi.outputObjs.empty()) {
+                //创建新的subnet的情况
+                zeno::parseUpdateInfo(pNode->get_customui(), updateInfo);
+            } else {
+                //删除subnet再undo的情况
+                zeno::parseUpdateInfo(customUi, updateInfo);
+                if (auto subnNode = dynamic_cast<SubnetNode*>(pNode)) {
+                    subnNode->setCustomUi(customUi);
+                }
+            }
             pNode->update_editparams(updateInfo, true);
         }
     }
