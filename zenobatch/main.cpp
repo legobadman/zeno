@@ -10,6 +10,7 @@
 #include <Windows.h>
 #include <zeno/io/iohelper.h>
 #include <zeno/io/zenreader.h>
+#include <zeno/extra/EventCallbacks.h>
 #include <zeno/core/NodeImpl.h>
 #include <zenovis/Session.h>
 #include <zenovis/RenderEngine.h>
@@ -272,6 +273,10 @@ int main(int argc, char* argv[]) {
         });
 
     init_plugins(argv[0]);
+
+    static int calledOnce = ([] {
+        zeno::getSession().eventCallbacks->triggerEvent("init");
+        }(), 0);
 
     sess.createGraph(args.file);
 
