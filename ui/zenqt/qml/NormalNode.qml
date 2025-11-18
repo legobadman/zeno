@@ -643,6 +643,12 @@ Qan.NodeItem {
         }
     }
 
+    function normalizeQrcPath(path) {
+        if (path.startsWith(":/"))
+            return path.substring(2);   // 去掉前两个字符 :/
+        return path;
+    }
+
     Component.onCompleted: {
         //初始化基本数据:
         var graphM = nodeItem.graph.model;
@@ -666,7 +672,7 @@ Qan.NodeItem {
             nodeicon.visible = true
             detach_name_editor.visible = true
             nodename_editor.visible = false
-            nodeicon.source = "data:image/svg+xml;utf8," + uistyle["icon"]
+            nodeicon.source = normalizeQrcPath(uistyle["icon"])
         }
         else {
             nodeicon.visible = false

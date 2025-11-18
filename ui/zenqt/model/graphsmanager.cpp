@@ -341,6 +341,7 @@ void GraphsManager::clear()
     }
     m_filePath = "";
     emit fileClosed();
+    setCurrentGraphPath("");
 }
 
 void GraphsManager::onRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
