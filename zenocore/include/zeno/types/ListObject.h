@@ -27,6 +27,7 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     void set(size_t index, zany&& obj);
     void update_key(const String& key) override;
     bool has_change_info() const;
+    bool empty() const;
 
     std::vector<int> get2_int() const;
     std::vector<float> get2_float() const;

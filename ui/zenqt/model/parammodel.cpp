@@ -764,6 +764,15 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     return QVariant();
 }
 
+bool ParamsModel::updateParamValue(const QString& name, const QVariant& qvar) {
+    QModelIndex paramIdx(index(indexFromName(name, true), 0));
+    if (!paramIdx.isValid()) {
+        return false;
+    }
+    const auto& anyVal = UiHelper::qvarToAny(qvar);
+    return setData(paramIdx, QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
+}
+
 int ParamsModel::indexFromName(const QString& name, bool bInput) const
 {
     for (int i = 0; i < m_items.length(); i++) {

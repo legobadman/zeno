@@ -443,7 +443,7 @@ bool ZenoPropPanel::syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout
         //bKeyFrame = AppHelper::getCurveValue(val);
     }
 
-    QWidget* pControl = zenoui::createWidget(m_idx, anyVal, ctrl, type, cbSet, pros);
+    QWidget* pControl = zenoui::createWidget(m_idx, paramName, anyVal, ctrl, type, cbSet, pros);
 
     ZTextLabel* pLabel = new ZTextLabel(paramName);
 
@@ -727,7 +727,7 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
         //bKeyFrame = AppHelper::getCurveValue(val);
     }
 
-    QWidget* pControl = zenoui::createWidget(m_idx, anyVal, ctrl, type, cbSet, pros);
+    QWidget* pControl = zenoui::createWidget(m_idx, paramName, anyVal, ctrl, type, cbSet, pros);
 
     ZTextLabel* pLabel = new ZTextLabel(paramName);
 

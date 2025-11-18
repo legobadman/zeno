@@ -128,7 +128,7 @@ struct ShaderTexture3D : ShaderNodeClone<ShaderTexture3D>
     ZENDEFNODE(ShaderTexture2D, {
     {
         {gParamType_Int, "texId", "0"},
-        {gParamType_IObject, "coord"},
+        {gParamType_Shader, "coord"},
         {gParamType_Vec2f, "uvtiling", "1,1"},
         {"enum float vec2 vec3 vec4", "type", "vec3"},
     },

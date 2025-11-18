@@ -1949,7 +1949,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
         }
 
         //有很多ref子图中字符串类型的参数，所以一切字符串都要parse
-        const std::string& code = any_cast<std::string>(defl);
+        const std::string& code = any_cast_to_string(defl);
         if (!code.empty()) {
             result = resolve_string(code, code);
         }

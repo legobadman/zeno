@@ -235,11 +235,9 @@ struct ExtractMaterialShader : zeno::INode
     {
         virtual void apply() override
         {
-            auto obj = ZImpl(get_input<zeno::IObject>("object"));
+            auto prim = get_input_Geometry("object")->toPrimitiveObject();
             auto isL = ZImpl(get_input2<int>("islight"));
             auto inverdir = ZImpl(get_input2<int>("invertdir"));
-
-            auto prim = dynamic_cast<zeno::PrimitiveObject *>(obj.get());
 
             zeno::vec3f clr;
             if (! prim->verts.has_attr("clr")) {
@@ -255,10 +253,10 @@ struct ExtractMaterialShader : zeno::INode
                 }
             }
 
-            obj->userData()->set_int("isRealTimeObject", std::move(isL));
-            obj->userData()->set_int("isL", std::move(isL));
-            obj->userData()->set_int("ivD", std::move(inverdir));
-            ZImpl(set_output("object", std::move(obj)));
+            prim->userData()->set_int("isRealTimeObject", std::move(isL));
+            prim->userData()->set_int("isL", std::move(isL));
+            prim->userData()->set_int("ivD", std::move(inverdir));
+            set_output("object", create_GeometryObject(prim.get()));
         }
     };
 
@@ -266,12 +264,12 @@ struct ExtractMaterialShader : zeno::INode
         BindLight,
         {
             {
-                {gParamType_Primitive, "object", "", zeno::Socket_ReadOnly},
+                {gParamType_Geometry, "object", "", zeno::Socket_ReadOnly},
                 {gParamType_Bool, "islight", "1"},// actually string or list
                 {gParamType_Bool, "invertdir", "0"}
             },
             {
-                {gParamType_Primitive, "object"},
+                {gParamType_Geometry, "object"},
             },
             {},
             {

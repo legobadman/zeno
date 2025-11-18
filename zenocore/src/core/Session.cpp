@@ -736,6 +736,10 @@ bool Session::is_frame_node(const std::string& node_cls) {
     return frame_node_cls.find(node_cls) != frame_node_cls.end();
 }
 
+int Session::get_frame_id() const {
+    return globalState->getFrameId();
+}
+
 ZENO_API void Session::markDirtyAndCleanResult()
 {
     if (mainGraph)

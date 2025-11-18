@@ -126,6 +126,7 @@ private:
     ZToolBarButton *pSearchBtn;
     ZToolBarButton *pSettings;
     ZToolBarButton *pCleanProj;
+    ZToolBarButton *pCleanScene;
 
     ZToolMenuButton *m_btnRun;
     ZTextIconButton* m_btnKill;

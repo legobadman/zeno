@@ -37,6 +37,7 @@ struct SceneObject : IObject {
 
     std::string root_name;
     bool bNeedUpdateDescriptor = true;  //update descriptor目前和updatemesh是等价的。
+    bool bResetOptixScene = false;      //zeno3无法不断更新Mesh，cuda会报不知名的异常，只能重新清理场景
 
     zany clone() const override {
         auto newSceneObj = std::make_unique<SceneObject>();
@@ -46,6 +47,7 @@ struct SceneObject : IObject {
         newSceneObj->node_to_id = node_to_id;
         newSceneObj->root_name = root_name;
         newSceneObj->bNeedUpdateDescriptor = bNeedUpdateDescriptor;
+        newSceneObj->bResetOptixScene = bResetOptixScene;
         for (auto& [key, geom] : geom_list) {
             auto new_geom = safe_uniqueptr_cast<GeometryObject_Adapter>(geom->clone());
             newSceneObj->geom_list.emplace(key, std::move(new_geom));

@@ -359,6 +359,12 @@ zeno::reflect::Any UiHelper::qvarToAny(const QVariant& var, const zeno::ParamTyp
         {
             return var.value<zeno::reflect::Any>();
         }
+        else if (var.userType() == QMetaTypeId<zeno::vec3f>::qt_metatype_id()) {
+            return var.value<zeno::vec3f>();
+        }
+        else if (var.userType() == QMetaTypeId<zeno::vec3i>::qt_metatype_id()) {
+            return var.value<zeno::vec3i>();
+        }
         else if (var.userType() == QMetaTypeId<UI_VECTYPE>::qt_metatype_id())
         {
             UI_VECTYPE vec = var.value<UI_VECTYPE>();

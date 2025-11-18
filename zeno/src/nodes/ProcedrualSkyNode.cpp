@@ -15,8 +15,8 @@ struct ProceduralSky : INode {
     virtual void apply() override {
         auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto pUserData = dynamic_cast<UserData*>(prim->userData());
-        pUserData->set2("isRealTimeObject", std::move(1));
-        pUserData->set2("ProceduralSky", std::move(1));
+        pUserData->set2("isRealTimeObject", 1);
+        pUserData->set2("ProceduralSky", 1);
         pUserData->set2("sunLightDir", std::move(ZImpl(get_input2<zeno::vec2f>("sunLightDir"))));
         pUserData->set2("sunLightSoftness", std::move(ZImpl(get_input2<float>("sunLightSoftness"))));
         pUserData->set2("windDir", std::move(ZImpl(get_input2<zeno::vec2f>("windDir"))));
@@ -60,7 +60,7 @@ struct HDRSky : INode {
              }
         }
         auto pUserData = dynamic_cast<UserData*>(prim->userData());
-        pUserData->set2("isRealTimeObject", std::move(1));
+        pUserData->set2("isRealTimeObject", 1);
         pUserData->set2("HDRSky", std::move(path));
         pUserData->set2("evnTexRotation", std::move(ZImpl(get_input2<float>("rotation"))));
         pUserData->set2("evnTex3DRotation", std::move(ZImpl(get_input2<zeno::vec3f>("rotation3d"))));
@@ -304,8 +304,8 @@ struct SkyComposer : INode {
             pUserData->set2("psizes", json(psizes).dump());
         }
 
-        pUserData->set2("SkyComposer", std::move(1));
-        pUserData->set2("isRealTimeObject", std::move(1));
+        pUserData->set2("SkyComposer", 1);
+        pUserData->set2("isRealTimeObject", 1);
         ZImpl(set_output("out", std::move(prim)));
     }
 };

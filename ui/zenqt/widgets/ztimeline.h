@@ -43,10 +43,12 @@ signals:
 public slots:
     void onTimelineUpdate(int frameid);
     void onFrameEditted();
+    void onPlayToggled();
     void setSliderValue(int frameid);
     void setPlayButtonChecked(bool bToggle);
     void togglePlayButton(bool bOn);
     void stopSolver();
+    void onRenderObjectLoaded();
 
 private:
     void initStyleSheet();

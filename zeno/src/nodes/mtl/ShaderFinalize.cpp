@@ -162,12 +162,14 @@ struct ShaderFinalize : INode {
             mtl->extensions = ZImpl(get_input<zeno::StringObject>("extensionsCode"))->get();
         {
             if (ZImpl(has_input("tex2dList"))) {
-                auto tex2dList = ZImpl(get_input<ListObject>("tex2dList"))->m_impl->get<zeno::Texture2DObject>();
-                if (!tex2dList.empty() && !em.tex2Ds.empty()) {
+                auto tex2dList = get_input_ListObject("tex2dList");
+                if (!tex2dList->empty() && !em.tex2Ds.empty()) {
                     throw zeno::makeError("Can not use both way!");
                 }
-                for (const auto& tex: tex2dList) {
-                    em.tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
+                for (const auto& obj : tex2dList->m_impl->m_objects) {
+                    if (auto tex = dynamic_cast<zeno::Texture2DObject*>(obj.get())) {
+                        em.tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
+                    }
                 }
             }
             if (!em.tex2Ds.empty()) {

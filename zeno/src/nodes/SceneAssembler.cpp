@@ -1084,6 +1084,7 @@ struct MakeSceneNode : zeno::INode {
     void apply() override {
         auto scene_tree = std::make_unique<SceneObject>();
         scene_tree->root_name = zsString2Std(get_input2_string("root_name"));
+        scene_tree->bResetOptixScene = get_input2_bool("Reset Optix Scene");
         if (!zeno::starts_with(scene_tree->root_name, "/")) {
             scene_tree->root_name = "/" + scene_tree->root_name;
         }
@@ -1128,6 +1129,7 @@ ZENDEFNODE( MakeSceneNode, {
         {gParamType_Geometry, "prim"},
         {gParamType_String, "root_name", "/ABC"},
         {gParamType_ListOfMat4, "xforms"},
+        {gParamType_Bool, "Reset Optix Scene", "0"}
     },
     {
         {gParamType_Scene, "scene"},

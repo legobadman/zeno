@@ -342,6 +342,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pSettings = new ZToolBarButton(false, ":/icons/toolbar_localSetting_idle.svg", ":/icons/toolbar_localSetting_light.svg");
     pTestApi = new ZToolBarButton(false, ":/icons/timeline-curvemap.svg", ":/icons/timeline-curvemap.svg");
     pCleanProj = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
+    pCleanScene = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
     pMultiThreadExecute = new ZToolBarButton(true, ":/icons/multithread.svg", ":/icons/multithread-on.svg");
 
     pAlways = new QCheckBox(tr("Auto"), this);
@@ -426,7 +427,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     };
     CallbackCollection cbSet;
     cbSet.cbEditFinished = funcZoomEdited;
-    cbZoom = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), std::string("100%"), zeno::Combobox, ui_gParamType_String, cbSet, props));
+    cbZoom = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), "", std::string("100%"), zeno::Combobox, ui_gParamType_String, cbSet, props));
     cbZoom->setProperty("focusBorder", "none");
     cbZoom->setEditable(false);
     cbZoom->setFixedSize(ZenoStyle::dpiScaled(60), ZenoStyle::dpiScaled(20));
@@ -459,6 +460,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pToolLayout->addWidget(m_btnRun);
     pToolLayout->addWidget(m_btnKill);
     pToolLayout->addWidget(pCleanProj);
+    pToolLayout->addWidget(pCleanScene);
     pToolLayout->addWidget(pMultiThreadExecute);
 
     pToolLayout->addStretch(4);
@@ -672,8 +674,8 @@ void DockContent_Editor::initConnections()
         m_btnKill->setVisible(true);
         if (m_btnRun->text() == tr("ReRun")) {
             zeno::getSession().markDirtyAndCleanResult();
-        for (auto view : zenoApp->getMainWindow()->viewports())
-            view->cleanUpScene();
+            for (auto view : zenoApp->getMainWindow()->viewports())
+                view->cleanUpScene();
         }
 
         zenoApp->calculationMgr()->run();
@@ -718,6 +720,18 @@ void DockContent_Editor::initConnections()
         }
         zenoApp->calculationMgr()->clear();
     });
+
+    connect(pCleanScene, &ZToolBarButton::clicked, this, [=]() {
+        if (ZenoMainWindow* pMainWin = zenoApp->getMainWindow()) {
+            QVector<ZGeometrySpreadsheet*> spreadsheets = pMainWin->getGeoSpreadSheet();
+            for (ZGeometrySpreadsheet* spreadsheet : spreadsheets) {
+                spreadsheet->clearModel();
+            }
+        }
+        for (auto view : zenoApp->getMainWindow()->viewports()) {
+            view->cleanUpScene();
+        }
+        });
 
     connect(&ZenoSettingsManager::GetInstance(), &ZenoSettingsManager::valueChanged, this, [=](QString name) {
         if (name == zsShowGrid) 
@@ -990,7 +1004,7 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
 
     CallbackCollection cbSet;
     cbSet.cbEditFinished = funcRender;
-    m_cbRes = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), std::string("Free"), zeno::Combobox, ui_gParamType_String, cbSet, props));
+    m_cbRes = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), "", std::string("Free"), zeno::Combobox, ui_gParamType_String, cbSet, props));
     m_cbRes->setProperty("focusBorder", "none");
     m_cbRes->setEditable(false);
     m_cbRes->view()->setFixedWidth(ZenoStyle::dpiScaled(110));

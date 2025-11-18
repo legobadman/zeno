@@ -28,9 +28,9 @@ static const float eps = 0.0001f;
 namespace zeno {
 struct UVProjectFromPlane : zeno::INode {
     virtual void apply() override {
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto &uv = prim->verts.add_attr<zeno::vec3f>("uv");
-        auto refPlane = ZImpl(get_input<PrimitiveObject>("refPlane"));
+        auto refPlane = get_input_Geometry("refPlane")->toPrimitiveObject();
         if (refPlane->verts.size() != 4) {
             zeno::log_error("refPlane must be 1 * 1 plane!");
             throw zeno::makeError("refPlane must be 1 * 1 plane!");
@@ -73,17 +73,17 @@ struct UVProjectFromPlane : zeno::INode {
                 prim->uvs[i] = {uv[i][0], uv[i][1]};
             }
         }
-        ZImpl(set_output("outPrim", std::move(prim)));
+        set_output("outPrim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(UVProjectFromPlane, {
     {
-        {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
-        {gParamType_Primitive, "refPlane", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "refPlane", "", zeno::Socket_ReadOnly},
     },
     {
-        {gParamType_Primitive, "outPrim"}
+        {gParamType_Geometry, "outPrim"}
     },
     {},
     {"primitive"},
