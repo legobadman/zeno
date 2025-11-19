@@ -1,6 +1,7 @@
 ## 节点图编辑器
 
 ZENO 图节点编辑器在新版本上得到了简化，区分了对象输入和数值型的输入
+![Overview](assets/zh/basic_node_ui.png)
 
 
 
