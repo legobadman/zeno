@@ -1,11 +1,11 @@
 ## 节点图编辑器
 
 ZENO 图节点编辑器在新版本上得到了简化，区分了对象输入和数值型的输入
-![Overview](assets/zh/basic_node_ui.png)
+![基础节点界面](assets/zh/basic_node_ui.png)
 
 
-
-支持了公式和引用机制，并显示了引用线，以表示参数之间的引用关系
+支持了公式和引用机制，并显示了引用线，以表示参数之间的引用关系:
+![引用参数](assets/zh/nodeeditor_ref_param.gif)
 
 
 ## 几何结构优化
