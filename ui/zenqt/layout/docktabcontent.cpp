@@ -327,22 +327,20 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
 {
     pListView = new ZToolBarButton(true, ":/icons/subnet-listview.svg", ":/icons/subnet-listview-on.svg");
     pTreeView = new ZToolBarButton(true, ":/icons/nodeEditor_nodeTree_unselected.svg", ":/icons/nodeEditor_nodeTree_selected.svg");
-    pluginView = new ZToolBarButton(true, ":/icons/nodeEditor_nodeTree_unselected.svg", ":/icons/nodeEditor_nodeTree_selected.svg");
+    pluginView = new ZToolBarButton(true, ":/icons/nodeEditor_extension_unselected.svg", ":/icons/nodeEditor_extension_selected.svg");
 
     pSubnetMgr = new ZToolBarButton(false, ":/icons/nodeEditor_subnetManager_unselected.svg", ":/icons/nodeEditor_subnetManager_selected.svg");
-    pFold = new ZToolBarButton(false, ":/icons/nodeEditor_nodeFold_unselected.svg", ":/icons/nodeEditor_nodeFold_selected.svg");
-    pUnfold = new ZToolBarButton(false, ":/icons/nodeEditor_nodeUnfold_unselected.svg", ":/icons/nodeEditor_nodeUnfold_selected.svg");
     pSnapGrid = new ZToolBarButton(true, ":/icons/nodeEditor_snap_unselected.svg", ":/icons/nodeEditor_snap_selected.svg");
     pShowGrid = new ZToolBarButton(true, ":/icons/nodeEditor_grid_unselected.svg", ":/icons/nodeEditor_grid_selected.svg");
-    pRearrangeGraph = new ZToolBarButton(false, ":/icons/nodeEditor_grid_unselected.svg", ":/icons/nodeEditor_grid_selected.svg");
-    pShowThumb = new ZToolBarButton(true, ":/icons/nodeEditor_blackboard_unselected.svg", ":/icons/nodeEditor_blackboard_selected.svg");
+    pRearrangeGraph = new ZToolBarButton(false, ":/icons/nodeEditor_rearrangement_unselected.svg", ":/icons/nodeEditor_rearrangement_selected.svg");
+    pShowThumb = new ZToolBarButton(true, ":/icons/nodeEditor_overview_unselected.svg", ":/icons/nodeEditor_overview_selected.svg");
     pCustomParam = new ZToolBarButton(false, ":/icons/nodeEditor_nodePara_unselected.svg", ":/icons/nodeEditor_nodePara_selected.svg");
     pGroup = new ZToolBarButton(false, ":/icons/nodeEditor_blackboard_unselected.svg", ":/icons/nodeEditor_blackboard_selected.svg");
     pSearchBtn = new ZToolBarButton(true, ":/icons/toolbar_search_idle.svg", ":/icons/toolbar_search_light.svg");
     pSettings = new ZToolBarButton(false, ":/icons/toolbar_localSetting_idle.svg", ":/icons/toolbar_localSetting_light.svg");
-    pTestApi = new ZToolBarButton(false, ":/icons/timeline-curvemap.svg", ":/icons/timeline-curvemap.svg");
-    pCleanProj = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
-    pCleanScene = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
+    //pTestApi = new ZToolBarButton(false, ":/icons/timeline-curvemap.svg", ":/icons/timeline-curvemap.svg");
+    pCleanProj = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool_unselected.svg", ":/icons/broom_clear_clean_tool_selected.svg");
+    //pCleanScene = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
     pMultiThreadExecute = new ZToolBarButton(true, ":/icons/multithread.svg", ":/icons/multithread-on.svg");
 
     pAlways = new QCheckBox(tr("Auto"), this);
@@ -353,8 +351,6 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pTreeView->setToolTip(tr("Node List"));
     pluginView->setToolTip(tr("Plugin List"));
     pSubnetMgr->setToolTip(tr("Subnet Manager"));
-    pFold->setToolTip(tr("Fold"));
-    pUnfold->setToolTip(tr("Unfold"));
     pCustomParam->setToolTip(tr("Customize Parameters"));
     pGroup->setToolTip(tr("Create Group"));
     pSearchBtn->setToolTip(tr("Search"));
@@ -444,15 +440,13 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pToolLayout->addStretch(1);
 
     pToolLayout->addWidget(pSubnetMgr);
-    pToolLayout->addWidget(pFold);
-    pToolLayout->addWidget(pUnfold);
     pToolLayout->addWidget(pSnapGrid);
     pToolLayout->addWidget(pShowGrid);
     pToolLayout->addWidget(pCustomParam);
     pToolLayout->addWidget(pGroup);
     pToolLayout->addWidget(pShowThumb);
     pToolLayout->addWidget(pRearrangeGraph);
-    pToolLayout->addWidget(pTestApi);     //TOFIX: 添加此项竟然导致最大化窗口无效，要研究布局细节。
+    //pToolLayout->addWidget(pTestApi);     //TOFIX: 添加此项竟然导致最大化窗口无效，要研究布局细节。
 
     //pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
     pToolLayout->addStretch(4);
@@ -460,7 +454,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pToolLayout->addWidget(m_btnRun);
     pToolLayout->addWidget(m_btnKill);
     pToolLayout->addWidget(pCleanProj);
-    pToolLayout->addWidget(pCleanScene);
+    //pToolLayout->addWidget(pCleanScene);
     pToolLayout->addWidget(pMultiThreadExecute);
 
     pToolLayout->addStretch(4);
@@ -512,20 +506,6 @@ void DockContent_Editor::initConnections()
         pTreeView->setChecked(false);
         pListView->setChecked(false);
         pluginView->setChecked(false);
-    });
-    connect(pFold, &ZToolBarButton::clicked, this, [=]() {
-        if (m_pEditor->welComPageShowed())
-            return;
-        QAction act("Collaspe");
-        act.setProperty("ActionType", ZenoMainWindow::ACTION_COLLASPE);
-        m_pEditor->onAction(&act);
-    });
-    connect(pUnfold, &ZToolBarButton::clicked, this, [=]() {
-        if (m_pEditor->welComPageShowed())
-            return;
-        QAction act("Expand");
-        act.setProperty("ActionType", ZenoMainWindow::ACTION_EXPAND);
-        m_pEditor->onAction(&act);
     });
     connect(pCustomParam, &ZToolBarButton::clicked, this, [=]() {
         if (m_pEditor->welComPageShowed())

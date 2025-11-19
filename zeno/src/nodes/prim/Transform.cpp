@@ -108,6 +108,13 @@ namespace zeno {
             user_data->del("_bboxMax");
         }
 
+        CustomUI export_customui() const override {
+            CustomUI ui = INode::export_customui();
+            ui.uistyle.iconResPath = ":/icons/node/transform.svg";
+            ui.uistyle.background = "#FFFFFF";
+            return ui;
+        }
+
         void apply() override {
             zany input_object = ZImpl(clone_input("Input Geometry"));
             zeno::vec3f translate = ZImpl(get_input2<vec3f>("Translation"));

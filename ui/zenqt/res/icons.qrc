@@ -4,6 +4,8 @@
     <file>icons/node/error.svg</file>
     <file>icons/node/camera.svg</file>
     <file>icons/node/fluid.svg</file>
+    <file>icons/node/transform.svg</file>
+    <file>icons/node/frame.svg</file>
     <file>icons/time-frame-mark.svg</file>
     <file>icons/adsdock/vsdark/close-button.svg</file>
     <file>icons/adsdock/vsdark/close-button-disabled.svg</file>
@@ -266,6 +268,8 @@
     <file>icons/nodeEditor_subnetPanel_unselected.svg</file>
     <file>icons/nodeEditor_nodePara_selected.svg</file>
     <file>icons/nodeEditor_nodePara_unselected.svg</file>
+    <file>icons/nodeEditor_extension_selected.svg</file>
+    <file>icons/nodeEditor_extension_unselected.svg</file>
     <file>icons/multithread.svg</file>
     <file>icons/multithread-on.svg</file>
     <file>icons/timeline_always_off.svg</file>
@@ -400,16 +404,20 @@
     <file>icons/view-noradius-off.svg</file>
     <file>icons/run_stop.svg</file>
     <file>icons/run_play.svg</file>
-    <file>icons/broom_clear_clean_tool.svg</file>
+    <file>icons/broom_clear_clean_tool_unselected.svg</file>
+    <file>icons/broom_clear_clean_tool_selected.svg</file>
     <file>icons/plugin_unselected.svg</file>
     <file>icons/plugin_selected.svg</file>
     <file>icons/geo_userdata-idle.svg</file>
     <file>icons/geo_userdata-on.svg</file>
-
     <file>icons/node/cube.svg</file>
     <file>icons/node/switchif.svg</file>
     <file>icons/node/switch-between.svg</file>
     <file>icons/node/aw.svg</file>
     <file>icons/node/subnet.svg</file>
+    <file>icons/nodeEditor_overview_unselected.svg</file>
+    <file>icons/nodeEditor_overview_selected.svg</file>
+    <file>icons/nodeEditor_rearrangement_unselected.svg</file>
+    <file>icons/nodeEditor_rearrangement_selected.svg</file>
 </qresource>
 </RCC>

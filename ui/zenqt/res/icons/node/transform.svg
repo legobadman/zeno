@@ -1,0 +1,23 @@
+<svg width="24" height="24" viewBox="0 0 24 24"
+     xmlns="http://www.w3.org/2000/svg" fill="none">
+
+  <!-- Rotation ring -->
+  <circle cx="12" cy="12" r="9.2"
+          stroke="#858585" stroke-width="1.2" fill="none"/>
+
+  <!-- X axis (red, right) -->
+  <line x1="12" y1="12" x2="23" y2="12"
+        stroke="#FF5555" stroke-width="2.6" stroke-linecap="round"/>
+
+  <!-- Y axis (green, up) -->
+  <line x1="12" y1="12" x2="12" y2="1"
+        stroke="#4CAF50" stroke-width="2.6" stroke-linecap="round"/>
+
+  <!-- Z axis (blue, diagonal down-left) -->
+  <line x1="12" y1="12" x2="2" y2="22"
+        stroke="#3B82F6" stroke-width="2.6" stroke-linecap="round"/>
+
+  <!-- Pivot center -->
+  <circle cx="12" cy="12" r="2.3"
+          fill="#858585"/>
+</svg>

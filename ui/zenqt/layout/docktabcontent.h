@@ -112,8 +112,6 @@ private:
     ZToolBarButton *pTreeView;
     ZToolBarButton* pluginView;
     ZToolBarButton *pSubnetMgr;
-    ZToolBarButton *pFold;
-    ZToolBarButton *pUnfold;
     ZToolBarButton *pSnapGrid;
     ZToolBarButton *pShowGrid;
     ZToolBarButton *pShowThumb;
@@ -126,7 +124,7 @@ private:
     ZToolBarButton *pSearchBtn;
     ZToolBarButton *pSettings;
     ZToolBarButton *pCleanProj;
-    ZToolBarButton *pCleanScene;
+    ZToolBarButton *pCleanScene = nullptr;
 
     ZToolMenuButton *m_btnRun;
     ZTextIconButton* m_btnKill;

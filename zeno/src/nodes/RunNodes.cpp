@@ -100,6 +100,14 @@ ZENDEFNODE(GetFrameTimeElapsed, {
 });
 
 struct GetFrameNum : zeno::INode {
+
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.iconResPath = ":/icons/node/frame.svg";
+        ui.uistyle.background = "#CDCDCD";
+        return ui;
+    }
+
     virtual void apply() override {
         auto num = std::make_unique<zeno::NumericObject>();
         num->set(ZImpl(getGlobalState())->getFrameId());
