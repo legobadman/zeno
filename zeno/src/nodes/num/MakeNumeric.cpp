@@ -4,6 +4,13 @@
 namespace zeno {
 
 struct NumericInt : INode {
+
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.iconResPath = ":/icons/node/integer.svg";
+        return ui;
+    }
+
     virtual void apply() override {
         ZImpl(set_primitive_output("value", ZImpl(get_param<int>("value"))));
     }

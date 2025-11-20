@@ -743,6 +743,12 @@ namespace zeno {
             Z_Axis
         };
 
+        CustomUI export_customui() const override {
+            CustomUI ui = INode::export_customui();
+            ui.uistyle.iconResPath = ":/icons/node/sphere.svg";
+            return ui;
+        }
+
         void apply() override {
             zeno::vec3f Center = ZImpl(get_input2<vec3f>("Center"));
             zeno::vec3f Rotate = ZImpl(get_input2<vec3f>("Rotate"));

@@ -368,7 +368,7 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 
     RoundRectInfo buttonShapeInfo;
     buttonShapeInfo.W = ZenoStyle::dpiScaled(22.);
-    buttonShapeInfo.H = ZenoStyle::dpiScaled(50.);
+    buttonShapeInfo.H = ZenoStyle::dpiScaled(44.);
     buttonShapeInfo.ltradius = buttonShapeInfo.rtradius = ZenoStyle::dpiScaled(9.);
     //根据是否有visible的socket显示来决定
     buttonShapeInfo.lbradius = buttonShapeInfo.rbradius = bBodyVisible ? 0 : ZenoStyle::dpiScaled(9.);
@@ -400,7 +400,7 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     pHLayout->addItem(m_pStatusWidgets1, Qt::AlignLeft);
 
     pHLayout->addSpacing(ZenoStyle::dpiScaled(16.));
-    const QSizeF szIcon = ZenoStyle::dpiScaledSize(QSizeF(26, 26));
+    const QSizeF szIcon = ZenoStyle::dpiScaledSize(QSizeF(24, 24));
 
     if (zeno::getSession().is_frame_node(nodeCls.toStdString())) {
         m_frameNodeMark = new ZenoImageItem(":/icons/time-frame-mark.svg", "", "", QSizeF(20, 20), headerWidget);
