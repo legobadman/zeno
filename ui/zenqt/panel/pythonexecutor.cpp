@@ -68,7 +68,7 @@ void PythonExecutePane::run() {
 
         const std::string& script = text.toStdString();
 #ifdef ZENO_WITH_PYTHON
-        bSucceed = zeno::runPython(script);
+        bSucceed = zeno::getSession().asyncRunPython(script);
 #endif
     }
     if (!bSucceed) {
