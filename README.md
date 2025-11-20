@@ -14,12 +14,11 @@ Open-source node system framework, to change your algorithmic code into useful t
 
 
 ## Features
-- [Graph Node Editor](docs/feature.md)
-- [Geometry Manipatuion](docs/CONTRIBUTING.md)
-- [ZFX Script System](BUILD.md)
-- [Realtime Render](docs/FAQ.md)
-- [Dynamic Simulation](docs/introduction.md)
-- [Video tutorial series](https://space.bilibili.com/263032155)
+- [Graph Node Editor](docs/feature_grapheditor.md)
+- [Geometry Manipatuion](docs/feature_calculation.md)
+- [ZFX Script System](docs/feature_zfx.md)
+- [Realtime Render](docs/feature_scene_assembler.md)
+- [Software Sxtension](docs/feature_extension.md)
 
 ## Gallery
 
