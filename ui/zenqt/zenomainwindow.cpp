@@ -11,6 +11,7 @@
 #include "panel/zgeometryspreadsheet.h"
 #include "panel/zqmlpanel.h"
 #include "panel/pythonexecutor.h"
+#include "panel/pythonconsole.h"
 #include "widgets/ztimeline.h"
 #include "widgets/ztoolbar.h"
 #include "viewport/viewportwidget.h"
@@ -1006,7 +1007,7 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         break;
     }
     case ACTION_PYTHON_EXECUTOR: {
-        auto pane = new PythonExecutePane;
+        auto pane = new PythonConsole;
         pWid = pane;
         title = tr("Python Executor");
         break;
