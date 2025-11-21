@@ -659,6 +659,18 @@ bool Session::asyncRunPython(const std::string& code) {
     return false;
 }
 
+bool Session::runPythonInteractive(const std::string& line, bool& needMore, std::string& output) {
+    if (m_pyexecutor)
+        return m_pyexecutor->runPythonInteractive(line, needMore, output);
+    return false;
+}
+
+bool Session::completePython(const std::string& text, std::vector<std::string>& out) {
+    if (m_pyexecutor)
+        return m_pyexecutor->completePython(text, out);
+    return false;
+}
+
 void* Session::hEventOfPyFinish() {
     return nullptr;
 }

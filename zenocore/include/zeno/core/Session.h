@@ -109,6 +109,8 @@ struct Session {
     ZENO_API void initEnv(const zenoio::ZSG_PARSE_RESULT ioresult);
     ZENO_API void initPyzen(std::function<void()> pyzenFunc);
     ZENO_API bool asyncRunPython(const std::string& code);
+    ZENO_API bool runPythonInteractive(const std::string& line, bool& needMore, std::string& output);
+    ZENO_API bool completePython(const std::string& text, std::vector<std::string>& out);
     ZENO_API void* hEventOfPyFinish();
     void reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus status);
     void reportIOProgress(const std::string& info, int inc);
