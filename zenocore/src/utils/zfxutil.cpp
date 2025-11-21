@@ -719,7 +719,7 @@ namespace zeno
                 std::string nodename = nodePrmPath.substr(0, idx);
                 paramPath = nodePrmPath.substr(idx + 1);
                 std::string nodeAbsPath = graph_correct_path + '/' + nodename;
-                pNodeImpl = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
+                pNodeImpl = zeno::getSession().mainGraph()->getNodeByPath(nodeAbsPath);
                 if (!pNodeImpl) {
                     //找不到节点，说明可能是当前节点
                     pNodeImpl = pContext->spNode;

@@ -132,7 +132,7 @@ Zpy_Camera::Zpy_Camera(
 )
 {
     //先默认在mainGraph里创建，避免还要指定一个graph这种麻烦（而且Camera这种大概率只要在main创建）
-    auto spNode = zeno::getSession().mainGraph->createNode("MakeCamera");
+    auto spNode = zeno::getSession().mainGraph()->createNode("MakeCamera");
     if (!spNode) {
         throw std::runtime_error("cannot create camera because of internal error");
     }
@@ -158,7 +158,7 @@ Zpy_Camera::Zpy_Camera(
 
     auto nodename = spNode->get_name();
     zeno::render_reload_info render_;
-    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
+    zeno::getSession().mainGraph()->applyNodes({ nodename }, render_);
 }
 
 Zpy_Camera::Zpy_Camera(zeno::NodeImpl* wpNode)
@@ -170,7 +170,7 @@ void Zpy_Camera::run() {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
     auto nodename = spNode->get_name();
     zeno::render_reload_info render_;
-    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
+    zeno::getSession().mainGraph()->applyNodes({ nodename }, render_);
 }
 
 std::unique_ptr<zeno::CameraObject> Zpy_Camera::getCamera() const {
@@ -293,7 +293,7 @@ Zpy_Light::Zpy_Light(
 )
 {
     //先默认在mainGraph里创建，避免还要指定一个graph这种麻烦（而且Camera这种大概率只要在main创建）
-    auto spNode = zeno::getSession().mainGraph->createNode("LightNode");
+    auto spNode = zeno::getSession().mainGraph()->createNode("LightNode");
     if (!spNode) {
         throw std::runtime_error("cannot create light because of internal error");
     }
@@ -321,7 +321,7 @@ Zpy_Light::Zpy_Light(
 
     auto nodename = spNode->get_name();
     zeno::render_reload_info render_;
-    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
+    zeno::getSession().mainGraph()->applyNodes({ nodename }, render_);
 }
 
 Zpy_Light::Zpy_Light(zeno::NodeImpl* wpNode)
@@ -402,7 +402,7 @@ void Zpy_Light::run() {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
     auto nodename = spNode->get_name();
     zeno::render_reload_info render_;
-    zeno::getSession().mainGraph->applyNodes({ nodename }, render_);
+    zeno::getSession().mainGraph()->applyNodes({ nodename }, render_);
 }
 
 std::shared_ptr<zeno::PrimitiveObject> Zpy_Light::getLight() const {

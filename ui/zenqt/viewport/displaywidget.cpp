@@ -416,7 +416,7 @@ void DisplayWidget::submit(const zeno::render_reload_info& info) {
 
     //这里要对不在current_ui_graph的节点进行过滤
     //TODO: 应该在graphmodel上做
-    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(render_summary.current_ui_graph);
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph()->getGraphByPath(render_summary.current_ui_graph);
     for (auto iter = render_summary.objs.begin(); iter != render_summary.objs.end(); ) {
         if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
             iter = render_summary.objs.erase(iter);
@@ -454,7 +454,7 @@ void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {
 
     //这里要对不在current_ui_graph的节点进行过滤
     //TODO: 应该在graphmodel上做
-    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(reload.current_ui_graph);
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph()->getGraphByPath(reload.current_ui_graph);
     for (auto iter = infos.begin(); iter != infos.end(); ) {
         if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
             iter = infos.erase(iter);

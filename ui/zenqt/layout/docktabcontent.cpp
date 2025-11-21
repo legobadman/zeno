@@ -33,6 +33,7 @@
 #include "model/GraphModel.h"
 #include "dialog/ZOptixCameraSetting.h"
 #include <zeno/core/typeinfo.h>
+#include <zeno/core/Graph.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/ObjectRecorder.h>
 
@@ -329,7 +330,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pTreeView = new ZToolBarButton(true, ":/icons/nodeEditor_nodeTree_unselected.svg", ":/icons/nodeEditor_nodeTree_selected.svg");
     pluginView = new ZToolBarButton(true, ":/icons/nodeEditor_extension_unselected.svg", ":/icons/nodeEditor_extension_selected.svg");
 
-    pSubnetMgr = new ZToolBarButton(false, ":/icons/nodeEditor_subnetManager_unselected.svg", ":/icons/nodeEditor_subnetManager_selected.svg");
+    pUploadExtension = new ZToolBarButton(false, ":/icons/nodeEditor_subnetManager_unselected.svg", ":/icons/nodeEditor_subnetManager_selected.svg");
     pSnapGrid = new ZToolBarButton(true, ":/icons/nodeEditor_snap_unselected.svg", ":/icons/nodeEditor_snap_selected.svg");
     pShowGrid = new ZToolBarButton(true, ":/icons/nodeEditor_grid_unselected.svg", ":/icons/nodeEditor_grid_selected.svg");
     pRearrangeGraph = new ZToolBarButton(false, ":/icons/nodeEditor_rearrangement_unselected.svg", ":/icons/nodeEditor_rearrangement_selected.svg");
@@ -350,7 +351,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pListView->setToolTip(tr("Subnet List"));
     pTreeView->setToolTip(tr("Node List"));
     pluginView->setToolTip(tr("Plugin List"));
-    pSubnetMgr->setToolTip(tr("Subnet Manager"));
+    pUploadExtension->setToolTip(tr("Update Extension"));
     pCustomParam->setToolTip(tr("Customize Parameters"));
     pGroup->setToolTip(tr("Create Group"));
     pSearchBtn->setToolTip(tr("Search"));
@@ -439,13 +440,13 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
 
     pToolLayout->addStretch(1);
 
-    pToolLayout->addWidget(pSubnetMgr);
     pToolLayout->addWidget(pSnapGrid);
     pToolLayout->addWidget(pShowGrid);
     pToolLayout->addWidget(pCustomParam);
     pToolLayout->addWidget(pGroup);
     pToolLayout->addWidget(pShowThumb);
     pToolLayout->addWidget(pRearrangeGraph);
+    pToolLayout->addWidget(pUploadExtension);
     //pToolLayout->addWidget(pTestApi);     //TOFIX: 添加此项竟然导致最大化窗口无效，要研究布局细节。
 
     //pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
@@ -556,6 +557,13 @@ void DockContent_Editor::initConnections()
         act.setProperty("ActionType", ZenoMainWindow::ACTION_REARRANGE_GRAPH);
         m_pEditor->onAction(&act);
     });
+
+    connect(pUploadExtension, &ZToolBarButton::clicked, this, [=]() {
+        auto& sess = zeno::getSession();
+        auto gra = sess.mainGraph();
+        auto spNode = gra->createNode("Cube");
+    });
+
     if (pTestApi) {
         connect(pTestApi, &ZToolBarButton::clicked, this, [=]() {
             auto& sess = zeno::getSession();

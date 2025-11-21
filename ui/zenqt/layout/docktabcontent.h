@@ -111,7 +111,7 @@ private:
     ZToolBarButton *pListView;
     ZToolBarButton *pTreeView;
     ZToolBarButton* pluginView;
-    ZToolBarButton *pSubnetMgr;
+    ZToolBarButton *pUploadExtension;
     ZToolBarButton *pSnapGrid;
     ZToolBarButton *pShowGrid;
     ZToolBarButton *pShowThumb;

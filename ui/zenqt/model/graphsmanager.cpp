@@ -248,7 +248,7 @@ bool GraphsManager::saveFile(const QString& filePath, APP_SETTINGS)
     zenoio::AppSettings settings;       //TODO:
     settings.timeline = zenoApp->getMainWindow()->timelineInfo();
 
-    zeno::GraphData graph = zeno::getSession().mainGraph->exportGraph();
+    zeno::GraphData graph = zeno::getSession().mainGraph()->exportGraph();
 
     zenoio::ZenWriter writer;
     writer.set_proj_path(filePath.toStdString());
@@ -279,7 +279,7 @@ GraphsTreeModel* GraphsManager::newFile()
 {
     auto& sess = zeno::getSession();
     clear();
-    if (!sess.mainGraph) {
+    if (!sess.mainGraph()) {
         sess.resetMainGraph();
     }
     m_main = new GraphModel("/main", false, m_treemodel, nullptr, this);

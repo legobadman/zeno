@@ -44,7 +44,6 @@ struct Session {
     std::unique_ptr<GlobalError> const globalError;
     std::unique_ptr<EventCallbacks> const eventCallbacks;
     std::unique_ptr<UserData> const m_userData;
-    std::shared_ptr<Graph> mainGraph;
     std::unique_ptr<AssetsMgr> assets;
     std::unique_ptr<GlobalVariableManager> globalVariableManager;
     std::unique_ptr<FunctionManager> funcManager;
@@ -61,6 +60,7 @@ struct Session {
 
     ZENO_API UserData &userData() const;
     ZENO_API std::shared_ptr<Graph> createGraph(const std::string& name);
+    ZENO_API std::shared_ptr<Graph> mainGraph() const;
     ZENO_API NodeImpl* getNodeByUuidPath(std::string const& uuid_path);
     ZENO_API NodeImpl* getNodeByPath(std::string const& uuid_path);
     ZENO_API void resetMainGraph();
@@ -128,6 +128,8 @@ private:
     unsigned long m_mainThreadId;
     std::atomic<bool> m_bInterrupted;
     std::unique_ptr<PyExecuteProxy> m_pyexecutor;
+
+    std::shared_ptr<Graph> m_spMainGraph;
 
     zeno::NodeRegistry m_cates;
     //std::map<std::string, std::vector<NodeInfo>> m_cates;

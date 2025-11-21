@@ -63,7 +63,7 @@ ZENO_API Session::Session()
     , globalError(std::make_unique<GlobalError>())
     , eventCallbacks(std::make_unique<EventCallbacks>())
     , m_userData(std::make_unique<UserData>())
-    //, mainGraph(std::make_shared<Graph>("main"))
+    //, m_spMainGraph(std::make_shared<Graph>("main"))
     , assets(std::make_unique<AssetsMgr>())
     , m_pyexecutor(std::make_unique<PyExecuteProxy>())
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
@@ -81,7 +81,7 @@ ZENO_API Session::~Session() {
 
 void Session::destroy() {
     assets.reset();
-    mainGraph.reset();
+    m_spMainGraph.reset();
 }
 
 
@@ -345,8 +345,8 @@ void Session::uninstallModule(const std::string& module_path) {
             const std::string uninstall_nodecls = info.name;
             nodeClasses.erase(uninstall_nodecls);
             //所有节点要disable掉，只留一个空壳
-            if (mainGraph)
-                mainGraph->update_load_info(uninstall_nodecls, true);
+            if (m_spMainGraph)
+                m_spMainGraph->update_load_info(uninstall_nodecls, true);
         }
     }
 }
@@ -356,8 +356,8 @@ void Session::endLoadModule() {
     for (NodeInfo& info : m_cates) {
         if (info.module_path == m_current_loading_module) {
             info.status = ZModule_Loaded;
-            if (mainGraph)
-                mainGraph->update_load_info(info.name, false);
+            if (m_spMainGraph)
+                m_spMainGraph->update_load_info(info.name, false);
         }
     }
     m_current_loading_module = "";
@@ -377,24 +377,28 @@ ZENO_API std::shared_ptr<Graph> Session::createGraph(const std::string& name) {
     return graph;
 }
 
+ZENO_API std::shared_ptr<Graph> Session::mainGraph() const {
+    return m_spMainGraph;
+}
+
 ZENO_API NodeImpl* Session::getNodeByUuidPath(std::string const& uuid_path) {
-    return mainGraph->getNodeByUuidPath(uuid_path);
+    return m_spMainGraph->getNodeByUuidPath(uuid_path);
 }
 
 ZENO_API NodeImpl* Session::getNodeByPath(std::string const& uuid_path)
 {
-    return mainGraph->getNodeByPath(uuid_path);
+    return m_spMainGraph->getNodeByPath(uuid_path);
 }
 
 ZENO_API void Session::resetMainGraph() {
-    mainGraph.reset();
-    mainGraph = std::make_shared<Graph>("main");
+    m_spMainGraph.reset();
+    m_spMainGraph = std::make_shared<Graph>("main");
     globalVariableManager.reset();
     globalVariableManager = std::make_unique<GlobalVariableManager>();
 }
 
 void Session::clearMainGraph() {
-    mainGraph.reset();
+    m_spMainGraph.reset();
 }
 
 ZENO_API void Session::clearAssets() {
@@ -458,8 +462,8 @@ ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path)
     }
 
     std::string graph_name = items[0];
-    if (graph_name == "main" && mainGraph) {
-        return mainGraph->getGraphByPath(path);
+    if (graph_name == "main" && m_spMainGraph) {
+        return m_spMainGraph->getGraphByPath(path);
     }
     else if (auto spGraph = assets->getAssetGraph(graph_name, true)) {
         return spGraph->getGraphByPath(path);
@@ -483,8 +487,8 @@ void Session::reportNodeStatus(const ObjPath& path, bool bDirty, NodeRunStatus s
 ZENO_API void Session::switchToFrame(int frameid)
 {
     CORE_API_BATCH
-    if (mainGraph) {
-        mainGraph->markDirtyWhenFrameChanged();
+    if (m_spMainGraph) {
+        m_spMainGraph->markDirtyWhenFrameChanged();
     }
     if (globalState) {
         globalState->updateFrameId(frameid);
@@ -559,13 +563,13 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
     });
 
     globalError->clearState();
-    float total_time = mainGraph->statistic_cpu_used();
+    float total_time = m_spMainGraph->statistic_cpu_used();
     globalState->init_total_runtime(total_time);
 
     bool bFailed = false;
     try
     {
-        mainGraph->runGraph(infos);
+        m_spMainGraph->runGraph(infos);
     }
     catch (ErrorException const& e) {
         infos.error.set_node_info(e.get_node_info());
@@ -581,7 +585,7 @@ ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& inf
         bFailed = true;
     }
     if (!infos.error.failed() && bFailed) {
-        mainGraph->mark_clean();
+        m_spMainGraph->mark_clean();
     }
     return true;
 }
@@ -611,8 +615,8 @@ int Session::get_frame_id() const {
 
 ZENO_API void Session::markDirtyAndCleanResult()
 {
-    if (mainGraph)
-        mainGraph->markDirtyAndCleanup();
+    if (m_spMainGraph)
+        m_spMainGraph->markDirtyAndCleanup();
 }
 
 ZENO_API void Session::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {
@@ -638,10 +642,10 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
     scope_exit sp([&]() {m_bDisableRunning = bDisableRun; });
 
     resetMainGraph();
-    mainGraph->init(ioresult.mainGraph);
-    mainGraph->initRef(ioresult.mainGraph);
+    m_spMainGraph->init(ioresult.mainGraph);
+    m_spMainGraph->initRef(ioresult.mainGraph);
     m_proj_path = ioresult.path;
-    //referManager->init(mainGraph);
+    //referManager->init(m_spMainGraph);
 
     switchToFrame(ioresult.timeline.currFrame);
     //init $F globalVariable
