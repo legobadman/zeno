@@ -16,9 +16,11 @@ ZENO 图节点编辑器在新版本上得到了简化，区分了对象输入和
 ![创建节点](assets/zh/menu_create_nodes.gif)
    
 2. 通过python交互环境调用绑定到内核的py接口：
+![python api](assets/zh/py_createnode.gif)
    
 3. 直接通过内核提供的C/C++ api，操作计算图
-
+![cpp api](assets/zh/cpp_api_createNode.gif)
 
 
 在UI框架的优化尝试方面，尝试过基于Qt Quick下的节点编辑器，和现有的基于QGraphicsView体系的节点编辑器 共用一套ViewModel。
+![qml gv](assets/zh/qml_and_gv.gif)
