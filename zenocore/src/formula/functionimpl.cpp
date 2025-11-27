@@ -535,7 +535,7 @@ namespace zeno
                                 return vec[0];
                             }
                             else {
-                                return vec[1];
+                                return vec[i];
                             }
                             }, arg.value);
                         formatargs.push_back(arg_var);
