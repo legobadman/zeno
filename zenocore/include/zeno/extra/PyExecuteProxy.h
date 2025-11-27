@@ -14,6 +14,7 @@ namespace zeno
             PENDING,
             SUCCEED,
             FAILED,
+            QUIT,
         };
 
         enum ExecType {
@@ -34,16 +35,18 @@ namespace zeno
 
     public:
         PyExecuteProxy();
+        ~PyExecuteProxy();
         void initPyzenFunc(std::function<void()> pyzenFunc);
         bool runPython(const std::string& code);
         bool runPythonInteractive(const std::string& line, bool& needMore, std::string& output);
         void waitLoop();
         bool completePython(const std::string& text, std::vector<std::string>& out);
+        void quit();
 
     private:
         void initialize();
 
-        std::thread m_thd;
+        std::thread m_thd;  //TODO: join
         std::condition_variable m_cv;
         std::mutex m_mtx;
         std::string m_code;

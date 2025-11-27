@@ -18,6 +18,11 @@ namespace zeno {
         m_pyzenFunc = pyzenFunc;
     }
 
+    PyExecuteProxy::~PyExecuteProxy() {
+        quit();
+        m_thd.join();
+    }
+
     void PyExecuteProxy::initialize() {
 #ifdef ZENO_WITH_PYTHON
         if (!m_pyzenFunc) {
@@ -84,7 +89,12 @@ namespace zeno {
     void PyExecuteProxy::waitLoop() {
         while (true) {
             std::unique_lock lck(m_mtx);
-            m_cv.wait(lck, [&]() {return m_context.state == State::PENDING; });
+            m_cv.wait(lck, [&]() {return m_context.state == State::PENDING ||
+                m_context.state == State::QUIT; });
+
+            if (m_context.state == State::QUIT) {
+                return;
+            }
 
             if (!m_bInitEnv) {
                 initialize();
@@ -205,6 +215,13 @@ sys.stderr = catchOutErr\n\
 
         out = m_completionList;
         return true;
+    }
+
+    void PyExecuteProxy::quit() {
+        std::unique_lock<std::mutex> lck(m_mtx);
+
+        m_context.state = QUIT;
+        m_cv.notify_one();
     }
 
     bool PyExecuteProxy::runPythonInteractive(const std::string& line, bool& needMore, std::string& output) {
