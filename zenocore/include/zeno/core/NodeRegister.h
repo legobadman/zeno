@@ -24,6 +24,7 @@ namespace zeno {
 		ZENO_API int registerNodeClass(INode* (*ctor)(), std::string const& clsname, Descriptor const& desc);
 		ZENO_API int registerNodeClass(INode* (*ctor)(), std::string const& nodecls, CustomUI const& customui);
 		ZENO_API void registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip);
+		ZENO_API int unregisterNodeClass(std::string const& nodecls);
 		ZENO_API bool getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip);
 		ZENO_API INodeClass* getNodeClassPtr(const std::string& name);
 		ZENO_API void beginLoadModule(const std::string& module_name);

@@ -245,6 +245,16 @@ namespace zeno {
         m_objsUIInfo.insert(std::make_pair(hashcode, _ObjUIInfo{ nametip, color }));
     }
 
+    int NodeRegister::unregisterNodeClass(std::string const& nodecls) {
+        auto iter = nodeClasses.find(nodecls);
+        if (iter == nodeClasses.end()) {
+            log_error("node class redefined: `{}`\n", nodecls);
+            return -1;
+        }
+        nodeClasses.erase(iter);
+        return 0;
+    }
+
     void NodeRegister::clear() {
         nodeClasses.clear();
     }

@@ -12,6 +12,10 @@ namespace zeno {
             ::zeno::getNodeRegister().registerNodeClass([]() -> zeno::INode* { \
                 return new Class; }, #Class, ui_##Class); \
         } \
+\
+        ~_Def##Class() {\
+            ::zeno::getNodeRegister().unregisterNodeClass(#Class);\
+        }\
     } _def##Class
 
 
@@ -21,6 +25,10 @@ namespace zeno {
             ::zeno::getNodeRegister().registerNodeClass([] () -> zeno::INode* { \
                 return new Class; }, #Class, desc); \
         } \
+\
+        ~_Def##Class() {\
+            ::zeno::getNodeRegister().unregisterNodeClass(#Class);\
+        }\
     } _def##Class
 
 // deprecated:
