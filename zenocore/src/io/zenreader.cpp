@@ -4,6 +4,7 @@
 #include <zeno/io/iotags.h>
 #include <zeno/io/zdareader.h>
 #include <zeno/core/Assets.h>
+#include <zeno/core/NodeRegister.h>
 #include <filesystem>
 
 
@@ -432,7 +433,7 @@ namespace zenoio
         }
         else {
             bool bExist = false;
-            zeno::CustomUI descUI = zeno::getSession().getOfficalUIDesc(nodeCls, bExist);
+            zeno::CustomUI descUI = zeno::getNodeRegister().getOfficalUIDesc(nodeCls, bExist);
             if (bExist) {
                 paramType = findParamType(descUI, bInput, sockName);
             }

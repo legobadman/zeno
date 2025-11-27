@@ -30,6 +30,7 @@
 #include "zeno/utils/string.h"
 #include <filesystem>
 #include <zeno/utils/image_proc.h>
+#include <zeno/core/NodeRegister.h>
 #include <png.h>
 
 
@@ -1180,7 +1181,7 @@ inline void addTexture(std::string path, bool blockCompression=false, TaskType* 
         g_ies[path] = {std::move(iesBuffer), coneAngle };
         return;
     }
-    else if (zeno::getSession().nodeClasses.count("ReadPNG16") > 0 && zeno::ends_with(path, ".png", false)) {
+    else if (zeno::getNodeRegister().getNodeClassPtr("ReadPNG16") && zeno::ends_with(path, ".png", false)) {
         path = std::filesystem::u8path(path).string();
         auto img = read_png(path.c_str());
         if (img->verts.size() == 0) {

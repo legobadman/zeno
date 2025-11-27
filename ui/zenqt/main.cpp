@@ -1,5 +1,6 @@
 //#include <zeno/zeno.h>
 #include <zeno/core/Session.h>
+#include <zeno/core/NodeRegister.h>
 
 
 int main_editor(int argc, char* argv[]);
@@ -19,6 +20,7 @@ static VLDGuard _earlyVLDGuard; // 构造函数会在 main() 之前调用
 int main(int argc, char *argv[]) 
 {
     //VLDGlobalDisable();
+    auto coreApp = zeno::createApplication();
     auto& sess = zeno::getSession();
     zeno::scope_exit sp([&]() {
         sess.destroy();

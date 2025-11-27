@@ -36,6 +36,7 @@
 #include <zeno/core/Graph.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/ObjectRecorder.h>
+#include <zeno/core/NodeRegister.h>
 
 
 ZToolBarButton::ZToolBarButton(bool bCheckable, const QString& icon, const QString& iconOn)
@@ -559,9 +560,14 @@ void DockContent_Editor::initConnections()
     });
 
     connect(pUploadExtension, &ZToolBarButton::clicked, this, [=]() {
-        auto& sess = zeno::getSession();
-        auto gra = sess.mainGraph();
-        auto spNode = gra->createNode("Cube");
+        auto& nodeRegs = zeno::getNodeRegister();
+        auto ptr = nodeRegs.getNodeClassPtr("erode_noise_perlin_GEO");
+        //nodeRegs.clear();
+        int j;
+        j = 0;
+        //auto& sess = zeno::getSession();
+        //auto gra = sess.mainGraph();
+        //auto spNode = gra->createNode("Cube");
     });
 
     if (pTestApi) {

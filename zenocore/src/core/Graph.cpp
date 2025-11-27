@@ -7,6 +7,7 @@
 #include <zeno/utils/scope_exit.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Assets.h>
+#include <zeno/core/NodeRegister.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/extra/GraphException.h>
@@ -413,12 +414,9 @@ std::string Graph::generateNewName(const std::string& node_cls, const std::strin
 
     std::string tempName = node_cls;
     if (!bAssets) {
-        auto& nodeClass = getSession().nodeClasses;
-        auto it = nodeClass.find(node_cls);
-        if (it != nodeClass.end()) {
-            auto cl = it->second.get();
-            if (cl && !cl->m_customui.nickname.empty())
-                tempName = cl->m_customui.nickname;
+        auto cl = getNodeRegister().getNodeClassPtr(node_cls);
+        if (cl && !cl->m_customui.nickname.empty()) {
+            tempName = cl->m_customui.nickname;
         }
     }
 
@@ -827,20 +825,18 @@ NodeImpl* Graph::createNode(
     NodeImpl* pNode = nullptr;
     std::unique_ptr<NodeImpl> upNode;
     if (!bAssets) {
-        auto& nodeClass = getSession().nodeClasses;
         std::string nodecls = cls;
-        auto it = nodeClass.find(nodecls);
-        if (it == nodeClass.end()) {
-            upNode = std::make_unique<NodeImpl>(nullptr);   //空壳
-            pNode = upNode.get();
-            pNode->initUuid(this, nodecls);
-            uuid = pNode->get_uuid();
-        }
-        else {
-            INodeClass* cl = it->second.get();
+        auto cl = getNodeRegister().getNodeClassPtr(nodecls);
+        if (cl) {
             upNode = std::move(cl->new_instance(this, name));
             pNode = upNode.get();
             pNode->nodeClass = cl;
+            uuid = pNode->get_uuid();
+        }
+        else {
+            upNode = std::make_unique<NodeImpl>(nullptr);   //空壳
+            pNode = upNode.get();
+            pNode->initUuid(this, nodecls);
             uuid = pNode->get_uuid();
         }
     }

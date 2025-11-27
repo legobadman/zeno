@@ -5,6 +5,7 @@
 #include "zenomainwindow.h"
 #include "zassert.h"
 #include <zeno/core/Session.h>
+#include <zeno/core/NodeRegister.h>
 
 
 PluginsModel::PluginsModel(QObject* parent)
@@ -13,12 +14,19 @@ PluginsModel::PluginsModel(QObject* parent)
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
     settings.beginGroup("Zeno Plugins");
     QStringList lst = settings.childKeys();
+    if (lst.indexOf("zs_base.dll") == -1) {
+        lst.push_front("zs_base.dll");
+    }
+
     for (int i = 0; i < lst.size(); i++)
     {
         const QString& key = lst[i];
         QString path = settings.value(key).toString();
-        QFileInfo fninfo(path);
         QString appDir = zenoApp->applicationDirPath();
+        if (path.isEmpty()) {
+            path = appDir + '/' + key;
+        }
+        QFileInfo fninfo(path);
         QString dllName = fninfo.fileName();
         path = appDir + '/' + dllName;
 
@@ -26,8 +34,8 @@ PluginsModel::PluginsModel(QObject* parent)
         _item.path = path;
         _item.bLoaded = fninfo.exists();
         if (_item.bLoaded) {
-            zeno::getSession().beginLoadModule(path.toStdString());
-            zeno::scope_exit sp([&]() { zeno::getSession().endLoadModule(); });
+            zeno::getNodeRegister().beginLoadModule(path.toStdString());
+            zeno::scope_exit sp([&]() { zeno::getNodeRegister().endLoadModule(); });
 #ifdef _WIN32
             _item.hDll = LoadLibrary(path.toUtf8().data());
             ZASSERT_EXIT(_item.hDll != INVALID_HANDLE_VALUE);
@@ -101,6 +109,10 @@ static QString getFileName(const QString& path) {
 bool PluginsModel::removeRows(int row, int count, const QModelIndex& parent) {
 #ifdef _WIN32
     beginRemoveRows(parent, row, row);
+
+    auto& nodeReg = zeno::getNodeRegister();
+    auto ptr = nodeReg.getNodeClassPtr("erode_noise_perlin_GEO");
+
     bool ret = FreeLibrary(m_items[row].hDll);
 
     //先从注册表移除
@@ -119,7 +131,7 @@ bool PluginsModel::removeRows(int row, int count, const QModelIndex& parent) {
     settings.beginGroup("Zeno Plugins");
     settings.remove(name);
 
-    zeno::getSession().uninstallModule(filePath.toStdString());
+    nodeReg.uninstallModule(filePath.toStdString());
 
     m_items.removeAt(row);
     endRemoveRows();
@@ -142,8 +154,8 @@ void PluginsModel::addPlugin(const QString& filePath) {
     if (!filePath.isEmpty()) {
         HMODULE hDll = 0;
         {
-            zeno::getSession().beginLoadModule(filePath.toStdString());
-            zeno::scope_exit sp([&]() { zeno::getSession().endLoadModule(); });
+            zeno::getNodeRegister().beginLoadModule(filePath.toStdString());
+            zeno::scope_exit sp([&]() { zeno::getNodeRegister().endLoadModule(); });
             hDll = LoadLibrary(filePath.toUtf8().data());
             //添加到注册表
             if (hDll) {

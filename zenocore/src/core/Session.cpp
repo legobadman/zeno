@@ -49,13 +49,7 @@ using namespace zeno::types;
 
 namespace zeno {
 
-    struct _ObjUIInfo
-    {
-        std::string_view name;
-        std::string_view color;
-    };
-    static std::map<size_t, _ObjUIInfo> s_objsUIInfo;
-
+static Session* s_ptrGlobal = nullptr;
 
 ZENO_API Session::Session()
     : globalState(std::make_unique<GlobalState>())
@@ -75,8 +69,7 @@ ZENO_API Session::Session()
 }
 
 ZENO_API Session::~Session() {
-    int j;
-    j = 0;
+    s_ptrGlobal = nullptr;
 }
 
 void Session::destroy() {
@@ -250,127 +243,18 @@ static CustomUI descToCustomui(const Descriptor& desc) {
     return ui;
 }
 
-ZENO_API void Session::defNodeClass(INode* (*ctor)(), std::string const &clsname, Descriptor const &desc) {
-    if (clsname == "Line") {
-        int j;
-        j = 0;
-    }
-    
-    if (nodeClasses.find(clsname) != nodeClasses.end()) {
-        log_warn("node class redefined: `{}`\n", clsname);
-        return;
-    }
-
-    CustomUI ui = descToCustomui(desc);
-    auto cls = std::make_unique<ImplNodeClass>(ctor, ui, clsname);
-    if (!clsname.empty() && clsname.front() == '^')
-        return;
-
-    NodeInfo info;
-    info.module_path = m_current_loading_module;
-    info.name = clsname;
-    info.status = ZModule_Loaded;
-    info.cate = cls->m_customui.category;
-
-    m_cates.push_back(std::move(info));
-    nodeClasses.emplace(clsname, std::move(cls));
-}
-
-ZENO_API void Session::defNodeClass2(INode* (*ctor)(), std::string const& nodecls, CustomUI const& customui) {
-    if (nodeClasses.find(nodecls) != nodeClasses.end()) {
-        log_error("node class redefined: `{}`\n", nodecls);
-    }
-    CustomUI ui = customui;
-    initControlsByType(ui);
-    auto cls = std::make_unique<ImplNodeClass>(ctor, ui, nodecls);
-
-    NodeInfo info;
-    info.module_path = m_current_loading_module;
-    info.name = nodecls;
-    info.status = ZModule_Loaded;
-    info.cate = cls->m_customui.category;
-
-    m_cates.push_back(std::move(info));
-    nodeClasses.emplace(nodecls, std::move(cls));
-}
-
-ZENO_API void Session::defNodeClass3(INode* (*ctor)(), const char* pName, Descriptor const& desc) {
-    //auto cls = std::make_unique<ImplNodeClass>(ctor, desc, pName);
-    //nodeClasses.emplace(pName, std::move(cls));
-}
-
-zeno::CustomUI Session::getOfficalUIDesc(const std::string& clsname, bool& bExist) {
-    if (nodeClasses.find(clsname) == nodeClasses.end()) {
-        bExist = false;
-        return zeno::CustomUI();
-    }
-    bExist = true;
-    return nodeClasses[clsname]->m_customui;
-}
-
-#if 0
-ZENO_API void Session::defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase)
-{
-    assert(pTypeBase);
-    const zeno::reflect::ReflectedTypeInfo& info = pTypeBase->get_info();
-    auto& nodecls = std::string(info.qualified_name.c_str());
-    //有些name反射出来可能带有命名空间比如zeno::XXX
-    int idx = nodecls.find_last_of(':');
-    if (idx != std::string::npos) {
-        nodecls = nodecls.substr(idx + 1);
-    }
-
-    if (nodeClasses.find(nodecls) != nodeClasses.end()) {
-        //log_error("node class redefined: `{}`\n", nodecls);
-        return;
-    }
-    auto cls = std::make_unique<ReflectNodeClass>(ctor, nodecls, pTypeBase);
-    std::string cate = cls->m_customui.category;
-    if (m_cates.find(cate) == m_cates.end())
-        m_cates.insert(std::make_pair(cate, std::vector<std::string>()));
-    m_cates[cate].push_back(nodecls);
-
-    nodeClasses.emplace(nodecls, std::move(cls));
-}
-#endif
-
-void Session::beginLoadModule(const std::string& module_name) {
-    m_current_loading_module = module_name;
-}
-
-void Session::uninstallModule(const std::string& module_path) {
-    for (NodeInfo& info : m_cates) {
-        if (info.module_path == module_path) {
-            info.status = ZModule_UnLoaded;
-            const std::string uninstall_nodecls = info.name;
-            nodeClasses.erase(uninstall_nodecls);
-            //所有节点要disable掉，只留一个空壳
-            if (m_spMainGraph)
-                m_spMainGraph->update_load_info(uninstall_nodecls, true);
-        }
-    }
-}
-
-void Session::endLoadModule() {
-    //有可能加载模块前有旧节点，这时候要enable已有的节点
-    for (NodeInfo& info : m_cates) {
-        if (info.module_path == m_current_loading_module) {
-            info.status = ZModule_Loaded;
-            if (m_spMainGraph)
-                m_spMainGraph->update_load_info(info.name, false);
-        }
-    }
-    m_current_loading_module = "";
-}
-
-
 ZENO_API INodeClass::INodeClass(CustomUI const &customui, std::string const& classname)
     : m_customui(customui)
     , classname(classname)
 {
 }
 
-ZENO_API INodeClass::~INodeClass() = default;
+ZENO_API INodeClass::~INodeClass() {
+    if (classname == "erode_noise_perlin_GEO") {
+        int j;
+        j = 0;
+    }
+}
 
 ZENO_API std::shared_ptr<Graph> Session::createGraph(const std::string& name) {
     auto graph = std::make_shared<Graph>(name);
@@ -619,22 +503,6 @@ ZENO_API void Session::markDirtyAndCleanResult()
         m_spMainGraph->markDirtyAndCleanup();
 }
 
-ZENO_API void Session::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {
-    s_objsUIInfo.insert(std::make_pair(hashcode, _ObjUIInfo { nametip, color }));
-}
-
-ZENO_API bool Session::getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip) {
-    auto iter = s_objsUIInfo.find(hashcode);
-    if (iter == s_objsUIInfo.end()) {
-        color = "#000000";
-        nametip = "unknown type";
-        return false;
-    }
-    color = iter->second.color;
-    nametip = iter->second.name;
-    return true;
-}
-
 ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
 
     bool bDisableRun = m_bDisableRunning;
@@ -677,10 +545,6 @@ bool Session::completePython(const std::string& text, std::vector<std::string>& 
 
 void* Session::hEventOfPyFinish() {
     return nullptr;
-}
-
-ZENO_API zeno::NodeRegistry Session::dumpCoreCates() {
-    return m_cates;
 }
 
 namespace {
@@ -744,25 +608,24 @@ std::string dumpDescriptorToJson(const std::string &key, const Descriptor& descr
 }
 }
 
-ZENO_API std::string Session::dumpDescriptorsJSON() const {
-    //deprecated.
-    return "";
-}
 
 ZENO_API UserData &Session::userData() const {
     return *m_userData;
 }
 
+
+
 ZENO_API Session &getSession() {
-#if 0
-    static std::unique_ptr<Session> ptr;
-    if (!ptr) {
-        ptr = std::make_unique<Session>();
+    if (!s_ptrGlobal) {
+        throw makeError<UnimplError>("global application has not been initialized");
     }
-#else
-    static std::unique_ptr<Session> ptr = std::make_unique<Session>();
-#endif
-    return *ptr;
+    return *s_ptrGlobal;
+}
+
+std::unique_ptr<Session> createApplication() {
+    std::unique_ptr<Session> ptr = std::make_unique<Session>();
+    s_ptrGlobal = ptr.get();
+    return ptr;
 }
 
 }

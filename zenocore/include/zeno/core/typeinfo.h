@@ -18,7 +18,7 @@ using namespace zeno::types;
 #define registerObjectTypeUIInfo(ObjectName, Name, Color) \
         struct _Sclass_registor_##ObjectName {\
             _Sclass_registor_##ObjectName() {\
-                zeno::getSession().registerObjUIInfo(gParamType_##Name, Color, #Name); \
+                zeno::getNodeRegister().registerObjUIInfo(gParamType_##Name, Color, #Name); \
             }\
         }; \
         static _Sclass_registor_##ObjectName static_inst_##ObjectName{};

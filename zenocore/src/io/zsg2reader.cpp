@@ -318,10 +318,8 @@ void Zsg2Reader::_parseSocket(
     }
     if (!bInput && paramType == Param_Null)
     {
-        auto& nodeClass = zeno::getSession().nodeClasses;
-        auto it = nodeClass.find(nodeCls);
-        if (it != nodeClass.end()) {
-            const auto& outputs = it->second->m_customui.outputPrims;
+        if (auto cl = zeno::getNodeRegister().getNodeClassPtr(nodeCls)) {
+            const auto& outputs = cl->m_customui.outputPrims;
             for (const auto& output : outputs)
             {
                 if (output.name == sockName)
@@ -338,7 +336,6 @@ void Zsg2Reader::_parseSocket(
     }
     else {
         if (bInput) {
-            //��������������������Ĭ�ϸ���Owing�˿ڰ�
             socketType = zeno::Socket_Owning;
         }
         else {

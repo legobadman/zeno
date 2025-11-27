@@ -3460,13 +3460,15 @@ void NodeImpl::update_load_info(bool bDisable) {
         m_pNode.reset();
     }
     else {
-        //重新加载，需要拿到INode的定义
+        //重新加载，需要拿到INode的定义，TODO：有点麻烦
+#if 0
         auto iter = zeno::getSession().nodeClasses.find(m_nodecls);
         if (iter == zeno::getSession().nodeClasses.end()) {
             throw makeNodeError<UnimplError>(get_path(), "cannot load the nodeclass definition");
         }
         const std::unique_ptr<INodeClass>& defcls = iter->second;
         m_pNode = defcls->new_coreinst();
+#endif
     }
     CALLBACK_NOTIFY(update_load_info, bDisable);
 }

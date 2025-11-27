@@ -13,6 +13,7 @@
 #include <zeno/io/zenwriter.h>
 #include <zeno/io/zenreader.h>
 #include <zeno/core/Session.h>
+#include <zeno/core/NodeRegister.h>
 #include "nodeeditor/gv/zenosubgraphscene.h"
 #include "zassert.h"
 #include "variantptr.h"
@@ -696,7 +697,7 @@ QStringList GraphsManager::recentFiles() const
 
 NodeCates GraphsManager::getCates() const
 {
-    zeno::NodeRegistry nodeRegs = zeno::getSession().dumpCoreCates();
+    zeno::NodeRegistry nodeRegs = zeno::getNodeRegister().dumpCoreCates();
     QVector<zeno::NodeInfo> assetsNames;
     NodeCates cates;
 

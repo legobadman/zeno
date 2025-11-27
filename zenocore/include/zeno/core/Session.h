@@ -37,8 +37,6 @@ class PyExecuteProxy;
 class FunctionManager;
 
 struct Session {
-    std::map<std::string, std::unique_ptr<INodeClass>> nodeClasses;
-
     std::unique_ptr<GlobalState> const globalState;
     std::unique_ptr<GlobalComm> const globalComm;
     std::unique_ptr<GlobalError> const globalError;
@@ -84,16 +82,6 @@ struct Session {
     ZENO_API bool is_frame_node(const std::string& node_cls);
     ZENO_API int get_frame_id() const;
     ZENO_API void markDirtyAndCleanResult();
-    ZENO_API std::string dumpDescriptorsJSON() const;
-    ZENO_API zeno::NodeRegistry dumpCoreCates();
-    ZENO_API void defNodeClass(INode*(*ctor)(), std::string const &id, Descriptor const &desc = {});
-    ZENO_API void defNodeClass2(INode*(*ctor)(), std::string const& nodecls, CustomUI const& customui);
-    ZENO_API void defNodeClass3(INode*(*ctor)(), const char* pName, Descriptor const& desc = {});
-    ZENO_API zeno::CustomUI getOfficalUIDesc(const std::string& clsname, bool& bExist);
-    //ZENO_API void defNodeReflectClass(std::function<INode*()> ctor, zeno::reflect::TypeBase* pTypeBase);
-    ZENO_API void beginLoadModule(const std::string& module_name);
-    ZENO_API void uninstallModule(const std::string& module_name);
-    ZENO_API void endLoadModule();
     ZENO_API void setApiLevelEnable(bool bEnable);
     ZENO_API void beginApiCall();
     ZENO_API void endApiCall();
@@ -104,8 +92,6 @@ struct Session {
     ZENO_API void registerNodeCallback(F_NodeStatus func);
     ZENO_API void registerIOCallback(F_IOProgress func);
     ZENO_API std::shared_ptr<Graph> getGraphByPath(const std::string& path);
-    ZENO_API void registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip);
-    ZENO_API bool getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip);
     ZENO_API void initEnv(const zenoio::ZSG_PARSE_RESULT ioresult);
     ZENO_API void initPyzen(std::function<void()> pyzenFunc);
     ZENO_API bool asyncRunPython(const std::string& code);
@@ -131,15 +117,13 @@ private:
 
     std::shared_ptr<Graph> m_spMainGraph;
 
-    zeno::NodeRegistry m_cates;
-    //std::map<std::string, std::vector<NodeInfo>> m_cates;
-    //std::map<std::string, std::vector<std::string>> m_module_nodes;
-
     std::function<void()> m_callbackRunTrigger;
     F_NodeStatus m_funcNodeStatus;
     F_IOProgress m_funcIOCallback;
 };
 
 ZENO_API Session &getSession();
+
+ZENO_API std::unique_ptr<Session> createApplication();
 
 }
