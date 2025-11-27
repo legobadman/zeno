@@ -779,17 +779,8 @@ void ZenoMainWindow::loadDockLayout(QString name, bool isDefault)
         QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
         settings.beginGroup("layout");
         settings.beginGroup(name);
-        if (settings.allKeys().indexOf("content") != -1) 
-        {
-            content = settings.value("content").toString();
-            settings.endGroup();
-            settings.endGroup();
-        } 
-        else
-        {
-            loadDockLayout(name, true);
-            return;
-        }
+        loadDockLayout(name, true);
+        return;
     }
     if (!content.isEmpty()) 
     {
@@ -939,7 +930,7 @@ void ZenoMainWindow::initDocks(PANEL_TYPE onlyView)
     } 
     settings.endGroup();
     settings.endGroup();
-    loadDockLayout(name, false);
+    loadDockLayout(name, true);
 }
 
 void ZenoMainWindow::onCreatePanel(int actionType)
@@ -1454,21 +1445,12 @@ void ZenoMainWindow::closeEvent(QCloseEvent *event)
     // todo: event->ignore() when saveQuit returns false?
     if (isClose) 
     {
-        //save latest layout
-        QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
-        settings.beginGroup("layout");
-        QString layoutInfo = exportLayout(m_layoutRoot, size());
-        settings.beginGroup(g_latest_layout);
-        settings.setValue("content", layoutInfo);
-        settings.endGroup();
-        settings.endGroup();
-
         // trigger destroy event
         zeno::getSession().eventCallbacks->triggerEvent("beginDestroy");
         zenoApp->cleanQmlEngine();
         QMainWindow::closeEvent(event);
     } 
-    else 
+    else
     {
         event->ignore();
     }
