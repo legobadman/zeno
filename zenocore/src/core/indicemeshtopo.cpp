@@ -87,7 +87,44 @@ namespace zeno
 
     /* 添加元素 */
     int IndiceMeshTopology::add_face(const std::vector<int>& points, bool bClose) {
-        throw makeError<UnimplError>("");
+        int face_id = nfaces();
+        if (!bClose) {
+            if (points.size() < 2) {
+                throw makeError<UnimplError>("Open face must have at least 2 points");
+            }
+            if (points.size() == 2) {
+                vec2i line = { points[0], points[1] };
+                m_indiceMesh_topo->lines.push_back(line);
+            }
+            else {
+                for (size_t i = 0; i < points.size() - 1; i++) {
+                    vec2i line = { points[i], points[i + 1] };
+                    m_indiceMesh_topo->lines.push_back(line);
+                }
+            }
+        }
+        else {
+            if (is_base_triangle()) {
+                if (points.size() != 3) {
+                    throw makeError<UnimplError>("Triangle mesh can only add triangle faces");
+                }
+                vec3i tri = { points[0], points[1], points[2] };
+                m_indiceMesh_topo->tris.push_back(tri);
+            }
+            else {
+                if (points.size() < 3) {
+                    throw makeError<UnimplError>("Closed face must have at least 3 points");
+                }
+                int start_offset = m_indiceMesh_topo->loops.size();
+                for (int point_id : points) {
+                    m_indiceMesh_topo->loops.push_back(point_id);
+                }
+                vec2i poly = { start_offset, (int)points.size() };
+                m_indiceMesh_topo->polys.push_back(poly);
+            }
+        }
+
+        return face_id;
     }
 
     void IndiceMeshTopology::set_face(int idx, const std::vector<int>& points, bool bClose) {
