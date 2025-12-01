@@ -63,6 +63,5 @@ namespace zeno
 
     private:
         std::unique_ptr<PrimitiveObject> m_indiceMesh_topo;
-        int m_point_size;
     };
 }

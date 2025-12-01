@@ -5,7 +5,6 @@ namespace zeno
 {
     IndiceMeshTopology::IndiceMeshTopology(PrimitiveObject* prim)
         : m_indiceMesh_topo(std::make_unique<PrimitiveObject>(*prim))
-        , m_point_size(prim->size())
     {
         //不需要顶点数属性，是记录在外面的
         //m_indiceMesh_topo->verts.clear();   //需要记录顶点，因为可以需要这几个点作后续的拓扑处理
@@ -13,7 +12,6 @@ namespace zeno
     }
 
     IndiceMeshTopology::IndiceMeshTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
-        : m_point_size(nPoints)
     {
         m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
         if (bTriangle) {
@@ -26,7 +24,6 @@ namespace zeno
     }
 
     IndiceMeshTopology::IndiceMeshTopology(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
-        : m_point_size(nPoints)
     {
         m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
         m_indiceMesh_topo->verts.resize(nPoints);
@@ -87,6 +84,15 @@ namespace zeno
 
     /* 添加元素 */
     int IndiceMeshTopology::add_face(const std::vector<int>& points, bool bClose) {
+        if (points.empty()) {
+            return -1;
+        }
+        for (int point_id : points) {
+            if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size()) {
+                throw makeError<UnimplError>("Invalid point index in add_face");
+            }
+        }
+
         int face_id = nfaces();
         if (!bClose) {
             if (points.size() < 2) {
@@ -155,7 +161,7 @@ namespace zeno
     /* 返回元素个数 */
     int IndiceMeshTopology::npoints() const {
         //verts其实只存在Geom层面，拓扑层面后续会自定义，而不是沿用PrimitiveObject
-        return m_point_size;
+        return m_indiceMesh_topo->verts.size();
     }
 
     int IndiceMeshTopology::nfaces() const {
@@ -193,7 +199,7 @@ namespace zeno
     /* 点相关 */
     std::vector<int> IndiceMeshTopology::point_faces(int point_id) const {
         std::vector<int> faces;
-        if (point_id < 0 || point_id >= m_point_size)
+        if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size())
             return faces;
 
         if (is_base_triangle()) {
@@ -221,7 +227,7 @@ namespace zeno
     }
 
     int IndiceMeshTopology::point_vertex(int point_id) const {
-        if (point_id < 0 || point_id >= m_point_size)
+        if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size())
             return -1;
 
         if (is_base_triangle()) {
@@ -246,7 +252,7 @@ namespace zeno
 
     std::vector<int> IndiceMeshTopology::point_vertices(int point_id) const {
         std::vector<int> vertices;
-        if (point_id < 0 || point_id >= m_point_size)
+        if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size())
             return vertices;
 
         if (is_base_triangle()) {
