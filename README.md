@@ -14,7 +14,7 @@ Open-source node system framework, to change your algorithmic code into useful t
 
 
 ## Features
-- <a href="docs/feature_grapheditor.md" target="_blank">Graph Node Editor</a>
+- [Graph Node Editor](docs/feature_grapheditor.md)
 - [Geometry Manipatuion](docs/feature_calculation.md)
 - [ZFX Script System](docs/feature_zfx.md)
 - [Realtime Render](docs/feature_scene_assembler.md)

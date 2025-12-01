@@ -7,8 +7,8 @@ namespace zeno
         : m_indiceMesh_topo(std::make_unique<PrimitiveObject>(*prim))
         , m_point_size(prim->size())
     {
-        //不需要顶点数据和属性，是记录在外面的
-        m_indiceMesh_topo->verts.clear();
+        //不需要顶点数属性，是记录在外面的
+        //m_indiceMesh_topo->verts.clear();   //需要记录顶点，因为可以需要这几个点作后续的拓扑处理
         m_indiceMesh_topo->verts.attrs.clear();
     }
 
@@ -29,6 +29,7 @@ namespace zeno
         : m_point_size(nPoints)
     {
         m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
+        m_indiceMesh_topo->verts.resize(nPoints);
         int nFace = faces.size();
         if (bTriangle) {
             m_indiceMesh_topo->tris->resize(nFace);

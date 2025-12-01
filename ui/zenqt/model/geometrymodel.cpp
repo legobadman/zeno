@@ -79,7 +79,7 @@ static QMap<int, AttributeInfo> initColMapping(zeno::GeometryObject* pObject, ze
 VertexModel::VertexModel(zeno::GeometryObject_Adapter* spObject, QObject* parent) 
     : QAbstractTableModel(parent)
     , m_nvertices(spObject->nvertices())
-    , m_geomery(nullptr)
+    , m_geomery(spObject)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_VERTEX);
     spObject->m_impl->register_add_vertex([this](int vertext_linearIdx) {
@@ -209,17 +209,17 @@ bool VertexModel::removeRows(int row, int count, const QModelIndex& parent) {
 PointModel::PointModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
     : QAbstractTableModel(parent)
     , m_npoints(spObject->npoints())
-    , m_geomery(nullptr)
+    , m_geomery(spObject)
 {
-    m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_POINT);
-    spObject->m_impl->register_add_point([this](int ptnum) {
+    m_colMap = initColMapping(m_geomery->m_impl.get(), zeno::ATTR_POINT);
+    m_geomery->m_impl->register_add_point([this](int ptnum) {
         if (ptnum != -1) {
             beginInsertRows(QModelIndex(), ptnum, ptnum);
             m_npoints++;
             endInsertRows();
         }
     });
-    spObject->m_impl->register_remove_point([this](int ptnum) {
+    m_geomery->m_impl->register_remove_point([this](int ptnum) {
         if (ptnum != -1) {
             beginRemoveRows(QModelIndex(), ptnum, ptnum);
             m_npoints--;
@@ -331,7 +331,7 @@ bool PointModel::removeRows(int row, int count, const QModelIndex& parent) {
 FaceModel::FaceModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
     : QAbstractTableModel(parent)
     , m_nfaces(spObject->nfaces())
-    , m_geomery(nullptr)
+    , m_geomery(spObject)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_FACE);
     spObject->m_impl->register_add_face([this](int faceid) {
@@ -449,7 +449,7 @@ void FaceModel::setGeoObject(zeno::GeometryObject_Adapter* spObject)
 
 GeomDetailModel::GeomDetailModel(zeno::GeometryObject_Adapter* spObject, QObject* parent)
     : QAbstractTableModel(parent)
-    , m_geomery(nullptr)
+    , m_geomery(spObject)
 {
     m_colMap = initColMapping(spObject->m_impl.get(), zeno::ATTR_GEO);
 }
