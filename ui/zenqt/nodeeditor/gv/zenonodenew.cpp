@@ -107,6 +107,7 @@ ZenoNodeNew::ZenoNodeNew(const NodeUtilParam &params, QGraphicsItem *parent)
     , m_frameNodeMark(nullptr)
     , m_nameItem(nullptr)
     , m_dirtyMarker(nullptr)
+    , m_pLockMark(nullptr)
 {
     setFlags(ItemIsMovable | ItemIsSelectable);
     setAcceptHoverEvents(true);
@@ -422,8 +423,27 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
         m_nameEditor->setFont(font2);
         QRectF brNameEditor = m_nameEditor->boundingRect();
         qreal ww = brNameEditor.width() + ZenoStyle::dpiScaled(8);
-        qreal nameEditor_height = 14;
-        m_nameEditor->setPos(-ww, nameEditor_height);
+        qreal hh = brNameEditor.height();
+        qreal nameEditor_height = 0;
+
+        zeno::NodeType type = static_cast<zeno::NodeType>(m_index.data(QtRole::ROLE_NODETYPE).toInt());
+        if (type == zeno::Node_AssetInstance) {
+            nameEditor_height = 0;
+            static const int lock_iconsz = 16, hmargin = 16, vmargin = 28;
+            m_nameEditor->setPos(-ww, nameEditor_height);
+            bool bLocked = m_index.data(QtRole::ROLE_NODE_LOCKED).toBool();
+            m_pLockMark = new ZenoImageItem(":/icons/lock.svg", ":/icons/lock.svg", ":/icons/unlock.svg",
+                QSize(lock_iconsz, lock_iconsz), this);
+            m_pLockMark->setCheckable(true);
+            m_pLockMark->setPos(-lock_iconsz - hmargin, nameEditor_height + hh + vmargin);
+            m_pLockMark->toggle(!bLocked);
+            m_pLockMark->setClickable(false);
+        }
+        else {
+            nameEditor_height = 16;
+            m_nameEditor->setPos(-ww, nameEditor_height);
+        }
+
         connect(m_nameEditor, &ZEditableTextItem::contentsChanged, this, [=]() {
             qreal ww = m_nameEditor->textLength() + ZenoStyle::dpiScaled(8);
             m_nameEditor->setPos(-ww, nameEditor_height);
@@ -659,6 +679,11 @@ void ZenoNodeNew::onNameUpdated(const QString& newName)
         m_nameItem->setText(newName);
         ZGraphicsLayout::updateHierarchy(m_nameItem);
     }
+}
+
+void ZenoNodeNew::onNodeLockedChanged(bool bLocked) {
+    ZASSERT_EXIT(m_pLockMark);
+    m_pLockMark->toggle(!bLocked);
 }
 
 ZSocketLayout* ZenoNodeNew::getSocketLayout(bool bInput, const QString& name) const

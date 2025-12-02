@@ -66,6 +66,7 @@ public:
     void onRunStateChanged() override;
     void onSocketLinkChanged(const QModelIndex& paramIdx, bool bInput, bool bAdded, const QString keyName) override;
     void onNameUpdated(const QString& newName);
+    void onNodeLockedChanged(bool bLocked);
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
@@ -114,6 +115,7 @@ private:
     RightStatusBtnGroup* m_pStatusWidgets2;
     ZenoImageItem* m_errorTip;
     ZenoImageItem* m_frameNodeMark;
+    ZenoImageItem* m_pLockMark;
     QGraphicsPolygonItem* m_statusMarker;
     ZLayoutBackground* m_bodyWidget;
     ZLayoutBackground* m_headerWidget;

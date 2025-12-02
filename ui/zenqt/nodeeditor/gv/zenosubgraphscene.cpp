@@ -320,6 +320,11 @@ void ZenoSubGraphScene::onDataChanged(const QModelIndex& topLeft, const QModelIn
         ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
         m_nodes[id]->onRunStateChanged();
     }
+    if (role == QtRole::ROLE_NODE_LOCKED) {
+        ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
+        bool bLocked = idx.data(QtRole::ROLE_NODE_LOCKED).toBool();
+        m_nodes[id]->onNodeLockedChanged(bLocked);
+    }
     //if (role == QtRole::ROLE_NODE_DIRTY)
     //{
     //    QVariant varDataChanged = idx.data(QtRole::ROLE_NODE_DIRTY);

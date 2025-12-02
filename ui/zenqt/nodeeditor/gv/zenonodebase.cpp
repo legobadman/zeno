@@ -287,23 +287,31 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         ZASSERT_EXIT(pSubgGraphM);
         bool bLocked = pSubgGraphM->isLocked();
         QMenu* nodeMenu = new QMenu;
-        QAction* pLock = new QAction(bLocked ? tr("UnLock") : tr("Lock"));
+        QAction* pLock = new QAction(bLocked ? tr("UnLock") : tr("Lock and Reset"));
         nodeMenu->addAction(pLock);
         connect(pLock, &QAction::triggered, this, [=]() {
-            //TODO: oldui case
-            //pSubgGraphM->setLocked(!bLocked);
+            bool bLocked = m_index.data(QtRole::ROLE_NODE_LOCKED).toBool();
+            UiHelper::qIndexSetData(m_index, !bLocked, QtRole::ROLE_NODE_LOCKED);
         });
         if (!bLocked)
         {
+            QAction* pSyncAsset = new QAction(tr("Sync Local Changed To Asset"));
+            nodeMenu->addAction(pSyncAsset);
+            connect(pSyncAsset, &QAction::triggered, this, [=]() {
+                QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
+                GraphModel* model = qobject_cast<GraphModel*>(pModel);
+                model->syncAssetInst(m_index);
+            });
+
             QAction* pEditParam = new QAction(tr("Custom Params"));
             nodeMenu->addAction(pEditParam);
             connect(pEditParam, &QAction::triggered, this, [=]() {
                 ZenoGraphsEditor* pEditor = getEditorViewByViewport(event->widget());
-            if (pEditor)
-            {
-                QString assetName = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
-                pEditor->onAssetsCustomParamsClicked(assetName);
-            }
+                if (pEditor)
+                {
+                    QString assetName = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
+                    pEditor->onAssetsCustomParamsClicked(assetName);
+                }
             });
         }
         nodeMenu->exec(QCursor::pos());

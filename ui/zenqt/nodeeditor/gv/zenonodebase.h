@@ -53,6 +53,7 @@ public:
     virtual void onCollaspeUpdated(bool);
     virtual void onCollaspeBtnClicked();
     virtual void onRunStateChanged() {};
+    virtual void onNodeLockedChanged(bool bLocked) {}
     virtual void onSocketLinkChanged(const QModelIndex& paramIdx, bool bInput, bool bAdded, const QString keyName) {};
     virtual void onOptionsUpdated(int options) {};
     virtual void onViewUpdated(bool bView) {};

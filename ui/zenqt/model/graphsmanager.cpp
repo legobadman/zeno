@@ -476,7 +476,7 @@ void GraphsManager::saveProject(const QString& name)
         assetsModel()->saveAsset(name);
         if (m_main)
         {
-            m_main->syncToAssetsInstance(name);
+            m_main->syncToAssetsInstance(name, nullptr);
         }
     }
 }

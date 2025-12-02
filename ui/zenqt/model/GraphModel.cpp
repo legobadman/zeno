@@ -1926,7 +1926,7 @@ void GraphModel::syncToAssetsInstance_customui(const QString& assetsName, zeno::
         return;
     }
 
-    syncToAssetsInstance(assetsName);
+    syncToAssetsInstance(assetsName, nullptr);
 
     for (QString subgnode : m_subgNodes) {
         ZASSERT_EXIT(m_name2uuid.find(subgnode) != m_name2uuid.end());
@@ -2049,6 +2049,11 @@ void GraphModel::syncAssetInst(const QModelIndex& assetNode) {
     std::shared_ptr<zeno::Graph> newSharedAsset = assets->syncInstToAssets(spNode);
     zeno::CustomUI newUi = subnetnode->export_customui();
     assets->updateAssetInfo(assetName.toStdString(), newSharedAsset, newUi);
+    //在调用updateAssetInfo后，model上的m_wpCoreGraph直接失效了，
+    //因为不再采用智能指针，故指针被悬空了，因此要马上赋予新的图，并且注册
+    pAssetGraph->m_impl->m_wpCoreGraph = newSharedAsset.get();
+    pAssetGraph->registerCoreNotify();
+
     //uimodel上增加节点和边
     std::map<std::string, zeno::NodeImpl*> nodes;
     nodes = newSharedAsset->getNodes();
@@ -2058,7 +2063,7 @@ void GraphModel::syncAssetInst(const QModelIndex& assetNode) {
     pAssetGraph->_initLink();
 
     //同步到其他的instance
-    mainG->syncToAssetsInstance(assetName);
+    mainG->syncToAssetsInstance(assetName, item);
 
     //有可能改了asset的customui，而别的asset引用了这个修改后的asset，而且有节点参数ui，就意味着
     //所有asset也得同步一下这个
@@ -2071,16 +2076,19 @@ void GraphModel::syncAssetInst(const QModelIndex& assetNode) {
     mainG->m_undoRedoStack.value()->clear();
 }
 
-void GraphModel::syncToAssetsInstance(const QString& assetsName)
+void GraphModel::syncToAssetsInstance(const QString& assetsName, NodeItem* currentAssetNode)
 {
     for (const QString & name : m_subgNodes)
     {
         ZASSERT_EXIT(m_name2uuid.find(name) != m_name2uuid.end());
         QString uuid = m_name2uuid[name];
         ZASSERT_EXIT(m_nodes.find(uuid) != m_nodes.end());
-        GraphModel* pSubgM = m_nodes[uuid]->optSubgraph.value();
+        NodeItem* pNodeItem = m_nodes[uuid];
+        if (pNodeItem == currentAssetNode)  //当前assetNode发起的同步，自己就不需要更新了
+            continue;
+        GraphModel* pSubgM = pNodeItem->optSubgraph.value();
         ZASSERT_EXIT(pSubgM);
-        if (assetsName == m_nodes[uuid]->cls)
+        if (assetsName == pNodeItem->cls)
         {
             //TO DO: compare diff
             if (!pSubgM->isLocked())
@@ -2110,7 +2118,7 @@ void GraphModel::syncToAssetsInstance(const QString& assetsName)
         }
         else
         {
-            pSubgM->syncToAssetsInstance(assetsName);
+            pSubgM->syncToAssetsInstance(assetsName, nullptr);
         }
     }
 }
