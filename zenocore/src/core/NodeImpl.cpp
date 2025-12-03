@@ -3158,8 +3158,8 @@ bool zeno::NodeImpl::update_param_control_prop(const std::string& param, zeno::r
     CORE_API_BATCH
     auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
     spParam.ctrlProps = props;
-        CALLBACK_NOTIFY(update_param_control_prop, param, props)
-        return true;
+    CALLBACK_NOTIFY(update_param_control_prop, param, props)
+    return true;
 }
 
 bool NodeImpl::update_param_visible(const std::string& name, bool bOn, bool bInput) {
@@ -3649,10 +3649,12 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 spParam.name = newname;
                 spParam.socketType = Socket_Primitve;
                 spParam.bWildcard = param.bWildcard;
-                if (param.bInput && bChangeType)
+                if (param.bInput)
                 {
-                    update_param_control(spParam.name, param.control);
                     update_param_control_prop(spParam.name, param.ctrlProps);
+                    if (bChangeType) {
+                        update_param_control(spParam.name, param.control);
+                    }
                 }
             }
             else {

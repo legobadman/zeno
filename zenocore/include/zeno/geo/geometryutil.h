@@ -101,6 +101,16 @@ namespace zeno
         /*out*/std::map<int, DividePoint>& split_infos,
         /*out*/PointSide& which_side_if_failed
         );
+    ZENO_API void transformGeom(
+        zeno::GeometryObject_Adapter* geom
+        , glm::mat4 matrix
+        , std::string pivotType
+        , vec3f pivotPos
+        , vec3f localX
+        , vec3f localY
+        , vec3f translate
+        , vec4f rotation
+        , vec3f scaling);
 }
 
 

@@ -389,6 +389,92 @@ namespace zeno
         return mergedObj;
     }
 
+    static glm::vec3 mapplypos(glm::mat4 const& matrix, glm::vec3 const& vector) {
+        auto vector4 = matrix * glm::vec4(vector, 1.0f);
+        return glm::vec3(vector4) / vector4.w;
+    }
+
+    static glm::vec3 mapplynrm(glm::mat4 const& matrix, glm::vec3 const& vector) {
+        glm::mat3 normMatrix(matrix);
+        normMatrix = glm::transpose(glm::inverse(normMatrix));
+        auto vector3 = normMatrix * vector;
+        return glm::normalize(vector3);
+    }
+
+    void transformGeom(
+        zeno::GeometryObject_Adapter* geom
+        , glm::mat4 matrix
+        , std::string pivotType
+        , vec3f pivotPos
+        , vec3f localX
+        , vec3f localY
+        , vec3f translate
+        , vec4f rotation
+        , vec3f scaling)
+    {
+        zeno::vec3f _pivot = {};
+        zeno::vec3f lX = { 1, 0, 0 };
+        zeno::vec3f lY = { 0, 1, 0 };
+        if (pivotType == "bboxCenter") {
+            zeno::vec3f _min;
+            zeno::vec3f _max;
+            std::tie(_min, _max) = geomBoundingBox(geom->m_impl.get());
+            _pivot = (_min + _max) / 2;
+        }
+        else if (pivotType == "custom") {
+            _pivot = pivotPos;
+            lX = localX;
+            lY = localY;
+        }
+        auto lZ = zeno::cross(lX, lY);
+        lY = zeno::cross(lZ, lX);
+
+        auto pivot_to_world = glm::mat4(1);
+        pivot_to_world[0] = { lX[0], lX[1], lX[2], 0 };
+        pivot_to_world[1] = { lY[0], lY[1], lY[2], 0 };
+        pivot_to_world[2] = { lZ[0], lZ[1], lZ[2], 0 };
+        pivot_to_world[3] = { _pivot[0], _pivot[1], _pivot[2], 1 };
+        auto pivot_to_local = glm::inverse(pivot_to_world);
+        matrix = pivot_to_world * matrix * pivot_to_local;
+
+        //std::vector<zeno::vec3f> pos = geom->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+        if (geom->has_attr(ATTR_POINT, "pos"))
+        {
+            //TODO: 前面可以判断是否符合写时复制，比如transform的tsr是否发生改变
+            geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+                auto p = zeno::vec_to_other<glm::vec3>(old_pos);
+                p = mapplypos(matrix, p);
+                auto newpos = zeno::other_to_vec<3>(p);
+                return newpos;
+                });
+            //prim->verts.add_attr<zeno::vec3f>("_origin_pos") = pos; //视图端transform会用到，这里先不加
+        }
+
+        //std::vector<float> xvec = geom->get_attrs<float, 'x'>(ATTR_POINT, "pos");
+        //float xpos = geom->get_elem<float, 'x'>(ATTR_POINT, "pos", 0);
+
+        if (geom->has_attr(ATTR_POINT, "nrm"))
+        {
+            geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
+                auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
+                n = mapplynrm(matrix, n);
+                auto newnrm = zeno::other_to_vec<3>(n);
+                return newnrm;
+                });
+            //prim->verts.add_attr<zeno::vec3f>("_origin_nrm") = nrm;
+        }
+
+        auto user_data = dynamic_cast<UserData*>(geom->userData());
+        user_data->setLiterial("_translate", translate);
+        user_data->setLiterial("_rotate", rotation);
+        user_data->setLiterial("_scale", scaling);
+        user_data->set2("_pivot", _pivot);
+        user_data->set2("_localX", lX);
+        user_data->set2("_localY", lY);
+        user_data->del("_bboxMin");
+        user_data->del("_bboxMax");
+    }
+
     ZENO_API bool dividePlane(
         const std::vector<vec3f>& face_pts, /*容器的顺序就是面点的逆序排序*/
         float A, float B, float C, float D,

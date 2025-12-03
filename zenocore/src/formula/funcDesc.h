@@ -49,6 +49,11 @@ namespace zeno
                 "Returns a pseudo-number number from 0 to 1.",
                 "float", {{"seed", "int"}}}
             },
+            {"randbetween",
+                {"randbetween",
+                "Returns a pseudo-number number from min to max",
+                "float", {{"min", "float"}, {"max", "float"}, {"seed", "int"}}}
+            },
             {"pow",
                 {"pow",
                 "Find first param raised to the second param power.",

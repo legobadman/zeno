@@ -1,7 +1,11 @@
 #include <zeno/zeno.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
-#include "glm/gtc/matrix_transform.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/transform.hpp>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/core/FunctionManager.h>
 #include <sstream>
@@ -10,6 +14,7 @@
 #include <unordered_set>
 #include <zeno/para/parallel_reduce.h>
 #include <zeno/utils/interfaceutil.h>
+#include <zeno/utils/eulerangle.h>
 
 
 #ifndef M_PI
@@ -21,19 +26,19 @@ namespace zeno {
 
     struct CopyToPoints : INode {
         void apply() override {
-            auto _input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Geometry"));
-            auto _target_Obj = ZImpl(get_input2<GeometryObject_Adapter>("Target Geometry"));
+            auto _input_object = ZImpl(get_input2<GeometryObject_Adapter>("Object To Be Copied"));
+            auto points_from_obj = ZImpl(get_input2<GeometryObject_Adapter>("Points From"));
             std::string alignTo = ZImpl(get_input2<std::string>("Align To"));
 
             if (!_input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
-            else if (!_target_Obj) {
+            else if (!points_from_obj) {
                 throw makeError<UnimplError>("empty target object.");
             }
 
             auto input_object = _input_object->m_impl.get();
-            auto target_Obj = _target_Obj->m_impl.get();
+            auto target_Obj = points_from_obj->m_impl.get();
             if (!input_object->has_point_attr("pos")) {
                 throw makeError<UnimplError>("invalid input object.");
             }
@@ -90,7 +95,66 @@ namespace zeno {
                     auto idx = pt_offset + j;
 
                     auto& pt = inputPos[j];
-                    glm::vec4 gp = translate * glm::vec4(pt[0], pt[1], pt[2], 1);
+
+                    glm::mat4 matTrans(1.0);
+                    glm::mat4 matRotate(1.0);
+                    glm::mat4 matScale(1.0);
+
+                    auto trans_by = get_input2_string("Translate By Attribute");
+                    auto scale_by = get_input2_string("Scale By Attribute");
+                    auto rotate_by = get_input2_string("Rotate By Attribute");
+
+                    if (!trans_by.empty()) {
+                        zeno::vec3f trans(0);
+                        GeoAttrType type = points_from_obj->get_attr_type(zeno::ATTR_POINT, trans_by);
+                        if (type == ATTR_FLOAT) {
+                            float v = points_from_obj->m_impl->get_elem<float>(ATTR_POINT, zsString2Std(trans_by), 0, i);
+                            trans = vec3f(v, v, v);
+                        }
+                        else if (type == ATTR_VEC3) {
+                            trans = points_from_obj->m_impl->get_elem<vec3f>(ATTR_POINT, zsString2Std(trans_by), 0, i);
+                        }
+                        else {
+                            throw makeError<UnimplError>("");
+                        }
+                        matTrans = glm::translate(glm::vec3(trans[0], trans[1], trans[2]));
+                    }
+                    if (!scale_by.empty()) {
+                        zeno::vec3f scaling(1);
+                        GeoAttrType type = points_from_obj->get_attr_type(zeno::ATTR_POINT, scale_by);
+                        if (type == ATTR_FLOAT) {
+                            float v = points_from_obj->m_impl->get_elem<float>(ATTR_POINT, zsString2Std(scale_by), 0, i);
+                            scaling = vec3f(v, v, v);
+                        }
+                        else if (type == ATTR_VEC3) {
+                            scaling = points_from_obj->m_impl->get_elem<vec3f>(ATTR_POINT, zsString2Std(scale_by), 0, i);
+                        }
+                        else {
+                            throw makeError<UnimplError>("");
+                        }
+                        matScale = glm::scale(glm::vec3(scaling[0], scaling[1], scaling[2]));
+                    }
+                    if (!rotate_by.empty()) {
+                        glm::vec3 eularAngleXYZ(0);
+
+                        GeoAttrType type = points_from_obj->get_attr_type(zeno::ATTR_POINT, rotate_by);
+                        if (type == ATTR_FLOAT) {
+                            float v = points_from_obj->m_impl->get_elem<float>(ATTR_POINT, zsString2Std(rotate_by), 0, i);
+                            eularAngleXYZ = glm::vec3(v, v, v);
+                        }
+                        else if (type == ATTR_VEC3) {
+                            vec3f v = points_from_obj->m_impl->get_elem<vec3f>(ATTR_POINT, zsString2Std(rotate_by), 0, i);
+                            eularAngleXYZ = glm::vec3(v[0], v[1], v[2]);
+                        }
+                        else {
+                            throw makeError<UnimplError>("");
+                        }
+                        matRotate = EulerAngle::rotate(EulerAngle::RotationOrder::YXZ, EulerAngle::Measure::Radians, eularAngleXYZ);
+                    }
+
+                    auto matByAttrs = matTrans * matRotate * matScale;
+
+                    glm::vec4 gp = translate * matByAttrs * glm::vec4(pt[0], pt[1], pt[2], 1);
                     newObjPos[idx] = zeno::vec3f(gp.x, gp.y, gp.z);
 
                     if (hasNrm) {
@@ -125,15 +189,43 @@ namespace zeno {
     ZENDEFNODE(CopyToPoints, 
     {
         {
-            {gParamType_Geometry, "Input Geometry"},
-            {gParamType_Geometry, "Target Geometry"},
+            {gParamType_Geometry, "Object To Be Copied"},
+            {gParamType_Geometry, "Points From"},
             ParamPrimitive("Align To", gParamType_String, "Align To Point Center", Combobox, std::vector<std::string>{"Align To Point Center", "Align To Min"}),
+            {gParamType_String, "Translate By Attribute"},
+            {gParamType_String, "Scale By Attribute"},
+            {gParamType_String, "Rotate By Attribute"}
         },
         {
             {gParamType_Geometry, "Output"},
         },
         {},
         {"deprecated"},
+    });
+
+
+    struct CopyAndTransform : INode {
+        void apply() override {
+            //TODO
+        }
+    };
+
+    ZENDEFNODE(CopyAndTransform,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("Total Number", gParamType_Int, 2, Slider, std::vector<int>{0, 20, 1}),
+            {gParamType_Vec3f, "Translate", "0,0,0"},
+            {gParamType_Vec3f, "Rotate", "0,0,0"},
+            {gParamType_Vec3f, "Scale", "1,1,1"},
+            ParamPrimitive("Uniform Scale", gParamType_Float, 1.0, Slider, std::vector<int>{0, 10, 1}),
+            {gParamType_Float, "Uniform Scale", "1.0"}
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"prim"}
     });
 
 
@@ -851,7 +943,7 @@ namespace zeno {
         void apply() override
         {
             auto input_object = ZImpl(get_input<GeometryObject_Adapter>("Input Object"));
-            auto match_object = ZImpl(get_input<GeometryObject_Adapter>("Match Object"));
+            
             zeno::vec3f TargetPosition = ZImpl(get_input2<zeno::vec3f>("Target Position"));
             zeno::vec3f TargetSize = ZImpl(get_input2<zeno::vec3f>("Target Size"));
             bool bTranslate = ZImpl(get_input2<bool>("Translate"));
@@ -868,7 +960,8 @@ namespace zeno {
             const auto& currbbox = geomBoundingBox(input_object->m_impl.get());
 
             zeno::vec3f boxmin, boxmax;
-            if (match_object) {
+            if (has_input("Match Object")) {
+                auto match_object = ZImpl(get_input<GeometryObject_Adapter>("Match Object"));
                 const auto& bbox = geomBoundingBox(match_object->m_impl.get());
                 boxmin = bbox.first;
                 boxmax = bbox.second;

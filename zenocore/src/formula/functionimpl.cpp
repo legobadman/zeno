@@ -727,6 +727,28 @@ namespace zeno
             return res;
         }
 
+        static ZfxVariable randbetween(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
+            if (args.size() < 2 || args.size() > 3)
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for randbetween function");
+
+            ZfxVariable res;
+
+            float min = get_zfxvec_front_elem<float>(args[0].value);
+            float max = get_zfxvec_front_elem<float>(args[1].value);
+            //int seed = get_zfxvec_front_elem<float>(args[2].value);
+
+            res = call_unary_numeric_func<float>([&](float seed)->float {
+                std::mt19937 rng((int)seed);
+                std::uniform_real_distribution<float> dist(min, max);
+                return dist(rng);
+                }, args[2], filter);
+
+            //std::mt19937 rng(seed);                              
+            //std::uniform_real_distribution<float> dist(min, max); // 区间 [min, max)
+            //res.value = std::vector<float>{ dist(rng) };
+            return res;
+        }
+
         static ZfxVariable pow(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
             if (args.size() != 2)
                 throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "invalid number of arguments for pow function");
@@ -1754,6 +1776,9 @@ namespace zeno
             }
             if (funcname == "rand") {
                 return rand(args, filter, pContext);
+            }
+            if (funcname == "randbetween") {
+                return randbetween(args, filter, pContext);
             }
             if (funcname == "pow") {
                 return pow(args, filter, pContext);

@@ -14,6 +14,7 @@
 #include "iotags.h"
 #include "style/zenostyle.h"
 #include "widgets/zspinboxslider.h"
+#include "widgets/floatslider.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
 #include "declmetatype.h"
@@ -44,6 +45,7 @@ static CONTROL_ITEM_INFO controlList[] = {
     {"SpinBox",             zeno::SpinBox,      zeno::types::gParamType_Int,    ":/icons/parameter_control_spinbox.svg"},
     {"DoubleSpinBox",       zeno::DoubleSpinBox,zeno::types::gParamType_Float,  ":/icons/parameter_control_spinbox.svg"},
     {"Slider",              zeno::Slider,       zeno::types::gParamType_Int,    ":/icons/parameter_control_slider.svg"},
+    {"DoubleSlider",        zeno::Slider,       zeno::types::gParamType_Float,  ":/icons/parameter_control_slider.svg"},
     {"SpinBoxSlider",       zeno::SpinBoxSlider,zeno::types::gParamType_Int,    ":/icons/parameter_control_slider.svg"},
 };
 
@@ -1036,9 +1038,9 @@ void ZEditParamLayoutDlg::switchStackProperties(int ctrl, QStandardItem* pItem)
         }
 
         std::vector<float> ranges = zeno::reflect::any_cast<std::vector<float>>(pros);
-        m_ui->editStep->setText(QString::number(ranges[2]));
         m_ui->editMin->setText(QString::number(ranges[0]));
         m_ui->editMax->setText(QString::number(ranges[1]));
+        m_ui->editStep->setText(QString::number(ranges[2]));
     }
     else {
         m_ui->stackProperties->setCurrentIndex(0);
@@ -1082,7 +1084,7 @@ void ZEditParamLayoutDlg::onStepEditFinished()
     auto properties = layerIdx.data(QtRole::ROLE_PARAM_CTRL_PROPERTIES).value<zeno::reflect::Any>();
     qreal step = m_ui->editStep->text().toDouble();
     auto ranges = zeno::reflect::any_cast<std::vector<float>>(properties);
-    ranges[0] = step;
+    ranges[2] = step;
 
     QStandardItem* item = m_paramsLayoutM_inputs->itemFromIndex(layerIdx);
     zeno::reflect::Any anyVal(ranges);
@@ -1118,6 +1120,12 @@ void ZEditParamLayoutDlg::updateSliderInfo()
         {
             pControl->setRange(info.min, info.max);
             pControl->setSingleStep(info.step);
+        }
+        else if (FloatSlider* pControl = qobject_cast<FloatSlider*>(pLayoutItem->widget()))
+        {
+            pControl->setFloatMinimum(info.min);
+            pControl->setFloatMaximum(info.max);
+            pControl->setFloatStep(info.step);
         }
     }
 }
