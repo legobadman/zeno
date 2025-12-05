@@ -114,6 +114,10 @@ namespace zenoio
         {
             return zeno::Heatmap;
         }
+        else if (descName == "Color Vec3f")
+        {
+            return zeno::ColorVec;
+        }
         else if (descName == "Curve")
         {
             return zeno::CurveEditor;

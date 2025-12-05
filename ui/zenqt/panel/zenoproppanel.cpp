@@ -151,7 +151,7 @@ void ZenoPropPanel::clearLayout()
 
     if (m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeDict" || m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeList") {
         clearMakeDictMakeListLayout();
-            }
+    }
     else {
         int nodeType = m_idx.data(QtRole::ROLE_NODETYPE).toInt();
         if (nodeType == zeno::Node_SubgraphNode || nodeType == zeno::Node_AssetInstance) {
@@ -159,14 +159,15 @@ void ZenoPropPanel::clearLayout()
             if (clsname == "Subnet") {
                 m_tabWidget = nullptr;
                 m_outputWidget = nullptr;
-        }
+            }
             else if (clsname == "DopNetwork") {
                 m_dopNetworkPanel = nullptr;
                 m_outputWidget = nullptr;
-    }
-        } else {
-        m_normalNodeInputWidget = nullptr;
-        m_outputWidget = nullptr;
+            }
+        } 
+        else {
+            m_normalNodeInputWidget = nullptr;
+            m_outputWidget = nullptr;
         }
         m_inputControls.clear();
         m_outputControls.clear();
@@ -208,8 +209,8 @@ void ZenoPropPanel::reset(GraphModel* subgraph, const QModelIndexList& nodes, bo
     if (m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeDict" || m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeList") {
         if (QWidget* wid = resetMakeDictMakeListLayout()) {
             pMainLayout->addWidget(wid);
-            }
         }
+    }
     else {
         ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS));
         ZASSERT_EXIT(paramsM);
@@ -226,7 +227,8 @@ void ZenoPropPanel::reset(GraphModel* subgraph, const QModelIndexList& nodes, bo
 				if (QWidget* wid = resetSubnetLayout()) {
 					pMainLayout->addWidget(wid);
 				}
-			} else {
+			}
+            else {
 				ParamTabModel* tableM = customUiM->tabModel();
                 ZASSERT_EXIT(tableM)
 				ParamGroupModel* groupM = tableM->data(tableM->index(0), QmlCUIRole::GroupModel).value<ParamGroupModel*>();
@@ -486,16 +488,23 @@ bool ZenoPropPanel::syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout
             row++;
         }
     }
-    pGroupLayout->addWidget(pnewIcon, row, 0, Qt::AlignCenter);
-
+    pGroupLayout->addWidget(pnewIcon, row, 0, Qt::AlignLeft | Qt::AlignVCenter);
     pGroupLayout->addWidget(pnewLabel, row, 1, Qt::AlignLeft | Qt::AlignVCenter);
-    if (pControl)
-        pGroupLayout->addWidget(pnewControl, row, 2, Qt::AlignVCenter);
+    if (pControl) {
+        if (qobject_cast<QPushButton*>(pControl)) {
+            //按钮是固定宽度的，如果不左对齐，会导致按钮落在中间
+            pGroupLayout->addWidget(pnewControl, row, 2, Qt::AlignLeft | Qt::AlignVCenter);
+        }
+        else {
+            //Qt的布局里，如果不设置alignment，就自动填充剩下全部距离
+            pGroupLayout->addWidget(pnewControl, row, 2);
+        }
+    }
 
-    if (ZTextEdit* pMultilineStr = qobject_cast<ZTextEdit*>(pControl))
-    {
+    if (ZTextEdit* pMultilineStr = qobject_cast<ZTextEdit*>(pControl)) {
         connect(pMultilineStr, &ZTextEdit::geometryUpdated, pGroupWidget, &ZExpandableSection::updateGeo);
-    } else if (ZLineEdit* pLineEdit = qobject_cast<ZLineEdit*>(pControl)) {
+    }
+    else if (ZLineEdit* pLineEdit = qobject_cast<ZLineEdit*>(pControl)) {
         pLineEdit->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
     else if (ZVecEditor* pVecEdit = qobject_cast<ZVecEditor*>(pControl)) {
@@ -538,8 +547,15 @@ bool ZenoPropPanel::syncAddGroup(QVBoxLayout* pTabLayout, ParamPlainModel* param
     pGroupWidget->setCollasped(bCollaspe);
     QGridLayout* pLayout = new QGridLayout;
     pLayout->setContentsMargins(10, 15, 10, 15);
+
+    pLayout->setColumnStretch(0, 0);   // 图标列不伸缩
+    pLayout->setColumnStretch(1, 0);   // 文本列不伸缩
+    pLayout->setColumnStretch(2, 1);   // 第三列占满剩余空间
+    //pLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    //pLayout->setHorizontalSpacing(8);
+
     //pLayout->setColumnStretch(1, 1);
-    pLayout->setColumnStretch(2, 3);
+    //pLayout->setColumnStretch(2, 3);
     pLayout->setSpacing(10);
     for (int k = 0; k < paramM->rowCount(); k++)
     {
