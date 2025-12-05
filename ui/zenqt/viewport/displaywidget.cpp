@@ -414,6 +414,8 @@ void DisplayWidget::submit(const zeno::render_reload_info& info) {
         render_summary.current_ui_graph = "/main";
     }
 
+    //计算时不管在哪一个层级，都把最外层main的结果送去渲染端，因为用户直接在子图修改后希望马上看到结果，而不是跳回最外层main
+#if 0
     //这里要对不在current_ui_graph的节点进行过滤
     //TODO: 应该在graphmodel上做
     std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph()->getGraphByPath(render_summary.current_ui_graph);
@@ -425,6 +427,7 @@ void DisplayWidget::submit(const zeno::render_reload_info& info) {
             iter++;
         }
     }
+#endif
     if (!render_summary.objs.empty()) {
         if (m_bGLView) {
             m_glView->reload_objects(render_summary);
