@@ -26,6 +26,7 @@ struct ZENO_API SubnetNode : NodeImpl {
     void mark_clean() override;
 
     void cleanInternalCaches();
+    void convert_to_assetinst(const std::string& asset_name) override;
 
     NodeData exportInfo() const override;
     CustomUI get_customui() const override;

@@ -1870,7 +1870,11 @@ void GraphModel::_clear()
     while (rowCount() > 0)
     {
         const QString& nodeName = index(0, 0).data(QtRole::ROLE_NODE_NAME).toString();
-        removeNode(nodeName);
+        bool bret = removeNode(nodeName);
+        if (!bret) {
+            ZASSERT_EXIT(FALSE);
+            return;
+        }
     }
 }
 
@@ -2074,6 +2078,28 @@ void GraphModel::syncAssetInst(const QModelIndex& assetNode) {
 
     //得把事务清掉，因为这里没法支持undo/redo
     mainG->m_undoRedoStack.value()->clear();
+}
+
+void GraphModel::changeSubnetToAssetInstance(const QModelIndex& index, const QString& newAssetName)
+{
+    if (!index.isValid())
+        return;
+
+    NodeItem* item = m_nodes[m_row2uuid[index.row()]];
+    item->cls = newAssetName;
+    if (auto subnetnode = dynamic_cast<zeno::SubnetNode*>(item->m_wpNode)) {
+        item->m_cbLockChanged = subnetnode->register_lockChanged([=]() {
+            QModelIndex idx = this->indexFromName(item->name);
+            bool bLocked = subnetnode->is_locked();
+            emit this->lockStatusChanged();
+            emit this->dataChanged(idx, idx, QVector<int>{ QtRole::ROLE_NODE_LOCKED });
+            });
+    }
+    item->m_wpNode->convert_to_assetinst(newAssetName.toStdString());
+    if (item->optSubgraph.has_value()) {
+        GraphModel* pSubgM = *item->optSubgraph;
+        QStringList wtf = pSubgM->currentPath();
+    }
 }
 
 void GraphModel::syncToAssetsInstance(const QString& assetsName, NodeItem* currentAssetNode)

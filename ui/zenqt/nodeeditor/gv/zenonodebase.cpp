@@ -250,19 +250,25 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         nodeMenu->addAction(saveAsset);
         connect(saveAsset, &QAction::triggered, this, [=]() {
             QString name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
-            AssetsModel* pModel = zenoApp->graphsManager()->assetsModel();
-            if (pModel->getAssetGraph(name))
-            {
-                QMessageBox::warning(nullptr, tr("Save as asset"), tr("Asset %1 is existed").arg(name));
-                return;
-            }
-            zeno::ZenoAsset asset;
-            asset.info.name = name.toStdString();
+
             QString dirPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
             QString path = dirPath + "/ZENO/assets/" + name + ".zda";
-            path = QFileDialog::getSaveFileName(nullptr, "File to Open", path, "All Files(*);;");
+            path = QFileDialog::getSaveFileName(nullptr, "File to Open", path, "Zeno Digital Asset(*.zda);;");
             if (path.isEmpty())
                 return;
+
+            QFileInfo fn(path);
+            QString finalAssetName = fn.completeBaseName();
+
+            AssetsModel* pModel = zenoApp->graphsManager()->assetsModel();
+            if (pModel->getAssetGraph(finalAssetName))
+            {
+                QMessageBox::warning(nullptr, tr("Save as asset"), tr("Asset %1 is existed").arg(finalAssetName));
+                return;
+            }
+
+            zeno::ZenoAsset asset;
+            asset.info.name = finalAssetName.toStdString();
             asset.info.path = path.toStdString();
             asset.info.majorVer = 1;
             asset.info.minorVer = 0;
@@ -275,7 +281,10 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             asset.m_customui = data.customUi;
             auto& assets = zeno::getSession().assets;
             assets->createAsset(asset);
-            pModel->saveAsset(name);
+            pModel->saveAsset(finalAssetName);
+
+            auto graphM = qobject_cast<GraphModel*>(const_cast<QAbstractItemModel*>(m_index.model()));
+            graphM->changeSubnetToAssetInstance(m_index, finalAssetName);
         });
 
         nodeMenu->exec(QCursor::pos());

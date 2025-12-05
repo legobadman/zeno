@@ -77,6 +77,10 @@ void NodeImpl::set_locked(bool bLocked) {
 
 }
 
+void NodeImpl::convert_to_assetinst(const std::string& asset_name) {
+    m_nodecls = asset_name;
+}
+
 void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
     //TODO: 考虑asset的情况
     m_nodecls = nodecls;

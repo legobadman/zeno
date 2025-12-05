@@ -99,6 +99,7 @@ public:
     void updateParamName(QModelIndex nodeIdx, int row, QString newName);
     void syncToAssetsInstance_customui(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui);
     void syncToAssetsInstance(const QString& assetsName, NodeItem* currentAssetNode);
+    void changeSubnetToAssetInstance(const QModelIndex& index, const QString& newAssetName);
     void removeParam(QModelIndex nodeIdx, int row);
     void removeLink(const QModelIndex& linkIdx);
     void removeLink(const zeno::EdgeInfo& link);

@@ -424,7 +424,8 @@ std::string Graph::generateNewName(const std::string& node_cls, const std::strin
     bool end_with_digit = std::isdigit(tempName.back());
     while (true) {
         std::string new_name = tempName + (end_with_digit ? "_" : "") + std::to_string(i++);
-        if (nodes.find(new_name) == nodes.end()) {
+        if (nodes.find(new_name) == nodes.end() &&
+            m_name2uuid.find(new_name) == m_name2uuid.end()) {
             nodes.insert(new_name);
             return new_name;
         }

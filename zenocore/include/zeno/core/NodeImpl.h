@@ -98,6 +98,7 @@ namespace zeno
         virtual NodeType nodeType() const;
         virtual bool is_locked() const;
         virtual void set_locked(bool);
+        virtual void convert_to_assetinst(const std::string& asset_name);
 
         void set_view(bool bOn);
         CALLBACK_REGIST(set_view, void, bool)

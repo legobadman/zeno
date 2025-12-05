@@ -97,6 +97,9 @@ ZENO_API void AssetsMgr::createAsset(const zeno::ZenoAsset asset, bool isFirstCr
         std::shared_ptr<Graph> spGraph = std::make_shared<Graph>(asset.info.name, true);
         spGraph->setName(asset.info.name);
         spGraph->init(asset.optGraph.value());
+        if (spGraph->getName().empty()) {
+            spGraph->setName(asset.info.name);
+        }
         newAsst.sharedGraph = spGraph;
     }
     newAsst.primitive_inputs = asset.primitive_inputs;

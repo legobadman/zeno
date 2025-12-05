@@ -443,6 +443,11 @@ void SubnetNode::cleanInternalCaches() {
     m_subgraph->markDirtyAndCleanup();
 }
 
+void SubnetNode::convert_to_assetinst(const std::string& asset_name) {
+    NodeImpl::convert_to_assetinst(asset_name);
+    set_locked(true);
+}
+
 NodeData SubnetNode::exportInfo() const {
     //要注意，这里必须要手动cast为SubnetNode才能拿，因为NodeImpl已经和INode分离了
     NodeData node = NodeImpl::exportInfo();

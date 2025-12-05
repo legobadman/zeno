@@ -89,6 +89,7 @@ private slots:
 private:
     ZLayoutBackground* initBodyWidget();
     ZLayoutBackground* initHeaderWidget();
+    void initLockMark();
     ZGraphicsLayout* initPrimSockets(ParamsModel* pModel, const bool bInput);
     ZGraphicsLayout* initVerticalSockets(bool bInput);
     void _drawShadow(QPainter* painter);

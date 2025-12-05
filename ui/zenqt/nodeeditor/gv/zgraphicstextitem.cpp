@@ -395,6 +395,7 @@ ZEditableTextItem::ZEditableTextItem(const QString &text, QGraphicsItem *parent)
     , m_pSlider(nullptr)
     , m_bValidating(false)
     , m_bTextLengthAsBounding(false)
+    , m_bTransBg(false)
 {
     _base::setText(text);
     initUI(text);
@@ -407,6 +408,7 @@ ZEditableTextItem::ZEditableTextItem(QGraphicsItem* parent)
     , m_pSlider(nullptr)
     , m_bValidating(false)
     , m_bTextLengthAsBounding(false)
+    , m_bTransBg(false)
 {
     initUI("");
 }
@@ -429,6 +431,8 @@ void ZEditableTextItem::paint(QPainter *painter, const QStyleOptionGraphicsItem 
         col = QColor("#3A6E64");
     else if (!this->isEnabled())
         col = QColor("#3C424E");
+    else if (m_bTransBg)
+        col = QColor::fromRgb(0, 0, 0, 0);
     else
         col = QColor("#191D21");
     painter->setBrush(col);
@@ -542,6 +546,10 @@ bool ZEditableTextItem::showSlider() const
 
 void ZEditableTextItem::setTextLengthAsBounding(bool bOn) {
     m_bTextLengthAsBounding = bOn;
+}
+
+void ZEditableTextItem::setTransparnetBackground(bool bOn) {
+    m_bTransBg = bOn;
 }
 
 void ZEditableTextItem::setNumSlider(QGraphicsScene* pScene, const QVector<qreal>& steps)

@@ -291,6 +291,35 @@ void ZenoNodeNew::updateNodeNameByEditor() {
         ZGraphicsLayout::updateHierarchy(textEditor);
 }
 
+void ZenoNodeNew::initLockMark() {
+    static const int lock_iconsz = 16, hmargin = 16, vmargin = 28, space_lbl_lock = 4, lbl_voffset = -2;
+
+    bool bLocked = m_index.data(QtRole::ROLE_NODE_LOCKED).toBool();
+    const QString& nodecls = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
+
+    m_pLockMark = new ZenoImageItem(":/icons/lock.svg", ":/icons/lock.svg", ":/icons/unlock.svg",
+        QSize(lock_iconsz, lock_iconsz), m_nameEditor);
+    QRectF brNameEditor = m_nameEditor->boundingRect();
+    m_pLockMark->setCheckable(true);
+    m_pLockMark->setPos(brNameEditor.width() - lock_iconsz, brNameEditor.height());
+
+    m_pLockMark->toggle(!bLocked);
+    m_pLockMark->setClickable(false);
+
+    auto br = m_pLockMark->boundingRect();
+
+    QFont fnt = QApplication::font();
+    fnt.setPointSize(10);
+    fnt.setWeight(QFont::Normal);
+
+    ZSimpleTextItem* lblAssetName = new ZSimpleTextItem(nodecls, fnt, QColor("#666666"), m_pLockMark);
+
+    QFontMetrics metrics(fnt);
+    int xoffset = metrics.horizontalAdvance(nodecls) + space_lbl_lock;
+    qreal yoffset = lock_iconsz / 2 - metrics.height() / 2 + lbl_voffset;
+    lblAssetName->setPos(-xoffset, yoffset);
+}
+
 ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 {
     ZLayoutBackground* headerWidget = new ZLayoutBackground;
@@ -421,6 +450,7 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
         m_nameEditor->setDefaultTextColor(QColor("#CCCCCC"));
         m_nameEditor->setTextLengthAsBounding(true);
         m_nameEditor->setFont(font2);
+        m_nameEditor->setTransparnetBackground(true);
         QRectF brNameEditor = m_nameEditor->boundingRect();
         qreal ww = brNameEditor.width() + ZenoStyle::dpiScaled(8);
         qreal hh = brNameEditor.height();
@@ -428,21 +458,10 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 
         zeno::NodeType type = static_cast<zeno::NodeType>(m_index.data(QtRole::ROLE_NODETYPE).toInt());
         if (type == zeno::Node_AssetInstance) {
-            nameEditor_height = 0;
-            static const int lock_iconsz = 16, hmargin = 16, vmargin = 28;
-            m_nameEditor->setPos(-ww, nameEditor_height);
-            bool bLocked = m_index.data(QtRole::ROLE_NODE_LOCKED).toBool();
-            m_pLockMark = new ZenoImageItem(":/icons/lock.svg", ":/icons/lock.svg", ":/icons/unlock.svg",
-                QSize(lock_iconsz, lock_iconsz), this);
-            m_pLockMark->setCheckable(true);
-            m_pLockMark->setPos(-lock_iconsz - hmargin, nameEditor_height + hh + vmargin);
-            m_pLockMark->toggle(!bLocked);
-            m_pLockMark->setClickable(false);
+            initLockMark();
         }
-        else {
-            nameEditor_height = 16;
-            m_nameEditor->setPos(-ww, nameEditor_height);
-        }
+        nameEditor_height = 8;
+        m_nameEditor->setPos(-ww, nameEditor_height);
 
         connect(m_nameEditor, &ZEditableTextItem::contentsChanged, this, [=]() {
             qreal ww = m_nameEditor->textLength() + ZenoStyle::dpiScaled(8);
@@ -487,8 +506,6 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
             }
         });
     }
-
-
 
 #if 0
     const NodeState& state = m_index.data(QtRole::ROLE_NODE_RUN_STATE).value<NodeState>();
@@ -682,8 +699,13 @@ void ZenoNodeNew::onNameUpdated(const QString& newName)
 }
 
 void ZenoNodeNew::onNodeLockedChanged(bool bLocked) {
-    ZASSERT_EXIT(m_pLockMark);
-    m_pLockMark->toggle(!bLocked);
+    if (!m_pLockMark) {
+        //有可能是从subnet升级为asset instance
+        initLockMark();
+    }
+    else {
+        m_pLockMark->toggle(!bLocked);
+    }
 }
 
 ZSocketLayout* ZenoNodeNew::getSocketLayout(bool bInput, const QString& name) const
