@@ -14,6 +14,7 @@ namespace zeno
     IndiceMeshTopology::IndiceMeshTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
     {
         m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
+        m_indiceMesh_topo->verts.resize(nPoints);
         if (bTriangle) {
             m_indiceMesh_topo->tris->resize(nFaces);
         }
