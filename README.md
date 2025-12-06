@@ -10,7 +10,7 @@ ZENO is an open-source, Node based 3D system able to produce cinematic physics e
 Aside of its simulation Tools, ZENO provides necessary visualization nodes for users to import and run simulations if you feel that the current software you are using is too slow.
 Open-source node system framework, to change your algorithmic code into useful tools to create much more complicated simulations!
 
-<img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202312/ZENO2_v2023.jpg" width="640" position="left">
+![地形](docs/assets/zh/homepage.png)
 
 
 ## Features
@@ -22,10 +22,11 @@ Open-source node system framework, to change your algorithmic code into useful t
 
 ## Gallery
 
-Fig.1 - Geometry
+Fig.1 - 程序化地形
+![地形](docs/assets/zh/terrain2.gif)
 
-
-Fig.2 - Nvdia Optix Renderer
+Fig.2 - Nvidia光线追踪
+![擎天柱](docs/assets/zh/optix-qtz.gif)
 
 
 Fig.3 - Fluid simulation (用swe02.zsg)
