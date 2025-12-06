@@ -9,5 +9,20 @@
 - zs_alembic.dll，包含对abc文件处理相关的节点
 
 
-
 ## 命令行程序
+
+新版Zeno可以通过zenobatch，运行批处理程序，这样无须创建用户界面相关的属性，直接通过计算图，并指定渲染参数，最后渲染出图片和录制视频
+
+到Zeno目录下，运行以下命令：
+```
+zenobatch.exe --file E:\zeno3\misc\graphs\SceneAssem\bldgs_new.zen --frame 0 70 --size 1780 1024 --sample 16 --path C:\record --optix true
+```
+
+然后zenobatch.exe会逐帧运行，待计算完成后，渲染端对计算对象，按照特定的参数进行渲染，最后录制到特定的目录：
+
+![zenobatch](assets/zh/zenobatch-cmd.png)
+*上图展示命令行录制，首先要加载各个插件，然后初始化CUDA Optix渲染引擎，后续就是计算和渲染*
+
+
+然后在指定目录可以看到程序录制的渲染结果：
+![zenobatch-record](assets/zh/zenobatch-recordpic.png)

@@ -262,6 +262,7 @@ int main(int argc, char* argv[]) {
     std::cout << "zdalist: " << args.zdalist << "\n";
     std::cout << "=============================\n";
 
+    std::unique_ptr<zeno::Session> coreApp = zeno::createApplication();
     auto& sess = zeno::getSession();
     sess.resetMainGraph();
 

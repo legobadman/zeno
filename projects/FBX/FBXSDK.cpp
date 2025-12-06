@@ -2169,7 +2169,7 @@ struct NewFBXSceneInfo : INode {
         int start_frame = get_input2_int("Start Frame");
         int idx = frameid - start_frame;
         if (idx < 0 || idx >= json_list->size()) {
-            throw makeError<IndexError>(idx, json_list->size(), "ListGetItem (for list)");
+            throw makeError<IndexError>(idx, json_list->size(), "NewFBXSceneInfo (for list)");
         }
         auto json_obj = json_list->get(idx);
         set_output("json", json_obj->clone());
