@@ -1,1 +1,13 @@
-## 插件化，资产文件和命令行程序
+## 插件化
+新版Zeno支持自定义插件，用户可以根据自己的功能需求，自定义插件dll，并通过ZENO加载，以下是官方代码自定义的插件：
+- zs_base.dll，包含所有基础几何节点、流程处理节点和其他常用的节点，zeno启动时就会自动加载
+- zs_fbx.dll，包含FBX工程文件的处理节点
+- zs_cuda.dll，包含CUDA相关的节点
+- zs_imgcv.dll，包含图片处理相关的节点
+- zs_rigid.dll，包含刚体解算相关的节点
+- zs_vdb.dll，包含openvdb相关的节点
+- zs_alembic.dll，包含对abc文件处理相关的节点
+
+
+
+## 命令行程序

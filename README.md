@@ -17,8 +17,8 @@ Open-source node system framework, to change your algorithmic code into useful t
 - [Graph Node Editor](docs/feature_grapheditor.md)
 - [Geometry Manipatuion](docs/feature_calculation.md)
 - [ZFX Script System](docs/feature_zfx.md)
-- [Realtime Render](docs/feature_scene_assembler.md)
-- [Software Sxtension](docs/feature_extension.md)
+- [Zeno Digital Asset](docs/feature_zda.md)
+- [Software Extension](docs/feature_extension.md)
 
 ## Gallery
 

@@ -228,6 +228,8 @@ namespace zeno
         static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext, bool bInput) {
             ParamPrimitive paramData;
             std::vector<std::string> items;
+            NodeImpl* refSourceNode = nullptr;
+            std::string ref_param;
 
             if (zeno::starts_with(ref, "../")) {
                 //直接取上层子图节点的参数
@@ -257,18 +259,18 @@ namespace zeno
             }
             else {
                 std::string parampath, _;
-                auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
-                if (!spNode) {
+                refSourceNode = zfx::getNodeAndParamFromRefString(ref, pContext, _, parampath);
+                if (!refSourceNode) {
                     throw makeError<UnimplError>("the refer node doesn't exist");
                 }
                 items = split_str(parampath, '.');
-                std::string paramname = items[0];
+                ref_param = items[0];
 
                 bool bExist = false;
                 if (bInput) {
-                    paramData = spNode->get_input_prim_param(paramname, &bExist);
+                    paramData = refSourceNode->get_input_prim_param(ref_param, &bExist);
                 } else {
-                    paramData = spNode->get_output_prim_param(paramname, &bExist);
+                    paramData = refSourceNode->get_output_prim_param(ref_param, &bExist);
                 }
                 if (!bExist) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the refer param doesn't exist, may be deleted before");
@@ -382,6 +384,16 @@ namespace zeno
             {
                 if (items[1].size() != 1)
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path());
+
+                if (!paramData.result.has_value()) {
+                    //可能引用的源头（比如节点本身）还没算，只能让它再算一下前置依赖
+                    refSourceNode->requireInput(ref_param, nullptr);
+                    bool bExist = false;
+                    paramData = refSourceNode->get_input_prim_param(ref_param, &bExist);
+                    if (!bExist) {
+                        throw makeError<UnimplError>("the refer param doesn't exist");
+                    }
+                }
 
                 int idx = -1;
                 switch (items[1][0])
