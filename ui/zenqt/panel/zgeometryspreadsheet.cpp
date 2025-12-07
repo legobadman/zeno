@@ -10,6 +10,8 @@
 #include "zassert.h"
 #include "style/zenostyle.h"
 #include <zeno/extra/SceneAssembler.h>
+#include "zenoimagepanel.h"
+
 
 static void tableViewResizeColumns(QTableView* tableView) {
     tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -1371,6 +1373,7 @@ ZGeometrySpreadsheet::ZGeometrySpreadsheet(QWidget* parent)
     m_views->addWidget(new SceneObjView);  // 添加SceneObjView组件
     m_views->addWidget(new ListObjView);   // 添加ListObjView组件
     m_views->addWidget(new MaterialObjView); // 添加MaterialObjView组件
+    m_views->addWidget(new ZenoImagePanel);
 
     QPlainTextEdit* jsonView = new QPlainTextEdit;
     jsonView->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
@@ -1428,32 +1431,51 @@ void ZGeometrySpreadsheet::setGeometry(
     }
 
     m_clone_obj = std::move(pObject);
+    zeno::IObject* ptrObject = m_clone_obj.get();
+    const QString& nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
+    bool isImage = m_clone_obj->userData()->has("isImage");
 
-    if (m_clone_obj->userData()->has("isImage")) {
-        m_views->setCurrentIndex(0);  // 调整索引
+    for (int i = 0; i < m_views->count(); i++) {
+        QWidget* wid = m_views->widget(i);
+        if (auto baseAttrView = qobject_cast<BaseAttributeView*>(wid)) {
+            auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get());
+            baseAttrView->setGeometryObject(subgraph, nodeidx, geoObj, nodename);
+        }
+        else if (auto sceneObjView = qobject_cast<SceneObjView*>(wid)) {
+            auto sceneObj = dynamic_cast<zeno::SceneObject*>(m_clone_obj.get());
+            sceneObjView->setSceneObject(subgraph, nodeidx, sceneObj, nodename);
+        }
+        else if (auto listObjView = qobject_cast<ListObjView*>(wid)) {
+            auto listObj = dynamic_cast<zeno::ListObject*>(m_clone_obj.get());
+            listObjView->setListObject(subgraph, nodeidx, listObj); 
+        }
+        else if (auto materialObjView = qobject_cast<MaterialObjView*>(wid)) {
+            auto materialObj = dynamic_cast<zeno::MaterialObject*>(m_clone_obj.get());
+            materialObjView->setMaterialObject(subgraph, nodeidx, materialObj, nodename);
+        }
+        else if (auto imagepanel = qobject_cast<ZenoImagePanel*>(wid)) {
+            auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get());
+            if (isImage) {
+                imagepanel->setObject(m_clone_obj.get());
+            }
+            else {
+                imagepanel->setObject(nullptr);
+            }
+        }
+    }
+
+    if (isImage) {
+        m_views->setCurrentIndex(6);  // 调整索引
         return;
     }
 
     if (auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get())) {
-        if (auto baseAttrView = qobject_cast<BaseAttributeView*>(m_views->widget(2))) {
-            baseAttrView->setGeometryObject(subgraph, nodeidx, geoObj, nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
-        }
         m_views->setCurrentIndex(2);
-    } else if (auto primObj = dynamic_cast<zeno::PrimitiveObject*>(m_clone_obj.get())) {
-        if (auto convertedObj = create_GeometryObject(primObj)) {
-            m_clone_obj = std::move(convertedObj);
-            if (auto baseAttrView = qobject_cast<BaseAttributeView*>(m_views->widget(2))) {
-                baseAttrView->setGeometryObject(subgraph, nodeidx, static_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get()), nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
-            }
-            m_views->setCurrentIndex(2);
-        }
-    } else if (auto sceneObj = dynamic_cast<zeno::SceneObject*>(m_clone_obj.get())) {
-        if (auto sceneObjView = qobject_cast<SceneObjView*>(m_views->widget(3))) {
-            sceneObjView->setSceneObject(subgraph, nodeidx, sceneObj, nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
-        }
+    }
+    else if (auto sceneObj = dynamic_cast<zeno::SceneObject*>(m_clone_obj.get())) {
         m_views->setCurrentIndex(3);
-
-    } else if (auto listObj = dynamic_cast<zeno::ListObject*>(m_clone_obj.get())) {
+    }
+    else if (auto listObj = dynamic_cast<zeno::ListObject*>(m_clone_obj.get())) {
         //还要检查一下是不是数值
         if (listObj->size() > 0) {
             if (dynamic_cast<zeno::NumericObject*>(listObj->get(0))) {
@@ -1470,17 +1492,13 @@ void ZGeometrySpreadsheet::setGeometry(
                     return;
                 }
             }
-            else if(auto listObjView = qobject_cast<ListObjView*>(m_views->widget(4))) {
-                listObjView->setListObject(subgraph, nodeidx, listObj);
-            }
         }
         m_views->setCurrentIndex(4);
-    } else if (auto materialObj = dynamic_cast<zeno::MaterialObject*>(m_clone_obj.get())) {
-        if (auto materialObjView = qobject_cast<MaterialObjView*>(m_views->widget(5))) {
-            materialObjView->setMaterialObject(subgraph, nodeidx, materialObj, nodeidx.data(QtRole::ROLE_NODE_NAME).toString());
-        }
+    }
+    else if (auto materialObj = dynamic_cast<zeno::MaterialObject*>(m_clone_obj.get())) {
         m_views->setCurrentIndex(5);
-    } else {
+    }
+    else {
         const auto& jsonStr = m_clone_obj->serialize_json();
         auto qsJson = QString::fromStdString(jsonStr);
         if (qsJson.isEmpty()) {
