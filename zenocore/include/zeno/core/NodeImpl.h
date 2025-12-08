@@ -227,6 +227,7 @@ namespace zeno
         bool moveUpLinkKey(bool bInput, const std::string& param_name, const std::string& key);
         bool removeLink(bool bInput, const EdgeInfo& edge);
         void mark_dirty_objs();
+        DirtyReason getDirtyReason() const;
         std::vector<std::pair<std::string, bool>> getWildCardParams(const std::string& name, bool bPrim);
         void getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType, bool& bWildcard);
         void constructReference(const std::string& param_name);
@@ -349,6 +350,7 @@ namespace zeno
         void preApply_Primitives(CalcContext* pContext);
         void preApply_SwitchIf(CalcContext* pContext);
         void preApply_SwitchBetween(CalcContext* pContext);
+        void preApply_FrameCache(CalcContext* pContext);
         void bypass();
         CustomUI _deflCustomUI() const;
 
@@ -368,6 +370,7 @@ namespace zeno
         NodeRunStatus m_status = Node_DirtyReadyToRun;
         Graph* m_pGraph;
         std::unique_ptr<INode> m_pNode;
+        DirtyReason m_dirtyReason = NoDirty;
         bool m_bView = false;
         bool m_bypass = false;
         bool m_nocache = false;

@@ -220,6 +220,10 @@ namespace zeno
         return m_pAdapter->getGlobalState()->getFrameId();
     }
 
+    DirtyReason INode::getDirtyReason() const {
+        return m_pAdapter->getDirtyReason();
+    }
+
     GlobalState* INode::getGlobalState() {
         return m_pAdapter->getGlobalState();
     }

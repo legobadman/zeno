@@ -91,6 +91,9 @@ namespace zeno {
     void add_prefix_key(IObject* pObject, const std::string& prefix);
     ZENO_API std::vector<std::string> get_obj_paths(IObject* pObject);
 
+    ZENO_API zany readObjCache(const std::string& file_path);
+    ZENO_API void writeObjCache(const std::string& file_path, IObject* pObject);
+
     AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval);
 }
 

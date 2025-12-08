@@ -72,7 +72,6 @@ struct IPicker : IGraphicDraw {
 struct MakeGraphicVisitor {
     Scene *in_scene{};
     std::unique_ptr<IGraphic> out_result;
-    void visit(zeno::GeometryObject_Adapter* object);
 
 #define _ZENO_PER_XMACRO(TypeName, ...) \
     void visit(zeno::TypeName *object);

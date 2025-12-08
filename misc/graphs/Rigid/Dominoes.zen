@@ -1022,8 +1022,8 @@
                     }
                 },
                 "uipos": [
-                    1983.0,
-                    5365.0
+                    1691.0,
+                    5481.0
                 ],
                 "status": [],
                 "collasped": false
@@ -2982,6 +2982,148 @@
                 "status": [],
                 "collasped": false
             },
+            "CameraNode1": {
+                "name": "CameraNode1",
+                "class": "CameraNode",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "pos": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -0.5241696834564209,
+                            13.935047149658204,
+                            10.216165542602539
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "up": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.1345221847295761,
+                            0.5501596927642822,
+                            -0.8241538405418396
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "view": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.08862817287445069,
+                            -0.8350602984428406,
+                            -0.5429739952087402
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fov": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 45.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "aperture": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focalPlaneDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "other": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "0.683862,0.331644,0.809799,0,0,16.5829,",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 89,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "sync": {
+                        "links": null,
+                        "type": "numeric",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focal": {
+                        "links": null,
+                        "type": "numeric",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    3002.0,
+                    5192.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "EvalFBXAnim1": {
                 "name": "EvalFBXAnim1",
                 "class": "EvalFBXAnim",
@@ -4129,6 +4271,64 @@
                 "uipos": [
                     2259.0,
                     4238.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "FrameCache1": {
+                "name": "FrameCache1",
+                "class": "FrameCache",
+                "object_inputs": {
+                    "Depend": {
+                        "links": [
+                            {
+                                "out-node": "RigidStepWorld",
+                                "out-socket": "out_world",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Depend"
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    },
+                    "Input": {
+                        "links": [
+                            {
+                                "out-node": "BindMaterial1",
+                                "out-socket": "object",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "object"
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "path": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "C:\\Zeno\\framecache\\$F.zencache",
+                        "control": {
+                            "name": "read path"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "iobject",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    2254.0,
+                    5008.0
                 ],
                 "status": [],
                 "collasped": false
@@ -5864,7 +6064,7 @@
                 },
                 "uipos": [
                     2595.0,
-                    5216.0
+                    5524.0
                 ],
                 "status": [
                     "View"
@@ -6131,6 +6331,38 @@
                 "uipos": [
                     1587.0,
                     1821.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "NumericFloat3": {
+                "name": "NumericFloat3",
+                "class": "NumericFloat",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "value": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": "$F+1",
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "value": {
+                        "type": "float",
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    3062.0,
+                    4974.0
                 ],
                 "status": [],
                 "collasped": false
@@ -6697,8 +6929,8 @@
                     }
                 },
                 "uipos": [
-                    1600.0,
-                    4817.0
+                    1352.0,
+                    5003.0
                 ],
                 "status": [],
                 "collasped": false
@@ -16276,9 +16508,7 @@
                     1237.0,
                     4633.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false,
                 "subnet-customUi": {
                     "nickname": "",
@@ -16646,6 +16876,108 @@
                     }
                 }
             },
+            "Route1": {
+                "name": "Route1",
+                "class": "Route",
+                "object_inputs": {
+                    "input": {
+                        "links": [
+                            {
+                                "out-node": "FrameCache1",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "input"
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "float_val": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "int_val": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "string_val": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "0",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "vec3f_val": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "RunType": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "normal",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "normal",
+                                "lightCamera",
+                                "material",
+                                "matrix"
+                            ]
+                        },
+                        "socket-type": "none",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "output": {
+                        "type": "iobject",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    2186.0,
+                    5228.0
+                ],
+                "status": [
+                    "View"
+                ],
+                "collasped": false
+            },
             "RouteDepend1": {
                 "name": "RouteDepend1",
                 "class": "RouteDepend",
@@ -16774,8 +17106,8 @@
                     "Input": {
                         "links": [
                             {
-                                "out-node": "BindMaterial1",
-                                "out-socket": "object",
+                                "out-node": "FrameCache1",
+                                "out-socket": "Output",
                                 "out-key": "",
                                 "in-key": "",
                                 "target-socket": "Input"
@@ -16835,7 +17167,7 @@
                 },
                 "uipos": [
                     2568.0,
-                    5017.0
+                    5325.0
                 ],
                 "status": [],
                 "collasped": false
@@ -17208,7 +17540,15 @@
                         "visible": false
                     },
                     "anisotropic": {
-                        "links": null,
+                        "links": [
+                            {
+                                "out-node": "NumericFloat3",
+                                "out-socket": "value",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "anisotropic"
+                            }
+                        ],
                         "type": "float",
                         "default-value": 0.0,
                         "control": {
@@ -17216,7 +17556,7 @@
                         },
                         "controlProps": null,
                         "socket-type": "clone",
-                        "visible": false
+                        "visible": true
                     },
                     "anisoRotation": {
                         "links": null,
@@ -17731,10 +18071,12 @@
                     }
                 },
                 "uipos": [
-                    2909.0,
-                    4965.0
+                    3326.0,
+                    4988.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false
             },
             "ShaderTexture2D1": {
@@ -17918,8 +18260,8 @@
                     }
                 },
                 "uipos": [
-                    1753.0,
-                    4967.0
+                    1505.0,
+                    5153.0
                 ],
                 "status": [],
                 "collasped": false
@@ -18108,8 +18450,8 @@
                     }
                 },
                 "uipos": [
-                    1873.0,
-                    4819.0
+                    1625.0,
+                    5005.0
                 ],
                 "status": [],
                 "collasped": false
@@ -19079,6 +19421,150 @@
                 "status": [],
                 "collasped": false
             },
+            "cam_moreclear": {
+                "name": "cam_moreclear",
+                "class": "CameraNode",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "pos": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            -11.510616302490235,
+                            8.721158981323243,
+                            3.785787582397461
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "up": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.5877679586410523,
+                            0.7980284690856934,
+                            -0.13296911120414735
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "view": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.778363049030304,
+                            -0.6026208400726318,
+                            -0.17608106136322022
+                        ],
+                        "control": {
+                            "name": "Float Vector 3"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fov": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 45.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "aperture": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focalPlaneDistance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 2.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "other": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "-0.859114,2.04002,1.27047,0,0,12.8226,",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 77,
+                        "control": {
+                            "name": "Integer"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "sync": {
+                        "links": null,
+                        "type": "numeric",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "focal": {
+                        "links": null,
+                        "type": "numeric",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "camera": {
+                        "type": "",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    3022.0,
+                    5337.0
+                ],
+                "status": [
+                    "View"
+                ],
+                "collasped": false
+            },
             "cd807876-CreatePlane": {
                 "name": "cd807876-CreatePlane",
                 "class": "CreatePlane",
@@ -19319,8 +19805,8 @@
                     }
                 },
                 "uipos": [
-                    1962.0,
-                    5170.0
+                    1660.0,
+                    5300.0
                 ],
                 "status": [],
                 "collasped": false
@@ -19614,7 +20100,7 @@
         "timeline": {
             "start-frame": 0,
             "end-frame": 100,
-            "curr-frame": 0,
+            "curr-frame": 77,
             "always": false,
             "timeline-fps": 24
         }

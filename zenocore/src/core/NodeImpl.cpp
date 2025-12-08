@@ -561,6 +561,10 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
         return;
 
     m_dirty = bOn;
+    m_dirtyReason = reason;
+    if (!m_dirty) {
+        m_dirtyReason = NoDirty;
+    }
 
     if (!bRecursively)
         return;
@@ -572,7 +576,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
                 if (link->dest_inparam != &param) {
                     assert(link->dest_inparam);
                     auto destNode = link->dest_inparam->m_wpNode;
-                    destNode->mark_dirty(true);
+                    destNode->mark_dirty(true, reason);
                 }
             }
         }
@@ -580,7 +584,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
             for (auto link : param.reflinks) {
                 assert(link->dest_inparam);
                 auto destNode = link->dest_inparam->m_wpNode;
-                destNode->mark_dirty(true);
+                destNode->mark_dirty(true, reason);
                 destNode->clear_input_cacheobj(link->dest_inparam->name);
             }
             for (auto link : param.links) {
@@ -589,7 +593,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
                 if (inParam) {
                     auto inNode = inParam->m_wpNode;
                     assert(inNode);
-                    inNode->mark_dirty(true);
+                    inNode->mark_dirty(true, reason);
                     inNode->clear_input_cacheobj(inParam->name);
                 }
             }
@@ -601,7 +605,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
                 if (inParam) {
                     auto inNode = inParam->m_wpNode;
                     assert(inNode);
-                    inNode->mark_dirty(true);
+                    inNode->mark_dirty(true, reason);
                 }
             }
         }
@@ -641,6 +645,10 @@ void NodeImpl::mark_dirty_objs()
             }
         }
     }
+}
+
+DirtyReason NodeImpl::getDirtyReason() const {
+    return m_dirtyReason;
 }
 
 void NodeImpl::complete() {}
@@ -810,6 +818,23 @@ void NodeImpl::preApply_SwitchIf(CalcContext* pContext) {
     const std::string& exec_param = (cond != 0) ? "If True" : "If False";
     requireInput(exec_param, pContext);
     launch_param_task(exec_param);
+}
+
+void NodeImpl::preApply_FrameCache(CalcContext* pContext) {
+    //这里有一个问题，就是如果应用重启了，如何判定是否需要重新写cache?
+    if (m_dirtyReason == Dirty_All) {
+        preApply(pContext);
+    }
+    else if (m_dirtyReason == Dirty_FrameChanged) {
+        preApply_Primitives(pContext);
+        //需要把路径拿出来，才得知cache是否已经存在了，如果cache不存在，
+        //即便framechange也得把上游依赖解了
+        auto param = get_input_prim_param("path");
+        auto path = zeno::reflect::any_cast<std::string>(param.result);
+        if (!std::filesystem::exists(path)) {
+            preApply(pContext);
+        }
+    }
 }
 
 void NodeImpl::preApply_SwitchBetween(CalcContext* pContext) {
@@ -2450,6 +2475,8 @@ void NodeImpl::doApply(CalcContext* pContext) {
         preApply_SwitchBetween(pContext);
     } else if (m_nodecls == "ForEachEnd") {
         preApply_Primitives(pContext);
+    } else if (m_nodecls == "FrameCache") {
+        preApply_FrameCache(pContext);
     } else {
         preApply(pContext);
     }
@@ -3773,6 +3800,14 @@ void NodeImpl::init(const NodeData& dat)
     }
     initParams(dat);
     m_dirty = true;
+    if (m_nodecls == "FrameCache") {
+        //有可能上一次已经缓存了内容，如果我们允许上一次的缓存留下来的话，就可以标为FrameChanged
+        //那就意味着，如果想清理缓存，只能让用户手动清理，因为机制不好理解什么时候缓存失效
+        m_dirtyReason = Dirty_FrameChanged;
+    }
+    else {
+        m_dirtyReason = Dirty_All;
+    }
 }
 
 void NodeImpl::initParams(const NodeData& dat)

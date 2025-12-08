@@ -68,6 +68,7 @@ namespace zeno
 
         int GetFrameId() const;
         GlobalState* getGlobalState();
+        DirtyReason getDirtyReason() const;
 
         NodeImpl* m_pAdapter = nullptr;
     };

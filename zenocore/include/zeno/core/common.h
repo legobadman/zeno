@@ -182,6 +182,7 @@ namespace zeno {
 
     enum DirtyReason
     {
+        NoDirty,
         Dirty_All,
         Dirty_FrameChanged,
         Dirty_ParamChanged,

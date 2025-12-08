@@ -5,6 +5,8 @@
 #include <zeno/core/Graph.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/ObjectDef.h>
+#include <zeno/funcs/ObjectCodec.h>
+#include <fstream>
 #include <zeno/core/reflectdef.h>
 #include <regex>
 #include <zeno/core/typeinfo.h>
@@ -1950,6 +1952,38 @@ namespace zeno {
             _paths.push_back(zsString2Std(pObject->key()));
             return _paths;
         }
+    }
+
+    zany readObjCache(const std::string& file_path) {
+        if (!std::filesystem::exists(file_path)) {
+            return nullptr;
+        }
+        auto szBuffer = std::filesystem::file_size(file_path);
+        std::vector<char> dat(szBuffer);
+        FILE* fp = fopen(file_path.c_str(), "rb");
+        if (!fp) {
+            log_error("zeno cache file does not exist");
+            return nullptr;
+        }
+        size_t ret = fread(&dat[0], 1, szBuffer, fp);
+        assert(ret == szBuffer);
+        fclose(fp);
+        fp = nullptr;
+        const char* buffer = &dat[0];
+        return decodeObject(buffer, szBuffer);
+    }
+
+    void writeObjCache(const std::string& file_path, IObject* pObject) {
+        std::vector<char> buffer;
+        bool ret = encodeObject(pObject, buffer);
+        if (!ret)
+            throw;
+
+        auto sz = buffer.size();
+        std::ofstream ofs(file_path, std::ios::binary);
+        std::ostreambuf_iterator<char> oit(ofs);
+        std::copy(buffer.begin(), buffer.end(), oit);
+        ofs.close();
     }
 
     void update_dict_root_key(DictObject* dictobj, const std::string& key)

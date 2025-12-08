@@ -7,6 +7,7 @@
 #include <zeno/core/Graph.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/DictObject.h>
+//#include <zeno/extra/GlobalComm.h>
 
 namespace zeno {
 
@@ -54,6 +55,40 @@ ZENDEFNODE(PortalOut, {
     {"layout"},
 });
 #endif
+
+
+struct FrameCache : zeno::INode {
+    virtual void apply() override {
+        zeno::DirtyReason reason = getDirtyReason();
+        auto path = zsString2Std(get_input2_string("path"));
+        if (reason == zeno::Dirty_FrameChanged) {
+            //无须上游的数据，直接读文件即可
+            zany cacheObj = zeno::readObjCache(path);
+            if (cacheObj) {
+                set_output("Output", std::move(cacheObj));
+                return;
+            }
+        }
+
+        //上游脏了或者cache不存在，得重新写一次cache
+        auto pObject = get_input("Input");
+        zeno::writeObjCache(path, pObject);
+        set_output("Output", pObject->clone());
+    }
+};
+
+ZENDEFNODE(FrameCache, {
+    {
+        {gParamType_IObject, "Input"},
+        {gParamType_IObject, "Depend"},
+        {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit}
+    },
+    {
+        {gParamType_IObject, "Output"}
+    },
+    {},
+    {"layout"},
+    });
 
 
 struct Route : zeno::INode {
