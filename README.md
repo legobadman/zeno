@@ -29,7 +29,8 @@ Fig.2 - Nvidia光线追踪
 ![擎天柱](docs/assets/zh/optix-qtz.gif)
 
 
-Fig.3 - Fluid simulation (用swe02.zsg)
+Fig.3 - 流体解算
+![亚运会冲天潮](docs/assets/zh/yyh.gif)
 
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/flip.png" width="640" position="left">
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/liulang.gif" width="640" position="left">
