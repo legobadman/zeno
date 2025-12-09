@@ -31,18 +31,24 @@ Fig.2 - Nvidia光线追踪
 
 Fig.3 - 流体解算
 ![亚运会冲天潮](docs/assets/zh/yyh.gif)
+*亚运会开幕式潮水演示*
 
+<!--
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/flip.png" width="640" position="left">
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/liulang.gif" width="640" position="left">
+-->
 
-Fig.4 - Rigid simulation
+Fig.4 - 刚体模拟
+![刚体模拟](docs/assets/zh/Rigid.gif)
 
+<!--
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202208/Bullet_Simulation.gif" width="640" position="left">
 
 
 Fig.5 - Procedural Terrain
 
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/programmatic.gif" width="640" position="left">
+-->
 
 Fig.6 - Human rendering
 
