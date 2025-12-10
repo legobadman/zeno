@@ -4310,7 +4310,7 @@
                     "path": {
                         "links": null,
                         "type": "string",
-                        "default-value": "C:\\Zeno\\framecache\\$F.zencache",
+                        "default-value": "C:\\Zeno\\cache\\Domino\\$F.zencache",
                         "control": {
                             "name": "read path"
                         },
@@ -6063,8 +6063,8 @@
                     }
                 },
                 "uipos": [
-                    2595.0,
-                    5524.0
+                    2572.0,
+                    5515.0
                 ],
                 "status": [
                     "View"
@@ -20100,7 +20100,7 @@
         "timeline": {
             "start-frame": 0,
             "end-frame": 100,
-            "curr-frame": 77,
+            "curr-frame": 0,
             "always": false,
             "timeline-fps": 24
         }

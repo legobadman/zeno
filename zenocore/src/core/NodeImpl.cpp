@@ -59,6 +59,15 @@ namespace zeno {
 NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
     if (m_pNode)
         m_pNode->m_pAdapter = this;
+
+    if (m_nodecls == "FrameCache") {
+        //有可能上一次已经缓存了内容，如果我们允许上一次的缓存留下来的话，就可以标为FrameChanged
+        //那就意味着，如果想清理缓存，只能让用户手动清理，因为机制不好理解什么时候缓存失效
+        m_dirtyReason = Dirty_FrameChanged;
+    }
+    else {
+        m_dirtyReason = Dirty_All;
+    }
 }
 
 NodeType NodeImpl::nodeType() const {
