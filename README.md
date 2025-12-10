@@ -30,8 +30,8 @@ Nvidia光线追踪
 
 
 流体解算
-![亚运会冲天潮](docs/assets/zh/yyh.gif)
-*亚运会开幕式潮水演示*
+![亚运会冲天潮](docs/assets/zh/yyh.gif)<br>
+*杭州亚运会开幕式潮水演示*
 
 <!--
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/flip.png" width="640" position="left">
