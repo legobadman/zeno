@@ -22,14 +22,14 @@ Open-source node system framework, to change your algorithmic code into useful t
 
 ## Gallery
 
-Fig.1 - 程序化地形
+程序化地形
 ![地形](docs/assets/zh/terrain2.gif)
 
-Fig.2 - Nvidia光线追踪
+Nvidia光线追踪
 ![擎天柱](docs/assets/zh/optix-qtz.gif)
 
 
-Fig.3 - 流体解算
+流体解算
 ![亚运会冲天潮](docs/assets/zh/yyh.gif)
 *亚运会开幕式潮水演示*
 
@@ -38,7 +38,7 @@ Fig.3 - 流体解算
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/liulang.gif" width="640" position="left">
 -->
 
-Fig.4 - 刚体模拟
+刚体模拟
 ![刚体模拟](docs/assets/zh/Rigid.gif)
 
 <!--
@@ -50,12 +50,14 @@ Fig.5 - Procedural Terrain
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/programmatic.gif" width="640" position="left">
 -->
 
-Fig.6 - Human rendering
+毛发渲染
+![毛发渲染](docs/assets/zh/hair.png)
 
+<!--
 <img src="https://zenustech.oss-cn-beijing.aliyuncs.com/Place-in-Github/202304/face.png" width="640" position="left">
 
-
 https://user-images.githubusercontent.com/25457920/234779878-a2f43b2f-5b9b-463b-950b-8842dad0c651.MP4
+-->
 
 
 
