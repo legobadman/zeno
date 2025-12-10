@@ -1073,7 +1073,8 @@ namespace reflect
 /// Begin RTTI of "class std::basic_string<char>"
 #ifndef _REFLECT_RTTI_GUARD_class_std_basicstringLABcharRAB_1350625706064273086
 #define _REFLECT_RTTI_GUARD_class_std_basicstringLABcharRAB_1350625706064273086 1
-// !!! importance: This is a template specialization "class std::basic_string<char>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::basic_string<char>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -1338,9 +1339,11 @@ namespace reflect
 /// Begin RTTI of "class zeno::String"
 #ifndef _REFLECT_RTTI_GUARD_class_zeno_String_14378431277616792538
 #define _REFLECT_RTTI_GUARD_class_zeno_String_14378431277616792538 1
-namespace zeno {
+namespace zeno {
+
 class String;
-}
+}
+
 
 namespace zeno
 {
@@ -1605,7 +1608,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<2, int>"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB2_intRAB_16965886646643039397
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB2_intRAB_16965886646643039397 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<2, int>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<2, int>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -1870,9 +1874,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::Vec2i"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_Vec2i_12756616248127599565
 #define _REFLECT_RTTI_GUARD_struct_zeno_Vec2i_12756616248127599565 1
-namespace zeno {
+namespace zeno {
+
 struct Vec2i;
-}
+}
+
 
 namespace zeno
 {
@@ -2137,7 +2143,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<2, float>"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB2_floatRAB_6471145251105555636
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB2_floatRAB_6471145251105555636 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<2, float>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<2, float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -2402,9 +2409,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::Vec2f"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_Vec2f_12756599755453176400
 #define _REFLECT_RTTI_GUARD_struct_zeno_Vec2f_12756599755453176400 1
-namespace zeno {
+namespace zeno {
+
 struct Vec2f;
-}
+}
+
 
 namespace zeno
 {
@@ -2669,7 +2678,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<2, class std::basic_string<char> >"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB2_class_std_basicstringLABcharRAB_RAB_14482195190842139743
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB2_class_std_basicstringLABcharRAB_RAB_14482195190842139743 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<2, class std::basic_string<char> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<2, class std::basic_string<char> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -2934,7 +2944,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<3, int>"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB3_intRAB_8367839167412710198
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB3_intRAB_8367839167412710198 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<3, int>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<3, int>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -3199,9 +3210,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::Vec3i"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_Vec3i_12757412294546235104
 #define _REFLECT_RTTI_GUARD_struct_zeno_Vec3i_12757412294546235104 1
-namespace zeno {
+namespace zeno {
+
 struct Vec3i;
-}
+}
+
 
 namespace zeno
 {
@@ -3466,7 +3479,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<3, float>"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB3_floatRAB_1291108797552895579
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB3_floatRAB_1291108797552895579 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<3, float>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<3, float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -3731,9 +3745,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::Vec3f"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_Vec3f_12757428787220658269
 #define _REFLECT_RTTI_GUARD_struct_zeno_Vec3f_12757428787220658269 1
-namespace zeno {
+namespace zeno {
+
 struct Vec3f;
-}
+}
+
 
 namespace zeno
 {
@@ -3998,7 +4014,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<3, class std::basic_string<char> >"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB3_class_std_basicstringLABcharRAB_RAB_7612059177550748566
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB3_class_std_basicstringLABcharRAB_RAB_7612059177550748566 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<3, class std::basic_string<char> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<3, class std::basic_string<char> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -4263,7 +4280,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<4, int>"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB4_intRAB_724601356907542639
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB4_intRAB_724601356907542639 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<4, int>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<4, int>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -4528,9 +4546,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::Vec4i"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_Vec4i_12758300699941640367
 #define _REFLECT_RTTI_GUARD_struct_zeno_Vec4i_12758300699941640367 1
-namespace zeno {
+namespace zeno {
+
 struct Vec4i;
-}
+}
+
 
 namespace zeno
 {
@@ -4795,7 +4815,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<4, float>"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB4_floatRAB_5986645728587245802
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB4_floatRAB_5986645728587245802 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<4, float>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<4, float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -5060,9 +5081,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::Vec4f"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_Vec4f_12758306197499781422
 #define _REFLECT_RTTI_GUARD_struct_zeno_Vec4f_12758306197499781422 1
-namespace zeno {
+namespace zeno {
+
 struct Vec4f;
-}
+}
+
 
 namespace zeno
 {
@@ -5327,7 +5350,8 @@ namespace reflect
 /// Begin RTTI of "struct zeno::_impl_vec::vec<4, class std::basic_string<char> >"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB4_class_std_basicstringLABcharRAB_RAB_8375677720103744597
 #define _REFLECT_RTTI_GUARD_struct_zeno_implvec_vecLAB4_class_std_basicstringLABcharRAB_RAB_8375677720103744597 1
-// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<4, class std::basic_string<char> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct zeno::_impl_vec::vec<4, class std::basic_string<char> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -5592,7 +5616,8 @@ namespace reflect
 /// Begin RTTI of "struct glm::mat<3, 3, float>"
 #ifndef _REFLECT_RTTI_GUARD_struct_glm_matLAB3_3_floatRAB_16310354986700837126
 #define _REFLECT_RTTI_GUARD_struct_glm_matLAB3_3_floatRAB_16310354986700837126 1
-// !!! importance: This is a template specialization "struct glm::mat<3, 3, float>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct glm::mat<3, 3, float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -5857,7 +5882,8 @@ namespace reflect
 /// Begin RTTI of "struct glm::mat<4, 4, float>"
 #ifndef _REFLECT_RTTI_GUARD_struct_glm_matLAB4_4_floatRAB_16993842308719517276
 #define _REFLECT_RTTI_GUARD_struct_glm_matLAB4_4_floatRAB_16993842308719517276 1
-// !!! importance: This is a template specialization "struct glm::mat<4, 4, float>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct glm::mat<4, 4, float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -6119,10 +6145,277 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
+/// Begin RTTI of "class std::vector<struct glm::mat<4, 4, float> >"
+#ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_102376033651582524
+#define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_102376033651582524 1
+// !!! importance: This is a template specialization "class std::vector<struct glm::mat<4, 4, float> >", doesn't generate forward declaration.
+
+
+namespace zeno
+{
+namespace reflect
+{
+    template <>
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class std::vector<struct glm::mat<4, 4, float> >>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> >>::type>::type,class std::vector<struct glm::mat<4, 4, float> >>::value) {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> >",
+                102376033651582524ULL,
+                static_cast<size_t>(
+                    TF_None ),
+                0
+            };
+            return s;
+        } else {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> >",
+                102376033651582524ULL,
+                static_cast<size_t>(
+                    TF_None ),
+                type_info<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> >>::type>::type>().hash_code()
+            };
+            return s;
+        }
+    }
+
+    
+    struct _Sclass_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RABRegistrator {
+        _Sclass_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(102376033651582524, zeno::reflect::type_info<class std::vector<struct glm::mat<4, 4, float> >>());
+        }
+    };
+    static _Sclass_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RABRegistrator global_Sclass_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RABRegistrator{};
+    
+}
+
+
+namespace types
+{
+    constexpr size_t gParamType_ListOfMat4 = 102376033651582524ULL;
+}
+
+
+}
+#endif // _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_102376033651582524
+/// End RTTI of "class std::vector<struct glm::mat<4, 4, float> >"
+///////////////////////////
+
+///////////////////////////
+/// Begin RTTI of "class std::vector<struct glm::mat<4, 4, float> > &"
+#ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_1727575023729238390
+#define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_1727575023729238390 1
+
+namespace zeno
+{
+namespace reflect
+{
+    template <>
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class std::vector<struct glm::mat<4, 4, float> > &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> > &>::type>::type,class std::vector<struct glm::mat<4, 4, float> > &>::value) {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> > &",
+                1727575023729238390ULL,
+                static_cast<size_t>(
+                    TF_IsLValueRef | TF_None ),
+                0
+            };
+            return s;
+        } else {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> > &",
+                1727575023729238390ULL,
+                static_cast<size_t>(
+                    TF_IsLValueRef | TF_None ),
+                type_info<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> > &>::type>::type>().hash_code()
+            };
+            return s;
+        }
+    }
+
+    
+}
+
+
+
+}
+#endif // _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_1727575023729238390
+/// End RTTI of "class std::vector<struct glm::mat<4, 4, float> > &"
+///////////////////////////
+
+///////////////////////////
+/// Begin RTTI of "class std::vector<struct glm::mat<4, 4, float> > &&"
+#ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_17651959876612774640
+#define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_17651959876612774640 1
+
+namespace zeno
+{
+namespace reflect
+{
+    template <>
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class std::vector<struct glm::mat<4, 4, float> > &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> > &&>::type>::type,class std::vector<struct glm::mat<4, 4, float> > &&>::value) {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> > &&",
+                17651959876612774640ULL,
+                static_cast<size_t>(
+                    TF_IsRValueRef | TF_None ),
+                0
+            };
+            return s;
+        } else {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> > &&",
+                17651959876612774640ULL,
+                static_cast<size_t>(
+                    TF_IsRValueRef | TF_None ),
+                type_info<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> > &&>::type>::type>().hash_code()
+            };
+            return s;
+        }
+    }
+
+    
+}
+
+
+
+}
+#endif // _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_17651959876612774640
+/// End RTTI of "class std::vector<struct glm::mat<4, 4, float> > &&"
+///////////////////////////
+
+///////////////////////////
+/// Begin RTTI of "const class std::vector<struct glm::mat<4, 4, float> > &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_7837955887679690351
+#define _REFLECT_RTTI_GUARD_const_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_7837955887679690351 1
+
+namespace zeno
+{
+namespace reflect
+{
+    template <>
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class std::vector<struct glm::mat<4, 4, float> > &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class std::vector<struct glm::mat<4, 4, float> > &>::type>::type,const class std::vector<struct glm::mat<4, 4, float> > &>::value) {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "const class std::vector<struct glm::mat<4, 4, float> > &",
+                7837955887679690351ULL,
+                static_cast<size_t>(
+                    TF_IsConst | TF_IsLValueRef | TF_None ),
+                0
+            };
+            return s;
+        } else {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "const class std::vector<struct glm::mat<4, 4, float> > &",
+                7837955887679690351ULL,
+                static_cast<size_t>(
+                    TF_IsConst | TF_IsLValueRef | TF_None ),
+                type_info<typename std::decay<std::remove_pointer<const class std::vector<struct glm::mat<4, 4, float> > &>::type>::type>().hash_code()
+            };
+            return s;
+        }
+    }
+
+    
+}
+
+
+
+}
+#endif // _REFLECT_RTTI_GUARD_const_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_7837955887679690351
+/// End RTTI of "const class std::vector<struct glm::mat<4, 4, float> > &"
+///////////////////////////
+
+///////////////////////////
+/// Begin RTTI of "const class std::vector<struct glm::mat<4, 4, float> > *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_Mul_7837960285726203195
+#define _REFLECT_RTTI_GUARD_const_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_Mul_7837960285726203195 1
+
+namespace zeno
+{
+namespace reflect
+{
+    template <>
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class std::vector<struct glm::mat<4, 4, float> > *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class std::vector<struct glm::mat<4, 4, float> > *>::type>::type,const class std::vector<struct glm::mat<4, 4, float> > *>::value) {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "const class std::vector<struct glm::mat<4, 4, float> > *",
+                7837960285726203195ULL,
+                static_cast<size_t>(
+                    TF_IsPointer | TF_None ),
+                0
+            };
+            return s;
+        } else {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "const class std::vector<struct glm::mat<4, 4, float> > *",
+                7837960285726203195ULL,
+                static_cast<size_t>(
+                    TF_IsPointer | TF_None ),
+                type_info<typename std::decay<std::remove_pointer<const class std::vector<struct glm::mat<4, 4, float> > *>::type>::type>().hash_code()
+            };
+            return s;
+        }
+    }
+
+    
+}
+
+
+
+}
+#endif // _REFLECT_RTTI_GUARD_const_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_Mul_7837960285726203195
+/// End RTTI of "const class std::vector<struct glm::mat<4, 4, float> > *"
+///////////////////////////
+
+///////////////////////////
+/// Begin RTTI of "class std::vector<struct glm::mat<4, 4, float> > *"
+#ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_Mul_1727588217868776922
+#define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_Mul_1727588217868776922 1
+
+namespace zeno
+{
+namespace reflect
+{
+    template <>
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class std::vector<struct glm::mat<4, 4, float> > *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> > *>::type>::type,class std::vector<struct glm::mat<4, 4, float> > *>::value) {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> > *",
+                1727588217868776922ULL,
+                static_cast<size_t>(
+                    TF_IsPointer | TF_None ),
+                0
+            };
+            return s;
+        } else {
+            static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
+                "class std::vector<struct glm::mat<4, 4, float> > *",
+                1727588217868776922ULL,
+                static_cast<size_t>(
+                    TF_IsPointer | TF_None ),
+                type_info<typename std::decay<std::remove_pointer<class std::vector<struct glm::mat<4, 4, float> > *>::type>::type>().hash_code()
+            };
+            return s;
+        }
+    }
+
+    
+}
+
+
+
+}
+#endif // _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_glm_matLAB4_4_floatRAB_RAB_Mul_1727588217868776922
+/// End RTTI of "class std::vector<struct glm::mat<4, 4, float> > *"
+///////////////////////////
+
+///////////////////////////
 /// Begin RTTI of "struct glm::vec<3, float>"
 #ifndef _REFLECT_RTTI_GUARD_struct_glm_vecLAB3_floatRAB_2551243981112912689
 #define _REFLECT_RTTI_GUARD_struct_glm_vecLAB3_floatRAB_2551243981112912689 1
-// !!! importance: This is a template specialization "struct glm::vec<3, float>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "struct glm::vec<3, float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -6387,7 +6680,8 @@ namespace reflect
 /// Begin RTTI of "class std::vector<class std::basic_string<char> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABclass_std_basicstringLABcharRAB_RAB_8472269399861637118
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABclass_std_basicstringLABcharRAB_RAB_8472269399861637118 1
-// !!! importance: This is a template specialization "class std::vector<class std::basic_string<char> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<class std::basic_string<char> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -6649,21 +6943,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<class zeno::String>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_6422359787960396687
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_6422359787960396687 1
-// !!! importance: This is a template specialization "class zeno::Vector<class zeno::String>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<class zeno::String>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_3610052837063493220
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_3610052837063493220 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<class zeno::String>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<class zeno::String>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String>>::type>::type,class zeno::Vector<class zeno::String>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<class zeno::String>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String>>::type>::type,class zeno::ZsVector<class zeno::String>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String>",
-                6422359787960396687ULL,
+                "class zeno::ZsVector<class zeno::String>",
+                3610052837063493220ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -6671,53 +6966,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String>",
-                6422359787960396687ULL,
+                "class zeno::ZsVector<class zeno::String>",
+                3610052837063493220ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABclass_zeno_StringRABRegistrator {
-        _Sclass_zeno_VectorLABclass_zeno_StringRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6422359787960396687, zeno::reflect::type_info<class zeno::Vector<class zeno::String>>());
+    struct _Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator {
+        _Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(3610052837063493220, zeno::reflect::type_info<class zeno::ZsVector<class zeno::String>>());
         }
     };
-    static _Sclass_zeno_VectorLABclass_zeno_StringRABRegistrator global_Sclass_zeno_VectorLABclass_zeno_StringRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator global_Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiStringList = 6422359787960396687ULL;
+    constexpr size_t gParamType_AbiStringList = 3610052837063493220ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_6422359787960396687
-/// End RTTI of "class zeno::Vector<class zeno::String>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_3610052837063493220
+/// End RTTI of "class zeno::ZsVector<class zeno::String>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<class zeno::String> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_4644249792292658945
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_4644249792292658945 1
+/// Begin RTTI of "class zeno::ZsVector<class zeno::String> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_6421898967622287326
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_6421898967622287326 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<class zeno::String> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String> &>::type>::type,class zeno::Vector<class zeno::String> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<class zeno::String> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String> &>::type>::type,class zeno::ZsVector<class zeno::String> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String> &",
-                4644249792292658945ULL,
+                "class zeno::ZsVector<class zeno::String> &",
+                6421898967622287326ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -6725,11 +7020,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String> &",
-                4644249792292658945ULL,
+                "class zeno::ZsVector<class zeno::String> &",
+                6421898967622287326ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -6741,25 +7036,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_4644249792292658945
-/// End RTTI of "class zeno::Vector<class zeno::String> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_6421898967622287326
+/// End RTTI of "class zeno::ZsVector<class zeno::String> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<class zeno::String> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_5599156546111008581
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_5599156546111008581 1
+/// Begin RTTI of "class zeno::ZsVector<class zeno::String> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_213409239325536872
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_213409239325536872 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<class zeno::String> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String> &&>::type>::type,class zeno::Vector<class zeno::String> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<class zeno::String> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String> &&>::type>::type,class zeno::ZsVector<class zeno::String> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String> &&",
-                5599156546111008581ULL,
+                "class zeno::ZsVector<class zeno::String> &&",
+                213409239325536872ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -6767,11 +7062,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String> &&",
-                5599156546111008581ULL,
+                "class zeno::ZsVector<class zeno::String> &&",
+                213409239325536872ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -6783,25 +7078,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_5599156546111008581
-/// End RTTI of "class zeno::Vector<class zeno::String> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_213409239325536872
+/// End RTTI of "class zeno::ZsVector<class zeno::String> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<class zeno::String> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABclass_zeno_StringRAB_12226458265119155872
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABclass_zeno_StringRAB_12226458265119155872 1
+/// Begin RTTI of "const class zeno::ZsVector<class zeno::String> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABclass_zeno_StringRAB_3301100958676529567
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABclass_zeno_StringRAB_3301100958676529567 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<class zeno::String> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<class zeno::String> &>::type>::type,const class zeno::Vector<class zeno::String> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<class zeno::String> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<class zeno::String> &>::type>::type,const class zeno::ZsVector<class zeno::String> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<class zeno::String> &",
-                12226458265119155872ULL,
+                "const class zeno::ZsVector<class zeno::String> &",
+                3301100958676529567ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -6809,11 +7104,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<class zeno::String> &",
-                12226458265119155872ULL,
+                "const class zeno::ZsVector<class zeno::String> &",
+                3301100958676529567ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<class zeno::String> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<class zeno::String> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -6825,25 +7120,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABclass_zeno_StringRAB_12226458265119155872
-/// End RTTI of "const class zeno::Vector<class zeno::String> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABclass_zeno_StringRAB_3301100958676529567
+/// End RTTI of "const class zeno::ZsVector<class zeno::String> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<class zeno::String> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABclass_zeno_StringRAB_Mul_12226471459258694404
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABclass_zeno_StringRAB_Mul_12226471459258694404 1
+/// Begin RTTI of "const class zeno::ZsVector<class zeno::String> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABclass_zeno_StringRAB_Mul_3301105356723042411
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABclass_zeno_StringRAB_Mul_3301105356723042411 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<class zeno::String> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<class zeno::String> *>::type>::type,const class zeno::Vector<class zeno::String> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<class zeno::String> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<class zeno::String> *>::type>::type,const class zeno::ZsVector<class zeno::String> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<class zeno::String> *",
-                12226471459258694404ULL,
+                "const class zeno::ZsVector<class zeno::String> *",
+                3301105356723042411ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -6851,11 +7146,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<class zeno::String> *",
-                12226471459258694404ULL,
+                "const class zeno::ZsVector<class zeno::String> *",
+                3301105356723042411ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<class zeno::String> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<class zeno::String> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -6867,25 +7162,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABclass_zeno_StringRAB_Mul_12226471459258694404
-/// End RTTI of "const class zeno::Vector<class zeno::String> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABclass_zeno_StringRAB_Mul_3301105356723042411
+/// End RTTI of "const class zeno::ZsVector<class zeno::String> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<class zeno::String> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_Mul_4644245394246146101
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_Mul_4644245394246146101 1
+/// Begin RTTI of "class zeno::ZsVector<class zeno::String> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_Mul_6421894569575774482
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_Mul_6421894569575774482 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<class zeno::String> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String> *>::type>::type,class zeno::Vector<class zeno::String> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<class zeno::String> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String> *>::type>::type,class zeno::ZsVector<class zeno::String> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String> *",
-                4644245394246146101ULL,
+                "class zeno::ZsVector<class zeno::String> *",
+                6421894569575774482ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -6893,11 +7188,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<class zeno::String> *",
-                4644245394246146101ULL,
+                "class zeno::ZsVector<class zeno::String> *",
+                6421894569575774482ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<class zeno::String> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<class zeno::String> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -6909,15 +7204,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABclass_zeno_StringRAB_Mul_4644245394246146101
-/// End RTTI of "class zeno::Vector<class zeno::String> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABclass_zeno_StringRAB_Mul_6421894569575774482
+/// End RTTI of "class zeno::ZsVector<class zeno::String> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<int>"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABintRAB_11332342544482872366
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABintRAB_11332342544482872366 1
-// !!! importance: This is a template specialization "class std::vector<int>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<int>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -7179,21 +7475,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<int>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_5294446623426350797
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_5294446623426350797 1
-// !!! importance: This is a template specialization "class zeno::Vector<int>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<int>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_6181268278529856360
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_6181268278529856360 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<int>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<int>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<int>>::type>::type,class zeno::Vector<int>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<int>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<int>>::type>::type,class zeno::ZsVector<int>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int>",
-                5294446623426350797ULL,
+                "class zeno::ZsVector<int>",
+                6181268278529856360ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -7201,53 +7498,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int>",
-                5294446623426350797ULL,
+                "class zeno::ZsVector<int>",
+                6181268278529856360ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<int>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<int>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABintRABRegistrator {
-        _Sclass_zeno_VectorLABintRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(5294446623426350797, zeno::reflect::type_info<class zeno::Vector<int>>());
+    struct _Sclass_zeno_ZsVectorLABintRABRegistrator {
+        _Sclass_zeno_ZsVectorLABintRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6181268278529856360, zeno::reflect::type_info<class zeno::ZsVector<int>>());
         }
     };
-    static _Sclass_zeno_VectorLABintRABRegistrator global_Sclass_zeno_VectorLABintRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABintRABRegistrator global_Sclass_zeno_ZsVectorLABintRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiIntList = 5294446623426350797ULL;
+    constexpr size_t gParamType_AbiIntList = 6181268278529856360ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_5294446623426350797
-/// End RTTI of "class zeno::Vector<int>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_6181268278529856360
+/// End RTTI of "class zeno::ZsVector<int>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<int> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_13022999964374026851
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_13022999964374026851 1
+/// Begin RTTI of "class zeno::ZsVector<int> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_3158738011698605850
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_3158738011698605850 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<int> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<int> &>::type>::type,class zeno::Vector<int> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<int> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<int> &>::type>::type,class zeno::ZsVector<int> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int> &",
-                13022999964374026851ULL,
+                "class zeno::ZsVector<int> &",
+                3158738011698605850ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -7255,11 +7552,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int> &",
-                13022999964374026851ULL,
+                "class zeno::ZsVector<int> &",
+                3158738011698605850ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<int> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<int> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7271,25 +7568,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_13022999964374026851
-/// End RTTI of "class zeno::Vector<int> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_3158738011698605850
+/// End RTTI of "class zeno::ZsVector<int> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<int> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_9945909420696154943
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_9945909420696154943 1
+/// Begin RTTI of "class zeno::ZsVector<int> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_5654590806226158324
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_5654590806226158324 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<int> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<int> &&>::type>::type,class zeno::Vector<int> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<int> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<int> &&>::type>::type,class zeno::ZsVector<int> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int> &&",
-                9945909420696154943ULL,
+                "class zeno::ZsVector<int> &&",
+                5654590806226158324ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -7297,11 +7594,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int> &&",
-                9945909420696154943ULL,
+                "class zeno::ZsVector<int> &&",
+                5654590806226158324ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<int> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<int> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7313,25 +7610,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_9945909420696154943
-/// End RTTI of "class zeno::Vector<int> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_5654590806226158324
+/// End RTTI of "class zeno::ZsVector<int> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<int> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABintRAB_16864831801774663028
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABintRAB_16864831801774663028 1
+/// Begin RTTI of "const class zeno::ZsVector<int> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABintRAB_10589744652093737265
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABintRAB_10589744652093737265 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<int> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<int> &>::type>::type,const class zeno::Vector<int> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<int> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<int> &>::type>::type,const class zeno::ZsVector<int> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<int> &",
-                16864831801774663028ULL,
+                "const class zeno::ZsVector<int> &",
+                10589744652093737265ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -7339,11 +7636,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<int> &",
-                16864831801774663028ULL,
+                "const class zeno::ZsVector<int> &",
+                10589744652093737265ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<int> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<int> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7355,25 +7652,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABintRAB_16864831801774663028
-/// End RTTI of "const class zeno::Vector<int> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABintRAB_10589744652093737265
+/// End RTTI of "const class zeno::ZsVector<int> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<int> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABintRAB_Mul_16864818607635124496
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABintRAB_Mul_16864818607635124496 1
+/// Begin RTTI of "const class zeno::ZsVector<int> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABintRAB_Mul_10589740254047224421
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABintRAB_Mul_10589740254047224421 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<int> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<int> *>::type>::type,const class zeno::Vector<int> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<int> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<int> *>::type>::type,const class zeno::ZsVector<int> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<int> *",
-                16864818607635124496ULL,
+                "const class zeno::ZsVector<int> *",
+                10589740254047224421ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -7381,11 +7678,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<int> *",
-                16864818607635124496ULL,
+                "const class zeno::ZsVector<int> *",
+                10589740254047224421ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<int> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<int> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7397,25 +7694,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABintRAB_Mul_16864818607635124496
-/// End RTTI of "const class zeno::Vector<int> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABintRAB_Mul_10589740254047224421
+/// End RTTI of "const class zeno::ZsVector<int> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<int> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_Mul_13023013158513565383
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_Mul_13023013158513565383 1
+/// Begin RTTI of "class zeno::ZsVector<int> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_Mul_3158724817559067318
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_Mul_3158724817559067318 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<int> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<int> *>::type>::type,class zeno::Vector<int> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<int> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<int> *>::type>::type,class zeno::ZsVector<int> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int> *",
-                13023013158513565383ULL,
+                "class zeno::ZsVector<int> *",
+                3158724817559067318ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -7423,11 +7720,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<int> *",
-                13023013158513565383ULL,
+                "class zeno::ZsVector<int> *",
+                3158724817559067318ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<int> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<int> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7439,15 +7736,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABintRAB_Mul_13023013158513565383
-/// End RTTI of "class zeno::Vector<int> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABintRAB_Mul_3158724817559067318
+/// End RTTI of "class zeno::ZsVector<int> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<float>"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABfloatRAB_8862306467697783251
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABfloatRAB_8862306467697783251 1
-// !!! importance: This is a template specialization "class std::vector<float>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -7709,21 +8007,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<float>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_131869058210785820
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_131869058210785820 1
-// !!! importance: This is a template specialization "class zeno::Vector<float>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<float>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_15654587305286246761
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_15654587305286246761 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<float>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<float>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<float>>::type>::type,class zeno::Vector<float>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<float>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<float>>::type>::type,class zeno::ZsVector<float>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float>",
-                131869058210785820ULL,
+                "class zeno::ZsVector<float>",
+                15654587305286246761ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -7731,53 +8030,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float>",
-                131869058210785820ULL,
+                "class zeno::ZsVector<float>",
+                15654587305286246761ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<float>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<float>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABfloatRABRegistrator {
-        _Sclass_zeno_VectorLABfloatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(131869058210785820, zeno::reflect::type_info<class zeno::Vector<float>>());
+    struct _Sclass_zeno_ZsVectorLABfloatRABRegistrator {
+        _Sclass_zeno_ZsVectorLABfloatRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15654587305286246761, zeno::reflect::type_info<class zeno::ZsVector<float>>());
         }
     };
-    static _Sclass_zeno_VectorLABfloatRABRegistrator global_Sclass_zeno_VectorLABfloatRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABfloatRABRegistrator global_Sclass_zeno_ZsVectorLABfloatRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiFloatList = 131869058210785820ULL;
+    constexpr size_t gParamType_AbiFloatList = 15654587305286246761ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_131869058210785820
-/// End RTTI of "class zeno::Vector<float>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_15654587305286246761
+/// End RTTI of "class zeno::ZsVector<float>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<float> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_7450363161895796182
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_7450363161895796182 1
+/// Begin RTTI of "class zeno::ZsVector<float> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_3409859507811010935
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_3409859507811010935 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<float> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<float> &>::type>::type,class zeno::Vector<float> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<float> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<float> &>::type>::type,class zeno::ZsVector<float> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float> &",
-                7450363161895796182ULL,
+                "class zeno::ZsVector<float> &",
+                3409859507811010935ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -7785,11 +8084,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float> &",
-                7450363161895796182ULL,
+                "class zeno::ZsVector<float> &",
+                3409859507811010935ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<float> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<float> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7801,25 +8100,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_7450363161895796182
-/// End RTTI of "class zeno::Vector<float> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_3409859507811010935
+/// End RTTI of "class zeno::ZsVector<float> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<float> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_2675147615069404880
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_2675147615069404880 1
+/// Begin RTTI of "class zeno::ZsVector<float> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_8722918239374185635
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_8722918239374185635 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<float> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<float> &&>::type>::type,class zeno::Vector<float> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<float> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<float> &&>::type>::type,class zeno::ZsVector<float> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float> &&",
-                2675147615069404880ULL,
+                "class zeno::ZsVector<float> &&",
+                8722918239374185635ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -7827,11 +8126,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float> &&",
-                2675147615069404880ULL,
+                "class zeno::ZsVector<float> &&",
+                8722918239374185635ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<float> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<float> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7843,25 +8142,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_2675147615069404880
-/// End RTTI of "class zeno::Vector<float> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_8722918239374185635
+/// End RTTI of "class zeno::ZsVector<float> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<float> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABfloatRAB_16092859679938708973
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABfloatRAB_16092859679938708973 1
+/// Begin RTTI of "const class zeno::ZsVector<float> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABfloatRAB_908245543636808920
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABfloatRAB_908245543636808920 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<float> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<float> &>::type>::type,const class zeno::Vector<float> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<float> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<float> &>::type>::type,const class zeno::ZsVector<float> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<float> &",
-                16092859679938708973ULL,
+                "const class zeno::ZsVector<float> &",
+                908245543636808920ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -7869,11 +8168,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<float> &",
-                16092859679938708973ULL,
+                "const class zeno::ZsVector<float> &",
+                908245543636808920ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<float> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<float> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7885,25 +8184,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABfloatRAB_16092859679938708973
-/// End RTTI of "const class zeno::Vector<float> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABfloatRAB_908245543636808920
+/// End RTTI of "const class zeno::ZsVector<float> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<float> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABfloatRAB_Mul_16092846485799170441
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABfloatRAB_Mul_16092846485799170441 1
+/// Begin RTTI of "const class zeno::ZsVector<float> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABfloatRAB_Mul_908241145590296076
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABfloatRAB_Mul_908241145590296076 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<float> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<float> *>::type>::type,const class zeno::Vector<float> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<float> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<float> *>::type>::type,const class zeno::ZsVector<float> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<float> *",
-                16092846485799170441ULL,
+                "const class zeno::ZsVector<float> *",
+                908241145590296076ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -7911,11 +8210,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<float> *",
-                16092846485799170441ULL,
+                "const class zeno::ZsVector<float> *",
+                908241145590296076ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<float> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<float> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7927,25 +8226,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABfloatRAB_Mul_16092846485799170441
-/// End RTTI of "const class zeno::Vector<float> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABfloatRAB_Mul_908241145590296076
+/// End RTTI of "const class zeno::ZsVector<float> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<float> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_Mul_7450376356035334714
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_Mul_7450376356035334714 1
+/// Begin RTTI of "class zeno::ZsVector<float> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_Mul_3409846313671472403
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_Mul_3409846313671472403 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<float> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<float> *>::type>::type,class zeno::Vector<float> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<float> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<float> *>::type>::type,class zeno::ZsVector<float> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float> *",
-                7450376356035334714ULL,
+                "class zeno::ZsVector<float> *",
+                3409846313671472403ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -7953,11 +8252,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<float> *",
-                7450376356035334714ULL,
+                "class zeno::ZsVector<float> *",
+                3409846313671472403ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<float> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<float> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -7969,15 +8268,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABfloatRAB_Mul_7450376356035334714
-/// End RTTI of "class zeno::Vector<float> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABfloatRAB_Mul_3409846313671472403
+/// End RTTI of "class zeno::ZsVector<float> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<struct zeno::_impl_vec::vec<2, float> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB2_floatRAB_RAB_352580941733667956
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB2_floatRAB_RAB_352580941733667956 1
-// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<2, float> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<2, float> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -8239,21 +8539,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2f>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_3723469020882266465
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_3723469020882266465 1
-// !!! importance: This is a template specialization "class zeno::Vector<struct zeno::Vec2f>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2f>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_15902463235470035794
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_15902463235470035794 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<struct zeno::Vec2f>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2f>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f>>::type>::type,class zeno::Vector<struct zeno::Vec2f>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2f>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f>>::type>::type,class zeno::ZsVector<struct zeno::Vec2f>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f>",
-                3723469020882266465ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f>",
+                15902463235470035794ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -8261,53 +8562,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f>",
-                3723469020882266465ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f>",
+                15902463235470035794ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABstruct_zeno_Vec2fRABRegistrator {
-        _Sclass_zeno_VectorLABstruct_zeno_Vec2fRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(3723469020882266465, zeno::reflect::type_info<class zeno::Vector<struct zeno::Vec2f>>());
+    struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator {
+        _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15902463235470035794, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec2f>>());
         }
     };
-    static _Sclass_zeno_VectorLABstruct_zeno_Vec2fRABRegistrator global_Sclass_zeno_VectorLABstruct_zeno_Vec2fRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiVec2fList = 3723469020882266465ULL;
+    constexpr size_t gParamType_AbiVec2fList = 15902463235470035794ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_3723469020882266465
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2f>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_15902463235470035794
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2f>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2f> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_6571087022135364463
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_6571087022135364463 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2f> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_9103697863433923248
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_9103697863433923248 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2f> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f> &>::type>::type,class zeno::Vector<struct zeno::Vec2f> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2f> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f> &>::type>::type,class zeno::ZsVector<struct zeno::Vec2f> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f> &",
-                6571087022135364463ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f> &",
+                9103697863433923248ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -8315,11 +8616,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f> &",
-                6571087022135364463ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f> &",
+                9103697863433923248ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8331,25 +8632,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_6571087022135364463
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2f> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_9103697863433923248
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2f> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2f> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_9466921241909882123
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_9466921241909882123 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2f> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_2573377718444514530
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_2573377718444514530 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2f> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f> &&>::type>::type,class zeno::Vector<struct zeno::Vec2f> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2f> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f> &&>::type>::type,class zeno::ZsVector<struct zeno::Vec2f> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f> &&",
-                9466921241909882123ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f> &&",
+                2573377718444514530ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -8357,11 +8658,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f> &&",
-                9466921241909882123ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f> &&",
+                2573377718444514530ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8373,25 +8674,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_9466921241909882123
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2f> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_2573377718444514530
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2f> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec2f> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2fRAB_503853730876782106
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2fRAB_503853730876782106 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec2f> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_2490094114524990733
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_2490094114524990733 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec2f> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2f> &>::type>::type,const class zeno::Vector<struct zeno::Vec2f> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec2f> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2f> &>::type>::type,const class zeno::ZsVector<struct zeno::Vec2f> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2f> &",
-                503853730876782106ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2f> &",
+                2490094114524990733ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -8399,11 +8700,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2f> &",
-                503853730876782106ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2f> &",
+                2490094114524990733ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2f> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2f> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8415,25 +8716,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2fRAB_503853730876782106
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec2f> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_2490094114524990733
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec2f> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec2f> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2fRAB_Mul_503840536737243574
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2fRAB_Mul_503840536737243574 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec2f> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_Mul_2490080920385452201
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_Mul_2490080920385452201 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec2f> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2f> *>::type>::type,const class zeno::Vector<struct zeno::Vec2f> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec2f> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2f> *>::type>::type,const class zeno::ZsVector<struct zeno::Vec2f> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2f> *",
-                503840536737243574ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2f> *",
+                2490080920385452201ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -8441,11 +8742,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2f> *",
-                503840536737243574ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2f> *",
+                2490080920385452201ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2f> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2f> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8457,25 +8758,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2fRAB_Mul_503840536737243574
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec2f> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_Mul_2490080920385452201
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec2f> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2f> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_Mul_6571091420181877307
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_Mul_6571091420181877307 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2f> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_Mul_9103711057573461780
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_Mul_9103711057573461780 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2f> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f> *>::type>::type,class zeno::Vector<struct zeno::Vec2f> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2f> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f> *>::type>::type,class zeno::ZsVector<struct zeno::Vec2f> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f> *",
-                6571091420181877307ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f> *",
+                9103711057573461780ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -8483,11 +8784,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2f> *",
-                6571091420181877307ULL,
+                "class zeno::ZsVector<struct zeno::Vec2f> *",
+                9103711057573461780ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2f> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2f> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8499,15 +8800,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2fRAB_Mul_6571091420181877307
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2f> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2fRAB_Mul_9103711057573461780
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2f> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<struct zeno::_impl_vec::vec<3, float> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB3_floatRAB_RAB_16802479141220513467
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB3_floatRAB_RAB_16802479141220513467 1
-// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<3, float> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<3, float> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -8769,21 +9071,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3f>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_2965409629491681554
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_2965409629491681554 1
-// !!! importance: This is a template specialization "class zeno::Vector<struct zeno::Vec3f>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3f>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_16415639397073908385
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_16415639397073908385 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<struct zeno::Vec3f>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3f>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f>>::type>::type,class zeno::Vector<struct zeno::Vec3f>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3f>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f>>::type>::type,class zeno::ZsVector<struct zeno::Vec3f>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f>",
-                2965409629491681554ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f>",
+                16415639397073908385ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -8791,53 +9094,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f>",
-                2965409629491681554ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f>",
+                16415639397073908385ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABstruct_zeno_Vec3fRABRegistrator {
-        _Sclass_zeno_VectorLABstruct_zeno_Vec3fRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(2965409629491681554, zeno::reflect::type_info<class zeno::Vector<struct zeno::Vec3f>>());
+    struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator {
+        _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16415639397073908385, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec3f>>());
         }
     };
-    static _Sclass_zeno_VectorLABstruct_zeno_Vec3fRABRegistrator global_Sclass_zeno_VectorLABstruct_zeno_Vec3fRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiVec3fList = 2965409629491681554ULL;
+    constexpr size_t gParamType_AbiVec3fList = 16415639397073908385ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_2965409629491681554
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3f>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_16415639397073908385
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3f>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3f> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_11684933499308269168
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_11684933499308269168 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3f> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_4373774088132593327
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_4373774088132593327 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3f> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f> &>::type>::type,class zeno::Vector<struct zeno::Vec3f> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3f> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f> &>::type>::type,class zeno::ZsVector<struct zeno::Vec3f> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f> &",
-                11684933499308269168ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f> &",
+                4373774088132593327ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -8845,11 +9148,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f> &",
-                11684933499308269168ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f> &",
+                4373774088132593327ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8861,25 +9164,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_11684933499308269168
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3f> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_4373774088132593327
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3f> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3f> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_16206871830986083362
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_16206871830986083362 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3f> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_1678208303073434315
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_1678208303073434315 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3f> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f> &&>::type>::type,class zeno::Vector<struct zeno::Vec3f> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3f> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f> &&>::type>::type,class zeno::ZsVector<struct zeno::Vec3f> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f> &&",
-                16206871830986083362ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f> &&",
+                1678208303073434315ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -8887,11 +9190,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f> &&",
-                16206871830986083362ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f> &&",
+                1678208303073434315ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8903,25 +9206,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_16206871830986083362
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3f> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_1678208303073434315
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3f> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec3f> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3fRAB_12744568190939222329
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3fRAB_12744568190939222329 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec3f> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_8818477382135201406
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_8818477382135201406 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec3f> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3f> &>::type>::type,const class zeno::Vector<struct zeno::Vec3f> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec3f> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3f> &>::type>::type,const class zeno::ZsVector<struct zeno::Vec3f> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3f> &",
-                12744568190939222329ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3f> &",
+                8818477382135201406ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -8929,11 +9232,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3f> &",
-                12744568190939222329ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3f> &",
+                8818477382135201406ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3f> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3f> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8945,25 +9248,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3fRAB_12744568190939222329
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec3f> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_8818477382135201406
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec3f> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec3f> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3fRAB_Mul_12744581385078760861
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3fRAB_Mul_12744581385078760861 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec3f> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_Mul_8818472984088688562
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_Mul_8818472984088688562 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec3f> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3f> *>::type>::type,const class zeno::Vector<struct zeno::Vec3f> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec3f> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3f> *>::type>::type,const class zeno::ZsVector<struct zeno::Vec3f> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3f> *",
-                12744581385078760861ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3f> *",
+                8818472984088688562ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -8971,11 +9274,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3f> *",
-                12744581385078760861ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3f> *",
+                8818472984088688562ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3f> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3f> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -8987,25 +9290,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3fRAB_Mul_12744581385078760861
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec3f> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_Mul_8818472984088688562
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec3f> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3f> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_Mul_11684946693447807700
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_Mul_11684946693447807700 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3f> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_Mul_4373778486179106171
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_Mul_4373778486179106171 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3f> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f> *>::type>::type,class zeno::Vector<struct zeno::Vec3f> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3f> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f> *>::type>::type,class zeno::ZsVector<struct zeno::Vec3f> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f> *",
-                11684946693447807700ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f> *",
+                4373778486179106171ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -9013,11 +9316,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3f> *",
-                11684946693447807700ULL,
+                "class zeno::ZsVector<struct zeno::Vec3f> *",
+                4373778486179106171ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3f> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3f> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9029,15 +9332,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3fRAB_Mul_11684946693447807700
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3f> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3fRAB_Mul_4373778486179106171
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3f> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<struct zeno::_impl_vec::vec<4, float> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB4_floatRAB_RAB_14658396477978350594
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB4_floatRAB_RAB_14658396477978350594 1
-// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<4, float> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<4, float> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -9299,21 +9603,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4f>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_5021581036111415351
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_5021581036111415351 1
-// !!! importance: This is a template specialization "class zeno::Vector<struct zeno::Vec4f>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4f>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_17215774899444545944
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_17215774899444545944 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<struct zeno::Vec4f>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4f>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f>>::type>::type,class zeno::Vector<struct zeno::Vec4f>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4f>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f>>::type>::type,class zeno::ZsVector<struct zeno::Vec4f>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f>",
-                5021581036111415351ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f>",
+                17215774899444545944ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -9321,53 +9626,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f>",
-                5021581036111415351ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f>",
+                17215774899444545944ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABstruct_zeno_Vec4fRABRegistrator {
-        _Sclass_zeno_VectorLABstruct_zeno_Vec4fRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(5021581036111415351, zeno::reflect::type_info<class zeno::Vector<struct zeno::Vec4f>>());
+    struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator {
+        _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(17215774899444545944, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec4f>>());
         }
     };
-    static _Sclass_zeno_VectorLABstruct_zeno_Vec4fRABRegistrator global_Sclass_zeno_VectorLABstruct_zeno_Vec4fRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiVec4fList = 5021581036111415351ULL;
+    constexpr size_t gParamType_AbiVec4fList = 17215774899444545944ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_5021581036111415351
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4f>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_17215774899444545944
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4f>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4f> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_3120837157199553449
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_3120837157199553449 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4f> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_1049766989716486730
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_1049766989716486730 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4f> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f> &>::type>::type,class zeno::Vector<struct zeno::Vec4f> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4f> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f> &>::type>::type,class zeno::ZsVector<struct zeno::Vec4f> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f> &",
-                3120837157199553449ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f> &",
+                1049766989716486730ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -9375,11 +9680,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f> &",
-                3120837157199553449ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f> &",
+                1049766989716486730ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9391,25 +9696,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_3120837157199553449
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4f> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_1049766989716486730
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4f> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4f> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_5773708084625304573
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_5773708084625304573 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4f> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_13600953481867363716
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_13600953481867363716 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4f> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f> &&>::type>::type,class zeno::Vector<struct zeno::Vec4f> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4f> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f> &&>::type>::type,class zeno::ZsVector<struct zeno::Vec4f> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f> &&",
-                5773708084625304573ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f> &&",
+                13600953481867363716ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -9417,11 +9722,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f> &&",
-                5773708084625304573ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f> &&",
+                13600953481867363716ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9433,25 +9738,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_5773708084625304573
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4f> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_13600953481867363716
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4f> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec4f> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4fRAB_2355556142573455488
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4fRAB_2355556142573455488 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec4f> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_8025922625342360539
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_8025922625342360539 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec4f> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4f> &>::type>::type,const class zeno::Vector<struct zeno::Vec4f> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec4f> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4f> &>::type>::type,const class zeno::ZsVector<struct zeno::Vec4f> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4f> &",
-                2355556142573455488ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4f> &",
+                8025922625342360539ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -9459,11 +9764,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4f> &",
-                2355556142573455488ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4f> &",
+                8025922625342360539ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4f> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4f> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9475,25 +9780,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4fRAB_2355556142573455488
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec4f> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_8025922625342360539
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec4f> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec4f> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4fRAB_Mul_2355569336712994020
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4fRAB_Mul_2355569336712994020 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec4f> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_Mul_8025918227295847695
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_Mul_8025918227295847695 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec4f> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4f> *>::type>::type,const class zeno::Vector<struct zeno::Vec4f> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec4f> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4f> *>::type>::type,const class zeno::ZsVector<struct zeno::Vec4f> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4f> *",
-                2355569336712994020ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4f> *",
+                8025918227295847695ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -9501,11 +9806,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4f> *",
-                2355569336712994020ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4f> *",
+                8025918227295847695ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4f> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4f> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9517,25 +9822,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4fRAB_Mul_2355569336712994020
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec4f> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_Mul_8025918227295847695
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec4f> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4f> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_Mul_3120850351339091981
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_Mul_3120850351339091981 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4f> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_Mul_1049753795576948198
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_Mul_1049753795576948198 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4f> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f> *>::type>::type,class zeno::Vector<struct zeno::Vec4f> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4f> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f> *>::type>::type,class zeno::ZsVector<struct zeno::Vec4f> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f> *",
-                3120850351339091981ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f> *",
+                1049753795576948198ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -9543,11 +9848,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4f> *",
-                3120850351339091981ULL,
+                "class zeno::ZsVector<struct zeno::Vec4f> *",
+                1049753795576948198ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4f> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4f> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9559,15 +9864,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4fRAB_Mul_3120850351339091981
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4f> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4fRAB_Mul_1049753795576948198
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4f> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<struct zeno::_impl_vec::vec<2, int> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB2_intRAB_RAB_8437938278359228333
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB2_intRAB_RAB_8437938278359228333 1
-// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<2, int> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<2, int> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -9829,21 +10135,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2i>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_3724451984277697874
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_3724451984277697874 1
-// !!! importance: This is a template specialization "class zeno::Vector<struct zeno::Vec2i>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2i>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_15901480272074604385
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_15901480272074604385 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<struct zeno::Vec2i>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2i>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i>>::type>::type,class zeno::Vector<struct zeno::Vec2i>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2i>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i>>::type>::type,class zeno::ZsVector<struct zeno::Vec2i>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i>",
-                3724451984277697874ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i>",
+                15901480272074604385ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -9851,53 +10158,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i>",
-                3724451984277697874ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i>",
+                15901480272074604385ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABstruct_zeno_Vec2iRABRegistrator {
-        _Sclass_zeno_VectorLABstruct_zeno_Vec2iRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(3724451984277697874, zeno::reflect::type_info<class zeno::Vector<struct zeno::Vec2i>>());
+    struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator {
+        _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15901480272074604385, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec2i>>());
         }
     };
-    static _Sclass_zeno_VectorLABstruct_zeno_Vec2iRABRegistrator global_Sclass_zeno_VectorLABstruct_zeno_Vec2iRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiVec2iList = 3724451984277697874ULL;
+    constexpr size_t gParamType_AbiVec2iList = 15901480272074604385ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_3724451984277697874
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2i>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_15901480272074604385
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2i>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2i> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_14693236628915037360
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_14693236628915037360 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2i> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_981548256654250351
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_981548256654250351 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2i> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i> &>::type>::type,class zeno::Vector<struct zeno::Vec2i> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2i> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i> &>::type>::type,class zeno::ZsVector<struct zeno::Vec2i> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i> &",
-                14693236628915037360ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i> &",
+                981548256654250351ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -9905,11 +10212,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i> &",
-                14693236628915037360ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i> &",
+                981548256654250351ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9921,25 +10228,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_14693236628915037360
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2i> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_981548256654250351
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2i> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2i> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_13390295336755735266
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_13390295336755735266 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2i> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_17096747697308213003
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_17096747697308213003 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2i> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i> &&>::type>::type,class zeno::Vector<struct zeno::Vec2i> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2i> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i> &&>::type>::type,class zeno::ZsVector<struct zeno::Vec2i> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i> &&",
-                13390295336755735266ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i> &&",
+                17096747697308213003ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -9947,11 +10254,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i> &&",
-                13390295336755735266ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i> &&",
+                17096747697308213003ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -9963,25 +10270,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_13390295336755735266
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2i> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_17096747697308213003
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2i> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec2i> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2iRAB_12109845860866775669
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2iRAB_12109845860866775669 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec2i> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_4788368264723549986
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_4788368264723549986 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec2i> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2i> &>::type>::type,const class zeno::Vector<struct zeno::Vec2i> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec2i> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2i> &>::type>::type,const class zeno::ZsVector<struct zeno::Vec2i> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2i> &",
-                12109845860866775669ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2i> &",
+                4788368264723549986ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -9989,11 +10296,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2i> &",
-                12109845860866775669ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2i> &",
+                4788368264723549986ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2i> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2i> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10005,25 +10312,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2iRAB_12109845860866775669
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec2i> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_4788368264723549986
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec2i> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec2i> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2iRAB_Mul_12109850258913288513
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2iRAB_Mul_12109850258913288513 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec2i> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_Mul_4788372662770062830
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_Mul_4788372662770062830 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec2i> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2i> *>::type>::type,const class zeno::Vector<struct zeno::Vec2i> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec2i> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2i> *>::type>::type,const class zeno::ZsVector<struct zeno::Vec2i> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2i> *",
-                12109850258913288513ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2i> *",
+                4788372662770062830ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -10031,11 +10338,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec2i> *",
-                12109850258913288513ULL,
+                "const class zeno::ZsVector<struct zeno::Vec2i> *",
+                4788372662770062830ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec2i> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec2i> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10047,25 +10354,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec2iRAB_Mul_12109850258913288513
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec2i> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_Mul_4788372662770062830
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec2i> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec2i> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_Mul_14693249823054575892
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_Mul_14693249823054575892 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec2i> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_Mul_981552654700763195
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_Mul_981552654700763195 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec2i> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i> *>::type>::type,class zeno::Vector<struct zeno::Vec2i> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec2i> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i> *>::type>::type,class zeno::ZsVector<struct zeno::Vec2i> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i> *",
-                14693249823054575892ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i> *",
+                981552654700763195ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -10073,11 +10380,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec2i> *",
-                14693249823054575892ULL,
+                "class zeno::ZsVector<struct zeno::Vec2i> *",
+                981552654700763195ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec2i> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec2i> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10089,15 +10396,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec2iRAB_Mul_14693249823054575892
-/// End RTTI of "class zeno::Vector<struct zeno::Vec2i> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec2iRAB_Mul_981552654700763195
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec2i> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<struct zeno::_impl_vec::vec<3, int> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB3_intRAB_RAB_12969379980554923694
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB3_intRAB_RAB_12969379980554923694 1
-// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<3, int> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<3, int> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -10359,21 +10667,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3i>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_2964426666096250145
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_2964426666096250145 1
-// !!! importance: This is a template specialization "class zeno::Vector<struct zeno::Vec3i>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3i>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_16416622360469339794
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_16416622360469339794 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<struct zeno::Vec3i>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3i>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i>>::type>::type,class zeno::Vector<struct zeno::Vec3i>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3i>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i>>::type>::type,class zeno::ZsVector<struct zeno::Vec3i>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i>",
-                2964426666096250145ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i>",
+                16416622360469339794ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -10381,53 +10690,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i>",
-                2964426666096250145ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i>",
+                16416622360469339794ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABstruct_zeno_Vec3iRABRegistrator {
-        _Sclass_zeno_VectorLABstruct_zeno_Vec3iRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(2964426666096250145, zeno::reflect::type_info<class zeno::Vector<struct zeno::Vec3i>>());
+    struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator {
+        _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16416622360469339794, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec3i>>());
         }
     };
-    static _Sclass_zeno_VectorLABstruct_zeno_Vec3iRABRegistrator global_Sclass_zeno_VectorLABstruct_zeno_Vec3iRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiVec3iList = 2964426666096250145ULL;
+    constexpr size_t gParamType_AbiVec3iList = 16416622360469339794ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_2964426666096250145
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3i>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_16416622360469339794
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3i>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3i> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_3562783892528596271
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_3562783892528596271 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3i> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_12495923694912266224
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_12495923694912266224 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3i> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i> &>::type>::type,class zeno::Vector<struct zeno::Vec3i> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3i> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i> &>::type>::type,class zeno::ZsVector<struct zeno::Vec3i> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i> &",
-                3562783892528596271ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i> &",
+                12495923694912266224ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -10435,11 +10744,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i> &",
-                3562783892528596271ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i> &",
+                12495923694912266224ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10451,25 +10760,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_3562783892528596271
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3i> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_12495923694912266224
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3i> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3i> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_12283497736140230219
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_12283497736140230219 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3i> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_5601582397919287458
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_5601582397919287458 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3i> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i> &&>::type>::type,class zeno::Vector<struct zeno::Vec3i> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3i> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i> &&>::type>::type,class zeno::ZsVector<struct zeno::Vec3i> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i> &&",
-                12283497736140230219ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i> &&",
+                5601582397919287458ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -10477,11 +10786,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i> &&",
-                12283497736140230219ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i> &&",
+                5601582397919287458ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10493,25 +10802,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_12283497736140230219
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3i> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_5601582397919287458
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3i> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec3i> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3iRAB_3517726556915475590
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3iRAB_3517726556915475590 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec3i> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_13380469976488798689
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_13380469976488798689 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec3i> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3i> &>::type>::type,const class zeno::Vector<struct zeno::Vec3i> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec3i> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3i> &>::type>::type,const class zeno::ZsVector<struct zeno::Vec3i> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3i> &",
-                3517726556915475590ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3i> &",
+                13380469976488798689ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -10519,11 +10828,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3i> &",
-                3517726556915475590ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3i> &",
+                13380469976488798689ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3i> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3i> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10535,25 +10844,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3iRAB_3517726556915475590
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec3i> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_13380469976488798689
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec3i> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec3i> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3iRAB_Mul_3517739751055014122
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3iRAB_Mul_3517739751055014122 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec3i> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_Mul_13380465578442285845
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_Mul_13380465578442285845 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec3i> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3i> *>::type>::type,const class zeno::Vector<struct zeno::Vec3i> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec3i> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3i> *>::type>::type,const class zeno::ZsVector<struct zeno::Vec3i> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3i> *",
-                3517739751055014122ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3i> *",
+                13380465578442285845ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -10561,11 +10870,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec3i> *",
-                3517739751055014122ULL,
+                "const class zeno::ZsVector<struct zeno::Vec3i> *",
+                13380465578442285845ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec3i> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec3i> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10577,25 +10886,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec3iRAB_Mul_3517739751055014122
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec3i> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_Mul_13380465578442285845
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec3i> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec3i> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_Mul_3562788290575109115
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_Mul_3562788290575109115 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec3i> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_Mul_12495936889051804756
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_Mul_12495936889051804756 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec3i> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i> *>::type>::type,class zeno::Vector<struct zeno::Vec3i> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec3i> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i> *>::type>::type,class zeno::ZsVector<struct zeno::Vec3i> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i> *",
-                3562788290575109115ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i> *",
+                12495936889051804756ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -10603,11 +10912,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec3i> *",
-                3562788290575109115ULL,
+                "class zeno::ZsVector<struct zeno::Vec3i> *",
+                12495936889051804756ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec3i> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec3i> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10619,15 +10928,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec3iRAB_Mul_3562788290575109115
-/// End RTTI of "class zeno::Vector<struct zeno::Vec3i> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec3iRAB_Mul_12495936889051804756
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec3i> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<struct zeno::_impl_vec::vec<4, int> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB4_intRAB_RAB_8958441701489594431
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABstruct_zeno_implvec_vecLAB4_intRAB_RAB_8958441701489594431 1
-// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<4, int> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<struct zeno::_impl_vec::vec<4, int> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -10889,21 +11199,22 @@ namespace reflect
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4i>"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_5033963736065867708
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_5033963736065867708 1
-// !!! importance: This is a template specialization "class zeno::Vector<struct zeno::Vec4i>", doesn't generate forward declaration.
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4i>"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_17226332410096546491
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_17226332410096546491 1
+// !!! importance: This is a template specialization "class zeno::ZsVector<struct zeno::Vec4i>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4i>>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i>>::type>::type,class zeno::Vector<struct zeno::Vec4i>>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4i>>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i>>::type>::type,class zeno::ZsVector<struct zeno::Vec4i>>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i>",
-                5033963736065867708ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i>",
+                17226332410096546491ULL,
                 static_cast<size_t>(
                     TF_None ),
                 0
@@ -10911,53 +11222,53 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i>",
-                5033963736065867708ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i>",
+                17226332410096546491ULL,
                 static_cast<size_t>(
                     TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i>>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i>>::type>::type>().hash_code()
             };
             return s;
         }
     }
 
     
-    struct _Sclass_zeno_VectorLABstruct_zeno_Vec4iRABRegistrator {
-        _Sclass_zeno_VectorLABstruct_zeno_Vec4iRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(5033963736065867708, zeno::reflect::type_info<class zeno::Vector<struct zeno::Vec4i>>());
+    struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator {
+        _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator() {
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(17226332410096546491, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec4i>>());
         }
     };
-    static _Sclass_zeno_VectorLABstruct_zeno_Vec4iRABRegistrator global_Sclass_zeno_VectorLABstruct_zeno_Vec4iRABRegistrator{};
+    static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator{};
     
 }
 
 
 namespace types
 {
-    constexpr size_t gParamType_AbiVec4iList = 5033963736065867708ULL;
+    constexpr size_t gParamType_AbiVec4iList = 17226332410096546491ULL;
 }
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_5033963736065867708
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4i>"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_17226332410096546491
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4i>"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4i> &"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_12340739596885358326
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_12340739596885358326 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4i> &"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_192750848912236453
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_192750848912236453 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4i> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i> &>::type>::type,class zeno::Vector<struct zeno::Vec4i> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4i> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i> &>::type>::type,class zeno::ZsVector<struct zeno::Vec4i> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i> &",
-                12340739596885358326ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i> &",
+                192750848912236453ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
                 0
@@ -10965,11 +11276,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i> &",
-                12340739596885358326ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i> &",
+                192750848912236453ULL,
                 static_cast<size_t>(
                     TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -10981,25 +11292,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_12340739596885358326
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4i> &"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_192750848912236453
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4i> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4i> &&"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_17726608495519294320
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_17726608495519294320 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4i> &&"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_2106148601094867865
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_2106148601094867865 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4i> &&>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i> &&>::type>::type,class zeno::Vector<struct zeno::Vec4i> &&>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4i> &&>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i> &&>::type>::type,class zeno::ZsVector<struct zeno::Vec4i> &&>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i> &&",
-                17726608495519294320ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i> &&",
+                2106148601094867865ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
                 0
@@ -11007,11 +11318,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i> &&",
-                17726608495519294320ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i> &&",
+                2106148601094867865ULL,
                 static_cast<size_t>(
                     TF_IsRValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i> &&>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i> &&>::type>::type>().hash_code()
             };
             return s;
         }
@@ -11023,25 +11334,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_17726608495519294320
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4i> &&"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_2106148601094867865
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4i> &&"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec4i> &"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4iRAB_12741371416950012287
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4iRAB_12741371416950012287 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec4i> &"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_4500462056448217156
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_4500462056448217156 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec4i> &>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4i> &>::type>::type,const class zeno::Vector<struct zeno::Vec4i> &>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec4i> &>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4i> &>::type>::type,const class zeno::ZsVector<struct zeno::Vec4i> &>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4i> &",
-                12741371416950012287ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4i> &",
+                4500462056448217156ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
                 0
@@ -11049,11 +11360,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4i> &",
-                12741371416950012287ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4i> &",
+                4500462056448217156ULL,
                 static_cast<size_t>(
                     TF_IsConst | TF_IsLValueRef | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4i> &>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4i> &>::type>::type>().hash_code()
             };
             return s;
         }
@@ -11065,25 +11376,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4iRAB_12741371416950012287
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec4i> &"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_4500462056448217156
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec4i> &"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "const class zeno::Vector<struct zeno::Vec4i> *"
-#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4iRAB_Mul_12741375814996525131
-#define _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4iRAB_Mul_12741375814996525131 1
+/// Begin RTTI of "const class zeno::ZsVector<struct zeno::Vec4i> *"
+#ifndef _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_Mul_4500448862308678624
+#define _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_Mul_4500448862308678624 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::Vector<struct zeno::Vec4i> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4i> *>::type>::type,const class zeno::Vector<struct zeno::Vec4i> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<const class zeno::ZsVector<struct zeno::Vec4i> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4i> *>::type>::type,const class zeno::ZsVector<struct zeno::Vec4i> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4i> *",
-                12741375814996525131ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4i> *",
+                4500448862308678624ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -11091,11 +11402,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "const class zeno::Vector<struct zeno::Vec4i> *",
-                12741375814996525131ULL,
+                "const class zeno::ZsVector<struct zeno::Vec4i> *",
+                4500448862308678624ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<const class zeno::Vector<struct zeno::Vec4i> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<const class zeno::ZsVector<struct zeno::Vec4i> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -11107,25 +11418,25 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_const_class_zeno_VectorLABstruct_zeno_Vec4iRAB_Mul_12741375814996525131
-/// End RTTI of "const class zeno::Vector<struct zeno::Vec4i> *"
+#endif // _REFLECT_RTTI_GUARD_const_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_Mul_4500448862308678624
+/// End RTTI of "const class zeno::ZsVector<struct zeno::Vec4i> *"
 ///////////////////////////
 
 ///////////////////////////
-/// Begin RTTI of "class zeno::Vector<struct zeno::Vec4i> *"
-#ifndef _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_Mul_12340752791024896858
-#define _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_Mul_12340752791024896858 1
+/// Begin RTTI of "class zeno::ZsVector<struct zeno::Vec4i> *"
+#ifndef _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_Mul_192755246958749297
+#define _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_Mul_192755246958749297 1
 
 namespace zeno
 {
 namespace reflect
 {
     template <>
-    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::Vector<struct zeno::Vec4i> *>() {
-        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i> *>::type>::type,class zeno::Vector<struct zeno::Vec4i> *>::value) {
+    inline REFLECT_STATIC_CONSTEXPR const RTTITypeInfo& type_info<class zeno::ZsVector<struct zeno::Vec4i> *>() {
+        if REFLECT_FORCE_CONSTEPXR (std::is_same<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i> *>::type>::type,class zeno::ZsVector<struct zeno::Vec4i> *>::value) {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i> *",
-                12340752791024896858ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i> *",
+                192755246958749297ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
                 0
@@ -11133,11 +11444,11 @@ namespace reflect
             return s;
         } else {
             static REFLECT_STATIC_CONSTEXPR RTTITypeInfo s = {
-                "class zeno::Vector<struct zeno::Vec4i> *",
-                12340752791024896858ULL,
+                "class zeno::ZsVector<struct zeno::Vec4i> *",
+                192755246958749297ULL,
                 static_cast<size_t>(
                     TF_IsPointer | TF_None ),
-                type_info<typename std::decay<std::remove_pointer<class zeno::Vector<struct zeno::Vec4i> *>::type>::type>().hash_code()
+                type_info<typename std::decay<std::remove_pointer<class zeno::ZsVector<struct zeno::Vec4i> *>::type>::type>().hash_code()
             };
             return s;
         }
@@ -11149,15 +11460,16 @@ namespace reflect
 
 
 }
-#endif // _REFLECT_RTTI_GUARD_class_zeno_VectorLABstruct_zeno_Vec4iRAB_Mul_12340752791024896858
-/// End RTTI of "class zeno::Vector<struct zeno::Vec4i> *"
+#endif // _REFLECT_RTTI_GUARD_class_zeno_ZsVectorLABstruct_zeno_Vec4iRAB_Mul_192755246958749297
+/// End RTTI of "class zeno::ZsVector<struct zeno::Vec4i> *"
 ///////////////////////////
 
 ///////////////////////////
 /// Begin RTTI of "class std::vector<class zeno::reflect::Any>"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABclass_zeno_reflect_AnyRAB_4563279078811816794
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABclass_zeno_reflect_AnyRAB_4563279078811816794 1
-// !!! importance: This is a template specialization "class std::vector<class zeno::reflect::Any>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<class zeno::reflect::Any>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -11422,9 +11734,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::CurvesData"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_CurvesData_16327668114186180410
 #define _REFLECT_RTTI_GUARD_struct_zeno_CurvesData_16327668114186180410 1
-namespace zeno {
+namespace zeno {
+
 struct CurvesData;
-}
+}
+
 
 namespace zeno
 {
@@ -11689,9 +12003,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::BCurveObject"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_BCurveObject_6841588794272413944
 #define _REFLECT_RTTI_GUARD_struct_zeno_BCurveObject_6841588794272413944 1
-namespace zeno {
+namespace zeno {
+
 struct BCurveObject;
-}
+}
+
 
 namespace zeno
 {
@@ -11956,9 +12272,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::HeatmapData"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_HeatmapData_16907690619462570378
 #define _REFLECT_RTTI_GUARD_struct_zeno_HeatmapData_16907690619462570378 1
-namespace zeno {
+namespace zeno {
+
 struct HeatmapData;
-}
+}
+
 
 namespace zeno
 {
@@ -12223,9 +12541,11 @@ namespace reflect
 /// Begin RTTI of "struct zeno::ShaderData"
 #ifndef _REFLECT_RTTI_GUARD_struct_zeno_ShaderData_5880748608921663691
 #define _REFLECT_RTTI_GUARD_struct_zeno_ShaderData_5880748608921663691 1
-namespace zeno {
+namespace zeno {
+
 struct ShaderData;
-}
+}
+
 
 namespace zeno
 {
@@ -12761,7 +13081,8 @@ namespace reflect
 /// Begin RTTI of "class std::vector<class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData> >"
 #ifndef _REFLECT_RTTI_GUARD_class_std_vectorLABclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_RAB_8007795410826436593
 #define _REFLECT_RTTI_GUARD_class_std_vectorLABclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_RAB_8007795410826436593 1
-// !!! importance: This is a template specialization "class std::vector<class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData> >", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::vector<class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData> >", doesn't generate forward declaration.
+
 
 namespace zeno
 {
@@ -13026,7 +13347,8 @@ namespace reflect
 /// Begin RTTI of "class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData>"
 #ifndef _REFLECT_RTTI_GUARD_class_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_9597672160759649577
 #define _REFLECT_RTTI_GUARD_class_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_9597672160759649577 1
-// !!! importance: This is a template specialization "class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData>", doesn't generate forward declaration.
+// !!! importance: This is a template specialization "class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData>", doesn't generate forward declaration.
+
 
 namespace zeno
 {
