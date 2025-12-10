@@ -240,7 +240,10 @@ static __inline__ __device__ vec2 samplingVDB(const unsigned long long grid_ptr,
     return vec2 { nanoSampling<decltype(_acc), DataTypeNVDB, Order>(_acc, pos_indexed, volin), _grid->tree().root().maximum() };
 }
 
-extern "C" __device__ void __direct_callable__evalmat(const float4* uniforms, void** buffers, void* attrs_ptr, VolumeOut& output) {
+extern "C" __device__ void __direct_callable__evalmat(void* attrs_ptr, VolumeOut& output) {
+
+    let uniforms = params.d_uniforms;
+    let buffers = params.global_buffers;
 
     auto& attrs = *reinterpret_cast<VolumeIn2*>(attrs_ptr);
     auto& prd = attrs;
@@ -258,7 +261,7 @@ extern "C" __device__ void __direct_callable__evalmat(const float4* uniforms, vo
 
     auto att_isBackFace = false;
     auto att_isShadowRay = attrs.isShadowRay;
-    
+    float albedoAmp = 1.0f;
 #ifdef __FORWARD__
     //GENERATED_BEGIN_MARK
     
@@ -272,6 +275,7 @@ extern "C" __device__ void __direct_callable__evalmat(const float4* uniforms, vo
     vec3 emission = tmp / 50.f;
     vec3 albedo = tmp;
     auto extinction = vec3(1.0f);
+
 #endif // _FALLBACK_
 
 #if _USING_NANOVDB_
@@ -279,6 +283,7 @@ extern "C" __device__ void __direct_callable__evalmat(const float4* uniforms, vo
     output.albedo = clamp(albedo, 0.0f, 1.0f);
     output.anisotropy = clamp(anisotropy, -1.0f, 1.0f);
     output.extinction = extinction;
+    output.albedoAmp = albedoAmp;
 
     output.density = fmaxf(density, 0.0f);
     output.emission = fmaxf(emission, vec3(0.0f));

@@ -9,7 +9,7 @@ namespace {
 /*struct RunOnce : zeno::INode {  // deprecated
     virtual void apply() override {
         bool yes = getGlobalState()->substepid == 0;
-        auto obj = std::make_shared<zeno::ConditionObject>();
+        auto obj = std::make_unique<zeno::ConditionObject>();
         obj->set(yes);
         ZImpl(set_output("cond", std::move(obj)));
     }
@@ -25,7 +25,7 @@ ZENDEFNODE(RunOnce, {
 struct RunAfterFrame : zeno::INode {  // deprecated
     virtual void apply() override {
         bool yes = getGlobalState()->has_frame_completed || !getGlobalState()->time_step_integrated;
-        auto obj = std::make_shared<zeno::ConditionObject>();
+        auto obj = std::make_unique<zeno::ConditionObject>();
         obj->set(yes);
         ZImpl(set_output("cond", std::move(obj)));
     }
@@ -41,7 +41,7 @@ ZENDEFNODE(RunAfterFrame, {
 struct RunBeforeFrame : zeno::INode {  // deprecated
     virtual void apply() override {
         bool yes = !getGlobalState()->has_substep_executed;
-        auto obj = std::make_shared<zeno::ConditionObject>();
+        auto obj = std::make_unique<zeno::ConditionObject>();
         obj->set(yes);
         ZImpl(set_output("cond", std::move(obj)));
     }
@@ -71,7 +71,7 @@ ZENDEFNODE(SetFrameTime, {
 
 struct GetFrameTime : zeno::INode {
     virtual void apply() override {
-        auto time = std::make_shared<zeno::NumericObject>();
+        auto time = std::make_unique<zeno::NumericObject>();
         time->set(ZImpl(getGlobalState())->frame_time);
         ZImpl(set_output("time", std::move(time)));
     }
@@ -86,7 +86,7 @@ ZENDEFNODE(GetFrameTime, {
 
 struct GetFrameTimeElapsed : zeno::INode {
     virtual void apply() override {
-        auto time = std::make_shared<zeno::NumericObject>();
+        auto time = std::make_unique<zeno::NumericObject>();
         time->set(ZImpl(getGlobalState())->frame_time_elapsed);
         ZImpl(set_output("time", std::move(time)));
     }
@@ -100,8 +100,16 @@ ZENDEFNODE(GetFrameTimeElapsed, {
 });
 
 struct GetFrameNum : zeno::INode {
+
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.iconResPath = ":/icons/node/frame.svg";
+        ui.uistyle.background = "#CDCDCD";
+        return ui;
+    }
+
     virtual void apply() override {
-        auto num = std::make_shared<zeno::NumericObject>();
+        auto num = std::make_unique<zeno::NumericObject>();
         num->set(ZImpl(getGlobalState())->getFrameId());
         ZImpl(set_output("FrameNum", std::move(num)));
     }
@@ -116,7 +124,7 @@ ZENDEFNODE(GetFrameNum, {
 
 struct GetTime : zeno::INode {
     virtual void apply() override {
-        auto time = std::make_shared<zeno::NumericObject>();
+        auto time = std::make_unique<zeno::NumericObject>();
         time->set(ZImpl(getGlobalState())->getFrameId() * ZImpl(getGlobalState())->frame_time
             + ZImpl(getGlobalState())->frame_time_elapsed);
         ZImpl(set_output("time", std::move(time)));
@@ -132,7 +140,7 @@ ZENDEFNODE(GetTime, {
 
 struct GetFramePortion : zeno::INode {
     virtual void apply() override {
-        auto portion = std::make_shared<zeno::NumericObject>();
+        auto portion = std::make_unique<zeno::NumericObject>();
         portion->set(ZImpl(getGlobalState())->frame_time_elapsed / ZImpl(getGlobalState())->frame_time);
         ZImpl(set_output("FramePortion", std::move(portion)));
     }
@@ -161,7 +169,7 @@ struct IntegrateFrameTime : zeno::INode {
             ZImpl(getGlobalState())->frame_time_elapsed += dt;
         }
         ZImpl(getGlobalState())->time_step_integrated = true;
-        auto ret = std::make_shared<zeno::NumericObject>();
+        auto ret = std::make_unique<zeno::NumericObject>();
         ret->set(dt);
         ZImpl(set_output("actual_dt", std::move(ret)));
     }

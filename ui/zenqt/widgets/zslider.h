@@ -26,6 +26,7 @@ signals:
 
 public slots:
     void setSliderValue(int value);
+    void onlyUpdateSliderValue(int);
 
 private:
     int _posToFrame(int x);

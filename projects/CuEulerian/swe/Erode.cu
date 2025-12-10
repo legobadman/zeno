@@ -1,3 +1,5 @@
+#if 0
+
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include <cassert>
@@ -105,7 +107,7 @@ namespace zeno {
             // 初始化
             ////////////////////////////////////////////////////////////////////////////////////////
             // 初始化网格
-            auto terrain = get_input<PrimitiveObject>("prim_2DGrid");
+            auto terrain = get_input_Geometry("prim_2DGrid")->toPrimitiveObject();
             int nx, nz;
             auto &ud = terrain->userData();
             if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")))
@@ -121,8 +123,8 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto value = get_input2<float>("value");
-            auto seed = get_input2<float>("seed");
+            auto value = get_input2_float("value");
+            auto seed = get_input2_float("seed");
 
             // 初始化网格属性
             if (!terrain->verts.has_attr("cond")) {
@@ -180,7 +182,7 @@ namespace zeno {
             // 初始化
             ////////////////////////////////////////////////////////////////////////////////////////
             // 初始化网格
-            auto terrain = get_input<PrimitiveObject>("prim_2DGrid");
+            auto terrain = get_input_Geometry("prim_2DGrid")->toPrimitiveObject();
             int nx, nz;
             auto &ud = terrain->userData();
             if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")))
@@ -196,8 +198,8 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto smooth_rate = get_input2<float>("smoothRate");
-            auto flowName = get_input2<std::string>("flowName");
+            auto smooth_rate = get_input2_float("smoothRate");
+            auto flowName = zsString2Std(get_input2_string("flowName"));
             // 初始化网格属性
             auto &flow = terrain->verts.attr<float>(flowName);
             auto &_lap = terrain->verts.add_attr<float>("_lap");
@@ -277,7 +279,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<PrimitiveObject>("prim_2DGrid");
+            auto terrain = get_input_Geometry("prim_2DGrid")->toPrimitiveObject();
             int nx, nz;
             auto &ud = terrain->userData();
             if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")))
@@ -293,25 +295,25 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();
-            auto cut_angle = get_input<NumericObject>("cut_angle")->get<float>();
-            auto global_erosionrate = get_input<NumericObject>("global_erosionrate")->get<float>();
-            auto erosionrate = get_input<NumericObject>("erosionrate")->get<float>();
-            auto erodability = get_input<NumericObject>("erodability")->get<float>();
-            auto removalrate = get_input<NumericObject>("removalrate")->get<float>();
-            auto maxdepth = get_input<NumericObject>("maxdepth")->get<float>();
+            auto gridbias = get_input2_float("gridbias");
+            auto cut_angle = get_input2_float("cut_angle");
+            auto global_erosionrate = get_input2_float("global_erosionrate");
+            auto erosionrate = get_input2_float("erosionrate");
+            auto erodability = get_input2_float("erodability");
+            auto removalrate = get_input2_float("removalrate");
+            auto maxdepth = get_input2_float("maxdepth");
 
             std::uniform_real_distribution<float> distr(0.0, 1.0); // 设置随机分布
-            auto seed = get_input<NumericObject>("seed")->get<float>();
+            auto seed = get_input2_float("seed");
 
-            auto iterations = get_input<NumericObject>("iterations")->get<int>(); // 外部迭代总次数      10
-            auto iter = get_input<NumericObject>("iter")->get<int>();             // 外部迭代当前次数    1~10
-            auto i = get_input<NumericObject>("i")->get<int>();                   // 内部迭代当前次数    0~7
-            auto openborder = get_input<NumericObject>("openborder")->get<int>(); // 获取边界标记
+            auto iterations = get_input2_int("iterations"); // 外部迭代总次数      10
+            auto iter = get_input2_int("iter");             // 外部迭代当前次数    1~10
+            auto i = get_input2_int("i");                   // 内部迭代当前次数    0~7
+            auto openborder = get_input2_int("openborder"); // 获取边界标记
 
-            auto perm = get_input<ListObject>("perm")->get2<int>(); //std::vector<int>
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>(); //std::vector<int>
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             // 初始化网格属性
             if (!terrain->verts.has_attr("_height") || !terrain->verts.has_attr("_debris") ||
@@ -525,9 +527,9 @@ namespace zeno {
         {
             "prim_2DGrid",
 
-            {"ListObject", "perm"},
-            {"ListObject", "p_dirs"},
-            {"ListObject", "x_dirs"},
+            {gParamType_List, "perm"},
+            {gParamType_List, "p_dirs"},
+            {gParamType_List, "x_dirs"},
 
             {gParamType_Float, "seed", "9676.79"},
             {gParamType_Int, "iterations", "0"},
@@ -567,7 +569,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<PrimitiveObject>("prim_2DGrid");
+            auto terrain = get_input_Geometry("prim_2DGrid")->toPrimitiveObject();
             int nx, nz;
             auto &ud = terrain->userData();
             if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")))
@@ -583,25 +585,25 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();
-            auto repose_angle = get_input<NumericObject>("repose_angle")->get<float>();
-            auto quant_amt = get_input<NumericObject>("quant_amt")->get<float>();
-            auto flow_rate = get_input<NumericObject>("flow_rate")->get<float>();
+            auto gridbias = get_input2_float("gridbias");
+            auto repose_angle = get_input2_float("repose_angle");
+            auto quant_amt = get_input2_float("quant_amt");
+            auto flow_rate = get_input2_float("flow_rate");
 
             std::uniform_real_distribution<float> distr(0.0, 1.0);
-            auto seed = get_input<NumericObject>("seed")->get<float>();
+            auto seed = get_input2_float("seed");
 
-            auto iterations = get_input<NumericObject>("iterations")->get<int>();
-            auto iter = get_input<NumericObject>("iter")->get<int>();
-            auto i = get_input<NumericObject>("i")->get<int>();
-            auto openborder = get_input<NumericObject>("openborder")->get<int>();
+            auto iterations = get_input2_int("iterations");
+            auto iter = get_input2_int("iter");
+            auto i = get_input2_int("i");
+            auto openborder = get_input2_int("openborder");
 
-            auto perm = get_input<ListObject>("perm")->get2<int>();
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>();
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             // 初始化网格属性
-            auto stablilityMaskName = get_input2<std::string>("stabilitymask");
+            auto stablilityMaskName = zsString2Std(get_input2_string("stabilitymask"));
             if (!terrain->verts.has_attr(stablilityMaskName)) {
                 auto &_sta = terrain->verts.add_attr<float>(stablilityMaskName);
                 std::fill(_sta.begin(), _sta.end(), 0.0);
@@ -828,9 +830,9 @@ namespace zeno {
             "prim_2DGrid",
 
             {gParamType_String, "stabilitymask", "_stability"},
-            {"ListObject", "perm"},
-            {"ListObject", "p_dirs"},
-            {"ListObject", "x_dirs"},
+            {gParamType_List, "perm"},
+            {gParamType_List, "p_dirs"},
+            {gParamType_List, "x_dirs"},
 
             {gParamType_Float, "seed", "15231.3"},
             {gParamType_Int, "iterations", "0"},
@@ -868,7 +870,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<PrimitiveObject>("prim_2DGrid");
+            auto terrain = get_input_Geometry("prim_2DGrid")->toPrimitiveObject();
             int nx, nz;
             auto &ud = terrain->userData();
             if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")))
@@ -884,25 +886,25 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();
-            auto repose_angle = get_input<NumericObject>("repose_angle")->get<float>();
-            auto quant_amt = get_input<NumericObject>("quant_amt")->get<float>();
-            auto flow_rate = get_input<NumericObject>("flow_rate")->get<float>();
+            auto gridbias = get_input2_float("gridbias");
+            auto repose_angle = get_input2_float("repose_angle");
+            auto quant_amt = get_input2_float("quant_amt");
+            auto flow_rate = get_input2_float("flow_rate");
 
             std::uniform_real_distribution<float> distr(0.0, 1.0);
-            auto seed = get_input<NumericObject>("seed")->get<float>();
+            auto seed = get_input2_float("seed");
 
-            auto iterations = get_input<NumericObject>("iterations")->get<int>();
-            auto iter = get_input<NumericObject>("iter")->get<int>();
-            auto i = get_input<NumericObject>("i")->get<int>();
-            auto openborder = get_input<NumericObject>("openborder")->get<int>();
+            auto iterations = get_input2_int("iterations");
+            auto iter = get_input2_int("iter");
+            auto i = get_input2_int("i");
+            auto openborder = get_input2_int("openborder");
 
-            auto perm = get_input<ListObject>("perm")->get2<int>();
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>();
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             // 初始化网格属性
-            auto stablilityMaskName = get_input2<std::string>("stabilitymask");
+            auto stablilityMaskName = zsString2Std(get_input2_string("stabilitymask"));
             if (!terrain->verts.has_attr(stablilityMaskName)) {
                 auto &_sta = terrain->verts.add_attr<float>(stablilityMaskName);
                 std::fill(_sta.begin(), _sta.end(), 0.0);
@@ -1157,9 +1159,9 @@ namespace zeno {
             "prim_2DGrid",
 
             {gParamType_String, "stabilitymask", "_stability"},
-            {"ListObject", "perm"},
-            {"ListObject", "p_dirs"},
-            {"ListObject", "x_dirs"},
+            {gParamType_List, "perm"},
+            {gParamType_List, "p_dirs"},
+            {gParamType_List, "x_dirs"},
 
             {gParamType_Float, "seed", "15231.3"},
             {gParamType_Int, "iterations", "0"},
@@ -1197,7 +1199,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<PrimitiveObject>("prim_2DGrid");
+            auto terrain = get_input_Geometry("prim_2DGrid")->toPrimitiveObject();
             int nx, nz;
             auto &ud = terrain->userData();
             if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")))
@@ -1214,48 +1216,46 @@ namespace zeno {
 
             // 获取面板参数
             // 侵蚀主参数
-            auto global_erosionrate = get_input<NumericObject>("global_erosionrate")->get<float>(); // 1 全局侵蚀率
-            auto erodability = get_input<NumericObject>("erodability")->get<float>();               // 1.0 侵蚀能力
-            auto erosionrate = get_input<NumericObject>("erosionrate")->get<float>();               // 0.4 侵蚀率
-            auto bank_angle = get_input<NumericObject>("bank_angle")->get<float>(); // 70.0 河堤侵蚀角度
-            auto seed = get_input<NumericObject>("seed")->get<float>();             // 12.34
+            auto global_erosionrate = get_input2_float("global_erosionrate"); // 1 全局侵蚀率
+            auto erodability = get_input2_float("erodability");               // 1.0 侵蚀能力
+            auto erosionrate = get_input2_float("erosionrate");               // 0.4 侵蚀率
+            auto bank_angle = get_input2_float("bank_angle"); // 70.0 河堤侵蚀角度
+            auto seed = get_input2_float("seed");             // 12.34
 
             // 高级参数
-            auto removalrate = get_input<NumericObject>("removalrate")->get<float>(); // 0.0 风化率/水吸收率
-            auto max_debris_depth = get_input<NumericObject>("max_debris_depth")->get<float>(); // 5	碎屑最大深度
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();                 // 0.0
+            auto removalrate = get_input2_float("removalrate"); // 0.0 风化率/水吸收率
+            auto max_debris_depth = get_input2_float("max_debris_depth"); // 5	碎屑最大深度
+            auto gridbias = get_input2_float("gridbias");                 // 0.0
 
             // 侵蚀能力调整
-            auto max_erodability_iteration = get_input<NumericObject>("max_erodability_iteration")->get<int>();     // 5
-            auto initial_erodability_factor = get_input<NumericObject>("initial_erodability_factor")->get<float>(); // 0.5
-            auto slope_contribution_factor = get_input<NumericObject>("slope_contribution_factor")->get<float>();   // 0.8
+            auto max_erodability_iteration = get_input2_int("max_erodability_iteration");     // 5
+            auto initial_erodability_factor = get_input2_float("initial_erodability_factor"); // 0.5
+            auto slope_contribution_factor = get_input2_float("slope_contribution_factor");   // 0.8
 
             // 河床参数
             auto bed_erosionrate_factor =
-                    get_input<NumericObject>("bed_erosionrate_factor")->get<float>();           // 1 河床侵蚀率因子
-            auto depositionrate = get_input<NumericObject>("depositionrate")->get<float>(); // 0.01 沉积率
-            auto sedimentcap = get_input<NumericObject>("sedimentcap")
-                    ->get<float>(); // 10.0 高度差转变为沉积物的比率 / 泥沙容量，每单位流动水可携带的泥沙量
+                    get_input2_float("bed_erosionrate_factor");           // 1 河床侵蚀率因子
+            auto depositionrate = get_input2_float("depositionrate"); // 0.01 沉积率
+            auto sedimentcap = get_input2_float("sedimentcap"); // 10.0 高度差转变为沉积物的比率 / 泥沙容量，每单位流动水可携带的泥沙量
 
             // 河堤参数
             auto bank_erosionrate_factor =
-                    get_input<NumericObject>("bank_erosionrate_factor")->get<float>(); // 1.0 河堤侵蚀率因子
-            auto max_bank_bed_ratio = get_input<NumericObject>("max_bank_bed_ratio")
-                    ->get<float>(); // 0.5 The maximum of bank to bed water column height ratio
+                    get_input2_float("bank_erosionrate_factor"); // 1.0 河堤侵蚀率因子
+            auto max_bank_bed_ratio = get_input2_float("max_bank_bed_ratio"); // 0.5 The maximum of bank to bed water column height ratio
             // 高于这个比值的河岸将不会在侵蚀中被视为河岸，会停止侵蚀
             // 河流控制
-            auto quant_amt = get_input<NumericObject>("quant_amt")->get<float>(); // 0.05 流量维持率，越高流量越稳定
-            auto iterations = get_input<NumericObject>("iterations")->get<int>(); // 流淌的总迭代次数
+            auto quant_amt = get_input2_float("quant_amt"); // 0.05 流量维持率，越高流量越稳定
+            auto iterations = get_input2_int("iterations"); // 流淌的总迭代次数
 
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             std::uniform_real_distribution<float> distr(0.0, 1.0);
-            auto iter = get_input<NumericObject>("iter")->get<int>();
-            auto i = get_input<NumericObject>("i")->get<int>();
-            auto openborder = get_input<NumericObject>("openborder")->get<int>();
+            auto iter = get_input2_int("iter");
+            auto i = get_input2_int("i");
+            auto openborder = get_input2_int("openborder");
 
-            auto perm = get_input<ListObject>("perm")->get2<int>();
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>();
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             // 初始化网格属性
             if (!terrain->verts.has_attr("_height") || !terrain->verts.has_attr("_temp_height") ||
@@ -1638,9 +1638,9 @@ namespace zeno {
                {/* inputs: */ {
                        "prim_2DGrid",
 
-                       {"ListObject", "perm"},
-                       {"ListObject", "p_dirs"},
-                       {"ListObject", "x_dirs"},
+                       {gParamType_List, "perm"},
+                       {gParamType_List, "p_dirs"},
+                       {gParamType_List, "x_dirs"},
 
                        {gParamType_Float, "seed", "12.34"},
                        {gParamType_Int, "iterations", "40"}, // 流淌的总迭代次数
@@ -1723,7 +1723,7 @@ namespace zeno {
 //            ////////////////////////////////////////////////////////////////////////////////////////
 //
 //            // 初始化网格
-//            auto terrain = get_input<PrimitiveObject>("HeightField");
+//            auto terrain = get_input_Geometry("HeightField")->toPrimitiveObject();
 //            int nx, nz;
 //            auto &ud = terrain->userData();
 //            if ((!ud.has<int>("nx")) || (!ud.has<int>("nz")))
@@ -1739,21 +1739,21 @@ namespace zeno {
 //            float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 //
 //            // 获取面板参数
-//            auto heightLayer = get_input2<std::string>("height_layer");
-//            auto maskLayer = get_input2<std::string>("mask_layer");
-//            auto smoothRadius = get_input2<int>("smooth_radius");
+//            auto heightLayer = zsString2Std(get_input2_string("height_layer"));
+//            auto maskLayer = zsString2Std(get_input2_string("mask_layer"));
+//            auto smoothRadius = get_input2_int("smooth_radius");
 //
-//            auto useSlope = get_input2<bool>("use_slope");
-//            auto minSlope = get_input2<float>("min_slopeangle");
-//            auto maxSlope = get_input2<float>("max_slopeangle");
+//            auto useSlope = get_input2_bool("use_slope");
+//            auto minSlope = get_input2_float("min_slopeangle");
+//            auto maxSlope = get_input2_float("max_slopeangle");
 //
-//            auto useDir = get_input2<bool>("use_direction");
-//            auto goalAngle = get_input2<float>("goal_angle");
-//            auto angleSpread = get_input2<float>("angle_spread");
+//            auto useDir = get_input2_bool("use_direction");
+//            auto goalAngle = get_input2_float("goal_angle");
+//            auto angleSpread = get_input2_float("angle_spread");
 //
-//            auto useHeight = get_input2<bool>("use_height");
-//            auto minHeight = get_input2<float>("min_height");
-//            auto maxHeight = get_input2<float>("max_height");
+//            auto useHeight = get_input2_bool("use_height");
+//            auto minHeight = get_input2_float("min_height");
+//            auto maxHeight = get_input2_float("max_height");
 //
 //            // 初始化网格属性
 //            if (!terrain->verts.has_attr(heightLayer) || !terrain->verts.has_attr(maskLayer)) {
@@ -1904,7 +1904,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<ZenoParticles>("zs_HeightField");
+            auto terrain = safe_uniqueptr_cast<ZenoParticles>(clone_input("zs_HeightField"));
             auto &pars = terrain->getParticles();
 
             size_t nx, nz;
@@ -1919,25 +1919,25 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();
-            auto cut_angle = get_input<NumericObject>("cutangle")->get<float>();
-            auto global_erosionrate = get_input<NumericObject>("global_erosionrate")->get<float>();
-            auto erosionrate = get_input<NumericObject>("erosionrate")->get<float>();
-            auto erodability = get_input<NumericObject>("erodability")->get<float>();
-            auto removalrate = get_input<NumericObject>("removalrate")->get<float>();
-            auto maxdepth = get_input<NumericObject>("maxdepth")->get<float>();
+            auto gridbias = get_input2_float("gridbias");
+            auto cut_angle = get_input2_float("cutangle");
+            auto global_erosionrate = get_input2_float("global_erosionrate");
+            auto erosionrate = get_input2_float("erosionrate");
+            auto erodability = get_input2_float("erodability");
+            auto removalrate = get_input2_float("removalrate");
+            auto maxdepth = get_input2_float("maxdepth");
 
             std::uniform_real_distribution<float> distr(0.0, 1.0); // 设置随机分布
-            auto seed = get_input<NumericObject>("seed")->get<float>();
+            auto seed = get_input2_float("seed");
 
-            auto iterations = get_input<NumericObject>("iterations")->get<int>(); // 外部迭代总次数      10
-            auto iter = get_input<NumericObject>("iter")->get<int>();             // 外部迭代当前次数    1~10
-            auto i = get_input<NumericObject>("i")->get<int>();                   // 内部迭代当前次数    0~7
-            auto openborder = get_input<NumericObject>("openborder")->get<int>(); // 获取边界标记
+            auto iterations = get_input2_int("iterations"); // 外部迭代总次数      10
+            auto iter = get_input2_int("iter");             // 外部迭代当前次数    1~10
+            auto i = get_input2_int("i");                   // 内部迭代当前次数    0~7
+            auto openborder = get_input2_int("openborder"); // 获取边界标记
 
-            auto perm = get_input<ListObject>("perm")->get2<int>();
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>();
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             int iterseed = iter * 134775813;
             int color = perm[i];
@@ -1947,10 +1947,10 @@ namespace zeno {
             int x_dirs_1 = x_dirs[1];
 
             // 初始化地形遮罩
-            auto erodabilitymask_name = get_input2<std::string>("erodability_mask_layer");
-            auto removalratemask_name = get_input2<std::string>("removalrate_mask_layer");
-            auto cutanglemask_name = get_input2<std::string>("cutangle_mask_layer");
-            auto gridbiasmask_name = get_input2<std::string>("gridbias_mask_layer");
+            auto erodabilitymask_name = zsString2Std(get_input2_string("erodability_mask_layer"));
+            auto removalratemask_name = zsString2Std(get_input2_string("removalrate_mask_layer"));
+            auto cutanglemask_name = zsString2Std(get_input2_string("cutangle_mask_layer"));
+            auto gridbiasmask_name = zsString2Std(get_input2_string("gridbias_mask_layer"));
             if (!terrain->prim->verts.has_attr(erodabilitymask_name) ||
                 !terrain->prim->verts.has_attr(removalratemask_name) ||
                 !terrain->prim->verts.has_attr(cutanglemask_name) ||
@@ -2165,9 +2165,9 @@ namespace zeno {
         /* inputs: */
         {
             "zs_HeightField",
-            {"ListObject", "perm"},
-            {"ListObject", "p_dirs"},
-            {"ListObject", "x_dirs"},
+            {gParamType_List, "perm"},
+            {gParamType_List, "p_dirs"},
+            {gParamType_List, "x_dirs"},
 
             {gParamType_Float, "seed", "9676.79"},
             {gParamType_Int, "iterations", "0"},
@@ -2211,7 +2211,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<ZenoParticles>("zs_HeightField");
+            auto terrain = safe_uniqueptr_cast<ZenoParticles>(clone_input("zs_HeightField"));
             auto &pars = terrain->getParticles();
 
             size_t nx, nz;
@@ -2226,14 +2226,14 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto openborder = get_input<NumericObject>("openborder")->get<int>();
-            auto repose_angle = get_input<NumericObject>("repose_angle")->get<float>();
-            auto flow_rate = get_input<NumericObject>("flow_rate")->get<float>();
-            auto height_factor = get_input<NumericObject>("height_factor")->get<float>();
-            auto entrainmentrate = get_input<NumericObject>("entrainmentrate")->get<float>();
+            auto openborder = get_input2_int("openborder");
+            auto repose_angle = get_input2_float("repose_angle");
+            auto flow_rate = get_input2_float("flow_rate");
+            auto height_factor = get_input2_float("height_factor");
+            auto entrainmentrate = get_input2_float("entrainmentrate");
 
             // 初始化地形遮罩
-            auto write_back_material_layer = get_input2<std::string>("write_back_material_layer");
+            auto write_back_material_layer = zsString2Std(get_input2_string("write_back_material_layer"));
             if (!terrain->prim->verts.has_attr(write_back_material_layer)) {
                 zeno::log_error("Node [zs_tumble_material_v1], no such data layer named '{}'.",
                                 write_back_material_layer);
@@ -2405,7 +2405,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<ZenoParticles>("zs_HeightField");
+            auto terrain = safe_uniqueptr_cast<ZenoParticles>(clone_input("zs_HeightField"));
             auto &pars = terrain->getParticles();
 
             size_t nx, nz;
@@ -2420,22 +2420,22 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();
-            auto repose_angle = get_input<NumericObject>("repose_angle")->get<float>();
-            auto quant_amt = get_input<NumericObject>("quant_amt")->get<float>();
-            auto flow_rate = get_input<NumericObject>("flow_rate")->get<float>();
+            auto gridbias = get_input2_float("gridbias");
+            auto repose_angle = get_input2_float("repose_angle");
+            auto quant_amt = get_input2_float("quant_amt");
+            auto flow_rate = get_input2_float("flow_rate");
 
             std::uniform_real_distribution<float> distr(0.0, 1.0);
-            auto seed = get_input<NumericObject>("seed")->get<float>();
+            auto seed = get_input2_float("seed");
 
-            auto iterations = get_input<NumericObject>("iterations")->get<int>();
-            auto iter = get_input<NumericObject>("iter")->get<int>();
-            auto i = get_input<NumericObject>("i")->get<int>();
-            auto openborder = get_input<NumericObject>("openborder")->get<int>();
+            auto iterations = get_input2_int("iterations");
+            auto iter = get_input2_int("iter");
+            auto i = get_input2_int("i");
+            auto openborder = get_input2_int("openborder");
 
-            auto perm = get_input<ListObject>("perm")->get2<int>();
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>();
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             int iterseed = iter * 134775813;
             int color = perm[i];
@@ -2455,9 +2455,9 @@ namespace zeno {
 //            printf("==============\n");
 
             // 初始化地形遮罩
-            auto reposeanglemask_name = get_input2<std::string>("reposeangle_mask_layer");
-            auto gridbiasmask_name = get_input2<std::string>("gridbias_mask_layer");
-            auto stablilitymask_name = get_input2<std::string>("stability_mask_layer");
+            auto reposeanglemask_name = zsString2Std(get_input2_string("reposeangle_mask_layer"));
+            auto gridbiasmask_name = zsString2Std(get_input2_string("gridbias_mask_layer"));
+            auto stablilitymask_name = zsString2Std(get_input2_string("stability_mask_layer"));
             if (!terrain->prim->verts.has_attr(reposeanglemask_name) ||
                 !terrain->prim->verts.has_attr(gridbiasmask_name) ||
                 !terrain->prim->verts.has_attr(stablilitymask_name)) {
@@ -2679,9 +2679,9 @@ namespace zeno {
             "zs_HeightField",
 
             {gParamType_String, "stability_mask_layer", "_stability_mask"},      //~~~~~mask
-            {"ListObject", "perm"},
-            {"ListObject", "p_dirs"},
-            {"ListObject", "x_dirs"},
+            {gParamType_List, "perm"},
+            {gParamType_List, "p_dirs"},
+            {gParamType_List, "x_dirs"},
 
             {gParamType_Float, "seed", "15231.3"},
             {gParamType_Int, "iterations", "0"},
@@ -2720,7 +2720,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<ZenoParticles>("zs_HeightField");
+            auto terrain = safe_uniqueptr_cast<ZenoParticles>(clone_input("zs_HeightField"));
             auto &pars = terrain->getParticles();
 
             size_t nx, nz;
@@ -2735,22 +2735,22 @@ namespace zeno {
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
             // 获取面板参数
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();
-            auto repose_angle = get_input<NumericObject>("repose_angle")->get<float>();
-            auto quant_amt = get_input<NumericObject>("quant_amt")->get<float>();
-            auto flow_rate = get_input<NumericObject>("flow_rate")->get<float>();
+            auto gridbias = get_input2_float("gridbias");
+            auto repose_angle = get_input2_float("repose_angle");
+            auto quant_amt = get_input2_float("quant_amt");
+            auto flow_rate = get_input2_float("flow_rate");
 
             std::uniform_real_distribution<float> distr(0.0, 1.0);
-            auto seed = get_input<NumericObject>("seed")->get<float>();
+            auto seed = get_input2_float("seed");
 
-            auto iterations = get_input<NumericObject>("iterations")->get<int>();
-            auto iter = get_input<NumericObject>("iter")->get<int>();
-            auto i = get_input<NumericObject>("i")->get<int>();
-            auto openborder = get_input<NumericObject>("openborder")->get<int>();
+            auto iterations = get_input2_int("iterations");
+            auto iter = get_input2_int("iter");
+            auto i = get_input2_int("i");
+            auto openborder = get_input2_int("openborder");
 
-            auto perm = get_input<ListObject>("perm")->get2<int>();
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>();
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             int iterseed = iter * 134775813;
             int color = perm[i];
@@ -2760,9 +2760,9 @@ namespace zeno {
             int x_dirs_1 = x_dirs[1];
 
             // 初始化地形遮罩
-            auto reposeanglemask_name = get_input2<std::string>("reposeangle_mask_layer");
-            auto gridbiasmask_name = get_input2<std::string>("gridbias_mask_layer");
-            auto stablilitymask_name = get_input2<std::string>("stability_mask_layer");
+            auto reposeanglemask_name = zsString2Std(get_input2_string("reposeangle_mask_layer"));
+            auto gridbiasmask_name = zsString2Std(get_input2_string("gridbias_mask_layer"));
+            auto stablilitymask_name = zsString2Std(get_input2_string("stability_mask_layer"));
             if (!terrain->prim->verts.has_attr(reposeanglemask_name) ||
                 !terrain->prim->verts.has_attr(gridbiasmask_name) ||
                 !terrain->prim->verts.has_attr(stablilitymask_name)) {
@@ -3007,9 +3007,9 @@ namespace zeno {
             "zs_HeightField",
 
             {gParamType_String, "stability_mask_layer", "_stability_mask"},  //~~~~~mask
-            {"ListObject", "perm"},
-            {"ListObject", "p_dirs"},
-            {"ListObject", "x_dirs"},
+            {gParamType_List, "perm"},
+            {gParamType_List, "p_dirs"},
+            {gParamType_List, "x_dirs"},
 
             {gParamType_Float, "seed", "15231.3"},
             {gParamType_Int, "iterations", "0"},
@@ -3049,7 +3049,7 @@ namespace zeno {
             ////////////////////////////////////////////////////////////////////////////////////////
 
             // 初始化网格
-            auto terrain = get_input<ZenoParticles>("zs_HeightField");
+            auto terrain = safe_uniqueptr_cast<ZenoParticles>(clone_input("zs_HeightField"));
             auto &pars = terrain->getParticles();
 
             size_t nx, nz;
@@ -3065,48 +3065,46 @@ namespace zeno {
 
             // 获取面板参数
             // 侵蚀主参数
-            auto global_erosionrate = get_input<NumericObject>("global_erosionrate")->get<float>(); // 1 全局侵蚀率
-            auto erodability = get_input<NumericObject>("erodability")->get<float>();               // 1.0 侵蚀能力
-            auto erosionrate = get_input<NumericObject>("erosionrate")->get<float>();               // 0.4 侵蚀率
-            auto bank_angle = get_input<NumericObject>("bank_angle")->get<float>(); // 70.0 河堤侵蚀角度
-            auto seed = get_input<NumericObject>("seed")->get<float>();             // 12.34
+            auto global_erosionrate = get_input2_float("global_erosionrate"); // 1 全局侵蚀率
+            auto erodability = get_input2_float("erodability");               // 1.0 侵蚀能力
+            auto erosionrate = get_input2_float("erosionrate");               // 0.4 侵蚀率
+            auto bank_angle = get_input2_float("bank_angle"); // 70.0 河堤侵蚀角度
+            auto seed = get_input2_float("seed");             // 12.34
 
             // 高级参数
-            auto removalrate = get_input<NumericObject>("removalrate")->get<float>(); // 0.0 风化率/水吸收率
-            auto max_debris_depth = get_input<NumericObject>("max_debris_depth")->get<float>(); // 5	碎屑最大深度
-            auto gridbias = get_input<NumericObject>("gridbias")->get<float>();                 // 0.0
+            auto removalrate = get_input2_float("removalrate"); // 0.0 风化率/水吸收率
+            auto max_debris_depth = get_input2_float("max_debris_depth"); // 5	碎屑最大深度
+            auto gridbias = get_input2_float("gridbias");                 // 0.0
 
             // 侵蚀能力调整
-            auto max_erodability_iteration = get_input<NumericObject>("max_erodability_iteration")->get<int>();     // 5
-            auto initial_erodability_factor = get_input<NumericObject>("initial_erodability_factor")->get<float>(); // 0.5
-            auto slope_contribution_factor = get_input<NumericObject>("slope_contribution_factor")->get<float>();   // 0.8
+            auto max_erodability_iteration = get_input2_int("max_erodability_iteration");     // 5
+            auto initial_erodability_factor = get_input2_float("initial_erodability_factor"); // 0.5
+            auto slope_contribution_factor = get_input2_float("slope_contribution_factor");   // 0.8
 
             // 河床参数
             auto bed_erosionrate_factor =
-                    get_input<NumericObject>("bed_erosionrate_factor")->get<float>();           // 1 河床侵蚀率因子
-            auto depositionrate = get_input<NumericObject>("depositionrate")->get<float>(); // 0.01 沉积率
-            auto sedimentcap = get_input<NumericObject>("sedimentcap")
-                    ->get<float>(); // 10.0 高度差转变为沉积物的比率 / 泥沙容量，每单位流动水可携带的泥沙量
+                    get_input2_float("bed_erosionrate_factor");           // 1 河床侵蚀率因子
+            auto depositionrate = get_input2_float("depositionrate"); // 0.01 沉积率
+            auto sedimentcap = get_input2_float("sedimentcap"); // 10.0 高度差转变为沉积物的比率 / 泥沙容量，每单位流动水可携带的泥沙量
 
             // 河堤参数
             auto bank_erosionrate_factor =
-                    get_input<NumericObject>("bank_erosionrate_factor")->get<float>(); // 1.0 河堤侵蚀率因子
-            auto max_bank_bed_ratio = get_input<NumericObject>("max_bank_bed_ratio")
-                    ->get<float>(); // 0.5 The maximum of bank to bed water column height ratio
+                    get_input2_float("bank_erosionrate_factor"); // 1.0 河堤侵蚀率因子
+            auto max_bank_bed_ratio = get_input2_float("max_bank_bed_ratio"); // 0.5 The maximum of bank to bed water column height ratio
             // 高于这个比值的河岸将不会在侵蚀中被视为河岸，会停止侵蚀
             // 河流控制
-            auto quant_amt = get_input<NumericObject>("quant_amt")->get<float>(); // 0.05 流量维持率，越高流量越稳定
-            auto iterations = get_input<NumericObject>("iterations")->get<int>(); // 流淌的总迭代次数
+            auto quant_amt = get_input2_float("quant_amt"); // 0.05 流量维持率，越高流量越稳定
+            auto iterations = get_input2_int("iterations"); // 流淌的总迭代次数
 
             //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             std::uniform_real_distribution<float> distr(0.0, 1.0);
-            auto iter = get_input<NumericObject>("iter")->get<int>();
-            auto i = get_input<NumericObject>("i")->get<int>();
-            auto openborder = get_input<NumericObject>("openborder")->get<int>();
+            auto iter = get_input2_int("iter");
+            auto i = get_input2_int("i");
+            auto openborder = get_input2_int("openborder");
 
-            auto perm = get_input<ListObject>("perm")->get2<int>();
-            auto p_dirs = get_input<ListObject>("p_dirs")->get2<int>();
-            auto x_dirs = get_input<ListObject>("x_dirs")->get2<int>();
+            auto perm = get_input_ListObject("perm")->get2<int>();
+            auto p_dirs = get_input_ListObject("p_dirs")->get2<int>();
+            auto x_dirs = get_input_ListObject("x_dirs")->get2<int>();
 
             int iterseed = iter * 134775813;
             int color = perm[i];
@@ -3116,11 +3114,11 @@ namespace zeno {
             int x_dirs_1 = x_dirs[1];
 
             // 初始化地形遮罩
-            auto gridbiasmask_name = get_input2<std::string>("gridbias_mask_layer");
-            auto erodabilitymask_name = get_input2<std::string>("erodability_mask_layer");
-            auto bankanglemask_name = get_input2<std::string>("bankangle_mask_layer");
-            auto removalratemask_name = get_input2<std::string>("removalrate_mask_layer");
-            auto depositionratemask_name = get_input2<std::string>("depositionrate_mask_layer");
+            auto gridbiasmask_name = zsString2Std(get_input2_string("gridbias_mask_layer"));
+            auto erodabilitymask_name = zsString2Std(get_input2_string("erodability_mask_layer"));
+            auto bankanglemask_name = zsString2Std(get_input2_string("bankangle_mask_layer"));
+            auto removalratemask_name = zsString2Std(get_input2_string("removalrate_mask_layer"));
+            auto depositionratemask_name = zsString2Std(get_input2_string("depositionrate_mask_layer"));
             if (!terrain->prim->verts.has_attr(gridbiasmask_name) ||
                 !terrain->prim->verts.has_attr(erodabilitymask_name) ||
                 !terrain->prim->verts.has_attr(bankanglemask_name) ||
@@ -3496,9 +3494,9 @@ namespace zeno {
         {
             "zs_HeightField",
 
-            {"ListObject", "perm"},
-            {"ListObject", "p_dirs"},
-            {"ListObject", "x_dirs"},
+            {gParamType_List, "perm"},
+            {gParamType_List, "p_dirs"},
+            {gParamType_List, "x_dirs"},
 
             {gParamType_Float, "seed", "12.34"},
             {gParamType_Int, "iterations", "40"}, // 流淌的总迭代次数
@@ -3565,13 +3563,13 @@ namespace zeno {
 
             ////////////////////////////////////////////////////////////////////////////////////////
             ////////////////////////////////////////////////////////////////////////////////////////
-            auto terrain = get_input<PrimitiveObject>("prim");
+            auto terrain = get_input_Geometry("prim")->toPrimitiveObject();
 
-            auto invert_mask = get_input2<bool>("invert mask");
-            auto view_radius = get_input2<int>("view distance");
-            auto step_scale = get_input2<float>("step scale");
-            auto axis_count = get_input2<int>("num of searches");
-            auto dohemisphere = get_input2<bool>("dohemisphere");
+            auto invert_mask = get_input2_bool("invert mask");
+            auto view_radius = get_input2_int("view distance");
+            auto step_scale = get_input2_float("step scale");
+            auto axis_count = get_input2_int("num of searches");
+            auto dohemisphere = get_input2_bool("dohemisphere");
 
             int nx, nz;
             auto &ud = terrain->userData();
@@ -3584,7 +3582,7 @@ namespace zeno {
             float pos_delta_z = zeno::abs(pos[0][2]-pos[1][2]);
             float cellSize = zeno::max(pos_delta_x, pos_delta_z);
 
-//        auto heightLayer = get_input2<std::string>("height_layer");
+//        auto heightLayer = zsString2Std(get_input2_string("height_layer"));
 //        if (!terrain->verts.has_attr(heightLayer)) {
 //            zeno::log_error("Node [HF_maskByFeature], no such data layer named '{}'.",
 //                            heightLayer);
@@ -3722,14 +3720,14 @@ namespace zeno {
     struct zs_HF_Clip : INode {
         void apply() override {
 
-            auto terrain = get_input<PrimitiveObject>("HeightField");
-            auto Minclip = get_input2<bool>("MinClip");
-            auto Maxclip = get_input2<bool>("MaxClip");
-            auto MinclipValue = get_input2<float>("Minclipheight");
-            auto MaxclipValue = get_input2<float>("Maxclipheight");
-            auto SoftClip = get_input2<bool>("SoftClip");
-            auto SoftClipStrength = get_input2<float>("SoftClip Strength");
-            auto SoftClipScale = get_input2<float>("SoftClip Scale");
+            auto terrain = get_input_Geometry("HeightField")->toPrimitiveObject();
+            auto Minclip = get_input2_bool("MinClip");
+            auto Maxclip = get_input2_bool("MaxClip");
+            auto MinclipValue = get_input2_float("Minclipheight");
+            auto MaxclipValue = get_input2_float("Maxclipheight");
+            auto SoftClip = get_input2_bool("SoftClip");
+            auto SoftClipStrength = get_input2_float("SoftClip Strength");
+            auto SoftClipScale = get_input2_float("SoftClip Scale");
 
             size_t nx, nz;
             auto &ud = terrain->userData();
@@ -3821,3 +3819,4 @@ namespace zeno {
             "erode",
         }});
 }   // namespace zeno
+#endif

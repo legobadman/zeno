@@ -198,26 +198,27 @@ endfunction()
 #endif()
 add_subdirectory(zenocore)
 add_subdirectory(zeno)
+add_subdirectory(zenobatch)
 add_subdirectory(api/python)
 
 ## --- begin cihou perf-geeks
 if (ZENO_MARCH_NATIVE)
     if (MSVC)
-        target_compile_options(zenobase PRIVATE /arch:AVX)
+        target_compile_options(zs_base PRIVATE /arch:AVX)
     else()
-        target_compile_options(zenobase PRIVATE "-march=native")
+        target_compile_options(zs_base PRIVATE "-march=native")
     endif()
 endif()
 if (ZENO_USE_FAST_MATH)
     if (MSVC)
-        target_compile_options(zenobase PRIVATE /fp:fast)
+        target_compile_options(zs_base PRIVATE /fp:fast)
     else()
-        target_compile_options(zenobase PRIVATE "-ffast-math")
+        target_compile_options(zs_base PRIVATE "-ffast-math")
     endif()
 endif()
 ## --- end cihou perf-geeks
 
-target_compile_options(zenobase
+target_compile_options(zs_base
             PUBLIC $<$<COMPILE_LANGUAGE:CXX>: $<IF:$<CXX_COMPILER_ID:MSVC>, /utf-8, >>
             )
 

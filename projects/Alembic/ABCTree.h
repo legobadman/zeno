@@ -5,6 +5,8 @@ using Json = nlohmann::json;
 
 #include <zeno/core/IObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/utils/safe_dynamic_cast.h>
+#include <memory>
 #include <Alembic/AbcGeom/Foundation.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreAbstract/All.h>
@@ -25,14 +27,33 @@ struct CameraInfo {
     double verticalAperture;
 };
 
-struct ABCTree : IObjectClone<ABCTree> {
+struct ABCTree : IObject {
     std::string name;
-    std::shared_ptr<PrimitiveObject> prim;
+    std::unique_ptr<zeno::PrimitiveObject> prim;
     Alembic::Abc::M44d xform = Alembic::Abc::M44d();
-    std::shared_ptr<CameraInfo> camera_info;
-    std::vector<std::shared_ptr<ABCTree>> children;
+    std::unique_ptr<CameraInfo> camera_info;
+    std::vector<std::unique_ptr<ABCTree>> children;
     ObjectVisibility visible = ObjectVisibility::kVisibilityDeferred;
     std::string instanceSourcePath;
+
+    zany clone() const override {
+        auto tree = std::make_unique<ABCTree>();
+        tree->name = name;
+        if (prim) {
+            tree->prim = zeno::safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
+        }
+        tree->xform = xform;
+        if (camera_info) {
+            tree->camera_info = std::make_unique<CameraInfo>(*camera_info);
+        }
+        tree->children.resize(children.size());
+        for (int i = 0; i < children.size(); i++) {
+            tree->children[i] = zeno::safe_uniqueptr_cast<ABCTree>(children[i]->clone());
+        }
+        tree->visible = visible;
+        tree->instanceSourcePath = instanceSourcePath;
+        return tree;
+    }
 
     Json get_scene_info(
         ObjectVisibility parent_visible = ObjectVisibility::kVisibilityVisible
@@ -70,7 +91,7 @@ struct ABCTree : IObjectClone<ABCTree> {
     template <class Func>
     bool visitPrims(Func const &func) const {
         if constexpr (std::is_void_v<std::invoke_result_t<Func,
-                      std::shared_ptr<PrimitiveObject> const &>>) {
+                      std::unique_ptr<PrimitiveObject> const &>>) {
             if (prim)
                 func(prim);
             for (auto const &ch: children)

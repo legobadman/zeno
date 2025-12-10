@@ -359,6 +359,12 @@ zeno::reflect::Any UiHelper::qvarToAny(const QVariant& var, const zeno::ParamTyp
         {
             return var.value<zeno::reflect::Any>();
         }
+        else if (var.userType() == QMetaTypeId<zeno::vec3f>::qt_metatype_id()) {
+            return var.value<zeno::vec3f>();
+        }
+        else if (var.userType() == QMetaTypeId<zeno::vec3i>::qt_metatype_id()) {
+            return var.value<zeno::vec3i>();
+        }
         else if (var.userType() == QMetaTypeId<UI_VECTYPE>::qt_metatype_id())
         {
             UI_VECTYPE vec = var.value<UI_VECTYPE>();
@@ -505,6 +511,30 @@ QVariant UiHelper::anyToQvar(zeno::reflect::Any var)
         vec.push_back(QString::fromStdString(vec4s[2]));
         vec.push_back(QString::fromStdString(vec4s[3]));
         return QVariant::fromValue(vec);
+    }
+    else if (zeno::reflect::get_type<zeno::vecvar>() == var.type()) {
+        zeno::vecvar v = zeno::reflect::any_cast<zeno::vecvar>(var);
+        if (v.empty()) return QVariant();
+        return std::visit([&](auto&& arg)->QVariant {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                UI_VECTYPE vec_;
+                for (auto var_ : v) {
+                    vec_.push_back(std::get<T>(var_));
+                }
+                return QVariant::fromValue(vec_);
+            }
+            else if constexpr (std::is_same_v<T, std::string>) {
+                UI_VECSTRING vec_;
+                for (auto var_ : v) {
+                    vec_.push_back(QString::fromStdString(std::get<T>(var_)));
+                }
+                return QVariant::fromValue(vec_);
+            }
+            else {
+                return QVariant();
+            }
+            }, v[0]);
     }
     return QVariant();
 }
@@ -1186,6 +1216,13 @@ QString UiHelper::getSockSubgraph(const QString& sockPath)
     return "";
 }
 
+QString UiHelper::floatToString(float val) {
+    QString s = QString::number(val, 'f', 6); // 保留最多6位小数
+    s = s.remove(QRegExp("0+$"));             // 去掉多余的尾随0
+    if (s.endsWith('.')) s.append('0');       // 如果最后是小数点，则补上一个0
+    return s;
+}
+
 QString UiHelper::anyToString(const zeno::reflect::Any& any)
 {
     if (!any.has_value()) {
@@ -1199,18 +1236,7 @@ QString UiHelper::anyToString(const zeno::reflect::Any& any)
     }
     else if (gParamType_PrimVariant == any.type().hash_code()) {
         zeno::PrimVar var = zeno::reflect::any_cast<zeno::PrimVar>(any);
-        return std::visit([](auto&& val)->QString {
-            using T = std::decay_t<decltype(val)>;
-            if constexpr (std::is_same_v<int, T> || std::is_same_v<float, T>) {
-                return QString::number(val);
-            }
-            else if constexpr (std::is_same_v<std::string, T>) {
-                return QString::fromStdString(val);
-            }
-            else {
-                return "";
-            }
-        }, var);
+        return editVariantToQString(var);
     }
     else if (zeno::reflect::get_type<std::string>() == any.type()) {
         return QString::fromStdString(zeno::any_cast_to_string(any));
@@ -1399,15 +1425,18 @@ QString UiHelper::editVariantToQString(const zeno::PrimVar& var)
 {
     return std::visit([](auto&& val) -> QString {
         using T = std::decay_t<decltype(val)>;
-    if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
-        return QString::number(val);
-    }
-    else if constexpr (std::is_same_v<T, std::string>) {
-        return QString::fromStdString(val);
-    }
-    else {
-        return "";
-    }
+        if constexpr (std::is_same_v<T, int>) {
+            return QString::number(val);
+        }
+        else if constexpr (std::is_same_v<T, float>) {
+            return floatToString(val);
+        }
+        else if constexpr (std::is_same_v<T, std::string>) {
+            return QString::fromStdString(val);
+        }
+        else {
+            return "";
+        }
         }, var);
 }
 
@@ -2568,7 +2597,7 @@ void UiHelper::saveProject(const QString& name)
         GraphModel* pModel =  zenoApp->graphsManager()->getGraph({ "main" });
         if (pModel)
         {
-            pModel->syncToAssetsInstance(name);
+            pModel->syncToAssetsInstance(name, nullptr);
         }
     }
 }
@@ -2617,10 +2646,10 @@ QStringList UiHelper::findSuccessorNode(GraphModel* pModel, const QString& node)
     return nodes;
 }
 
-QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& node)
+QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& originnode, bool bfindInput, bool bfindOutput)
 {
     std::unordered_set<std::string> nodesName;
-    std::function<void(GraphModel*, std::string, std::unordered_set<std::string>&)> findNodes = [&findNodes](GraphModel* pModel, std::string node, std::unordered_set<std::string>& nodesName) {
+    std::function<void(GraphModel*, std::string, std::unordered_set<std::string>&, bool)> findNodes = [&findNodes, &originnode](GraphModel* pModel, std::string node, std::unordered_set<std::string>& nodesName, bool bInput) {
         if (nodesName.count(node) || node.empty()) {
             return;
         } else {
@@ -2634,16 +2663,27 @@ QStringList UiHelper::findAllLinkdNodes(GraphModel* pModel, const QString& node)
                 PARAM_LINKS links = idx.data(QtRole::ROLE_LINKS).value<PARAM_LINKS>();
                 for (auto link : links) {
                     zeno::EdgeInfo edge = link.data(QtRole::ROLE_LINK_INFO).value<zeno::EdgeInfo>();
-                    if (idx.data(QtRole::ROLE_ISINPUT).toBool()) {
-                        findNodes(pModel, edge.outNode, nodesName);
+                    bool inputParam = idx.data(QtRole::ROLE_ISINPUT).toBool();
+                    if (bInput) {
+                        if (inputParam) {
+                            findNodes(pModel, edge.outNode, nodesName, bInput);
+                        }
                     } else {
-                        findNodes(pModel, edge.inNode, nodesName);
+                        if (!inputParam) {
+                            findNodes(pModel, edge.inNode, nodesName, bInput);
+                        }
                     }
                 }
             }
         }
     };
-    findNodes(pModel, node.toStdString(), nodesName);
+    if (bfindInput) {
+        findNodes(pModel, originnode.toStdString(), nodesName, true);
+    }
+    nodesName.erase(originnode.toStdString());
+    if (bfindOutput) {
+        findNodes(pModel, originnode.toStdString(), nodesName, false);
+    }
     QStringList list;
     for (auto& i : nodesName) {
         list.append(QString::fromStdString(i));
@@ -2671,7 +2711,7 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Node Parameters") || title == "Node Parameters") {
         type = PANEL_NODE_PARAMS;
     }
-    else if (title == QObject::tr("View") || title == "View" || title == QObject::tr("Scene Viewport") || title == "Scene Viewport") {
+    else if (title == QObject::tr("View") || title == "View" || title == QObject::tr("Scene Viewport") || title == "Scene Viewport" || title == QObject::tr("GL Viewport") || title == "GL Viewport") {
         type = PANEL_GL_VIEW;
     }
     else if (title == QObject::tr("Editor") || title == "Editor" || title == QObject::tr("Node Editor") || title == "Node Editor") {
@@ -2679,9 +2719,6 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     }
     else if (title == QObject::tr("Geometry Data") || title == "Geometry Data") {
         type = PANEL_GEOM_DATA;
-    }
-    else if (title == QObject::tr("Object Data") || title == "Object Data") {
-        type = PANEL_NODE_DATA;
     }
     else if (title == QObject::tr("Logger") || title == "Logger" || title == QObject::tr("Log") || title == "Log") {
         type = PANEL_LOG;
@@ -2706,7 +2743,7 @@ PANEL_TYPE UiHelper::title2Type(const QString& title)
     else if (title == QObject::tr("Image") || title == "Image") {
         type = PANEL_IMAGE;
     }
-    else if (title == QObject::tr("Optix") || title == "Optix") {
+    else if (title == QObject::tr("Optix") || title == "Optix" || title == QObject::tr("Optix Viewport") || title == "Optix Viewport") {
         type = PANEL_OPTIX_VIEW;
     }
     else if (title == QObject::tr("Command Params") || title == "Command Params") {

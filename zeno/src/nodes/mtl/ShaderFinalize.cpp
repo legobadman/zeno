@@ -9,6 +9,8 @@
 #include <zeno/utils/logger.h>
 #include <zeno/types/UserData.h>
 
+#include <tinygltf/json.hpp>
+
 namespace zeno {
 
 struct ShaderFinalize : INode {
@@ -132,26 +134,47 @@ struct ShaderFinalize : INode {
         vec3f mask_value = (vec3f)ZImpl(get_input2<zeno::vec3i>("mask_value")) / 255.0f;
         code += zeno::format("vec3 mask_value = vec3({}, {}, {});\n", mask_value[0], mask_value[1], mask_value[2]);
 
-        auto mtl = std::make_shared<MaterialObject>();
+        auto mtl = std::make_unique<MaterialObject>();
         mtl->mtlidkey = ZImpl(get_input2<std::string>("mtlid"));
         mtl->frag = std::move(code);
 
+        nlohmann::json j;
+        if (ZImpl(has_input("opacity"))) {
+            const ShaderData& opa_data = ZImpl(get_input_shader("opacity"));
+            if (opa_data.data.index() == 0) {
+                std::visit([&](auto&& val) {
+                    using T = std::decay_t<decltype(val)>;
+                    if constexpr (std::is_same_v<T, float> || std::is_same_v<T, int>) {
+                        float opacity = val; // It's actually transparency not opacity
+                        opacity = max(0.0f, 1.0f - opacity);
+                        j["opacity"] = opacity;
+                    }
+                    else {
+                        throw makeError<UnimplError>("the type of opacity is not int or float");
+                    }
+                    }, std::get<NumericValue>(opa_data.data));
+            }
+
+        }
+        mtl->parameters = j.dump();
+
         if (ZImpl(has_input("extensionsCode")))
             mtl->extensions = ZImpl(get_input<zeno::StringObject>("extensionsCode"))->get();
-
         {
             if (ZImpl(has_input("tex2dList"))) {
-                auto tex2dList = ZImpl(get_input<ListObject>("tex2dList"))->m_impl->get<zeno::Texture2DObject>();
-                if (!tex2dList.empty() && !em.tex2Ds.empty()) {
+                auto tex2dList = get_input_ListObject("tex2dList");
+                if (!tex2dList->empty() && !em.tex2Ds.empty()) {
                     throw zeno::makeError("Can not use both way!");
                 }
-                for (const auto& tex: tex2dList) {
-                    em.tex2Ds.push_back(tex);
+                for (const auto& obj : tex2dList->m_impl->m_objects) {
+                    if (auto tex = dynamic_cast<zeno::Texture2DObject*>(obj.get())) {
+                        em.tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
+                    }
                 }
             }
             if (!em.tex2Ds.empty()) {
                 for (const auto& tex: em.tex2Ds) {
-                    mtl->tex2Ds.push_back(tex);
+                    mtl->tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
                 }
                 auto texCode = "uniform sampler2D zenotex[32]; \n";
                 mtl->common.insert(0, texCode);
@@ -163,7 +186,7 @@ struct ShaderFinalize : INode {
     }
 };
 
-//ä»¥ä¸‹æ•°æ®ç±»å‹æœ‰å¯èƒ½ä¼šæ¥æ”¶åˆ°å…¶ä»–ShaderèŠ‚ç‚¹ï¼Œè¿™æ—¶å€™ä¼ è¿‡æ¥çš„æ˜¯ShaderDataï¼Œä¸èƒ½èµ°ç±»å‹åˆ¤åˆ«ã€‚
+//ÒÔÏÂÊı¾İÀàĞÍÓĞ¿ÉÄÜ»á½ÓÊÕµ½ÆäËûShader½Úµã£¬ÕâÊ±ºò´«¹ıÀ´µÄÊÇShaderData£¬²»ÄÜ×ßÀàĞÍÅĞ±ğ¡£
 ZENDEFNODE(ShaderFinalize, {
     {
         {gParamType_Float, "base", "1"},

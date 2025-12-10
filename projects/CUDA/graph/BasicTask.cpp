@@ -1,3 +1,4 @@
+#if 0
 #include "Task.hpp"
 #include "zensim/omp/execution/ExecutionPolicy.hpp"
 #include <queue>
@@ -188,7 +189,7 @@ struct WriteTaskDependencyGraph : INode {
   }
   void apply() override {
     std::vector<WorkNode *> nodes;
-    auto jobs = get_input("job");
+    auto jobs = clone_input("job");
     if (auto ptr = std::dynamic_pointer_cast<WorkNode>(jobs); ptr)
       nodes.push_back(ptr.get());
     else if (auto list = std::dynamic_pointer_cast<ListObject>(jobs); list) {
@@ -196,7 +197,7 @@ struct WriteTaskDependencyGraph : INode {
         if (auto ptr = std::dynamic_pointer_cast<WorkNode>(arg); ptr)
           nodes.push_back(ptr.get());
     }
-    auto filename = get_input2<std::string>("json_file_path");
+    auto filename = zsString2Std(get_input2_string("json_file_path"));
 
     std::vector<Json> jsons;
 
@@ -223,12 +224,12 @@ struct WriteTaskDependencyGraph : INode {
 ZENO_DEFNODE(WriteTaskDependencyGraph)
 ({/* inputs: */
   {
-      {gParamType_List, "job"},
-      {"writepath", "json_file_path", ""},
+      {gParamType_IObject, "job"},
+      {gParamType_String, "json_file_path", "", zeno::Socket_Primitve, zeno::WritePathEdit},
   },
   /* outputs: */
   {
-      {"job"},
+      {gParamType_IObject, "job"},
   },
   /* params: */
   {},
@@ -241,7 +242,7 @@ struct AssembleJob : INode {
   void apply() override {
     auto ret = std::make_shared<WorkNode>();
 
-    auto tag = get_input2<std::string>("name_tag");
+    auto tag = zsString2Std(get_input2_string("name_tag"));
     if (tag.empty())
       throw std::runtime_error("work name must not be empty!");
     ret->tag = tag;
@@ -258,7 +259,7 @@ struct AssembleJob : INode {
     ret->workItems = workItems;
 
     auto deps = has_input("dependencies")
-                    ? get_input<ListObject>("dependencies")
+                    ? get_input_ListObject("dependencies")
                     : std::make_shared<ListObject>();
     for (auto &&arg : deps->get())
       if (auto ptr = std::dynamic_pointer_cast<WorkNode>(arg); ptr)
@@ -288,12 +289,12 @@ ZENO_DEFNODE(AssembleJob)
 struct SetWorkDependencies : INode {
   void apply() override {
     auto node = get_input<WorkNode>("job");
-    auto reset = get_input2<bool>("reset");
+    auto reset = get_input2_bool("reset");
     if (reset)
       node->deps.clear();
 
     auto deps = has_input("dependencies")
-                    ? get_input<ListObject>("dependencies")
+                    ? get_input_ListObject("dependencies")
                     : std::make_shared<ListObject>();
     for (auto &&arg : deps->get())
       if (auto ptr = std::dynamic_pointer_cast<WorkNode>(arg); ptr)
@@ -321,3 +322,4 @@ ZENO_DEFNODE(SetWorkDependencies)
   }});
 
 } // namespace zeno
+#endif

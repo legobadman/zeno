@@ -115,13 +115,13 @@ static void set_time_info(IUserData* ud, TimeSamplingType tst, float start, int 
         ud->set_float("_abc_time_fps", 0.0f);
     }
 }
-static void read_velocity(std::shared_ptr<PrimitiveObject> prim, V3fArraySamplePtr marr, bool read_done) {
+static void read_velocity(PrimitiveObject* prim, V3fArraySamplePtr marr, bool read_done) {
     if (marr == nullptr) {
         return;
     }
     if (marr->size() > 0) {
         if (!read_done) {
-            log_info("[alembic] totally {} velocities", marr->size());
+            //log_info("[alembic] totally {} velocities", marr->size());
         }
         auto &parr = prim->add_attr<vec3f>("v");
         for (size_t i = 0; i < marr->size(); i++) {
@@ -131,7 +131,7 @@ static void read_velocity(std::shared_ptr<PrimitiveObject> prim, V3fArraySampleP
     }
 }
 template<typename T>
-void attr_from_data(std::shared_ptr<PrimitiveObject> prim, GeometryScope scope, std::string attr_name, std::vector<T> &data) {
+void attr_from_data(PrimitiveObject* prim, GeometryScope scope, std::string attr_name, std::vector<T> &data) {
     if (scope == GeometryScope::kUniformScope) {
         if (zeno::ends_with(attr_name, "_polys")) {
             attr_name = attr_name.substr(0, attr_name.size() - 6);
@@ -283,7 +283,7 @@ void attr_from_data(std::shared_ptr<PrimitiveObject> prim, GeometryScope scope, 
     }
 }
 template<typename T>
-void attr_from_data_vec(std::shared_ptr<PrimitiveObject> prim, GeometryScope scope, std::string attr_name, std::vector<T> &data) {
+void attr_from_data_vec(PrimitiveObject* prim, GeometryScope scope, std::string attr_name, std::vector<T> &data) {
     if (scope == GeometryScope::kUniformScope) {
         if (prim->polys.size() == data.size()) {
             auto &attr = prim->polys.add_attr<T>(attr_name);
@@ -338,7 +338,7 @@ void attr_from_data_vec(std::shared_ptr<PrimitiveObject> prim, GeometryScope sco
         }
     }
 }
-static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundProperty arbattrs, const ISampleSelector &iSS, bool read_done) {
+static void read_attributes2(PrimitiveObject* prim, ICompoundProperty arbattrs, const ISampleSelector &iSS, bool read_done) {
     if (!arbattrs) {
         return;
     }
@@ -355,7 +355,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = samp.getVals()->get()[i];
             }
             if (!read_done) {
-                log_info("[alembic] float attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] float attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data(prim, samp.getScope(), p.getName(), data);
         }
@@ -369,7 +369,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = samp.getVals()->get()[i];
             }
             if (!read_done) {
-                log_info("[alembic] int attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] int attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data(prim, samp.getScope(), p.getName(), data);
         }
@@ -384,7 +384,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = {v[0], v[1], v[2]};
             }
             if (!read_done) {
-                log_info("[alembic] V3f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] V3f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
         }
@@ -399,7 +399,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = {v[0], v[1], v[2]};
             }
             if (!read_done) {
-                log_info("[alembic] N3f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] N3f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
         }
@@ -414,7 +414,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data[i] = {v[0], v[1], v[2]};
             }
             if (!read_done) {
-                log_info("[alembic] C3f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] C3f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
         }
@@ -433,17 +433,17 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
                 data_w[i] = v[3];
             }
             if (!read_done) {
-                log_info("[alembic] C4f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] C4f attr {}, len {}.", p.getName(), data.size());
             }
             attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
             attr_from_data_vec(prim, samp.getScope(), p.getName() + "_rgb", data_xyz);
             attr_from_data_vec(prim, samp.getScope(), p.getName() + "_a", data_w);
         }
         else {
-            log_info("[alembic] unknown attr {}.", p.getName());
-            zeno::log_info("getExtent {} ", p.getDataType().getExtent());
-            zeno::log_info("getNumBytes {} ", p.getDataType().getNumBytes());
-            zeno::log_info("getPod {} ", p.getDataType().getPod());
+            //log_info("[alembic] unknown attr {}.", p.getName());
+            //zeno::log_info("getExtent {} ", p.getDataType().getExtent());
+            //zeno::log_info("getNumBytes {} ", p.getDataType().getNumBytes());
+            //zeno::log_info("getPod {} ", p.getDataType().getPod());
         }
     }
     {
@@ -477,7 +477,7 @@ static void read_attributes2(std::shared_ptr<PrimitiveObject> prim, ICompoundPro
     }
 }
 
-static void read_user_data(std::shared_ptr<PrimitiveObject> prim, ICompoundProperty arbattrs, const ISampleSelector &iSS, bool read_done) {
+static void read_user_data(PrimitiveObject* prim, ICompoundProperty arbattrs, const ISampleSelector &iSS, bool read_done) {
     if (!arbattrs) {
         return;
     }
@@ -575,7 +575,7 @@ static ObjectVisibility read_visible_attr(ICompoundProperty arbattrs, const ISam
     return ObjectVisibility::kVisibilityDeferred;
 }
 
-static std::shared_ptr<PrimitiveObject> foundABCMesh(
+static std::unique_ptr<PrimitiveObject> foundABCMesh(
         Alembic::AbcGeom::IPolyMeshSchema &mesh
         , int frameid
         , bool read_done
@@ -583,7 +583,7 @@ static std::shared_ptr<PrimitiveObject> foundABCMesh(
         , bool outOfRangeAsEmpty
         , std::string abc_name
 ) {
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = mesh.getTimeSampling();
     float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
@@ -609,7 +609,7 @@ static std::shared_ptr<PrimitiveObject> foundABCMesh(
         }
     }
 
-    read_velocity(prim, mesamp.getVelocities(), read_done);
+    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
     if (auto nrm = mesh.getNormalsParam()) {
         auto nrmsamp =
                 nrm.getIndexedValue(Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index));
@@ -702,9 +702,10 @@ static std::shared_ptr<PrimitiveObject> foundABCMesh(
         }
     }
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
-    read_attributes2(prim, arbattrs, iSS, read_done);
+    read_attributes2(prim.get(), arbattrs, iSS, read_done);
+    read_user_data(prim.get(), arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
-    read_user_data(prim, usrData, iSS, read_done);
+    read_user_data(prim.get(), usrData, iSS, read_done);
 
     if (is_point) {
         prim->loops.clear();
@@ -749,8 +750,8 @@ static std::shared_ptr<PrimitiveObject> foundABCMesh(
     return prim;
 }
 
-static std::shared_ptr<PrimitiveObject> foundABCSubd(Alembic::AbcGeom::ISubDSchema &subd, int frameid, bool read_done, bool read_face_set, bool outOfRangeAsEmpty) {
-    auto prim = std::make_shared<PrimitiveObject>();
+static std::unique_ptr<PrimitiveObject> foundABCSubd(Alembic::AbcGeom::ISubDSchema &subd, int frameid, bool read_done, bool read_face_set, bool outOfRangeAsEmpty) {
+    auto prim = std::make_unique<PrimitiveObject>();
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = subd.getTimeSampling();
     float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
@@ -776,7 +777,7 @@ static std::shared_ptr<PrimitiveObject> foundABCSubd(Alembic::AbcGeom::ISubDSche
         }
     }
 
-    read_velocity(prim, mesamp.getVelocities(), read_done);
+    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
 
     if (auto marr = mesamp.getFaceIndices()) {
         if (!read_done) {
@@ -851,9 +852,10 @@ static std::shared_ptr<PrimitiveObject> foundABCSubd(Alembic::AbcGeom::ISubDSche
         }
     }
     ICompoundProperty arbattrs = subd.getArbGeomParams();
-    read_attributes2(prim, arbattrs, iSS, read_done);
+    read_attributes2(prim.get(), arbattrs, iSS, read_done);
+    read_user_data(prim.get(), arbattrs, iSS, read_done);
     ICompoundProperty usrData = subd.getUserProperties();
-    read_user_data(prim, usrData, iSS, read_done);
+    read_user_data(prim.get(), usrData, iSS, read_done);
 
     if (read_face_set) {
         auto &faceset = prim->polys.add_attr<int>("faceset");
@@ -878,7 +880,7 @@ static std::shared_ptr<PrimitiveObject> foundABCSubd(Alembic::AbcGeom::ISubDSche
     return prim;
 }
 
-static std::shared_ptr<CameraInfo> foundABCCamera(Alembic::AbcGeom::ICameraSchema &cam, int frameid) {
+static std::unique_ptr<CameraInfo> foundABCCamera(Alembic::AbcGeom::ICameraSchema &cam, int frameid) {
     CameraInfo cam_info;
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = cam.getTimeSampling();
     float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
@@ -892,13 +894,13 @@ static std::shared_ptr<CameraInfo> foundABCCamera(Alembic::AbcGeom::ICameraSchem
     cam_info._far = samp.getFarClippingPlane();
     cam_info.horizontalAperture = samp.getHorizontalAperture() * 10;
     cam_info.verticalAperture = samp.getVerticalAperture() * 10;
-    log_info(
-        "[alembic] Camera focal_length: {}, near: {}, far: {}",
-        cam_info.focal_length,
-        cam_info._near,
-        cam_info._far
-    );
-    return std::make_shared<CameraInfo>(cam_info);
+//    log_info(
+//        "[alembic] Camera focal_length: {}, near: {}, far: {}",
+//        cam_info.focal_length,
+//        cam_info._near,
+//        cam_info._far
+//    );
+    return std::make_unique<CameraInfo>(cam_info);
 }
 
 static Alembic::Abc::v12::M44d foundABCXform(Alembic::AbcGeom::IXformSchema &xfm, int frameid) {
@@ -912,8 +914,8 @@ static Alembic::Abc::v12::M44d foundABCXform(Alembic::AbcGeom::IXformSchema &xfm
     return samp.getMatrix();
 }
 
-static std::shared_ptr<PrimitiveObject> foundABCPoints(Alembic::AbcGeom::IPointsSchema &mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
-    auto prim = std::make_shared<PrimitiveObject>();
+static std::unique_ptr<PrimitiveObject> foundABCPoints(Alembic::AbcGeom::IPointsSchema &mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
+    auto prim = std::make_unique<PrimitiveObject>();
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = mesh.getTimeSampling();
     float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
@@ -929,7 +931,7 @@ static std::shared_ptr<PrimitiveObject> foundABCPoints(Alembic::AbcGeom::IPoints
     Alembic::AbcGeom::IPointsSchema::Sample mesamp = mesh.getValue(iSS);
     if (auto marr = mesamp.getPositions()) {
         if (!read_done) {
-            log_info("[alembic] totally {} positions", marr->size());
+            //log_info("[alembic] totally {} positions", marr->size());
         }
         auto &parr = prim->verts;
         for (size_t i = 0; i < marr->size(); i++) {
@@ -945,16 +947,17 @@ static std::shared_ptr<PrimitiveObject> foundABCPoints(Alembic::AbcGeom::IPoints
             ids[i] = mesamp.getIds()->operator[](i);
         }
     }
-    read_velocity(prim, mesamp.getVelocities(), read_done);
+    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
-    read_attributes2(prim, arbattrs, iSS, read_done);
+    read_attributes2(prim.get(), arbattrs, iSS, read_done);
+    read_user_data(prim.get(), arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
-    read_user_data(prim, usrData, iSS, read_done);
+    read_user_data(prim.get(), usrData, iSS, read_done);
     return prim;
 }
 
-static std::shared_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurvesSchema &mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
-    auto prim = std::make_shared<PrimitiveObject>();
+static std::unique_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurvesSchema &mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
+    auto prim = std::make_unique<PrimitiveObject>();
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = mesh.getTimeSampling();
     float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
@@ -970,7 +973,7 @@ static std::shared_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurves
     Alembic::AbcGeom::ICurvesSchema::Sample mesamp = mesh.getValue(iSS);
     if (auto marr = mesamp.getPositions()) {
         if (!read_done) {
-            log_info("[alembic] totally {} positions", marr->size());
+            //log_info("[alembic] totally {} positions", marr->size());
         }
         auto &parr = prim->verts;
         for (size_t i = 0; i < marr->size(); i++) {
@@ -978,7 +981,7 @@ static std::shared_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurves
             parr.emplace_back(val[0], val[1], val[2]);
         }
     }
-    read_velocity(prim, mesamp.getVelocities(), read_done);
+    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
     {
         auto &parr = prim->lines;
         auto numCurves = mesamp.getCurvesNumVertices()->size();
@@ -1005,9 +1008,10 @@ static std::shared_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurves
         }
     }
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
-    read_attributes2(prim, arbattrs, iSS, read_done);
+    read_attributes2(prim.get(), arbattrs, iSS, read_done);
+    read_user_data(prim.get(), arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
-    read_user_data(prim, usrData, iSS, read_done);
+    read_user_data(prim.get(), usrData, iSS, read_done);
     return prim;
 }
 
@@ -1142,7 +1146,7 @@ void traverseABC(
 
         Alembic::AbcGeom::IObject child(obj, name);
 
-        auto childTree = std::make_shared<ABCTree>();
+        auto childTree = std::make_unique<ABCTree>();
         traverseABC(child, *childTree, frameid, read_done, read_face_set, path, iTimeMap, tree.visible, skipInvisibleObject, outOfRangeAsEmpty, use_instance);
         tree.children.push_back(std::move(childTree));
     }
@@ -1162,10 +1166,10 @@ Alembic::AbcGeom::IArchive readABC(std::string const &path) {
         hdr = buf;
     }
     if (hdr == "\x89HDF") {
-        log_info("[alembic] opening as HDF5 format");
+        //log_info("[alembic] opening as HDF5 format");
         return {Alembic::AbcCoreHDF5::ReadArchive(), native_path};
     } else if (hdr == "Ogaw") {
-        log_info("[alembic] opening as Ogawa format");
+        //log_info("[alembic] opening as Ogawa format");
         return {Alembic::AbcCoreOgawa::ReadArchive(), native_path};
     } else {
         throw Exception("[alembic] unrecognized ABC header: [" + hdr + "]");
@@ -1179,12 +1183,12 @@ struct ReadAlembic : INode {
     virtual void apply() override {
         bool use_instance = get_input2_bool("use_instance");
         int frameid;
-        if (has_input("frameid")) {
+        if (has_link_input("frameid")) {
             frameid = std::lround(get_input2_float("frameid"));
         } else {
             frameid = GetFrameId();
         }
-        auto abctree = std::make_shared<ABCTree>();
+        auto abctree = std::make_unique<ABCTree>();
         bool read_face_set = get_input2_bool("read_face_set");
         {
             auto path = zsString2Std(get_input2_string("path"));
@@ -1214,21 +1218,21 @@ struct ReadAlembic : INode {
             usedPath = path;
         }
         {
-            auto namelist = std::make_shared<zeno::ListObject>();
+            auto namelist = std::make_unique<zeno::ListObject>();
             abctree->visitPrims([&] (auto const &p) {
                 auto ud = p->userData();
                 auto _abc_path = zsString2Std(ud->get_string("abcpath_0", ""));
-                namelist->push_back(std::make_shared<StringObject>(_abc_path));
+                namelist->push_back(std::make_unique<StringObject>(_abc_path));
             });
             auto ud = abctree->userData();
             ud->set_int("prim_count", int(namelist->size()));
             for (auto i = 0; i < namelist->size(); i++) {
                 auto n = namelist->get(i);
                 zeno::String na = stdString2zs(zeno::format("path_{:04}", i));
-                auto strobj = std::dynamic_pointer_cast<StringObject>(n);
+                auto strobj = safe_dynamic_cast<StringObject>(n);
                 ud->set_string(na, stdString2zs(strobj->value));
             }
-            set_output("namelist", namelist);
+            set_output("namelist", std::move(namelist));
         }
         if (get_input2_bool("CopyFacesetToMatid") && read_face_set) {
             abctree->visitPrims([](auto &prim){
@@ -1257,7 +1261,7 @@ ZENDEFNODE(ReadAlembic, {
     {"alembic"},
 });
 
-std::shared_ptr<ListObject> abc_split_by_name(std::shared_ptr<PrimitiveObject> prim, bool add_when_none) {
+std::unique_ptr<ListObject> abc_split_by_name(PrimitiveObject* prim, bool add_when_none) {
     auto list = create_ListObject();
     if (prim->verts.size() == 0) {
         return list;
@@ -1265,7 +1269,7 @@ std::shared_ptr<ListObject> abc_split_by_name(std::shared_ptr<PrimitiveObject> p
     int faceset_count = prim->userData()->get_int("faceset_count");
     if (add_when_none && faceset_count == 0) {
         auto name = prim->userData()->get_string("_abc_name");
-        prim_set_faceset(prim.get(), name);
+        prim_set_faceset(prim, name);
         faceset_count = 1;
     }
     std::map<int, std::vector<int>> faceset_map;
@@ -1280,7 +1284,7 @@ std::shared_ptr<ListObject> abc_split_by_name(std::shared_ptr<PrimitiveObject> p
         }
         for (auto f = 0; f < faceset_count; f++) {
             auto name = prim->userData()->get_string(stdString2zs(zeno::format("faceset_{}", f)));
-            auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(prim->clone());
+            auto new_prim = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
             new_prim->polys.resize(faceset_map[f].size());
             for (auto i = 0; i < faceset_map[f].size(); i++) {
                 new_prim->polys[i] = prim->polys[faceset_map[f][i]];
@@ -1296,7 +1300,7 @@ std::shared_ptr<ListObject> abc_split_by_name(std::shared_ptr<PrimitiveObject> p
                 new_prim->userData()->del(stdString2zs(zeno::format("faceset_{}", j)));
             }
             prim_set_faceset(new_prim.get(), name);
-            list->push_back(new_prim);
+            list->push_back(std::move(new_prim));
         }
     }
     else if (prim->tris.size()) {
@@ -1307,7 +1311,7 @@ std::shared_ptr<ListObject> abc_split_by_name(std::shared_ptr<PrimitiveObject> p
         }
         for (auto f = 0; f < faceset_count; f++) {
             auto name = prim->userData()->get_string(stdString2zs(zeno::format("faceset_{}", f)));
-            auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(prim->clone());
+            auto new_prim = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
             new_prim->tris.resize(faceset_map[f].size());
             for (auto i = 0; i < faceset_map[f].size(); i++) {
                 new_prim->tris[i] = prim->tris[faceset_map[f][i]];
@@ -1323,7 +1327,7 @@ std::shared_ptr<ListObject> abc_split_by_name(std::shared_ptr<PrimitiveObject> p
                 new_prim->userData()->del(stdString2zs(zeno::format("faceset_{}", j)));
             }
             prim_set_faceset(new_prim.get(), name);
-            list->push_back(new_prim);
+            list->push_back(std::move(new_prim));
         }
     }
     return list;
@@ -1333,26 +1337,26 @@ struct AlembicSplitByName: INode {
         auto prim = get_input_PrimitiveObject("prim");
         int faceset_count = prim->userData()->get_int("faceset_count");
         {
-            auto namelist = std::make_shared<zeno::ListObject>();
+            auto namelist = std::make_unique<zeno::ListObject>();
             for (auto f = 0; f < faceset_count; f++) {
                 auto name = prim->userData()->get_string(stdString2zs(zeno::format("faceset_{}", f)));
-                namelist->push_back(std::make_shared<StringObject>(zsString2Std(name)));
+                namelist->push_back(std::make_unique<StringObject>(zsString2Std(name)));
             }
-            set_output("namelist", namelist);
+            set_output("namelist", std::move(namelist));
         }
 
         auto dict = create_DictObject();
         auto list = abc_split_by_name(prim, false);
-        auto prims = get_prims_from_list(list);
+        auto prims = get_prims_from_list(list.get());
 
-        for (auto prim : prims) {
+        for (auto& prim : prims) {
             auto name = zsString2Std(prim->userData()->get_string("faceset_0"));
             if (get_input2_bool("killDeadVerts")) {
                 primKillDeadVerts(prim.get());
             }
             dict->lut[name] = std::move(prim);
         }
-        set_output("dict", dict);
+        set_output("dict", std::move(dict));
     }
 };
 
@@ -1371,10 +1375,10 @@ ZENDEFNODE(AlembicSplitByName, {
 
 struct CopyPosAndNrmByIndex: INode {
     void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         auto lstobj = get_input_ListObject("list");
         auto prims = get_prims_from_list(lstobj);
-        for (auto p : prims) {
+        for (auto& p : prims) {
             size_t size = p->size();
             auto index = p->attr<int>("index");
             for (auto i = 0; i < size; i++) {
@@ -1389,7 +1393,7 @@ struct CopyPosAndNrmByIndex: INode {
             }
         }
 
-        set_output("out", prim);
+        set_output("out", std::move(prim));
     }
 };
 
@@ -1408,11 +1412,10 @@ ZENDEFNODE(CopyPosAndNrmByIndex, {
 struct PrimsFilterInUserdata: INode {
     void apply() override {
         auto prims = get_input_ListObject("list");
-        auto input_updateinfo = get_input_container_info("list");
         auto filter_str = zsString2Std(get_input2_string("filters"));
         std::vector<std::string> filters = zeno::split_str(filter_str, {' ', '\n'});
         std::vector<std::string> filters_;
-        auto out_list = std::make_shared<ListObject>();
+        auto out_list = std::make_unique<ListObject>();
 
         for (auto &s: filters) {
             if (s.length() > 0) {
@@ -1447,12 +1450,10 @@ struct PrimsFilterInUserdata: INode {
             }
             bool insert = (contain && this_contain) || (!contain && !this_contain);
             if (insert) {
-                out_list->push_back(p);
+                out_list->push_back(p->clone());
             }
         }
-        //由于上述只涉及到筛选，所以info全给也没什么问题
-        set_output_container_info("out", input_updateinfo);
-        set_output("out", out_list);
+        set_output("out", std::move(out_list));
     }
 };
 
@@ -1460,7 +1461,7 @@ ZENDEFNODE(PrimsFilterInUserdata, {
     {
         {gParamType_List, "list"},
         {gParamType_String, "name", ""},
-        {gParamType_String, "filters"},
+        {gParamType_String, "filters", "", Socket_Primitve, zeno::Multiline},
         {gParamType_Bool, "contain", "1"},
         {gParamType_Bool, "fuzzy", "0"},
     },
@@ -1553,11 +1554,11 @@ ZENDEFNODE(PrimsFilterInUserdataPython, {
 #endif
 struct SetFaceset: INode {
     void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         auto faceset_name = get_input2_string("facesetName");
         prim_set_faceset(prim.get(), faceset_name);
 
-        set_output("out", prim);
+        set_output("out", std::move(prim));
     }
 };
 
@@ -1575,10 +1576,10 @@ ZENDEFNODE(SetFaceset, {
 
 struct SetABCPath: INode {
     void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         auto abcpathName = get_input2_string("abcpathName");
         prim_set_abcpath(prim.get(), abcpathName);
-        set_output("out", prim);
+        set_output("out", std::move(prim));
     }
 };
 
@@ -1596,10 +1597,10 @@ ZENDEFNODE(SetABCPath, {
 
 struct PrimCopyFacesetToMatid: INode {
     void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         prim_copy_faceset_to_matid(prim.get());
 
-        set_output("out", prim);
+        set_output("out", std::move(prim));
     }
 };
 

@@ -10,7 +10,7 @@ struct PrimitiveDuplicate : zeno::INode {
         auto mesh = ZImpl(get_input<PrimitiveObject>("meshPrim"));
         auto pars = ZImpl(get_input<PrimitiveObject>("particlesPrim"));
 
-        auto outm = std::make_shared<PrimitiveObject>();
+        auto outm = std::make_unique<PrimitiveObject>();
         outm->resize(pars->size() * mesh->size());
 
         float uniScale = ZImpl(has_input("uniScale")) ?

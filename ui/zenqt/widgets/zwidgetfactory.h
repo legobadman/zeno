@@ -9,6 +9,7 @@ namespace zenoui
 {
     QWidget* createWidget(
         const QModelIndex& nodeIdx,
+        const QString& param_name,
         const zeno::reflect::Any& value,
         zeno::ParamControl ctrl,
         const zeno::ParamType paramType,

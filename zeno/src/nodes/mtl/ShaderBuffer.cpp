@@ -31,13 +31,13 @@ struct ShaderBuffer : INode {
 
         for(int i=0; i<list.size(); ++i) {
 
-            auto node = std::make_shared<ImplShaderBuffer>();
+            auto node = std::make_unique<ImplShaderBuffer>();
 
             std::string na = zsString2Std(get_input2_string("name"));
             node->m_pAdapter->set_primitive_input("name", na);
 
             node->out = i;
-            auto shader = std::make_shared<ShaderObject>(node.get());
+            auto shader = std::make_unique<ShaderObject>(node.get());
             set_output(list[i], std::move(shader));
         }
     }

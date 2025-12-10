@@ -1,10 +1,10 @@
 #include <zeno/zeno.h>
-#include <zeno/extra/TempNode.h>
 #include <zeno/utils/eulerangle.h>
 
 #include <zeno/types/UserData.h>
 #include <zeno/types/LightObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -68,21 +68,21 @@ struct LightNode : INode {
         auto shapeEnum = magic_enum::enum_cast<LightShape>(shapeString).value_or(LightShape::Plane);
         auto shapeOrder = magic_enum::enum_integer(shapeEnum);
 
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto &VERTS = prim->verts;
         auto &LINES = prim->lines;
         auto &TRIS = prim->tris;
 
         if (ZImpl(has_input("prim"))) {
-            auto mesh = ZImpl(get_input<PrimitiveObject>("prim"));
+            auto mesh = get_input_Geometry("prim")->toPrimitiveObject();
 
             if (mesh->tris->size() > 0) {
-                prim = mesh;
+                prim = std::move(mesh);
                 shapeEnum = LightShape::TriangleMesh;
                 shapeOrder = magic_enum::enum_integer(shapeEnum);
             }
-        } else {
-
+        }
+        else {
             auto order = ZImpl(get_input2<std::string>("EulerRotationOrder"));
             auto orderTyped = magic_enum::enum_cast<EulerAngle::RotationOrder>(order).value_or(EulerAngle::RotationOrder::YXZ);
 
@@ -117,6 +117,7 @@ struct LightNode : INode {
             auto pscale = std::max(scale[0], scale[2]);
             pscale = std::max(pscale, scale[1]);
 
+#if 0
             if (shapeEnum == LightShape::Sphere) {
 
                 auto tmpPrim = zeno::TempNodeSimpleCaller("CreateSphere")
@@ -169,6 +170,7 @@ struct LightNode : INode {
                     TRIS.push_back(tri+4);
                 }
             }
+#endif
 
             if (shapeEnum != LightShape::Point) {
                 // Plane Indices
@@ -380,7 +382,7 @@ struct LightNode : INode {
         auto visibleIntensity = ZImpl(get_input2<float>("visibleIntensity"));
         ud->set_float("visibleIntensity", std::move(visibleIntensity));
 
-        ZImpl(set_output("prim", std::move(prim)));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 
     const static inline std::string lightShapeKey = "shape";
@@ -427,7 +429,7 @@ ZENO_DEFNODE(LightNode)({
         {gParamType_Vec3f, "rotate", "0, 0, 0"},
         {gParamType_Vec4f, "quaternion", "1, 0, 0, 0"},
 
-        {gParamType_Vec3f, "color", "1, 1, 1"},
+        {gParamType_Vec3f, "color", "1, 1, 1", zeno::Socket_Primitve, zeno::ColorVec},
         {gParamType_Float, "exposure", "0"},
         {gParamType_Float, "intensity", "1"},
         {gParamType_Float, "fluxFixed", "-1.0"},
@@ -447,10 +449,10 @@ ZENO_DEFNODE(LightNode)({
 
         {"enum " + LightNode::lightShapeListString(), LightNode::lightShapeKey, LightNode::lightShapeDefaultString()},
         {"enum " + LightNode::lightTypeListString(), LightNode::lightTypeKey, LightNode::lightTypeDefaultString()},
-        {gParamType_Primitive, "prim"},
+        {gParamType_Geometry, "prim"},
     },
     {
-        {gParamType_Primitive, "prim"}
+        {gParamType_Geometry, "prim"}
     },
     {
         {"enum " + EulerAngle::RotationOrderListString(), "EulerRotationOrder", EulerAngle::RotationOrderDefaultString()},

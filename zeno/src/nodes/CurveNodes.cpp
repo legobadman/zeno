@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/funcs/ParseObjectFromUi.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/para/parallel_for.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/utils/zeno_p.h>
@@ -61,14 +62,14 @@ ZENO_DEFNODE(EvalCurve)({
 
 struct EvalCurveOnPrimAttr : zeno::INode {
     virtual void apply() override {
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto curve = ZImpl(get_input_prim<CurvesData>("curve"));
         if (!prim) {
             throw;
         }
 
-        auto attrName = ZImpl(get_input2<std::string>("attrName"));
-        auto dstName = ZImpl(get_input2<std::string>("dstName"));
+        auto attrName = zsString2Std(get_input2_string("attrName"));
+        auto dstName = zsString2Std(get_input2_string("dstName"));
         prim->attr_visit(attrName, [&](auto &arr) {
             if (dstName.empty() || dstName == attrName) {
                 parallel_for_each(arr.begin(), arr.end(), [&] (auto &val) {
@@ -83,19 +84,19 @@ struct EvalCurveOnPrimAttr : zeno::INode {
                 });
             }
         });
-        ZImpl(set_output("prim", prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENO_DEFNODE(EvalCurveOnPrimAttr)({
     {
-        {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
         {gParamType_String, "attrName", "tmp"},
         {gParamType_String, "dstName", ""},
         {gParamType_Curve, "curve", "", zeno::Socket_Primitve},
     },
     {
-        {gParamType_Primitive, "prim"},
+        {gParamType_Geometry, "prim"},
     },
     {},
     {"curve"},

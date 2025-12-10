@@ -8,7 +8,6 @@
 #include "util/uihelper.h"
 #include "widgets/zcomboboxitemdelegate.h"
 #include <QSvgRenderer>
-#include <zeno/extra/TempNode.h>
 #include <zeno/extra/assetDir.h>
 #include "widgets/zlineedit.h"
 
@@ -291,6 +290,7 @@ void ZenoParamPathEdit::mousePressEvent(QGraphicsSceneMouseEvent *event)
         // need to resolve the formula path
         {
             zeno::setConfigVariable("ZSG", zsgDir.toStdString());
+#if 0
             auto code = std::make_shared<zeno::StringObject>();
             code->set(path.toStdString());
             auto outs = zeno::TempNodeSimpleCaller("StringEval")
@@ -301,6 +301,7 @@ void ZenoParamPathEdit::mousePressEvent(QGraphicsSceneMouseEvent *event)
             {
                 filePath = QString::fromStdString(spStrObj->get());
             }
+#endif
         }
 
         QString dirPath;

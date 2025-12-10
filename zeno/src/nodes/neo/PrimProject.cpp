@@ -489,7 +489,7 @@ struct TestRayBox : INode {
         auto bmin = ZImpl(get_input2<zeno::vec3f>("box_min"));
         auto bmax = ZImpl(get_input2<zeno::vec3f>("box_max"));
         ZImpl(set_output("predicate",
-                   std::make_shared<NumericObject>((int)ray_box_intersect(origin, dir, std::make_pair(bmin, bmax)))));
+                   std::make_unique<NumericObject>((int)ray_box_intersect(origin, dir, std::make_pair(bmin, bmax)))));
     }
 };
 

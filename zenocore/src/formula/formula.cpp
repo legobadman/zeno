@@ -283,7 +283,7 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                             normalFuncArgIsRef = std::regex_search(std::get<std::string>(last->children[0]->value), prefixPattren);
                         }
 
-                        if (info.name == "ref" || normalFuncArgIsRef) {
+                        if (info.name == "ref" || info.name == "refout" || normalFuncArgIsRef) {
                             if (last->children.size() == 1 && last->children[0] && last->children[0]->type == nodeType::STRING) {
 
                                 const std::string& refcontent = std::get<std::string>(last->children[0]->value);
@@ -415,10 +415,10 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
 
                                     auto subnetnode_name = subnetnode.substr(subnetnode.rfind('/') + 1);
                                     auto nodepath = subnetnode_name + "." + parampath;
-                                    ret = getNodesByPath(subnetnode, ".", nodepath);
+                                    ret = getNodesByPath(subnetnode, ".", nodepath, info.name);
                                 }
                                 else {
-                                    ret = getNodesByPath(m_nodepath, ".", refcontent);
+                                    ret = getNodesByPath(m_nodepath, ".", refcontent, info.name);
                                 }
 #else
                                 if (refcontent == "") {
@@ -445,7 +445,7 @@ ZENO_API formula_tip_info Formula::getRecommandTipInfo() const
                                         break;
                                     }
                                 }
-                                ret = getNodesByPath(m_nodepath, graphpath, nodepath);
+                                ret = getNodesByPath(m_nodepath, graphpath, nodepath, info.name);
 #endif
                                 break;
                             }

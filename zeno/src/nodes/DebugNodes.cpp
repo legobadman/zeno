@@ -1,12 +1,13 @@
 #include <zeno/zeno.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/utils/logger.h>
 #include <cstdio>
 #include <thread>
 
 
-namespace {
+namespace zeno {
 
 struct PrintMessage : zeno::INode {
     virtual void apply() override {
@@ -157,7 +158,7 @@ ZENDEFNODE(TriggerException, {
 
 struct TriggerViewportFault : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         prim->tris.resize(1);
         ZImpl(set_output("prim", std::move(prim)));
     }
@@ -174,13 +175,19 @@ ZENDEFNODE(TriggerViewportFault, {
 struct MockRunning : zeno::INode {
     virtual void apply() override {
         int secs = ZImpl(get_input<zeno::NumericObject>("wait seconds"))->get<int>();
+        if (get_input2_bool("cause exception")) {
+            throw makeError<UnimplError>(": MockRunning");
+        }
         std::this_thread::sleep_for(std::chrono::seconds(secs));
+        auto geom = zeno::create_GeometryObject(zeno::Topo_IndiceMesh, true, { zeno::vec3f(0,0,0) }, {});
+        set_output("DST", std::move(geom));
     }
 };
 
 ZENDEFNODE(MockRunning, {
     {{gParamType_List, "SRC"},
-     {gParamType_Int, "wait seconds", "1", zeno::NoSocket, zeno::Lineedit}
+     {gParamType_Int, "wait seconds", "1", zeno::NoSocket, zeno::Lineedit},
+     {gParamType_Bool, "cause exception", "0"}
     },
     {{gParamType_IObject, "DST"}},
     {},
@@ -206,7 +213,11 @@ struct Group : zeno::INode {
 };
 
 ZENDEFNODE(Group, {
-    {{gParamType_String, "title", "title"},{gParamType_String, "items"},{gParamType_Vec3f, "background", "0, 0.39, 0.66"},{gParamType_Vec2f, "size", "500,500"}},
+    {
+        {gParamType_String, "title", "title"},
+        {gParamType_String, "items"},
+        {gParamType_Vec3f, "background", "0, 0.39, 0.66"},
+        {gParamType_Vec2f, "size", "500,500"}},
     {},
     {},
     {"layout"},

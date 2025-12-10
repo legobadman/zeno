@@ -1,7 +1,6 @@
-#include <zenovis/RenderEngine.h>
+﻿#include <zenovis/RenderEngine.h>
 #include <zenovis/DrawOptions.h>
 #include <zenovis/bate/GraphicsManager.h>
-#include <zenovis/ObjectsManager.h>
 #include <zenovis/DrawOptions.h>
 #include <zenovis/bate/IGraphic.h>
 #include <zenovis/opengl/vao.h>
@@ -47,17 +46,6 @@ struct RenderEngineBate : RenderEngine {
         graphicsMan->reload(info);
     }
 
-    void load_objects(const zeno::RenderObjsInfo& objs) override {
-        graphicsMan->load_objects2(objs);
-    }
-
-    void load_objects(const std::vector<zeno::render_update_info>& infos) {
-        graphicsMan->load_objects3(infos);
-    }
-
-    void load_object(zeno::render_update_info info) override {
-    }
-
     void assetLoad() override {
 
     }
@@ -72,11 +60,6 @@ struct RenderEngineBate : RenderEngine {
 
     void endFrameLoading(int frameid) override {
 
-    }
-
-    //deprecated
-    void update() override {
-        graphicsMan->load_objects(scene->objectsMan->pairsShared());
     }
 
     void draw(bool record) override {
@@ -153,7 +136,11 @@ struct RenderEngineBate : RenderEngine {
         primHighlight = nullptr;
         fbr = nullptr;
     }
-    std::optional<glm::vec3> getClickedPos(int x, int y) override {
+    std::optional<glm::vec3> getClickedPos(float _x, float _y) override {
+		auto w = scene->camera->m_nx;
+		auto h = scene->camera->m_ny;
+        int x = glm::clamp(int(_x * w), 0, w - 1);
+        int y = glm::clamp(int(_y * h), 0, h - 1);
         auto depth = fbr->getDepth(x, y);
         if (depth == 0) {
             return {};
@@ -162,8 +149,7 @@ struct RenderEngineBate : RenderEngine {
 
         auto fov = scene->camera->m_fov;
         float cz = scene->camera->inf_z_near / depth;
-        auto w = scene->camera->m_nx;
-        auto h = scene->camera->m_ny;
+
 //        zeno::log_info("{} {} {} {}", x, y, w, h);
 //        zeno::log_info("fov: {}", fov);
 //        zeno::log_info("w: {}, h: {}", w, h);

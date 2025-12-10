@@ -114,6 +114,10 @@ namespace zenoio
         {
             return zeno::Heatmap;
         }
+        else if (descName == "Color Vec3f")
+        {
+            return zeno::ColorVec;
+        }
         else if (descName == "Curve")
         {
             return zeno::CurveEditor;
@@ -667,6 +671,22 @@ namespace zenoio
                 defl = val.GetBool();
             }
         }
+        case gParamType_AnyNumeric: {
+            if (val.IsInt()) {
+                defl = val.GetInt();
+            }
+            else if (val.IsFloat()) {
+                defl = val.GetFloat();
+            }
+            else if (val.IsDouble()) {
+                defl = val.GetFloat();
+            }
+            else if (val.IsBool()) {
+                defl = val.GetBool();
+            }
+            //TODO: AnyNumeric类型的defl目前还不支持vec的情况
+            break;
+        }
         }
         if (zeno::isPrimVarType(type)) {
             if (type == gParamType_Int || type == gParamType_Float) {
@@ -1149,6 +1169,25 @@ namespace zenoio
                     writer.Int(vec[2]);
                     writer.Int(vec[3]);
                     writer.EndArray();
+                }
+                else if (anyType == gParamType_PrimVariant) {
+                    const auto& primvar = any_cast<zeno::PrimVar>(any);
+                    std::visit([&](auto&& _val) {
+                        using T = std::decay_t<decltype(_val)>;
+                        if constexpr (std::is_same_v<T, int>) {
+                            writer.Int(_val);
+                        }
+                        else if constexpr (std::is_same_v<T, float>) {
+                            writer.Double(_val);
+                        }
+                        else if constexpr (std::is_same_v<T, std::string>) {
+                            writer.String(_val.c_str());
+                        }
+                        else {
+                            assert(false);
+                            writer.Null();
+                        }
+                        }, primvar);
                 }
                 else {
                     assert(false);

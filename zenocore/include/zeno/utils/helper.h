@@ -11,6 +11,7 @@
 #include <zeno/core/reflectdef.h>
 #include <zeno/reflect/container/any>
 #include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
+#include <tinygltf/json.hpp>
 
 
 namespace zeno {
@@ -38,6 +39,7 @@ namespace zeno {
     ZENO_API std::string editVariantToStr(const PrimVar& var);
     ZENO_API std::vector<zany> fromZenCache(const std::string& cachedir, int frameid);
     ZENO_API std::wstring s2ws();
+    ZENO_API void merge_json(nlohmann::json& target, const nlohmann::json& source);
     bool isEqual(const zvariant& lhs, const zvariant& rhs, ParamType const type);
     zany strToZAny(std::string const& defl, ParamType const& type);
     EdgeInfo getEdgeInfo(std::shared_ptr<ObjectLink> spLink);
@@ -47,6 +49,7 @@ namespace zeno {
     ZENO_API std::string objPathToStr(ObjPath path);
     ObjPath strToObjPath(const std::string& str);
     bool getParamInfo(const CustomUI& customui, std::vector<ParamPrimitive>& inputs, std::vector<ParamPrimitive>& outputs);
+    zeno::ParamType findParamType(const CustomUI& customui, bool bInput, const std::string& name);
     bool isPrimitiveType(const ParamType type);
     ZENO_API PrimitiveParams customUiToParams(const CustomUIParams& customparams);
     ZENO_API void parseUpdateInfo(const CustomUI& customui, ParamsUpdateInfo& infos);
@@ -55,7 +58,7 @@ namespace zeno {
     std::string relativePath(std::string currentPath, const std::string& path);
     std::set<std::string> getReferPath(const std::string& path);
     std::set<std::string> getReferPaths(const zvariant& val);
-    formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& prefix);
+    formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& prefix, std::string funcName);
 
     bool isObjectType(const zeno::reflect::RTTITypeInfo& type, bool& isConstPtr);
     bool isObjectType(ParamType type);
@@ -85,7 +88,11 @@ namespace zeno {
     void update_dict_root_key(DictObject* dictobj, const std::string& key);
 
     zany clone_by_key(IObject* pObject, const std::string& prefix);
+    void add_prefix_key(IObject* pObject, const std::string& prefix);
     ZENO_API std::vector<std::string> get_obj_paths(IObject* pObject);
+
+    ZENO_API zany readObjCache(const std::string& file_path);
+    ZENO_API void writeObjCache(const std::string& file_path, IObject* pObject);
 
     AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval);
 }

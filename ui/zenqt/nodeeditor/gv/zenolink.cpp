@@ -218,6 +218,7 @@ ZenoFullLink::ZenoFullLink(const QPersistentModelIndex& idx, ZenoNodeBase* outNo
     , m_index(idx)
     , m_bLegacyLink(false)
     , m_bHover(false)
+    , m_pTextItem(nullptr)
 {
     setAcceptHoverEvents(true);
     setFlags(ItemIsSelectable | ItemIsFocusable);
@@ -242,6 +243,14 @@ ZenoFullLink::ZenoFullLink(const QPersistentModelIndex& idx, ZenoNodeBase* outNo
     m_dstPos = inNode->getSocketPos(inSockIdx, inKey);
     m_srcPos = outNode->getSocketPos(outSockIdx, outKey);
     m_bObjLink = edge.bObjLink;
+
+    if (!inKey.isEmpty()) {
+        m_pTextItem = new ZGraphicsTextItem(this);
+        m_pTextItem->setDefaultTextColor(QColor("#FFFFFF"));
+        m_pTextItem->setFont(QApplication::font());
+        m_pTextItem->setText(inKey);
+        updateTextItemPosition();
+    }
 
     connect(inNode, SIGNAL(inSocketPosChanged()), this, SLOT(onInSocketPosChanged()));
     connect(outNode, SIGNAL(outSocketPosChanged()), this, SLOT(onOutSocketPosChanged()));
@@ -292,6 +301,8 @@ void ZenoFullLink::onInSocketPosChanged()
             m_dstPos = pNode->getSocketPos(inSockIdx, inKey);
         }
     }
+
+    updateTextItemPosition();
 }
 
 void ZenoFullLink::getConnectedState(zeno::SocketType& inSockProp, bool& inNodeCollasped)
@@ -301,6 +312,18 @@ void ZenoFullLink::getConnectedState(zeno::SocketType& inSockProp, bool& inNodeC
     const QModelIndex& inNode = inSockIdx.data(QtRole::ROLE_NODE_IDX).toModelIndex();
     inNodeCollasped = inNode.data(QtRole::ROLE_COLLASPED).toBool();
     inSockProp = (zeno::SocketType)inSockIdx.data(QtRole::ROLE_SOCKET_TYPE).toInt();
+}
+
+void ZenoFullLink::updateTextItemPosition()
+{
+    if (!m_pTextItem || m_pTextItem->toPlainText().isEmpty())
+        return;
+
+    QPointF midPoint = (m_srcPos + m_dstPos) / 2.0;
+    QRectF textRect = m_pTextItem->boundingRect();
+    midPoint -= QPointF(textRect.width() / 2.0, textRect.height() / 2.0);
+
+    m_pTextItem->setPos(midPoint);
 }
 
 void ZenoFullLink::onOutSocketPosChanged()
@@ -322,6 +345,8 @@ void ZenoFullLink::onOutSocketPosChanged()
         outNodeIdx.data(QtRole::ROLE_COLLASPED).toBool();
 
     m_srcPos = pNode->getSocketPos(outSockIdx, outKey);
+
+    updateTextItemPosition();
 }
 
 bool ZenoFullLink::isPrimLink()
@@ -429,7 +454,11 @@ void ZenoFullLink::paint(QPainter* painter, QStyleOptionGraphicsItem const* styl
             painter->save();
             QPen pen;
             pen.setColor(isSelected() ? QColor(0xFA6400) : QColor(192, 36, 36, 153));
-            pen.setWidthF(ZenoStyle::scaleWidth(4));
+            if (m_pTextItem && !m_pTextItem->document()->isEmpty()) {
+                pen.setWidthF(ZenoStyle::scaleWidth(2));
+            } else {
+                pen.setWidthF(ZenoStyle::scaleWidth(4));
+            }
             pen.setJoinStyle(Qt::RoundJoin);
             //pen.setStyle(Qt::DashLine);
             painter->setRenderHint(QPainter::Antialiasing);
@@ -441,7 +470,11 @@ void ZenoFullLink::paint(QPainter* painter, QStyleOptionGraphicsItem const* styl
         else {
             painter->save();
             QPen pen;
-            pen.setColor(isSelected() ? QColor(0xFA6400) : QColor("#4B9EF4"));
+            if (m_index.data(QtRole::ROLE_IS_REFLINK).toBool()) {
+                pen.setColor(QColor("#96a48b"));
+            } else {
+                pen.setColor(isSelected() ? QColor(0xFA6400) : QColor("#4B9EF4"));
+            }
             pen.setWidthF(ZenoStyle::scaleWidth(1));
             pen.setStyle(Qt::DashLine);
             painter->setRenderHint(QPainter::Antialiasing);

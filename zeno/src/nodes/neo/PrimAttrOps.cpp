@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/utils/variantswitch.h>
 #include <zeno/utils/arrayindex.h>
@@ -106,7 +107,7 @@ ZENDEFNODE(PrimFillColor, {
 
 struct PrimFloatAttrToInt : INode {
     virtual void apply() override {
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto attr = ZImpl(get_input2<std::string>("attr"));
         auto attrOut = ZImpl(get_input2<std::string>("attrOut"));
         if(prim->verts.has_attr(attr)){
@@ -160,19 +161,20 @@ struct PrimFloatAttrToInt : INode {
                 });
             }
         }
-        ZImpl(set_output("prim", std::move(prim)));
+        auto geom = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geom));
     }
 };
 
 ZENDEFNODE(PrimFloatAttrToInt, {
     {
-    {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+    {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
     {gParamType_String, "attr", "tag"},
     {gParamType_String, "attrOut", "tag"},
     {gParamType_Float, "divisor", "1"},
     },
     {
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     },
     {
     },

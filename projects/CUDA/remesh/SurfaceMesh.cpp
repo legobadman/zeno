@@ -51,7 +51,7 @@ SurfaceMesh::SurfaceMesh(std::shared_ptr<zeno::PrimitiveObject> prim,
 }
 
 SurfaceMesh::SurfaceMesh(const SurfaceMesh& rhs) {
-    prim_ = std::static_pointer_cast<PrimitiveObject>(rhs.prim_->clone());
+    prim_ = std::make_shared<PrimitiveObject>(*rhs.prim_);
 
     vertices_size_ = rhs.vertices_size_;
     halfedges_size_ = rhs.halfedges_size_;

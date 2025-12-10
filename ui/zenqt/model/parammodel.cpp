@@ -1,4 +1,4 @@
-﻿#include "parammodel.h"
+#include "parammodel.h"
 #include "zassert.h"
 #include "util/uihelper.h"
 #include <zeno/core/data.h>
@@ -764,6 +764,15 @@ QVariant ParamsModel::data(const QModelIndex& index, int role) const
     return QVariant();
 }
 
+bool ParamsModel::updateParamValue(const QString& name, const QVariant& qvar) {
+    QModelIndex paramIdx(index(indexFromName(name, true), 0));
+    if (!paramIdx.isValid()) {
+        return false;
+    }
+    const auto& anyVal = UiHelper::qvarToAny(qvar);
+    return setData(paramIdx, QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
+}
+
 int ParamsModel::indexFromName(const QString& name, bool bInput) const
 {
     for (int i = 0; i < m_items.length(); i++) {
@@ -1064,12 +1073,22 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         for (QPersistentModelIndex linkIdx : item.links) {
             if (item.bInput) {
                 QModelIndex outSockIdx = linkIdx.data(QtRole::ROLE_OUTSOCK_IDX).toModelIndex();
-                //only remove link by model itself, with no action about core data.
-                QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(outSockIdx.model());
-                ParamsModel* outParams = qobject_cast<ParamsModel*>(pModel);
-                ZASSERT_EXIT(outParams);
-                bool ret = outParams->removeSpecificLink(outSockIdx, linkIdx);
-                ZASSERT_EXIT(ret);
+                bool outParamIsInput = outSockIdx.data(QtRole::ROLE_ISINPUT).toBool();
+                if (outParamIsInput) {//引用了输入，是referlink的情况
+                    QModelIndex inSockIdx = linkIdx.data(QtRole::ROLE_INSOCK_IDX).toModelIndex();
+                    QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(inSockIdx.model());
+                    ParamsModel* inParams = qobject_cast<ParamsModel*>(pModel);
+                    ZASSERT_EXIT(inParams);
+                    bool ret = inParams->removeSpecificLink(inSockIdx, linkIdx);
+                    ZASSERT_EXIT(ret);
+                } else {
+                    //only remove link by model itself, with no action about core data.
+                    QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(outSockIdx.model());
+                    ParamsModel* outParams = qobject_cast<ParamsModel*>(pModel);
+                    ZASSERT_EXIT(outParams);
+                    bool ret = outParams->removeSpecificLink(outSockIdx, linkIdx);
+                    ZASSERT_EXIT(ret);
+                }
             }
             else {
                 QModelIndex inSockIdx = linkIdx.data(QtRole::ROLE_INSOCK_IDX).toModelIndex();
@@ -1173,6 +1192,27 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         }
     }
     //resetCustomParamModel();
+
+    //重建referlink
+    for (const auto& [edgeinfo, outParamIsOutput] : spNode->getReflinkInfo(false)) {
+        GraphModel* pGraphM = parentGraph();
+        QModelIndex fromNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.outNode));
+        QModelIndex toNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.inNode));
+        ZASSERT_EXIT(fromNodeIdx.isValid() && toNodeIdx.isValid());
+        ParamsModel* fromParams = QVariantPtr<ParamsModel>::asPtr(fromNodeIdx.data(QtRole::ROLE_PARAMS));
+        ParamsModel* toParams = QVariantPtr<ParamsModel>::asPtr(toNodeIdx.data(QtRole::ROLE_PARAMS));
+        ZASSERT_EXIT(fromParams&& toParams);
+        QModelIndex from = fromParams->paramIdx(QString::fromStdString(edgeinfo.outParam), !outParamIsOutput);
+        QModelIndex to = toParams->paramIdx(QString::fromStdString(edgeinfo.inParam), true);
+        if (from.isValid() && to.isValid()) {
+            if (LinkModel* lnkModel = pGraphM->getLinkModel()) {
+                QModelIndex linkIdx = lnkModel->addLink(from, QString::fromStdString(edgeinfo.outKey), to, QString::fromStdString(edgeinfo.inKey), edgeinfo.bObjLink);
+                fromParams->addLink(from, linkIdx);
+                toParams->addLink(to, linkIdx);
+                lnkModel->setData(linkIdx, true, QtRole::ROLE_IS_REFLINK);
+            }
+        }
+    }
 
     initProxyModels();
     emit layoutChanged();

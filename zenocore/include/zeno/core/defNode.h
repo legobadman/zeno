@@ -1,6 +1,7 @@
 #pragma once
 
 #include <zeno/core/Session.h>
+#include <zeno/core/NodeRegister.h>
 
 namespace zeno {
 
@@ -8,25 +9,33 @@ namespace zeno {
     static zeno::CustomUI ui_##Class(__VA_ARGS__); \
     static struct _Def##Class { \
         _Def##Class() { \
-            ::zeno::getSession().defNodeClass2([]() -> zeno::INode* { \
+            ::zeno::getNodeRegister().registerNodeClass([]() -> zeno::INode* { \
                 return new Class; }, #Class, ui_##Class); \
         } \
+\
+        ~_Def##Class() {\
+            ::zeno::getNodeRegister().unregisterNodeClass(#Class);\
+        }\
     } _def##Class
 
 
 #define ZENO_DEFNODE(Class) \
     static struct _Def##Class { \
         _Def##Class(::zeno::Descriptor const &desc) { \
-            ::zeno::getSession().defNodeClass([] () -> zeno::INode* { \
+            ::zeno::getNodeRegister().registerNodeClass([] () -> zeno::INode* { \
                 return new Class; }, #Class, desc); \
         } \
+\
+        ~_Def##Class() {\
+            ::zeno::getNodeRegister().unregisterNodeClass(#Class);\
+        }\
     } _def##Class
 
 // deprecated:
 template <class T>
 [[deprecated("use ZENO_DEFNODE(T)(...)")]]
 inline int defNodeClass(std::string const &id, zeno::Descriptor const &desc = {}) {
-    getSession().defNodeClass([] () -> zeno::INode* { return new T; }, id, desc);
+    getNodeRegister().registerNodeClass([] () -> zeno::INode* { return new T; }, id, desc);
     return 1;
 }
 

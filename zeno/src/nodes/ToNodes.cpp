@@ -13,7 +13,7 @@ namespace {
 
 struct MakeDummy : zeno::INode {
     virtual void apply() override {
-        ZImpl(set_output("dummy", std::make_shared<DummyObject>()));
+        ZImpl(set_output("dummy", std::make_unique<DummyObject>()));
     }
 };
 

@@ -4,6 +4,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/CameraObject.h>
@@ -46,10 +47,8 @@ struct EvalAnim{
 
     std::unordered_map<std::string, int> m_JointCorrespondingIndex;
 
-    void initAnim(std::shared_ptr<NodeTree>& nodeTree,
-                  std::shared_ptr<BoneTree>& boneTree,
-                  std::shared_ptr<FBXData>& fbxData,
-                  std::shared_ptr<AnimInfo>& animInfo){
+    void initAnim(NodeTree* nodeTree, BoneTree* boneTree, FBXData* fbxData, AnimInfo* animInfo)
+    {
         m_animInfo = *animInfo;
 
         m_Vertices = fbxData->iVertices.value;
@@ -68,7 +67,7 @@ struct EvalAnim{
         m_CurrentFrame = 0.0f;
     }
 
-    void updateAnimation(int fi, std::shared_ptr<zeno::PrimitiveObject>& prim) {
+    void updateAnimation(int fi, zeno::PrimitiveObject* prim) {
         // TODO Use the actual frame number
         auto tick_fps = m_animInfo.tick;
         float dt = (float)fi / tick_fps;
@@ -106,9 +105,9 @@ struct EvalAnim{
         }
     }
 
-    void decomposeAnimation(std::shared_ptr<zeno::DictObject> &t,
-                            std::shared_ptr<zeno::DictObject> &r,
-                            std::shared_ptr<zeno::DictObject> &s){
+    void decomposeAnimation(zeno::DictObject* t,
+                            zeno::DictObject* r,
+                            zeno::DictObject* s){
 
         for(auto& m:m_BoneTransforms){
             //zeno::log_info("A {}", m.first);
@@ -120,18 +119,18 @@ struct EvalAnim{
             //zeno::log_info("    R {: f} {: f} {: f} {: f}", rotate.x, rotate.y, rotate.z, rotate.w);
             //zeno::log_info("    S {: f} {: f} {: f}", scale.x, scale.y, scale.z);
 
-            auto nt = std::make_shared<zeno::NumericObject>();
+            auto nt = std::make_unique<zeno::NumericObject>();
             nt->value = zeno::vec3f(trans.x, trans.y, trans.z);
 
-            auto nr = std::make_shared<zeno::NumericObject>();
+            auto nr = std::make_unique<zeno::NumericObject>();
             nr->value = zeno::vec4f(rotate.x, rotate.y, rotate.z, rotate.w);
 
-            auto ns = std::make_shared<zeno::NumericObject>();
+            auto ns = std::make_unique<zeno::NumericObject>();
             ns->value = zeno::vec3f(scale.x, scale.y, scale.z);
 
-            t->lut[m.first] = nt;
-            r->lut[m.first] = nr;
-            s->lut[m.first] = ns;
+            t->lut[m.first] = std::move(nt);
+            r->lut[m.first] = std::move(nr);
+            s->lut[m.first] = std::move(ns);
         }
     }
 
@@ -245,9 +244,7 @@ struct EvalAnim{
             calculateBoneTransform(&node->children[i], globalTransformation, pathName);
     }
 
-    void updateCameraAndLight(std::shared_ptr<FBXData>& fbxData,
-                              std::shared_ptr<ICamera>& iCamera,
-                              std::shared_ptr<ILight>& iLight)
+    void updateCameraAndLight(FBXData* fbxData, ICamera* iCamera, ILight* iLight)
     {
         float gscale = m_evalOption.globalScale;
         // TODO We didn't consider that the camera might be in the hierarchy
@@ -310,7 +307,7 @@ struct EvalAnim{
         }
     }
 
-    void calculateFinal(std::shared_ptr<zeno::PrimitiveObject>& prim){
+    void calculateFinal(zeno::PrimitiveObject* prim){
         auto &ver = prim->verts;
         auto &trisInd = prim->tris;
         auto &polys = prim->polys;
@@ -502,9 +499,9 @@ struct EvalFBXAnim : zeno::INode {
         if(evalBlendShape)
             evalOption.evalBlendShape = true;
 
-        auto nodeTree = evalOption.interAnimData ? fbxData->nodeTree : zeno::safe_dynamic_cast<NodeTree>(get_input("nodetree"));
-        auto boneTree = evalOption.interAnimData ? fbxData->boneTree : zeno::safe_dynamic_cast<BoneTree>(get_input("bonetree"));
-        auto animInfo = evalOption.interAnimData ? fbxData->animInfo : zeno::safe_dynamic_cast<AnimInfo>(get_input("animinfo"));
+        auto nodeTree = evalOption.interAnimData ? fbxData->nodeTree.get() : dynamic_cast<NodeTree*>(get_input("nodetree"));
+        auto boneTree = evalOption.interAnimData ? fbxData->boneTree.get() : dynamic_cast<BoneTree*>(get_input("bonetree"));
+        auto animInfo = evalOption.interAnimData ? fbxData->animInfo.get() : dynamic_cast<AnimInfo*>(get_input("animinfo"));
 
         if(nodeTree == nullptr || boneTree == nullptr || animInfo == nullptr){
             zeno::log_error("FBX: Empty NodeTree, BoneTree or AnimInfo");
@@ -514,21 +511,21 @@ struct EvalFBXAnim : zeno::INode {
             throw zeno::makeError("Empty FBX Data");
         }
 
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
-        auto transDict = std::make_shared<zeno::DictObject>();
-        auto quatDict = std::make_shared<zeno::DictObject>();
-        auto scaleDict = std::make_shared<zeno::DictObject>();
-        auto iCamera = std::make_shared<ICamera>();
-        auto iLight = std::make_shared<ILight>();
-        auto matName = std::make_shared<zeno::StringObject>();
-        auto pathName = std::make_shared<zeno::StringObject>();
-        auto outMeshName = std::make_shared<zeno::StringObject>();
-        auto isVisibility = std::make_shared<zeno::NumericObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
+        auto transDict = std::make_unique<zeno::DictObject>();
+        auto quatDict = std::make_unique<zeno::DictObject>();
+        auto scaleDict = std::make_unique<zeno::DictObject>();
+        auto iCamera = std::make_unique<ICamera>();
+        auto iLight = std::make_unique<ILight>();
+        auto matName = std::make_unique<zeno::StringObject>();
+        auto pathName = std::make_unique<zeno::StringObject>();
+        auto outMeshName = std::make_unique<zeno::StringObject>();
+        auto isVisibility = std::make_unique<zeno::NumericObject>();
 
         auto path = fbxData->iPathName.value;
         if(! fbxData->iVisibility.lut.empty()){
             if(fbxData->iVisibility.lut.find(path) != fbxData->iVisibility.lut.end()){
-                auto visibilityData = fbxData->iVisibility.lut[path];
+                auto visibilityData = fbxData->iVisibility.lut[path].get();
                 auto listVisData = zeno::safe_dynamic_cast<zeno::ListObject>(visibilityData);
                 bool is_visibility;
                 auto length_m1 = listVisData->size() - 1;
@@ -557,13 +554,13 @@ struct EvalFBXAnim : zeno::INode {
 //        TIMER_END(EvalAnim)
 
 //        TIMER_START(UpdateAnim)
-        anim.updateAnimation(frameid, prim);
+        anim.updateAnimation(frameid, prim.get());
 //        TIMER_END(UpdateAnim)
-        anim.updateCameraAndLight(fbxData, iCamera, iLight);
-        anim.decomposeAnimation(transDict, quatDict, scaleDict);
+        anim.updateCameraAndLight(fbxData, iCamera.get(), iLight.get());
+        anim.decomposeAnimation(transDict.get(), quatDict.get(), scaleDict.get());
 
-        auto bsPrims = std::make_shared<zeno::ListObject>();
-        auto bsPrimsOrigin = std::make_shared<zeno::ListObject>();
+        auto bsPrims = std::make_unique<zeno::ListObject>();
+        auto bsPrimsOrigin = std::make_unique<zeno::ListObject>();
         auto meshName = fbxData->iMeshName.value_relName;
 
         matName->set(fbxData->iMeshName.value_matName);
@@ -583,7 +580,7 @@ struct EvalFBXAnim : zeno::INode {
 
             //std::cout << "BlendShape Key " << bsName << "\n";
             for(int i=0; i< nameOfBlendShapes.size(); i++){
-                auto bsprim = std::make_shared<zeno::PrimitiveObject>();
+                auto bsprim = std::make_unique<zeno::PrimitiveObject>();
                 auto &verAttr = bsprim->verts;
                 auto &indAttr = bsprim->tris;
                 auto &nrmAttr = bsprim->verts.add_attr<zeno::vec3f>("nrm");
@@ -613,7 +610,7 @@ struct EvalFBXAnim : zeno::INode {
                     dnrmAttr.emplace_back(dnrm.x, dnrm.y, dnrm.z);
                 }
 
-                bsPrimsOrigin->push_back(bsprim);
+                bsPrimsOrigin->push_back(create_GeometryObject(bsprim.get()));
             }
         }
 //        TIMER_END(BlendShapeCreate)
@@ -658,7 +655,7 @@ struct EvalFBXAnim : zeno::INode {
                 }
 
                 for(unsigned int i=0; i<blendShapeData.size(); i++){ // Anim Mesh & Same as BlendShape WeightsAndValues
-                    auto bsprim = std::make_shared<zeno::PrimitiveObject>();
+                    auto bsprim = std::make_unique<zeno::PrimitiveObject>();
                     auto &verAttr = bsprim->verts;
                     auto &nrmAttr = bsprim->verts.add_attr<zeno::vec3f>("nrm");
                     auto &norb = bsprim->verts.add_attr<zeno::vec3f>("nrmb");
@@ -686,7 +683,7 @@ struct EvalFBXAnim : zeno::INode {
                         }
                     }
 
-                    bsPrims->push_back(bsprim);
+                    bsPrims->push_back(create_GeometryObject(bsprim.get()));
                 }
             }else{
                 std::cout << "BlendShape NotFound MorphKey " << meshName << "\n";
@@ -695,10 +692,10 @@ struct EvalFBXAnim : zeno::INode {
 //        TIMER_END(BlendShapeEval)
 
         //zeno::log_info("Frame {} Prims Num {} Mesh Name {}", anim.m_CurrentFrame, bsPrims->size(), meshName);
-        auto data2write = std::make_shared<SFBXData>();
+        auto data2write = std::make_unique<SFBXData>();
         *data2write = anim.m_FbxData;
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
         set_output("bsPrims", std::move(bsPrims));
         set_output("bsPrimsOrigin", std::move(bsPrimsOrigin));
         set_output("camera", std::move(iCamera));
@@ -718,15 +715,15 @@ ZENDEFNODE(EvalFBXAnim,
                {
                     {gParamType_Int, "frameid"},
                    //{gParamType_Float, "fps", "24.0"},
-                    {gParamType_Unknown, "data"},
-                    {gParamType_Unknown, "animinfo"},
-                    {gParamType_Unknown, "nodetree"},
-                    {gParamType_Unknown, "bonetree"},
+                    {gParamType_IObject, "data"},
+                    {gParamType_IObject, "animinfo"},
+                    {gParamType_IObject, "nodetree"},
+                    {gParamType_IObject, "bonetree"},
                },  /* outputs: */
                {
-                   {gParamType_Primitive, "prim"},
-                   {gParamType_Unknown, "camera"},
-                   {gParamType_Unknown, "light"},
+                   {gParamType_Geometry, "prim"},
+                   {gParamType_IObject, "camera"},
+                   {gParamType_IObject, "light"},
                    {gParamType_String,"matName"},
                    {gParamType_String, "meshName"},
                    {gParamType_String,"pathName"},
@@ -735,7 +732,7 @@ ZENDEFNODE(EvalFBXAnim,
                    {gParamType_Dict, "transDict"},
                    {gParamType_Dict, "quatDict"},
                    {gParamType_Dict, "scaleDict"},
-                   {gParamType_Unknown, "writeData"},
+                   {gParamType_IObject, "writeData"},
                    {gParamType_Bool, "visibility"}
                },  /* params: */
                {

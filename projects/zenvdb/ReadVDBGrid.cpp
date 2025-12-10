@@ -14,7 +14,7 @@
 namespace zeno {
 namespace {
 
-static std::shared_ptr<VDBGrid> readGenericVDBGrid(const std::string &fn, uint32_t index=0) {
+static std::unique_ptr<VDBGrid> readGenericVDBGrid(const std::string &fn, uint32_t index=0) {
   using GridTypes = std::tuple
     < openvdb::points::PointDataGrid
     , openvdb::FloatGrid
@@ -29,7 +29,7 @@ static std::shared_ptr<VDBGrid> readGenericVDBGrid(const std::string &fn, uint32
 
 	if (index >= my_grids->size()) index=0;
 
-  std::shared_ptr<VDBGrid> grid;
+  std::unique_ptr<VDBGrid> grid;
   for (openvdb::GridPtrVec::iterator iter = my_grids->begin();
        iter != my_grids->end(); ++iter) {
 
@@ -41,9 +41,9 @@ static std::shared_ptr<VDBGrid> readGenericVDBGrid(const std::string &fn, uint32
         using GridT = std::tuple_element_t<i, GridTypes>;
         if ((*iter)->isType<GridT>()) {
           
-          auto pGrid = std::make_shared<VDBGridWrapper<GridT>>();
+          auto pGrid = std::make_unique<VDBGridWrapper<GridT>>();
           pGrid->m_grid = openvdb::gridPtrCast<GridT>(*iter);
-          grid = pGrid;
+          grid = std::move(pGrid);
           return true;
         }
         return false;
@@ -110,27 +110,27 @@ ZENDEFNODE(CacheVDBGrid,
     }});
 #endif
 
-static std::shared_ptr<VDBGrid> readvdb(std::string path, std::string type, uint32_t index=0)
+static std::unique_ptr<VDBGrid> readvdb(std::string path, std::string type, uint32_t index=0)
 {
     if (type == "") {
       std::cout << "vdb read generic data" << std::endl;
       return readGenericVDBGrid(path, index);
     }
-    std::shared_ptr<VDBGrid> data;
+    std::unique_ptr<VDBGrid> data;
     if (type == "float") {
-      data = std::make_shared<VDBFloatGrid>();
+      data = std::make_unique<VDBFloatGrid>();
     } else if (type == "float3") {
       std::cout << "vdb read float3 data" << std::endl;
-      data = std::make_shared<VDBFloat3Grid>();
+      data = std::make_unique<VDBFloat3Grid>();
     } else if (type == "int") {
       std::cout << "vdb read int data" << std::endl;
-      data = std::make_shared<VDBIntGrid>();
+      data = std::make_unique<VDBIntGrid>();
     } else if (type == "int3") {
       std::cout << "vdb read int3 data" << std::endl;
-      data = std::make_shared<VDBInt3Grid>();
+      data = std::make_unique<VDBInt3Grid>();
     } else if (type == "points") {
       std::cout << "vdb read points data" << std::endl;
-      data = std::make_shared<VDBPointsGrid>();
+      data = std::make_unique<VDBPointsGrid>();
     } else {
       printf("%s\n", type.c_str());
       assert(0 && "bad VDBGrid type");
@@ -145,7 +145,7 @@ struct ReadVDBGrid : zeno::INode {
     auto path = zsString2Std(get_param_string("path"));
     auto type = zsString2Std(get_param_string("type"));
     auto data = readvdb(path, type);
-    set_output("data", data);
+    set_output("data", std::move(data));
   }
 };
 static int defReadVDBGrid = zeno::defNodeClass<ReadVDBGrid>(

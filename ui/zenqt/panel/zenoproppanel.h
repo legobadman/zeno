@@ -53,8 +53,8 @@ public slots:
     void onLinkRemoved(const zeno::EdgeInfo& link);
     void onDictListTableUpdateLink(QList<QPair<QString, QModelIndex>> links);
     void onDictListTableRemoveLink(QList<QModelIndex> links);
-
     void onSettings();
+    void onRunStatusChanged();
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event);

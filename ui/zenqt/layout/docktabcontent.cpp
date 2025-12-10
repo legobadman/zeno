@@ -1,13 +1,13 @@
-#include "docktabcontent.h"
+﻿#include "docktabcontent.h"
 #include "style/zenostyle.h"
 #include "widgets/ziconbutton.h"
 #include "widgets/zlabel.h"
 #include "style/zstyleoption.h"
 #include "panel/zenodatapanel.h"
 #include "panel/zenoproppanel.h"
-#include "panel/zenospreadsheet.h"
 #include "panel/zlogpanel.h"
 #include "panel/zenoimagepanel.h"
+#include "panel/zgeometryspreadsheet.h"
 #include "nodeeditor/gv/zenographseditor.h"
 #include "nodeeditor/gv/zenosubgraphview.h"
 #include "viewport/displaywidget.h"
@@ -25,7 +25,6 @@
 #include "widgets/zwidgetfactory.h"
 #include <zeno/core/Session.h>
 #include <zeno/types/UserData.h>
-#include <zenovis/ObjectsManager.h>
 #include "nodeeditor/gv/callbackdef.h"
 #include "zassert.h"
 #include "viewport/zenovis.h"
@@ -34,7 +33,10 @@
 #include "model/GraphModel.h"
 #include "dialog/ZOptixCameraSetting.h"
 #include <zeno/core/typeinfo.h>
-
+#include <zeno/core/Graph.h>
+#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ObjectRecorder.h>
+#include <zeno/core/NodeRegister.h>
 
 
 ZToolBarButton::ZToolBarButton(bool bCheckable, const QString& icon, const QString& iconOn)
@@ -327,20 +329,22 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
 {
     pListView = new ZToolBarButton(true, ":/icons/subnet-listview.svg", ":/icons/subnet-listview-on.svg");
     pTreeView = new ZToolBarButton(true, ":/icons/nodeEditor_nodeTree_unselected.svg", ":/icons/nodeEditor_nodeTree_selected.svg");
-    pluginView = new ZToolBarButton(true, ":/icons/nodeEditor_nodeTree_unselected.svg", ":/icons/nodeEditor_nodeTree_selected.svg");
+    pluginView = new ZToolBarButton(true, ":/icons/nodeEditor_extension_unselected.svg", ":/icons/nodeEditor_extension_selected.svg");
 
-    pSubnetMgr = new ZToolBarButton(false, ":/icons/nodeEditor_subnetManager_unselected.svg", ":/icons/nodeEditor_subnetManager_selected.svg");
-    pFold = new ZToolBarButton(false, ":/icons/nodeEditor_nodeFold_unselected.svg", ":/icons/nodeEditor_nodeFold_selected.svg");
-    pUnfold = new ZToolBarButton(false, ":/icons/nodeEditor_nodeUnfold_unselected.svg", ":/icons/nodeEditor_nodeUnfold_selected.svg");
+    pUploadExtension = new ZToolBarButton(false, ":/icons/nodeEditor_subnetManager_unselected.svg", ":/icons/nodeEditor_subnetManager_selected.svg");
     pSnapGrid = new ZToolBarButton(true, ":/icons/nodeEditor_snap_unselected.svg", ":/icons/nodeEditor_snap_selected.svg");
     pShowGrid = new ZToolBarButton(true, ":/icons/nodeEditor_grid_unselected.svg", ":/icons/nodeEditor_grid_selected.svg");
-    pRearrangeGraph = new ZToolBarButton(false, ":/icons/nodeEditor_grid_unselected.svg", ":/icons/nodeEditor_grid_selected.svg");
-    pShowThumb = new ZToolBarButton(true, ":/icons/nodeEditor_blackboard_unselected.svg", ":/icons/nodeEditor_blackboard_selected.svg");
+    pRearrangeGraph = new ZToolBarButton(false, ":/icons/nodeEditor_rearrangement_unselected.svg", ":/icons/nodeEditor_rearrangement_selected.svg");
+    pShowThumb = new ZToolBarButton(true, ":/icons/nodeEditor_overview_unselected.svg", ":/icons/nodeEditor_overview_selected.svg");
     pCustomParam = new ZToolBarButton(false, ":/icons/nodeEditor_nodePara_unselected.svg", ":/icons/nodeEditor_nodePara_selected.svg");
     pGroup = new ZToolBarButton(false, ":/icons/nodeEditor_blackboard_unselected.svg", ":/icons/nodeEditor_blackboard_selected.svg");
     pSearchBtn = new ZToolBarButton(true, ":/icons/toolbar_search_idle.svg", ":/icons/toolbar_search_light.svg");
     pSettings = new ZToolBarButton(false, ":/icons/toolbar_localSetting_idle.svg", ":/icons/toolbar_localSetting_light.svg");
-    pTestApi = new ZToolBarButton(false, ":/icons/timeline-curvemap.svg", ":/icons/timeline-curvemap.svg");
+    //pTestApi = new ZToolBarButton(false, ":/icons/timeline-curvemap.svg", ":/icons/timeline-curvemap.svg");
+    pCleanProj = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool_unselected.svg", ":/icons/broom_clear_clean_tool_selected.svg");
+    //pCleanScene = new ZToolBarButton(false, ":/icons/broom_clear_clean_tool.svg", ":/icons/broom_clear_clean_tool.svg");
+    pMultiThreadExecute = new ZToolBarButton(true, ":/icons/multithread.svg", ":/icons/multithread-on.svg");
+
     pAlways = new QCheckBox(tr("Auto"), this);
     pAlways->setChecked(false);
     pAlways->setProperty("cssClass", "AlwaysCheckBox");
@@ -348,9 +352,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     pListView->setToolTip(tr("Subnet List"));
     pTreeView->setToolTip(tr("Node List"));
     pluginView->setToolTip(tr("Plugin List"));
-    pSubnetMgr->setToolTip(tr("Subnet Manager"));
-    pFold->setToolTip(tr("Fold"));
-    pUnfold->setToolTip(tr("Unfold"));
+    pUploadExtension->setToolTip(tr("Update Extension"));
     pCustomParam->setToolTip(tr("Customize Parameters"));
     pGroup->setToolTip(tr("Create Group"));
     pSearchBtn->setToolTip(tr("Search"));
@@ -373,26 +375,30 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     m_btnRun->setMargins(ZenoStyle::dpiScaledMargins(QMargins(11, 5, 14, 5)));
     m_btnRun->setBackgroundClr(QColor("#1978E6"), QColor("#599EED"), QColor("#1978E6"), QColor("#1978E6"));
     m_btnRun->setTextClr(QColor("#FFFFFF"), QColor("#FFFFFF"), QColor("#FFFFFF"), QColor("#FFFFFF"));
-    ZenoSettingsManager &settings = ZenoSettingsManager::GetInstance();
-    m_btnRun->setShortcut(settings.getShortCut(ShortCut_Run));
+    ZenoSettingsManager &global_settings = ZenoSettingsManager::GetInstance();
+    m_btnRun->setShortcut(global_settings.getShortCut(ShortCut_Run));
     m_btnRun->setCursor(QCursor(Qt::PointingHandCursor));
 
     //kill
     m_btnKill->setFont(fnt);
-    m_btnKill->setShortcut(settings.getShortCut(ShortCut_Kill));
+    m_btnKill->setShortcut(global_settings.getShortCut(ShortCut_Kill));
     m_btnKill->setVisible(false);
 
     QFontMetrics fontMetrics(fnt);
 
     pListView->setChecked(false);
     pluginView->setChecked(false);
-    pShowGrid->setChecked(ZenoSettingsManager::GetInstance().getValue(zsShowGrid).toBool());
+    pShowGrid->setChecked(global_settings.getValue(zsShowGrid).toBool());
+
+    bool bMultithread = global_settings.getValue(zsMultithread).toBool();
+    pMultiThreadExecute->setChecked(bMultithread);
+    zeno::getSession().set_async_executing(bMultithread);
 
     //必须要等初始化界面后才能让用户点击显示
     pShowThumb->setChecked(false);
-    ZenoSettingsManager::GetInstance().setValue(zsShowThumbnail, false);
+    global_settings.setValue(zsShowThumbnail, false);
 
-    pSnapGrid->setChecked(ZenoSettingsManager::GetInstance().getValue(zsSnapGrid).toBool());
+    pSnapGrid->setChecked(global_settings.getValue(zsSnapGrid).toBool());
     pShowGrid->setToolTip(pShowGrid->isChecked() ? tr("Hide Grid") : tr("Show Grid"));
     pSnapGrid->setToolTip(pSnapGrid->isChecked() ? tr("UnSnap Grid") : tr("Snap Grid"));
 
@@ -419,7 +425,7 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
     };
     CallbackCollection cbSet;
     cbSet.cbEditFinished = funcZoomEdited;
-    cbZoom = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), std::string("100%"), zeno::Combobox, ui_gParamType_String, cbSet, props));
+    cbZoom = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), "", std::string("100%"), zeno::Combobox, ui_gParamType_String, cbSet, props));
     cbZoom->setProperty("focusBorder", "none");
     cbZoom->setEditable(false);
     cbZoom->setFixedSize(ZenoStyle::dpiScaled(60), ZenoStyle::dpiScaled(20));
@@ -435,22 +441,23 @@ void DockContent_Editor::initToolbar(QHBoxLayout* pToolLayout)
 
     pToolLayout->addStretch(1);
 
-    pToolLayout->addWidget(pSubnetMgr);
-    pToolLayout->addWidget(pFold);
-    pToolLayout->addWidget(pUnfold);
     pToolLayout->addWidget(pSnapGrid);
     pToolLayout->addWidget(pShowGrid);
     pToolLayout->addWidget(pCustomParam);
     pToolLayout->addWidget(pGroup);
     pToolLayout->addWidget(pShowThumb);
     pToolLayout->addWidget(pRearrangeGraph);
-    pToolLayout->addWidget(pTestApi);     //TOFIX: 添加此项竟然导致最大化窗口无效，要研究布局细节。
-    pToolLayout->addWidget(pAlways);
+    pToolLayout->addWidget(pUploadExtension);
+    //pToolLayout->addWidget(pTestApi);     //TOFIX: 添加此项竟然导致最大化窗口无效，要研究布局细节。
 
     //pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
-
+    pToolLayout->addStretch(4);
+    pToolLayout->addWidget(pAlways);
     pToolLayout->addWidget(m_btnRun);
     pToolLayout->addWidget(m_btnKill);
+    pToolLayout->addWidget(pCleanProj);
+    //pToolLayout->addWidget(pCleanScene);
+    pToolLayout->addWidget(pMultiThreadExecute);
 
     pToolLayout->addStretch(4);
 
@@ -502,20 +509,6 @@ void DockContent_Editor::initConnections()
         pListView->setChecked(false);
         pluginView->setChecked(false);
     });
-    connect(pFold, &ZToolBarButton::clicked, this, [=]() {
-        if (m_pEditor->welComPageShowed())
-            return;
-        QAction act("Collaspe");
-        act.setProperty("ActionType", ZenoMainWindow::ACTION_COLLASPE);
-        m_pEditor->onAction(&act);
-    });
-    connect(pUnfold, &ZToolBarButton::clicked, this, [=]() {
-        if (m_pEditor->welComPageShowed())
-            return;
-        QAction act("Expand");
-        act.setProperty("ActionType", ZenoMainWindow::ACTION_EXPAND);
-        m_pEditor->onAction(&act);
-    });
     connect(pCustomParam, &ZToolBarButton::clicked, this, [=]() {
         if (m_pEditor->welComPageShowed())
             return;
@@ -531,9 +524,19 @@ void DockContent_Editor::initConnections()
         m_pEditor->onAction(&act);
     });
     connect(pSnapGrid, &ZToolBarButton::toggled, this, [=](bool bChecked) {
+        auto& sess = zeno::getSession();
+        auto& objrec = sess.m_recorder;
+        if (objrec->m_geoms.empty()) {
+            return;
+        }
         if (m_pEditor->welComPageShowed())
             return;
         ZenoSettingsManager::GetInstance().setValue(zsSnapGrid, bChecked);
+    });
+    connect(pMultiThreadExecute, &ZToolBarButton::toggled, this, [=](bool bChecked) {
+        auto& sess = zeno::getSession();
+        sess.set_async_executing(bChecked);
+        ZenoSettingsManager::GetInstance().setValue(zsMultithread, bChecked);
     });
     connect(pShowGrid, &ZToolBarButton::toggled, this, [=](bool bChecked) {
         if (m_pEditor->welComPageShowed())
@@ -555,6 +558,18 @@ void DockContent_Editor::initConnections()
         act.setProperty("ActionType", ZenoMainWindow::ACTION_REARRANGE_GRAPH);
         m_pEditor->onAction(&act);
     });
+
+    connect(pUploadExtension, &ZToolBarButton::clicked, this, [=]() {
+        auto& nodeRegs = zeno::getNodeRegister();
+        auto ptr = nodeRegs.getNodeClassPtr("erode_noise_perlin_GEO");
+        //nodeRegs.clear();
+        int j;
+        j = 0;
+        //auto& sess = zeno::getSession();
+        //auto gra = sess.mainGraph();
+        //auto spNode = gra->createNode("Cube");
+    });
+
     if (pTestApi) {
         connect(pTestApi, &ZToolBarButton::clicked, this, [=]() {
             auto& sess = zeno::getSession();
@@ -618,9 +633,9 @@ void DockContent_Editor::initConnections()
             return;
         auto& sess = zeno::getSession();
         sess.set_auto_run(checked);
-        if (checked) {
-            zenoApp->calculationMgr()->run();
-        }
+        //if (checked) {
+        //    zenoApp->calculationMgr()->run();
+        //}
     });
     connect(m_pEditor, &ZenoGraphsEditor::zoomed, [=](qreal newFactor) {
         QString percent = QString::number(int(newFactor * 100));
@@ -653,8 +668,8 @@ void DockContent_Editor::initConnections()
         m_btnKill->setVisible(true);
         if (m_btnRun->text() == tr("ReRun")) {
             zeno::getSession().markDirtyAndCleanResult();
-        for (auto view : zenoApp->getMainWindow()->viewports())
-            view->cleanUpScene();
+            for (auto view : zenoApp->getMainWindow()->viewports())
+                view->cleanUpScene();
         }
 
         zenoApp->calculationMgr()->run();
@@ -681,7 +696,7 @@ void DockContent_Editor::initConnections()
     });
 
     auto calcMgr = zenoApp->calculationMgr();
-    connect(calcMgr, &CalculationMgr::calcFinished, this, [=](bool bSucceed, zeno::ObjPath, QString) {
+    connect(calcMgr, &CalculationMgr::calcFinished, this, [=](bool bSucceed, QString, QString) {
         m_btnRun->setVisible(true);
         m_btnKill->setVisible(false);
     });
@@ -689,6 +704,28 @@ void DockContent_Editor::initConnections()
     connect(m_btnKill, &ZTextIconButton::clicked, this, [=]() {
         zenoApp->calculationMgr()->kill();
     });
+
+    connect(pCleanProj, &ZToolBarButton::clicked, this, [=]() {
+        if (ZenoMainWindow* pMainWin = zenoApp->getMainWindow()) {
+            QVector<ZGeometrySpreadsheet*> spreadsheets = pMainWin->getGeoSpreadSheet();
+            for (ZGeometrySpreadsheet* spreadsheet : spreadsheets) {
+                spreadsheet->clearModel();
+            }
+        }
+        zenoApp->calculationMgr()->clear();
+    });
+
+    connect(pCleanScene, &ZToolBarButton::clicked, this, [=]() {
+        if (ZenoMainWindow* pMainWin = zenoApp->getMainWindow()) {
+            QVector<ZGeometrySpreadsheet*> spreadsheets = pMainWin->getGeoSpreadSheet();
+            for (ZGeometrySpreadsheet* spreadsheet : spreadsheets) {
+                spreadsheet->clearModel();
+            }
+        }
+        for (auto view : zenoApp->getMainWindow()->viewports()) {
+            view->cleanUpScene();
+        }
+        });
 
     connect(&ZenoSettingsManager::GetInstance(), &ZenoSettingsManager::valueChanged, this, [=](QString name) {
         if (name == zsShowGrid) 
@@ -961,7 +998,7 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
 
     CallbackCollection cbSet;
     cbSet.cbEditFinished = funcRender;
-    m_cbRes = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), std::string("Free"), zeno::Combobox, ui_gParamType_String, cbSet, props));
+    m_cbRes = qobject_cast<QComboBox*>(zenoui::createWidget(QModelIndex(), "", std::string("Free"), zeno::Combobox, ui_gParamType_String, cbSet, props));
     m_cbRes->setProperty("focusBorder", "none");
     m_cbRes->setEditable(false);
     m_cbRes->view()->setFixedWidth(ZenoStyle::dpiScaled(110));
@@ -984,6 +1021,7 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
         pToolLayout->addWidget(m_pointIndicator);
         m_uv_mode = new QCheckBox(tr("UV"));
         m_uv_mode->setStyleSheet("color: white;");
+		m_uv_mode->setMinimumWidth(1);
         pToolLayout->addWidget(m_uv_mode);
     }
     else {
@@ -991,23 +1029,49 @@ void DockContent_View::initToolbar(QHBoxLayout* pToolLayout)
         m_background->setStyleSheet("color: white;");
         auto& ud = zeno::getSession().userData();
         m_background->setChecked(ud.get2<bool>("optix_show_background", false));
-        pToolLayout->addWidget(m_background);
         m_camera_setting = new QPushButton("Camera");
-        pToolLayout->addWidget(m_camera_setting);
-    }
+        m_pause = new QPushButton("Pause");
+        m_pause->setCheckable(true);
+        m_matNeedUpdate = new QCheckBox(tr("UpdateMat"));
+        auto& inst = ZenoSettingsManager::GetInstance();
+        QVariant varViewportUpdateMat = inst.getValue(zsViewportUpdateMat);
+        bool needUpdateMat = varViewportUpdateMat.isValid()? varViewportUpdateMat.toBool(): false;
+        zeno::getSession().userData().set2("viewport-optix-matNeedUpdate", needUpdateMat);
+        m_matNeedUpdate->setChecked(needUpdateMat);
+        m_matNeedUpdate->setStyleSheet("color: white;");
 
-    {
-    pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
         m_depth = new QCheckBox(tr("Depth[C]"));
         m_depth->setStyleSheet("color: white;");
         m_depth->setCheckState(Qt::Checked);
-        pToolLayout->addWidget(m_depth);
         m_FPN = new QCheckBox(tr("FPN[N]"));
         m_FPN->setStyleSheet("color: white;");
-        pToolLayout->addWidget(m_FPN);
         m_Reset = new QPushButton(tr("Reset"));
+    }
+
+    //允许无限窄
+    if (m_bGLView) {
+		m_cbRes->setMinimumWidth(1);
+    } else {
+        m_camera_setting->setMinimumWidth(1);
+        m_camera_setting->setMinimumWidth(1);
+        m_pause->setMinimumWidth(1);
+        m_matNeedUpdate->setMinimumWidth(1);
+        m_background->setMinimumWidth(1);
+        m_depth->setMinimumWidth(1);
+        m_FPN->setMinimumWidth(1);
+        m_Reset->setMinimumWidth(1);
+        m_cbRes->setMinimumWidth(1);
+
+        pToolLayout->addWidget(m_background);
+        pToolLayout->addWidget(m_camera_setting);
+        pToolLayout->addWidget(m_pause);
+        pToolLayout->addWidget(m_matNeedUpdate);
+        pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
+        pToolLayout->addWidget(m_depth);
+        pToolLayout->addWidget(m_FPN);
         pToolLayout->addWidget(m_Reset);
     }
+
     pToolLayout->addWidget(new ZLineWidget(false, QColor("#121416")));
     pToolLayout->addWidget(m_screenshoot);
     pToolLayout->addWidget(m_recordVideo);
@@ -1067,6 +1131,19 @@ void DockContent_View::initConnections()
             }
         });
     }
+    if (m_pause) {
+        connect(m_pause, &QPushButton::clicked, this, [=](bool bToggled) {
+            zeno::getSession().userData().set2("viewport-optix-pause", bToggled);
+        });
+    }
+    if (m_matNeedUpdate) {
+        connect(m_matNeedUpdate, &QCheckBox::stateChanged, this, [=](int state) {
+            bool bChecked = (state == Qt::Checked);
+            zeno::getSession().userData().set2("viewport-optix-matNeedUpdate", bChecked);
+            auto& inst = ZenoSettingsManager::GetInstance();
+            inst.setValue(zsViewportUpdateMat, bChecked);
+        });
+    }
     if (m_Reset) {
         connect(m_Reset, &QPushButton::clicked, this, [=](bool bToggled) {
             auto *scene = m_pDisplay->getZenoVis()->getSession()->get_scene();
@@ -1085,6 +1162,7 @@ void DockContent_View::initConnections()
 
     connect(m_pointIndicator, &ZToolBarButton::toggled, this, [=](bool bToggled) {
         GraphsManager* graphsMgr = zenoApp->graphsManager();
+        auto& sess = zeno::getSession();
         QString path = graphsMgr->currentGraphPath();
 
         QStringList paths = path.split('/', Qt::SkipEmptyParts);
@@ -1101,6 +1179,14 @@ void DockContent_View::initConnections()
             zeno::render_update_info update;
             update.reason = zeno::Update_View;
             update.uuidpath_node_objkey = nodeuuidpath;
+            auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath);
+            assert(spNode);
+            if (spNode) {
+                auto pObject = spNode->get_default_output_object();
+                if (pObject) {
+                    update.spObject = pObject->clone();
+                }
+            }
             info.objs.push_back(update);
         }
 

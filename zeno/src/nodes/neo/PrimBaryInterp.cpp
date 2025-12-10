@@ -57,7 +57,7 @@ struct PrimBarycentricInterp : INode {
             BarycentricInterp(points.get(), prim.get(), index, v0, v1, v2, points->verts[index], w, idTag, weightTag);
         }
 
-        ZImpl(set_output("Particles", ZImpl(get_input("Particles"))));
+        ZImpl(set_output("Particles", ZImpl(clone_input("Particles"))));
     }
 };
 

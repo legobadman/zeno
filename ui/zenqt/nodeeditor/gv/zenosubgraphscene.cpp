@@ -1,4 +1,4 @@
-#include "zenosubgraphscene.h"
+﻿#include "zenosubgraphscene.h"
 #include "zenonodebase.h"
 #include "zenolink.h"
 #include <zeno/io/zsg2reader.h>
@@ -20,7 +20,6 @@
 #include "viewport/viewportwidget.h"
 #include "viewport/displaywidget.h"
 #include "zenomainwindow.h"
-#include <zenovis/ObjectsManager.h>
 #include "viewport/picker.h"
 #include "settings/zenosettingsmanager.h"
 #include "widgets/ztimeline.h"
@@ -77,9 +76,9 @@ void ZenoSubGraphScene::initModel(GraphModel* pGraphM)
         connect(pNode, &ZenoNodeBase::socketClicked, this, &ZenoSubGraphScene::onSocketClicked);
         connect(pNode, &ZenoNodeBase::nodePosChangedSignal, this, &ZenoSubGraphScene::onNodePosChanged);
         addItem(pNode);
-        pNode->initUI(idx);
-        const QString& nodeid = pNode->nodeId();
+        const QString& nodeid = idx.data(QtRole::ROLE_NODE_NAME).toString();
         m_nodes[nodeid] = pNode;
+        pNode->initUI(idx);
         if (pNode->nodeClass() == "Group") 
         {
             blackboardVect << pNode;
@@ -320,6 +319,11 @@ void ZenoSubGraphScene::onDataChanged(const QModelIndex& topLeft, const QModelIn
     {
         ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
         m_nodes[id]->onRunStateChanged();
+    }
+    if (role == QtRole::ROLE_NODE_LOCKED) {
+        ZASSERT_EXIT(m_nodes.find(id) != m_nodes.end());
+        bool bLocked = idx.data(QtRole::ROLE_NODE_LOCKED).toBool();
+        m_nodes[id]->onNodeLockedChanged(bLocked);
     }
     //if (role == QtRole::ROLE_NODE_DIRTY)
     //{
@@ -1011,6 +1015,27 @@ void ZenoSubGraphScene::onTempLinkClosed()
                 }
             }
 
+            zeno::ParamType outParamType = outSockIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
+            zeno::ParamType inParamType = inSockIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
+            if (inParamType == gParamType_List) {
+                //如果输出是list或者object，要询问作为子元素还是整体
+                if (outParamType == gParamType_List || outParamType == gParamType_IObject) {
+                    QMessageBox msgBox;
+                    msgBox.setWindowFlags(msgBox.windowFlags() & ~Qt::WindowCloseButtonHint);
+                    msgBox.setText(tr("add to list as a child element?"));
+                    QPushButton* asChildBtn = msgBox.addButton(tr("as a child element"), QMessageBox::AcceptRole);
+                    QPushButton* asWholeBtn = msgBox.addButton(tr("as a whole"), QMessageBox::RejectRole);
+                    msgBox.setDefaultButton(asChildBtn);
+
+                    int ret = msgBox.exec();
+                    if (msgBox.clickedButton() == asChildBtn) {
+                        newEdge.inKey = "obj0";
+                    } else if (msgBox.clickedButton() == asWholeBtn) {
+                        newEdge.inKey = "";
+                    }
+                }
+            }
+
             m_model->addLink(newEdge);
             return;
         }
@@ -1173,13 +1198,14 @@ void ZenoSubGraphScene::onRowsInserted(const QModelIndex& parent, int first, int
 {
     //right click goes here
     QModelIndex idx = m_model->index(first, 0, parent);
-    ZenoNodeBase*pNode = createNode(idx, m_nodeParams);
+    ZenoNodeBase* pNode = createNode(idx, m_nodeParams);
+    const QString& nodeid = idx.data(QtRole::ROLE_NODE_NAME).toString();
+    m_nodes[nodeid] = pNode;
+
     connect(pNode, &ZenoNodeBase::socketClicked, this, &ZenoSubGraphScene::onSocketClicked);
     connect(pNode, &ZenoNodeBase::nodePosChangedSignal, this, &ZenoSubGraphScene::onNodePosChanged);
     addItem(pNode);
     pNode->initUI(idx);
-    QString id = pNode->nodeId();
-    m_nodes[id] = pNode;
 
     if (dynamic_cast<GroupNode *>(pNode)) 
     {
@@ -1229,10 +1255,12 @@ void ZenoSubGraphScene::selectObjViaNodes() {
         for (auto item : selItems) {
             if (auto *pNode = qgraphicsitem_cast<ZenoNodeBase*>(item)) {
                 auto node_id = pNode->index().data(QtRole::ROLE_NODE_NAME).toString().toStdString();
+                /*
                 for (const auto &[prim_name, _] : scene->objectsMan->pairsShared()) {
                     if (prim_name.find(node_id) != std::string::npos)
                         picker->add(prim_name);
                 }
+                */
             }
         }
         picker->sync_to_scene();

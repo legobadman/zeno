@@ -12,11 +12,24 @@ namespace zeno
         for (auto& [str, obj] : dictObj.lut) {
             auto cloneobj = obj->clone();
             cloneobj->update_key(obj->key());
-            lut.insert({ str, cloneobj });
+            lut.insert({ str, std::move(cloneobj) });
         }
         m_modify = dictObj.m_modify;
         m_new_added = dictObj.m_new_added;
         m_new_removed = dictObj.m_new_removed;
+    }
+
+    DictObject& DictObject::operator=(const DictObject& dictObj) {
+        m_key = dictObj.m_key;
+        for (auto& [str, obj] : dictObj.lut) {
+            auto cloneobj = obj->clone();
+            cloneobj->update_key(obj->key());
+            lut.insert({ str, std::move(cloneobj) });
+        }
+        m_modify = dictObj.m_modify;
+        m_new_added = dictObj.m_new_added;
+        m_new_removed = dictObj.m_new_removed;
+        return *this;
     }
 
     DictObject::~DictObject() {
@@ -37,8 +50,11 @@ namespace zeno
     void DictObject::Delete() {
     }
 
+    bool DictObject::has_change_info() const {
+        return !m_modify.empty() || !m_new_added.empty() || !m_new_removed.empty();
+    }
 
-    ZENO_API zeno::SharedPtr<DictObject> create_DictObject() {
-        return std::make_shared<DictObject>();
+    std::unique_ptr<DictObject> create_DictObject() {
+        return std::make_unique<DictObject>();
     }
 }

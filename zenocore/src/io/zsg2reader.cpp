@@ -13,6 +13,32 @@ namespace zenoio {
 
 ZENO_API Zsg2Reader::Zsg2Reader() {}
 
+bool Zsg2Reader::importNodes(const std::string& strjson, zeno::NodesData& nodes, zeno::LinksData& links,
+    zeno::ReferencesData& refs)
+{
+    rapidjson::Document doc;
+    doc.Parse(strjson.c_str());
+
+    if (!doc.IsObject() || !doc.HasMember("nodes"))
+        return false;
+
+    const rapidjson::Value& val = doc["nodes"];
+    if (val.IsNull())
+        return false;
+
+    zeno::GraphData subgData;
+    std::map<std::string, zeno::GraphData> subgraphDatas;
+    for (const auto& node : val.GetObject())
+    {
+        const std::string& nodeid = node.name.GetString();  //旧版本显示的key值是uuid，而name是cls
+        const zeno::NodeData& nodeData = _parseNode("", nodeid, node.value, subgraphDatas, subgData.links);
+        subgData.nodes.insert(std::make_pair(nodeData.name, nodeData));
+    }
+    nodes = subgData.nodes;
+    links = subgData.links;
+    return true;
+}
+
 bool Zsg2Reader::_parseMainGraph(const rapidjson::Document& doc, zeno::GraphData& mainData)
 {
     if (doc.HasMember("version") && doc["version"].IsString())
@@ -292,10 +318,8 @@ void Zsg2Reader::_parseSocket(
     }
     if (!bInput && paramType == Param_Null)
     {
-        auto& nodeClass = zeno::getSession().nodeClasses;
-        auto it = nodeClass.find(nodeCls);
-        if (it != nodeClass.end()) {
-            const auto& outputs = it->second->m_customui.outputPrims;
+        if (auto cl = zeno::getNodeRegister().getNodeClassPtr(nodeCls)) {
+            const auto& outputs = cl->m_customui.outputPrims;
             for (const auto& output : outputs)
             {
                 if (output.name == sockName)
@@ -312,7 +336,6 @@ void Zsg2Reader::_parseSocket(
     }
     else {
         if (bInput) {
-            //��������������������Ĭ�ϸ���Owing�˿ڰ�
             socketType = zeno::Socket_Owning;
         }
         else {

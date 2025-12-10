@@ -1,4 +1,5 @@
 #include "zeno/types/PrimitiveObject.h"
+#include <zeno/types/IGeometryObject.h>
 #include "zeno/types/StringObject.h"
 #include <openvdb/Types.h>
 #include <thread>
@@ -18,7 +19,7 @@ struct ParticleAsVoxels : INode{
         auto type = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"))->getType();
         
         if(type=="FloatGrid"){
-            auto ingrid = safe_dynamic_cast<VDBFloatGrid>(get_input("vdbGrid"));
+            auto ingrid = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
             auto inparticles = get_input_PrimitiveObject("particles");
             auto attrName = zsString2Std(get_input2_string("Attr"));
@@ -38,7 +39,7 @@ struct ParticleAsVoxels : INode{
             set_output("oGrid", std::move(ingrid));
         }
         if(type=="Vec3fGrid") {
-            auto ingrid = safe_dynamic_cast<VDBFloat3Grid>(get_input("vdbGrid"));
+            auto ingrid = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("vdbGrid"));
             auto const &grid = ingrid->m_grid;
             auto inparticles = get_input_PrimitiveObject("particles");
             auto attrName = zsString2Std(get_input2_string("Attr"));
@@ -137,7 +138,7 @@ struct VDBVoxelAsParticles : INode {
             // printf("concurrent vec of size %d, zs pos size %d\n", pos.size(), zspos.size());
 #endif
 
-            auto prim = std::make_shared<zeno::PrimitiveObject>();
+            auto prim = std::make_unique<zeno::PrimitiveObject>();
             prim->resize(zspos.size());
             auto &primPos = prim->add_attr<vec3f>("pos");
             // wxl
@@ -228,7 +229,7 @@ struct VDBVoxelAsParticles : INode {
             // printf("concurrent vec of size %d, zs pos size %d\n", pos.size(), zspos.size());
 #endif
 
-            auto prim = std::make_shared<zeno::PrimitiveObject>();
+            auto prim = std::make_unique<zeno::PrimitiveObject>();
             prim->resize(zspos.size());
             auto &primPos = prim->add_attr<vec3f>("pos");
             // wxl
@@ -303,7 +304,7 @@ struct VDBVoxelAsParticles : INode {
             // printf("concurrent vec of size %d, zs pos size %d\n", pos.size(), zspos.size());
 #endif
 
-            auto prim = std::make_shared<zeno::PrimitiveObject>();
+            auto prim = std::make_unique<zeno::PrimitiveObject>();
             prim->resize(zspos.size());
             auto &primPos = prim->add_attr<vec3f>("pos");
             auto &primVal = prim->add_attr<float>(valToAttr);
@@ -398,7 +399,7 @@ struct VDBVoxelAsParticles : INode {
             // printf("concurrent vec of size %d, zs pos size %d\n", pos.size(), zspos.size());
 #endif
 
-            auto prim = std::make_shared<zeno::PrimitiveObject>();
+            auto prim = std::make_unique<zeno::PrimitiveObject>();
             prim->resize(zspos.size());
             auto &primPos = prim->add_attr<vec3f>("pos");
             auto &primVal = prim->add_attr<vec3f>(valToAttr);
@@ -446,7 +447,7 @@ struct VDBLeafAsParticles : INode {
         openvdb::tree::LeafManager<std::decay_t<decltype(grid->tree())>> leafman(grid->tree());
         leafman.foreach(wrangler);
 
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         prim->resize(pos.size());
         auto &primPos = prim->add_attr<vec3f>("pos");
         for (int i = 0; i < pos.size(); i++) {
@@ -459,28 +460,28 @@ struct VDBLeafAsParticles : INode {
         auto ingrid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
         auto vdbType = ingrid->getType();
 
-        std::shared_ptr<zeno::PrimitiveObject> prim(nullptr);
+        std::unique_ptr<zeno::PrimitiveObject> prim;
 
         if (vdbType == "FloatGrid")
-            prim = LeafAsParticle(std::dynamic_pointer_cast<VDBFloatGrid>(ingrid));
+            prim = LeafAsParticle(safe_dynamic_cast<VDBFloatGrid>(ingrid));
         else if (vdbType == "Int32Grid")
-            prim = LeafAsParticle(std::dynamic_pointer_cast<VDBIntGrid>(ingrid));
+            prim = LeafAsParticle(safe_dynamic_cast<VDBIntGrid>(ingrid));
         else if (vdbType == "Vec3fGrid")
-            prim = LeafAsParticle(std::dynamic_pointer_cast<VDBFloat3Grid>(ingrid));
+            prim = LeafAsParticle(safe_dynamic_cast<VDBFloat3Grid>(ingrid));
         else if (vdbType == "Vec3IGrid")
-            prim = LeafAsParticle(std::dynamic_pointer_cast<VDBInt3Grid>(ingrid));
+            prim = LeafAsParticle(safe_dynamic_cast<VDBInt3Grid>(ingrid));
         else if (vdbType == "PointDataGrid")
-            prim = LeafAsParticle(std::dynamic_pointer_cast<VDBPointsGrid>(ingrid));
+            prim = LeafAsParticle(safe_dynamic_cast<VDBPointsGrid>(ingrid));
         else 
             throw std::runtime_error("VDB type not found.");
 
-        set_output("primPars", std::move(prim));
+        set_output("primPars", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(VDBLeafAsParticles, {
                             {{gParamType_VDBGrid, "vdbGrid", "", zeno::Socket_ReadOnly}},
-                            {{gParamType_Primitive, "primPars"}},
+                            {{gParamType_Geometry, "primPars"}},
                             {},
                             {"visualize"},
                         });

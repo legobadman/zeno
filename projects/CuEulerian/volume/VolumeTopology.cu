@@ -22,10 +22,10 @@ struct MarkZSLevelSet : INode {
         using namespace zs;
 
         // this could possibly be the same staggered velocity field too
-        auto zsfield = get_input<ZenoLevelSet>("ZSField");
+        auto zsfield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSField"));
         auto &field = zsfield->getBasicLevelSet()._ls;
 
-        auto threshold = std::abs(get_input2<float>("threshold"));
+        auto threshold = std::abs(get_input2_float("threshold"));
 
         match(
             [this, threshold](auto &lsPtr) -> std::enable_if_t<is_spls_v<typename RM_CVREF_T(lsPtr)::element_type>> {
@@ -83,9 +83,9 @@ struct ZSLevelSetTopologyUnion : INode {
         using namespace zs;
 
         // this could possibly be the same staggered velocity field too
-        auto zsfield = get_input<ZenoLevelSet>("ZSField");
+        auto zsfield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSField"));
         auto &field = zsfield->getBasicLevelSet()._ls;
-        auto refZsField = get_input<ZenoLevelSet>("RefZSField");
+        auto refZsField = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("RefZSField"));
         auto &refField = refZsField->getBasicLevelSet()._ls;
 
         match(
@@ -135,11 +135,11 @@ struct ExtendZSLevelSet : INode {
         using namespace zs;
 
         // this could possibly be the same staggered velocity field too
-        auto zsfield = get_input<ZenoLevelSet>("ZSField");
+        auto zsfield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSField"));
         auto &field = zsfield->getBasicLevelSet()._ls;
-        auto velZsField = get_input<ZenoLevelSet>("ZSVelField");
+        auto velZsField = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSVelField"));
         const auto &velField = velZsField->getBasicLevelSet()._ls;
-        auto dt = get_input2<float>("dt");
+        auto dt = get_input2_float("dt");
 
         match(
             [this, dt](auto &lsPtr, const auto &velLsPtr)
@@ -173,9 +173,9 @@ struct ZSLevelSetFloodFill : INode {
     void apply() override {
         fmt::print(fg(fmt::color::green), "begin executing ZSLevelSetFloodFill\n");
 
-        auto zsfield = get_input<ZenoLevelSet>("ZSField");
+        auto zsfield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSField"));
         auto &field = zsfield->getBasicLevelSet()._ls;
-        auto sdfZsField = get_input<ZenoLevelSet>("ZSSdfField");
+        auto sdfZsField = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSSdfField"));
 
         using namespace zs;
 

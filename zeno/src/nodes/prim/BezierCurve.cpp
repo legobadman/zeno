@@ -60,7 +60,7 @@ struct CreateBezierCurve : zeno::INode {
         auto attr = ZImpl(get_param<std::string>("SampleAttr"));
 
         zeno::BCurveObject outCurve;
-        auto outprim = std::make_shared<zeno::PrimitiveObject>();
+        auto outprim = std::make_unique<zeno::PrimitiveObject>();
         std::vector<zeno::vec3f> inputPoint, cPoints;
         std::vector<float> tagList;
        
@@ -69,7 +69,7 @@ struct CreateBezierCurve : zeno::INode {
             int iSize = list->m_impl->size();
             if (iSize > 0) {
                 for (int i = 0; i < iSize; i++) {
-                    zeno::PrimitiveObject *obj = dynamic_cast<zeno::PrimitiveObject *>(list->m_impl->get(i).get());
+                    zeno::PrimitiveObject *obj = dynamic_cast<zeno::PrimitiveObject *>(list->m_impl->get(i));
                     for (auto p : obj->verts) {
                         inputPoint.push_back(p);
                     }
@@ -78,7 +78,7 @@ struct CreateBezierCurve : zeno::INode {
         } else {
             auto inPrim = ZImpl(get_input<zeno::PrimitiveObject>("SamplePoints")).get();
             if (attr.empty()) {
-                ZImpl(set_output("prim", std::move(std::shared_ptr<zeno::PrimitiveObject>(new zeno::PrimitiveObject))));
+                ZImpl(set_output("prim", std::make_unique<zeno::PrimitiveObject>()));
                 ZImpl(set_primitive_output("curev", outCurve));
                 return;
             }
@@ -143,7 +143,7 @@ struct CreatePoint : zeno::INode {
         auto x = ZImpl(get_param<float>("x"));
         auto y = ZImpl(get_param<float>("y"));
         auto z = ZImpl(get_param<float>("z"));
-        auto outprim = std::make_shared<zeno::PrimitiveObject>();
+        auto outprim = std::make_unique<zeno::PrimitiveObject>();
         outprim->verts.resize(1);
         outprim->verts[0] = zeno::vec3f(x, y, z);
 

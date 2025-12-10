@@ -3,7 +3,6 @@
 #include "optixviewport.h"
 #include "zoptixviewport.h"
 #include <zenovis/RenderEngine.h>
-#include <zenovis/ObjectsManager.h>
 #include <zenovis/Camera.h>
 #include <zeno/extra/GlobalComm.h>
 #include <zeno/extra/GlobalState.h>
@@ -403,19 +402,8 @@ void DisplayWidget::onPlayClicked(bool bChecked)
     }
 }
 
-void DisplayWidget::onRenderInfoCommitted(zeno::render_update_info info) {
-    if (m_bGLView) {
-        m_glView->load_object(info);
-        //emit render_objects_loaded();
-    }
-    else {
-        m_optixView->load_object(info);
-    }
-    updateFrame();
-}
-
-void DisplayWidget::submit(zeno::render_reload_info render_summary) {
-
+void DisplayWidget::submit(const zeno::render_reload_info& info) {
+    zeno::render_reload_info render_summary = info;
     render_summary.current_ui_graph;
     render_summary.policy = zeno::Reload_Calculation;
 
@@ -426,9 +414,11 @@ void DisplayWidget::submit(zeno::render_reload_info render_summary) {
         render_summary.current_ui_graph = "/main";
     }
 
+    //计算时不管在哪一个层级，都把最外层main的结果送去渲染端，因为用户直接在子图修改后希望马上看到结果，而不是跳回最外层main
+#if 0
     //这里要对不在current_ui_graph的节点进行过滤
     //TODO: 应该在graphmodel上做
-    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(render_summary.current_ui_graph);
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph()->getGraphByPath(render_summary.current_ui_graph);
     for (auto iter = render_summary.objs.begin(); iter != render_summary.objs.end(); ) {
         if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
             iter = render_summary.objs.erase(iter);
@@ -437,6 +427,7 @@ void DisplayWidget::submit(zeno::render_reload_info render_summary) {
             iter++;
         }
     }
+#endif
     if (!render_summary.objs.empty()) {
         if (m_bGLView) {
             m_glView->reload_objects(render_summary);
@@ -445,6 +436,10 @@ void DisplayWidget::submit(zeno::render_reload_info render_summary) {
             m_optixView->reload_objects(render_summary);
         }
         updateFrame();
+    }
+    else {
+        //still emit the signal even no obj to be rendered.
+        emit render_reload_finished();
     }
 }
 
@@ -462,7 +457,7 @@ void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {
 
     //这里要对不在current_ui_graph的节点进行过滤
     //TODO: 应该在graphmodel上做
-    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph->getGraphByPath(reload.current_ui_graph);
+    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph()->getGraphByPath(reload.current_ui_graph);
     for (auto iter = infos.begin(); iter != infos.end(); ) {
         if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
             iter = infos.erase(iter);
@@ -488,18 +483,21 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     zeno::render_update_info info;
     info.reason = zeno::Update_Reconstruct;
     info.uuidpath_node_objkey = nodeuuidpath.toStdString();
+    auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath.toStdString());
+    assert(spNode);
+    if (spNode) {
+        auto pObject = spNode->get_default_output_object();
+        if (pObject) {
+            info.spObject = pObject->clone();
+        }
+    }
     infos.emplace_back(std::move(info));
     submit(infos);
 }
 
-void DisplayWidget::onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info info) {
+void DisplayWidget::onCalcFinished(bool bSucceed, QString, QString, const zeno::render_reload_info& info) {
     if (bSucceed) {
-        //先从objManager拿出
         submit(info);
-        //auto& sess = zeno::getSession();
-        //std::vector<zeno::render_update_info> infos;
-        //sess.objsMan->export_render_infos(infos);
-        //submit(infos);
     }
 }
 
@@ -512,15 +510,6 @@ void DisplayWidget::reload(const zeno::render_reload_info& info)
         m_optixView->reload_objects(info);
     }
     updateFrame();
-}
-
-void DisplayWidget::onJustLoadObjects() {
-    if (m_bGLView) {
-        m_glView->load_objects();
-    }
-    else {
-        m_optixView->load_objects();
-    }
 }
 
 void DisplayWidget::updateFrame(const QString &action) // cihou optix
@@ -542,7 +531,7 @@ void DisplayWidget::updateFrame(const QString &action) // cihou optix
             //restore the timer, because it will be stopped by signal of new frame.
             m_pTimer->start(m_sliderFeq);
         }
-        int frame = zeno::getSession().globalComm->maxPlayFrames() - 1;
+        int frame = 0;// zeno::getSession().globalComm->maxPlayFrames() - 1;
         frame = std::max(frame, 0);
         emit frameRunFinished(frame);
     }
@@ -644,6 +633,7 @@ void DisplayWidget::onCommandDispatched(int actionType, bool bChecked)
         {
             int frameid = m_glView->getSession()->get_curr_frameid();
             auto *scene = m_glView->getSession()->get_scene();
+            /*
             for (auto const &[key, ptr] : scene->objectsMan->pairs()) {
                 if (key.find("MakeCamera") != std::string::npos &&
                     key.find(zeno::format(":{}:", frameid)) != std::string::npos) {
@@ -652,6 +642,7 @@ void DisplayWidget::onCommandDispatched(int actionType, bool bChecked)
                     updateFrame();
                 }
             }
+            */
         }
     }
     else if (actionType == ZenoMainWindow::ACTION_RECORD_VIDEO)
@@ -1295,10 +1286,12 @@ void DisplayWidget::onNodeSelected(GraphModel* subgraph, const QModelIndexList &
             // find prim in object manager
             auto input_node_id = input_nodes[0].get_node_id();
             string prim_name;
+            /*
             for (const auto &[k, v] : scene->objectsMan->pairsShared()) {
                 if (k.find(input_node_id.toStdString()) != string::npos)
                     prim_name = k;
             }
+            */
             if (prim_name.empty())
                 return;
 

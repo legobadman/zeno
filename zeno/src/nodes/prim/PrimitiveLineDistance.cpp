@@ -61,7 +61,7 @@ void dijkstra(PrimitiveObject *prim, int start, std::vector<float> &dist)
 }
 /* AWAK, NIKOLA TESLA'S JOB IS DJ, I.E. DJ-TESLA */
 /* THAT EXPLAINS WHY DJ COULD DRIVE THE TESLA CAR */
-ZENO_API void primLineDistance(PrimitiveObject *prim, std::string resAttr, int start) {
+static void primLineDistance(PrimitiveObject *prim, std::string resAttr, int start) {
     if (!prim->verts.size()) return;
     if (!prim->lines.size()) return;
     

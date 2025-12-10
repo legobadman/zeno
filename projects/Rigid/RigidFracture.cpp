@@ -13,30 +13,32 @@
 #include <zeno/ListObject.h>
 #include <zeno/NumericObject.h>
 #include <zeno/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/logger.h>
 #include <zeno/utils/UserData.h>
 #include <zeno/utils/fileio.h>
 #include <zeno/zeno.h>
 
 // zpc
+#if 0
 #include "zensim/container/Bht.hpp"
 #include "zensim/math/matrix/SparseMatrix.hpp"
 #include "zensim/math/matrix/SparseMatrixOperations.hpp"
-#if 1
 #include "zensim/graph/ConnectedComponents.hpp"
-#endif
 #include "zensim/omp/execution/ExecutionPolicy.hpp"
 #include "zensim/zpc_tpls/fmt/color.h"
+#endif
 
 #include "RigidTest.h"
 
 // convex decomposition
 #include <VHACD/inc/VHACD.h>
-#include <hacdHACD.h>
-#include <hacdICHull.h>
-#include <hacdVector.h>
+//#include <hacdHACD.h>
+//#include <hacdICHull.h>
+//#include <hacdVector.h>
 
 void BulletObject::printDynamics(std::any clr_) const {
+#if 0
     fmt::color clr = std::any_cast<fmt::color>(clr_);
     auto trans = getWorldTransform();
     auto origin = trans.getOrigin();
@@ -45,8 +47,10 @@ void BulletObject::printDynamics(std::any clr_) const {
     std::string tag = isCompound() ? "cpd" : "rb";
     fmt::print(fg(clr), "{}[{}]: origin <{}, {}, {}>; linv <{}, {}, {}>; angv <{}, {}, {}>;\n", tag, (void *)this,
                origin[0], origin[1], origin[2], lin[0], lin[1], lin[2], ang[0], ang[1], ang[2]);
+#endif
 }
 void BulletObject::printChildDynamics(int rbi, std::any clr_) const {
+#if 0
     fmt::color clr = std::any_cast<fmt::color>(clr_);
     auto cpdTrans = getWorldTransform();
     auto ang = body->getAngularVelocity();
@@ -66,8 +70,10 @@ void BulletObject::printChildDynamics(int rbi, std::any clr_) const {
             cpdTrans.getOrigin()[1], cpdTrans.getOrigin()[2], chTrans.getOrigin()[0], chTrans.getOrigin()[1],
             chTrans.getOrigin()[2], lin[0], lin[1], lin[2], ang[0], ang[1], ang[2]);
     }
+#endif
 }
 
+#if 0
 namespace zeno {
 
 template <typename T>
@@ -149,15 +155,15 @@ struct BulletGlueRigidBodies : zeno::INode {
         auto pol = omp_exec();
 
 #if DEBUG_CPD
-        auto centerlist = std::make_shared<ListObject>();
-        auto locallist = std::make_shared<ListObject>();
-        auto linklist = std::make_shared<ListObject>();
+        auto centerlist = create_ListObject();
+        auto locallist = create_ListObject();
+        auto linklist = create_ListObject();
 #endif
         // std::vector<std::shared_ptr<BulletObject>>
-        auto rbs = get_input<ListObject>("rbList")->get<BulletObject>();
+        auto rbs = get_input_ListObject("rbList")->getRaw<BulletObject>();
         const auto nrbs = rbs.size();
 
-        auto glueList = get_input<ListObject>("glueListVec2i")->getLiterial<vec2i>();
+        auto glueList = get_input_ListObject("glueListVec2i")->getLiterial<vec2i>();
         auto ncons = glueList.size();
 
         /// @brief construct compound topo
@@ -185,7 +191,7 @@ struct BulletGlueRigidBodies : zeno::INode {
 
         auto ncompounds = tab.size();
         /// @note the output BulletObject list
-        auto rblist = std::make_shared<ListObject>();
+        auto rblist = create_ListObject();
 #if 1
         rblist->arr.resize(ncompounds);
 #else
@@ -228,7 +234,7 @@ struct BulletGlueRigidBodies : zeno::INode {
         std::vector<std::shared_ptr<ListObject>> primLists(ncompounds);
         std::vector<std::unique_ptr<btCompoundShape>> btCpdShapes(ncompounds);
         pol(zip(primLists, btCpdShapes), [](auto &primPtr, auto &cpdShape) {
-            primPtr = std::make_shared<ListObject>();
+            primPtr = create_ListObject();
             cpdShape = std::make_unique<btCompoundShape>();
         });
 
@@ -359,14 +365,14 @@ struct BulletGlueRigidBodies : zeno::INode {
 #if DEBUG_CPD
 ZENDEFNODE(BulletGlueRigidBodies, {
                                       {
-                                          "rbList",
-                                          "glueListVec2i",
+                                          {gParamType_List, "rbList"},
+                                          {gParamType_List, "glueListVec2i"},
                                       },
                                       {
-                                          "compoundList",
-                                          "centerList",
-                                          "localList",
-                                          "linkList",
+                                          {gParamType_List, "compoundList"},
+                                          {gParamType_List, "centerList"},
+                                          {gParamType_List, "localList"},
+                                          {gParamType_List, "linkList"},
                                       },
                                       {},
                                       {"Bullet"},
@@ -392,17 +398,17 @@ struct BulletUpdateCpdChildPrimTrans : zeno::INode {
         auto pol = omp_exec();
 
         std::shared_ptr<ListObject> initialPrimList;
-        auto translationList = std::make_shared<ListObject>();
-        auto rotationList = std::make_shared<ListObject>();
+        auto translationList = create_ListObject();
+        auto rotationList = create_ListObject();
 #if DEBUG_CPD
-        auto centerlist = std::make_shared<ListObject>();
-        auto minlist = std::make_shared<ListObject>();
-        auto maxlist = std::make_shared<ListObject>();
+        auto centerlist = create_ListObject();
+        auto minlist = create_ListObject();
+        auto maxlist = create_ListObject();
 #endif
 
         // std::vector<std::shared_ptr<BulletObject>>
-        auto cpdList = get_input<ListObject>("compoundList");
-        auto cpdBodies = cpdList->get<BulletObject>();
+        auto cpdList = get_input_ListObject("compoundList");
+        auto cpdBodies = cpdList->getRaw<BulletObject>();
         const auto ncpds = cpdBodies.size();
 
         // bool hasVisualPrimlist = cpdList->userData().has("visualPrimlist");
@@ -412,11 +418,11 @@ struct BulletUpdateCpdChildPrimTrans : zeno::INode {
         if (hasVisualPrimlist) {
             // initialPrimList = cpdList->userData().get<ListObject>("initialPrimlist");
             primlist = cpdList->userData().get<ListObject>("visualPrimlist");
-            visPrims = primlist->get<PrimitiveObject>();
+            visPrims = primlist->getRaw<PrimitiveObject>();
         } else {
-            initialPrimList = std::make_shared<ListObject>();
+            initialPrimList = create_ListObject();
             cpdList->userData().set("initialPrimlist", initialPrimList);
-            primlist = std::make_shared<ListObject>();
+            primlist = create_ListObject();
             cpdList->userData().set("visualPrimlist", primlist);
         }
         int no = 0;
@@ -478,7 +484,7 @@ struct BulletUpdateCpdChildPrimTrans : zeno::INode {
 
             /// @note true compounds
             auto cpdPrimlist = cpdShape->userData().get<ListObject>("prim");
-            auto cpdPrims = cpdPrimlist->get<PrimitiveObject>();
+            auto cpdPrims = cpdPrimlist->getRaw<PrimitiveObject>();
             if (cpdPrims.size() != btcpdShape->getNumChildShapes())
                 throw std::runtime_error(
                     fmt::format("the number of child shapes [{}] and prim objs [{}] in compound [{}] mismatch!",
@@ -594,13 +600,13 @@ ZENDEFNODE(BulletUpdateCpdChildPrimTrans, {
 
 struct BulletMakeConstraintRelationship : zeno::INode {
     virtual void apply() override {
-        auto constraintName = get_param<std::string>("constraintName");
-        auto constraintType = get_param<std::string>("constraintType");
-        auto obj1 = get_input<BulletObject>("obj1");
-        auto iter = get_input2<int>("iternum");
+        auto constraintName = zsString2Std(get_input2_string("constraintName"));
+        auto constraintType = zsString2Std(get_input2_string("constraintType"));
+        auto obj1 = safe_uniqueptr_cast<BulletObject>(move_input("obj1"));
+        auto iter = get_input2_int("iternum");
         std::shared_ptr<BulletConstraintRelationship> cons;
         if (has_input("obj2")) {
-            auto obj2 = get_input<BulletObject>("obj2");
+            auto obj2 = safe_uniqueptr_cast<BulletObject>(move_input("obj2"));
             cons = std::make_shared<BulletConstraintRelationship>(obj1.get(), obj2.get(), constraintName, iter,
                                                                   constraintType);
         } else {
@@ -623,7 +629,7 @@ ZENDEFNODE(BulletMakeConstraintRelationship,
 
 struct BulletObjectSetVel : zeno::INode {
     virtual void apply() override {
-        auto obj = get_input<BulletObject>("object");
+        auto obj = safe_uniqueptr_cast<BulletObject>(move_input("object"));
         auto body = obj->body.get();
 
         if (has_input("linearVel")) {
@@ -656,11 +662,11 @@ struct BulletMaintainCompoundsAndConstraints : zeno::INode {
         auto pol = omp_exec();
 
         /// @note simple (non-compound) rigid bodies
-        auto rbs = get_input<ListObject>("rbList")->get<BulletObject>();
+        auto rbs = get_input_ListObject("rbList")->getRaw<BulletObject>();
         const auto nrbs = rbs.size();
 
         /// @note constraint relationships
-        auto relationships = get_input<ListObject>("constraint_relationships")->get<BulletConstraintRelationship>();
+        auto relationships = get_input_ListObject("constraint_relationships")->getRaw<BulletConstraintRelationship>();
         const auto ncons = relationships.size();
 
         ///
@@ -752,8 +758,8 @@ struct BulletMaintainCompoundsAndConstraints : zeno::INode {
 
         auto ncompounds = tab.size();
         /// @note the output BulletObject list
-        auto rblist = std::make_shared<ListObject>();
-        rblist->arr.resize(ncompounds);
+        auto rblist = create_ListObject();
+        rblist->resize(ncompounds);
 
         /// @note isolated rigid bodies are delegated to this BulletObject list here!
         // determine compound or not pass on rbs that are does not belong in any compound
@@ -836,7 +842,7 @@ struct BulletMaintainCompoundsAndConstraints : zeno::INode {
         std::vector<std::shared_ptr<ListObject>> primLists(ncompounds);
         std::vector<std::unique_ptr<btCompoundShape>> btCpdShapes(ncompounds);
         pol(zip(primLists, btCpdShapes), [](auto &primPtr, auto &cpdShape) {
-            primPtr = std::make_shared<ListObject>();
+            primPtr = create_ListObject();
             cpdShape = std::make_unique<btCompoundShape>();
         });
 
@@ -988,7 +994,7 @@ struct BulletMaintainCompoundsAndConstraints : zeno::INode {
         ///
         /// @brief generate bulletconstraints
         /// @note the output BulletConstraint list
-        auto conslist = std::make_shared<ListObject>();
+        auto conslist = create_ListObject();
         conslist->arr.resize(numPreservedCons);
         // numPreservedCons, gatheredCons, gatheredConsIs, gatheredConsJs, gatheredConsCompIs, gatheredConsCompJs
 
@@ -1022,8 +1028,8 @@ struct BulletMaintainRigidBodiesAndConstraints : zeno::INode {
         auto pol = omp_exec();
 
         /// @note simple (non-compound) rigid bodies
-        auto rblist = get_input<ListObject>("rbList");
-        auto rbs = rblist->get<BulletObject>();
+        auto rblist = get_input_ListObject("rbList");
+        auto rbs = rblist->getRaw<BulletObject>();
         const auto nrbs = rbs.size();
 
 #if DEBUG_CPD
@@ -1031,7 +1037,7 @@ struct BulletMaintainRigidBodiesAndConstraints : zeno::INode {
 #endif
 
         /// @note constraint relationships
-        auto relationships = get_input<ListObject>("constraint_relationships")->get<BulletConstraintRelationship>();
+        auto relationships = get_input_ListObject("constraint_relationships")->getRaw<BulletConstraintRelationship>();
         const auto ncons = relationships.size();
 
         ///
@@ -1168,7 +1174,7 @@ struct BulletMaintainRigidBodiesAndConstraints : zeno::INode {
         if (rblist->userData().has("compounds")) {
             // std::vector<std::shared_ptr<BulletObject>>
             groupList = rblist->userData().get<ListObject>("compounds");
-            auto prevGroups = groupList->get<BulletObject>();
+            auto prevGroups = groupList->getRaw<BulletObject>();
 #if DEBUG_CPD
             fmt::print(fg(fmt::color::gold), "read (cpd)grouplist at [{}]\n",
                        (void *)rblist->userData().get<ListObject>("compounds").get());
@@ -1223,7 +1229,7 @@ struct BulletMaintainRigidBodiesAndConstraints : zeno::INode {
             });
 #endif
         }
-        groupList = std::make_shared<ListObject>();
+        groupList = create_ListObject();
         /// @note the output BulletObject list
         groupList->arr.resize(ncompounds);
         set_attrib<ListObject>(rblist, "compounds", groupList);
@@ -1324,7 +1330,7 @@ struct BulletMaintainRigidBodiesAndConstraints : zeno::INode {
         std::vector<std::shared_ptr<ListObject>> primLists(ncompounds);
         std::vector<std::unique_ptr<btCompoundShape>> btCpdShapes(ncompounds);
         pol(zip(primLists, btCpdShapes), [](auto &primPtr, auto &cpdShape) {
-            primPtr = std::make_shared<ListObject>();
+            primPtr = create_ListObject();
             cpdShape = std::make_unique<btCompoundShape>();
         });
 
@@ -1492,7 +1498,7 @@ struct BulletMaintainRigidBodiesAndConstraints : zeno::INode {
 #if DEBUG_CPD
         puts("newly prepared compounds\' states");
         {
-            auto cpds = groupList->get<BulletObject>();
+            auto cpds = groupList->getRaw<BulletObject>();
             pol(range(cpds), [&](auto &cpd) {
                 if (cpd->isCompound()) {
                     cpd->printDynamics(fmt::color::blue);
@@ -1511,7 +1517,7 @@ struct BulletMaintainRigidBodiesAndConstraints : zeno::INode {
         ///
         /// @brief generate bulletconstraints
         /// @note the output BulletConstraint list
-        auto conslist = std::make_shared<ListObject>();
+        auto conslist = create_ListObject();
         conslist->arr.resize(numPreservedCons);
         // numPreservedCons, gatheredCons, gatheredConsIs, gatheredConsJs, gatheredConsCompIs, gatheredConsCompJs
 
@@ -1534,3 +1540,4 @@ ZENDEFNODE(BulletMaintainRigidBodiesAndConstraints, {
                                                     });
 
 } // namespace zeno
+#endif

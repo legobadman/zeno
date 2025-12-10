@@ -71,9 +71,9 @@ struct ShaderTernaryMath : ShaderNodeClone<ShaderTernaryMath> {
 
 ZENDEFNODE(ShaderTernaryMath, {
     {
-        {gParamType_Float, "in1", "0"},
-        {gParamType_Float, "in2", "0"},
-        {gParamType_Float, "in3", "0"},
+        {gParamType_AnyNumeric, "in1", "0.0", zeno::Socket_Primitve, zeno::Lineedit},
+        {gParamType_AnyNumeric, "in2", "0.0", zeno::Socket_Primitve, zeno::Lineedit},
+        {gParamType_AnyNumeric, "in3", "0.0", zeno::Socket_Primitve, zeno::Lineedit},
         {(std::string)"enum " + ternops, "op", "mix"},
     },
     {
@@ -150,8 +150,8 @@ struct ShaderBinaryMath : ShaderNodeClone<ShaderBinaryMath> {
 
 ZENDEFNODE(ShaderBinaryMath, {
     {
-        {gParamType_Float, "in1", "0"},
-        {gParamType_Float, "in2", "0"},
+        {gParamType_AnyNumeric, "in1", "0.0", zeno::Socket_Primitve, zeno::Lineedit},
+        {gParamType_AnyNumeric, "in2", "0.0", zeno::Socket_Primitve, zeno::Lineedit},
         {(std::string)"enum " + binops, "op", "add"},
     },
     {

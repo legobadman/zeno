@@ -90,7 +90,7 @@ void ZenoBlackboardPropWidget::insertRow(const QString &desc, const zeno::ParamC
         }
     };
     zeno::ParamType type = desc == "title" ? ui_gParamType_String : ui_gParamType_Vec3f;
-    QWidget *pControl = zenoui::createWidget(m_idx, anyVal, ctrl, type, cbSet, zeno::reflect::Any());
+    QWidget *pControl = zenoui::createWidget(m_idx, "", anyVal, ctrl, type, cbSet, zeno::reflect::Any());
     pControl->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
     if (desc == "title") {
         m_pTitle = qobject_cast<ZTextEdit *>(pControl);

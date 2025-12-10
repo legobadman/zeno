@@ -32,14 +32,14 @@ namespace zeno
         void reset_forloop_settings();
         bool is_continue_to_run(CalcContext* pContext);
         void increment();
-        zany get_iterate_object();
+        IObject* get_iterate_object();
         void apply() override;
         void apply_foreach(CalcContext* pContext);
         void adjustCollectObjInfo();
-        void clearCalcResults();
+        void clearCalcResults() override;
 
         zany m_iterate_object;
-        zeno::SharedPtr<ListObject> m_collect_objs;     //TODO: 如果foreach的对象是Dict，但这里收集的结果将会以list返回出去，以后再支持Dict的收集
-        std::vector<zany> m_last_collect_objs;
+        std::unique_ptr<ListObject> m_collect_objs;     //TODO: 如果foreach的对象是Dict，但这里收集的结果将会以list返回出去，以后再支持Dict的收集
+        //std::vector<IObject*> m_last_collect_objs;    //直接储存raw pointer危险
     };
 }

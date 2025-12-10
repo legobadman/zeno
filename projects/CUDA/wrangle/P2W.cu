@@ -6,7 +6,6 @@
 #include "zensim/zpc_tpls/fmt/format.h"
 
 // from projects/ZenoFX/p2w.cpp : ParticlesTwoWrangle
-#include "dbg_printf.h"
 #include <cassert>
 #include <cuda.h>
 #include <zeno/core/Graph.h>
@@ -15,6 +14,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
@@ -33,13 +33,13 @@ struct ZSParticlesTwoWrangler : zeno::INode {
     }
     void apply() override {
         using namespace zs;
-        auto code = get_input<StringObject>("zfxCode")->get();
+        auto code = zsString2Std(get_input2_string("zfxCode"));
 
-        auto parObjPtr = get_input<ZenoParticles>("ZSParticles");
-        auto parObjPtr2 = get_input<ZenoParticles>("ZSParticles2");
+        auto parObjPtr = safe_uniqueptr_cast<ZenoParticles>(clone_input("ZSParticles"));
+        auto parObjPtr2 = safe_uniqueptr_cast<ZenoParticles>(clone_input("ZSParticles2"));
 
         if (parObjPtr->numParticles() != parObjPtr2->numParticles()) {
-            dbg_printf("prim and prim2 size mismatch (%d != %d), using minimal\n", parObjPtr->numParticles(),
+            printf("prim and prim2 size mismatch (%d != %d), using minimal\n", parObjPtr->numParticles(),
                        parObjPtr2->numParticles());
         }
 
@@ -50,7 +50,7 @@ struct ZSParticlesTwoWrangler : zeno::INode {
 
         /// params
         auto params =
-            has_input("params") ? get_input<zeno::DictObject>("params") : std::make_shared<zeno::DictObject>();
+            has_input("params") ? safe_uniqueptr_cast<DictObject>(clone_input("params")) : std::make_unique<zeno::DictObject>();
         {
             // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
             auto const &gs = *this->getGlobalState();
@@ -59,6 +59,7 @@ struct ZSParticlesTwoWrangler : zeno::INode {
             params->lut["DT"] = objectFromLiterial(gs.frame_time);
             params->lut["T"] = objectFromLiterial(gs.frame_time * gs.getFrameId() + gs.frame_time_elapsed);
             // END心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
+#if 0
             // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动引用portal做参数
             for (auto const &[key, ref] : getThisGraph()->portalIns) {
                 if (auto i = code.find('$' + key); i != std::string::npos) {
@@ -66,7 +67,7 @@ struct ZSParticlesTwoWrangler : zeno::INode {
                     if (code.size() <= i || !std::isalnum(code[i])) {
                         if (params->lut.count(key))
                             continue;
-                        dbg_printf("ref portal %s\n", key.c_str());
+                        printf("ref portal %s\n", key.c_str());
                         auto res =
                             getThisGraph()->callTempNode("PortalOut", {{"name:", objectFromLiterial(key)}}).at("port");
                         params->lut[key] = std::move(res);
@@ -74,6 +75,7 @@ struct ZSParticlesTwoWrangler : zeno::INode {
                 }
             }
             // END心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动引用portal做参数
+#endif
             // BEGIN伺候心欣伺候懒得extract出变量了
             std::vector<std::string> keys;
             for (auto const &[key, val] : params->lut) {
@@ -81,7 +83,7 @@ struct ZSParticlesTwoWrangler : zeno::INode {
             }
             for (auto const &key : keys) {
                 if (!dynamic_cast<zeno::NumericObject *>(params->lut.at(key).get())) {
-                    dbg_printf("ignored non-numeric %s\n", key.c_str());
+                    printf("ignored non-numeric %s\n", key.c_str());
                     params->lut.erase(key);
                 }
             }
@@ -89,7 +91,8 @@ struct ZSParticlesTwoWrangler : zeno::INode {
         }
         std::vector<float> parvals;
         std::vector<std::pair<std::string, int>> parnames;
-        for (auto const &[key_, par] : params->getLiterial<zeno::NumericValue>()) {
+        for (auto const &[key_, obj] : params->lut) {
+            auto par = zeno::objectToLiterial<zeno::NumericValue>(obj);
             auto key = '$' + key_;
             auto dim = std::visit(
                 [&](auto const &v) {
@@ -118,7 +121,7 @@ struct ZSParticlesTwoWrangler : zeno::INode {
                     }
                 },
                 par);
-            //dbg_printf("define param: %s dim %d\n", key.c_str(), dim);
+            //printf("define param: %s dim %d\n", key.c_str(), dim);
             opts.define_param(key, dim);
         }
 
@@ -161,12 +164,12 @@ struct ZSParticlesTwoWrangler : zeno::INode {
             for (auto const &[name, dim] : prog->newsyms) {
                 assert(name[0] == '@');
                 if (name[1] == '@')
-                    err_printf("ERROR: cannot define new attribute %s on prim2\n", name.c_str());
+                    printf("ERROR: cannot define new attribute %s on prim2\n", name.c_str());
                 auto key = name.substr(1);
                 if (!checkDuplication(key))
                     newChns.push_back(PropertyTag{key, dim});
                 if (dim != 3 && dim != 1)
-                    err_printf("ERROR: bad attribute dimension for primitive: %d\n", dim);
+                    printf("ERROR: bad attribute dimension for primitive: %d\n", dim);
             }
             if (newChns.size() > 0)
                 pars.append_channels(cudaPol, newChns);
@@ -265,7 +268,7 @@ struct ZSParticlesTwoWrangler : zeno::INode {
             cuCtxSynchronize();
         }
 
-        set_output("ZSParticles", get_input("ZSParticles"));
+        set_output("ZSParticles", std::move(parObjPtr));
     }
 
   private:
@@ -273,11 +276,11 @@ struct ZSParticlesTwoWrangler : zeno::INode {
 };
 
 ZENDEFNODE(ZSParticlesTwoWrangler, {
-                                       {{"ZenoParticles", "ZSParticles"},
-                                        {"ZenoParticles", "ZSParticles2"},
+                                       {{gParamType_Particles, "ZSParticles"},
+                                        {gParamType_Particles, "ZSParticles2"},
                                         {gParamType_String, "zfxCode"},
-                                        {"DictObject:NumericObject", "params"}},
-                                       {"ZSParticles"},
+                                        {gParamType_Dict, "params"}},
+                                       {{gParamType_Particles, "ZSParticles"}},
                                        {},
                                        {"zswrangle"},
                                    });

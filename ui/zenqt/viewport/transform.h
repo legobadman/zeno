@@ -94,7 +94,7 @@ private:
     }
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<GeometryObject_Adapter>> m_objects;
+    std::unordered_map<std::string, GeometryObject_Adapter*> m_objects;
     std::set<std::string> m_objectsKeys;
 
     ObjectNodeInfo m_objnodeinfo;

@@ -17,7 +17,7 @@ namespace zeno
       auto frag = ZImpl(get_input<zeno::StringObject>("frag"))->get();
       auto common = ZImpl(get_input<zeno::StringObject>("common"))->get();
       auto extensions = ZImpl(get_input<zeno::StringObject>("extensions"))->get();
-      auto mtl = std::make_shared<zeno::MaterialObject>();
+      auto mtl = std::make_unique<zeno::MaterialObject>();
 
       if (vert.empty()) vert = R"(
 #version 120
@@ -99,7 +99,7 @@ struct ExtractMaterialShader : zeno::INode
 {
     virtual void apply() override {
       auto mtl = ZImpl(get_input<zeno::MaterialObject>("mtl"));
-      auto s = [] (std::string const &s) { auto p = std::make_shared<StringObject>(); p->set(s); return p; };
+      auto s = [] (std::string const &s) { auto p = std::make_unique<StringObject>(); p->set(s); return p; };
       ZImpl(set_output("vert", s(mtl->vert)));
       ZImpl(set_output("frag", s(mtl->frag)));
       ZImpl(set_output("common", s(mtl->common)));
@@ -113,8 +113,8 @@ struct ExtractMaterialShader : zeno::INode
     virtual void apply() override
     {
       auto prim = ZImpl(get_input<zeno::PrimitiveObject>("prim"));
-      auto mtl = ZImpl(get_input<zeno::MaterialObject>("mtl"));
-      prim->mtl = mtl;
+      auto mtl = safe_uniqueptr_cast<zeno::MaterialObject>(clone_input("mtl"));
+      prim->mtl.reset(mtl.release());
       ZImpl(set_output("prim", std::move(prim)));
     }
   };
@@ -145,14 +145,13 @@ struct ExtractMaterialShader : zeno::INode
         if(ZImpl(has_input2<zeno::ListObject>("object"))) {
             auto list = ZImpl(get_input2<zeno::ListObject>("object"));
             for (auto p: list->get()) {
-                auto np = std::dynamic_pointer_cast<PrimitiveObject>(p);
-                np->userData()->set_string("mtlid", stdString2zs(mtlid));
+                p->userData()->set_string("mtlid", stdString2zs(mtlid));
             }
             set_output("object", std::move(list));
             return;
         }
 
-      auto obj = ZImpl(get_input<zeno::PrimitiveObject>("object"));
+      auto obj = clone_input_Geometry("object");
       
       auto mtlid2 = ZImpl(get_input2<std::string>("mtlid"));
       int matNum = obj->userData()->get_int("matNum",0);
@@ -164,20 +163,9 @@ struct ExtractMaterialShader : zeno::INode
       obj->userData()->set_int("matNum", 1);
       obj->userData()->set_string("Material_0", stdString2zs(mtlid2));
       obj->userData()->set_string("mtlid", stdString2zs(mtlid));
-      if(obj->tris.size()>0)
-      {
-          obj->tris.add_attr<int>("matid");
-          obj->tris.attr<int>("matid").assign(obj->tris.size(),0);
-      }
-      if(obj->quads.size()>0)
-      {
-          obj->quads.add_attr<int>("matid");
-          obj->quads.attr<int>("matid").assign(obj->quads.size(),0);
-      }
-      if(obj->polys.size()>0)
-      {
-          obj->polys.add_attr<int>("matid");
-          obj->polys.attr<int>("matid").assign(obj->polys.size(),0);
+      if (obj->nfaces() > 0) {
+          int matid = 0;
+          obj->create_face_attr("matid", matid);
       }
       ZImpl(set_output("object", std::move(obj)));
     }
@@ -187,11 +175,11 @@ struct ExtractMaterialShader : zeno::INode
       BindMaterial,
       {
           {
-              {gParamType_Primitive, "object", "", zeno::Socket_ReadOnly, zeno::NullControl},
+              {gParamType_IObject, "object", "", zeno::Socket_ReadOnly, zeno::NullControl},
               {gParamType_String, "mtlid", "Mat1"},
           },
           {
-              {gParamType_Primitive, "object", "", zeno::Socket_Output, zeno::NullControl},
+              {gParamType_IObject, "object", "", zeno::Socket_Output, zeno::NullControl},
           },
           {},
           {
@@ -247,11 +235,9 @@ struct ExtractMaterialShader : zeno::INode
     {
         virtual void apply() override
         {
-            auto obj = ZImpl(get_input<zeno::IObject>("object"));
+            auto prim = get_input_Geometry("object")->toPrimitiveObject();
             auto isL = ZImpl(get_input2<int>("islight"));
             auto inverdir = ZImpl(get_input2<int>("invertdir"));
-
-            auto prim = dynamic_cast<zeno::PrimitiveObject *>(obj.get());
 
             zeno::vec3f clr;
             if (! prim->verts.has_attr("clr")) {
@@ -267,10 +253,10 @@ struct ExtractMaterialShader : zeno::INode
                 }
             }
 
-            obj->userData()->set_int("isRealTimeObject", std::move(isL));
-            obj->userData()->set_int("isL", std::move(isL));
-            obj->userData()->set_int("ivD", std::move(inverdir));
-            ZImpl(set_output("object", std::move(obj)));
+            prim->userData()->set_int("isRealTimeObject", std::move(isL));
+            prim->userData()->set_int("isL", std::move(isL));
+            prim->userData()->set_int("ivD", std::move(inverdir));
+            set_output("object", create_GeometryObject(prim.get()));
         }
     };
 
@@ -278,12 +264,12 @@ struct ExtractMaterialShader : zeno::INode
         BindLight,
         {
             {
-                {gParamType_Primitive, "object", "", zeno::Socket_ReadOnly},
+                {gParamType_Geometry, "object", "", zeno::Socket_ReadOnly},
                 {gParamType_Bool, "islight", "1"},// actually string or list
                 {gParamType_Bool, "invertdir", "0"}
             },
             {
-                {gParamType_Primitive, "object"},
+                {gParamType_Geometry, "object"},
             },
             {},
             {
@@ -302,7 +288,7 @@ struct ExtractMaterialShader : zeno::INode
 
         virtual void apply() override {
 
-            auto prim = get_input_PrimitiveObject("in");
+            auto prim = clone_input_PrimitiveObject("in");
 
             auto a_value = ZImpl(get_input2<std::string>(aKey(), ""));
             auto b_value = ZImpl(get_input2<std::string>(bKey(), ""));

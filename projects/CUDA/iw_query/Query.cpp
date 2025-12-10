@@ -4,7 +4,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include "bvh.h"
 #include "distanceQueries.h"
 #include "zensim/container/Bvh.hpp"
@@ -16,6 +16,9 @@
 #include "zensim/zpc_tpls/fmt/format.h"
 #include <chrono>
 #include <zeno/utils/log.h>
+#include <zeno/utils/interfaceutil.h>
+#include <zeno/core/typeinfo.h>
+#include "zeno_types/reflect/reflection.generated.hpp"
 
 namespace zeno {
 
@@ -24,11 +27,11 @@ namespace zeno {
 ///
 struct QueryNearestPoints : INode {
     void apply() override {
-        auto points = get_input<PrimitiveObject>("points");
-        auto prim = get_input<PrimitiveObject>("target_prim");
-        auto idTag = get_input2<std::string>("idTag");
-        auto distTag = get_input2<std::string>("distTag");
-        auto cpTag = get_input2<std::string>("closestPointTag");
+        auto points = get_input_Geometry("points")->toPrimitiveObject();
+        auto prim = get_input_Geometry("target_prim")->toPrimitiveObject();
+        auto idTag = zsString2Std(get_input2_string("idTag"));
+        auto distTag = zsString2Std(get_input2_string("distTag"));
+        auto cpTag = zsString2Std(get_input2_string("closestPointTag"));
 
         using v3f = ospcommon::vec3f;
         using v3i = ospcommon::vec3i;
@@ -332,20 +335,20 @@ struct QueryNearestPoints : INode {
 #endif
 #endif
 
-        set_output("points", points);
+        set_output("points", create_GeometryObject(points.get()));
     }
 };
 
 ZENDEFNODE(QueryNearestPoints, {/* inputs: */
                                 {
-                                    {gParamType_Primitive, "points", ""},
-                                    {gParamType_Primitive, "target_prim", ""},
+                                    {gParamType_Geometry, "points", ""},
+                                    {gParamType_Geometry, "target_prim", ""},
                                     {gParamType_String, "idTag", "bvh_id"},
                                     {gParamType_String, "distTag", "bvh_dist"},
                                     {gParamType_String, "closestPointTag", "cp"},
                                 },
                                 /* outputs: */
-                                {{gParamType_Primitive, "points", ""}},
+                                {{gParamType_Geometry, "points", ""}},
                                 /* params: */
                                 {},
                                 /* category: */

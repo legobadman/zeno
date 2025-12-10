@@ -1,4 +1,4 @@
-#ifndef __ZENO_MAINWINDOW_H__
+﻿#ifndef __ZENO_MAINWINDOW_H__
 #define __ZENO_MAINWINDOW_H__
 
 #include <unordered_set>
@@ -17,6 +17,7 @@ class LiveSignalsBridge;
 class ViewportWidget;
 class ZenoPropPanel;
 class ZenoImagePanel;
+class ZGeometrySpreadsheet;
 
 namespace ads
 {
@@ -50,6 +51,7 @@ public:
     DisplayWidget* getCurrentViewport() const;
     DisplayWidget* getOptixWidget() const;
     ZenoGraphsEditor* getAnyEditor() const;
+    QVector<ZGeometrySpreadsheet*> getGeoSpreadSheet() const;
     void dispatchCommand(QAction* pAction, bool bTriggered);
     void onSolverCallback(zeno::SOLVER_MSG msg, int startFrame, int endFrame);
     void sortRecentFile(QStringList &lst);
@@ -58,6 +60,7 @@ public:
     void statusbarShowMessage(const std::string& text, int timeout = 0) const;
 
     bool propPanelIsFloating(ZenoPropPanel* panel);
+    void updateStatusTip(bool showProgress, const QString& text, float progress = 0.f);
 
     QLineEdit* selected = nullptr;
 
@@ -169,7 +172,7 @@ public slots:
     void importGraph(bool bPreset = false);
     void exportGraph();
     void onNodesSelected(GraphModel* subgraph, const QModelIndexList& nodes, bool select);
-    void onPrimitiveSelected(const std::unordered_set<std::string>& primids);
+    void onPrimitiveSelected(const std::unordered_set<std::string>& primids, std::string mtlid = "", bool selecFromOpitx = false);
     void updateViewport(const QString& action = "");
     void onRunFinished();
     void onFeedBack();
@@ -184,8 +187,7 @@ public slots:
     void toggleTimelinePlay(bool bOn);
     void onZenovisFrameUpdate(bool bGLView, int frameid);
     void onCheckUpdate();
-    void onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg);
-    void justLoadObjects();
+    void onCalcFinished(bool bSucceed, QString nodeUuidPath, QString msg);
     void reload_qml();
     void onSetTimelineValue();
     void onComposeVideo();
@@ -204,6 +206,7 @@ protected:
 private:
     void init(PANEL_TYPE onlyView);
     void initMenu();
+    void initStatusBar();
     void initDocks(PANEL_TYPE onlyView);
     void initAllDockWidgets();
     void initWindowProperty();
@@ -240,6 +243,8 @@ private:
     int m_nResizeTimes;
     bool m_bOnlyOptix;          //isolate optix window.
     QScopedPointer<Ui::MainWindow> m_ui;
+
+    QProgressBar* m_status_progressbar;
 
     std::unique_ptr<QLocalSocket> optixClientSocket;
     bool m_bOptixProcRecording = false;

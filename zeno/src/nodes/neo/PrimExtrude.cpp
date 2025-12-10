@@ -6,7 +6,6 @@
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/arrayindex.h>
 #include <zeno/utils/variantswitch.h>
-#include <zeno/extra/TempNode.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/zeno.h>
 #include <numeric>
@@ -29,7 +28,7 @@ struct PrimExtrude : INode {
         auto averagedExtrude = ZImpl(get_input2<bool>("averagedExtrude"));
         auto flipOldFaces = ZImpl(get_input2<bool>("flipOldFaces"));
 
-        auto prim2 = std::make_shared<PrimitiveObject>(*prim);
+        auto prim2 = std::make_unique<PrimitiveObject>(*prim);
 
         if (autoFindEdges && !maskAttr.empty()) {
             //AttrVector<vec2i> oldlines = std::move(prim2->lines);

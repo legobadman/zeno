@@ -26,6 +26,9 @@ ZCodeEditor::ZCodeEditor(const QString& text, QWidget *parent)
     setText(text);
     initUI();
 
+    QFont fnt("Consolas", 14);
+    setFont(fnt);
+
     connect(this, &QTextEdit::cursorPositionChanged, this, &ZCodeEditor::slt_showFuncDesc);
     //connect(this, &QTextEdit::textChanged, [this]() {
     //    int currDocHeight = this->document()->size().height();

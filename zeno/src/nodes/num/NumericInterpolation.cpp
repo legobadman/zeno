@@ -71,7 +71,7 @@ struct NumericInterpolation : zeno::INode {
             dst = interp_f(fac, dstMin, dstMax);
         }, fac, dstMin, dstMax);
 
-        auto ret = std::make_shared<zeno::NumericObject>();
+        auto ret = std::make_unique<zeno::NumericObject>();
         ret->value = dst;
         ZImpl(set_output("dst", std::move(ret)));
     }

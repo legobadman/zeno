@@ -15,8 +15,10 @@
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
@@ -29,6 +31,11 @@ using GenericWorkAttribute =
     std::variant<zs::tuple<int, int, int>, std::vector<int>>;
 
 struct WorkNode : IObject {
+
+    std::unique_ptr<zeno::IObject> clone() const override {
+        auto pCloned = std::make_unique<WorkNode>(*this);
+        return pCloned;
+    }
   //
   std::string tag;
   std::vector<std::string> workItems;

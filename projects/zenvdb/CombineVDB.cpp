@@ -76,7 +76,7 @@ struct  ResampleVDBGrid : zeno::INode {
             auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("resampleFrom"));
             resampleVDB<openvdb::Vec3fGrid>(source->m_grid, target->m_grid);
         }
-        set_output("resampleTo", get_input("resampleTo"));
+        set_output("resampleTo", clone_input("resampleTo"));
     } else {
         printf("ERROR: resample type mismarch!!");
     }
@@ -99,15 +99,12 @@ struct CombineVDB : zeno::INode{
 
     std::string targetType = safe_dynamic_cast<VDBGrid>(get_input("FieldA"))->getType();
     std::string sourceType = safe_dynamic_cast<VDBGrid>(get_input("FieldB"))->getType();
-    std::shared_ptr<VDBFloatGrid> dataf;
-    
+
     if(targetType == sourceType && targetType== "FloatGrid")
     {
         auto OpType = zsString2Std(get_param_string("OpType"));
-        dataf = std::make_shared<VDBFloatGrid>();
-        
-        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
-        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
+        auto target = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldA"));
+        auto source = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldB"));
         if (get_param_bool("writeBack")) {
             auto srcgrid = source->m_grid->deepCopy();
             if(OpType=="CSGUnion") {
@@ -117,9 +114,9 @@ struct CombineVDB : zeno::INode{
             } else if(OpType=="CSGDifference") {
               openvdb::tools::csgDifference(*(target->m_grid), *(srcgrid));
             }
-            set_output("FieldOut", get_input("FieldA"));
+            set_output("FieldOut", std::move(target));
         } else {
-            auto result = std::make_shared<VDBFloatGrid>();
+            auto result = std::make_unique<VDBFloatGrid>();
             if(OpType=="CSGUnion") {
               result->m_grid = openvdb::tools::csgUnionCopy(*(target->m_grid), *(source->m_grid));
             } else if(OpType=="CSGIntersection") {
@@ -127,59 +124,59 @@ struct CombineVDB : zeno::INode{
             } else if(OpType=="CSGDifference") {
               result->m_grid = openvdb::tools::csgDifferenceCopy(*(target->m_grid), *(source->m_grid));
             }
-            set_output("FieldOut", result);
+            set_output("FieldOut", std::move(result));
         }
     }
     auto OpType = zsString2Std(get_param_string("OpType"));
     if(OpType== "Add")
     {
       if(targetType == sourceType && targetType== "FloatGrid"){
-        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
-        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
+        auto target = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldA"));
+        auto source = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compSum(*(target->m_grid), *(srcgrid));
-        set_output("FieldOut", get_input("FieldA"));
+        set_output("FieldOut", std::move(target));
       }
       if(targetType == sourceType && targetType== "Vec3fGrid"){
-        auto target = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldA"));
-        auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldB"));
+        auto target = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("FieldA"));
+        auto source = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compSum(*(target->m_grid), *(srcgrid));
-        set_output("FieldOut", get_input("FieldA"));
+        set_output("FieldOut", std::move(target));
       }
     }
     if(OpType== "Mul")
     {
       if(targetType == sourceType && targetType== "FloatGrid"){
-        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
-        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
+        auto target = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldA"));
+        auto source = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compMul(*(target->m_grid), *(srcgrid));
-        set_output("FieldOut", get_input("FieldA"));
+        set_output("FieldOut", std::move(target));
       }
       if(targetType == sourceType && targetType== "Vec3fGrid"){
-        auto target = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldA"));
-        auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldB"));
+        auto target = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("FieldA"));
+        auto source = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compMul(*(target->m_grid), *(srcgrid));
-        set_output("FieldOut", get_input("FieldA"));
+        set_output("FieldOut", std::move(target));
       }
     }
     if(OpType== "Replace")
     {
       if(targetType == sourceType && targetType== "FloatGrid"){
-        auto target = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldA"));
-        auto source = safe_dynamic_cast<VDBFloatGrid>(get_input("FieldB"));
+        auto target = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldA"));
+        auto source = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compReplace(*(target->m_grid), *(srcgrid));
-        set_output("FieldOut", get_input("FieldA"));
+        set_output("FieldOut", std::move(target));
       }
       if(targetType == sourceType && targetType== "Vec3fGrid"){
-        auto target = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldA"));
-        auto source = safe_dynamic_cast<VDBFloat3Grid>(get_input("FieldB"));
+        auto target = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("FieldA"));
+        auto source = safe_uniqueptr_cast<VDBFloat3Grid>(clone_input("FieldB"));
         auto srcgrid = source->m_grid->deepCopy();
         openvdb::tools::compReplace(*(target->m_grid), *(srcgrid));
-        set_output("FieldOut", get_input("FieldA"));
+        set_output("FieldOut", std::move(target));
       }
     }
     

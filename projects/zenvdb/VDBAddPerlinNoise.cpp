@@ -29,7 +29,7 @@ struct fuck_openvdb_vec<openvdb::Vec3f> {
 
 struct VDBPerlinNoise : INode {
   virtual void apply() override {
-    auto inoutSDF = safe_dynamic_cast<VDBFloatGrid>(get_input("inoutSDF"));
+    auto inoutSDF = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("inoutSDF"));
     auto scale = get_input2_float("scale");
     auto scale3d = toVec3f(get_input2_vec3f("scale3d"));
     auto detail = get_input2_float("detail");
@@ -74,7 +74,7 @@ struct VDBPerlinNoise : INode {
     auto velman = openvdb::tree::LeafManager<std::decay_t<decltype(grid->tree())>>(grid->tree());
     velman.foreach(wrangler);
 
-    set_output("inoutSDF", get_input("inoutSDF"));
+    set_output("inoutSDF", std::move(inoutSDF));
   }
 };
 

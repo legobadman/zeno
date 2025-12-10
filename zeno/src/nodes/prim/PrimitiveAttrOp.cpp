@@ -33,7 +33,7 @@ struct PrimitiveFillAttr : INode {
         }
     }, arr, value);
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -79,7 +79,7 @@ struct PrimitivePrintAttr : INode {
         printf("\n");
     });
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -129,7 +129,7 @@ struct PrimitiveRandomizeAttr : INode {
         }
     });
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 
@@ -160,7 +160,7 @@ struct PrimitiveRandomAttr : INode {
   virtual void apply() override {
     auto prim = ZImpl(has_input("prim")) ?
         ZImpl(get_input<PrimitiveObject>("prim")) :
-        std::make_shared<PrimitiveObject>();
+        std::make_unique<PrimitiveObject>();
     auto min = ZImpl(get_input<NumericObject>("min"));
     auto max = ZImpl(get_input<NumericObject>("max"));
     auto attrName = ZImpl(get_param<std::string>(("attrName")));
@@ -185,7 +185,7 @@ struct PrimitiveRandomAttr : INode {
         }
     });
 
-    ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+    ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
   }
 };
 

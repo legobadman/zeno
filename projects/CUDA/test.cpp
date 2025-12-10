@@ -7,6 +7,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/zeno.h>
 //#include "zensim/geometry/VdbLevelSet.h"
@@ -243,7 +244,7 @@ struct ZSFileTest : INode {
         constexpr auto space = execspace_e::openmp;
         auto pol = omp_exec();
 
-        auto fn = get_input2<std::string>("file");
+        auto fn = zsString2Std(get_input2_string("file"));
 #if 0
         auto vallocator = get_virtual_memory_source(memsrc_e::host, -1, (size_t)1 << (size_t)23, "STACK");
 
@@ -707,9 +708,14 @@ struct TestAdaptiveGrid : INode {
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
 
+        zany input_sdf;
         openvdb::FloatGrid::Ptr sdf;
-        if (has_input("sdf"))
-            sdf = get_input("sdf")->as<VDBFloatGrid>()->m_grid;
+        if (has_input("sdf")) {
+            input_sdf = clone_input("sdf");
+            if (auto ptrGrid = dynamic_cast<VDBFloatGrid*>(input_sdf.get())) {
+                sdf = ptrGrid->m_grid;
+            }
+        }
         else {
             sdf = zs::load_floatgrid_from_vdb_file("/home/mine/Codes/zeno2/zeno/assets/tozeno.vdb")
                       .as<openvdb::FloatGrid::Ptr>();
@@ -865,16 +871,16 @@ struct TestAdaptiveGrid : INode {
         //openvdb::Mat4R
         auto trans = sdf->transform().baseMap()->getAffineMap()->getMat4();
 
-        auto ret = std::make_shared<VDBFloatGrid>();
+        auto ret = std::make_unique<VDBFloatGrid>();
         auto &dstGrid = ret->m_grid;
         fmt::print("vec3fgrid value_type: {}\n", get_type_str<typename openvdb::Vec3fGrid::ValueType>());
-        set_output("vdb", ret);
+        set_output("vdb", std::move(ret));
     }
 };
 
 ZENDEFNODE(TestAdaptiveGrid, {
-                                 {"sdf"},
-                                 {"vdb"},
+                                 {{gParamType_VDBGrid, "sdf"}},
+                                 {{gParamType_VDBGrid, "vdb"}},
                                  {},
                                  {"ZPCTest"},
                              });

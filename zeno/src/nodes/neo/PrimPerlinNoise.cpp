@@ -17,7 +17,7 @@
 
 namespace zeno {
 
-ZENO_API void primPerlinNoise(PrimitiveObject *prim, std::string inAttr, std::string outAttr, std::string outType, float scale, float detail, float roughness, float disortion, vec3f offset, float average, float strength) {
+static void primPerlinNoise(PrimitiveObject *prim, std::string inAttr, std::string outAttr, std::string outType, float scale, float detail, float roughness, float disortion, vec3f offset, float average, float strength) {
     prim->attr_visit(inAttr, [&] (auto const &inArr) {
         std::visit([&] (auto outTypeId) {
             using InT = std::decay_t<decltype(inArr[0])>;
@@ -76,7 +76,7 @@ struct PrimPerlinNoise : INode {
         auto outType = ZImpl(get_input2<std::string>("outType"));
         primPerlinNoise(prim.get(), inAttr, outAttr, outType, scale,
                         detail, roughness, disortion, offset, average, strength);
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 

@@ -1,4 +1,4 @@
-#include "zenonodenew.h"
+﻿#include "zenonodenew.h"
 #include "zenosubgraphscene.h"
 #include "uicommon.h"
 #include "control/common_id.h"
@@ -104,8 +104,10 @@ ZenoNodeNew::ZenoNodeNew(const NodeUtilParam &params, QGraphicsItem *parent)
     , m_NameItemTip(nullptr)
     , m_statusMarker(nullptr)
     , m_errorTip(nullptr)
+    , m_frameNodeMark(nullptr)
     , m_nameItem(nullptr)
     , m_dirtyMarker(nullptr)
+    , m_pLockMark(nullptr)
 {
     setFlags(ItemIsMovable | ItemIsSelectable);
     setAcceptHoverEvents(true);
@@ -289,6 +291,35 @@ void ZenoNodeNew::updateNodeNameByEditor() {
         ZGraphicsLayout::updateHierarchy(textEditor);
 }
 
+void ZenoNodeNew::initLockMark() {
+    static const int lock_iconsz = 16, hmargin = 16, vmargin = 28, space_lbl_lock = 4, lbl_voffset = -2;
+
+    bool bLocked = m_index.data(QtRole::ROLE_NODE_LOCKED).toBool();
+    const QString& nodecls = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
+
+    m_pLockMark = new ZenoImageItem(":/icons/lock.svg", ":/icons/lock.svg", ":/icons/unlock.svg",
+        QSize(lock_iconsz, lock_iconsz), m_nameEditor);
+    QRectF brNameEditor = m_nameEditor->boundingRect();
+    m_pLockMark->setCheckable(true);
+    m_pLockMark->setPos(brNameEditor.width() - lock_iconsz, brNameEditor.height());
+
+    m_pLockMark->toggle(!bLocked);
+    m_pLockMark->setClickable(false);
+
+    auto br = m_pLockMark->boundingRect();
+
+    QFont fnt = QApplication::font();
+    fnt.setPointSize(10);
+    fnt.setWeight(QFont::Normal);
+
+    ZSimpleTextItem* lblAssetName = new ZSimpleTextItem(nodecls, fnt, QColor("#666666"), m_pLockMark);
+
+    QFontMetrics metrics(fnt);
+    int xoffset = metrics.horizontalAdvance(nodecls) + space_lbl_lock;
+    qreal yoffset = lock_iconsz / 2 - metrics.height() / 2 + lbl_voffset;
+    lblAssetName->setPos(-xoffset, yoffset);
+}
+
 ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 {
     ZLayoutBackground* headerWidget = new ZLayoutBackground;
@@ -367,7 +398,7 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 
     RoundRectInfo buttonShapeInfo;
     buttonShapeInfo.W = ZenoStyle::dpiScaled(22.);
-    buttonShapeInfo.H = ZenoStyle::dpiScaled(50.);
+    buttonShapeInfo.H = ZenoStyle::dpiScaled(44.);
     buttonShapeInfo.ltradius = buttonShapeInfo.rtradius = ZenoStyle::dpiScaled(9.);
     //根据是否有visible的socket显示来决定
     buttonShapeInfo.lbradius = buttonShapeInfo.rbradius = bBodyVisible ? 0 : ZenoStyle::dpiScaled(9.);
@@ -399,7 +430,14 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     pHLayout->addItem(m_pStatusWidgets1, Qt::AlignLeft);
 
     pHLayout->addSpacing(ZenoStyle::dpiScaled(16.));
-    const QSizeF szIcon = ZenoStyle::dpiScaledSize(QSizeF(26, 26));
+    const QSizeF szIcon = ZenoStyle::dpiScaledSize(QSizeF(24, 24));
+
+    if (zeno::getSession().is_frame_node(nodeCls.toStdString())) {
+        m_frameNodeMark = new ZenoImageItem(":/icons/time-frame-mark.svg", "", "", QSizeF(20, 20), headerWidget);
+        m_frameNodeMark->setPos(QPointF(-24, 28));
+        m_frameNodeMark->setToolTip(tr("Every time the frame is changed, the node will be marked dirty"));
+    }
+
     if (!iconResPath.isEmpty())
     {
         ImageElement elem;
@@ -412,12 +450,26 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
         m_nameEditor->setDefaultTextColor(QColor("#CCCCCC"));
         m_nameEditor->setTextLengthAsBounding(true);
         m_nameEditor->setFont(font2);
-        qreal ww = m_nameEditor->boundingRect().width() + ZenoStyle::dpiScaled(8);
-        m_nameEditor->setPos(-ww, 14);
+        m_nameEditor->setTransparnetBackground(true);
+        QRectF brNameEditor = m_nameEditor->boundingRect();
+        qreal ww = brNameEditor.width() + ZenoStyle::dpiScaled(8);
+        qreal hh = brNameEditor.height();
+        qreal nameEditor_height = 0;
+
+        zeno::NodeType type = static_cast<zeno::NodeType>(m_index.data(QtRole::ROLE_NODETYPE).toInt());
+        if (type == zeno::Node_AssetInstance) {
+            initLockMark();
+        }
+        nameEditor_height = 8;
+        m_nameEditor->setPos(-ww, nameEditor_height);
+
         connect(m_nameEditor, &ZEditableTextItem::contentsChanged, this, [=]() {
             qreal ww = m_nameEditor->textLength() + ZenoStyle::dpiScaled(8);
-            m_nameEditor->setPos(-ww, 14);
+            m_nameEditor->setPos(-ww, nameEditor_height);
         });
+        if (m_frameNodeMark) {
+            m_frameNodeMark->setPos(-24, nameEditor_height + brNameEditor.height());
+        }
         connect(m_nameEditor, &ZGraphicsTextItem::editingFinished, this, &ZenoNodeNew::updateNodeNameByEditor);
     }
     else {
@@ -643,6 +695,16 @@ void ZenoNodeNew::onNameUpdated(const QString& newName)
     {
         m_nameItem->setText(newName);
         ZGraphicsLayout::updateHierarchy(m_nameItem);
+    }
+}
+
+void ZenoNodeNew::onNodeLockedChanged(bool bLocked) {
+    if (!m_pLockMark) {
+        //有可能是从subnet升级为asset instance
+        initLockMark();
+    }
+    else {
+        m_pLockMark->toggle(!bLocked);
     }
 }
 
@@ -981,6 +1043,11 @@ void ZenoNodeNew::markNodeStatus(QmlNodeRunStatus::Value status)
         ZASSERT_EXIT(m_dirtyMarker);
         m_dirtyMarker->setColors(false, clrMarker);
     }
+    else if (m_nodeStatus == QmlNodeRunStatus::ResultTaken) {
+        QColor clrMarker(240, 194, 248);
+        ZASSERT_EXIT(m_dirtyMarker);
+        m_dirtyMarker->setColors(false, clrMarker);
+    }
     else {
         if (m_errorTip)
             m_errorTip->hide();
@@ -1199,26 +1266,26 @@ void ZenoNodeNew::onZoomed()
     }
     else if (m_NameItemTip == nullptr) 
     {
-        /*
+
         const QString& nodeCls = m_index.data(QtRole::ROLE_NODE_NAME).toString();
         m_NameItemTip = new ZSimpleTextItem(nodeCls, this);
 
         QFont font2 = QApplication::font();
-        font2.setPointSize(14);
-        font2.setWeight(QFont::Normal);
+        font2.setPointSize(9);
+        font2.setWeight(QFont::ExtraLight);
 
         m_NameItemTip->setBrush(QColor("#CCCCCC"));
         m_NameItemTip->setFlag(QGraphicsItem::ItemIgnoresTransformations);
         m_NameItemTip->setFont(font2);
         m_NameItemTip->show();
-        */
+
     }
     if (m_NameItemTip) 
     {
         QString name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
         if (m_NameItemTip->text() != name)
             m_NameItemTip->setText(name);
-        //m_NameItemTip->setPos(QPointF(m_headerWidget->pos().x(), -ZenoStyle::scaleWidth(36)));
+        m_NameItemTip->setPos(QPointF(m_headerWidget->pos().x(), -ZenoStyle::scaleWidth(36)));
     }
 }
 
@@ -1286,26 +1353,45 @@ bool ZenoNodeNew::eventFilter(QObject* obj, QEvent* event)
         QEvent::Type type = event->type();
         switch (type)
         {
-        case QEvent::GraphicsSceneMousePress: {
-            QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
-            _cache_name_move = mouseEvent->scenePos();
-            ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(this->scene());
-            ZASSERT_EXIT(pScene, false);
-            pScene->select({m_index});
-            break;
-        }
-        case QEvent::GraphicsSceneMouseMove: {
-            QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
-            QPointF mousePos = mouseEvent->scenePos();
-            qreal mx = mousePos.x(), my = mousePos.y();
-            QPointF currPos = this->scenePos();
-            qreal cx = currPos.x(), cy = currPos.y();
-
-            QPointF offset = mousePos - _cache_name_move;
-            setPos(currPos + offset);
-            _cache_name_move = mousePos;
-            break;
-        }
+            case QEvent::GraphicsSceneMousePress: {
+                QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
+                _cache_name_move = mouseEvent->scenePos();
+                _cache_origin_pos = _cache_name_move;
+                if (!isSelected()) {
+                    ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(this->scene());
+                    ZASSERT_EXIT(pScene, false);
+                    pScene->select({ m_index });
+                }
+                break;
+            }
+            case QEvent::GraphicsSceneMouseRelease: {
+                QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
+                QPointF mousePos = mouseEvent->scenePos();
+                ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(this->scene());
+                ZASSERT_EXIT(pScene, false);
+                if (isSelected() &&
+                    pScene->selectedItems().size() > 1 &&
+                    qAbs(mouseEvent->scenePos().x() - _cache_origin_pos.x()) < 3 &&
+                    qAbs(mouseEvent->scenePos().y() - _cache_origin_pos.y()) < 3) {
+                    pScene->select({ m_index });
+                }
+                mouseReleaseEvent(mouseEvent);
+                break;
+            }
+            case QEvent::GraphicsSceneMouseMove: {
+                QGraphicsSceneMouseEvent* mouseEvent = static_cast<QGraphicsSceneMouseEvent*>(event);
+                QPointF mousePos = mouseEvent->scenePos();
+                QPointF offset = mousePos - _cache_name_move;
+                auto selectedItems = scene()->selectedItems();
+                for (int i = 0; i < selectedItems.size(); i++) {
+                    auto cur = selectedItems.at(i);
+                    if (ZenoNodeBase* base = qgraphicsitem_cast<ZenoNodeBase*>(cur)) {
+                        cur->setPos(cur->scenePos() + offset);
+                    }
+                }
+                _cache_name_move = mousePos;
+                break;
+            }
         }
     }
     return _base::eventFilter(obj, event);
@@ -1314,15 +1400,15 @@ bool ZenoNodeNew::eventFilter(QObject* obj, QEvent* event)
 
 void ZenoNodeNew::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 {
-    if (const GraphModel* pModel = QVariantPtr<GraphModel>::asPtr(m_index.data(QtRole::ROLE_GRAPH)))
-    {
-        if (pModel->isLocked())
-            return;
-    }
     _base::mouseDoubleClickEvent(event);
     QList<QGraphicsItem*> items = scene()->items(event->scenePos());
     if (items.contains(m_nameEditor))
     {
+        if (const GraphModel* pModel = QVariantPtr<GraphModel>::asPtr(m_index.data(QtRole::ROLE_GRAPH)))
+        {
+            if (pModel->isLocked())
+                return;
+        }
         QString name = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
         if (name == m_nameEditor->toPlainText())
         {

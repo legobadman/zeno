@@ -22,8 +22,8 @@ struct PrimitiveAttrPicker : zeno::INode {
                 int i;
                 ss >> i;
                 selected_indices.push_back(i);
-                auto idx = std::make_shared<NumericObject>(i);
-                selected_indices_numeric.push_back(idx);
+                auto idx = std::make_unique<NumericObject>(i);
+                selected_indices_numeric.push_back(std::move(idx));
                 ss.clear();
             };
             for (auto c : selected) {
@@ -49,7 +49,7 @@ struct PrimitiveAttrPicker : zeno::INode {
             }
         }
 
-        auto list = create_ListObject(stdVec2zeVec(selected_indices_numeric));
+        auto list = create_ListObject(std::move(selected_indices_numeric));
         ZImpl(set_output("list", std::move(list)));
         ZImpl(set_output("outPrim", std::move(prim)));
     }

@@ -11,7 +11,7 @@ namespace zeno {
 struct TraceOneStep : INode {
   virtual void apply() override {
     auto steps = get_input2_int("steps");
-    auto prim = get_input_PrimitiveObject("prim");
+    auto prim = clone_input_PrimitiveObject("prim");
     auto vecField = safe_dynamic_cast<VDBFloat3Grid>(get_input("vecField"));
     auto size = get_input2_int("size");
     auto dt = get_input2_float("dt");

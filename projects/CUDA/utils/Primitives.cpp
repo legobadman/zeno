@@ -18,10 +18,11 @@
 #include <zeno/ListObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
-
+#include <zeno/geo/commonutil.h>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 
@@ -70,7 +71,7 @@ static zs::Vector<zs::AABBBox<3, float>> retrieve_bounding_volumes(zs::OmpExecut
 #if 0
 struct PrimitiveConnectedComponents : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
@@ -162,7 +163,7 @@ struct PrimitiveConnectedComponents : INode {
 
         auto outPrim = std::make_shared<PrimitiveObject>();
         outPrim->resize(pos.size());
-        auto id = get_input2<int>("set_index");
+        auto id = get_input2_int("set_index");
         int setSize = 0;
         for (int i = 0; i != pos.size(); ++i)
             if (setids[i] == id)
@@ -182,14 +183,14 @@ struct PrimitiveConnectedComponents : INode {
         fmt::print("=================\n\n");
 #endif
 
-        set_output("prim", std::move(outPrim));
+        set_output("prim", create_GeometryObject(outPrim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveConnectedComponents, {
-                                             {{gParamType_Primitive, "prim"}, {gParamType_Int, "set_index", "0"}},
+                                             {{gParamType_Geometry, "prim"}, {gParamType_Int, "set_index", "0"}},
                                              {
-                                                 {gParamType_Primitive, "prim"},
+                                                 {gParamType_Geometry, "prim"},
                                              },
                                              {},
                                              {"zs_query"},
@@ -198,7 +199,7 @@ ZENDEFNODE(PrimitiveConnectedComponents, {
 
 struct PrimitiveConnectedComponents : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
@@ -315,13 +316,12 @@ struct PrimitiveConnectedComponents : INode {
         });
         exclusive_scan(pol, std::begin(vertexCounts), std::end(vertexCounts), std::begin(vertexOffsets));
 
-        auto outPrims = std::make_shared<ListObject>();
-        outPrims->arr.resize(numSets);
+        auto outPrims = std::make_unique<ListObject>();
+        outPrims->resize(numSets);
 
         std::vector<int> preserveMarks(pos.size()), preserveOffsets(pos.size());
         for (int setNo = 0; setNo != numSets; ++setNo) {
-            auto primIsland = std::make_shared<PrimitiveObject>();
-            outPrims->arr[setNo] = primIsland;
+            auto primIsland = std::make_unique<PrimitiveObject>();
             /// @brief comptact vertices
             primIsland->resize(vertexCounts[setNo]);
             // add custom vert attributes
@@ -385,7 +385,8 @@ struct PrimitiveConnectedComponents : INode {
                         }
                     }
                 });
-            } else {
+            }
+            else {
                 // loops
                 // select polys
                 pol(enumerate(polys), [&](int ei, vec2i poly) {
@@ -475,14 +476,17 @@ struct PrimitiveConnectedComponents : INode {
                     }
                 });
             }
+
+            outPrims->set(setNo, std::move(primIsland));
         }
+
 
         set_output("prim_islands", std::move(outPrims));
     }
 };
 
 ZENDEFNODE(PrimitiveConnectedComponents, {
-                                             {{gParamType_Primitive, "prim"}},
+                                             {{gParamType_Geometry, "prim"}},
                                              {
                                                  {gParamType_List, "prim_islands"},
                                              },
@@ -493,7 +497,7 @@ ZENDEFNODE(PrimitiveConnectedComponents, {
 // assuming point uv and triangle topo
 struct PrimitiveMarkIslands : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
@@ -568,14 +572,14 @@ struct PrimitiveMarkIslands : INode {
         std::sort(kvs.begin(), kvs.end(), lessOp);
         pol(enumerate(kvs), [&invMap](int no, auto kv) { invMap[kv.second] = no; });
 
-        auto islandTag = get_input2<std::string>("island_tag");
+        auto islandTag = zsString2Std(get_input2_string("island_tag"));
         auto &setids = prim->add_attr<int>(islandTag);
         pol(range(pos.size()), [&fas, &setids, &invMap, vtab = view<space>(vtab)](int vi) mutable {
             auto ancestor = fas[vi];
             auto setNo = vtab.query(ancestor);
             setids[vi] = invMap[setNo];
         });
-        if (get_input2<bool>("mark_face")) {
+        if (get_input2_bool("mark_face")) {
             auto &faceids = polys.add_attr<int>(islandTag);
             pol(zip(polys.values, faceids), [&](const auto &poly, int &fid) {
                 auto offset = poly[0];
@@ -592,15 +596,15 @@ struct PrimitiveMarkIslands : INode {
         if (isTris) {
             primTriangulate(prim.get(), true, false);
         }
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveMarkIslands, {
-                                     {{gParamType_Primitive, "prim"}, {gParamType_String, "island_tag", "island_index"},
+                                     {{gParamType_Geometry, "prim"}, {gParamType_String, "island_tag", "island_index"},
                                       {gParamType_Bool, "mark_face", "0"}},
                                      {
-                                         {gParamType_Primitive, "prim"},
+                                         {gParamType_Geometry, "prim"},
                                      },
                                      {},
                                      {"zs_geom"},
@@ -609,9 +613,9 @@ ZENDEFNODE(PrimitiveMarkIslands, {
 
 struct PrimitiveReorder : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        bool orderVerts = get_input2<bool>("order_vertices");
-        bool orderTris = get_input2<bool>("order_tris");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        bool orderVerts = get_input2_bool("order_vertices");
+        bool orderTris = get_input2_bool("order_tris");
 
         using namespace zs;
         using bv_t = zs::AABBBox<3, zs::f32>;
@@ -772,15 +776,15 @@ struct PrimitiveReorder : INode {
             }
         }
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveReorder,
            {
-               {{gParamType_Primitive, "prim"}, {gParamType_Bool, "order_vertices", "0"}, {gParamType_Bool, "order_tris", "1"}},
+               {{gParamType_Geometry, "prim"}, {gParamType_Bool, "order_vertices", "0"}, {gParamType_Bool, "order_tris", "1"}},
                {
-                   {gParamType_Primitive, "prim"},
+                   {gParamType_Geometry, "prim"},
                },
                {},
                {"zs_geom"},
@@ -805,7 +809,8 @@ static std::set<std::string> separate_string_by(const std::string &tags, const s
 /// vert attrib either promoted or averaged during fusion
 struct PrimitiveFuse : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        ;
         using namespace zs;
         using zsbvh_t = ZenoLinearBvh;
         using bvh_t = zsbvh_t::lbvh_t;
@@ -814,7 +819,7 @@ struct PrimitiveFuse : INode {
 
         auto &verts = prim->verts;
         const auto &pos = verts.values;
-        auto preservedAttribs_ = get_input2<std::string>("preserved_vert_attribs");
+        auto preservedAttribs_ = zsString2Std(get_input2_string("preserved_vert_attribs"));
         std::set<std::string> preservedAttribs = separate_string_by(preservedAttribs_, " :;,.");
         std::set<std::string> promotedAttribs;
         RM_CVREF_T(prim->verts) newVerts;
@@ -827,7 +832,7 @@ struct PrimitiveFuse : INode {
         });
 
         /// @brief establish vert proximity topo
-        auto dist = get_input2<float>("proximity_theshold");
+        auto dist = get_input2_float("proximity_theshold");
         std::shared_ptr<zsbvh_t> zsbvh;
         ZenoLinearBvh::element_e et = ZenoLinearBvh::point;
         auto bvs = retrieve_bounding_volumes(pol, pos, dist);
@@ -1025,16 +1030,17 @@ struct PrimitiveFuse : INode {
 
         /// @brief update verts
         verts = newVerts;
-        set_output("prim", std::move(prim));
+
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveFuse, {
-                              {{gParamType_Primitive, "prim"},
+                              {{gParamType_Geometry, "prim"},
                                {gParamType_Float, "proximity_theshold", "0.00001"},
                                {gParamType_String, "preserved_vert_attribs", ""}},
                               {
-                                  {gParamType_Primitive, "prim"},
+                                  {gParamType_Geometry, "prim"},
                               },
                               {},
                               {"zs_geom"},
@@ -1057,7 +1063,7 @@ struct PrimitiveFuse2 : INode {
         return res;
     }
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         using zsbvh_t = ZenoLinearBvh;
@@ -1067,11 +1073,11 @@ struct PrimitiveFuse2 : INode {
 
         auto &verts = prim->verts;
         const auto &pos = verts.values;
-        auto preservedAttribs_ = get_input2<std::string>("preserved_vert_attribs");
+        auto preservedAttribs_ = zsString2Std(get_input2_string("preserved_vert_attribs"));
         std::set<std::string> preservedAttribs = separate_string_by(preservedAttribs_, " :;,.");
         std::set<std::string> promotedAttribs;
         RM_CVREF_T(prim->verts) newVerts;
-        bool promoteRestAttribs = get_input2<bool>("promote_rest_attribs");
+        bool promoteRestAttribs = get_input2_bool("promote_rest_attribs");
         if (promoteRestAttribs)
             verts.foreach_attr<AttrAcceptAll>([&](auto const &key, auto const &arr) {
                 using T = std::decay_t<decltype(arr[0])>;
@@ -1088,7 +1094,7 @@ struct PrimitiveFuse2 : INode {
             });
 
         /// @brief establish vert proximity topo
-        auto dist = get_input2<float>("proximity_theshold");
+        auto dist = get_input2_float("proximity_theshold");
         std::shared_ptr<zsbvh_t> zsbvh;
         ZenoLinearBvh::element_e et = ZenoLinearBvh::point;
         auto bvs = retrieve_bounding_volumes(pol, pos, dist);
@@ -1293,19 +1299,20 @@ struct PrimitiveFuse2 : INode {
 
         /// @brief update verts
         verts = newVerts;
-        set_output("prim", std::move(prim));
+
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveFuse2, {
                                {
-                                   {gParamType_Primitive, "prim"},
+                                   {gParamType_Geometry, "prim"},
                                    {gParamType_Float, "proximity_theshold", "0.00001"},
                                    {gParamType_String, "preserved_vert_attribs", ""},
                                    {gParamType_Bool, "promote_rest_attribs", "true"},
                                },
                                {
-                                   {gParamType_Primitive, "prim"},
+                                   {gParamType_Geometry, "prim"},
                                },
                                {},
                                {"zs_geom"},
@@ -1313,7 +1320,7 @@ ZENDEFNODE(PrimitiveFuse2, {
 
 struct PointFuse : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("points");
+        auto prim = get_input_Geometry("points")->toPrimitiveObject();
         using namespace zs;
         using zsbvh_t = ZenoLinearBvh;
         using bvh_t = zsbvh_t::lbvh_t;
@@ -1322,9 +1329,9 @@ struct PointFuse : INode {
 
         auto &verts = prim->verts;
         const auto &pos = verts.values;
-        auto sumAttribs_ = get_input2<std::string>("sum_vert_attribs");
-        auto minAttribs_ = get_input2<std::string>("min_vert_attribs");
-        auto maxAttribs_ = get_input2<std::string>("max_vert_attribs");
+        auto sumAttribs_ = zsString2Std(get_input2_string("sum_vert_attribs"));
+        auto minAttribs_ = zsString2Std(get_input2_string("min_vert_attribs"));
+        auto maxAttribs_ = zsString2Std(get_input2_string("max_vert_attribs"));
         std::set<std::string> sumAttribs = separate_string_by(sumAttribs_, " :;,.");
         std::set<std::string> minAttribs = separate_string_by(minAttribs_, " :;,.");
         std::set<std::string> maxAttribs = separate_string_by(maxAttribs_, " :;,.");
@@ -1351,7 +1358,7 @@ struct PointFuse : INode {
         }
 
         /// @brief establish vert proximity topo
-        auto dist = get_input2<float>("proximity_theshold");
+        auto dist = get_input2_float("proximity_theshold");
         std::shared_ptr<zsbvh_t> zsbvh;
         ZenoLinearBvh::element_e et = ZenoLinearBvh::point;
         auto bvs = retrieve_bounding_volumes(pol, pos, dist);
@@ -1533,19 +1540,19 @@ struct PointFuse : INode {
 
         /// @brief update verts
         verts = newVerts;
-        set_output("points", std::move(prim));
+        set_output("points", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PointFuse, {
-                              {{gParamType_Primitive, "points"},
+                              {{gParamType_Geometry, "points"},
                                {gParamType_Float, "proximity_theshold", "0.00001"},
                                {gParamType_String, "sum_vert_attribs", ""},
                                {gParamType_String, "min_vert_attribs", ""},
                                {gParamType_String, "max_vert_attribs", ""},
                                },
                               {
-                                  {gParamType_Primitive, "points"},
+                                  {gParamType_Geometry, "points"},
                               },
                               {},
                               {"zs_geom"},
@@ -1570,7 +1577,7 @@ struct PrimitiveFuse : INode {
         return res;
     }
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         using zsbvh_t = ZenoLinearBvh;
@@ -1580,12 +1587,12 @@ struct PrimitiveFuse : INode {
 
         auto &verts = prim->verts;
         const auto &pos = verts.values;
-        auto preservedAttribs_ = get_input2<std::string>("preserved_vert_attribs");
+        auto preservedAttribs_ = zsString2Std(get_input2_string("preserved_vert_attribs"));
         std::set<std::string> preservedAttribs = separate_string_by(preservedAttribs_, " :;,.");
 
         /// @brief establish vert proximity topo
         RM_CVREF_T(prim->verts) newVerts;
-        auto dist = get_input2<float>("proximity_theshold");
+        auto dist = get_input2_float("proximity_theshold");
         std::shared_ptr<zsbvh_t> zsbvh;
         ZenoLinearBvh::element_e et = ZenoLinearBvh::point;
         auto bvs = retrieve_bounding_volumes(pol, pos, dist);
@@ -1815,16 +1822,16 @@ struct PrimitiveFuse : INode {
 
         /// @brief update verts
         verts = newVerts;
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveFuse, {
-                              {{gParamType_Primitive, "prim"},
+                              {{gParamType_Geometry, "prim"},
                                {gParamType_Float, "proximity_theshold", "0.00001"},
                                {gParamType_String, "preserved_vert_attribs", ""}},
                               {
-                                  {gParamType_Primitive, "prim"},
+                                  {gParamType_Geometry, "prim"},
                               },
                               {},
                               {"zs_geom"},
@@ -1883,13 +1890,13 @@ static void flatten_loop_uvs(AttrVector<int> &loops, AttrVector<zeno::vec2f> &uv
 #if 0
 struct PrimPromotePointAttribs : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
         auto pol = omp_exec();
 
-        auto promoteAttribs_ = get_input2<std::string>("promote_vert_attribs");
+        auto promoteAttribs_ = zsString2Std(get_input2_string("promote_vert_attribs"));
         std::set<std::string> promoteAttribs = separate_string_by(promoteAttribs_, " :;,.");
 
         auto &verts = prim->verts;
@@ -1929,9 +1936,9 @@ struct PrimPromotePointAttribs : INode {
 };
 
 ZENDEFNODE(PrimPromotePointAttribs, {
-                                        {{gParamType_Primitive, "prim"}, {gParamType_String, "promote_vert_attribs", ""}},
+                                        {{gParamType_Geometry, "prim"}, {gParamType_String, "promote_vert_attribs", ""}},
                                         {
-                                            {gParamType_Primitive, "prim"},
+                                            {gParamType_Geometry, "prim"},
                                         },
                                         {},
                                         {"zs_geom"},
@@ -1939,13 +1946,13 @@ ZENDEFNODE(PrimPromotePointAttribs, {
 
 struct PrimDemoteVertAttribs : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
         auto pol = omp_exec();
 
-        auto demoteAttribs_ = get_input2<std::string>("demote_vert_attribs");
+        auto demoteAttribs_ = zsString2Std(get_input2_string("demote_vert_attribs"));
         std::set<std::string> demoteAttribs = separate_string_by(demoteAttribs_, " :;,.");
 
         auto &verts = prim->verts;
@@ -2013,9 +2020,9 @@ struct PrimDemoteVertAttribs : INode {
 };
 
 ZENDEFNODE(PrimDemoteVertAttribs, {
-                                      {{gParamType_Primitive, "prim"}, {gParamType_String, "demote_vert_attribs", ""}},
+                                      {{gParamType_Geometry, "prim"}, {gParamType_String, "demote_vert_attribs", ""}},
                                       {
-                                          {gParamType_Primitive, "prim"},
+                                          {gParamType_Geometry, "prim"},
                                       },
                                       {},
                                       {"zs_geom"},
@@ -2024,14 +2031,14 @@ ZENDEFNODE(PrimDemoteVertAttribs, {
 
 struct PrimAttributePromote : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto &verts = prim->verts;
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
         auto pol = omp_exec();
 
-        auto promoteAttribs_ = get_input2<std::string>("promote_attribs");
+        auto promoteAttribs_ = zsString2Std(get_input2_string("promote_attribs"));
         std::set<std::string> promoteAttribs = separate_string_by(promoteAttribs_, " :;,.");
 
         auto &tris = prim->tris;
@@ -2051,7 +2058,7 @@ struct PrimAttributePromote : INode {
             throw std::runtime_error("[PrimAttributePromote] input primitive should either be a triangle mesh or in "
                                      "the poly-based representation.");
 
-        auto directionStr = get_input2<std::string>("direction");
+        auto directionStr = zsString2Std(get_input2_string("direction"));
 
         if (hasLoops) {
             ///
@@ -2089,7 +2096,7 @@ struct PrimAttributePromote : INode {
                 for (const auto &attr : promoteAttribs)
                     verts.erase_attr(attr);
             } else {
-                std::string strategy = get_input2<std::string>("merge_strategy");
+                std::string strategy = zsString2Std(get_input2_string("merge_strategy"));
                 int mergeOp = strategy == "average" ? 0 : (strategy == "min" ? 1 : 2);
 
                 auto initAttrib = [mergeOp](auto &arr) {
@@ -2252,7 +2259,7 @@ struct PrimAttributePromote : INode {
                 for (const auto &attr : promoteAttribs)
                     verts.erase_attr(attr);
             } else {
-                std::string strategy = get_input2<std::string>("merge_strategy");
+                std::string strategy = zsString2Std(get_input2_string("merge_strategy"));
                 int mergeOp = strategy == "average" ? 0 : (strategy == "min" ? 1 : 2);
 
                 auto initAttrib = [mergeOp](auto &arr) {
@@ -2430,25 +2437,25 @@ struct PrimAttributePromote : INode {
             }
         }
 
-        set_output("prim", prim);
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimAttributePromote, {
                                      {
-                                         {gParamType_Primitive, "prim"},
+                                         {gParamType_Geometry, "prim"},
                                          {gParamType_String, "promote_attribs", ""},
                                          {"enum point_to_vert vert_to_point", "direction", "point_to_vert"},
                                          {"enum average min max", "merge_strategy", "average"},
                                      },
                                      {
-                                         {gParamType_Primitive, "prim"},
+                                         {gParamType_Geometry, "prim"},
                                      },
                                      {},
                                      {"zs_geom"},
                                  });
 
-static std::shared_ptr<PrimitiveObject> unfuse_primitive(std::shared_ptr<PrimitiveObject> prim, std::string tag) {
+static std::unique_ptr<PrimitiveObject> unfuse_primitive(PrimitiveObject* prim, std::string tag) {
     using namespace zs;
     constexpr auto space = execspace_e::openmp;
     auto pol = omp_exec();
@@ -2516,7 +2523,7 @@ static std::shared_ptr<PrimitiveObject> unfuse_primitive(std::shared_ptr<Primiti
         }
     });
 
-    auto resPrim = std::make_shared<PrimitiveObject>();
+    auto resPrim = std::make_unique<PrimitiveObject>();
 
     resPrim->verts.resize(numEntries);
     auto &resVerts = resPrim->verts;
@@ -2597,7 +2604,7 @@ static std::shared_ptr<PrimitiveObject> unfuse_primitive(std::shared_ptr<Primiti
     return resPrim;
 }
 
-static void assign_group_tag_to_verts(std::shared_ptr<PrimitiveObject> prim, std::string tag) {
+static void assign_group_tag_to_verts(PrimitiveObject* prim, std::string tag) {
     using namespace zs;
     constexpr auto space = execspace_e::openmp;
     auto pol = omp_exec();
@@ -2641,33 +2648,33 @@ static void assign_group_tag_to_verts(std::shared_ptr<PrimitiveObject> prim, std
 /// @note duplicate vertices shared by multiple groups
 struct PrimitiveUnfuse : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto tag = get_input2<std::string>("partition_tag");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto tag = zsString2Std(get_input2_string("partition_tag"));
 
-        auto resPrim = unfuse_primitive(prim, tag);
+        auto resPrim = unfuse_primitive(prim.get(), tag);
 
-        bool toList = get_input2<bool>("to_list");
+        bool toList = get_input2_bool("to_list");
 
         if (toList) {
-            assign_group_tag_to_verts(resPrim, tag);
+            assign_group_tag_to_verts(resPrim.get(), tag);
 
             auto primList = primUnmergeVerts(resPrim.get(), tag);
-            auto listPrim = std::make_shared<ListObject>();
+            auto listPrim = std::make_unique<ListObject>();
             for (auto &primPtr : primList) {
                 listPrim->push_back(std::move(primPtr));
             }
             set_output("partitioned_prim", std::move(listPrim));
         } else {
-            set_output("partitioned_prim", std::move(resPrim));
+            set_output("partitioned_prim", create_GeometryObject(resPrim.get()));
         }
     }
 };
 ZENDEFNODE(PrimitiveUnfuse, {
-                                {{gParamType_Primitive, "prim"},
+                                {{gParamType_Geometry, "prim"},
                                  {gParamType_String, "partition_tag", "triangle_index"},
                                  {gParamType_Bool, "to_list", "false"}},
                                 {
-                                    {gParamType_Primitive, "partitioned_prim"},
+                                    {gParamType_IObject, "partitioned_prim"},
                                 },
                                 {},
                                 {"zs_geom"},
@@ -2675,19 +2682,20 @@ ZENDEFNODE(PrimitiveUnfuse, {
 
 struct PrimitiveUnmerge : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto tag = get_input2<std::string>("tagAttr");
-        auto method = get_input2<std::string>("method");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        
+        auto tag = zsString2Std(get_input2_string("tagAttr"));
+        auto method = zsString2Std(get_input2_string("method"));
 
-        if (get_input2<bool>("preSimplify")) {
+        if (get_input2_bool("preSimplify")) {
             primSimplifyTag(prim.get(), tag);
         }
         if (method == "faces") {
-            assign_group_tag_to_verts(prim, tag);
+            assign_group_tag_to_verts(prim.get(), tag);
         }
         auto primList = primUnmergeVerts(prim.get(), tag);
 
-        auto listPrim = std::make_shared<ListObject>();
+        auto listPrim = std::make_unique<ListObject>();
         for (auto &primPtr : primList) {
             listPrim->push_back(std::move(primPtr));
         }
@@ -2697,7 +2705,7 @@ struct PrimitiveUnmerge : INode {
 
 ZENDEFNODE(PrimitiveUnmerge, {
                                  {
-                                     {gParamType_Primitive, "prim"},
+                                     {gParamType_Geometry, "prim"},
                                      {gParamType_String, "tagAttr", "tag"},
                                      {gParamType_Bool, "preSimplify", "0"},
                                      {"enum verts faces", "method", "verts"},
@@ -2711,10 +2719,10 @@ ZENDEFNODE(PrimitiveUnmerge, {
 
 struct GatherPrimIds : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto refPrim = get_input<PrimitiveObject>("refPrim");
-        auto tag = get_input2<std::string>("tagAttr");
-        auto indexTag = get_input2<std::string>("refIndexTagAttr");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto refPrim = get_input_Geometry("refPrim")->toPrimitiveObject();
+        auto tag = zsString2Std(get_input2_string("tagAttr"));
+        auto indexTag = zsString2Std(get_input2_string("refIndexTagAttr"));
 
         const auto &targetIndices = prim->attr<int>("target_index");
         const auto &refAttr = refPrim->attr<int>(tag);
@@ -2724,19 +2732,19 @@ struct GatherPrimIds : INode {
         auto pol = omp_exec();
         pol(range(prim->size()), [&](int vi) { attr[vi] = refAttr[targetIndices[vi]]; });
 
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(GatherPrimIds, {
                               {
-                                  {gParamType_Primitive, "prim"},
-                                  {gParamType_Primitive, "refPrim"},
+                                  {gParamType_Geometry, "prim"},
+                                  {gParamType_Geometry, "refPrim"},
                                   {gParamType_String, "tagAttr", "id"},
                                   {gParamType_String, "refIndexTagAttr", "target_index"},
                               },
                               {
-                                  {gParamType_Primitive, "prim"},
+                                  {gParamType_Geometry, "prim"},
                               },
                               {},
                               {"primitive"},
@@ -2744,9 +2752,9 @@ ZENDEFNODE(GatherPrimIds, {
 
 struct MarkSelectedVerts : INode {
     void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto tagStr = get_input2<std::string>("selection_tag");
-        auto markedLines = get_input<PrimitiveObject>("marked_lines");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto tagStr = zsString2Std(get_input2_string("selection_tag"));
+        auto markedLines = get_input_Geometry("marked_lines")->toPrimitiveObject();
 
         auto &tags = prim->add_attr<float>(tagStr);
         using namespace zs;
@@ -2758,16 +2766,16 @@ struct MarkSelectedVerts : INode {
             tags[line[0]] = 1.f;
             tags[line[1]] = 1.f;
         });
-        set_output("prim", prim);
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(MarkSelectedVerts, {
 
-                                  {{gParamType_Primitive, "prim"},
+                                  {{gParamType_Geometry, "prim"},
                                    {gParamType_String, "selection_tag", "selected"},
-                                   {gParamType_Primitive, "marked_lines"}},
+                                   {gParamType_Geometry, "marked_lines"}},
                                   {
-                                      {gParamType_Primitive, "prim"},
+                                      {gParamType_Geometry, "prim"},
                                   },
                                   {},
                                   {"zs_geom"},
@@ -2779,7 +2787,7 @@ struct ComputeAverageEdgeLength : INode {
         constexpr auto space = execspace_e::openmp;
         auto pol = omp_exec();
 
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         const auto &pos = prim->attr<vec3f>("pos");
 
         std::vector<float> els(0);
@@ -2840,19 +2848,19 @@ struct ComputeAverageEdgeLength : INode {
         zs::reduce(pol, std::begin(els), std::end(els), std::begin(maxEl), zs::detail::deduce_numeric_min<float>(),
                    zs::getmax<float>{});
 
-        set_output("prim", prim);
-        set_output("average_edge_length", std::make_shared<NumericObject>(sum[0] / els.size()));
-        set_output("minimum_edge_length", std::make_shared<NumericObject>(minEl[0]));
-        set_output("maximum_edge_length", std::make_shared<NumericObject>(maxEl[0]));
+        set_output("prim", create_GeometryObject(prim.get()));
+        set_output_float("average_edge_length", sum[0] / els.size());
+        set_output_float("minimum_edge_length", minEl[0]);
+        set_output_float("maximum_edge_length", maxEl[0]);
     }
 };
 
 ZENDEFNODE(ComputeAverageEdgeLength, {
                                          {
-                                             {gParamType_Primitive, "prim"},
+                                             {gParamType_Geometry, "prim"},
                                          },
                                          {
-                                             {gParamType_Primitive, "prim"},
+                                             {gParamType_Geometry, "prim"},
                                              {gParamType_Float, "average_edge_length"},
                                              {gParamType_Float, "minimum_edge_length"},
                                              {gParamType_Float, "maximum_edge_length"},
@@ -2864,40 +2872,41 @@ ZENDEFNODE(ComputeAverageEdgeLength, {
 struct PrimitiveHasUV : INode {
     void apply() override {
 
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
-        auto ret = std::make_shared<NumericObject>(0);
+        bool ret = false;
         if (prim->verts.has_attr("uv"))
-            ret = std::make_shared<NumericObject>(1);
+            ret = true;
         if (prim->polys.size()) {
             if (prim->loops.has_attr("uvs") && prim->uvs.size() > 0)
-                ret = std::make_shared<NumericObject>(1);
+                ret = true;
         } else {
             if (prim->quads.size()) {
                 if (prim->quads.has_attr("uv0") && prim->quads.has_attr("uv1") && prim->quads.has_attr("uv2") &&
                     prim->quads.has_attr("uv3"))
-                    ret = std::make_shared<NumericObject>(1);
+                    ret = true;
             } else if (prim->tris.size()) {
                 if (prim->tris.has_attr("uv0") && prim->tris.has_attr("uv1") && prim->tris.has_attr("uv2"))
-                    ret = std::make_shared<NumericObject>(1);
+                    ret = true;
             } else if (prim->lines.size()) {
                 if (prim->lines.has_attr("uv0") && prim->lines.has_attr("uv1"))
-                    ret = std::make_shared<NumericObject>(1);
+                    ret = true;
             } else if (prim->points.size()) {
-                if (prim->points.has_attr("uv0"))
-                    ret = std::make_shared<NumericObject>(1);
+                if (prim->points.has_attr("uv0")) {
+                    ret = true;
+                }
             }
         }
-        set_output("prim", prim);
-        set_output("has_uv", ret);
+        set_output("prim", create_GeometryObject(prim.get()));
+        set_output_bool("has_uv", ret);
     }
 };
 ZENDEFNODE(PrimitiveHasUV, {
                                {
-                                   {gParamType_Primitive, "prim"},
+                                   {gParamType_Geometry, "prim"},
                                },
                                {
-                                   {gParamType_Primitive, "prim"},
+                                   {gParamType_Geometry, "prim"},
                                    {gParamType_Bool, "has_uv"},
                                },
                                {},
@@ -2907,23 +2916,23 @@ ZENDEFNODE(PrimitiveHasUV, {
 struct SurfacePointsInterpolation : INode {
     void apply() override {
         using namespace zs;
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         /// @note assume weight/index tag presence, attr tag can be constructed on-the-fly
-        auto attrTag = get_input2<std::string>("attrTag");
-        auto weightTag = get_input2<std::string>("weightTag");
-        auto indexTag = get_input2<std::string>("indexTag");
+        auto attrTag = zsString2Std(get_input2_string("attrTag"));
+        auto weightTag = zsString2Std(get_input2_string("weightTag"));
+        auto indexTag = zsString2Std(get_input2_string("indexTag"));
 
         auto &ws = prim->attr<vec3f>(weightTag);
         auto &triInds = prim->attr<float>(indexTag); // this in accordance with pnbvhw.cpp : QueryNearestPrimitive
 
         const int *vlocked = nullptr;
         if (has_input("vert_exclusion"))
-            if (get_input2<bool>("vert_exclusion"))
+            if (get_input2_bool("vert_exclusion"))
                 if (prim->has_attr("v_feature")) // generated during remesh
                     vlocked = prim->attr<int>("v_feature").data();
 
-        const auto refPrim = get_input<PrimitiveObject>("ref_prim");
-        auto refAttrTag = get_input2<std::string>("refAttrTag");
+        const auto refPrim = get_input_Geometry("ref_prim")->toPrimitiveObject();
+        auto refAttrTag = zsString2Std(get_input2_string("refAttrTag"));
 
         const auto &refTris = refPrim->tris.values;
         auto doWork = [&](const auto &srcAttr)
@@ -2946,23 +2955,22 @@ struct SurfacePointsInterpolation : INode {
             // auto &dstAttr = prim->attr(attrTag);
             match(doWork, [](...) {})(refPrim->attr(refAttrTag));
         }
-
-        set_output("prim", prim);
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(SurfacePointsInterpolation, {
                                            {
-                                               {gParamType_Primitive, "prim"},
+                                               {gParamType_Geometry, "prim"},
                                                {gParamType_String, "attrTag", "pos"},
                                                {gParamType_String, "weightTag"},
                                                {gParamType_String, "indexTag"},
-                                               {gParamType_Primitive, "ref_prim"},
+                                               {gParamType_Geometry, "ref_prim"},
                                                {gParamType_String, "refAttrTag", "pos"},
                                                {gParamType_Bool, "vert_exclusion", "false"},
                                            },
                                            {
-                                               {gParamType_Primitive, "prim"},
+                                               {gParamType_Geometry, "prim"},
                                            },
                                            {},
                                            {"zs_geom"},
@@ -2974,9 +2982,9 @@ struct ParticleCluster : zeno::INode {
         using bvh_t = zsbvh_t::lbvh_t;
         using bv_t = bvh_t::Box;
 
-        auto pars = get_input<zeno::PrimitiveObject>("pars");
-        float dist = get_input2<float>("dist");
-        float uvDist = get_input2<float>("uv_dist");
+        auto pars = get_input_Geometry("pars")->toPrimitiveObject();
+        float dist = get_input2_float("dist");
+        float uvDist = get_input2_float("uv_dist");
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
@@ -3049,7 +3057,7 @@ struct ParticleCluster : zeno::INode {
             fas[vi] = fa;
             vtab.insert(fa);
         });
-        auto &clusterids = pars->add_attr<float>(get_input2<std::string>("cluster_tag"));
+        auto &clusterids = pars->add_attr<float>(zsString2Std(get_input2_string("cluster_tag")));
         pol(range(pos.size()), [&clusterids, &fas, vtab = view<space>(vtab)](int vi) mutable {
             auto ancestor = fas[vi];
             auto clusterNo = vtab.query(ancestor);
@@ -3058,19 +3066,19 @@ struct ParticleCluster : zeno::INode {
         auto numClusters = vtab.size();
         fmt::print("{} clusters in total.\n", numClusters);
 
-        set_output("num_clusters", std::make_shared<NumericObject>((int)numClusters));
-        set_output("pars", std::move(pars));
+        set_output_int("num_clusters", (int)numClusters);
+        set_output("pars", create_GeometryObject(pars.get()));
     }
 };
 
 ZENDEFNODE(ParticleCluster, {
                                 {
-                                    {gParamType_Primitive, "pars"},
+                                    {gParamType_Geometry, "pars"},
                                     {gParamType_Float, "dist", "1"},
                                     {gParamType_Float, "uv_dist", "0"},
                                     {gParamType_String, "cluster_tag", "cluster_index"},
                                 },
-                                {{gParamType_Primitive, "pars"}, {gParamType_Int, "num_clusters"}},
+                                {{gParamType_Geometry, "pars"}, {gParamType_Int, "num_clusters"}},
                                 {},
                                 {"zs_geom"},
                             });
@@ -3081,9 +3089,9 @@ struct ParticleSegmentation : zeno::INode {
         using bvh_t = zsbvh_t::lbvh_t;
         using bv_t = bvh_t::Box;
 
-        auto pars = get_input<zeno::PrimitiveObject>("pars");
-        float dist = get_input2<float>("dist");
-        float uvDist2 = zs::sqr(get_input2<float>("uv_dist"));
+        auto pars = get_input_Geometry("pars")->toPrimitiveObject();
+        float dist = get_input2_float("dist");
+        float uvDist2 = zs::sqr(get_input2_float("uv_dist"));
         const vec2f *uvPtr = nullptr;
 
         if (pars->has_attr("uv") && std::sqrt(uvDist2) > zs::detail::deduce_numeric_epsilon<float>() * 10)
@@ -3165,7 +3173,7 @@ struct ParticleSegmentation : zeno::INode {
         std::vector<int> maskOut(pos.size());
         std::vector<int> clusterSize(pos.size());
         int clusterNo = 0;
-        auto &clusterids = pars->add_attr<float>(get_input2<std::string>("segment_tag"));
+        auto &clusterids = pars->add_attr<float>(zsString2Std(get_input2_string("segment_tag")));
         for (int color = 1; color <= ncolors; ++color) {
             pol(range(pos.size()), [&](int vi) {
                 if (colors[vi] != color)
@@ -3198,7 +3206,7 @@ struct ParticleSegmentation : zeno::INode {
         clusterSize.resize(clusterNo);
 
         /// further redistribute particles for more spatial-evenly distributed clusters
-        auto npp = get_input2<int>("post_process_cnt");
+        auto npp = get_input2_int("post_process_cnt");
         while (npp--) {
             std::vector<vec3f> clusterCenters(clusterNo);
             std::vector<vec2f> clusterUVCenters(clusterNo);
@@ -3250,7 +3258,7 @@ struct ParticleSegmentation : zeno::INode {
         }
         fmt::print("{} colors {} clusters.\n", ncolors, clusterNo);
 
-        if (get_input2<bool>("paint_color")) {
+        if (get_input2_bool("paint_color")) {
             auto &clrs = pars->add_attr<vec3f>("clr");
             pol(range(pos.size()), [&](int vi) {
                 std::mt19937 rng;
@@ -3275,30 +3283,32 @@ struct ParticleSegmentation : zeno::INode {
             throw std::runtime_error("some particles might be duplicated!");
 #endif
 
-        set_output("num_segments", std::make_shared<NumericObject>((int)clusterNo));
-        set_output("pars", std::move(pars));
+        set_output_int("num_segments", (int)clusterNo);
+        set_output("pars", create_GeometryObject(pars.get()));
     }
 };
 
 ZENDEFNODE(ParticleSegmentation, {
                                      {
-                                         {gParamType_Primitive, "pars"},
+                                         {gParamType_Geometry, "pars"},
                                          {gParamType_Float, "dist", "1"},
                                          {gParamType_Float, "uv_dist", "0"},
                                          {gParamType_String, "segment_tag", "segment_index"},
                                          {gParamType_Int, "post_process_cnt", "0"},
                                          {gParamType_Bool, "paint_color", "1"},
                                      },
-                                     {{gParamType_Primitive, "pars"}, {"NumericObject", "num_segments"}},
+                                     {
+                                         {gParamType_Geometry, "pars"},
+                                         {gParamType_Int, "num_segments"}},
                                      {},
                                      {"zs_geom"},
                                  });
 
 struct CollapseClusters : INode {
     void apply() override {
-        auto clusters = get_input<zeno::PrimitiveObject>("clusters");
-        auto numClusters = get_input2<int>("num_segments");
-        auto clusterTag = get_input2<std::string>("segment_tag");
+        auto clusters = get_input_Geometry("clusters")->toPrimitiveObject();
+        auto numClusters = get_input2_int("num_segments");
+        auto clusterTag = zsString2Std(get_input2_string("segment_tag"));
         auto pars = std::make_shared<PrimitiveObject>();
         pars->resize(numClusters);
 
@@ -3325,23 +3335,23 @@ struct CollapseClusters : INode {
                     printf("there exists cluster with no actual particles.\n");
             });
         }
-        set_output("pars", std::move(pars));
+        set_output("pars", create_GeometryObject(pars.get()));
     }
 };
 ZENDEFNODE(CollapseClusters, {
                                  {
-                                     {gParamType_Primitive, "clusters"},
+                                     {gParamType_Geometry, "clusters"},
                                      {gParamType_Int, "num_segments"},
                                      {gParamType_String, "segment_tag", "segment_index"},
                                  },
-                                 {{gParamType_Primitive, "pars"}},
+                                 {{gParamType_Geometry, "pars"}},
                                  {},
                                  {"zs_geom"},
                              });
 
 struct PrimitiveBFS : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
@@ -3392,7 +3402,7 @@ struct PrimitiveBFS : INode {
         pol(spmat._vals, [](int &v) { v = 1; });
         puts("done connectivity graph build");
 
-        auto id = get_input2<int>("vert_index");
+        auto id = get_input2_int("vert_index");
         if (id >= pos.size())
             id = 0;
 
@@ -3428,7 +3438,7 @@ struct PrimitiveBFS : INode {
         }
         fmt::print("{} bfs levels in total.\n", iter);
 
-        auto lid = get_input2<int>("level_index");
+        auto lid = get_input2_int("level_index");
         auto outPrim = std::make_shared<PrimitiveObject>();
         outPrim->resize(pos.size());
         int setSize = 0;
@@ -3437,14 +3447,14 @@ struct PrimitiveBFS : INode {
                 outPrim->attr<zeno::vec3f>("pos")[setSize++] = pos[i];
         outPrim->resize(setSize);
 
-        set_output("prim", std::move(outPrim));
+        set_output("prim", create_GeometryObject(outPrim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveBFS, {
-                             {{gParamType_Primitive, "prim"}, {gParamType_Int, "vert_index", "0"}, {gParamType_Int, "level_index", "0"}},
+                             {{gParamType_Geometry, "prim"}, {gParamType_Int, "vert_index", "0"}, {gParamType_Int, "level_index", "0"}},
                              {
-                                 {gParamType_Primitive, "prim"},
+                                 {gParamType_Geometry, "prim"},
                              },
                              {},
                              {"zs_query"},
@@ -3452,7 +3462,7 @@ ZENDEFNODE(PrimitiveBFS, {
 
 struct PrimitiveColoring : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         using namespace zs;
         constexpr auto space = execspace_e::openmp;
@@ -3623,15 +3633,14 @@ struct PrimitiveColoring : INode {
         }
 #endif
         fmt::print("{} colors in total.\n", iter);
-
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveColoring, {
-                                  {{gParamType_Primitive, "prim"}},
+                                  {{gParamType_Geometry, "prim"}},
                                   {
-                                      {gParamType_Primitive, "prim"},
+                                      {gParamType_Geometry, "prim"},
                                   },
                                   {},
                                   {"zs_query"},
@@ -3642,11 +3651,11 @@ struct PrimitiveProject : INode {
         using bvh_t = zs::LBvh<3, int, float>;
         using bv_t = typename bvh_t::Box;
 
-        auto prim = get_input<PrimitiveObject>("prim");
-        auto targetPrim = get_input<PrimitiveObject>("targetPrim");
-        auto limit = get_input2<float>("limit");
-        auto nrmAttr = get_input2<std::string>("nrmAttr");
-        auto side = get_input2<std::string>("side");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto targetPrim = get_input_Geometry("targetPrim")->toPrimitiveObject();
+        auto limit = get_input2_float("limit");
+        auto nrmAttr = zsString2Std(get_input2_string("nrmAttr"));
+        auto side = zsString2Std(get_input2_string("side"));
 
         int sideNo = 0;
         if (side == "closest")
@@ -3672,12 +3681,12 @@ struct PrimitiveProject : INode {
         auto const &nrm = prim->attr<vec3f>(nrmAttr);
         std::string distTag = "dist";
         if (has_input("distTag"))
-            distTag = get_input2<std::string>("distTag");
+            distTag = zsString2Std(get_input2_string("distTag"));
         auto &dists = prim->add_attr<float>(distTag);
 
         float tol = 5e-6f;
         if (has_input("threshold"))
-            tol = get_input2<float>("threshold");
+            tol = get_input2_float("threshold");
 
         pol(range(pos.size()), [&, bvh = proxy<space>(targetBvh), sideNo](size_t i) {
             using vec3 = zs::vec<float, 3>;
@@ -3736,15 +3745,14 @@ struct PrimitiveProject : INode {
                 pos[i] = (ro + dist * rd).to_array();
             dists[i] = dist;
         });
-
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveProject, {
                                  {
-                                     {gParamType_Primitive, "prim"},
-                                     {gParamType_Primitive, "targetPrim"},
+                                     {gParamType_Geometry, "prim"},
+                                     {gParamType_Geometry, "targetPrim"},
                                      {gParamType_String, "nrmAttr", "nrm"},
                                      {gParamType_Float, "limit", "0"},
                                      {gParamType_String, "distTag", "dist"},
@@ -3752,7 +3760,7 @@ ZENDEFNODE(PrimitiveProject, {
                                      {"enum closest farthest", "side", "farthest"},
                                  },
                                  {
-                                     {gParamType_Primitive, "prim"},
+                                     {gParamType_Geometry, "prim"},
                                  },
                                  {},
                                  {"zs_query"},
@@ -3772,26 +3780,26 @@ struct QueryClosestPrimitive : zeno::INode {
         }
     };
     void apply() override {
-        auto targetPrim = get_input<PrimitiveObject>("targetPrim");
-        auto &userData = targetPrim->userData();
-        auto bvhTag = get_input2<std::string>("bvh_tag");
-        auto zsbvh = std::dynamic_pointer_cast<zsbvh_t>(userData.get(bvhTag));
+        auto targetPrim = get_input_Geometry("targetPrim")->toPrimitiveObject();
+        auto userData = targetPrim->userData();
+        auto bvhTag = get_input2_string("bvh_tag");
+        auto zsbvh = safe_uniqueptr_cast<zsbvh_t>(userData->get(bvhTag));
         bvh_t &lbvh = zsbvh->get();
 
-        auto line = std::make_shared<PrimitiveObject>();
+        auto line = std::make_unique<PrimitiveObject>();
 
         using Ti = typename bvh_t::index_type;
         auto pol = zs::omp_exec();
         Ti pid = 0;
         Ti bvhId = -1;
         float dist = std::numeric_limits<float>::max();
-        if (has_input<PrimitiveObject>("prim")) {
-            auto prim = get_input<PrimitiveObject>("prim");
+        if (has_input("prim")) {
+            auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
-            auto idTag = get_input2<std::string>("idTag");
-            auto distTag = get_input2<std::string>("distTag");
-            auto radiusTag = get_input2<std::string>("radiusTag");
-            auto weightTag = get_input2<std::string>("weightTag");
+            auto idTag = zsString2Std(get_input2_string("idTag"));
+            auto distTag = zsString2Std(get_input2_string("distTag"));
+            auto radiusTag = zsString2Std(get_input2_string("radiusTag"));
+            auto weightTag = zsString2Std(get_input2_string("weightTag"));
 
             auto &bvhids = prim->add_attr<float>(idTag);
             auto &dists = prim->add_attr<float>(distTag);
@@ -3873,8 +3881,10 @@ struct QueryClosestPrimitive : zeno::INode {
                  "(of {})\n",
                  dist, bvhId, lbvh->getNumLeaves(), pid, prim->size());
 #endif
-        } else if (has_input<NumericObject>("prim")) {
-            auto p = get_input<NumericObject>("prim")->get<zeno::vec3f>();
+        }
+        /* ǲëprimȻNumeric? Ǹɴ಻Ҫڵϵͳˣֱд
+        else if (has_input<NumericObject>("prim")) {
+            auto p = get_input2_vec3f("prim");
             using vec3 = zs::vec<float, 3>;
             auto pi = vec3::from_array(p);
             auto lbvhv = zs::proxy<zs::execspace_e::host>(lbvh);
@@ -3907,21 +3917,22 @@ struct QueryClosestPrimitive : zeno::INode {
         } else
             throw std::runtime_error("unknown primitive kind (only supports "
                                      "PrimitiveObject and NumericObject::vec3f).");
+        */
 
         // line->verts.push_back(lbvh->retrievePrimitiveCenter(bvhId, w));
         // line->lines.push_back({0, 1});
 
-        set_output("primid", std::make_shared<NumericObject>(pid));
-        set_output("bvh_primid", std::make_shared<NumericObject>(bvhId));
-        set_output("dist", std::make_shared<NumericObject>(dist));
+        set_output_int("primid", pid);
+        set_output_int("bvh_primid", bvhId);
+        set_output_float("dist", dist);
         // set_output("bvh_prim", lbvh->retrievePrimitive(bvhId));
-        set_output("segment", std::move(line));
+        set_output("segment", create_GeometryObject(line.get()));
     }
 };
 
 ZENDEFNODE(QueryClosestPrimitive, {
-                                      {{gParamType_Primitive, "prim"},
-                                       {gParamType_Primitive, "targetPrim"},
+                                      {{gParamType_Geometry, "prim"},
+                                       {gParamType_Geometry, "targetPrim"},
                                        {gParamType_String, "idTag", "bvh_id"},
                                        {gParamType_String, "radiusTag", "query_radius"},
                                        {gParamType_String, "distTag", "bvh_dist"},
@@ -3930,8 +3941,8 @@ ZENDEFNODE(QueryClosestPrimitive, {
                                       {{gParamType_Int, "primid"},
                                        {gParamType_Int, "bvh_primid"},
                                        {gParamType_Float, "dist"},
-                                       {gParamType_Primitive, "bvh_prim"},
-                                       {gParamType_Primitive, "segment"}},
+                                       {gParamType_Geometry, "bvh_prim"},
+                                       {gParamType_Geometry, "segment"}},
                                       {},
                                       {"zs_query"},
                                   });
@@ -3939,13 +3950,13 @@ ZENDEFNODE(QueryClosestPrimitive, {
 
 struct FollowUpReferencePrimitive : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
-        auto idTag = get_input2<std::string>("idTag");
-        auto wsTag = get_input2<std::string>("weightTag");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto idTag = zsString2Std(get_input2_string("idTag"));
+        auto wsTag = zsString2Std(get_input2_string("weightTag"));
         auto &pos = prim->attr<zeno::vec3f>("pos");
         auto &ids = prim->attr<float>(idTag);
         auto &ws = prim->attr<zeno::vec3f>(wsTag);
-        auto refPrim = get_input2<PrimitiveObject>("ref_surf_prim");
+        auto refPrim = get_input_Geometry("ref_surf_prim")->toPrimitiveObject();
         auto &refPos = refPrim->attr<vec3f>("pos");
         auto &refTris = refPrim->tris.values;
         auto pol = zs::omp_exec();
@@ -3955,15 +3966,15 @@ struct FollowUpReferencePrimitive : INode {
             auto tri = refTris[triNo];
             pos[i] = w[0] * refPos[tri[0]] + w[1] * refPos[tri[1]] + w[2] * refPos[tri[2]];
         });
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(FollowUpReferencePrimitive, {
-                                           {{gParamType_Primitive, "prim"},
-                                            {gParamType_Primitive, "ref_surf_prim"},
+                                           {{gParamType_Geometry, "prim"},
+                                            {gParamType_Geometry, "ref_surf_prim"},
                                             {gParamType_String, "idTag", "bvh_id"},
                                             {gParamType_String, "weightTag", "bvh_ws"}},
-                                           {{gParamType_Primitive, "prim"}},
+                                           {{gParamType_Geometry, "prim"}},
                                            {},
                                            {"zs_geom"},
                                        });
@@ -4060,7 +4071,7 @@ struct KuhnMunkres {
 
 struct ComputeParticlesCenter : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         auto n = prim->size();
         const auto &pos = prim->attr<vec3f>("pos");
@@ -4086,15 +4097,13 @@ struct ComputeParticlesCenter : INode {
         calcCenter(1);
         calcCenter(2);
 
-        set_output("prim", std::move(prim));
-
-        auto ret = std::make_shared<NumericObject>(trans);
-        set_output("center", std::move(ret));
+        set_output("prim", create_GeometryObject(prim.get()));
+        set_output_vec3f("center", toAbiVec3f(trans));
     }
 };
 ZENDEFNODE(ComputeParticlesCenter, {
-                                       {{gParamType_Primitive, "prim"}},
-                                       {{gParamType_Primitive, "prim"}, {gParamType_Vec3f, "center"}},
+                                       {{gParamType_Geometry, "prim"}},
+                                       {{gParamType_Geometry, "prim"}, {gParamType_Vec3f, "center"}},
                                        {},
                                        {"zs_geom"},
                                    });
@@ -4129,7 +4138,7 @@ static zeno::vec3f compute_dimensions(const PrimitiveObject &primA, const Primit
 
 struct ComputeParticlesDirection : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
 
         auto n = prim->size();
         const auto &pos = prim->attr<vec3f>("pos");
@@ -4137,7 +4146,7 @@ struct ComputeParticlesDirection : INode {
         zeno::vec3f trans{0, 0, 0};
 
         if (has_input("origin")) {
-            trans = get_input2<zeno::vec3f>("origin");
+            trans = toVec3f(get_input2_vec3f("origin"));
         } else {
             std::vector<float> locs[3];
             for (int d = 0; d != 3; ++d) {
@@ -4178,26 +4187,25 @@ struct ComputeParticlesDirection : INode {
         fmt::print(fg(fmt::color::green), "trans: {}, {}, {}. direction: {}, {}, {}.\n", trans[0], trans[1], trans[2],
                    U(0, 0), U(1, 0), U(2, 0));
 #endif
+        set_output("prim", create_GeometryObject(prim.get()));
 
-        set_output("prim", std::move(prim));
-
-        auto ret = std::make_shared<NumericObject>(vec3f{U(0, 0), U(1, 0), U(2, 0)});
-        set_output("principal_direction", std::move(ret));
+        auto ret = Vec3f(U(0, 0), U(1, 0), U(2, 0));
+        set_output_vec3f("principal_direction", std::move(ret));
     }
 };
 ZENDEFNODE(ComputeParticlesDirection, {
-                                          {{gParamType_Primitive, "prim"}, {gParamType_Vec3f, "origin"}},
-                                          {{gParamType_Primitive, "prim"}, {gParamType_Vec3f, "principal_direction"}},
+                                          {{gParamType_Geometry, "prim"}, {gParamType_Vec3f, "origin"}},
+                                          {{gParamType_Geometry, "prim"}, {gParamType_Vec3f, "principal_direction"}},
                                           {},
                                           {"zs_geom"},
                                       });
 
 struct AssociateParticles : INode {
     void apply() override {
-        auto srcPrim = get_input2<PrimitiveObject>("srcPrim");
-        auto dstPrim = get_input2<PrimitiveObject>("dstPrim");
-        auto posTag = get_input2<std::string>("target_pos_tag");
-        auto indexTag = get_input2<std::string>("target_index_tag");
+        auto srcPrim = get_input_Geometry("srcPrim")->toPrimitiveObject();
+        auto dstPrim = get_input_Geometry("dstPrim")->toPrimitiveObject();
+        auto posTag = zsString2Std(get_input2_string("target_pos_tag"));
+        auto indexTag = zsString2Std(get_input2_string("target_index_tag"));
 
         auto &dstPos = srcPrim->add_attr<vec3f>(posTag);
         auto &dstIndices = srcPrim->add_attr<int>(indexTag);
@@ -4242,15 +4250,15 @@ struct AssociateParticles : INode {
                 }
             });
         }
-        set_output("srcPrim", std::move(srcPrim));
+        set_output("srcPrim", create_GeometryObject(srcPrim.get()));
     }
 };
 ZENDEFNODE(AssociateParticles, {
-                                   {{gParamType_Primitive, "srcPrim"},
+                                   {{gParamType_Geometry, "srcPrim"},
                                     {gParamType_String, "target_pos_tag", "target_pos"},
                                     {gParamType_String, "target_index_tag", "target_index"},
-                                    {gParamType_Primitive, "dstPrim"}},
-                                   {{gParamType_Primitive, "srcPrim"}},
+                                    {gParamType_Geometry, "dstPrim"}},
+                                   {{gParamType_Geometry, "srcPrim"}},
                                    {},
                                    {"zs_geom"},
                                });
@@ -4258,20 +4266,20 @@ ZENDEFNODE(AssociateParticles, {
 #if 0
 struct SetupParticleTransition : INode {
     void apply() override {
-        auto srcPars = get_input2<PrimitiveObject>("src_particles");
-        auto srcClusters = get_input2<PrimitiveObject>("src_clusters");
+        auto srcPars = get_input_Geometry("src_particles")->toPrimitiveObject();
+        auto srcClusters = get_input_Geometry("src_clusters")->toPrimitiveObject();
 
-        auto dstPars = get_input2<PrimitiveObject>("dst_particles");
-        auto dstClusters = get_input2<PrimitiveObject>("dst_clusters");
+        auto dstPars = get_input_Geometry("dst_particles")->toPrimitiveObject();
+        auto dstClusters = get_input_Geometry("dst_clusters")->toPrimitiveObject();
 
-        auto prim = get_input2<PrimitiveObject>("anim_particles");
+        auto prim = get_input_Geometry("anim_particles")->toPrimitiveObject();
 
-        auto particleClusterIndexTag = get_input2<std::string>("particle_cluster_index_tag");
-        auto clusterTargetIndexTag = get_input2<std::string>("cluster_target_index_tag");
-        auto transTag = get_input2<std::string>("per_frame_translation_tag");
+        auto particleClusterIndexTag = zsString2Std(get_input2_string("particle_cluster_index_tag"));
+        auto clusterTargetIndexTag = zsString2Std(get_input2_string("cluster_target_index_tag"));
+        auto transTag = zsString2Std(get_input2_string("per_frame_translation_tag"));
 
-        auto numTransFrames = get_input2<int>("num_transition_frames");
-        auto numFrames = get_input2<int>("num_animating_frames");
+        auto numTransFrames = get_input2_int("num_transition_frames");
+        auto numFrames = get_input2_int("num_animating_frames");
 
         // sizes
         auto nSrcPars = srcPars->size();
@@ -4431,23 +4439,23 @@ struct SetupParticleTransition : INode {
             }
         });
 #endif
-        set_output("anim_particles", std::move(prim));
+        set_output("anim_particles", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(SetupParticleTransition, {
                                         {
-                                            {gParamType_Primitive, "src_particles"},
-                                            {gParamType_Primitive, "src_clusters"},
-                                            {gParamType_Primitive, "dst_particles"},
-                                            {gParamType_Primitive, "dst_clusters"},
+                                            {gParamType_Geometry, "src_particles"},
+                                            {gParamType_Geometry, "src_clusters"},
+                                            {gParamType_Geometry, "dst_particles"},
+                                            {gParamType_Geometry, "dst_clusters"},
                                             {gParamType_String, "particle_cluster_index_tag", "segment_index"}, // for pars
                                             {gParamType_String, "cluster_target_index_tag", "target_index"},    // for clusters
                                             {gParamType_String, "per_frame_translation_tag", "frame_translation"},
                                             {gParamType_Int, "num_transition_frames", "20"},
                                             {gParamType_Int, "num_animating_frames", "100"},
-                                            {gParamType_Primitive, "anim_particles"},
+                                            {gParamType_Geometry, "anim_particles"},
                                         },
-                                        {{gParamType_Primitive, "anim_particles"}},
+                                        {{gParamType_Geometry, "anim_particles"}},
                                         {},
                                         {"zs_geom"},
                                     });
@@ -4455,18 +4463,19 @@ ZENDEFNODE(SetupParticleTransition, {
 
 struct SetupParticleTransitionDirect : INode {
     void apply() override {
-        auto srcPars = get_input2<PrimitiveObject>("src_particles");
+        
+        auto srcPars = get_input_Geometry("src_particles")->toPrimitiveObject();
 
-        auto dstPars = get_input2<PrimitiveObject>("dst_particles");
+        auto dstPars = get_input_Geometry("dst_particles")->toPrimitiveObject();
 
-        auto prim = get_input2<PrimitiveObject>("anim_particles");
+        auto prim = get_input_Geometry("anim_particles")->toPrimitiveObject();
 
-        auto indexTag = get_input2<std::string>("target_index_tag");
-        auto transTag = get_input2<std::string>("per_frame_translation_tag");
-        auto clrTransTag = get_input2<std::string>("per_frame_clr_trans_tag");
+        auto indexTag = zsString2Std(get_input2_string("target_index_tag"));
+        auto transTag = zsString2Std(get_input2_string("per_frame_translation_tag"));
+        auto clrTransTag = zsString2Std(get_input2_string("per_frame_clr_trans_tag"));
 
-        auto numTransFrames = get_input2<int>("num_transition_frames");
-        auto radius = get_input2<float>("rad");
+        auto numTransFrames = get_input2_int("num_transition_frames");
+        auto radius = get_input2_float("rad");
 
         // sizes
         auto nSrcPars = srcPars->size();
@@ -4527,34 +4536,33 @@ struct SetupParticleTransitionDirect : INode {
                 clrTrans[i] = onColor / numTransFrames; // towards full on (green)
             }
         });
-
-        set_output("anim_particles", std::move(prim));
+        set_output("anim_particles", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(SetupParticleTransitionDirect, {
                                               {
-                                                  {gParamType_Primitive, "src_particles"},
-                                                  {gParamType_Primitive, "dst_particles"},
+                                                  {gParamType_Geometry, "src_particles"},
+                                                  {gParamType_Geometry, "dst_particles"},
                                                   {gParamType_String, "target_index_tag", "target_index"},
                                                   {gParamType_String, "per_frame_translation_tag", "frame_translation"},
                                                   {gParamType_String, "per_frame_clr_trans_tag", "trans_clr"},
                                                   {gParamType_Float, "rad", "2"},
                                                   {gParamType_Int, "num_transition_frames", "20"},
-                                                  {gParamType_Primitive, "anim_particles"},
+                                                  {gParamType_Geometry, "anim_particles"},
                                               },
-                                              {{gParamType_Primitive, "anim_particles"}},
+                                              {{gParamType_Geometry, "anim_particles"}},
                                               {},
                                               {"zs_geom"},
                                           });
 
 struct AssociateParticlesFast : INode {
     void apply() override {
-        auto srcPrim = get_input2<PrimitiveObject>("srcPrim");
-        auto dstPrim = get_input2<PrimitiveObject>("dstPrim");
-        auto posTag = get_input2<std::string>("target_pos_tag");
-        auto indexTag = get_input2<std::string>("target_index_tag");
+        auto srcPrim = get_input_Geometry("srcPrim")->toPrimitiveObject();
+        auto dstPrim = get_input_Geometry("dstPrim")->toPrimitiveObject();
+        auto posTag = zsString2Std(get_input2_string("target_pos_tag"));
+        auto indexTag = zsString2Std(get_input2_string("target_index_tag"));
 
-        auto principal = get_input2<zeno::vec3f>("principal_direction");
+        auto principal = toVec3f(get_input2_vec3f("principal_direction"));
 
         auto &dstPos = srcPrim->add_attr<vec3f>(posTag);
         auto &dstIndices = srcPrim->add_attr<int>(indexTag);
@@ -4591,50 +4599,47 @@ struct AssociateParticlesFast : INode {
             dstIndices[srcId] = dstId;
             dstPos[srcId] = dst[dstId];
         });
-        set_output("srcPrim", std::move(srcPrim));
+        set_output("srcPrim", create_GeometryObject(srcPrim.get()));
     }
 };
 ZENDEFNODE(AssociateParticlesFast, {
-                                       {{gParamType_Primitive, "srcPrim"},
+                                       {{gParamType_Geometry, "srcPrim"},
                                         {gParamType_String, "target_pos_tag", "target_pos"},
                                         {gParamType_String, "target_index_tag", "target_index"},
                                         {gParamType_Vec3f, "principal_direction", "1, 0, 0"},
-                                        {gParamType_Primitive, "dstPrim"}},
-                                       {{gParamType_Primitive, "srcPrim"}},
+                                        {gParamType_Geometry, "dstPrim"}},
+                                       {{gParamType_Geometry, "srcPrim"}},
                                        {},
                                        {"zs_geom"},
                                    });
 
 struct AdvanceFrame : INode {
     void apply() override {
-        auto segmentNo_ = get_input<NumericObject>("segment_no");
-        auto localOffset_ = get_input<NumericObject>("local_offset");
-        auto segmentNo = segmentNo_->get<int>();
-        auto localOffset = localOffset_->get<int>();
-
-        auto localCap = get_input2<int>("num_local_frames");
-        auto segmentCap = get_input2<int>("num_total_segments");
+        auto segmentNo = get_input2_int("segment_no");
+        auto localOffset = get_input2_int("local_offset");
+        auto localCap = get_input2_int("num_local_frames");
+        auto segmentCap = get_input2_int("num_total_segments");
 
         // output
-        auto enterNewFrame = get_input<NumericObject>("enter_new_segment");
         bool isNew = false;
+        int out_segmentNo = segmentNo;
+        int out_localOffset = localOffset;
         if (segmentNo + 1 < segmentCap) {
             if (++localOffset >= localCap) {
-                segmentNo_->set(segmentNo + 1);
-                localOffset_->set(0);
+                out_segmentNo = segmentNo + 1;
+                out_localOffset = 0;
                 isNew = true;
             } else {
-                localOffset_->set(localOffset);
+                out_localOffset = localOffset;
             }
         } else {
             // already the last frame
-            localOffset_->set(localOffset + 1);
+            out_localOffset = localOffset + 1;
         }
 
-        set_output("segment_no", std::move(segmentNo_));
-        set_output("local_offset", std::move(localOffset_));
-        enterNewFrame->set((int)isNew);
-        set_output("enter_new_segment", std::move(enterNewFrame));
+        set_output_int("segment_no", out_segmentNo);
+        set_output_int("local_offset", out_localOffset);
+        set_output_bool("enter_new_segment", isNew);
     }
 };
 ZENDEFNODE(AdvanceFrame, {
@@ -4650,10 +4655,10 @@ ZENDEFNODE(AdvanceFrame, {
 
 struct PrimAssignRefAttrib : INode {
     virtual void apply() override {
-        auto points = get_input<PrimitiveObject>("prim");
-        auto prim = get_input<PrimitiveObject>("ref_prim");
-        auto idTag = get_input2<std::string>("pointIdTag");
-        auto tag = get_input2<std::string>("attribTag");
+        auto points = get_input_Geometry("prim")->toPrimitiveObject();
+        auto prim = get_input_Geometry("ref_prim")->toPrimitiveObject();
+        auto idTag = zsString2Std(get_input2_string("pointIdTag"));
+        auto tag = zsString2Std(get_input2_string("attribTag"));
 
         auto pointIndex = points->attr<int>(idTag);
 
@@ -4680,26 +4685,26 @@ struct PrimAssignRefAttrib : INode {
             })(points->verts.attr(tag), prim->verts.attr(tag));
         }
 
-        set_output("prim", get_input("prim"));
+        set_output("prim", create_GeometryObject(points.get()));
     }
 };
 
 ZENDEFNODE(PrimAssignRefAttrib, {
                                       {
-                                          "prim",
-                                          "ref_prim",
+                                          {gParamType_Geometry, "prim"},
+                                          {gParamType_Geometry, "ref_prim"},
                                           {gParamType_String, "pointIdTag", "bvh_id"},
                                           {gParamType_String, "attribTag"},
                                       },
-                                      {gParamType_Primitive, "prim"},
+                                      {{gParamType_Geometry, "prim"}},
                                       {},
                                       {"primitive"},
                                   });
 
 struct RemovePrimitiveTopo : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
-        auto topoStrs_ = get_input2<std::string>("topo_strings");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto topoStrs_ = zsString2Std(get_input2_string("topo_strings"));
         std::set<std::string> topoStrs = separate_string_by(topoStrs_, " :;,.");
         auto removeAttr = [](auto &attrVector) { attrVector.clear(); };
 
@@ -4720,22 +4725,23 @@ struct RemovePrimitiveTopo : INode {
             removeAttr(prim->edges);
         if (empty || topoStrs.find("uvs") != topoStrs.end())
             removeAttr(prim->uvs);
-        set_output("prim", std::move(prim));
+
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(RemovePrimitiveTopo, {
                                     {
-                                        {gParamType_Primitive, "prim"},
+                                        {gParamType_Geometry, "prim"},
                                         {gParamType_String, "topo_strings", ""},
                                     },
-                                    {{gParamType_Primitive, "prim"}},
+                                    {{gParamType_Geometry, "prim"}},
                                     {},
                                     {"zs_geom"},
                                 });
 
 struct ShuffleParticles : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto n = prim->size();
 
         auto &pos = prim->verts.values;
@@ -4758,14 +4764,14 @@ struct ShuffleParticles : INode {
                     [](...) {})(srcArr);
             }
         }
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 ZENDEFNODE(ShuffleParticles, {
                                  {
-                                     {gParamType_Primitive, "prim"},
+                                     {gParamType_Geometry, "prim"},
                                  },
-                                 {{gParamType_Primitive, "prim"}},
+                                 {{gParamType_Geometry, "prim"}},
                                  {},
                                  {"zs_geom"},
                              });
@@ -4776,16 +4782,15 @@ struct EmbedPrimitiveBvh : zeno::INode {
         using bvh_t = zsbvh_t::lbvh_t;
         using bv_t = bvh_t::Box;
 
-        auto prim = get_input<zeno::PrimitiveObject>("prim");
-        auto &userData = prim->userData();
-        float thickness = has_input("thickness") ? get_input<zeno::NumericObject>("thickness")->get<float>() : 0.f;
-        auto primType = get_input2<std::string>("prim_type");
-        auto bvhTag = get_input2<std::string>("bvh_tag");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto userData = prim->userData();
+        float thickness = has_input("thickness") ? get_input2_float("thickness") : 0.f;
+        auto primType = zsString2Std(get_input2_string("prim_type"));
+        auto bvhTag = get_input2_string("bvh_tag");
 
         auto pol = zs::omp_exec();
 
         zs::Vector<bv_t> bvs;
-        std::shared_ptr<zsbvh_t> zsbvh;
         ZenoLinearBvh::element_e et = ZenoLinearBvh::point;
         if (primType == "point") {
             bvs = retrieve_bounding_volumes(pol, prim->attr<vec3f>("pos"), thickness);
@@ -4800,28 +4805,28 @@ struct EmbedPrimitiveBvh : zeno::INode {
             bvs = retrieve_bounding_volumes(pol, prim->attr<vec3f>("pos"), prim->quads.values, thickness);
             et = ZenoLinearBvh::tet;
         }
-        if (!userData.has(bvhTag)) { // build
-            zsbvh = std::make_shared<zsbvh_t>();
+        if (!userData->has(bvhTag)) { // build
+            auto zsbvh = std::make_unique<zsbvh_t>();
             zsbvh->et = et;
             bvh_t &bvh = zsbvh->get();
             bvh.build(pol, bvs);
-            userData.set(bvhTag, zsbvh);
+            userData->set(bvhTag, std::move(zsbvh));
         } else { // refit
-            zsbvh = std::dynamic_pointer_cast<zsbvh_t>(userData.get(bvhTag));
+            auto zsbvh = safe_uniqueptr_cast<zsbvh_t>(userData->get(bvhTag));
             zsbvh->et = et;
             bvh_t &bvh = zsbvh->get();
             bvh.refit(pol, bvs);
         }
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(EmbedPrimitiveBvh, {
-                                  {{gParamType_Primitive, "prim"},
+                                  {{gParamType_Geometry, "prim"},
                                    {gParamType_Float, "thickness", "0"},
                                    {"enum point line tri quad", "prim_type", "auto"},
                                    {gParamType_String, "bvh_tag", "bvh"}},
-                                  {{gParamType_Primitive, "prim"}},
+                                  {{gParamType_Geometry, "prim"}},
                                   {},
                                   {"zs_accel"},
                               });
@@ -4832,17 +4837,16 @@ struct EmbedPrimitiveSpatialHash : zeno::INode {
         using sh_t = zssh_t::sh_t;
         using bv_t = sh_t::bv_t;
 
-        auto prim = get_input<zeno::PrimitiveObject>("prim");
-        auto &userData = prim->userData();
-        auto sideLength = get_input2<float>("side_length");
-        float thickness = has_input("thickness") ? get_input<zeno::NumericObject>("thickness")->get<float>() : 0.f;
-        auto primType = get_input2<std::string>("prim_type");
-        auto shTag = get_input2<std::string>("spatial_hash_tag");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto userData = prim->userData();
+        auto sideLength = get_input2_float("side_length");
+        float thickness = has_input("thickness") ? get_input2_float("thickness") : 0.f;
+        auto primType = zsString2Std(get_input2_string("prim_type"));
+        auto shTag = get_input2_string("spatial_hash_tag");
 
         auto pol = zs::omp_exec();
 
         zs::Vector<bv_t> bvs;
-        std::shared_ptr<zssh_t> zssh;
         ZenoSpatialHash::element_e et = ZenoSpatialHash::point;
         if (primType == "point") {
             bvs = retrieve_bounding_volumes(pol, prim->attr<vec3f>("pos"), thickness);
@@ -4857,29 +4861,29 @@ struct EmbedPrimitiveSpatialHash : zeno::INode {
             bvs = retrieve_bounding_volumes(pol, prim->attr<vec3f>("pos"), prim->quads.values, thickness);
             et = ZenoSpatialHash::tet;
         }
-        if (!userData.has(shTag)) { // build
-            zssh = std::make_shared<zssh_t>();
+        if (!userData->has(shTag)) { // build
+            auto zssh = std::make_unique<zssh_t>();
             zssh->et = et;
             sh_t &sh = zssh->get();
             sh.build(pol, sideLength, bvs);
-            userData.set(shTag, zssh);
+            userData->set(shTag, std::move(zssh));
         } else { // refit
-            zssh = std::dynamic_pointer_cast<zssh_t>(userData.get(shTag));
+            auto zssh = safe_uniqueptr_cast<zssh_t>(userData->get(shTag));
             zssh->et = et;
             sh_t &sh = zssh->get();
             sh.build(pol, sideLength, bvs);
         }
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(EmbedPrimitiveSpatialHash, {
-                                          {{gParamType_Primitive, "prim"},
+                                          {{gParamType_Geometry, "prim"},
                                            {gParamType_Float, "side_length", "1"},
                                            {gParamType_Float, "thickness", "0"},
                                            {"enum point line tri quad", "prim_type", "auto"},
                                            {gParamType_String, "spatial_hash_tag", "sh"}},
-                                          {{gParamType_Primitive, "prim"}},
+                                          {{gParamType_Geometry, "prim"}},
                                           {},
                                           {"zs_accel"},
                                       });

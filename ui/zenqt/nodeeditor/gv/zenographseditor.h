@@ -1,4 +1,4 @@
-#ifndef __ZENO_GRAPHS_EDITOR_H__
+﻿#ifndef __ZENO_GRAPHS_EDITOR_H__
 #define __ZENO_GRAPHS_EDITOR_H__
 
 #include <QtWidgets>

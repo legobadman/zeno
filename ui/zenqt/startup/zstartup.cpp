@@ -220,6 +220,7 @@ void verifyVersion()
     zeno::log_info("zeno {} {} {} {}", plat, ver, __TIME__, feat);
 }
 
+#if 0
 int invoke_main(int argc, char *argv[]);
 int invoke_main(int argc, char *argv[]) {
     if (argc < 1) {
@@ -239,3 +240,4 @@ int invoke_main(int argc, char *argv[]) {
     auto alterMain = ud.get<zeno::GenericObject<int(*)(int, char **)>>("subprogram_" + prog)->get();
     return alterMain(newArgv.size(), newArgv.data());
 }
+#endif

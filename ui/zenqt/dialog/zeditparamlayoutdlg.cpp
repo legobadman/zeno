@@ -14,6 +14,7 @@
 #include "iotags.h"
 #include "style/zenostyle.h"
 #include "widgets/zspinboxslider.h"
+#include "widgets/floatslider.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
 #include "declmetatype.h"
@@ -44,6 +45,7 @@ static CONTROL_ITEM_INFO controlList[] = {
     {"SpinBox",             zeno::SpinBox,      zeno::types::gParamType_Int,    ":/icons/parameter_control_spinbox.svg"},
     {"DoubleSpinBox",       zeno::DoubleSpinBox,zeno::types::gParamType_Float,  ":/icons/parameter_control_spinbox.svg"},
     {"Slider",              zeno::Slider,       zeno::types::gParamType_Int,    ":/icons/parameter_control_slider.svg"},
+    {"DoubleSlider",        zeno::Slider,       zeno::types::gParamType_Float,  ":/icons/parameter_control_slider.svg"},
     {"SpinBoxSlider",       zeno::SpinBoxSlider,zeno::types::gParamType_Int,    ":/icons/parameter_control_slider.svg"},
 };
 
@@ -471,6 +473,8 @@ void ZEditParamLayoutDlg::initUI()
     m_ui->listConctrl->setFocusPolicy(Qt::NoFocus);
 
     m_ui->cbObjectType->addItem(tr("Geometry"), (quint64)gParamType_Geometry);
+    m_ui->cbObjectType->addItem(tr("List"), (quint64)gParamType_List);
+    m_ui->cbObjectType->addItem(tr("Material"), (quint64)gParamType_Material);
     m_ui->cbObjectType->addItem(tr("Object"), (quint64)gParamType_IObject);
     m_ui->cbObjectType->hide();
 
@@ -705,7 +709,7 @@ void ZEditParamLayoutDlg::onTreeCurrentChanged(const QModelIndex& current, const
             return pCurrentItem->data(QtRole::ROLE_PARAM_VALUE);
         };
 
-        QWidget *valueControl = zenoui::createWidget(QModelIndex(), anyVal, ctrl, paramType, cbSets, controlProperties);
+        QWidget *valueControl = zenoui::createWidget(QModelIndex(), name, anyVal, ctrl, paramType, cbSets, controlProperties);
         if (valueControl) {
             valueControl->setEnabled(bEditable);
             m_ui->gridLayout->addWidget(valueControl, rowValueControl, 1);
@@ -786,7 +790,7 @@ void ZEditParamLayoutDlg::onOutputsListCurrentChanged(const zeno::NodeDataGroup 
             return pCurrentItem->data(QtRole::ROLE_PARAM_VALUE);
         };
 
-        QWidget* valueControl = zenoui::createWidget(QModelIndex(), anyVal, ctrl, paramType, cbSets, controlProperties);
+        QWidget* valueControl = zenoui::createWidget(QModelIndex(), name, anyVal, ctrl, paramType, cbSets, controlProperties);
         if (valueControl) {
             valueControl->setEnabled(bEditable);
             m_ui->gridLayout->addWidget(valueControl, rowValueControl, 1);
@@ -1034,9 +1038,9 @@ void ZEditParamLayoutDlg::switchStackProperties(int ctrl, QStandardItem* pItem)
         }
 
         std::vector<float> ranges = zeno::reflect::any_cast<std::vector<float>>(pros);
-        m_ui->editStep->setText(QString::number(ranges[2]));
         m_ui->editMin->setText(QString::number(ranges[0]));
         m_ui->editMax->setText(QString::number(ranges[1]));
+        m_ui->editStep->setText(QString::number(ranges[2]));
     }
     else {
         m_ui->stackProperties->setCurrentIndex(0);
@@ -1080,7 +1084,7 @@ void ZEditParamLayoutDlg::onStepEditFinished()
     auto properties = layerIdx.data(QtRole::ROLE_PARAM_CTRL_PROPERTIES).value<zeno::reflect::Any>();
     qreal step = m_ui->editStep->text().toDouble();
     auto ranges = zeno::reflect::any_cast<std::vector<float>>(properties);
-    ranges[0] = step;
+    ranges[2] = step;
 
     QStandardItem* item = m_paramsLayoutM_inputs->itemFromIndex(layerIdx);
     zeno::reflect::Any anyVal(ranges);
@@ -1116,6 +1120,12 @@ void ZEditParamLayoutDlg::updateSliderInfo()
         {
             pControl->setRange(info.min, info.max);
             pControl->setSingleStep(info.step);
+        }
+        else if (FloatSlider* pControl = qobject_cast<FloatSlider*>(pLayoutItem->widget()))
+        {
+            pControl->setFloatMinimum(info.min);
+            pControl->setFloatMaximum(info.max);
+            pControl->setFloatStep(info.step);
         }
     }
 }
@@ -1257,20 +1267,33 @@ void ZEditParamLayoutDlg::onOutputPrimTypeChanged(int idx) {
     const QModelIndex& currIdx = m_ui->outputsView->currentIndex();
     if (!currIdx.isValid())
         return;
+
     QStandardItem* pItem = m_paramsLayoutM_outputs->itemFromIndex(currIdx);
-    auto type = m_ui->cbOutputPrim->itemData(idx);
+    QVariant varType = m_ui->cbOutputPrim->itemData(idx);
+    zeno::ParamType type = varType.toULongLong();
     pItem->setData(type, QtRole::ROLE_PARAM_TYPE);
+
+    zeno::reflect::Any anyVal = zeno::initAnyDeflValue(type);
+    pItem->setData(QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
 }
 
 void ZEditParamLayoutDlg::onObjTypeChanged(int idx)
 {
-    const QModelIndex& currIdx = m_ui->objInputsView->currentIndex();
-    if (!currIdx.isValid())
-        return;
-
-    QStandardItem* pItem = m_paramsLayoutM_objInputs->itemFromIndex(currIdx);
-    auto objtype = m_ui->cbObjectType->itemData(idx);
-    pItem->setData(objtype, QtRole::ROLE_PARAM_TYPE);
+    QModelIndex currIdx = m_ui->objInputsView->currentIndex();
+    if (currIdx.isValid())
+    {
+        QStandardItem* pItem = m_paramsLayoutM_objInputs->itemFromIndex(currIdx);
+        auto objtype = m_ui->cbObjectType->itemData(idx);
+        pItem->setData(objtype, QtRole::ROLE_PARAM_TYPE);
+    }
+    else {
+        currIdx = m_ui->objOutputsView->currentIndex();
+        if (currIdx.isValid()) {
+            QStandardItem* pItem = m_paramsLayoutM_objOutputs->itemFromIndex(currIdx);
+            auto objtype = m_ui->cbObjectType->itemData(idx);
+            pItem->setData(objtype, QtRole::ROLE_PARAM_TYPE);
+        }
+    }
 }
 
 void ZEditParamLayoutDlg::onControlItemChanged(int idx)
@@ -1304,7 +1327,7 @@ void ZEditParamLayoutDlg::onControlItemChanged(int idx)
 
     zeno::reflect::Any controlProperties = layerIdx.data(QtRole::ROLE_PARAM_CTRL_PROPERTIES).value< zeno::reflect::Any>();
     cbSets.cbGetIndexData = [=]() -> QVariant { return UiHelper::initDefaultValue(type); };
-    QWidget *valueControl = zenoui::createWidget(QModelIndex(), anyVal, ctrl, type, cbSets, controlProperties);
+    QWidget *valueControl = zenoui::createWidget(QModelIndex(), "", anyVal, ctrl, type, cbSets, controlProperties);
     if (valueControl) {
         valueControl->setEnabled(true);
         m_ui->gridLayout->addWidget(valueControl, rowValueControl, 1);
@@ -1312,6 +1335,7 @@ void ZEditParamLayoutDlg::onControlItemChanged(int idx)
         switchStackProperties(ctrl, pItem);
         pItem->setData(getIcon(pItem), Qt::DecorationRole);
         pItem->setData(QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
+
     }
 }
 

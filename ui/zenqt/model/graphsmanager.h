@@ -41,17 +41,21 @@ public:
     Q_INVOKABLE QStringList paste(const QPointF& pos, const QStringList& path_of_graphM);
     Q_INVOKABLE QModelIndex getNodeIndexByUuidPath(const QString& objPath);
 
+    //给出节点路径，得到对应节点的索引，如果路径是一个子图节点的路径，就返回子图节点。
+    Q_INVOKABLE QModelIndex getNodeIndexByPath(const QString& path);
+
     Q_PROPERTY(QString currentPath READ currentGraphPath WRITE setCurrentGraphPath NOTIFY currentPathChanged)
     QString currentGraphPath() const;
     void setCurrentGraphPath(const QString& path);
 
     void createGraphs(const zenoio::ZSG_PARSE_RESULT ioresult);
-    inline GraphsTreeModel* currentModel() const { return m_model; }
+    GraphModel* mainModel() const { return m_main; }
+    inline GraphsTreeModel* currentModel() const { return m_treemodel; }
     AssetsModel* assetsModel() const;
     PluginsModel* pluginModel() const;
     QStandardItemModel* logModel() const;
     GraphModel* getGraph(const QStringList& objPath) const;
-    GraphsTreeModel* openZsgFile(const QString &fn, zenoio::ERR_CODE& code);
+    GraphsTreeModel* openZsgFile(const QString &fullPath, zenoio::ERR_CODE& code);
     bool saveFile(const QString& filePath, APP_SETTINGS settings);
     bool isInitializing() const;
     bool isImporting() const;
@@ -99,7 +103,7 @@ private slots:
 private:
     void registerCoreNotify();
 
-    GraphsTreeModel* m_model;
+    GraphsTreeModel* m_treemodel;
     GraphModel* m_main;
     QStandardItemModel* m_logModel;     //connection with scene.
     AssetsModel* m_assets;

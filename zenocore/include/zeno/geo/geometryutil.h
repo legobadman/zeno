@@ -75,16 +75,23 @@ namespace zeno
         Rotate_Orientaion orientaion
         );
     ZENO_API std::pair<vec3f, vec3f> geomBoundingBox(GeometryObject* geo);
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> mergeObjects(std::shared_ptr<zeno::ListObject> spList);
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold);
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> scatter(
-        std::shared_ptr<zeno::GeometryObject_Adapter> input,
+    ZENO_API std::optional<std::pair<vec3f, vec3f>> geomBoundingBox2(GeometryObject* prim);
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> mergeObjects(
+        zeno::ListObject* spList,
+        std::string const& tagAttr = {},
+        bool tag_on_vert = true,
+        bool tag_on_face = false);
+    ZENO_API void geom_set_abcpath(GeometryObject_Adapter* prim, zeno::String path_name);
+    ZENO_API void geom_set_faceset(GeometryObject_Adapter* prim, zeno::String faceset_name);
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold);
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces);
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> scatter(
+        zeno::GeometryObject_Adapter* input,
         const std::string& sampleRegion,
         const int count,
         int seed);
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> divideObject(
-        std::shared_ptr<zeno::GeometryObject_Adapter> input_object,
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> divideObject(
+        zeno::GeometryObject_Adapter* input_object,
         DivideKeep keep,
         zeno::vec3f center_pos,
         zeno::vec3f direction
@@ -94,6 +101,16 @@ namespace zeno
         /*out*/std::map<int, DividePoint>& split_infos,
         /*out*/PointSide& which_side_if_failed
         );
+    ZENO_API void transformGeom(
+        zeno::GeometryObject_Adapter* geom
+        , glm::mat4 matrix
+        , std::string pivotType
+        , vec3f pivotPos
+        , vec3f localX
+        , vec3f localY
+        , vec3f translate
+        , vec4f rotation
+        , vec3f scaling);
 }
 
 

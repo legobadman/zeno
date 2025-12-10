@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "Utils.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
@@ -6,7 +7,6 @@
 #include "zensim/zpc_tpls/fmt/format.h"
 
 // from projects/ZenoFX/pnw.cpp : ParticlesNeighborWrangle
-#include "dbg_printf.h"
 #include <cassert>
 #include <cuda.h>
 #include <zeno/core/Graph.h>
@@ -15,6 +15,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
@@ -40,7 +41,7 @@ struct ZSParticleNeighborWrangler : INode {
         currentContext.setContext();
         auto cudaPol = cuda_exec().sync(true);
 
-        auto code = get_input<StringObject>("zfxCode")->get();
+        auto code = zsString2Std(get_input2_string("zfxCode"));
 
         /// parObjPtr
         auto parObjPtrs = RETRIEVE_OBJECT_PTRS(ZenoParticles, "ZSParticles");
@@ -68,7 +69,7 @@ struct ZSParticleNeighborWrangler : INode {
         if (has_input<ZenoIndexBuckets>("ZSIndexBuckets"))
             ibsPtr = get_input<ZenoIndexBuckets>("ZSIndexBuckets");
         else if (has_input<NumericObject>("ZSIndexBuckets"))
-            spatial_hashing(cudaPol, neighborPars, get_input<NumericObject>("ZSIndexBuckets")->get<float>() * 2,
+            spatial_hashing(cudaPol, neighborPars, get_input2_float("ZSIndexBuckets") * 2,
                             ibsPtr->get());
         else
             ;
@@ -79,7 +80,7 @@ struct ZSParticleNeighborWrangler : INode {
 
         /// params
         auto params =
-            has_input("params") ? get_input<zeno::DictObject>("params") : std::make_shared<zeno::DictObject>();
+            has_input("params") ? safe_uniqueptr_cast<DictObject>(clone_input("params")) : std::make_unique<zeno::DictObject>();
         {
             // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
             auto const &gs = *this->getGlobalState();
@@ -95,7 +96,7 @@ struct ZSParticleNeighborWrangler : INode {
                     if (code.size() <= i || !std::isalnum(code[i])) {
                         if (params->lut.count(key))
                             continue;
-                        dbg_printf("ref portal %s\n", key.c_str());
+                        printf("ref portal %s\n", key.c_str());
                         auto res =
                             getThisGraph()->callTempNode("PortalOut", {{"name:", objectFromLiterial(key)}}).at("port");
                         params->lut[key] = std::move(res);
@@ -110,7 +111,7 @@ struct ZSParticleNeighborWrangler : INode {
             }
             for (auto const &key : keys) {
                 if (!dynamic_cast<zeno::NumericObject *>(params->lut.at(key).get())) {
-                    dbg_printf("ignored non-numeric %s\n", key.c_str());
+                    printf("ignored non-numeric %s\n", key.c_str());
                     params->lut.erase(key);
                 }
             }
@@ -147,7 +148,7 @@ struct ZSParticleNeighborWrangler : INode {
                     }
                 },
                 par);
-            //dbg_printf("define param: %s dim %d\n", key.c_str(), dim);
+            //printf("define param: %s dim %d\n", key.c_str(), dim);
             opts.define_param(key, dim);
             //auto par = zeno::safe_any_cast<zeno::NumericValue>(obj);
         }
@@ -282,7 +283,7 @@ struct ZSParticleNeighborWrangler : INode {
         zs::f32 *d_params = dparams.data();
         int nchns = daccessors.size();
         void *addr = daccessors.data();
-        int isBox = get_input2<bool>("is_box") ? 1 : 0;
+        int isBox = get_input2_bool("is_box") ? 1 : 0;
         float radius = ibs._dx;
         void *args[] = {(void *)&cnt,  (void *)&isBox,    (void *)&radius, (void *)&parsv, (void *)&neighborParsv,
                         (void *)&ibsv, (void *)&d_params, (void *)&nchns,  (void *)&addr};
@@ -300,15 +301,16 @@ struct ZSParticleNeighborWrangler : INode {
 };
 
 ZENDEFNODE(ZSParticleNeighborWrangler, {
-                                           {{"ZenoParticles", "ZSParticles"},
-                                            {"ZenoParticles", "ZSNeighborParticles"},
+                                           {{gParamType_Particles, "ZSParticles"},
+                                            {gParamType_Particles, "ZSNeighborParticles"},
                                             {"ZenoIndexBuckets", "ZSIndexBuckets"},
                                             {gParamType_String, "zfxCode"},
                                             {gParamType_Bool, "is_box", "1"},
                                             {"DictObject:NumericObject", "params"}},
-                                           {"ZSParticles"},
+                                           {{gParamType_Particles, "ZSParticles"}},
                                            {},
                                            {"zswrangle"},
                                        });
 
 } // namespace zeno
+#endif

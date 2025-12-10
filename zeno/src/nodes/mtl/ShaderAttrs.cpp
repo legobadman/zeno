@@ -18,7 +18,7 @@ enum struct SurfaceAttr {
 };
 
 enum struct InstAttr {
-    instIdx, instPos, instNrm, instUv, instClr, instTang
+    priIdx, instId, instIdx
 };
 
 enum struct VolumeAttr {};
@@ -86,7 +86,7 @@ ZENDEFNODE(ShaderInputAttr, {
 
 struct MakeShaderUniform : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         auto size = ZImpl(get_input2<int>("size"));
         prim->resize(size);
         if (ZImpl(has_input("uniformDict"))) {

@@ -6,16 +6,16 @@
 
 namespace zeno {
 
-template <class Vector>
+template <class ZsVector>
 struct PolymorphicVector {
-    using value_type = typename Vector::value_type;
-    using iterator = typename Vector::iterator;
-    using const_iterator = typename Vector::const_iterator;
+    using value_type = typename ZsVector::value_type;
+    using iterator = typename ZsVector::iterator;
+    using const_iterator = typename ZsVector::const_iterator;
 
     using element_type = typename std::pointer_traits<value_type>::element_type;
     static_assert(std::is_polymorphic_v<element_type>);
 
-    Vector m_curr;
+    ZsVector m_curr;
 
     auto begin() const {
         return m_curr.begin();

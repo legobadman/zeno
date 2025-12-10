@@ -215,6 +215,8 @@ LeftStatusBtnGroup::LeftStatusBtnGroup(zeno::NodeType type, RoundRectInfo info, 
     m_nocache = new NoCacheButton(info, this);
     m_nocache->setPos(0, 0);
 
+    updateRightButtomRadius(m_rectInfo.lbradius);
+
     connect(m_nocache, &NoCacheButton::toggled, [&](bool hovered) {
         emit toggleChanged(STATUS_NOCACHE, hovered);
         });
@@ -267,6 +269,8 @@ RightStatusBtnGroup::RightStatusBtnGroup(RoundRectInfo info, QGraphicsItem* pare
     m_view = new ViewButton(info, this);
     m_bypass->setPos(0, 0);
     m_view->setPos(side + button_margin, 0);
+
+    updateRightButtomRadius(m_rectInfo.rbradius > 0);
 
     //connect(m_view, SIGNAL(hoverChanged(bool)), m_Imgview, SLOT(setHovered(bool)));
     //connect(m_view, SIGNAL(toggled(bool)), m_Imgview, SLOT(toggle(bool)));

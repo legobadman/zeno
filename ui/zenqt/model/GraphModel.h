@@ -91,14 +91,15 @@ public:
     void clear();
     void undo();
     void redo();
-    void pushToplevelStack(QUndoCommand* cmd);
+    void pushUndoRedoStack(QUndoCommand* cmd);
     void beginMacro(const QString& name);
     void endMacro();
 
     //test functions:
     void updateParamName(QModelIndex nodeIdx, int row, QString newName);
     void syncToAssetsInstance_customui(const QString& assetsName, zeno::ParamsUpdateInfo info, const zeno::CustomUI& customui);
-    void syncToAssetsInstance(const QString& assetsName);
+    void syncToAssetsInstance(const QString& assetsName, NodeItem* currentAssetNode);
+    void changeSubnetToAssetInstance(const QModelIndex& index, const QString& newAssetName);
     void removeParam(QModelIndex nodeIdx, int row);
     void removeLink(const QModelIndex& linkIdx);
     void removeLink(const zeno::EdgeInfo& link);
@@ -122,6 +123,7 @@ public:
     void _setByPassImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
     void _setNoCacheImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
     void _setClearSubnetImpl(const QModelIndex& idx, bool bOn, bool endTransaction = false);
+    void _RemoveNodeUpdateRefLink(const QModelIndex& fromNodeIdx, const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput);
 
     //unrevertable:
     void clearNodeObjs(const QModelIndex& nodeIdx);
@@ -142,8 +144,8 @@ private:
     void unRegisterCoreNotify();
     void _appendNode(void* spNode);
     void _initLink();
-    void _addLink_callback(const zeno::EdgeInfo link);
-    bool _removeLink(const zeno::EdgeInfo& edge);
+    void _addLink_callback(const zeno::EdgeInfo link, bool outParamIsOutput = true, bool isReflink = false);//outParamIsOutput：有referlink之后outparam可能不只是output也可能是input
+    bool _removeLink(const zeno::EdgeInfo& edge, bool outParamIsOutput = true);
     void _updateName(const QString& oldName, const QString& newName);
     void _clear();
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;

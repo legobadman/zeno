@@ -18,7 +18,7 @@ struct PrimitiveScatter : INode {
         auto npoints = ZImpl(get_input<NumericObject>("npoints"))->get<int>();
         auto seed = ZImpl(get_input<NumericObject>("seed"))->get<int>();
         auto type = ZImpl(get_param<std::string>("type"));
-        auto retprim = std::make_shared<PrimitiveObject>();
+        auto retprim = std::make_unique<PrimitiveObject>();
 
         if (type == "tris" && prim->tris.size()) {
             float total = 0;

@@ -8,6 +8,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/parallel_reduce.h>
@@ -187,11 +188,11 @@ void retrieve_bounding_volumes(zs::CudaExecutionPolicy &pol, VPosRange &&posR, V
 
 struct ComputeVertexAO : INode {
     void apply() override {
-        auto prim = get_input2<PrimitiveObject>("prim");
-        auto scene = get_input2<PrimitiveObject>("scene");
-        auto nrmTag = get_input2<std::string>("nrm_tag");
-        auto niters = get_input2<int>("sample_iters");
-        auto distCap = get_input2<float>("dist_cap");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto scene = get_input_Geometry("scene")->toPrimitiveObject();
+        auto nrmTag = zsString2Std(get_input2_string("nrm_tag"));
+        auto niters = get_input2_int("sample_iters");
+        auto distCap = get_input2_float("dist_cap");
         if (distCap < std::numeric_limits<float>::epsilon())
             distCap = std::numeric_limits<float>::max();
 
@@ -210,9 +211,9 @@ struct ComputeVertexAO : INode {
         zs::copy(mem_device, (void *)pos.data(), (void *)scenePos.data(), sizeof(v3) * pos.size());
         zs::copy(mem_device, (void *)indices.data(), (void *)sceneTris.data(), sizeof(i3) * indices.size());
 
-        auto &sceneData = scene->userData();
-        if (!sceneData.has<ZenoLinearBvh>(zs_bvh_tag)) {
-            auto zsbvh = std::make_shared<ZenoLinearBvh>();
+        auto sceneData = scene->userData();
+        if (!sceneData->has(zs_bvh_tag)) {
+            auto zsbvh = std::make_unique<ZenoLinearBvh>();
             zsbvh->thickness = 0;
             zsbvh->et = ZenoLinearBvh::surface;
 
@@ -220,16 +221,16 @@ struct ComputeVertexAO : INode {
             zs::Vector<bv_t> bvs{indices.size(), memsrc_e::device};
             retrieve_bounding_volumes(pol, range(pos), range(indices), bvs);
             bvh.build(pol, bvs);
-            sceneData.set(zs_bvh_tag, zsbvh);
+            sceneData->set(zs_bvh_tag, std::move(zsbvh));
         } else {
-            auto zsbvh = sceneData.get<ZenoLinearBvh>(zs_bvh_tag); // std::shared_ptr<>
+            auto zsbvh = safe_uniqueptr_cast<ZenoLinearBvh>(sceneData->get(zs_bvh_tag));
             auto &bvh = zsbvh->bvh;
             zs::Vector<bv_t> bvs{allocator, indices.size()};
             retrieve_bounding_volumes(pol, range(pos), range(indices), bvs);
             bvh.refit(pol, bvs);
         }
 
-        auto zsbvh = sceneData.get<ZenoLinearBvh>(zs_bvh_tag); // std::shared_ptr<>
+        auto zsbvh = safe_uniqueptr_cast<ZenoLinearBvh>(sceneData->get(zs_bvh_tag));
         auto &bvh = zsbvh->bvh;
 
         const auto &hpos = prim->verts.values;
@@ -315,23 +316,23 @@ struct ComputeVertexAO : INode {
                 ao = 1.f * accum / niters;
             });
 
-        const auto &haos = prim->add_attr<float>(get_input2<std::string>("ao_tag"));
+        const auto &haos = prim->add_attr<float>(zsString2Std(get_input2_string("ao_tag")));
         zs::copy(mem_device, (void *)haos.data(), (void *)aos.data(), sizeof(float) * haos.size());
 
-        set_output("prim", prim);
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(ComputeVertexAO, {
                                 {
-                                    {gParamType_Primitive, "prim", ""},
-                                    {gParamType_Primitive, "scene", ""},
+                                    {gParamType_Geometry, "prim", ""},
+                                    {gParamType_Geometry, "scene", ""},
                                     {gParamType_String, "nrm_tag", "nrm"},
                                     {gParamType_String, "ao_tag", "ao"},
                                     {gParamType_Float, "dist_cap", "0"},
                                     {gParamType_Int, "sample_iters", "512"},
                                 },
-                                {"prim"},
+                                {{gParamType_Geometry, "prim"}},
                                 {},
                                 {"tracing"},
                             });

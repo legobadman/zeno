@@ -57,7 +57,8 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
         bool bAssets = false,
         std::pair<float, float> pos = {},
         bool isIOInit = false,
-        bool* pbAssetLock = nullptr);
+        bool* pbAssetLock = nullptr,
+        CustomUI customUi = CustomUI());
     CALLBACK_REGIST(createNode, void, const std::string&, zeno::NodeImpl*)
 
     bool removeNode(std::string const& name);
@@ -88,6 +89,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     std::shared_ptr<Graph> getGraphByPath(const std::string& path);
     std::map<std::string, NodeImpl*> getNodes() const;
     std::set<std::string> get_viewnodes() const;
+    float statistic_cpu_used() const;
 
     GraphData exportGraph() const;
 
@@ -109,6 +111,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     void clearNodes();
     void clearContainerUpdateInfo();
     void runGraph(render_reload_info& infos);
+    void mark_clean();
     void applyNodes(std::set<std::string> const &ids, render_reload_info& infos);
     void addNode(std::string const &cls, std::string const &id);
     Graph *addSubnetNode(std::string const &id);
@@ -122,20 +125,15 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     void setKeyFrame(std::string const &id, std::string const &par, zany const &val);
     void setFormula(std::string const &id, std::string const &par, zany const &val);
     void addNodeOutput(std::string const &id, std::string const &par);
-    zany getNodeInput(std::string const &sn, std::string const &ss) const;
-    void setNodeParam(std::string const &id, std::string const &par,
-        std::variant<int, float, std::string, zany> const &val);  /* to be deprecated */
     std::map<std::string, zany> callSubnetNode(std::string const &id,
             std::map<std::string, zany> inputs) const;
-    std::map<std::string, zany> callTempNode(std::string const &id,
-            std::map<std::string, zany> inputs);
 
     std::set<std::string> getSubInputs();
     std::set<std::string> getSubOutputs();
     void viewNodeUpdated(const std::string node, bool bView);
     void markDirtyWhenFrameChanged();
     void markDirtyAndCleanup();
-    void onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value);
+    void onNodeParamUpdated(PrimitiveParam* spParam, const zeno::reflect::Any& old_value, const zeno::reflect::Any& new_value);
     void parseNodeParamDependency(PrimitiveParam* spParam, zeno::reflect::Any& new_value);
 
     bool isFrameNode(std::string uuid);
@@ -150,7 +148,7 @@ private:
     void resetWildCardParamsType(bool bWildcard, NodeImpl* node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
     std::shared_ptr<Graph> _getGraphByPath(std::vector<std::string> items);
     bool isLinkValid(const EdgeInfo& edge);
-    void applyNode(std::string const& id, render_update_info& info);
+    render_update_info applyNode(std::string const& node_name, CalcContext* pContext);
 
     NodeImpl* m_parSubnetNode = nullptr;
     std::map<std::string, std::unique_ptr<NodeImpl>> m_nodes;  //based on uuid.

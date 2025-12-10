@@ -37,7 +37,7 @@ ZQmlRender::~ZQmlRender()
 {
 }
 
-void ZQmlRender::reload_objects(zeno::render_reload_info info)
+void ZQmlRender::reload_objects(const zeno::render_reload_info& info)
 {
     m_zenovis->reload(info);
     emit requestUpdate();

@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/vec.h>
@@ -48,25 +49,25 @@ void dump_obj(PrimitiveObject *prim, std::ostream &fout) {
 
 struct WriteObjPrim : INode {
     virtual void apply() override {
-        auto prim = ZImpl(get_input<PrimitiveObject>("prim"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
         auto path = ZImpl(get_input<StringObject>("path"))->get();
         path = create_directories_when_write_file(path);
 
-        if (ZImpl(get_param<bool>("polygonate"))) {
+        if (get_input2_bool("polygonate")) {
             primPolygonate(prim.get());
         }
         std::ofstream fout(path);
         dump_obj(prim.get(), fout);
-        ZImpl(set_output("prim", std::move(prim)));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(WriteObjPrim,
         { /* inputs: */ {
-        {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
         {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::WritePathEdit},
         }, /* outputs: */ {
-        {gParamType_Primitive, "prim"},
+        {gParamType_Geometry, "prim"},
         }, /* params: */ {
         {gParamType_Bool, "polygonate", "1"},
         }, /* category: */ {

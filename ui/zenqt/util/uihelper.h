@@ -1,4 +1,4 @@
-#ifndef __UI_HELPER_H__
+﻿#ifndef __UI_HELPER_H__
 #define __UI_HELPER_H__
 
 #include <rapidjson/document.h>
@@ -60,6 +60,7 @@ public:
     static QStringList getCoreTypeList();
     static bool parseVecType(const QString& type, int& dim, bool& bFloat);
     static QString anyToString(const zeno::reflect::Any& any);
+    static QString floatToString(float val);
     static QString variantToString(const QVariant& var);
     static QString editVariantToQString(const zeno::PrimVar& var);
     static QVariant primvarToQVariant(const zeno::PrimVar& var);
@@ -112,7 +113,7 @@ public:
     static QStringList stdlistToQStringList(const zeno::ObjPath& objpath);
     static QStringList findPreviousNode(GraphModel* pModel, const QString& node);
     static QStringList findSuccessorNode(GraphModel* pModel, const QString& node);
-    static QStringList findAllLinkdNodes(GraphModel* pModel, const QString& node);
+    static QStringList findAllLinkdNodes(GraphModel* pModel, const QString& node, bool bfindInput, bool bfindOutput);
     static int getIndegree(const QModelIndex& nodeIdx);
     static PANEL_TYPE title2Type(const QString& title);
 

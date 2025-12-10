@@ -1,3 +1,4 @@
+#include <zeno/utils/api.h>
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/IGeometryObject.h>
@@ -10,12 +11,6 @@
 #include <cstdlib>
 
 namespace zeno {
-
-ZENO_API std::pair<vec3f, vec3f> primBoundingBox(PrimitiveObject *prim) {
-    if (!prim->verts.size())
-        return {{0, 0, 0}, {0, 0, 0}};
-    return parallel_reduce_minmax(prim->verts.begin(), prim->verts.end());
-}
 
 static std::pair<vec3f, vec3f> geoBoundingBox(GeometryObject_Adapter* prim) {
     const std::vector<zeno::vec3f>& pts = prim->points_pos();
@@ -30,7 +25,7 @@ struct PrimBoundingBox : INode {
   virtual void apply() override {
     auto prim = get_input_Geometry("prim");
     auto extraBound = ZImpl(get_input2<float>("extraBound"));
-    auto [bmin, bmax] = geoBoundingBox(prim.get());
+    auto [bmin, bmax] = geoBoundingBox(prim);
     if (extraBound != 0) {
         bmin -= extraBound;
         bmax += extraBound;

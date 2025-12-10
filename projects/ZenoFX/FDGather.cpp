@@ -4,6 +4,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/extra/GlobalState.h>
@@ -107,7 +108,7 @@ struct Gather2DFiniteDifference : zeno::INode {
     virtual void apply() override {
         auto nx = get_input2_int("nx");
         auto ny = get_input2_int("ny");
-        auto grid = get_input_PrimitiveObject("grid");
+        auto grid = get_input_Geometry("grid")->toPrimitiveObject();
         auto attrT = get_param_string("attrT");
         auto type = get_param_string("OpType");
         auto channel = zsString2Std(get_param_string("channel"));
@@ -137,18 +138,18 @@ struct Gather2DFiniteDifference : zeno::INode {
                 }
             }
         }
-
-        set_output("prim", std::move(grid));
+        auto ret = create_GeometryObject(grid.get());
+        set_output("prim", std::move(ret));
 
     }
 };
 
 ZENDEFNODE(Gather2DFiniteDifference, {
-                                         {{gParamType_Primitive, "grid"},
+                                         {{gParamType_Geometry, "grid"},
                                           {gParamType_Int, "nx","1"},
                                           {gParamType_Int, "ny", "1"},
                                           {gParamType_String, "channel", "pos"}},
-                                         {{gParamType_Primitive, "prim"}},
+                                         {{gParamType_Geometry, "prim"}},
                                          {{"enum vec3 float", "attrT", "float"},
                                           {"enum FIVE_STENCIL NINE_STENCIL", "OpType", "FIVE_STENCIL"}},
                                          {"zenofx"},
@@ -158,7 +159,7 @@ struct MomentumTransfer2DFiniteDifference : zeno::INode {
     virtual void apply() override {
         auto nx = get_input2_int("nx");
         auto ny = get_input2_int("ny");
-        auto grid = get_input_PrimitiveObject("grid");
+        auto grid = get_input_Geometry("grid")->toPrimitiveObject();
         auto attrT = get_param_string("attrT");
         auto type = get_param_string("OpType");
         auto channel = zsString2Std(get_input2_string("channel"));
@@ -197,18 +198,18 @@ struct MomentumTransfer2DFiniteDifference : zeno::INode {
                 }
             }
         }
-
-        set_output("prim", std::move(grid));
+        auto ret = create_GeometryObject(grid.get());
+        set_output("prim", std::move(ret));
 
     }
 };
 ZENDEFNODE(MomentumTransfer2DFiniteDifference, {
-                                         {{gParamType_Primitive, "grid"},
+                                         {{gParamType_Geometry, "grid"},
                                           {gParamType_Int, "nx","1"},
                                           {gParamType_Int, "ny", "1"},
                                           {gParamType_String, "channel", "d"},
                                           {gParamType_String, "add_channel", "d"}},
-                                         {{gParamType_Primitive, "prim"}},
+                                         {{gParamType_Geometry, "prim"}},
                                          {{"enum vec3 float", "attrT", "float"},
                                           {"enum FIVE_STENCIL NINE_STENCIL", "OpType", "FIVE_STENCIL"}},
                                          {"zenofx"},
@@ -256,8 +257,8 @@ struct Grid2DSample : zeno::INode {
         auto nx = get_input2_int("nx");
         auto ny = get_input2_int("ny");
         auto bmin = toVec3f(get_input2_vec3f("bmin"));
-        auto prim = get_input_PrimitiveObject("prim");
-        auto grid = get_input_PrimitiveObject("sampleGrid");
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        auto grid = get_input_Geometry("sampleGrid")->toPrimitiveObject();
         auto channelList = zsString2Std(get_input2_string("channel"));
         auto sampleby = zsString2Std(get_input2_string("sampleBy"));
         auto isPeriodic = get_input2_string("sampleType") == "Periodic";
@@ -294,13 +295,13 @@ struct Grid2DSample : zeno::INode {
                 }
             }
         }
-
-        set_output("prim", std::move(prim));
+        auto ret = create_GeometryObject(prim.get());
+        set_output("prim", std::move(ret));
     }
 };
 ZENDEFNODE(Grid2DSample, {
-                             {{gParamType_Primitive, "prim"},
-                              {gParamType_Primitive, "sampleGrid"},
+                             {{gParamType_Geometry, "prim"},
+                              {gParamType_Geometry, "sampleGrid"},
                               {gParamType_Int, "nx", "1"},
                               {gParamType_Int, "ny", "1"},
                               {gParamType_Float, "h", "1"},
@@ -308,7 +309,7 @@ ZENDEFNODE(Grid2DSample, {
                               {gParamType_String, "channel", "*"},
                               {gParamType_String, "sampleBy", "pos"},
                               {"enum Clamp Periodic", "sampleType", "Clamp"}},
-                             {{gParamType_Primitive, "prim"}},
+                             {{gParamType_Geometry, "prim"}},
                              {},
                              {"zenofx"},
                          });

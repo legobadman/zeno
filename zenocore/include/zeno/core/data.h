@@ -15,6 +15,7 @@
 #include <zeno/reflect/type.hpp>
 #include <zeno/types/CurveObject.h>
 #include <zeno/core/IObject.h>
+#include <zeno/extra/GlobalError.h>
 
 
 namespace zeno {
@@ -89,11 +90,12 @@ namespace zeno {
             , tooltip(tooltip)
         {
         }
-        CommonParam(std::string name, ParamType type, std::string constrain = "", std::string tooltip = "")
+        CommonParam(std::string name, ParamType type, std::string constrain = "", std::string tooltip = "", bool socketVisible = false)
             : name(name)
             , type(type)
             , constrain(constrain)
             , tooltip(tooltip)
+            , bSocketVisible(socketVisible)
         {
         }
         CommonParam(std::string name, SocketType socketType, SocketProperty sockProp)
@@ -129,8 +131,8 @@ namespace zeno {
             , control(control)
             , ctrlProps(ctrlProps)
         {}
-        ParamPrimitive(std::string name, ParamType type, zeno::reflect::Any defl = zeno::reflect::Any(), ParamControl control = NullControl, zeno::reflect::Any ctrlProps = zeno::reflect::Any(), std::string constrain = "")
-            : CommonParam(name, type, constrain)
+        ParamPrimitive(std::string name, ParamType type, zeno::reflect::Any defl = zeno::reflect::Any(), ParamControl control = NullControl, zeno::reflect::Any ctrlProps = zeno::reflect::Any(), std::string constrain = "", bool socketVisible = false)
+            : CommonParam(name, type, constrain, "", socketVisible)
             , defl(defl)
             , control(control)
             , ctrlProps(ctrlProps)
@@ -479,6 +481,61 @@ namespace zeno {
     {
         ParamPath curr_param;
         std::variant<NumericValue, ShaderNodePath> data;
+    };
+
+    using SharedObjects = std::map<std::string, std::shared_ptr<zeno::IObject>>;
+
+    struct RenderObjsInfo {
+        SharedObjects newObjs;
+        SharedObjects modifyObjs;
+        SharedObjects remObjs;
+        SharedObjects lightObjs;    //TODO:
+        SharedObjects allObjects;
+
+        bool empty() const {
+            return newObjs.empty() && modifyObjs.empty() && remObjs.empty() && lightObjs.empty();
+        }
+    };
+
+    struct NodeImpl;
+
+    struct ObjectNodeInfo {
+        std::optional<IObject*> rootObj;        //list/dict case.
+        IObject* transformingObj;
+        NodeImpl* spViewNode;
+    };
+
+    //一条计算链路的更新信息：
+    struct render_update_info {
+        UpdateReason reason = Update_Unknown;
+        std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
+        zany spObject;  //对象所属权可藉此传送到渲染端
+        std::vector<std::string> remove_objs;
+
+        render_update_info() {}
+        render_update_info(const render_update_info& rhs) {
+            reason = rhs.reason;
+            uuidpath_node_objkey = rhs.uuidpath_node_objkey;
+            if (rhs.spObject)
+                spObject = rhs.spObject->clone();
+            remove_objs = rhs.remove_objs;
+        }
+
+        render_update_info& operator=(const render_update_info& rhs) {
+            reason = rhs.reason;
+            uuidpath_node_objkey = rhs.uuidpath_node_objkey;
+            if (rhs.spObject)
+                spObject = rhs.spObject->clone();
+            remove_objs = rhs.remove_objs;
+            return *this;
+        }
+    };
+
+    struct render_reload_info {
+        render_reload_policy policy;
+        std::string current_ui_graph;   //当前用户在编辑器端的ui图层，以普通路径表达
+        std::vector<render_update_info> objs;
+        GlobalError error;
     };
 }
 

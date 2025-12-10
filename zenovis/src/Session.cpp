@@ -84,7 +84,7 @@ void Session::set_uv_mode(bool enable) {
 }
 
 void Session::set_num_samples(int num_samples) {
-    // TODO
+    impl->scene->drawOptions->num_samples = num_samples;
 }
 
 void Session::set_viewport_point_size_scale(double scale) {
@@ -198,20 +198,8 @@ void Session::look_perspective() {
     impl->scene->camera->updateMatrix();
 }
 
-void Session::load_objects(const zeno::RenderObjsInfo& objs) {
-    impl->scene->load_objects(objs);
-}
-
-void Session::load_objects(const std::vector<zeno::render_update_info>& infos) {
-    impl->scene->load_objects(infos);
-}
-
 void Session::reload(const zeno::render_reload_info& info) {
     impl->scene->reload(info);
-}
-
-void Session::load_object(zeno::render_update_info info) {
-    impl->scene->load_object(info);
 }
 
 void Session::look_to_dir(float cx, float cy, float cz,

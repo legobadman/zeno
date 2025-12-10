@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <zeno/utils/api.h>
 #include <zeno/core/IObject.h>
@@ -37,6 +37,22 @@ namespace zeno
     struct PrimitiveLink;
     struct SubnetNode;
     struct CalcContext;
+    struct RefSourceInfo;
+
+    struct ExecuteContext
+    {
+        std::string innode_uuid_path;
+        std::string in_node;
+        std::string in_param;
+        std::string out_param;
+        CalcContext* pContext;
+    };
+
+    struct RefLinkInfo
+    {
+        EdgeInfo reflink;
+        bool bOutParamIsOutput;//reflink的source可能是一个output也可能是一个input，true表示reflink引用了一个output参数
+    };
 
     class ZENO_API NodeImpl
     {
@@ -46,12 +62,22 @@ namespace zeno
         NodeImpl(INode* pNode);
         virtual ~NodeImpl();
 
-        void doApply(CalcContext* pContext);
-        void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
+        //获取require_output_param指定的结果，如需要则计算（如果不脏则直接取结果）。
+        void execute(CalcContext* pContext);
+        zany execute_get_object(const ExecuteContext& exec_context);
+        zeno::reflect::Any execute_get_numeric(const ExecuteContext& exec_context);
+
         void doOnlyApply();
-        void mark_dirty(bool bOn, DirtyReason reason = zeno::Dirty_All, bool bWholeSubnet = true, bool bRecursively = true);
+        void mark_dirty(
+            bool bOn,
+            DirtyReason reason = zeno::Dirty_All,
+            bool bWholeSubnet = true,
+            bool bRecursively = true
+        );
+        virtual void mark_clean();
         virtual void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
         virtual void clearCalcResults();
+        virtual float time() const;
 
         //BEGIN new api
         void init(const NodeData& dat);
@@ -72,6 +98,7 @@ namespace zeno
         virtual NodeType nodeType() const;
         virtual bool is_locked() const;
         virtual void set_locked(bool);
+        virtual void convert_to_assetinst(const std::string& asset_name);
 
         void set_view(bool bOn);
         CALLBACK_REGIST(set_view, void, bool)
@@ -86,6 +113,7 @@ namespace zeno
         bool is_nocache() const;
 
         bool is_dirty() const { return m_dirty; }
+        bool is_upstream_dirty(const std::string& in_param) const;
         NodeRunStatus get_run_status() const { return m_status; }
 
         CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
@@ -101,23 +129,16 @@ namespace zeno
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
-        zany get_input_obj(std::string const& name) const;
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
         ParamType get_anyparam_type(bool bInput, const std::string& name);
 
-        /*container_info是记录参数的ListObject的增删改情况，便于作部分加载*/
-        container_elem_update_info get_input_container_info(const std::string& param);
-        container_elem_update_info get_output_container_info(const std::string& param);
-        void set_input_container_info(const std::string& param, const container_elem_update_info& info);
-        void set_output_container_info(const std::string& param, const container_elem_update_info& info);
         void clear_container_info();
 
         std::string get_viewobject_output_param() const;
         virtual NodeData exportInfo() const;
-        void set_result(bool bInput, const std::string& name, zany spObj);
-        bool set_output(std::string const& param, zany obj);
+        bool set_output(std::string const& param, zany&& obj);
 
-        bool update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& oldVal);
+        bool update_param_impl(const std::string& param, const zeno::reflect::Any& new_value);
         bool set_primitive_output(std::string const& id, const zeno::reflect::Any& val);
         bool set_primitive_input(std::string const& id, const zeno::reflect::Any& val);
 
@@ -127,7 +148,7 @@ namespace zeno
             return zeno::reflect::any_cast<T>(prim.defl);
         }
 
-        bool update_param(const std::string& name, zeno::reflect::Any new_value);
+        bool update_param(const std::string& name, const zeno::reflect::Any& new_value);
         CALLBACK_REGIST(update_param, void, const std::string&, zeno::reflect::Any, zeno::reflect::Any)
 
         bool update_param_socket_type(const std::string& name, SocketType type);
@@ -196,6 +217,7 @@ namespace zeno
         bool add_input_obj_param(ParamObject param);
         bool add_output_prim_param(ParamPrimitive param);
         bool add_output_obj_param(ParamObject param);
+
         void init_object_link(bool bInput, const std::string& paramname, std::shared_ptr<ObjectLink> spLink, const std::string& targetParam);
         void init_primitive_link(bool bInput, const std::string& paramname, std::shared_ptr<PrimitiveLink> spLink, const std::string& targetParam);
         bool isPrimitiveType(bool bInput, const std::string& param_name, bool& bExist);
@@ -205,6 +227,7 @@ namespace zeno
         bool moveUpLinkKey(bool bInput, const std::string& param_name, const std::string& key);
         bool removeLink(bool bInput, const EdgeInfo& edge);
         void mark_dirty_objs();
+        DirtyReason getDirtyReason() const;
         std::vector<std::pair<std::string, bool>> getWildCardParams(const std::string& name, bool bPrim);
         void getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType, bool& bWildcard);
         void constructReference(const std::string& param_name);
@@ -213,7 +236,13 @@ namespace zeno
         void on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded); //参数名包括对象输入和数值输入，不可重名
         void checkParamsConstrain();
 
+        //referLink相关
+        std::vector<RefLinkInfo> getReflinkInfo(bool bOnlySearchByDestNode = true);
+        void removeNodeUpdateRefLink(const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput);//前端删除节点时undo/redo相关param的reflink
+
         CALLBACK_REGIST(update_visable_enable, void, zeno::NodeImpl*, std::set<std::string>, std::set<std::string>)
+        CALLBACK_REGIST(addRefLink, void, EdgeInfo, bool outParamIsOutput)
+        CALLBACK_REGIST(removeRefLink, void, EdgeInfo, bool outParamIsOutput)
 
     public:
         //为名为ds的输入参数，求得这个参数在依赖边的求值下的值，或者没有依赖边下的默认值。
@@ -225,34 +254,37 @@ namespace zeno
 
         bool has_link_input(std::string const& id) const;
         bool has_input(std::string const& id) const;
-        zany get_input(std::string const& id) const;
-        zany get_output_obj(std::string const& sock_name);
+        zany clone_input(std::string const& id) const;
+        zany move_input(std::string const& id);
+        zany move_output(std::string const& id);
+        //get_input很麻烦，因为数值型的“对象”是新建出来的
+        //IObject* get_input(std::string const& id) const;
+        IObject* get_input_obj(std::string const& id) const;
+        IObject* get_output_obj(std::string const& sock_name);
         std::vector<zany> get_output_objs();
-        virtual zany get_default_output_object();
-        virtual container_elem_update_info get_default_output_container_info();
+        virtual IObject* get_default_output_object();   //thread unsafe
+        zany clone_default_output_object();
+        void reportStatus(bool bDirty, NodeRunStatus status);
 
-        template <class T>
-        std::shared_ptr<T> get_input(std::string const& id) const {
-            auto obj = get_input(id);
-            return safe_dynamic_cast<T>(std::move(obj), "input socket `" + id + "` of node `" + m_name + "`");
-        }
+        zany takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
+        zany takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
+        zeno::reflect::Any takeOutputPrim(PrimitiveParam* out_param, PrimitiveParam* in_param, bool& bAllOutputTaken);
+        zeno::reflect::Any takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
+        void mark_takeover();
+        bool is_takenover() const;
+        void check_break_and_return();
 
         template <class T>
         bool has_input(std::string const& id) const {
             if (!has_input(id)) return false;
-            auto obj = get_input(id);
+            auto obj = clone_input(id);
             return !!dynamic_cast<T*>(obj.get());
         }
 
         template <class T>
         bool has_input2(std::string const& id) const {
             if (!has_input(id)) return false;
-            return objectIsLiterial<T>(get_input(id));
-        }
-
-        template <class T>
-        auto get_input2(std::string const& id) const {
-            return objectToLiterial<T>(get_input(id), "input socket `" + id + "` of node `" + m_name + "`");
+            return objectIsLiterial<T>(clone_input(id).get());
         }
 
         template <class T>
@@ -266,17 +298,21 @@ namespace zeno
             return get_input2<T>(id);
         }
 
-        template <class T = IObject>
-        std::shared_ptr<T> get_input(std::string const& id, std::shared_ptr<T> const& defl) const {
-            return has_input(id) ? get_input<T>(id) : defl;
+        template <class T>
+        std::unique_ptr<T> get_input(std::string const& id) const {
+            auto obj = clone_input(id);
+            return safe_uniqueptr_cast<T>(std::move(obj));
+        }
+
+        template <class T>
+        auto get_input2(std::string const& id) const {
+            return objectToLiterial<T>(clone_input(id), "input socket `" + id + "` of node `" + m_name + "`");
         }
 
         template <class T>
         T get_input2(std::string const& id, T const& defl) const {
             return has_input(id) ? get_input2<T>(id) : defl;
         }
-
-        TempNodeCaller temp_node(std::string const& id);
 
     protected:
         virtual void complete();
@@ -290,24 +326,31 @@ namespace zeno
         std::map<std::string, ObjectParam> m_outputObjs;
         
     private:
+        bool addRefLink(const EdgeInfo& edge, bool outParamIsOutput);
+        bool removeRefLink(const EdgeInfo& edge, bool outParamIsOutput);
+        bool removeRefLinkDesParamIndx(bool bInput, bool bPrimitivParam, const std::string& paramName, bool bUiNeedRemoveReflink = false);//移除一个reflink在其destParam中的索引
+
+        void doApply(CalcContext* pContext);
+        void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
-        std::shared_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
-        std::shared_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty);
+        std::unique_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
+        std::unique_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
-        void reportStatus(bool bDirty, NodeRunStatus status);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);
         std::string resolve_string(const std::string& fmla, const std::string& defl);
         zfxvariant execute_fmla(const std::string& expression);
         template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
-        std::set<std::pair<std::string, std::string>> resolveReferSource(const zeno::reflect::Any& param_defl);
+        std::set<RefSourceInfo> resolveReferSource(const zeno::reflect::Any& param_defl);
         void initReferLinks(PrimitiveParam* target_param);
+        bool checkAllOutputLinkTraced();
+        void launch_param_task(const std::string& param);
 
         //preApply是先解决所有输入参数（上游）的求值问题
         void preApply(CalcContext* pContext);
         void preApply_Primitives(CalcContext* pContext);
         void preApply_SwitchIf(CalcContext* pContext);
         void preApply_SwitchBetween(CalcContext* pContext);
-        void commit_to_render(UpdateReason reason);
+        void preApply_FrameCache(CalcContext* pContext);
         void bypass();
         CustomUI _deflCustomUI() const;
 
@@ -315,7 +358,8 @@ namespace zeno
         void preApplyTimeshift(CalcContext* pContext);
         //foreach特供
         void foreachend_apply(CalcContext* pContext);
-        void init_output_container_updateinfo();
+        void clear_input_cacheobj(const std::string& param);
+
 
         std::string m_name;
         std::string m_nodecls;
@@ -326,12 +370,17 @@ namespace zeno
         NodeRunStatus m_status = Node_DirtyReadyToRun;
         Graph* m_pGraph;
         std::unique_ptr<INode> m_pNode;
+        DirtyReason m_dirtyReason = NoDirty;
         bool m_bView = false;
         bool m_bypass = false;
         bool m_nocache = false;
+
         bool m_dirty = true;
+        bool m_takenover = false;   //标记为nocache的节点，在计算完毕后，其输出被“移动”到下游节点后，当前节点处于takenover的状态，即，不脏且无法取出数据
 
         zeno::reflect::TypeBase* m_pTypebase = nullptr;
+
+        mutable std::mutex m_mutex;
 
         friend class SubnetNode;
     };

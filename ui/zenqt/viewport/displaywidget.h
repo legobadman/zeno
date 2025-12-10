@@ -87,9 +87,7 @@ public slots:
     void onMouseHoverMoved();
     void onDockViewAction(bool triggered);
     void onRenderRequest(QString nodeuuidpath);
-    void onCalcFinished(bool bSucceed, zeno::ObjPath, QString, zeno::render_reload_info);
-    void onRenderInfoCommitted(zeno::render_update_info info);
-    void onJustLoadObjects();
+    void onCalcFinished(bool bSucceed, QString, QString, const zeno::render_reload_info&);
     void onSetCamera(zenovis::ZOptixCameraSettingInfo value);
     void onSetBackground(bool bShowBackground);
     void setSampleNumber(int sample_number);
@@ -121,7 +119,7 @@ private:
     void initRecordMgr();
     void sendTaskToServer(const VideoRecInfo& info);
     void submit(std::vector<zeno::render_update_info> infos);
-    void submit(zeno::render_reload_info render_summary);
+    void submit(const zeno::render_reload_info& render_summary);
 
 #ifdef BASE_QML_VIEWPORT
     ZOpenGLQuickView* m_glView;

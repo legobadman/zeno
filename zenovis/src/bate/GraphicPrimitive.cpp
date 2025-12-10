@@ -12,7 +12,6 @@
 #include <zeno/utils/ticktock.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/helper.h>
-#include <zeno/extra/TempNode.h>
 #include <zenovis/Camera.h>
 #include <zenovis/DrawOptions.h>
 #include <zenovis/Scene.h>
@@ -486,6 +485,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
         }
         if (int subdlevs = prim->userData()->get_int("delayedSubdivLevels", 0)) {
             // todo: zhxx, should comp normal after subd or before?
+#if 0
             zeno::log_trace("computing subdiv {}", subdlevs);
             (void)zeno::TempNodeSimpleCaller("OSDPrimSubdiv")
                 .set("prim", std::make_shared<zeno::PrimitiveObject>(*prim))
@@ -497,6 +497,7 @@ struct ZhxxGraphicPrimitive final : IGraphicDraw {
                 .set2<bool>("delayTillIpc", false)
                 .call();  // will inplace subdiv prim
             prim->userData()->del("delayedSubdivLevels");
+#endif
         }
         if (thePrmHasFaces) {
             zeno::log_trace("demoting faces");

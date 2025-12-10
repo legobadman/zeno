@@ -2,6 +2,7 @@
 #include <zeno/types/IGeometryObject.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/types/ListObject_impl.h>
+#include <zeno/types/UserData.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/para/parallel_reduce.h>
@@ -206,25 +207,85 @@ namespace zeno
         return parallel_reduce_minmax(verts.begin(), verts.end());
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> mergeObjects(std::shared_ptr<zeno::ListObject> spList) {
-        int nTotalPts = 0, nTotalFaces = 0;
-        const std::vector<zeno::SharedPtr<zeno::GeometryObject_Adapter>>& geoobjs = spList->m_impl->get<zeno::GeometryObject_Adapter>();
+    std::optional<std::pair<vec3f, vec3f>> geomBoundingBox2(GeometryObject* geo) {
+        const std::vector<vec3f>& verts = geo->points_pos();
+        if (!verts.size())
+            return std::nullopt;
+        return parallel_reduce_minmax(verts.begin(), verts.end());
+    }
+
+    void geom_set_abcpath(GeometryObject_Adapter* geom, zeno::String path_name) {
+        auto pUserData = geom->userData();
+        int faceset_count = pUserData->get_int("abcpath_count", 0);
+        for (auto j = 0; j < faceset_count; j++) {
+            pUserData->del(stdString2zs(zeno::format("abcpath_{}", j)));
+        }
+        pUserData->set_int("abcpath_count", 1);
+        pUserData->set_string("abcpath_0", path_name);
+        geom->create_face_attr("abcpath", (int)0);
+    }
+
+    void geom_set_faceset(GeometryObject_Adapter* geom, zeno::String faceset_name) {
+        IUserData* pUserData = geom->userData();
+        int faceset_count = pUserData->get_int("faceset_count", 0);
+        for (auto j = 0; j < faceset_count; j++) {
+            pUserData->del(stdString2zs(zeno::format("faceset_{}", j)));
+        }
+        pUserData->set_int("faceset_count", 1);
+        pUserData->set_string("faceset_0", faceset_name);
+        geom->create_face_attr("faceset", (int)0);
+    }
+
+    static void set_special_attr_remap(GeometryObject_Adapter* p, std::string attr_name, std::unordered_map<std::string, int>& facesetNameMap) {
+        UserData* pUserData = dynamic_cast<UserData*>(p->userData());
+        int faceset_count = pUserData->get_int(stdString2zs(attr_name + "_count"), 0);
+        {
+            std::unordered_map<int, int> cur_faceset_index_map;
+            for (auto i = 0; i < faceset_count; i++) {
+                auto path = pUserData->get2<std::string>(format("{}_{}", attr_name, i));
+                if (facesetNameMap.count(path) == 0) {
+                    int new_index = facesetNameMap.size();
+                    facesetNameMap[path] = new_index;
+                }
+                cur_faceset_index_map[i] = facesetNameMap[path];
+            }
+
+            for (int i = 0; i < p->nfaces(); i++) {
+                int val = p->m_impl->get_elem<int>(ATTR_FACE, attr_name, 0, i);
+                int newval = cur_faceset_index_map[val];
+                p->m_impl->set_elem(ATTR_FACE, attr_name, i, newval);
+            }
+        }
+    }
+
+
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> mergeObjects(
+        zeno::ListObject* spList,
+        std::string const& tagAttr,
+        bool tag_on_vert,
+        bool tag_on_face)
+    {
+        size_t nTotalPts = 0, nTotalFaces = 0, nVertices = 0;
+        const std::vector<zeno::GeometryObject_Adapter*>& geoobjs = spList->m_impl->get<zeno::GeometryObject_Adapter>();
         for (auto spObject : geoobjs) {
             nTotalPts += spObject->npoints();
             nTotalFaces += spObject->nfaces();
         }
 
         std::vector<zeno::vec3f> newObjPos(nTotalPts);
+        std::vector<std::vector<int>> newFaces(nTotalFaces);
 
-        auto mergedObj = create_GeometryObject(zeno::Topo_IndiceMesh, false, nTotalPts, nTotalFaces, true);
         size_t pt_offset = 0, face_offset = 0;
+        bool bTriangle = true;
         for (int iGeom = 0; iGeom < geoobjs.size(); iGeom++)
         {
             auto elemObj = geoobjs[iGeom];
             std::vector<vec3f> obj_pos = elemObj->m_impl->points_pos();
-
             int nPts = elemObj->npoints();
             int nFaces = elemObj->nfaces();
+            if (!elemObj->is_base_triangle()) {
+                bTriangle = false;
+            }
 
             std::copy(obj_pos.begin(), obj_pos.end(), newObjPos.begin() + pt_offset);
             for (int iFace = 0; iFace < nFaces; iFace++) {
@@ -232,15 +293,186 @@ namespace zeno
                 for (int k = 0; k < facePoints.size(); ++k) {
                     facePoints[k] += pt_offset;
                 }
-                mergedObj->m_impl->set_face(face_offset + iFace, facePoints, true); //TODO: case of Lines.
+                newFaces[iFace + face_offset] = std::move(facePoints);
             }
-
-            mergedObj->inheritAttributes(elemObj.get(), -1, pt_offset, {"pos"}, face_offset, {});
             pt_offset += nPts;
             face_offset += nFaces;
         }
+
+        auto mergedObj = create_GeometryObject(zeno::Topo_IndiceMesh, bTriangle, newObjPos, newFaces);
+        //copy attribute from each obj
+        pt_offset = 0;
+        face_offset = 0;
+        for (int iGeom = 0; iGeom < geoobjs.size(); iGeom++) {
+            auto elemObj = geoobjs[iGeom];
+            int nPts = elemObj->npoints();
+            int nFaces = elemObj->nfaces();
+            mergedObj->inheritAttributes(elemObj, -1, pt_offset, { "pos" }, face_offset, {});
+            pt_offset += nPts;
+            face_offset += nFaces;
+        }
+
         mergedObj->create_attr(ATTR_POINT, "pos", newObjPos);
+
+        std::vector<std::string> matNameList(0);
+        std::unordered_map<std::string, int> facesetNameMap;
+        std::unordered_map<std::string, int> abcpathNameMap;
+        for (auto p : geoobjs) {
+            //if p has material
+            int matNum = p->userData()->get_int("matNum", 0);
+            if (matNum > 0) {
+                for (int i = 0; i < p->nfaces(); i++) {
+                     int matid = p->m_impl->get_elem<int>(ATTR_FACE, "matid", 0, i);
+                     if (matid != -1) {
+                         p->m_impl->set_elem<int>(ATTR_FACE, "matid", i, matid + 1);
+                     }
+                }
+                for (int i = 0; i < matNum; i++) {
+                    auto matIdx = "Material_" + to_string(i);
+                    auto matName = p->userData()->get_string(stdString2zs(matIdx), "Default");
+                    matNameList.emplace_back(zsString2Std(matName));
+                }
+            }
+            else {
+                if (p->nfaces() > 0) {
+                    p->set_face_attr("matid", (int)-1);
+                }
+            }
+
+            int faceset_count = p->userData()->get_int("faceset_count", 0);
+            if (faceset_count == 0) {
+                geom_set_faceset(p, "defFS");
+                faceset_count = 1;
+            }
+            set_special_attr_remap(p, "faceset", facesetNameMap);
+
+            int path_count = p->userData()->get_int("abcpath_count", 0);
+            if (path_count == 0) {
+                geom_set_abcpath(p, "/ABC/unassigned");
+                path_count = 1;
+            }
+            set_special_attr_remap(p, "abcpath", abcpathNameMap);
+        }
+
+        //合并UserData
+        auto pUserData = dynamic_cast<UserData*>(mergedObj->userData());
+        for (auto& p : geoobjs) {
+            pUserData->merge(*dynamic_cast<UserData*>(p->userData()));
+        }
+
+        if (matNameList.size() > 0) {
+            //add matNames to userData
+            int i = 0;
+            for (auto name : matNameList) {
+                auto matIdx = "Material_" + to_string(i);
+                pUserData->setLiterial(matIdx, name);
+                i++;
+            }
+        }
+        int oMatNum = matNameList.size();
+        pUserData->set2("matNum", oMatNum);
+        {
+            for (auto const& [k, v] : facesetNameMap) {
+                pUserData->set2(format("faceset_{}", v), k);
+            }
+            int faceset_count = facesetNameMap.size();
+            pUserData->set2("faceset_count", faceset_count);
+        }
+        {
+            for (auto const& [k, v] : abcpathNameMap) {
+                pUserData->set2(format("abcpath_{}", v), k);
+            }
+            int abcpath_count = abcpathNameMap.size();
+            pUserData->set2("abcpath_count", abcpath_count);
+        }
+
         return mergedObj;
+    }
+
+    static glm::vec3 mapplypos(glm::mat4 const& matrix, glm::vec3 const& vector) {
+        auto vector4 = matrix * glm::vec4(vector, 1.0f);
+        return glm::vec3(vector4) / vector4.w;
+    }
+
+    static glm::vec3 mapplynrm(glm::mat4 const& matrix, glm::vec3 const& vector) {
+        glm::mat3 normMatrix(matrix);
+        normMatrix = glm::transpose(glm::inverse(normMatrix));
+        auto vector3 = normMatrix * vector;
+        return glm::normalize(vector3);
+    }
+
+    void transformGeom(
+        zeno::GeometryObject_Adapter* geom
+        , glm::mat4 matrix
+        , std::string pivotType
+        , vec3f pivotPos
+        , vec3f localX
+        , vec3f localY
+        , vec3f translate
+        , vec4f rotation
+        , vec3f scaling)
+    {
+        zeno::vec3f _pivot = {};
+        zeno::vec3f lX = { 1, 0, 0 };
+        zeno::vec3f lY = { 0, 1, 0 };
+        if (pivotType == "bboxCenter") {
+            zeno::vec3f _min;
+            zeno::vec3f _max;
+            std::tie(_min, _max) = geomBoundingBox(geom->m_impl.get());
+            _pivot = (_min + _max) / 2;
+        }
+        else if (pivotType == "custom") {
+            _pivot = pivotPos;
+            lX = localX;
+            lY = localY;
+        }
+        auto lZ = zeno::cross(lX, lY);
+        lY = zeno::cross(lZ, lX);
+
+        auto pivot_to_world = glm::mat4(1);
+        pivot_to_world[0] = { lX[0], lX[1], lX[2], 0 };
+        pivot_to_world[1] = { lY[0], lY[1], lY[2], 0 };
+        pivot_to_world[2] = { lZ[0], lZ[1], lZ[2], 0 };
+        pivot_to_world[3] = { _pivot[0], _pivot[1], _pivot[2], 1 };
+        auto pivot_to_local = glm::inverse(pivot_to_world);
+        matrix = pivot_to_world * matrix * pivot_to_local;
+
+        //std::vector<zeno::vec3f> pos = geom->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+        if (geom->has_attr(ATTR_POINT, "pos"))
+        {
+            //TODO: 前面可以判断是否符合写时复制，比如transform的tsr是否发生改变
+            geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+                auto p = zeno::vec_to_other<glm::vec3>(old_pos);
+                p = mapplypos(matrix, p);
+                auto newpos = zeno::other_to_vec<3>(p);
+                return newpos;
+                });
+            //prim->verts.add_attr<zeno::vec3f>("_origin_pos") = pos; //视图端transform会用到，这里先不加
+        }
+
+        //std::vector<float> xvec = geom->get_attrs<float, 'x'>(ATTR_POINT, "pos");
+        //float xpos = geom->get_elem<float, 'x'>(ATTR_POINT, "pos", 0);
+
+        if (geom->has_attr(ATTR_POINT, "nrm"))
+        {
+            geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
+                auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
+                n = mapplynrm(matrix, n);
+                auto newnrm = zeno::other_to_vec<3>(n);
+                return newnrm;
+                });
+            //prim->verts.add_attr<zeno::vec3f>("_origin_nrm") = nrm;
+        }
+
+        auto user_data = dynamic_cast<UserData*>(geom->userData());
+        user_data->setLiterial("_translate", translate);
+        user_data->setLiterial("_rotate", rotation);
+        user_data->setLiterial("_scale", scaling);
+        user_data->set2("_pivot", _pivot);
+        user_data->set2("_localX", lX);
+        user_data->set2("_localY", lY);
+        user_data->del("_bboxMin");
+        user_data->del("_bboxMax");
     }
 
     ZENO_API bool dividePlane(
@@ -524,8 +756,8 @@ namespace zeno
         return true;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> divideObject(
-        std::shared_ptr<zeno::GeometryObject_Adapter> input_object,
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> divideObject(
+        zeno::GeometryObject_Adapter* input_object,
         DivideKeep keep,
         zeno::vec3f center_pos,
         zeno::vec3f direction
@@ -642,7 +874,7 @@ namespace zeno
         }
 
         //todo: 考虑线
-        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, false, new_pos, newFaces);
+        auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, false, new_pos, newFaces);
 
         //去除被排除的部分
         for (auto iter = rem_points.rbegin(); iter != rem_points.rend(); iter++) {
@@ -651,13 +883,13 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> scatter(
-        std::shared_ptr<zeno::GeometryObject_Adapter> input,
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> scatter(
+        zeno::GeometryObject_Adapter* input,
         const std::string& sampleRegion,
         const int nPointCount,
         int seed)
     {
-        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, input->is_base_triangle(), nPointCount, 0);
+        auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, input->is_base_triangle(), nPointCount, 0);
         if (seed == -1) seed = std::random_device{}();
 
         const int nFaces = input->m_impl->nfaces();
@@ -727,18 +959,18 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
         int nPoints = 0, nFaces = faces.size();
         for (auto& facePts : faces) {
             nPoints += facePts.size();
         }
-        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, false, nPoints, nFaces);
+        auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, false, nPoints, nFaces);
         std::vector<vec3f> points;
         points.resize(nPoints);
         int nInitPoints = 0;
         for (int iFace = 0; iFace < faces.size(); iFace++) {
             const std::vector<zeno::vec3f>& facePts = faces[iFace];
-            zeno::Vector<int> ptIndice;
+            zeno::ZsVector<int> ptIndice;
             for (int iPt = 0; iPt < facePts.size(); iPt++) {
                 int currIdx = nInitPoints + iPt;
                 points[currIdx] = facePts[iPt];
@@ -786,7 +1018,7 @@ namespace zeno
         }
     }
 
-    ZENO_API std::shared_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold) {
+    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold) {
 
         std::vector<vec3f> points = input->m_impl->points_pos();
         _PointCloud cloud{ points };
@@ -855,10 +1087,10 @@ namespace zeno
             }
         }
 
-        auto spOutput = create_GeometryObject(zeno::Topo_IndiceMesh, false, new_points.size(), newFaces.size());
+        auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, false, new_points.size(), newFaces.size());
         for (int iFace = 0; iFace < newFaces.size(); iFace++) {
             const std::vector<int>& facePts = newFaces[iFace];
-            const zeno::Vector<int>& _facePts = stdVec2zeVec(facePts);
+            const zeno::ZsVector<int>& _facePts = stdVec2zeVec(facePts);
             spOutput->add_face(_facePts);
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);

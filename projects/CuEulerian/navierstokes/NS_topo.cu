@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/LevelSetUtils.tpp"
@@ -23,8 +24,8 @@ namespace zeno {
 struct ZSExtendSparseGrid : INode {
 
     void apply() override {
-        auto zsSPG = get_input<ZenoSparseGrid>("SparseGrid");
-        auto nlayers = get_input2<int>("layers");
+        auto zsSPG = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto nlayers = get_input2_int("layers");
 
         using namespace zs;
         static constexpr auto space = execspace_e::cuda;
@@ -68,7 +69,7 @@ struct ZSExtendSparseGrid : INode {
         spg.resizeGrid(nbsOffset);
         newNbs = nbsOffset - nbs;
 
-        if (get_input2<bool>("fillByBackground")) {
+        if (get_input2_bool("fillByBackground")) {
             pol(zs::Collapse{newNbs, spg.block_size},
                 [spgv = proxy<space>(spg), nbs, bg = spg._background,
                  nchns = spg.numChannels()] __device__(int blockno, int cellno) mutable {
@@ -81,7 +82,7 @@ struct ZSExtendSparseGrid : INode {
             zs::memset(mem_device, (void *)spg._grid.tileOffset(nbs), 0, (std::size_t)newNbs * spg._grid.tileBytes());
         }
 
-        bool includeMultigrid = get_input2<bool>("multigrid");
+        bool includeMultigrid = get_input2_bool("multigrid");
         if (includeMultigrid) {
             /// @brief adjust multigrid accordingly
             // grid
@@ -290,7 +291,7 @@ struct ZSMaintainSparseGrid : INode {
             }
         });
 
-        if (get_input2<bool>("multigrid")) {
+        if (get_input2_bool("multigrid")) {
             /// @brief adjust multigrid accordingly
             // grid
             nbs = spg.numBlocks();
@@ -334,10 +335,10 @@ struct ZSMaintainSparseGrid : INode {
     }
 
     void apply() override {
-        auto zsSPG = get_input<ZenoSparseGrid>("SparseGrid");
-        auto tag = get_input2<std::string>("Attribute");
-        auto nlayers = get_input2<int>("layers");
-        auto needRefit = get_input2<bool>("refit");
+        auto zsSPG = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("SparseGrid"));
+        auto tag = zsString2Std(get_input2_string("Attribute"));
+        auto nlayers = get_input2_int("layers");
+        auto needRefit = get_input2_bool("refit");
 
         int opt = 0;
         if (needRefit) {
@@ -378,3 +379,4 @@ ZENDEFNODE(ZSMaintainSparseGrid, {/* inputs: */
                                   {"Eulerian"}});
 
 } // namespace zeno
+#endif

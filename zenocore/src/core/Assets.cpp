@@ -14,7 +14,9 @@ namespace zeno {
 
 AssetsMgr::AssetsMgr() {
     //先不加载，待主工程加载后延迟加载asset
-    //initAssetsInfo();
+    //正确的做法应该是：如果主工程同目录有zda文件，就优先加载本地路径的zda，待主工程关闭时，同时移除这些zda
+    //比较麻烦的是默认路径和主工程目录存在同名的情况，先不处理(TODO)
+    initAssetsInfo();
 }
 
 AssetsMgr::~AssetsMgr() {
@@ -95,6 +97,9 @@ void AssetsMgr::createAsset(const zeno::ZenoAsset asset, bool isFirstCreate) {
         std::shared_ptr<Graph> spGraph = std::make_shared<Graph>(asset.info.name, true);
         spGraph->setName(asset.info.name);
         spGraph->init(asset.optGraph.value());
+        if (spGraph->getName().empty()) {
+            spGraph->setName(asset.info.name);
+        }
         newAsst.sharedGraph = spGraph;
     }
     newAsst.primitive_inputs = asset.primitive_inputs;

@@ -2,6 +2,7 @@
 #include <zeno/PrimitiveObject.h>
 #include <zeno/StringObject.h>
 #include <zeno/types/HeatmapObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/VDBGrid.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/UserData.h>
@@ -97,7 +98,7 @@ void sampleVDBAttribute2(
 }
 struct SampleVDBToPrimitive : INode {
   virtual void apply() override {
-    auto prim = get_input_PrimitiveObject("prim");
+    auto prim = clone_input_PrimitiveObject("prim");
     auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
     auto attr = zsString2Std(get_input2_string("primAttr"));
     auto sampleby = zsString2Std(get_input2_string("sampleBy"));
@@ -105,9 +106,9 @@ struct SampleVDBToPrimitive : INode {
     auto type = zsString2Std(get_param_string("SampleType"));
 
 
-    if (dynamic_cast<VDBFloatGrid *>(grid.get()))
+    if (dynamic_cast<VDBFloatGrid *>(grid))
         prim->add_attr<float>(attr);
-    else if (dynamic_cast<VDBFloat3Grid *>(grid.get()))
+    else if (dynamic_cast<VDBFloat3Grid *>(grid))
         prim->add_attr<vec3f>(attr);
     else
         throw zeno::Exception("unknown vdb grid type\n");
@@ -122,7 +123,7 @@ struct SampleVDBToPrimitive : INode {
     //std::visit([&](auto &vel) { 
     prim->attr_visit(attr, [&] (auto &vel) {
       if constexpr (is_vdb_to_prim_convertible<std::decay_t<decltype(vel)>>::value)
-        sampleVDBAttribute(pos, vel, grid.get()); 
+        sampleVDBAttribute(pos, vel, grid); 
     });
                //prim->attr(attr));
 
@@ -149,18 +150,18 @@ ZENDEFNODE(SampleVDBToPrimitive, {
                                  });
 
 static void primSampleVDB(
-        std::shared_ptr<PrimitiveObject> prim,
+        PrimitiveObject* prim,
         const std::string &srcChannel,
         const std::string &dstChannel,
-        std::shared_ptr<VDBGrid> grid,
+        VDBGrid* grid,
         float remapMin,
         float remapMax
 ) {
     auto &pos = prim->attr<vec3f>(srcChannel);
-    if (dynamic_cast<VDBFloatGrid *>(grid.get())) {
+    if (dynamic_cast<VDBFloatGrid *>(grid)) {
         prim->add_attr<float>(dstChannel);
     }
-    else if (dynamic_cast<VDBFloat3Grid *>(grid.get())) {
+    else if (dynamic_cast<VDBFloat3Grid *>(grid)) {
         prim->add_attr<vec3f>(dstChannel);
     }
     else {
@@ -168,26 +169,27 @@ static void primSampleVDB(
     }
     prim->attr_visit(dstChannel, [&] (auto &vel) {
         if constexpr (is_vdb_to_prim_convertible<std::decay_t<decltype(vel)>>::value)
-            sampleVDBAttribute2(pos, vel, grid.get(), remapMin, remapMax);
+            sampleVDBAttribute2(pos, vel, grid, remapMin, remapMax);
     });
 }
 
 struct PrimSample3D : zeno::INode {
     virtual void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
-        auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
+        auto geom = get_input_Geometry("prim");
+        auto grid = safe_uniqueptr_cast<VDBGrid>(clone_input("vdbGrid"));
         auto dstChannel = zsString2Std(get_input2_string("dstChannel"));
         auto srcChannel = zsString2Std(get_input2_string("srcChannel"));
         auto remapMin = get_input2_float("remapMin");
         auto remapMax = get_input2_float("remapMax");
-
-        primSampleVDB(prim, srcChannel, dstChannel, grid, remapMin, remapMax);
-        set_output("outPrim", std::move(prim));
+        auto prim = geom->toPrimitiveObject();
+        primSampleVDB(prim.get(), srcChannel, dstChannel, grid.get(), remapMin, remapMax);
+        auto ret = create_GeometryObject(prim.get());
+        set_output("outPrim", std::move(ret));
     }
 };
 ZENDEFNODE(PrimSample3D, {
     {
-        {gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
         {gParamType_VDBGrid,"vdbGrid", "", zeno::Socket_ReadOnly},
         {gParamType_String, "srcChannel", "pos"},
         {gParamType_String, "dstChannel", "clr"},
@@ -195,14 +197,14 @@ ZENDEFNODE(PrimSample3D, {
         {gParamType_Float, "remapMax", "1"},
     },
     {
-        {gParamType_Primitive, "outPrim"}
+        {gParamType_Geometry, "outPrim"}
     },
     {},
     {"primitive"},
 });
 struct PrimSample : zeno::INode {
     virtual void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto prim = clone_input_PrimitiveObject("prim");
         auto srcChannel = get_input2_string("srcChannel");
         auto dstChannel = get_input2_string("dstChannel");
         auto remapMin = get_input2_float("remapMin");
@@ -211,16 +213,16 @@ struct PrimSample : zeno::INode {
         auto borderColor = get_input2_vec3f("borderColor");
         if (has_input("sampledObject") && 
             get_input_PrimitiveObject("sampledObject")->userData()->has("isImage")) {
-            auto image = get_input_PrimitiveObject("sampledObject");
+            auto image = clone_input_PrimitiveObject("sampledObject");
             primSampleTexture(prim.get(), srcChannel, "vertex", dstChannel, image.get(), wrap, borderColor, remapMin, remapMax);
         }
         else if (has_input("sampledObject")) {
-            auto heatmap = safe_dynamic_cast<HeatmapObject>(get_input("sampledObject"));
+            auto heatmap = safe_uniqueptr_cast<HeatmapObject>(clone_input("sampledObject"));
             primSampleHeatmap(prim.get(), srcChannel, dstChannel, heatmap.get(), remapMin, remapMax);
         }
         else if (has_input("sampledObject")) {
             auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
-            primSampleVDB(prim, zsString2Std(srcChannel), zsString2Std(dstChannel), grid, remapMin, remapMax);
+            primSampleVDB(prim.get(), zsString2Std(srcChannel), zsString2Std(dstChannel), grid, remapMin, remapMax);
         } else {
             throw zeno::Exception("unknown input type of sampledObject");
         }

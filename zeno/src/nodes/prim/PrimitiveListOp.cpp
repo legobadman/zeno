@@ -12,7 +12,7 @@ namespace zeno {
 
 struct MakePrimitiveFromList : zeno::INode {
   virtual void apply() override {
-    auto prim = std::make_shared<PrimitiveObject>();
+    auto prim = std::make_unique<PrimitiveObject>();
     auto list = ZImpl(get_input<ListObject>("list"));
     for (auto const &val: list->m_impl->getLiterial<vec3f>()) {
         prim->verts.push_back(val);

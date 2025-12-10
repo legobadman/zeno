@@ -5,6 +5,9 @@
 #include <zeno/types/UserData.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/core/Graph.h>
+#include <zeno/types/ListObject.h>
+#include <zeno/types/DictObject.h>
+//#include <zeno/extra/GlobalComm.h>
 
 namespace zeno {
 
@@ -19,7 +22,7 @@ struct PortalIn : zeno::INode {
 
     virtual void apply() override {
         auto name = ZImpl(get_param<std::string>("name"));
-        auto obj = ZImpl(get_input("port"));
+        auto obj = ZImpl(clone_input("port"));
         std::shared_ptr<Graph> spGraph = getThisGraph();
         assert(spGraph);
         spGraph->portals[name] = std::move(obj);
@@ -54,13 +57,47 @@ ZENDEFNODE(PortalOut, {
 #endif
 
 
+struct FrameCache : zeno::INode {
+    virtual void apply() override {
+        zeno::DirtyReason reason = getDirtyReason();
+        auto path = zsString2Std(get_input2_string("path"));
+        if (reason == zeno::Dirty_FrameChanged) {
+            //无须上游的数据，直接读文件即可
+            zany cacheObj = zeno::readObjCache(path);
+            if (cacheObj) {
+                set_output("Output", std::move(cacheObj));
+                return;
+            }
+        }
+
+        //上游脏了或者cache不存在，得重新写一次cache
+        auto pObject = get_input("Input");
+        zeno::writeObjCache(path, pObject);
+        set_output("Output", pObject->clone());
+    }
+};
+
+ZENDEFNODE(FrameCache, {
+    {
+        {gParamType_IObject, "Input"},
+        {gParamType_IObject, "Depend"},
+        {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit}
+    },
+    {
+        {gParamType_IObject, "Output"}
+    },
+    {},
+    {"layout"},
+    });
+
+
 struct Route : zeno::INode {
     virtual void apply() override {
         if (ZImpl(has_input("input"))) {
-            auto obj = ZImpl(get_input("input"));
+            auto obj = ZImpl(clone_input("input"));
             ZImpl(set_output("output", std::move(obj)));
         } else {
-            ZImpl(set_output("output", std::make_shared<zeno::DummyObject>()));
+            ZImpl(set_output("output", std::make_unique<zeno::DummyObject>()));
         }
     }
     CustomUI export_customui() const override {
@@ -79,19 +116,52 @@ ZENDEFNODE(Route, {
         {gParamType_Vec3f, "vec3f_val", "0,0,0"}
     },
     {{gParamType_IObject, "output"}},
-    {},
+    {{"enum normal lightCamera material matrix", "RunType", "normal"}},
     {"layout"},
 });
+
+
+struct RouteDepend : zeno::INode {
+    virtual void apply() override {
+        get_input_ListObject("deps");
+        if (ZImpl(has_input("input"))) {
+            auto obj = ZImpl(clone_input("input"));
+            ZImpl(set_output("output", std::move(obj)));
+        }
+        else {
+            ZImpl(set_output("output", std::make_unique<zeno::DummyObject>()));
+        }
+    }
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.background = "#99B2C4";
+        return ui;
+    }
+};
+
+ZENDEFNODE(RouteDepend, {
+    {
+        {gParamType_IObject, "input", "", zeno::Socket_ReadOnly},
+        {gParamType_List, "deps"},
+        {gParamType_Float, "float_val", "0"},
+        {gParamType_Int, "int_val", "0"},
+        {gParamType_String, "string_val", "0"},
+        {gParamType_Vec3f, "vec3f_val", "0,0,0"}
+    },
+    {{gParamType_IObject, "output"}},
+    {{"enum normal lightCamera material matrix", "RunType", "normal"}},
+    {"layout"},
+    });
 
 
 struct Stamp : zeno::INode {
     virtual void apply() override {
         if (ZImpl(has_input("input"))) {
-            auto obj = ZImpl(get_input("input"));
+            auto obj = ZImpl(clone_input("input"));
             ZImpl(set_output("output", std::move(obj)));
         }
         else {
-            ZImpl(set_output("output", std::make_shared<zeno::DummyObject>()));
+            ZImpl(set_output("output", std::make_unique<zeno::DummyObject>()));
         }
     }
 };
@@ -107,14 +177,14 @@ ZENDEFNODE(Stamp, {
 
 struct Clone : zeno::INode {
     virtual void apply() override {
-        auto obj = ZImpl(get_input("object"));
+        auto obj = ZImpl(clone_input("object"));
         auto newobj = obj->clone();
         if (!newobj) {
             log_error("requested object doesn't support clone");
             return;
         }
         ZImpl(set_output("newObject", std::move(newobj)));
-        ZImpl(set_output("origin", obj));
+        ZImpl(set_output("origin", std::move(obj)));
     }
 };
 
@@ -131,8 +201,8 @@ ZENDEFNODE(Clone, {
 
 struct Assign : zeno::INode {
     virtual void apply() override {
-        auto src = ZImpl(get_input("src"));
-        auto dst = ZImpl(get_input("dst"));
+        auto src = ZImpl(clone_input("src"));
+        auto dst = ZImpl(clone_input("dst"));
         *dst = *src;
         ZImpl(set_output("dst", std::move(dst)));
     }
@@ -147,10 +217,10 @@ ZENDEFNODE(Assign, {
 
 struct SetUserData : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        auto key = ZImpl(get_param<std::string>("key"));
+        auto object = ZImpl(clone_input("object"));
+        auto key = zsString2Std(get_input2_string("key"));
         UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
-        pUsrData->set(key, ZImpl(get_input("data")));
+        pUsrData->set(key, ZImpl(clone_input("data")));
         ZImpl(set_output("object", std::move(object)));
     }
 };
@@ -167,10 +237,10 @@ ZENDEFNODE(SetUserData, {
 
 struct SetUserData2 : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        auto key = ZImpl(get_input2<std::string>("key"));
+        auto object = ZImpl(clone_input("object"));
+        auto key = zsString2Std(get_input2_string("key"));
         UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
-        pUsrData->set(key, ZImpl(get_input("data")));
+        pUsrData->set(key, ZImpl(clone_input("data")));
         ZImpl(set_output("object", std::move(object)));
     }
 };
@@ -190,13 +260,18 @@ ZENDEFNODE(SetUserData2, {
 
 struct GetUserData : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        auto key = ZImpl(get_param<std::string>("key"));
+        auto object = ZImpl(clone_input("object"));
+        auto key = zsString2Std(get_input2_string("key"));
         UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
         auto hasValue = pUsrData->has(key);
-        auto data = hasValue ? pUsrData->get(key) : std::make_shared<DummyObject>();
-        ZImpl(set_output2("hasValue", hasValue));
-        ZImpl(set_output("data", std::move(data)));
+        if (hasValue) {
+            ZImpl(set_primitive_output("hasValue", hasValue));
+            ZImpl(set_output("data", pUsrData->get(key)));
+        }
+        else {
+            ZImpl(set_primitive_output("hasValue", false));
+            ZImpl(set_output("data", std::make_unique<DummyObject>()));
+        }
     }
 };
 
@@ -209,12 +284,12 @@ ZENDEFNODE(GetUserData, {
 
 struct GetUserData2 : zeno::INode {
   virtual void apply() override {
-    auto object = ZImpl(get_input("object"));
-    auto key = ZImpl(get_input2<std::string>("key"));
+    auto object = ZImpl(clone_input("object"));
+    auto key = zsString2Std(get_input2_string("key"));
     UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
     auto hasValue = pUsrData->has(key);
-    auto data = hasValue ? pUsrData->get(key) : std::make_shared<DummyObject>();
-    ZImpl(set_output2("hasValue", hasValue));
+    auto data = hasValue ? pUsrData->get(key) : std::make_unique<DummyObject>();
+    ZImpl(set_primitive_output("hasValue", hasValue));
     ZImpl(set_output("data", std::move(data)));
   }
 };
@@ -229,12 +304,13 @@ ZENDEFNODE(GetUserData2, {
 
 struct GetUserData3 : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        auto key = ZImpl(get_input2<std::string>("key"));
+        auto object = ZImpl(clone_input("object"));
+        auto key = zsString2Std(get_input2_string("key"));
         UserData* pUsrData = static_cast<UserData*>(object->userData());
-        if (pUsrData->has(key)) {
+        bool hasValue = pUsrData->has(key);
+        if (hasValue) {
             auto data = pUsrData->get(key);
-            if (auto numericObj = std::dynamic_pointer_cast<NumericObject>(data)) {
+            if (auto numericObj = dynamic_cast<NumericObject*>(data.get())) {
                 std::visit([&](auto&& val) {
                     using T = std::decay_t<decltype(val)>;
                     if (std::is_same_v<T, int>) {
@@ -263,16 +339,14 @@ struct GetUserData3 : zeno::INode {
                     }
                 }, numericObj->get());
             }
-            else if (auto stringObj = std::dynamic_pointer_cast<StringObject>(object)) {
+            else if (auto stringObj = dynamic_cast<StringObject*>(object.get())) {
                 ZImpl(set_primitive_output("data", stringObj->get()));
             }
             else {
                 throw makeError<UnimplError>("ObjectToBasetype expect not numericObject or stringObject");
             }
         }
-        else {
-            throw makeError<UnimplError>("only support numeric or string");
-        }
+        ZImpl(set_primitive_output("hasValue", hasValue));
     }
 };
 
@@ -283,6 +357,7 @@ ZENDEFNODE(GetUserData3, {
     },
     {
         {gParamType_AnyNumeric, "data"},
+        {gParamType_Bool, "hasValue"}
     },
     {},
     {"lifecycle"},
@@ -291,8 +366,8 @@ ZENDEFNODE(GetUserData3, {
 
 struct DelUserData : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        auto key = ZImpl(get_param<std::string>("key"));
+        auto object = ZImpl(clone_input("object"));
+        auto key = zsString2Std(get_input2_string("key"));
         UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
         pUsrData->del(stdString2zs(key));
     }
@@ -307,8 +382,8 @@ ZENDEFNODE(DelUserData, {
 
 struct DelUserData2 : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        auto key = ZImpl(get_input2<std::string>("key"));
+        auto object = ZImpl(clone_input("object"));
+        auto key = zsString2Std(get_input2_string("key"));
         UserData* pUsrData = dynamic_cast<UserData*>(object->userData());
         pUsrData->del(stdString2zs(key));
         ZImpl(set_output("object", std::move(object)));
@@ -324,8 +399,8 @@ ZENDEFNODE(DelUserData2, {
 
 struct ObjectToPrimInt : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        if (auto numericObj = std::dynamic_pointer_cast<NumericObject>(object)) {
+        auto object = ZImpl(clone_input("object"));
+        if (auto numericObj = dynamic_cast<NumericObject*>(object.get())) {
             int val = 0;
             std::visit([&val](auto&& var) {
                 using T = std::decay_t<decltype(var)>;
@@ -350,8 +425,8 @@ ZENDEFNODE(ObjectToPrimInt, {
 
 struct ObjectToPrimString : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("object"));
-        if (auto stringObj = std::dynamic_pointer_cast<StringObject>(object)) {
+        auto object = ZImpl(clone_input("object"));
+        if (auto stringObj = dynamic_cast<StringObject*>(object.get())) {
             ZImpl(set_primitive_output("value", stringObj->get()));
         }
         else {
@@ -369,9 +444,9 @@ ZENDEFNODE(ObjectToPrimString, {
 
 struct ObjectToBasetype : zeno::INode {
     virtual void apply() override {
-        auto object = ZImpl(get_input("Object"));
+        auto object = ZImpl(clone_input("object"));
         auto type = zsString2Std(get_input2_string("Output type"));
-        if (auto numericObj = std::dynamic_pointer_cast<NumericObject>(object)) {
+        if (auto numericObj = dynamic_cast<NumericObject*>(object.get())) {
             std::visit([&type](auto&& val) {
                 using T = std::decay_t<decltype(val)>;
                 std::string valtype;
@@ -414,7 +489,7 @@ struct ObjectToBasetype : zeno::INode {
             } else if (type == "vec4f") {
                 ZImpl(set_primitive_output("vec4f", std::get<vec4f>(numericObj->get())));
             }
-        } else if (auto stringObj = std::dynamic_pointer_cast<StringObject>(object)) {
+        } else if (auto stringObj = dynamic_cast<StringObject*>(object.get())) {
             if (type == "string") {
                 ZImpl(set_primitive_output("string", stringObj->get()));
             } else {
@@ -447,12 +522,16 @@ ZENDEFNODE(ObjectToBasetype, {
     {"ObjectToBasetype"},
     });
 
-#if 0
 struct CopyAllUserData : zeno::INode {
     virtual void apply() override {
-        auto src = ZImpl(get_input("src"));
-        auto dst = ZImpl(get_input("dst"));
-        dst->userData() = src->userData();
+        auto src = ZImpl(clone_input("src"));
+        auto dst = ZImpl(clone_input("dst"));
+        auto pSrcUd = static_cast<UserData*>(src->userData());
+        auto pDstUd = static_cast<UserData*>(dst->userData());
+        pDstUd->m_data.clear();
+        for (const auto& [key, data] : pSrcUd->m_data) {
+            pDstUd->m_data.insert(std::make_pair(key, data->clone()));
+        }
         ZImpl(set_output("dst", std::move(dst)));
     }
 };
@@ -466,7 +545,6 @@ ZENDEFNODE(CopyAllUserData, {
     {},
     {"lifecycle"},
 });
-#endif
 
 }
 

@@ -1,5 +1,6 @@
 #include <zeno/funcs/ObjectCodec.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/MaterialObject.h>
 #include <zeno/utils/variantswitch.h>
 #include <zeno/utils/log.h>
@@ -110,6 +111,17 @@ bool encodePrimitiveObject(PrimitiveObject const *obj, std::back_insert_iterator
         *it++ = '0';
     }
     return true;
+}
+
+bool encodeGeometryObject_Adapter(GeometryObject_Adapter const* obj, std::back_insert_iterator<std::vector<char>> it) {
+    auto spPrim = obj->toPrimitiveObject();
+    return encodePrimitiveObject(spPrim.get(), it);
+}
+
+std::shared_ptr<GeometryObject_Adapter> decodeGeometryObject_Adapter(const char* it) {
+    auto spPrim = decodePrimitiveObject(it);
+    auto geom = create_GeometryObject(spPrim.get());
+    return geom;
 }
 
 }

@@ -17,23 +17,17 @@ struct ZENO_API DictObject : IObjectClone<DictObject> {
     ~DictObject();
     void Delete() override;
 
-    template <class T = IObject>
-  std::map<std::string, std::shared_ptr<T>> get() const {
-      std::map<std::string, std::shared_ptr<T>> res;
+    std::map<std::string, IObject*> get() const {
+        std::map<std::string, IObject*> res;
         for (auto const &[key, val]: lut) {
-            res.emplace(key, safe_dynamic_cast<T>(val));
+            res.emplace(key, val.get());
         }
         return res;
     }
 
-    template <class T>
-    std::map<std::string, T> getLiterial() const {
-        std::map<std::string, T> res;
-        for (auto const &[key, val]: lut) {
-            res.emplace(key, objectToLiterial<T>(val));
-        }
-        return res;
-    }
+    bool has_change_info() const;
+
+    DictObject& operator=(const DictObject&);
 
     //TODO: 目前还没有自开发的map和set，所以这里没法保证abi兼容
     std::map<std::string, zany> lut;     //TMD全暴露出去了，想改都不好改
@@ -44,6 +38,6 @@ private:
     void clear_children();
 };
 
-ZENO_API zeno::SharedPtr<DictObject> create_DictObject();
+ZENO_API std::unique_ptr<DictObject> create_DictObject();
 
 }

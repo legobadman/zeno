@@ -6,6 +6,7 @@
 #include <zeno/core/Graph.h>
 #include <zeno/extra/assetDir.h>
 #include <zeno/funcs/PrimitiveUtils.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/string.h>
@@ -75,13 +76,13 @@ struct DSU {
 
 struct ParticleClustering : INode {
     virtual void apply() override {
-        auto pars = get_input<zeno::PrimitiveObject>("pars");
-        int knum = get_input2<int>("cluster_number");
-        float dmax = get_input2<float>("diameter");
-        auto cluster_tag = get_input<zeno::StringObject>("cluster_tag")->get();
-        bool color = get_input2<bool>("paint_color");
-        bool cluster_center = get_input2<bool>("output_cluster_center");
-        auto sumAttribs_ = get_input2<std::string>("sum_vert_attribs");
+        auto pars = get_input_Geometry("pars")->toPrimitiveObject();
+        int knum = get_input2_int("cluster_number");
+        float dmax = get_input2_float("diameter");
+        auto cluster_tag = zsString2Std(get_input2_string("cluster_tag"));
+        bool color = get_input2_bool("paint_color");
+        bool cluster_center = get_input2_bool("output_cluster_center");
+        auto sumAttribs_ = zsString2Std(get_input2_string("sum_vert_attribs"));
         std::vector<std::string> sumAttribs = zeno::split_str(sumAttribs_);
         auto &pos = pars->verts;
         int vnum = pos->size();
@@ -90,11 +91,11 @@ struct ParticleClustering : INode {
         std::vector<vec3f> center{};
         if (knum <= 0 && dmax <= 0) {
             zeno::log_warn("please enter either \"cluster_number\" or \"diameter\"");
-            set_output("pars", std::move(pars));
+            set_output("pars", create_GeometryObject(pars.get()));
             return;
         } else if (knum > 0 && dmax > 0) {
             zeno::log_warn("please enter only one of \"cluster_number\" and \"diameter\"");
-            set_output("pars", std::move(pars));
+            set_output("pars", create_GeometryObject(pars.get()));
             return;
         } else if (knum > 0) {
             center.resize(knum);
@@ -207,20 +208,20 @@ struct ParticleClustering : INode {
             }
         }
 
-        set_output("pars", std::move(pars));
+        set_output("pars", create_GeometryObject(pars.get()));
     }
 };
 
 ZENO_DEFNODE(ParticleClustering)
 ({
-    {{gParamType_Primitive, "pars"},
+    {{gParamType_Geometry, "pars"},
     {gParamType_Int, "cluster_number", "0"},
     {gParamType_Float, "diameter", "0"},
     {gParamType_String, "cluster_tag", "cluster_index"},
     {gParamType_Bool, "paint_color", "1"},
     {gParamType_Bool, "output_cluster_center", "1"},
     {gParamType_String, "sum_vert_attribs", ""}},
-    {{gParamType_Primitive, "pars"}},
+    {{gParamType_Geometry, "pars"}},
     {},
     {"primitive"},
 });

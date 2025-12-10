@@ -132,7 +132,7 @@ float noise_perlin(float x, float y, float z)
 
 struct erode_noise_perlin : INode {
     void apply() override {
-        auto terrain = get_input_Geometry("prim_2DGrid");
+        auto terrain = clone_input_Geometry("prim_2DGrid");
 
         auto attrName = get_input2_string("attrName");
         auto attrType = get_input2_string("attrType");
@@ -165,7 +165,7 @@ struct erode_noise_perlin : INode {
                 return fval;
                 });
         }
-        set_output("prim_2DGrid", terrain);
+        set_output("prim_2DGrid", std::move(terrain));
     }
 };
 ZENDEFNODE(erode_noise_perlin,
@@ -531,7 +531,7 @@ float noise_simplexNoise4(float x, float y, float z, float w) {
 //
 struct erode_noise_simplex : INode {
     void apply() override {
-        auto terrain = get_input_Geometry("prim_2DGrid");
+        auto terrain = clone_input_Geometry("prim_2DGrid");
         auto attrName = get_input2_string("attrName");
         auto attrType = get_input2_string("attrType");
         if (!terrain->has_point_attr(attrName)) {
@@ -565,7 +565,7 @@ struct erode_noise_simplex : INode {
                 });
         }
 
-        set_output("prim_2DGrid", terrain);
+        set_output("prim_2DGrid", std::move(terrain));
     }
 };
 ZENDEFNODE(erode_noise_simplex,
@@ -737,7 +737,7 @@ glm::vec3 sdnoise(glm::vec2 pos) {
 
 struct erode_noise_analytic_simplex_2d : INode {
     void apply() override {
-        auto terrain = get_input_Geometry("prim_2DGrid");
+        auto terrain = clone_input_Geometry("prim_2DGrid");
 
         auto attrName = get_input2_string("attrName");
         if (!terrain->has_point_attr(attrName)) {
@@ -756,7 +756,7 @@ struct erode_noise_analytic_simplex_2d : INode {
             return vec3f(ret.x, ret.y, ret.z);
             });
 
-        set_output("prim_2DGrid", terrain);
+        set_output("prim_2DGrid", std::move(terrain));
     }
 };
 ZENDEFNODE(erode_noise_analytic_simplex_2d,
@@ -878,7 +878,7 @@ struct NoiseImageGen2 : INode {//todo::image shape should same when pixel aspect
         auto amplitude = ZImpl(get_input2<zeno::vec4f>("amplitude"));
         auto pulsenum = ZImpl(get_input2<int>("pulsenum"));
 
-        auto image = std::make_shared<PrimitiveObject>();
+        auto image = std::make_unique<PrimitiveObject>();
         image->verts.resize(image_size[0] * image_size[1]);
         auto &alpha = image->verts.add_attr<float>("alpha");
 
@@ -933,7 +933,7 @@ struct NoiseImageGen2 : INode {//todo::image shape should same when pixel aspect
         image->userData()->set_int("isImage", 1);
         image->userData()->set_int("w", image_size[0]);
         image->userData()->set_int("h", image_size[1]);
-        ZImpl(set_output("image", image));
+        ZImpl(set_output("image", std::move(image)));
     }
 };
 ZENDEFNODE(NoiseImageGen2, {
@@ -1042,7 +1042,7 @@ struct NoiseImageGen : INode {
         auto frequency = ZImpl(get_input2<zeno::vec2f>("spatial frequency")) * 0.001f; // tofix: mysterious scale?
         auto amplitude = ZImpl(get_input2<zeno::vec4f>("amplitude"));
 
-        auto image = std::make_shared<PrimitiveObject>();
+        auto image = std::make_unique<PrimitiveObject>();
         image->verts.resize(image_size[0] * image_size[1]);
         auto &alpha = image->verts.add_attr<float>("alpha");
 
@@ -1101,7 +1101,7 @@ struct NoiseImageGen : INode {
         image->userData()->set_int("isImage", 1);
         image->userData()->set_int("w", image_size[0]);
         image->userData()->set_int("h", image_size[1]);
-        ZImpl(set_output("image", image));
+        ZImpl(set_output("image", std::move(image)));
     }
 };
 ZENDEFNODE(NoiseImageGen, {
@@ -1128,7 +1128,7 @@ ZENDEFNODE(NoiseImageGen, {
 struct erode_noise_sparse_convolution : INode {
     void apply() override {
 
-        zeno::SharedPtr<GeometryObject_Adapter> terrain = get_input_Geometry("prim_2DGrid");
+        auto terrain = clone_input_Geometry("prim_2DGrid");
         auto pulsenum = ZImpl(get_input2<int>("pulsenum"));
         auto attrName = get_input2_string("attrName");
         auto attrType = ZImpl(get_input2<std::string>("attrType"));
@@ -1166,7 +1166,7 @@ struct erode_noise_sparse_convolution : INode {
                 return fVal;
                 });
         }
-        set_output("prim_2DGrid", terrain);
+        set_output("prim_2DGrid", std::move(terrain));
     }
 };
 ZENDEFNODE(erode_noise_sparse_convolution, {/* inputs: */ {
@@ -1343,7 +1343,7 @@ struct Noise_gabor_2d : INode {
             noise[i] = noise2dV; //直接float？
         }
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 
@@ -1439,7 +1439,7 @@ float noise_WorleyNoise3(float px, float py, float pz, int fType, int distType, 
 
 struct erode_noise_worley : INode {
     void apply() override {
-        auto terrain = get_input_Geometry("prim_2DGrid");
+        auto terrain = clone_input_Geometry("prim_2DGrid");
         auto posLikeAttrName = get_input2_string("posLikeAttrName");
         if (!terrain->has_point_attr(posLikeAttrName))
         {
@@ -1494,7 +1494,7 @@ struct erode_noise_worley : INode {
                 return fVal;
                 });
         }
-        set_output("prim_2DGrid", terrain);
+        set_output("prim_2DGrid", std::move(terrain));
     }
 };
 ZENDEFNODE(erode_noise_worley,
@@ -1586,7 +1586,7 @@ struct erode_hybridMultifractal_v1 : INode {
             }
             });
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_hybridMultifractal_v1,
@@ -1669,7 +1669,7 @@ struct erode_hybridMultifractal_v2 : INode {
             }
             });
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_hybridMultifractal_v2,
@@ -1751,7 +1751,7 @@ struct erode_hybridMultifractal_v3 : INode {
             }
             });
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_hybridMultifractal_v3,
@@ -1801,7 +1801,7 @@ float noise_domainWarpingV1(vec3f pos, float H, float frequence, float amplitude
 
 struct erode_domainWarping_v1 : INode {
     void apply() override {
-        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_shared<PrimitiveObject>();
+        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_unique<PrimitiveObject>();
 
         auto H = ZImpl(get_input<NumericObject>("fbmH"))->get<float>();
         auto frequence = ZImpl(get_input<NumericObject>("fbmFrequence"))->get<float>();
@@ -1831,7 +1831,7 @@ struct erode_domainWarping_v1 : INode {
             }
             });
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(erode_domainWarping_v1,
@@ -1867,7 +1867,7 @@ struct erode_domainWarping_v2 : INode {
     void apply() override {
         auto prim = ZImpl(has_input("prim")) ?
             ZImpl(get_input<PrimitiveObject>("prim")) :
-            std::make_shared<PrimitiveObject>();
+            std::make_unique<PrimitiveObject>();
 
         auto H = ZImpl(get_input<NumericObject>("fbmH"))->get<float>();
         auto frequence = ZImpl(get_input<NumericObject>("fbmFrequence"))->get<float>();
@@ -1897,7 +1897,7 @@ struct erode_domainWarping_v2 : INode {
             }
             });
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(erode_domainWarping_v2,
@@ -1935,8 +1935,8 @@ void noise_Voronoi3(const vec3f pos, const std::vector<vec3f>& points, float& vo
 
 struct erode_voronoi : INode {
     void apply() override {
-        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_shared<PrimitiveObject>();
-        auto featurePrim = ZImpl(has_input("featurePrim")) ? ZImpl(get_input<PrimitiveObject>("featurePrim")) : std::make_shared<PrimitiveObject>();
+        auto prim = ZImpl(has_input("prim")) ? ZImpl(get_input<PrimitiveObject>("prim")) : std::make_unique<PrimitiveObject>();
+        auto featurePrim = ZImpl(has_input("featurePrim")) ? ZImpl(get_input<PrimitiveObject>("featurePrim")) : std::make_unique<PrimitiveObject>();
 
         auto attrName = ZImpl(get_param<std::string>("attrName"));
         if (!prim->has_attr(attrName)) { prim->add_attr<float>(attrName); }
@@ -1952,7 +1952,7 @@ struct erode_voronoi : INode {
             noise_Voronoi3(samplePoints[i], featurePrim->verts, attr_voro[i], attr_mFPP[i]);
         }
 
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(erode_voronoi,
@@ -2055,7 +2055,7 @@ struct Primcluster : INode {//todo:: just for color ramp now
             prim->verts.add_attr<zeno::vec3f>(outputattr)[i] = old_clusters[i].center;
         }
         
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(Primcluster,

@@ -11,7 +11,7 @@
 #include <zeno/geo/commonutil.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/eulerangle.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include <glm/mat4x4.hpp>
 
 struct GreedyVoxel {
@@ -165,9 +165,9 @@ struct CreateVolumeBox : zeno::INode {
 
         if (has_input("vdbGrid")) {
 
-            auto grid = std::dynamic_pointer_cast<VDBGrid>(get_input("vdbGrid"));
+            auto grid = zeno::safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
 		   
-            auto float_grid = std::dynamic_pointer_cast<VDBFloatGrid>(grid);
+            auto float_grid = zeno::safe_dynamic_cast<VDBFloatGrid>(grid);
             auto root = float_grid->m_grid->tree().root();
 
             using GridType = openvdb::FloatGrid;
@@ -270,11 +270,17 @@ struct CreateVolumeBox : zeno::INode {
             transforms.push_back(transform);
         }
 
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
 
         for (auto& transform : transforms) {
         
-            auto prim = std::make_shared<zeno::PrimitiveObject>();
+            auto prim = std::make_unique<zeno::PrimitiveObject>();
+
+            std::string vol_mat;
+            if (has_input("vol_mat")) {
+                vol_mat = zsString2Std(get_input2_string("vol_mat"));
+            }
+            prim->userData()->set_string("vol_mat", stdString2zs(vol_mat));
 
             float dummy[] = {-0.5f, 0.5f};
 
@@ -282,7 +288,7 @@ struct CreateVolumeBox : zeno::INode {
                 for (int j=0; j<=1; ++j) {
                     for (int k=0; k<=1; ++k) {
                         auto p = glm::vec4(dummy[i], dummy[j], dummy[k], 1.0f);
-                        p = transform * p; 
+                        p = transform * p;
                         prim->verts.push_back(zeno::vec3f(p.x, p.y, p.z));
                     }
                 }
@@ -311,14 +317,16 @@ struct CreateVolumeBox : zeno::INode {
             prim->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
             prim->userData()->set_bool("vbox", true);
 
-            list->push_back(prim);        
+            auto geom = create_GeometryObject(prim.get());
+            list->push_back(std::move(geom));
         }
 
         if (list->size()==1) {
-            set_output("prim", std::move(list->get(0)));
+            set_output("prim", std::move(list->get(0)->clone()));
             return;
         }
 
+        throw makeError<UnimplError>("unsupport list of prim as output");
         set_output("prim", std::move(list));
     }
 };
@@ -330,9 +338,10 @@ ZENDEFNODE(CreateVolumeBox, {
         {gParamType_Vec3f, "rotate", "0, 0, 0"},
         {gParamType_Bool, "greedy", "0"},
         {gParamType_VDBGrid, "vdbGrid" },
+        {gParamType_String, "vol_mat", ""},
     },
     {
-        {gParamType_Primitive, "prim"}
+        {gParamType_Geometry, "prim"}
     },
     {
         {"enum " + EulerAngle::RotationOrderListString(), "EulerRotationOrder", "XYZ"},

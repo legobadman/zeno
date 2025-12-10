@@ -67,6 +67,7 @@ public:
     Q_PROPERTY(QString maxLengthName READ getMaxLengthName NOTIFY maxLengthName_changed)
 
     Q_INVOKABLE int indexFromName(const QString& name, bool bInput) const;
+    Q_INVOKABLE bool updateParamValue(const QString& name, const QVariant& qvar);
     Q_INVOKABLE QVariant getIndexList(bool bInput) const;
     Q_INVOKABLE QStandardItemModel* customParamModel();
     Q_INVOKABLE CustomUIModel* customUIModel();

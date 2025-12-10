@@ -1,4 +1,4 @@
-#include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/CurveType.h>
 #include <zeno/types/UserData.h>
 #include <zeno/zeno.h>
@@ -21,12 +21,12 @@ struct CyHair : zeno::INode {
             throw std::string("CyHair file doesn't exist");
         }
 
-        auto out = std::make_shared<zeno::PrimitiveObject>();
+        auto out = std::make_unique<zeno::PrimitiveObject>();
         out->userData()->set_bool("yup", yup);
         out->userData()->set_string("path", stdString2zs(path));
         out->userData()->set_bool("cyhair", true);
     
-        ZImpl(set_output("out", std::move(out)));
+        set_output("out", create_GeometryObject(out.get()));
     }
 };
 
@@ -36,7 +36,7 @@ ZENDEFNODE(CyHair,
         {gParamType_Bool, "yup", "1"},
     },
     {
-        {gParamType_Primitive, "out"}
+        {gParamType_Geometry, "out"}
     }, //output
     {},
     {"read"}

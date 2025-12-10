@@ -3198,6 +3198,25 @@ All Files (*)</source>
     </message>
 </context>
 <context>
+    <name>BaseAttributeView</name>
+    <message>
+        <source>vertex</source>
+        <translation>顶点</translation>
+    </message>
+	    <message>
+        <source>point</source>
+        <translation>点</translation>
+    </message>
+	    <message>
+        <source>face</source>
+        <translation>面</translation>
+    </message>
+	    <message>
+        <source>geo</source>
+        <translation>几何</translation>
+    </message>
+</context>
+<context>
     <name>ZenoSubGraphScene</name>
     <message>
         <source>Error</source>
@@ -3210,6 +3229,18 @@ All Files (*)</source>
     <message>
         <source>add Link</source>
         <translation>添加连接</translation>
+    </message>
+	<message>
+        <source>add to list as a child element?</source>
+        <translation>是否作为子元素加入List？</translation>
+    </message>
+	<message>
+        <source>as a child element</source>
+        <translation>作为子元素</translation>
+    </message>
+	<message>
+        <source>as a whole</source>
+        <translation>作为整体</translation>
     </message>
 </context>
 <context>

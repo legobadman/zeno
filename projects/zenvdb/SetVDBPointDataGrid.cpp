@@ -98,16 +98,16 @@ struct PrimToVDBPointDataGrid : zeno::INode {
     
     if(has_input("vdbPoints"))
     {
-        auto input = get_input("vdbPoints"); 
-        auto data = safe_dynamic_cast<VDBPointsGrid>(input);
+        auto input = clone_input("vdbPoints"); 
+        auto data = safe_dynamic_cast<VDBPointsGrid>(input.get());
         dx = data->m_grid->transformPtr()->voxelSize()[0];
         data->m_grid = particleArrayToGrid(positions, velocitys, dx);
         set_output("Particles", std::move(input));
     }
     else{
-        auto data = std::make_shared<VDBPointsGrid>();
+        auto data = std::make_unique<VDBPointsGrid>();
         data->m_grid = particleArrayToGrid(positions, velocitys, dx);
-        set_output("Particles", data);
+        set_output("Particles", std::move(data));
     }
   }
 };
@@ -141,9 +141,9 @@ struct SetVDBPointDataGrid : zeno::INode {
           
           }
     }
-    auto data = std::make_shared<VDBPointsGrid>();
+    auto data = std::make_unique<VDBPointsGrid>();
     data->m_grid = particleArrayToGrid(positions, velocitys, dx);
-    set_output("Particles", data);
+    set_output("Particles", std::move(data));
   }
 };
 

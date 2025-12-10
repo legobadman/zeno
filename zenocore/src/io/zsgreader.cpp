@@ -12,12 +12,18 @@ namespace zenoio {
 
     using namespace zenoio::iotags;
 
-    ZsgReader::ZsgReader() : m_bDiskReading(true), m_ioVer(zeno::VER_3) {}
+    ZsgReader::ZsgReader()
+        : m_bDiskReading(true)
+        , m_ioVer(zeno::VER_3)
+        , m_num_of_nodes(0)
+    {
+    }
 
     ZENO_API ZSG_PARSE_RESULT ZsgReader::openFile(const std::wstring& fn)
     {
         ZSG_PARSE_RESULT result;
         result.code = PARSE_ERROR;
+        result.path = fn;
 
         std::filesystem::path filePath(fn);
         if (!std::filesystem::exists(filePath)) {
@@ -67,6 +73,10 @@ namespace zenoio {
         result.iover = m_ioVer;
         result.code = PARSE_NOERROR;
         return result;
+    }
+
+    int ZsgReader::numOfNodes() const {
+        return m_num_of_nodes;
     }
 
     bool ZsgReader::_parseMainGraph(const rapidjson::Document& doc, zeno::GraphData& ret) {

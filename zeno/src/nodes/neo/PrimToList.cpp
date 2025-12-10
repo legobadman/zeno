@@ -142,37 +142,37 @@ struct PrimToList : INode {
             if (type == "verts") {
                 lst->m_impl->resize(prim->verts.size());
                 for (size_t i = 0; i < prim->verts.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->verts[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->verts[i]));
                 }
             } else if (type == "points") {
                 lst->m_impl->resize(prim->points.size());
                 for (size_t i = 0; i < prim->points.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->points[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->points[i]));
                 }
             } else if (type == "lines") {
                 lst->m_impl->resize(prim->lines.size());
                 for (size_t i = 0; i < prim->lines.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->lines[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->lines[i]));
                 }
             } else if (type == "tris") {
                 lst->m_impl->resize(prim->tris.size());
                 for (size_t i = 0; i < prim->tris.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->tris[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->tris[i]));
                 }
             } else if (type == "quads") {
                 lst->m_impl->resize(prim->quads.size());
                 for (size_t i = 0; i < prim->quads.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->quads[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->quads[i]));
                 }
             } else if (type == "polys") {
                 lst->m_impl->resize(prim->polys.size());
                 for (size_t i = 0; i < prim->polys.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->polys[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->polys[i]));
                 }
             } else if (type == "loops") {
                 lst->m_impl->resize(prim->loops.size());
                 for (size_t i = 0; i < prim->loops.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(prim->loops[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(prim->loops[i]));
                 }
             } else {
                 throw makeError("invalid type " + type);
@@ -181,7 +181,7 @@ struct PrimToList : INode {
             auto fun = [&] (auto const &arr) {
                 lst->m_impl->resize(arr.size());
                 for (size_t i = 0; i < arr.size(); i++) {
-                    lst->m_impl->set(i, std::make_shared<NumericObject>(arr[i]));
+                    lst->m_impl->set(i, std::make_unique<NumericObject>(arr[i]));
                 }
             };
             if (type == "verts") {
@@ -231,37 +231,37 @@ struct PrimUpdateFromList : INode {
             if (type == "verts") {
                 prim->verts.resize(lst->m_impl->size());
                 for (size_t i = 0; i < prim->verts.size(); i++) {
-                    prim->verts[i] = objectToLiterial<vec3f>(lst->m_impl->get(i));
+                    prim->verts[i] = objectToLiterial<vec3f>(lst->m_impl->get(i)->clone());
                 }
             } else if (type == "points") {
                 prim->points.resize(lst->m_impl->size());
                 for (size_t i = 0; i < prim->points.size(); i++) {
-                    prim->points[i] = objectToLiterial<int>(lst->m_impl->get(i));
+                    prim->points[i] = objectToLiterial<int>(lst->m_impl->get(i)->clone());
                 }
             } else if (type == "lines") {
                 prim->lines.resize(lst->m_impl->size());
                 for (size_t i = 0; i < prim->lines.size(); i++) {
-                    prim->lines[i] = objectToLiterial<vec2i>(lst->m_impl->get(i));
+                    prim->lines[i] = objectToLiterial<vec2i>(lst->m_impl->get(i)->clone());
                 }
             } else if (type == "tris") {
                 prim->tris.resize(lst->m_impl->size());
                 for (size_t i = 0; i < prim->tris.size(); i++) {
-                    prim->tris[i] = objectToLiterial<vec3i>(lst->m_impl->get(i));
+                    prim->tris[i] = objectToLiterial<vec3i>(lst->m_impl->get(i)->clone());
                 }
             } else if (type == "quads") {
                 prim->quads.resize(lst->m_impl->size());
                 for (size_t i = 0; i < prim->quads.size(); i++) {
-                    prim->quads[i] = objectToLiterial<vec4i>(lst->m_impl->get(i));
+                    prim->quads[i] = objectToLiterial<vec4i>(lst->m_impl->get(i)->clone());
                 }
             } else if (type == "polys") {
                 prim->polys.resize(lst->m_impl->size());
                 for (size_t i = 0; i < prim->polys.size(); i++) {
-                    prim->polys[i] = objectToLiterial<vec2i>(lst->m_impl->get(i));
+                    prim->polys[i] = objectToLiterial<vec2i>(lst->m_impl->get(i)->clone());
                 }
             } else if (type == "loops") {
                 prim->loops.resize(lst->m_impl->size());
                 for (size_t i = 0; i < prim->loops.size(); i++) {
-                    prim->loops[i] = objectToLiterial<int>(lst->m_impl->get(i));
+                    prim->loops[i] = objectToLiterial<int>(lst->m_impl->get(i)->clone());
                 }
             } else {
                 throw makeError("invalid type " + type);
@@ -270,7 +270,7 @@ struct PrimUpdateFromList : INode {
             auto fun = [&] (auto &arr) {
                 using T = std::decay_t<decltype(arr[0])>;
                 for (size_t i = 0; i < arr.size(); i++) {
-                    arr[i] = objectToLiterial<T>(lst->m_impl->get(i));
+                    arr[i] = objectToLiterial<T>(lst->m_impl->get(i)->clone());
                 }
             };
             if (type == "verts") {

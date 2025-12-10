@@ -68,6 +68,12 @@ Zen.GraphsTotalView {
         */
     }
 
+    function initQmlEditorView() {
+        const graphsview_comp = Qt.createComponent("qrc:/ZGraphsView.qml")
+        const newgraphsview = graphsview_comp.createObject(welcomepage_or_editor, { id: "graphsallview" })
+        welcomepage_or_editor.currentIndex = 1
+    }
+
     onModelInited: function() {
         //动态添加ZGraphsView，这样主图模型就已经初始化了
         const graphsview_comp = Qt.createComponent("qrc:/ZGraphsView.qml")
@@ -80,6 +86,14 @@ Zen.GraphsTotalView {
         if (welcomepage_or_editor.currentIndex == 1) {
             welcomepage_or_editor.currentIndex = 0
             welcomepage_or_editor.children[1].destroy()
+        }
+    }
+
+    Component.onCompleted: {
+        if (graphsMgr.currentPath != "") {
+            initQmlEditorView()
+        } else {
+            welcomepage_or_editor.currentIndex = 0
         }
     }
 }

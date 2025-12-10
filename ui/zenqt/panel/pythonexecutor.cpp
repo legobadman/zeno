@@ -1,6 +1,6 @@
 ﻿#include "pythonexecutor.h"
 #include "layout/docktabcontent.h"
-#include <zeno/include/zenoutil.h>
+#include <zeno/utils/zenoutil.h>
 #include <zenoapplication.h>
 #include "zassert.h"
 #include "model/graphsmanager.h"
@@ -68,7 +68,7 @@ void PythonExecutePane::run() {
 
         const std::string& script = text.toStdString();
 #ifdef ZENO_WITH_PYTHON
-        bSucceed = zeno::runPython(script);
+        bSucceed = zeno::getSession().asyncRunPython(script);
 #endif
     }
     if (!bSucceed) {

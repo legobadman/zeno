@@ -1,4 +1,4 @@
-﻿#include "zenoproppanel.h"
+#include "zenoproppanel.h"
 #include "zenoapplication.h"
 #include "model/graphsmanager.h"
 #include "model/curvemodel.h"
@@ -34,6 +34,7 @@
 #include <zeno/core/typeinfo.h>
 #include "declmetatype.h"
 #include "model/customuimodel.h"
+#include "calculation/calculationmgr.h"
 
 
 using namespace zeno::reflect;
@@ -70,10 +71,24 @@ ZenoPropPanel::ZenoPropPanel(QWidget* parent)
     pVLayout->setContentsMargins(QMargins(0, 0, 0, 0));
     setLayout(pVLayout);
     setFocusPolicy(Qt::ClickFocus);
+
+    auto calcMgr = zenoApp->calculationMgr();
+    connect(calcMgr, &CalculationMgr::runStatus_changed, this, &ZenoPropPanel::onRunStatusChanged);
 }
 
 ZenoPropPanel::~ZenoPropPanel()
 {
+    auto calcMgr = zenoApp->calculationMgr();
+    disconnect(calcMgr, &CalculationMgr::runStatus_changed, this, &ZenoPropPanel::onRunStatusChanged);
+}
+
+void ZenoPropPanel::onRunStatusChanged() {
+    auto calcMgr = zenoApp->calculationMgr();
+    RunStatus::Value status = calcMgr->getRunStatus();
+    if (status == RunStatus::Running)
+        setEnabled(false);
+    else
+        setEnabled(true);
 }
 
 QSize ZenoPropPanel::sizeHint() const
@@ -136,7 +151,7 @@ void ZenoPropPanel::clearLayout()
 
     if (m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeDict" || m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeList") {
         clearMakeDictMakeListLayout();
-            }
+    }
     else {
         int nodeType = m_idx.data(QtRole::ROLE_NODETYPE).toInt();
         if (nodeType == zeno::Node_SubgraphNode || nodeType == zeno::Node_AssetInstance) {
@@ -144,14 +159,15 @@ void ZenoPropPanel::clearLayout()
             if (clsname == "Subnet") {
                 m_tabWidget = nullptr;
                 m_outputWidget = nullptr;
-        }
+            }
             else if (clsname == "DopNetwork") {
                 m_dopNetworkPanel = nullptr;
                 m_outputWidget = nullptr;
-    }
-        } else {
-        m_normalNodeInputWidget = nullptr;
-        m_outputWidget = nullptr;
+            }
+        } 
+        else {
+            m_normalNodeInputWidget = nullptr;
+            m_outputWidget = nullptr;
         }
         m_inputControls.clear();
         m_outputControls.clear();
@@ -193,8 +209,8 @@ void ZenoPropPanel::reset(GraphModel* subgraph, const QModelIndexList& nodes, bo
     if (m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeDict" || m_idx.data(QtRole::ROLE_CLASS_NAME).toString() == "MakeList") {
         if (QWidget* wid = resetMakeDictMakeListLayout()) {
             pMainLayout->addWidget(wid);
-            }
         }
+    }
     else {
         ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS));
         ZASSERT_EXIT(paramsM);
@@ -211,7 +227,8 @@ void ZenoPropPanel::reset(GraphModel* subgraph, const QModelIndexList& nodes, bo
 				if (QWidget* wid = resetSubnetLayout()) {
 					pMainLayout->addWidget(wid);
 				}
-			} else {
+			}
+            else {
 				ParamTabModel* tableM = customUiM->tabModel();
                 ZASSERT_EXIT(tableM)
 				ParamGroupModel* groupM = tableM->data(tableM->index(0), QmlCUIRole::GroupModel).value<ParamGroupModel*>();
@@ -412,7 +429,8 @@ bool ZenoPropPanel::syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout
         */
         ParamsModel* paramsModel = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS));
         const QModelIndex& idx = paramsModel->paramIdx(perIdx.data(QtRole::ROLE_PARAM_NAME).toString(), true);
-        UiHelper::qIndexSetData(idx, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        //UiHelper::qIndexSetData(idx, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        m_model->setModelData(idx, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
     };
     cbSet.cbSwitch = [=](bool bOn) {
         zenoApp->getMainWindow()->setInDlgEventLoop(bOn);   //deal with ubuntu dialog slow problem when update viewport.
@@ -427,7 +445,7 @@ bool ZenoPropPanel::syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout
         //bKeyFrame = AppHelper::getCurveValue(val);
     }
 
-    QWidget* pControl = zenoui::createWidget(m_idx, anyVal, ctrl, type, cbSet, pros);
+    QWidget* pControl = zenoui::createWidget(m_idx, paramName, anyVal, ctrl, type, cbSet, pros);
 
     ZTextLabel* pLabel = new ZTextLabel(paramName);
 
@@ -470,16 +488,23 @@ bool ZenoPropPanel::syncAddControl(ZExpandableSection* pGroupWidget, QGridLayout
             row++;
         }
     }
-    pGroupLayout->addWidget(pnewIcon, row, 0, Qt::AlignCenter);
-
+    pGroupLayout->addWidget(pnewIcon, row, 0, Qt::AlignLeft | Qt::AlignVCenter);
     pGroupLayout->addWidget(pnewLabel, row, 1, Qt::AlignLeft | Qt::AlignVCenter);
-    if (pControl)
-        pGroupLayout->addWidget(pnewControl, row, 2, Qt::AlignVCenter);
+    if (pControl) {
+        if (qobject_cast<QPushButton*>(pControl)) {
+            //按钮是固定宽度的，如果不左对齐，会导致按钮落在中间
+            pGroupLayout->addWidget(pnewControl, row, 2, Qt::AlignLeft | Qt::AlignVCenter);
+        }
+        else {
+            //Qt的布局里，如果不设置alignment，就自动填充剩下全部距离
+            pGroupLayout->addWidget(pnewControl, row, 2);
+        }
+    }
 
-    if (ZTextEdit* pMultilineStr = qobject_cast<ZTextEdit*>(pControl))
-    {
+    if (ZTextEdit* pMultilineStr = qobject_cast<ZTextEdit*>(pControl)) {
         connect(pMultilineStr, &ZTextEdit::geometryUpdated, pGroupWidget, &ZExpandableSection::updateGeo);
-    } else if (ZLineEdit* pLineEdit = qobject_cast<ZLineEdit*>(pControl)) {
+    }
+    else if (ZLineEdit* pLineEdit = qobject_cast<ZLineEdit*>(pControl)) {
         pLineEdit->setHintListWidget(m_hintlist.get(), m_descLabel.get());
     }
     else if (ZVecEditor* pVecEdit = qobject_cast<ZVecEditor*>(pControl)) {
@@ -522,8 +547,15 @@ bool ZenoPropPanel::syncAddGroup(QVBoxLayout* pTabLayout, ParamPlainModel* param
     pGroupWidget->setCollasped(bCollaspe);
     QGridLayout* pLayout = new QGridLayout;
     pLayout->setContentsMargins(10, 15, 10, 15);
+
+    pLayout->setColumnStretch(0, 0);   // 图标列不伸缩
+    pLayout->setColumnStretch(1, 0);   // 文本列不伸缩
+    pLayout->setColumnStretch(2, 1);   // 第三列占满剩余空间
+    //pLayout->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    //pLayout->setHorizontalSpacing(8);
+
     //pLayout->setColumnStretch(1, 1);
-    pLayout->setColumnStretch(2, 3);
+    //pLayout->setColumnStretch(2, 3);
     pLayout->setSpacing(10);
     for (int k = 0; k < paramM->rowCount(); k++)
     {
@@ -685,8 +717,6 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
     ParamsModel* paramsM = QVariantPtr<ParamsModel>::asPtr(m_idx.data(QtRole::ROLE_PARAMS));
     QPersistentModelIndex idxCoreParam = paramsM->paramIdx(paramName, bInput);
 
-    ZASSERT_EXIT(anyVal.has_value() || type == gParamType_AnyNumeric || type == gParamType_StringList);
-
     zeno::ParamControl ctrl = (zeno::ParamControl)idxCoreParam.data(QtRole::ROLE_PARAM_CONTROL).toInt();
 
     const zeno::reflect::Any& pros = idxCoreParam.data(QtRole::ROLE_PARAM_CTRL_PROPERTIES).value<zeno::reflect::Any>();
@@ -695,8 +725,9 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
 
     bool bFloat = UiHelper::isFloatType(type);
     cbSet.cbEditFinished = [=](zeno::reflect::Any newValue) {
-        paramsM->setData(idxCoreParam, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        //paramsM->setData(idxCoreParam, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
         //paramItem->setData(QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
+        m_model->setModelData(idxCoreParam, QVariant::fromValue(newValue), QtRole::ROLE_PARAM_VALUE);
     };
     cbSet.cbSwitch = [=](bool bOn) {
         zenoApp->getMainWindow()->setInDlgEventLoop(bOn);   //deal with ubuntu dialog slow problem when update viewport.
@@ -712,7 +743,7 @@ void ZenoPropPanel::normalNodeAddInputWidget(ZScrollArea* scrollArea, QGridLayou
         //bKeyFrame = AppHelper::getCurveValue(val);
     }
 
-    QWidget* pControl = zenoui::createWidget(m_idx, anyVal, ctrl, type, cbSet, pros);
+    QWidget* pControl = zenoui::createWidget(m_idx, paramName, anyVal, ctrl, type, cbSet, pros);
 
     ZTextLabel* pLabel = new ZTextLabel(paramName);
 

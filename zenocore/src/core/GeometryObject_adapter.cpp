@@ -3,31 +3,34 @@
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/interfaceutil.h>
-#include <zeno/core/ObjectManager.h>
+#include <zeno/core/ObjectRecorder.h>
 
 
 namespace zeno
 {
+//#define TEST_GEOMETRY_LEAK
+
     zany GeometryObject_Adapter::clone() const {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = std::make_unique<GeometryObject>(*m_impl);
         newGeom->m_usrData = this->m_usrData->clone();  //TODO:调整写法
+        newGeom->m_key = this->m_key;
         return newGeom;
     }
 
     void GeometryObject_Adapter::Delete() {}
 
     GeometryObject_Adapter::GeometryObject_Adapter() {
-        //auto id = zsString2Std(key());
-        auto& objsman = zeno::getSession().objsMan;
-        objsman->m_rec_geoms.insert((char*)this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geoms.insert(this);
+#endif
     }
 
     GeometryObject_Adapter::~GeometryObject_Adapter() {
         Delete();
-        //auto id = zsString2Std(key());
-        auto& objsman = zeno::getSession().objsMan;
-        objsman->m_rec_geoms.erase((char*)this);
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geoms.erase(this);
+#endif
     }
 
     void GeometryObject_Adapter::inheritAttributes(
@@ -52,16 +55,16 @@ namespace zeno
         return m_impl->points_pos();
     }
 
-    Vector<Vec3i> GeometryObject_Adapter::tri_indice() const {
+    ZsVector<Vec3i> GeometryObject_Adapter::tri_indice() const {
         const std::vector<vec3f>& vec = m_impl->points_pos();
-        Vector<Vec3i> _vec(vec.size());
+        ZsVector<Vec3i> _vec(vec.size());
         for (size_t i = 0; i < vec.size(); i++) {
             _vec[i] = toAbiVec3i(vec[i]);
         }
         return _vec;
     }
 
-    Vector<int> GeometryObject_Adapter::edge_list() const {
+    ZsVector<int> GeometryObject_Adapter::edge_list() const {
         return stdVec2zeVec(m_impl->edge_list());
     }
 
@@ -85,9 +88,9 @@ namespace zeno
         return m_impl->get_attr_type(grp, zsString2Std(name));
     }
 
-    zeno::Vector<zeno::String> GeometryObject_Adapter::get_attr_names(GeoAttrGroup grp) {
+    zeno::ZsVector<zeno::String> GeometryObject_Adapter::get_attr_names(GeoAttrGroup grp) {
         const std::vector<std::string>& vec = m_impl->get_attr_names(grp);
-        Vector<zeno::String> _vec(vec.size());
+        ZsVector<zeno::String> _vec(vec.size());
         for (int i = 0; i < vec.size(); i++) {
             _vec[i] = stdString2zs(vec[i]);
         }
@@ -220,11 +223,11 @@ namespace zeno
         return m_impl->add_point(toVec3f(pos));
     }
 
-    int GeometryObject_Adapter::add_face(const zeno::Vector<int>& points, bool bClose) {
+    int GeometryObject_Adapter::add_face(const zeno::ZsVector<int>& points, bool bClose) {
         return m_impl->add_face(zeVec2stdVec(points), bClose);
     }
 
-    void GeometryObject_Adapter::set_face(int idx, const zeno::Vector<int>& points, bool bClose) {
+    void GeometryObject_Adapter::set_face(int idx, const zeno::ZsVector<int>& points, bool bClose) {
         return m_impl->set_face(idx, zeVec2stdVec(points), bClose);
     }
 
@@ -260,7 +263,7 @@ namespace zeno
         return m_impl->nattributes(grp);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::point_faces(int point_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::point_faces(int point_id) {
         return stdVec2zeVec(m_impl->point_faces(point_id));
     }
 
@@ -268,7 +271,7 @@ namespace zeno
         return m_impl->point_vertex(point_id);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::point_vertices(int point_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::point_vertices(int point_id) {
         return stdVec2zeVec(m_impl->point_vertices(point_id));
     }
 
@@ -276,7 +279,7 @@ namespace zeno
         return m_impl->face_point(face_id, vert_id);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::face_points(int face_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::face_points(int face_id) {
         return stdVec2zeVec(m_impl->face_points(face_id));
     }
 
@@ -288,7 +291,7 @@ namespace zeno
         return m_impl->face_vertex_count(face_id);
     }
 
-    zeno::Vector<int> GeometryObject_Adapter::face_vertices(int face_id) {
+    zeno::ZsVector<int> GeometryObject_Adapter::face_vertices(int face_id) {
         return stdVec2zeVec(m_impl->face_vertices(face_id));
     }
 
@@ -324,34 +327,34 @@ namespace zeno
         return m_impl->vertex_info(linear_vertex_id);
     }
 
-    zeno::SharedPtr<PrimitiveObject> GeometryObject_Adapter::toPrimitiveObject() const {
-        zeno::SharedPtr<PrimitiveObject> spPrim = m_impl->toPrimitive();
+    std::unique_ptr<PrimitiveObject> GeometryObject_Adapter::toPrimitiveObject() const {
+        std::unique_ptr<PrimitiveObject> spPrim = m_impl->toPrimitive();
         spPrim->m_usrData = m_usrData->clone();
         return spPrim;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> GeometryObject_Adapter::toIndiceMeshesTopo() const {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> GeometryObject_Adapter::toIndiceMeshesTopo() const {
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = m_impl->toIndiceMeshesTopo();
         newGeom->m_usrData = this->m_usrData->clone();
         return newGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> GeometryObject_Adapter::toHalfEdgeTopo() const {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> GeometryObject_Adapter::toHalfEdgeTopo() const {
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = m_impl->toHalfEdgeTopo();
         newGeom->m_usrData = this->m_usrData->clone();
         return newGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type) {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type) {
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(type);
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(type, bTriangle, nPoints, nFaces, bInitFaces);
         //提前添加pos
         std::vector<vec3f> points(nPoints);
@@ -359,27 +362,31 @@ namespace zeno
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(
         GeomTopoType type,
         bool bTriangle,
         const std::vector<zeno::vec3f>& points,
         const std::vector<std::vector<int>>& faces)
     {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
-        pGeom->m_impl = std::make_unique<GeometryObject>(type, bTriangle, points.size(), faces);
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
+        pGeom->m_impl = std::make_unique<GeometryObject>(type, bTriangle, (int)points.size(), faces);
         pGeom->m_impl->create_attr(ATTR_POINT, "pos", points);
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> create_GeometryObject(std::shared_ptr<PrimitiveObject> prim) {
-        auto pGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> create_GeometryObject(PrimitiveObject* prim) {
+        if (!prim->userData()->has_bool("cyhair")) {
+            if (!prim || prim->verts->empty())
+                return nullptr;
+        }
+        auto pGeom = std::make_unique<GeometryObject_Adapter>();
         pGeom->m_impl = std::make_unique<GeometryObject>(prim);
         pGeom->m_usrData = prim->m_usrData->clone();
         return pGeom;
     }
 
-    zeno::SharedPtr<GeometryObject_Adapter> clone_GeometryObject(zeno::SharedPtr<GeometryObject_Adapter> pGeom) {
-        auto newGeom = std::make_shared<GeometryObject_Adapter>();
+    std::unique_ptr<GeometryObject_Adapter> clone_GeometryObject(std::unique_ptr<GeometryObject_Adapter> pGeom) {
+        auto newGeom = std::make_unique<GeometryObject_Adapter>();
         newGeom->m_impl = std::make_unique<GeometryObject>(*pGeom->m_impl);
         newGeom->m_usrData = pGeom->m_usrData->clone();
         return newGeom;

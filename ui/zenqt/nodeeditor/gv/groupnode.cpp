@@ -473,9 +473,8 @@ void GroupNode::updateBlackboard() {
         index = paramsM->index(paramsM->indexFromName("size", true), 0);
         if (index.isValid())
         {
-            UI_VECTYPE val;
-            val << this->size().width() << this->size().height();
-            UiHelper::qIndexSetData(index, QVariant::fromValue(UiHelper::qvarToAny(QVariant::fromValue(val), ui_gParamType_Vec3f)), QtRole::ROLE_PARAM_VALUE);
+            zeno::reflect::Any szVal = zeno::reflect::make_any<zeno::vec2f>(size().width(), size().height());
+            UiHelper::qIndexSetData(index, QVariant::fromValue(szVal), QtRole::ROLE_PARAM_VALUE);
         }
     }
 }

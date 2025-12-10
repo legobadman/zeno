@@ -18,7 +18,7 @@ using namespace zeno::types;
 #define registerObjectTypeUIInfo(ObjectName, Name, Color) \
         struct _Sclass_registor_##ObjectName {\
             _Sclass_registor_##ObjectName() {\
-                zeno::getSession().registerObjUIInfo(gParamType_##Name, Color, #Name); \
+                zeno::getNodeRegister().registerObjUIInfo(gParamType_##Name, Color, #Name); \
             }\
         }; \
         static _Sclass_registor_##ObjectName static_inst_##ObjectName{};
@@ -44,5 +44,16 @@ registerObjectTypeHash(InstancingObject, Instance)
 #define gParamType_FBXObject        239
 #define gParamType_Scene            240
 #define gParamType_ABCTree          242
+#define gParamType_IndexBuckets     243
+#define gParamType_OceanFFT         244
+#define gParamType_SparseGrid       245
+#define gParamType_BulletTransform  246
+#define gParamType_BulletTriangleMesh  247
+#define gParamType_BulletCollisionShape  248
+#define gParamType_BulletWorld      249
+#define gParamType_BulletObject     250
+#define gParamType_BulletConstraint 251
+#define gParamType_TextureObjectVDB 252
+#define gParamType_Texture2DObject  253
 
 #endif

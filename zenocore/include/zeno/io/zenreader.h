@@ -10,7 +10,7 @@ namespace zenoio
     {
     public:
         ZENO_API ZenReader();
-        ZENO_API bool importNodes(const std::string& fn, zeno::NodesData& nodes, zeno::LinksData& links,
+        ZENO_API bool importNodes(const std::string& strjson, zeno::NodesData& nodes, zeno::LinksData& links,
             zeno::ReferencesData& refs);
     protected:
         bool _parseMainGraph(const rapidjson::Document& doc, zeno::GraphData& ret) override;
@@ -59,6 +59,9 @@ namespace zenoio
 
         zeno::CustomUI _parseCustomUI(const std::string& id, const rapidjson::Value& customuiObj, zeno::LinksData& links);
         zeno::CustomUI _parseCustomUI(const rapidjson::Value& customuiObj);
+
+    private:
+        void _static_nodes(const rapidjson::Document& doc);
     };
 }
 

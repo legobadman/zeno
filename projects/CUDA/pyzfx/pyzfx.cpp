@@ -4,7 +4,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include "zensim/ZpcBuiltin.hpp"
 #include "zensim/io/Filesystem.hpp"
 #include "zensim/zpc_tpls/fmt/color.h"
@@ -12,6 +12,9 @@
 #include <cstdlib>
 #include <filesystem>
 #include <zeno/utils/log.h>
+#include <zeno/utils/interfaceutil.h>
+#include <zeno/core/typeinfo.h>
+#include "zeno_types/reflect/reflection.generated.hpp"
 
 namespace fs = std::filesystem;
 
@@ -19,7 +22,7 @@ namespace zeno {
 
 struct PyZpcLite : INode {
     void apply() override {
-        auto inputPath = get_input2<std::string>("path");
+        auto inputPath = zsString2Std(get_input2_string("path"));
         char *p = nullptr;
         if (inputPath.empty())
             p = getenv("PATH");
@@ -48,9 +51,9 @@ struct PyZpcLite : INode {
         const std::string target = "python";
 #endif
 
-        auto inputParams = std::make_shared<DictObject>();
-        if (has_input<DictObject>("inputs"))
-            inputParams = get_input2<DictObject>("inputs");
+        auto inputParams = create_DictObject();
+        if (has_input("inputs"))
+            inputParams = safe_uniqueptr_cast<zeno::DictObject>(clone_input("inputs"));
 
         for (const auto &path : pathLocations) {
             fmt::print("iterate path: {}\n", path);
@@ -74,7 +77,7 @@ struct PyZpcLite : INode {
             }
         }
 
-        set_output("outputs", std::make_shared<DictObject>());
+        set_output("outputs", create_DictObject());
     }
 };
 

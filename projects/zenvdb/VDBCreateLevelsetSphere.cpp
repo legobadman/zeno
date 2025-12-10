@@ -31,9 +31,9 @@ struct VDBCreateLevelsetSphere : zeno::INode {
       if (auto t = get_input2_float("half_width"); t > 0)
         half_width=t;
     }
-    auto data = std::make_shared<VDBFloatGrid>(openvdb::tools::createLevelSetSphere<openvdb::FloatGrid>(
+    auto data = std::make_unique<VDBFloatGrid>(openvdb::tools::createLevelSetSphere<openvdb::FloatGrid>(
         radius, openvdb::Vec3f(center[0], center[1], center[2]), dx, half_width));
-    set_output("data", data);
+    set_output("data", std::move(data));
   }
 };
 

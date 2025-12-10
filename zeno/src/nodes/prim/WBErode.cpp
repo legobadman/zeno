@@ -148,12 +148,12 @@ struct erode_rand_color : INode {
             perm[idx2] = temp;
         }
 
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
         for (int i = 0; i < 8; i++)
         {
-            auto num = std::make_shared<zeno::NumericObject>();
+            auto num = std::make_unique<zeno::NumericObject>();
             num->set<int>(perm[i]);
-            list->m_impl->push_back(num);
+            list->m_impl->push_back(std::move(num));
         }
         ZImpl(set_output("list", std::move(list)));
     }
@@ -198,12 +198,12 @@ struct erode_rand_dir : INode {
             }
         }
 
-        auto list = std::make_shared<zeno::ListObject>();
+        auto list = std::make_unique<zeno::ListObject>();
         for (int i = 0; i < 2; i++)
         {
-            auto num = std::make_shared<zeno::NumericObject>();
+            auto num = std::make_unique<zeno::NumericObject>();
             num->set<int>(dirs[i]);
-            list->m_impl->push_back(num);
+            list->m_impl->push_back(std::move(num));
         }
         ZImpl(set_output("list", std::move(list)));
     }
@@ -2298,7 +2298,7 @@ struct erode_terrainHiMeLo : INode {
         ud->set_float("lo", lo);
         ud->set_float("me", all / attr.size());
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(erode_terrainHiMeLo,
@@ -2344,7 +2344,7 @@ struct HF_maskByFeature : INode {
         ////////////////////////////////////////////////////////////////////////////////////////
 
         // 初始化网格
-        auto terrain = get_input_Geometry("HeightField");
+        auto terrain = clone_input_Geometry("HeightField");
         int nx, nz;
         auto ud = terrain->userData();
         if ((!ud->has("nx")) || (!ud->has("nz")))
@@ -2502,7 +2502,7 @@ struct HF_maskByFeature : INode {
         }
 
         terrain->set_point_attr(maskLayer, mask);
-        set_output("HeightField", terrain);
+        set_output("HeightField", std::move(terrain));
     }
 };
 ZENDEFNODE(HF_maskByFeature,
@@ -2562,7 +2562,7 @@ struct HF_rotate_displacement_2d : INode {
             pos[i] -= vec3f(ret.x, ret.y, ret.z);
         }
 
-        ZImpl(set_output("prim_2DGrid", ZImpl(get_input("prim_2DGrid"))));
+        ZImpl(set_output("prim_2DGrid", ZImpl(clone_input("prim_2DGrid"))));
     }
 };
 ZENDEFNODE(HF_rotate_displacement_2d,
@@ -2578,7 +2578,7 @@ ZENDEFNODE(HF_rotate_displacement_2d,
 
 struct HF_remap : INode {
     void apply() override {
-        auto terrain = get_input_Geometry("prim");
+        auto terrain = clone_input_Geometry("prim");
         auto remapLayer = get_input2_string("remap layer");
         if (!terrain->has_point_attr(remapLayer)) {
             throw makeError<UnimplError>("Node [HF_remap], no such data layer named '" + zsString2Std(remapLayer) + "'");
@@ -2634,7 +2634,7 @@ struct HF_remap : INode {
             return new_val;
             });
 
-        set_output("prim", terrain);
+        set_output("prim", std::move(terrain));
     }
 };
 ZENDEFNODE(HF_remap,
@@ -2820,7 +2820,7 @@ struct HF_maskbyOcclusion : INode {
                 ao[idx] = invert_mask ? 1-total_fov : total_fov;
             }
         }
-        ZImpl(set_output("prim", ZImpl(get_input("prim"))));
+        ZImpl(set_output("prim", ZImpl(clone_input("prim"))));
     }
 };
 ZENDEFNODE(HF_maskbyOcclusion,

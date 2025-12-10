@@ -105,7 +105,7 @@ class _ZenoSubGraphView : public QGraphicsView
     Q_OBJECT
     typedef QGraphicsView _base;
 public:
-    _ZenoSubGraphView(ZenoSubGraphView* parent = nullptr);
+    _ZenoSubGraphView(ZenoSubGraphView* parent = nullptr, ZenoSubGraphScene* scene = nullptr);
     void initScene(ZenoSubGraphScene* pScene);
     void setPath(const QString& path);
     qreal scaleFactor() const;
@@ -168,10 +168,10 @@ private:
 #include "zenosubgraphview.moc"
 
 
-_ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent)
+_ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent, ZenoSubGraphScene* scene)
     : QGraphicsView(parent)
     , m_view(parent)
-    , m_scene(nullptr)
+    , m_scene(scene)
     , _modifiers(Qt::ControlModifier)
     , m_factor(1.)
     , m_dragMove(false)
@@ -188,17 +188,17 @@ _ZenoSubGraphView::_ZenoSubGraphView(ZenoSubGraphView* parent)
     setMouseTracking(true);
     setContextMenuPolicy(Qt::DefaultContextMenu);
 
-    //QAction* ctrlz = new QAction("Undo", this);
- //   ctrlz->setShortcut(QKeySequence::Undo);
-    //ctrlz->setShortcutContext(Qt::WidgetShortcut);
- //   connect(ctrlz, SIGNAL(triggered()), this, SLOT(undo()));
- //   addAction(ctrlz);
+    QAction* ctrlz = new QAction("Undo", this);
+    ctrlz->setShortcut(QKeySequence::Undo);
+    ctrlz->setShortcutContext(Qt::WidgetShortcut);
+    connect(ctrlz, SIGNAL(triggered()), this, SLOT(undo()));
+    addAction(ctrlz);
 
- //   QAction* ctrly = new QAction("Redo", this);
- //   ctrly->setShortcut(QKeySequence::Redo);
-    //ctrly->setShortcutContext(Qt::WidgetShortcut);
- //   connect(ctrly, SIGNAL(triggered()), this, SLOT(redo()));
- //   addAction(ctrly);
+    QAction* ctrly = new QAction("Redo", this);
+    ctrly->setShortcut(QKeySequence::Redo);
+    ctrly->setShortcutContext(Qt::WidgetShortcut);
+    connect(ctrly, SIGNAL(triggered()), this, SLOT(redo()));
+    addAction(ctrly);
 
     QAction* pActSave = new QAction("Save", this);
     pActSave->setShortcut(QKeySequence::Save);
@@ -363,8 +363,11 @@ void _ZenoSubGraphView::focusOnWithNoSelect(const QString& nodeId)
     if (pItem)
     {
         QRectF rcBounding = pItem->sceneBoundingRect();
-        rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width() / 10., rcBounding.height() / 10.);
-        fitInView(rcBounding, Qt::KeepAspectRatio);
+        //rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width() / 10., rcBounding.height() / 10.);
+        //fitInView(rcBounding, Qt::KeepAspectRatio);
+        target_scene_pos = rcBounding.center();
+        gentle_zoom(1.0);
+        centerOn(target_scene_pos);
     }
 }
 
@@ -384,7 +387,7 @@ void _ZenoSubGraphView::focusOn(const QString& nodeName, const QPointF& pos, boo
     if (pSelNode)
     {
         QRectF rcBounding = pSelNode->sceneBoundingRect();
-        //rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width(), rcBounding.height());
+        rcBounding.adjust(-rcBounding.width(), -rcBounding.height(), rcBounding.width(), rcBounding.height());
         fitInView(rcBounding, Qt::KeepAspectRatio);
         target_scene_pos = rcBounding.center();
         editor_factor = transform().m11();
@@ -618,6 +621,11 @@ void _ZenoSubGraphView::resizeEvent(QResizeEvent* event)
         int h = height();
         m_pSearcher->setGeometry(w - sz.width(), 0, sz.width(), sz.height());
     }
+
+    QRectF viewRect = viewport()->rect().adjusted(2, 2, -2, -2);
+    if (!scene() && !viewRect.isEmpty()) {
+        initScene(m_scene);
+    }
 }
 
 void _ZenoSubGraphView::contextMenuEvent(QContextMenuEvent* event)
@@ -714,6 +722,9 @@ void LayerPathWidget::setPath(const QStringList& path)
 {
     if (m_path == path)
         return;
+
+    auto graphsMgr = zenoApp->graphsManager();
+    graphsMgr->setCurrentGraphPath(path.join('/'));
 
     m_path = path;
     QHBoxLayout* pLayout = qobject_cast<QHBoxLayout*>(this->layout());
@@ -906,25 +917,20 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
         _ZenoSubGraphView* pView = qobject_cast<_ZenoSubGraphView*>(m_stackedView->widget(i));
         ZASSERT_EXIT(pView);
         ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(pView->scene());
-        ZASSERT_EXIT(pScene);
-        GraphModel* pModel = pScene->getGraphModel();
-        ZASSERT_EXIT(pModel);
-        auto currpath = pModel->currentPath();
-        if (currpath == path) {
-            m_stackedView->setCurrentIndex(i);
-            bFound = true;
-            pCurrentView = pView;
-            break;
+        if (pScene) {
+            GraphModel* pModel = pScene->getGraphModel();
+            ZASSERT_EXIT(pModel);
+            auto currpath = pModel->currentPath();
+            if (currpath == path) {
+                m_stackedView->setCurrentIndex(i);
+                bFound = true;
+                pCurrentView = pView;
+                break;
+            }
         }
     }
 
     if (!bFound) {
-        auto pView = new _ZenoSubGraphView(this);
-        connect(pView, SIGNAL(zoomed(qreal)), this, SIGNAL(zoomed(qreal)));
-        m_stackedView->addWidget(pView);
-        m_stackedView->setCurrentWidget(pView);
-        pCurrentView = pView;
-
         auto graphsMgr = zenoApp->graphsManager();
         ZenoSubGraphScene* pScene = qobject_cast<ZenoSubGraphScene*>(graphsMgr->gvScene(path));
         if (!pScene)
@@ -934,7 +940,14 @@ void ZenoSubGraphView::resetPath(const QStringList& path, const QString& objId, 
             GraphModel* pGraphM = graphsMgr->getGraph(path);
             pScene->initModel(pGraphM);
         }
-        pView->initScene(pScene);
+
+        auto pView = new _ZenoSubGraphView(this, pScene);
+        connect(pView, SIGNAL(zoomed(qreal)), this, SIGNAL(zoomed(qreal)));
+        m_stackedView->addWidget(pView);
+        m_stackedView->setCurrentWidget(pView);
+        pCurrentView = pView;
+
+        //pView->initScene(pScene);
     }
 
     if (path.isEmpty())

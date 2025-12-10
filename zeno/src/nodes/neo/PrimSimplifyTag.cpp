@@ -3,29 +3,14 @@
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/NumericObject.h>
+#include <zeno/geo/commonutil.h>
 #include <unordered_map>
 #include <random>
 
 namespace zeno {
 
-ZENO_API void primSimplifyTag(PrimitiveObject *prim, std::string tagAttr) {
-    auto &tag = prim->verts.attr<int>(tagAttr);
-    std::unordered_map<int, int> lut;
-    int top = 0;
-    for (int i = 0; i < tag.size(); i++) {
-        auto k = tag[i];
-        auto it = lut.find(k);
-        if (it != lut.end()) {
-            tag[i] = it->second;
-        } else {
-            int c = top++;
-            lut.emplace(k, c);
-            tag[i] = c;
-        }
-    }
-}
 
-ZENO_API void primColorByTag(PrimitiveObject *prim, std::string tagAttr, std::string clrAttr, int seed) {
+static void primColorByTag(PrimitiveObject *prim, std::string tagAttr, std::string clrAttr, int seed) {
     auto const &tag = prim->verts.attr<int>(tagAttr);
     auto &clr = prim->verts.add_attr<zeno::vec3f>(clrAttr);
     std::unordered_map<int, vec3f> lut;

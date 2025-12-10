@@ -1,16 +1,14 @@
-﻿#include <zeno/core/NodeImpl.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/core/Graph.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/Assets.h>
-#include <zeno/core/ObjectManager.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/types/DummyObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/extra/DirtyChecker.h>
-#include <zeno/extra/TempNode.h>
 #include <zeno/extra/foreach.h>
 #include <zeno/utils/Error.h>
 #include <zeno/utils/string.h>
@@ -35,6 +33,7 @@
 #include <zeno/reflect/type.hpp>
 #include <zeno/reflect/container/arraylist>
 #include <zeno/reflect/metadata.hpp>
+#include <zeno/types/ListObject.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/MeshObject.h>
 #include <zeno/types/MatrixObject.h>
@@ -42,6 +41,7 @@
 #include <zeno/core/reflectdef.h>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/extra/CalcContext.h>
+#include <filesystem>
 #include <zeno/extra/SubnetNode.h>
 #include <zeno/utils/interfaceutil.h>
 //#include <Python.h>
@@ -59,10 +59,23 @@ namespace zeno {
 NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
     if (m_pNode)
         m_pNode->m_pAdapter = this;
+
+    if (m_nodecls == "FrameCache") {
+        //有可能上一次已经缓存了内容，如果我们允许上一次的缓存留下来的话，就可以标为FrameChanged
+        //那就意味着，如果想清理缓存，只能让用户手动清理，因为机制不好理解什么时候缓存失效
+        m_dirtyReason = Dirty_FrameChanged;
+    }
+    else {
+        m_dirtyReason = Dirty_All;
+    }
 }
 
 NodeType NodeImpl::nodeType() const {
-    return m_pNode->type();
+    if (m_pNode) {
+        return m_pNode->type();
+    } else {
+        return NoVersionNode;
+    }
 }
 
 bool NodeImpl::is_locked() const {
@@ -71,6 +84,10 @@ bool NodeImpl::is_locked() const {
 
 void NodeImpl::set_locked(bool bLocked) {
 
+}
+
+void NodeImpl::convert_to_assetinst(const std::string& asset_name) {
+    m_nodecls = asset_name;
 }
 
 void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
@@ -413,7 +430,11 @@ bool NodeImpl::is_nocache() const {
 void NodeImpl::reportStatus(bool bDirty, NodeRunStatus status) {
     m_status = status;
     m_dirty = bDirty;
-    zeno::getSession().reportNodeStatus(m_uuidPath, bDirty, status);
+    auto& sess = zeno::getSession();
+    if (status == Node_RunSucceed) {
+        sess.globalState->update_consume_time(this->time());
+    }
+    sess.reportNodeStatus(m_uuidPath, bDirty, status);
 }
 
 void NodeImpl::mark_previous_ref_dirty() {
@@ -504,7 +525,7 @@ bool NodeImpl::has_frame_relative_params() const {
 
 bool NodeImpl::isInDopnetwork()
 {
-    Graph* parentGraph = m_pGraph;
+ /*   Graph* parentGraph = m_pGraph;
     while (parentGraph)
     {
         if (auto pSubnetImpl = parentGraph->getParentSubnetNode())
@@ -522,13 +543,18 @@ bool NodeImpl::isInDopnetwork()
             }
         }
         else break;
-    }
+    }*/
     return false;
 }
 
 void NodeImpl::onInterrupted() {
     mark_dirty(true);
     mark_previous_ref_dirty();
+}
+
+void NodeImpl::mark_clean() {
+    m_status = Node_Clean;
+    reportStatus(false, m_status);
 }
 
 void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively)
@@ -544,17 +570,22 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
         return;
 
     m_dirty = bOn;
+    m_dirtyReason = reason;
+    if (!m_dirty) {
+        m_dirtyReason = NoDirty;
+    }
 
     if (!bRecursively)
         return;
 
     if (m_dirty) {
+        m_takenover = false;
         for (auto& [name, param] : m_inputPrims) {
             for (auto link : param.reflinks) {
                 if (link->dest_inparam != &param) {
                     assert(link->dest_inparam);
                     auto destNode = link->dest_inparam->m_wpNode;
-                    destNode->mark_dirty(true);
+                    destNode->mark_dirty(true, reason);
                 }
             }
         }
@@ -562,7 +593,8 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
             for (auto link : param.reflinks) {
                 assert(link->dest_inparam);
                 auto destNode = link->dest_inparam->m_wpNode;
-                destNode->mark_dirty(true);
+                destNode->mark_dirty(true, reason);
+                destNode->clear_input_cacheobj(link->dest_inparam->name);
             }
             for (auto link : param.links) {
                 auto inParam = link->toparam;
@@ -570,7 +602,8 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
                 if (inParam) {
                     auto inNode = inParam->m_wpNode;
                     assert(inNode);
-                    inNode->mark_dirty(true);
+                    inNode->mark_dirty(true, reason);
+                    inNode->clear_input_cacheobj(inParam->name);
                 }
             }
         }
@@ -581,7 +614,7 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
                 if (inParam) {
                     auto inNode = inParam->m_wpNode;
                     assert(inNode);
-                    inNode->mark_dirty(true);
+                    inNode->mark_dirty(true, reason);
                 }
             }
         }
@@ -591,9 +624,9 @@ void NodeImpl::mark_dirty(bool bOn, DirtyReason reason, bool bWholeSubnet, bool 
     {
         if (bWholeSubnet)
             pSubnetNode->mark_subnetdirty(bOn);
-        if (DopNetwork* pDop = dynamic_cast<DopNetwork*>(pSubnetNode)) {
-            pDop->resetFrameState();
-    }
+        //if (DopNetwork* pDop = dynamic_cast<DopNetwork*>(pSubnetNode)) {
+        //    pDop->resetFrameState();
+        //}
     }
 
     Graph* spGraph = m_pGraph;
@@ -619,9 +652,12 @@ void NodeImpl::mark_dirty_objs()
             if (param.spObject->key().empty()) {
                 continue;
             }
-            getSession().objsMan->collect_removing_objs(zsString2Std(param.spObject->key()));
         }
     }
+}
+
+DirtyReason NodeImpl::getDirtyReason() const {
+    return m_dirtyReason;
 }
 
 void NodeImpl::complete() {}
@@ -632,7 +668,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
 
     //debug
 #if 1
-    if (m_name == "CompImport2") {
+    if (m_name == "FormSceneTree1") {
         int j;
         j = 0;
     }
@@ -651,18 +687,162 @@ void NodeImpl::preApply(CalcContext* pContext) {
         if (!ret)
             zeno::log_warn("the param {} may not be initialized", name);
     }
+
+    //wait all
+    for (auto& [name, param] : m_inputObjs) {
+        for (auto link : param.links) {
+            auto& task = link->upstream_task;
+            if (task.valid()) {
+                task.wait();
+            }
+        }
+    }
+    for (auto& [name, param] : m_inputPrims) {
+        for (auto link : param.links) {
+            auto& task = link->upstream_task;
+            if (task.valid()) {
+                task.wait();
+            }
+        }
+    }
+
+    //resolve all dependencys for input params
+    for (auto& [name, param] : m_inputObjs) {
+        if (param.type == gParamType_List) {
+            param.spObject = processList(&param, pContext);
+        }
+        else if (param.type == gParamType_Dict) {
+            param.spObject = processDict(&param, pContext);
+        }
+        else {
+            if (param.links.size() == 1) {
+                auto spLink = *param.links.begin();
+                auto& task = spLink->upstream_task;
+                if (task.valid()) {
+                    param.spObject = task.get();
+                }
+                else {
+                    if (!spLink->fromparam->spObject)
+                        throw makeNodeError<UnimplError>(get_path(), "cannot get object from upstream");
+
+                    //task为空，因为之前已经被执行过一次了，上游已经算好了
+                    //没有task，说明上游不需要计算，但对于多支路的下游来说，就不一定知道上游是否经历了计算
+                    //因此，在传递脏位的时候，要顺带把param.spObject情况，然而再到 上游拷一次
+                    if (!param.spObject)
+                        param.spObject = spLink->fromparam->spObject->clone();
+                }
+                param.spObject->update_key(stdString2zs(m_uuid));
+            }
+        }
+    }
+
+    for (auto& [name, param] : m_inputPrims) {
+        if (param.type != gParamType_ListOfMat4) {
+            //如果不是list类型，只会有一个连接
+            if (!param.links.empty()) {
+                auto spLink = *param.links.begin();
+                auto& task = spLink->upstream_task;
+                if (task.valid()) {
+                    param.result = task.get();
+                }
+                else {
+                    //直接从上游拷过来即可
+                    param.result = spLink->fromparam->result;
+                }
+            }
+        }
+        else {
+            std::vector<glm::mat4> result;
+            for (auto spLink : param.links) {
+                auto& task = spLink->upstream_task;
+                zeno::reflect::Any res;
+                if (task.valid()) {
+                    res = task.get();
+                }
+                else {
+                    res = spLink->fromparam->result;
+                }
+                if (res.type().hash_code() == gParamType_ListOfMat4) {
+                    result = zeno::reflect::any_cast<std::vector<glm::mat4>>(res);
+                    break;
+                }
+                else if (res.type().hash_code() == gParamType_Matrix4) {
+                    result.push_back(zeno::reflect::any_cast<glm::mat4>(res));
+                }
+                else {
+                    throw makeNodeError<UnimplError>(get_path(), "");
+                }
+            }
+            param.result = result;
+        }
+    }
+}
+
+void NodeImpl::launch_param_task(const std::string& param) {
+    auto iter = m_inputObjs.find(param);
+    if (iter != m_inputObjs.end()) {
+        ObjectParam& objParam = iter->second;
+        if (!objParam.links.empty()) {
+            auto spLink = *objParam.links.begin();
+            auto& task = spLink->upstream_task;
+            if (task.valid()) {
+                //如果没有边，那么spObject在requireInput就会被清空
+                objParam.spObject = task.get();
+            }
+            else {
+                objParam.spObject = spLink->fromparam->spObject->clone();
+            }
+        }
+    }
+    else {
+        auto iter2 = m_inputPrims.find(param);
+        if (iter2 != m_inputPrims.end()) {
+            PrimitiveParam& primParam = iter2->second;
+            if (primParam.links.size() == 1) {
+                auto spLink = *primParam.links.begin();
+                auto& task = spLink->upstream_task;
+                if (task.valid()) {
+                    primParam.result = task.get();
+                }
+            }
+        }
+    }
 }
 
 void NodeImpl::preApply_SwitchIf(CalcContext* pContext) {
     preApply_Primitives(pContext);
 
     const zeno::reflect::Any& res = this->get_param_result("Condition");
-    int cond = zeno::reflect::any_cast<int>(res);
-    if (cond != 0) {
-        requireInput("If True", pContext);
+    int cond = 0;
+    if (res.type().hash_code() == gParamType_Int) {
+        cond = zeno::reflect::any_cast<int>(res);
     }
-    else {
-        requireInput("If False", pContext);
+    else if (res.type().hash_code() == gParamType_Float) {
+        cond = zeno::reflect::any_cast<float>(res);
+    }
+    else if (res.type().hash_code() == gParamType_Bool) {
+        cond = zeno::reflect::any_cast<bool>(res);
+    }
+
+    const std::string& exec_param = (cond != 0) ? "If True" : "If False";
+    requireInput(exec_param, pContext);
+    launch_param_task(exec_param);
+}
+
+void NodeImpl::preApply_FrameCache(CalcContext* pContext) {
+    //这里有一个问题，就是如果应用重启了，如何判定是否需要重新写cache?
+    if (m_dirtyReason == Dirty_All) {
+        preApply(pContext);
+    }
+    else if (m_dirtyReason == Dirty_FrameChanged) {
+        preApply_Primitives(pContext);
+        //需要把路径拿出来，才得知cache是否已经存在了，如果cache不存在，
+        //即便framechange也得把上游依赖解了
+        auto param = get_input_prim_param("path");
+        auto path = zeno::reflect::any_cast<std::string>(param.result);
+        if (!std::filesystem::exists(path)) {
+            preApply(pContext);
+        }
     }
 }
 
@@ -672,48 +852,56 @@ void NodeImpl::preApply_SwitchBetween(CalcContext* pContext) {
     int cond = zeno::reflect::any_cast<int>(get_param_result("cond1"));
     if (cond != 0) {
         requireInput("b1", pContext);
+        launch_param_task("b1");
         return;
     }
 
     cond = zeno::reflect::any_cast<int>(get_param_result("cond2"));
     if (cond != 0) {
         requireInput("b2", pContext);
+        launch_param_task("b2");
         return;
     }
 
     cond = zeno::reflect::any_cast<int>(get_param_result("cond3"));
     if (cond != 0) {
         requireInput("b3", pContext);
+        launch_param_task("b3");
         return;
     }
 
     cond = zeno::reflect::any_cast<int>(get_param_result("cond4"));
     if (cond != 0) {
         requireInput("b4", pContext);
+        launch_param_task("b4");
         return;
     }
 
     cond = zeno::reflect::any_cast<int>(get_param_result("cond5"));
     if (cond != 0) {
         requireInput("b5", pContext);
+        launch_param_task("b5");
         return;
     }
 
     cond = zeno::reflect::any_cast<int>(get_param_result("cond6"));
     if (cond != 0) {
         requireInput("b6", pContext);
+        launch_param_task("b6");
         return;
     }
 
     cond = zeno::reflect::any_cast<int>(get_param_result("cond7"));
     if (cond != 0) {
         requireInput("b7", pContext);
+        launch_param_task("b7");
         return;
     }
 
     cond = zeno::reflect::any_cast<int>(get_param_result("cond8"));
     if (cond != 0) {
         requireInput("b8", pContext);
+        launch_param_task("b8");
         return;
     }
 }
@@ -725,6 +913,21 @@ void NodeImpl::preApply_Primitives(CalcContext* pContext) {
         bool ret = requireInput(name, pContext);
         if (!ret)
             zeno::log_warn("the param {} may not be initialized", name);
+    }
+
+    for (auto& [name, param] : m_inputPrims) {
+        if (param.type != gParamType_ListOfMat4) {
+            //如果不是list类型，只会有一个连接
+            if (!param.links.empty()) {
+                auto& task = (*param.links.begin())->upstream_task;
+                if (task.valid()) {
+                    param.result = task.get();
+                }
+            }
+        }
+        else {
+            //TODO:
+        }
     }
 }
 
@@ -781,7 +984,7 @@ void NodeImpl::foreachend_apply(CalcContext* pContext)
         for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(pContext); foreach_end->increment())
         {
             foreach_begin->mark_dirty(true);
-            pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
+            //pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
 
             preApply(pContext);
             foreach_end->apply_foreach(pContext);
@@ -795,10 +998,27 @@ void NodeImpl::foreachend_apply(CalcContext* pContext)
 
 void NodeImpl::apply() {
     if (m_pNode) {
-        m_pNode->apply();
+        try {
+            m_pNode->apply();
+        }
+        catch (ErrorException const& e) {
+            if (e.get_node_info().empty()) {
+                throw ErrorException(get_path(), e.getError());
+            }
+            else {
+                throw e;
+            }
+        }
+        catch (std::exception const& e) {
+            std::string err = e.what();
+            throw makeNodeError<StdError>(get_path(), std::current_exception());
+        }
+        catch (...) {
+            throw makeNodeError<UnimplError>(get_path(), "unknown error");
+        }
     }
     else {
-        throw makeError<UnimplError>("the node has been uninstalled");
+        throw makeNodeError<UnimplError>(get_path(), "the node has been uninstalled");
     }
 }
 
@@ -977,90 +1197,90 @@ void NodeImpl::reflectNode_apply()
 #endif
 }
 
-void NodeImpl::commit_to_render(UpdateReason reason) {
-    render_update_info info;
-    info.reason = reason;
-    info.uuidpath_node_objkey = m_uuidPath;
-
-    auto& sess = zeno::getSession();
-    sess.objsMan->collect_render_update(info);
-}
-
 void NodeImpl::update_out_objs_key()
 {
     for (auto const& [name, param] : m_outputObjs)
     {
-        if (param.spObject && param.spObject->key().empty())
+        if (param.spObject)
         {
-                //目前节点处所看到的object，都隶属于此节点本身。
+            //目前节点处所看到的object，都隶属于此节点本身。
+            if (param.spObject->key().empty())
                 param.spObject->update_key(stdString2zs(m_uuid));
-            }
         }
     }
+}
 
 void NodeImpl::on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded) {
     checkParamsConstrain();
+
+    if (!bInput && bAdded) {
+        auto iter = m_outputObjs.find(paramname);
+    }
 }
 
 void NodeImpl::on_node_about_to_remove() {
     //移除所有引用边的依赖关系
-    for (auto& [_, input_param] : m_inputPrims)
-    {
-        for (const std::shared_ptr<ReferLink>& reflink : input_param.reflinks) {
-            if (reflink->source_inparam == &input_param) {
-                //当前参数是引用源
-                auto& otherLinks = reflink->dest_inparam->reflinks;
-                otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
-                //参数值也改掉吧，把ref(...)改为 inv_ref(...)
-                auto otherNode = reflink->dest_inparam->m_wpNode;
-                assert(otherNode);
+    auto& primsRemoveReferLink = [](std::map<std::string, PrimitiveParam>& prims) {
+        for (auto& [_, input_param] : prims)
+        {
+            for (const std::shared_ptr<ReferLink>& reflink : input_param.reflinks) {
+                if (reflink->source_inparam == &input_param) {
+                    //当前参数是引用源
+                    auto& otherLinks = reflink->dest_inparam->reflinks;
+                    otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+                    //参数值也改掉吧，把ref(...)改为 inv_ref(...)
+                    auto otherNode = reflink->dest_inparam->m_wpNode;
+                    assert(otherNode);
 
-                auto defl = reflink->dest_inparam->defl;
-                assert(defl.has_value());
-                ParamType type = defl.type().hash_code();
-                if (type == gParamType_PrimVariant) {
-                    PrimVar var = any_cast<PrimVar>(defl);
-                    std::visit([&](auto& arg) {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, std::string>) {
-                            auto iter = arg.find("ref(");
-                            if (iter != std::string::npos) {
-                                arg.replace(arg.find("ref("), 4, "ref_not_exist(");
-                            }
-                        }
-                    }, var);
-                    otherNode->update_param(reflink->dest_inparam->name, var);
-                }
-                else if (type == gParamType_VecEdit) {
-                    vecvar vec = any_cast<vecvar>(defl);
-                    for (auto& elem : vec) {
+                    auto defl = reflink->dest_inparam->defl;
+                    assert(defl.has_value());
+                    ParamType type = defl.type().hash_code();
+                    if (type == gParamType_PrimVariant) {
+                        PrimVar var = any_cast<PrimVar>(defl);
                         std::visit([&](auto& arg) {
                             using T = std::decay_t<decltype(arg)>;
                             if constexpr (std::is_same_v<T, std::string>) {
                                 auto iter = arg.find("ref(");
                                 if (iter != std::string::npos) {
-                                    arg.replace(iter, 4, "ref_not_exist(");
+                                    arg.replace(arg.find("ref("), 4, "ref_not_exist(");
                                 }
                             }
-                        }, elem);
+                        }, var);
+                        otherNode->update_param(reflink->dest_inparam->name, var);
                     }
-                    otherNode->update_param(reflink->dest_inparam->name, vec);
-                }
+                    else if (type == gParamType_VecEdit) {
+                        vecvar vec = any_cast<vecvar>(defl);
+                        for (auto& elem : vec) {
+                            std::visit([&](auto& arg) {
+                                using T = std::decay_t<decltype(arg)>;
+                                if constexpr (std::is_same_v<T, std::string>) {
+                                    auto iter = arg.find("ref(");
+                                    if (iter != std::string::npos) {
+                                        arg.replace(iter, 4, "ref_not_exist(");
+                                    }
+                                }
+                            }, elem);
+                        }
+                        otherNode->update_param(reflink->dest_inparam->name, vec);
+                    }
 
-                if (otherNode)
-                    otherNode->mark_dirty(true);
+                    if (otherNode)
+                        otherNode->mark_dirty(true);
+                }
+                else {
+                    //当前参数引用了别的节点参数
+                    auto& otherLinks = reflink->source_inparam->reflinks;
+                    otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+                    auto otherNode = reflink->source_inparam->m_wpNode;
+                    if (otherNode)
+                        otherNode->mark_dirty(true);
+                }
             }
-            else {
-                //当前参数引用了别的节点参数
-                auto& otherLinks = reflink->source_inparam->reflinks;
-                otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
-                auto otherNode = reflink->source_inparam->m_wpNode;
-                if (otherNode)
-                    otherNode->mark_dirty(true);
-            }
+            input_param.reflinks.clear();
         }
-        input_param.reflinks.clear();
-    }
+    };
+    primsRemoveReferLink(m_inputPrims);
+    primsRemoveReferLink(m_outputPrims);
     for (auto& [_, output_obj] : m_outputObjs)
     {
         for (const std::shared_ptr<ReferLink>& reflink : output_obj.reflinks) {
@@ -1185,7 +1405,7 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         //资产图不会执行，无须构造引用关系
         return;
     }
-    std::set<std::pair<std::string, std::string>> refSources = resolveReferSource(target_param->defl);
+    std::set<RefSourceInfo> refSources = resolveReferSource(target_param->defl);
     auto newAdded = refSources;
 
     for (auto iter = target_param->reflinks.begin(); iter != target_param->reflinks.end(); )
@@ -1200,14 +1420,15 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         }
 
         //查看当前link在新的集合里是否还存在。
-        for (const auto& [source_node_uuidpath, source_param] : refSources)
+        for (const auto& refSrcInfo : refSources)
         {
             auto spSrcNode = remote_source->m_wpNode;
-            if (spSrcNode->get_uuid_path() == source_node_uuidpath &&
-                remote_source->name == source_param) {
+            if (spSrcNode->get_uuid_path() == refSrcInfo.uuidPath &&
+                remote_source->name == refSrcInfo.paramName &&
+                remote_source->bInput == (refSrcInfo.funcName == "ref")) {
                 //已经有了
                 bExist = true;
-                newAdded.erase({ source_node_uuidpath, source_param });
+                newAdded.erase(refSrcInfo);
                 break;
             }
         }
@@ -1219,36 +1440,51 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
             iter = target_param->reflinks.erase(iter);
             auto& other_links = remote_source->reflinks;
             other_links.erase(std::remove(other_links.begin(), other_links.end(), spRefLink));
+
+            EdgeInfo refLink{ remote_source->m_wpNode->get_name(), remote_source->name, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false };
+            removeRefLink(refLink, !remote_source->bInput);
         }
     }
 
-    for (const auto& [source_node_uuidpath, source_param] : newAdded)
+    for (const auto& refSrcInfo : newAdded)
     {
         //目前引用功能只支持本图引用，不能跨图引用
         std::string sourcenode_uuid;
-        if (source_node_uuidpath.find('/') != std::string::npos) {
-            sourcenode_uuid = source_node_uuidpath.substr(source_node_uuidpath.find_last_of('/') + 1);
+        if (refSrcInfo.uuidPath.find('/') != std::string::npos) {
+            sourcenode_uuid = refSrcInfo.uuidPath.substr(refSrcInfo.uuidPath.find_last_of('/') + 1);
         }
         else {
-            sourcenode_uuid = source_node_uuidpath;
+            sourcenode_uuid = refSrcInfo.uuidPath;
         }
 
         NodeImpl* srcNode = getGraph()->getNodeByUuidPath(sourcenode_uuid);
-        auto iterSrcParam = srcNode->m_inputPrims.find(source_param);
-        if (iterSrcParam != srcNode->m_inputPrims.end()) {
-            PrimitiveParam& srcparam = iterSrcParam->second;
-            if (&srcparam != target_param)  //排除直接引用自己的情况
-            {
-                //构造reflink
-                std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
-                reflink->source_inparam = &srcparam;
-                reflink->dest_inparam = target_param;
-                target_param->reflinks.push_back(reflink);
-                srcparam.reflinks.push_back(reflink);
+
+        if (refSrcInfo.funcName != "refout") {
+            bool isSubInput = sourcenode_uuid.find("SubInput") != std::string::npos;
+            auto& inoutPrims = isSubInput ? srcNode->m_outputPrims : srcNode->m_inputPrims;
+            auto iterSrcParam = inoutPrims.find(refSrcInfo.paramName);
+            if (iterSrcParam != inoutPrims.end()) {
+                PrimitiveParam& srcparam = iterSrcParam->second;
+                if (&srcparam != target_param)  //排除直接引用自己的情况
+                {
+                    //构造reflink
+                    std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
+                    reflink->source_inparam = &srcparam;
+                    reflink->dest_inparam = target_param;
+                    target_param->reflinks.push_back(reflink);
+                    srcparam.reflinks.push_back(reflink);
+
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), isSubInput);
+                }
             }
-        } else {
-            auto iterSrcObj = srcNode->m_outputObjs.find(source_param);
-            if (iterSrcObj != srcNode->m_outputObjs.end()) {
+        }
+        if (refSrcInfo.funcName != "ref") {
+            bool isSubOutput = sourcenode_uuid.find("SubOutput") != std::string::npos;
+            auto& inoutPrims = isSubOutput ? srcNode->m_inputPrims : srcNode->m_outputPrims;
+            auto& inoutObjs = isSubOutput ? srcNode->m_inputObjs : srcNode->m_outputObjs;
+
+            auto iterSrcObj = inoutObjs.find(refSrcInfo.paramName);
+            if (iterSrcObj != inoutObjs.end()) {
                 ObjectParam& srcObj = iterSrcObj->second;
                 //构造reflink
                 std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
@@ -1256,10 +1492,12 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                 reflink->dest_inparam = target_param;
                 target_param->reflinks.push_back(reflink);
                 srcObj.reflinks.push_back(reflink);
+
+                addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), !isSubOutput);
             }
             else {
-                auto iterOutPrim = srcNode->m_outputPrims.find(source_param);
-                if (iterOutPrim != srcNode->m_outputPrims.end()) {
+                auto iterOutPrim = inoutPrims.find(refSrcInfo.paramName);
+                if (iterOutPrim != inoutPrims.end()) {
                     PrimitiveParam& srcparam = iterOutPrim->second;
                     //构造reflink
                     std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
@@ -1267,21 +1505,23 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
                     reflink->dest_inparam = target_param;
                     target_param->reflinks.push_back(reflink);
                     srcparam.reflinks.push_back(reflink);
+
+                    addRefLink(EdgeInfo({ srcNode->get_name(), refSrcInfo.paramName, "", target_param->m_wpNode->get_name(), target_param->name, "", "", false }), !isSubOutput);
                 }
             }
         }
     }
 }
 
-std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const Any& param_defl) {
+std::set<RefSourceInfo> NodeImpl::resolveReferSource(const Any& param_defl) {
 
-    std::set<std::pair<std::string, std::string>> refSources;
+    std::set<RefSourceInfo> refSources;
     std::vector<std::string> refSegments;
 
     ParamType deflType = param_defl.type().hash_code();
     if (deflType == zeno::types::gParamType_String) {
         const std::string& param_text = zeno::any_cast_to_string(param_defl);
-        if (param_text.find("ref") != std::string::npos) {
+        if (!param_text.empty()) {//不限制为ref/refout，可能是npoints("./Cube1.Output")之类的
             refSegments.push_back(param_text);
         }
     }
@@ -1291,7 +1531,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
             return refSources;
         }
         std::string param_text = std::get<std::string>(var);
-        if (param_text.find("ref") != std::string::npos) {
+        if (!param_text.empty()) {
             refSegments.push_back(param_text);
         }
     }
@@ -1302,7 +1542,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
                 continue;
             }
             std::string param_text = std::get<std::string>(elem);
-            if (param_text.find("ref") != std::string::npos) {
+            if (!param_text.empty()) {
                 refSegments.push_back(param_text);
             }
         }
@@ -1316,7 +1556,7 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
     //需要用zfxparser直接parse出所有引用信息
     GlobalError err;
     zeno::GraphException::catched([&] {
-        auto& funcMgr = zeno::getSession().funcManager;
+        FunctionManager funcMgr;
         ZfxContext ctx;
         ctx.spNode = this;
         for (auto param_text : refSegments)
@@ -1336,8 +1576,8 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
             {
                 ctx.code = code;
                 std::shared_ptr<ZfxASTNode> astRoot = zfx.getASTResult();
-                std::set<std::pair<std::string, std::string>> paths =
-                    funcMgr->getReferSources(astRoot, &ctx);
+                std::set<RefSourceInfo> paths =
+                    funcMgr.getReferSources(astRoot, &ctx);
                 if (!paths.empty()) {
                     refSources.insert(paths.begin(), paths.end());
                 }
@@ -1347,64 +1587,83 @@ std::set<std::pair<std::string, std::string>> NodeImpl::resolveReferSource(const
     return refSources;
 }
 
-std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcContext* pContext) {
-    std::shared_ptr<DictObject> spDict;
+std::unique_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcContext* pContext) {
     //连接的元素是list还是list of list的规则，参照Graph::addLink下注释。
-    bool bDirecyLink = false;
+    bool bDirectLink = false;
     const auto& inLinks = in_param->links;
-#if 0
+#if 1
     if (inLinks.size() == 1)
     {
+        auto dict_register_all_items = [&](DictObject* dictobj) {
+            if (!dictobj->has_change_info()) {
+                //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
+                for (const auto& [dictkey, obj] : dictobj->lut) {
+                    std::string key = zsString2Std(obj->key());
+                    if (key.empty())
+                        continue;
+                    //直接全部收集
+                    dictobj->m_new_added.insert(key);
+                }
+            }
+            };
+
         std::shared_ptr<ObjectLink> spLink = inLinks.front();
         auto out_param = spLink->fromparam;
-        std::shared_ptr<INode> outNode = out_param->m_wpNode;
+        auto outNode = out_param->m_wpNode;
         assert(outNode);
 
         if (out_param->type == in_param->type && spLink->tokey.empty()) //根据Graph::addLink规则，类型相同且无key视为直连
         {
-            bDirecyLink = true;
-            if (outNode->is_dirty()) {
-                GraphException::translated([&] {
-                    outNode->doApply(pContext);
-                    }, outNode.get());
-            }
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-            assert(out_param->type == gParamType_Dict);
+            std::unique_ptr<DictObject> spDict;
+            bDirectLink = true;
 
-            //规则如普通节点，都是直接拷贝
-#if 0
-            if (in_param->socketType == Socket_Owning) {
-                spDict = std::dynamic_pointer_cast<DictObject>(outResult->move_clone());
+            if (spLink->upstream_task.valid()) {
+                auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
+                auto _spDict = dynamic_cast<DictObject*>(outResult.get());
+                if (!_spDict) {
+                    throw makeNodeError(get_path(), "no list object received");
+                }
+                spDict.reset(static_cast<DictObject*>(outResult.release()));
+                //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
+                dict_register_all_items(spDict.get());
+                spDict->update_key(out_param->spObject->key());
             }
-            else if (in_param->socketType == Socket_ReadOnly) {
-                spDict = std::dynamic_pointer_cast<DictObject>(outResult);
+            else {
+                assert(!outNode->is_dirty());
+                //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
+                if (in_param->spObject) {
+                    //相当于转一次又给回外面。。。
+                    spDict = safe_uniqueptr_cast<DictObject>(std::move(in_param->spObject));
+                }
+                else {
+                    //outNode已经算好了，直接拿应该不会导致race condition
+                    spDict = safe_uniqueptr_cast<DictObject>(out_param->spObject->clone());
+                    //新的list，这里全部内容都要登记到new_added.
+                    dict_register_all_items(spDict.get());
+                    spDict->update_key(out_param->spObject->key());
+                }
             }
-            else if (in_param->socketType == Socket_Clone)
-#endif
-            {
-                //里面的元素也要clone
-                std::shared_ptr<DictObject> outDict = std::dynamic_pointer_cast<DictObject>(outResult);
-                spDict = std::dynamic_pointer_cast<DictObject>(outDict->clone_by_key(m_uuid));
+            if (!spDict) {
+                throw makeNodeError<UnimplError>(get_path(), "no outResult List from output");
             }
-            spDict->update_key(m_uuid);
+            bDirectLink = true;
+            add_prefix_key(spDict.get(), m_uuid);
             return spDict;
         }
     }
 #endif
-    if (!bDirecyLink)
+    if (!bDirectLink)
     {
-        std::map<std::string, zany> existObjs;
+        std::map<std::string, IObject*> existObjs;
         if (in_param->spObject) {
-            std::shared_ptr<DictObject> spOldDict;
-            spOldDict = std::dynamic_pointer_cast<DictObject>(in_param->spObject);
+            auto spOldDict = dynamic_cast<DictObject*>(in_param->spObject.get());
             for (auto& [key, spobj] : spOldDict->lut) {
                 std::string skey = zsString2Std(spobj->key());
-                existObjs.insert({skey, spobj});
+                existObjs.insert({skey, spobj.get()});
             }
         }
 
-        spDict = std::make_shared<DictObject>();
+        auto spDict = std::make_unique<DictObject>();
         for (const auto& spLink : in_param->links)
         {
             const std::string& keyName = spLink->tokey;
@@ -1414,28 +1673,27 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
             bool is_this_item_dirty = outNode->is_dirty();
 
             if (is_this_item_dirty) {  //list中的元素是dirty的，重新计算并加入list
-                GraphException::translated([&] {
-                    outNode->doApply(pContext);
-                }, outNode);
+                outNode->doApply(pContext);
             }
 
             auto outResult = outNode->get_output_obj(out_param->name);
             assert(outResult);
             {
                 zany newObj;
-                if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(outResult)) {
-                    newObj = clone_by_key(_spList.get(), m_uuid);
+                if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult)) {
+                    newObj = clone_by_key(_spList, m_uuid);
                 }
-                else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(outResult)) {
-                    newObj = clone_by_key(_spDict.get(), m_uuid);
+                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult)) {
+                    newObj = clone_by_key(_spDict, m_uuid);
                 }
                 else {
                     zeno::String newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
                     newObj = outResult->clone();
                     newObj->update_key(newkey);
                 }
-                spDict->lut[keyName] = newObj;
+                
                 std::string const& new_key = zsString2Std(newObj->key());
+                spDict->lut[keyName] = std::move(newObj);
 
                 if (is_this_item_dirty) {
                     //需要区分是新的还是旧的，这里先粗暴认为全是新的
@@ -1453,12 +1711,12 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
             }
         }
         //剩下没出现的都认为是移除掉了
-        std::function<void(zany)> flattenDict = [&flattenDict, &spDict](zany obj) {
-            if (auto _spList = std::dynamic_pointer_cast<ListObject>(obj)) {
+        std::function<void(IObject*)> flattenDict = [&flattenDict, &spDict](IObject* obj) {
+            if (auto _spList = dynamic_cast<ListObject*>(obj)) {
                 for (int i = 0; i < _spList->m_impl->size(); ++i) {
                     flattenDict(_spList->m_impl->get(i));
                 }
-            } else if (auto _spDict = std::dynamic_pointer_cast<DictObject>(obj)) {
+            } else if (auto _spDict = dynamic_cast<DictObject*>(obj)) {
                 for (auto& [key, obj] : _spDict->get()) {
                     flattenDict(obj);
                 }
@@ -1471,234 +1729,181 @@ std::shared_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcCon
         }
 
         spDict->update_key(stdString2zs(m_uuid));
+        return spDict;
     }
-    return spDict;
-}
-
-container_elem_update_info NodeImpl::get_input_container_info(const std::string& param) {
-    const ObjectParam& objparam = safe_at(m_inputObjs, param, "input obj param");
-    return objparam.listdict_update;
-}
-
-container_elem_update_info NodeImpl::get_output_container_info(const std::string& param) {
-    const ObjectParam& objparam = safe_at(m_outputObjs, param, "output obj param");
-    return objparam.listdict_update;
-}
-
-void NodeImpl::set_input_container_info(const std::string& param, const container_elem_update_info& info) {
-    ObjectParam& objparam = safe_at(m_inputObjs, param, "input obj param");
-    objparam.listdict_update = info;
-}
-
-void NodeImpl::set_output_container_info(const std::string& param, const container_elem_update_info& info) {
-    ObjectParam& objparam = safe_at(m_outputObjs, param, "output obj param");
-    objparam.listdict_update = info;
+    return nullptr;
 }
 
 void NodeImpl::clear_container_info() {
     for (auto& [_, param] : m_inputObjs) {
-        param.listdict_update.clear();
+        for (auto spLink : param.links) {
+            spLink->bTraceAndTaken = false;
+        }
+        if (param.type == gParamType_List && param.spObject) {
+            auto spList = static_cast<ListObject*>(param.spObject.get());
+            spList->m_impl->m_new_added.clear();
+            spList->m_impl->m_new_removed.clear();
+            spList->m_impl->m_modify.clear();
+        }
     }
     for (auto& [_, param] : m_outputObjs) {
-        param.listdict_update.clear();
+        for (auto spLink : param.links) {
+            spLink->bTraceAndTaken = false;
+        }
+        if (param.type == gParamType_List && param.spObject) {
+            auto spList = static_cast<ListObject*>(param.spObject.get());
+            spList->m_impl->m_new_added.clear();
+            spList->m_impl->m_new_removed.clear();
+            spList->m_impl->m_modify.clear();
+        }
     }
 }
 
-std::shared_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext, bool& bDirty) {
+std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcContext* pContext) {
     assert(gParamType_List == in_param->type);
-    std::shared_ptr<ListObject> spList;
+    
     bool bDirectLink = false;
 
     if (m_nodecls == "FormSceneTree") {
         int j;
         j = 0;
     }
-    bDirty = true;
 
     if (in_param->links.size() == 1)
     {
         std::shared_ptr<ObjectLink> spLink = in_param->links.front();
         auto out_param = spLink->fromparam;
         NodeImpl* outNode = out_param->m_wpNode;
-        bool is_upstream_dirty = outNode->is_dirty();
 
-        if (out_param->type == in_param->type || out_param->type == gParamType_IObject) {   //现在不允许List嵌套List，如果只有一个，直接认定为直连
-            if (is_upstream_dirty) {
-                GraphException::translated([&] {
-                    outNode->doApply(pContext);
-                    }, outNode);
-            }
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-
-            if (!is_upstream_dirty)
-            {
-                auto input_cache_list = std::dynamic_pointer_cast<ListObject>(in_param->spObject);
-                if (input_cache_list) {
-                    bDirty = false;
-                    return input_cache_list;
+        auto list_register_all_items = [&](ListObject* listobj) {
+            if (!listobj->has_change_info()) {
+                //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
+                for (const auto& obj : listobj->m_impl->m_objects) {
+                    std::string key = zsString2Std(obj->key());
+                    if (key.empty()) throw makeNodeError<UnimplError>(get_path(), "there is object in list with empty key");
+                    //直接全部收集
+                    listobj->m_impl->m_new_added.insert(key);
                 }
             }
+        };
 
-            //里面的元素也要clone
-            auto outList = std::dynamic_pointer_cast<ListObject>(outResult);
-            if (outList)
-            {
-                bDirectLink = true;
+        if (outNode->is_takenover()) {
+            //可能上一次计算被taken了
+            return nullptr;
+        }
 
-                container_elem_update_info out_updateinfo = out_param->listdict_update;
-                spList = create_ListObject();
-                container_elem_update_info input_container_updateinfo;
-
-                std::map<std::string, zany> existInputObjs;
+        if ((out_param->type == in_param->type || out_param->type == gParamType_IObject) &&
+            spLink->tokey.empty())
+        {
+            std::unique_ptr<ListObject> spList;
+            bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
+            if (spLink->upstream_task.valid()) {
+                auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
+                auto _spList = dynamic_cast<ListObject*>(outResult.get());
+                if (!_spList) {
+                    throw makeNodeError(get_path(), "no list object received");
+                }
+                spList.reset(static_cast<ListObject*>(outResult.release()));
+                //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
+                list_register_all_items(spList.get());
+                spList->update_key(out_param->spObject->key());
+            }
+            else {
+                assert(!outNode->is_dirty());
+                //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
                 if (in_param->spObject) {
-                    auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
-                    for (auto spobj : spOldList->m_impl->get()) {
-                        existInputObjs.insert({ zsString2Std(spobj->key()), spobj });
-                    }
+                    //相当于转一次又给回外面。。。
+                    spList = safe_uniqueptr_cast<ListObject>(std::move(in_param->spObject));
                 }
-
-                for (zany outobj : outList->get()) {
-                    auto outkey = zsString2Std(outobj->key());
-                    zany inobj = clone_by_key(outobj.get(), m_uuid);
-                    //如果outobj在input里没有，就添加
-                    auto in_clone_key = zsString2Std(inobj->key());
-                    spList->push_back(inobj);   //对象要重新拷一次，无论后续要不要加，反正会吞掉之前的obj.
-                    if (existInputObjs.find(in_clone_key) == existInputObjs.end()) {
-                        input_container_updateinfo.new_added.insert(in_clone_key);
-                    }
-                    else {
-                        //当前输入参数也缓存了一个同样key值的clone对象，但这个对象可能被上游改了
-                        if (out_updateinfo.modified.find(outkey) != out_updateinfo.modified.end()) {
-                            input_container_updateinfo.modified.insert(in_clone_key);
-                        }
-                    }
+                else {
+                    //outNode已经算好了，直接拿应该不会导致race condition
+                    spList = safe_uniqueptr_cast<ListObject>(out_param->spObject->clone());
+                    //新的list，这里全部内容都要登记到new_added.
+                    list_register_all_items(spList.get());
+                    spList->update_key(out_param->spObject->key());
                 }
-
-                //也要观察一下移除的情况
-                for (auto out_removed_key : out_updateinfo.removed) {
-                    auto inobj_clone_removed_key = m_uuid + "\\" + out_removed_key;
-                    if (existInputObjs.find(inobj_clone_removed_key) != existInputObjs.end()) {
-                        input_container_updateinfo.removed.insert(inobj_clone_removed_key);
-                    }
-                }
-
-                spList->update_key(stdString2zs(m_uuid));
-                in_param->listdict_update = input_container_updateinfo;
             }
+            if (!spList) {
+                throw makeNodeError<UnimplError>(get_path(), "no outResult List from output");
+            }
+            bDirectLink = true;
+            add_prefix_key(spList.get(), m_uuid);
+            return spList;
         }
     }
     if (!bDirectLink)
     {
-        //目前不允许List嵌套list的情况
-        spList = create_ListObject();
-        int indx = 0;
-        container_elem_update_info input_container_updateinfo;
-
-        std::map<std::string, zany> existInputObjs;
-        if (in_param->spObject) {
-            auto spOldList = dynamic_cast<ListObject*>(in_param->spObject.get());
-            for (auto spobj : spOldList->m_impl->get()) {
-                existInputObjs.insert({ zsString2Std(spobj->key()), spobj });
+        auto spList = create_ListObject();
+        auto cachedList = static_cast<ListObject*>(in_param->spObject.get());
+        std::set<std::string> old_list;
+        if (cachedList) {
+            for (const auto& obj : cachedList->m_impl->m_objects) {
+                old_list.insert(zsString2Std(obj->key()));
             }
         }
 
+        //TODO: 多个物体作为List的元素，如果其中有一个被take over，要怎么处理？
         for (const auto& spLink : in_param->links)
         {
-            //list的情况下，keyName是不是没意义，顺序怎么维持？
             auto out_param = spLink->fromparam;
+            std::string upstream_obj_key;
+            std::string new_obj_key;
             NodeImpl* outNode = out_param->m_wpNode;
-            bool is_upstream_dirty = outNode->is_dirty();
-
-            if (is_upstream_dirty) {  //list中的元素是dirty的，重新计算并加入list
-                GraphException::translated([&] {
-                    outNode->doApply(pContext);
-                }, outNode);
+            if (outNode->is_takenover()) {
+                continue;
             }
+            if (spLink->upstream_task.valid()) {
+                //有任务发起，说明上游新增了或者修改了某一个节点
+                auto outResult = spLink->upstream_task.get();
+                upstream_obj_key = zsString2Std(out_param->spObject->key());
+                outResult->update_key(stdString2zs(upstream_obj_key));
+                add_prefix_key(outResult.get(), m_uuid);
+                new_obj_key = zsString2Std(outResult->key());
 
-            //拿这个没有意义，因为links下的不可能是list
-            container_elem_update_info upstream_info = out_param->listdict_update;
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-            {
-                zany newObj;
-                if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult.get())) {
-                    newObj = clone_by_key(_spList, m_uuid);
-                }
-                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult.get())) {
-                    newObj = clone_by_key(_spDict, m_uuid);
+                spList->push_back(std::move(outResult));
+
+                if (old_list.find(new_obj_key) != old_list.end()) {
+                    //旧的列表有这一项，说明是修改的
+                    spList->m_impl->m_modify.insert(new_obj_key);
                 }
                 else {
-                    auto newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
-                        newObj = outResult->clone();
-                        newObj->update_key(newkey);
-                    }
-                spList->m_impl->push_back(newObj);
-
-                //需要区分是新的还是旧的，这里先粗暴认为全是新的
-                std::string const& new_key = zsString2Std(newObj->key());
-                if (is_upstream_dirty) {
-                    //需要区分是新的还是旧的，这里先粗暴认为全是新的
-                    if (existInputObjs.find(new_key) != existInputObjs.end()) {
-                        input_container_updateinfo.modified.insert(new_key);
-                        existInputObjs.erase(new_key);
-                    }
-                    else {
-                        input_container_updateinfo.new_added.insert(new_key);
-                    }
-                } else {
+                    //旧的列表没有，现在发现新的
+                    spList->m_impl->m_new_added.insert(new_obj_key);
                 }
-                existInputObjs.erase(new_key);
             }
-        }
-        //剩下没出现的都认为是移除掉了
-        std::function<void(zany)> flattenList = [&](zany obj) {
-            if (auto _spList = std::dynamic_pointer_cast<zeno::ListObject>(obj)) {
-                for (int i = 0; i < _spList->m_impl->size(); ++i) {
-                    flattenList(_spList->m_impl->get(i));
+            else {
+                //没有任务发起，但上游可能已经有缓存好的结果，直接加到list即可
+                assert(!outNode->is_dirty());
+                //想知道是不是新增，要与oldList对比
+                upstream_obj_key = zsString2Std(out_param->spObject->key());
+                new_obj_key = m_uuid + '\\' + upstream_obj_key;
+                if (old_list.find(new_obj_key) != old_list.end()) {
+                    //直接从缓存取就行
+                    for (const auto& obj : cachedList->m_impl->m_objects) {
+                        if (zsString2Std(obj->key()) == new_obj_key) {
+                            spList->push_back(obj->clone());
+                            break;
+                        }
+                    }
                 }
-            } else if (auto _spDict = std::dynamic_pointer_cast<zeno::DictObject>(obj)) {
-                for (auto& [key, obj] : _spDict->get()) {
-                    flattenList(obj);
-                }
-            } else {
-                input_container_updateinfo.removed.insert(zsString2Std(obj->key()));
-            }
-        };
-        for (auto& [key, removeobj] : existInputObjs) {
-            flattenList(removeobj);//提前节需要移除的对象的key全部展平，在GraphicsManager.h中一次性移除，才能正确显示
-        }
+                else {
+                    //上游节点不脏，但边新增到list，这时候需要标脏这个obj，否则渲染端没法认出
+                    auto new_obj = out_param->spObject->clone();
+                    new_obj->update_key(stdString2zs(upstream_obj_key));
+                    add_prefix_key(new_obj.get(), m_uuid);
+                    spList->m_impl->m_modify.insert(zsString2Std(new_obj->key()));
 
+                    spList->push_back(std::move(new_obj));
+                }
+            }
+            old_list.erase(new_obj_key);
+        }
+        //从old_list剩下的，就是要被删除的元素
+        spList->m_impl->m_new_removed = old_list;
         spList->update_key(stdString2zs(m_uuid));
-        in_param->listdict_update = input_container_updateinfo;
+        return spList;
     }
-    return spList;
-}
-
-void NodeImpl::init_output_container_updateinfo() {
-    //如果节点输出了list，但没有设定好update_info，这里就全部加到add里，以便于下游节点能取到
-    for (auto& [name, outparam] : m_outputObjs) {
-        if (!outparam.spObject)
-            continue;
-        outparam.listdict_update.container_key = zsString2Std(outparam.spObject->key());
-        if (!outparam.listdict_update.empty())
-            continue;
-        if (gParamType_List == outparam.type) {
-            //有一些节点输出的list就是输入的list，虽然对象一样，但是可能节点算法会修改其中一些对象
-            //比如往一些对象里加userdata，这时候input的updateinfo就得更新了，
-            //意味着用户要手动在节点算法里调用set_output_container_info，否则无法识别哪些是新修改
-            //只能全部加进去，不然会漏掉。
-            auto listobj = std::static_pointer_cast<ListObject>(outparam.spObject);
-            
-            for (zany spobj : listobj->get()) {
-                auto key = zsString2Std(spobj->key());
-                outparam.listdict_update.new_added.insert(key);
-            }
-        }
-        else if (gParamType_Dict == outparam.type) {
-            //TODO
-        }
-    }
+    return nullptr;
 }
 
 zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
@@ -1710,6 +1915,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
 
     int frame = getGlobalState()->getFrameId();
 
+    const std::string& name = in_param->name;
     const ParamType type = in_param->type;
     const auto& defl = in_param->defl;
     if (type == gParamType_Heatmap && !defl.has_value()) {
@@ -1723,6 +1929,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     switch (type) {
     case gParamType_Int:
     case gParamType_Float:
+    case gParamType_AnyNumeric: //暂时不考虑默认值是向量的情况
     {
         if (editType == gParamType_PrimVariant) {
             zeno::PrimVar var = any_cast<zeno::PrimVar>(defl);
@@ -1741,7 +1948,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(get_path(), "error type with `gParamType_PrimVariant`");
                 }
             }, var);
         }
@@ -1780,7 +1987,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
         }
 
         //有很多ref子图中字符串类型的参数，所以一切字符串都要parse
-        const std::string& code = any_cast<std::string>(defl);
+        const std::string& code = any_cast_to_string(defl);
         if (!code.empty()) {
             result = resolve_string(code, code);
         }
@@ -1811,7 +2018,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(get_path());
                 }
             }, editvec[i]);
             vec.push_back(res);
@@ -1841,9 +2048,21 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
     {
         break;
     }
+    case gParamType_ListOfMat4:
+    {
+        if (in_param->links.size() == 1 && in_param->links.front()->toparam->type == gParamType_ListOfMat4) {
+            //TODO
+        }
+        else {
+            for (auto link : in_param->links) {
+                
+            }
+        }
+        break;
+    }
     case gParamType_Shader:
     {
-        throw makeError<UnimplError>("no defl value supported on the param with type `gParamType_Shader`, please connect the link by outside");
+        throw makeNodeError<UnimplError>(get_path(), "no defl value supported on the param with type `gParamType_Shader`, please connect the link by outside");
 #if 0
         if (editType == gParamType_PrimVariant) {
             zeno::PrimVar var = any_cast<zeno::PrimVar>(defl);
@@ -1862,7 +2081,7 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
                     return arg.eval(frame);
                 }
                 else {
-                    throw makeError<UnimplError>();
+                    throw makeNodeError<UnimplError>(get_path());
                 }
             }, var);
         }
@@ -1891,82 +2110,88 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
 
     bool bCloned = true;
     //如果outputobj是 PrimitiveObject，则不走拷贝，而是move，如果List和Dict含有哪怕只有一个PrimitiveObj，也不走拷贝
-    if (auto prim = std::dynamic_pointer_cast<PrimitiveObject>(out_param->spObject)) {
+    if (auto prim = dynamic_cast<PrimitiveObject*>(out_param->spObject.get())) {
         bCloned = false;
     }
-    else if (auto lst = std::dynamic_pointer_cast<ListObject>(out_param->spObject)) {
-        if (ListHasPrimObj(lst.get())) {
+    else if (auto lst = dynamic_cast<ListObject*>(out_param->spObject.get())) {
+        if (ListHasPrimObj(lst)) {
             bCloned = false;
         }
     }
-    else if (auto dict = std::dynamic_pointer_cast<DictObject>(out_param->spObject)) {
-        if (DictHasPrimObj(dict.get())) {
+    else if (auto dict = dynamic_cast<DictObject*>(out_param->spObject.get())) {
+        if (DictHasPrimObj(dict)) {
             bCloned = false;
         }
     }
 
-    //因为要同时清除所有输入输出，所以只考虑最常见的情况，以免复杂的检查链路
-    bool bAllTaken = false;     //输出参数所有的链路（包括本链路）都被获取了
-    if (outNode->is_nocache() && outNode->only_single_output_object()) {
-        bAllTaken = true;
-        for (auto link : out_param->links) {
-            ObjectParam* toparam = link->toparam;
-            NodeImpl* otherInNode = toparam->m_wpNode;
-            if (otherInNode != this && otherInNode->is_dirty()) {
-                bAllTaken = false;
-                break;
-            }
-        }
+    bool bAllTaken = false;
+    auto outputObj = outNode->takeOutputObject(out_param, in_param, bAllTaken);
+    in_param->spObject = outputObj->clone();
+    in_param->spObject->update_key(stdString2zs(m_uuidPath));
+
+    if (outNode->is_nocache() && bAllTaken) {
+        //似乎要把输入也干掉，但如果一锅清掉，可能会漏了数值输出，或者多对象输出的情况（虽然很少见）
+        outNode->mark_takeover();
     }
 
-    if (bCloned) {
-        in_param->spObject = out_param->spObject->clone();
+    if (auto splist = dynamic_cast<ListObject*>(in_param->spObject.get())) {
+        update_list_root_key(splist, m_uuidPath);
+    } else if (auto spdict = dynamic_cast<DictObject*>(in_param->spObject.get())) {
+        update_dict_root_key(spdict, m_uuidPath);
+    }
+
+    return true;
+}
+
+void NodeImpl::execute(CalcContext* pContext) {
+    std::lock_guard scope(m_mutex);
+    doApply(pContext);
+}
+
+zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
+    //锁的粒度可以更精细化，比如没有apply和takeover，在只读的情况下，可以释放锁
+    //另一方面，如果多个节点想获取同一个节点的输出，就得排队了
+    std::lock_guard scope(m_mutex);
+
+    doApply(exec_context.pContext);
+
+    zany res;
+    //TODO: take over要设计成只限制一对一连接，否则遇到没法clone的对象，就没法move给两个下游了
+    if (is_nocache()) {
+        //TODO: 是否要在这里清理outputNode?
+        //其实可以，因为这里并不是存粹的数学函数，必然有修改当前节点状态的可能。
+        res = move_output(exec_context.out_param);
+        mark_takeover();
     }
     else {
-        in_param->spObject = out_param->spObject;
-#if OWING_UPSTREAM_NODE		//in_param和out_param暂时引用同一个object
-        out_param->spObject.reset();
-        outNode->mark_dirty(true);
-#endif
+        auto result = get_output_obj(exec_context.out_param);
+        if (!result) {
+            throw makeNodeError<UnimplError>(get_path(), "no result");
+        }
+        res = result->clone();
     }
+    return res;
+}
 
-    if (bAllTaken) {
-        //似乎要把输入也干掉，但如果一锅清掉，可能会漏了数值输出，或者多对象输出的情况（虽然很少见）
-        outNode->clearCalcResults();
-        outNode->mark_dirty(true, zeno::Dirty_All, true, false);
-    }
+zeno::reflect::Any NodeImpl::execute_get_numeric(const ExecuteContext& exec_context) {
+    std::lock_guard scope(m_mutex);
 
-    if (auto splist = std::dynamic_pointer_cast<ListObject>(in_param->spObject)) {
-        update_list_root_key(splist.get(), m_uuidPath);
-    } else if (auto spdict = std::dynamic_pointer_cast<DictObject>(in_param->spObject)) {
-        update_dict_root_key(spdict.get(), m_uuidPath);
-    } else {
-        in_param->spObject->update_key(stdString2zs(m_uuidPath));
+    doApply(exec_context.pContext);
+
+    bool bAllOutputTaken = false;
+    auto result = takeOutputPrim(exec_context.out_param, exec_context.in_param, bAllOutputTaken);
+    if (bAllOutputTaken && is_nocache()) {
+        mark_takeover();
     }
-#if 0
-    if (in_param->socketType == Socket_Clone) {
-        in_param->spObject = outputObj->clone();
-    }
-    else if (in_param->socketType == Socket_Owning) {
-        in_param->spObject = outputObj->move_clone();
-        assert(outNode);
-        outNode->mark_dirty(true);
-    }
-    else if (in_param->socketType == Socket_ReadOnly) {
-        in_param->spObject = outputObj;
-        //TODO: readonly property on object.
-    }
-    else if (in_param->bWildcard) {
-        in_param->spObject = outputObj;
-    }
-#endif
-    return true;
+    return result;
 }
 
 bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
     // 目前假设输入对象和输入数值，不能重名（不难实现，老节点直接改）。
+    auto launch_method = zeno::getSession().is_async_executing() ? 
+        (std::launch::async | std::launch::deferred) : std::launch::deferred;
 
-    if (ds == "Center") {
+    if (ds == "path") {
         int j;
         j = 0;
     }
@@ -1980,43 +2205,30 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
             in_param->spObject.reset();
         }
         else {
-            switch (in_param->type)
-            {
-                case gParamType_Dict:
-                {
-                    std::shared_ptr<DictObject> outDict = processDict(in_param, pContext);
-                    in_param->spObject = outDict;
-                    break;
-                }
-                case gParamType_List:
-                {
-                    bool bDirty = false;
-                    std::shared_ptr<ListObject> outList = processList(in_param, pContext, bDirty);
-                    if (bDirty)
-                        in_param->spObject = outList;
-                    break;
-                }
-                case gParamType_Curve:
-                {
-                    //Curve要视作Object，因为整合到variant太麻烦，只要对于最原始的MakeCurve节点，以字符串（储存json）作为特殊类型即可。
-                }
-                default:
-                {
-                    if (in_param->links.size() == 1)
-                    {
-                        std::shared_ptr<ObjectLink> spLink = *(in_param->links.begin());
-                        ObjectParam* out_param = spLink->fromparam;
-                        auto outNode = out_param->m_wpNode;
+            if (in_param->links.empty()) {
+                //清空缓存对象
+                in_param->spObject.reset();
+            }
 
-                        GraphException::translated([&] {
-                            outNode->doApply(pContext);
-                        }, outNode);
+            //改为异步计算以后，直接发起task即可，后续再考虑组装的事宜
+            for (auto spLink : in_param->links) {
+                ObjectParam* out_param = spLink->fromparam;
+                auto outNode = out_param->m_wpNode;
+                if (outNode->is_takenover()) {
+                    //维持原来的参数结果状态，不从上游取（事实上上游的内容已经被删掉了）
+                    return true;
+                }
+                if (outNode->is_dirty())
+                {
+                    ExecuteContext ctx;
+                    ctx.in_node = m_name;
+                    ctx.in_param = in_param->name;
+                    ctx.out_param = out_param->name;
+                    ctx.pContext = pContext;
+                    ctx.innode_uuid_path = m_uuidPath;
 
-                        if (out_param->spObject)
-                        {
-                            receiveOutputObj(in_param, outNode, out_param);
-                        }
-                    }
+                    //发起异步任务：
+                    spLink->upstream_task = std::async(launch_method, &NodeImpl::execute_get_object, outNode, ctx);
                 }
             }
         }
@@ -2042,6 +2254,7 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                         Graph* spSrcGraph = spSrcNode->m_pGraph;
                         assert(spSrcGraph);
                         //NOTE in 2025/3/25: 还是apply引用源，至于本节点参数循环引用的问题，走另外的路线
+                        //TODO: refactor with async tasks
                         if (spSrcNode == this) {
                             //引用自身的参数，直接拿defl，因为这种情况绝大多数是固定值，没必要执行计算，比如pos引用size的数据
                             spSrcNode->doApply_Parameter(reflink->source_inparam->name, pContext);
@@ -2052,22 +2265,32 @@ bool NodeImpl::requireInput(std::string const& ds, CalcContext* pContext) {
                     }
                 }
 
-                in_param->result = processPrimitive(in_param);
+                const zeno::reflect::Any& primval = processPrimitive(in_param);
+                in_param->result = primval;
                 //旧版本的requireInput指的是是否有连线，如果想兼容旧版本，这里可以返回false，但使用量不多，所以就修改它的定义。
             }
             else {
-                if (in_param->links.size() == 1) {
-                    std::shared_ptr<PrimitiveLink> spLink = *in_param->links.begin();
+                for (auto spLink : in_param->links) {
                     auto outNode = spLink->fromparam->m_wpNode;
-
-                    GraphException::translated([&] {
-                        outNode->doApply(pContext);
-                    }, outNode);
-                    //数值基本类型，直接复制。
-                    //注意：这里并不会检查类型，因为有一些特殊情况，比如Shader节点的连接，是允许将Shader类型连到数值输入里的（ShaderFinalize)
-                    //这样，检查的工作就交给了节点本身（INode)。
-                    in_param->result = spLink->fromparam->result;
+                    if (outNode->is_takenover()) {
+                        continue;
+                    }
+                    if (outNode->is_dirty())
+                    {
+                        ExecuteContext ctx;
+                        ctx.in_node = m_name;
+                        ctx.in_param = in_param->name;
+                        ctx.out_param = spLink->fromparam->name;
+                        ctx.pContext = pContext;
+                        ctx.innode_uuid_path = m_uuidPath;
+                        spLink->upstream_task = std::async(launch_method, &NodeImpl::execute_get_numeric, outNode, ctx);
+                    }
+                    else {
+                        //直接从上游拷过来即可
+                        in_param->result = spLink->fromparam->result;
+                    }
                 }
+                
             }
         } else {
             return false;
@@ -2080,19 +2303,20 @@ void NodeImpl::doOnlyApply() {
     apply();
 }
 
+float NodeImpl::time() const {
+    if (m_pNode) return m_pNode->time();
+    return 0;
+}
+
 void NodeImpl::clearCalcResults() {
-    if (m_nodecls == "ForEachEnd") {
-        ForEachEnd* foreachend = static_cast<ForEachEnd*>(m_pNode.get());
-        foreachend->clearCalcResults();
-    }
+    if (m_pNode)
+        m_pNode->clearCalcResults();
 
     for (auto& [key, param] : m_inputObjs) {
         param.spObject.reset();
-        param.listdict_update.clear();
     }
     for (auto& [key, param] : m_outputObjs) {
         param.spObject.reset();
-        param.listdict_update.clear();
     }
     for (auto& [key, param] : m_inputPrims) {
         param.result.reset();
@@ -2100,7 +2324,6 @@ void NodeImpl::clearCalcResults() {
     for (auto& [key, param] : m_outputPrims) {
         param.result.reset();
     }
-    mark_dirty(true);
 }
 
 void NodeImpl::doApply_Parameter(std::string const& name, CalcContext* pContext) {
@@ -2110,7 +2333,7 @@ void NodeImpl::doApply_Parameter(std::string const& name, CalcContext* pContext)
 
     std::string uuid_path = get_uuid_path() + "/" + name;
     if (pContext->uuid_node_params.find(uuid_path) != pContext->uuid_node_params.end()) {
-        throw makeError<UnimplError>("cycle reference occurs when refer paramters!");
+        throw makeNodeError<UnimplError>(get_path(), "cycle reference occurs when refer paramters!");
     }
 
     scope_exit scope_apply_param([&]() { pContext->uuid_node_params.erase(uuid_path); });
@@ -2125,37 +2348,133 @@ void NodeImpl::bypass() {
     //找到输入和输出的唯一object(如果输入有两个，并且有一个有连线，是否采纳连线这个？）
     //不考虑数值类型的输出
     if (m_outputObjs.empty() || m_inputObjs.empty()) {
-        throw makeError<UnimplError>("there is not matched input and output object when mute button is on");
+        throw makeNodeError<UnimplError>(get_path(), "there is not matched input and output object when mute button is on");
     }
     ObjectParam& input_objparam = m_inputObjs.begin()->second;
     ObjectParam& output_objparam = m_outputObjs.begin()->second;
     if (input_objparam.type != output_objparam.type) {
-        throw makeError<UnimplError>("the input and output type is not matched, when the mute button is on");
+        throw makeNodeError<UnimplError>(get_path(), "the input and output type is not matched, when the mute button is on");
     }
-    output_objparam.spObject = input_objparam.spObject;
+    output_objparam.spObject = input_objparam.spObject->clone();
+}
+
+void NodeImpl::check_break_and_return() {
+    if (zeno::getSession().is_interrupted()) {
+        m_status = Node_DirtyReadyToRun;
+        reportStatus(m_dirty, m_status);
+        throw makeNodeError<InterruputError>(this->get_path(), get_path());
+    }
+}
+
+bool NodeImpl::addRefLink(const EdgeInfo& edge, bool outParamIsOutput)
+{
+    CORE_API_BATCH
+    //如果边已存在，删除这条边再添加引用边
+    if (outParamIsOutput) {
+        if (auto outnode = m_pGraph->getNode(edge.outNode)) {
+            std::vector<EdgeInfo> links = outnode->getLinksByParam(false, edge.outParam);
+            for (auto link : links) {
+                if (link == edge) {
+                    m_pGraph->removeLink(edge);
+                }
+            }
+        }
+    }
+
+    CALLBACK_NOTIFY(addRefLink, edge, outParamIsOutput)
+    return true;
+}
+
+bool NodeImpl::removeRefLink(const EdgeInfo& edge, bool outParamIsOutput)
+{
+    CORE_API_BATCH
+    CALLBACK_NOTIFY(removeRefLink, edge, outParamIsOutput)
+    return true;
+}
+
+bool NodeImpl::removeRefLinkDesParamIndx(bool bInput, bool bPrimitivParam, const std::string& paramName, bool bUiNeedRemoveReflink)
+{
+    if (bPrimitivParam) {
+        auto& self_prim_params = bInput ? m_inputPrims : m_outputPrims;
+        auto it = self_prim_params.find(paramName);
+        if (it != self_prim_params.end()) {
+            for (auto reflinkIt : it->second.reflinks) {
+                for (auto iter = reflinkIt->dest_inparam->reflinks.begin(); iter != reflinkIt->dest_inparam->reflinks.end(); ) {
+                    if ((*iter)->source_inparam == reflinkIt->source_inparam && (*iter)->dest_inparam == reflinkIt->dest_inparam) {
+                        iter = reflinkIt->dest_inparam->reflinks.erase(iter);
+                    } else {
+                        iter++;
+                    }
+                }
+                if (bUiNeedRemoveReflink) {
+                    EdgeInfo refLink{ reflinkIt->source_inparam->m_wpNode->get_name(), paramName, "", reflinkIt->dest_inparam->m_wpNode->get_name(), reflinkIt->dest_inparam->name, "", "", false };
+                    removeRefLink(refLink, !bInput);
+                }
+            }
+            return true;
+        }
+    } else {
+        auto& self_obj_params = bInput ? m_inputObjs : m_outputObjs;
+        auto it = self_obj_params.find(paramName);
+        if (it != self_obj_params.end()) {
+            for (auto reflinkIt : it->second.reflinks) {
+                for (auto iter = reflinkIt->dest_inparam->reflinks.begin(); iter != reflinkIt->dest_inparam->reflinks.end(); ) {
+                    if ((*iter)->source_inparam == reflinkIt->source_inparam && (*iter)->dest_inparam == reflinkIt->dest_inparam) {
+                        iter = reflinkIt->dest_inparam->reflinks.erase(iter);
+                    } else {
+                        iter++;
+                    }
+                }
+                if (bUiNeedRemoveReflink) {
+                    EdgeInfo refLink{ reflinkIt->source_inparam->m_wpNode->get_name(), paramName, "", reflinkIt->dest_inparam->m_wpNode->get_name(), reflinkIt->dest_inparam->name, "", "", false };
+                    removeRefLink(refLink, !bInput);
+                }
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 void NodeImpl::doApply(CalcContext* pContext) {
-
     if (!m_dirty)
         return;
 
+    check_break_and_return();
+
     assert(pContext);
     std::string uuid_path = get_uuid_path();
-    if (pContext->visited_nodes.find(uuid_path) != pContext->visited_nodes.end()) {
-        throw makeError<UnimplError>("cycle reference occurs!");
-    }
-    pContext->visited_nodes.insert(uuid_path);
+
     scope_exit spUuidRecord([=] {
+        std::lock_guard scope(pContext->mtx);
         pContext->visited_nodes.erase(uuid_path);
-    });
+        });
+
+    {
+        std::lock_guard scope(pContext->mtx);
+        if (pContext->visited_nodes.find(uuid_path) != pContext->visited_nodes.end()) {
+            throw makeNodeError<UnimplError>(get_path(), "cycle reference occurs!");
+        }
+        pContext->visited_nodes.insert(uuid_path);
+    }
 
 #if 1
-    if (m_name == "CopyAttribute1"){//}&& pContext->curr_iter == 1) {
-        int j;
-        j = 0;
+    if (m_bypass) {
+        set_name(m_name);
+    }
+    if (m_name == "ForEachEnd6") {//}&& pContext->curr_iter == 1) {
+        set_name(m_name);
     }
 #endif
+
+    for (auto const& [name, param] : m_outputObjs) {
+        if (param.type == gParamType_List && param.spObject) {
+            auto list = static_cast<ListObject*>(param.spObject.get());
+            list->m_impl->m_modify.clear();
+            list->m_impl->m_new_added.clear();
+            list->m_impl->m_new_removed.clear();
+        }
+    }
 
     if (m_nodecls == "TimeShift") {
         preApplyTimeshift(pContext);
@@ -2165,20 +2484,21 @@ void NodeImpl::doApply(CalcContext* pContext) {
         preApply_SwitchBetween(pContext);
     } else if (m_nodecls == "ForEachEnd") {
         preApply_Primitives(pContext);
+    } else if (m_nodecls == "FrameCache") {
+        preApply_FrameCache(pContext);
     } else {
         preApply(pContext);
     }
 
-    if (zeno::getSession().is_interrupted()) {
-        throw makeError<InterruputError>(m_uuidPath);
-    }
+    check_break_and_return();
 
     log_debug("==> enter {}", m_name);
     {
 #ifdef ZENO_BENCHMARKING
         //Timer _(m_name);
 #endif
-        if (m_bypass) {
+        //暂时废弃bypass，先作为一个debug节点
+        if (false && m_bypass) {
             bypass();
         }
         else {
@@ -2194,10 +2514,34 @@ void NodeImpl::doApply(CalcContext* pContext) {
     log_debug("==> leave {}", m_name);
 
     update_out_objs_key();
-    init_output_container_updateinfo();
     reportStatus(false, Node_RunSucceed);
-    if (m_bView) {
-        //commit_to_render(Update_Reconstruct);
+}
+
+bool NodeImpl::is_upstream_dirty(const std::string& in_param) const {
+    if (auto iter = m_inputObjs.find(in_param); iter != m_inputObjs.end()) {
+        const auto& param = iter->second;
+        for (auto spLink : param.links) {
+            auto outNode = spLink->fromparam->m_wpNode;
+            NodeRunStatus status = outNode->get_run_status();
+            if (status != Node_Clean) {
+                return true;
+            }
+        }
+        return false;
+    }
+    else if (auto iter = m_inputPrims.find(in_param); iter != m_inputPrims.end()) {
+        const auto& param = iter->second;
+        for (auto spLink : param.links) {
+            auto outNode = spLink->fromparam->m_wpNode;
+            NodeRunStatus status = outNode->get_run_status();
+            if (status != Node_Clean) {
+                return true;
+            }
+        }
+        return false;
+    }
+    else {
+        throw makeNodeError<UnimplError>(get_path(), "the param is not exist");
     }
 }
 
@@ -2320,16 +2664,6 @@ ParamPrimitive NodeImpl::get_input_prim_param(std::string const& name, bool* pEx
             *pExist = false;
     }
     return param;
-}
-
-zany NodeImpl::get_input_obj(std::string const& name) const {
-    ParamObject param;
-    auto iter = m_inputObjs.find(name);
-    if (iter != m_inputObjs.end()) {
-        auto& paramObj = iter->second;
-        return paramObj.spObject;
-    }
-    return nullptr;
 }
 
 ParamObject NodeImpl::get_input_obj_param(std::string const& name, bool* pExist) const {
@@ -2458,6 +2792,13 @@ bool NodeImpl::add_output_prim_param(ParamPrimitive param) {
     return true;
 }
 
+void NodeImpl::clear_input_cacheobj(const std::string& param) {
+    auto iter = m_inputObjs.find(param);
+    if (iter != m_inputObjs.end()) {
+        iter->second.spObject.reset();
+    }
+}
+
 bool NodeImpl::add_output_obj_param(ParamObject param) {
     if (m_outputObjs.find(param.name) != m_outputObjs.end()) {
         return false;
@@ -2472,17 +2813,6 @@ bool NodeImpl::add_output_obj_param(ParamObject param) {
     sparam.wildCardGroup = param.wildCardGroup;
     m_outputObjs.insert(std::make_pair(param.name, std::move(sparam)));
     return true;
-}
-
-void NodeImpl::set_result(bool bInput, const std::string& name, zany spObj) {
-    if (bInput) {
-        auto& param = safe_at(m_inputObjs, name, "");
-        param.spObject = spObj;
-    }
-    else {
-        auto& param = safe_at(m_outputObjs, name, "");
-        param.spObject = spObj;
-    }
 }
 
 void NodeImpl::init_object_link(bool bInput, const std::string& paramname, std::shared_ptr<ObjectLink> spLink, const std::string& targetParam) {
@@ -2737,29 +3067,32 @@ NodeData NodeImpl::exportInfo() const
     return node;
 }
 
-bool NodeImpl::update_param(const std::string& param, zeno::reflect::Any new_value) {
+bool NodeImpl::update_param(const std::string& param, const zeno::reflect::Any& new_value) {
     CORE_API_BATCH
-    zeno::reflect::Any old_value;
-    bool ret = update_param_impl(param, new_value, old_value);
+    
+    auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
+    zeno::reflect::Any old_value = spParam.defl;
+    bool ret = update_param_impl(param, new_value);
     if (ret) {
-        CALLBACK_NOTIFY(update_param, param, old_value, new_value)
+        CALLBACK_NOTIFY(update_param, param, old_value, m_inputPrims[param].defl)
         mark_dirty(true);
     }
     return ret;
 }
 
-bool NodeImpl::update_param_impl(const std::string& param, zeno::reflect::Any new_value, zeno::reflect::Any& old_value)
+bool NodeImpl::update_param_impl(const std::string& param, const zeno::reflect::Any& new_value)
 {
     auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
-    bool isvalid = convertToEditVar(new_value, spParam.type);
+    auto edit_new_value = new_value;
+    bool isvalid = convertToEditVar(edit_new_value, spParam.type);
     if (!isvalid) {
         zeno::log_error("cannot convert to edit variable");
         return false;
     }
-    if (spParam.defl != new_value)
+    if (spParam.defl != edit_new_value)
     {
-        old_value = spParam.defl;
-        spParam.defl = new_value;
+        zeno::reflect::Any old_value = spParam.defl;
+        spParam.defl = edit_new_value;
 
         Graph* spGraph = m_pGraph;
         assert(spGraph);
@@ -2865,8 +3198,8 @@ bool zeno::NodeImpl::update_param_control_prop(const std::string& param, zeno::r
     CORE_API_BATCH
     auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_name + "`");
     spParam.ctrlProps = props;
-        CALLBACK_NOTIFY(update_param_control_prop, param, props)
-        return true;
+    CALLBACK_NOTIFY(update_param_control_prop, param, props)
+    return true;
 }
 
 bool NodeImpl::update_param_visible(const std::string& name, bool bOn, bool bInput) {
@@ -2974,6 +3307,113 @@ void NodeImpl::checkParamsConstrain() {
     }
 }
 
+std::vector<RefLinkInfo> NodeImpl::getReflinkInfo(bool bOnlySearchByDestNode)
+{
+    std::vector<RefLinkInfo> refLinksInfo;
+    for (auto& [name, param] : m_inputPrims) {
+        for (auto link : param.reflinks) {
+            if (link->source_inparam && link->dest_inparam) {
+                if (bOnlySearchByDestNode) {
+                    if (link->source_inparam == &param) {
+                        continue;
+                    }
+                }
+                if (link->source_inparam->m_wpNode && link->dest_inparam->m_wpNode) {
+                    EdgeInfo refLink{
+                        link->source_inparam->m_wpNode->get_name(),
+                        link->source_inparam->name, "",
+                        link->dest_inparam->m_wpNode->get_name(),
+                        link->dest_inparam->name, "", "", false};
+                    refLinksInfo.push_back({refLink, !link->source_inparam->bInput });
+                }
+            }
+        }
+    }
+    if (!bOnlySearchByDestNode) {
+        for (auto& [name, param] : m_outputPrims) {
+            for (auto link : param.reflinks) {
+                if (link->source_inparam && link->dest_inparam) {
+                    if (link->source_inparam->m_wpNode && link->dest_inparam->m_wpNode) {
+                        EdgeInfo refLink{
+                            link->source_inparam->m_wpNode->get_name(),
+                            link->source_inparam->name, "",
+                            link->dest_inparam->m_wpNode->get_name(),
+                            link->dest_inparam->name, "", "", false };
+                        refLinksInfo.push_back({refLink, !link->source_inparam->bInput });
+                    }
+                }
+            }
+        }
+        for (auto& [name, param] : m_outputObjs) {
+            for (auto link : param.reflinks) {
+                if (link->source_inparam && link->dest_inparam) {
+                    if (link->source_inparam->m_wpNode && link->dest_inparam->m_wpNode) {
+                        EdgeInfo refLink{
+                            link->source_inparam->m_wpNode->get_name(),
+                            link->source_inparam->name, "",
+                            link->dest_inparam->m_wpNode->get_name(),
+                            link->dest_inparam->name, "", "", false };
+                        refLinksInfo.push_back({ refLink, !link->source_inparam->bInput });
+                    }
+                }
+            }
+        }
+    }
+    return refLinksInfo;
+}
+
+void NodeImpl::removeNodeUpdateRefLink(const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput)
+{
+    auto outnode = m_pGraph->getNode(link.outNode);
+    auto innode = m_pGraph->getNode(link.inNode);
+    if (outnode && innode) {
+        CoreParam* outCoreParam = nullptr;
+        auto& outPrims = bOutParamIsOutput ? outnode->m_outputPrims : outnode->m_inputPrims;
+        auto outPrimParamIt = outPrims.find(link.outParam);
+        if (outPrimParamIt == outPrims.end()) {
+            auto outObjParamIt = outnode->m_outputObjs.find(link.outParam);
+            if (outObjParamIt == outnode->m_outputObjs.end()) {
+                return;
+            }
+            outCoreParam = &outObjParamIt->second;
+        } else {
+            outCoreParam = &outPrimParamIt->second;
+        }
+        auto inParamIt = innode->m_inputPrims.find(link.inParam);
+        if (inParamIt == innode->m_inputPrims.end()) {
+            return;
+        }
+        if (bAddRef) {
+            for (auto iter = outCoreParam->reflinks.begin(); iter != outCoreParam->reflinks.end(); iter++) {
+                auto spReflink = *iter;
+                if (spReflink->source_inparam->name == link.outParam &&
+                    spReflink->dest_inparam->name == link.inParam &&
+                    spReflink->dest_inparam->m_wpNode->get_name() == link.inNode)
+                    return;
+            }
+            std::shared_ptr<ReferLink> reflink = std::make_shared<ReferLink>();
+            reflink->source_inparam = outCoreParam;
+            reflink->dest_inparam = &inParamIt->second;
+            outCoreParam->reflinks.push_back(reflink);
+            inParamIt->second.reflinks.push_back(reflink);
+            addRefLink(link, bOutParamIsOutput);
+        } else {
+            for (auto iter = outCoreParam->reflinks.begin(); iter != outCoreParam->reflinks.end(); ) {
+                auto spReflink = *iter;
+                if (spReflink->source_inparam->name == link.outParam &&
+                    spReflink->dest_inparam->name == link.inParam &&
+                    spReflink->dest_inparam->m_wpNode->get_name() == link.inNode) {
+                    inParamIt->second.reflinks.erase(std::remove(inParamIt->second.reflinks.begin(), inParamIt->second.reflinks.end(), spReflink));
+                    outCoreParam->reflinks.erase(iter);
+                    removeRefLink(link, bOutParamIsOutput);
+                    break;
+                }
+                iter++;
+            }
+        }
+    }
+}
+
 bool NodeImpl::update_param_enable(const std::string& name, bool bOn, bool bInput) {
     if (bInput) {
         if (auto iter = m_inputObjs.find(name); iter != m_inputObjs.end()) {
@@ -3060,13 +3500,15 @@ void NodeImpl::update_load_info(bool bDisable) {
         m_pNode.reset();
     }
     else {
-        //重新加载，需要拿到INode的定义
+        //重新加载，需要拿到INode的定义，TODO：有点麻烦
+#if 0
         auto iter = zeno::getSession().nodeClasses.find(m_nodecls);
         if (iter == zeno::getSession().nodeClasses.end()) {
-            throw makeError<UnimplError>("cannot load the nodeclass definition");
+            throw makeNodeError<UnimplError>(get_path(), "cannot load the nodeclass definition");
         }
         const std::unique_ptr<INodeClass>& defcls = iter->second;
         m_pNode = defcls->new_coreinst();
+#endif
     }
     CALLBACK_NOTIFY(update_load_info, bDisable);
 }
@@ -3105,6 +3547,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             if (oldname.empty()) {
                 //new added name.
                 if (self_obj_params.find(newname) != self_obj_params.end()) {
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, false, newname);
+                    self_obj_params[newname].reflinks.clear();
                     // the new name happen to have the same name with the old name, but they are not the same param.
                     self_obj_params.erase(newname);
                     if (param.bInput)
@@ -3135,6 +3580,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     //exist name changed.
                     self_obj_params[newname] = std::move(self_obj_params[oldname]);
                     self_obj_params.erase(oldname);
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, false, newname);
+                    self_obj_params[newname].reflinks.clear();
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -3148,7 +3596,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     obj_outputs_old.erase(oldname);
 
                 auto& spParam = self_obj_params[newname];
-                spParam.type = param.type;
+                if (param.type != spParam.type) {
+                    update_param_type(spParam.name, false, param.bInput, param.type);
+                }
                 spParam.name = newname;
                 spParam.bWildcard = param.bWildcard;
                 if (param.bInput)
@@ -3157,7 +3607,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 }
             }
             else {
-                throw makeError<KeyError>(oldname, "the name does not exist on the node");
+                throw makeNodeError<KeyError>(get_path(), oldname, "the name does not exist on the node");
             }
         }
         else if (const auto& pParam = std::get_if<ParamPrimitive>(&_pair.param))
@@ -3174,6 +3624,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
             if (oldname.empty()) {
                 //new added name.
                 if (self_prim_params.find(newname) != self_prim_params.end()) {
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, true, newname);
+                    self_prim_params[newname].reflinks.clear();
                     // the new name happen to have the same name with the old name, but they are not the same param.
                     self_prim_params.erase(newname);
                     if (param.bInput)
@@ -3198,6 +3651,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 sparam.bWildcard = param.bWildcard;
                 sparam.m_wpNode = this;
                 sparam.bSocketVisible = param.bSocketVisible;
+                sparam.bInput = param.bInput;
                 self_prim_params[newname] = std::move(sparam);
 
                 new_params.insert(newname);
@@ -3207,6 +3661,9 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                     //exist name changed.
                     self_prim_params[newname] = std::move(self_prim_params[oldname]);
                     self_prim_params.erase(oldname);
+                    //调整refelink
+                    removeRefLinkDesParamIndx(param.bInput, true, newname);
+                    self_prim_params[newname].reflinks.clear();
 
                     rename_params.insert({ oldname, newname });
                 }
@@ -3221,7 +3678,10 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
 
                 auto& spParam = self_prim_params[newname];
                 spParam.defl = param.defl;
+                bool bChangeType = false;
                 if (param.type != spParam.type) {
+                    bChangeType = true;
+                    update_param_type(spParam.name, true, param.bInput, param.type);
                     spParam.defl = initAnyDeflValue(spParam.type);
                 }
                 convertToEditVar(spParam.defl, spParam.type);
@@ -3231,19 +3691,14 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 spParam.bWildcard = param.bWildcard;
                 if (param.bInput)
                 {
-                    if (param.type != spParam.type)
-                    {
-                        update_param_type(spParam.name, true, param.bInput, param.type);
-                        //update_param_type(spParam->name, param.type);
-                        //if (auto spNode = subgraph->getNode(oldname))
-                        //    spNode->update_param_type("port", param.type);
-                    }
-                    update_param_control(spParam.name, param.control);
                     update_param_control_prop(spParam.name, param.ctrlProps);
+                    if (bChangeType) {
+                        update_param_control(spParam.name, param.control);
+                    }
                 }
             }
             else {
-                throw makeError<KeyError>(oldname, "the name does not exist on the node");
+                throw makeNodeError<KeyError>(get_path(), oldname, "the name does not exist on the node");
             }
         }
     }
@@ -3254,6 +3709,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : inputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), true, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(true, true, rem_name);
+        m_inputPrims[rem_name].reflinks.clear();
+
         m_inputPrims.erase(rem_name);
         changes.remove_inputs.insert(rem_name);
     }
@@ -3261,6 +3721,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : outputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), false, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(false, true, rem_name);
+        m_outputPrims[rem_name].reflinks.clear();
+
         m_outputPrims.erase(rem_name);
         changes.remove_outputs.insert(rem_name);
     }
@@ -3268,6 +3733,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : obj_inputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), true, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(true, false, rem_name);
+        m_inputObjs[rem_name].reflinks.clear();
+
         m_inputObjs.erase(rem_name);
         changes.remove_inputs.insert(rem_name);
     }
@@ -3275,6 +3745,11 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
     for (auto rem_name : obj_outputs_old) {
         if (spGraph)
             spGraph->removeLinks(get_name(), false, rem_name);
+
+        //调整refelink
+        removeRefLinkDesParamIndx(false, false, rem_name);
+        m_outputObjs[rem_name].reflinks.clear();
+
         m_outputObjs.erase(rem_name);
         changes.remove_outputs.insert(rem_name);
     }
@@ -3311,7 +3786,7 @@ void NodeImpl::init(const NodeData& dat)
     if (!dat.name.empty())
         m_name = dat.name;
 
-    if (m_name == "CopyAttribute1") {
+    if (m_name == "RigidRecenterPrim") {
         int j;
         j = -0;
     }
@@ -3334,6 +3809,14 @@ void NodeImpl::init(const NodeData& dat)
     }
     initParams(dat);
     m_dirty = true;
+    if (m_nodecls == "FrameCache") {
+        //有可能上一次已经缓存了内容，如果我们允许上一次的缓存留下来的话，就可以标为FrameChanged
+        //那就意味着，如果想清理缓存，只能让用户手动清理，因为机制不好理解什么时候缓存失效
+        m_dirtyReason = Dirty_FrameChanged;
+    }
+    else {
+        m_dirtyReason = Dirty_All;
+    }
 }
 
 void NodeImpl::initParams(const NodeData& dat)
@@ -3367,6 +3850,9 @@ void NodeImpl::initParams(const NodeData& dat)
                 convertToEditVar(param.defl, param.type);
                 sparam.defl = param.defl;
                 convertToEditVar(sparam.defl, param.type);
+                if (!sparam.defl.has_value()) {
+                    sparam.defl = initAnyDeflValue(param.type);
+                }
 
                 // 普通子图的控件及参数类型，是由定义处决定的，而非IO值。
                 //sparam.control = param.control;
@@ -3401,7 +3887,7 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
     //这个函数其实就是特供ShaderFinalize
     auto iter = m_inputPrims.find(param);
     if (iter == m_inputPrims.end()) {
-        throw makeError<UnimplError>("not valid param");
+        throw makeNodeError<UnimplError>(get_path(), "not valid param");
     }
     ShaderData shader;
 
@@ -3409,7 +3895,7 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
         bool bSucceed = false;
         shader.data = AnyToNumeric(defl, bSucceed);
         if (!bSucceed) {
-            throw makeError<UnimplError>("cannot get NumericValue on defl value");
+            throw makeNodeError<UnimplError>(get_path(), "cannot get NumericValue on defl value");
         }
         return shader;
     }
@@ -3422,7 +3908,7 @@ ShaderData NodeImpl::get_input_shader(const std::string& param, zeno::reflect::A
         bool bSucceed = false;
         shader.data = AnyToNumeric(result, bSucceed);
         if (!bSucceed) {
-            throw makeError<UnimplError>("cannot get NumericValue");
+            throw makeNodeError<UnimplError>(get_path(), "cannot get NumericValue");
         }
     }
 
@@ -3491,12 +3977,143 @@ bool NodeImpl::has_input(std::string const &id) const {
     }
 }
 
-zany NodeImpl::get_input(std::string const &id) const {
+IObject* NodeImpl::get_input_obj(std::string const& id) const {
+    auto iter2 = m_inputObjs.find(id);
+    if (iter2 != m_inputObjs.end()) {
+        return iter2->second.spObject.get();
+    }
+    return nullptr;
+}
+
+/*
+IObject* NodeImpl::get_input(std::string const& id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {
         auto& val = iter->second.result;
         if (!val.has_value()) {
+            throw makeNodeError<UnimplError>(get_path(), "cannot get prim result of " + id + "`");
+        }
+        const ParamType paramType = iter->second.type;
+        switch (paramType) {
+        case zeno::types::gParamType_Int:
+        case zeno::types::gParamType_Float:
+        case zeno::types::gParamType_Bool:
+        case zeno::types::gParamType_Vec2f:
+        case zeno::types::gParamType_Vec2i:
+        case zeno::types::gParamType_Vec3f:
+        case zeno::types::gParamType_Vec3i:
+        case zeno::types::gParamType_Vec4f:
+        case zeno::types::gParamType_Vec4i:
+        case gParamType_AnyNumeric:
+        {
+            //依然有很多节点用了NumericObject，为了兼容，需要套一层NumericObject出去。
+            std::shared_ptr<NumericObject> spNum = std::make_shared<NumericObject>();
+            const auto& anyType = val.type();
+            if (anyType == zeno::reflect::type_info<int>()) {
+                spNum->set<int>(zeno::reflect::any_cast<int>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<bool>()) {
+                spNum->set<int>(zeno::reflect::any_cast<bool>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<float>()) {
+                spNum->set<float>(zeno::reflect::any_cast<float>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec2i>()) {
+                spNum->set<vec2i>(zeno::reflect::any_cast<vec2i>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec3i>()) {
+                spNum->set<vec3i>(zeno::reflect::any_cast<vec3i>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec4i>()) {
+                spNum->set<vec4i>(zeno::reflect::any_cast<vec4i>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec2f>()) {
+                spNum->set<vec2f>(zeno::reflect::any_cast<vec2f>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec3f>()) {
+                spNum->set<vec3f>(zeno::reflect::any_cast<vec3f>(val));
+            }
+            else if (anyType == zeno::reflect::type_info<vec4f>()) {
+                spNum->set<vec4f>(zeno::reflect::any_cast<vec4f>(val));
+            }
+            else if (paramType == gParamType_AnyNumeric &&
+                (anyType == zeno::reflect::type_info<const char*>() ||
+                    anyType == zeno::reflect::type_info<zeno::String>() ||
+                    anyType == zeno::reflect::type_info<std::string>())) {
+                std::string str = zeno::any_cast_to_string(val);
+                return std::make_unique<StringObject>(str);
+            }
+            else
+            {
+                //throw makeError<TypeError>(typeid(T));
+                //error, throw expection.
+            }
+            return spNum;
+        }
+        case zeno::types::gParamType_Matrix3:
+        {
+            std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+            matrixObj->m = zeno::reflect::any_cast<glm::mat3>(val);
+            return matrixObj;
+        }
+        case zeno::types::gParamType_Matrix4:
+        {
+            std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+            matrixObj->m = zeno::reflect::any_cast<glm::mat4>(val);
+            return matrixObj;
+        }
+        case zeno::types::gParamType_String:
+        {
+            std::string str = zeno::any_cast_to_string(val);
+            return std::make_shared<StringObject>(str);
+        }
+        case zeno::types::gParamType_Shader:
+        {
+            throw makeNodeError<UnimplError>(get_path(), "ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
+        }
+        case gParamType_Heatmap:
+        {
+            std::shared_ptr<zeno::HeatmapObject> heatmapObj = std::make_shared<zeno::HeatmapObject>();
+            heatmapObj->colors = zeno::reflect::any_cast<zeno::HeatmapData>(val).colors;
+            return heatmapObj;
+        }
+        default:
             return nullptr;
+        }
+    }
+    else {
+        auto iter2 = m_inputObjs.find(id);
+        if (iter2 != m_inputObjs.end()) {
+            return iter2->second.spObject;
+        }
+        throw makeNodeError<KeyError>(get_path(), id, "get_input");
+    }
+    return nullptr;
+}
+*/
+
+zany NodeImpl::move_input(std::string const& id) {
+    auto iter = m_inputObjs.find(id);
+    if (iter == m_inputObjs.end()) {
+        throw makeNodeError<KeyError>(get_path(), id, "move_input");
+    }
+    return std::move(iter->second.spObject);
+}
+
+zany NodeImpl::move_output(std::string const& id) {
+    auto iter = m_outputObjs.find(id);
+    if (iter == m_outputObjs.end()) {
+        throw makeNodeError<KeyError>(get_path(), id, "move_input");
+    }
+    return std::move(iter->second.spObject);
+}
+
+zany NodeImpl::clone_input(std::string const &id) const {
+    auto iter = m_inputPrims.find(id);
+    if (iter != m_inputPrims.end()) {
+        auto& val = iter->second.result;
+        if (!val.has_value()) {
+            throw makeNodeError<UnimplError>(get_path(), "cannot get prim result of " + id + "`");
         }
         const ParamType paramType = iter->second.type;
         switch (paramType) {
@@ -3512,7 +4129,7 @@ zany NodeImpl::get_input(std::string const &id) const {
             case gParamType_AnyNumeric:
             {
                 //依然有很多节点用了NumericObject，为了兼容，需要套一层NumericObject出去。
-                std::shared_ptr<NumericObject> spNum = std::make_shared<NumericObject>();
+                auto spNum = std::make_unique<NumericObject>();
                 const auto& anyType = val.type();
                 if (anyType == zeno::reflect::type_info<int>()) {
                     spNum->set<int>(zeno::reflect::any_cast<int>(val));
@@ -3546,7 +4163,7 @@ zany NodeImpl::get_input(std::string const &id) const {
                      anyType == zeno::reflect::type_info<zeno::String>() ||
                      anyType == zeno::reflect::type_info<std::string>())) {
                     std::string str = zeno::any_cast_to_string(val);
-                    return std::make_shared<StringObject>(str);
+                    return std::make_unique<StringObject>(str);
                 }
                 else
                 {
@@ -3557,28 +4174,28 @@ zany NodeImpl::get_input(std::string const &id) const {
             }
             case zeno::types::gParamType_Matrix3:
             {
-                std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+                auto matrixObj = std::make_unique<MatrixObject>();
                 matrixObj->m = zeno::reflect::any_cast<glm::mat3>(val);
                 return matrixObj;
             }
             case zeno::types::gParamType_Matrix4:
             {
-                std::shared_ptr<zeno::MatrixObject> matrixObj = std::make_shared<MatrixObject>();
+                auto matrixObj = std::make_unique<MatrixObject>();
                 matrixObj->m = zeno::reflect::any_cast<glm::mat4>(val);
                 return matrixObj;
             }
             case zeno::types::gParamType_String:
             {
                 std::string str = zeno::any_cast_to_string(val);
-                return std::make_shared<StringObject>(str);
+                return std::make_unique<StringObject>(str);
             }
             case zeno::types::gParamType_Shader:
             {
-                throw makeError<UnimplError>("ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
+                throw makeNodeError<UnimplError>(get_path(), "ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
             }
             case gParamType_Heatmap:
             {
-                std::shared_ptr<zeno::HeatmapObject> heatmapObj = std::make_shared<zeno::HeatmapObject>();
+                auto heatmapObj = std::make_unique<zeno::HeatmapObject>();
                 heatmapObj->colors = zeno::reflect::any_cast<zeno::HeatmapData>(val).colors;
                 return heatmapObj;
             }
@@ -3589,9 +4206,11 @@ zany NodeImpl::get_input(std::string const &id) const {
     else {
         auto iter2 = m_inputObjs.find(id);
         if (iter2 != m_inputObjs.end()) {
-            return iter2->second.spObject;
+            if (!iter2->second.spObject)
+                return nullptr;
+            return iter2->second.spObject->clone();
         }
-        throw makeError<KeyError>(id, "get_input");
+        throw makeNodeError<KeyError>(get_path(), id, "get_input");
     }
     return nullptr;
 }
@@ -3628,19 +4247,19 @@ bool NodeImpl::set_primitive_output(std::string const& id, const zeno::reflect::
     return true;
 }
 
-bool NodeImpl::set_output(std::string const& param, zany obj) {
+bool NodeImpl::set_output(std::string const& param, zany&& obj) {
     //只给旧节点模块使用，如果函数暴露reflect::Any，就会迫使所有使用这个函数的cpp文件include headers
     //会增加程序体积以及编译时间，待后续生成文件优化后再考虑处理。
     auto iter = m_outputObjs.find(param);
     if (iter != m_outputObjs.end()) {
-            iter->second.spObject = obj;
+        iter->second.spObject = std::move(obj);
         return true;
     }
     else {
         auto iter2 = m_outputPrims.find(param);
         if (iter2 != m_outputPrims.end()) {
             //兼容以前NumericObject的情况
-            if (auto numObject = std::dynamic_pointer_cast<NumericObject>(obj)) {
+            if (auto numObject = dynamic_cast<NumericObject*>(obj.get())) {
                 const auto& val = numObject->value;
                 if (std::holds_alternative<int>(val))
                 {
@@ -3680,7 +4299,7 @@ bool NodeImpl::set_output(std::string const& param, zany obj) {
                     //error, throw expection.
                 }
             }
-            else if (auto strObject = std::dynamic_pointer_cast<StringObject>(obj)) {
+            else if (auto strObject = dynamic_cast<StringObject*>(obj.get())) {
                 const auto& val = strObject->value;
                 iter2->second.result = val;
             }
@@ -3690,39 +4309,136 @@ bool NodeImpl::set_output(std::string const& param, zany obj) {
     return false;
 }
 
-zany NodeImpl::get_default_output_object() {
+IObject* NodeImpl::get_default_output_object() {
     if (m_nodecls == "SubOutput") {
-        return get_input("port");
+        return get_input_obj("port");
     }
-    if (m_outputObjs.empty())
+    if (m_outputObjs.empty()) {
         return nullptr;
-    return m_outputObjs.begin()->second.spObject;
+    }
+    return m_outputObjs.begin()->second.spObject.get();
 }
 
-container_elem_update_info NodeImpl::get_default_output_container_info() {
-    if (m_outputObjs.empty())
-        return container_elem_update_info();
-    return m_outputObjs.begin()->second.listdict_update;
+zany NodeImpl::clone_default_output_object() {
+    std::lock_guard lock(m_mutex);
+    if (IObject* default_output_obj = get_default_output_object()) {
+        return default_output_obj->clone();
+    }
+    else {
+        if (!m_outputPrims.empty()) {
+            bool bSucceed = false;
+            //输出所有numeric
+            auto lst = create_ListObject();
+            for (const auto& [_, outparam] : m_outputPrims) {
+                NumericValue val = AnyToNumeric(outparam.result, bSucceed);
+                auto numobj = std::make_unique<NumericObject>();
+                numobj->value = val;
+                numobj->update_key(stdString2zs(outparam.name));
+                lst->push_back(std::move(numobj));
+            }
+            return lst;
+        }
+    }
+    return nullptr;
 }
 
-zany NodeImpl::get_output_obj(std::string const& param) {
+IObject* NodeImpl::get_output_obj(std::string const& param) {
     auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + m_name + "`");
-    return spParam.spObject;
+    return spParam.spObject.get();
+}
+
+bool NodeImpl::checkAllOutputLinkTraced() {
+    bool bAllOutputTaken = true;
+    //检查是否当前节点是否所有边都被trace了
+    for (const auto& [_, outparam] : m_outputObjs) {
+        for (auto link : outparam.links) {
+            if (!link->bTraceAndTaken) {
+                bAllOutputTaken = false;
+                break;
+            }
+        }
+    }
+    for (const auto& [_, outparam] : m_outputPrims) {
+        for (auto link : outparam.links) {
+            if (!link->bTraceAndTaken) {
+                bAllOutputTaken = false;
+                break;
+            }
+        }
+    }
+    return bAllOutputTaken;
+}
+
+zeno::reflect::Any NodeImpl::takeOutputPrim(PrimitiveParam* out_param, PrimitiveParam* in_param, bool& bAllOutputTaken) {
+    for (auto link : out_param->links) {
+        if (link->toparam == in_param) {
+            link->bTraceAndTaken = true;
+            break;
+        }
+    }
+    bAllOutputTaken = checkAllOutputLinkTraced();
+    return out_param->result;
+}
+
+zeno::reflect::Any NodeImpl::takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
+    auto iter = m_outputPrims.find(out_param);
+    if (iter == m_outputPrims.end())
+        throw makeNodeError<KeyError>(get_path(), out_param, "no such output prim param");
+
+    auto& outparam = iter->second;
+    for (auto link : outparam.links) {
+        if (link->toparam->name == in_param) {
+            link->bTraceAndTaken = true;
+            break;
+        }
+    }
+    bAllOutputTaken = checkAllOutputLinkTraced();
+    return outparam.result;
+}
+
+void NodeImpl::mark_takeover() {
+    m_takenover = true;
+    clearCalcResults();
+    mark_dirty(false);
+    reportStatus(false, Node_ResultTaken);
+}
+
+bool NodeImpl::is_takenover() const {
+    return m_takenover;
+}
+
+zany NodeImpl::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken) {
+    for (auto link : out_param->links) {
+        if (link->toparam == in_param) {
+            link->bTraceAndTaken = true;
+            break;
+        }
+    }
+    bAllOutputTaken = checkAllOutputLinkTraced();
+    return std::move(out_param->spObject);
+}
+
+zany NodeImpl::takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
+    auto iter = m_outputObjs.find(out_param);
+    if (iter == m_outputObjs.end())
+        throw makeNodeError<KeyError>(get_path(), out_param, "no such output object param");
+    auto& outparam = iter->second;
+    for (auto link : outparam.links) {
+        if (link->toparam->name == in_param) {
+            link->bTraceAndTaken = true;
+            break;
+        }
+    }
+    bAllOutputTaken = checkAllOutputLinkTraced();
+    return std::move(outparam.spObject);
 }
 
 std::vector<zany> NodeImpl::get_output_objs() {
     std::vector<zany> objs;
     for (const auto& [name, objparam] : m_outputObjs) {
-        objs.push_back(objparam.spObject);
+        objs.push_back(objparam.spObject->clone());
     }
     return objs;
-}
-
-TempNodeCaller NodeImpl::temp_node(std::string const &id) {
-    //TODO: deprecated
-    Graph* spGraph = m_pGraph;
-    assert(spGraph);
-    return TempNodeCaller(spGraph, id);
 }
 
 zfxvariant NodeImpl::execute_fmla(const std::string& expression)
@@ -3753,22 +4469,77 @@ float NodeImpl::resolve(const std::string& expression, const ParamType type) {
         return std::get<float>(res);
     }
     else {
-        throw makeError<UnimplError>("the result of formula is not numeric");
+        throw makeNodeError<UnimplError>(get_path(), "the result of formula is not numeric");
     }
     //TODO: kframe issues
     //k帧太麻烦，现阶段用不上先不处理
 }
 
+static std::string ws2s(std::wstring const& wstr) {
+    std::setlocale(LC_ALL, "");  // 设置为系统默认 locale
+    size_t len = std::wcstombs(nullptr, wstr.c_str(), 0);
+    std::string str(len, '\0');
+    std::wcstombs(&str[0], wstr.c_str(), len);
+    return str;
+}
+
+static std::string replaceTokens(const std::string& input,
+    const std::unordered_map<std::string, std::string>& replacements)
+{
+    std::string result = input;
+    for (const auto& [key, value] : replacements) {
+        size_t pos = 0;
+        while ((pos = result.find(key, pos)) != std::string::npos) {
+            result.replace(pos, key.length(), value);
+            pos += value.length(); // 跳过已替换的部分
+        }
+    }
+    return result;
+}
+
 std::string NodeImpl::resolve_string(const std::string& fmla, const std::string& defl) {
     try
     {
-        const zfxvariant& res = execute_fmla(fmla);
-        if (std::holds_alternative<std::string>(res)) {
-            return std::get<std::string>(res);
+        //TODO: 要长远解决这类问题，就要拆分“普通编辑框”，单独把公式编辑器拎出来，既可以处理向量的情况，又可以区分字符串是否需要编译
+        std::string fmla = defl;
+        //先替换掉常见的$F，$ZSG
+        if (fmla.find('$') != std::string::npos) {
+            auto& sess = zeno::getSession();
+            std::filesystem::path pathObj(ws2s(sess.get_project_path()));
+            std::filesystem::path dir = pathObj.parent_path();  // 获取上一级目录
+
+            std::unordered_map<std::string, std::string> replacements = {
+                {"$F",   std::to_string(sess.globalState->getFrameId()) },
+                {"$ZSG", dir.string()}
+            };
+            fmla = replaceTokens(fmla, replacements);
+        }
+
+        //只有遇到函数的情况才能解析，目前先不上语法树
+        if (fmla.find_first_of("()") != std::string::npos) {
+            const zfxvariant& res = execute_fmla(fmla);
+            if (std::holds_alternative<std::string>(res)) {
+                return std::get<std::string>(res);
+            }
+        }
+        else {
+            return fmla;
         }
     }
     catch(...)
     {
+        //再检查一下有没有$F
+        if (fmla.find("{$F}") != std::string::npos) {
+            int frame = zeno::getSession().globalState->getFrameId();
+            std::string res = fmla;
+            size_t pos = 0;
+            std::string framestr = std::to_string(frame);
+            while ((pos = res.find("{$F}", pos)) != std::string::npos) {
+                res.replace(pos, 4, framestr);
+                pos += framestr.length();  // 防止死循环
+            }
+            return res;
+        }
     }
     return defl;
 }

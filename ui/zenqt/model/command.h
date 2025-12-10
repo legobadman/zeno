@@ -55,6 +55,21 @@ private:
     QString m_lastViewNodeName;
 };
 
+class RemoveNodeUpdateRefLinkCommand : public QUndoCommand
+{
+public:
+    RemoveNodeUpdateRefLinkCommand(bool bAddLink, const zeno::EdgeInfo& link, const QStringList& graphPath, bool outParamIsOutput);
+    void redo() override;
+    void undo() override;
+
+private:
+    const bool m_bAdd, m_bOutParamIsOutput;
+    const zeno::EdgeInfo m_link;
+
+    GraphModel* m_model;
+    QStringList m_graphPath;
+};
+
 class ModelDataCommand : public QUndoCommand
 {
 public:

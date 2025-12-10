@@ -111,6 +111,7 @@ public:
     void setValidator(const QValidator* pValidator);
     void setNumSlider(QGraphicsScene* pScene, const QVector<qreal>& steps);
     void setTextLengthAsBounding(bool bOn);
+    void setTransparnetBackground(bool bOn);
     QString text() const;
     bool showSlider() const;
     QRectF boundingRect() const override;
@@ -143,6 +144,7 @@ private:
     bool m_bValidating;
     bool m_bShowSlider;
     bool m_bTextLengthAsBounding;
+    bool m_bTransBg;
 };
 
 class ZenoSocketItem;

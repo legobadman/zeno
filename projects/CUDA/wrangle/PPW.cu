@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "Utils.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
@@ -6,7 +7,6 @@
 #include "zensim/zpc_tpls/fmt/format.h"
 
 // from projects/ZenoFX/ppw.cpp : ParticlesParticlesWrangle
-#include "dbg_printf.h"
 #include <cassert>
 #include <cuda.h>
 #include <zeno/core/Graph.h>
@@ -15,6 +15,7 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/log.h>
 #include <zeno/zeno.h>
@@ -35,7 +36,7 @@ struct ZSParticleParticleWrangler : INode {
     }
     void apply() override {
         using namespace zs;
-        auto code = get_input<StringObject>("zfxCode")->get();
+        auto code = zsString2Std(get_input2_string("zfxCode"));
 
         /// parObjPtr
         auto parObjPtrs = RETRIEVE_OBJECT_PTRS(ZenoParticles, "ZSParticles");
@@ -62,7 +63,7 @@ struct ZSParticleParticleWrangler : INode {
 
         /// params
         auto params =
-            has_input("params") ? get_input<zeno::DictObject>("params") : std::make_shared<zeno::DictObject>();
+            has_input("params") ? safe_uniqueptr_cast<DictObject>(clone_input("params")) : std::make_unique<zeno::DictObject>();
         {
             // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
             auto const &gs = *this->getGlobalState();
@@ -78,7 +79,7 @@ struct ZSParticleParticleWrangler : INode {
                     if (code.size() <= i || !std::isalnum(code[i])) {
                         if (params->lut.count(key))
                             continue;
-                        dbg_printf("ref portal %s\n", key.c_str());
+                        printf("ref portal %s\n", key.c_str());
                         auto res =
                             getThisGraph()->callTempNode("PortalOut", {{"name:", objectFromLiterial(key)}}).at("port");
                         params->lut[key] = std::move(res);
@@ -93,7 +94,7 @@ struct ZSParticleParticleWrangler : INode {
             }
             for (auto const &key : keys) {
                 if (!dynamic_cast<zeno::NumericObject *>(params->lut.at(key).get())) {
-                    dbg_printf("ignored non-numeric %s\n", key.c_str());
+                    printf("ignored non-numeric %s\n", key.c_str());
                     params->lut.erase(key);
                 }
             }
@@ -130,7 +131,7 @@ struct ZSParticleParticleWrangler : INode {
                     }
                 },
                 par);
-            //dbg_printf("define param: %s dim %d\n", key.c_str(), dim);
+            //printf("define param: %s dim %d\n", key.c_str(), dim);
             opts.define_param(key, dim);
             //auto par = zeno::safe_any_cast<zeno::NumericValue>(obj);
         }
@@ -277,13 +278,14 @@ struct ZSParticleParticleWrangler : INode {
 };
 
 ZENDEFNODE(ZSParticleParticleWrangler, {
-                                           {{"ZenoParticles", "ZSParticles"},
-                                            {"ZenoParticles", "ZSNeighborParticles"},
+                                           {{gParamType_Particles, "ZSParticles"},
+                                            {gParamType_Particles, "ZSNeighborParticles"},
                                             {gParamType_String, "zfxCode"},
                                             {"DictObject:NumericObject", "params"}},
-                                           {"ZSParticles"},
+                                           {{gParamType_Particles, "ZSParticles"}},
                                            {},
                                            {"zswrangle"},
                                        });
 
 } // namespace zeno
+#endif

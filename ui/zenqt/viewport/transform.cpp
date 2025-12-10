@@ -1,5 +1,3 @@
-#include <zeno/core/ObjectManager.h>
-#include <zenovis/ObjectsManager.h>
 #include "transform.h"
 #include <zeno/funcs/PrimitiveTools.h>
 #include <zeno/types/UserData.h>
@@ -519,12 +517,12 @@ namespace zeno {
 
     void FakeTransformer::markObjectsInteractive() {
         m_status = true;
-        zeno::getSession().objsMan->collect_modify_objs(m_objectsKeys, true);
+        //zeno::getSession().objsMan->collect_modify_objs(m_objectsKeys, true);
     }
 
     void FakeTransformer::unmarkObjectsInteractive() {
         m_status = false;
-        zeno::getSession().objsMan->remove_modify_objs(m_objectsKeys);
+        //zeno::getSession().objsMan->remove_modify_objs(m_objectsKeys);
     }
 
     void FakeTransformer::resizeHandler(int dir) {
@@ -652,12 +650,12 @@ namespace zeno {
         if (name.empty())
             return;
 
-        std::shared_ptr<GeometryObject_Adapter> transformObj;
+        GeometryObject_Adapter* transformObj = nullptr;
 
-        auto& objsMan = zeno::getSession().objsMan;
+        //auto& objsMan = zeno::getSession().objsMan;
+        //m_objnodeinfo = objsMan->getObjectAndViewNode(name);
 
-        m_objnodeinfo = objsMan->getObjectAndViewNode(name);
-        std::shared_ptr<GeometryObject_Adapter> transObj = std::dynamic_pointer_cast<GeometryObject_Adapter>(m_objnodeinfo.transformingObj);
+        auto transObj = dynamic_cast<GeometryObject_Adapter*>(m_objnodeinfo.transformingObj);
         if (!transObj) {
             //todo: maybe the transforming obj is a memeber of list object.
             return;
@@ -672,9 +670,9 @@ namespace zeno {
 
         std::string trans_name;
 
-        std::shared_ptr<GeometryObject_Adapter> object;
+        GeometryObject_Adapter* object = nullptr;
         if (nodecls != "Transform") {
-            object = std::dynamic_pointer_cast<GeometryObject_Adapter>(transObj->clone());
+            object = dynamic_cast<GeometryObject_Adapter*>(transObj);
             trans_name = zsString2Std(object->key());
         }
         else {
@@ -795,15 +793,15 @@ namespace zeno {
             spOriNode->set_view(false);
             transNode->set_view(true);
 
-            zany originalObj = m_objnodeinfo.transformingObj;
+            auto originalObj = m_objnodeinfo.transformingObj;
             //原始的对象要隐藏
-            auto& objectsMan = zeno::getSession().objsMan;
+            //auto& objectsMan = zeno::getSession().objsMan;
             //只是为了标记一下view隐藏
-            objectsMan->remove_rendering_obj(originalObj);
+            //objectsMan->remove_rendering_obj(originalObj);
 
             //把obj设置到新的transform节点的output端。
             std::string outputparam = transNode->get_viewobject_output_param();
-            transNode->set_result(false, outputparam, spObj);
+            transNode->set_output(outputparam, spObj->clone());
         }
 
         {
@@ -829,12 +827,13 @@ namespace zeno {
             transNode->update_param("quatRotation", rotate);
 
             //2.登记新的obj到
-            auto& objectsMan = zeno::getSession().objsMan;
-            objectsMan->collectingObject(spObj, transNode, true);
+            //auto& objectsMan = zeno::getSession().objsMan;
+            //objectsMan->collectingObject(spObj, transNode, true);
 
             //3.渲染端更新加载
             auto mainWin = zenoApp->getMainWindow();
-            mainWin->justLoadObjects();
+            //TODO:
+            //mainWin->justLoadObjects();
         }
     }
 

@@ -202,8 +202,7 @@ struct Blend: INode {//optimize
                 image2alpha[i] = alpha;
                 }
             }
-
-        set_output("image", image2);
+            set_output("image", std::move(image2));
     }
 };
 
@@ -293,9 +292,8 @@ struct CompBlur : INode {//TODO::delete
                                                       static_cast<float>(sum2)});
                 }
             }
-            image = blurredImage;
         }
-        set_output("image", blurredImage);
+        set_output("image", std::move(blurredImage));
     }
 };
 
@@ -354,7 +352,7 @@ struct ImageExtractChannel : INode {
                 throw zeno::makeError("image have no alpha channel");
             }
         }
-        set_output("image", image2);
+        set_output("image", std::move(image2));
     }
 };
 ZENDEFNODE(ImageExtractChannel, {
@@ -381,7 +379,7 @@ struct CompImport : INode {
         auto attrName = get_input2_string("attrName");
         auto remapRange = toVec2f(get_input2_vec2f("RemapRange"));
         auto remap = get_input2_bool("Remap");
-        auto image = std::make_shared<PrimitiveObject>();
+        auto image = std::make_unique<PrimitiveObject>();
         auto attributesType = get_input2_string("AttributesType");
 
         image->resize(nx * ny);
@@ -418,8 +416,8 @@ struct CompImport : INode {
         else if (attributesType == "vec3f") {
             //TODO
         }
-        zeno::SharedPtr<GeometryObject_Adapter> geo = create_GeometryObject(image);
-        set_output("image", geo);
+        auto geo = create_GeometryObject(image.get());
+        set_output("image", std::move(geo));
     }
 };
 

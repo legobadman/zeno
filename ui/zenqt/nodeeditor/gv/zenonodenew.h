@@ -1,4 +1,4 @@
-#ifndef __ZENO_NODE_NEW_H__
+﻿#ifndef __ZENO_NODE_NEW_H__
 #define __ZENO_NODE_NEW_H__
 
 #include <QtWidgets>
@@ -66,6 +66,7 @@ public:
     void onRunStateChanged() override;
     void onSocketLinkChanged(const QModelIndex& paramIdx, bool bInput, bool bAdded, const QString keyName) override;
     void onNameUpdated(const QString& newName);
+    void onNodeLockedChanged(bool bLocked);
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
@@ -88,6 +89,7 @@ private slots:
 private:
     ZLayoutBackground* initBodyWidget();
     ZLayoutBackground* initHeaderWidget();
+    void initLockMark();
     ZGraphicsLayout* initPrimSockets(ParamsModel* pModel, const bool bInput);
     ZGraphicsLayout* initVerticalSockets(bool bInput);
     void _drawShadow(QPainter* painter);
@@ -113,6 +115,8 @@ private:
     LeftStatusBtnGroup* m_pStatusWidgets1;
     RightStatusBtnGroup* m_pStatusWidgets2;
     ZenoImageItem* m_errorTip;
+    ZenoImageItem* m_frameNodeMark;
+    ZenoImageItem* m_pLockMark;
     QGraphicsPolygonItem* m_statusMarker;
     ZLayoutBackground* m_bodyWidget;
     ZLayoutBackground* m_headerWidget;
@@ -130,6 +134,7 @@ private:
     QmlNodeRunStatus::Value m_nodeStatus;
 
     QPointF _cache_name_move;
+    QPointF _cache_origin_pos;
 };
 
 #endif

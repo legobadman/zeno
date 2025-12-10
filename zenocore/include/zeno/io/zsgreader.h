@@ -13,6 +13,7 @@ namespace zenoio
         ZsgReader();
         virtual ~ZsgReader() = default;
         ZENO_API ZSG_PARSE_RESULT openFile(const std::wstring& fn);
+        ZENO_API int numOfNodes() const;
 
     protected:
         virtual bool _parseMainGraph(const rapidjson::Document& doc, zeno::GraphData& ret);
@@ -48,6 +49,10 @@ namespace zenoio
     protected:
         zeno::ZSG_VERSION m_ioVer;
         bool m_bDiskReading;        //disk io read.
+
+        float total_time;
+        float used_time;
+        int m_num_of_nodes;
 
     private:
         zeno::TimelineInfo _parseTimeline(const rapidjson::Value& jsonTimeline);

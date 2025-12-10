@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/logger.h>
 #include <zeno/ListObject.h>
+#include <zeno/types/ListObject_impl.h>
 #include <zeno/NumericObject.h>
 #include <zeno/PrimitiveObject.h>
 #include <zeno/utils/UserData.h>
@@ -113,7 +114,7 @@ struct CreatingAndWritingGrid : zeno::INode {
     virtual void apply() override {
         // the zeno has already initialize the openvdb the time the program start
         // openvdb::initialize();
-        auto output_filename = get_input<StringObject>("output_filename")->get();
+        auto output_filename = zsString2Std(get_input2_string("output_filename"));
 
         openvdb::FloatGrid::Ptr grid = openvdb::FloatGrid::create(2.0);
         makeSphere(*grid,/*radius=*/50.0f,/*center=*/openvdb::Vec3f(1.5,2,3));
@@ -143,7 +144,7 @@ ZENDEFNODE(CreatingAndWritingGrid, {
 
 struct ReadingAndModifyingAGrid : zeno::INode {
     virtual void apply() override {
-        auto input_filename = get_input<StringObject>("input_filename")->get();
+        auto input_filename = zsString2Std(get_input2_string("input_filename"));
         openvdb::io::File file(input_filename.c_str());
         file.open();
 
@@ -190,7 +191,7 @@ struct ReadingAndModifyingAGrid : zeno::INode {
         grid->setGridClass(openvdb::GRID_FOG_VOLUME);
         grid->setName("FogVolumeSphere");
 
-        auto output_filename = get_input<StringObject>("output_filename")->get();
+        auto output_filename = zsString2Std(get_input2_string("output_filename"));
         openvdb::io::File(output_filename.c_str()).write({grid});
     }
 };
@@ -213,7 +214,7 @@ struct NodeIterator_OpenVDB : zeno::INode {
         using Int2Type = Int1Type::ChildNodeType;
         using LeafType = Int2Type::ChildNodeType;
 
-        auto input_filename = get_input<StringObject>("input_filename")->get();
+        auto input_filename = zsString2Std(get_input2_string("input_filename"));
         openvdb::io::File file(input_filename.c_str());
         file.open();
 
@@ -309,7 +310,7 @@ struct ViewVDBBoundingBox : zeno::INode {
         using Int2Type = Int1Type::ChildNodeType;
         using LeafType = Int2Type::ChildNodeType;
 
-        auto input_filename = get_input<StringObject>("input_filename")->get();
+        auto input_filename = zsString2Std(get_input2_string("input_filename"));
         openvdb::io::File file(input_filename);
         file.open();
         openvdb::FloatGrid::Ptr grid = openvdb::gridPtrCast<GridType>(file.readGrid("LevelSetSphere"));
@@ -344,13 +345,13 @@ struct ViewVDBBoundingBox : zeno::INode {
         // for(TreeType::NodeIter iter = grid->tree().beginNode();iter;++iter)
         //     add_bounding_box(grid,iter.getBoundingBox(),idx++,segs.values,verts.values);       
 
-        set_output("prim",std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(ViewVDBBoundingBox,{
     {{"readpath","input_filename"}},
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     {},
     {"TEST_OPENVDB"},
 });
@@ -407,7 +408,7 @@ struct ViewLeafNodeBoundingBox : zeno::INode {
         using LeafType = Int2Type::ChildNodeType;
 
 
-        auto input_filename = get_input<StringObject>("input_filename")->get();
+        auto input_filename = zsString2Std(get_input2_string("input_filename"));
         openvdb::io::File file(input_filename);
         file.open();
 
@@ -431,7 +432,7 @@ struct ViewLeafNodeBoundingBox : zeno::INode {
             add_bounding_colored_box(grid,aabb,idx++,zeno::vec3f{1.0},segs.values,verts.values,clrs);
         }
 
-        set_output("prim",std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
 
 
     }
@@ -440,7 +441,7 @@ struct ViewLeafNodeBoundingBox : zeno::INode {
 
 ZENDEFNODE(ViewLeafNodeBoundingBox,{
     {{"readpath","input_filename"}},
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     {},
     {"TEST_OPENVDB"},
 });
@@ -468,7 +469,7 @@ struct TransformLevelSet : zeno::INode {
         // std::cout << "Try Transform LevelSet" << std::endl;
         std::cout << "LeafType Dim : " << LeafType::LOG2DIM << std::endl;
 
-        auto input_filename = get_input<StringObject>("input_filename")->get();
+        auto input_filename = zsString2Std(get_input2_string("input_filename"));
         openvdb::io::File file(input_filename);
         file.open();
 
@@ -480,7 +481,7 @@ struct TransformLevelSet : zeno::INode {
 
         const openvdb::math::Transform &sourceXform = source_grid->transform();
 
-        auto scale = get_input<zeno::NumericObject>("scale")->get<zeno::vec3f>();
+        auto scale = toVec3f(get_input2_vec3f("scale"));
 
 
         openvdb::math::Transform::Ptr transform = openvdb::math::Transform::createLinearTransform(sourceXform.baseMap()->getAffineMap()->getMat4());
@@ -508,7 +509,7 @@ struct TransformLevelSet : zeno::INode {
 
         target_grid->setName("LevelSetSphere");
         target_grid->setGridClass(openvdb::GRID_LEVEL_SET);
-        auto output_filename = get_input<StringObject>("output_filename")->get();
+        auto output_filename = zsString2Std(get_input2_string("output_filename"));
         // std::cout << "input voxel size : " << source_grid->voxelSize() << "\t" << "output voxel size : " << target_grid->voxelSize() << std::endl;
         openvdb::io::File(output_filename.c_str()).write({target_grid});
     }
@@ -571,7 +572,7 @@ struct ViewVDBPoints : zeno::INode {
     virtual void apply() override {
         std::vector<openvdb::Vec3R> positions;
 
-        auto points = get_input<zeno::ListObject>("points")->getLiterial<zeno::vec3f>();
+        auto points = get_input_ListObject("points")->m_impl->getLiterial<zeno::vec3f>();
         for(int i = 0;i < points.size();++i)
             positions.push_back(openvdb::Vec3R(points[i][0],points[i][1],points[i][2]));
         // positions.push_back(openvdb::Vec3R(-0.6,1,0));
@@ -606,7 +607,7 @@ struct ViewVDBPoints : zeno::INode {
         segs.resize((nm_leaf_nodes + positions.size()) * 12);
         auto& clrs = prim->add_attr<zeno::vec3f>("clr");
 
-        auto point_width = get_input<zeno::NumericObject>("point_width")->get<float>();
+        auto point_width = get_input2_float("point_width");
         auto delta = openvdb::Vec3f(point_width);
 
         int idx = 0;
@@ -646,13 +647,13 @@ struct ViewVDBPoints : zeno::INode {
             }
         }
         
-        set_output("prim",std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(ViewVDBPoints,{
     {"points","point_width"},
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     {},
     {"TEST_OPENVDB"},
 });
@@ -705,8 +706,8 @@ void add_colored_aabb(const openvdb::Vec3f& wmin,
     }
 
     virtual void apply() override {
-        auto points = get_input<ListObject>("points")->getLiterial<zeno::vec3f>();
-        auto radius_ = get_input<ListObject>("radius")->getLiterial<float>();
+        auto points = get_input_ListObject("points")->m_impl->getLiterial<zeno::vec3f>();
+        auto radius_ = get_input_ListObject("radius")->m_impl->getLiterial<float>();
         std::vector<openvdb::Vec3R> positions(points.size());
         for(int i = 0;i < points.size();++i)
             positions[i] = openvdb::Vec3R(points[i][0],points[i][1],points[i][2]);
@@ -763,7 +764,7 @@ void add_colored_aabb(const openvdb::Vec3f& wmin,
 
         int idx = 0;
 
-        // auto point_width = get_input2<float>("point_width");
+        // auto point_width = get_input2_float("point_width");
 
         for(auto leafIter = grid->tree().cbeginLeaf();leafIter;++leafIter) {
             std::cout << "Leaf" << leafIter->origin() << std::endl;
@@ -809,7 +810,7 @@ void add_colored_aabb(const openvdb::Vec3f& wmin,
 
 ZENDEFNODE(ViewVDBPointsWithAttribute,{
     {"points","radius"},
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     {},
     {"TEST_OPENVDB"},
 });
@@ -941,7 +942,7 @@ struct TestDilation : zeno::INode {
     }
 
     virtual void apply() override {
-        auto points = get_input<zeno::ListObject>("points")->getLiterial<zeno::vec3f>();
+        auto points = get_input_ListObject("points")->m_impl->getLiterial<zeno::vec3f>();
         std::vector<openvdb::Vec3R> positions(points.size());
 
         for(size_t i = 0;i < points.size();++i)
@@ -963,7 +964,7 @@ struct TestDilation : zeno::INode {
 
         grid->setName("Points");
 
-        int iter = get_param<int>("dilate");
+        int iter = get_input2_int("dilate");
         openvdb::tools::dilateActiveValues(grid->tree(),iter,openvdb::tools::NearestNeighbors::NN_FACE_EDGE_VERTEX, openvdb::tools::TilePolicy::EXPAND_TILES);        
 
         int nm_leaf_nodes = grid->treePtr()->leafCount();
@@ -981,8 +982,8 @@ struct TestDilation : zeno::INode {
         segs.resize((nm_leaf_nodes + positions.size()) * 12 + nm_active_voxel * 12);
         auto& clrs = prim->add_attr<zeno::vec3f>("clr");
 
-        // auto point_width = get_input<zeno::NumericObject>("point_width")->get<float>();
-        auto point_width = get_param<float>("radius");
+        // auto point_width = get_input2_float("point_width");
+        auto point_width = get_param_float("radius");
         // auto delta = openvdb::Vec3f(point_width);
 
         int idx = 0;
@@ -1000,7 +1001,7 @@ struct TestDilation : zeno::INode {
         auto point_delta = grid->transform().indexToWorld(openvdb::Vec3f{point_width});
 
 
-        int view_active_voxels_only = get_param<int>("view_av_only");
+        int view_active_voxels_only = get_input2_int("view_av_only");
 
         for(auto leafIter = grid->tree().cbeginLeaf();leafIter;++leafIter,++leaf_idx) {
             auto aabb = leafIter->getNodeBoundingBox();
@@ -1063,7 +1064,7 @@ struct TestDilation : zeno::INode {
 
 ZENDEFNODE(TestDilation,{
     {"points"},
-    {gParamType_Primitive, "prim"},
+    {gParamType_Geometry, "prim"},
     {{gParamType_Float,"radius","0.1"},{gParamType_Int,"dilate","1"},{gParamType_Int,"view_av_only","1"}},
     {"TEST_OPENVDB"},
 });

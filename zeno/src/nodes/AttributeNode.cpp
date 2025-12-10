@@ -40,10 +40,10 @@ namespace zeno {
                 attr_value = ZImpl(get_input2<bool>("Boolean Value"));
             }
 
-            if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
+            if (auto spPrim = dynamic_cast<PrimitiveObject*>(input_object.get())) {
                 throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
             }
-            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
+            else if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(input_object.get())) {
                 if (m_attrgroup == "Point") {
                     spGeo->m_impl->create_attr(ATTR_POINT, attr_name, attr_value);
                 }
@@ -57,7 +57,7 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Unsupport Object for creating attribute");
             }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(CreateAttribute,
@@ -104,7 +104,7 @@ namespace zeno {
                     spGeo->m_impl->delete_attr(ATTR_GEO, attrname);
                 }
             }
-            ZImpl(set_output("Output", spGeo));
+            ZImpl(set_output("Output", std::move(spGeo)));
         }
     };
     ZENDEFNODE(DeleteAttribute,
@@ -178,8 +178,8 @@ namespace zeno {
             else if (m_attrgroup == "Geometry") {
                 group = ATTR_GEO;
             }
-            input_object->copy_attr_from(group, from_object.get(), source, target);
-            set_output("Output", input_object);
+            input_object->copy_attr_from(group, from_object, source, target);
+            set_output("Output", std::move(input_object));
         }
     };
     ZENDEFNODE(CopyAttributeFrom,
@@ -215,7 +215,7 @@ namespace zeno {
                 group = ATTR_GEO;
             }
             input_object->copy_attr(group, source, target);
-            set_output("Output", input_object);
+            set_output("Output", std::move(input_object));
         }
     };
     ZENDEFNODE(CopyAttribute,
@@ -267,10 +267,10 @@ namespace zeno {
                 attr_value = ZImpl(get_input2<bool>("Boolean Value"));
             }
 
-            if (std::shared_ptr<PrimitiveObject> spPrim = std::dynamic_pointer_cast<PrimitiveObject>(input_object)) {
+            if (auto spPrim = dynamic_cast<PrimitiveObject*>(input_object.get())) {
                 throw makeError<UnimplError>("Unsupport Legacy Primitive Object for creating attribute");
             }
-            else if (std::shared_ptr<GeometryObject_Adapter> spGeo = std::dynamic_pointer_cast<GeometryObject_Adapter>(input_object)) {
+            else if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(input_object.get())) {
                 if (m_attrgroup == "Point") {
                     if (!spGeo->m_impl->has_point_attr(attr_name)) {
                         throw makeError<UnimplError>("Input object does not have point attribute: " + attr_name);
@@ -293,7 +293,7 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Unsupport Object for creating attribute");
             }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(SetAttribute,

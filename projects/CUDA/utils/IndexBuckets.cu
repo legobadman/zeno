@@ -6,16 +6,18 @@
 #include "zensim/zpc_tpls/fmt/color.h"
 #include "zensim/zpc_tpls/fmt/format.h"
 #include <zeno/types/NumericObject.h>
+#include <zeno/types/IGeometryObject.h>
 
 namespace zeno {
 
 struct MakeZSBuckets : zeno::INode {
     void apply() override {
-        float radius = get_input<NumericObject>("radius")->get<float>();
-        float radiusMin = has_input("radiusMin") ? get_input<NumericObject>("radiusMin")->get<float>() : 0.f;
-        auto &pars = get_input<ZenoParticles>("ZSParticles")->getParticles();
+        float radius = get_input2_float("radius");
+        float radiusMin = has_input("radiusMin") ? get_input2_float("radiusMin") : 0.f;
+        auto zspars = safe_uniqueptr_cast<ZenoParticles>(clone_input("ZSParticles"));
+        auto &pars = zspars->getParticles();
 
-        auto out = std::make_shared<ZenoIndexBuckets>();
+        auto out = std::make_unique<ZenoIndexBuckets>();
         auto &ibs = out->get();
 
         using namespace zs;
@@ -28,10 +30,16 @@ struct MakeZSBuckets : zeno::INode {
     }
 };
 
-ZENDEFNODE(MakeZSBuckets, {{{"ZSParticles"}, {"numeric:float", "radius"}, {"numeric:float", "radiusMin"}},
-                           {"ZSIndexBuckets"},
-                           {},
-                           {"MPM"}});
+ZENDEFNODE(MakeZSBuckets, {
+    {
+        {gParamType_Particles, "ZSParticles"},
+        {gParamType_Float, "radius"},
+        {gParamType_Float, "radiusMin"}
+    },
+    {{gParamType_IndexBuckets, "ZSIndexBuckets"}},
+    {},
+    {"MPM"}
+});
 
 struct MakeZSLBvh : zeno::INode {
     template <typename TileVecT>
@@ -50,10 +58,10 @@ struct MakeZSLBvh : zeno::INode {
         bvh.build(pol, bvs);
     }
     void apply() override {
-        auto pars = get_input<ZenoParticles>("ZSParticles");
-        float radius = get_input<NumericObject>("radius")->get<float>();
+        auto pars = safe_uniqueptr_cast<ZenoParticles>(clone_input("ZSParticles"));
+        float radius = get_input2_float("radius");
 
-        auto out = std::make_shared<ZenoLinearBvh>();
+        auto out = std::make_unique<ZenoLinearBvh>();
         auto &bvh = out->get();
 
         using namespace zs;
@@ -68,6 +76,14 @@ struct MakeZSLBvh : zeno::INode {
     }
 };
 
-ZENDEFNODE(MakeZSLBvh, {{{"ZSParticles"}, {"numeric:float", "radius"}}, {"ZSLBvh"}, {}, {"MPM"}});
+ZENDEFNODE(MakeZSLBvh, {
+    {
+        {gParamType_Particles, "ZSParticles"},
+        {gParamType_Float, "radius"}
+    },
+    {{gParamType_IObject, "ZSLBvh"}},
+    {},
+    {"MPM"}
+});
 
 } // namespace zeno

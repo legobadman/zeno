@@ -314,7 +314,7 @@ static vector<vector<vec3f>> read_vat(const std::string &path) {
 }
 
 struct WriteCustomVAT : INode {
-    std::vector<std::shared_ptr<PrimitiveObject>> prims;
+    std::vector<std::unique_ptr<PrimitiveObject>> prims;
     virtual void apply() override {
         int frameid;
         if (has_input("frameid")) {
@@ -328,10 +328,10 @@ struct WriteCustomVAT : INode {
         if (frameid == frameStart) {
             prims.resize(frameCount);
         }
-        auto raw_prim = get_input_PrimitiveObject("prim");
-        auto prim = std::dynamic_pointer_cast<PrimitiveObject>(raw_prim->clone());
+        auto raw_prim = clone_input_PrimitiveObject("prim");
+        auto prim = safe_uniqueptr_cast<PrimitiveObject>(raw_prim->clone());
         if (frameStart <= frameid && frameid <= frameEnd) {
-            prims[frameid - frameStart] = prim;
+            prims[frameid - frameStart] = safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
         }
         if (frameid == frameEnd) {
             // face overflow check
@@ -344,14 +344,14 @@ struct WriteCustomVAT : INode {
 
                 if (max_face_in_prims > max_face_per_vat) {
                     zeno::log_error("max_face_in_prims: {} > max_face_per_vat: {}", max_face_in_prims, max_face_per_vat);
-                    set_output("prim", raw_prim);
+                    set_output("prim", std::move(raw_prim));
                     return;
                 }
             }
             vector<vector<vec3f>> v;
             v.resize(prims.size());
             for (auto i = 0; i < prims.size(); i++) {
-                auto prim = prims[i];
+                auto& prim = prims[i];
                 v[i].resize(prim->tris.size() * 3);
                 for (auto j = 0; j < prim->tris.size(); j++) {
                     const auto & tri = prim->tris[j];
@@ -367,7 +367,7 @@ struct WriteCustomVAT : INode {
             vector<vector<vec3f>> nrms;
             nrms.resize(prims.size());
             for (auto i = 0; i < prims.size(); i++) {
-                auto prim = prims[i];
+                auto& prim = prims[i];
                 auto& nrm_ref = prim->verts.attr<vec3f>("nrm");
                 nrms[i].resize(prim->tris.size() * 3);
                 for (auto j = 0; j < prim->tris.size(); j++) {
@@ -442,7 +442,7 @@ struct WriteCustomVAT : INode {
             }
             zeno::log_info("VAT: save success!");
         }
-        set_output("prim", raw_prim);
+        set_output("prim", std::move(raw_prim));
     }
 };
 
@@ -477,7 +477,7 @@ struct ReadCustomVAT : INode {
         } else {
             frameid = GetFrameId();
         }
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         if (frameid < v.size()) {
             auto & f = v[frameid];
             prim->verts.resize(f.size());
@@ -512,7 +512,7 @@ struct ReadVATFile : INode {
     virtual void apply() override {
         auto path = get_input2_string("path");
         auto vat = read_vat_texture(zsString2Std(path));
-        auto img = std::make_shared<PrimitiveObject>();
+        auto img = std::make_unique<PrimitiveObject>();
         img->verts.resize(vat.height * 8192);
         for (int64_t i = 0; i < vat.height * 8192; i++) {
             img->verts[i] = vat.data[i];
@@ -521,7 +521,7 @@ struct ReadVATFile : INode {
         img->userData()->set_int("isImage", 1);
         img->userData()->set_int("w", 8192);
         img->userData()->set_int("h", vat.height);
-        set_output("image", img);
+        set_output("image", std::move(img));
     }
 };
 

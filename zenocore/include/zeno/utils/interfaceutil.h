@@ -7,7 +7,7 @@
 namespace zeno
 {
     template<class T>
-    std::vector<T> zeVec2stdVec(const zeno::Vector<T>& rhs) {
+    std::vector<T> zeVec2stdVec(const zeno::ZsVector<T>& rhs) {
         std::vector<T> vec(rhs.size());
         for (int i = 0; i < rhs.size(); i++) {
             vec[i] = rhs[i];
@@ -16,15 +16,21 @@ namespace zeno
     }
 
     template<class T>
-    zeno::Vector<T> stdVec2zeVec(const std::vector<T>& rhs) {
-        zeno::Vector<T> vec(rhs.size());
+    zeno::ZsVector<T> stdVec2zeVec(const std::vector<T>& rhs) {
+        zeno::ZsVector<T> vec(rhs.size());
         for (int i = 0; i < rhs.size(); i++) {
             vec[i] = rhs[i];
         }
         return vec;
     }
 
-    inline std::string zsString2Std(const zeno::String& zs) { return std::string(zs.c_str()); }
+    inline std::string zsString2Std(const zeno::String& zs) { 
+        if (auto ptr = zs.c_str()) {
+            return std::string(ptr);
+        } else {
+            return "";
+        }
+    }
     inline zeno::String stdString2zs(const std::string& ss) { return zeno::String(ss.c_str()); }
 
     inline zeno::vec2f toVec2f(const zeno::Vec2f& rhs) { return zeno::vec2f(rhs.x, rhs.y); }

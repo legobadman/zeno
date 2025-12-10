@@ -15,6 +15,16 @@ namespace zeno {
 struct UserData : IUserData {
     std::map<std::string, zany> m_data;
 
+    UserData() {}
+
+    UserData(const UserData& rhs) {
+        for (auto& [key, dat] : rhs.m_data) {
+            m_data.insert(std::make_pair(key, dat->clone()));
+        }
+    }
+
+    UserData& operator=(const UserData& rhs) = delete;
+
     std::unique_ptr<IUserData> clone() override {
         return std::make_unique<UserData>(*this);
     }
@@ -175,12 +185,20 @@ struct UserData : IUserData {
         set2(skey, toVec4i(vec));
     }
 
-    Vector<String> keys() const override {
-        Vector<String> vec;
+    ZsVector<String> keys() const override {
+        ZsVector<String> vec;
         for (const auto& [key, value] : m_data) {
             vec.push_back(stdString2zs(key));
         }
         return vec;
+    }
+
+    zany get(const String& key) const override {
+        return get(zsString2Std(key), nullptr);
+    }
+
+    void set(const String& key, zany&& val) override {
+        set(zsString2Std(key), std::move(val));
     }
 
     void del(String const& name) override {
@@ -201,11 +219,11 @@ struct UserData : IUserData {
         if (it == m_data.end()) {
             return false;
         }
-        return objectIsLiterial<T>(it->second);
+        return objectIsLiterial<T>(it->second.get());
     }
 
-    std::shared_ptr<IObject> const &get(std::string const &name) const {
-        return safe_at(m_data, name, "user data");
+    zany get(std::string const &name) const {
+        return safe_at(m_data, name, "user data")->clone();
     }
 
     template <class T>
@@ -213,8 +231,8 @@ struct UserData : IUserData {
         return !!dynamic_cast<T *>(get(name).get());
     }
 
-    std::shared_ptr<IObject> get(std::string const &name, std::shared_ptr<IObject> defl) const {
-        return has(name) ? get(name) : defl;
+    zany get(std::string const &name, IObject* defl) const {
+        return has(name) ? get(name)->clone() : defl->clone();
     }
 
     template <class T>
@@ -241,7 +259,8 @@ struct UserData : IUserData {
 
     template <class T>
     T get2(std::string const &name) const {
-        return objectToLiterial<T>(get(name));
+        const auto& tempobj = get(name);
+        return objectToLiterial<T>(tempobj);
     }
 
     template <class T>
@@ -249,13 +268,13 @@ struct UserData : IUserData {
         return has(name) ? getLiterial<T>(name) : defl;
     }
 
-    void set(std::string const &name, std::shared_ptr<IObject> value) {
-        m_data[name] = std::move(value);
+    void set(std::string const &name, zany&& value) {
+        m_data[name] = value->clone();
     }
 
     void merge(const UserData& name) {
         for (const auto& pair : name.m_data) {
-            m_data.insert(pair);
+            m_data.insert(std::make_pair(pair.first, pair.second->clone()));
         }
     }
 
@@ -267,7 +286,7 @@ struct UserData : IUserData {
 
     template <class T>
     void set2(std::string const &name, T &&value) {
-        m_data[name] = objectFromLiterial(std::forward<T>(value));
+        m_data[name] = objectFromLiterial(std::forward<T>(value))->clone();
     }
 
     auto begin() const {

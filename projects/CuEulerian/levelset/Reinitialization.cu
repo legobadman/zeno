@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/LevelSetUtils.tpp"
@@ -15,9 +16,9 @@
 namespace zeno {
 struct ZSRenormalizeSDF : INode {
     void apply() override {
-        auto sdfGrid = get_input<ZenoSparseGrid>("Grid");
-        auto sdfTag = get_input2<std::string>("SDFAttrName");
-        int nIter = get_input2<int>("iterations");
+        auto sdfGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("Grid"));
+        auto sdfTag = zsString2Std(get_input2_string("SDFAttrName"));
+        int nIter = get_input2_int("iterations");
 
         auto &spg = sdfGrid->spg;
         auto block_cnt = spg.numBlocks();
@@ -304,3 +305,4 @@ ZENDEFNODE(ZSRenormalizeSDF, {/* inputs: */
                               {"Eulerian"}});
 
 } // namespace zeno
+#endif

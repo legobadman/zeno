@@ -4,6 +4,13 @@
 namespace zeno {
 
 struct NumericInt : INode {
+
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.iconResPath = ":/icons/node/integer.svg";
+        return ui;
+    }
+
     virtual void apply() override {
         ZImpl(set_primitive_output("value", ZImpl(get_param<int>("value"))));
     }
@@ -237,26 +244,26 @@ ZENDEFNODE(TestVariantInt, {
 struct CreateNumericObj : INode {
     void apply() override {
         std::string type = m_pAdapter->get_input2<std::string>("Numeric Type");
-        std::shared_ptr<NumericObject> spNum;
+        std::unique_ptr<NumericObject> spNum;
         if (type == "Integer") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<int>("Integer Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<int>("Integer Value"));
         }
         else if (type == "Float") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<float>("Float Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<float>("Float Value"));
         }
         else if (type == "Vector2") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<vec2f>("Vector2 Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<vec2f>("Vector2 Value"));
         }
         else if (type == "Vector3") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<vec3f>("Vector3 Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<vec3f>("Vector3 Value"));
         }
         else if (type == "Vector4") {
-            spNum = std::make_shared<NumericObject>(m_pAdapter->get_input2<vec4f>("Vector4 Value"));
+            spNum = std::make_unique<NumericObject>(m_pAdapter->get_input2<vec4f>("Vector4 Value"));
         }
         else {
             throw;
         }
-        set_output("numericobj", spNum);
+        set_output("numericobj", std::move(spNum));
     }
 };
 
@@ -275,6 +282,44 @@ ZENDEFNODE(CreateNumericObj, {
     {},
     {"numeric"}
 });
+
+struct Matrix4 : INode {
+    void apply() override {
+        auto r0 = get_input2_vec4f("r0");
+        auto r1 = get_input2_vec4f("r1");
+        auto r2 = get_input2_vec4f("r2");
+        auto r3 = get_input2_vec4f("r3");
+
+        glm::mat4 m(r0.x, r0.y, r0.z, r0.w,
+            r1.x, r1.y, r1.z, r1.w,
+            r2.x, r2.y, r2.z, r2.w,
+            r3.x, r3.y, r3.z, r3.w);
+
+        m_pAdapter->set_primitive_output("matrix", m);
+    }
+};
+
+ZENDEFNODE(Matrix4, {
+    {
+        {gParamType_Vec4f, "r0", "0,0,0,0"},
+        {gParamType_Vec4f, "r1", "0,0,0,0"},
+        {gParamType_Vec4f, "r2", "0,0,0,0"},
+        {gParamType_Vec4f, "r3", "0,0,0,0"},
+    },
+    {
+        ParamPrimitive("matrix", gParamType_Matrix4, glm::mat4(1), NullControl, zeno::reflect::Any(), "", true)
+        //{gParamType_Matrix4, "matrix"}
+    },
+    {},
+    {"numeric"}
+});
+
+
+struct CreateListOfMatrix4 : INode {
+    void apply() override {
+
+    }
+};
 
 
 struct TestZVariant : INode {

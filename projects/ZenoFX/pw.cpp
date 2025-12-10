@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/PrimitiveObject.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/DictObject.h>
 #include <zeno/extra/GlobalState.h>
@@ -62,7 +63,8 @@ static void vectors_wrangle
 
 struct ParticlesWrangle : zeno::INode {
     virtual void apply() override {
-        auto prim = get_input_PrimitiveObject("prim");
+        auto geom = get_input_Geometry("prim");
+        auto prim = geom->toPrimitiveObject();
         auto code = zsString2Std(get_input2_string("zfxCode"));
 
         // BEGIN张心欣快乐自动加@IND
@@ -86,7 +88,7 @@ struct ParticlesWrangle : zeno::INode {
         });
 
         auto params = has_input("params") ?
-            get_input_DictObject("params") :
+            safe_uniqueptr_cast<DictObject>(clone_input("params")) :
             create_DictObject();
         {
         // BEGIN心欣你也可以把这段代码加到其他wrangle节点去，这样这些wrangle也可以自动有$F$DT$T做参数
@@ -127,9 +129,10 @@ struct ParticlesWrangle : zeno::INode {
         }
         std::vector<float> parvals;
         std::vector<std::pair<std::string, int>> parnames;
-        for (auto const &[key_, par]: params->getLiterial<zeno::NumericValue>()) {
-            auto key = '$' + key_;
-                auto dim = std::visit([&] (auto const &v) {
+        for (auto const &[key_, obj]: params->lut) {
+                auto par = zeno::objectToLiterial<zeno::NumericValue>(obj);
+                auto key = '$' + key_;
+                auto dim = std::visit([&](auto const& v) {
                     using T = std::decay_t<decltype(v)>;
                     if constexpr (std::is_convertible_v<T, zeno::vec3f>) {
                         parvals.push_back(v[0]);
@@ -151,15 +154,15 @@ struct ParticlesWrangle : zeno::INode {
                         return 2;
                     } else {
                         printf("invalid parameter type encountered: `%s`\n",
-                                typeid(T).name());
+                            typeid(T).name());
                         return 0;
                     }
-                }, par);
+                    }, par);
                 dbg_printf("define param: %s dim %d\n", key.c_str(), dim);
                 opts.define_param(key, dim);
-            //auto par = zeno::safe_any_cast<zeno::NumericValue>(obj);
-            
+                //auto par = zeno::safe_any_cast<zeno::NumericValue>(obj);
         }
+        
         //if (1)
         //{
         //    // BEGIN 引用预解析：将其他节点参数引用到此处，可能涉及提前对该参数的计算
@@ -214,15 +217,16 @@ struct ParticlesWrangle : zeno::INode {
         }
         vectors_wrangle(exec, chs);
 
-        set_output("prim", std::move(prim));
+        auto ret = create_GeometryObject(prim.get());
+        set_output("prim", std::move(ret));
     }
 };
 
 ZENDEFNODE(ParticlesWrangle, {
-    {{gParamType_Primitive, "prim", "", zeno::Socket_ReadOnly},
+    {{gParamType_Geometry, "prim", "", zeno::Socket_ReadOnly},
      {gParamType_String, "zfxCode", "", Socket_Primitve, CodeEditor},
      {gParamType_Dict, "params", "", zeno::Socket_ReadOnly}},
-    {{gParamType_Primitive, "prim"}},
+    {{gParamType_Geometry, "prim"}},
     {},
     {"zenofx"},
 });

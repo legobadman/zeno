@@ -12,6 +12,7 @@
 #include <zeno/utils/log.h>
 #include <zeno/utils/parallel_reduce.h>
 #include <zeno/utils/vec.h>
+#include <zeno/utils/interfaceutil.h>
 #include <zeno/zeno.h>
 
 #include "Noise.cuh"
@@ -78,16 +79,16 @@ float prim_reduce(typename ZenoParticles::particles_t &verts, float e, TransOp t
 
 struct ZSParticlePerlinNoise : INode {
     virtual void apply() override {
-        auto zspars = get_input<ZenoParticles>("zspars");
-        auto attrTag = get_input2<std::string>("Attribute");
-        auto opType = get_input2<std::string>("OpType");
-        auto frequency = get_input2<zeno::vec3f>("Frequency");
-        auto offset = get_input2<zeno::vec3f>("Offset");
-        auto roughness = get_input2<float>("Roughness");
-        auto turbulence = get_input2<int>("Turbulence");
-        auto amplitude = get_input2<float>("Amplitude");
-        auto attenuation = get_input2<float>("Attenuation");
-        auto mean = get_input2<zeno::vec3f>("MeanNoise");
+        auto zspars = safe_uniqueptr_cast<ZenoParticles>(clone_input("zspars"));
+        auto attrTag = zsString2Std(get_input2_string("Attribute"));
+        auto opType = zsString2Std(get_input2_string("OpType"));
+        auto frequency = toVec3f(get_input2_vec3f("Frequency"));
+        auto offset = toVec3f(get_input2_vec3f("Offset"));
+        auto roughness = get_input2_float("Roughness");
+        auto turbulence = get_input2_int("Turbulence");
+        auto amplitude = get_input2_float("Amplitude");
+        auto attenuation = get_input2_float("Attenuation");
+        auto mean = toVec3f(get_input2_vec3f("MeanNoise"));
 
         bool isAccumulate = opType == "accumulate" ? true : false;
 
@@ -146,23 +147,23 @@ struct ZSParticlePerlinNoise : INode {
                 }
             });
 
-        set_output("zspars", zspars);
+        set_output("zspars", std::move(zspars));
     }
 };
 
 ZENDEFNODE(ZSParticlePerlinNoise, {/* inputs: */
-                               {"zspars",
-                                {"string", "Attribute", "v"},
+                               {{gParamType_Particles, "zspars"},
+                                {gParamType_String, "Attribute", "v"},
                                 {"enum replace accumulate", "OpType", "accumulate"},
-                                {"vec3f", "Frequency", "1, 1, 1"},
-                                {"vec3f", "Offset", "0, 0, 0"},
-                                {"float", "Roughness", "0.5"},
-                                {"int", "Turbulence", "4"},
-                                {"float", "Amplitude", "1.0"},
-                                {"float", "Attenuation", "1.0"},
-                                {"vec3f", "MeanNoise", "0, 0, 0"}},
+                                {gParamType_Vec3f, "Frequency", "1, 1, 1"},
+                                {gParamType_Vec3f, "Offset", "0, 0, 0"},
+                                {gParamType_Float, "Roughness", "0.5"},
+                                {gParamType_Int, "Turbulence", "4"},
+                                {gParamType_Float, "Amplitude", "1.0"},
+                                {gParamType_Float, "Attenuation", "1.0"},
+                                {gParamType_Vec3f, "MeanNoise", "0, 0, 0"}},
                                /* outputs: */
-                               {"zspars"},
+                               {{gParamType_Particles, "zspars"}},
                                /* params: */
                                {},
                                /* category: */
@@ -183,9 +184,9 @@ struct ZSPrimitiveReduction : zeno::INode {
     };
     virtual void apply() override {
         using namespace zs;
-        auto prim = get_input<ZenoParticles>("ZSParticles");
+        auto prim = safe_uniqueptr_cast<ZenoParticles>(clone_input("ZSParticles"));
         auto &verts = prim->getParticles();
-        auto attrToReduce = get_input2<std::string>("attr");
+        auto attrToReduce = zsString2Std(get_input2_string("attr"));
         if (attrToReduce == "pos")
             attrToReduce = "x";
         if (attrToReduce == "vel")
@@ -194,8 +195,8 @@ struct ZSPrimitiveReduction : zeno::INode {
         if (!verts.hasProperty(attrToReduce))
             throw std::runtime_error(fmt::format("verts do not have property [{}]\n", attrToReduce));
 
-        auto opStr = get_input2<std::string>("op");
-        zeno::NumericValue result;
+        auto opStr = zsString2Std(get_input2_string("op"));
+        float result;
         if (opStr == "avg") {
             result = prim_reduce(verts, 0, pass_on{}, std::plus<float>{}, attrToReduce) / verts.size();
         } else if (opStr == "max") {
@@ -206,19 +207,17 @@ struct ZSPrimitiveReduction : zeno::INode {
             result = prim_reduce(verts, 0, getabs{}, getmax<float>{}, attrToReduce);
         }
 
-        auto out = std::make_shared<zeno::NumericObject>();
-        out->set(result);
-        set_output("result", std::move(out));
+        set_output_float("result", result);
     }
 };
 ZENDEFNODE(ZSPrimitiveReduction, {/* inputs: */ {
-                                      "ZSParticles",
+                                      {gParamType_Particles, "ZSParticles"},
                                       {gParamType_String, "attr", "pos"},
                                       {"enum avg max min absmax", "op", "avg"},
                                   },
                                   /* outputs: */
                                   {
-                                      "result",
+                                      {gParamType_Float, "result"},
                                   },
                                   /* params: */
                                   {},
@@ -227,10 +226,11 @@ ZENDEFNODE(ZSPrimitiveReduction, {/* inputs: */ {
                                       "primitive",
                                   }});
 
+#if 0
 struct ZSGetUserData : zeno::INode {
     virtual void apply() override {
         auto object = get_input<ZenoParticles>("object");
-        auto key = get_param<std::string>("key");
+        auto key = get_input2_string("key");
         auto hasValue = object->zsUserData().has(key);
         auto data = hasValue ? object->zsUserData().get(key) : std::make_shared<DummyObject>();
         set_output2("hasValue", hasValue);
@@ -239,11 +239,13 @@ struct ZSGetUserData : zeno::INode {
 };
 
 ZENDEFNODE(ZSGetUserData, {
-                              {"object"},
-                              {"data", {gParamType_Bool, "hasValue"}},
+                              {{gParamType_Particles, "object"}},
+                              {"data", 
+                                {gParamType_Bool, "hasValue"}},
                               {{gParamType_String, "key", ""}},
                               {"lifecycle"},
                           });
+
 
 struct ColoringSelected : INode {
     using tiles_t = typename ZenoParticles::particles_t;
@@ -291,12 +293,12 @@ struct ColoringSelected : INode {
         auto cudaPol = zs::cuda_exec().sync(true);
 
         auto zsls = get_input<ZenoLevelSet>("ZSLevelSet");
-        bool boundaryWise = get_input2<bool>("boundary_wise");
+        bool boundaryWise = get_input2_bool("boundary_wise");
         auto &vtemp = zsprim->getParticles();
         if (boundaryWise || vtemp.hasProperty("on_boundary"))
             markBoundaryVerts(cudaPol, zsprim.get());
 
-        auto tag = get_input2<std::string>("markTag");
+        auto tag = zsString2Std(get_input2_string("markTag"));
         vtemp.append_channels(cudaPol, std::vector<zs::PropertyTag>{{tag, 1}});
         cudaPol(range(vtemp, tag), [] ZS_LAMBDA(auto &mark) mutable { mark = 0; });
 
@@ -334,8 +336,9 @@ ZENDEFNODE(ColoringSelected, {{
                                   {gParamType_Bool, "boundary_wise", "0"},
                                   {gParamType_String, "markTag", "selected"},
                               },
-                              {"ZSParticles"},
+                              {{gParamType_Particles, "ZSParticles"}},
                               {},
                               {"geom"}});
+#endif
 
 } // namespace zeno

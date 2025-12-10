@@ -29,8 +29,8 @@ namespace zeno
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
         GeometryObject(const GeometryObject& rhs);
-        GeometryObject(std::shared_ptr<PrimitiveObject> spPrim);
-        std::shared_ptr<PrimitiveObject> toPrimitive();
+        GeometryObject(PrimitiveObject* spPrim);
+        std::unique_ptr<PrimitiveObject> toPrimitive();
         GeomTopoType type() const;
         void inheritAttributes(
             GeometryObject* rhs,
@@ -52,6 +52,9 @@ namespace zeno
         bool is_Line() const;
         int get_group_count(GeoAttrGroup grp) const;
         GeoAttrType get_attr_type(GeoAttrGroup grp, std::string const& name);
+#ifdef TRACE_GEOM_ATTR_DATA
+        std::string get_attr_data_id(GeoAttrGroup grp, std::string const& name, std::string channel = "");
+#endif
         std::vector<std::string> get_attr_names(GeoAttrGroup grp);
         void geomTriangulate(zeno::TriangulateInfo& info);
         //standard API
@@ -204,7 +207,7 @@ namespace zeno
         void _temp_code_regist();
         void _temp_code_unregist();
 
-        void initFromPrim(std::shared_ptr<PrimitiveObject> prim);
+        void initFromPrim(PrimitiveObject* prim);
         std::map<std::string, AttributeVector>& get_container(GeoAttrGroup grp);
         const std::map<std::string, AttributeVector>& get_const_container(GeoAttrGroup grp) const;
         size_t get_attr_size(GeoAttrGroup grp) const;
@@ -218,6 +221,8 @@ namespace zeno
         std::map<std::string, AttributeVector> m_face_attrs;
         std::map<std::string, AttributeVector> m_geo_attrs;
         std::map<std::string, AttributeVector> m_vert_attrs;
+
+        AttrVector<vec2f> m_uvs;  //不清楚uvs是否挂在点线面，所以先放在这里中转
 
         const GeomTopoType m_type;
     };

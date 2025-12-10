@@ -85,11 +85,6 @@ namespace zeno
             }, var);
         }
 
-        std::vector<zfxvariant> attrvarVecToZfxVec(AttrVarVec anyval, int size) {
-            std::vector<zfxvariant> ret;
-            return ret;
-        }
-
         std::vector<zfxvariant> extractAttrValue(Any anyval, int size)
         {
             std::vector<zfxvariant> res;
@@ -202,11 +197,11 @@ namespace zeno
             return res;
         }
 
-        AttrVar getInitValueFromVariant(const std::vector<zfxvariant>& zfxvec)
+        AttrVar getInitValueFromVariant(const ZfxVector& zfxvec)
         {
-            assert(!zfxvec.empty());
-            return std::visit([&](auto&& val)->AttrVar {
-                using E = std::decay_t<decltype(val)>;
+            return std::visit([&](auto& vec)->AttrVar {
+                using T = std::decay_t<decltype(vec)>;
+                using E = typename T::value_type;
                 if constexpr (std::is_same_v<E, int>) {
                     return 0;
                 }
@@ -216,11 +211,11 @@ namespace zeno
                 else if constexpr (std::is_same_v<E, std::string>) {
                     return "";
                 }
-                else if constexpr (std::is_same_v<E, glm::vec3>) {
-                    return glm::vec3(0, 0, 0);
-                }
                 else if constexpr (std::is_same_v<E, glm::vec2>) {
                     return glm::vec2(0, 0);
+                }
+                else if constexpr (std::is_same_v<E, glm::vec3>) {
+                    return glm::vec3(0, 0, 0);
                 }
                 else if constexpr (std::is_same_v<E, glm::vec4>) {
                     return glm::vec4(0, 0, 0, 0);
@@ -228,94 +223,96 @@ namespace zeno
                 else {
                     throw makeError<UnimplError>("Unsupport type for converting to AttrVar");
                 }
-            }, zfxvec[0]);
+            }, zfxvec);
         }
 
-        AttrVar convertToAttrVar(const std::vector<zfxvariant>& zfxvec)
+        std::vector<glm::vec3> zvec3toglm(const std::vector<zeno::vec3f>& vec) {
+            std::vector<glm::vec3> _vec;
+            _vec.reserve(vec.size());
+            for (auto vec3 : vec) {
+                _vec.push_back(glm::vec3(vec3[0], vec3[1], vec3[2]));
+            }
+            return _vec;
+        }
+
+        AttrVar convertToAttrVar(const ZfxVector& zfxvec)
         {
-            AttrVar wtf;
-            assert(!zfxvec.empty());
-            return std::visit([&](auto&& val)->AttrVar {
-                using E = std::decay_t<decltype(val)>;
+            return std::visit([&](auto& vec)->AttrVar {
+                using T = std::decay_t<decltype(vec)>;
+                using E = typename T::value_type;
                 if constexpr (std::is_same_v<E, int>) {
-                    if (zfxvec.size() == 1) {
-                        return val;
-                    }
-                    else {
-                        std::vector<int> vec(zfxvec.size());
-                        for (int i = 0; i < zfxvec.size(); i++) {
-                            vec[i] = std::get<int>(zfxvec[i]);
-                        }
-                        return vec;
-                    }
+                    if (vec.size() == 1) return vec[0];
+                    return vec;
                 }
                 else if constexpr (std::is_same_v<E, float>) {
-                    if (zfxvec.size() == 1) {
-                        return val;
-                    }
-                    else {
-                        std::vector<float> vec(zfxvec.size());
-                        for (int i = 0; i < zfxvec.size(); i++) {
-                            vec[i] = std::get<float>(zfxvec[i]);
-                        }
-                        return vec;
-                    }
+                    if (vec.size() == 1) return vec[0];
+                    return vec;
                 }
                 else if constexpr (std::is_same_v<E, std::string>) {
-                    if (zfxvec.size() == 1) {
-                        return val;
+                    if (vec.size() == 1) return vec[0];
+                    return vec;
+                }
+                else if constexpr (std::is_same_v<E, glm::vec2>) {
+                    if (vec.size() == 1) {
+                        return zeno::vec2f(vec[0][0], vec[0][1]);
                     }
                     else {
-                        std::vector<std::string> vec(zfxvec.size());
-                        for (int i = 0; i < zfxvec.size(); i++) {
-                            vec[i] = std::get<std::string>(zfxvec[i]);
+                        std::vector<zeno::vec2f> _vec(vec.size());
+                        for (int i = 0; i < vec.size(); i++) {
+                            glm::vec2 v = vec[i];
+                            _vec[i] = zeno::vec2f(v[0], v[1]);
                         }
-                        return vec;
+                        return _vec;
                     }
                 }
                 else if constexpr (std::is_same_v<E, glm::vec3>) {
-                    if (zfxvec.size() == 1) {
-                        return zeno::vec3f(val[0], val[1], val[2]);
+                    if (vec.size() == 1) {
+                        return zeno::vec3f(vec[0][0], vec[0][1], vec[0][2]);
                     }
                     else {
-                        std::vector<zeno::vec3f> vec(zfxvec.size());
-                        for (int i = 0; i < zfxvec.size(); i++) {
-                            glm::vec3 v = std::get<glm::vec3>(zfxvec[i]);
-                            vec[i] = zeno::vec3f(v[0], v[1], v[2]);
+                        std::vector<zeno::vec3f> _vec(vec.size());
+                        for (int i = 0; i < vec.size(); i++) {
+                            glm::vec3 v = vec[i];
+                            _vec[i] = zeno::vec3f(v[0], v[1], v[2]);
                         }
-                        return vec;
-                    }
-                }
-                else if constexpr (std::is_same_v<E, glm::vec2>) {
-                    if (zfxvec.size() == 1) {
-                        return zeno::vec2f(val[0], val[1]);
-                    }
-                    else {
-                        std::vector<zeno::vec2f> vec(zfxvec.size());
-                        for (int i = 0; i < zfxvec.size(); i++) {
-                            glm::vec2 v = std::get<glm::vec2>(zfxvec[i]);
-                            vec[i] = zeno::vec2f(v[0], v[1]);
-                        }
-                        return vec;
+                        return _vec;
                     }
                 }
                 else if constexpr (std::is_same_v<E, glm::vec4>) {
-                    if (zfxvec.size() == 1) {
-                        return zeno::vec4f(val[0], val[1], val[2], val[3]);
+                    if (vec.size() == 1) {
+                        return zeno::vec4f(vec[0][0], vec[0][1], vec[0][2], vec[0][3]);
                     }
                     else {
-                        std::vector<zeno::vec4f> vec(zfxvec.size());
-                        for (int i = 0; i < zfxvec.size(); i++) {
-                            glm::vec4 v = std::get<glm::vec4>(zfxvec[i]);
-                            vec[i] = zeno::vec4f(v[0], v[1], v[2]);
+                        std::vector<zeno::vec4f> _vec(vec.size());
+                        for (int i = 0; i < vec.size(); i++) {
+                            glm::vec4 v = vec[i];
+                            _vec[i] = zeno::vec4f(v[0], v[1], v[2], v[3]);
                         }
-                        return vec;
+                        return _vec;
                     }
                 }
                 else {
                     throw makeError<UnimplError>("Unsupport type for converting to AttrVar");
                 }
-            }, zfxvec[0]);
+            }, zfxvec);
+        }
+
+        zfxvariant getZfxVarElement(const ZfxVector& vec, int idx) {
+            return std::visit([&](auto&& arg)->zfxvariant {
+                if (idx < 0 || idx >= arg.size()) {
+                    throw makeError<UnimplError>("idx exceeds the range of vec");
+                }
+                return arg[idx];
+                }, vec);
+        }
+
+        ZfxVariable initVarFromZvar(const zfxvariant& var) {
+            return std::visit([&](auto&& val)->ZfxVariable {
+                ZfxVariable res;
+                using E = std::decay_t<decltype(val)>;
+                res.value = std::vector<E>{ val };
+                return res;
+                }, var);
         }
 
         zeno::ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel) {
@@ -323,36 +320,41 @@ namespace zeno
             if (attrname[0] == '@')
                 attr_name = attrname.substr(1);
 
-            auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pContext->spObject);
+            auto spGeom = dynamic_cast<zeno::GeometryObject_Adapter*>(pContext->spObject.get());
+            if (!spGeom)
+                throw makeError<UnimplError>("no geom");
 
             //观察是否内置属性，目前内置属性统统在外部处理，不耦合到GeometryObject的api上
             if (attr_name == "ptnum") {
                 int N = spGeom->npoints();
                 ZfxVariable res;
-                res.value.resize(N);
+                std::vector<int> seq(N);
                 for (int i = 0; i < N; i++) {
-                    res.value[i] = i;
+                    seq[i] = i;
                 }
+                res.value = std::move(seq);
                 res.bAttr = true;
                 return res;
             }
             else if (attr_name == "facenum") {
                 int N = spGeom->nfaces();
                 ZfxVariable res;
-                res.value.resize(N);
+                std::vector<int> seq(N);
                 for (int i = 0; i < N; i++) {
-                    res.value[i] = i;
+                    seq[i] = i;
                 }
+                res.value = std::move(seq);
                 res.bAttr = true;
                 return res;
             }
             else if (attr_name == "vtxnum") {
                 int N = spGeom->nvertices();
                 ZfxVariable res;
-                res.value.resize(N);
+                std::vector<int> seq(N);
                 for (int i = 0; i < N; i++) {
-                    res.value[i] = i;
+                    seq[i] = i;
                 }
+                res.value = std::move(seq);
                 res.bAttr = true;
                 return res;
             }
@@ -388,96 +390,60 @@ namespace zeno
 
             switch (type) {
             case ATTR_INT: {
-                std::vector<int> vec(spGeom->m_impl->get_attrs<int>(pContext->runover, attr_name));
                 ZfxVariable res;
-                res.value.resize(vec.size());
+                res.value = spGeom->m_impl->get_attrs<int>(pContext->runover, attr_name);
                 res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
                 return res;
             }
             case ATTR_FLOAT: {
-                std::vector<float> vec(spGeom->m_impl->get_attrs<float>(pContext->runover, attr_name));
                 ZfxVariable res;
-                res.value.resize(vec.size());
+                res.value = spGeom->m_impl->get_attrs<float>(pContext->runover, attr_name);
                 res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
                 return res;
             }
             case ATTR_STRING: {
-                std::vector<std::string> vec(spGeom->m_impl->get_attrs<std::string>(pContext->runover, attr_name));
                 ZfxVariable res;
-                res.value.resize(vec.size());
+                res.value = spGeom->m_impl->get_attrs<std::string>(pContext->runover, attr_name);
                 res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
                 return res;
             }
             case ATTR_VEC2: {
-                std::vector<glm::vec2> vec(spGeom->m_impl->get_attrs<glm::vec2>(pContext->runover, attr_name));
                 ZfxVariable res;
-                res.value.resize(vec.size());
+                res.value = spGeom->m_impl->get_attrs<glm::vec2>(pContext->runover, attr_name);
                 res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
                 return res;
             }
             case ATTR_VEC3: {
                 if (channel == 'x') {
-                    std::vector<float> vec(spGeom->m_impl->get_attrs<float, 'x'>(pContext->runover, attr_name));
                     ZfxVariable res;
-                    res.value.resize(vec.size());
+                    res.value = spGeom->m_impl->get_attrs<float, 'x'>(pContext->runover, attr_name);
                     res.bAttr = true;
-                    for (int i = 0; i < vec.size(); i++) {
-                        res.value[i] = vec[i];
-                    }
                     return res;
                 }
                 else if (channel == 'y') {
-                    std::vector<float> vec(spGeom->m_impl->get_attrs<float, 'y'>(pContext->runover, attr_name));
                     ZfxVariable res;
-                    res.value.resize(vec.size());
+                    res.value = spGeom->m_impl->get_attrs<float, 'y'>(pContext->runover, attr_name);
                     res.bAttr = true;
-                    for (int i = 0; i < vec.size(); i++) {
-                        res.value[i] = vec[i];
-                    }
                     return res;
                 }
                 else if (channel == 'z') {
-                    std::vector<float> vec(spGeom->m_impl->get_attrs<float, 'z'>(pContext->runover, attr_name));
                     ZfxVariable res;
-                    res.value.resize(vec.size());
+                    res.value = spGeom->m_impl->get_attrs<float, 'z'>(pContext->runover, attr_name);
                     res.bAttr = true;
-                    for (int i = 0; i < vec.size(); i++) {
-                        res.value[i] = vec[i];
-                    }
                     return res;
                 }
                 else {
                     assert(channel == 0);
-                    std::vector<glm::vec3> vec(spGeom->m_impl->get_attrs<glm::vec3>(pContext->runover, attr_name));
                     ZfxVariable res;
-                    res.value.resize(vec.size());
+                    res.value = spGeom->m_impl->get_attrs<glm::vec3>(pContext->runover, attr_name);
                     res.bAttr = true;
-                    for (int i = 0; i < vec.size(); i++) {
-                        res.value[i] = vec[i];
-                    }
                     return res;
                 }
             }
             case ATTR_VEC4: {
-                std::vector<glm::vec4> vec(spGeom->m_impl->get_attrs<glm::vec4>(pContext->runover, attr_name));
                 ZfxVariable res;
-                res.value.resize(vec.size());
+                res.value = spGeom->m_impl->get_attrs<glm::vec4>(pContext->runover, attr_name);
                 res.bAttr = true;
-                for (int i = 0; i < vec.size(); i++) {
-                    res.value[i] = vec[i];
-                }
                 return res;
             }
             default:
@@ -501,7 +467,7 @@ namespace zeno
 
         template<class ElemType>
         static void set_attr_by_zfx(
-                std::shared_ptr<GeometryObject_Adapter> spGeom,
+                GeometryObject_Adapter* spGeom,
                 std::string attrname,
                 std::string channel,
                 const ZfxVariable& var,
@@ -511,116 +477,120 @@ namespace zeno
         {
             GeoAttrGroup group = pContext->runover;
             int N = spGeom->m_impl->get_group_count(group);
-            int nVariable = var.value.size();
+            int nVariable = var.size();
             if (N != nVariable && nVariable != 1) {
                 throw makeError<UnimplError>("size dismatch when assign value to attributes");
             }
 
-            std::vector<ElemType> vec(N);
-            for (int i = 0; i < N; i++) {
-                vec[i] = get_zfxvar<ElemType>(var.value[std::min(i, nVariable - 1)]);
-            }
+            std::visit([&](auto& var_vec) {
+                using T = std::decay_t<decltype(var_vec)>;
+                using E = typename T::value_type;
 
-            bool bAttrExist = spGeom->m_impl->has_attr(group, attrname);
-            if (bAttrExist) {
-                if constexpr (std::is_same_v<ElemType, std::string>) {
-                    int N = spGeom->m_impl->get_group_count(pContext->runover), nVariable = var.value.size();
-                    if (N != nVariable && nVariable != 1) {
-                        throw makeError<UnimplError>("size dismatch when assign value to attributes");
-                    }
-                    std::vector<std::string> vec(N);
-                    for (int i = 0; i < N; i++) {
-                        vec[i] = get_zfxvar<std::string>(var.value[std::min(i, nVariable - 1)]);
-                    }
-                    spGeom->m_impl->foreach_attr_update<std::string>(pContext->runover, attrname, 0, [&](int idx, std::string old_val)->std::string {
-                        return filter[idx] ? vec[idx] : old_val;
-                        });
+                bool bSingleValue = nVariable == 1;
+
+                std::vector<ElemType> vec(nVariable);
+                if constexpr (!std::is_constructible_v<ElemType, E>) {
+                    throw makeError<TypeError>(typeid(ElemType), typeid(E), "get<zfxvariant>");
                 }
                 else {
-                    char chn = 0;
-                    if (!channel.empty()) {
-                        chn = channel[0];
+                    for (int i = 0; i < nVariable; i++) {
+                        vec[i] = (ElemType)var_vec[i];
                     }
-                    int chnidx = chn - 'x';
-                    if (opVal == AddAssign) {
-                        if (chn != 0) {
-                            if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                    //单值？
-                                    return filter[idx] ? (old_val + vec[idx][chnidx]) : old_val;
-                                    });
-                            }
-                        }
-                        else {
-                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                                //单值？
-                                return filter[idx] ? (old_val + vec[idx]) : old_val;
-                                });
-                        }
+                }
 
-                    }
-                    else if (opVal == SubAssign) {
-                        if (chn != 0) {
-                            if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                    return filter[idx] ? (old_val - vec[idx][chnidx]) : old_val;
-                                    });
-                            }
-                        }
-                        else {
-                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                                return filter[idx] ? (old_val - vec[idx]) : old_val;
-                                });
-                        }
-                    }
-                    else if (opVal == MulAssign) {
-                        if (chn != 0) {
-                            if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                    return filter[idx] ? (old_val * vec[idx][chnidx]) : old_val;
-                                    });
-                            }
-                        }
-                        else {
-                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                                return filter[idx] ? (old_val * vec[idx]) : old_val;
-                                });
-                        }
-                    }
-                    else if (opVal == DivAssign) {
-                        if (chn != 0) {
-                            if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                    return filter[idx] ? (old_val / vec[idx][chnidx]) : old_val;
-                                    });
-                            }
-                        }
-                        else {
-                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                                return filter[idx] ? (old_val / vec[idx]) : old_val;
-                                });
-                        }
+                bool bAttrExist = spGeom->m_impl->has_attr(group, attrname);
+                if (bAttrExist) {
+                    if constexpr (std::is_same_v<ElemType, std::string>) {
+                        spGeom->m_impl->foreach_attr_update<std::string>(pContext->runover, attrname, 0, [&](int idx, std::string old_val)->std::string {
+                            return filter[idx] ? vec[bSingleValue ? 0 : idx] : old_val;
+                            });
                     }
                     else {
-                        if (chn != 0) {
-                            if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
-                                spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
-                                    return filter[idx] ? vec[idx][chnidx] : old_val;
+                        char chn = 0;
+                        if (!channel.empty()) {
+                            chn = channel[0];
+                        }
+                        int chnidx = chn - 'x';
+                        if (opVal == AddAssign) {
+                            if (chn != 0) {
+                                if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                                    spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                        //单值？
+                                        return filter[idx] ? (old_val + vec[bSingleValue ? 0 : idx][chnidx]) : old_val;
+                                        });
+                                }
+                            }
+                            else {
+                                spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                                    //单值？
+                                    return filter[idx] ? (old_val + vec[bSingleValue ? 0 : idx]) : old_val;
+                                    });
+                            }
+
+                        }
+                        else if (opVal == SubAssign) {
+                            if (chn != 0) {
+                                if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                                    spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                        return filter[idx] ? (old_val - vec[bSingleValue ? 0 : idx][chnidx]) : old_val;
+                                        });
+                                }
+                            }
+                            else {
+                                spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                                    return filter[idx] ? (old_val - vec[bSingleValue ? 0 : idx]) : old_val;
+                                    });
+                            }
+                        }
+                        else if (opVal == MulAssign) {
+                            if (chn != 0) {
+                                if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                                    spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                        return filter[idx] ? (old_val * vec[bSingleValue ? 0 : idx][chnidx]) : old_val;
+                                        });
+                                }
+                            }
+                            else {
+                                spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                                    return filter[idx] ? (old_val * vec[bSingleValue ? 0 : idx]) : old_val;
+                                    });
+                            }
+                        }
+                        else if (opVal == DivAssign) {
+                            if (chn != 0) {
+                                if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                                    spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                        return filter[idx] ? (old_val / vec[bSingleValue ? 0 : idx][chnidx]) : old_val;
+                                        });
+                                }
+                            }
+                            else {
+                                spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                                    return filter[idx] ? (old_val / vec[bSingleValue ? 0 : idx]) : old_val;
                                     });
                             }
                         }
                         else {
-                            spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
-                                return filter[idx] ? vec[idx] : old_val;
-                                });
+                            if (chn != 0) {
+                                if constexpr (std::is_same_v<ElemType, glm::vec2> || std::is_same_v<ElemType, glm::vec3> || std::is_same_v<ElemType, glm::vec4>) {
+                                    spGeom->m_impl->foreach_attr_update<float>(group, attrname, chn, [&](int idx, float old_val)->float {
+                                        return filter[idx] ? vec[bSingleValue ? 0 : idx][chnidx] : old_val;
+                                        });
+                                }
+                            }
+                            else {
+                                spGeom->m_impl->foreach_attr_update<ElemType>(group, attrname, chn, [&](int idx, ElemType old_val)->ElemType {
+                                    return filter[idx] ? vec[bSingleValue ? 0 : idx] : old_val;
+                                    });
+                            }
                         }
                     }
                 }
-            }
-            else {
-                //创建反正都需要整个创建，暂时不用filter，（或者filter掉的部分元素为0)
-                spGeom->m_impl->create_attr(group, attrname, vec);
-            }
+                else {
+                    //创建反正都需要整个创建，暂时不用filter，（或者filter掉的部分元素为0)
+                    spGeom->m_impl->create_attr(group, attrname, vec);
+                }
+                }, var.value);
         }
 
         void setAttrValue(std::string attrname, const std::string& channel, const ZfxVariable& var, operatorVals opVal, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -631,14 +601,11 @@ namespace zeno
                 attrname = "pos";
             }
 
-            auto spGeom = std::dynamic_pointer_cast<GeometryObject_Adapter>(pContext->spObject);
-
             GeoAttrGroup group = pContext->runover;
-
-
             if (!channel.empty() && channel != "x" && channel != "y" && channel != "z" && channel != "w") {
                 throw makeError<UnimplError>("Unknown channel name");
             }
+            auto spGeom = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
 
             GeoAttrType type = spGeom->m_impl->get_attr_type(group, attrname);
             if (type == ATTR_TYPE_UNKNOWN) {//attrname可能是其他类型,尝试设置为其他类型
@@ -694,30 +661,25 @@ namespace zeno
         {
             if (ref.empty()) {
                 zeno::log_warn("ref empty");
+                return nullptr;
             }
 
             if (zeno::starts_with(ref, "..")) {
                 //子图直接获取参数
                 if (zeno::starts_with(ref, "../")) {
-                    return nullptr; //根本无须确立引用关系，直接取上层子图的参数就可以了
-#if 0
                     auto thisNode = pContext->spNode;
                     auto thisGraph = thisNode->getGraph();
                     paramPath = ref.substr(3);
                     auto paramPathItems = split_str(paramPath, '.');
-                    paramName = paramPathItems.empty() ? paramPath : paramPathItems[0];
-
+                    if (paramPathItems.size() != 1) {
+                        zeno::log_warn("unknow ref");
+                        return nullptr;
+                    }
+                    paramName = paramPathItems[0];
                     //找出参数对应的SubInput节点
                     NodeImpl* pSubInput = thisGraph->getNode(paramName);
                     paramName = "port";
-                    if (paramPathItems.size() == 2) {
-                        paramPath = paramName + "." + paramPathItems[1];
-                    }
-                    else {
-                        paramPath = "port";
-                    }
                     return pSubInput;
-#endif
                 }
                 return nullptr;
             }
@@ -757,7 +719,7 @@ namespace zeno
                 std::string nodename = nodePrmPath.substr(0, idx);
                 paramPath = nodePrmPath.substr(idx + 1);
                 std::string nodeAbsPath = graph_correct_path + '/' + nodename;
-                pNodeImpl = zeno::getSession().mainGraph->getNodeByPath(nodeAbsPath);
+                pNodeImpl = zeno::getSession().mainGraph()->getNodeByPath(nodeAbsPath);
                 if (!pNodeImpl) {
                     //找不到节点，说明可能是当前节点
                     pNodeImpl = pContext->spNode;

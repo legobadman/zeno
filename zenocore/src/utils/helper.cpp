@@ -5,6 +5,8 @@
 #include <zeno/core/Graph.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/ObjectDef.h>
+#include <zeno/funcs/ObjectCodec.h>
+#include <fstream>
 #include <zeno/core/reflectdef.h>
 #include <regex>
 #include <zeno/core/typeinfo.h>
@@ -64,6 +66,9 @@ namespace zeno {
             type == "MaterialObject" ||
             type == "LBvh") {
             return gParamType_IObject;
+        }
+        else if (type == "Material") {
+            return gParamType_Material;
         }
         else if (type == "VDBGrid") {
             return gParamType_IObject;
@@ -243,14 +248,15 @@ namespace zeno {
         case gParamType_Heatmap: return "color";
         case gParamType_AnyNumeric: return "numeric";
         case gParamType_Matrix4: return "Matrix4";
+        case gParamType_Material: return "Material";
         default:
             return "";
         }
     }
 
     bool ListHasPrimObj(zeno::ListObject* list) {
-        for (zany elem : list->get()) {
-            if (std::dynamic_pointer_cast<PrimitiveObject>(elem)) {
+        for (auto elem : list->get()) {
+            if (dynamic_cast<PrimitiveObject*>(elem)) {
                 return false;
             }
         }
@@ -259,7 +265,7 @@ namespace zeno {
 
     bool DictHasPrimObj(zeno::DictObject* dict) {
         for (auto& [key, elem] : dict->get()) {
-            if (std::dynamic_pointer_cast<PrimitiveObject>(elem)) {
+            if (dynamic_cast<PrimitiveObject*>(elem)) {
                 return false;
             }
         }
@@ -291,12 +297,25 @@ namespace zeno {
 
     std::vector<zany> fromZenCache(const std::string& cachedir, int frameid) {
         std::vector<zany> objs;
-        GlobalComm::ViewObjects _objs;
+        std::map<std::string, zany> _objs;
         GlobalComm::fromDisk(cachedir, frameid, _objs);
-        for (auto iter : _objs) {
-            objs.push_back(iter.second);
+        for (const auto& iter : _objs) {
+            objs.push_back(iter.second->clone());
         }
         return objs;
+    }
+
+    void merge_json(nlohmann::json& target, const nlohmann::json& source) {
+        for (auto it = source.begin(); it != source.end(); ++it) {
+            if (target.contains(it.key()) && target[it.key()].is_object() && it.value().is_object()) {
+                // 如果都是 object，递归合并
+                merge_json(target[it.key()], it.value());
+            }
+            else {
+                // 否则直接覆盖
+                target[it.key()] = it.value();
+            }
+        }
     }
 
     ZENO_API bool convertToEditVar(Any& val, const ParamType type) {
@@ -307,16 +326,55 @@ namespace zeno {
         if (anyType == gParamType_PrimVariant || anyType == gParamType_VecEdit)
             return true;
 
-        if (type == gParamType_Int) {
+        if (type == gParamType_AnyNumeric) {
             if (anyType == gParamType_String) {
                 val = PrimVar(zeno::any_cast_to_string(val));
                 return true;
             }
-            else if (anyType == gParamType_Float) {
-                val = (int)any_cast<float>(val);
+            else if (anyType == gParamType_Float || anyType == gParamType_Double) {
+                val = PrimVar(any_cast<float>(val));
+                return true;
             }
-            else if (anyType == gParamType_Double) {
-                val = (int)any_cast<double>(val);
+            else if (anyType == gParamType_Int) {
+                val = PrimVar(any_cast<int>(val));
+                return true;
+            }
+            else if (type == gParamType_Vec2f) {
+                auto vec2 = any_cast<vec2f>(val);
+                val = vecvar{ vec2[0], vec2[1] };
+                return true;
+            } else if (type == gParamType_Vec2i) {
+                auto vec2 = any_cast<vec2i>(val);
+                val = vecvar{ vec2[0], vec2[1] };
+                return true;
+            } else if (type == gParamType_Vec3i) {
+                auto vec3 = any_cast<vec3i>(val);
+                val = vecvar{ vec3[0], vec3[1], vec3[2] };
+                return true;
+            } else if (type == gParamType_Vec3f) {
+                auto vec3 = any_cast<vec3f>(val);
+                val = vecvar{ vec3[0], vec3[1], vec3[2] };
+                return true;
+            } else if (type == gParamType_Vec4i) {
+                auto vec4 = any_cast<vec4i>(val);
+                val = vecvar{ vec4[0], vec4[1], vec4[2], vec4[3] };
+                return true;
+            } else if (type == gParamType_Vec4f) {
+                auto vec4 = any_cast<vec4f>(val);
+                val = vecvar{ vec4[0], vec4[1], vec4[2], vec4[3] };
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else if (type == gParamType_Int) {
+            if (anyType == gParamType_String) {
+                val = PrimVar(zeno::any_cast_to_string(val));
+                return true;
+            }
+            else if (anyType == gParamType_Float || anyType == gParamType_Double) {
+                val = PrimVar((int)any_cast<float>(val));
             }
             else {
                 val = PrimVar(any_cast<int>(val));
@@ -329,10 +387,10 @@ namespace zeno {
                 return true;
             }
             else if (anyType == gParamType_Int) {
-                val = (float)any_cast<int>(val);
+                val = PrimVar((float)any_cast<int>(val));
             }
             else if (anyType == gParamType_Double) {
-                val = (float)any_cast<double>(val);
+                val = PrimVar((float)any_cast<double>(val));
             }
             else {
                 val = PrimVar(any_cast<float>(val));
@@ -413,6 +471,9 @@ namespace zeno {
         }
         case gParamType_Shader: {
             return std::stof(defl); //参考ShaderBinaryMath的in1 in2参数
+        }
+        case gParamType_AnyNumeric: {
+            return std::stof(defl);
         }
         case gParamType_Vec2i:
         case gParamType_Vec3i:
@@ -686,7 +747,7 @@ namespace zeno {
         }
         else if (type == gParamType_AnyNumeric)
         {
-            return Any();
+            return 0.f;
         }
         else if (type == gParamType_Heatmap)
         {
@@ -699,6 +760,14 @@ namespace zeno {
         else if (type == gParamType_StringList)
         {
             return std::vector<std::string>();
+        }
+        else if (type == gParamType_ListOfMat4)
+        {
+            return std::vector<glm::mat4>();
+        }
+        else if (type == gParamType_IntList)
+        {
+            return std::vector<int>();
         }
         else {
             assert(false);
@@ -794,7 +863,7 @@ namespace zeno {
         const std::string& outParam = spOutParam->name;
         const std::string& inNode = spInNode->get_name();
         const std::string& inParam = spInParam->name;
-        edge = { outNode, outParam, "", inNode, inParam, "", spLink->targetParam, false };
+        edge = { outNode, outParam, spLink->fromkey, inNode, inParam, spLink->tokey, spLink->targetParam, false };
         return edge;
     }
 
@@ -920,7 +989,7 @@ namespace zeno {
             }, val);
     }
 
-    formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& node_part)
+    formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& node_part, std::string funcName)
     {
         formula_tip_info ret;
         ret.type = FMLA_NO_MATCH;
@@ -954,7 +1023,16 @@ namespace zeno {
         }
 
         //node_part like `Cube1.position.x`
-        std::vector<std::string> node_items = split_str(node_part, '.');
+        std::vector<std::string> node_items;
+        if (funcName != "ref" && funcName != "refout") {
+            if (zeno::starts_with(node_part, "./")) {
+                auto normalFuncArgPart = node_part.substr(node_part.find_first_of('/') + 1);
+                node_items = split_str(normalFuncArgPart, '.');
+            }
+        } else {
+            node_items = split_str(node_part, '.');
+        }
+
         bool bEndsWithDot = !node_part.empty() && node_part.back() == '.';
         const std::string& node_name = !node_items.empty() ? node_items[0] : "";
         const std::string& param_part = node_items.size() >= 2 ? node_items[1] : "";
@@ -964,12 +1042,11 @@ namespace zeno {
         for (auto& [name, spNode] : nodes) {
             if (name.find(node_name) != std::string::npos) {
                 if (!param_part.empty() || (param_part.empty() && bEndsWithDot)) {
-                    PrimitiveParams params = spNode->get_input_primitive_params();
-                    for (auto param : params) {
-                        if (param.name.find(param_part) != std::string::npos) {
+                    auto& findCondidate = [&ret, &param_part, &param_component, &bEndsWithDot](ParamType paramType, std::string paramName, bool& bExist) {
+                        if (paramName.find(param_part) != std::string::npos) {
                             if (!param_part.empty() && (!param_component.empty() || bEndsWithDot)) {
-                                if (param.name == param_part) {
-                                    switch (param.type) {
+                                if (paramName == param_part) {
+                                    switch (paramType) {
                                     case gParamType_Vec2f:
                                     case gParamType_Vec2i:
                                     {
@@ -984,9 +1061,8 @@ namespace zeno {
                                         }
                                         else
                                         {
-                                            ret.ref_candidates.clear();
-                                            ret.type = FMLA_NO_MATCH;
-                                            return ret;
+                                            bExist = false;
+                                            return;
                                         }
                                         break;
                                     }
@@ -1004,9 +1080,8 @@ namespace zeno {
                                         }
                                         else
                                         {
-                                            ret.ref_candidates.clear();
-                                            ret.type = FMLA_NO_MATCH;
-                                            return ret;
+                                            bExist = false;
+                                            return;
                                         }
                                         break;
                                     }
@@ -1024,31 +1099,75 @@ namespace zeno {
                                         }
                                         else
                                         {
-                                            ret.ref_candidates.clear();
-                                            ret.type = FMLA_NO_MATCH;
-                                            return ret;
+                                            bExist = false;
+                                            return;
                                         }
                                         break;
                                     }
                                     default:
                                     {
-                                        ret.ref_candidates.clear();
-                                        ret.type = FMLA_NO_MATCH;
-                                        return ret;
+                                        bExist = false;
+                                        return;
                                     }
                                     }
                                 }
                                 else {
-                                    ret.ref_candidates.clear();
-                                    ret.type = FMLA_NO_MATCH;
-                                    return ret;
+                                    bExist = false;
+                                    return;
                                 }
                             }
                             else {
                                 ret.type = FMLA_TIP_REFERENCE;
                                 ret.prefix = param_part;
-                                ret.ref_candidates.push_back({ param.name, "" /*icon*/ });
+                                ret.ref_candidates.push_back({ paramName, "" /*icon*/ });
                             }
+                        }
+                    };
+                    bool bExist = true;
+                    if (funcName == "ref") {
+                        PrimitiveParams params = spNode->get_input_primitive_params();
+                        for (auto param : params) {
+                            findCondidate(param.type, param.name, bExist);
+                            if (!bExist) {
+                                ret.ref_candidates.clear();
+                                ret.type = FMLA_NO_MATCH;
+                                return ret;
+                            }
+                        }
+                    }
+                    else if (funcName == "refout") {
+                        PrimitiveParams params = spNode->get_output_primitive_params();
+                        for (auto param : params) {
+                            findCondidate(param.type, param.name, bExist);
+                        }
+                        if (!bExist) {
+                            ret.ref_candidates.clear();
+                            ret.type = FMLA_NO_MATCH;
+                            return ret;
+                        }
+                    }
+                    else {
+                        PrimitiveParams paramsPrim = spNode->get_input_primitive_params();
+                        PrimitiveParams paramsOutPrim = spNode->get_output_primitive_params();
+                        paramsPrim.insert(paramsPrim.end(), paramsOutPrim.begin(), paramsOutPrim.end());
+                        for (auto param : paramsPrim) {
+                            findCondidate(param.type, param.name, bExist);
+                        }
+                        if (!bExist) {
+                            ret.ref_candidates.clear();
+                            ret.type = FMLA_NO_MATCH;
+                            return ret;
+                        }
+                        ObjectParams params = spNode->get_input_object_params();
+                        ObjectParams paramsOut = spNode->get_output_object_params();
+                        params.insert(params.end(), paramsOut.begin(), paramsOut.end());
+                        for (auto param : params) {
+                            findCondidate(param.type, param.name, bExist);
+                        }
+                        if (!bExist) {
+                            ret.ref_candidates.clear();
+                            ret.type = FMLA_NO_MATCH;
+                            return ret;
                         }
                     }
                 }
@@ -1210,6 +1329,9 @@ namespace zeno {
             return true;
         }
         else if (inType == gParamType_AnyNumeric || outType == gParamType_AnyNumeric) {
+            return true;
+        }
+        else if (inType == gParamType_ListOfMat4 || outType == gParamType_Matrix4) {
             return true;
         }
         else if (gParamType_IObject == inType && outGroup == Role_OutputObject) {    //outType的Obj类型可以转IObject
@@ -1552,71 +1674,71 @@ namespace zeno {
     AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval) {
         //可以支持原有的非abi兼容的类型
         size_t code = anyval.type().hash_code();
-        if (code == zeno::reflect::type_info<int>().get_decayed_hash()) {
+        if (code == zeno::reflect::type_info<int>().hash_code()) {
             return zeno::reflect::any_cast<int>(anyval);
         }
-        else if (code == zeno::reflect::type_info<float>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<float>().hash_code()) {
             return zeno::reflect::any_cast<float>(anyval);
         }
         else if (code == gParamType_String) {
             return zeno::any_cast_to_string(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::String>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<zeno::String>().hash_code()) {
             return zsString2Std(zeno::reflect::any_cast<zeno::String>(anyval));
         }
         else if (code == gParamType_Vec3f) {
             return zeno::reflect::any_cast<zeno::vec3f>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vec3f>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<zeno::Vec3f>().hash_code()) {
             return toVec3f(zeno::reflect::any_cast<zeno::Vec3f>(anyval));
         }
         else if (code == gParamType_Vec3i) {
             return zeno::reflect::any_cast<zeno::vec3i>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vec3i>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<zeno::Vec3i>().hash_code()) {
             return toVec3i(zeno::reflect::any_cast<zeno::Vec3i>(anyval));
         }
         else if (code == gParamType_Vec2i) {
             return zeno::reflect::any_cast<zeno::vec2i>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vec2i>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<zeno::Vec2i>().hash_code()) {
             return toVec2i(zeno::reflect::any_cast<zeno::Vec2i>(anyval));
         }
         else if (code == gParamType_Vec2f) {
             return zeno::reflect::any_cast<zeno::vec2f>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vec2f>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<zeno::Vec2f>().hash_code()) {
             return toVec2f(zeno::reflect::any_cast<zeno::Vec2f>(anyval));
         }
         else if (code == gParamType_Vec4i) {
             return zeno::reflect::any_cast<zeno::vec4i>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vec4i>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<zeno::Vec4i>().hash_code()) {
             return toVec4i(zeno::reflect::any_cast<zeno::Vec4i>(anyval));
         }
         else if (code == gParamType_Vec4f) {
             return zeno::reflect::any_cast<zeno::vec4f>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vec4f>().get_decayed_hash()) {
+        else if (code == zeno::reflect::type_info<zeno::Vec4f>().hash_code()) {
             return toVec4f(zeno::reflect::any_cast<zeno::Vec4f>(anyval));
         }
         else if (code == gParamType_IntList) {
             return zeno::reflect::any_cast<std::vector<int>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<int>>().get_decayed_hash()) {
-            return zeVec2stdVec(any_cast<zeno::Vector<int>>(anyval));
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<int>>().hash_code()) {
+            return zeVec2stdVec(any_cast<zeno::ZsVector<int>>(anyval));
         }
         else if (code == gParamType_FloatList) {
             return zeno::reflect::any_cast<std::vector<float>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<float>>().get_decayed_hash()) {
-            return zeVec2stdVec(any_cast<zeno::Vector<float>>(anyval));
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<float>>().hash_code()) {
+            return zeVec2stdVec(any_cast<zeno::ZsVector<float>>(anyval));
         }
         else if (code == gParamType_StringList) {
             return zeno::reflect::any_cast<std::vector<std::string>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::String>>().get_decayed_hash()) {
-            auto zvec = any_cast<zeno::Vector<zeno::String>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::String>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::String>>(anyval);
             std::vector<std::string> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = zsString2Std(zvec[i]);
@@ -1626,8 +1748,8 @@ namespace zeno {
         else if (code == gParamType_Vec3iList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec3i>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3i>>().get_decayed_hash()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec3i>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec3i>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec3i>>(anyval);
             std::vector<zeno::vec3i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec3i(zvec[i]);
@@ -1637,8 +1759,8 @@ namespace zeno {
         else if (code == gParamType_Vec3fList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec3f>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec3f>>().get_decayed_hash()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec3f>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec3f>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec3f>>(anyval);
             std::vector<zeno::vec3f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec3f(zvec[i]);
@@ -1648,8 +1770,8 @@ namespace zeno {
         else if (code == gParamType_Vec2iList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec2i>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2i>>().get_decayed_hash()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec2i>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec2i>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec2i>>(anyval);
             std::vector<zeno::vec2i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec2i(zvec[i]);
@@ -1659,8 +1781,8 @@ namespace zeno {
         else if (code == gParamType_Vec2fList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec2f>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec2f>>().get_decayed_hash()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec2f>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec2f>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec2f>>(anyval);
             std::vector<zeno::vec2f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec2f(zvec[i]);
@@ -1670,8 +1792,8 @@ namespace zeno {
         else if (code == gParamType_Vec4fList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec4f>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4f>>().get_decayed_hash()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec4f>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec4f>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec4f>>(anyval);
             std::vector<zeno::vec4f> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec4f(zvec[i]);
@@ -1681,8 +1803,8 @@ namespace zeno {
         else if (code == gParamType_Vec4iList) {
             return zeno::reflect::any_cast<std::vector<zeno::vec4i>>(anyval);
         }
-        else if (code == zeno::reflect::type_info<zeno::Vector<zeno::Vec4i>>().get_decayed_hash()) {
-            auto zvec = any_cast<zeno::Vector<zeno::Vec4i>>(anyval);
+        else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::Vec4i>>().hash_code()) {
+            auto zvec = any_cast<zeno::ZsVector<zeno::Vec4i>>(anyval);
             std::vector<zeno::vec4i> vec(zvec.size());
             for (int i = 0; i < zvec.size(); i++) {
                 vec[i] = toVec4i(zvec[i]);
@@ -1717,16 +1839,47 @@ namespace zeno {
         mmodify.swap(listobj->m_impl->m_modify);
         mnew.swap(listobj->m_impl->m_new_added);
         mremove.swap(listobj->m_impl->m_new_removed);
-        for (zany obj : listobj->m_impl->get()) {
-            if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
-                update_list_root_key(plist.get(), key);
-            } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
-                update_dict_root_key(pdict.get(), key);
+        for (auto obj : listobj->m_impl->get()) {
+            if (auto plist = dynamic_cast<ListObject*>(obj)) {
+                update_list_root_key(plist, key);
+            } else if (auto pdict = dynamic_cast<DictObject*>(obj)) {
+                update_dict_root_key(pdict, key);
             } else {
                 std::string objkey = zsString2Std(obj->key());
                 auto it = objkey.find_first_of('\\');
                 newkey = it == std::string::npos ? objkey : (key + objkey.substr(it));
                 obj->update_key(stdString2zs(newkey));
+            }
+        }
+    }
+
+    void add_prefix_key(IObject* pObject, const std::string& prefix) {
+        auto objKey = pObject->key();
+        if (!objKey.empty()) {
+            zeno::String newKey = stdString2zs(prefix) + '\\' + objKey;
+            pObject->update_key(newKey);
+        }
+        if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
+            for (auto& elemObj : pList->m_impl->m_objects) {
+                add_prefix_key(elemObj.get(), prefix);
+            }
+            std::set<std::string> modify, removed, added;
+            for (auto id : pList->m_impl->m_new_added) {
+                added.insert(prefix + '\\' + id);
+            }
+            for (auto id : pList->m_impl->m_modify) {
+                modify.insert(prefix + '\\' + id);
+            }
+            for (auto id : pList->m_impl->m_new_removed) {
+                removed.insert(prefix + '\\' + id);
+            }
+            pList->m_impl->m_new_added = added;
+            pList->m_impl->m_modify = modify;
+            pList->m_impl->m_new_removed = removed;
+        }
+        else if (DictObject* pDict = dynamic_cast<DictObject*>(pObject)) {
+            for (auto& [key, spObject] : pDict->lut) {
+                add_prefix_key(spObject.get(), prefix);
             }
         }
     }
@@ -1751,13 +1904,13 @@ namespace zeno {
 
             for (auto& spObject : pList->m_impl->m_objects) {
                 auto newObj = clone_by_key(spObject.get(), prefix);
-                newList->m_impl->m_objects.push_back(newObj);
+                newList->m_impl->m_objects.push_back(std::move(newObj));
             }
             return newList;
         }
         else if (DictObject* pDict = dynamic_cast<DictObject*>(pObject)) {
             //不修改自身
-            zeno::SharedPtr<DictObject> newDict = create_DictObject();
+            auto newDict = create_DictObject();
             //DictObject* newDict = create_DictObject();
             newDict->update_key(stdString2zs(prefix) + '\\' + pDict->key());
 
@@ -1773,7 +1926,7 @@ namespace zeno {
             for (auto& [key, spObject] : pDict->lut) {
                 std::string new_key = prefix + '\\' + key;
                 auto newObj = clone_by_key(spObject.get(), prefix);
-                newDict->lut.insert(std::make_pair(key, newObj));
+                newDict->lut.insert(std::make_pair(key, std::move(newObj)));
             }
             return newDict;
         }
@@ -1788,8 +1941,8 @@ namespace zeno {
     std::vector<std::string> get_obj_paths(IObject* pObject) {
         std::vector<std::string> _paths;
         if (ListObject* lstObj = dynamic_cast<ListObject*>(pObject)) {
-            for (zany spObj : lstObj->get()) {
-                std::vector<std::string> subpaths = get_obj_paths(spObj.get());
+            for (auto spObj : lstObj->get()) {
+                std::vector<std::string> subpaths = get_obj_paths(spObj);
                 for (const std::string& subpath : subpaths) {
                     _paths.push_back(subpath);
                 }
@@ -1800,6 +1953,38 @@ namespace zeno {
             _paths.push_back(zsString2Std(pObject->key()));
             return _paths;
         }
+    }
+
+    zany readObjCache(const std::string& file_path) {
+        if (!std::filesystem::exists(file_path)) {
+            return nullptr;
+        }
+        auto szBuffer = std::filesystem::file_size(file_path);
+        std::vector<char> dat(szBuffer);
+        FILE* fp = fopen(file_path.c_str(), "rb");
+        if (!fp) {
+            log_error("zeno cache file does not exist");
+            return nullptr;
+        }
+        size_t ret = fread(&dat[0], 1, szBuffer, fp);
+        assert(ret == szBuffer);
+        fclose(fp);
+        fp = nullptr;
+        const char* buffer = &dat[0];
+        return decodeObject(buffer, szBuffer);
+    }
+
+    void writeObjCache(const std::string& file_path, IObject* pObject) {
+        std::vector<char> buffer;
+        bool ret = encodeObject(pObject, buffer);
+        if (!ret)
+            throw;
+
+        auto sz = buffer.size();
+        std::ofstream ofs(file_path, std::ios::binary);
+        std::ostreambuf_iterator<char> oit(ofs);
+        std::copy(buffer.begin(), buffer.end(), oit);
+        ofs.close();
     }
 
     void update_dict_root_key(DictObject* dictobj, const std::string& key)
@@ -1826,10 +2011,10 @@ namespace zeno {
         mnew.swap(dictobj->m_new_added);
         mremove.swap(dictobj->m_new_removed);
         for (auto& [str, obj] : dictobj->lut) {
-            if (auto plist = std::dynamic_pointer_cast<ListObject>(obj)) {
-                update_list_root_key(plist.get(), key);
-            } else if (auto pdict = std::dynamic_pointer_cast<DictObject>(obj)) {
-                update_dict_root_key(pdict.get(), key);
+            if (auto plist = dynamic_cast<ListObject*>(obj.get())) {
+                update_list_root_key(plist, key);
+            } else if (auto pdict = dynamic_cast<DictObject*>(obj.get())) {
+                update_dict_root_key(pdict, key);
             } else {
                 std::string objkey = zsString2Std(obj->key());
                 auto it = objkey.find_first_of('\\');
@@ -1841,6 +2026,38 @@ namespace zeno {
 
     bool getParamInfo(const CustomUI& customui, std::vector<ParamPrimitive>& inputs, std::vector<ParamPrimitive>& outputs) {
         return false;
+    }
+
+    zeno::ParamType findParamType(const CustomUI& customui, bool bInput, const std::string& name) {
+        if (bInput) {
+            for (auto param : customui.inputObjs) {
+                if (param.name == name) {
+                    return param.type;
+                }
+            }
+            for (auto tab : customui.inputPrims) {
+                for (auto group : tab.groups) {
+                    for (auto param : group.params) {
+                        if (param.name == name) {
+                            return param.type;
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (auto param : customui.outputPrims) {
+                if (param.name == name) {
+                    return param.type;
+                }
+            }
+            for (auto param : customui.outputObjs) {
+                if (param.name == name) {
+                    return param.type;
+                }
+            }
+        }
+        return Param_Null;
     }
 
     bool isPrimitiveType(const ParamType type) {
@@ -1859,21 +2076,25 @@ namespace zeno {
             type == gParamType_Heatmap ||
             type == gParamType_Curve ||
             type == gParamType_Shader ||
-            type == gParamType_StringList;
-        //TODO: heatmap type.
+            type == gParamType_StringList ||
+            type == gParamType_Matrix4 ||
+            type == gParamType_ListOfMat4 ||
+            type == gParamType_IntList ||
+            type == gParamType_FloatList ||
+            type == gParamType_GLMVec3;
     }
 
     zany strToZAny(std::string const& defl, ParamType const& type) {
         switch (type) {
         case gParamType_String: {
-            zany res = std::make_shared<zeno::StringObject>(defl);
+            zany res = std::make_unique<zeno::StringObject>(defl);
             return res;
         }
         case gParamType_Int: {
-            return std::make_shared<NumericObject>(std::stoi(defl));
+            return std::make_unique<NumericObject>(std::stoi(defl));
         }
         case gParamType_Float: {
-            return std::make_shared<NumericObject>(std::stof(defl));
+            return std::make_unique<NumericObject>(std::stof(defl));
         }
         case gParamType_Vec2i:
         case gParamType_Vec3i:
@@ -1885,13 +2106,13 @@ namespace zeno {
             }
 
             if (gParamType_Vec2i == type) {
-                return std::make_shared<NumericObject>(vec2i(vec[0], vec[1]));
+                return std::make_unique<NumericObject>(vec2i(vec[0], vec[1]));
             }
             else if (gParamType_Vec3i == type) {
-                return std::make_shared<NumericObject>(vec3i(vec[0], vec[1], vec[2]));
+                return std::make_unique<NumericObject>(vec3i(vec[0], vec[1], vec[2]));
             }
             else {
-                return std::make_shared<NumericObject>(vec4i(vec[0], vec[1], vec[2], vec[3]));
+                return std::make_unique<NumericObject>(vec4i(vec[0], vec[1], vec[2], vec[3]));
             }
         }
         case gParamType_Vec2f:
@@ -1904,13 +2125,13 @@ namespace zeno {
             }
 
             if (gParamType_Vec2f == type) {
-                return std::make_shared<NumericObject>(vec2f(vec[0], vec[1]));
+                return std::make_unique<NumericObject>(vec2f(vec[0], vec[1]));
             }
             else if (gParamType_Vec3f == type) {
-                return std::make_shared<NumericObject>(vec3f(vec[0], vec[1], vec[2]));
+                return std::make_unique<NumericObject>(vec3f(vec[0], vec[1], vec[2]));
             }
             else {
-                return std::make_shared<NumericObject>(vec4f(vec[0], vec[1], vec[2], vec[3]));
+                return std::make_unique<NumericObject>(vec4f(vec[0], vec[1], vec[2], vec[3]));
             }
         }
         default:

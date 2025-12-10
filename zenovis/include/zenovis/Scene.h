@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include <zeno/core/IObject.h>
-#include <zeno/core/ObjectManager.h>
+#include <zeno/core/data.h>
 #include <zeno/utils/disable_copy.h>
 #include <zeno/utils/vec.h>
 #include <map>
@@ -18,7 +18,6 @@ struct Camera;
 struct DrawOptions;
 struct ShaderManager;
 struct GraphicsManager;
-struct ObjectsManager;
 struct RenderManager;
 
 enum class PICK_MODE {
@@ -36,16 +35,12 @@ struct Scene : zeno::disable_copy {
     std::unique_ptr<Camera> camera;
     std::unique_ptr<DrawOptions> drawOptions;
     std::unique_ptr<ShaderManager> shaderMan;
-    std::unique_ptr<ObjectsManager> objectsMan;
     std::unique_ptr<RenderManager> renderMan;
 
     Scene();
     ~Scene();
 
     void draw(bool record);
-    void load_objects(const zeno::RenderObjsInfo& objs);
-    void load_objects(const std::vector<zeno::render_update_info>& infos);
-    void load_object(zeno::render_update_info info);
     void reload(const zeno::render_reload_info& info);
     void cleanUpScene();
     void cleanupView();
@@ -57,14 +52,10 @@ struct Scene : zeno::disable_copy {
     static void loadGLAPI(void *procaddr);
     void* getOptixImg(int &w, int &h);
 
-    //渲染前展平所有对象
-    void convertListObjsRender(std::shared_ptr<zeno::IObject>const& objToBeConvert,     //展平对象并构建索引(如果是list中的元素)
-        std::map<std::string, std::shared_ptr<zeno::IObject>>& allListItems,
-        std::set<std::string>& allListItemsKeys, bool convertKeyOnly = false, std::string listNamePath = "", std::string listIdxPath = "");
-    void convertListObjs(zeno::zany objToBeConvert,           //仅展平对象
-        std::vector<std::pair<std::string, zeno::zany>>& allListItems);
-    void convertListObjs(zeno::zany objToBeConvert,           //仅展平对象
-        std::map<std::string, zeno::zany>& allListItems);
+    void convertListObjs(zeno::IObject* objToBeConvert,           //仅展平对象
+        std::vector<std::pair<std::string, zeno::IObject*>>& allListItems);
+    void convertListObjs(zeno::IObject* objToBeConvert,           //仅展平对象
+        std::map<std::string, zeno::IObject*>& allListItems);
     void set_select_mode(PICK_MODE _select_mode);
     PICK_MODE get_select_mode();
 private:

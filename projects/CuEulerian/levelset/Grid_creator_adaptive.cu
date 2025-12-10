@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/LevelSetUtils.tpp"
@@ -20,11 +21,11 @@ namespace zeno {
 
 struct ZSMakeAdaptiveGrid : INode {
   void apply() override {
-    auto attr = get_input2<std::string>("Attribute");
-    auto dx = get_input2<float>("Dx");
-    auto bg = get_input2<float>("background");
-    auto type = get_input2<std::string>("type");
-    auto structure = get_input2<std::string>("structure");
+    auto attr = zsString2Std(get_input2_string("Attribute"));
+    auto dx = get_input2_float("Dx");
+    auto bg = get_input2_float("background");
+    auto type = zsString2Std(get_input2_string("type"));
+    auto structure = zsString2Std(get_input2_string("structure"));
 
     auto zsAG = std::make_shared<ZenoAdaptiveGrid>();
 
@@ -35,7 +36,7 @@ struct ZSMakeAdaptiveGrid : INode {
       nc = 3;
 
     using namespace zs;
-    if (auto str = get_input2<std::string>("category"); str == "vdb") {
+    if (auto str = zsString2Std(get_input2_string("category")); str == "vdb") {
       auto &ag = zsAG->beginVdbGrid();
 
       ag.level(dim_c<0>) =
@@ -94,10 +95,10 @@ ZENDEFNODE(ZSMakeAdaptiveGrid, {/* inputs: */
 
 struct ZSAdaptiveGridToVDB : INode {
   void apply() override {
-    auto zs_grid = get_input<ZenoAdaptiveGrid>("AdaptiveGrid");
-    auto attr = get_input2<std::string>("Attribute");
-    auto VDBGridClass = get_input2<std::string>("VDBGridClass");
-    auto VDBGridName = get_input2<std::string>("VDBGridName");
+    auto zs_grid = safe_uniqueptr_cast<ZenoAdaptiveGrid>(clone_input("AdaptiveGrid"));
+    auto attr = zsString2Std(get_input2_string("Attribute"));
+    auto VDBGridClass = zsString2Std(get_input2_string("VDBGridClass"));
+    auto VDBGridName = zsString2Std(get_input2_string("VDBGridName"));
 
     if (attr.empty())
       attr = "sdf";
@@ -186,13 +187,13 @@ ZENDEFNODE(ZSAdaptiveGridToVDB,
 
 struct ZSVDBToAdaptiveGrid : INode {
   void apply() override {
-    auto vdb = get_input<VDBGrid>("VDB");
-    auto attr = get_input2<std::string>("Attribute");
+    auto vdb = safe_uniqueptr_cast<VDBGrid>(clone_input("VDB"));
+    auto attr = zsString2Std(get_input2_string("Attribute"));
     if (attr.empty())
       attr = "sdf";
 
     if (has_input("AdaptiveGrid")) {
-      auto zs_grid = get_input<ZenoAdaptiveGrid>("AdaptiveGrid");
+      auto zs_grid = safe_uniqueptr_cast<ZenoAdaptiveGrid>(clone_input("AdaptiveGrid"));
       ZenoAdaptiveGrid::vdb_t &ag = zs_grid->getVdbGrid();
 
       int num_ch;
@@ -271,7 +272,7 @@ struct ValidateAdaptiveGrid : INode {
     else
       throw std::runtime_error("no sdf input detected.");
 
-    auto points = get_input<PrimitiveObject>("points");
+    auto points = get_input_Geometry("points")->toPrimitiveObject();
     const auto &pos = points->verts.values;
 
     auto pol = omp_exec();
@@ -313,3 +314,4 @@ ZENDEFNODE(ValidateAdaptiveGrid,
            {{"sdf", "points"}, {"sdf"}, {}, {"Eulerian"}});
 
 } // namespace zeno
+#endif

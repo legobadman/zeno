@@ -72,13 +72,13 @@ struct ZSLevelSetBinaryOperator : INode {
         using namespace zs;
 
         // this could possibly be the same staggered velocity field too
-        auto zsfielda = get_input<ZenoLevelSet>("ZSFieldA");
+        auto zsfielda = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSFieldA"));
         auto &fielda = zsfielda->getBasicLevelSet()._ls;
-        auto zsfieldb = get_input<ZenoLevelSet>("ZSFieldB");
+        auto zsfieldb = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSFieldB"));
         auto &fieldb = zsfieldb->getBasicLevelSet()._ls;
 
-        float a = get_input2<float>("a");
-        float b = get_input2<float>("b");
+        float a = get_input2_float("a");
+        float b = get_input2_float("b");
         auto opStr = get_param<std::string>("transfer");
 
         using Op = variant<plus<void>, minus<void>, multiplies<void>, divides<void>>;
@@ -200,11 +200,11 @@ struct ResampleZSLevelSet : INode {
         using namespace zs;
 
         // this could possibly be the same staggered velocity field too
-        auto zsfield = get_input<ZenoLevelSet>("ZSField");
+        auto zsfield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSField"));
         auto &field = zsfield->getBasicLevelSet()._ls;
-        auto refZsField = get_input<ZenoLevelSet>("RefZSField");
+        auto refZsField = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("RefZSField"));
         const auto &refField = refZsField->getBasicLevelSet()._ls;
-        auto propertyName = get_input2<std::string>("property");
+        auto propertyName = zsString2Std(get_input2_string("property"));
 
         match(
             [this, propertyName](auto &lsPtr, const auto &refLsPtr)
@@ -284,12 +284,12 @@ struct AdvectZSLevelSet : INode {
         using namespace zs;
 
         // this could possibly be the same staggered velocity field too
-        auto zsfield = get_input<ZenoLevelSet>("ZSField");
+        auto zsfield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSField"));
         auto &field = zsfield->getBasicLevelSet()._ls;
 
-        auto velZsField = get_input<ZenoLevelSet>("ZSVelField");
+        auto velZsField = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSVelField"));
         const auto &velField = velZsField->getBasicLevelSet()._ls;
-        auto dt = get_input2<float>("dt");
+        auto dt = get_input2_float("dt");
 
         auto nvoxels = std::make_shared<NumericObject>();
 
@@ -378,15 +378,15 @@ struct ClampZSLevelSet : INode {
         using namespace zs;
 
         // this could possibly be the same staggered velocity field too
-        auto zsfield = get_input<ZenoLevelSet>("ZSField");
+        auto zsfield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSField"));
         auto &field = zsfield->getBasicLevelSet()._ls;
 
-        auto zsreffield = get_input<ZenoLevelSet>("RefZSField");
+        auto zsreffield = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("RefZSField"));
         auto &reffield = zsreffield->getBasicLevelSet()._ls;
 
-        auto velZsField = get_input<ZenoLevelSet>("ZSVelField");
+        auto velZsField = safe_uniqueptr_cast<ZenoLevelSet>(clone_input("ZSVelField"));
         const auto &velField = velZsField->getBasicLevelSet()._ls;
-        auto dt = get_input2<float>("dt");
+        auto dt = get_input2_float("dt");
 
         match(
             [this, dt](auto &lsPtr, auto &refLsPtr, const auto &velLsPtr)

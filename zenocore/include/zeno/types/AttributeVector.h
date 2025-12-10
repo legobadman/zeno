@@ -20,12 +20,26 @@ namespace zeno {
         ZENO_API size_t size() const;
         ZENO_API void set(const AttrVar& val_or_vec, bool sigval_init = true);
         ZENO_API GeoAttrType type() const;
-        ZENO_API AttrVarVec get();
         ZENO_API AttrValue front() const;
         ZENO_API AttrValue getelem(size_t idx) const;
         ZENO_API void copySlice(const AttributeVector& rhs, int fromIndex);
 
-        void to_prim_attr(std::shared_ptr<PrimitiveObject> spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {
+#ifdef TRACE_GEOM_ATTR_DATA
+        void set_xcomp_id(const std::string& id);
+        void set_ycomp_id(const std::string& id);
+        void set_zcomp_id(const std::string& id);
+        void set_self_id(const std::string& id);
+        std::string xcomp_id();
+        std::string ycomp_id();
+        std::string zcomp_id();
+        std::string wcomp_id();
+        std::string self_id();
+#endif
+
+        void to_prim_attr(PrimitiveObject* spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {
+            if (attr_name.empty()) {
+                return;
+            }
             if (self) {
                 auto& valvar = self->value();
 
@@ -268,7 +282,7 @@ namespace zeno {
                     }, spComp->value());
                 }
                 else {
-                    AttrVarVec& attrval = self->value();
+                    AttrVarOrVec& attrval = self->value();
                     return self->get<T>(idx);
                 }
             }
@@ -277,33 +291,24 @@ namespace zeno {
         template<class T, char CHANNEL = 0>
         void set_elem(size_t idx, T val) {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
                 x_comp->set(idx, val[0]);
                 y_comp->set(idx, val[1]);
             }
             else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
                 x_comp->set(idx, val[0]);
                 y_comp->set(idx, val[1]);
                 z_comp->set(idx, val[2]);
             }
             else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
-                if (w_comp.use_count() > 1)
-                    w_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
+                w_comp = AttrColumn::copy_on_write(w_comp);
                 x_comp->set(idx, val[0]);
                 y_comp->set(idx, val[1]);
                 z_comp->set(idx, val[2]);
@@ -312,27 +317,19 @@ namespace zeno {
             else {
                 if constexpr (CHANNEL > 0) {
                     if constexpr (CHANNEL == 'x') {
-                        if (x_comp.use_count() > 1) {
-                            x_comp = std::make_shared<AttrColumn>(*x_comp);
-                        }
+                        x_comp = AttrColumn::copy_on_write(x_comp);
                         x_comp->set(idx, val);
                     }
                     else if constexpr (CHANNEL == 'y') {
-                        if (y_comp.use_count() > 1) {
-                            y_comp = std::make_shared<AttrColumn>(*y_comp);
-                        }
+                        y_comp = AttrColumn::copy_on_write(y_comp);
                         y_comp->set(idx, val);
                     }
                     else if constexpr (CHANNEL == 'z') {
-                        if (z_comp.use_count() > 1) {
-                            z_comp = std::make_shared<AttrColumn>(*z_comp);
-                        }
+                        z_comp = AttrColumn::copy_on_write(z_comp);
                         z_comp->set(idx, val);
                     }
                     else if constexpr (CHANNEL == 'w') {
-                        if (w_comp.use_count() > 1) {
-                            w_comp = std::make_shared<AttrColumn>(*w_comp);
-                        }
+                        w_comp = AttrColumn::copy_on_write(w_comp);
                         w_comp->set(idx, val);
                     }
                     else {
@@ -340,9 +337,7 @@ namespace zeno {
                     }
                 }
                 else {
-                    if (self.use_count() > 1) {
-                        self = std::make_shared<AttrColumn>(*self);
-                    }
+                    self = AttrColumn::copy_on_write(self);
                     self->set(idx, val);
                 }
             }
@@ -351,31 +346,22 @@ namespace zeno {
         template<class T, char CHANNEL = 0>
         void insert_elem(size_t idx, T val) {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
                 x_comp->insert(idx, val[0]);
                 y_comp->insert(idx, val[1]);
             } else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
                 x_comp->insert(idx, val[0]);
                 y_comp->insert(idx, val[1]);
                 z_comp->insert(idx, val[2]);
             } else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
-                if (w_comp.use_count() > 1)
-                    w_comp = std::make_shared<AttrColumn>(*w_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
+                w_comp = AttrColumn::copy_on_write(w_comp);
                 x_comp->insert(idx, val[0]);
                 y_comp->insert(idx, val[1]);
                 z_comp->insert(idx, val[2]);
@@ -383,32 +369,22 @@ namespace zeno {
             } else {
                 if constexpr (CHANNEL > 0) {
                     if constexpr (CHANNEL == 'x') {
-                        if (x_comp.use_count() > 1) {
-                            x_comp = std::make_shared<AttrColumn>(*x_comp);
-                        }
+                        x_comp = AttrColumn::copy_on_write(x_comp);
                         x_comp->insert(idx, val);
                     } else if constexpr (CHANNEL == 'y') {
-                        if (y_comp.use_count() > 1) {
-                            y_comp = std::make_shared<AttrColumn>(*y_comp);
-                        }
+                        y_comp = AttrColumn::copy_on_write(y_comp);
                         y_comp->insert(idx, val);
                     } else if constexpr (CHANNEL == 'z') {
-                        if (z_comp.use_count() > 1) {
-                            z_comp = std::make_shared<AttrColumn>(*z_comp);
-                        }
+                        z_comp = AttrColumn::copy_on_write(z_comp);
                         z_comp->insert(idx, val);
                     } else if constexpr (CHANNEL == 'w') {
-                        if (w_comp.use_count() > 1) {
-                            w_comp = std::make_shared<AttrColumn>(*w_comp);
-                        }
+                        w_comp = AttrColumn::copy_on_write(w_comp);
                         w_comp->insert(idx, val);
                     } else {
                         throw;
                     }
                 } else {
-                    if (self.use_count() > 1) {
-                        self = std::make_shared<AttrColumn>(*self);
-                    }
+                    self = AttrColumn::copy_on_write(self);
                     self->insert(idx, val);
                 }
             }
@@ -418,33 +394,24 @@ namespace zeno {
         template<class T, char CHANNEL = 0>
         void append(T val) {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2> ) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
                 x_comp->append(val[0]);
                 y_comp->append(val[1]);
             }
             else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
                 x_comp->append(val[0]);
                 y_comp->append(val[1]);
                 z_comp->append(val[2]);
             }
             else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
-                if (w_comp.use_count() > 1)
-                    w_comp = std::make_shared<AttrColumn>(*w_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
+                w_comp = AttrColumn::copy_on_write(w_comp);
                 x_comp->append(val[0]);
                 y_comp->append(val[1]);
                 z_comp->append(val[2]);
@@ -453,32 +420,22 @@ namespace zeno {
             else {
                 if constexpr (CHANNEL > 0) {
                     if constexpr (CHANNEL == 'x') {
-                        if (x_comp.use_count() > 1) {
-                            x_comp = std::make_shared<AttrColumn>(*x_comp);
-                        }
+                        x_comp = AttrColumn::copy_on_write(x_comp);
                         x_comp->append(val);
                     } else if constexpr (CHANNEL == 'y') {
-                        if (y_comp.use_count() > 1) {
-                            y_comp = std::make_shared<AttrColumn>(*y_comp);
-                        }
+                        y_comp = AttrColumn::copy_on_write(y_comp);
                         y_comp->append(val);
                     } else if constexpr (CHANNEL == 'z') {
-                        if (z_comp.use_count() > 1) {
-                            z_comp = std::make_shared<AttrColumn>(*z_comp);
-                        }
+                        z_comp = AttrColumn::copy_on_write(z_comp);
                         z_comp->append(val);
                     } else if constexpr (CHANNEL == 'w') {
-                        if (w_comp.use_count() > 1) {
-                            w_comp = std::make_shared<AttrColumn>(*w_comp);
-                        }
+                        w_comp = AttrColumn::copy_on_write(w_comp);
                         w_comp->append(val);
                     } else {
                         throw;
                     }
                 } else {
-                    if (self.use_count() > 1) {
-                        self = std::make_shared<AttrColumn>(*self);
-                    }
+                    self = AttrColumn::copy_on_write(self);
                     self->append(val);
                 }
             }
@@ -488,31 +445,22 @@ namespace zeno {
         template<class T, char CHANNEL = 0>
         void remove_elem(size_t idx) {
             if constexpr (std::is_same_v<T, vec2f> || std::is_same_v<T, glm::vec2>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
                 x_comp->remove(idx);
                 y_comp->remove(idx);
             } else if constexpr (std::is_same_v<T, vec3f> || std::is_same_v<T, glm::vec3>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
                 x_comp->remove(idx);
                 y_comp->remove(idx);
                 z_comp->remove(idx);
             } else if constexpr (std::is_same_v<T, vec4f> || std::is_same_v<T, glm::vec4>) {
-                if (x_comp.use_count() > 1)
-                    x_comp = std::make_shared<AttrColumn>(*x_comp);
-                if (y_comp.use_count() > 1)
-                    y_comp = std::make_shared<AttrColumn>(*y_comp);
-                if (z_comp.use_count() > 1)
-                    z_comp = std::make_shared<AttrColumn>(*z_comp);
-                if (w_comp.use_count() > 1)
-                    w_comp = std::make_shared<AttrColumn>(*w_comp);
+                x_comp = AttrColumn::copy_on_write(x_comp);
+                y_comp = AttrColumn::copy_on_write(y_comp);
+                z_comp = AttrColumn::copy_on_write(z_comp);
+                w_comp = AttrColumn::copy_on_write(w_comp);
                 x_comp->remove(idx);
                 y_comp->remove(idx);
                 z_comp->remove(idx);
@@ -520,36 +468,26 @@ namespace zeno {
             } else {
                 if constexpr (CHANNEL > 0) {
                     if constexpr (CHANNEL == 'x') {
-                        if (x_comp.use_count() > 1) {
-                            x_comp = std::make_shared<AttrColumn>(*x_comp); 
-                        }
+                        x_comp = AttrColumn::copy_on_write(x_comp);
                         x_comp->remove(idx);
                     }
                     else if constexpr (CHANNEL == 'y') {
-                        if (y_comp.use_count() > 1) {
-                            y_comp = std::make_shared<AttrColumn>(*y_comp);
-                        }
+                        y_comp = AttrColumn::copy_on_write(y_comp);
                         y_comp->remove(idx);
                     }
                     else if constexpr (CHANNEL == 'z') {
-                        if (z_comp.use_count() > 1) {
-                            z_comp = std::make_shared<AttrColumn>(*z_comp);
-                        }
+                        z_comp = AttrColumn::copy_on_write(z_comp);
                         z_comp->remove(idx);
                     }
                     else if constexpr (CHANNEL == 'w') {
-                        if (w_comp.use_count() > 1) {
-                            w_comp = std::make_shared<AttrColumn>(*w_comp);
-                        }
+                        w_comp = AttrColumn::copy_on_write(w_comp);
                         w_comp->remove(idx);
                     }
                     else {
                         throw;
                     }
                 } else {
-                    if (self.use_count() > 1) {
-                        self = std::make_shared<AttrColumn>(*self);
-                    }
+                    self = AttrColumn::copy_on_write(self);
                     self->remove(idx);
                 }
             }
@@ -561,34 +499,26 @@ namespace zeno {
             if (channel > 0) {
                 std::shared_ptr<AttrColumn> spComp;
                 if (channel == 'x') {
-                    if (x_comp.use_count() > 1) {
-                        x_comp = std::make_shared<AttrColumn>(*x_comp);
-                    }
+                    x_comp = AttrColumn::copy_on_write(x_comp);
                     spComp = x_comp;
                 }
                 else if (channel == 'y') {
-                    if (y_comp.use_count() > 1) {
-                        y_comp = std::make_shared<AttrColumn>(*y_comp);
-                    }
+                    y_comp = AttrColumn::copy_on_write(y_comp);
                     spComp = y_comp;
                 }
                 else if (channel == 'z') {
-                    if (z_comp.use_count() > 1) {
-                        z_comp = std::make_shared<AttrColumn>(*z_comp);
-                    }
+                    z_comp = AttrColumn::copy_on_write(z_comp);
                     spComp = z_comp;
                 }
                 else if (channel == 'w') {
-                    if (w_comp.use_count() > 1) {
-                        w_comp = std::make_shared<AttrColumn>(*w_comp);
-                    }
+                    w_comp = AttrColumn::copy_on_write(w_comp);
                     spComp = w_comp;
                 }
                 else {
                     throw makeError<UnimplError>("Unknown channel");
                 }
 
-                AttrVarVec& var = spComp->value();
+                AttrVarOrVec& var = spComp->value();
                 std::visit([&](auto& vec) {
                     using E = std::decay_t<decltype(vec)>;
                     if constexpr (std::is_same_v<std::vector<T>, E>) {
@@ -611,12 +541,10 @@ namespace zeno {
             }
             else {
                 if constexpr (std::is_same_v<T, vec2f>) {
-                    if (x_comp.use_count() > 1)
-                        x_comp = std::make_shared<AttrColumn>(*x_comp);
-                    if (y_comp.use_count() > 1)
-                        y_comp = std::make_shared<AttrColumn>(*y_comp);
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
+                    x_comp = AttrColumn::copy_on_write(x_comp);
+                    y_comp = AttrColumn::copy_on_write(y_comp);
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     if (!pXVec || !pYVec)
@@ -640,16 +568,13 @@ namespace zeno {
                     }
                 }
                 else if constexpr (std::is_same_v<T, vec3f>) {
-                    if (x_comp.use_count() > 1)
-                        x_comp = std::make_shared<AttrColumn>(*x_comp);
-                    if (y_comp.use_count() > 1)
-                        y_comp = std::make_shared<AttrColumn>(*y_comp);
-                    if (z_comp.use_count() > 1)
-                        z_comp = std::make_shared<AttrColumn>(*z_comp);
+                    x_comp = AttrColumn::copy_on_write(x_comp);
+                    y_comp = AttrColumn::copy_on_write(y_comp);
+                    z_comp = AttrColumn::copy_on_write(z_comp);
 
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
-                    AttrVarVec& zvar = z_comp->value();
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
+                    AttrVarOrVec& zvar = z_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     auto pZVec = std::get_if<std::vector<float>>(&zvar);
@@ -682,12 +607,10 @@ namespace zeno {
 
                 }
                 else if constexpr (std::is_same_v<T, glm::vec2>) {
-                    if (x_comp.use_count() > 1)
-                        x_comp = std::make_shared<AttrColumn>(*x_comp);
-                    if (y_comp.use_count() > 1)
-                        y_comp = std::make_shared<AttrColumn>(*y_comp);
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
+                    x_comp = AttrColumn::copy_on_write(x_comp);
+                    y_comp = AttrColumn::copy_on_write(y_comp);
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     if (!pXVec || !pYVec)
@@ -711,16 +634,13 @@ namespace zeno {
                     }
                 }
                 else if constexpr (std::is_same_v<T, glm::vec3>) {
-                    if (x_comp.use_count() > 1)
-                        x_comp = std::make_shared<AttrColumn>(*x_comp);
-                    if (y_comp.use_count() > 1)
-                        y_comp = std::make_shared<AttrColumn>(*y_comp);
-                    if (z_comp.use_count() > 1)
-                        z_comp = std::make_shared<AttrColumn>(*z_comp);
+                    x_comp = AttrColumn::copy_on_write(x_comp);
+                    y_comp = AttrColumn::copy_on_write(y_comp);
+                    z_comp = AttrColumn::copy_on_write(z_comp);
 
-                    AttrVarVec& xvar = x_comp->value();
-                    AttrVarVec& yvar = y_comp->value();
-                    AttrVarVec& zvar = z_comp->value();
+                    AttrVarOrVec& xvar = x_comp->value();
+                    AttrVarOrVec& yvar = y_comp->value();
+                    AttrVarOrVec& zvar = z_comp->value();
                     auto pXVec = std::get_if<std::vector<float>>(&xvar);
                     auto pYVec = std::get_if<std::vector<float>>(&yvar);
                     auto pZVec = std::get_if<std::vector<float>>(&zvar);
@@ -753,10 +673,8 @@ namespace zeno {
 
                 }
                 else {
-                    if (self.use_count() > 1) {
-                        self = std::make_shared<AttrColumn>(*self);
-                    }
-                    AttrVarVec& selfvar = self->value();
+                    self = AttrColumn::copy_on_write(self);
+                    AttrVarOrVec& selfvar = self->value();
                     std::visit([&](auto&& val) {
                         using E = std::decay_t<decltype(val)>;
                         int sz = val.size();

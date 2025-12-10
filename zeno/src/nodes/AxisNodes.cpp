@@ -34,7 +34,7 @@ struct MakeAxis : zeno::INode {
         auto axisX = ZImpl(get_input2<zeno::vec3f>("axisX"));
         auto axisY = ZImpl(get_input2<zeno::vec3f>("axisY"));
         auto axisZ = ZImpl(get_input2<zeno::vec3f>("axisZ"));
-        auto p = std::make_shared<AxisObject>(origin, axisX, axisY, axisZ);
+        auto p = std::make_unique<AxisObject>(origin, axisX, axisY, axisZ);
         auto by = ZImpl(get_param<std::string>("normalize"));
         if (by == "X")
             p->renormalizeByX();

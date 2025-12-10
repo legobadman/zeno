@@ -11,7 +11,7 @@ namespace zeno
         SolverImpl(INode* pNode);
         virtual ~SolverImpl();
         void terminate_solve();
-        zany get_default_output_object() override;
+        IObject* get_default_output_object() override;
         void clearCalcResults() override;
         void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) override;
     };

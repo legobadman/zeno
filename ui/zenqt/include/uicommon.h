@@ -1,4 +1,4 @@
-﻿#ifndef __ZENO_UI_COMMON_H__
+#ifndef __ZENO_UI_COMMON_H__
 #define __ZENO_UI_COMMON_H__
 
 #include <zeno/core/typeinfo.h>
@@ -238,6 +238,7 @@ public:
         ROLE_NODE_RUN_STATE,
         ROLE_NODEDATA,
         ROLE_OUTPUT_OBJS,
+        ROLE_OUTPUT_VIEWOBJ,
 
         ROLE_NODEIDX,
         ROLE_LINK_FROM_IDX,
@@ -249,6 +250,7 @@ public:
         ROLE_LINK_INFO,
         ROLE_INSOCK_IDX,
         ROLE_OUTSOCK_IDX,
+        ROLE_IS_REFLINK,
         ROLE_NODE_IDX,
         ROLE_MTLID,
         ROLE_KEYFRAMES,
@@ -367,7 +369,6 @@ enum PANEL_TYPE
     PANEL_GL_VIEW,
     PANEL_EDITOR,
     PANEL_NODE_PARAMS,
-    PANEL_NODE_DATA,
     PANEL_GEOM_DATA,
     PANEL_LOG,
     PANEL_LIGHT,
@@ -662,11 +663,13 @@ public:
     explicit QmlNodeRunStatus() {}
 
     enum Value {
+        Clean,
         DirtyReadyToRun,
         Pending,
         Running,
         RunError,
-        RunSucceed
+        RunSucceed,
+        ResultTaken
     };
     Q_ENUM(Value)
 };

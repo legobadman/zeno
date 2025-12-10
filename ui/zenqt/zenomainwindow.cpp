@@ -1,4 +1,4 @@
-#include "zenomainwindow.h"
+﻿#include "zenomainwindow.h"
 #include "model/graphsmanager.h"
 #include <zeno/extra/EventCallbacks.h>
 #include <zeno/types/GenericObject.h>
@@ -7,11 +7,11 @@
 #include "layout/docktabcontent.h"
 #include "panel/zenodatapanel.h"
 #include "panel/zenoproppanel.h"
-#include "panel/zenospreadsheet.h"
 #include "panel/zlogpanel.h"
 #include "panel/zgeometryspreadsheet.h"
 #include "panel/zqmlpanel.h"
 #include "panel/pythonexecutor.h"
+#include "panel/pythonconsole.h"
 #include "widgets/ztimeline.h"
 #include "widgets/ztoolbar.h"
 #include "viewport/viewportwidget.h"
@@ -79,6 +79,7 @@ ZenoMainWindow::ZenoMainWindow(QWidget *parent, Qt::WindowFlags flags, PANEL_TYP
     , m_bOnlyOptix(false)
     , m_pDockManager(nullptr)
     , m_qml_gl(nullptr)
+    , m_status_progressbar(nullptr)
 {
     init(onlyView);
     setContextMenuPolicy(Qt::NoContextMenu);
@@ -125,6 +126,28 @@ void ZenoMainWindow::init(PANEL_TYPE onlyView)
         PythonAIDialog dialog(this);
         dialog.exec();
     });
+
+    initStatusBar();
+}
+
+void ZenoMainWindow::initStatusBar() {
+    m_status_progressbar = new QProgressBar(this);
+    m_status_progressbar->setRange(0, 100);
+    m_status_progressbar->setValue(0);
+    m_status_progressbar->setFixedWidth(128);
+    m_status_progressbar->setTextVisible(false);
+    m_status_progressbar->setStyleSheet("QProgressBar { background:white; }");
+    m_status_progressbar->hide();
+    m_ui->statusbar->addPermanentWidget(m_status_progressbar);
+}
+
+void ZenoMainWindow::updateStatusTip(bool showProgress, const QString& text, float progress) {
+    m_status_progressbar->setVisible(showProgress);
+    m_ui->statusbar->showMessage(text);
+    if (showProgress) {
+        m_status_progressbar->setValue(progress * 100);
+    }
+    //zenoApp->processEvents(QEventLoop::AllEvents);
 }
 
 void ZenoMainWindow::initWindowProperty()
@@ -491,6 +514,7 @@ void ZenoMainWindow::_resizeDocks(PtrLayoutNode root)
 void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString& name)
 {
     auto pDockElem = new ads::CDockWidget(name);
+    pDockElem->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
 
     PANEL_TYPE type = UiHelper::title2Type(name);
     switch (type)
@@ -514,12 +538,6 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
         auto pParams = new DockContent_Parameter;
         pParams->initUI();
         pDockElem->setWidget(pParams, ads::CDockWidget::ForceNoScrollArea);
-        break;
-    }
-    case PANEL_NODE_DATA:
-    {
-        auto pObjectData = new ZenoSpreadsheet;
-        pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
     case PANEL_QML_GLVIEW:
@@ -557,6 +575,9 @@ void ZenoMainWindow::addDockWidget(ads::CDockAreaWidget* cakeArea, const QString
     }
     case PANEL_OPTIX_VIEW:
     {
+        auto pView = new DockContent_View(false);
+        pView->initUI();
+        pDockElem->setWidget(pView, ads::CDockWidget::ForceNoScrollArea);
         break;
     }
     case PANEL_COMMAND_PARAMS:
@@ -666,12 +687,6 @@ void ZenoMainWindow::initDocksWidget(ads::CDockAreaWidget* cakeArea, ads::CDockW
                 pDockElem->setWidget(pParams, ads::CDockWidget::ForceNoScrollArea);
                 break;
             }
-            case PANEL_NODE_DATA:
-            {
-                auto pObjectData = new ZenoSpreadsheet;
-                pDockElem->setWidget(pObjectData, ads::CDockWidget::ForceNoScrollArea);
-                break;
-            }
             case PANEL_GEOM_DATA:
             {
                 pDockElem->setWidget(new ZGeometrySpreadsheet, ads::CDockWidget::ForceNoScrollArea);
@@ -764,17 +779,8 @@ void ZenoMainWindow::loadDockLayout(QString name, bool isDefault)
         QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
         settings.beginGroup("layout");
         settings.beginGroup(name);
-        if (settings.allKeys().indexOf("content") != -1) 
-        {
-            content = settings.value("content").toString();
-            settings.endGroup();
-            settings.endGroup();
-        } 
-        else
-        {
-            loadDockLayout(name, true);
-            return;
-        }
+        loadDockLayout(name, true);
+        return;
     }
     if (!content.isEmpty()) 
     {
@@ -924,7 +930,7 @@ void ZenoMainWindow::initDocks(PANEL_TYPE onlyView)
     } 
     settings.endGroup();
     settings.endGroup();
-    loadDockLayout(name, false);
+    loadDockLayout(name, true);
 }
 
 void ZenoMainWindow::onCreatePanel(int actionType)
@@ -940,12 +946,6 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         pFloatWidget->initUI();
         pWid = pFloatWidget;
         title = tr("Node Editor");
-        break;
-    }
-    case ACTION_OBJECT_DATA: {
-        auto pObjectData = new ZenoSpreadsheet;
-        pWid = pObjectData;
-        title = tr("Object Data");
         break;
     }
     case ACTION_OBJECT_DATA_QML: {
@@ -998,7 +998,7 @@ void ZenoMainWindow::onCreatePanel(int actionType)
         break;
     }
     case ACTION_PYTHON_EXECUTOR: {
-        auto pane = new PythonExecutePane;
+        auto pane = new PythonConsole;
         pWid = pane;
         title = tr("Python Executor");
         break;
@@ -1053,13 +1053,12 @@ void ZenoMainWindow::initTimeline()
 {
     //master版本改动过大，而且都是cache相关，因此先不合并，维持3的设定
     auto pCalcMgr = zenoApp->calculationMgr();
-    connect(m_pTimeline, &ZTimeline::playForward, pCalcMgr, &CalculationMgr::onPlayTriggered);
-    connect(m_pTimeline, &ZTimeline::playForward, this, &ZenoMainWindow::reload_qml);
     connect(m_pTimeline, &ZTimeline::sliderValueChanged, pCalcMgr, &CalculationMgr::onFrameSwitched);
     connect(m_pTimeline, &ZTimeline::sliderRangeChanged, [](int start, int end) {
         auto& sess = zeno::getSession();
         sess.updateFrameRange(start, end);
     });
+    connect(pCalcMgr, &CalculationMgr::renderLoadFinished, m_pTimeline, &ZTimeline::onRenderObjectLoaded);
 }
 
 ZTimeline* ZenoMainWindow::timeline() const
@@ -1067,35 +1066,21 @@ ZTimeline* ZenoMainWindow::timeline() const
     return m_pTimeline;
 }
 
-void ZenoMainWindow::onCalcFinished(bool bSucceed, zeno::ObjPath nodeUuidPath, QString msg)
+void ZenoMainWindow::onCalcFinished(bool bSucceed, QString nodePath, QString msg)
 {
     if (!bSucceed) {
         ZenoGraphsEditor* pEditor = getAnyEditor();
         if (pEditor) {
-            GraphsTreeModel* pTreeM = zenoApp->graphsManager()->currentModel();
-            if (pTreeM) {
-                QModelIndex nodeIdx = pTreeM->getIndexByUuidPath(nodeUuidPath);
-                const QString& nodePath = nodeIdx.data(QtRole::ROLE_OBJPATH).toString();
-                QStringList pathitems = nodePath.split("/", Qt::SkipEmptyParts);
-                ZASSERT_EXIT(!pathitems.isEmpty());
-                QString nodeName = pathitems.back();
-                pathitems.pop_back();
-                pEditor->activateTab(pathitems, nodeName, true);
+            GraphModel* mainM = zenoApp->graphsManager()->mainModel();
+            QStringList pathList = nodePath.split('/', Qt::SkipEmptyParts);
+            if (pathList.empty()) {
+                ZASSERT_EXIT(0);
+                return;
             }
-        }
-    }
-}
-
-void ZenoMainWindow::justLoadObjects()
-{
-    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
-    {
-        if (dock->isVisible())
-        {
-            QWidget* wid = dock->widget();
-            if (DockContent_View* view = qobject_cast<DockContent_View*>(wid)) {
-                view->getDisplayWid()->onJustLoadObjects();
-            }
+            GraphModel* targetM = mainM->getGraphByPath(pathList);
+            QString nodename = pathList.last();
+            pathList.pop_back();
+            pEditor->activateTab(pathList, nodename, true);
         }
     }
 }
@@ -1207,6 +1192,7 @@ void ZenoMainWindow::onRunTriggered(/*bool applyLightAndCameraOnly, bool applyMa
         launchParam.beginFrame = beginFrame;
         launchParam.endFrame = endFrame;
         launchParam.runtype = runtype;
+        launchParam.always = false;
         QString path = pModel->filePath();
         path = path.left(path.lastIndexOf("/"));
         launchParam.zsgPath = path;
@@ -1270,7 +1256,7 @@ void ZenoMainWindow::updateViewport(const QString& action)
         if (action == "finishFrame")
         {
             bool bPlayed = m_pTimeline->isPlayToggled();
-            int endFrame = zeno::getSession().globalComm->maxPlayFrames() - 1;
+            int endFrame = 0;// zeno::getSession().globalComm->maxPlayFrames() - 1;
             m_pTimeline->updateCachedFrame();
             if (!bPlayed)
             {
@@ -1307,7 +1293,7 @@ void ZenoMainWindow::updateViewport(const QString& action)
             }
         }
         if (action == "newFrame") {
-            int endFrame = zeno::getSession().globalComm->maxPlayFrames() - 1;
+            int endFrame = 0;// zeno::getSession().globalComm->maxPlayFrames();
             int beginframe = m_pTimeline->fromTo().first;
             if (endFrame == beginframe) {   //run的时候起始帧计算完成后，将timeline重置为起始帧
 #if 0
@@ -1342,6 +1328,23 @@ ZenoGraphsEditor* ZenoMainWindow::getAnyEditor() const
         }
     }
     return pEditor;
+}
+
+QVector<ZGeometrySpreadsheet*> ZenoMainWindow::getGeoSpreadSheet() const
+{
+    QVector<ZGeometrySpreadsheet*> spreadsheets;
+    for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
+    {
+        if (dock->isVisible())
+        {
+            QWidget* wid = dock->widget();
+            if (ZGeometrySpreadsheet* spreadsheet = qobject_cast<ZGeometrySpreadsheet*>(wid))
+            {
+                spreadsheets.append(spreadsheet);
+            }
+        }
+    }
+    return spreadsheets;
 }
 
 void ZenoMainWindow::onRunFinished()
@@ -1437,29 +1440,17 @@ void ZenoMainWindow::closeEvent(QCloseEvent *event)
     //killProgram();
     killOptix();
 
-    QSettings settings(zsCompanyName, zsEditor);
-    bool autoClean = settings.value("zencache-autoclean").isValid() ? settings.value("zencache-autoclean").toBool() : true;
-    bool autoRemove = settings.value("zencache-autoremove").isValid() ? settings.value("zencache-autoremove").toBool() : false;
 
     bool isClose = this->saveQuit();
     // todo: event->ignore() when saveQuit returns false?
     if (isClose) 
     {
-        //save latest layout
-        QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
-        settings.beginGroup("layout");
-        QString layoutInfo = exportLayout(m_layoutRoot, size());
-        settings.beginGroup(g_latest_layout);
-        settings.setValue("content", layoutInfo);
-        settings.endGroup();
-        settings.endGroup();
-
         // trigger destroy event
         zeno::getSession().eventCallbacks->triggerEvent("beginDestroy");
         zenoApp->cleanQmlEngine();
         QMainWindow::closeEvent(event);
     } 
-    else 
+    else
     {
         event->ignore();
     }
@@ -2072,6 +2063,9 @@ void ZenoMainWindow::setActionIcon(QAction *action)
 }
 
 bool ZenoMainWindow::saveQuit() {
+    zeno::getSession().setDisableRunning(true);
+    zeno::scope_exit sp([&] { zeno::getSession().setDisableRunning(false); });
+
     auto pGraphsMgm = zenoApp->graphsManager();
     ZASSERT_EXIT(pGraphsMgm, true);
     GraphsTreeModel* pModel = pGraphsMgm->currentModel();
@@ -2091,7 +2085,7 @@ bool ZenoMainWindow::saveQuit() {
 
     //cleanup
     if (pModel) {
-        zeno::getSession().globalComm->clearFrameState();
+        //zeno::getSession().globalComm->clearFrameState();
         auto views = viewports();
         for (auto view : views)
         {
@@ -2323,37 +2317,15 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                 {
                     const QModelIndex& idx = nodes[0];
                     ZASSERT_EXIT(idx.isValid());
-                    zeno::zany pObject = idx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::zany>();
-                    auto spGeom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(pObject);
-                    panel->setGeometry(subgraph, idx, spGeom);
-                }
-            }
-            else if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(wid))
-            {
-                if (select && nodes.size() == 1)
-                {
-                    const QModelIndex& idx = nodes[0];
-                    panel->onNodeSelected(idx);
-
-                    QString nodeId = idx.data(QtRole::ROLE_NODE_NAME).toString();
-
-                    ZenoMainWindow* pWin = zenoApp->getMainWindow();
-                    ZASSERT_EXIT(pWin);
-                    QVector<DisplayWidget*> views = pWin->viewports();
-                    for (auto pDisplay : views)
-                    {
-                        auto pZenoVis = pDisplay->getZenoVis();
-                        ZASSERT_EXIT(pZenoVis);
-                        auto* scene = pZenoVis->getSession()->get_scene();
-                        scene->selected.clear();
-                        std::string nodeid = nodeId.toStdString();
-                        for (auto const& [key, ptr] : scene->objectsMan->pairs()) {
-                            if (nodeid == key.substr(0, key.find_first_of(':'))) {
-                                scene->selected.insert(key);
-                            }
+                    std::string objPath = idx.data(QtRole::ROLE_OBJPATH).toString().toStdString();
+                    if (auto spNode = zeno::getSession().getNodeByPath(objPath)) {
+                        zeno::zany spOut = spNode->clone_default_output_object();
+                        if (spOut) {
+                            panel->setGeometry(subgraph, idx, std::move(spOut));
                         }
-                        onPrimitiveSelected(scene->selected);
-                        pDisplay->updateFrame();
+                        else {
+                            panel->setGeometry(subgraph, idx, nullptr);
+                        }
                     }
                 }
             }
@@ -2384,20 +2356,10 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
     }
 }
 
-void ZenoMainWindow::onPrimitiveSelected(const std::unordered_set<std::string>& primids) {
+void ZenoMainWindow::onPrimitiveSelected(const std::unordered_set<std::string>& primids, std::string mtlid, bool selecFromOpitx) {
+    //TODO ZHOUHANG:
     for (ads::CDockWidget* dock : m_pDockManager->dockWidgetsMap())
     {
-#if 0
-        if (ZenoSpreadsheet* panel = qobject_cast<ZenoSpreadsheet*>(dock->widget()))
-        {
-            if (primids.size() == 1) {
-                panel->setPrim(*primids.begin());
-            }
-            else {
-                panel->clear();
-            }
-        }
-#endif
     }
 }
 

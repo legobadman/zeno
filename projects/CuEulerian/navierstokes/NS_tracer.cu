@@ -1,3 +1,4 @@
+#if 0
 #include "Structures.hpp"
 #include "zensim/cuda/execution/ExecutionPolicy.cuh"
 #include "zensim/geometry/LevelSetUtils.tpp"
@@ -573,22 +574,22 @@ struct ZSTracerAdvectDiffuse : INode {
     }
 
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto diffuse = get_input2<float>("Diffusion");
-        auto dt = get_input2<float>("dt");
-        auto scheme = get_input2<std::string>("Scheme");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto diffuse = get_input2_float("Diffusion");
+        auto dt = get_input2_float("dt");
+        auto scheme = zsString2Std(get_input2_string("Scheme"));
         auto wind = get_input2<zeno::vec3f>("WindVelocity");
 
         auto pol = zs::cuda_exec();
         ///
-        if (get_input2<bool>("Density")) {
+        if (get_input2_bool("Density")) {
             compute(pol, "rho", diffuse, dt, scheme, 1.f, wind, NSGrid.get());
         }
-        if (get_input2<bool>("Temperature")) {
+        if (get_input2_bool("Temperature")) {
             compute(pol, "T", diffuse, dt, scheme, 1.f, wind, NSGrid.get());
         }
-        if (get_input2<bool>("Fuel")) {
-            auto speedScale = get_input2<float>("FuelSpeedScale");
+        if (get_input2_bool("Fuel")) {
+            auto speedScale = get_input2_float("FuelSpeedScale");
             compute(pol, "fuel", diffuse, dt, scheme, speedScale, wind, NSGrid.get());
         }
 
@@ -692,12 +693,12 @@ struct ZSTracerEmission : INode {
     }
 
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto EmitSDF = get_input<ZenoSparseGrid>("EmitterSDF");
-        auto fromObj = get_input2<bool>("fromObjBoundary");
-        auto addNoise = get_input2<bool>("AddNoise");
-        auto noiseAmpPercent = get_input2<float>("NoiseAmpPercent");
-        auto swirlSize = get_input2<float>("SwirlSize");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto EmitSDF = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("EmitterSDF"));
+        auto fromObj = get_input2_bool("fromObjBoundary");
+        auto addNoise = get_input2_bool("AddNoise");
+        auto noiseAmpPercent = get_input2_float("NoiseAmpPercent");
+        auto swirlSize = get_input2_float("SwirlSize");
 
         if (!NSGrid->getSparseGrid().hasProperty("mark")) {
             fromObj = false;
@@ -705,23 +706,23 @@ struct ZSTracerEmission : INode {
 
         auto pol = zs::cuda_exec();
 
-        if (get_input2<bool>("Density")) {
-            auto rhoAmount = get_input2<float>("DensityAmount");
+        if (get_input2_bool("Density")) {
+            auto rhoAmount = get_input2_float("DensityAmount");
             tracerEmit(pol, "rho", NSGrid.get(), EmitSDF.get(), fromObj, rhoAmount, addNoise, noiseAmpPercent,
                        swirlSize);
         }
-        if (get_input2<bool>("Temperature")) {
-            auto TAmount = get_input2<float>("TemperatureAmount");
+        if (get_input2_bool("Temperature")) {
+            auto TAmount = get_input2_float("TemperatureAmount");
             tracerEmit(pol, "T", NSGrid.get(), EmitSDF.get(), fromObj, TAmount, addNoise, noiseAmpPercent, swirlSize);
         }
-        if (get_input2<bool>("Fuel")) {
-            auto fuelAmount = get_input2<float>("FuelAmount");
+        if (get_input2_bool("Fuel")) {
+            auto fuelAmount = get_input2_float("FuelAmount");
             tracerEmit(pol, "fuel", NSGrid.get(), EmitSDF.get(), fromObj, fuelAmount, addNoise, noiseAmpPercent,
                        swirlSize);
         }
 
-        if (get_input2<bool>("hasEmitterVel") && has_input<ZenoSparseGrid>("EmitterVel")) {
-            auto EmitVel = get_input<ZenoSparseGrid>("EmitterVel");
+        if (get_input2_bool("hasEmitterVel") && has_input<ZenoSparseGrid>("EmitterVel")) {
+            auto EmitVel = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("EmitterVel"));
             velocityEmit(pol, NSGrid.get(), EmitSDF.get(), EmitVel.get());
         }
 
@@ -753,11 +754,11 @@ ZENDEFNODE(ZSTracerEmission, {/* inputs: */
 
 struct ZSSmokeBuoyancy : INode {
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto dt = get_input2<float>("dt");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto dt = get_input2_float("dt");
         auto gravity = get_input2<zeno::vec3f>("Gravity");
-        auto alpha = get_input2<float>("DensityCoef");
-        auto beta = get_input2<float>("TemperatureCoef");
+        auto alpha = get_input2_float("DensityCoef");
+        auto beta = get_input2_float("TemperatureCoef");
 
         auto &spg = NSGrid->spg;
         auto block_cnt = spg.numBlocks();
@@ -814,13 +815,13 @@ ZENDEFNODE(ZSSmokeBuoyancy, {/* inputs: */
 
 struct ZSVolumeCombustion : INode {
     void apply() override {
-        auto NSGrid = get_input<ZenoSparseGrid>("NSGrid");
-        auto dt = get_input2<float>("dt");
-        auto ignitionT = get_input2<float>("IgnitionTemperature");
-        auto burnSpeed = get_input2<float>("BurnSpeed");
-        auto rhoEmitAmount = get_input2<float>("DensityEmitAmount");
-        auto TEmitAmount = get_input2<float>("TemperatureEmitAmount");
-        auto volumeExpansion = get_input2<float>("VolumeExpansion");
+        auto NSGrid = safe_uniqueptr_cast<ZenoSparseGrid>(clone_input("NSGrid"));
+        auto dt = get_input2_float("dt");
+        auto ignitionT = get_input2_float("IgnitionTemperature");
+        auto burnSpeed = get_input2_float("BurnSpeed");
+        auto rhoEmitAmount = get_input2_float("DensityEmitAmount");
+        auto TEmitAmount = get_input2_float("TemperatureEmitAmount");
+        auto volumeExpansion = get_input2_float("VolumeExpansion");
 
         auto &spg = NSGrid->spg;
         auto block_cnt = spg.numBlocks();
@@ -877,3 +878,4 @@ ZENDEFNODE(ZSVolumeCombustion, {/* inputs: */
                                 {"Eulerian"}});
 
 } // namespace zeno
+#endif

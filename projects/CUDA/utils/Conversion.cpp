@@ -7,7 +7,7 @@
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/utils/variantswitch.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include "zensim/io/Filesystem.hpp"
 #include "zensim/zpc_tpls/fmt/color.h"
 #include "zensim/zpc_tpls/fmt/format.h"
@@ -19,7 +19,7 @@ namespace zeno {
 
 struct AssetConversion : INode {
     void apply() override {
-        auto pathStr = get_input2<std::string>("path");
+        auto pathStr = zsString2Std(get_input2_string("path"));
         char *p = nullptr;
         if (pathStr.empty())
             p = getenv("PATH");
@@ -48,10 +48,10 @@ struct AssetConversion : INode {
         const std::string target = "blender";
 #endif
 
-        auto inputFile = get_input2<std::string>("input_model_file");
+        auto inputFile = zsString2Std(get_input2_string("input_model_file"));
         fs::path inputPath = inputFile;
         auto ext = inputPath.extension().string();
-        auto outputPath = get_input2<std::string>("output_model_file");
+        auto outputPath = zsString2Std(get_input2_string("output_model_file"));
         auto format = fs::path(outputPath).extension().string();
         if (format.empty())
             format = ".obj";
@@ -148,19 +148,19 @@ void primLineify(PrimitiveObject *prim, bool with_uv) {
 
 struct PrimitiveLineify : INode {
     virtual void apply() override {
-        auto prim = get_input<PrimitiveObject>("prim");
-        if (get_param<bool>("from_poly")) {
-            primLineify(prim.get(), get_param<bool>("with_uv"));
+        auto prim = get_input_Geometry("prim")->toPrimitiveObject();
+        if (get_input2_bool("from_poly")) {
+            primLineify(prim.get(), get_input2_bool("with_uv"));
         }
-        set_output("prim", std::move(prim));
+        set_output("prim", create_GeometryObject(prim.get()));
     }
 };
 
 ZENDEFNODE(PrimitiveLineify, {/* inputs: */
-                              {{gParamType_Primitive, "prim"}},
+                              {{gParamType_Geometry, "prim"}},
                               /* outputs: */
                               {
-                                  {gParamType_Primitive, "prim"},
+                                  {gParamType_Geometry, "prim"},
                               },
                               /* params: */
                               {
@@ -177,14 +177,14 @@ struct PointsToZSParticles : INode {
         using namespace zs;
 
         // primitive
-        auto inParticles = get_input<PrimitiveObject>("prim");
-        bool include_customed_properties = get_input2<bool>("add_customed_attr");
+        const auto inParticles = get_input_Geometry("prim")->toPrimitiveObject();
+        bool include_customed_properties = get_input2_bool("add_customed_attr");
         auto &obj = inParticles->attr<vec3f>("pos");
 
-        auto outParticles = std::make_shared<ZenoParticles>();
+        auto outParticles = std::make_unique<ZenoParticles>();
 
         // primitive binding
-        outParticles->prim = inParticles;
+        outParticles->prim = std::make_shared<PrimitiveObject>(*inParticles);
 
         /// category, size
         std::size_t size{obj.size()};
@@ -229,7 +229,7 @@ struct PointsToZSParticles : INode {
         for (auto tag : tags)
             fmt::print("vert prop tag: [{}, {}]\n", tag.name, tag.numChannels);
 
-        outParticles->particles = std::make_shared<typename ZenoParticles::particles_t>(tags, size, memsrc_e::host);
+        outParticles->particles = std::make_unique<typename ZenoParticles::particles_t>(tags, size, memsrc_e::host);
         auto &pars = outParticles->getParticles(); // tilevector
         {
             ompExec(zs::range(size), [pars = proxy<execspace_e::openmp>({}, pars), &obj, &inParticles,
@@ -255,13 +255,13 @@ struct PointsToZSParticles : INode {
             pars = pars.clone({memsrc_e::device});
         }
 
-        set_output("ZSParticles", outParticles);
+        set_output("ZSParticles", std::move(outParticles));
     }
 };
 
 ZENDEFNODE(PointsToZSParticles, {
-                                    {gParamType_Primitive, {gParamType_Bool, "add_customed_attr", "1"}},
-                                    {"ZSParticles"},
+                                    {{gParamType_Geometry, "prim"}, {gParamType_Bool, "add_customed_attr", "1"}},
+                                    {{gParamType_Particles, "ZSParticles"}},
                                     {},
                                     {"conversion"},
                                 });
@@ -271,9 +271,9 @@ struct PointsToZSParticles2 : INode {
         using namespace zs;
 
         // primitive
-        auto inParticles = get_input<PrimitiveObject>("prim");
-        bool include_customed_properties = get_input2<bool>("add_customed_attr");
-        auto selected_props_list = get_input2<std::string>("selected_custom_attr_tags");
+        auto inParticles = get_input_Geometry("prim")->toPrimitiveObject();
+        bool include_customed_properties = get_input2_bool("add_customed_attr");
+        auto selected_props_list = zsString2Std(get_input2_string("selected_custom_attr_tags"));
         std::set<std::string> selected_props;
         auto processTags = [](std::string tags, std::set<std::string> &res) {
             using Ti = RM_CVREF_T(std::string::npos);
@@ -294,10 +294,10 @@ struct PointsToZSParticles2 : INode {
         processTags(selected_props_list, selected_props);
         auto &obj = inParticles->attr<vec3f>("pos");
 
-        auto outParticles = std::make_shared<ZenoParticles>();
+        auto outParticles = std::make_unique<ZenoParticles>();
 
         // primitive binding
-        outParticles->prim = inParticles;
+        outParticles->prim = std::make_shared<PrimitiveObject>(*inParticles);
 
         /// category, size
         std::size_t size{obj.size()};
@@ -346,7 +346,7 @@ struct PointsToZSParticles2 : INode {
         for (auto tag : tags)
             fmt::print("vert prop tag: [{}, {}]\n", tag.name, tag.numChannels);
 
-        outParticles->particles = std::make_shared<typename ZenoParticles::particles_t>(tags, size, memsrc_e::host);
+        outParticles->particles = std::make_unique<typename ZenoParticles::particles_t>(tags, size, memsrc_e::host);
         auto &pars = outParticles->getParticles(); // tilevector
         {
             ompExec(zs::range(size), [pars = proxy<execspace_e::openmp>({}, pars), &obj, &inParticles,
@@ -372,17 +372,17 @@ struct PointsToZSParticles2 : INode {
             pars = pars.clone({memsrc_e::device});
         }
 
-        set_output("ZSParticles", outParticles);
+        set_output("ZSParticles", std::move(outParticles));
     }
 };
 
 ZENDEFNODE(PointsToZSParticles2, {
                                      {
-                                         "prim",
+                                         {gParamType_Geometry, "prim"},
                                          {gParamType_Bool, "add_customed_attr", "1"},
                                          {gParamType_String, "selected_custom_attr_tags", ""},
                                      },
-                                     {"ZSParticles"},
+                                     {{gParamType_Particles, "ZSParticles"}},
                                      {},
                                      {"conversion"},
                                  });

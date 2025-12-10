@@ -26,8 +26,8 @@
 #include <cstdio>
 #include <vector>
 
-static std::shared_ptr<zeno::PrimitiveObject> read_png(const char* file_path) {
-    auto img = std::make_shared<zeno::PrimitiveObject>();
+static std::unique_ptr<zeno::PrimitiveObject> read_png(const char* file_path) {
+    auto img = std::make_unique<zeno::PrimitiveObject>();
     FILE* file = fopen(file_path, "rb");
     if (!file) {
         zeno::log_error("Error: File not found: {}", file_path);
@@ -152,7 +152,7 @@ struct ReadPNG16 : INode {//todo: select custom color space
         auto path = zsString2Std(get_input2_string("path"));
         path = std::filesystem::u8path(path).string();
         auto img = read_png(path.c_str());
-        set_output("image", img);
+        set_output("image", std::move(img));
     }
 };
 ZENDEFNODE(ReadPNG16, {
@@ -227,7 +227,7 @@ struct WriteExr : INode {
         std::vector<float*> pixels;
         std::vector<std::string> channels;
         std::vector<std::pair<int, int>> width_heights;
-        auto dict = std::dynamic_pointer_cast<DictObject>(get_input("channels"));
+        auto dict = safe_uniqueptr_cast<DictObject>(clone_input("channels"));
         for (auto &[k, v]: dict->lut) {
             if (k.size()) {
                 channels.push_back(k+'.');
@@ -235,7 +235,7 @@ struct WriteExr : INode {
             else {
                 channels.push_back(k);
             }
-            auto img = std::dynamic_pointer_cast<PrimitiveObject>(v);
+            auto img = safe_dynamic_cast<PrimitiveObject>(v.get());
             if (!img || !img->userData()->get_int("isImage", 0)) {
                 throw zeno::makeError("input not image");
             }

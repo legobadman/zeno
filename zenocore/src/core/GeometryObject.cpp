@@ -10,11 +10,16 @@
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>
 #include <zeno/utils/variantswitch.h>
+#include <zeno/types/GeometryObject.h>
+#include <zeno/core/Session.h>
+#include <zeno/core/ObjectRecorder.h>
 #include <regex>
 
 
 namespace zeno
 {
+    //#define TEST_GEOMETRY_LEAK
+
     template <class T>
     static T get_zfxvar(zfxvariant value) {
         return std::visit([](auto const& val) -> T {
@@ -31,19 +36,22 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type)
         : m_type(type)
     {
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
     }
 
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
         : m_type(type)
     {
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, nFaces, bInitFaces);
         }
         else if (Topo_HalfEdge == type) {
             m_spTopology = create_halfedge_topo(bTriangle, nPoints, nFaces, bInitFaces);
-        }
-        else if (Topo_Line == type) {
-            throw makeError<UnimplError>("TODO: construct Line");
         }
         else {
             throw makeError<UnimplError>("unknown type of Geometry Topology");
@@ -53,49 +61,26 @@ namespace zeno
     GeometryObject::GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
         : m_type(type)
     {
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, faces);
         }
         else if (Topo_HalfEdge == type) {
             m_spTopology = create_halfedge_topo(bTriangle, nPoints, faces);
         }
-        else if (Topo_Line == type) {
-            throw makeError<UnimplError>("TODO: construct Line");
-        }
         else {
             throw makeError<UnimplError>("unknown type of Geometry Topology");
         }
     }
 
-    GeometryObject::GeometryObject(const GeometryObject& rhs)
-        : m_spTopology(rhs.m_spTopology)
-        , m_type(rhs.m_type)
-    {
-        m_vert_attrs = rhs.m_vert_attrs;
-        m_point_attrs = rhs.m_point_attrs;
-        m_face_attrs = rhs.m_face_attrs;
-        m_geo_attrs = rhs.m_geo_attrs;
-    }
-
-    GeometryObject::~GeometryObject() {
-        int usecnt = m_spTopology.use_count();
-        if (usecnt > 0) {
-            int j;
-            j = 0;
-        }
-    }
-
-    void GeometryObject::_temp_code_regist() {
-        
-    }
-
-    void GeometryObject::_temp_code_unregist() {
-
-    }
-
-    GeometryObject::GeometryObject(std::shared_ptr<PrimitiveObject> spPrim)
+    GeometryObject::GeometryObject(PrimitiveObject* spPrim)
         : m_type(Topo_IndiceMesh)
     {
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
         m_spTopology = create_indicemesh_topo(spPrim);
         //提取出prim所有的属性
         create_attr(ATTR_POINT, "pos", spPrim->verts.values);
@@ -109,14 +94,47 @@ namespace zeno
         for (auto& [attr_name, var_vec] : spPrim->tris.attrs) {
             create_attr_from_AttrVector(ATTR_FACE, attr_name, var_vec);
         }
+        m_uvs = spPrim->uvs;
+    }
+
+    GeometryObject::GeometryObject(const GeometryObject& rhs)
+        : m_spTopology(rhs.m_spTopology)
+        , m_type(rhs.m_type)
+    {
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.insert(this);
+#endif
+        m_vert_attrs = rhs.m_vert_attrs;
+        m_point_attrs = rhs.m_point_attrs;
+        m_face_attrs = rhs.m_face_attrs;
+        m_geo_attrs = rhs.m_geo_attrs;
+    }
+
+    GeometryObject::~GeometryObject() {
+        int usecnt = m_spTopology.use_count();
+        if (usecnt > 0) {
+            int j;
+            j = 0;
+        }
+#ifdef TEST_GEOMETRY_LEAK
+        zeno::getSession().m_recorder->m_geom_impls.erase(this);
+#endif
+    }
+
+    void GeometryObject::_temp_code_regist() {
+        
+    }
+
+    void GeometryObject::_temp_code_unregist() {
+
     }
 
     GeomTopoType GeometryObject::type() const {
         return m_type;
     }
 
-    std::shared_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
-        std::shared_ptr<PrimitiveObject> spPrim = std::make_shared<PrimitiveObject>();
+    std::unique_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
+        auto spPrim = std::make_unique<PrimitiveObject>();
         std::vector<vec3f> vec_pos = points_pos();
         int nPoints = m_spTopology->npoints();
         assert(nPoints == vec_pos.size());
@@ -129,21 +147,22 @@ namespace zeno
             if (name == "pos") {
                 continue;
             }
-            sp_attr_data.to_prim_attr(spPrim, true, false, name);
+            sp_attr_data.to_prim_attr(spPrim.get(), true, false, name);
         }
 
         for (auto& [name, sp_attr_data] : m_face_attrs) {
-            sp_attr_data.to_prim_attr(spPrim, false, m_spTopology->is_base_triangle(), name);
+            sp_attr_data.to_prim_attr(spPrim.get(), false, m_spTopology->is_base_triangle(), name);
         }
 
-        std::shared_ptr<PrimitiveObject> primTopo = get_primitive_topo(m_spTopology);
+        auto primTopo = get_primitive_topo(m_spTopology);
         //拷拓扑就行
-        spPrim->lines = primTopo->lines;
-        spPrim->tris = primTopo->tris;
-        spPrim->quads = primTopo->quads;
-        spPrim->loops = primTopo->loops;
-        spPrim->polys = primTopo->polys;
-        spPrim->edges = primTopo->edges;
+        spPrim->lines.values = primTopo->lines.values;
+        spPrim->tris.values = primTopo->tris.values;
+        spPrim->quads.values = primTopo->quads.values;
+        spPrim->loops.values = primTopo->loops.values;
+        spPrim->polys.values = primTopo->polys.values;
+        spPrim->edges.values = primTopo->edges.values;
+        spPrim->uvs = m_uvs;
         return spPrim;
     }
 
@@ -233,7 +252,7 @@ namespace zeno
         }, var_vec);
     }
 
-    void GeometryObject::initFromPrim(std::shared_ptr<PrimitiveObject> prim) {
+    void GeometryObject::initFromPrim(PrimitiveObject* prim) {
         //不考虑points，lines, quads, edges, mtl. inst，遇到再处理
         if (!prim->points->empty() || !prim->lines->empty() || !prim->edges->empty()
             || !prim->quads->empty()) {
@@ -283,7 +302,7 @@ namespace zeno
         zeno::GeomTopoType type = m_spTopology->type();
         if (zeno::Topo_IndiceMesh == type) {
             auto pGeom = std::make_unique<GeometryObject>(Topo_HalfEdge);
-            pGeom->m_spTopology = create_halfedge_by_indicemesh(m_spTopology);
+            pGeom->m_spTopology = create_halfedge_by_indicemesh(npoints(), m_spTopology);
             pGeom->m_point_attrs = m_point_attrs;
             pGeom->m_vert_attrs = m_vert_attrs;
             pGeom->m_face_attrs = m_face_attrs;
@@ -585,11 +604,11 @@ namespace zeno
 
         auto iter = m_face_attrs.find(attr_name);
         if (iter != m_face_attrs.end()) {
+            set_face_attr(attr_name, defl);
             return -1;   //already exist
         }
         int n = m_spTopology->nfaces();
         m_face_attrs.insert(std::make_pair(attr_name, AttributeVector(defl, n)));
-
         return 0;
     }
 
@@ -806,6 +825,22 @@ namespace zeno
         return m_geo_attrs.find(name) != m_geo_attrs.end();
     }
 
+#ifdef TRACE_GEOM_ATTR_DATA
+    std::string GeometryObject::get_attr_data_id(GeoAttrGroup grp, std::string const& name, std::string channel) {
+        std::map<std::string, AttributeVector>& container = get_container(grp);
+        auto iter = container.find(name);
+        if (iter != container.end()) {
+            auto& attrVec = iter->second;
+            if (channel == "") return attrVec.self_id();
+            if (channel == "x") return attrVec.xcomp_id();
+            if (channel == "y") return attrVec.ycomp_id();
+            if (channel == "z") return attrVec.zcomp_id();
+            if (channel == "w") return attrVec.wcomp_id();
+        }
+        return "";
+    }
+#endif
+
     GeoAttrType GeometryObject::get_attr_type(GeoAttrGroup grp, std::string const& name) {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         auto iter = container.find(name);
@@ -999,7 +1034,8 @@ namespace zeno
 
     int GeometryObject::isLineFace(int faceid)
     {
-        return m_spTopology->type() == Topo_Line;
+        //DEPRECATED
+        return 0;
     }
 
     int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {

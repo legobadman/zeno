@@ -11,7 +11,7 @@ namespace zeno {
 
 struct SDFAdvect : zeno::INode {
     virtual void apply() override {
-        auto inSDF = safe_dynamic_cast<VDBFloatGrid>(get_input("InoutSDF"));
+        auto inSDF = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("InoutSDF"));
         auto vecField = safe_dynamic_cast<VDBFloat3Grid>(get_input("VecField"));
         auto grid = inSDF->m_grid;
         auto field = vecField->m_grid;
@@ -90,7 +90,7 @@ struct SDFAdvect : zeno::INode {
         }
 
         advection.advect(0.0, timeStep);
-        set_output("InoutSDF", get_input("InoutSDF"));
+        set_output("InoutSDF", std::move(inSDF));
     }
 };
 
@@ -186,9 +186,9 @@ struct VolumeAdvect : zeno::INode {
             //set_output("outField", get_input("InField"));
         }
         //advection.advect(0.0, timeStep);
-        auto layers_to_ext = std::make_shared<zeno::NumericObject>();
+        auto layers_to_ext = std::make_unique<zeno::NumericObject>();
         layers_to_ext->set<int>(advection.getMaxDistance(*field, timeStep));
-        set_output("extend", layers_to_ext);
+        set_output("extend", std::move(layers_to_ext));
     }
 };
 

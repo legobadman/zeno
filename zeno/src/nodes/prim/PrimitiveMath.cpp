@@ -30,8 +30,8 @@ struct PlaneProjectPrimitive2DAABB : INode {
                 bmax = zeno::max(bmax, coor);
             }
         }
-        ZImpl(set_output("boundMin2D", std::make_shared<NumericObject>(bmin)));
-        ZImpl(set_output("boundMax2D", std::make_shared<NumericObject>(bmax)));
+        ZImpl(set_output("boundMin2D", std::make_unique<NumericObject>(bmin)));
+        ZImpl(set_output("boundMax2D", std::make_unique<NumericObject>(bmax)));
     }
 };
 

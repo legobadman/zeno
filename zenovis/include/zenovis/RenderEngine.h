@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <zenovis/Camera.h>
 #include <zenovis/Scene.h>
@@ -7,7 +7,8 @@
 #include <string>
 #include <memory>
 #include <map>
-#include <zeno/core/ObjectManager.h>
+#include "tinygltf/json.hpp"
+using Json = nlohmann::json;
 
 namespace zenovis {
 
@@ -15,7 +16,6 @@ struct Scene;
 
 struct RenderEngine {
     virtual void draw(bool record) = 0;
-    virtual void update() = 0;
     virtual void cleanupScene() = 0;
     virtual void assetLoad() = 0;
     virtual void run() = 0;
@@ -25,12 +25,15 @@ struct RenderEngine {
     virtual void cleanupWhenExit() = 0;
     virtual void reload(const zeno::render_reload_info& info) {}
     virtual void optxShowBackground(bool showbg) {};
-
-    virtual void load_objects(const zeno::RenderObjsInfo& objs) {}
-    virtual void load_object(zeno::render_update_info info) {}
-    virtual void load_objects(const std::vector<zeno::render_update_info>& infos) {}
     virtual ~RenderEngine() = default;
-    virtual std::optional<glm::vec3> getClickedPos(int x, int y) { return {}; }
+    virtual std::optional<glm::vec3> getClickedPos(float x, float y) { return {}; }
+    virtual std::optional<std::tuple<std::string, std::string, uint32_t>> getClickedId(float x, float y) { return {}; }
+    virtual void load_matrix_objects(const std::vector<zeno::zany>& matrixs) {};
+    virtual void outlineInit(Json const &msg) {};
+
+    virtual void showBackground(bool bShow) {};
+
+    std::function<void(std::string)> fun = [](std::string){};
 };
 
 class RenderManager {

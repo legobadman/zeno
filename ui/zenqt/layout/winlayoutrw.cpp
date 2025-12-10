@@ -1,7 +1,6 @@
 #include "winlayoutrw.h"
 #include "layout/docktabcontent.h"
 #include "../viewport/viewportwidget.h"
-#include "../panel/zenospreadsheet.h"
 #include "../panel/zlogpanel.h"
 #include <rapidjson/document.h>
 #include "viewport/displaywidget.h"

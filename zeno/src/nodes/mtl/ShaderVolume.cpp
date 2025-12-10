@@ -34,7 +34,7 @@ struct ShaderVolume : INode {
         }, {
            
             ZImpl(get_input_shader("depth", (float)999)),
-            //get_input<IObject>("extinction", std::make_shared<NumericObject>(float(1))),
+            //get_input<IObject>("extinction", std::make_unique<NumericObject>(float(1))),
             ZImpl(get_input_shader("albedo", vec3f(0.5))),
             ZImpl(get_input_shader("anisotropy", float(0))),
 
@@ -45,7 +45,7 @@ struct ShaderVolume : INode {
 
         code += "auto extinction = vec3(1.0f); \n";
 
-        auto mtl = std::make_shared<MaterialObject>();
+        auto mtl = std::make_unique<MaterialObject>();
         mtl->frag = std::move(code);
 
             if (ZImpl(has_input("tex2dList"))) {
@@ -54,19 +54,19 @@ struct ShaderVolume : INode {
                     throw zeno::makeError("Can not use both way!");
                 }
                 for (const auto& tex: tex2dList) {
-                    em.tex2Ds.push_back(tex);
+                    em.tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
                 }
             }
             if (!em.tex2Ds.empty()) {
                 for (const auto& tex: em.tex2Ds) {
-                    mtl->tex2Ds.push_back(tex);
+                    mtl->tex2Ds.push_back(safe_uniqueptr_cast<zeno::Texture2DObject>(tex->clone()));
                 }
             }
 
         int vol_depth = (int)ZImpl(get_input2<float>("depth"));
         float vol_extinction = ZImpl(get_input2<float>("extinction"));
 
-        auto EmissionScale = ZImpl(get_input2<std::string>("EmissionScale:"));
+        auto EmissionScale = ZImpl(get_input2<std::string>("EmissionScale"));
         em.commonCode += "#define VolumeEmissionScale VolumeEmissionScaleType::" + EmissionScale + "\n";
 
         vol_depth = clamp(vol_depth, 9, 9999);
@@ -86,14 +86,14 @@ struct ShaderVolume : INode {
 
         if (ZImpl(has_input("tex3dList")))
         {
-            auto tex3dList = ZImpl(get_input<ListObject>("tex3dList"))->m_impl->getRaw(); //get<zeno::StringObject>();
+            auto tex3dList = get_input_ListObject("tex3dList")->m_impl->getRaw(); //get<zeno::StringObject>();
 
             for (const auto& tex3d : tex3dList) {
 
                 const auto ele = dynamic_cast<zeno::StringObject*>(tex3d);
                 if (ele == nullptr) {
-                    auto texObject = std::dynamic_pointer_cast<zeno::TextureObjectVDB>(tex3d->clone());
-                    mtl->tex3Ds.push_back(texObject); 
+                    auto texObject = safe_uniqueptr_cast<zeno::TextureObjectVDB>(tex3d->clone());
+                    mtl->tex3Ds.push_back(std::shared_ptr<zeno::TextureObjectVDB>(texObject.release())); 
                     continue;
                 }
 
@@ -116,7 +116,7 @@ struct ShaderVolume : INode {
                     } 
                 }
 
-                auto toVDB = std::make_shared<TextureObjectVDB>();
+                auto toVDB = std::make_unique<TextureObjectVDB>();
                 toVDB->path = path;
                 toVDB->channel = channel_string;
                 toVDB->eleType = TextureObjectVDB::ElementType::Fp32;
@@ -163,7 +163,7 @@ ZENDEFNODE(ShaderVolume, {
         {gParamType_Float, "extinction", "1"},
         {gParamType_Float, "anisotropy", "0"},
 
-        {gParamType_Vec3f, "albedo", "0.5,0.5,0.5"},
+        {gParamType_Vec3f, "albedo", "0.5,0.5,0.5", Socket_Primitve, zeno::ColorVec},
         {gParamType_Float, "density", "0"},
         {gParamType_Vec3f, "emission", "0.0,0.0,0.0"}
     },
@@ -179,13 +179,14 @@ struct ShaderVolumeHomogeneous : INode {
 
     virtual void apply() override {
 
-        auto mtl = std::make_shared<MaterialObject>();
+        auto mtl = std::make_unique<MaterialObject>();
 
         auto extinction = ZImpl(get_input2<zeno::vec3f>("extinction"));
-        extinction = clamp(extinction, 1e-5, 1e+5);
+            extinction = clamp(extinction, 1e-10, 1e+5);
 
         auto albedo     = ZImpl(get_input2<zeno::vec3f>("albedo"));
         auto anisotropy = ZImpl(get_input2<float>("anisotropy"));
+        auto albedoAmp = get_input2_float("albedoAmp");
 
         std::stringstream ss {};
         ss << std::setprecision(9);
@@ -193,6 +194,7 @@ struct ShaderVolumeHomogeneous : INode {
         ss << std::setprecision(9);
         ss << "auto density  = 0.0f;\n";
         ss << "vec3 emission = vec3(0.0f);   \n";
+        ss << "albedoAmp = float(" << albedoAmp << ");\n";
         ss << "vec3 albedo = vec3(" << albedo[0] << "," << albedo[1] << "," << albedo[2] << "); \n";
         ss << "vec3 extinction = vec3(" << extinction[0] << "," << extinction[1] << "," << extinction[2] << "); \n";
 
@@ -223,10 +225,10 @@ struct ShaderVolumeHomogeneous : INode {
 
 ZENDEFNODE(ShaderVolumeHomogeneous, {
     {
-        {gParamType_Vec3f, "albedo", "1,1,1"},
+        {gParamType_Vec3f, "albedo", "1,1,1", Socket_Primitve, zeno::ColorVec},
         {gParamType_Vec3f, "extinction", "0.01,0.01,0.01"},
         {gParamType_Float, "anisotropy", "0"},
-        
+        {gParamType_Float, "albedoAmp", "1.0"},
         {gParamType_Bool, "debug", "false"},
         {gParamType_Bool, "multiscatter", "false"},
         {gParamType_String, "mtlid", "VolMat1"},

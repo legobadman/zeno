@@ -250,19 +250,25 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         nodeMenu->addAction(saveAsset);
         connect(saveAsset, &QAction::triggered, this, [=]() {
             QString name = m_index.data(QtRole::ROLE_NODE_NAME).toString();
-            AssetsModel* pModel = zenoApp->graphsManager()->assetsModel();
-            if (pModel->getAssetGraph(name))
-            {
-                QMessageBox::warning(nullptr, tr("Save as asset"), tr("Asset %1 is existed").arg(name));
-                return;
-            }
-            zeno::ZenoAsset asset;
-            asset.info.name = name.toStdString();
+
             QString dirPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
             QString path = dirPath + "/ZENO/assets/" + name + ".zda";
-            path = QFileDialog::getSaveFileName(nullptr, "File to Open", path, "All Files(*);;");
+            path = QFileDialog::getSaveFileName(nullptr, "File to Open", path, "Zeno Digital Asset(*.zda);;");
             if (path.isEmpty())
                 return;
+
+            QFileInfo fn(path);
+            QString finalAssetName = fn.completeBaseName();
+
+            AssetsModel* pModel = zenoApp->graphsManager()->assetsModel();
+            if (pModel->getAssetGraph(finalAssetName))
+            {
+                QMessageBox::warning(nullptr, tr("Save as asset"), tr("Asset %1 is existed").arg(finalAssetName));
+                return;
+            }
+
+            zeno::ZenoAsset asset;
+            asset.info.name = finalAssetName.toStdString();
             asset.info.path = path.toStdString();
             asset.info.majorVer = 1;
             asset.info.minorVer = 0;
@@ -275,7 +281,10 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             asset.m_customui = data.customUi;
             auto& assets = zeno::getSession().assets;
             assets->createAsset(asset);
-            pModel->saveAsset(name);
+            pModel->saveAsset(finalAssetName);
+
+            auto graphM = qobject_cast<GraphModel*>(const_cast<QAbstractItemModel*>(m_index.model()));
+            graphM->changeSubnetToAssetInstance(m_index, finalAssetName);
         });
 
         nodeMenu->exec(QCursor::pos());
@@ -287,23 +296,31 @@ void ZenoNodeBase::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         ZASSERT_EXIT(pSubgGraphM);
         bool bLocked = pSubgGraphM->isLocked();
         QMenu* nodeMenu = new QMenu;
-        QAction* pLock = new QAction(bLocked ? tr("UnLock") : tr("Lock"));
+        QAction* pLock = new QAction(bLocked ? tr("UnLock") : tr("Lock and Reset"));
         nodeMenu->addAction(pLock);
         connect(pLock, &QAction::triggered, this, [=]() {
-            //TODO: oldui case
-            //pSubgGraphM->setLocked(!bLocked);
+            bool bLocked = m_index.data(QtRole::ROLE_NODE_LOCKED).toBool();
+            UiHelper::qIndexSetData(m_index, !bLocked, QtRole::ROLE_NODE_LOCKED);
         });
         if (!bLocked)
         {
+            QAction* pSyncAsset = new QAction(tr("Sync Local Changed To Asset"));
+            nodeMenu->addAction(pSyncAsset);
+            connect(pSyncAsset, &QAction::triggered, this, [=]() {
+                QAbstractItemModel* pModel = const_cast<QAbstractItemModel*>(m_index.model());
+                GraphModel* model = qobject_cast<GraphModel*>(pModel);
+                model->syncAssetInst(m_index);
+            });
+
             QAction* pEditParam = new QAction(tr("Custom Params"));
             nodeMenu->addAction(pEditParam);
             connect(pEditParam, &QAction::triggered, this, [=]() {
                 ZenoGraphsEditor* pEditor = getEditorViewByViewport(event->widget());
-            if (pEditor)
-            {
-                QString assetName = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
-                pEditor->onAssetsCustomParamsClicked(assetName);
-            }
+                if (pEditor)
+                {
+                    QString assetName = m_index.data(QtRole::ROLE_CLASS_NAME).toString();
+                    pEditor->onAssetsCustomParamsClicked(assetName);
+                }
             });
         }
         nodeMenu->exec(QCursor::pos());

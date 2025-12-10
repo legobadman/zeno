@@ -1,4 +1,4 @@
-#include <zeno/zeno.h>
+﻿#include <zeno/zeno.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/GeometryObject.h>
@@ -96,7 +96,7 @@ struct CreateCube : zeno::INode {
     }
 
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
 
         auto size = get_input2_float("size");
         auto div_w = get_input2_int("div_w");
@@ -479,7 +479,7 @@ struct CreateCube : zeno::INode {
         }
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim", std::move(geo));
     }
 };
@@ -506,7 +506,7 @@ ZENDEFNODE(CreateCube, {
 
 struct CreateDisk : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto position = get_input2_vec3f_("position");
         auto scaleSize = get_input2_vec3f_("scaleSize");
         auto radius = get_input2_float("radius");
@@ -548,8 +548,8 @@ struct CreateDisk : zeno::INode {
         tris[tris.size()-1] = zeno::vec3i(divisions, 0, 1);
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
-        set_output("prim", geo);
+        auto geo = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -571,7 +571,7 @@ ZENDEFNODE(CreateDisk, {
 
 struct CreatePlane : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto position = get_input2_vec3f_("position");
         auto scale = get_input2_vec3f_("scaleSize");
         auto size = get_input2_float("size");
@@ -711,8 +711,8 @@ struct CreatePlane : zeno::INode {
         prim->userData()->set_vec3f("rotate", toAbiVec3f(rotate));
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
-        set_output("prim", prim);
+        auto geo = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -736,7 +736,7 @@ ZENDEFNODE(CreatePlane, {
 
 struct CreateTube : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto position = get_input2_vec3f_("position");
         auto scale = get_input2_vec3f_("scaleSize");
         auto radius1 = get_input2_float("radius1");
@@ -954,8 +954,8 @@ struct CreateTube : zeno::INode {
         }
 
         NORMUV_CIHOU
-        auto geo = create_GeometryObject(prim);
-        set_output("prim", geo);
+        auto geo = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geo));
     }
 };
 
@@ -992,7 +992,7 @@ struct CreateTorus : zeno::INode {
             minorSegment = 3;
         }
 
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         prim->verts.resize(majorSegment * minorSegment);
         auto &nrm = prim->verts.add_attr<zeno::vec3f>("nrm");
         for (auto j = 0; j < minorSegment; j++) {
@@ -1075,7 +1075,7 @@ struct CreateTorus : zeno::INode {
         if (!get_input2_bool("quads")){
             primTriangulate(prim.get());
         }
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim",std::move(geo));
     }
 };
@@ -1102,7 +1102,7 @@ ZENDEFNODE(CreateTorus, {
 
 struct CreateSphere : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto position = get_input2_vec3f_("position");
         auto scale = get_input2_vec3f_("scaleSize");
         auto rotate = get_input2_vec3f_("rotate");
@@ -1304,7 +1304,7 @@ struct CreateSphere : zeno::INode {
             prim->userData()->set_vec3f("sphere_rotate", toAbiVec3f(rotate));
             prim->userData()->set_vec3f("sphere_scale", toAbiVec3f(scale));
 
-            // auto sphere_transform = std::make_shared<zeno::MatrixObject>();
+            // auto sphere_transform = std::make_unique<zeno::MatrixObject>();
             // sphere_transform->m = transform;
             auto transform_ptr = glm::value_ptr(transform);
             
@@ -1321,7 +1321,7 @@ struct CreateSphere : zeno::INode {
             prim->userData()->set_vec4f("_transform_row3", toAbiVec4f(row3));
         }
 
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim",std::move(geo));
     }
 };
@@ -1350,7 +1350,7 @@ ZENDEFNODE(CreateSphere, {
 
 struct CreateCone : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
         auto position = get_input2_vec3f_("position");
         auto scaleSize = get_input2_vec3f_("scaleSize");
         auto radius = get_input2_float("radius");
@@ -1372,7 +1372,7 @@ struct CreateCone : zeno::INode {
             tris.push_back(vec3i(lons, i, (i + 1) % lons));
             tris.push_back(vec3i(i, lons + 1, (i + 1) % lons));
         }
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim", std::move(geo));
     }
 };
@@ -1392,7 +1392,7 @@ ZENDEFNODE(CreateCone, {
 
 struct CreateCylinder : zeno::INode {
     virtual void apply() override {
-        auto prim = std::make_shared<zeno::PrimitiveObject>();
+        auto prim = std::make_unique<zeno::PrimitiveObject>();
 
         auto position = get_input2_vec3f_("position");
         auto scaleSize = get_input2_vec3f_("scaleSize");
@@ -1430,7 +1430,7 @@ struct CreateCylinder : zeno::INode {
             tris.push_back(vec3i(_1, _0, _2));
             tris.push_back(vec3i(_2, _0, _3));
         }
-        auto geo = create_GeometryObject(prim);
+        auto geo = create_GeometryObject(prim.get());
         set_output("prim", std::move(geo));
     }
 };
@@ -1515,13 +1515,13 @@ ZENDEFNODE(CopyFile, {
 
 struct HEdgeGeoSelfTest : zeno::INode {
     void apply() override {
-        std::shared_ptr<PrimitiveObject> prim;
+        PrimitiveObject* prim = nullptr;
         if (ZImpl(has_input("prim"))) {
             prim = get_input_PrimitiveObject("prim");
         }
-        auto spGeom = std::make_shared<GeometryObject>(prim);
+        auto spGeom = std::make_unique<GeometryObject>(prim);
         auto spRes = spGeom->toPrimitive();
-        set_output("prim", spRes);
+        set_output("prim", std::move(spRes));
     }
 };
 
@@ -1537,12 +1537,12 @@ ZENDEFNODE(HEdgeGeoSelfTest, {
 
 struct HEdgeBasedPrim : zeno::INode {
     void apply() override {
-        std::shared_ptr<PrimitiveObject> prim;
+        PrimitiveObject* prim = nullptr;
         if (has_input("prim")) {
             prim = get_input_PrimitiveObject("prim");
         }
         auto spGeom = create_GeometryObject(prim);
-        set_output("prim", spGeom);
+        set_output("prim", std::move(spGeom));
     }
 };
 

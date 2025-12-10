@@ -269,7 +269,7 @@ namespace zeno {
             if (ZImpl(has_input("distance")))
                 distance = ZImpl(get_input<zeno::NumericObject>("distance"))->get<float>();
             if (lengthSquared(direction) < 0.000001f) {
-                ZImpl(set_output("outPrim", ZImpl(get_input("prim"))));
+                ZImpl(set_output("outPrim", ZImpl(clone_input("prim"))));
                 return;
             }
             direction = reverse ? -normalize(direction) : normalize(direction);
@@ -278,7 +278,7 @@ namespace zeno {
             auto refprim = ZImpl(get_input<PrimitiveObject>("prim"));
             auto& ref_pos_attr = refprim->attr<zeno::vec3f>("pos");
 
-            auto outprim = std::make_shared<PrimitiveObject>();
+            auto outprim = std::make_unique<PrimitiveObject>();
             std::vector<zeno::vec3f> new_pos_attr;
             std::unordered_map<int32_t, int32_t> point_map;
             for(auto key:refprim->attr_keys())

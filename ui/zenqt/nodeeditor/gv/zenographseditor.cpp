@@ -1,4 +1,4 @@
-#include "zenographseditor.h"
+﻿#include "zenographseditor.h"
 #include "zenosubgraphview.h"
 #include "widgets/ztoolbutton.h"
 #include "zenoapplication.h"
@@ -691,6 +691,8 @@ void ZenoGraphsEditor::activateTab(const QStringList& subgpath, const QString& f
     int idx = tabIndexOfName(showName);
     auto graphsMgm = zenoApp->graphsManager();
     GraphModel* pGraphM = graphsMgm->getGraph(subgpath);
+    if (!pGraphM)
+        return;
 
     QString resPath;
     if (showName != "main") {
@@ -795,8 +797,9 @@ void ZenoGraphsEditor::activateTab(const QString& subGraphName, const QString& p
 
     ZenoSubGraphView* pView = qobject_cast<ZenoSubGraphView*>(m_ui->graphsViewTab->currentWidget());
     ZASSERT_EXIT(pView);
-    pView->resetPath(path, subGraphName, objId, isError);
+    pView->resetPath(path, subGraphName, objId, isError, focusWithSelect);
 
+    if (focusWithSelect) {
     m_mainWin->onNodesSelected(pModel->index(subGraphName), pView->scene()->selectNodesIndice(), true);
 }
 #endif
@@ -812,8 +815,9 @@ void ZenoGraphsEditor::showFloatPanel(GraphModel* subgraph, const QModelIndexLis
 void ZenoGraphsEditor::onTreeItemActivated(const QModelIndex& index)
 {
     QModelIndex idx = index;
-    QString treeItemName = idx.data(QtRole::ROLE_NODE_NAME).toString();
-    QStringList subgPath;
+    QModelIndex realIdx = idx.data(Qt::UserRole + 1).toModelIndex();
+    QString treeItemName = realIdx.data(QtRole::ROLE_NODE_NAME).toString();
+    QStringList subgPath;   //当前树节点所在的子图的路径，路径不包括节点
     if (!idx.parent().isValid())
     {
         subgPath.append("main");
@@ -824,8 +828,15 @@ void ZenoGraphsEditor::onTreeItemActivated(const QModelIndex& index)
         idx = idx.parent();
         while (idx.isValid())
         {
-            QString objName = idx.data(QtRole::ROLE_NODE_NAME).toString();
-            subgPath.push_front(objName);
+            realIdx = idx.data(Qt::UserRole + 1).toModelIndex();
+            if (realIdx.isValid()) {
+                QString objName = realIdx.data(QtRole::ROLE_NODE_NAME).toString();
+                subgPath.push_front(objName);
+            }
+            else {
+                QString dispName = idx.data().toString();
+                subgPath.push_front(dispName);
+            }
             idx = idx.parent();
         }
     }
@@ -980,9 +991,11 @@ void ZenoGraphsEditor::onSearchEdited(const QString& content)
 
             QString nodeName = res.targetIdx.data(QtRole::ROLE_CLASS_NAME).toString();
             QString nodeIdent = res.targetIdx.data(QtRole::ROLE_NODE_NAME).toString();
+            QString uuidpath = res.targetIdx.data(QtRole::ROLE_OBJPATH).toString();
             QStandardItem* pItem = new QStandardItem(nodeIdent);
             pItem->setData(nodeName, QtRole::ROLE_CLASS_NAME);
             pItem->setData(res.targetIdx.data(QtRole::ROLE_NODE_NAME).toString(), QtRole::ROLE_NODE_NAME);
+            pItem->setData(uuidpath, QtRole::ROLE_OBJPATH);
             parentItem->appendRow(pItem);
         }
     }
@@ -994,13 +1007,18 @@ void ZenoGraphsEditor::onSearchEdited(const QString& content)
 
 void ZenoGraphsEditor::onSearchItemClicked(const QModelIndex& index)
 {
-    //TODO
     QString objId = index.data(QtRole::ROLE_NODE_NAME).toString();
+    QString objpath = index.data(QtRole::ROLE_OBJPATH).toString();
+    QStringList subgPath = objpath.split('/', Qt::SkipEmptyParts);
+    subgPath.pop_back();
+    ZASSERT_EXIT(!subgPath.isEmpty());
+    activateTab(subgPath, objId);
+
     if (index.parent().isValid())
     {
         QString parentId = index.parent().data(QtRole::ROLE_NODE_NAME).toString();
         QString subgName = index.parent().data(QtRole::ROLE_CLASS_NAME).toString();
-        //activateTab(subgName, objId);
+        //activateTab(subgPath, objId);
     }
     else
     {
@@ -1027,7 +1045,7 @@ void ZenoGraphsEditor::toggleViewForSelected(bool bOn)
             else {
                 options = options ^ zeno::View;
             }
-            pModel->setData(idx, options, QtRole::ROLE_NODE_STATUS);
+            pModel->setData(idx, bOn, QtRole::ROLE_NODE_ISVIEW);
         }
     }
 }

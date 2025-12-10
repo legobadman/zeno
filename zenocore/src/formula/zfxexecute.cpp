@@ -7,6 +7,7 @@
 #include "zfxparser.hpp"
 #include <regex>
 #include <zeno/core/FunctionManager.h>
+#include "../utils/zfxutil.h"
 
 
 namespace zeno
@@ -41,8 +42,9 @@ ZENO_API int ZfxExecute::execute() {
     }
     //TODO: error exception catch.
     if (m_root) {
-        auto& funcMgr = zeno::getSession().funcManager;
-        funcMgr->executeZfx(m_root, m_context);
+        FunctionManager funcMgr;
+        //auto& funcMgr = zeno::getSession().funcManager;
+        funcMgr.executeZfx(m_root, m_context);
     }
     else {
 
@@ -53,13 +55,14 @@ ZENO_API int ZfxExecute::execute() {
 zfxvariant ZfxExecute::execute_fmla() {
     int ret = parse();
     if (ret != 0) {
-        throw makeError<ZfxParseError>();
+        throw makeNodeError<ZfxParseError>(m_context->spNode->get_path());
     }
     //只支持单值计算
     ZfxElemFilter filter(1, 1);
-    auto& funcMgr = zeno::getSession().funcManager;
-    const ZfxVariable& res = funcMgr->execute(m_root, filter, m_context);
-    return res.value[0];
+    //auto& funcMgr = zeno::getSession().funcManager;
+    FunctionManager funcMgr;
+    const ZfxVariable& res = funcMgr.execute(m_root, filter, m_context);
+    return zeno::zfx::getZfxVarElement(res.value, 0);
 }
 
 std::shared_ptr<ZfxASTNode> ZfxExecute::makeNewNode(nodeType type, operatorVals op, std::vector<std::shared_ptr<ZfxASTNode>> children) {

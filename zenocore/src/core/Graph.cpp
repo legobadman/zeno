@@ -7,6 +7,7 @@
 #include <zeno/utils/scope_exit.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Assets.h>
+#include <zeno/core/NodeRegister.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/extra/GraphException.h>
@@ -25,6 +26,7 @@
 #include <cctype>
 #include <zeno/core/GlobalVariable.h>
 #include <zeno/core/typeinfo.h>
+#include <future>
 #include <zeno/reflection/zenoreflecttypes.cpp.generated.hpp>
 //#include <Python.h>
 //#include <pybind11/pybind11.h>
@@ -45,12 +47,6 @@ Graph::Graph(const std::string& name, bool bAssets) : m_name(name), m_bAssets(bA
 
 Graph::~Graph() {
 
-}
-
-zany Graph::getNodeInput(std::string const& sn, std::string const& ss) const {
-    //todo: deprecated
-    auto node = safe_at(m_nodes, sn, "node name").get();
-    return node->get_input(ss);
 }
 
 void Graph::clearNodes() {
@@ -84,31 +80,61 @@ Graph *Graph::getSubnetGraph(std::string const & node_name) const {
     return node ? node->get_subgraph() : nullptr;
 }
 
-void Graph::applyNode(std::string const &node_name, render_update_info& info) {
+render_update_info Graph::applyNode(std::string const &node_name, CalcContext* pContext) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
-
-    CalcContext ctx;
-    if (m_parSubnetNode) {
-        ctx.isSubnetApply = true;
+    if (!node->is_dirty()) {
+        return render_update_info();
     }
 
-    GraphException::translated([&] {
-        node->doApply(&ctx);
-    }, node);
+    node->execute(pContext);
 
+    render_update_info info;
     if (node->is_view()) {
         info.reason = Update_Reconstruct;
-        info.cond_update_info = node->get_default_output_container_info();
+        auto pObj = node->get_default_output_object();
+        if (pObj) {
+            info.spObject = pObj->clone();
+        }
         info.uuidpath_node_objkey = node->get_uuid_path();
+
+        if (node->is_nocache()) {
+            //销毁对象，所属权已经移交到info上
+            node->mark_takeover();
+        }
+    }
+    return info;
+}
+
+void Graph::mark_clean() {
+    for (auto& [_, node] : m_nodes) {
+        if (node->get_run_status() == Node_RunSucceed) {
+            node->mark_clean();
+        }
     }
 }
 
 void Graph::applyNodes(std::set<std::string> const &nodes, render_reload_info& infos) {
+    auto launch_method = zeno::getSession().is_async_executing() ? 
+        (std::launch::async | std::launch::deferred) : std::launch::deferred;
+    clearContainerUpdateInfo();
+
+    CalcContext ctx;
+    std::vector<std::future<render_update_info>> tasks;
     for (auto const& node_name: nodes) {
-        render_update_info info;
-        applyNode(node_name, info);
-        infos.objs.push_back(info);
+        tasks.push_back(std::async(launch_method, &Graph::applyNode, this, node_name, &ctx));
+    }
+    for (auto& task : tasks) {
+        if (task.valid()) {
+            task.wait();
+        }
+    }
+
+    for (auto& task : tasks) {
+        const zeno::render_update_info& info = task.get();
+        if (!info.uuidpath_node_objkey.empty()) {
+            infos.objs.push_back(info);
+        }
     }
     infos.policy = Reload_Calculation;
 }
@@ -118,7 +144,7 @@ void Graph::runGraph(render_reload_info& infos) {
     return applyNodes(m_viewnodes, infos);
 }
 
-void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
+void Graph::onNodeParamUpdated(PrimitiveParam* spParam, const zeno::reflect::Any&, const zeno::reflect::Any&) {
     auto spNode = spParam->m_wpNode;
     assert(spNode);
     const std::string& uuid = spNode->get_uuid();
@@ -128,9 +154,9 @@ void Graph::onNodeParamUpdated(PrimitiveParam* spParam, zeno::reflect::Any old_v
         frame_nodes.insert(uuid);
     }
     else {
-        static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver" };
-        if (frame_node_cls.find(cls) == frame_node_cls.end())
-        frame_nodes.erase(uuid);
+        if (!zeno::getSession().is_frame_node(cls)) {
+            frame_nodes.erase(uuid);
+        }
     }
 }
 
@@ -246,38 +272,10 @@ std::map<std::string, zany> Graph::callSubnetNode(std::string const &id,
     return std::map<std::string, zany>();
 }
 
-std::map<std::string, zany> Graph::callTempNode(std::string const &id,
-        std::map<std::string, zany> inputs) {
-
-    //DEPRECARED.
-    return {};
-#if 0
-    auto cl = safe_at(getSession().nodeClasses, id, "node class name").get();
-    const std::string& name = generateUUID();
-    auto se = cl->new_instance(shared_from_this(), name);
-    se->directly_setinputs(inputs);
-    se->doOnlyApply();
-    return se->getoutputs();
-#endif
-}
-
 void Graph::addNodeOutput(std::string const& id, std::string const& par) {
     // add "dynamic" output which is not descriped by core.
     //todo: deprecated.
     //safe_at(nodes, id, "node name")->outputs[par] = nullptr;
-}
-
-void Graph::setNodeParam(std::string const &id, std::string const &par,
-    std::variant<int, float, std::string, zany> const &val) {
-    auto parid = par + ":";
-    std::visit([&] (auto const &val) {
-        using T = std::decay_t<decltype(val)>;
-        if constexpr (std::is_same_v<T, zany>) {
-            setNodeInput(id, parid, val);
-        } else {
-            setNodeInput(id, parid, objectFromLiterial(val));
-        }
-    }, val);
 }
 
 static void initSpecialNode(zeno::NodeImpl* pNodeImpl, const NodeData& node) {
@@ -321,6 +319,7 @@ void Graph::init(const GraphData& graph) {
         auto spNode = createNode(node.cls, name, bAssets, node.uipos, true, bAssets ? &bAssetLock : nullptr);
         spNode->init(node);
         initSpecialNode(spNode, node);
+        sess.reportIOProgress(name, 1);
     }
     //import edges
     for (const auto& link : graph.links) {
@@ -415,12 +414,9 @@ std::string Graph::generateNewName(const std::string& node_cls, const std::strin
 
     std::string tempName = node_cls;
     if (!bAssets) {
-        auto& nodeClass = getSession().nodeClasses;
-        auto it = nodeClass.find(node_cls);
-        if (it != nodeClass.end()) {
-            auto cl = it->second.get();
-            if (cl && !cl->m_customui.nickname.empty())
-                tempName = cl->m_customui.nickname;
+        auto cl = getNodeRegister().getNodeClassPtr(node_cls);
+        if (cl && !cl->m_customui.nickname.empty()) {
+            tempName = cl->m_customui.nickname;
         }
     }
 
@@ -428,7 +424,8 @@ std::string Graph::generateNewName(const std::string& node_cls, const std::strin
     bool end_with_digit = std::isdigit(tempName.back());
     while (true) {
         std::string new_name = tempName + (end_with_digit ? "_" : "") + std::to_string(i++);
-        if (nodes.find(new_name) == nodes.end()) {
+        if (nodes.find(new_name) == nodes.end() &&
+            m_name2uuid.find(new_name) == m_name2uuid.end()) {
             nodes.insert(new_name);
             return new_name;
         }
@@ -813,8 +810,9 @@ NodeImpl* Graph::createNode(
     bool bAssets,
     std::pair<float, float> pos,
     bool isIOInit,
-    bool* pbAssetLock
-    )
+    bool* pbAssetLock,
+    CustomUI customUi
+)
 {
     CORE_API_BATCH
     const std::string& name = generateNewName(cls, orgin_name, bAssets);
@@ -828,20 +826,18 @@ NodeImpl* Graph::createNode(
     NodeImpl* pNode = nullptr;
     std::unique_ptr<NodeImpl> upNode;
     if (!bAssets) {
-        auto& nodeClass = getSession().nodeClasses;
         std::string nodecls = cls;
-        auto it = nodeClass.find(nodecls);
-        if (it == nodeClass.end()) {
-            upNode = std::make_unique<NodeImpl>(nullptr);   //空壳
-            pNode = upNode.get();
-            pNode->initUuid(this, nodecls);
-            uuid = pNode->get_uuid();
-        }
-        else {
-            INodeClass* cl = it->second.get();
+        auto cl = getNodeRegister().getNodeClassPtr(nodecls);
+        if (cl) {
             upNode = std::move(cl->new_instance(this, name));
             pNode = upNode.get();
             pNode->nodeClass = cl;
+            uuid = pNode->get_uuid();
+        }
+        else {
+            upNode = std::make_unique<NodeImpl>(nullptr);   //空壳
+            pNode = upNode.get();
+            pNode->initUuid(this, nodecls);
             uuid = pNode->get_uuid();
         }
     }
@@ -854,15 +850,23 @@ NodeImpl* Graph::createNode(
         asset_nodes.insert(uuid);
     }
 
-    static std::set<std::string> frame_node_cls = { "GetFrameNum", "CameraNode", "FlipSolver", "NewFBXSceneInfo"};
-    if (frame_node_cls.count(cls) > 0) {
+    if (zeno::getSession().is_frame_node(cls)) {
         frame_nodes.insert(uuid);
     }
     if (zeno::isDerivedFromSubnetNodeName(cls)) {
         subnet_nodes.insert(uuid);
         if (!isIOInit) {
             zeno::ParamsUpdateInfo updateInfo;
-            zeno::parseUpdateInfo(pNode->get_customui(), updateInfo);
+            if (customUi.inputPrims.empty() && customUi.outputPrims.empty() && customUi.inputObjs.empty() && customUi.outputObjs.empty()) {
+                //创建新的subnet的情况
+                zeno::parseUpdateInfo(pNode->get_customui(), updateInfo);
+            } else {
+                //删除subnet再undo的情况
+                zeno::parseUpdateInfo(customUi, updateInfo);
+                if (auto subnNode = dynamic_cast<SubnetNode*>(pNode)) {
+                    subnNode->setCustomUi(customUi);
+                }
+            }
             pNode->update_editparams(updateInfo, true);
         }
     }
@@ -1047,6 +1051,19 @@ std::map<std::string, NodeImpl*> Graph::getNodes() const {
     return nodes;
 }
 
+float Graph::statistic_cpu_used() const {
+    float total_time = 0;
+    for (auto& [uuid, node] : m_nodes) {
+        //dirty, foreach的情况
+        NodeRunStatus status = node->get_run_status();
+        if (status == Node_DirtyReadyToRun) {
+            float time = node->time();
+            total_time += time;
+        }
+    }
+    return total_time;
+}
+
 std::set<std::string> Graph::get_viewnodes() const {
     return m_viewnodes;
 }
@@ -1198,7 +1215,44 @@ bool Graph::addLink(const EdgeInfo& edge) {
     bool bConnectWithKey = false;
     adjustEdge.inKey = edge.inKey;
 
-    if (!bInputPrim)
+    if (bInputPrim)
+    {
+        ParamPrimitive inParam = inNode->get_input_prim_param(edge.inParam, &bExist);
+        if (!bExist)
+            return false;
+        ParamPrimitive outParam = outNode->get_output_prim_param(edge.outParam, &bExist);
+        if (!bExist)
+            return false;
+        if (inParam.type == gParamType_ListOfMat4)
+        {
+            if (outParam.type == gParamType_Matrix4)
+            {
+                bConnectWithKey = true;
+                std::vector<EdgeInfo> inParamLinks = inParam.links;
+
+                //要先检查一下已有的边是不是直连，如果是，要删掉
+                if (inParam.links.size() == 1 && inParam.links[0].inKey.empty()) {
+                    removeLinks(inNode->get_name(), true, edge.inParam);
+                    inParam.links.clear();
+                }
+
+                std::set<std::string> ss;
+                for (const EdgeInfo& spLink : inParam.links) {
+                    ss.insert(spLink.inKey);
+                }
+
+                if (adjustEdge.inKey.empty())
+                    adjustEdge.inKey = "obj0";
+
+                int i = 0;
+                while (ss.find(adjustEdge.inKey) != ss.end()) {
+                    i++;
+                    adjustEdge.inKey = "obj" + std::to_string(i);
+                }
+            }
+        }
+    }
+    else
     {
         ParamObject inParam = inNode->get_input_obj_param(edge.inParam);
         ParamObject outParam = outNode->get_output_obj_param(edge.outParam);
@@ -1252,12 +1306,25 @@ bool Graph::addLink(const EdgeInfo& edge) {
         }
     }
 
-    if (!bConnectWithKey)
+    if (!bConnectWithKey) {
         removeLinks(inNode->get_name(), true, edge.inParam);
+    } else {
+        std::vector<EdgeInfo> links = inNode->getLinksByParam(true, edge.inParam);
+        for (auto link : links) {
+            if (link.inNode == adjustEdge.inNode && link.outNode == adjustEdge.outNode &&
+                link.inParam == adjustEdge.inParam && link.outParam == adjustEdge.outParam) {
+                adjustEdge.inKey = link.inKey;
+                removeLink(link);
+                break;
+            }
+        }
+    }
 
     assert(bInputPrim == bOutputPrim);
     if (bInputPrim) {
         std::shared_ptr<PrimitiveLink> spLink = std::make_shared<PrimitiveLink>();
+        spLink->fromkey = adjustEdge.outKey;
+        spLink->tokey = adjustEdge.inKey;
         outNode->init_primitive_link(false, edge.outParam, spLink, edge.targetParam);
         inNode->init_primitive_link(true, edge.inParam, spLink, edge.targetParam);
         adjustEdge.bObjLink = false;

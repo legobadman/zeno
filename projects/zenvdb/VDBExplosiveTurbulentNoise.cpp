@@ -108,7 +108,7 @@ float operator()(float x, float y, float z) {  // https://www.shadertoy.com/view
 
 struct VDBExplosiveTurbulentNoise : INode {
   virtual void apply() override {
-    auto inoutSDF = safe_dynamic_cast<VDBFloatGrid>(get_input("inoutSDF"));
+    auto inoutSDF = safe_uniqueptr_cast<VDBFloatGrid>(clone_input("inoutSDF"));
     auto strength = get_input2_float("strength");
     auto scale = get_input2_float("scale");
     auto scaling = has_input("scaling") ?
@@ -147,7 +147,7 @@ struct VDBExplosiveTurbulentNoise : INode {
     auto velman = openvdb::tree::LeafManager<std::decay_t<decltype(grid->tree())>>(grid->tree());
     velman.foreach(wrangler);
 
-    set_output("inoutSDF", get_input("inoutSDF"));
+    set_output("inoutSDF", std::move(inoutSDF));
   }
 };
 

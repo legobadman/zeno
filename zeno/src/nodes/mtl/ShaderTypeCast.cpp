@@ -18,14 +18,14 @@ struct ShaderTypeCast : ShaderNodeClone<ShaderTypeCast> {
         auto obj = ZImpl(get_input_shader("in"));
         em->determineType(obj);
 
-        auto type = zsString2Std(get_input2_string("type:"));
+        auto type = zsString2Std(get_input2_string("type"));
         return TypeHint.at(type);
     }
 
     virtual void emitCode(EmissionPass *em) override {
 
-        auto op = zsString2Std(get_input2_string("op:"));
-        auto type = zsString2Std(get_input2_string("type:"));
+        auto op = zsString2Std(get_input2_string("op"));
+        auto type = zsString2Std(get_input2_string("type"));
         
         auto obj = ZImpl(get_input_shader("in"));
         auto in = em->determineExpr(obj);

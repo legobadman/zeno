@@ -27,7 +27,7 @@ public:
     std::string getName() const { return name; }
 
     std::string testzeno() {
-        return m_pSess->mainGraph->getName();
+        return m_pSess->mainGraph()->getName();
     }
 
 private:
@@ -43,7 +43,7 @@ public:
     }
 
     Zpy_Graph mainGraph() const {
-        return Zpy_Graph(sess.mainGraph);
+        return Zpy_Graph(sess.mainGraph());
     }
     void run() {
         zeno::render_reload_info _;
@@ -58,7 +58,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(zen, m) {  // `ze` 是python里import的模块名
     m.def("mainGraph", []() -> Zpy_Graph {
-        return Zpy_Graph(zeno::getSession().mainGraph);
+        return Zpy_Graph(zeno::getSession().mainGraph());
     });
 
     py::class_<MyClass>(m, "MyClass")

@@ -9,7 +9,7 @@
 #if 1
 #include <QtWidgets>
 #include "widgets/zcombobox.h"
-#include <zeno/core/common.h>
+#include <zeno/core/data.h>
 
 class ZenoImageView: public QGraphicsView {
     Q_OBJECT
@@ -104,6 +104,7 @@ public:
     ZenoImagePanel(QWidget* parent = nullptr);
     void clear();
     void reload(const zeno::render_reload_info& info);
+    void setObject(zeno::IObject* pObject);
 
 private:
     zeno::render_reload_info m_info;

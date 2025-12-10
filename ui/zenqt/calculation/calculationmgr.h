@@ -18,9 +18,8 @@ public:
     void setCurrentGraphPath(const QString& current_graph_path);
 
 signals:
-    void calcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info);
-    void nodeStatusChanged(zeno::ObjPath, QmlNodeRunStatus::Value);
-    void commitRenderInfo(zeno::render_update_info);
+    void calcFinished(bool, QString, QString, const zeno::render_reload_info&);
+    void nodeStatusChanged(QString, QmlNodeRunStatus::Value);
 
 public slots:
     void run();
@@ -55,10 +54,10 @@ public:
     bool isMultiThreadRunning() const;
 
 signals:
-    void calcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info);
+    void calcFinished(bool, QString, QString, const zeno::render_reload_info&);
     void renderRequest(QString);
-    void nodeStatusChanged(zeno::ObjPath, QmlNodeRunStatus::Value);
-    void commitRenderInfo(zeno::render_update_info);
+    void renderLoadFinished();
+    void nodeStatusChanged(QString, QmlNodeRunStatus::Value);
     void runStatus_changed();
     void autorun_changed();
 
@@ -67,8 +66,8 @@ public slots:
     void onFrameSwitched(int frame);
 
 private slots:
-    void onCalcFinished(bool, zeno::ObjPath, QString, zeno::render_reload_info info);
-    void onNodeStatusReported(zeno::ObjPath, QmlNodeRunStatus::Value);
+    void onCalcFinished(bool, QString, QString, const zeno::render_reload_info& info);
+    void onNodeStatusReported(QString, QmlNodeRunStatus::Value);
     void on_render_objects_loaded();
     void onPlayReady();
 

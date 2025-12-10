@@ -22,10 +22,10 @@ namespace zeno
 	{
 		virtual void apply() override
 		{
-			auto tex = std::make_shared<zeno::Texture2DObject>();
+			auto tex = std::make_unique<zeno::Texture2DObject>();
 
 			tex->path = ZImpl(get_input2<std::string>("path"));
-            if (ZImpl(has_input("heatmap"))) {
+            if (ZImpl(has_link_input("heatmap"))) {
                 if (tex->path.empty()) {
                     std::srand(std::time(0));
                     tex->path = std::filesystem::temp_directory_path().string() + '/' + "heatmap-" + std::to_string(std::rand()) + ".png";
@@ -89,7 +89,7 @@ namespace zeno
 #undef SET_TEX_FILTER
 
 			tex->blockCompression = ZImpl(get_input2<bool>("blockCompression"));
-			ZImpl(set_output("tex", std::move(tex)));
+			set_output("tex", std::move(tex));
 		}
 	};
 
@@ -103,10 +103,10 @@ namespace zeno
 				{(std::string) "enum " + texWrapping, "wrapT", "REPEAT"},
 				{(std::string) "enum " + texFiltering, "minFilter", "LINEAR"},
 				{(std::string) "enum " + texFiltering, "magFilter", "LINEAR"},
-				{"bool", "blockCompression", "false"}
+				{gParamType_Bool, "blockCompression", "false"}
 			},
 			{
-				{gParamType_String, "tex"},
+				{gParamType_Texture2DObject, "tex"},
 			},
 			{},
 			{
@@ -136,7 +136,7 @@ namespace zeno
 
 		virtual void apply() override
 		{
-			auto tex = std::make_shared<zeno::TextureObjectVDB>();
+			auto tex = std::make_unique<zeno::TextureObjectVDB>();
 
 			tex->path = ZImpl(get_input2<std::string>("path"));
 			tex->channel = ZImpl(get_input2<std::string>("channel"));
@@ -158,7 +158,7 @@ namespace zeno
 				{"enum " + MakeTextureVDB::dataTypeListString(), MakeTextureVDB::dataTypeKey, MakeTextureVDB::dataTypeDefaultString()},
 			},
 			{
-				{gParamType_String, "tex"},
+				{gParamType_TextureObjectVDB, "tex"},
 			},
 			{},
 			{

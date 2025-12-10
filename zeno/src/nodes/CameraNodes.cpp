@@ -4,18 +4,24 @@
 #include <zeno/types/UserData.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/utils/eulerangle.h>
-
+#include <zeno/types/IGeometryObject.h>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include "zeno/extra/TempNode.h"
 #include <regex>
 
 namespace zeno {
-struct CameraNode: zeno::INode{
+struct CameraNode: zeno::INode {
+
+    CustomUI export_customui() const override {
+        CustomUI ui = INode::export_customui();
+        ui.uistyle.iconResPath = ":/icons/node/camera.svg";
+        return ui;
+    }
+
     virtual void apply() override {
-        auto camera = std::make_shared<zeno::CameraObject>();
+        auto camera = std::make_unique<zeno::CameraObject>();
 
         camera->pos = ZImpl(get_input2<zeno::vec3f>("pos"));
         camera->up = ZImpl(get_input2<zeno::vec3f>("up"));
@@ -52,6 +58,8 @@ ZENO_DEFNODE(CameraNode)({
          {gParamType_Float, "focalPlaneDistance", "2.0"},
          {gParamType_String, "other", ""},
          {gParamType_Int, "frame", "0"},
+         {gParamType_AnyNumeric, "sync", "", zeno::Socket_Primitve, zeno::PushButton},
+         {gParamType_AnyNumeric, "focal", "", zeno::Socket_Primitve, zeno::PushButton}
      },
      {
          {gParamType_Camera, "camera"},
@@ -63,7 +71,7 @@ ZENO_DEFNODE(CameraNode)({
 
 struct MakeCamera : INode {
     virtual void apply() override {
-        auto camera = std::make_shared<CameraObject>();
+        auto camera = std::make_unique<CameraObject>();
 
         camera->pos = ZImpl(get_input2<zeno::vec3f>("pos"));
         camera->up = ZImpl(get_input2<zeno::vec3f>("up"));
@@ -99,7 +107,7 @@ ZENO_DEFNODE(MakeCamera)({
 
 struct SetPhysicalCamera : INode {
     virtual void apply() override {
-        auto camera = ZImpl(get_input("camera"));
+        auto camera = ZImpl(clone_input("camera"));
         auto ud = camera->userData();
         ud->set_float("aperture", ZImpl(get_input2<float>("aperture")));
         ud->set_float("shutter_speed", ZImpl(get_input2<float>("shutter_speed")));
@@ -108,6 +116,7 @@ struct SetPhysicalCamera : INode {
         ud->set_bool("exposure", ZImpl(get_input2<bool>("exposure")));
         ud->set_bool("panorama_camera", get_input2_bool("panorama_camera"));
         ud->set_bool("panorama_vr180", get_input2_bool("panorama_vr180"));
+        ud->set_float("pupillary_distance", get_input2_float("pupillary_distance"));
         ud->set_float("pupillary_distance", get_input2_float("pupillary_distance"));
 
         ZImpl(set_output("camera", std::move(camera)));
@@ -120,6 +129,7 @@ ZENO_DEFNODE(SetPhysicalCamera)({
         {gParamType_Float, "aperture", "2"},
         {gParamType_Float, "shutter_speed", "0.04"},
         {gParamType_Float, "iso", "150"},
+        {gParamType_Int, "renderRatio", "1"},
         {gParamType_Bool, "aces", "0"},
         {gParamType_Bool, "exposure", "0"},
         {"bool", "exposure", "0"},
@@ -137,7 +147,7 @@ ZENO_DEFNODE(SetPhysicalCamera)({
 
 struct TargetCamera : INode {
     virtual void apply() override {
-        auto camera = std::make_shared<CameraObject>();
+        auto camera = std::make_unique<CameraObject>();
 
         auto refUp = zeno::normalize(ZImpl(get_input2<zeno::vec3f>("refUp")));
         auto pos = ZImpl(get_input2<zeno::vec3f>("pos"));
@@ -150,15 +160,20 @@ struct TargetCamera : INode {
         camera->pos = pos;
         camera->up = up;
         camera->view = view;
-        camera->ffar = ZImpl(get_input2<float>("far"));
-        camera->fnear = ZImpl(get_input2<float>("near"));
-        camera->fov = ZImpl(get_input2<float>("fov"));
-        camera->aperture = ZImpl(get_input2<float>("aperture"));
+        camera->ffar = get_input2_float("far");
+        camera->fnear = get_input2_float("near");
+        camera->fov = get_input2_float("fov");
+        camera->aperture = get_input2_float("aperture");
         if(AF){
             camera->focalPlaneDistance = zeno::length(target-pos);
         }else{
-            camera->focalPlaneDistance = ZImpl(get_input2<float>("focalPlaneDistance"));
+            camera->focalPlaneDistance = get_input2_float("focalPlaneDistance");
         }
+        camera->userData()->set_float("frame", get_input2_float("frame"));
+        camera->userData()->set_int("is_target", int(1));
+        camera->userData()->set_vec3f("refUp", toAbiVec3f(refUp));
+        camera->userData()->set_vec3f("target", toAbiVec3f(target));
+        camera->userData()->set_int("AutoFocus", int(AF));
 
         ZImpl(set_output("camera", std::move(camera)));
     }
@@ -175,6 +190,7 @@ ZENO_DEFNODE(TargetCamera)({
         {gParamType_Float, "aperture", "11"},
         {gParamType_Bool,"AutoFocus","false"},
         {gParamType_Float, "focalPlaneDistance", "2.0"},
+        {"float", "frame", "0"},
     },
     {
         {"CameraObject", "camera"},
@@ -186,7 +202,7 @@ ZENO_DEFNODE(TargetCamera)({
 
 struct MakeLight : INode {
     virtual void apply() override {
-        auto light = std::make_shared<LightObject>();
+        auto light = std::make_unique<LightObject>();
         light->lightDir = normalize(ZImpl(get_input2<zeno::vec3f>("lightDir")));
         light->intensity = ZImpl(get_input2<float>("intensity"));
         light->shadowTint = ZImpl(get_input2<zeno::vec3f>("shadowTint"));
@@ -224,13 +240,13 @@ struct ScreenSpaceProjectedGrid : INode {
         return t;
     }
     virtual void apply() override {
-        auto cam = ZImpl(get_input2<CameraObject>("cam"));
-        auto prim = std::make_shared<PrimitiveObject>();
-        auto raw_width = ZImpl(get_input2<int>("width"));
-        auto raw_height = ZImpl(get_input2<int>("height"));
-        auto u_padding = ZImpl(get_input2<int>("u_padding"));
-        auto v_padding = ZImpl(get_input2<int>("v_padding"));
-        auto sea_level = ZImpl(get_input2<float>("sea_level"));
+        auto cam = dynamic_cast<CameraObject*>(get_input("cam"));
+        auto prim = std::make_unique<PrimitiveObject>();
+        auto raw_width = get_input2_int("width");
+        auto raw_height = get_input2_int("height");
+        auto u_padding = get_input2_int("u_padding");
+        auto v_padding = get_input2_int("v_padding");
+        auto sea_level = get_input2_float("sea_level");
         auto fov = glm::radians(cam->fov);
         auto pos = cam->pos;
         auto up = cam->up;
@@ -245,6 +261,8 @@ struct ScreenSpaceProjectedGrid : INode {
         float right_scale = std::tan(fov / 2) * ratio * float(width - 1) / float(raw_width - 1);
         float up_scale = std::tan(fov / 2) * float(height - 1) / float(raw_height - 1);
         prim->verts.resize(width * height);
+        auto &valid = prim->verts.add_attr<float>("valid");
+        #pragma omp parallel for
         for (auto j = 0; j <= height - 1; j++) {
             float v = float(j) / float(height - 1) * 2.0f - 1.0f;
             for (auto i = 0; i <= width - 1; i++) {
@@ -254,12 +272,10 @@ struct ScreenSpaceProjectedGrid : INode {
                 auto t = hitOnFloor(pos, ndir, sea_level);
                 if (t > 0 && t * zeno::dot(ndir, dir) < infinite) {
                     prim->verts[j * width + i] = pos + ndir * t;
+                    valid[j * width + i] = 1;
                 }
-                else {
-                    prim->verts[j * width + i] = pos + dir * infinite;
                 }
             }
-        }
         std::vector<vec3i> tris;
         tris.reserve((width - 1) * (height - 1) * 2);
         for (auto j = 0; j < height - 1; j++) {
@@ -268,26 +284,18 @@ struct ScreenSpaceProjectedGrid : INode {
                 auto _1 = j * width + i + 1;
                 auto _2 = j * width + i + 1 + width;
                 auto _3 = j * width + i + width;
+                if (valid[_0] > 0 && valid[_1] > 0 && valid[_2] > 0 ) {
                 tris.emplace_back(_0, _1, _2);
+                }
+                if (valid[_0] > 0 && valid[_2] > 0 && valid[_3] > 0 ) {
                 tris.emplace_back(_0, _2, _3);
             }
         }
+        }
         prim->tris.values = tris;
 
-        auto outs = zeno::TempNodeSimpleCaller("PrimitiveClip")
-                .set("prim", std::move(prim))
-                .set2<vec3f>("origin", pos)
-                .set2<vec3f>("direction", view)
-                .set2<float>("distance", infinite * 0.999)
-                .set2<bool>("reverse:", false)
-                .call();
-
-        // Create nodes
-        auto new_prim = std::dynamic_pointer_cast<PrimitiveObject>(outs.get("outPrim"));
-        for (auto i = 0; i < new_prim->verts.size(); i++) {
-            new_prim->verts[i][1] = sea_level;
-        }
-        ZImpl(set_output("prim", std::move(new_prim)));
+        auto geom = create_GeometryObject(prim.get());
+        set_output("prim", std::move(geom));
     }
 };
 
@@ -301,8 +309,8 @@ ZENO_DEFNODE(ScreenSpaceProjectedGrid)({
          {gParamType_Float, "sea_level", "0"},
      },
      {
-{gParamType_Primitive, "prim"},
-},
+         {gParamType_Geometry, "prim"},
+     },
      {
      },
      {"shader"},
@@ -311,9 +319,9 @@ ZENO_DEFNODE(ScreenSpaceProjectedGrid)({
 
 struct CameraFrustum : INode {
     virtual void apply() override {
-        auto cam = ZImpl(get_input2<CameraObject>("cam"));
-        auto width = ZImpl(get_input2<int>("width"));
-        auto height = ZImpl(get_input2<int>("height"));
+        auto cam = dynamic_cast<CameraObject*>(get_input("cam"));
+        auto width = get_input2_int("width");
+        auto height = get_input2_int("height");
         auto fov = glm::radians(cam->fov);
         auto pos = cam->pos;
         auto up = cam->up;
@@ -322,7 +330,7 @@ struct CameraFrustum : INode {
         auto ffar = cam->ffar;
         auto right = zeno::cross(view, up);
         float ratio = float(width) / float(height);
-        auto prim = std::make_shared<PrimitiveObject>();
+        auto prim = std::make_unique<PrimitiveObject>();
         prim->verts.resize(8);
         vec3f _near_left_up = pos + fnear * (view - right * std::tan(fov / 2) * ratio + up * std::tan(fov / 2));
         vec3f _near_left_down = pos + fnear * (view - right * std::tan(fov / 2) * ratio - up * std::tan(fov / 2));
@@ -366,8 +374,8 @@ ZENO_DEFNODE(CameraFrustum)({
          {gParamType_Int, "height", "1080"},
      },
      {
-{gParamType_Primitive, "prim"},
-},
+        {gParamType_Primitive, "prim"},
+     },
      {
      },
      {"shader"},

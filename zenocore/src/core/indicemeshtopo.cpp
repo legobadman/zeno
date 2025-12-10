@@ -3,25 +3,31 @@
 
 namespace zeno
 {
-    IndiceMeshTopology::IndiceMeshTopology(std::shared_ptr<PrimitiveObject> prim)
-        : m_indiceMesh_topo(prim)
+    IndiceMeshTopology::IndiceMeshTopology(PrimitiveObject* prim)
+        : m_indiceMesh_topo(std::make_unique<PrimitiveObject>(*prim))
     {
+        //‰∏çÈúÄË¶ÅÈ°∂ÁÇπÊï∞Â±ûÊÄßÔºåÊòØËÆ∞ÂΩïÂú®Â§ñÈù¢ÁöÑ
+        //m_indiceMesh_topo->verts.clear();   //ÈúÄË¶ÅËÆ∞ÂΩïÈ°∂ÁÇπÔºåÂõ†‰∏∫ÂèØ‰ª•ÈúÄË¶ÅËøôÂá†‰∏™ÁÇπ‰ΩúÂêéÁª≠ÁöÑÊãìÊâëÂ§ÑÁêÜ
+        m_indiceMesh_topo->verts.attrs.clear();
     }
 
     IndiceMeshTopology::IndiceMeshTopology(bool bTriangle, int nPoints, int nFaces, bool bInitFaces)
     {
-        m_indiceMesh_topo = std::make_shared<PrimitiveObject>();
-        m_indiceMesh_topo->resize(nPoints);
-        if (nFaces > 0) {
-            assert(false);
-            //loops≤ª÷™µ¿»Á∫Œ≥ı ºªØ£¨“ÚŒ™√Êµƒµ„∏ˆ ˝≤ª“ª÷¬
+        m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
+        m_indiceMesh_topo->verts.resize(nPoints);
+        if (bTriangle) {
+            m_indiceMesh_topo->tris->resize(nFaces);
+        }
+        else {
+            //loopsÁõÆÂâçËøòÊ≤°ÂàùÂßãÂåñÔºåÈúÄË¶ÅÁü•ÈÅìÊãìÊâë
+            m_indiceMesh_topo->polys->resize(nFaces);
         }
     }
 
     IndiceMeshTopology::IndiceMeshTopology(bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces)
     {
-        m_indiceMesh_topo = std::make_shared<PrimitiveObject>();
-        m_indiceMesh_topo->resize(nPoints);  //≤ª–Ë“™…Ë÷√verts£¨∏¯∏ˆ¥Û–°æÕ––£¨◊¯±Í «¥¢¥Ê‘⁄ Ù–‘…œµƒ
+        m_indiceMesh_topo = std::make_unique<PrimitiveObject>();
+        m_indiceMesh_topo->verts.resize(nPoints);
         int nFace = faces.size();
         if (bTriangle) {
             m_indiceMesh_topo->tris->resize(nFace);
@@ -50,8 +56,11 @@ namespace zeno
     }
 
     std::shared_ptr<IGeomTopology> IndiceMeshTopology::clone() {
-        auto newtopo = std::make_shared<PrimitiveObject>(*m_indiceMesh_topo);
-        return std::make_shared<IndiceMeshTopology>(newtopo);
+        return std::make_shared<IndiceMeshTopology>(m_indiceMesh_topo.get());
+    }
+
+    std::unique_ptr<PrimitiveObject> IndiceMeshTopology::toPrimitiveObject() const {
+        return std::make_unique<PrimitiveObject>(*m_indiceMesh_topo);
     }
 
     std::vector<vec3i> IndiceMeshTopology::tri_indice() const {
@@ -74,9 +83,55 @@ namespace zeno
         return false;
     }
 
-    /* ÃÌº”‘™Àÿ */
+    /* Ê∑ªÂä†ÂÖÉÁ¥† */
     int IndiceMeshTopology::add_face(const std::vector<int>& points, bool bClose) {
-        throw makeError<UnimplError>("");
+        if (points.empty()) {
+            return -1;
+        }
+        for (int point_id : points) {
+            if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size()) {
+                throw makeError<UnimplError>("Invalid point index in add_face");
+            }
+        }
+
+        int face_id = nfaces();
+        if (!bClose) {
+            if (points.size() < 2) {
+                throw makeError<UnimplError>("Open face must have at least 2 points");
+            }
+            if (points.size() == 2) {
+                vec2i line = { points[0], points[1] };
+                m_indiceMesh_topo->lines.push_back(line);
+            }
+            else {
+                for (size_t i = 0; i < points.size() - 1; i++) {
+                    vec2i line = { points[i], points[i + 1] };
+                    m_indiceMesh_topo->lines.push_back(line);
+                }
+            }
+        }
+        else {
+            if (is_base_triangle()) {
+                if (points.size() != 3) {
+                    throw makeError<UnimplError>("Triangle mesh can only add triangle faces");
+                }
+                vec3i tri = { points[0], points[1], points[2] };
+                m_indiceMesh_topo->tris.push_back(tri);
+            }
+            else {
+                if (points.size() < 3) {
+                    throw makeError<UnimplError>("Closed face must have at least 3 points");
+                }
+                int start_offset = m_indiceMesh_topo->loops.size();
+                for (int point_id : points) {
+                    m_indiceMesh_topo->loops.push_back(point_id);
+                }
+                vec2i poly = { start_offset, (int)points.size() };
+                m_indiceMesh_topo->polys.push_back(poly);
+            }
+        }
+
+        return face_id;
     }
 
     void IndiceMeshTopology::set_face(int idx, const std::vector<int>& points, bool bClose) {
@@ -91,7 +146,7 @@ namespace zeno
         throw makeError<UnimplError>("");
     }
 
-    /* “∆≥˝‘™Àÿœ‡πÿ */
+    /* ÁßªÈô§ÂÖÉÁ¥†Áõ∏ÂÖ≥ */
     bool IndiceMeshTopology::remove_faces(const std::set<int>& faces, bool includePoints, std::vector<int>& removedPtnum) {
         throw makeError<UnimplError>("");
     }
@@ -104,15 +159,15 @@ namespace zeno
         throw makeError<UnimplError>("");
     }
 
-    /* ∑µªÿ‘™Àÿ∏ˆ ˝ */
+    /* ËøîÂõûÂÖÉÁ¥†‰∏™Êï∞ */
     int IndiceMeshTopology::npoints() const {
-        //verts∆‰ µ÷ª¥Ê‘⁄Geom≤„√Ê£¨Õÿ∆À≤„√Ê∫Û–¯ª·◊‘∂®“Â£¨∂¯≤ª «—ÿ”√PrimitiveObject
-        return m_indiceMesh_topo->verts->size();
+        //vertsÂÖ∂ÂÆûÂè™Â≠òÂú®GeomÂ±ÇÈù¢ÔºåÊãìÊâëÂ±ÇÈù¢ÂêéÁª≠‰ºöËá™ÂÆö‰πâÔºåËÄå‰∏çÊòØÊ≤øÁî®PrimitiveObject
+        return m_indiceMesh_topo->verts.size();
     }
 
     int IndiceMeshTopology::nfaces() const {
         if (is_base_triangle()) {
-            return m_indiceMesh_topo->verts->size();
+            return m_indiceMesh_topo->tris->size();
         }
         else {
             return m_indiceMesh_topo->polys->size();
@@ -142,70 +197,322 @@ namespace zeno
         }
     }
 
-    /* µ„œ‡πÿ */
-    std::vector<int> IndiceMeshTopology::point_faces(int point_id) {
-        throw makeError<UnimplError>("");
+    /* ÁÇπÁõ∏ÂÖ≥ */
+    std::vector<int> IndiceMeshTopology::point_faces(int point_id) const {
+        std::vector<int> faces;
+        if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size())
+            return faces;
+
+        if (is_base_triangle()) {
+            for (int i = 0; i < m_indiceMesh_topo->tris.size(); i++) {
+                const auto& tri = m_indiceMesh_topo->tris[i];
+                if (tri[0] == point_id || tri[1] == point_id || tri[2] == point_id) {
+                    faces.push_back(i);
+                }
+            }
+        } else {
+            for (int i = 0; i < m_indiceMesh_topo->polys.size(); i++) {
+                const auto& poly = m_indiceMesh_topo->polys[i];
+                int startIdx = poly[0];
+                int count = poly[1];
+
+                for (int j = 0; j < count; j++) {
+                    if (m_indiceMesh_topo->loops[startIdx + j] == point_id) {
+                        faces.push_back(i);
+                        break;
+                    }
+                }
+            }
+        }
+        return faces;
     }
 
-    int IndiceMeshTopology::point_vertex(int point_id) {
-        throw makeError<UnimplError>("");
+    int IndiceMeshTopology::point_vertex(int point_id) const {
+        if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size())
+            return -1;
+
+        if (is_base_triangle()) {
+            int face_id = 0;
+            for (const auto& tri : m_indiceMesh_topo->tris) {
+                for (int vert_id = 0; vert_id < 3; vert_id++) {
+                    if (tri[vert_id] == point_id) {
+                        return face_id * 3 + vert_id;
+                    }
+                }
+                face_id++;
+            }
+        } else {
+            for (int linear_vertex_id = 0; linear_vertex_id < m_indiceMesh_topo->loops->size(); linear_vertex_id++) {
+                if (m_indiceMesh_topo->loops[linear_vertex_id] == point_id) {
+                    return linear_vertex_id;
+                }
+            }
+        }
+        return -1;
     }
 
-    std::vector<int> IndiceMeshTopology::point_vertices(int point_id) {
-        throw makeError<UnimplError>("");
+    std::vector<int> IndiceMeshTopology::point_vertices(int point_id) const {
+        std::vector<int> vertices;
+        if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size())
+            return vertices;
+
+        if (is_base_triangle()) {
+            int face_id = 0;
+            for (const auto& tri : m_indiceMesh_topo->tris) {
+                for (int vert_id = 0; vert_id < 3; vert_id++) {
+                    if (tri[vert_id] == point_id) {
+                        vertices.push_back(face_id * 3 + vert_id);
+                        break;
+                    }
+                }
+                face_id++;
+            }
+        } else {
+            for (int linear_vertex_id = 0; linear_vertex_id < m_indiceMesh_topo->loops->size(); linear_vertex_id++) {
+                if (m_indiceMesh_topo->loops[linear_vertex_id] == point_id) {
+                    vertices.push_back(linear_vertex_id);
+                }
+            }
+        }
+        return vertices;
     }
 
-    /* √Êœ‡πÿ */
+    /* Èù¢Áõ∏ÂÖ≥ */
     int IndiceMeshTopology::face_point(int face_id, int vert_id) const {
-        throw makeError<UnimplError>("");
+        if (face_id < 0 || vert_id < 0)
+            return -1;
+
+        if (is_base_triangle()) {
+            if (face_id >= m_indiceMesh_topo->tris->size() || vert_id >= 3)
+                return -1;
+            return m_indiceMesh_topo->tris[face_id][vert_id];
+        } else {
+            if (face_id >= m_indiceMesh_topo->polys->size() || vert_id >= nvertices(face_id))
+                return -1;
+
+            const auto& poly = m_indiceMesh_topo->polys[face_id];
+            int startIdx = poly[0];
+            return m_indiceMesh_topo->loops[startIdx + vert_id];
+        }
     }
 
     std::vector<int> IndiceMeshTopology::face_points(int face_id) const {
-        throw makeError<UnimplError>("");
+        const auto& face_summary = m_indiceMesh_topo->polys[face_id];
+        int startIdx = face_summary[0];
+        int count = face_summary[1];
+        std::vector<int> face;
+        for (int vert = startIdx; vert < startIdx + count; vert++) {
+            face.push_back(m_indiceMesh_topo->loops[vert]);
+        }
+        return face;
     }
 
-    int IndiceMeshTopology::face_vertex(int face_id, int vert_id) {
-        throw makeError<UnimplError>("");
+    int IndiceMeshTopology::face_vertex(int face_id, int vert_id) const {
+        if (face_id < 0 || vert_id < 0)
+            return -1;
+
+        if (is_base_triangle()) {
+            if (face_id >= m_indiceMesh_topo->tris->size() || vert_id >= 3)
+                return -1;
+            return face_id * 3 + vert_id;
+        } else {
+            if (face_id >= m_indiceMesh_topo->polys->size() || vert_id >= nvertices(face_id))
+                return -1;
+
+            return m_indiceMesh_topo->polys[face_id][0] + vert_id;
+        }
     }
 
-    int IndiceMeshTopology::face_vertex_count(int face_id) {
-        throw makeError<UnimplError>("");
+    int IndiceMeshTopology::face_vertex_count(int face_id) const {
+        return nvertices(face_id);
     }
 
-    std::vector<int> IndiceMeshTopology::face_vertices(int face_id) {
-        throw makeError<UnimplError>("");
+    std::vector<int> IndiceMeshTopology::face_vertices(int face_id) const {
+        std::vector<int> vertices;
+        if (face_id < 0 || face_id >= nfaces())
+            return vertices;
+
+        int nVertex = nvertices(face_id);
+        vertices.reserve(nVertex);
+
+        if (is_base_triangle()) {
+            int start_vertex = face_id * 3;
+            for (int vert_id = 0; vert_id < nVertex; vert_id++) {
+                vertices.push_back(start_vertex + vert_id);
+            }
+        } else {
+            int start_offset = m_indiceMesh_topo->polys[face_id][0];
+            for (int vert_id = 0; vert_id < nVertex; vert_id++) {
+                vertices.push_back(start_offset + vert_id);
+            }
+        }
+
+        return vertices;
     }
 
-    /* Vertexœ‡πÿ */
-    int IndiceMeshTopology::vertex_index(int face_id, int vertex_id) {
-        throw makeError<UnimplError>("");
+    /* VertexÁõ∏ÂÖ≥ */
+    int IndiceMeshTopology::vertex_index(int face_id, int vertex_id) const {
+        if (face_id < 0 || vertex_id < 0)
+            return -1;
+
+        if (is_base_triangle()) {
+            if (face_id >= m_indiceMesh_topo->tris->size() || vertex_id >= 3)
+                return -1;
+            return face_id * 3 + vertex_id;
+        } else {
+            if (face_id >= m_indiceMesh_topo->polys->size() || vertex_id >= nvertices(face_id))
+                return -1;
+
+            return m_indiceMesh_topo->polys[face_id][0] + vertex_id;
+        }
     }
 
-    int IndiceMeshTopology::vertex_next(int linear_vertex_id) {
-        throw makeError<UnimplError>("");
+    int IndiceMeshTopology::vertex_next(int linear_vertex_id) const {
+        int pointid = vertex_point(linear_vertex_id);
+        if (pointid == -1) {
+            return -1;
+        }
+
+        auto vertices = point_vertices(pointid);
+        auto iter = std::find(vertices.cbegin(), vertices.cend(), linear_vertex_id);
+        if (iter == vertices.end()) {
+            return -1;
+        }
+
+        size_t idx = static_cast<size_t>(std::distance(vertices.cbegin(), iter));
+        if (idx == vertices.size() - 1) {
+            return vertices[0];
+        }
+        else {
+            return vertices[idx + 1];
+        }
     }
 
-    int IndiceMeshTopology::vertex_prev(int linear_vertex_id) {
-        throw makeError<UnimplError>("");
+    int IndiceMeshTopology::vertex_prev(int linear_vertex_id) const {
+        int pointid = vertex_point(linear_vertex_id);
+        if (pointid == -1) {
+            return -1;
+        }
+
+        auto vertices = point_vertices(pointid);
+        auto iter = std::find(vertices.cbegin(), vertices.cend(), linear_vertex_id);
+        if (iter == vertices.end()) {
+            return -1;
+        }
+
+        size_t idx = static_cast<size_t>(std::distance(vertices.cbegin(), iter));
+        if (idx == 0) {
+            return vertices.back();
+        }
+        else {
+            return vertices[idx - 1];
+        }
     }
 
-    std::tuple<int, int, int> IndiceMeshTopology::vertex_info(int linear_vertex_id) {
-        //throw makeError<UnimplError>("");
-        return { -1,-1,-1 };
+    std::tuple<int, int, int> IndiceMeshTopology::vertex_info(int linear_vertex_id) const {
+        if (linear_vertex_id < 0) {
+            return { -1, -1, -1 };
+        }
+
+        int face_id = vertex_face(linear_vertex_id);
+        if (face_id == -1) {
+            return { -1, -1, -1 };
+        }
+
+        int vertex_index = vertex_face_index(linear_vertex_id);
+        if (vertex_index == -1) {
+            return { -1, -1, -1 };
+        }
+
+        int point_id = vertex_point(linear_vertex_id);
+        if (point_id == -1) {
+            return { -1, -1, -1 };
+        }
+
+        return { face_id, vertex_index, point_id };
     }
 
-    int IndiceMeshTopology::vertex_point(int linear_vertex_id) {
-        //throw makeError<UnimplError>("");
+    int IndiceMeshTopology::vertex_point(int linear_vertex_id) const {
+        if (linear_vertex_id < 0) {
+            return -1;
+        }
+
+        if (is_base_triangle()) {
+            int face_id = linear_vertex_id / 3;
+            int vert_id = linear_vertex_id % 3;
+            if (face_id < 0 || face_id >= m_indiceMesh_topo->tris->size() ||
+                vert_id < 0 || vert_id >= 3) {
+                return -1;
+            }
+            return m_indiceMesh_topo->tris[face_id][vert_id];
+        } else {
+            if (linear_vertex_id >= m_indiceMesh_topo->loops->size()) {
+                return -1;
+            }
+            return m_indiceMesh_topo->loops[linear_vertex_id];
+        }
+    }
+
+    int IndiceMeshTopology::vertex_face(int linear_vertex_id) const {
+        if (linear_vertex_id < 0) {
+            return -1;
+        }
+
+        if (is_base_triangle()) {
+            int face_id = linear_vertex_id / 3;
+            if (face_id < 0 || face_id >= m_indiceMesh_topo->tris->size()) {
+                return -1;
+            }
+            return face_id;
+        } else {
+            int left = 0, right = m_indiceMesh_topo->polys->size() - 1;
+            while (right - left > 0) {
+                int mid = left + (right - left) / 2;
+                int start_offset = m_indiceMesh_topo->polys[mid][0];
+                int face_size = m_indiceMesh_topo->polys[mid][1];
+
+                if (linear_vertex_id < start_offset) {
+                    right = mid - 1;
+                } else if (linear_vertex_id >= start_offset + face_size) {
+                    left = mid + 1;
+                } else {
+                    return mid;
+                }
+            }
+            if (left >= 0 && left < m_indiceMesh_topo->polys->size()) {
+                int start_offset = m_indiceMesh_topo->polys[left][0];
+                int face_size = m_indiceMesh_topo->polys[left][1];
+                if (linear_vertex_id >= start_offset && linear_vertex_id < start_offset + face_size) {
+                    return left;
+                }
+            }
+        }
         return -1;
     }
 
-    int IndiceMeshTopology::vertex_face(int linear_vertex_id) {
-        //throw makeError<UnimplError>("");
-        return -1;
-    }
+    int IndiceMeshTopology::vertex_face_index(int linear_vertex_id) const {
+        if (linear_vertex_id < 0) {
+            return -1;
+        }
 
-    int IndiceMeshTopology::vertex_face_index(int linear_vertex_id) {
-        //throw makeError<UnimplError>("");
-        return -1;
+        if (is_base_triangle()) {
+            int face_id = linear_vertex_id / 3;
+            if (face_id < 0 || face_id >= m_indiceMesh_topo->tris->size()) {
+                return -1;
+            }
+            return linear_vertex_id % 3;
+        } else {
+            int face_id = vertex_face(linear_vertex_id);
+            if (face_id == -1) {
+                return -1;
+            }
+            int start_offset = m_indiceMesh_topo->polys[face_id][0];
+            int face_size = m_indiceMesh_topo->polys[face_id][1];
+            int vertex_index = linear_vertex_id - start_offset;
+            if (vertex_index < 0 || vertex_index >= face_size) {
+                return -1;
+            }
+            return vertex_index;
+        }
     }
 }

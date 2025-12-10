@@ -1,7 +1,11 @@
 #include <zeno/zeno.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
-#include "glm/gtc/matrix_transform.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/transform.hpp>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/core/FunctionManager.h>
 #include <sstream>
@@ -10,6 +14,7 @@
 #include <unordered_set>
 #include <zeno/para/parallel_reduce.h>
 #include <zeno/utils/interfaceutil.h>
+#include <zeno/utils/eulerangle.h>
 
 
 #ifndef M_PI
@@ -21,19 +26,19 @@ namespace zeno {
 
     struct CopyToPoints : INode {
         void apply() override {
-            auto _input_object = ZImpl(get_input2<GeometryObject_Adapter>("Input Geometry"));
-            auto _target_Obj = ZImpl(get_input2<GeometryObject_Adapter>("Target Geometry"));
+            auto _input_object = ZImpl(get_input2<GeometryObject_Adapter>("Object To Be Copied"));
+            auto points_from_obj = ZImpl(get_input2<GeometryObject_Adapter>("Points From"));
             std::string alignTo = ZImpl(get_input2<std::string>("Align To"));
 
             if (!_input_object) {
                 throw makeError<UnimplError>("empty input object.");
             }
-            else if (!_target_Obj) {
+            else if (!points_from_obj) {
                 throw makeError<UnimplError>("empty target object.");
             }
 
             auto input_object = _input_object->m_impl.get();
-            auto target_Obj = _target_Obj->m_impl.get();
+            auto target_Obj = points_from_obj->m_impl.get();
             if (!input_object->has_point_attr("pos")) {
                 throw makeError<UnimplError>("invalid input object.");
             }
@@ -90,7 +95,66 @@ namespace zeno {
                     auto idx = pt_offset + j;
 
                     auto& pt = inputPos[j];
-                    glm::vec4 gp = translate * glm::vec4(pt[0], pt[1], pt[2], 1);
+
+                    glm::mat4 matTrans(1.0);
+                    glm::mat4 matRotate(1.0);
+                    glm::mat4 matScale(1.0);
+
+                    auto trans_by = get_input2_string("Translate By Attribute");
+                    auto scale_by = get_input2_string("Scale By Attribute");
+                    auto rotate_by = get_input2_string("Rotate By Attribute");
+
+                    if (!trans_by.empty()) {
+                        zeno::vec3f trans(0);
+                        GeoAttrType type = points_from_obj->get_attr_type(zeno::ATTR_POINT, trans_by);
+                        if (type == ATTR_FLOAT) {
+                            float v = points_from_obj->m_impl->get_elem<float>(ATTR_POINT, zsString2Std(trans_by), 0, i);
+                            trans = vec3f(v, v, v);
+                        }
+                        else if (type == ATTR_VEC3) {
+                            trans = points_from_obj->m_impl->get_elem<vec3f>(ATTR_POINT, zsString2Std(trans_by), 0, i);
+                        }
+                        else {
+                            throw makeError<UnimplError>("");
+                        }
+                        matTrans = glm::translate(glm::vec3(trans[0], trans[1], trans[2]));
+                    }
+                    if (!scale_by.empty()) {
+                        zeno::vec3f scaling(1);
+                        GeoAttrType type = points_from_obj->get_attr_type(zeno::ATTR_POINT, scale_by);
+                        if (type == ATTR_FLOAT) {
+                            float v = points_from_obj->m_impl->get_elem<float>(ATTR_POINT, zsString2Std(scale_by), 0, i);
+                            scaling = vec3f(v, v, v);
+                        }
+                        else if (type == ATTR_VEC3) {
+                            scaling = points_from_obj->m_impl->get_elem<vec3f>(ATTR_POINT, zsString2Std(scale_by), 0, i);
+                        }
+                        else {
+                            throw makeError<UnimplError>("");
+                        }
+                        matScale = glm::scale(glm::vec3(scaling[0], scaling[1], scaling[2]));
+                    }
+                    if (!rotate_by.empty()) {
+                        glm::vec3 eularAngleXYZ(0);
+
+                        GeoAttrType type = points_from_obj->get_attr_type(zeno::ATTR_POINT, rotate_by);
+                        if (type == ATTR_FLOAT) {
+                            float v = points_from_obj->m_impl->get_elem<float>(ATTR_POINT, zsString2Std(rotate_by), 0, i);
+                            eularAngleXYZ = glm::vec3(v, v, v);
+                        }
+                        else if (type == ATTR_VEC3) {
+                            vec3f v = points_from_obj->m_impl->get_elem<vec3f>(ATTR_POINT, zsString2Std(rotate_by), 0, i);
+                            eularAngleXYZ = glm::vec3(v[0], v[1], v[2]);
+                        }
+                        else {
+                            throw makeError<UnimplError>("");
+                        }
+                        matRotate = EulerAngle::rotate(EulerAngle::RotationOrder::YXZ, EulerAngle::Measure::Radians, eularAngleXYZ);
+                    }
+
+                    auto matByAttrs = matTrans * matRotate * matScale;
+
+                    glm::vec4 gp = translate * matByAttrs * glm::vec4(pt[0], pt[1], pt[2], 1);
                     newObjPos[idx] = zeno::vec3f(gp.x, gp.y, gp.z);
 
                     if (hasNrm) {
@@ -118,22 +182,50 @@ namespace zeno {
             for (int i = 0; i < pts_offset.size(); i++) {
                 spgeo->inheritAttributes(_input_object.get(), -1, pts_offset[i], {"pos", "nrm"}, faces_offset[i], {});
             }
-            ZImpl(set_output("Output", spgeo));
+            ZImpl(set_output("Output", std::move(spgeo)));
         }
     };
 
     ZENDEFNODE(CopyToPoints, 
     {
         {
-            {gParamType_Geometry, "Input Geometry"},
-            {gParamType_Geometry, "Target Geometry"},
+            {gParamType_Geometry, "Object To Be Copied"},
+            {gParamType_Geometry, "Points From"},
             ParamPrimitive("Align To", gParamType_String, "Align To Point Center", Combobox, std::vector<std::string>{"Align To Point Center", "Align To Min"}),
+            {gParamType_String, "Translate By Attribute"},
+            {gParamType_String, "Scale By Attribute"},
+            {gParamType_String, "Rotate By Attribute"}
         },
         {
             {gParamType_Geometry, "Output"},
         },
         {},
         {"deprecated"},
+    });
+
+
+    struct CopyAndTransform : INode {
+        void apply() override {
+            //TODO
+        }
+    };
+
+    ZENDEFNODE(CopyAndTransform,
+    {
+        {
+            {gParamType_Geometry, "Input"},
+            ParamPrimitive("Total Number", gParamType_Int, 2, Slider, std::vector<int>{0, 20, 1}),
+            {gParamType_Vec3f, "Translate", "0,0,0"},
+            {gParamType_Vec3f, "Rotate", "0,0,0"},
+            {gParamType_Vec3f, "Scale", "1,1,1"},
+            ParamPrimitive("Uniform Scale", gParamType_Float, 1.0, Slider, std::vector<int>{0, 10, 1}),
+            {gParamType_Float, "Uniform Scale", "1.0"}
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"prim"}
     });
 
 
@@ -337,7 +429,7 @@ namespace zeno {
                         //}
                     }
                 }
-                std::shared_ptr<GeometryObject> spgeo = std::make_shared<GeometryObject>(false, newpts.size(), 0);
+                std::shared_ptr<GeometryObject> spgeo = std::make_unique<GeometryObject>(false, newpts.size(), 0);
                 spgeo->create_attr(ATTR_POINT, "pos", newpts);
                 return spgeo;
 #if 0
@@ -418,8 +510,8 @@ namespace zeno {
         void apply() override
         {
             auto list_object = ZImpl(get_input2<zeno::ListObject>("Input Of Objects"));
-            auto mergedObj = zeno::mergeObjects(list_object);
-            ZImpl(set_output("Output", mergedObj));
+            auto mergedObj = zeno::mergeObjects(list_object.get());
+            ZImpl(set_output("Output", std::move(mergedObj)));
         }
     };
 
@@ -432,7 +524,7 @@ namespace zeno {
             {gParamType_Geometry, "Output"},
         },
         {},
-        {"deprecated"},
+        {"prim"},
     });
 
 
@@ -453,17 +545,17 @@ namespace zeno {
             zany output_obj;
             for (int i = 0; i <= nx; i++) {
                 float xi = xmin + i * dx;
-                output_obj = divideObject(input_object, Keep_Both, vec3f(xi, 0, 0), vec3f(1, 0, 0));
+                output_obj = divideObject(input_object.get(), Keep_Both, vec3f(xi, 0, 0), vec3f(1, 0, 0));
             }
             for (int i = 0; i <= ny; i++) {
                 float yi = ymin + i * dy;
-                output_obj = divideObject(input_object, Keep_Both, vec3f(0, yi, 0), vec3f(0, 1, 0));
+                output_obj = divideObject(input_object.get(), Keep_Both, vec3f(0, yi, 0), vec3f(0, 1, 0));
             }
             for (int i = 0; i <= nz; i++) {
                 float zi = zmin + i * dz;
-                output_obj = divideObject(input_object, Keep_Both, vec3f(0, 0, zi), vec3f(0, 0, 1));
+                output_obj = divideObject(input_object.get(), Keep_Both, vec3f(0, 0, zi), vec3f(0, 0, 1));
             }
-            ZImpl(set_output("Output", output_obj));
+            ZImpl(set_output("Output", std::move(output_obj)));
         }
     };
     ZENDEFNODE(Divide,
@@ -488,7 +580,7 @@ namespace zeno {
             float Length = ZImpl(get_input2<float>("Length"));
 
             if (Length == 0) {
-                ZImpl(set_output("Output", input_object));
+                ZImpl(set_output("Output", std::move(input_object)));
                 return;
             }
 
@@ -532,7 +624,7 @@ namespace zeno {
             }
 
             auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), newpos, newfaces);
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Resample,
@@ -563,7 +655,7 @@ namespace zeno {
                 faces.emplace_back(std::move(face_indice));
             }
             auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), pos, faces);
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Reverse,
@@ -600,8 +692,8 @@ namespace zeno {
             else {
                 throw makeError<UnimplError>("Keep Error");
             }
-            auto spOutput = divideObject(input_object, keep, center_pos, direction);
-            ZImpl(set_output("Output", spOutput));
+            auto spOutput = divideObject(input_object.get(), keep, center_pos, direction);
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Clip,
@@ -634,7 +726,7 @@ namespace zeno {
                 //TODO: impl remove_points
                 input_object->remove_point(*iter);
             }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(RemoveUnusedPoints,
@@ -682,7 +774,7 @@ namespace zeno {
                 input_object->remove_point(*iter);
             }
 
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(RemoveInlinePoints,
@@ -739,7 +831,7 @@ namespace zeno {
                 }
             }
             input_object->create_face_attr(stdString2zs(outputAttrName), measurements);
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(Measure,
@@ -812,7 +904,7 @@ namespace zeno {
             }
 
             auto spOutput = create_GeometryObject(Topo_IndiceMesh, input_object->is_base_triangle(), new_pos, faces);
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(Mirror,
@@ -851,7 +943,7 @@ namespace zeno {
         void apply() override
         {
             auto input_object = ZImpl(get_input<GeometryObject_Adapter>("Input Object"));
-            auto match_object = ZImpl(get_input<GeometryObject_Adapter>("Match Object"));
+            
             zeno::vec3f TargetPosition = ZImpl(get_input2<zeno::vec3f>("Target Position"));
             zeno::vec3f TargetSize = ZImpl(get_input2<zeno::vec3f>("Target Size"));
             bool bTranslate = ZImpl(get_input2<bool>("Translate"));
@@ -861,14 +953,15 @@ namespace zeno {
             bool bScaleToFit = ZImpl(get_input2<bool>("Scale To Fit"));
 
             if (!bTranslate && !bScaleToFit) {
-                ZImpl(set_output("Output", input_object));
+                ZImpl(set_output("Output", std::move(input_object)));
                 return;
             }
 
             const auto& currbbox = geomBoundingBox(input_object->m_impl.get());
 
             zeno::vec3f boxmin, boxmax;
-            if (match_object) {
+            if (has_input("Match Object")) {
+                auto match_object = ZImpl(get_input<GeometryObject_Adapter>("Match Object"));
                 const auto& bbox = geomBoundingBox(match_object->m_impl.get());
                 boxmin = bbox.first;
                 boxmax = bbox.second;
@@ -934,7 +1027,7 @@ namespace zeno {
                     return newnrm;
                     });
             }
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(MatchSize,
@@ -975,7 +1068,7 @@ namespace zeno {
                 return old_pos + nrm * Distance;
             });
 
-            ZImpl(set_output("Output", input_object));
+            ZImpl(set_output("Output", std::move(input_object)));
         }
     };
     ZENDEFNODE(Peak,
@@ -1000,8 +1093,8 @@ namespace zeno {
             int Seed = ZImpl(get_input2<int>("Random Seed"));
             std::string sampleRegion = ZImpl(get_input2<std::string>("Sample Regin"));
 
-            auto spOutput = zeno::scatter(input_object, sampleRegion, Count, Seed);
-            ZImpl(set_output("Output", spOutput));
+            auto spOutput = zeno::scatter(input_object.get(), sampleRegion, Count, Seed);
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(Scatter,
@@ -1054,7 +1147,7 @@ namespace zeno {
                 line_object->m_impl->add_face(line, false);
             }
 
-            ZImpl(set_output("Output", line_object));
+            ZImpl(set_output("Output", std::move(line_object)));
 #endif
         }
     };
@@ -1104,7 +1197,7 @@ namespace zeno {
             if (bPostComputeNormals)
                 spOutput->create_point_attr("nrm", point_normals);
 
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
     ZENDEFNODE(UniquePoints,
@@ -1186,7 +1279,7 @@ namespace zeno {
                 }
 
                 auto spOutput = create_GeometryObject(Topo_IndiceMesh, false, new_pos, faces);
-                ZImpl(set_output("Output", spOutput));
+                ZImpl(set_output("Output", std::move(spOutput)));
             }
         }
     };
@@ -1287,7 +1380,7 @@ namespace zeno {
             }
             auto spOutput = constructGeom(newFaces);
             auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
-            ZImpl(set_output("Output", spFinal));
+            ZImpl(set_output("Output", std::move(spFinal)));
         }
     };
     ZENDEFNODE(PolyExpand,
@@ -1408,11 +1501,12 @@ namespace zeno {
                     newFaces.push_back(front_pts);  //todo: 需要传一个front的字段标记为front面。
                 }
                 auto spOutput = constructGeom(newFaces);
-                auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
-                ZImpl(set_output("Output", spFinal));
+                //拓扑出问题，先不fuse
+                //auto spFinal = zeno::fuseGeometry(spOutput.get(), 0.005);
+                ZImpl(set_output("Output", std::move(spOutput)));
             }
             else {
-                ZImpl(set_output("Output", input_object));
+                ZImpl(set_output("Output", std::move(input_object)));
             }
         }
     };
@@ -1420,8 +1514,8 @@ namespace zeno {
     {
         {
             ParamObject("Input", gParamType_Geometry),
-            ParamPrimitive("Distance", gParamType_Float, 0.f),//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
-            ParamPrimitive("Inset", gParamType_Float, 0.f),//, Slider, std::vector<float>{0.0, 1.0, 0.01})},
+            ParamPrimitive("Distance", gParamType_Float, 0.f, Slider, std::vector<float>{0.0, 1.0, 0.01}),
+            ParamPrimitive("Inset", gParamType_Float, 0.f, Slider, std::vector<float>{0.0, 1.0, 0.01}),
             ParamPrimitive("Output Front Attribute", gParamType_Bool, false, Checkbox),
             ParamPrimitive("Front Attribute", gParamType_String, "extrudeFront", Lineedit, zeno::reflect::Any(), "enable = parameter('Output Front Attribute').value == 1;"),
             ParamPrimitive("Output Back Attribute", gParamType_Bool, false, Checkbox),
@@ -1470,13 +1564,13 @@ namespace zeno {
             auto spOutput = input_object->clone();
 
             ctx.spNode = m_pAdapter;
-            ctx.spObject = spOutput;
+            ctx.spObject = std::move(spOutput);
             ctx.code = finalZfx;
 
             zeno::ZfxExecute zfxexe(finalZfx, &ctx);
             zfxexe.execute();
 
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(ctx.spObject)));
         }
 
         zeno::CustomUI export_customui() const override {
@@ -1513,7 +1607,7 @@ namespace zeno {
                 throw makeError<UnimplError>("empty input object.");
             }
             auto spOutput = fuseGeometry(input_object.get(), snapDistance);
-            ZImpl(set_output("Output", spOutput));
+            ZImpl(set_output("Output", std::move(spOutput)));
         }
     };
 

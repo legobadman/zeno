@@ -111,9 +111,7 @@ private:
     ZToolBarButton *pListView;
     ZToolBarButton *pTreeView;
     ZToolBarButton* pluginView;
-    ZToolBarButton *pSubnetMgr;
-    ZToolBarButton *pFold;
-    ZToolBarButton *pUnfold;
+    ZToolBarButton *pUploadExtension;
     ZToolBarButton *pSnapGrid;
     ZToolBarButton *pShowGrid;
     ZToolBarButton *pShowThumb;
@@ -121,9 +119,12 @@ private:
     ZToolBarButton *pCustomParam;
     ZToolBarButton *pGroup;
     ZToolBarButton* pTestApi = nullptr;
-    QCheckBox*pAlways;
+    ZToolBarButton* pMultiThreadExecute = nullptr;
+    QCheckBox* pAlways;
     ZToolBarButton *pSearchBtn;
     ZToolBarButton *pSettings;
+    ZToolBarButton *pCleanProj;
+    ZToolBarButton *pCleanScene = nullptr;
 
     ZToolMenuButton *m_btnRun;
     ZTextIconButton* m_btnKill;

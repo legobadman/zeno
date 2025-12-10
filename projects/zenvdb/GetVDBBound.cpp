@@ -12,8 +12,8 @@ namespace zeno {
 struct GetVDBBound : INode {
   virtual void apply() override {
     auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
-    auto bbmin = std::make_shared<zeno::NumericObject>();
-    auto bbmax = std::make_shared<zeno::NumericObject>();
+    auto bbmin = std::make_unique<zeno::NumericObject>();
+    auto bbmax = std::make_unique<zeno::NumericObject>();
 
     zeno::vec3f bmin, bmax;
     openvdb::CoordBBox box = grid->evalActiveVoxelBoundingBox();
@@ -44,8 +44,8 @@ struct GetVDBBound : INode {
 
     bbmin->set<zeno::vec3f>(bmin);
     bbmax->set<zeno::vec3f>(bmax);
-    set_output("bmin", bbmin);
-    set_output("bmax", bbmax);
+    set_output("bmin", std::move(bbmin));
+    set_output("bmax", std::move(bbmax));
   }
 };
 
@@ -61,10 +61,10 @@ ZENDEFNODE(GetVDBBound, {
 struct GetVDBVoxelSize : INode {
   virtual void apply() override {
     auto grid = safe_dynamic_cast<VDBGrid>(get_input("vdbGrid"));
-    auto dx = std::make_shared<zeno::NumericObject>();
-    auto dy = std::make_shared<zeno::NumericObject>();
-    auto dz = std::make_shared<zeno::NumericObject>();
-    auto dxyz = std::make_shared<zeno::NumericObject>();
+    auto dx = std::make_unique<zeno::NumericObject>();
+    auto dy = std::make_unique<zeno::NumericObject>();
+    auto dz = std::make_unique<zeno::NumericObject>();
+    auto dxyz = std::make_unique<zeno::NumericObject>();
     vec3f del = grid->getVoxelSize();
     dx->set(del[0]);
     dy->set(del[1]);

@@ -6,9 +6,9 @@
 #include "zenoimagepanel.h"
 #include "PrimAttrTableModel.h"
 #include "viewport/zenovis.h"
-#include "zenovis/ObjectsManager.h"
 #include "zeno/utils/format.h"
 #include <zeno/types/UserData.h>
+#include <zeno/core/NodeImpl.h>
 #include <zeno/types/PrimitiveObject.h>
 #include "zeno/utils/vec.h"
 #include "zeno/utils/log.h"
@@ -27,7 +27,68 @@ void ZenoImagePanel::clear() {
     pStatusBar->clear();
 }
 
+void ZenoImagePanel::setObject(zeno::IObject* pObject) {
+    if (!pObject)
+        return;
+    auto ud = pObject->userData();
+    if (ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
+        return;
+    }
+    bool enableGamma = pGamma->checkState() == Qt::Checked;
+    if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(pObject)) {
+        auto obj = geom->toPrimitiveObject();
+        int width = ud->get_int("w");
+        int height = ud->get_int("h");
+        if (image_view) {
+            if (pMode->currentText() != "Alpha") {
+                QImage img(width, height, QImage::Format_RGB32);
+                auto index = std::map<QString, zeno::vec3i>{
+                    {"RGB", {0, 1, 2}},
+                    {"Red", {0, 0, 0}},
+                    {"Green", {1, 1, 1}},
+                    {"Blue", {2, 2, 2}},
+                }.at(pMode->currentText());
+                for (auto i = 0; i < obj->verts.size(); i++) {
+                    int h = i / width;
+                    int w = i % width;
+                    auto c = obj->verts[i];
+                    if (enableGamma) {
+                        c = zeno::pow(c, 1.0f / 2.2f);
+                    }
+                    int r = glm::clamp(int(c[index[0]] * 255.99), 0, 255);
+                    int g = glm::clamp(int(c[index[1]] * 255.99), 0, 255);
+                    int b = glm::clamp(int(c[index[2]] * 255.99), 0, 255);
+
+                    img.setPixel(w, height - 1 - h, qRgb(r, g, b));
+                }
+                img = img.mirrored(true, false);
+                image_view->setImage(img);
+            }
+            else if (pMode->currentText() == "Alpha") {
+                QImage img(width, height, QImage::Format_RGB32);
+                if (obj->verts.has_attr("alpha")) {
+                    auto& alpha = obj->verts.attr<float>("alpha");
+                    for (auto i = 0; i < obj->verts.size(); i++) {
+                        int h = i / width;
+                        int w = i % width;
+                        auto c = alpha[i];
+                        int r = glm::clamp(int(c * 255.99), 0, 255);
+                        int g = glm::clamp(int(c * 255.99), 0, 255);
+                        int b = glm::clamp(int(c * 255.99), 0, 255);
+
+                        img.setPixel(w, height - 1 - h, qRgb(r, g, b));
+                    }
+                }
+                image_view->setImage(img);
+            }
+        }
+        QString statusInfo = QString(zeno::format("width: {}, height: {}", width, height).c_str());
+        pStatusBar->setText(statusInfo);
+    }
+}
+
 void ZenoImagePanel::reload(const zeno::render_reload_info& info) {
+    return;
     m_info = info;
     bool enableGamma = pGamma->checkState() == Qt::Checked;
     const auto& update = info.objs[0];
@@ -38,14 +99,14 @@ void ZenoImagePanel::reload(const zeno::render_reload_info& info) {
     else {
         auto spNode = zeno::getSession().getNodeByUuidPath(update.uuidpath_node_objkey);
         assert(spNode);
-        zeno::zany spObject = spNode->get_default_output_object();
+        auto spObject = spNode->get_default_output_object();
         if (spObject) {
             if (update.reason == zeno::Update_View) {
                 auto ud = spObject->userData();
                 if (ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
                     return;
                 }
-                if (auto geom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(spObject)) {
+                if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(spObject)) {
                     auto obj = geom->toPrimitiveObject();
                     int width = ud->get_int("w");
                     int height = ud->get_int("h");
@@ -190,7 +251,7 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
         const auto& update = m_info.objs[0];
         auto spNode = zeno::getSession().getNodeByUuidPath(update.uuidpath_node_objkey);
         assert(spNode);
-        zeno::zany spObject = spNode->get_default_output_object();
+        auto spObject = spNode->get_default_output_object();
         if (!spObject) return;
 
         auto ud = spObject->userData();
@@ -198,7 +259,7 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
             return;
         }
         found = true;
-        if (auto geom = std::dynamic_pointer_cast<zeno::GeometryObject_Adapter>(spObject)) {
+        if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(spObject)) {
             auto obj = geom->toPrimitiveObject();
             int width = ud->get_int("w");
             int height = ud->get_int("h");

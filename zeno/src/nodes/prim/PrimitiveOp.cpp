@@ -1,4 +1,5 @@
 #include <zeno/zeno.h>
+#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/vec.h>
@@ -56,7 +57,7 @@ struct PrimitiveUnaryOp : INode {
         }
     }); });
 
-    ZImpl(set_output("primOut", ZImpl(get_input("primOut"))));
+    ZImpl(set_output("primOut", ZImpl(clone_input("primOut"))));
   }
 };
 
@@ -94,9 +95,9 @@ struct BinaryOperator {
 
 struct PrimitiveBinaryOp : INode {
   virtual void apply() override {
-    auto primA = ZImpl(get_input<PrimitiveObject>("primA"));
-    auto primB = ZImpl(get_input<PrimitiveObject>("primB"));
-    auto primOut = ZImpl(get_input<PrimitiveObject>("primOut"));
+    auto primA = get_input_Geometry("primA")->toPrimitiveObject();
+    auto primB = get_input_Geometry("primB")->toPrimitiveObject();
+    auto primOut = get_input_Geometry("primOut")->toPrimitiveObject();
     auto attrA = ZImpl(get_param<std::string>("attrA"));
     auto attrB = ZImpl(get_param<std::string>("attrB"));
     auto attrOut = ZImpl(get_param<std::string>("attrOut"));
@@ -142,24 +143,24 @@ struct PrimitiveBinaryOp : INode {
         });
     });
 
-    ZImpl(set_output("primOut", ZImpl(get_input("primOut"))));
+    set_output("primOut", create_GeometryObject(primOut.get()));
   }
 };
 
 ZENDEFNODE(PrimitiveBinaryOp,
     { /* inputs: */ {
-        {gParamType_Primitive, "primB", "", zeno::Socket_ReadOnly},
-        {gParamType_Primitive, "primA", "", zeno::Socket_ReadOnly},
-        {gParamType_Primitive, "primOut", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "primB", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "primA", "", zeno::Socket_ReadOnly},
+        {gParamType_Geometry, "primOut", "", zeno::Socket_ReadOnly},
     }, /* outputs: */ {
-        {gParamType_Primitive, "primOut"},
+        {gParamType_Geometry, "primOut"},
     }, /* params: */ {
     {gParamType_String, "attrA", "pos"},
     {gParamType_String, "attrB", "pos"},
     {gParamType_String, "attrOut", "pos"},
     {gParamType_String, "op", "copyA"},
     }, /* category: */ {
-    "deprecated",
+    "prim",
     }});
 
 
@@ -168,11 +169,11 @@ struct PrimitiveMix : INode {
     auto primA = ZImpl(get_input<PrimitiveObject>("primA"));
     auto primB = ZImpl(get_input<PrimitiveObject>("primB"));
 
-    std::shared_ptr<zeno::PrimitiveObject> primOut;
+    std::unique_ptr<zeno::PrimitiveObject> primOut;
     if (ZImpl(has_input("primOut"))) {
             primOut = ZImpl(get_input<PrimitiveObject>("primOut"));
     } else {
-            primOut = std::make_shared<zeno::PrimitiveObject>(*primA);
+            primOut = std::make_unique<zeno::PrimitiveObject>(*primA);
     }
     auto attrA = ZImpl(get_param<std::string>("attrA"));
     auto attrB = ZImpl(get_param<std::string>("attrB"));
@@ -194,7 +195,7 @@ struct PrimitiveMix : INode {
                 });
         });
     });
-    ZImpl(set_output("primOut", primOut));
+    ZImpl(set_output("primOut", std::move(primOut)));
   }
 };
 ZENDEFNODE(PrimitiveMix,
@@ -281,7 +282,7 @@ struct PrimitiveHalfBinaryOp : INode {
         });
     });
 
-    ZImpl(set_output("primOut", ZImpl(get_input("primOut"))));
+    ZImpl(set_output("primOut", ZImpl(clone_input("primOut"))));
   }
 };
 

@@ -2,6 +2,7 @@
 #include <Python.h>
 #include <pybind11/pybind11.h>
 #include <zeno/utils/log.h>
+#include <zeno/utils/zenoutil.h>
 #include <zeno/zeno.h>
 #include "pythonenv.h"
 

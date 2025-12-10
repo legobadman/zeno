@@ -3,7 +3,7 @@
 
 namespace zeno {
 namespace {
-
+#if 0
 struct ObjTimeShift : INode {
     std::vector<zany> m_objseq;
 
@@ -43,6 +43,7 @@ ZENDEFNODE(ObjTimeShift, {
     },
     {"primitive"},
 });
+#endif
 
 //struct ObjCacheToDisk : INode {
 //};

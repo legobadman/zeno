@@ -10,7 +10,7 @@ namespace zeno {
     ZENO_API GlobalError::GlobalError() {
     }
 
-    ZENO_API GlobalError::GlobalError(ObjPath node, std::shared_ptr<Error> error, std::string param)
+    ZENO_API GlobalError::GlobalError(std::string node, std::shared_ptr<Error> error, std::string param)
         : m_nodeUuidPath(node)
         , m_error(error)
         , m_param(param)
@@ -37,7 +37,7 @@ namespace zeno {
         return m_error->message;
     }
 
-    ZENO_API ObjPath GlobalError::getNode() const {
+    ZENO_API std::string GlobalError::getNode() const {
         return m_nodeUuidPath;
     }
 }
