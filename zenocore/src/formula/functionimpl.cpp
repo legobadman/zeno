@@ -878,6 +878,9 @@ namespace zeno
                             throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the type of arguments of add_point is not matched.");
                         }
                         }, arg.value);
+                    if (pContext->runover == ATTR_POINT) {
+                        filter.resize(filter.size() + 1, 1);
+                    }
                     ZfxVariable res;
                     res.value = std::vector<int>{ ptnum };
                     return res;
@@ -890,6 +893,9 @@ namespace zeno
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
                     //暂时只考虑一个点
                     int ptnum = spGeo->m_impl->add_point(zeno::vec3f(0, 0, 0));
+                    if (pContext->runover == ATTR_POINT) {
+                        filter.resize(filter.size() + 1, 1);
+                    }
                     ZfxVariable res;
                     res.value = std::vector<int>{ ptnum };
                     return res;
@@ -911,6 +917,9 @@ namespace zeno
                 int faceid = get_zfxvec_front_elem<int>(args[0].value);
                 int pointid = get_zfxvec_front_elem<int>(args[1].value);
                 int vertid = spGeo->m_impl->add_vertex(faceid, pointid);
+                if (pContext->runover == ATTR_VERTEX) {
+                    filter.resize(filter.size() + 1, 1);
+                }
                 ZfxVariable res;
                 res.value = std::vector<int>{ vertid };
                 return res;
@@ -992,8 +1001,10 @@ namespace zeno
                     bSucceed = spGeo->m_impl->remove_point(currrem);
                 }
                 if (bSucceed) {
-                    //要调整filter，移除掉第currrem位置的元素
-                    filter.erase(filter.begin() + currrem);
+                    if (pContext->runover == ATTR_POINT) {
+                        //要调整filter，移除掉第currrem位置的元素
+                        filter.erase(filter.begin() + currrem);
+                    }
                     //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
                     //afterRemovePoint(currrem);
                     for (auto& [name, attrVar] : *pContext->zfxVariableTbl) {
@@ -1069,8 +1080,10 @@ namespace zeno
                     bSucceed = spGeo->m_impl->remove_point(currrem);
                 }
                 if (bSucceed) {
-                    //要调整filter，移除掉第currrem位置的元素
-                    filter.erase(filter.begin() + currrem);
+                    if (pContext->runover == ATTR_POINT) {
+                        //要调整filter，移除掉第currrem位置的元素
+                        filter.erase(filter.begin() + currrem);
+                    }
                     //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
 
                     //移除点以后要调整已有的属性值
@@ -1132,6 +1145,9 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             const auto& points = get_zfxvec_front_elem<std::vector<int>>(args[0].value);
             int ret = spGeo->m_impl->add_face(points);
+            if (pContext->runover == ATTR_FACE) {
+                filter.resize(filter.size() + 1, 1);
+            }
             return initVarFromZvar(ret);
         }
 
@@ -1191,14 +1207,18 @@ namespace zeno
 
             bSucceed = spGeo->m_impl->remove_faces(remfaces, bIncludePoints);
             if (bSucceed) {
-                //要调整filter，移除掉第currrem位置的元素
-                removeElemsByIndice(filter, remfaces);
+                if (pContext->runover == ATTR_FACE) {
+                    //要调整filter，移除掉第currrem位置的元素
+                    removeElemsByIndice(filter, remfaces);
+                }
                 //afterRemoveElements(remfaces);
                 for (auto& [name, attrVar] : *pContext->zfxVariableTbl) {
                     auto& attrvalues = attrVar.value;
 
                     std::visit([&](auto& vec) {
-                        removeElemsByIndice(vec, remfaces);
+                        if (pContext->runover == ATTR_FACE) {
+                            removeElemsByIndice(vec, remfaces);
+                        }
                     }, attrVar.value);
                 }
             }
