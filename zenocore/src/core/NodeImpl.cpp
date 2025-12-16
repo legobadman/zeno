@@ -1218,7 +1218,15 @@ void NodeImpl::on_link_added_removed(bool bInput, const std::string& paramname, 
     }
 }
 
+void NodeImpl::register_removeSelf(std::function<void()> cb_func) {
+    m_cbRemoveSelfCallback.insert(std::make_pair(generateUUID(), cb_func));
+}
+
 void NodeImpl::on_node_about_to_remove() {
+    //如果有回调注册了，就先处理回调，让注册方完成释放操作
+    for (const auto& [_, cb] : m_cbRemoveSelfCallback) {
+        cb();
+    }
     //移除所有引用边的依赖关系
     auto& primsRemoveReferLink = [](std::map<std::string, PrimitiveParam>& prims) {
         for (auto& [_, input_param] : prims)
