@@ -2093,27 +2093,14 @@ namespace zeno
                 }
                 else {
                     //todo: other geometry
+                    throw makeError<UnimplError>("only support current geom(which is \"0\"");
                 }
 
                 PointCloud pc;
                 pc.radius = radius;
                 pc.maxpoints = maxpoints;
                 pc.pTree = std::make_shared<zeno::KdTree>(points, points.size());
-
-                std::visit([&](const auto& vec) {
-                    using T = std::decay_t<decltype(vec)>;
-                    using E = typename T::value_type;
-                    if constexpr (std::is_same_v<E, glm::vec3>) {
-                        pc.testPoints.resize(vec.size());
-                        for (int i = 0; i < pc.testPoints.size(); i++) {
-                            const auto& _pt = vec[i];
-                            pc.testPoints[i] = zeno::vec3f(_pt[0], _pt[1], _pt[2]);
-                        }
-                    }
-                    else {
-                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"not support type");
-                    }
-                    }, args[3].value);
+                pc.testPoints = points;
 
                 int handle = pContext->pchandles.size();
                 pContext->pchandles.push_back(pc);
