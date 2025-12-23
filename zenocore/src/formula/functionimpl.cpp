@@ -1324,14 +1324,61 @@ namespace zeno
         }
 
         static ZfxVariable set_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() != 2)
-                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_point_attr is not matched.");
+            if (args.size() == 2) {
+                auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
+                std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
+                AttrVar defl = zfxVarToAttrVar(args[1]);
+                int ret = spGeo->m_impl->set_point_attr(name, defl);
+                return initVarFromZvar(ret);
+            } else if (args.size() == 3) {
+                auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
+                std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
+                AttrVar idx = zfxVarToAttrVar(args[1]);
+                AttrVar defl = zfxVarToAttrVar(args[2]);
+                std::visit([&, pContext](auto&& argdix) {
+                    using T = std::decay_t<decltype(argdix)>;
+                    if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                        std::visit([&](auto&& argdefl) {
+                            using T = std::decay_t<decltype(argdefl)>;
+                            if constexpr (
+                                std::is_same_v<T, float> ||
+                                std::is_same_v<T, int> ||
+                                std::is_same_v<T, vec2f> ||
+                                std::is_same_v<T, vec3f> ||
+                                std::is_same_v<T, vec4f> ||
+                                std::is_same_v<T, std::string>
+                                ) {
+                                spGeo->m_impl->set_elem(ATTR_POINT, name, argdix, argdefl);
+                            }
+                        }, defl);
+                    } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+                        for (int i = 0; i < argdix.size(); ++i)
+                        {
+                            std::visit([&](auto&& argdefl) {
+                                using T = std::decay_t<decltype(argdefl)>;
+                                if constexpr (
+                                    std::is_same_v<T, float> ||
+                                    std::is_same_v<T, int> ||
+                                    std::is_same_v<T, vec2f> ||
+                                    std::is_same_v<T, vec3f> ||
+                                    std::is_same_v<T, vec4f> ||
+                                    std::is_same_v<T, std::string>
+                                    ) {
+                                    spGeo->m_impl->set_elem(ATTR_POINT, name, i, argdefl);
+                                }
+                            }, defl);
+                        }
+                    } else {
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not supported index type");
+                    }
+                }, idx);
 
-            auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
-            std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->set_point_attr(name, defl);
-            return initVarFromZvar(ret);
+                //int ret = spGeo->m_impl->set_attr_elem(ATTR_POINT, name, 0, args[2]);
+                return initVarFromZvar(0);
+            } else {
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_point_attr is not matched.");
+            }
+
         }
 
         static ZfxVariable set_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {

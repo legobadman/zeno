@@ -128,7 +128,7 @@ namespace zenoio
 
         //要先parse customui以获得整个参数树结构。
         if (objValue.HasMember("subnet-customUi")) {
-            retNode.customUi = _parseCustomUI(nodeid, objValue["subnet-customUi"], links);
+            retNode.customUi = _parseCustomUI(nodeid, objValue["subnet-customUi"], links, refs);
         }
         if (objValue.HasMember(iotags::params::node_inputs_objs)) {
             _parseInputs(true, nodeid, cls, objValue[iotags::params::node_inputs_objs], retNode, links, refs);
@@ -564,9 +564,9 @@ namespace zenoio
         }
     }
 
-    zeno::CustomUI ZenReader::_parseCustomUI(const std::string& id, const rapidjson::Value& customuiObj, zeno::LinksData& links)
+    zeno::CustomUI ZenReader::_parseCustomUI(const std::string& id, const rapidjson::Value& customuiObj, zeno::LinksData& links, zeno::ReferencesData& refs)
     {
-        auto readCustomUiParam = [&links, &id](zeno::ParamPrimitive& paramInfo, const rapidjson::Value& param, const std::string& sockName) {
+        auto readCustomUiParam = [&links, &id, &refs](zeno::ParamPrimitive& paramInfo, const rapidjson::Value& param, const std::string& sockName) {
             if (param.IsObject()) {
                 auto paramValue = param.GetObject();
                 if (paramValue.HasMember("type") && paramValue["type"].IsString())
@@ -574,7 +574,17 @@ namespace zenoio
                 if (paramValue.HasMember("socket-type") && paramValue["socket-type"].IsString())
                     paramInfo.socketType = getSocketTypeByDesc(paramValue["socket-type"].GetString());
 
-                paramInfo.defl = zenoio::jsonValueToAny(paramValue["default-value"], paramInfo.type);
+                bool hasRef = false;
+                paramInfo.defl = zenoio::jsonValueToAny(paramValue["default-value"], paramInfo.type, &hasRef);
+                if (hasRef) {
+                    std::set<std::string> params_with_refs;
+                    auto iter = refs.find(id);
+                    if (iter != refs.end()) {
+                        params_with_refs = iter->second;
+                    }
+                    params_with_refs.insert(sockName);
+                    refs.insert_or_assign(id, params_with_refs);
+                }
                 if (paramValue.HasMember("control") && paramValue["control"].IsObject())
                 {
                     zeno::reflect::Any props;
@@ -668,7 +678,8 @@ namespace zenoio
     zeno::CustomUI ZenReader::_parseCustomUI(const rapidjson::Value& customuiObj)
     {
         zeno::LinksData lnks;
-        return _parseCustomUI(std::string(), customuiObj, lnks);
+        zeno::ReferencesData refs;
+        return _parseCustomUI(std::string(), customuiObj, lnks, refs);
     }
 
 }
