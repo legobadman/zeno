@@ -118,6 +118,8 @@ struct Make2DGridPrimitive : INode {
             : vec3f(0, 1, 0);
         vec3f o = ZImpl(has_input("origin")) ?
             ZImpl(get_input<NumericObject>("origin"))->get<zeno::vec3f>() : vec3f(0);
+        auto quad = ZImpl(has_input("quads")) ?
+            ZImpl(get_input<NumericObject>("quads"))->get<bool>() : false;
         if (ZImpl(has_input("scale"))) {
             auto obj = ZImpl(get_input<NumericObject>("scale"));
             auto scale = obj->is<int>() ? obj->get<int>() : obj->get<float>();
@@ -162,18 +164,37 @@ struct Make2DGridPrimitive : INode {
                     }
             }
             if (ZImpl(get_param<bool>("hasFaces"))) {
-                prim->tris.resize((nx - 1) * (ny - 1) * 2);
+                if (quad) {
+                    prim->loops.resize((nx - 1) * (ny - 1) * 4);
+                    prim->polys.resize((nx - 1) * (ny - 1));
 #pragma omp parallel for
-                for (intptr_t y = 0; y < ny - 1; y++)
-                    for (intptr_t x = 0; x < nx - 1; x++) {
-                        intptr_t index = y * (nx - 1) + x;
-                        prim->tris[index * 2][2] = y * nx + x;
-                        prim->tris[index * 2][1] = y * nx + x + 1;
-                        prim->tris[index * 2][0] = (y + 1) * nx + x + 1;
-                        prim->tris[index * 2 + 1][2] = (y + 1) * nx + x + 1;
-                        prim->tris[index * 2 + 1][1] = (y + 1) * nx + x;
-                        prim->tris[index * 2 + 1][0] = y * nx + x;
-                    }
+                    for (intptr_t y = 0; y < ny - 1; y++)
+                        for (intptr_t x = 0; x < nx - 1; x++) {
+                            intptr_t index = y * (nx - 1) + x;
+                            intptr_t loop_start = index * 4;
+
+                            prim->loops[loop_start] = y * nx + x;           // 左下
+                            prim->loops[loop_start + 1] = y * nx + x + 1;     // 右下
+                            prim->loops[loop_start + 2] = (y + 1) * nx + x + 1; // 右上
+                            prim->loops[loop_start + 3] = (y + 1) * nx + x;   // 左上
+
+                            prim->polys[index] = vec2i(loop_start, 4);
+                        }
+                } else {
+                    // 使用三角形面 (tris)
+                    prim->tris.resize((nx - 1) * (ny - 1) * 2);
+#pragma omp parallel for
+                    for (intptr_t y = 0; y < ny - 1; y++)
+                        for (intptr_t x = 0; x < nx - 1; x++) {
+                            intptr_t index = y * (nx - 1) + x;
+                            prim->tris[index * 2][2] = y * nx + x;
+                            prim->tris[index * 2][1] = y * nx + x + 1;
+                            prim->tris[index * 2][0] = (y + 1) * nx + x + 1;
+                            prim->tris[index * 2 + 1][2] = (y + 1) * nx + x + 1;
+                            prim->tris[index * 2 + 1][1] = (y + 1) * nx + x;
+                            prim->tris[index * 2 + 1][0] = y * nx + x;
+                        }
+                }
             }
         } else {
 #pragma omp parallel for
@@ -195,18 +216,37 @@ struct Make2DGridPrimitive : INode {
             }
 
             if (ZImpl(get_param<bool>("hasFaces"))) {
-                prim->tris.resize((nx - 1) * (ny - 1) * 2);
+                if (quad) {
+                    prim->loops.resize((nx - 1) * (ny - 1) * 4);
+                    prim->polys.resize((nx - 1) * (ny - 1));
 #pragma omp parallel for
-                for (intptr_t x = 0; x < nx - 1; x++)
-                    for (intptr_t y = 0; y < ny - 1; y++) {
-                        intptr_t index = x * (ny - 1) + y;
-                        prim->tris[index * 2][2] = x * ny + y;
-                        prim->tris[index * 2][1] = x * ny + y + 1;
-                        prim->tris[index * 2][0] = (x + 1) * ny + y + 1;
-                        prim->tris[index * 2 + 1][2] = (x + 1) * ny + y + 1;
-                        prim->tris[index * 2 + 1][1] = (x + 1) * ny + y;
-                        prim->tris[index * 2 + 1][0] = x * ny + y;
-                    }
+                    for (intptr_t x = 0; x < nx - 1; x++)
+                        for (intptr_t y = 0; y < ny - 1; y++) {
+                            intptr_t index = x * (ny - 1) + y;
+                            intptr_t loop_start = index * 4;
+
+                            prim->loops[loop_start] = x * ny + y;           // 左下
+                            prim->loops[loop_start + 1] = x * ny + y + 1;     // 右下
+                            prim->loops[loop_start + 2] = (x + 1) * ny + y + 1; // 右上
+                            prim->loops[loop_start + 3] = (x + 1) * ny + y;   // 左上
+
+                            prim->polys[index] = vec2i(loop_start, 4);
+                        }
+                } else {
+                    // 使用三角形面 (tris)
+                    prim->tris.resize((nx - 1) * (ny - 1) * 2);
+#pragma omp parallel for
+                    for (intptr_t x = 0; x < nx - 1; x++)
+                        for (intptr_t y = 0; y < ny - 1; y++) {
+                            intptr_t index = x * (ny - 1) + y;
+                            prim->tris[index * 2][2] = x * ny + y;
+                            prim->tris[index * 2][1] = x * ny + y + 1;
+                            prim->tris[index * 2][0] = (x + 1) * ny + y + 1;
+                            prim->tris[index * 2 + 1][2] = (x + 1) * ny + y + 1;
+                            prim->tris[index * 2 + 1][1] = (x + 1) * ny + y;
+                            prim->tris[index * 2 + 1][0] = x * ny + y;
+                        }
+                }
             }
         }
 
@@ -226,6 +266,7 @@ ZENDEFNODE(Make2DGridPrimitive,
         {gParamType_Vec3f, "sizeY", "0,1,0"},
         {gParamType_Float, "scale", "1"},
         {gParamType_Vec3f, "origin", "0,0,0"},
+        {gParamType_Bool, "quads", "0"},
         }, /* outputs: */ {
         {gParamType_Geometry, "prim"},
         }, /* params: */ {
