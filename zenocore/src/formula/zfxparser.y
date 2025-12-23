@@ -340,6 +340,11 @@ compareexp: addsubexp   { $$ = $1; }
             $$ = driver.makeNewNode(COMPOP, $2, children);
             $$->value = $2;
         }
+    | LPAREN compareexp compare-op addsubexp RPAREN {
+            std::vector<std::shared_ptr<ZfxASTNode>>children({$2, $4});
+            $$ = driver.makeNewNode(COMPOP, $3, children);
+            $$->value = $3;
+        }
     | compareexp compare-op addsubexp QUESTION exp-statement COLON exp-statement {
             std::vector<std::shared_ptr<ZfxASTNode>> children({$1, $3});
             auto spCond = driver.makeNewNode(COMPOP, $2, children);

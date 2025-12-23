@@ -1466,6 +1466,10 @@ void NodeImpl::initReferLinks(PrimitiveParam* target_param) {
         }
 
         NodeImpl* srcNode = getGraph()->getNodeByUuidPath(sourcenode_uuid);
+        if (!srcNode) {
+            zeno::log_warn("invalid ref");
+            continue;
+        }
 
         if (refSrcInfo.funcName != "refout") {
             bool isSubInput = sourcenode_uuid.find("SubInput") != std::string::npos;
@@ -3700,9 +3704,7 @@ params_change_info NodeImpl::update_editparams(const ParamsUpdateInfo& params, b
                 if (param.bInput)
                 {
                     update_param_control_prop(spParam.name, param.ctrlProps);
-                    if (bChangeType) {
-                        update_param_control(spParam.name, param.control);
-                    }
+                    update_param_control(spParam.name, param.control);
                 }
             }
             else {
@@ -3794,7 +3796,7 @@ void NodeImpl::init(const NodeData& dat)
     if (!dat.name.empty())
         m_name = dat.name;
 
-    if (m_name == "RigidRecenterPrim") {
+    if (m_name == "Create_body_base") {
         int j;
         j = -0;
     }

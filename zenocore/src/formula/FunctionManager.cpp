@@ -1646,7 +1646,7 @@ namespace zeno {
                     if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
                         auto _vec = std::vector<int>(N);
                         for (int i = 0; i < N; i++) {
-                            _vec[i] = vec[i];
+                            _vec[i] = !static_cast<int>(vec[i]);
                         }
                         result.value = _vec;
                     }
