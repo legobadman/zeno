@@ -27,10 +27,12 @@
                     }
                 },
                 "uipos": [
-                    -195.0,
+                    -194.0,
                     563.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false,
                 "subnet-customUi": {
                     "nickname": "",
@@ -483,7 +485,7 @@
                                 "port": {
                                     "links": [
                                         {
-                                            "out-node": "stacked_boxes",
+                                            "out-node": "init_attributes",
                                             "out-socket": "Output",
                                             "out-key": "",
                                             "in-key": "",
@@ -498,8 +500,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {},
                             "uipos": [
-                                238.0,
-                                743.0
+                                20.0,
+                                786.0
                             ],
                             "status": [],
                             "collasped": false
@@ -1048,8 +1050,8 @@
                             },
                             "object_outputs": {},
                             "uipos": [
-                                700.0,
-                                0.0
+                                -398.0,
+                                248.0
                             ],
                             "status": [],
                             "collasped": false
@@ -1062,7 +1064,7 @@
                                 "seed": {
                                     "links": null,
                                     "type": "int",
-                                    "default-value": 2,
+                                    "default-value": "ref(\"../seed\")",
                                     "control": {
                                         "name": "Integer"
                                     },
@@ -1082,7 +1084,9 @@
                                 -7.0,
                                 245.0
                             ],
-                            "status": [],
+                            "status": [
+                                "View"
+                            ],
                             "collasped": false,
                             "subnet-customUi": {
                                 "nickname": "",
@@ -1095,7 +1099,7 @@
                                             "seed": {
                                                 "links": null,
                                                 "type": "int",
-                                                "default-value": 2,
+                                                "default-value": "ref(\"../seed\")",
                                                 "control": {
                                                     "name": "Integer"
                                                 },
@@ -1293,7 +1297,7 @@
                                             }
                                         },
                                         "uipos": [
-                                            -150.0,
+                                            -152.0,
                                             1668.0
                                         ],
                                         "status": [],
@@ -3453,7 +3457,7 @@
                                             "Zfx Code": {
                                                 "links": null,
                                                 "type": "string",
-                                                "default-value": "//用粗暴的方法找出bbox.max的点\nvector3 bmin = get_bboxmin();\nvector3 bmax = get_bboxmax();\n\nint rem_pts[];\n\nfor (int pt=0; pt < npoints(); pt++) { \n    vector3 pos = get_point_attr(\"P\", pt);\n    float x = pos[0];\n    float y = pos[1];\n    float z = pos[2];\n    if (pos != bmax) {\n        rem_pts = append(rem_pts, pt);\n    }\n}\nremove_point(rem_pts);",
+                                                "default-value": "//用粗暴的方法找出bbox.max的点\nvector3 bmin = get_bboxmin();\nvector3 bmax = get_bboxmax();\n\nint rem_pts[];\n\nfor (int pt=0; pt < npoints(); pt++) { \n    vector3 pos = get_point_attr(\"pos\", pt);\n    float x = pos[0];\n    float y = pos[1];\n    float z = pos[2];\n    if (pos != bmax) {\n        rem_pts = append(rem_pts, pt);\n    }\n}\nremove_point(rem_pts);",
                                                 "control": {
                                                     "name": "CodeEditor"
                                                 },
@@ -3471,7 +3475,7 @@
                                         },
                                         "uipos": [
                                             -270.0,
-                                            1865.0
+                                            1863.0
                                         ],
                                         "status": [],
                                         "collasped": false
@@ -3557,8 +3561,8 @@
                                         },
                                         "object_outputs": {},
                                         "uipos": [
-                                            2091.0,
-                                            139.0
+                                            -712.0,
+                                            556.0
                                         ],
                                         "status": [],
                                         "collasped": false
@@ -3705,7 +3709,7 @@
                     "Global Seed": {
                         "links": null,
                         "type": "int",
-                        "default-value": 2249,
+                        "default-value": 2427,
                         "control": {
                             "name": "Slider"
                         },
@@ -3755,7 +3759,7 @@
                 "object_outputs": {},
                 "uipos": [
                     -528.0,
-                    640.0
+                    641.0
                 ],
                 "status": [],
                 "collasped": false,
@@ -3770,7 +3774,7 @@
                                 "Global Seed": {
                                     "links": null,
                                     "type": "int",
-                                    "default-value": 2249,
+                                    "default-value": 2427,
                                     "control": {
                                         "name": "Slider"
                                     },
@@ -4005,9 +4009,7 @@
                     -200.0,
                     718.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false,
                 "subnet-customUi": {
                     "nickname": "",
@@ -4104,7 +4106,9 @@
                                 -63.0,
                                 147.0
                             ],
-                            "status": [],
+                            "status": [
+                                "View"
+                            ],
                             "collasped": false
                         },
                         "Input": {
@@ -4825,7 +4829,7 @@
                                             "Zfx Code": {
                                                 "links": null,
                                                 "type": "string",
-                                                "default-value": "vector3 v = {0,1,0};\r\n@nrm = v;",
+                                                "default-value": "vector3 v = vec3(0,1,0);\n@nrm = v;",
                                                 "control": {
                                                     "name": "CodeEditor"
                                                 },
@@ -4842,8 +4846,8 @@
                                             }
                                         },
                                         "uipos": [
-                                            -19.0,
-                                            301.0
+                                            -9.0,
+                                            363.0
                                         ],
                                         "status": [],
                                         "collasped": false
