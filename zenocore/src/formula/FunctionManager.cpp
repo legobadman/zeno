@@ -414,11 +414,35 @@ namespace zeno {
                     std::is_same_v<Op, std::greater<>> ||
                     std::is_same_v<Op, std::greater_equal<>> ||
                     std::is_same_v<Op, std::logical_or<>> || 
-                    std::is_same_v<Op, std::logical_and<>> ||
+                    std::is_same_v<Op, std::logical_and<>>/* ||
                     std::is_same_v<Op, std::equal_to<>> ||
-                    std::is_same_v<Op, std::not_equal_to<>>)
+                    std::is_same_v<Op, std::not_equal_to<>>*/)
                 {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support boolean exp for glm::vec");
+                }
+                else if constexpr (std::is_same_v<Op, std::equal_to<>>) {
+                    std::vector<int> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1 - 1)];
+                        const auto& rval = rhs_vec[std::min(i, N2 - 1)];
+                        bool equal = glm::all(glm::equal(lval, rval));
+                        result[i] = equal;
+                    }
+                    res.value = result;
+                }
+                else if constexpr (std::is_same_v<Op, std::not_equal_to<>>) {
+                    std::vector<int> result(maxsize);
+                    for (int i = 0; i < maxsize; i++) {
+                        if (!filter[i])
+                            continue;
+                        const auto& lval = lhs_vec[std::min(i, N1 - 1)];
+                        const auto& rval = rhs_vec[std::min(i, N2 - 1)];
+                        bool notEqual = glm::all(glm::notEqual(lval, rval));
+                        result[i] = notEqual;
+                    }
+                    res.value = result;
                 }
                 else
                 {

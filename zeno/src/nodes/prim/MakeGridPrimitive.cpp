@@ -261,7 +261,7 @@ struct Make2DGridPrimitive : INode {
 ZENDEFNODE(Make2DGridPrimitive,
         { /* inputs: */ {
         {gParamType_Int, "nx", "2"},
-        {gParamType_Int, "ny", "0"},
+        {gParamType_Int, "ny", "2"},
         {gParamType_Vec3f, "sizeX", "1,0,0"},
         {gParamType_Vec3f, "sizeY", "0,1,0"},
         {gParamType_Float, "scale", "1"},
