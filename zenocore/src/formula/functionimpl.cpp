@@ -1765,7 +1765,7 @@ namespace zeno
                         std::vector<E1> ret_vec(N);
                         for (int i = 0; i < N; i++) {
                             int idx = idx_vec[i];
-                            ret_vec[i] = vec[i];
+                            ret_vec[i] = vec[idx];
                         }
                         ret.value = std::move(ret_vec);
                     }

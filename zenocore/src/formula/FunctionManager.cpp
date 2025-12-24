@@ -439,7 +439,7 @@ namespace zeno {
                             continue;
                         const auto& lval = lhs_vec[std::min(i, N1 - 1)];
                         const auto& rval = rhs_vec[std::min(i, N2 - 1)];
-                        bool notEqual = glm::all(glm::notEqual(lval, rval));
+                        bool notEqual = !glm::all(glm::equal(lval, rval));
                         result[i] = notEqual;
                     }
                     res.value = result;
