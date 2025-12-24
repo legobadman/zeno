@@ -151,6 +151,7 @@ namespace zeno {
         int m_iterations = get_input2_int("Iterations");
         int m_increment = get_input2_int("Increment");
         int m_start_value = get_input2_int("Start Value");
+        bool m_need_stop_cond = get_input2_bool("Has Stop Condition");
         int m_stop_condition = get_input2_int("Stop Condition");
 
         if (iter_method == "By Count") {
@@ -160,13 +161,15 @@ namespace zeno {
             }
             else {
                 if (m_increment > 0) {//正增长
-                    if (m_iterations <= current_iter - m_start_value || current_iter >= m_stop_condition) {
+                    if (m_iterations <= current_iter - m_start_value ||
+                        (m_need_stop_cond && current_iter >= m_stop_condition)) {
                         adjustCollectObjInfo();
                         return false;
                     }
                 }
                 else {//负增长
-                    if (m_iterations <= m_start_value - current_iter || current_iter <= m_stop_condition) {
+                    if (m_iterations <= m_start_value - current_iter ||
+                        (m_need_stop_cond && current_iter <= m_stop_condition)) {
                         adjustCollectObjInfo();
                         return false;
                     }
@@ -372,7 +375,8 @@ namespace zeno {
             ParamPrimitive("Iterations", gParamType_Int, 10, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
             ParamPrimitive("Increment", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
             ParamPrimitive("Start Value", gParamType_Int, 0, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
-            ParamPrimitive("Stop Condition", gParamType_Int, 1, zeno::Lineedit, Any(), "enabled = parameter('Iterate Method').value == 'By Count';"),
+            ParamPrimitive("Stop Condition", gParamType_Int, 0, zeno::Slider, std::vector<int>{0, 10, 1}, "enabled = parameter('Iterate Method').value == 'By Count' && parameter('Has Stop Condition').value == 1;"),
+            ParamPrimitive("Has Stop Condition", gParamType_Bool, false),
             ParamPrimitive("Output List", gParamType_Bool, false, zeno::Checkbox, Any()),
             ParamPrimitive("Clear Cache In ForEach Begin", gParamType_Bool, false, zeno::Checkbox, Any())
         },

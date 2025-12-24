@@ -1919,7 +1919,22 @@
                                                 "type": "int",
                                                 "default-value": 4,
                                                 "control": {
-                                                    "name": "Integer"
+                                                    "name": "Slider"
+                                                },
+                                                "controlProps": {
+                                                    "min": 0,
+                                                    "max": 10,
+                                                    "step": 1
+                                                },
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            },
+                                            "Has Stop Condition": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": true,
+                                                "control": {
+                                                    "name": ""
                                                 },
                                                 "controlProps": null,
                                                 "socket-type": "clone",
@@ -4530,7 +4545,7 @@
                                             "Current Iteration": {
                                                 "links": null,
                                                 "type": "int",
-                                                "default-value": 1,
+                                                "default-value": 10,
                                                 "control": {
                                                     "name": ""
                                                 },
@@ -4694,7 +4709,22 @@
                                                 "type": "int",
                                                 "default-value": 1,
                                                 "control": {
-                                                    "name": "Integer"
+                                                    "name": "Slider"
+                                                },
+                                                "controlProps": {
+                                                    "min": 0,
+                                                    "max": 10,
+                                                    "step": 1
+                                                },
+                                                "socket-type": "clone",
+                                                "visible": false
+                                            },
+                                            "Has Stop Condition": {
+                                                "links": null,
+                                                "type": "bool",
+                                                "default-value": false,
+                                                "control": {
+                                                    "name": ""
                                                 },
                                                 "controlProps": null,
                                                 "socket-type": "clone",
