@@ -4,7 +4,7 @@
 #define THROW_WHEN_CORE_DESTROYED \
 auto spGraph = m_wpGraph.lock();\
 if (!spGraph) {\
-    throw std::runtime_error("the node has been destroyed in core data");\
+    throw std::runtime_error("the graph has been destroyed in core data");\
 }
 
 

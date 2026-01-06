@@ -33,6 +33,7 @@ namespace zeno
             int face_offset,
             std::set<zeno::String> face_nocopy
         );
+        GeomTopoType topo_type() const;
 
         std::vector<zeno::vec3f> points_pos();
         ZsVector<Vec3i> tri_indice() const;

@@ -86,12 +86,12 @@ ZenoApplication::~ZenoApplication()
 
 void ZenoApplication::onThreadLogReady(const QString& msg)
 {
+    auto mgr = m_graphsMgr;
     if (msg.startsWith("["))
     {
         QMessageLogger logger("zeno", 0, 0);
         QChar tip = msg.at(1);
 
-        auto mgr = m_graphsMgr;
         if (tip == 'T') {
             mgr->appendLog(QtDebugMsg, "zeno", 0, msg);
         }
@@ -110,9 +110,12 @@ void ZenoApplication::onThreadLogReady(const QString& msg)
         else if (tip == 'E') {
             mgr->appendLog(QtFatalMsg, "zeno", 0, msg);
         }
+        else {
+            mgr->appendLog(QtDebugMsg, "zeno", 0, msg);
+        }
     }
     else {
-        m_graphsMgr->appendLog(QtDebugMsg, "zeno", 0, msg);
+        mgr->appendLog(QtDebugMsg, "zeno", 0, msg);
     }
 }
 

@@ -33,6 +33,10 @@ namespace zeno
 #endif
     }
 
+    GeomTopoType GeometryObject_Adapter::topo_type() const {
+        return m_impl->type();
+    }
+
     void GeometryObject_Adapter::inheritAttributes(
         GeometryObject_Adapter* rhs,
         int vtx_offset,

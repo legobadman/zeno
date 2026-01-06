@@ -1,8 +1,44 @@
 #include "indicemeshtopo.h"
 #include <zeno/para/parallel_reduce.h>
+#include <zeno/geo/commonutil.h>
 
 namespace zeno
 {
+    template<typename T>
+    void erase_attr_vector_range(AttrVector<T>& attr_vec, size_t start, size_t count) {
+        if (start >= attr_vec.size() || count == 0) return;
+
+        size_t end = std::min(start + count, attr_vec.size());
+
+        attr_vec.values.erase(attr_vec.values.begin() + start, attr_vec.values.begin() + end);
+
+        for (auto& [key, attr_variant] : attr_vec.attrs) {
+            std::visit([start, count](auto& attr_vec) {
+                if (start < attr_vec.size()) {
+                    size_t actual_end = std::min(start + count, attr_vec.size());
+                    attr_vec.erase(attr_vec.begin() + start, attr_vec.begin() + actual_end);
+                }
+                }, attr_variant);
+        }
+    }
+
+    template<typename T>
+    void insert_attr_vector_range(AttrVector<T>& attr_vec, size_t pos, const std::vector<T>& elements) {
+        if (pos > attr_vec.size()) {
+            throw makeError<UnimplError>("Insert position out of bounds");
+        }
+
+        attr_vec.values.insert(attr_vec.values.begin() + pos, elements.begin(), elements.end());
+
+        for (auto& [key, attr_variant] : attr_vec.attrs) {
+            std::visit([pos, count = elements.size()](auto& attr_vec) {
+                using ValueType = typename std::decay_t<decltype(attr_vec)>::value_type;
+                ValueType default_value{};
+                attr_vec.insert(attr_vec.begin() + pos, count, default_value);
+                }, attr_variant);
+        }
+    }
+
     IndiceMeshTopology::IndiceMeshTopology(PrimitiveObject* prim)
         : m_indiceMesh_topo(std::make_unique<PrimitiveObject>(*prim))
     {
@@ -64,15 +100,55 @@ namespace zeno
     }
 
     std::vector<vec3i> IndiceMeshTopology::tri_indice() const {
-        throw makeError<UnimplError>("");
+        auto clonePrim = m_indiceMesh_topo->clone();
+        if (auto pPrim = dynamic_cast<PrimitiveObject*>(clonePrim.get())) {
+            if (is_base_triangle()) {
+                return pPrim->tris;
+            }
+            else {
+                primTriangulateQuads(pPrim);
+                primTriangulate(pPrim);
+                return pPrim->tris;
+            }
+        }
+        throw makeError<UnimplError>("unknow obj type");
     }
 
     std::vector<std::vector<int>> IndiceMeshTopology::face_indice() const {
-        throw makeError<UnimplError>("");
+        std::vector<std::vector<int>> indice;
+        int nFaces = nfaces();
+        for (int i = 0; i < nFaces; i++) {
+            std::vector<int> face = face_points(i);
+            indice.emplace_back(face);
+        }
+        return indice;
     }
 
     std::vector<int> IndiceMeshTopology::edge_list() const {
-        throw makeError<UnimplError>("");
+        std::vector<int> edges;
+        int nFaces = nfaces();
+
+        std::set<std::pair<int, int>> edgeSet;
+        for (int face_id = 0; face_id < nFaces; face_id++) {
+            std::vector<int> facePoints = face_points(face_id);
+            int numPoints = facePoints.size();
+
+            if (numPoints < 2) continue;
+            for (int i = 0; i < numPoints; i++) {
+                int fromPoint = facePoints[i];
+                int toPoint = facePoints[(i + 1) % numPoints];
+
+                if (fromPoint > toPoint) {
+                    std::swap(fromPoint, toPoint);
+                }
+                edgeSet.insert({ fromPoint, toPoint });
+            }
+        }
+        for (const auto& edge : edgeSet) {
+            edges.push_back(edge.first);
+            edges.push_back(edge.second);
+        }
+        return edges;
     }
 
     bool IndiceMeshTopology::is_base_triangle() const {
@@ -135,28 +211,328 @@ namespace zeno
     }
 
     void IndiceMeshTopology::set_face(int idx, const std::vector<int>& points, bool bClose) {
-        throw makeError<UnimplError>("");
+        if (points.empty()) {
+            throw makeError<UnimplError>("Cannot set face with empty points");
+        }
+        for (int point_id : points) {
+            if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size()) {
+                throw makeError<UnimplError>("Invalid point index in set_face");
+            }
+        }
+        if (idx < 0 || idx >= nfaces()) {
+            throw makeError<UnimplError>("Invalid face index in set_face");
+        }
+
+        if (!bClose) {
+            if (points.size() < 2) {
+                throw makeError<UnimplError>("Open face must have at least 2 points");
+            }
+            if (is_base_triangle()) {
+                if (idx < m_indiceMesh_topo->tris.size()) {
+                    erase_attr_vector_range(m_indiceMesh_topo->tris, idx, 1);
+                }
+                if (points.size() == 2) {
+                    vec2i line = { points[0], points[1] };
+                    m_indiceMesh_topo->lines.push_back(line);
+                }
+                else {
+                    for (size_t i = 0; i < points.size() - 1; i++) {
+                        vec2i line = { points[i], points[i + 1] };
+                        m_indiceMesh_topo->lines.push_back(line);
+                    }
+                }
+            }
+            else {
+                if (idx < m_indiceMesh_topo->polys.size()) {
+                    const auto& old_poly = m_indiceMesh_topo->polys[idx];
+                    int start_offset = old_poly[0];
+                    int count = old_poly[1];
+
+                    erase_attr_vector_range(m_indiceMesh_topo->loops, start_offset, count);
+                    erase_attr_vector_range(m_indiceMesh_topo->polys, idx, 1);
+                    for (int i = idx; i < m_indiceMesh_topo->polys.size(); i++) {
+                        m_indiceMesh_topo->polys[i][0] -= count;
+                    }
+                }
+                if (points.size() == 2) {
+                    vec2i line = { points[0], points[1] };
+                    m_indiceMesh_topo->lines.push_back(line);
+                }
+                else {
+                    for (size_t i = 0; i < points.size() - 1; i++) {
+                        vec2i line = { points[i], points[i + 1] };
+                        m_indiceMesh_topo->lines.push_back(line);
+                    }
+                }
+            }
+        }
+        else {
+            if (points.size() < 3) {
+                throw makeError<UnimplError>("Closed face must have at least 3 points");
+            }
+            if (is_base_triangle()) {
+                if (points.size() != 3) {
+                    throw makeError<UnimplError>("Triangle mesh can only set triangle faces");
+                }
+                if (idx >= 0 && idx < m_indiceMesh_topo->tris.size()) {
+                    m_indiceMesh_topo->tris[idx] = { points[0], points[1], points[2] };
+                }
+                else {
+                    throw makeError<UnimplError>("Face index out of bounds for triangle mesh");
+                }
+            }
+            else {
+                if (idx < m_indiceMesh_topo->polys.size()) {
+                    const auto& old_poly = m_indiceMesh_topo->polys[idx];
+                    int start_offset = old_poly[0];
+                    int old_count = old_poly[1];
+                    int new_count = points.size();
+
+                    int size_diff = new_count - old_count;
+                    for (int i = 0; i < std::min(old_count, new_count); i++) {// 更新loops中的点序列
+                        m_indiceMesh_topo->loops[start_offset + i] = points[i];
+                    }
+                    if (new_count > old_count) {// 插入新元素
+                        std::vector<int> new_elements(points.begin() + old_count, points.end());
+                        insert_attr_vector_range(m_indiceMesh_topo->loops, start_offset + old_count, new_elements);
+                    }
+                    else if (new_count < old_count) {// 删除多余元素
+                        erase_attr_vector_range(m_indiceMesh_topo->loops, start_offset + new_count, old_count - new_count);
+                    }
+
+                    m_indiceMesh_topo->polys[idx][1] = new_count;
+                    if (size_diff != 0) {
+                        for (int i = idx + 1; i < m_indiceMesh_topo->polys.size(); i++) {
+                            m_indiceMesh_topo->polys[i][0] += size_diff;
+                        }
+                    }
+                }
+                else {
+                    throw makeError<UnimplError>("Face index out of bounds for polygon mesh");
+                }
+            }
+        }
     }
 
     int IndiceMeshTopology::add_point() {
-        throw makeError<UnimplError>("");
+        int new_point_index = m_indiceMesh_topo->verts.size();
+        m_indiceMesh_topo->verts.values.push_back({});
+        return new_point_index;
     }
 
     int IndiceMeshTopology::add_vertex(int face_id, int point_id) {
-        throw makeError<UnimplError>("");
+        if (face_id < 0 || face_id >= nfaces()) {
+            throw makeError<UnimplError>("Invalid face index in add_vertex");
+        }
+        if (point_id < 0 || point_id >= m_indiceMesh_topo->verts.size()) {
+            throw makeError<UnimplError>("Invalid point index in add_vertex");
+        }
+
+        if (is_base_triangle()) {
+            throw makeError<UnimplError>("Cannot add vertex to triangle mesh");
+        }
+        else {
+            if (face_id >= m_indiceMesh_topo->polys.size()) {
+                throw makeError<UnimplError>("Face index out of bounds for polygon mesh");
+            }
+
+            auto& poly = m_indiceMesh_topo->polys[face_id];
+            int start_offset = poly[0];
+            int current_count = poly[1];
+            int insert_position = start_offset + current_count;
+
+            std::vector<int> new_elements = { point_id };
+            insert_attr_vector_range(m_indiceMesh_topo->loops, insert_position, new_elements);
+
+            poly[1] = current_count + 1;
+            for (int i = face_id + 1; i < m_indiceMesh_topo->polys.size(); i++) {
+                m_indiceMesh_topo->polys[i][0] += 1;
+            }
+            return current_count;
+        }
     }
 
     /* 移除元素相关 */
     bool IndiceMeshTopology::remove_faces(const std::set<int>& faces, bool includePoints, std::vector<int>& removedPtnum) {
-        throw makeError<UnimplError>("");
+        if (faces.empty()) {
+            return false;
+        }
+        for (auto face_id : faces) {
+            if (face_id < 0 || face_id >= nfaces()) {
+                return false;
+            }
+        }
+
+        if (is_base_triangle()) {
+            for (auto it = faces.rbegin(); it != faces.rend(); ++it) {
+                int face_id = *it;
+                erase_attr_vector_range(m_indiceMesh_topo->tris, face_id, 1);
+            }
+        }
+        else {
+            for (auto it = faces.rbegin(); it != faces.rend(); ++it) {
+                int face_id = *it;
+                const auto& poly = m_indiceMesh_topo->polys[face_id];
+                int startOffset = poly[0];
+                int count = poly[1];
+
+                erase_attr_vector_range(m_indiceMesh_topo->polys, face_id, 1);
+                erase_attr_vector_range(m_indiceMesh_topo->loops, startOffset, count);
+            }
+
+            int currentOffset = 0;
+            for (int i = 0; i < m_indiceMesh_topo->polys.size(); i++) {
+                auto& poly = m_indiceMesh_topo->polys[i];
+                int count = poly[1];
+                poly[0] = currentOffset;
+                currentOffset += count;
+            }
+        }
+
+        return true;
     }
 
     bool IndiceMeshTopology::remove_point(int ptnum) {
-        throw makeError<UnimplError>("");
+        if (ptnum < 0 || ptnum >= m_indiceMesh_topo->verts.size()) {
+            return false;
+        }
+
+        erase_attr_vector_range(m_indiceMesh_topo->verts, ptnum, 1);
+
+        if (is_base_triangle()) {
+            for (int i = m_indiceMesh_topo->tris.size() - 1; i >= 0; i--) {
+                auto& tri = m_indiceMesh_topo->tris[i];
+                if (tri[0] == ptnum || tri[1] == ptnum || tri[2] == ptnum) {
+                    erase_attr_vector_range(m_indiceMesh_topo->tris, i, 1);
+                }
+                else {
+                    for (int j = 0; j < 3; j++) {
+                        if (tri[j] > ptnum) {
+                            tri[j]--;
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (int i = m_indiceMesh_topo->polys.size() - 1; i >= 0; i--) {
+                auto& poly = m_indiceMesh_topo->polys[i];
+                bool usesDeletedPoint = false;
+                int startOffset = poly[0];
+                int count = poly[1];
+
+                for (int j = 0; j < count; j++) {
+                    if (m_indiceMesh_topo->loops[startOffset + j] == ptnum) {
+                        usesDeletedPoint = true;
+                        break;
+                    }
+                }
+                if (usesDeletedPoint) {
+                    erase_attr_vector_range(m_indiceMesh_topo->polys, i, 1);
+                    erase_attr_vector_range(m_indiceMesh_topo->loops, startOffset, count);
+                }
+                else {
+                    for (int j = 0; j < count; j++) {
+                        int& loop = m_indiceMesh_topo->loops[startOffset + j];
+                        if (loop > ptnum) {
+                            loop--;
+                        }
+                    }
+                }
+            }
+            int currentOffset = 0;
+            for (int i = 0; i < m_indiceMesh_topo->polys.size(); i++) {
+                auto& poly = m_indiceMesh_topo->polys[i];
+                int count = poly[1];
+                poly[0] = currentOffset;
+                currentOffset += count;
+            }
+        }
+        for (int i = m_indiceMesh_topo->lines.size() - 1; i >= 0; i--) {
+            auto& line = m_indiceMesh_topo->lines[i];
+            if (line[0] == ptnum || line[1] == ptnum) {
+                erase_attr_vector_range(m_indiceMesh_topo->lines, i, 1);
+            }
+            else {
+                for (int j = 0; j < 2; j++) {
+                    if (line[j] > ptnum) {
+                        line[j]--;
+                    }
+                }
+            }
+        }
+        for (int i = m_indiceMesh_topo->quads.size() - 1; i >= 0; i--) {
+            auto& quad = m_indiceMesh_topo->quads[i];
+            if (quad[0] == ptnum || quad[1] == ptnum || quad[2] == ptnum || quad[3] == ptnum) {
+                erase_attr_vector_range(m_indiceMesh_topo->quads, i, 1);
+            }
+            else {
+                for (int j = 0; j < 4; j++) {
+                    if (quad[j] > ptnum) {
+                        quad[j]--;
+                    }
+                }
+            }
+        }
+        for (int i = m_indiceMesh_topo->edges.size() - 1; i >= 0; i--) {
+            auto& edge = m_indiceMesh_topo->edges[i];
+            if (edge[0] == ptnum || edge[1] == ptnum) {
+                erase_attr_vector_range(m_indiceMesh_topo->edges, i, 1);
+            }
+            else {
+                for (int j = 0; j < 2; j++) {
+                    if (edge[j] > ptnum) {
+                        edge[j]--;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     bool IndiceMeshTopology::remove_vertex(int face_id, int vert_id) {
-        throw makeError<UnimplError>("");
+        if (face_id < 0 || face_id >= nfaces()) {
+            return false;
+        }
+
+        if (is_base_triangle()) {
+            if (vert_id < 0 || vert_id >= 3) {
+                return false;
+            }
+
+            erase_attr_vector_range(m_indiceMesh_topo->tris, face_id, 1);
+            return true;
+        }
+        else {
+            if (vert_id < 0 || vert_id >= nvertices(face_id)) {
+                return false;
+            }
+
+            auto& poly = m_indiceMesh_topo->polys[face_id];
+            int startOffset = poly[0];
+            int count = poly[1];
+
+            if (count <= 3) {
+                erase_attr_vector_range(m_indiceMesh_topo->polys, face_id, 1);
+                erase_attr_vector_range(m_indiceMesh_topo->loops, startOffset, count);
+                for (int i = face_id; i < m_indiceMesh_topo->polys.size(); i++) {
+                    m_indiceMesh_topo->polys[i][0] -= count;
+                }
+            }
+            else {
+                int deletePos = startOffset + vert_id;
+                erase_attr_vector_range(m_indiceMesh_topo->loops, deletePos, 1);
+
+                poly[1] = count - 1;
+
+                for (int i = face_id + 1; i < m_indiceMesh_topo->polys.size(); i++) {
+                    m_indiceMesh_topo->polys[i][0]--;
+                }
+            }
+
+            return true;
+        }
     }
 
     /* 返回元素个数 */
@@ -181,7 +557,7 @@ namespace zeno
         else {
             return parallel_reduce_sum(m_indiceMesh_topo->polys->begin(), m_indiceMesh_topo->polys->end(), [&](vec2i const& ind) {
                 return ind[1];
-            });
+                });
         }
     }
 
@@ -297,12 +673,23 @@ namespace zeno
     }
 
     std::vector<int> IndiceMeshTopology::face_points(int face_id) const {
-        const auto& face_summary = m_indiceMesh_topo->polys[face_id];
-        int startIdx = face_summary[0];
-        int count = face_summary[1];
         std::vector<int> face;
-        for (int vert = startIdx; vert < startIdx + count; vert++) {
-            face.push_back(m_indiceMesh_topo->loops[vert]);
+        if (face_id < 0 || face_id >= nfaces())
+            return face;
+
+        if (is_base_triangle()) {
+            if (face_id >= m_indiceMesh_topo->tris->size())
+                return face;
+            const auto& tri = m_indiceMesh_topo->tris[face_id];
+            face = { tri[0], tri[1], tri[2] };
+        }
+        else {
+            const auto& face_summary = m_indiceMesh_topo->polys[face_id];
+            int startIdx = face_summary[0];
+            int count = face_summary[1];
+            for (int vert = startIdx; vert < startIdx + count; vert++) {
+                face.push_back(m_indiceMesh_topo->loops[vert]);
+            }
         }
         return face;
     }

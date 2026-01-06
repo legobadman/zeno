@@ -57,7 +57,7 @@ namespace zenoio
             zeno::LinksData& links,
             zeno::ReferencesData& refs);    //在parse节点的时候顺带把节点上的边信息也逐个记录到这里
 
-        zeno::CustomUI _parseCustomUI(const std::string& id, const rapidjson::Value& customuiObj, zeno::LinksData& links);
+        zeno::CustomUI _parseCustomUI(const std::string& id, const rapidjson::Value& customuiObj, zeno::LinksData& links, zeno::ReferencesData& refs);
         zeno::CustomUI _parseCustomUI(const rapidjson::Value& customuiObj);
 
     private:

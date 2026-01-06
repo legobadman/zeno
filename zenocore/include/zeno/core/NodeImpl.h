@@ -244,6 +244,8 @@ namespace zeno
         CALLBACK_REGIST(addRefLink, void, EdgeInfo, bool outParamIsOutput)
         CALLBACK_REGIST(removeRefLink, void, EdgeInfo, bool outParamIsOutput)
 
+        void register_removeSelf(std::function<void()> cb_func);
+
     public:
         //为名为ds的输入参数，求得这个参数在依赖边的求值下的值，或者没有依赖边下的默认值。
         bool requireInput(std::string const& ds, CalcContext* pContext);
@@ -360,6 +362,7 @@ namespace zeno
         void foreachend_apply(CalcContext* pContext);
         void clear_input_cacheobj(const std::string& param);
 
+        std::unordered_map<std::string, std::function<void()>> m_cbRemoveSelfCallback;
 
         std::string m_name;
         std::string m_nodecls;

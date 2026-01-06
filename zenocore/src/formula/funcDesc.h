@@ -134,8 +134,9 @@ namespace zeno
                 {"set_point_attr",
                 "Writes a point attribute to a geometry, return -1 on failure. \n"\
                 "name:\n    The name of the attribute to change.\n"\
+                "index(optional):\n    Specify the index of the point attribute to be set.\n"\
                 "value:\n    The value to set, and determines the type of attribute to set.",
-                "int", {{"name", "string"}, {"value", "any"}}}
+            "int", { {"name", "string"}, {"index", "int"}, {"value", "any"}}}
             },
             { "set_face_attr",
                 {"set_face_attr",
@@ -167,8 +168,9 @@ namespace zeno
             { "get_point_attr",
                 {"get_point_attr",
                 "Get point attribute from a geometry. \n"\
-                "name:\n    The name of the attribute to get.",
-                "int", {{"name", "string"}}}
+                "name:\n    The name of the attribute to get.\n"\
+                "index(optional):\n    Specify the index of the point attribute to be set.",
+                "int", {{"name", "string"}, {"index", "int"}}}
             },
             { "get_face_attr",
                 {"get_face_attr",

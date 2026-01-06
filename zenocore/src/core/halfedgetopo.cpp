@@ -179,7 +179,9 @@ namespace zeno
 
                 //vp->vq
                 auto hedge = std::make_shared<HEdge>();
-                std::string id = zeno::format("{}->{}", vp, vq);
+                std::stringstream ss;
+                ss << hedge.get();
+                std::string id = zeno::format("{}->{}:{}", vp, vq, ss.str());
                 hedge->id = id;
                 m_hEdges.insert(std::make_pair(id, hedge));
 
@@ -998,7 +1000,9 @@ namespace zeno
             hedge->face = face_id;
             hedge->point = to_point;
             hedge->point_from = from_point;
-            std::string id = zeno::format("{}->{}", from_point, to_point);
+            std::stringstream ss;
+            ss << hedge.get();
+            std::string id = zeno::format("{}->{}:{}", from_point, to_point, ss.str());
             hedge->id = id;
 
             if (hedge->point == hedge->point_from) {
@@ -1080,7 +1084,9 @@ namespace zeno
             hedge->face = face_id;
             hedge->point = to_point;
             hedge->point_from = from_point;
-            std::string id = zeno::format("{}->{}", from_point, to_point);
+            std::stringstream ss;
+            ss << hedge.get();
+            std::string id = zeno::format("{}->{}:{}", from_point, to_point, ss.str());
             hedge->id = id;
 
             if (hedge->point == hedge->point_from) {

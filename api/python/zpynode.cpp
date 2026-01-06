@@ -8,22 +8,38 @@
 using namespace zeno::reflect;
 
 #define THROW_WHEN_CORE_DESTROYED \
-auto spNode = m_wpNode;\
-if (!spNode) {\
+if (!m_ptrNode) {\
     throw std::runtime_error("the node has been destroyed in core data");\
 }
 
+Zpy_Node::Zpy_Node() {
+}
 
-Zpy_Node::Zpy_Node(zeno::NodeImpl* spNode)
-    : m_wpNode(spNode)
+Zpy_Node::~Zpy_Node() {
+}
+
+Zpy_Node::Zpy_Node(const Zpy_Node& rhs) {
+    m_ptrNode = rhs.m_ptrNode;
+    m_ptrNode->register_removeSelf([&]() {
+        m_ptrNode = nullptr;
+    });
+}
+
+Zpy_Node::Zpy_Node(zeno::NodeImpl* ptrNode)
+    : m_ptrNode(ptrNode)
 {
+    if (m_ptrNode) {
+        m_ptrNode->register_removeSelf([&]() {
+            m_ptrNode = nullptr;
+        });
+    }
 }
 
 void Zpy_Node::set_name(const std::string& name)
 {
     THROW_WHEN_CORE_DESTROYED
-    auto oldname = spNode->get_name();
-    if (auto spGraph = spNode->getGraph()) {
+    auto oldname = m_ptrNode->get_name();
+    if (auto spGraph = m_ptrNode->getGraph()) {
         spGraph->updateNodeName(oldname, name);
     }
 }
@@ -31,17 +47,17 @@ void Zpy_Node::set_name(const std::string& name)
 std::string Zpy_Node::get_name() const
 {
     THROW_WHEN_CORE_DESTROYED
-    return spNode->get_name();
+    return m_ptrNode->get_name();
 }
 
 void Zpy_Node::set_view(bool bOn) {
     THROW_WHEN_CORE_DESTROYED
-    spNode->set_view(bOn);
+    m_ptrNode->set_view(bOn);
 }
 
 bool Zpy_Node::is_view() const {
     THROW_WHEN_CORE_DESTROYED
-    return spNode->is_view();
+    return m_ptrNode->is_view();
 }
 
 static py::object primvar2pyobj(const zeno::PrimVar& var) {
@@ -68,19 +84,19 @@ void Zpy_Node::set_pos(const py::tuple pos) {
     float xp = pos[0].cast<float>();
     float yp = pos[1].cast<float>();
     THROW_WHEN_CORE_DESTROYED
-    spNode->set_pos({xp, yp});
+    m_ptrNode->set_pos({xp, yp});
 }
 
 py::tuple Zpy_Node::get_pos() const {
     THROW_WHEN_CORE_DESTROYED
-    auto pos = spNode->get_pos();
+    auto pos = m_ptrNode->get_pos();
     return py::make_tuple(pos.first, pos.second);
 }
 
 py::object Zpy_Node::param_value(const std::string& name) {
     THROW_WHEN_CORE_DESTROYED
     bool bExisted = false;
-    zeno::ParamPrimitive param = spNode->get_input_prim_param(name, &bExisted);
+    zeno::ParamPrimitive param = m_ptrNode->get_input_prim_param(name, &bExisted);
     if (!bExisted) {
         throw std::runtime_error("the param not existed");
     }
@@ -141,23 +157,23 @@ void Zpy_Node::update_param(const std::string& name, py::object obj) {
     THROW_WHEN_CORE_DESTROYED
     if (py::isinstance<py::int_>(obj)) {
         int value = obj.cast<int>();
-        spNode->update_param(name, value);
+        m_ptrNode->update_param(name, value);
         //py::print("Received an integer:", value);
     }
     else if (py::isinstance<py::float_>(obj)) {
         float value = obj.cast<float>();
-        spNode->update_param(name, value);
+        m_ptrNode->update_param(name, value);
         //py::print("Received a float:", value);
     }
     else if (py::isinstance<py::str>(obj)) {
         std::string value = obj.cast<std::string>();
-        spNode->update_param(name, value);
+        m_ptrNode->update_param(name, value);
         //py::print("Received a string:", value);
     }
     else if (py::isinstance<py::list>(obj)) {
         const py::list& lst = obj.cast<py::list>();
         zeno::vecvar vec = zpyapi::pylist2vec(lst);
-        spNode->update_param(name, vec);
+        m_ptrNode->update_param(name, vec);
     }
     else {
         py::print("Received an unknown type:", obj);

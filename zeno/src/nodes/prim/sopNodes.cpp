@@ -1645,4 +1645,49 @@ namespace zeno {
         {"geom"},
     });
 
+    struct ToHalfedgeTopo : zeno::INode {
+        void apply() override {
+            auto pGeometry = get_input_Geometry("Input");
+            if (Topo_HalfEdge == pGeometry->topo_type()) {
+                set_output("Output", pGeometry->clone());
+            }
+            else {
+                auto topoGeom = pGeometry->toHalfEdgeTopo();
+                set_output("Output", std::move(topoGeom));
+            }
+        }
+    };
+    ZENDEFNODE(ToHalfedgeTopo, {
+        {
+            {gParamType_Geometry, "Input"}
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
+
+    struct ToIndiceMeshTopo : zeno::INode {
+        void apply() override {
+            auto pGeometry = get_input_Geometry("Input");
+            if (Topo_IndiceMesh == pGeometry->topo_type()) {
+                set_output("Output", pGeometry->clone());
+            }
+            else {
+                auto topoGeom = pGeometry->toIndiceMeshesTopo();
+                set_output("Output", std::move(topoGeom));
+            }
+        }
+    };
+    ZENDEFNODE(ToIndiceMeshTopo, {
+        {
+            {gParamType_Geometry, "Input"}
+        },
+        {
+            {gParamType_Geometry, "Output"}
+        },
+        {},
+        {"geom"}
+    });
 }

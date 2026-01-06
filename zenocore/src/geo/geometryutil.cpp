@@ -250,10 +250,12 @@ namespace zeno
                 cur_faceset_index_map[i] = facesetNameMap[path];
             }
 
-            for (int i = 0; i < p->nfaces(); i++) {
-                int val = p->m_impl->get_elem<int>(ATTR_FACE, attr_name, 0, i);
-                int newval = cur_faceset_index_map[val];
-                p->m_impl->set_elem(ATTR_FACE, attr_name, i, newval);
+            if (p->m_impl->has_face_attr(attr_name)) {
+                for (int i = 0; i < p->nfaces(); i++) {
+                    int val = p->m_impl->get_elem<int>(ATTR_FACE, attr_name, 0, i);
+                    int newval = cur_faceset_index_map[val];
+                    p->m_impl->set_elem(ATTR_FACE, attr_name, i, newval);
+                }
             }
         }
     }

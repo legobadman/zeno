@@ -252,8 +252,18 @@ ZenoFullLink::ZenoFullLink(const QPersistentModelIndex& idx, ZenoNodeBase* outNo
         updateTextItemPosition();
     }
 
+    if (m_index.data(QtRole::ROLE_IS_REFLINK).toBool()) {
+        setAcceptedMouseButtons(Qt::NoButton);
+    }
+
     connect(inNode, SIGNAL(inSocketPosChanged()), this, SLOT(onInSocketPosChanged()));
     connect(outNode, SIGNAL(outSocketPosChanged()), this, SLOT(onOutSocketPosChanged()));
+
+    connect(const_cast<QAbstractItemModel*>(m_index.model()), &QAbstractItemModel::dataChanged, this, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+        if (roles.contains(QtRole::ROLE_IS_REFLINK) && m_index.data(QtRole::ROLE_IS_REFLINK).toBool()) {
+            setAcceptedMouseButtons(Qt::NoButton);
+        }
+    });
 }
 
 bool ZenoFullLink::isLegacyLink() const

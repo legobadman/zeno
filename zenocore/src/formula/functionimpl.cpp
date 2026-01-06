@@ -878,6 +878,9 @@ namespace zeno
                             throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the type of arguments of add_point is not matched.");
                         }
                         }, arg.value);
+                    if (pContext->runover == ATTR_POINT) {
+                        filter.resize(filter.size() + 1, 1);
+                    }
                     ZfxVariable res;
                     res.value = std::vector<int>{ ptnum };
                     return res;
@@ -890,6 +893,9 @@ namespace zeno
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
                     //暂时只考虑一个点
                     int ptnum = spGeo->m_impl->add_point(zeno::vec3f(0, 0, 0));
+                    if (pContext->runover == ATTR_POINT) {
+                        filter.resize(filter.size() + 1, 1);
+                    }
                     ZfxVariable res;
                     res.value = std::vector<int>{ ptnum };
                     return res;
@@ -911,6 +917,9 @@ namespace zeno
                 int faceid = get_zfxvec_front_elem<int>(args[0].value);
                 int pointid = get_zfxvec_front_elem<int>(args[1].value);
                 int vertid = spGeo->m_impl->add_vertex(faceid, pointid);
+                if (pContext->runover == ATTR_VERTEX) {
+                    filter.resize(filter.size() + 1, 1);
+                }
                 ZfxVariable res;
                 res.value = std::vector<int>{ vertid };
                 return res;
@@ -992,8 +1001,10 @@ namespace zeno
                     bSucceed = spGeo->m_impl->remove_point(currrem);
                 }
                 if (bSucceed) {
-                    //要调整filter，移除掉第currrem位置的元素
-                    filter.erase(filter.begin() + currrem);
+                    if (pContext->runover == ATTR_POINT) {
+                        //要调整filter，移除掉第currrem位置的元素
+                        filter.erase(filter.begin() + currrem);
+                    }
                     //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
                     //afterRemovePoint(currrem);
                     for (auto& [name, attrVar] : *pContext->zfxVariableTbl) {
@@ -1069,8 +1080,10 @@ namespace zeno
                     bSucceed = spGeo->m_impl->remove_point(currrem);
                 }
                 if (bSucceed) {
-                    //要调整filter，移除掉第currrem位置的元素
-                    filter.erase(filter.begin() + currrem);
+                    if (pContext->runover == ATTR_POINT) {
+                        //要调整filter，移除掉第currrem位置的元素
+                        filter.erase(filter.begin() + currrem);
+                    }
                     //所有储存在m_globalAttrCached里的属性都移除第currrem号元素，如果有ptnum，也要调整
 
                     //移除点以后要调整已有的属性值
@@ -1132,6 +1145,9 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             const auto& points = get_zfxvec_front_elem<std::vector<int>>(args[0].value);
             int ret = spGeo->m_impl->add_face(points);
+            if (pContext->runover == ATTR_FACE) {
+                filter.resize(filter.size() + 1, 1);
+            }
             return initVarFromZvar(ret);
         }
 
@@ -1191,14 +1207,18 @@ namespace zeno
 
             bSucceed = spGeo->m_impl->remove_faces(remfaces, bIncludePoints);
             if (bSucceed) {
-                //要调整filter，移除掉第currrem位置的元素
-                removeElemsByIndice(filter, remfaces);
+                if (pContext->runover == ATTR_FACE) {
+                    //要调整filter，移除掉第currrem位置的元素
+                    removeElemsByIndice(filter, remfaces);
+                }
                 //afterRemoveElements(remfaces);
                 for (auto& [name, attrVar] : *pContext->zfxVariableTbl) {
                     auto& attrvalues = attrVar.value;
 
                     std::visit([&](auto& vec) {
-                        removeElemsByIndice(vec, remfaces);
+                        if (pContext->runover == ATTR_FACE) {
+                            removeElemsByIndice(vec, remfaces);
+                        }
                     }, attrVar.value);
                 }
             }
@@ -1304,14 +1324,61 @@ namespace zeno
         }
 
         static ZfxVariable set_point_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
-            if (args.size() != 2)
-                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_point_attr is not matched.");
+            if (args.size() == 2) {
+                auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
+                std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
+                AttrVar defl = zfxVarToAttrVar(args[1]);
+                int ret = spGeo->m_impl->set_point_attr(name, defl);
+                return initVarFromZvar(ret);
+            } else if (args.size() == 3) {
+                auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
+                std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
+                AttrVar idx = zfxVarToAttrVar(args[1]);
+                AttrVar defl = zfxVarToAttrVar(args[2]);
+                std::visit([&, pContext](auto&& argdix) {
+                    using T = std::decay_t<decltype(argdix)>;
+                    if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+                        std::visit([&](auto&& argdefl) {
+                            using T = std::decay_t<decltype(argdefl)>;
+                            if constexpr (
+                                std::is_same_v<T, float> ||
+                                std::is_same_v<T, int> ||
+                                std::is_same_v<T, vec2f> ||
+                                std::is_same_v<T, vec3f> ||
+                                std::is_same_v<T, vec4f> ||
+                                std::is_same_v<T, std::string>
+                                ) {
+                                spGeo->m_impl->set_elem(ATTR_POINT, name, argdix, argdefl);
+                            }
+                        }, defl);
+                    } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+                        for (int i = 0; i < argdix.size(); ++i)
+                        {
+                            std::visit([&](auto&& argdefl) {
+                                using T = std::decay_t<decltype(argdefl)>;
+                                if constexpr (
+                                    std::is_same_v<T, float> ||
+                                    std::is_same_v<T, int> ||
+                                    std::is_same_v<T, vec2f> ||
+                                    std::is_same_v<T, vec3f> ||
+                                    std::is_same_v<T, vec4f> ||
+                                    std::is_same_v<T, std::string>
+                                    ) {
+                                    spGeo->m_impl->set_elem(ATTR_POINT, name, i, argdefl);
+                                }
+                            }, defl);
+                        }
+                    } else {
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not supported index type");
+                    }
+                }, idx);
 
-            auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
-            std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->set_point_attr(name, defl);
-            return initVarFromZvar(ret);
+                //int ret = spGeo->m_impl->set_attr_elem(ATTR_POINT, name, 0, args[2]);
+                return initVarFromZvar(0);
+            } else {
+                throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_point_attr is not matched.");
+            }
+
         }
 
         static ZfxVariable set_face_attr(const std::vector<ZfxVariable>& args, ZfxElemFilter& filter, ZfxContext* pContext) {
@@ -1698,7 +1765,7 @@ namespace zeno
                         std::vector<E1> ret_vec(N);
                         for (int i = 0; i < N; i++) {
                             int idx = idx_vec[i];
-                            ret_vec[i] = vec[i];
+                            ret_vec[i] = vec[idx];
                         }
                         ret.value = std::move(ret_vec);
                     }
@@ -2073,27 +2140,14 @@ namespace zeno
                 }
                 else {
                     //todo: other geometry
+                    throw makeError<UnimplError>("only support current geom(which is \"0\"");
                 }
 
                 PointCloud pc;
                 pc.radius = radius;
                 pc.maxpoints = maxpoints;
                 pc.pTree = std::make_shared<zeno::KdTree>(points, points.size());
-
-                std::visit([&](const auto& vec) {
-                    using T = std::decay_t<decltype(vec)>;
-                    using E = typename T::value_type;
-                    if constexpr (std::is_same_v<E, glm::vec3>) {
-                        pc.testPoints.resize(vec.size());
-                        for (int i = 0; i < pc.testPoints.size(); i++) {
-                            const auto& _pt = vec[i];
-                            pc.testPoints[i] = zeno::vec3f(_pt[0], _pt[1], _pt[2]);
-                        }
-                    }
-                    else {
-                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"not support type");
-                    }
-                    }, args[3].value);
+                pc.testPoints = points;
 
                 int handle = pContext->pchandles.size();
                 pContext->pchandles.push_back(pc);

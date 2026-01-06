@@ -23,7 +23,9 @@ PluginsModel::PluginsModel(QObject* parent)
         const QString& key = lst[i];
         QString path = settings.value(key).toString();
         QString appDir = zenoApp->applicationDirPath();
-        if (path.isEmpty()) {
+        //if (path.isEmpty())
+        {
+            //目前加载本地build目录，暂时不考虑外部文件
             path = appDir + '/' + key;
         }
         QFileInfo fninfo(path);
