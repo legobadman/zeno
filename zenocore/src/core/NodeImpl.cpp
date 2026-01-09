@@ -1228,7 +1228,7 @@ void NodeImpl::on_node_about_to_remove() {
         cb();
     }
     //移除所有引用边的依赖关系
-    auto& primsRemoveReferLink = [](std::map<std::string, PrimitiveParam>& prims) {
+    auto primsRemoveReferLink = [](std::map<std::string, PrimitiveParam>& prims) {
         for (auto& [_, input_param] : prims)
         {
             for (const std::shared_ptr<ReferLink>& reflink : input_param.reflinks) {

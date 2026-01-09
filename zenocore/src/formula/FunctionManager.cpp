@@ -296,11 +296,12 @@ namespace zeno {
 
     template <class _Ty = void>
     struct glmdot {
+#ifdef _WIN32        
         using _FIRST_ARGUMENT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
         using _SECOND_ARGUMENT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
         using _RESULT_TYPE_NAME _CXX17_DEPRECATE_ADAPTOR_TYPEDEFS = _Ty;
-
-        _NODISCARD constexpr float operator()(const _Ty& _Left, const _Ty& _Right) const {
+#endif
+        constexpr float operator()(const _Ty& _Left, const _Ty& _Right) const {
             return glm::dot(_Left, _Right);
         }
     };
@@ -308,7 +309,7 @@ namespace zeno {
     template <>
     struct glmdot<void> {
         template <class _Ty1, class _Ty2>
-        _NODISCARD constexpr float operator()(_Ty1&& _Left, _Ty2&& _Right) const {
+        constexpr float operator()(_Ty1&& _Left, _Ty2&& _Right) const {
             return glm::dot(static_cast<_Ty1&&>(_Left), static_cast<_Ty2&&>(_Right));
         }
     };
@@ -597,7 +598,7 @@ namespace zeno {
         //glm::mat3 mm2 = glm::dot(mat1, mat2);
     }
 
-    static void set_array_element(ZfxVariable& zfxarr, ZfxVariable idxarr, const ZfxVariable& zfxvalue, ZfxContext* pContext) {
+    static void set_array_element(ZfxVariable& zfxarr, const ZfxVariable& idxarr, const ZfxVariable& zfxvalue, ZfxContext* pContext) {
         std::visit([&](auto& target_vec, const auto& idx_vec, const auto& value_vec) {
             using T = std::decay_t<decltype(target_vec)>;
             using T_ElementType = typename T::value_type;
@@ -1237,7 +1238,7 @@ namespace zeno {
         return zeno::zfx::getAttrValue(attrname, pContext, channel);
     }
 
-    ZfxVariable FunctionManager::trunkVariable(ZfxVariable origin, const ZfxElemFilter& filter) {
+    ZfxVariable FunctionManager::trunkVariable(const ZfxVariable& origin, const ZfxElemFilter& filter) {
         return std::visit([&](auto& vec)->ZfxVariable {
             using T = std::decay_t<decltype(vec)>;
             using E = typename T::value_type;
@@ -1258,8 +1259,10 @@ namespace zeno {
             }
             else {
                 //扩大origin
-                vec.resize(nfilter);
-                return origin;
+                auto vec2 = vec;
+                vec2.resize(nfilter);
+                return ZfxVariable(vec2);
+                // return origin;
             }
             }, origin.value);
     }
@@ -1778,20 +1781,25 @@ namespace zeno {
                                         return anyToZfxVector(nodeparam.defl);
                                     }
                                     else if (visit_attr == "connected") {
-                                        return std::vector<int>{ !nodeparam.links.empty() };
+                                        auto _vec = std::vector<int>{ !nodeparam.links.empty() };
+                                        return ZfxVariable(_vec);
                                     }
                                     else if (visit_attr == "x") {
                                         //TODO
-                                        return std::vector<float>{ 0.f };
+                                        auto _vec = std::vector<float>{ 0.f };
+                                        return ZfxVariable(_vec);
                                     }
                                     else if (visit_attr == "y") {
-                                        return std::vector<float>{0.f};
+                                        auto _vec = std::vector<float>{ 0.f };
+                                        return ZfxVariable(_vec);
                                     }
                                     else if (visit_attr == "z") {
-                                        return std::vector<float>{0.f};
+                                        auto _vec = std::vector<float>{ 0.f };
+                                        return ZfxVariable(_vec);
                                     }
                                     else if (visit_attr == "w") {
-                                        return std::vector<float>{0.f};
+                                        auto _vec = std::vector<float>{ 0.f };
+                                        return ZfxVariable(_vec);
                                     }
                                     else {
                                         //unknown attr
@@ -1800,7 +1808,8 @@ namespace zeno {
                                 }
                                 else if constexpr (std::is_same_v<E3, ParamObject>) {
                                     if (visit_attr == "connected") {
-                                        return std::vector<int>{ !nodeparam.links.empty() };
+                                        auto _vec = std::vector<int>{ !nodeparam.links.empty() };
+                                        return ZfxVariable(_vec);
                                     }
                                     else {
                                         throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "unknown attr when visit nodeparam");

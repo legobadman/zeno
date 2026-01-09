@@ -38,7 +38,7 @@ public slots:
     void showNoFocusLineEdits(QWidget* lineEdit);
 
 protected:
-    bool eventFilter(QObject *watched, QEvent *event);
+    bool eventFilter(QObject *watched, QEvent *event) override;
     void resizeEvent(QResizeEvent* event) override;
 
 private:

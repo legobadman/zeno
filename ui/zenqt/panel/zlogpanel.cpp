@@ -340,7 +340,7 @@ ZlogPanel::ZlogPanel(QWidget* parent)
     , m_pFilterModel(nullptr)
     , m_pMenu(nullptr)
 {
-    m_ui.reset(new Ui::LogPanel);
+    m_ui = new Ui::LogPanel;
     m_ui->setupUi(this);
 
     m_ui->btnDebug->setButtonOptions(ZToolButton::Opt_Checkable | ZToolButton::Opt_HasIcon | ZToolButton::Opt_NoBackground);

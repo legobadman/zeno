@@ -183,7 +183,7 @@ struct PrimitiveColorByHeatmap : zeno::INode {
         float maxv = get_input2_float("max");
         float minv = get_input2_float("min");
         std::vector<zeno::vec3f> clr(prim->npoints());
-        auto &src = prim->get_float_attr(ATTR_POINT, attrName);
+        auto src = prim->get_float_attr(ATTR_POINT, attrName);
         #pragma omp parallel for //ideally this could be done in opengl
         for (int i = 0; i < src.size(); i++) {
             auto x = (src[i]-minv)/(maxv-minv);
@@ -247,8 +247,8 @@ void primSampleHeatmap(
         float remapMin,
         float remapMax
 ) {
-    auto &clr = prim->add_attr<zeno::vec3f>(dstChannel);
-    auto &src = prim->attr<float>(srcChannel);
+    auto clr = prim->add_attr<zeno::vec3f>(dstChannel);
+    auto src = prim->attr<float>(srcChannel);
 #pragma omp parallel for //ideally this could be done in opengl
     for (int i = 0; i < src.size(); i++) {
         auto x = (src[i]-remapMin)/(remapMax-remapMin);

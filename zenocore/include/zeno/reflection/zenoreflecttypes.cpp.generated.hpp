@@ -48,7 +48,7 @@ namespace reflect
     
     struct _SboolRegistrator {
         _SboolRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15698046148323980066, zeno::reflect::type_info<bool>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15698046148323980066ULL, zeno::reflect::type_info<bool>());
         }
     };
     static _SboolRegistrator global_SboolRegistrator{};
@@ -312,7 +312,7 @@ namespace reflect
     
     struct _SintRegistrator {
         _SintRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(3143511548502526014, zeno::reflect::type_info<int>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(3143511548502526014ULL, zeno::reflect::type_info<int>());
         }
     };
     static _SintRegistrator global_SintRegistrator{};
@@ -576,7 +576,7 @@ namespace reflect
     
     struct _SfloatRegistrator {
         _SfloatRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(11532138274943533413, zeno::reflect::type_info<float>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(11532138274943533413ULL, zeno::reflect::type_info<float>());
         }
     };
     static _SfloatRegistrator global_SfloatRegistrator{};
@@ -840,7 +840,7 @@ namespace reflect
     
     struct _SdoubleRegistrator {
         _SdoubleRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(11567507311810436776, zeno::reflect::type_info<double>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(11567507311810436776ULL, zeno::reflect::type_info<double>());
         }
     };
     static _SdoubleRegistrator global_SdoubleRegistrator{};
@@ -1106,7 +1106,7 @@ namespace reflect
     
     struct _Sclass_std_basicstringLABcharRABRegistrator {
         _Sclass_std_basicstringLABcharRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(1350625706064273086, zeno::reflect::type_info<class std::basic_string<char>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(1350625706064273086ULL, zeno::reflect::type_info<class std::basic_string<char>>());
         }
     };
     static _Sclass_std_basicstringLABcharRABRegistrator global_Sclass_std_basicstringLABcharRABRegistrator{};
@@ -1375,7 +1375,7 @@ namespace reflect
     
     struct _Sclass_zeno_StringRegistrator {
         _Sclass_zeno_StringRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(14378431277616792538, zeno::reflect::type_info<class zeno::String>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(14378431277616792538ULL, zeno::reflect::type_info<class zeno::String>());
         }
     };
     static _Sclass_zeno_StringRegistrator global_Sclass_zeno_StringRegistrator{};
@@ -1641,7 +1641,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB2_intRABRegistrator {
         _Sstruct_zeno_implvec_vecLAB2_intRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16965886646643039397, zeno::reflect::type_info<struct zeno::_impl_vec::vec<2, int>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16965886646643039397ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<2, int>>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB2_intRABRegistrator global_Sstruct_zeno_implvec_vecLAB2_intRABRegistrator{};
@@ -1910,7 +1910,7 @@ namespace reflect
     
     struct _Sstruct_zeno_Vec2iRegistrator {
         _Sstruct_zeno_Vec2iRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12756616248127599565, zeno::reflect::type_info<struct zeno::Vec2i>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12756616248127599565ULL, zeno::reflect::type_info<struct zeno::Vec2i>());
         }
     };
     static _Sstruct_zeno_Vec2iRegistrator global_Sstruct_zeno_Vec2iRegistrator{};
@@ -2176,7 +2176,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB2_floatRABRegistrator {
         _Sstruct_zeno_implvec_vecLAB2_floatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6471145251105555636, zeno::reflect::type_info<struct zeno::_impl_vec::vec<2, float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6471145251105555636ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<2, float>>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB2_floatRABRegistrator global_Sstruct_zeno_implvec_vecLAB2_floatRABRegistrator{};
@@ -2445,7 +2445,7 @@ namespace reflect
     
     struct _Sstruct_zeno_Vec2fRegistrator {
         _Sstruct_zeno_Vec2fRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12756599755453176400, zeno::reflect::type_info<struct zeno::Vec2f>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12756599755453176400ULL, zeno::reflect::type_info<struct zeno::Vec2f>());
         }
     };
     static _Sstruct_zeno_Vec2fRegistrator global_Sstruct_zeno_Vec2fRegistrator{};
@@ -2711,7 +2711,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB2_class_std_basicstringLABcharRAB_RABRegistrator {
         _Sstruct_zeno_implvec_vecLAB2_class_std_basicstringLABcharRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(14482195190842139743, zeno::reflect::type_info<struct zeno::_impl_vec::vec<2, class std::basic_string<char> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(14482195190842139743ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<2, class std::basic_string<char> >>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB2_class_std_basicstringLABcharRAB_RABRegistrator global_Sstruct_zeno_implvec_vecLAB2_class_std_basicstringLABcharRAB_RABRegistrator{};
@@ -2977,7 +2977,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB3_intRABRegistrator {
         _Sstruct_zeno_implvec_vecLAB3_intRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8367839167412710198, zeno::reflect::type_info<struct zeno::_impl_vec::vec<3, int>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8367839167412710198ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<3, int>>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB3_intRABRegistrator global_Sstruct_zeno_implvec_vecLAB3_intRABRegistrator{};
@@ -3246,7 +3246,7 @@ namespace reflect
     
     struct _Sstruct_zeno_Vec3iRegistrator {
         _Sstruct_zeno_Vec3iRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12757412294546235104, zeno::reflect::type_info<struct zeno::Vec3i>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12757412294546235104ULL, zeno::reflect::type_info<struct zeno::Vec3i>());
         }
     };
     static _Sstruct_zeno_Vec3iRegistrator global_Sstruct_zeno_Vec3iRegistrator{};
@@ -3512,7 +3512,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB3_floatRABRegistrator {
         _Sstruct_zeno_implvec_vecLAB3_floatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(1291108797552895579, zeno::reflect::type_info<struct zeno::_impl_vec::vec<3, float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(1291108797552895579ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<3, float>>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB3_floatRABRegistrator global_Sstruct_zeno_implvec_vecLAB3_floatRABRegistrator{};
@@ -3781,7 +3781,7 @@ namespace reflect
     
     struct _Sstruct_zeno_Vec3fRegistrator {
         _Sstruct_zeno_Vec3fRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12757428787220658269, zeno::reflect::type_info<struct zeno::Vec3f>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12757428787220658269ULL, zeno::reflect::type_info<struct zeno::Vec3f>());
         }
     };
     static _Sstruct_zeno_Vec3fRegistrator global_Sstruct_zeno_Vec3fRegistrator{};
@@ -4047,7 +4047,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB3_class_std_basicstringLABcharRAB_RABRegistrator {
         _Sstruct_zeno_implvec_vecLAB3_class_std_basicstringLABcharRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(7612059177550748566, zeno::reflect::type_info<struct zeno::_impl_vec::vec<3, class std::basic_string<char> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(7612059177550748566ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<3, class std::basic_string<char> >>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB3_class_std_basicstringLABcharRAB_RABRegistrator global_Sstruct_zeno_implvec_vecLAB3_class_std_basicstringLABcharRAB_RABRegistrator{};
@@ -4582,7 +4582,7 @@ namespace reflect
     
     struct _Sstruct_zeno_Vec4iRegistrator {
         _Sstruct_zeno_Vec4iRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12758300699941640367, zeno::reflect::type_info<struct zeno::Vec4i>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12758300699941640367ULL, zeno::reflect::type_info<struct zeno::Vec4i>());
         }
     };
     static _Sstruct_zeno_Vec4iRegistrator global_Sstruct_zeno_Vec4iRegistrator{};
@@ -4848,7 +4848,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB4_floatRABRegistrator {
         _Sstruct_zeno_implvec_vecLAB4_floatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(5986645728587245802, zeno::reflect::type_info<struct zeno::_impl_vec::vec<4, float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(5986645728587245802ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<4, float>>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB4_floatRABRegistrator global_Sstruct_zeno_implvec_vecLAB4_floatRABRegistrator{};
@@ -5117,7 +5117,7 @@ namespace reflect
     
     struct _Sstruct_zeno_Vec4fRegistrator {
         _Sstruct_zeno_Vec4fRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12758306197499781422, zeno::reflect::type_info<struct zeno::Vec4f>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12758306197499781422ULL, zeno::reflect::type_info<struct zeno::Vec4f>());
         }
     };
     static _Sstruct_zeno_Vec4fRegistrator global_Sstruct_zeno_Vec4fRegistrator{};
@@ -5383,7 +5383,7 @@ namespace reflect
     
     struct _Sstruct_zeno_implvec_vecLAB4_class_std_basicstringLABcharRAB_RABRegistrator {
         _Sstruct_zeno_implvec_vecLAB4_class_std_basicstringLABcharRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8375677720103744597, zeno::reflect::type_info<struct zeno::_impl_vec::vec<4, class std::basic_string<char> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8375677720103744597ULL, zeno::reflect::type_info<struct zeno::_impl_vec::vec<4, class std::basic_string<char> >>());
         }
     };
     static _Sstruct_zeno_implvec_vecLAB4_class_std_basicstringLABcharRAB_RABRegistrator global_Sstruct_zeno_implvec_vecLAB4_class_std_basicstringLABcharRAB_RABRegistrator{};
@@ -5649,7 +5649,7 @@ namespace reflect
     
     struct _Sstruct_glm_matLAB3_3_floatRABRegistrator {
         _Sstruct_glm_matLAB3_3_floatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16310354986700837126, zeno::reflect::type_info<struct glm::mat<3, 3, float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16310354986700837126ULL, zeno::reflect::type_info<struct glm::mat<3, 3, float>>());
         }
     };
     static _Sstruct_glm_matLAB3_3_floatRABRegistrator global_Sstruct_glm_matLAB3_3_floatRABRegistrator{};
@@ -5915,7 +5915,7 @@ namespace reflect
     
     struct _Sstruct_glm_matLAB4_4_floatRABRegistrator {
         _Sstruct_glm_matLAB4_4_floatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16993842308719517276, zeno::reflect::type_info<struct glm::mat<4, 4, float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16993842308719517276ULL, zeno::reflect::type_info<struct glm::mat<4, 4, float>>());
         }
     };
     static _Sstruct_glm_matLAB4_4_floatRABRegistrator global_Sstruct_glm_matLAB4_4_floatRABRegistrator{};
@@ -6447,7 +6447,7 @@ namespace reflect
     
     struct _Sstruct_glm_vecLAB3_floatRABRegistrator {
         _Sstruct_glm_vecLAB3_floatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(2551243981112912689, zeno::reflect::type_info<struct glm::vec<3, float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(2551243981112912689ULL, zeno::reflect::type_info<struct glm::vec<3, float>>());
         }
     };
     static _Sstruct_glm_vecLAB3_floatRABRegistrator global_Sstruct_glm_vecLAB3_floatRABRegistrator{};
@@ -6713,7 +6713,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABclass_std_basicstringLABcharRAB_RABRegistrator {
         _Sclass_std_vectorLABclass_std_basicstringLABcharRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8472269399861637118, zeno::reflect::type_info<class std::vector<class std::basic_string<char> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8472269399861637118ULL, zeno::reflect::type_info<class std::vector<class std::basic_string<char> >>());
         }
     };
     static _Sclass_std_vectorLABclass_std_basicstringLABcharRAB_RABRegistrator global_Sclass_std_vectorLABclass_std_basicstringLABcharRAB_RABRegistrator{};
@@ -6979,7 +6979,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator {
         _Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(3610052837063493220, zeno::reflect::type_info<class zeno::ZsVector<class zeno::String>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(3610052837063493220ULL, zeno::reflect::type_info<class zeno::ZsVector<class zeno::String>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator global_Sclass_zeno_ZsVectorLABclass_zeno_StringRABRegistrator{};
@@ -7245,7 +7245,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABintRABRegistrator {
         _Sclass_std_vectorLABintRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(11332342544482872366, zeno::reflect::type_info<class std::vector<int>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(11332342544482872366ULL, zeno::reflect::type_info<class std::vector<int>>());
         }
     };
     static _Sclass_std_vectorLABintRABRegistrator global_Sclass_std_vectorLABintRABRegistrator{};
@@ -7511,7 +7511,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABintRABRegistrator {
         _Sclass_zeno_ZsVectorLABintRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6181268278529856360, zeno::reflect::type_info<class zeno::ZsVector<int>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6181268278529856360ULL, zeno::reflect::type_info<class zeno::ZsVector<int>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABintRABRegistrator global_Sclass_zeno_ZsVectorLABintRABRegistrator{};
@@ -7777,7 +7777,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABfloatRABRegistrator {
         _Sclass_std_vectorLABfloatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8862306467697783251, zeno::reflect::type_info<class std::vector<float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8862306467697783251ULL, zeno::reflect::type_info<class std::vector<float>>());
         }
     };
     static _Sclass_std_vectorLABfloatRABRegistrator global_Sclass_std_vectorLABfloatRABRegistrator{};
@@ -8043,7 +8043,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABfloatRABRegistrator {
         _Sclass_zeno_ZsVectorLABfloatRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15654587305286246761, zeno::reflect::type_info<class zeno::ZsVector<float>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15654587305286246761ULL, zeno::reflect::type_info<class zeno::ZsVector<float>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABfloatRABRegistrator global_Sclass_zeno_ZsVectorLABfloatRABRegistrator{};
@@ -8575,7 +8575,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator {
         _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15902463235470035794, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec2f>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15902463235470035794ULL, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec2f>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec2fRABRegistrator{};
@@ -8841,7 +8841,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_floatRAB_RABRegistrator {
         _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_floatRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16802479141220513467, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<3, float> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16802479141220513467ULL, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<3, float> >>());
         }
     };
     static _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_floatRAB_RABRegistrator global_Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_floatRAB_RABRegistrator{};
@@ -9107,7 +9107,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator {
         _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16415639397073908385, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec3f>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16415639397073908385ULL, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec3f>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec3fRABRegistrator{};
@@ -9373,7 +9373,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_floatRAB_RABRegistrator {
         _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_floatRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(14658396477978350594, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<4, float> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(14658396477978350594ULL, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<4, float> >>());
         }
     };
     static _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_floatRAB_RABRegistrator global_Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_floatRAB_RABRegistrator{};
@@ -9639,7 +9639,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator {
         _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(17215774899444545944, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec4f>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(17215774899444545944ULL, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec4f>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec4fRABRegistrator{};
@@ -9905,7 +9905,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB2_intRAB_RABRegistrator {
         _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB2_intRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8437938278359228333, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<2, int> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8437938278359228333ULL, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<2, int> >>());
         }
     };
     static _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB2_intRAB_RABRegistrator global_Sclass_std_vectorLABstruct_zeno_implvec_vecLAB2_intRAB_RABRegistrator{};
@@ -10171,7 +10171,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator {
         _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15901480272074604385, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec2i>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(15901480272074604385ULL, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec2i>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec2iRABRegistrator{};
@@ -10437,7 +10437,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_intRAB_RABRegistrator {
         _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_intRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12969379980554923694, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<3, int> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(12969379980554923694ULL, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<3, int> >>());
         }
     };
     static _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_intRAB_RABRegistrator global_Sclass_std_vectorLABstruct_zeno_implvec_vecLAB3_intRAB_RABRegistrator{};
@@ -10703,7 +10703,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator {
         _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16416622360469339794, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec3i>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16416622360469339794ULL, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec3i>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec3iRABRegistrator{};
@@ -10969,7 +10969,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_intRAB_RABRegistrator {
         _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_intRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8958441701489594431, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<4, int> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8958441701489594431ULL, zeno::reflect::type_info<class std::vector<struct zeno::_impl_vec::vec<4, int> >>());
         }
     };
     static _Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_intRAB_RABRegistrator global_Sclass_std_vectorLABstruct_zeno_implvec_vecLAB4_intRAB_RABRegistrator{};
@@ -11235,7 +11235,7 @@ namespace reflect
     
     struct _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator {
         _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(17226332410096546491, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec4i>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(17226332410096546491ULL, zeno::reflect::type_info<class zeno::ZsVector<struct zeno::Vec4i>>());
         }
     };
     static _Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator global_Sclass_zeno_ZsVectorLABstruct_zeno_Vec4iRABRegistrator{};
@@ -11501,7 +11501,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABclass_zeno_reflect_AnyRABRegistrator {
         _Sclass_std_vectorLABclass_zeno_reflect_AnyRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(4563279078811816794, zeno::reflect::type_info<class std::vector<class zeno::reflect::Any>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(4563279078811816794ULL, zeno::reflect::type_info<class std::vector<class zeno::reflect::Any>>());
         }
     };
     static _Sclass_std_vectorLABclass_zeno_reflect_AnyRABRegistrator global_Sclass_std_vectorLABclass_zeno_reflect_AnyRABRegistrator{};
@@ -11770,7 +11770,7 @@ namespace reflect
     
     struct _Sstruct_zeno_CurvesDataRegistrator {
         _Sstruct_zeno_CurvesDataRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16327668114186180410, zeno::reflect::type_info<struct zeno::CurvesData>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16327668114186180410ULL, zeno::reflect::type_info<struct zeno::CurvesData>());
         }
     };
     static _Sstruct_zeno_CurvesDataRegistrator global_Sstruct_zeno_CurvesDataRegistrator{};
@@ -12039,7 +12039,7 @@ namespace reflect
     
     struct _Sstruct_zeno_BCurveObjectRegistrator {
         _Sstruct_zeno_BCurveObjectRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6841588794272413944, zeno::reflect::type_info<struct zeno::BCurveObject>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(6841588794272413944ULL, zeno::reflect::type_info<struct zeno::BCurveObject>());
         }
     };
     static _Sstruct_zeno_BCurveObjectRegistrator global_Sstruct_zeno_BCurveObjectRegistrator{};
@@ -12308,7 +12308,7 @@ namespace reflect
     
     struct _Sstruct_zeno_HeatmapDataRegistrator {
         _Sstruct_zeno_HeatmapDataRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16907690619462570378, zeno::reflect::type_info<struct zeno::HeatmapData>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(16907690619462570378ULL, zeno::reflect::type_info<struct zeno::HeatmapData>());
         }
     };
     static _Sstruct_zeno_HeatmapDataRegistrator global_Sstruct_zeno_HeatmapDataRegistrator{};
@@ -12577,7 +12577,7 @@ namespace reflect
     
     struct _Sstruct_zeno_ShaderDataRegistrator {
         _Sstruct_zeno_ShaderDataRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(5880748608921663691, zeno::reflect::type_info<struct zeno::ShaderData>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(5880748608921663691ULL, zeno::reflect::type_info<struct zeno::ShaderData>());
         }
     };
     static _Sstruct_zeno_ShaderDataRegistrator global_Sstruct_zeno_ShaderDataRegistrator{};
@@ -12841,7 +12841,7 @@ namespace reflect
     
     struct _Senum_zeno_ParamControlRegistrator {
         _Senum_zeno_ParamControlRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(18413074326739205324, zeno::reflect::type_info<enum zeno::ParamControl>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(18413074326739205324ULL, zeno::reflect::type_info<enum zeno::ParamControl>());
         }
     };
     static _Senum_zeno_ParamControlRegistrator global_Senum_zeno_ParamControlRegistrator{};
@@ -13114,7 +13114,7 @@ namespace reflect
     
     struct _Sclass_std_vectorLABclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_RABRegistrator {
         _Sclass_std_vectorLABclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_RABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8007795410826436593, zeno::reflect::type_info<class std::vector<class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData> >>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(8007795410826436593ULL, zeno::reflect::type_info<class std::vector<class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData> >>());
         }
     };
     static _Sclass_std_vectorLABclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_RABRegistrator global_Sclass_std_vectorLABclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRAB_RABRegistrator{};
@@ -13380,7 +13380,7 @@ namespace reflect
     
     struct _Sclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRABRegistrator {
         _Sclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRABRegistrator() {
-            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(9597672160759649577, zeno::reflect::type_info<class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData>>());
+            zeno::reflect::ReflectionRegistry::get().getRttiMap()->add(9597672160759649577ULL, zeno::reflect::type_info<class std::variant<int, float, class std::basic_string<char>, struct zeno::CurveData>>());
         }
     };
     static _Sclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRABRegistrator global_Sclass_std_variantLABint_float_class_std_basicstringLABcharRAB_struct_zeno_CurveDataRABRegistrator{};

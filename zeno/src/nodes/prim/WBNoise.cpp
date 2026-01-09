@@ -150,7 +150,7 @@ struct erode_noise_perlin : INode {
         {
             throw makeError<UnimplError>("no such data named `" + zsString2Std(vec3fAttrName) + "`.");
         }
-        auto& vec3fAttr = terrain->get_vec3f_attr(ATTR_POINT, vec3fAttrName);
+        auto vec3fAttr = terrain->get_vec3f_attr(ATTR_POINT, vec3fAttrName);
         if (attrType == "float3") {
             terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, vec3f oldval)->vec3f {
                 float x = noise_perlin(vec3fAttr[i][0], vec3fAttr[i][1], vec3fAttr[i][2]);
@@ -548,7 +548,7 @@ struct erode_noise_simplex : INode {
         {
             throw makeError<UnimplError>("no such data name `" + zsString2Std(posLikeAttrName) + "`.");
         }
-        const auto& pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
+        const auto pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
 
         if (attrType == "float3") {
             terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, zeno::vec3f old_val)->vec3f {
@@ -749,7 +749,7 @@ struct erode_noise_analytic_simplex_2d : INode {
         {
             throw makeError<UnimplError>("no such attr named `" + zsString2Std(posLikeAttrName) + "`");
         }
-        auto& pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
+        auto pos = terrain->get_vec3f_attr(ATTR_POINT, posLikeAttrName);
 
         terrain->foreach_vec3_attr_update(ATTR_POINT, attrName, 0, [&](int i, zeno::vec3f old_elem_value)->zeno::vec3f {
             glm::vec3 ret = sdnoise(glm::vec2(pos[i][0], pos[i][2]));

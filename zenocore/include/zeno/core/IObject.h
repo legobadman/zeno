@@ -87,7 +87,7 @@ namespace zeno {
         virtual std::unique_ptr<IObject> clone() const override {
             auto spClonedObj = std::make_unique<Derived>(static_cast<Derived const&>(*this));
             spClonedObj->m_usrData = std::move(this->m_usrData->clone());
-            spClonedObj->m_key = m_key;
+            spClonedObj->m_key = this->m_key;
             return spClonedObj;
         }
 

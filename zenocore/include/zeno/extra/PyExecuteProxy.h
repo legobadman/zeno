@@ -1,3 +1,4 @@
+#ifdef ZENO_WITH_PYTHON
 #pragma once
 
 #include <string>
@@ -56,11 +57,12 @@ namespace zeno
 
         ExecType m_execType = ExecType::RunScript;
         std::string m_lineInput;
-        bool m_needMoreInput = false;  // ÊÇ·ñ»¹ÐèÏÂÒ»ÐÐ£¨¶ÔÓ¦ py_console.push ·µ»ØÖµ£©
+        bool m_needMoreInput = false;  // ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Ð£ï¿½ï¿½ï¿½Ó¦ py_console.push ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
 
-        // ---- ×Ô¶¯²¹È«¹¦ÄÜ ----
+        // ---- ï¿½Ô¶ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½ ----
         std::string m_completionPrefix;
         std::vector<std::string> m_completionList;
     };
 
 }
+#endif

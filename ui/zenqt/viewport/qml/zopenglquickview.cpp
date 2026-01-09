@@ -72,6 +72,12 @@ void ZOpenGLQuickView::initializeUnderlay() {
         &ZOpenGLQuickView::onUpdateRequest, Qt::QueuedConnection);
     connect(m_renderer.get(), &ZQmlRender::sig_reload_finished, this,
         &ZOpenGLQuickView::sig_render_reload_finished);
+
+    // zeno::log_critical("GL_VENDOR: {}", std::string(glGetString(GL_VENDOR)));
+    // printf("GL_VENDOR:   %s\n", glGetString(GL_VENDOR));
+    // printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
+    // printf("GL_VERSION:  %s\n", glGetString(GL_VERSION));
+    // printf("GLSL:        %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
 void ZOpenGLQuickView::onUpdateRequest()

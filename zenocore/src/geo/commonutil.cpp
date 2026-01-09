@@ -3432,6 +3432,14 @@ namespace zeno
         return retprim;
     }
 
+    // todo where to put this func???
+    static float area(zeno::vec3f& p1, zeno::vec3f& p2, zeno::vec3f& p3) {
+        zeno::vec3f e1 = p3 - p1;
+        zeno::vec3f e2 = p2 - p1;
+        zeno::vec3f areavec = zeno::cross(e1, e2);
+        return 0.5 * sqrt(zeno::dot(areavec, areavec));
+    }
+
     // to do where to put this func??
     template <class T>
     T baryCentricInterpolation(T& v1, T& v2, T& v3, zeno::vec3f& p,
@@ -3444,14 +3452,6 @@ namespace zeno
         float w2 = a2 / a;
         float w3 = 1 - w1 - w2;
         return w1 * v1 + w2 * v2 + w3 * v3;
-    }
-
-    // todo where to put this func???
-    static float area(zeno::vec3f& p1, zeno::vec3f& p2, zeno::vec3f& p3) {
-        zeno::vec3f e1 = p3 - p1;
-        zeno::vec3f e2 = p2 - p1;
-        zeno::vec3f areavec = zeno::cross(e1, e2);
-        return 0.5 * sqrt(zeno::dot(areavec, areavec));
     }
 
     // todo where to put this func????

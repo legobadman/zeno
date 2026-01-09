@@ -1042,7 +1042,7 @@ namespace zeno {
         for (auto& [name, spNode] : nodes) {
             if (name.find(node_name) != std::string::npos) {
                 if (!param_part.empty() || (param_part.empty() && bEndsWithDot)) {
-                    auto& findCondidate = [&ret, &param_part, &param_component, &bEndsWithDot](ParamType paramType, std::string paramName, bool& bExist) {
+                    auto findCondidate = [&ret, &param_part, &param_component, &bEndsWithDot](ParamType paramType, std::string paramName, bool& bExist) {
                         if (paramName.find(param_part) != std::string::npos) {
                             if (!param_part.empty() && (!param_component.empty() || bEndsWithDot)) {
                                 if (paramName == param_part) {

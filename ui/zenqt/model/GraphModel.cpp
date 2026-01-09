@@ -1872,7 +1872,7 @@ void GraphModel::_clear()
         const QString& nodeName = index(0, 0).data(QtRole::ROLE_NODE_NAME).toString();
         bool bret = removeNode(nodeName);
         if (!bret) {
-            ZASSERT_EXIT(FALSE);
+            ZASSERT_EXIT(0);
             return;
         }
     }

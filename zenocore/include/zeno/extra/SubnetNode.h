@@ -14,7 +14,7 @@ struct ZENO_API SubnetNode : NodeImpl {
     ~SubnetNode();
 
     void apply() override;
-    float time() const;
+    float time() const override;
 
     void initParams(const NodeData& dat) override;
     params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false) override;
@@ -48,8 +48,8 @@ protected:
     std::shared_ptr<Graph> m_subgraph;    //assets subnetnode
 
 private:
-    bool m_bLocked; //Ö»¸ø×Ê²úÓÃ
-    bool m_bClearSubnet;    //¼ÆËãºóÇå³ý×ÓÍ¼½Úµã»º´æ
+    bool m_bLocked; //Ö»ï¿½ï¿½ï¿½Ê²ï¿½ï¿½ï¿½
+    bool m_bClearSubnet;    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Úµã»ºï¿½ï¿½
 };
 
 }

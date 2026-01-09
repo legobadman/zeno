@@ -1,6 +1,7 @@
 //
 // Created by zh on 2025/7/9.
 //
+#ifdef _HAS_COMPILE_ERROR_ON_TBB_TO_FIX_
 #include <zeno/zeno.h>
 #include <zeno/types/IGeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -814,3 +815,4 @@ ZENDEFNODE(PrimDice,
 }});
 
 }
+#endif

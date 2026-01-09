@@ -1,8 +1,7 @@
-﻿#include <tuple>
+﻿#ifdef ZENO_ENABLE_OPTIX
+#include <tuple>
 #include <unordered_map>
 #include <vcruntime_string.h>
-
-#ifdef ZENO_ENABLE_OPTIX
 #include <vector_types.h>
 #include "Scene.h"
 #include <tsl/ordered_map.h>

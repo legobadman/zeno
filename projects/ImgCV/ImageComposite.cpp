@@ -167,7 +167,7 @@ struct Blend: INode {//optimize
         image2->userData()->set_int("h", h1);
         bool alphaoutput =  blend->has_point_attr("alpha") || base->has_point_attr("alpha");
         image2->create_point_attr("alpha", 0.f);
-        auto &image2alpha = image2->get_float_attr(ATTR_POINT, "alpha");
+        auto image2alpha = image2->get_float_attr(ATTR_POINT, "alpha");
         const auto &blendalpha = blend->has_point_attr("alpha") ? blend->get_float_attr(zeno::ATTR_POINT, "alpha")
             : std::vector<float>(imagesize, 1.0f);
         const auto &basealpha = base->has_point_attr("alpha") ? base->get_float_attr(zeno::ATTR_POINT, "alpha")
@@ -343,7 +343,7 @@ struct ImageExtractChannel : INode {
         }
         else if(channel == "A") {
             if (image->has_point_attr("alpha")) {
-                auto &attr = image->get_float_attr(ATTR_POINT, "alpha");
+                auto attr = image->get_float_attr(ATTR_POINT, "alpha");
                 for(int i = 0; i < w * h; i++){
                     image2->set_pos(i, vec3f(attr[i]));
                 }
@@ -392,7 +392,7 @@ struct CompImport : INode {
                 throw makeError<UnimplError>("No such attribute in prim");
                 return;
             }
-            auto& attr = prim->get_float_attr(ATTR_POINT, attrName);
+            auto attr = prim->get_float_attr(ATTR_POINT, attrName);
             auto minresult = zeno::parallel_reduce_array<float>(attr.size(), attr[0], [&](size_t i) -> float { return attr[i]; },
                 [&](float i, float j) -> float { return zeno::min(i, j); });
             auto maxresult = zeno::parallel_reduce_array<float>(attr.size(), attr[0], [&](size_t i) -> float { return attr[i]; },

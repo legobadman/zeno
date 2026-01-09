@@ -15,10 +15,10 @@ public:
     void reload();
 
 protected:
-    void focusInEvent(QFocusEvent* event);
-    void focusOutEvent(QFocusEvent* event);
-    void enterEvent(QEvent* event);
-    void leaveEvent(QEvent* event);
+    void focusInEvent(QFocusEvent* event) override;
+    void focusOutEvent(QFocusEvent* event) override;
+    void enterEvent(QEvent* event) override;
+    void leaveEvent(QEvent* event) override;
 };
 
 class ZQmlGraphWidget : public QQuickWidget
@@ -28,7 +28,7 @@ public:
     ZQmlGraphWidget(GraphModel* pModel, QWidget* parent = nullptr);
 
 protected:
-    void focusInEvent(QFocusEvent* event);
+    void focusInEvent(QFocusEvent* event) override;
 };
 
 #endif

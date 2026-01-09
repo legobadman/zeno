@@ -253,7 +253,7 @@ void ZGroupSocketLayout::updateSockName(const QString &name)
     m_pGroupLine->setText(name);
 }
 
-void ZGroupSocketLayout::setVisible(bool bVisible) 
+void ZGroupSocketLayout::setVisible(bool bVisible)
 {
     m_pGroupLine->setVisible(bVisible);
 }

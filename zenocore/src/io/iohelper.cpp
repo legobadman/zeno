@@ -1252,7 +1252,7 @@ namespace zenoio
                             else if constexpr (std::is_same_v<T, zeno::CurveData>) {
                                 //TODO
                             }
-                        }, any_cast<zeno::PrimVar>(elem));
+                        }, elem);
                     }
                     writer.EndArray();
                 }

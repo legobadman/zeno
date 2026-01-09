@@ -102,7 +102,7 @@ ZenoMainWindow::~ZenoMainWindow()
 
 void ZenoMainWindow::init(PANEL_TYPE onlyView)
 {
-    m_ui.reset(new Ui::MainWindow);
+    m_ui = new Ui::MainWindow;
     m_ui->setupUi(this);
 
     initMenu();
@@ -1072,7 +1072,7 @@ void ZenoMainWindow::onCalcFinished(bool bSucceed, QString nodePath, QString msg
         ZenoGraphsEditor* pEditor = getAnyEditor();
         if (pEditor) {
             GraphModel* mainM = zenoApp->graphsManager()->mainModel();
-            QStringList pathList = nodePath.split('/', Qt::SkipEmptyParts);
+            QStringList pathList = nodePath.split('/', QtSkipEmptyParts);
             if (pathList.empty()) {
                 ZASSERT_EXIT(0);
                 return;

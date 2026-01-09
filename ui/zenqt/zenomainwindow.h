@@ -242,7 +242,7 @@ private:
     bool m_bAlways;
     int m_nResizeTimes;
     bool m_bOnlyOptix;          //isolate optix window.
-    QScopedPointer<Ui::MainWindow> m_ui;
+    Ui::MainWindow* m_ui;
 
     QProgressBar* m_status_progressbar;
 

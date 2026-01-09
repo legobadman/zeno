@@ -7,6 +7,7 @@
 #include <QAbstractListModel>
 #include <QString>
 #include <QQuickItem>
+#include "uicommon.h"
 
 class GraphModel;
 

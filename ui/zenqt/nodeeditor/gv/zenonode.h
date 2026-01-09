@@ -33,12 +33,12 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
     QRectF boundingRect() const override;
 
-    void initLayout();
+    void initLayout() override;
 
-    QModelIndex getSocketIndex(QGraphicsItem* uiitem, bool bSocketText) const;
-    QPointF getSocketPos(const QModelIndex& sockIdx, const QString keyName = "");
-    ZenoSocketItem* getNearestSocket(const QPointF& pos, bool bInput);
-    ZenoSocketItem* getSocketItem(const QModelIndex& sockIdx, const QString keyName);
+    QModelIndex getSocketIndex(QGraphicsItem* uiitem, bool bSocketText) const override;
+    QPointF getSocketPos(const QModelIndex& sockIdx, const QString keyName = "") override;
+    ZenoSocketItem* getNearestSocket(const QPointF& pos, bool bInput) override;
+    ZenoSocketItem* getSocketItem(const QModelIndex& sockIdx, const QString keyName) override;
     ZenoSocketItem* getTopBottomSocketItem(const QModelIndex& sockIdx, bool bInput);
     void markNodeStatus(QmlNodeRunStatus::Value status);
 
@@ -46,7 +46,7 @@ public:
     virtual void onUpdateParamsNotDesc();
     void onMarkDataChanged(bool bDirty);
 
-    virtual void onZoomed();
+    void onZoomed() override;
     void onCollaspeUpdated(bool) override;
     void onCollaspeBtnClicked() override;
     void onOptionsUpdated(int options) override;
@@ -60,7 +60,7 @@ public:
 
 public slots:    
     void onOptionsBtnToggled(STATUS_BTN btn, bool toggled);
-    void onNameUpdated(const QString& newName);
+    void onNameUpdated(const QString& newName) override;
     void onParamDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
     void onParamInserted(const QModelIndex& parent, int first, int last);
     void onViewParamAboutToBeRemoved(const QModelIndex& parent, int first, int last);

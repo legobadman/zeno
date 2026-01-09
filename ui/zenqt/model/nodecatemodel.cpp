@@ -59,7 +59,7 @@ QVector<NodeCateModel::MenuOrItem> NodeCateModel::getHistoryNodes() {
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
     settings.beginGroup("Search History");
     QString nodestr = settings.value("nodes").toString();
-    QStringList history_nodes = nodestr.split(" ", Qt::SkipEmptyParts);
+    QStringList history_nodes = nodestr.split(" ", QtSkipEmptyParts);
 
     QVector<MenuOrItem> items;
     for (QString node : history_nodes) {
@@ -150,7 +150,7 @@ bool NodeCateModel::execute(GraphModel* pGraphM, const QString& name, const QPoi
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
     settings.beginGroup("Search History");
     QString nodestr = settings.value("nodes").toString();
-    QStringList histroy_nodes = nodestr.split(" ", Qt::SkipEmptyParts);
+    QStringList histroy_nodes = nodestr.split(" ", QtSkipEmptyParts);
     //如果history_nodes已经有name，那就移除
     if (int idx = histroy_nodes.indexOf(name); idx != -1) {
         histroy_nodes.removeAt(idx);

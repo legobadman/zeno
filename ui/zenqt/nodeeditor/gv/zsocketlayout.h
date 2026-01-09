@@ -50,7 +50,7 @@ public:
     ZenoSocketItem *socketItemByIdx(const QModelIndex &sockIdx, const QString keyName) const override;
     QPointF getSocketPos(const QModelIndex &sockIdx, const QString keyName, bool &exist) override;
     void updateSockName(const QString &name) override;
-    void setVisible(bool bVisible);
+    void setVisible(bool bVisible) override;
 
 private:
     ZenoParamGroupLine *m_pGroupLine;

@@ -167,13 +167,24 @@ struct ZfxVariable
     bool bAttrUpdated = false;      //ZfxVariable也记录属性值（比如@P, @N @ptnum等），此标记记录在zfx执行中，属性值是否修改了
     bool bArray = false;    //int[] float[] vectorN[]这种都array，而vec3这些不算
 
-    ZfxVariable() {}
-    ZfxVariable(ZfxVector&& var) {
-        value = var;
-    }
+    ZfxVariable() = default;
+    ZfxVariable(const ZfxVariable&) = default;
+    ZfxVariable(ZfxVariable&&) = default;
+    ZfxVariable& operator=(const ZfxVariable&) = default;
+    ZfxVariable& operator=(ZfxVariable&&) = default;
+
+    ZfxVariable(ZfxVector&& var)
+        : value(std::move(var)) {}
     ZfxVariable(const ZfxVector& var) {
         value = var;
     }
+
+    template<class T,
+         std::enable_if_t<
+             !std::is_same_v<std::decay_t<T>, ZfxVariable>,
+             int> = 0>
+    explicit ZfxVariable(T&& v)
+        : value(std::forward<T>(v)) {}
 
     size_t size() const {
         return std::visit([&](const auto& vec)->size_t {

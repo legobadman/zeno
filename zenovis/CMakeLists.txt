@@ -84,4 +84,6 @@ endif()
 
 find_package(PNG REQUIRED)
 target_link_libraries(zenovis PRIVATE PNG::PNG)
-target_link_libraries(zenovis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib/glfw3.lib)
+if (WIN32)
+    target_link_libraries(zenovis PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib/glfw3.lib)
+endif()

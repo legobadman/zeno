@@ -1,16 +1,16 @@
 #ifdef ZENO_WITH_PYTHON
 #include <Python.h>
-#endif
 #include <zeno/extra/PyExecuteProxy.h>
 #include <zeno/zeno.h>
 #include <thread>
+#ifdef _WIN32
 #include <Windows.h>
-
+#endif
 
 namespace zeno {
 
     PyExecuteProxy::PyExecuteProxy() : m_bInitEnv(false) {
-        //Æô¶¯Ïß³Ì£¬²¢³õÊ¼»¯Python»·¾³£¬²¢ÇÒÏß³Ì´¦ÓÚ¼àÌý×´Ì¬
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì£ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Pythonï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì´ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½×´Ì¬
         m_thd = std::thread(&PyExecuteProxy::waitLoop, this);
     }
 
@@ -24,7 +24,6 @@ namespace zeno {
     }
 
     void PyExecuteProxy::initialize() {
-#ifdef ZENO_WITH_PYTHON
         if (!m_pyzenFunc) {
             throw makeError<UnimplError>("the pyzen has not been initialized");
         }
@@ -62,17 +61,17 @@ namespace zeno {
             "    import rlcompleter\n"
             "    import __main__\n"
             "\n"
-            "    # --- Èç¹ûÄ©Î²ÊÇµã£¬±ÈÈç 'zen.' »ò 'obj.' ---\n"
+            "    # --- ï¿½ï¿½ï¿½Ä©Î²ï¿½Çµã£¬ï¿½ï¿½ï¿½ï¿½ 'zen.' ï¿½ï¿½ 'obj.' ---\n"
             "    if prefix.endswith('.'):\n"
             "        obj = prefix[:-1]\n"
             "        try:\n"
             "            val = eval(obj, __main__.__dict__)\n"
-            "            # ·µ»ØËùÓÐ¿É¼ûÊôÐÔ\n"
+            "            # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¿É¼ï¿½ï¿½ï¿½ï¿½ï¿½\n"
             "            return [obj + '.' + k for k in dir(val) if not k.startswith('_')]\n"
             "        except Exception:\n"
             "            return []\n"
             "\n"
-            "    # --- ±ê×¼ rlcompleter ´¦Àí ---\n"
+            "    # --- ï¿½ï¿½×¼ rlcompleter ï¿½ï¿½ï¿½ï¿½ ---\n"
             "    results = []\n"
             "    i = 0\n"
             "    while True:\n"
@@ -83,7 +82,6 @@ namespace zeno {
             "        i += 1\n"
             "    return results\n"
         );
-#endif
     }
 
     void PyExecuteProxy::waitLoop() {
@@ -102,8 +100,6 @@ namespace zeno {
             }
 
             bool bFailed = false;
-
-#ifdef ZENO_WITH_PYTHON
             std::string stdOutErr =
                 "import sys\n\
 \
@@ -128,7 +124,7 @@ sys.stderr = catchOutErr\n\
                 }
             }
             else if (m_execType == ExecType::RunInteractive) {
-                // µ÷ÓÃ push_line(line)
+                // ï¿½ï¿½ï¿½ï¿½ push_line(line)
                 PyObject* main = PyImport_AddModule("__main__");
                 PyObject* pushFunc = PyObject_GetAttrString(main, "push_line");
                 PyObject* ret = PyObject_CallFunction(pushFunc, "s", m_lineInput.c_str());
@@ -136,7 +132,7 @@ sys.stderr = catchOutErr\n\
                     bFailed = true;
                 }
                 else {
-                    // push_line ·µ»Ø True = ´úÂëÎ´½áÊø£»False = ¿ÉÖ´ÐÐÏÂÒ»Ìõ
+                    // push_line ï¿½ï¿½ï¿½ï¿½ True = ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½False = ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
                     m_needMoreInput = PyObject_IsTrue(ret);
                     Py_DECREF(ret);
                 }
@@ -180,7 +176,6 @@ sys.stderr = catchOutErr\n\
                     }
                 }
             }
-#endif
             m_code.clear();
             m_context.state = bFailed ? FAILED : SUCCEED;
             m_cv.notify_one();
@@ -243,3 +238,4 @@ sys.stderr = catchOutErr\n\
     }
 
 }
+#endif

@@ -20,6 +20,11 @@
 #include "declmetatype.h"
 
 
+static QVariant toVarFromParamType(zeno::ParamType v)
+{
+    return QVariant::fromValue<qulonglong>(static_cast<qulonglong>(v));
+}
+
 static CONTROL_ITEM_INFO controlList[] = {
     {"Tab",                 zeno::NullControl,  Param_Null,   ":/icons/parameter_control_tab.svg"},
     {"Group",               zeno::NullControl,  Param_Null,   ":/icons/parameter_control_group.svg"},
@@ -950,7 +955,7 @@ void ZEditParamLayoutDlg::onBtnAddObjInputs()
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), QtRole::ROLE_PARAM_VALUE);
     pNewItem->setData(zeno::Socket_Clone, QtRole::ROLE_SOCKET_TYPE);
-    pNewItem->setData(gParamType_Geometry, QtRole::ROLE_PARAM_TYPE);
+    pNewItem->setData(toVarFromParamType(gParamType_Geometry), QtRole::ROLE_PARAM_TYPE);
 
     m_paramsLayoutM_objInputs->appendRow(pNewItem);
     pNewItem->setData(getIcon(pNewItem), Qt::DecorationRole);
@@ -968,7 +973,7 @@ void ZEditParamLayoutDlg::onBtnAddObjOutputs()
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), QtRole::ROLE_PARAM_VALUE);
     pNewItem->setData(zeno::Socket_Clone, QtRole::ROLE_SOCKET_TYPE);
-    pNewItem->setData(gParamType_Geometry, QtRole::ROLE_PARAM_TYPE);
+    pNewItem->setData(toVarFromParamType(gParamType_Geometry), QtRole::ROLE_PARAM_TYPE);
 
     m_paramsLayoutM_objOutputs->appendRow(pNewItem);
     pNewItem->setData(getIcon(pNewItem), Qt::DecorationRole);
@@ -986,7 +991,7 @@ void ZEditParamLayoutDlg::onBtnAddOutputs()
     pNewItem->setData(VPARAM_PARAM, ROLE_ELEMENT_TYPE);
     pNewItem->setData(QVariant(), QtRole::ROLE_PARAM_VALUE);
     pNewItem->setData(zeno::Socket_Clone, QtRole::ROLE_SOCKET_TYPE);
-    pNewItem->setData(gParamType_Float, QtRole::ROLE_PARAM_TYPE);
+    pNewItem->setData((quint64)gParamType_Float, QtRole::ROLE_PARAM_TYPE);
     zeno::reflect::Any anyVal = zeno::initAnyDeflValue(gParamType_Float);
     pNewItem->setData(QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
 
@@ -1271,7 +1276,7 @@ void ZEditParamLayoutDlg::onOutputPrimTypeChanged(int idx) {
     QStandardItem* pItem = m_paramsLayoutM_outputs->itemFromIndex(currIdx);
     QVariant varType = m_ui->cbOutputPrim->itemData(idx);
     zeno::ParamType type = varType.toULongLong();
-    pItem->setData(type, QtRole::ROLE_PARAM_TYPE);
+    pItem->setData(toVarFromParamType(type), QtRole::ROLE_PARAM_TYPE);
 
     zeno::reflect::Any anyVal = zeno::initAnyDeflValue(type);
     pItem->setData(QVariant::fromValue(anyVal), QtRole::ROLE_PARAM_VALUE);
@@ -1307,7 +1312,7 @@ void ZEditParamLayoutDlg::onControlItemChanged(int idx)
     auto pItem = m_paramsLayoutM_inputs->itemFromIndex(layerIdx);
     pItem->setData(ctrl, QtRole::ROLE_PARAM_CONTROL);
     zeno::ParamType type = getTypeByControlName(controlName);
-    pItem->setData((quint64)type, QtRole::ROLE_PARAM_TYPE);
+    pItem->setData(toVarFromParamType(type), QtRole::ROLE_PARAM_TYPE);
 
     QLayoutItem* pLayoutItem = m_ui->gridLayout->itemAtPosition(rowValueControl, 1);
     if (pLayoutItem)

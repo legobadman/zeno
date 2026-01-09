@@ -578,7 +578,11 @@ void GraphsManager::loadAssetDialog()
 void GraphsManager::addPlugin()
 {
     ZenoMainWindow* mainWin = zenoApp->getMainWindow();
+#ifdef _WIN32
     QStringList filePaths = QFileDialog::getOpenFileNames(mainWin, "File to Open", "", "Zeno Module (*.dll)");
+#else
+    QStringList filePaths = QFileDialog::getOpenFileNames(mainWin, "File to Open", "", "Zeno Module (*.so)");
+#endif
     for (QString filePath : filePaths) {
         if (!filePath.isEmpty()) {
             m_plugins->addPlugin(filePath);
@@ -667,7 +671,7 @@ QModelIndex GraphsManager::getNodeIndexByPath(const QString& path) {
     if (!m_main)
         return QModelIndex();
 
-    QStringList fullPathList = path.split('/', Qt::SkipEmptyParts);
+    QStringList fullPathList = path.split('/', QtSkipEmptyParts);
     if (fullPathList.first() == "main") {
         fullPathList.pop_front();
     }

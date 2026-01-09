@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include <rapidjson/document.h>
 #include <filesystem>
 #include <zeno/zeno.h>
@@ -500,3 +501,4 @@ namespace zeno {
     }
 
 }
+#endif

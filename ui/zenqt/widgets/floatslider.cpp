@@ -1,4 +1,4 @@
-#include "FloatSlider.h"
+#include "floatslider.h"
 #include "widgets/zlineedit.h"
 #include <QHBoxLayout>
 #include <QIntValidator>

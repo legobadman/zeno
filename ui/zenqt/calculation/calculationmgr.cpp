@@ -78,7 +78,7 @@ void CalculationMgr::onNodeStatusReported(QString qsPath, QmlNodeRunStatus::Valu
         if (state == QmlNodeRunStatus::RunError) {
             //为了方便查看错误，整个子图路径的节点都要标红
             GraphModel* pMain = graphsMgr->getGraph({ "main" });
-            QStringList pathList = qsPath.split('/', Qt::SkipEmptyParts);
+            QStringList pathList = qsPath.split('/', QtSkipEmptyParts);
             //把节点所在链路的所有子图（如果有）都mark
             while (pathList.size() > 1) {
                 QString path = pathList.join('/');

@@ -113,7 +113,9 @@ private:
     std::wstring m_proj_path;
     unsigned long m_mainThreadId;
     std::atomic<bool> m_bInterrupted;
+#ifdef ZENO_WITH_PYTHON
     std::unique_ptr<PyExecuteProxy> m_pyexecutor;
+#endif
 
     std::shared_ptr<Graph> m_spMainGraph;
 

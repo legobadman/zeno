@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QQuickItem>
+#include "uicommon.h"
 
 class ZParamItem : public QQuickItem
 {

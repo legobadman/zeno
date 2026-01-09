@@ -65,8 +65,8 @@ public:
     void onClearSubnetUpdated(bool clearSubnet) override;
     void onRunStateChanged() override;
     void onSocketLinkChanged(const QModelIndex& paramIdx, bool bInput, bool bAdded, const QString keyName) override;
-    void onNameUpdated(const QString& newName);
-    void onNodeLockedChanged(bool bLocked);
+    void onNameUpdated(const QString& newName) override;
+    void onNodeLockedChanged(bool bLocked) override;
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;

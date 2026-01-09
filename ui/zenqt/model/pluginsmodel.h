@@ -5,6 +5,11 @@
 
 #include <QtWidgets>
 #include <QQuickItem>
+#include "uicommon.h"
+
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif
 
 class PluginsModel : public QAbstractListModel
 {
@@ -12,16 +17,6 @@ class PluginsModel : public QAbstractListModel
     typedef QAbstractListModel _base;
     QML_ELEMENT
 
-    struct _pluginItem
-    {
-        QString path;   //插件dll的路径
-#ifdef _WIN32
-        HMODULE hDll;
-#else
-        
-#endif
-        bool bLoaded;   //false为加载不正常，比如路径不存在
-    };
 public:
     PluginsModel(QObject* parent = nullptr);
     ~PluginsModel();
@@ -41,6 +36,17 @@ public:
     void addPlugin(const QString& path);
 
 private:
+    struct _pluginItem
+    {
+        QString path;   //插件dll的路径
+#ifdef _WIN32
+        HMODULE hDll;
+#else
+        void* hDll = nullptr;
+#endif
+        bool bLoaded;   //false为加载不正常，比如路径不存在
+    };
+
     QVector<_pluginItem> m_items;
 };
 

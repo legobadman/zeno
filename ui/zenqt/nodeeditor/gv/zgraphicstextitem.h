@@ -71,7 +71,7 @@ public:
     void setHoverCursor(Qt::CursorShape cursor);
     bool isHovered() const;
     void updateBoundingRect();
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
 
     static QSizeF size(const QString& text, const QFont& font, int pleft, int pTop, int pRight, int pBottom);
 

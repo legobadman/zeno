@@ -33,9 +33,10 @@
 //-----------------------------------------------------------------------------
 
 // QuickQanava headers
+#include "./qanTableGroup.h"
 #include "./qanTableCell.h"
 #include "./qanNodeItem.h"
-#include "./qanTableGroup.h"
+
 
 namespace qan { // ::qan
 

@@ -1174,8 +1174,9 @@ void draw_circle(QPainter &painter, QPainter &painter2, glm::vec2 resolution, gl
     for (int i = 0; i < segment; i++) {
         float theta0 = float(i) * dtheta;
         float theta1 = float(i + 1) * dtheta;
-        glm::vec3 p0 = cos(theta0) * e0 * radius + sin(theta0) * e1 * radius + center;
-        glm::vec3 p1 = cos(theta1) * e0 * radius + sin(theta1) * e1 * radius + center;
+        float cos_theta0 = cos(theta0), cos_theta1 = cos(theta1), sin_theta0 = sin(theta0), sin_theta1 = sin(theta1);
+        glm::vec3 p0 = cos_theta0 * e0 * radius + sin_theta0 * e1 * radius + center;
+        glm::vec3 p1 = cos_theta1 * e0 * radius + sin_theta1 * e1 * radius + center;
         draw_3d_segment_to_screen(painter, painter2, resolution, vp_mat, p0, p1, color, 2, color_id);
     }
 }

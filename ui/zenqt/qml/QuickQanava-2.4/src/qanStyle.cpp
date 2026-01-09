@@ -60,7 +60,7 @@ bool    NodeStyle::setBackRadius(qreal backRadius) noexcept
     // PRECONDITIONS:
         // backRadius must be >= 0.
     if (backRadius < -0.00001) {
-        qWarning() << "qan::NodeStyle::setBackRadius(): Node background radius can't be < 0.";
+        //qWarning() << "qan::NodeStyle::setBackRadius(): Node background radius can't be < 0.";
         return false;
     }
     if (!qFuzzyCompare(1. + _backRadius, 1. + backRadius)) {

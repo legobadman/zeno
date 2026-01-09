@@ -19,7 +19,7 @@
 ZTimeline::ZTimeline(QWidget* parent)
     : QWidget(parent)
 {
-    m_ui.reset(new Ui::Timeline);
+    m_ui = new Ui::Timeline;
     m_ui->setupUi(this);
 
     QStringList items = { "23.5 fps", "24 fps", "25 fps", "30 fps", "60 fps" };

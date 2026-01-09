@@ -56,7 +56,7 @@ if (MSVC)
 endif()
 
 target_link_libraries(zeno PRIVATE Threads::Threads)
-target_link_libraries(zeno PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor Qt${QT_VERSION_MAJOR}::QuickControls2)
+target_link_libraries(zeno PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Svg Qt5::Network Qt5::Quick Qt5::QuickWidgets qt5advanceddocking QCodeEditor Qt5::QuickControls2)
 
 if (WIN32)
     target_link_libraries(zeno PRIVATE Dbghelp Version)

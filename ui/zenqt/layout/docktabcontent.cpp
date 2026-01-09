@@ -1165,7 +1165,7 @@ void DockContent_View::initConnections()
         auto& sess = zeno::getSession();
         QString path = graphsMgr->currentGraphPath();
 
-        QStringList paths = path.split('/', Qt::SkipEmptyParts);
+        QStringList paths = path.split('/', QtSkipEmptyParts);
         ZenoGraphsEditor* pGraphEditor = zenoApp->getMainWindow()->getAnyEditor();
         GraphModel* pModel = zenoApp->graphsManager()->getGraph(paths);
         ZASSERT_EXIT(pModel);

@@ -1,4 +1,4 @@
-#include "PythonConsole.h"
+#include "pythonconsole.h"
 #include <QTextCursor>
 #include <QTextObject>
 #include <QScrollBar>

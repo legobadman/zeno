@@ -26,6 +26,14 @@
 #define qt_unordered_map std::map
 #endif
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QtQml/qqml.h>
+#else
+#define QML_ELEMENT
+#define QML_NAMED_ELEMENT(x)
+#define QML_SINGLETON
+#endif
+
 constexpr size_t ui_gParamType_Bool = 15698046148323980066ULL;
 constexpr size_t ui_gParamType_String = 1350625706064273086ULL;
 constexpr size_t ui_gParamType_Int = 3143511548502526014ULL;

@@ -64,9 +64,9 @@ class ZPreferencesTabBar : public QTabBar
 {
     Q_OBJECT
 public:
-    QSize tabSizeHint(int index) const;
+    QSize tabSizeHint(int index) const override;
 protected:
-    void paintEvent(QPaintEvent* event);
+    void paintEvent(QPaintEvent* event) override;
 };
 
 class ZPreferencesTabWidget : public QTabWidget

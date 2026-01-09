@@ -13,7 +13,7 @@
 ZenoWelcomePage::ZenoWelcomePage(QWidget* parent)
 	: QWidget(parent)
 {
-    m_ui.reset(new Ui::WelcomePage);
+    m_ui = new Ui::WelcomePage;
     m_ui->setupUi(this);
 
     //setProperty("cssClass", "zenowelcomepage");

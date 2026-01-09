@@ -91,7 +91,7 @@ class NotEmptyValidator : public QValidator
 public:
     explicit NotEmptyValidator(ZCoreParamLineEdit* parent = nullptr);
     State validate(QString& input, int& pos) const;
-    void fixup(QString&) const;
+    void fixup(QString&) const override;
 
 private:
     ZCoreParamLineEdit* m_lineedit;

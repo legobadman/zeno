@@ -25,7 +25,6 @@
 #include <zeno/core/GlobalVariable.h>
 #include <zeno/core/FunctionManager.h>
 #include <regex>
-#include <Windows.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/core/ObjectRecorder.h>
 #include <zeno/reflect/core.hpp>
@@ -59,13 +58,17 @@ ZENO_API Session::Session()
     , m_userData(std::make_unique<UserData>())
     //, m_spMainGraph(std::make_shared<Graph>("main"))
     , assets(std::make_unique<AssetsMgr>())
+#ifdef ZENO_WITH_PYTHON
     , m_pyexecutor(std::make_unique<PyExecuteProxy>())
+#endif
     , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
     , m_recorder(std::make_unique<ObjectRecorder>())
     , m_mainThreadId(0)
 {
+#ifdef _WIN32
     m_mainThreadId = GetCurrentThreadId();
+#endif
 }
 
 ZENO_API Session::~Session() {
@@ -521,25 +524,33 @@ ZENO_API void Session::initEnv(const zenoio::ZSG_PARSE_RESULT ioresult) {
 }
 
 void Session::initPyzen(std::function<void()> pyzenFunc) {
+#ifdef ZENO_WITH_PYTHON
     if (m_pyexecutor)
         m_pyexecutor->initPyzenFunc(pyzenFunc);
+#endif
 }
 
 bool Session::asyncRunPython(const std::string& code) {
+#ifdef ZENO_WITH_PYTHON
     if (m_pyexecutor)
         return m_pyexecutor->runPython(code);
+#endif
     return false;
 }
 
 bool Session::runPythonInteractive(const std::string& line, bool& needMore, std::string& output) {
+#ifdef ZENO_WITH_PYTHON
     if (m_pyexecutor)
         return m_pyexecutor->runPythonInteractive(line, needMore, output);
+#endif
     return false;
 }
 
 bool Session::completePython(const std::string& text, std::vector<std::string>& out) {
+#ifdef ZENO_WITH_PYTHON
     if (m_pyexecutor)
         return m_pyexecutor->completePython(text, out);
+#endif
     return false;
 }
 

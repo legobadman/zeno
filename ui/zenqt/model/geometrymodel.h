@@ -121,7 +121,7 @@ public:
     void setGeoObject(zeno::GeometryObject_Adapter* pObject);
 
 private:
-    QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const;
+    QVariant userDataToString(const zeno::zany& object) const;
     zeno::UserData* userData() const;
 };
 

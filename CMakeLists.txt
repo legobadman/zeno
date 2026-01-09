@@ -198,7 +198,9 @@ endfunction()
 #endif()
 add_subdirectory(zenocore)
 add_subdirectory(zeno)
-add_subdirectory(zenobatch)
+if (ZENO_WITH_ZENOBATCH)
+    add_subdirectory(zenobatch)
+endif()
 add_subdirectory(api/python)
 
 ## --- begin cihou perf-geeks

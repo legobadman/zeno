@@ -14,9 +14,15 @@ PluginsModel::PluginsModel(QObject* parent)
     QSettings settings(QSettings::UserScope, zsCompanyName, zsEditor);
     settings.beginGroup("Zeno Plugins");
     QStringList lst = settings.childKeys();
+#ifdef _WIN32
     if (lst.indexOf("zs_base.dll") == -1) {
         lst.push_front("zs_base.dll");
     }
+#else
+    if (lst.indexOf("libzs_base.so") == -1) {
+        lst.push_front("libzs_base.so");
+    }
+#endif
 
     for (int i = 0; i < lst.size(); i++)
     {
@@ -42,7 +48,7 @@ PluginsModel::PluginsModel(QObject* parent)
             _item.hDll = LoadLibrary(path.toUtf8().data());
             ZASSERT_EXIT(_item.hDll != INVALID_HANDLE_VALUE);
 #else
-
+            _item.hDll = dlopen(path.toUtf8().data(), RTLD_NOW | RTLD_LOCAL);
 #endif
             m_items.append(_item);
         }
@@ -55,7 +61,7 @@ PluginsModel::~PluginsModel()
         #ifdef _WIN32
         FreeLibrary(_item.hDll);
         #else
-
+        dlclose(_item.hDll);
         #endif
     }
     m_items.clear();
@@ -109,14 +115,16 @@ static QString getFileName(const QString& path) {
 }
 
 bool PluginsModel::removeRows(int row, int count, const QModelIndex& parent) {
-#ifdef _WIN32
+
     beginRemoveRows(parent, row, row);
 
     auto& nodeReg = zeno::getNodeRegister();
     auto ptr = nodeReg.getNodeClassPtr("erode_noise_perlin_GEO");
-
+#ifdef _WIN32
     bool ret = FreeLibrary(m_items[row].hDll);
-
+#else
+    dlclose(m_items[row].hDll);
+#endif
     //先从注册表移除
     const QString& filePath = m_items[row].path;
     QFileInfo fn(filePath);
@@ -138,9 +146,6 @@ bool PluginsModel::removeRows(int row, int count, const QModelIndex& parent) {
     m_items.removeAt(row);
     endRemoveRows();
     return true;
-#else
-    return false;
-#endif
 }
 
 QHash<int, QByteArray> PluginsModel::roleNames() const {
@@ -152,13 +157,22 @@ QHash<int, QByteArray> PluginsModel::roleNames() const {
 }
 
 void PluginsModel::addPlugin(const QString& filePath) {
-#ifdef _WIN32
+
     if (!filePath.isEmpty()) {
+        #ifdef _WIN32
         HMODULE hDll = 0;
+        #else
+        void* hDll = nullptr;
+        #endif
         {
             zeno::getNodeRegister().beginLoadModule(filePath.toStdString());
             zeno::scope_exit sp([&]() { zeno::getNodeRegister().endLoadModule(); });
+
+            #ifdef _WIN32
             hDll = LoadLibrary(filePath.toUtf8().data());
+            #else
+            hDll = dlopen(filePath.toUtf8().data(), RTLD_NOW | RTLD_LOCAL);
+            #endif
             //添加到注册表
             if (hDll) {
                 QString name = QFileInfo(filePath).fileName();
@@ -183,7 +197,4 @@ void PluginsModel::addPlugin(const QString& filePath) {
             //TODO: 提示框
         }
     }
-#else
-    //todo: linux case
-#endif
 }

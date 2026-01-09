@@ -1,3 +1,4 @@
+#ifdef ZENO_WITH_PYTHON
 #include <zeno/zeno.h>
 #include <filesystem>
 #include <iostream>
@@ -7,7 +8,9 @@
 #include <algorithm>
 #include <locale>
 #include <codecvt>
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 #include <zeno/io/iohelper.h>
 #include <zeno/io/zenreader.h>
 #include <zeno/extra/EventCallbacks.h>
@@ -429,3 +432,4 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+#endif

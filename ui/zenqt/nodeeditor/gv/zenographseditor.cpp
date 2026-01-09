@@ -56,7 +56,7 @@ ZenoGraphsEditor::~ZenoGraphsEditor()
 
 void ZenoGraphsEditor::initUI()
 {
-    m_ui.reset(new Ui::GraphsEditor);
+    m_ui = new Ui::GraphsEditor;
     m_ui->setupUi(this);
 
     int _margin = ZenoStyle::dpiScaled(10);
@@ -852,7 +852,7 @@ void ZenoGraphsEditor::onPageActivated(const QPersistentModelIndex& subgIdx, con
 void ZenoGraphsEditor::onPageActivated(const QModelIndex& subgNodeIdx)
 {
     const QString& nodePath = subgNodeIdx.data(QtRole::ROLE_OBJPATH).toString();
-    QStringList pathitems = nodePath.split("/", Qt::SkipEmptyParts);
+    QStringList pathitems = nodePath.split("/", QtSkipEmptyParts);
     activateTab(pathitems);
 }
 
@@ -1009,7 +1009,7 @@ void ZenoGraphsEditor::onSearchItemClicked(const QModelIndex& index)
 {
     QString objId = index.data(QtRole::ROLE_NODE_NAME).toString();
     QString objpath = index.data(QtRole::ROLE_OBJPATH).toString();
-    QStringList subgPath = objpath.split('/', Qt::SkipEmptyParts);
+    QStringList subgPath = objpath.split('/', QtSkipEmptyParts);
     subgPath.pop_back();
     ZASSERT_EXIT(!subgPath.isEmpty());
     activateTab(subgPath, objId);

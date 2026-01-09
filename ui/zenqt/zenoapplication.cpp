@@ -23,6 +23,7 @@ class WinEventFilter : public QAbstractNativeEventFilter
 {
 public:
     bool nativeEventFilter(const QByteArray& eventType, void* message, long* result) override {
+#ifdef _WIN32
         if (eventType == "windows_generic_MSG" || eventType == "windows_dispatcher_MSG") {
             MSG* msg = static_cast<MSG*>(message);
             if (msg->message >= zeno::SOVLER_START && msg->message <= zeno::SOLVER_END) {
@@ -32,6 +33,7 @@ public:
                 return true;
             }
         }
+#endif
         return false;
     }
 
@@ -81,7 +83,7 @@ ZenoApplication::ZenoApplication(int &argc, char **argv)
 
 ZenoApplication::~ZenoApplication()
 {
-    zeno::getSession().destroy(); //ÔÚÐ¶ÔØ²å¼þÇ°ÏÈÇå¿ÕËùÓÐÍ¼
+    zeno::getSession().destroy(); //ï¿½ï¿½Ð¶ï¿½Ø²ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
 }
 
 void ZenoApplication::onThreadLogReady(const QString& msg)
@@ -213,8 +215,14 @@ void ZenoApplication::initFonts()
     //QFontDatabase::addApplicationFont(":/font/MiSans/MiSans-ExtraLight.ttf");
     //QFontDatabase::addApplicationFont(":/font/MiSans/MiSans-Demibold.ttf");
     //QFontDatabase::addApplicationFont(":/font/MiSans/MiSans-Bold.ttf");
+
+#ifdef _WIN32
     QFont font("Microsoft Sans Serif", 10);
     setFont(font);
+#else
+    //temp solution for font problem at linux build
+    //QFontDatabase::addApplicationFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf");
+#endif
 }
 
 GraphsManager* ZenoApplication::graphsManager() const

@@ -111,7 +111,7 @@ static void exportTableViewToCsv(QTableView* tableView) {
 
     // 3. 解析用户输入，转为列表，并校验列名
     QStringList headersToExport;
-    QStringList selectedHeaders = input.split(" ", Qt::SkipEmptyParts);
+    QStringList selectedHeaders = input.split(" ", QtSkipEmptyParts);
 
     if (selectedHeaders.isEmpty()) {
         // 空输入 -> 默认导出所有列

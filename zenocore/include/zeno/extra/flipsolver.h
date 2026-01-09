@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #pragma once
 
 #include <zeno/zeno.h>
@@ -8,10 +9,7 @@
 #include <zeno/utils/log.h>
 #include <zeno/utils/uuid.h>
 #include <zeno/extra/GlobalComm.h>
-#if defined(_WIN32)
 #include <Windows.h>
-#else
-#endif
 
 namespace zeno
 {
@@ -64,3 +62,5 @@ private:
 #endif
 };
 }
+
+#endif

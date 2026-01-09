@@ -252,7 +252,10 @@ struct AlembicPrimList : INode {
             for (auto prim: prims->get()) {
                 auto list = abc_split_by_name(dynamic_cast<PrimitiveObject*>(prim), false);
                 auto listarr = list->get();
-                arr.insert(arr.end(), listarr.begin(), listarr.end());
+                for (const auto& elem : listarr) {
+                    arr.push_back(elem->clone());
+                }
+                // arr.insert(arr.end(), listarr.begin(), listarr.end());
             }
         }
 
