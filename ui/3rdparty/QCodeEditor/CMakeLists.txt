@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(QCodeEditor)
 
-set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD 11)
 
 option(BUILD_EXAMPLE "Example building required" Off)
 
@@ -92,7 +92,6 @@ target_include_directories(QCodeEditor PUBLIC
 if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(QCodeEditor
 		PRIVATE
-		-ansi
 		-pedantic
 		-Wall
 		-Wextra
