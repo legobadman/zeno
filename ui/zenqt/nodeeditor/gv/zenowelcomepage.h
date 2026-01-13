@@ -13,6 +13,7 @@ class ZenoWelcomePage : public QWidget
 	Q_OBJECT
 public:
 	ZenoWelcomePage(QWidget* parent = nullptr);
+	~ZenoWelcomePage();
 	void initRecentFiles();
 
 protected:

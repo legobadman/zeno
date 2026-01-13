@@ -37,7 +37,7 @@ namespace zeno
         }
 
         ~String() {
-            free(m_data);
+            delete[] m_data;
             m_length = 0;
         }
 
@@ -66,7 +66,7 @@ namespace zeno
         }
 
         String& operator=(const char* str) noexcept {
-            free(m_data);
+            delete[] m_data;
             m_data = nullptr;
             m_length = _strlen(str);
             if (m_length > 0) {

@@ -55,6 +55,10 @@ ZTimeline::ZTimeline(QWidget* parent)
     m_ui->comboBox->hide();
 }
 
+ZTimeline::~ZTimeline() {
+    delete m_ui;
+}
+
 void ZTimeline::initSignals()
 {
     connect(m_ui->btnPlay, &ZToolButton::toggled, this, [=](bool toggle) {

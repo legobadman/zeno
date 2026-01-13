@@ -415,6 +415,10 @@ ZlogPanel::ZlogPanel(QWidget* parent)
     onFilterChanged();
 }
 
+ZlogPanel::~ZlogPanel() {
+    delete m_ui;
+}
+
 void ZlogPanel::initModel()
 {
     m_logModel = new QStandardItemModel(this);

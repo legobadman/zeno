@@ -17,6 +17,7 @@ class ZTimeline : public QWidget
     Q_OBJECT
 public:
     ZTimeline(QWidget* parent = nullptr);
+    ~ZTimeline();
     QPair<int, int> fromTo() const;
     void initFromTo(int from, int to);
     void initFps(int fps);

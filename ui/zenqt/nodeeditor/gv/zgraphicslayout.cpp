@@ -11,6 +11,14 @@
 #define CURRENT_DEBUG_LAYOUT "Header HLayout"
 
 
+ZGvLayoutItem::~ZGvLayoutItem() {
+    if (pLayout)
+        pLayout->clear();
+    delete pLayout;
+    delete pItem;
+}
+
+
 ZGraphicsLayout::ZGraphicsLayout(bool bHor)
     : m_spacing(0)
     , m_parent(nullptr)
@@ -27,6 +35,10 @@ void ZGraphicsLayout::setHorizontal(bool bHor)
 
 ZGraphicsLayout::~ZGraphicsLayout()
 {
+    if (m_dbgName == "mainLayout") {
+        int j;
+        j = 0;
+    }
     clear();
 }
 
@@ -67,95 +79,74 @@ void ZGraphicsLayout::addItem(QGraphicsItem* pItem)
 {
     if (!pItem) return;
 
-#ifndef _DEBUG_ZLAYOUT
     QSharedPointer<ZGvLayoutItem> item(new ZGvLayoutItem);
-#else
-    ZGvLayoutItem* item = new ZGvLayoutItem;
-#endif
     item->type = Type_Item;
     item->pItem = pItem;
     item->pLayout = nullptr;
     item->pItem->setData(GVKEY_PARENT_LAYOUT, QVariant::fromValue((void*)this));
     pItem->setParentItem(m_parentItem);
-    m_items.append(item);
+    m_items.append(std::move(item));
 }
 
 void ZGraphicsLayout::addItem(QGraphicsItem* pItem, Qt::Alignment flag)
 {
     if (!pItem) return;
 
-#ifndef _DEBUG_ZLAYOUT
     QSharedPointer<ZGvLayoutItem> item(new ZGvLayoutItem);
-#else
-    ZGvLayoutItem* item = new ZGvLayoutItem;
-#endif
     item->type = Type_Item;
     item->pItem = pItem;
     item->pLayout = nullptr;
     item->pItem->setData(GVKEY_PARENT_LAYOUT, QVariant::fromValue((void*)this));
     item->alignment = flag;
     pItem->setParentItem(m_parentItem);
-    m_items.append(item);
+    m_items.append(std::move(item));
 }
 
 void ZGraphicsLayout::insertItem(int i, QGraphicsItem* pItem)
 {
     if (!pItem) return;
 
-#ifndef _DEBUG_ZLAYOUT
     QSharedPointer<ZGvLayoutItem> item(new ZGvLayoutItem);
-#else
-    ZGvLayoutItem* item = new ZGvLayoutItem;
-#endif
     item->type = Type_Item;
     item->pItem = pItem;
     item->pLayout = nullptr;
     item->pItem->setData(GVKEY_PARENT_LAYOUT, QVariant::fromValue((void*)this));
     pItem->setParentItem(m_parentItem);
-
-    m_items.insert(i, item);
+    m_items.insert(i, std::move(item));
 }
 
 void ZGraphicsLayout::addLayout(ZGraphicsLayout* pLayout)
 {
     if (!pLayout) return;
 
-#ifndef _DEBUG_ZLAYOUT
     QSharedPointer<ZGvLayoutItem> item(new ZGvLayoutItem);
-#else
-    ZGvLayoutItem* item = new ZGvLayoutItem;
-#endif
     item->type = Type_Layout;
     item->pItem = nullptr;
     item->pLayout = pLayout;
     pLayout->m_parent = this;
     pLayout->setParentItem(m_parentItem);
-    m_items.append(item);
+    m_items.append(std::move(item));
 }
 
 void ZGraphicsLayout::insertLayout(int i, ZGraphicsLayout* pLayout)
 {
     if (!pLayout) return;
 
-#ifndef _DEBUG_ZLAYOUT
     QSharedPointer<ZGvLayoutItem> item(new ZGvLayoutItem);
-#else
-    ZGvLayoutItem* item = new ZGvLayoutItem;
-#endif
     item->type = Type_Layout;
     item->pItem = nullptr;
     item->pLayout = pLayout;
     pLayout->m_parent = this;
     pLayout->setParentItem(m_parentItem);
 
-    m_items.insert(i, item);
+    m_items.insert(i, std::move(item));
 }
 
 ZGvLayoutItem* ZGraphicsLayout::itemAt(int idx) const
 {
     if (idx < 0 || idx > m_items.size())
         return nullptr;
-    return m_items[idx];
+    return m_items[idx].get();
 }
 
 int ZGraphicsLayout::count() const
@@ -174,38 +165,29 @@ QString ZGraphicsLayout::getDebugName() const {
 
 void ZGraphicsLayout::addSpacing(qreal size)
 {
-#ifndef _DEBUG_ZLAYOUT
     QSharedPointer<ZGvLayoutItem> item(new ZGvLayoutItem);
-#else
-    ZGvLayoutItem* item = new ZGvLayoutItem;
-#endif
     item->type = Type_Spacing;
     item->pItem = nullptr;
     item->pLayout = nullptr;
-    if (size == -1)
-    {
+    if (size == -1) {
         item->gvItemSz.policy = m_bHorizontal ? QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed) :
                                     QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
     }
-    else
+    else {
         item->gvItemSz.policy = QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    }
     item->gvItemSz.minSize = m_bHorizontal ? QSizeF(size, 0) : QSizeF(0, size);
 
-    m_items.append(item);
+    m_items.append(std::move(item));
 }
 
 void ZGraphicsLayout::addSpacing(qreal sizehint, QSizePolicy policy)
 {
-#ifndef _DEBUG_ZLAYOUT
     QSharedPointer<ZGvLayoutItem> item(new ZGvLayoutItem);
-#else
-    ZGvLayoutItem* item = new ZGvLayoutItem;
-#endif
     item->type = Type_Spacing;
     item->pItem = nullptr;
     item->pLayout = nullptr;
-    if (m_bHorizontal)
-    {
+    if (m_bHorizontal) {
         if (policy.horizontalPolicy() == QSizePolicy::Minimum)
         {
             item->gvItemSz.policy = policy;
@@ -233,7 +215,7 @@ void ZGraphicsLayout::addSpacing(qreal sizehint, QSizePolicy policy)
             //todo
         }
     }
-    m_items.append(item);
+    m_items.append(std::move(item));
 }
 
 
@@ -310,7 +292,6 @@ void ZGraphicsLayout::removeItem(QGraphicsItem* item)
     for (int i = 0; i < m_items.size(); i++)
     {
         if (m_items[i]->type == Type_Item && m_items[i]->pItem == item) {
-            delete item;
             m_items.remove(i);
             break;
         }
@@ -369,17 +350,7 @@ void ZGraphicsLayout::removeLayout(ZGraphicsLayout* layout)
 
 void ZGraphicsLayout::clear()
 {
-    while (!m_items.isEmpty())
-    {
-        auto item = m_items.first();
-        if (item->type == Type_Layout) {
-            item->pLayout->clear();
-        }
-        else if (item->type == Type_Item) {
-            delete item->pItem;
-        }
-        m_items.removeFirst();
-    }
+    m_items.clear();
 }
 
 QSizeF ZGraphicsLayout::calculateSize()

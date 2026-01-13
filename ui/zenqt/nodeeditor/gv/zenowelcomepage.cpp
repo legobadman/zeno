@@ -83,6 +83,10 @@ ZenoWelcomePage::ZenoWelcomePage(QWidget* parent)
 	initSignals();
 }
 
+ZenoWelcomePage::~ZenoWelcomePage() {
+    delete m_ui;
+}
+
 void ZenoWelcomePage::initSignals()
 {
 	connect(m_ui->btnNew, SIGNAL(clicked()), this, SIGNAL(newRequest()));

@@ -4,7 +4,7 @@
 #include <QtWidgets>
 #include <QSizePolicy>
 
-#define _DEBUG_ZLAYOUT
+// #define _DEBUG_ZLAYOUT
 
 class ZGraphicsLayout;
 class QGraphicsItem;
@@ -55,6 +55,8 @@ struct ZGvLayoutItem
         , type(Type_Unknown)
         , bDirty(true)
     {}
+
+    ~ZGvLayoutItem();
 };
 
 class ZGraphicsLayout
@@ -104,12 +106,8 @@ private:
     QSizeF calculateSize();
     void calcItemsSize(QSizeF layoutSize);
 
-#ifdef _DEBUG_ZLAYOUT
-    QVector<ZGvLayoutItem*> m_items;
     QString m_dbgName;
-#else
     QVector<QSharedPointer<ZGvLayoutItem>> m_items;
-#endif
     ZGraphicsLayout* m_parent;
     QGraphicsItem* m_parentItem;
     QRectF m_geometry;

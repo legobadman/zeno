@@ -75,6 +75,7 @@ class ZlogPanel : public QWidget
     Q_OBJECT
 public:
     ZlogPanel(QWidget* parent = nullptr);
+    ~ZlogPanel();
 
 public slots:
     void onFilterChanged();

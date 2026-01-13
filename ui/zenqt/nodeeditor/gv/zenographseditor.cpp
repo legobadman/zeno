@@ -52,6 +52,7 @@ ZenoGraphsEditor::ZenoGraphsEditor(ZenoMainWindow* pMainWin)
 
 ZenoGraphsEditor::~ZenoGraphsEditor()
 {
+    delete m_ui;
 }
 
 void ZenoGraphsEditor::initUI()
@@ -100,7 +101,7 @@ void ZenoGraphsEditor::initUI()
 
 void ZenoGraphsEditor::initModel()
 {
-    m_sideBarModel = new QStandardItemModel;
+    m_sideBarModel = new QStandardItemModel(this);
 
     QStandardItem* pItem = new QStandardItem;
     pItem->setData(Side_Subnet);
@@ -118,7 +119,7 @@ void ZenoGraphsEditor::initModel()
     pItem->setData(Side_Plugin);
     m_sideBarModel->appendRow(pItem);
 
-    m_selection = new QItemSelectionModel(m_sideBarModel);
+    m_selection = new QItemSelectionModel(m_sideBarModel, this);
 }
 
 void ZenoGraphsEditor::initSignals()

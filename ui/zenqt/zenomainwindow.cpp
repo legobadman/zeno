@@ -98,6 +98,7 @@ ZenoMainWindow::ZenoMainWindow(QWidget *parent, Qt::WindowFlags flags, PANEL_TYP
 
 ZenoMainWindow::~ZenoMainWindow()
 {
+    delete m_ui;
 }
 
 void ZenoMainWindow::init(PANEL_TYPE onlyView)

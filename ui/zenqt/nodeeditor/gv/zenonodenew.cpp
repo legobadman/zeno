@@ -241,6 +241,7 @@ ZGraphicsLayout* ZenoNodeNew::initVerticalSockets(bool bInput)
     ZASSERT_EXIT(paramsM, nullptr);
 
     ZGraphicsLayout* pSocketLayout = new ZGraphicsLayout(true);
+    pSocketLayout->setDebugName("LeakLayout");
     pSocketLayout->addSpacing(-1);
     for (int r = 0; r < paramsM->rowCount(); r++)
     {
@@ -366,9 +367,6 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
     QFont font2 = QApplication::font();
     font2.setPointSize(12);
     font2.setWeight(QFont::Normal);
-
-    m_nameItem = new NodeNameItem(name);
-    m_nameItem->installEventFilter(this);
     //clsItem->setDefaultTextColor(QColor("#FFFFFF"));
 
     //qreal margin = ZenoStyle::dpiScaled(10);
@@ -382,7 +380,6 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
 
     //ZGraphicsLayout* pNameLayout = new ZGraphicsLayout(true);
 
-    connect(m_nameItem, &ZGraphicsTextItem::editingFinished, this, &ZenoNodeNew::updateNodeNameByEditor);
     ////TODO: 参照houdini，当名字与类名不重合时，就另外显示。
     //m_NameItem->hide();
 
@@ -476,6 +473,9 @@ ZLayoutBackground* ZenoNodeNew::initHeaderWidget()
         //补充一些距离
         //pHLayout->addSpacing(szIcon.width());// +ZenoStyle::dpiScaled(20.));
         //pHLayout->addSpacing(100, QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed));
+        m_nameItem = new NodeNameItem(name);
+        m_nameItem->installEventFilter(this);
+        connect(m_nameItem, &ZGraphicsTextItem::editingFinished, this, &ZenoNodeNew::updateNodeNameByEditor);
         pHLayout->addItem(m_nameItem, Qt::AlignVCenter);
     }
     pHLayout->addSpacing(ZenoStyle::dpiScaled(16.));

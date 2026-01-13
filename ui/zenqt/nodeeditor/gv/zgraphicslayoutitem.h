@@ -19,7 +19,7 @@ public:
 
     ~ZGraphicsLayoutItem()
     {
-        if (m_layout && m_layout->getDebugName() == "value") {
+        if (m_layout && m_layout->getDebugName() == "mainLayout") {
             int j;
             j = 0;
         }
